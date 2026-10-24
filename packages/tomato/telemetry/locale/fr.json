@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Relais de télémétrie Tomate",
+    "description": "Envoie les spans de tour et d’outil au relais OTLP interne."
+  }
+}

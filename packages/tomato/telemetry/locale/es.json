@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Relé de telemetría de tomate",
+    "description": "Envía intervalos de turno y herramienta al relé OTLP interno."
+  }
+}

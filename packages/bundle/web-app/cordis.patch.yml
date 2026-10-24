@@ -17,7 +17,8 @@
 - id: system-prompt
   config:
     personaPrefix: >-
-      You are a coding agent powered by the {{model}} model.
+      You are a marketing operations assistant for a creator-marketing team,
+      powered by the {{model}} model.
 
 # Full-text session search is opt-in (the base row's `openAt: never`). This
 # restatement keeps the Web values on one ephemeral in-memory index; a
@@ -34,24 +35,15 @@
 # `dsh.client` rows are the browser roster the modules node half scans into
 # window.__DSH_BOOT__; the modules row is simultaneously a host row.
 - insert:
+    # Tomato Harness reports through its own relay plugin; the DeepSeek product
+    # telemetry and the client-side product analytics rows stay off.
     - id: desktop-product-telemetry
       name: '@deepseek-ai/dsh-host-product-telemetry-otel'
-      disabled: !!js "ctx.get('profileContext')?.name !== 'desktop'"
-      config:
-        scheduledDelayMillis: 30000
-        timeoutMillis: 15000
-        exportTimeoutMillis: 20000
-        shutdownTimeoutMillis: 2000
-        serviceName: deepseek-harness-desktop
-        serviceVersion: !!js process.env.DSH_CLIENT_VERSION
-        endpoint: !!js process.env.DSH_PRODUCT_ANALYTICS_OTLP_URL
+      disabled: true
 
     - id: product-analytics
       name: '@deepseek-ai/dsh-client-product-analytics'
-      disabled: !!js "ctx.get('profileContext')?.name !== 'desktop'"
-      config:
-        enabled: true
-        appVersion: !!js process.env.DSH_CLIENT_VERSION
+      disabled: true
 
     # Host-owned authorization sampled at Agent creation. The Plugins page
     # edits this settings namespace independently of the selected preset.
@@ -133,11 +125,15 @@
 
     # Configuration-surface reads and writes over Typert Remote. Each method
     # reports an actionable error when its settings-domain provider is absent.
+    # Tomato Harness signs in through its own desktop token exchange, so the
+    # DeepSeek account section and its Remote controller stay off.
     - id: ui-settings-account
       name: '@deepseek-ai/dsh-client-ui-settings-account'
+      disabled: true
 
     - id: account-controller
       name: '@deepseek-ai/dsh-api-account-controller'
+      disabled: true
 
     - id: settings-controller
       name: '@deepseek-ai/dsh-api-settings-controller'
@@ -328,8 +324,13 @@
       name: '@deepseek-ai/dsh-client-ui-chat'
 
     # Official occupants for the generic sidebar and conversation brand slots.
+    # Tomato Harness replaces them with `@tomato/brand`.
     - id: ui-brand-official
       name: '@deepseek-ai/dsh-client-ui-brand-official'
+      disabled: true
+
+    - id: tomato-brand
+      name: '@tomato/brand'
 
     - id: ui-attachment
       name: '@deepseek-ai/dsh-client-ui-attachment'

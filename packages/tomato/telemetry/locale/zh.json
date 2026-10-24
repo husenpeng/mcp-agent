@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "番茄遥测中继",
+    "description": "把 turn 与工具 span 发往内部 OTLP relay。"
+  }
+}

@@ -34,14 +34,20 @@
     - id: llm
       name: '@deepseek-ai/dsh-llm'
 
+    # Tomato Harness routes every model request through its own relay and sends
+    # no official-provider request fields, so the official-API extension, the
+    # session-log upload that rides on it, and the package inventory it carries
+    # stay off.
     - id: deepseek-llm-api-extensions
       name: '@deepseek-ai/dsh-deepseek-llm-api-extensions'
+      disabled: true
 
     - id: session
       name: '@deepseek-ai/dsh-session'
 
     - id: session-log-deepseek
       name: '@deepseek-ai/dsh-session-log-deepseek'
+      disabled: true
 
     - id: typert
       name: '@deepseek-ai/dsh-typert-registry'
@@ -84,14 +90,17 @@
 
     - id: plugin-package-inventory-deepseek
       name: '@deepseek-ai/dsh-plugin-package-inventory-deepseek'
+      disabled: true
 
     # The transport-independent default for Agents created by entry points.
     # Settings may supply a saved selection; consumers read it at creation time.
+    # The route ships one placeholder model; the Models page adopts the relay's
+    # real catalog, and a signed-in user's saved selection displaces this pair.
     - id: agent-default-model
       name: '@deepseek-ai/dsh-agent-default-model'
       config:
-        provider: deepseek-official
-        model: deepseek-flash
+        provider: tomato-relay
+        model: tomato-chat
 
     - id: jobs
       name: '@deepseek-ai/dsh-jobs-local'
@@ -117,23 +126,40 @@
     - id: authorization
       name: '@deepseek-ai/dsh-authorization'
 
+    # Tomato Harness authenticates through its own desktop token exchange, so
+    # the DeepSeek account provider and its Platform sign-in flow stay off.
     - id: deepseek-account
       name: '@deepseek-ai/dsh-deepseek-account-platform'
-      config:
-        desktopPlatform: !!js "ctx.get('profileContext')?.name === 'desktop' && ['darwin', 'win32'].includes(process.platform) ? process.platform : null"
+      disabled: true
 
     - id: credentials
       name: '@deepseek-ai/dsh-credentials-local'
 
-    # The pi-ai multi-provider twin, mounted dormant: zero routes (and no extra
-    # models in the picker) until a `llm-pi-ai:` settings section supplies provider
-    # profiles — then those routes register live, keys resolving per request
-    # through their apiKeyEnv references, and drop again when the section empties.
-    # Supplying those profiles is exactly what the web Models page does. Which
-    # adapters exist is composition; which providers run is the user's settings
-    # document.
+    # The pi-ai multi-provider twin. Tomato Harness declares one hand-written
+    # route to the company's model relay; the route lists a single placeholder
+    # model so it is serviceable, while the Models page discovers the relay's
+    # real catalog through `GET {baseURL}/models` and adopts entries from it.
+    # The credential reference resolves per request through the credential
+    # store, so a rotated desktop token reaches the next model call.
     - id: llm-pi-ai
       name: '@deepseek-ai/dsh-llm-pi-ai'
+      config:
+        providers:
+          tomato-relay:
+            displayName: Tomato Relay
+            apiKeyEnv: TOMATO_RELAY_API_KEY
+            api: openai-completions
+            # The local mock relay. A deployment points this at the company
+            # relay through the Models page, which writes the route profile
+            # into the active profile's cordis.patch.yml.
+            baseURL: http://127.0.0.1:4010/v1
+            defaultContextWindow: 262144
+            defaultMaxTokens: 32768
+            models:
+              - id: tomato-chat
+                name: Tomato Chat
+                contextWindow: 262144
+                maxTokens: 32768
 
     - id: session-persistence-jsonl
       name: '@deepseek-ai/dsh-session-persistence-jsonl'
@@ -199,37 +225,28 @@
         writeEveryEvents: 200
         writeIntervalMs: 5000
 
+    # Tomato Harness reports through its own OTLP relay plugin, so the
+    # official session-log channel and its shared OTel service stay off.
     - id: otel
       name: '@deepseek-ai/dsh-otel'
+      disabled: true
 
-    # OTel releases a Session-log prefix only after explicit user feedback,
-    # regardless of model provider. Ordinary activity never triggers capture.
-    # DSH_TELEMETRY_OTLP_URL overrides the production endpoint. A non-empty
-    # DSH_TELEMETRY_DISABLED — any value, including '0'/'false' — opts the
-    # process out (the launchers patch the row disabled; config cannot disable
-    # a row). Exports carry the harness home's anonymous user id ($DSH_HOME/.anonymous-user-id,
-    # random UUID; delete the file to reset the identity) as the Resource's
-    # user.id. Byte-bounded batching may turn an authorized prefix into
-    # several HTTP requests. Requests run serially; each has its own 1s
-    # transport timeout and 1.5s watchdog. A watchdog does not release the
-    # active request slot. The outer 3s shutdown deadline stops queued sends;
-    # large prefixes or an unsettled transport may leave records unsent.
-    # Every CLI exit path drains by disposing the root on SIGINT/SIGTERM.
+    # Tomato Harness reports through its own OTLP relay plugin, so the official
+    # session-log channel stays off. The shared `otel` service stays mounted
+    # because the relay reuses it; disabling it would take the relay with it.
     - id: session-telemetry-otel
       name: '@deepseek-ai/dsh-session-telemetry-otel'
+      disabled: true
+
+    # Tomato Harness's own reporter: turn and tool spans to the internal relay.
+    # It derives spans from committed session events and sends nothing when its
+    # endpoint is empty.
+    - id: tomato-telemetry
+      name: '@tomato/telemetry'
       config:
-        mode: !!js process.env.DSH_TELEMETRY_MODE || 'FEEDBACK_ONLY'
-        shutdownTimeoutMillis: 3000
-        maxRequestBytes: 4000000
-        exporter:
-          url: !!js process.env.DSH_TELEMETRY_OTLP_URL ?? 'https://dsh-otel-collector.deepseeksvc.com/v1/logs'
-          compression: gzip
-          timeoutMillis: 1000
-        processor:
-          scheduledDelayMillis: 10000
-          maxQueueSize: 2048
-          maxExportBatchSize: 2048
-          exportTimeoutMillis: 1500
+        endpoint: !!js process.env.TOMATO_OTLP_ENDPOINT ?? ''
+        token: !!js process.env.TOMATO_OTLP_TOKEN
+        serviceName: tomato-harness
 
     - id: subprocess
       name: '@deepseek-ai/dsh-subprocess-local'
@@ -460,21 +477,22 @@
     # remains 30s. The DeepSeek Search and Fetch APIs register as
     # deepseek-search-api and deepseek-fetch-api with the same credential; the Web
     # search settings switch selects both in place of these defaults.
+    # Tomato Harness keeps web fetch only: the DeepSeek search backend needs an
+    # official-provider credential this deployment never holds, so both its
+    # search providers stay off and `search()` reports its own unavailable code
+    # when called.
     - id: web
       name: '@deepseek-ai/dsh-web'
       config:
-        searchProvider: deepseek-official
         fetchProvider: http
 
     - id: web-search-deepseek
       name: '@deepseek-ai/dsh-web-search-deepseek'
-      config:
-        apiKeyEnv: DEEPSEEK_API_KEY
+      disabled: true
 
     - id: web-deepseek-api
       name: '@deepseek-ai/dsh-web-deepseek-api'
-      config:
-        apiKeyEnv: DEEPSEEK_API_KEY
+      disabled: true
 
     - id: web-fetch-http
       name: '@deepseek-ai/dsh-web-fetch-http'
@@ -520,12 +538,12 @@
     - id: fs-sandbox
       name: '@deepseek-ai/dsh-fs-sandbox'
 
-    # The native DeepSeek adapter. No key or endpoint is inlined: both resolve per
-    # request from the `llm-deepseek:` settings section over this entry, with the
-    # key coming from the credential store below. Thinking defaults are a deployment
-    # choice.
+    # Tomato Harness serves models through the relay route on `llm-pi-ai`; the
+    # official DeepSeek adapters and their account sign-in stay off.
     - id: llm-deepseek
       name: '@deepseek-ai/dsh-llm-deepseek-api-key'
+      disabled: true
 
     - id: llm-deepseek-account
       name: '@deepseek-ai/dsh-llm-deepseek-account'
+      disabled: true

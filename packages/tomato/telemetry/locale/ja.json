@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "トマトテレメトリリレー",
+    "description": "ターンとツールの span を社内 OTLP relay に送信します。"
+  }
+}

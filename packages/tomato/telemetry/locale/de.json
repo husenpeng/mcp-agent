@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Tomaten-Telemetrie-Relais",
+    "description": "Sendet Turn- und Werkzeug-Spans an das interne OTLP-Relais."
+  }
+}
