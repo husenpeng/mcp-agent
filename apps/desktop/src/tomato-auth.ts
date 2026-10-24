@@ -87,7 +87,7 @@ class TokenStore {
     try {
       const parsed: unknown = JSON.parse(readFileSync(this.path, 'utf8'))
       if (typeof parsed !== 'object' || parsed === null) return null
-      const record = parsed as { encrypted?: unknown, value?: unknown }
+      const record = parsed as { encrypted?: unknown; value?: unknown }
       if (typeof record.value !== 'string' || record.value === '') return null
       if (record.encrypted !== true) return record.value
       return safeStorage.decryptString(Buffer.from(record.value, 'base64'))
@@ -112,7 +112,7 @@ interface PendingSignIn {
  * @returns sign-in operations and the account state stream.
  */
 export function desktopTomatoAuth(
-  invoke: (request: { namespace: string, method: string, args: Record<string, unknown> }) => Promise<unknown>,
+  invoke: (request: { namespace: string; method: string; args: Record<string, unknown> }) => Promise<unknown>,
   env: NodeJS.ProcessEnv = process.env,
 ): DesktopTomatoAuth {
   const store = new TokenStore()
@@ -201,7 +201,7 @@ export function desktopTomatoAuth(
   return {
     state: () => Promise.resolve(snapshot()),
     start,
-    async cancel(rawId) {
+    cancel(rawId) {
       const id = rawId as SignInAttemptView['id']
       if (pending !== undefined && attemptId(pending.id) === id) {
         pending.cancelled = true
@@ -209,7 +209,7 @@ export function desktopTomatoAuth(
         pending = undefined
       }
       settle({ id, phase: 'cancelled' })
-      return snapshot()
+      return Promise.resolve(snapshot())
     },
     async signOut() {
       store.clear()

@@ -63,6 +63,8 @@ import { DesktopUpdateOverlays } from './update-overlay.ts'
 import { DesktopQuitConfirmation } from './quit-confirmation.ts'
 import { DesktopTray } from './tray.ts'
 import { DesktopBackgroundNotice } from './background-notice.ts'
+import { openDiagnosticsLog, pruneDiagnosticsLogs } from './diagnostics-log.ts'
+import { developerMenuItems, developerModeEnabled } from './developer-mode.ts'
 
 let focusPrimaryWindow = (): void => {}
 let stopForRecovery = async (): Promise<void> => {}
@@ -85,6 +87,11 @@ const rendererConsole = new RendererConsoleTail()
 // Platform-conventional logs directory (macOS ~/Library/Logs/<name>, otherwise under userData);
 // set before ready so the first fatal report already resolves under it.
 app.setAppLogsPath()
+/** Shell diagnostics file; every lifecycle step, Host line, and renderer error lands here. */
+const diagnostics = openDiagnosticsLog(app.getPath('logs'))
+process.on('uncaughtException', (error) => { diagnostics.write('error', 'uncaught exception', error) })
+process.on('unhandledRejection', (reason) => { diagnostics.write('error', 'unhandled rejection', reason) })
+pruneDiagnosticsLogs(app.getPath('logs'))
 
 function currentDesktopLocale(): ReturnType<typeof resolveDesktopLocale> {
   return resolveDesktopLocale(windowsLanguage ?? app.getLocale())
@@ -125,6 +132,7 @@ function persistCrashReport(error: unknown, source: CrashReportSource): Promise<
 
 function reportFatal(error: unknown, source: CrashReportSource): void {
   console.error(error)
+  diagnostics.write('error', `fatal (${source})`, error)
   if (shuttingDown) {
     // No dialog during shutdown, but the report still records what failed on the way out.
     void persistCrashReport(error, source)
@@ -324,6 +332,10 @@ async function main(): Promise<void> {
   const resources = runtimeResources()
   const paths = resolveDesktopPaths()
   const development = !app.isPackaged
+  const developerMode = developerModeEnabled(process.env, development)
+  diagnostics.write('info', `shell started (version ${app.getVersion()}, developer=${String(developerMode)})`, {
+    electron: process.versions.electron, node: process.versions.node, platform: process.platform,
+  })
   const primaryRuntime = development
     ? developmentPrimaryRuntime()
     : join(process.resourcesPath, 'runtime', 'primary-runtime')
@@ -470,12 +482,14 @@ async function main(): Promise<void> {
     const host = new DesktopHostProcess(resources.node, resources.dsh, activeProject,
       hostInspectPort, { ...hostEnvironment, DSH_CLIENT_VERSION: desktopClientVersion() }, onFailure,
       primaryRuntime,
-      resources, (next) => { platformView.setSession(next) })
+      resources, (next) => { platformView.setSession(next) },
+      (stream, chunk) => { diagnostics.write('host', `${stream}: ${chunk.trimEnd()}`) })
     return {
       start: async () => {
         const ready = await host.start()
         hostCookie = await authenticateWebHost(ready.url)
         hostUrl = ready.url
+        diagnostics.write('info', `host ready at ${ready.url}`)
         if (ready.injections === undefined) throw new Error('Desktop Host did not provide boot injections')
         injections = ready.injections
         welcomeBackend = await connectDesktopWelcome(ready.url, (input, init) => net.fetch(input, init))
@@ -1002,6 +1016,13 @@ async function main(): Promise<void> {
       } },
     ] : [],
     { type: 'separator' },
+    ...developerMenuItems({
+      enabled: developerMode,
+      log: diagnostics,
+      window: () => mainWindow,
+      messages: () => currentDesktopLocale().messages,
+    }),
+    { type: 'separator' },
     ...hideCommands,
     { role: 'quit', ...(darwin ? { label: currentDesktopLocale().messages.quitApplication }
       : process.platform === 'win32' ? { label: currentDesktopLocale().messages.exitApplication } : {}) },
@@ -1129,7 +1150,10 @@ async function main(): Promise<void> {
     window.on('closed', () => { if (mainWindow === window) mainWindow = undefined })
     window.webContents.on('console-message', (details) => {
       if (details.level !== 'error') return
-      rendererConsole.push(`${details.sourceId}:${String(details.lineNumber)} ${details.message}`)
+      const line = `${details.sourceId}:${String(details.lineNumber)} ${details.message}`
+      rendererConsole.push(line)
+      // Renderer source ids address the served bundle, whose sourcemap names the original file.
+      diagnostics.write('renderer', line)
     })
     window.webContents.on('did-fail-load', (_event, code, description, url, isMainFrame) => {
       if (isMainFrame && code !== -3 && !quitting && !window.isDestroyed()) {

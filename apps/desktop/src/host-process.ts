@@ -189,6 +189,8 @@ export class DesktopHostProcess {
     private readonly packageManager?: { readonly pnpm: string; readonly nodeBin: string },
 
     private readonly onPlatformSession?: (session: PlatformSession | null) => void,
+    /** Receives every Host output chunk for the shell's diagnostics log. */
+    private readonly onOutput?: (stream: 'stdout' | 'stderr', chunk: string) => void,
   ) {}
 
   /**
@@ -213,7 +215,11 @@ export class DesktopHostProcess {
     })
     this.child = child
     child.stderr?.setEncoding('utf8')
-    child.stderr?.on('data', (chunk: string) => { this.stderr = (this.stderr + chunk).slice(-MAX_HOST_DIAGNOSTIC_CHARS) })
+    child.stderr?.on('data', (chunk: string) => {
+      this.stderr = (this.stderr + chunk).slice(-MAX_HOST_DIAGNOSTIC_CHARS)
+      this.onOutput?.('stderr', chunk)
+    })
+    child.stdout?.on('data', (chunk: Buffer) => { this.onOutput?.('stdout', chunk.toString()) })
     child.stdout?.pipe(process.stdout)
     child.on('message', (message: unknown) => {
       if (!isDesktopHostEvent(message)) {

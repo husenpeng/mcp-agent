@@ -2,33 +2,81 @@
 # section, a hash of its English and Chinese blocks outside code blocks and generated regions.
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write README.md
-/deepseek-harness:
-  en: f68c4f080ce55ff2
-  zh: 88a76d7f7f0b260e
-/deepseek-harness/developer-preview:
-  en: 4ef4d8a71ac143f0
-  zh: 1bfc3149ba8e5543
-/deepseek-harness/run:
-  en: 4e0248e4c6474fc6
-  zh: eb2fb8d78c7d6bc0
-/deepseek-harness/run/run-from-npm:
-  en: e22005cd42e6cbad
-  zh: 0f536f4208df1d60
-/deepseek-harness/run/run-from-source:
-  en: 819e3f7c144d0d64
-  zh: de815f040975dba7
-/deepseek-harness/community-and-support:
-  en: 20acf6451fdc869b
-  zh: d06246dd019ecef7
-/deepseek-harness/contributing:
-  en: cabc2d3e9f8898bd
-  zh: 83b6d238bae29ce3
-/deepseek-harness/development:
-  en: 803ca2b11b497bed
-  zh: 8b4071eb0e7783ef
-/deepseek-harness/citation:
-  en: 6704e9e5a8d49a91
-  zh: 85c9cdd8d56f8e9d
-/deepseek-harness/license:
-  en: 926995344fc1c72b
-  zh: c92fab5abf85932f
+/tomato-harness:
+  en: d9dd587d0ece9877
+  zh: 04054fc3b1eeab45
+/tomato-harness/summary:
+  en: b2526c284a31ae7f
+  zh: ecbc44843fa7fb96
+/tomato-harness/table-of-contents:
+  en: 640fc6e37468c38c
+  zh: 38b8c911934c35a1
+/tomato-harness/architecture:
+  en: a7e56472b11bd3c8
+  zh: 6150d900a0920ce9
+/tomato-harness/architecture/processes:
+  en: a468e53fb16c9bf0
+  zh: 4c796ace036085c4
+/tomato-harness/architecture/profile-composition:
+  en: 6a3b83fb39719934
+  zh: c9689d814c56155a
+/tomato-harness/architecture/capability-seams:
+  en: 205679657317e669
+  zh: c382be17c66d03bc
+/tomato-harness/architecture/model-visible-equals-logged:
+  en: 82054628e117bc8c
+  zh: ca330ccee8ac38ed
+/tomato-harness/architecture/threading-and-lifecycle:
+  en: ab88c68a595426df
+  zh: 168ff4e940069203
+/tomato-harness/architecture/client-plugin-composition:
+  en: 5abb50d372eb4d9f
+  zh: 4504a0dbd702ff82
+/tomato-harness/design-decisions:
+  en: 9edb2094264370d2
+  zh: 51b2ad4157a3642d
+/tomato-harness/prerequisites:
+  en: 07fdcf8db89f51d2
+  zh: 058cc0a40c6bff38
+/tomato-harness/initialize:
+  en: 8dfd610e1d60f2ed
+  zh: fb9fa53ff19d319f
+/tomato-harness/run:
+  en: 8bcfe486110004e4
+  zh: 5491f0aa70750247
+/tomato-harness/run/run-from-source:
+  en: 8cd027714539cfab
+  zh: 2cddbe7cfaca186e
+/tomato-harness/local-services:
+  en: 3389eb2c25c99cda
+  zh: 725a5ebf526713e4
+/tomato-harness/logging-and-developer-mode:
+  en: a7685d9e2f4aa13c
+  zh: b2288d0551fa9707
+/tomato-harness/logging-and-developer-mode/diagnostic-log:
+  en: c736dd08b3e02485
+  zh: 5b4fd07a5e5e4be4
+/tomato-harness/logging-and-developer-mode/developer-mode:
+  en: f00650e4686d2e1c
+  zh: 6a14c8b7f39a8fae
+/tomato-harness/logging-and-developer-mode/locating-client-code-from-a-log-line:
+  en: 8f7b8776ffa01d8b
+  zh: bac6f198cb89d92b
+/tomato-harness/production-readiness:
+  en: a55225845e6eaf35
+  zh: 7c103dfd5414c633
+/tomato-harness/production-readiness/blocking:
+  en: c396d8618ccdd011
+  zh: a0e4e34d198341fe
+/tomato-harness/production-readiness/important:
+  en: 57d166fcdf7dbcc6
+  zh: 867f6e2d4992d1e2
+/tomato-harness/production-readiness/nice-to-have:
+  en: a60f90f9619e1bf0
+  zh: 32e76cd0cb33fbfe
+/tomato-harness/troubleshooting:
+  en: 390cded4f0b10f52
+  zh: 6332ee84e94c22c1
+/tomato-harness/license:
+  en: 79b07e1b27e5346a
+  zh: 4c86653a4f5d232a
