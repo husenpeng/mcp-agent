@@ -217,7 +217,7 @@ pnpm run dev:desktop
 
 ### 诊断日志
 
-外壳在平台日志目录下按天写一份滚动文本日志（macOS 为 `~/Library/Logs/Tomato Harness/`，Windows 在 Electron 日志路径下的 `%APPDATA%\Tomato Harness\logs`）：
+外壳在平台日志目录下按天写一份滚动文本日志（目录跟随应用名：未打包启动为 `~/Library/Logs/Harness Dev/`，打包后为 `~/Library/Logs/Tomato Harness/`）：
 
 ```text
 2026-10-24T05:12:31.481Z [info] shell started (version 0.2.1-rc.3, developer=true) { electron: '44.7.0', ... }
