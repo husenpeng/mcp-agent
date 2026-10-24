@@ -148,7 +148,11 @@ export function desktopTomatoAuth(
     }
     const token = (body as { token: string }).token
     store.write(token)
+    // The workspace gate reads the local copy; a Host-side write failure must not
+    // discard a token the user already approved. The Host retries on the next sign-in
+    // and reports its own reason when the credential is missing at request time.
     await invoke({ namespace: 'credentials', method: 'set', args: { ref: TOKEN_CREDENTIAL_REF, value: token } })
+      .catch((error: unknown) => { console.warn('desktop auth: credential write failed', error) })
   }
 
   function finish(pendingSignIn: PendingSignIn, code: string | null, failure: string | null): void {

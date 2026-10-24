@@ -59,11 +59,15 @@ export async function connectDesktopWelcome(
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ type: 'client-request', rpcId, method, payload: { args: request.args } }),
     })
-    if (!response.ok) throw new Error('desktop welcome: Web request failed')
-    const envelope: unknown = await response.json()
+    const envelope: unknown = await response.json().catch(() => undefined)
     if (!record(envelope) || envelope.type !== 'server-response' || envelope.rpcId !== rpcId
       || !record(envelope.result) || envelope.result.ok !== true) {
-      throw new Error('desktop welcome: Web RPC failed')
+      // The Host's own diagnostics name the failing namespace and reason; keep them
+      // so a failed credential write says why instead of a generic message.
+      const detail = record(envelope) && record(envelope.result) && 'error' in envelope.result
+        ? JSON.stringify(envelope.result.error)
+        : `HTTP ${String(response.status)}`
+      throw new Error(`desktop welcome: Web RPC ${method} failed: ${detail}`)
     }
     return envelope.result.value
   }

@@ -1016,6 +1016,11 @@ async function main(): Promise<void> {
       } },
     ] : [],
     { type: 'separator' },
+    {
+      label: currentDesktopLocale().messages.signOutMenu,
+      enabled: welcomeBackend !== undefined,
+      click: () => { void signOut().catch((error: unknown) => { console.error(error) }) },
+    },
     ...developerMenuItems({
       enabled: developerMode,
       log: diagnostics,
@@ -1194,6 +1199,18 @@ async function main(): Promise<void> {
     }
   }
   let openingWelcome: Promise<void> | undefined
+  /**
+   * Drop the stored token, hide the workspace, and return to the welcome window.
+   * The Host keeps running: only the credential and the visible window change.
+   */
+  const signOut = async (): Promise<void> => {
+    if (quitting) return
+    await welcomeBackend?.account.signOut()
+    diagnostics.write('info', 'signed out')
+    enteredWorkspace = false
+    if (mainWindow !== undefined && !mainWindow.isDestroyed()) mainWindow.hide()
+    await showWelcome()
+  }
   const showWelcome = (): Promise<void> => {
     if (quitting) return Promise.resolve()
     if (welcomeWindow !== undefined && !welcomeWindow.isDestroyed()) {

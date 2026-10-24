@@ -129,6 +129,10 @@ export function repositoryClientBuildEnvironment(
     ...inherited,
     DSH_CLIENT_COMMIT_HASH: repositoryCommitHash(root, environment),
     ...(dirty === true ? { DSH_CLIENT_GIT_DIRTY: 'true' } : {}),
+    // Every build of this fork is a Tomato build, including the local one the
+    // desktop launcher makes; without it the document title falls back to the
+    // shell's generic local-build label.
+    DSH_CLIENT_TITLE: inherited.DSH_CLIENT_TITLE ?? 'Tomato Harness',
     DSH_CLIENT_VERSION: repositoryVersion(root),
   }
 }
