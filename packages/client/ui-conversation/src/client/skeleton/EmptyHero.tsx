@@ -101,8 +101,8 @@ function HeroFish({ hovering }: { hovering: boolean }) {
   return (
     <svg
       className={css.fish}
-      width={34}
-      height={(34 * FISH_LOGO_VIEWBOX.height) / FISH_LOGO_VIEWBOX.width}
+      width={44}
+      height={(44 * FISH_LOGO_VIEWBOX.height) / FISH_LOGO_VIEWBOX.width}
       viewBox={`0 0 ${FISH_LOGO_VIEWBOX.width} ${FISH_LOGO_VIEWBOX.height}`}
       fill="none"
       aria-hidden="true"
@@ -146,13 +146,13 @@ export function HeroShell({ t, renderSlot, children }: HeroShellProps) {
             }}
             onPointerLeave={() => { setHovering(false) }}
           >
-            {renderSlot('conversation.hero.brand.mark', { size: 34, className: css.fish }, {
+            {renderSlot('conversation.hero.brand.mark', { size: 44, className: css.fish }, {
               fallback: <HeroFish hovering={hovering} />,
             })}
           </span>
           <span className={css.titleGroup}>
             {/* Own element: keeps the headline text addressable apart from the badge. */}
-            <span>{t('hero.headline')}</span>
+            <span className={css.headlineText}>{t('hero.headline')}</span>
             <span className={css.previewBadge}>{t('hero.preview')}</span>
           </span>
         </div>

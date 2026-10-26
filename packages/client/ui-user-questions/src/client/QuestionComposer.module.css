@@ -332,10 +332,12 @@
   grid-area: 1 / 1;
 }
 
-/* Checked: label-primary fill with a primary-foreground check — the pair
-   inverts with the theme (dark fill in light mode, light fill in dark mode). */
+/* Checked: label-primary fill with a primary-inverted check — the pair
+   inverts with the theme (dark fill in light mode, light fill in dark mode).
+   primary-foreground is the ink on the brand-red button fill, which stays
+   white in both themes, so it cannot serve this ink-coloured fill. */
 .checkboxChecked {
-  color: var(--dsw-alias-label-primary-foreground);
+  color: var(--dsw-alias-label-primary-inverted);
 }
 
 .checkboxChecked::before {

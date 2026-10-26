@@ -18,6 +18,18 @@ body {
   /* Blocking masks dim the page; menu backgrounds retain their blur. */
   --dsw-mask-blur: none;
   --dsw-menu-backdrop-filter: blur(40px) saturate(150%);
+  /* Tomato 品牌渐变与卡片/面板阴影，取自 client-monorepo 的 colors.css 与 globals.css。 */
+  --dsw-brand-mark-start: rgb(183, 22, 22);
+  --dsw-brand-mark-end: rgb(254, 80, 66);
+  --dsw-brand-gradient-cta: linear-gradient(to right, rgb(255, 40, 40), rgb(253, 121, 92));
+  --dsw-brand-gradient-signature: linear-gradient(135deg, rgb(255, 0, 0) 15%, rgb(255, 94, 0) 85%);
+  --dsw-brand-gradient-hero: linear-gradient(135deg, rgb(255, 0, 0) 14.64%, rgb(255, 146, 83) 85.36%);
+  --dsw-brand-gradient-auth: linear-gradient(135deg, rgb(147, 0, 10), rgb(222, 55, 48) 45%, rgb(255, 84, 73));
+  --dsw-specific-shadow-card: 0 1px 5px rgba(17, 24, 39, 0.1);
+  --dsw-specific-shadow-panel: 0 12px 32px rgba(17, 24, 39, 0.07);
+  --dsw-specific-shadow-nav-active: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
+  --dsw-specific-shadow-sidebar: 40px 0 60px -15px color-mix(in srgb, rgb(46, 49, 50) 5%, transparent);
+  --dsw-specific-shadow-composer-top: 0 -4px 12px 0 rgba(0, 0, 0, 0.12);
 }
 
 body[data-ds-dark-theme] [data-menu-material] {
@@ -40,8 +52,19 @@ body * {
 }
 
 body[data-ds-dark-theme] {
-  --dsw-linear-gradient-think: linear-gradient(180deg, #151517 20.19%, rgba(21, 21, 23, 0) 100%);
-  --dsw-linear-think-select: linear-gradient(180deg, #232325 20.19%, rgba(35, 35, 37, 0) 100%);
+  --dsw-linear-gradient-think: linear-gradient(180deg, #191b1c 20.19%, rgba(25, 27, 28, 0) 100%);
+  --dsw-linear-think-select: linear-gradient(180deg, #212425 20.19%, rgba(33, 36, 37, 0) 100%);
+  --dsw-brand-mark-start: rgb(147, 0, 10);
+  --dsw-brand-mark-end: rgb(222, 55, 48);
+  --dsw-brand-gradient-cta: linear-gradient(to right, rgb(183, 22, 22), rgb(118, 11, 11));
+  --dsw-brand-gradient-signature: linear-gradient(135deg, rgb(183, 22, 22) 15%, rgb(118, 11, 11) 85%);
+  --dsw-brand-gradient-hero: linear-gradient(135deg, rgb(255, 84, 73) 14.64%, rgb(255, 137, 125) 85.36%);
+  --dsw-brand-gradient-auth: linear-gradient(135deg, rgb(147, 0, 10), rgb(183, 22, 22) 45%, rgb(222, 55, 48));
+  --dsw-specific-shadow-card: 0 1px 5px rgba(0, 0, 0, 0.4);
+  --dsw-specific-shadow-panel: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --dsw-specific-shadow-nav-active: 0 10px 15px -3px rgba(0, 0, 0, 0.45), 0 4px 6px -4px rgba(0, 0, 0, 0.45);
+  --dsw-specific-shadow-sidebar: 40px 0 60px -15px rgba(0, 0, 0, 0.45);
+  --dsw-specific-shadow-composer-top: 0 -4px 12px 0 rgba(0, 0, 0, 0.4);
 }
 
 /* ---------- 字体 ---------- */

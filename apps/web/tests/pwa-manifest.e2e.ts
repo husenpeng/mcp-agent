@@ -115,9 +115,9 @@ it('ships fixed-color favicons selected by document media queries', async () => 
   const light = await readFile(join(DIST_ROOT, 'favicon.svg'), 'utf8')
   const dark = await readFile(join(DIST_ROOT, 'favicon-dark.svg'), 'utf8')
   expect(light).not.toContain('<style>')
-  expect(light).toContain('fill="#000"')
-  expect(dark).toContain('fill="#fff"')
-  expect(dark.replace('fill="#fff"', 'fill="#000"')).toBe(light)
+  expect(light).toContain('fill="#b71616"')
+  expect(dark).toContain('fill="#de3730"')
+  expect(dark.replace('fill="#de3730"', 'fill="#b71616"')).toBe(light)
 })
 
 it('preserves fractional coverage along the Apple icon curves', async () => {

@@ -1,6 +1,6 @@
 /** Operations available to the isolated native welcome renderer. */
 
-import type { AccountView, SignInAttemptId } from '@deepseek-ai/dsh-deepseek-account/types'
+import type { AccountView, SignInAttemptId, SignInAttemptView } from '@deepseek-ai/dsh-deepseek-account/types'
 import type { ProductEventMap } from '@deepseek-ai/dsh-client-product-analytics/types'
 import type { DesktopLocale } from './locale.ts'
 
@@ -13,9 +13,24 @@ export const WELCOME_IPC = {
   start: 'dsh-welcome:start',
   cancel: 'dsh-welcome:cancel',
   copyLink: 'dsh-welcome:copy-link',
+  openLegal: 'dsh-welcome:open-legal',
   state: 'dsh-welcome:state',
   takeNotice: 'dsh-welcome:take-notice',
 } as const
+
+/** Legal pages the welcome card may open in the system browser. */
+export type WelcomeLegalDocument = 'terms' | 'privacy'
+
+/** Why the BFF returned to its login page after a Feishu authorization attempt. */
+export type WelcomeFeishuFailure = 'denied' | 'email-missing' | 'failed'
+
+/** Attempt projection carrying the desktop-only Feishu reason without widening the shared platform codes. */
+export type WelcomeSignInAttempt = SignInAttemptView & { readonly feishuFailure?: WelcomeFeishuFailure }
+
+/** Account projection the welcome renderer may receive. */
+export interface WelcomeAccountView extends Omit<AccountView, 'attempt'> {
+  readonly attempt: WelcomeSignInAttempt | null
+}
 
 /** Credential writes return a safe outcome without exposing Host diagnostics. */
 export type WelcomeSaveResult = { readonly ok: true } | { readonly ok: false }
@@ -34,11 +49,16 @@ export interface WelcomeOperations {
   /** @returns the pending notification, clearing it before another renderer can receive it. */
   takeNotice(): Promise<WelcomeNotice | undefined>
   /** @returns account state after starting a login attempt. */
-  startSignIn(): Promise<AccountView>
+  startSignIn(): Promise<WelcomeAccountView>
   /** @param id - attempt to cancel. @returns the settled state. */
-  cancelSignIn(id: SignInAttemptId): Promise<AccountView>
+  cancelSignIn(id: SignInAttemptId): Promise<WelcomeAccountView>
   /** @param id - current waiting attempt whose authorization URL is copied to the system clipboard. */
   copySignInLink(id: SignInAttemptId): Promise<void>
+  /**
+   * Open a legal page in the system browser.
+   * @param document - fixed page identity; the main process builds the URL.
+   */
+  openLegal(document: WelcomeLegalDocument): Promise<void>
 
   /**
    * Store the official provider's key before entering the workspace.
@@ -56,7 +76,7 @@ export interface WelcomeOperations {
 /** The renderer receives localized copy, login operations, and safe account snapshots. */
 export type WelcomeApi = DesktopLocale & WelcomeOperations & {
   /** @param listener - safe account snapshot recipient. @returns subscription disposer. */
-  onAccountState(listener: (state: AccountView) => void): () => void
+  onAccountState(listener: (state: WelcomeAccountView) => void): () => void
 }
 
 /** Authentication facts supplied at cold start or after a completed sign-out. */

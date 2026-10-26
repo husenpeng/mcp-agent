@@ -19,7 +19,15 @@
 }
 
 .sessionRow.selected {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background-color: transparent;
+  background-image: var(--dsw-brand-gradient-signature);
+  box-shadow: var(--dsw-specific-shadow-nav-active);
+  color: rgb(255, 255, 255);
+}
+
+.sessionRow.selected .title,
+.sessionRow.selected .slot {
+  color: inherit;
 }
 
 .dragPreview {
@@ -309,7 +317,7 @@
    latches `:hover` on the row after the title has already returned: an
    unguarded rule would strand that row without its ellipsis. */
 @media (hover: hover) {
-  .sessionRow:hover {
+  .sessionRow:not(.selected):hover {
     background: var(--dsw-alias-interactive-bg-hover);
   }
 

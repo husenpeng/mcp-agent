@@ -162,12 +162,18 @@ describe('desktop Feishu authentication', () => {
     expect(invoke).toHaveBeenCalledWith({ namespace: 'credentials', method: 'set', args: { ref: 'TOMATO_RELAY_API_KEY', value: 'session-abc' } })
   })
 
-  it('fails the attempt when the BFF lands on its login page', async () => {
+  it.each([
+    ['http://web.test/login?error=feishu_denied', 'denied'],
+    ['http://web.test/login?error=feishu_email_missing', 'email-missing'],
+    ['http://web.test/login?error=feishu_failed', 'failed'],
+    ['http://web.test/login', 'failed'],
+  ] as const)('maps the BFF failure %s to %s', async (url, feishuFailure) => {
     const { desktopTomatoAuth } = await load()
     const auth = desktopTomatoAuth(async () => undefined, ENV)
     void auth.start()
-    windows[0]?.navigate('http://web.test/login?error=feishu_failed')
+    windows[0]?.navigate(url)
     await vi.waitFor(async () => { expect((await auth.state()).attempt?.phase).toBe('failed') }, { timeout: 2000 })
+    expect((await auth.state()).attempt?.feishuFailure).toBe(feishuFailure)
     expect(windows[0]?.destroyed).toBe(true)
   })
 

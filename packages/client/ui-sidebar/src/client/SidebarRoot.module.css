@@ -289,7 +289,7 @@
   font-size: 18px;
   font-weight: 600;
   line-height: 24px;
-  letter-spacing: 0.04em;
+  letter-spacing: -0.025em;
 }
 
 .fallbackBrandName {
@@ -404,8 +404,8 @@
   white-space: nowrap;
 }
 
-/* New Session: 38px bar, 12px radius (figma 133:7634 geometry, squared-off
-   corners); collapsed it renders as the rail's plain icon control. */
+/* New Session: 36px bar on the shared 14px radius (client sidebar geometry);
+   collapsed it renders as the rail's plain icon control. */
 .newSession {
   container-type: inline-size;
   position: relative;
@@ -414,7 +414,7 @@
   align-items: center;
   justify-content: center;
   gap: 0;
-  height: 38px;
+  height: 36px;
   padding: 8px 12px;
   margin: 0 2px 12px;
   box-sizing: border-box;
@@ -548,14 +548,15 @@
 }
 
 @media (hover: hover) {
-  .panelRow:hover {
+  .panelRow:not(.panelActive):hover {
     background: var(--dsw-alias-interactive-bg-hover);
   }
 }
 
 .panelRow.panelActive {
-  background: var(--dsw-alias-interactive-bg-hover);
-  color: var(--dsw-alias-label-primary);
+  background-image: var(--dsw-brand-gradient-signature);
+  box-shadow: var(--dsw-specific-shadow-nav-active);
+  color: rgb(255, 255, 255);
 }
 
 .panelRow:focus-visible {

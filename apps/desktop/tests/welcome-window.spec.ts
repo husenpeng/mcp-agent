@@ -45,6 +45,7 @@ const operations = {
   startSignIn: async () => ({ links: { usageUrl: 'http://localhost/usage', topUpUrl: 'http://localhost/top_up' }, status: 'signed-out' as const, attempt: null }),
   cancelSignIn: async () => ({ links: { usageUrl: 'http://localhost/usage', topUpUrl: 'http://localhost/top_up' }, status: 'signed-out' as const, attempt: null }),
   copySignInLink: async () => undefined,
+  openLegal: async () => undefined,
   saveApiKey: () => Promise.resolve({ ok: true as const }),
   skip: () => Promise.resolve(),
 }
@@ -53,7 +54,7 @@ describe('desktop welcome window', () => {
   it.each(['darwin', 'win32', 'linux'] as const)('keeps the %s preview fixed-size and sandboxed', (platform) => {
     const options = welcomeWindowOptions(platform, resolveDesktopLocale('zh-CN'))
     expect(options).toMatchObject({
-      width: 600, height: 700, useContentSize: true, center: true, show: false,
+      width: 1000, height: 700, useContentSize: true, center: true, show: false,
       resizable: false, maximizable: false, fullscreenable: false,
       webPreferences: {
         nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true,
@@ -117,8 +118,9 @@ describe('desktop welcome window', () => {
     const saveApiKey = vi.fn(operations.saveApiKey)
     const skip = vi.fn(operations.skip)
     const copySignInLink = vi.fn(operations.copySignInLink)
+    const openLegal = vi.fn(operations.openLegal)
     const takeNotice = vi.fn(async () => 'session-expired' as const)
-    await openWelcomeWindow(resolveDesktopLocale('en'), { ...operations, saveApiKey, skip, copySignInLink, takeNotice })
+    await openWelcomeWindow(resolveDesktopLocale('en'), { ...operations, saveApiKey, skip, copySignInLink, openLegal, takeNotice })
     const own = { sender: window.webContents, senderFrame: window.webContents.mainFrame }
     const take = electron.handlers.get(WELCOME_IPC.takeNotice)!
     await expect(take({ ...own, senderFrame: {} })).rejects.toThrow('unowned frame')
@@ -138,6 +140,13 @@ describe('desktop welcome window', () => {
     await expect(copy(own, 42)).rejects.toThrow('invalid attempt')
     await copy(own, 'attempt')
     expect(copySignInLink).toHaveBeenCalledExactlyOnceWith('attempt')
+    const legal = electron.handlers.get(WELCOME_IPC.openLegal)!
+    await expect(legal({ ...own, senderFrame: {} }, 'terms')).rejects.toThrow('unowned frame')
+    await expect(legal(own, 'cookie')).rejects.toThrow('invalid legal page')
+    await legal(own, 'terms')
+    expect(openLegal).toHaveBeenCalledExactlyOnceWith('terms')
+    await legal(own, 'privacy')
+    expect(openLegal).toHaveBeenLastCalledWith('privacy')
     window.once.mock.calls[0]![1]()
     expect(electron.handlers.size).toBe(0)
   })

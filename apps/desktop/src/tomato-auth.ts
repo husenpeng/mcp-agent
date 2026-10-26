@@ -15,7 +15,8 @@ import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { app, BrowserWindow, safeStorage, session } from 'electron'
-import type { AccountLinks, AccountView, SignInAttemptView } from '@deepseek-ai/dsh-deepseek-account/types'
+import type { AccountLinks, SignInAttemptView } from '@deepseek-ai/dsh-deepseek-account/types'
+import type { WelcomeAccountView, WelcomeFeishuFailure, WelcomeSignInAttempt } from './welcome-api.ts'
 
 /** Credential reference the model relay route resolves; kept in step with the base bundle. */
 export const TOKEN_CREDENTIAL_REF = 'TOMATO_RELAY_API_KEY'
@@ -48,13 +49,13 @@ function links(env: NodeJS.ProcessEnv): AccountLinks {
 /** Operations the welcome window and the account state stream need. */
 export interface DesktopTomatoAuth {
   /** @returns the current account snapshot. */
-  state(): Promise<AccountView>
+  state(): Promise<WelcomeAccountView>
   /** @param client - ignored; the Feishu flow needs no client metadata. @returns the started attempt. */
-  start(client?: unknown): Promise<AccountView>
+  start(client?: unknown): Promise<WelcomeAccountView>
   /** @param id - attempt to abandon. @returns the settled state. */
-  cancel(id: string): Promise<AccountView>
+  cancel(id: string): Promise<WelcomeAccountView>
   /** @returns the signed-out state after removing the local token. */
-  signOut(): Promise<AccountView>
+  signOut(): Promise<WelcomeAccountView>
   /** @returns the sign-in window currently owning the attempt, for focus and lifecycle. */
   window(): BrowserWindow | undefined
   /**
@@ -65,7 +66,7 @@ export interface DesktopTomatoAuth {
    * @returns subscription disposer.
    */
   watch(
-    listener: (state: AccountView) => void,
+    listener: (state: WelcomeAccountView) => void,
     failed: () => void,
     expired: () => void,
     onPolicyChange?: (enabled: boolean) => void,
@@ -142,11 +143,11 @@ export function desktopTomatoAuth(
   env: NodeJS.ProcessEnv = process.env,
 ): DesktopTomatoAuth {
   const store = new TokenStore()
-  const listeners = new Set<(state: AccountView) => void>()
+  const listeners = new Set<(state: WelcomeAccountView) => void>()
   let pending: PendingSignIn | undefined
-  let attempt: SignInAttemptView | null = null
+  let attempt: WelcomeSignInAttempt | null = null
 
-  const snapshot = (): AccountView => ({
+  const snapshot = (): WelcomeAccountView => ({
     status: store.read() === null ? 'signed-out' : 'credential-stored',
     links: links(env),
     attempt,
@@ -155,7 +156,7 @@ export function desktopTomatoAuth(
     const state = snapshot()
     for (const listener of listeners) listener(state)
   }
-  const settle = (next: SignInAttemptView | null): void => {
+  const settle = (next: WelcomeSignInAttempt | null): void => {
     attempt = next
     publish()
   }
@@ -219,13 +220,17 @@ export function desktopTomatoAuth(
    * @param sessionId - verified cookie value, or null when the attempt failed.
    * @param failure - why the attempt failed, when it did.
    */
-  function finish(target: PendingSignIn, sessionId: string | null, failure: 'expired' | 'protocol' | 'network'): void {
+  function finish(target: PendingSignIn, sessionId: string | null, failure: 'expired' | 'protocol' | 'network', feishuFailure?: WelcomeFeishuFailure): void {
     if (target.settled) return
     target.settled = true
     if (pending === target) pending = undefined
     disposeAttempt(target)
     if (target.cancelled) { settle({ id: attemptId(target.id), phase: 'cancelled' }); return }
-    if (sessionId === null) { settle({ id: attemptId(target.id), phase: 'failed', errorCode: failure }); return }
+    if (sessionId === null) {
+      settle({ id: attemptId(target.id), phase: 'failed', errorCode: failure,
+        ...feishuFailure === undefined ? {} : { feishuFailure } })
+      return
+    }
     settle({ id: attemptId(target.id), phase: 'committing' })
     void exchange(sessionId).then(async ({ token }) => {
       store.write(token)
@@ -254,7 +259,7 @@ export function desktopTomatoAuth(
     poll.unref()
   }
 
-  async function start(): Promise<AccountView> {
+  async function start(): Promise<WelcomeAccountView> {
     if (pending !== undefined) {
       if (!pending.window.isDestroyed()) pending.window.focus()
       return snapshot()
@@ -291,7 +296,7 @@ export function desktopTomatoAuth(
     // waiting out the timeout.
     window.webContents.on('did-navigate', (_event, url) => {
       // The BFF returns to its login page with a reason code when sign-in failed.
-      if (url.includes('/login')) finish(started, null, 'protocol')
+      if (url.includes('/login')) finish(started, null, 'protocol', feishuFailure(url))
     })
     window.once('ready-to-show', () => { window.show() })
     window.once('closed', () => {
@@ -331,6 +336,18 @@ export function desktopTomatoAuth(
       listener(snapshot())
       return () => { listeners.delete(listener) }
     },
+  }
+}
+
+/** Map the BFF's login-page reason code to the welcome renderer's copy key. */
+function feishuFailure(url: string): WelcomeFeishuFailure {
+  let parsed: URL
+  try { parsed = new URL(url) } catch { return 'failed' }
+  switch (parsed.searchParams.get('error')) {
+    case 'feishu_denied': return 'denied'
+    case 'feishu_email_missing': return 'email-missing'
+    case 'feishu_failed': return 'failed'
+    default: return 'failed'
   }
 }
 

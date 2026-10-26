@@ -15,7 +15,7 @@ import { WELCOME_IPC, type WelcomeOperations } from './welcome-api.ts'
  */
 export function welcomeWindowOptions(platform: NodeJS.Platform, locale: DesktopLocale): BrowserWindowConstructorOptions {
   return {
-    width: 600,
+    width: 1000,
     height: 700,
     useContentSize: true,
     center: true,
@@ -33,7 +33,7 @@ export function welcomeWindowOptions(platform: NodeJS.Platform, locale: DesktopL
     } as const : {}),
     ...(platform === 'win32' ? {
       titleBarStyle: 'hidden',
-      titleBarOverlay: { color: '#00000000', symbolColor: '#0F1115', height: 42 },
+      titleBarOverlay: { color: '#00000000', symbolColor: '#171717', height: 42 },
       backgroundMaterial: 'acrylic',
     } as const : {}),
     webPreferences: {
@@ -66,7 +66,7 @@ export async function openWelcomeWindow(locale: DesktopLocale, operations: Welco
     active = false
     for (const channel of [
       WELCOME_IPC.analyticsEnabled, WELCOME_IPC.analytics, WELCOME_IPC.takeNotice, WELCOME_IPC.saveApiKey,
-      WELCOME_IPC.skip, WELCOME_IPC.start, WELCOME_IPC.cancel, WELCOME_IPC.copyLink,
+      WELCOME_IPC.skip, WELCOME_IPC.start, WELCOME_IPC.cancel, WELCOME_IPC.copyLink, WELCOME_IPC.openLegal,
     ]) {
       ipcMain.removeHandler(channel)
     }
@@ -112,6 +112,11 @@ export async function openWelcomeWindow(locale: DesktopLocale, operations: Welco
     assertSender(event)
     if (typeof id !== 'string') throw new Error('desktop welcome: invalid attempt')
     return operations.copySignInLink(id as SignInAttemptId)
+  })
+  ipcMain.handle(WELCOME_IPC.openLegal, async (event, page: unknown) => {
+    assertSender(event)
+    if (page !== 'terms' && page !== 'privacy') throw new Error('desktop welcome: invalid legal page')
+    await operations.openLegal(page)
   })
   window.once('closed', disposeHandlers)
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))

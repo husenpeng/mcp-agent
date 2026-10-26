@@ -66,12 +66,12 @@ function expectConsumerColors(source: string, palette: Map<string, string>): voi
 }
 
 const lightColors = {
-  background: [245, 247, 250],
-  backing: [202, 210, 219],
-  detail: [202, 210, 219],
-  inset: [237, 240, 244],
-  shadow: [237, 240, 244],
-  surface: [237, 240, 244],
+  background: [250, 250, 250],
+  backing: [197, 199, 201],
+  detail: [197, 199, 201],
+  inset: [240, 242, 244],
+  shadow: [240, 242, 244],
+  surface: [240, 242, 244],
 }
 
 it('preserves the original light artwork colors, including surface-colored insets and shadows', () => {
@@ -87,12 +87,12 @@ it.each([false, true])('defines the approved light static steps in the dark=%s p
 
 it('resolves the dark artwork colors through the actual static palette', () => {
   expect(illustrationColors(definitions(true))).toEqual({
-    background: [44, 44, 46],
-    backing: [67, 69, 74],
-    detail: [129, 133, 140],
-    inset: [67, 69, 74],
-    shadow: [67, 69, 74],
-    surface: [97, 102, 107],
+    background: [46, 49, 50],
+    backing: [68, 71, 73],
+    detail: [117, 120, 121],
+    inset: [68, 71, 73],
+    shadow: [68, 71, 73],
+    surface: [92, 95, 96],
   })
 })
 
@@ -106,7 +106,7 @@ it.each([false, true])('resolves the illustration consumer names in the dark=%s 
 
 it('rejects light static-color drift even when alias names stay unchanged', () => {
   const palette = definitions(false)
-  palette.set('--dsw-static-neutral-bluish-90', 'rgb(235, 238, 242)')
+  palette.set('--dsw-static-tomato-gray-95', 'rgb(235, 238, 242)')
   expect(() => { expect(illustrationColors(palette)).toEqual(lightColors) }).toThrow()
 })
 

@@ -477,7 +477,7 @@ describe('web e2e: settings modal and General preferences', () => {
       })
       expect(state).toEqual({
         attr: true,
-        background: 'rgb(21, 21, 23)',
+        background: 'rgb(25, 27, 28)',
         colorScheme: 'dark',
       })
     } finally {

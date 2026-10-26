@@ -1,0 +1,10 @@
+/* Theme-aware tomato glyph gradient. The theme sheets define the stops for
+   both palettes; the fallbacks keep the mark visible where the sheets are not
+   loaded (desktop shell surfaces). */
+.markStart {
+  stop-color: var(--dsw-brand-mark-start, rgb(183 22 22));
+}
+
+.markEnd {
+  stop-color: var(--dsw-brand-mark-end, rgb(254 80 66));
+}

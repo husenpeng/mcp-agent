@@ -76,6 +76,14 @@
   --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
 }
 
+/* Client hero composer: 142px minimum with 18px top and 12px bottom padding,
+   inside the shared 24px panel radius. */
+.hero .card {
+  min-height: 142px;
+  padding-top: 18px;
+  padding-bottom: 12px;
+}
+
 @media (pointer: coarse) {
   .card {
     font-size: max(16px, var(--dsh-content-font-size, 14px));

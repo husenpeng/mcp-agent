@@ -1,13 +1,13 @@
 <svg width="472" height="40" viewBox="0 0 472 40" fill="none" xmlns="http://www.w3.org/2000/svg">
 <style>
   :root {
-    --tomato-brand-ink: #0f1115;
-    --tomato-brand-red: #c01a12;
+    --tomato-brand-ink: #171717;
+    --tomato-brand-red: #b71616;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --tomato-brand-ink: #f9fafb;
-      --tomato-brand-red: #ff6a5e;
+      --tomato-brand-ink: #f0f2f4;
+      --tomato-brand-red: #de3730;
     }
   }
 </style>

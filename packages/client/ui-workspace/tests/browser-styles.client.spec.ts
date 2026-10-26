@@ -109,8 +109,10 @@ describe('WorkspaceBrowser.module.css list', () => {
     expect(rowDeclarations('.slot')?.get('height')).toBe('20px')
     expect(rowDeclarations('.sessionRow .title')?.get('margin')).toBe('0 6px 0 4px')
     expect(rowDeclarations('.searchResultRow')?.get('min-height')).toBe('48px')
-    expect(rowDeclarations('.sessionRow.selected')?.get('background'))
-      .toBe('var(--dsw-alias-interactive-bg-hover)')
+    expect(rowDeclarations('.sessionRow.selected')?.get('background-image'))
+      .toBe('var(--dsw-brand-gradient-signature)')
+    expect(rowDeclarations('.sessionRow.selected')?.get('background-color')).toBe('transparent')
+    expect(rowDeclarations('.sessionRow.selected')?.get('color')).toBe('rgb(255, 255, 255)')
   })
 
   it('marquees a clipped session title on row hover', () => {

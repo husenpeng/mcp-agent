@@ -23,9 +23,9 @@
   overflow: visible;
 }
 
-/* figma 34:10411: fish + title, gap 10, centered; 26/32 wt500. The preview
-   badge is a product addition outside that source: a mono superscript pill
-   riding the title's top-right. */
+/* figma 34:10411: fish + title, gap 10, centered. The client hero uses a
+   40px display headline with the emphasis gradient; the preview badge is a
+   product addition outside that source. */
 .headline {
   display: flex;
   /* Overflow-driven: the fish and the title group are two wrap units sharing
@@ -38,10 +38,25 @@
   row-gap: 12px;
   align-items: center;
   justify-content: center;
-  font-size: 26px;
-  line-height: 32px;
-  font-weight: 500;
+  font-size: 40px;
+  line-height: 48px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--dsw-alias-label-primary);
+}
+
+.headlineText {
+  background-image: var(--dsw-brand-gradient-hero);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (forced-colors: active) {
+  .headlineText {
+    background-image: none;
+    color: CanvasText;
+  }
 }
 
 /* Title text + badge as one wrap unit so the title never breaks mid-text with

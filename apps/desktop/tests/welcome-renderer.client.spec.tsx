@@ -5,7 +5,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { Welcome } from '../src/client/WelcomePage.tsx'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { resolveDesktopLocale } from '../src/locale.ts'
-import type { AccountView } from '@deepseek-ai/dsh-deepseek-account/types'
+import type { WelcomeAccountView } from '../src/welcome-api.ts'
 import type { WelcomeNotice } from '../src/welcome-api.ts'
 
 const html = readFileSync(join(import.meta.dirname, '../renderer/welcome.html'), 'utf8')
@@ -20,10 +20,11 @@ function mount(language = 'zh-CN', takeNotice = vi.fn<() => Promise<WelcomeNotic
     takeNotice,
     analytics: vi.fn(async (_event: string, _attributes: object) => {}),
     analyticsEnabled: async () => true,
-    onAccountState: vi.fn((_listener: (state: AccountView) => void) => stopAccount),
-    startSignIn: vi.fn(async (): Promise<AccountView> => ({ links: LINKS, status: 'signed-out', attempt: null })),
-    cancelSignIn: vi.fn(async (): Promise<AccountView> => ({ links: LINKS, status: 'signed-out', attempt: null })),
+    onAccountState: vi.fn((_listener: (state: WelcomeAccountView) => void) => stopAccount),
+    startSignIn: vi.fn(async (): Promise<WelcomeAccountView> => ({ links: LINKS, status: 'signed-out', attempt: null })),
+    cancelSignIn: vi.fn(async (): Promise<WelcomeAccountView> => ({ links: LINKS, status: 'signed-out', attempt: null })),
     copySignInLink: vi.fn(async () => undefined),
+    openLegal: vi.fn(async () => undefined),
     ...resolveDesktopLocale(language),
     saveApiKey: vi.fn(async () => ({ ok: true as const })),
     skip: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
@@ -40,26 +41,31 @@ function mount(language = 'zh-CN', takeNotice = vi.fn<() => Promise<WelcomeNotic
       '',
     ].join('\n')
   }
-  return { document, api, button, copy, unmount: mounted.unmount, stopAccount }
+  const consent = () => {
+    const box = document.querySelector<HTMLInputElement>('#auth-consent')!
+    fireEvent.click(box)
+  }
+  return { document, api, button, consent, copy, unmount: mounted.unmount, stopAccount }
 }
 
 describe('desktop welcome presentation', () => {
   it.each(['zh-CN', 'en'])('renders the %s entry with a company sign-in action', async (language) => {
     const view = mount(language)
     expect(view.document.documentElement.lang).toBe(language)
-    expect(view.document.querySelector('img')!.getAttribute('src')).toBe('assets/welcome-brand.svg')
+    expect(view.document.querySelector('img')!.getAttribute('src')).toBe('assets/tomato-mark-light.svg')
     await expect(view.copy()).toMatchFileSnapshot(`./expected/welcome/${language}.expected.txt`)
   })
 
   it('starts a sign-in and shows the waiting page with a copy action', async () => {
     const view = mount('en')
-    const waiting = Promise.withResolvers<AccountView>()
+    const waiting = Promise.withResolvers<WelcomeAccountView>()
+    view.consent()
     view.api.startSignIn.mockReturnValueOnce(waiting.promise)
     await act(async () => { fireEvent.click(view.button('#sign-in')) })
     expect(view.button('#auth-loading').hidden).toBe(false)
     act(() => {
       view.api.onAccountState.mock.calls[0]![0]({ status: 'signed-out', links: LINKS,
-        attempt: { id: 'waiting' as NonNullable<AccountView['attempt']>['id'], phase: 'waiting-browser', authorizeUrl: 'https://example.test/login' } })
+        attempt: { id: 'waiting' as NonNullable<WelcomeAccountView['attempt']>['id'], phase: 'waiting-browser', authorizeUrl: 'https://example.test/login' } })
     })
     await act(async () => { waiting.resolve({ status: 'signed-out', links: LINKS, attempt: null }); await waiting.promise })
     expect(view.button('#auth-copy').hidden).toBe(false)
@@ -70,8 +76,8 @@ describe('desktop welcome presentation', () => {
 
   it.each(['zh-CN', 'en'])('renders %s timeout with manual retry', async (language) => {
     const view = mount(language)
-    const receive = (state: AccountView) => { act(() => { view.api.onAccountState.mock.calls[0]![0](state) }) }
-    receive({ status: 'signed-out', links: LINKS, attempt: { id: 'expired' as NonNullable<AccountView['attempt']>['id'], phase: 'expired' } })
+    const receive = (state: WelcomeAccountView) => { act(() => { view.api.onAccountState.mock.calls[0]![0](state) }) }
+    receive({ status: 'signed-out', links: LINKS, attempt: { id: 'expired' as NonNullable<WelcomeAccountView['attempt']>['id'], phase: 'expired' } })
     expect(view.button('#auth-retry').hidden).toBe(false)
     expect(view.api.startSignIn).not.toHaveBeenCalled()
     fireEvent.click(view.button('#auth-retry'))
@@ -82,7 +88,7 @@ describe('desktop welcome presentation', () => {
     const view = mount('en')
     act(() => {
       view.api.onAccountState.mock.calls[0]![0]({ status: 'signed-out', links: LINKS,
-        attempt: { id: 'waiting' as NonNullable<AccountView['attempt']>['id'], phase: 'waiting-browser' } })
+        attempt: { id: 'waiting' as NonNullable<WelcomeAccountView['attempt']>['id'], phase: 'waiting-browser' } })
     })
     fireEvent.click(view.button('#auth-cancel'))
     await vi.waitFor(() => { expect(view.api.cancelSignIn).toHaveBeenCalledWith('waiting') })
@@ -92,7 +98,7 @@ describe('desktop welcome presentation', () => {
     const view = mount('en')
     const publish = view.api.onAccountState.mock.calls[0]![0]
     act(() => { publish({ status: 'credential-stored', links: LINKS,
-      attempt: { id: 'completed' as NonNullable<AccountView['attempt']>['id'], phase: 'succeeded' } }) })
+      attempt: { id: 'completed' as NonNullable<WelcomeAccountView['attempt']>['id'], phase: 'succeeded' } }) })
     expect(view.document.querySelector<HTMLElement>('#auth-page')!.hidden).toBe(false)
     act(() => { publish({ status: 'signed-out', links: LINKS, attempt: null }) })
     expect(view.button('#sign-in').closest('[hidden]')).toBeNull()
@@ -131,6 +137,30 @@ describe('desktop welcome presentation', () => {
     await act(async () => {})
     expect(screen.queryByRole('alert')).toBeNull()
     expect(view.button('#sign-in').closest('[hidden]')).toBeNull()
+  })
+
+  it('blocks the Feishu action until the user consents and opens localized legal pages', () => {
+    const view = mount('en')
+    expect(view.button('#sign-in').disabled).toBe(true)
+    view.consent()
+    expect(view.button('#sign-in').disabled).toBe(false)
+    fireEvent.click(view.document.querySelector('#terms-link')!)
+    fireEvent.click(view.document.querySelector('#privacy-link')!)
+    expect(view.api.openLegal).toHaveBeenNthCalledWith(1, 'terms')
+    expect(view.api.openLegal).toHaveBeenNthCalledWith(2, 'privacy')
+  })
+
+  it.each([
+    ['denied', 'welcomeAuthFeishuDenied'],
+    ['email-missing', 'welcomeAuthFeishuEmailMissing'],
+    ['failed', 'welcomeAuthFeishuFailed'],
+  ] as const)('renders the %s Feishu reason', (feishuFailure, key) => {
+    const view = mount('en')
+    act(() => {
+      view.api.onAccountState.mock.calls[0]![0]({ status: 'signed-out', links: LINKS,
+        attempt: { id: 'failed' as NonNullable<WelcomeAccountView['attempt']>['id'], phase: 'failed', errorCode: 'protocol', feishuFailure } })
+    })
+    expect(screen.getByRole('alert').textContent).toBe(view.api.messages[key])
   })
 
   it('keeps visible copy in the shell dictionaries and denies network access', () => {

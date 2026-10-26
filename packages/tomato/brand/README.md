@@ -31,7 +31,7 @@ Mount this plugin in the browser roster and leave `@deepseek-ai/dsh-client-ui-br
 
 Each registration waits on its owner's declaration through `ctx.slots.inject`, so the occupants follow the sidebar and conversation lifetimes and withdraw together during reload.
 
-The sidebar name is fixed product text, not a translated string: brand names are not localized. The mark is the product favicon geometry, drawn with `currentColor` so it follows the surrounding palette in both themes.
+The sidebar name is fixed product text, not a translated string: brand names are not localized. The mark is the product favicon geometry, filled with a linear gradient whose stops come from `--dsw-brand-mark-start` and `--dsw-brand-mark-end`. The theme sheets define a deep red pair for the light palette and a darker crimson pair for the dark palette; each mark instance owns a unique gradient id, so the sidebar and hero marks never share one definition.
 
 <a id="model-experience"></a>
 
@@ -47,6 +47,6 @@ None; this package neither assembles nor sends a provider request.
 
 <a id="known-limitations-and-deferred-work"></a>
 
-- **Mark is single-color** — the favicon's gradient is dropped so the glyph can inherit `currentColor`. A multi-color mark needs the theme's icon-replacement surface, not this package.
+- **Mark is a two-stop gradient** — the glyph follows the brand-mark variables, not the surrounding text color. A mark with more than two stops, or per-surface colors, needs the theme's icon-replacement surface, not this package.
 - **The hero wordmark is not registered** — the shell's own hero fallback stays; only the square mark is replaced.
 - **The browser tab title is a build value** — `DSH_CLIENT_TITLE` selects it at build time and is outside the slot system.

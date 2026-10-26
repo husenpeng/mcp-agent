@@ -249,15 +249,14 @@
   background: transparent;
 }
 
-/* Selected tab is blue, not ink: brand-primary resolves to neutral black in
-   this token sheet, so the selected state rides the business blue — the
-   nearest semantic token that stays blue in both themes. */
+/* Selected tab keeps the primary ink; the 2px marker carries the brand CTA
+   gradient, matching the client workspace tabs. */
 .tabActive {
-  color: var(--dsw-alias-state-business-primary);
+  color: var(--dsw-alias-label-primary);
 }
 
 .tabActive::after {
-  background: var(--dsw-alias-state-business-primary);
+  background-image: var(--dsw-brand-gradient-cta);
 }
 
 /* The More launcher centers its 22px box on the tab's 16px text line. */
@@ -273,7 +272,7 @@
   color: var(--dsw-alias-label-secondary);
 }
 
-.viewsMoreActive { color: var(--dsw-alias-state-business-primary); }
+.viewsMoreActive { color: var(--dsw-alias-brand-primary); }
 
 .tabLabel { display: block; max-width: 88px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 

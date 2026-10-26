@@ -15,7 +15,7 @@ h1 { margin: 0; min-height: 28px; font-size: 16px; font-weight: 500; line-height
 p { margin: 0; font-size: 14px; line-height: 22px; white-space: pre-wrap; overflow-wrap: anywhere; }
 #actions { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; position: sticky; bottom: 0; background: var(--dsw-alias-bg-layer-1); }
 button { min-height: 44px; padding: 9px 16px; border: 0; border-radius: 12px; font-family: inherit; font-size: 14px; font-weight: 500; line-height: 22px; color: inherit; cursor: pointer; }
-.primary { background: var(--dsw-alias-button-primary-fill); color: var(--dsw-alias-label-primary-inverted); }
+.primary { background: var(--dsw-alias-button-primary-fill); color: var(--dsw-alias-label-primary-foreground); }
 
 .secondary { background: var(--dsw-alias-button-primary-dimmed); color: inherit; }
 .close { display: grid; place-items: center; flex: none; width: 28px; min-height: 28px; padding: 7px; border-radius: 50%; background: transparent; }

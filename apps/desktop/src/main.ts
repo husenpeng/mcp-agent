@@ -44,6 +44,7 @@ import { pruneCrashReports, RendererConsoleTail, writeCrashReport, type CrashRep
 import { openWelcomeWindow } from './welcome-window.ts'
 import { WELCOME_IPC, needsWelcome, type WelcomeNotice } from './welcome-api.ts'
 import { connectDesktopWelcome, type DesktopWelcomeBackend } from './welcome-backend.ts'
+import { webBaseUrl } from './tomato-auth.ts'
 import { DesktopUpdateJournal } from './update-journal.ts'
 import { DesktopUpdatePreparationError } from './update-error.ts'
 import { DesktopUpdateSchedule, resolveDesktopUpdateScheduleConfig } from './update-schedule.ts'
@@ -198,7 +199,7 @@ function developmentHostInspectPort(enabled: boolean): number | undefined {
  * @returns the sidebar fill hex for the active system color scheme.
  */
 function chromeFallbackFill(): string {
-  return nativeTheme.shouldUseDarkColors ? '#1b1b1c' : '#f9fafb'
+  return nativeTheme.shouldUseDarkColors ? '#191b1c' : '#ffffff'
 }
 
 /**
@@ -219,7 +220,7 @@ function createWindow(preload: string, show = false, primary = false): BrowserWi
     ...(process.platform === 'win32' && primary ? {
       titleBarStyle: 'hidden' as const,
       titleBarOverlay: { height: WINDOWS_TITLEBAR_HEIGHT, color: chromeFallbackFill(),
-        symbolColor: nativeTheme.shouldUseDarkColors ? '#f9fafb' : '#0f1115' },
+        symbolColor: nativeTheme.shouldUseDarkColors ? '#f0f2f4' : '#171717' },
     } : {}),
     // hiddenInset places traffic lights inside the sidebar; sidebar vibrancy
     // needs a transparent window background to show through the page.
@@ -1238,6 +1239,10 @@ async function main(): Promise<void> {
             throw new Error('desktop welcome: login link is unavailable')
           }
           await clipboard.writeText(state.attempt.authorizeUrl)
+        },
+        openLegal: async (document) => {
+          const path = document === 'terms' ? '/terms-conditions' : '/privacy-policy'
+          await shell.openExternal(new URL(path, webBaseUrl()).href)
         },
         saveApiKey: async (apiKey) => {
           if (backend.host === undefined || welcomeBackend === undefined) return { ok: false }
