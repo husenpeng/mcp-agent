@@ -37,7 +37,7 @@ function json(response: ServerResponse, status: number, value: unknown): void {
 function textOf(content: unknown): string {
   if (typeof content === 'string') return content
   if (!Array.isArray(content)) return ''
-  return content.flatMap(part => {
+  return content.flatMap((part) => {
     if (typeof part !== 'object' || part === null) return []
     const text = (part as { text?: unknown }).text
     return typeof text === 'string' ? [text] : []
@@ -81,7 +81,7 @@ function streamChat(response: ServerResponse, messages: ChatMessage[]): void {
 }
 
 /** Serve one request; every route is local and credential-free. */
-async function handle(request: IncomingMessage, response: ServerResponse, authorizeNonce: Map<string, string>): Promise<void> {
+async function handle(request: IncomingMessage, response: ServerResponse, sessions: Set<string>): Promise<void> {
   const url = new URL(request.url ?? '/', 'http://127.0.0.1')
   if (request.method === 'GET' && url.pathname === '/v1/models') {
     json(response, 200, {
@@ -94,7 +94,7 @@ async function handle(request: IncomingMessage, response: ServerResponse, author
     return
   }
   if (request.method === 'POST' && url.pathname === '/v1/chat/completions') {
-    const body = JSON.parse(await readBody(request)) as { messages?: ChatMessage[], stream?: boolean }
+    const body = JSON.parse(await readBody(request)) as { messages?: ChatMessage[]; stream?: boolean }
     const messages = Array.isArray(body.messages) ? body.messages : []
     if (body.stream === false) {
       json(response, 200, {
@@ -109,25 +109,33 @@ async function handle(request: IncomingMessage, response: ServerResponse, author
     streamChat(response, messages)
     return
   }
-  if (request.method === 'GET' && url.pathname === '/desktop/authorize') {
-    const redirect = url.searchParams.get('redirect_uri')
-    const state = url.searchParams.get('state') ?? ''
-    if (redirect === null) { json(response, 400, { error: 'missing redirect_uri' }); return }
-    const code = `mock-${String(Date.now())}`
-    authorizeNonce.set(code, state)
-    const target = new URL(redirect)
-    target.searchParams.set('code', code)
-    target.searchParams.set('state', state)
-    // A real login page collects credentials first; the mock approves directly.
-    response.writeHead(302, { location: target.href })
+  // The desktop now signs in through the company web app. The mock reproduces the
+  // three routes that flow touches: the hosted start page, session verify, and the
+  // desktop token exchange.
+  if (request.method === 'GET' && url.pathname === '/api/auth/feishu/start') {
+    const sessionId = `mock-session-${String(Date.now())}`
+    sessions.add(sessionId)
+    response.writeHead(302, {
+      'set-cookie': `session_id=${sessionId}; Path=/; HttpOnly; SameSite=Lax`,
+      location: '/signed-in',
+    })
     response.end()
     return
   }
-  if (request.method === 'POST' && url.pathname === '/desktop/token') {
-    const body = JSON.parse(await readBody(request)) as { code?: string }
-    const code = body.code ?? ''
-    if (!authorizeNonce.delete(code)) { json(response, 401, { error: 'unknown code' }); return }
-    json(response, 200, { token: `tomato-local-token-${code}` })
+  if (request.method === 'GET' && url.pathname === '/signed-in') {
+    response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' })
+    response.end('<!doctype html><meta charset="utf-8"><title>Tomato Harness</title><p>登录成功，可以关闭此窗口。')
+    return
+  }
+  if (request.method === 'POST' && url.pathname === '/api/v1/auth/session/verify') {
+    const body = JSON.parse(await readBody(request)) as { sessionId?: string }
+    json(response, 200, { valid: sessions.has(body.sessionId ?? '') })
+    return
+  }
+  if (request.method === 'POST' && url.pathname === '/api/v1/auth/desktop/token') {
+    const body = JSON.parse(await readBody(request)) as { sessionId?: string }
+    if (!sessions.has(body.sessionId ?? '')) { json(response, 401, { error: 'unknown session' }); return }
+    json(response, 200, { token: `tomato-local-token-${String(Date.now())}` })
     return
   }
   if (request.method === 'POST' && (url.pathname === '/v1/traces' || url.pathname === '/v1/logs')) {
@@ -145,10 +153,10 @@ async function handle(request: IncomingMessage, response: ServerResponse, author
 }
 
 const { values } = parseArgs({ options: { port: { type: 'string', default: '4010' } } })
-const port = Number.parseInt(values.port ?? '4010', 10)
-const authorizeNonce = new Map<string, string>()
+const port = Number.parseInt(values.port, 10)
+const sessions = new Set<string>()
 const server = createServer((request, response) => {
-  void handle(request, response, authorizeNonce).catch((error: unknown) => {
+  void handle(request, response, sessions).catch((error: unknown) => {
     console.error('[mock] request failed', error)
     if (!response.headersSent) json(response, 500, { error: 'mock failure' })
     else response.end()
@@ -158,5 +166,6 @@ server.listen(port, '127.0.0.1', () => {
   console.log(`[mock] tomato services on http://127.0.0.1:${String(port)}`)
   console.log('[mock]   TOMATO_RELAY_BASE_URL=http://127.0.0.1:' + String(port) + '/v1')
   console.log('[mock]   TOMATO_AUTH_URL=http://127.0.0.1:' + String(port))
+  console.log('[mock]   TOMATO_WEB_URL=http://127.0.0.1:' + String(port))
   console.log('[mock]   TOMATO_OTLP_ENDPOINT=http://127.0.0.1:' + String(port) + '/v1/traces')
 })

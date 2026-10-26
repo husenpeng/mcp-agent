@@ -9,8 +9,8 @@
   en: b2526c284a31ae7f
   zh: ecbc44843fa7fb96
 /tomato-harness/table-of-contents:
-  en: 640fc6e37468c38c
-  zh: 38b8c911934c35a1
+  en: 915bc7c3bcd140a3
+  zh: 55a91940d49d1889
 /tomato-harness/architecture:
   en: a7e56472b11bd3c8
   zh: 6150d900a0920ce9
@@ -45,8 +45,11 @@
   en: 8bcfe486110004e4
   zh: 5491f0aa70750247
 /tomato-harness/run/run-from-source:
-  en: 8cd027714539cfab
-  zh: 2cddbe7cfaca186e
+  en: a37f1dd16bb2b743
+  zh: 14e7798392f81d73
+/tomato-harness/run/sign-in:
+  en: 286e35d1be665de1
+  zh: 7f60563e94e081a6
 /tomato-harness/local-services:
   en: 3389eb2c25c99cda
   zh: 725a5ebf526713e4

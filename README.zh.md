@@ -20,6 +20,7 @@ Tomato Harness 是面向达人营销团队的内部桌面 agent。它在 Electro
 - [前置条件](#prerequisites)
 - [初始化](#initialize)
 - [运行](#run)
+- [登录](#sign-in)
 - [本地服务](#local-services)
 - [日志与开发者模式](#logging-and-developer-mode)
 - [生产化清单](#production-readiness)
@@ -194,6 +195,23 @@ pnpm run dev:desktop
 | `DSH_DESKTOP_OPEN_DEVTOOLS` | `1` | 启动时打开独立 DevTools 窗口 |
 
 后续启动可用 `pnpm run start:desktop` 跳过重新构建。
+
+<a id="sign-in"></a>
+
+### 登录
+
+登录走公司 Web 应用的飞书路由，因此飞书开放平台无需登记桌面回跳地址，桌面也不持有任何飞书密钥：
+
+1. 欢迎窗的「登录」打开一个隔离的 Electron 窗口，地址为 `${TOMATO_WEB_URL}/api/auth/feishu/start`。
+2. BFF 向登录服务索取飞书授权链接，跳转飞书，并回到自己的源接收回调。用户在窗口里完成的正是网页端同一套登录。
+3. 桌面轮询该窗口的 cookie 分区取 BFF 下发的 `session_id`，再用 `POST ${TOMATO_AUTH_URL}/api/v1/auth/session/verify` 确认真实有效。
+4. 桌面用该会话向 `POST ${TOMATO_AUTH_URL}/api/v1/auth/desktop/token` 换长期令牌。服务端尚未提供该端点时返回 404，此时直接存储 session id，登录照常可用，等服务端补齐。
+5. 令牌加密写入 `userData/tomato-auth.json`，并以 `TOMATO_RELAY_API_KEY` 写进 Host 凭证库；登录窗口及其存储分区随即销毁。
+
+| 变量 | 默认值 | 含义 |
+|---|---|---|
+| `TOMATO_WEB_URL` | `https://test.tomatoai.vip` | 承载飞书 BFF 路由的公司 Web 应用 |
+| `TOMATO_AUTH_URL` | `http://127.0.0.1:4010` | 签发会话与桌面令牌的登录服务 |
 
 <a id="local-services"></a>
 

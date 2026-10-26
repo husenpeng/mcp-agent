@@ -20,6 +20,7 @@ This repository is a one-time hard fork of `deepseek-harness` at commit `22ddee3
 - [Prerequisites](#prerequisites)
 - [Initialize](#initialize)
 - [Run](#run)
+- [Sign-in](#sign-in)
 - [Local services](#local-services)
 - [Logging and developer mode](#logging-and-developer-mode)
 - [Production readiness](#production-readiness)
@@ -194,6 +195,23 @@ pnpm run dev:desktop
 | `DSH_DESKTOP_OPEN_DEVTOOLS` | `1` | Open a detached DevTools window on launch |
 
 Skip the rebuild on a later launch with `pnpm run start:desktop`.
+
+<a id="sign-in"></a>
+
+### Sign-in
+
+Sign-in runs through the company web application's Feishu routes, so the Feishu developer console needs no desktop redirect URI and the desktop holds no Feishu secrets:
+
+1. The welcome window's **Sign in** button opens an isolated Electron window at `${TOMATO_WEB_URL}/api/auth/feishu/start`.
+2. The BFF asks the login service for the Feishu authorize URL, redirects to Feishu, and receives the callback at its own origin. The user signs in there exactly as they would on the web.
+3. The shell polls that window's cookie jar for the BFF's `session_id` cookie, and confirms it with `POST ${TOMATO_AUTH_URL}/api/v1/auth/session/verify`.
+4. The shell exchanges the session for a desktop token at `POST ${TOMATO_AUTH_URL}/api/v1/auth/desktop/token`. Until that endpoint exists the exchange answers 404 and the session id itself is stored, which keeps sign-in working while the server side catches up.
+5. The token is encrypted into `userData/tomato-auth.json` and written to the Host's credential store as `TOMATO_RELAY_API_KEY`; the sign-in window and its storage partition are destroyed.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `TOMATO_WEB_URL` | `https://test.tomatoai.vip` | Company web app serving the Feishu BFF routes |
+| `TOMATO_AUTH_URL` | `http://127.0.0.1:4010` | Login service issuing sessions and desktop tokens |
 
 <a id="local-services"></a>
 

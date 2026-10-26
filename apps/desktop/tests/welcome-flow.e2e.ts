@@ -22,32 +22,29 @@ function version(path: string): string {
   return (JSON.parse(readFileSync(path, 'utf8')) as { version: string }).version
 }
 
-/** Stand-in login service speaking the desktop authorize/token exchange. */
+/** Stand-in login service: session verification and the desktop token exchange. */
 async function mockAuth() {
-  const codes = new Map<string, string>()
+  const sessions = new Set(['session-test'])
   const server = createServer((req, res) => {
     const url = new URL(req.url ?? '/', 'http://127.0.0.1')
-    if (url.pathname === '/desktop/authorize') {
-      const redirect = url.searchParams.get('redirect_uri')
-      if (redirect === null) { res.writeHead(400).end(); return }
-      const code = `code-${String(codes.size + 1)}`
-      codes.set(code, url.searchParams.get('state') ?? '')
-      const target = new URL(redirect)
-      target.searchParams.set('code', code)
-      target.searchParams.set('state', codes.get(code)!)
-      res.writeHead(302, { location: target.href }).end()
-      return
-    }
     let body = ''
     req.setEncoding('utf8')
     req.on('data', (chunk: string) => { body += chunk })
     req.on('end', () => {
-      if (url.pathname !== '/desktop/token' || req.method !== 'POST') { res.writeHead(404).end(); return }
-      const parsed = JSON.parse(body) as { code?: string }
-      const code = parsed.code ?? ''
-      if (!codes.delete(code)) { res.writeHead(401).end(); return }
-      res.writeHead(200, { 'content-type': 'application/json' })
-      res.end(JSON.stringify({ token: `token-${String(Date.now())}` }))
+      if (url.pathname === '/api/v1/auth/session/verify') {
+        const parsed = JSON.parse(body) as { sessionId?: string }
+        res.writeHead(200, { 'content-type': 'application/json' })
+        res.end(JSON.stringify({ valid: sessions.has(parsed.sessionId ?? '') }))
+        return
+      }
+      if (url.pathname === '/api/v1/auth/desktop/token' && req.method === 'POST') {
+        const parsed = JSON.parse(body) as { sessionId?: string }
+        if (!sessions.has(parsed.sessionId ?? '')) { res.writeHead(401).end(); return }
+        res.writeHead(200, { 'content-type': 'application/json' })
+        res.end(JSON.stringify({ token: `token-${String(Date.now())}` }))
+        return
+      }
+      res.writeHead(404).end()
     })
   })
   await new Promise<void>((resolve) => { server.listen(0, '127.0.0.1', () => { resolve() }) })

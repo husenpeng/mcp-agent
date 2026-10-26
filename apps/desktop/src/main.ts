@@ -209,12 +209,6 @@ function chromeFallbackFill(): string {
  * @param authorizeUrl - validated Platform authorization URL.
  * @returns the authorization URL carrying `theme=light` or `theme=dark`.
  */
-function platformLoginUrl(authorizeUrl: string): string {
-  const url = new URL(authorizeUrl)
-  url.searchParams.set('theme', nativeTheme.shouldUseDarkColors ? 'dark' : 'light')
-  return url.href
-}
-
 function createWindow(preload: string, show = false, primary = false): BrowserWindow {
   const window = new BrowserWindow({
     width: 1280,
@@ -501,9 +495,11 @@ async function main(): Promise<void> {
           if (quitting) return
           if (welcomeWindow !== undefined && !welcomeWindow.isDestroyed()) welcomeWindow.webContents.send(WELCOME_IPC.state, state)
           const attempt = state.attempt
+          // The Feishu sign-in runs in its own Electron window, which the auth backend
+          // already opened; the shell only raises it when the attempt is retried.
           if (attempt?.phase === 'waiting-browser' && attempt.authorizeUrl !== undefined && openedAttempt !== attempt.id) {
             openedAttempt = attempt.id
-            void shell.openExternal(platformLoginUrl(attempt.authorizeUrl)).catch(() => undefined)
+            accountBackend.window()?.focus()
           }
           if ((attempt?.phase === 'failed' || attempt?.phase === 'expired') && returnedAttempt !== attempt.id) {
             returnedAttempt = attempt.id
@@ -1241,7 +1237,7 @@ async function main(): Promise<void> {
           if (state?.attempt?.id !== id || state.attempt.phase !== 'waiting-browser' || state.attempt.authorizeUrl === undefined) {
             throw new Error('desktop welcome: login link is unavailable')
           }
-          await clipboard.writeText(platformLoginUrl(state.attempt.authorizeUrl))
+          await clipboard.writeText(state.attempt.authorizeUrl)
         },
         saveApiKey: async (apiKey) => {
           if (backend.host === undefined || welcomeBackend === undefined) return { ok: false }

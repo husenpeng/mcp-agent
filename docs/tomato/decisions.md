@@ -24,7 +24,7 @@
 - **工作区**：保留 dsh 原生多工作区语义。
 - **模型**：`llm-pi-ai` 自定义 route `tomato-relay`，`api: openai-completions`，`baseURL` 在基础层指向本地 mock（`http://127.0.0.1:4010/v1`），密钥通过 `apiKeyEnv: TOMATO_RELAY_API_KEY` 解析；部署用 Models 页把该路由的 `baseURL` 写进当前 profile 的 `cordis.patch.yml`。模型清单由中转站的 `GET /v1/models` 动态发现，基础层只留一个占位模型 `tomato-chat` 使路由可用。
 - **业务**：MCP 网关，沿用 tomatoAgent 已定的 `kol_capabilities` / `kol_search` / `kol_detail` / `kol_summary` 契约，`streamable-http` 传输，`Authorization: Bearer <每人令牌>`。
-- **登录**：公司登录服务新增桌面令牌端点（一次性授权码换 PAT）。壳在 welcome window 点「登录」后打开系统浏览器，浏览器回跳壳监听的 `127.0.0.1:<随机端口>/callback`，壳用 code 换 token、`safeStorage` 加密写入 `userData/tomato-auth.json`，并通过 Host RPC 写入凭证 `TOMATO_RELAY_API_KEY`。dsh 的 `deepseek-account`、`deepseek-account-platform`、`llm-deepseek-account`、`llm-deepseek` 与欢迎页的 API key 流程全部停用。
+- **登录**：走公司 Web 应用已有的飞书 BFF 路由。壳在 welcome window 点「登录」后打开一个隔离分区的 Electron 窗口加载 `${TOMATO_WEB_URL}/api/auth/feishu/start`，用户在窗口内完成飞书授权；壳轮询该分区取 BFF 的 `session_id` cookie，向登录服务 `session/verify` 确认有效后，再向 `/api/v1/auth/desktop/token` 换长期令牌（端点缺失时退回 session id），`safeStorage` 加密写入 `userData/tomato-auth.json`，并通过 Host RPC 写入凭证 `TOMATO_RELAY_API_KEY`。飞书开放平台无需登记桌面回跳地址，桌面不持有飞书密钥。dsh 的 `deepseek-account`、`deepseek-account-platform`、`llm-deepseek-account`、`llm-deepseek` 与欢迎页的 API key 流程全部停用。
 - **遥测**：关闭 dsh 全部外发（`session-log-deepseek`、`session-telemetry-otel`、`product-analytics`、`host-product-telemetry-otel`）。新增 `@tomato/telemetry` 把 `turn/*`、`tool/*` 折叠成 OTLP traces，发到内部 relay 端点，由服务端转发 Langfuse；Langfuse 密钥只在服务端。`endpoint` 为空时不注册监听。
 - **权限**：开放 `read-only` / `workspace-write` / `danger-full-access` 三档切换，默认 `workspace-write` + `ask`。
 
