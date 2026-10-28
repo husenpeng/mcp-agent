@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -23,12 +23,56 @@ async function withDirectory(action: (directory: string) => Promise<void>): Prom
 }
 
 describe('Desktop local packaging configuration', () => {
-  it('loads file-owned compression and defaults to fast Windows archive compression', async () => {
+  it('treats the file as defaults and lets a personal Windows compression value win', async () => {
     expect(resolveWindowsPackageSettings({}).compressionLevel).toBe(3)
     await withDirectory(async (directory) => {
       await writeFile(join(directory, '.env.windows'), 'TOMATO_DESKTOP_WINDOWS_COMPRESSION_LEVEL=3\n')
-      const selected = loadDesktopPackageEnvironment('win32', { TOMATO_DESKTOP_WINDOWS_COMPRESSION_LEVEL: '0' }, directory)
-      expect(resolveWindowsPackageSettings(selected).compressionLevel).toBe(3)
+      expect(resolveWindowsPackageSettings(loadDesktopPackageEnvironment('win32', {}, directory)).compressionLevel).toBe(3)
+      const personal = loadDesktopPackageEnvironment('win32', { TOMATO_DESKTOP_WINDOWS_COMPRESSION_LEVEL: '5' }, directory)
+      expect(resolveWindowsPackageSettings(personal).compressionLevel).toBe(5)
+    })
+  })
+
+  it('reads a preset beside the platform templates when no machine configuration is set', async () => {
+    await withDirectory(async (directory) => {
+      await mkdir(join(directory, 'config', 'windows-packaging'), { recursive: true })
+      await writeFile(join(directory, 'config', 'windows-packaging', 'test.env'),
+        'TOMATO_DESKTOP_AUTO_UPDATE_ENV=test\nTOMATO_DESKTOP_WINDOWS_COMPRESSION_LEVEL=9\n')
+      const selected = loadDesktopPackageEnvironment('win32', { TOMATO_PACKAGING_PRESET: 'test' }, directory, { unsigned: true })
+      expect(resolveWindowsPackageSettings(selected).compressionLevel).toBe(9)
+      const personal = loadDesktopPackageEnvironment('win32',
+        { TOMATO_PACKAGING_PRESET: 'test', TOMATO_DESKTOP_WINDOWS_COMPRESSION_LEVEL: '5' }, directory, { unsigned: true })
+      expect(resolveWindowsPackageSettings(personal).compressionLevel).toBe(5)
+    })
+  })
+
+  it.each([
+    ['win32', 'test', 'windows-packaging'],
+    ['win32', 'production', 'windows-packaging'],
+    ['darwin', 'test', 'macos-packaging'],
+    ['darwin', 'production', 'macos-packaging'],
+  ] as const)('accepts the committed %s %s template', async (platform, preset, directoryName) => {
+    await withDirectory(async (directory) => {
+      const target = join(directory, 'config', directoryName, `${preset}.env`)
+      await mkdir(join(directory, 'config', directoryName), { recursive: true })
+      await writeFile(target, await readFile(new URL(`../config/${directoryName}/${preset}.env.example`, import.meta.url), 'utf8'))
+      const selected = loadDesktopPackageEnvironment(platform, { TOMATO_PACKAGING_PRESET: preset }, directory, { unsigned: true })
+      expect(selected.TOMATO_DESKTOP_AUTO_UPDATE_ENV).toBe(preset)
+    })
+  })
+
+  it('lets a personal release setting override the selected preset file', async () => {
+    await withDirectory(async (directory) => {
+      await mkdir(join(directory, 'presets'))
+      await writeFile(join(directory, 'presets', 'test.env'),
+        'TOMATO_DESKTOP_AUTO_UPDATE_ENV=test\nTOMATO_DESKTOP_APP_ID=com.example.file\n')
+      const parent = { TOMATO_PACKAGING_CONFIG_DIR: directory, TOMATO_PACKAGING_PRESET: 'test',
+        TOMATO_DESKTOP_APP_ID: 'com.example.personal' }
+      expect(loadDesktopPackageEnvironment('win32', parent, directory, { unsigned: true }).TOMATO_DESKTOP_APP_ID)
+        .toBe('com.example.personal')
+      const fileOnly = { TOMATO_PACKAGING_CONFIG_DIR: directory, TOMATO_PACKAGING_PRESET: 'test' }
+      expect(loadDesktopPackageEnvironment('win32', fileOnly, directory, { unsigned: true }).TOMATO_DESKTOP_APP_ID)
+        .toBe('com.example.file')
     })
   })
 
@@ -109,7 +153,7 @@ describe('Desktop local packaging configuration', () => {
       TOMATO_DESKTOP_AUTO_UPDATE_ENV: 'production', TOMATO_DESKTOP_MANDATORY_UPDATE_CONFIG: 'invalid-json',
       TOMATO_DESKTOP_MANDATORY_UPDATE_PROD_ORIGIN: 'https://policy.example.com',
       TOMATO_DESKTOP_MACOS_SIGNING_IDENTITY: 'Release identity', CSC_LINK: 'missing.p12',
-      APPLE_API_KEY: 'missing.p8', DOWNLOAD_PROD_COS_SECRET_KEY: 'unused-secret',
+      APPLE_API_KEY: 'missing.p8', DOWNLOAD_PROD_UNKNOWN: 'unused-secret',
     }
     const local = localMacOSPackageEnvironment(parent)
     expect(local).toEqual({
@@ -121,23 +165,25 @@ describe('Desktop local packaging configuration', () => {
     expect(parent.TOMATO_DESKTOP_APP_ID).toBe('com.example.release')
   })
 
-  it('takes cache concurrency from the Windows file and defaults to four without ambient overrides', async () => {
+  it('takes cache concurrency from the Windows file and lets a personal value win', async () => {
     await withDirectory(async (directory) => {
-      const parent = { TOMATO_DESKTOP_WINDOWS_SIGNATURE_CACHE_CONCURRENCY: '8' }
       await writeFile(join(directory, '.env.windows'), '')
-      expect(resolveWindowsPackageSettings(loadDesktopPackageEnvironment('win32', parent, directory)).signatureCacheConcurrency).toBe(4)
+      expect(resolveWindowsPackageSettings(loadDesktopPackageEnvironment('win32', {}, directory)).signatureCacheConcurrency).toBe(4)
       await writeFile(join(directory, '.env.windows'), 'TOMATO_DESKTOP_WINDOWS_SIGNATURE_CACHE_CONCURRENCY=2\n')
-      expect(resolveWindowsPackageSettings(loadDesktopPackageEnvironment('win32', parent, directory)).signatureCacheConcurrency).toBe(2)
+      expect(resolveWindowsPackageSettings(loadDesktopPackageEnvironment('win32', {}, directory)).signatureCacheConcurrency).toBe(2)
+      const parent = { TOMATO_DESKTOP_WINDOWS_SIGNATURE_CACHE_CONCURRENCY: '8' }
+      expect(resolveWindowsPackageSettings(loadDesktopPackageEnvironment('win32', parent, directory)).signatureCacheConcurrency).toBe(8)
     })
   })
 
-  it('takes pack concurrency from the Windows file without inheriting ambient tuning', async () => {
+  it('takes pack concurrency from the Windows file and lets a personal value win', async () => {
     await withDirectory(async (directory) => {
-      const parent = { TOMATO_DESKTOP_WINDOWS_PACK_CONCURRENCY: '8' }
       await writeFile(join(directory, '.env.windows'), '')
-      expect(resolveWindowsPackageSettings(loadDesktopPackageEnvironment('win32', parent, directory)).packConcurrency).toBe(4)
+      expect(resolveWindowsPackageSettings(loadDesktopPackageEnvironment('win32', {}, directory)).packConcurrency).toBe(4)
       await writeFile(join(directory, '.env.windows'), 'TOMATO_DESKTOP_WINDOWS_PACK_CONCURRENCY=2\n')
-      expect(resolveWindowsPackageSettings(loadDesktopPackageEnvironment('win32', parent, directory)).packConcurrency).toBe(2)
+      expect(resolveWindowsPackageSettings(loadDesktopPackageEnvironment('win32', {}, directory)).packConcurrency).toBe(2)
+      const parent = { TOMATO_DESKTOP_WINDOWS_PACK_CONCURRENCY: '8' }
+      expect(resolveWindowsPackageSettings(loadDesktopPackageEnvironment('win32', parent, directory)).packConcurrency).toBe(8)
     })
   })
 
@@ -164,65 +210,65 @@ describe('Desktop local packaging configuration', () => {
     }
   })
 
-  it('selects the platform file, preserves literal secrets, and excludes stale ambient release settings', async () => {
+  it('loads the platform file, keeps literal secrets, and drops unrelated release values', async () => {
     await withDirectory(async (directory) => {
       await writeFile(join(directory, '.env.windows'), '\uFEFFTOMATO_DESKTOP_APP_ID=com.example.windows\r\nTOMATO_DESKTOP_WINDOWS_TOKEN_PIN=" #!$%&literal "\r\nTOMATO_DESKTOP_WINDOWS_CER_FILE="keys/public certificate.cer"\r\n')
       await writeFile(join(directory, '.env.macos'), 'TOMATO_DESKTOP_APP_ID=com.example.mac\nAPPLE_KEYCHAIN_PROFILE=release\nCSC_LINK=keys/signing.p12\nCSC_KEY_PASSWORD=" # literal "\n')
-      const parent = {
-        PATH: 'build-tools', TOMATO_DESKTOP_APP_ID: 'com.stale.desktop',
-        TOMATO_DESKTOP_MANDATORY_UPDATE_CONFIG: '{"origin":"https://stale.example.com"}',
-        dsh_desktop_mandatory_update_config: 'stale-policy',
-        TOMATO_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN: 'https://stale.example.com',
-        dsh_desktop_mandatory_update_prod_origin: 'https://stale.example.com',
-        TOMATO_DESKTOP_WINDOWS_TOKEN_PIN: 'stale-pin', APPLE_ID: 'stale-apple-id',
-        CSC_LINK: 'stale-certificate', DOWNLOAD_TEST_ORIGIN: 'https://stale.example.com',
-        DOWNLOAD_TEST_RELEASE_ID: 'a'.repeat(32), download_test_release_id: 'b'.repeat(32),
-        dsh_desktop_windows_key_container: 'case-insensitive-stale-container',
+      const winParent = {
+        PATH: 'build-tools', APPLE_ID: 'stale-apple-id', CSC_LINK: 'stale-certificate',
+        DOWNLOAD_PROD_UNKNOWN: 'unused-secret', dsh_desktop_mandatory_update_config: 'stale-policy',
       }
-      expect(loadDesktopPackageEnvironment('win32', parent, directory)).toEqual({
+      expect(loadDesktopPackageEnvironment('win32', winParent, directory)).toEqual({
         PATH: 'build-tools', TOMATO_DESKTOP_APP_ID: 'com.example.windows',
         TOMATO_DESKTOP_WINDOWS_TOKEN_PIN: ' #!$%&literal ',
         TOMATO_DESKTOP_WINDOWS_CER_FILE: join(directory, 'keys', 'public certificate.cer'),
       })
-      expect(loadDesktopPackageEnvironment('darwin', parent, directory)).toEqual({
+      expect(loadDesktopPackageEnvironment('darwin', { PATH: 'build-tools' }, directory)).toEqual({
         PATH: 'build-tools', TOMATO_DESKTOP_APP_ID: 'com.example.mac', APPLE_KEYCHAIN_PROFILE: 'release',
         CSC_LINK: join(directory, 'keys/signing.p12'), CSC_KEY_PASSWORD: ' # literal ',
       })
-      expect(parent.TOMATO_DESKTOP_WINDOWS_TOKEN_PIN).toBe('stale-pin')
-      expect(parent.dsh_desktop_mandatory_update_config).toBe('stale-policy')
+      const personal = loadDesktopPackageEnvironment('win32', { TOMATO_DESKTOP_APP_ID: 'com.example.personal' }, directory)
+      expect(personal.TOMATO_DESKTOP_APP_ID).toBe('com.example.personal')
+      expect(winParent).not.toHaveProperty('TOMATO_DESKTOP_WINDOWS_TOKEN_PIN')
     })
   })
 
-  it.each(['win32', 'darwin'] as const)('owns the %s release ID in its platform file', async (platform) => {
+  it.each(['win32', 'darwin'] as const)('prefers a personal %s release ID over the file and rejects an absent ID', async (platform) => {
     await withDirectory(async (directory) => {
       const settings = Object.entries(RELEASE).map(([name, value]) => `${name}='${value}'`).join('\n') + '\n'
       const file = join(directory, platform === 'win32' ? '.env.windows' : '.env.macos')
-      const parent = { DOWNLOAD_TEST_RELEASE_ID: 'a'.repeat(32) }
+      const personal = 'a'.repeat(32)
       await writeFile(file, settings)
-      expect(loadDesktopPackageEnvironment(platform, parent, directory).DOWNLOAD_TEST_RELEASE_ID).toBe(RELEASE.DOWNLOAD_TEST_RELEASE_ID)
+      expect(loadDesktopPackageEnvironment(platform, { DOWNLOAD_TEST_RELEASE_ID: personal }, directory).DOWNLOAD_TEST_RELEASE_ID)
+        .toBe(personal)
+      expect(loadDesktopPackageEnvironment(platform, {}, directory).DOWNLOAD_TEST_RELEASE_ID)
+        .toBe(RELEASE.DOWNLOAD_TEST_RELEASE_ID)
       await writeFile(file, settings.replace(`DOWNLOAD_TEST_RELEASE_ID='${RELEASE.DOWNLOAD_TEST_RELEASE_ID}'\n`, ''))
-      const missing = loadDesktopPackageEnvironment(platform, parent, directory)
+      const missing = loadDesktopPackageEnvironment(platform, {}, directory)
       expect(missing.DOWNLOAD_TEST_RELEASE_ID).toBeUndefined()
       expect(() => {
         validateDesktopPackageEnvironment(missing, platform === 'win32' ? WINDOWS : MACOS)
       }).toThrow(/DOWNLOAD_TEST_RELEASE_ID/u)
-      expect(parent.DOWNLOAD_TEST_RELEASE_ID).toBe('a'.repeat(32))
+      expect(loadDesktopPackageEnvironment(platform, { DOWNLOAD_TEST_RELEASE_ID: personal }, directory).DOWNLOAD_TEST_RELEASE_ID)
+        .toBe(personal)
     })
   })
 
-  it('loads mandatory update origins and options only from the platform file without changing its parent', async () => {
+  it('lets personal policy settings override the file without changing the parent', async () => {
     await withDirectory(async (directory) => {
       const windowsPolicy = JSON.stringify({ intervalMs: 5000, allowedPageOrigins: ['https://download.example.invalid'] })
       const macPolicy = JSON.stringify({ intervalMs: 6000, allowedPageOrigins: ['https://download.example.invalid'] })
+      const personalPolicy = JSON.stringify({ intervalMs: 7000, allowedPageOrigins: ['https://download.example.invalid'] })
       const origins = { TOMATO_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN: 'https://test.example.invalid',
         TOMATO_DESKTOP_MANDATORY_UPDATE_PROD_ORIGIN: 'https://prod.example.invalid' }
       const lines = Object.entries(origins).map(([key, value]) => `${key}=${value}\n`).join('')
       await writeFile(join(directory, '.env.windows'), `${lines}TOMATO_DESKTOP_MANDATORY_UPDATE_CONFIG='${windowsPolicy}'\n`)
       await writeFile(join(directory, '.env.macos'), `${lines}TOMATO_DESKTOP_MANDATORY_UPDATE_CONFIG='${macPolicy}'\n`)
-      const parent = { TOMATO_DESKTOP_MANDATORY_UPDATE_CONFIG: 'stale-policy' }
-      expect(loadDesktopPackageEnvironment('win32', parent, directory)).toEqual({ ...origins, TOMATO_DESKTOP_MANDATORY_UPDATE_CONFIG: windowsPolicy })
-      expect(loadDesktopPackageEnvironment('darwin', parent, directory)).toEqual({ ...origins, TOMATO_DESKTOP_MANDATORY_UPDATE_CONFIG: macPolicy })
-      expect(parent).toEqual({ TOMATO_DESKTOP_MANDATORY_UPDATE_CONFIG: 'stale-policy' })
+      expect(loadDesktopPackageEnvironment('win32', {}, directory)).toEqual({ ...origins, TOMATO_DESKTOP_MANDATORY_UPDATE_CONFIG: windowsPolicy })
+      expect(loadDesktopPackageEnvironment('darwin', {}, directory)).toEqual({ ...origins, TOMATO_DESKTOP_MANDATORY_UPDATE_CONFIG: macPolicy })
+      const parent = { TOMATO_DESKTOP_MANDATORY_UPDATE_CONFIG: personalPolicy }
+      expect(loadDesktopPackageEnvironment('win32', parent, directory).TOMATO_DESKTOP_MANDATORY_UPDATE_CONFIG).toBe(personalPolicy)
+      expect(parent.TOMATO_DESKTOP_MANDATORY_UPDATE_CONFIG).toBe(personalPolicy)
     })
   })
 
@@ -317,12 +363,14 @@ describe('Desktop local packaging configuration', () => {
   })
 })
 
-it('owns macOS tuning in the local file and validates it before signing credentials', async () => {
+it('reads macOS tuning from the file and lets a personal value win before signing credentials', async () => {
   await withDirectory(async (directory) => {
     await writeFile(join(directory, '.env.macos'), 'TOMATO_DESKTOP_MACOS_PACK_CONCURRENCY=2\nTOMATO_DESKTOP_MACOS_DOWNLOAD_PROXY=http://proxy.example:8080\nTOMATO_DESKTOP_MACOS_NOTARIZATION_PROXY=\n')
-    const env = loadDesktopPackageEnvironment('darwin', { TOMATO_DESKTOP_MACOS_PACK_CONCURRENCY: '99' }, directory)
-    expect(env.TOMATO_DESKTOP_MACOS_PACK_CONCURRENCY).toBe('2')
-    expect(env.TOMATO_DESKTOP_MACOS_NOTARIZATION_PROXY).toBe('')
+    const fileOnly = loadDesktopPackageEnvironment('darwin', {}, directory)
+    expect(fileOnly.TOMATO_DESKTOP_MACOS_PACK_CONCURRENCY).toBe('2')
+    expect(fileOnly.TOMATO_DESKTOP_MACOS_NOTARIZATION_PROXY).toBe('')
+    const personal = loadDesktopPackageEnvironment('darwin', { TOMATO_DESKTOP_MACOS_PACK_CONCURRENCY: '99' }, directory)
+    expect(personal.TOMATO_DESKTOP_MACOS_PACK_CONCURRENCY).toBe('99')
     expect(() =>{  validateDesktopPackageEnvironment({ ...RELEASE, TOMATO_DESKTOP_MACOS_PACK_CONCURRENCY: '' }, MACOS) }).toThrow('PACK_CONCURRENCY')
     expect(() =>{  validateDesktopPackageEnvironment({ ...RELEASE, TOMATO_DESKTOP_MACOS_NOTARIZATION_PROXY: 'socks5://localhost:8080' }, MACOS) }).toThrow('NOTARIZATION_PROXY')
   })
@@ -352,14 +400,15 @@ it('skips Apple credentials but still requires signing credentials for unnotariz
   })
 })
 
-it('takes ZIP compression from the Mac file instead of ambient release settings', async () => {
+it('takes ZIP compression from the Mac file and lets a personal value win', async () => {
   await withDirectory(async (directory) => {
     await writeFile(join(directory, '.env.macos'), 'TOMATO_DESKTOP_MACOS_ZIP_COMPRESSION_LEVEL=5\n')
-    const loaded = loadDesktopPackageEnvironment('darwin', { TOMATO_DESKTOP_MACOS_ZIP_COMPRESSION_LEVEL: '9' }, directory)
-    expect(loaded.TOMATO_DESKTOP_MACOS_ZIP_COMPRESSION_LEVEL).toBe('5')
+    expect(loadDesktopPackageEnvironment('darwin', {}, directory).TOMATO_DESKTOP_MACOS_ZIP_COMPRESSION_LEVEL).toBe('5')
+    expect(loadDesktopPackageEnvironment('darwin', { TOMATO_DESKTOP_MACOS_ZIP_COMPRESSION_LEVEL: '9' }, directory)
+      .TOMATO_DESKTOP_MACOS_ZIP_COMPRESSION_LEVEL).toBe('9')
     await writeFile(join(directory, '.env.macos'), '')
-    expect(loadDesktopPackageEnvironment('darwin', { TOMATO_DESKTOP_MACOS_ZIP_COMPRESSION_LEVEL: '9' }, directory))
-      .not.toHaveProperty('TOMATO_DESKTOP_MACOS_ZIP_COMPRESSION_LEVEL')
+    expect(loadDesktopPackageEnvironment('darwin', { TOMATO_DESKTOP_MACOS_ZIP_COMPRESSION_LEVEL: '9' }, directory)
+      .TOMATO_DESKTOP_MACOS_ZIP_COMPRESSION_LEVEL).toBe('9')
   })
 })
 

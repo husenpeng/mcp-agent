@@ -203,6 +203,12 @@ export function rescopeLine(line: string, only: ReadonlySet<RescopeLayer> = new 
     guards.push(match)
     return `@@TOMATO_EXTERNAL_${guards.length - 1}@@`
   })
+  // The legacy environment prefix stays in the packaging isolation filter so a
+  // stale DSH_* export can never reach a build.
+  out = out.replace(/DSH_\.\*/g, (match) => {
+    guards.push(match)
+    return `@@TOMATO_EXTERNAL_${guards.length - 1}@@`
+  })
 
   if (only.has('pkg')) {
     // Complete package names, longest and most specific first.

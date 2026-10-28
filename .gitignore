@@ -47,3 +47,7 @@ worktrees/
 .agents/worktrees/
 .typert-*/
 native/system/test/bin/
+
+# Machine-local desktop packaging inputs. Committed templates end in .env.example.
+apps/desktop/config/*-packaging/*.env
+apps/desktop/config/*-packaging/secrets/

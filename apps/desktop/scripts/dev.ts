@@ -17,6 +17,20 @@ const APP_ROOT = resolve(import.meta.dirname, '..')
 const REPOSITORY_ROOT = resolve(APP_ROOT, '..', '..')
 const BUILD_ROOT = join(APP_ROOT, '.desktop-build')
 const DEVELOPMENT_ROOT = join(BUILD_ROOT, 'development')
+const DEVELOPMENT_ENV = join(APP_ROOT, 'config', 'development.env')
+
+/**
+ * Load the development command's defaults without changing an exported personal value.
+ * Values exported by the launching shell win; the file fills only the names it declares.
+ * @param fileEnvironment - Parsed development env file.
+ */
+function applyEnvironmentDefaults(fileEnvironment: Readonly<NodeJS.Dict<string>>): void {
+  for (const [name, value] of Object.entries(fileEnvironment)) {
+    // An empty file value means "no configured value", not an empty override.
+    if (value === undefined || value.trim() === '' || process.env[name] !== undefined) continue
+    process.env[name] = value
+  }
+}
 
 interface PackageManifest {
   readonly version?: string
@@ -66,7 +80,7 @@ async function launchElectron(): Promise<void> {
   const hostPort = debugPort('TOMATO_DESKTOP_HOST_INSPECT_PORT', 9230)
   const home = resolve(process.env.TOMATO_HOME ?? join(DEVELOPMENT_ROOT, 'home'))
   const userData = resolve(process.env.TOMATO_DESKTOP_USER_DATA_DIR ?? join(DEVELOPMENT_ROOT, 'electron-user-data'))
-  const loginFile = join(APP_ROOT, 'config', 'development.env')
+  const loginFile = DEVELOPMENT_ENV
   const login = developmentLoginEnvironment(
     existsSync(loginFile) ? parseEnv(readFileSync(loginFile, 'utf8')) : {},
     process.env,
@@ -98,6 +112,8 @@ async function launchElectron(): Promise<void> {
 }
 
 async function main(): Promise<void> {
+  const developmentFile = existsSync(DEVELOPMENT_ENV) ? parseEnv(readFileSync(DEVELOPMENT_ENV, 'utf8')) : {}
+  applyEnvironmentDefaults(developmentFile)
   const { values } = parseArgs({ options: { 'skip-build': { type: 'boolean', default: false } } })
   if (!values['skip-build']) {
     await runPackageScript('build:artifacts', REPOSITORY_ROOT)

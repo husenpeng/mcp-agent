@@ -58,6 +58,16 @@ describe('desktop package target', () => {
       .toThrow(/--build-version requires a value/u)
   })
 
+  it('selects a per-platform packaging preset and rejects mismatched flags', () => {
+    expect(parseDesktopPackageInvocation(['mac-arm64', '--preset', 'test'], 'darwin', 'arm64').preset).toBe('test')
+    expect(parseDesktopPackageInvocation(['win-x64', '--preset', 'production'], 'win32', 'x64').preset).toBe('production')
+    expect(parseDesktopPackageInvocation(['mac-arm64'], 'darwin', 'arm64').preset).toBeUndefined()
+    expect(() => parseDesktopPackageInvocation(['mac-arm64', '--preset', 'nightly'], 'darwin', 'arm64'))
+      .toThrow(/--preset must be test or production/u)
+    expect(() => parseDesktopPackageInvocation(['mac-arm64', '--unsigned', '--preset', 'test'], 'darwin', 'arm64'))
+      .toThrow(/--preset requires a signed macOS build/u)
+  })
+
   it('keeps electron-builder publishing disabled for the separate validated upload', () => {
     const target = resolveDesktopPackageTarget('mac-arm64', 'darwin', 'arm64')
     expect(desktopElectronBuilderArguments(target, false)).toEqual([

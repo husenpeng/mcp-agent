@@ -202,6 +202,8 @@ interface DesktopPackageInvocation {
   readonly check: boolean
   /** Build identifier to publish under, when this build does not publish the product version. */
   readonly requestedBuildVersion: string | undefined
+  /** Selected configuration preset, or undefined for the checkout's platform dotenv. */
+  readonly preset: 'test' | 'production' | undefined
 }
 
 function hostTargetName(platform: NodeJS.Platform, arch: string): DesktopPackageTargetName {
@@ -234,6 +236,7 @@ export function parseDesktopPackageInvocation(
       'skip-notarization': { type: 'boolean', default: false },
       check: { type: 'boolean', default: false },
       'build-version': { type: 'string' },
+      preset: { type: 'string' },
     },
   })
   if (positionals.length > 1) throw new Error('desktop package: expected at most one target')
@@ -246,14 +249,23 @@ export function parseDesktopPackageInvocation(
   if (values['build-version'] !== undefined && (requestedBuildVersion === undefined || requestedBuildVersion === '')) {
     throw new Error('desktop package: --build-version requires a value')
   }
+  const preset = values.preset
+  if (preset !== undefined && preset !== 'test' && preset !== 'production') {
+    throw new Error('desktop package: --preset must be test or production')
+  }
+  const target = resolveDesktopPackageTarget(name, hostPlatform, hostArch)
+  if (preset !== undefined && values.unsigned && target.platform === 'darwin') {
+    throw new Error('desktop package: --preset requires a signed macOS build; unsigned local builds use the local preset')
+  }
   return {
-    target: resolveDesktopPackageTarget(name, hostPlatform, hostArch),
+    target,
     directory: values.dir,
     prepareOnly: values['prepare-only'],
     unsigned: values.unsigned,
     skipNotarization: values['skip-notarization'],
     check: values.check,
     requestedBuildVersion,
+    preset,
   }
 }
 
@@ -341,6 +353,7 @@ async function resolveRequestedBuildVersion(
 async function main(): Promise<void> {
   const invocation = parseDesktopPackageInvocation(process.argv.slice(2))
   const { target } = invocation
+  if (invocation.preset !== undefined) process.env.TOMATO_PACKAGING_PRESET = invocation.preset
   if (invocation.skipNotarization) {
     process.stdout.write('desktop package: skipping notarization and stapling; internal debugging only, not qualified for distribution or update publishing\n')
   }

@@ -196,7 +196,7 @@ macOS 和 Linux 从图形界面启动的程序只继承会话管理器提供的�
 pnpm run dev:desktop
 ```
 
-开发 Harness 状态默认写入 `apps/desktop/.desktop-build/development/home`，一次性 npm 项目位于 `apps/desktop/.desktop-build/development/project`，Electron 浏览器数据则位于 `apps/desktop/.desktop-build/development/electron-user-data`。因此，会话、设置、凭据、包链接和浏览器数据都不会进入用户正常使用的 Harness home；显式 `TOMATO_HOME` 只会替换开发 Harness home。Renderer DevTools 默认自动打开，Main、Renderer 和 tomato Host 调试端口依次为 9229、9222 和 9230。`TOMATO_DESKTOP_MAIN_INSPECT_PORT`、`TOMATO_DESKTOP_RENDERER_DEBUG_PORT` 与 `TOMATO_DESKTOP_HOST_INSPECT_PORT` 可以替换这些端口，`TOMATO_DESKTOP_OPEN_DEVTOOLS=0` 则保持 Renderer 调试窗口关闭。
+开发 Harness 状态默认写入 `apps/desktop/.desktop-build/development/home`，一次性 npm 项目位于 `apps/desktop/.desktop-build/development/project`，Electron 浏览器数据则位于 `apps/desktop/.desktop-build/development/electron-user-data`。因此，会话、设置、凭据、包链接和浏览器数据都不会进入用户正常使用的 Harness home。`config/development.env` 提供本启动器的默认值；启动 shell 导出的值优先，空条目表示未设置。显式 `TOMATO_HOME` 只会替换开发 Harness home。Renderer DevTools 默认自动打开，Main、Renderer 和 tomato Host 调试端口依次为 9229、9222 和 9230。`TOMATO_DESKTOP_MAIN_INSPECT_PORT`、`TOMATO_DESKTOP_RENDERER_DEBUG_PORT` 与 `TOMATO_DESKTOP_HOST_INSPECT_PORT` 可以替换这些端口，`TOMATO_DESKTOP_OPEN_DEVTOOLS=0` 则保持 Renderer 调试窗口关闭。
 
 显式构建完成后，`start:desktop` 会重新生成一次性项目，并跳过构建直接启动已有产物：
 

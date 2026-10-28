@@ -18,7 +18,7 @@ const APP_ROOT = fileURLToPath(new URL('..', import.meta.url))
 const SHARED_SETTING = /^(?:TOMATO_DESKTOP_(?:APP_ID|AUTO_UPDATE_ENV|NPM_REGISTRY|AUTH_SERVICE_URL|TOMATO_WEB_URL|MANDATORY_UPDATE_(?:CONFIG|(?:TEST|PROD)_ORIGIN))|DOWNLOAD_TEST_RELEASE_ID|DOWNLOAD_(?:TEST|PROD)_(?:ORIGIN|COS_BUCKET|COS_SECRET_ID|COS_SECRET_KEY))$/u
 const WINDOWS_SETTING = /^TOMATO_DESKTOP_WINDOWS_(?:CER_FILE|SIGNTOOL|KEY_CONTAINER|TOKEN_PIN|SIGNATURE_CACHE_DIR|SIGNATURE_CACHE_CONCURRENCY|PACK_CONCURRENCY|COMPRESSION_LEVEL)$/u
 const MACOS_SETTING = /^(?:TOMATO_DESKTOP_MACOS_(?:SIGNING_IDENTITY|TEAM_ID|SIGNATURE_CACHE_DIR|PACK_CONCURRENCY|ZIP_COMPRESSION_LEVEL|DOWNLOAD_PROXY|NOTARIZATION_PROXY)|APPLE_(?:API_KEY|API_KEY_ID|API_ISSUER|ID|APP_SPECIFIC_PASSWORD|TEAM_ID|KEYCHAIN|KEYCHAIN_PROFILE)|CSC_(?:LINK|KEY_PASSWORD))$/u
-const AMBIENT_RELEASE_SETTING = /^(?:TOMATO_DESKTOP_(?:APP_ID|AUTO_UPDATE_ENV|AUTH_SERVICE_URL|TOMATO_WEB_URL|MANDATORY_UPDATE_.*|WINDOWS_.*|MACOS_.*)|APPLE_.*|(?:WIN_)?CSC_.*|DOWNLOAD_(?:TEST|PROD)_.*)$/iu
+const AMBIENT_RELEASE_SETTING = /^(?:TOMATO_DESKTOP_(?:APP_ID|AUTO_UPDATE_ENV|AUTH_SERVICE_URL|TOMATO_WEB_URL|MANDATORY_UPDATE_.*|WINDOWS_.*|MACOS_.*)|APPLE_.*|(?:WIN_)?CSC_.*|DOWNLOAD_(?:TEST|PROD)_.*|DSH_.*)$/iu
 const FILE_SETTINGS = ['TOMATO_DESKTOP_WINDOWS_CER_FILE', 'TOMATO_DESKTOP_WINDOWS_SIGNTOOL', 'APPLE_API_KEY', 'APPLE_KEYCHAIN', 'CSC_LINK']
 
 /**
@@ -35,16 +35,18 @@ export function localMacOSPackageEnvironment(environment = process.env) {
 }
 
 /**
- * Read a machine preset when selected, otherwise the target's required dotenv; no ambient release fallback.
+ * Read a machine preset when selected, otherwise the target's required dotenv.
+ * Personal environment settings win; the selected file supplies the defaults, so a value exported
+ * from the user's shell overrides the file without editing it.
  * PACKAGE_MACOS_ZIP_COMPRESSION_LEVEL overrides the Mac file setting with 3 or 7; an empty value is invalid.
  * Any defined Mac ZIP override rejects Windows, including an empty value; nonempty Windows overrides reject macOS.
  * PACKAGE_TEST_RELEASE_ID overrides the test preset only; blank retains its configured ID.
  * PACKAGE_WINDOWS_COMPRESSION_LEVEL selects 3 or 7 for Windows workflow builds; blank retains the file setting.
  * @param {'win32' | 'darwin'} platform Target platform.
- * @param {NodeJS.ProcessEnv} environment Parent environment, retained only for unrelated build tools.
+ * @param {NodeJS.ProcessEnv} environment Parent environment; accepted release settings override the file.
  * @param {string} appRoot Desktop application directory; relative credential paths resolve here.
  * @param {{ unsigned?: boolean, prepareOnly?: boolean }} options Unsigned presets and Windows preparation-only presets never read signing credentials.
- * @returns {NodeJS.ProcessEnv} Isolated environment with file-owned release settings.
+ * @returns {NodeJS.ProcessEnv} Environment with the platform file as defaults and personal settings on top.
  */
 export function loadDesktopPackageEnvironment(platform, environment = process.env, appRoot = APP_ROOT, options = {}) {
   const compression = environment.PACKAGE_WINDOWS_COMPRESSION_LEVEL
@@ -58,29 +60,41 @@ export function loadDesktopPackageEnvironment(platform, environment = process.en
     if (platform !== 'darwin') throw new Error('desktop package: PACKAGE_MACOS_ZIP_COMPRESSION_LEVEL requires macOS')
     if (!['3', '7'].includes(zipCompression)) throw new Error('desktop package: workflow ZIP compression must be 3 or 7')
   }
+  const platformDirectory = platform === 'win32' ? 'windows-packaging' : 'macos-packaging'
   const preset = environment.TOMATO_PACKAGING_PRESET
+  const configRoot = environment.TOMATO_PACKAGING_CONFIG_DIR
+  if (configRoot !== undefined && !isAbsolute(configRoot)) {
+    throw new Error('desktop package: TOMATO_PACKAGING_CONFIG_DIR must be an absolute directory')
+  }
   let path = join(appRoot, platform === 'win32' ? '.env.windows' : '.env.macos')
   if (preset !== undefined) {
     if (preset !== 'test' && preset !== 'production') throw new Error('desktop package: preset must be test or production')
-    const root = environment.TOMATO_PACKAGING_CONFIG_DIR
-    if (!root || !isAbsolute(root)) throw new Error('desktop package: TOMATO_PACKAGING_CONFIG_DIR must be an absolute directory')
-    path = join(root, 'presets', `${preset}.env`)
+    // A machine configuration keeps presets under `presets/`; the repository checkout keeps
+    // `test.env` / `production.env` beside the platform's example files.
+    path = configRoot === undefined
+      ? join(appRoot, 'config', platformDirectory, `${preset}.env`)
+      : join(configRoot, 'presets', `${preset}.env`)
   }
   const platformSetting = platform === 'win32' ? WINDOWS_SETTING : MACOS_SETTING
   const publicPlatformSetting = platform === 'win32'
     ? /^TOMATO_DESKTOP_WINDOWS_(?:SIGNATURE_CACHE_(?:DIR|CONCURRENCY)|PACK_CONCURRENCY|COMPRESSION_LEVEL)$/u
     : /^TOMATO_DESKTOP_MACOS_(?:SIGNATURE_CACHE_DIR|PACK_CONCURRENCY|ZIP_COMPRESSION_LEVEL|DOWNLOAD_PROXY|NOTARIZATION_PROXY)$/u
-  const settings = readSettings(path, name => preset === undefined
-    ? SHARED_SETTING.test(name) || platformSetting.test(name)
-    : /^(?:TOMATO_DESKTOP_(?:APP_ID|AUTO_UPDATE_ENV|NPM_REGISTRY|AUTH_SERVICE_URL|TOMATO_WEB_URL|MANDATORY_UPDATE_(?:CONFIG|(?:TEST|PROD)_ORIGIN))|DOWNLOAD_TEST_(?:ORIGIN|RELEASE_ID))$/u.test(name) || publicPlatformSetting.test(name))
+  const presetSetting = /^(?:TOMATO_DESKTOP_(?:APP_ID|AUTO_UPDATE_ENV|NPM_REGISTRY|AUTH_SERVICE_URL|TOMATO_WEB_URL|MANDATORY_UPDATE_(?:CONFIG|(?:TEST|PROD)_ORIGIN))|DOWNLOAD_TEST_(?:ORIGIN|RELEASE_ID))$/u
+  const signingSetting = name => platform === 'win32'
+    ? /^TOMATO_DESKTOP_WINDOWS_(?:CER_FILE|SIGNTOOL|KEY_CONTAINER|TOKEN_PIN)$/u.test(name)
+    : MACOS_SETTING.test(name) && !publicPlatformSetting.test(name)
+  const accepts = preset === undefined
+    ? name => SHARED_SETTING.test(name) || platformSetting.test(name)
+    : name => presetSetting.test(name) || publicPlatformSetting.test(name)
+  const settings = readSettings(path, accepts)
   if (preset !== undefined) {
     if (settings.TOMATO_DESKTOP_AUTO_UPDATE_ENV !== preset) throw new Error('desktop package: preset deployment must match its name')
     if (!options.unsigned && (platform === 'darwin' || !options.prepareOnly)) {
       const filename = platform === 'win32' ? 'windows-signing.env' : 'macos-signing.env'
-      Object.assign(settings, readSettings(join(dirname(dirname(path)), 'secrets', filename),
-        name => platform === 'win32'
-          ? /^TOMATO_DESKTOP_WINDOWS_(?:CER_FILE|SIGNTOOL|KEY_CONTAINER|TOKEN_PIN)$/u.test(name)
-          : MACOS_SETTING.test(name) && !publicPlatformSetting.test(name)))
+      const secrets = configRoot === undefined
+        ? join(appRoot, 'config', platformDirectory, 'secrets')
+        : join(configRoot, 'secrets')
+      Object.assign(settings, readSettings(join(secrets, filename), signingSetting))
     }
   }
   if (compression !== undefined && compression !== '') settings.TOMATO_DESKTOP_WINDOWS_COMPRESSION_LEVEL = compression
@@ -93,9 +107,16 @@ export function loadDesktopPackageEnvironment(platform, environment = process.en
     if (!/^[a-f0-9]{32}$/u.test(releaseId)) throw new Error('desktop package: test release ID must contain 32 lowercase hexadecimal characters')
     settings.DOWNLOAD_TEST_RELEASE_ID = releaseId
   }
+  const personalSettings = Object.fromEntries(Object.entries(environment)
+    .filter(([name]) => accepts(name) || signingSetting(name) === true))
+  // Keep build-tool and personal variables, but never forward an unrelated
+  // release value (another platform's signing input, a stale legacy name).
+  const retained = Object.fromEntries(Object.entries(environment)
+    .filter(([name]) => !AMBIENT_RELEASE_SETTING.test(name) || accepts(name) || signingSetting(name) === true))
   return {
-    ...Object.fromEntries(Object.entries(environment).filter(([name]) => !AMBIENT_RELEASE_SETTING.test(name))),
+    ...retained,
     ...settings,
+    ...personalSettings,
     ...(environment.TOMATO_DESKTOP_UPDATE_CHANNEL === undefined ? {} : { TOMATO_DESKTOP_UPDATE_CHANNEL: environment.TOMATO_DESKTOP_UPDATE_CHANNEL }),
     ...(preset === undefined ? {} : { TOMATO_PACKAGING_PRESET: preset }),
   }
