@@ -2,84 +2,87 @@
 # section, a hash of its English and Chinese blocks outside code blocks and generated regions.
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write README.md
-/tomato-harness:
-  en: d9dd587d0ece9877
-  zh: 04054fc3b1eeab45
-/tomato-harness/summary:
+/tomato-ai:
+  en: 4f6810348349ae91
+  zh: 02a1b78a2d8dff56
+/tomato-ai/summary:
   en: b2526c284a31ae7f
   zh: ecbc44843fa7fb96
-/tomato-harness/table-of-contents:
+/tomato-ai/table-of-contents:
   en: 915bc7c3bcd140a3
   zh: 55a91940d49d1889
-/tomato-harness/architecture:
+/tomato-ai/architecture:
   en: a7e56472b11bd3c8
   zh: 6150d900a0920ce9
-/tomato-harness/architecture/processes:
-  en: a468e53fb16c9bf0
-  zh: 4c796ace036085c4
-/tomato-harness/architecture/profile-composition:
-  en: 6a3b83fb39719934
-  zh: c9689d814c56155a
-/tomato-harness/architecture/capability-seams:
+/tomato-ai/architecture/processes:
+  en: 35aa365534520534
+  zh: 3f1f712af6b4cffd
+/tomato-ai/architecture/profile-composition:
+  en: 82894669581daa08
+  zh: 9188e3189281f7a2
+/tomato-ai/architecture/capability-seams:
   en: 205679657317e669
   zh: c382be17c66d03bc
-/tomato-harness/architecture/model-visible-equals-logged:
+/tomato-ai/architecture/model-visible-equals-logged:
   en: 82054628e117bc8c
   zh: ca330ccee8ac38ed
-/tomato-harness/architecture/threading-and-lifecycle:
+/tomato-ai/architecture/threading-and-lifecycle:
   en: ab88c68a595426df
   zh: 168ff4e940069203
-/tomato-harness/architecture/client-plugin-composition:
+/tomato-ai/architecture/client-plugin-composition:
   en: 5abb50d372eb4d9f
   zh: 4504a0dbd702ff82
-/tomato-harness/design-decisions:
-  en: 9edb2094264370d2
-  zh: 51b2ad4157a3642d
-/tomato-harness/prerequisites:
-  en: 07fdcf8db89f51d2
-  zh: 058cc0a40c6bff38
-/tomato-harness/initialize:
+/tomato-ai/design-decisions:
+  en: 128c32277f87f9a6
+  zh: 6aac2f7dd31f65dc
+/tomato-ai/prerequisites:
+  en: e0bfe2105edd7521
+  zh: c2102dfa4f251195
+/tomato-ai/initialize:
   en: 8dfd610e1d60f2ed
   zh: fb9fa53ff19d319f
-/tomato-harness/run:
+/tomato-ai/run:
   en: 8bcfe486110004e4
   zh: 5491f0aa70750247
-/tomato-harness/run/run-from-source:
-  en: a37f1dd16bb2b743
-  zh: 14e7798392f81d73
-/tomato-harness/run/sign-in:
-  en: 286e35d1be665de1
-  zh: 7f60563e94e081a6
-/tomato-harness/local-services:
-  en: 3389eb2c25c99cda
-  zh: 725a5ebf526713e4
-/tomato-harness/logging-and-developer-mode:
+/tomato-ai/run/run-from-source:
+  en: 368e8db533545d2c
+  zh: b16396d714f9cb72
+/tomato-ai/run/sign-in:
+  en: ad18a337f1ebf048
+  zh: 45b838114fa4261a
+/tomato-ai/run/configure-a-model-provider:
+  en: a814216c82266252
+  zh: 2dcb05f2ea549257
+/tomato-ai/local-gateway:
+  en: 1ea52d353e59d875
+  zh: ad62f51e41aa59dc
+/tomato-ai/logging-and-developer-mode:
   en: a7685d9e2f4aa13c
   zh: b2288d0551fa9707
-/tomato-harness/logging-and-developer-mode/diagnostic-log:
-  en: c736dd08b3e02485
-  zh: f24c6623bd189a74
-/tomato-harness/logging-and-developer-mode/developer-mode:
+/tomato-ai/logging-and-developer-mode/diagnostic-log:
+  en: dcb547d677ba3c37
+  zh: f1cadabd80c8a7bd
+/tomato-ai/logging-and-developer-mode/developer-mode:
   en: f00650e4686d2e1c
   zh: 6a14c8b7f39a8fae
-/tomato-harness/logging-and-developer-mode/locating-client-code-from-a-log-line:
+/tomato-ai/logging-and-developer-mode/locating-client-code-from-a-log-line:
   en: 8f7b8776ffa01d8b
   zh: bac6f198cb89d92b
-/tomato-harness/production-readiness:
+/tomato-ai/production-readiness:
   en: a55225845e6eaf35
   zh: 7c103dfd5414c633
-/tomato-harness/production-readiness/blocking:
-  en: c396d8618ccdd011
-  zh: a0e4e34d198341fe
-/tomato-harness/production-readiness/important:
-  en: 57d166fcdf7dbcc6
-  zh: 867f6e2d4992d1e2
-/tomato-harness/production-readiness/nice-to-have:
+/tomato-ai/production-readiness/blocking:
+  en: 7716ce515ac5332e
+  zh: 89ef04169f6da148
+/tomato-ai/production-readiness/important:
+  en: 7ea900ec3ba4bde8
+  zh: d8d18b3bcbfc7438
+/tomato-ai/production-readiness/nice-to-have:
   en: a60f90f9619e1bf0
   zh: 32e76cd0cb33fbfe
-/tomato-harness/troubleshooting:
-  en: 390cded4f0b10f52
-  zh: 6332ee84e94c22c1
-/tomato-harness/license:
+/tomato-ai/troubleshooting:
+  en: b5ada21fc0c3ec5a
+  zh: 0a5f587bf44cd942
+/tomato-ai/license:
   en: 79b07e1b27e5346a
   zh: 4c86653a4f5d232a

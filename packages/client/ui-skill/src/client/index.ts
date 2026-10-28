@@ -176,12 +176,15 @@ export function apply(ctx: ClientContext): void {
       // The same ranking as the command group of this menu: case-insensitive
       // ordered subsequence, prefix hits first.
       return rankByName(skills, query)
-        .map(skill => ({
-          name: skill.name,
-          // The user-only marker rides the description (the menu's only
-          // secondary text); `hint` is the claim-state ghost text, not a badge.
-          description: skill.modelInvocable ? skill.description : `${t('menu.userOnly')} · ${skill.description}`,
-        }))
+        .map((skill) => {
+          const description = skill.description ?? ''
+          return {
+            name: skill.name,
+            // The user-only marker rides the description (the menu's only
+            // secondary text); `hint` is the claim-state ghost text, not a badge.
+            description: skill.modelInvocable ? description : `${t('menu.userOnly')} · ${description}`,
+          }
+        })
     },
     warm(session) {
       // Fire-and-forget scope-birth prewarm; the shared fetch reports

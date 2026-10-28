@@ -72,6 +72,8 @@ Queue 预览启用空白折叠和文档边缘 trim，保留 emoji，并使用 CS
 
 在粗指针设备上，composer 的草稿字号至少为 16px，以避免获得焦点时浏览器自动放大；更大的字号偏好仍然生效。
 
+空会话 hero 的点阵由 shell 持有的装饰性 canvas 绘制：指针附近的点向品牌红过渡，快速移动将点推开并弹性回位，点击产生冲击波。canvas 不进入可访问树、不参与命中、绘制在列内容之下；首帧落地前或平台无法绘制时回退到静态 CSS 点阵，减少动效时保留静态 canvas 帧。
+
 控件组的尺寸、内容、可见性或字体加载状态变化后，composer 测量展开状态下的控件组。若无法排在同一行，控制栏为模型位设置 `--dsh-composer-model-text-display: none` 和 `--dsh-composer-model-icon-display: block`；两者默认值分别为 `block` 和 `none`。若连图标也放不下，仍允许换行。
 
 上下文占用率入口遵循[统计控件圆角规则](../../../docs/ui-radius.zh.md#radius-scale)。
@@ -197,6 +199,7 @@ selector 必须是 owner currency 的纯函数。非 null 返回值作为 `match
 
 - **只有已注册 target 可以渲染**——除已注册的 `chat` 偏好外，shell 刻意不提供隐式 fallback target。
 - **Factory occurrence 继承渲染位置的 Session**——`conversation.content` 不接受独立寻址的 Session；该能力需要单独的 Session provider。
+- **hero 点阵交互仅限主 occurrence**——嵌入的 Conversation occurrence 保留纯色背景；画布颜色跟随 theme presenter 的 body 投影，而不经过 theme 服务。
 
 
 <a id="dev-note"></a>

@@ -49,6 +49,7 @@ The generated [configuration catalog](../../../docs/config-catalog.md#deepseek-a
 
 - **One merged catalog.** A consumer asks for the current catalog of a workspace and receives every winning skill summary from every provider, sorted by name — no provider-specific ordering or deduplication to do.
 - **On-demand loading.** Asking for one skill by name returns the full instruction body from whichever provider owns the winning candidate; the registry re-validates the loaded definition and rejects a stale selection whose name changed between discovery and load.
+- **Provider updates.** A provider may implement `update` to rewrite one candidate's description, routing hint, or body. `ctx.skills.update(name, patch, options)` delegates to the winning provider, re-validates the returned definition, and invalidates the catalog — including `skills/change` — so the next read sees the change even without a filesystem watcher. A summary reports `updatable: true` only while its winning provider implements the method.
 - **Embedded skills.** Plugins register an in-memory skill with `ctx.skills.register(...)`; the registry fills in a default invocation policy and the `runtime` provider label. Same-name runtime registrations in one layer are first-wins with a warning.
 - **Provider registration.** A provider contributes its catalog with `ctx.skills.registerProvider(...)`; registration is synchronous, and the returned disposer removes the provider. `runtime` is a reserved provider name.
 
@@ -66,6 +67,8 @@ An invocation policy on every skill decides which surfaces may advertise and loa
 A skill that any provider reports appears in the merged catalog, and loading it by its exact kebab-case name returns the body; an invalid name returns no skill rather than throwing. A provider that fails discovery is logged and skipped, and the observation is reported incomplete so consumers keep their last-good catalog; an explicit incomplete observation still contributes its candidates. A malformed candidate fails fast — the registry validates names, descriptions, invocation booleans, and provider ownership before caching or returning anything.
 
 Skill summaries retain the winning provider’s optional instruction-file `path` for discovery consumers that offer file previews. Listing still reads no skill body, and model-facing catalogs continue to select only their owned routing fields.
+
+An update names fields rather than a file: the winning provider resolves its own storage from the candidate it listed, so a caller cannot redirect a write to another path. The registry never writes skill content itself; providers that have nothing writable omit `update`, and their skills stay read-only.
 
 -----
 
@@ -96,6 +99,8 @@ A read (`list`/`snapshot`) collects each layer's candidates: runtime skills firs
 ### Loading and staleness
 
 `get()` selects the winning candidate, races the provider's load against the lookup's abort signal, and rechecks cancellation after selection or a cache hit. The returned definition must match the selected candidate's name; a mismatch invalidates the cached catalogs so the next snapshot rediscovers the provider's skills. Definitions are never cached — every load asks the provider for the current body.
+
+`update()` resolves the same winning candidate and hands the provider a patch of `description`, `whenToUse` (`null` removes it), or `content`. The provider owns serialization and storage; the registry validates the returned definition and invalidates the catalog once the write succeeds. A provider that returns `undefined` reports that the skill is no longer writable, and a returned definition whose name changed invalidates the catalog like a stale load.
 
 ### Invalidation
 

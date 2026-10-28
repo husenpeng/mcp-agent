@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Playwright browser",
+    "description": "Give every session its own Chromium through Playwright MCP. Install the Chromium build Playwright expects before first use.",
+    "detail": "docs/DETAIL.md"
+  }
+}

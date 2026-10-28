@@ -7,7 +7,7 @@ kind: "package-reference"
 
 [English](README.md) | 中文
 
-## Summary
+## 概述
 
 本包记录番茄 Harness 的 agent 行为：每轮一个 span，每个完成的工具调用一个子 span，以 OTLP/HTTP JSON 发往内部 relay，再由 relay 转发 Langfuse。所有内容都从持久会话事件推导，不发会话正文，也不阻塞 agent 循环：relay 故障只打一条警告并丢弃该批。
 
@@ -17,6 +17,7 @@ kind: "package-reference"
 - [记录什么](#what-is-recorded)
 - [Model Experience](#model-experience)
 - [Known Limitations and Deferred Work](#known-limitations-and-deferred-work)
+- [开发备注](#dev-note)
 
 <a id="use-this-package"></a>
 
@@ -74,3 +75,14 @@ None; this package neither assembles nor sends a provider request.
 - **不采集内容** —— span 只带耗时与结果。要采集 prompt/回复，得先就脱敏与存储做一次明确决策。
 - **尽力投递** —— 没有持久发件箱；relay 故障期间的批次会丢失。
 - **每个工具调用一个 span** —— 嵌套子 agent 的 turn 通过各自的会话形成独立 trace，不挂在父 turn 之下。
+
+<a id="dev-note"></a>
+
+### 开发备注
+
+<details>
+<summary>维护者工作上下文——点击展开</summary>
+
+无。
+
+</details>

@@ -3171,7 +3171,7 @@ export interface Config {
 
 ## `@deepseek-ai/dsh-skill`
 
-- `source`: [`packages/skill/skill/src/index.ts:278`](../packages/skill/skill/src/index.ts)
+- `source`: [`packages/skill/skill/src/index.ts:308`](../packages/skill/skill/src/index.ts)
 
 ```ts config-catalog
 /** Skill registry configuration. */
@@ -3188,7 +3188,7 @@ export interface Config {
 ## `@deepseek-ai/dsh-skill-filesystem`
 
 - `inject`: `skills`
-- `source`: [`packages/skill/skill-filesystem/src/index.ts:48`](../packages/skill/skill-filesystem/src/index.ts)
+- `source`: [`packages/skill/skill-filesystem/src/index.ts:49`](../packages/skill/skill-filesystem/src/index.ts)
 
 ```ts config-catalog
 /** Local filesystem skill provider configuration. */
@@ -4686,6 +4686,84 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@deepseek-ai/dsh-workspace-changes -->
 
+<!-- BEGIN GENERATED config-catalog:@tomato/gateway -->
+<a id="tomatogateway"></a>
+
+## `@tomato/gateway`
+
+- `inject`: `webServer` · `connection`
+- `source`: [`packages/tomato/gateway/src/config.ts:24`](../packages/tomato/gateway/src/config.ts)
+
+```ts config-catalog
+/** Validated gateway configuration. */
+export interface Config {
+  /** auth_service base URL; empty keeps login unavailable. */
+  authServiceUrl: string
+  /** Company Web BFF base URL; empty keeps login unavailable. */
+  companyWebUrl: string
+  /** Browser-facing service table, keyed by the `service` path segment. */
+  services: Record<string, ServiceEntry>
+  /** Session-verification timeout, in milliseconds. */
+  verifyTimeoutMs: number
+  /** Generic upstream request timeout, in milliseconds. */
+  requestTimeoutMs: number
+  /** Buffered-body cap for services that inject a user id into JSON. */
+  maxRequestBodyBytes: number
+  /** Lifetime of one login attempt, in milliseconds. */
+  stateTtlMs: number
+}
+
+/** One browser-facing service the gateway may forward to. */
+export interface ServiceEntry {
+  /** Absolute HTTP(S) base URL; the browser never supplies a host. */
+  baseURL: string
+  /** Optional verified-user injection; the internal header is always set. */
+  userIdInjection?: UserIdInjection
+  /** Per-request timeout; omitted uses the gateway timeout. */
+  timeoutMs?: number
+  /** Buffered-body cap for body injection; omitted uses the gateway cap. */
+  maxRequestBodyBytes?: number
+}
+
+/** Where the gateway adds the verified user id to an upstream request. */
+export type UserIdInjection = 'query' | 'body' | {
+  /** Request field carrying the id. */
+  readonly in: 'query' | 'body'
+  /** Parameter name the upstream reads. */
+  readonly name: string
+}
+```
+<!-- END GENERATED config-catalog:@tomato/gateway -->
+
+<!-- BEGIN GENERATED config-catalog:@tomato/telemetry -->
+<a id="tomatotelemetry"></a>
+
+## `@tomato/telemetry`
+
+- `source`: [`packages/tomato/telemetry/src/config.ts:4`](../packages/tomato/telemetry/src/config.ts)
+
+```ts config-catalog
+/** Plugin configuration for the OTLP relay reporter. */
+export interface Config {
+  /**
+   * Full OTLP/HTTP traces endpoint on the internal relay. An empty value keeps
+   * the listener unmounted, which is the local posture.
+   */
+  endpoint: string
+  /** Bearer token for the relay; empty sends no authorization header. */
+  token?: string
+  /** `service.name` resource attribute recorded on every batch. */
+  serviceName: string
+  /** Flush delay after the first span of a batch, in milliseconds. */
+  flushIntervalMs: number
+  /** Maximum spans per request; a full batch flushes immediately. */
+  maxBatchSpans: number
+  /** Per-request transport timeout, in milliseconds. */
+  timeoutMs: number
+}
+```
+<!-- END GENERATED config-catalog:@tomato/telemetry -->
+
 ## Loadable plugins with no config
 
 These load from a `cordis.yml` entry with no `config:` block; they declare no configuration API.
@@ -4752,6 +4830,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@deepseek-ai/dsh-client-ui-sidebar-right` | — | [`packages/client/ui-sidebar-right/src/index.ts`](../packages/client/ui-sidebar-right/src/index.ts) |
 | `@deepseek-ai/dsh-client-ui-sidebar-terminal` | — | [`packages/client/ui-sidebar-terminal/src/index.ts`](../packages/client/ui-sidebar-terminal/src/index.ts) |
 | `@deepseek-ai/dsh-client-ui-skill` | — | [`packages/client/ui-skill/src/index.ts`](../packages/client/ui-skill/src/index.ts) |
+| `@deepseek-ai/dsh-client-ui-skill-browser` | — | [`packages/client/ui-skill-browser/src/index.ts`](../packages/client/ui-skill-browser/src/index.ts) |
 | `@deepseek-ai/dsh-client-ui-subagent` | — | [`packages/client/ui-subagent/src/index.ts`](../packages/client/ui-subagent/src/index.ts) |
 | `@deepseek-ai/dsh-client-ui-tool` | — | [`packages/client/ui-tool/src/index.ts`](../packages/client/ui-tool/src/index.ts) |
 | `@deepseek-ai/dsh-client-ui-trajectory` | — | [`packages/client/ui-trajectory/src/index.ts`](../packages/client/ui-trajectory/src/index.ts) |
@@ -4812,6 +4891,8 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@deepseek-ai/dsh-user-questions` | — | [`packages/interaction/user-questions/src/index.ts`](../packages/interaction/user-questions/src/index.ts) |
 | `@deepseek-ai/dsh-webhook` | `agents` · `agentDefaultModel` · `agentPresets` · `permissionPresets` · `sessionTitle` · `workspaceRegistry` | [`packages/experimental/webhook/src/index.ts`](../packages/experimental/webhook/src/index.ts) |
 | `@deepseek-ai/dsh-workspace` | `storageDomain` · `sessionPersistence` | [`packages/workspace/workspace/src/index.ts`](../packages/workspace/workspace/src/index.ts) |
+| `@tomato/account` | — | [`packages/tomato/account/src/index.ts`](../packages/tomato/account/src/index.ts) |
+| `@tomato/brand` | — | [`packages/tomato/brand/src/index.ts`](../packages/tomato/brand/src/index.ts) |
 <!-- END GENERATED config-catalog:no-config -->
 
 ## Seam packages (not directly loadable)
@@ -4864,6 +4945,7 @@ Imported as libraries by other packages; a `cordis.yml` cannot load them.
 | `@deepseek-ai/dsh-deque` | — | [`packages/util/deque/src/index.ts`](../packages/util/deque/src/index.ts) |
 | `@deepseek-ai/dsh-experimental-agent-team-profile` | — | [`packages/experimental/agent-team-profile/src/index.ts`](../packages/experimental/agent-team-profile/src/index.ts) |
 | `@deepseek-ai/dsh-experimental-badge-skill-bundle` | — | [`packages/experimental/badge-skill-bundle/src/index.ts`](../packages/experimental/badge-skill-bundle/src/index.ts) |
+| `@deepseek-ai/dsh-experimental-browser-use-playwright-bundle` | — | [`packages/experimental/browser-use-playwright-bundle/src/index.ts`](../packages/experimental/browser-use-playwright-bundle/src/index.ts) |
 | `@deepseek-ai/dsh-experimental-browser-use-runtime` | — | [`packages/experimental/browser-use-runtime/src/index.ts`](../packages/experimental/browser-use-runtime/src/index.ts) |
 | `@deepseek-ai/dsh-experimental-cot-translation-bundle` | — | [`packages/experimental/cot-translation-bundle/src/index.ts`](../packages/experimental/cot-translation-bundle/src/index.ts) |
 | `@deepseek-ai/dsh-experimental-inspector-profile` | — | [`packages/experimental/inspector-profile/src/index.ts`](../packages/experimental/inspector-profile/src/index.ts) |

@@ -207,32 +207,85 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
       readonly childSessionId: SessionId
       readonly reason: 'corrupt' | 'unsupported' | 'unavailable'
     }
+    'skill/not-found': { readonly name: string }
+    'skill/not-editable': { readonly name: string }
+    'skill/invalid': { readonly reason?: string }
   }
 }
 
 /** Session-addressed request for the human-invocable skill catalog. */
 export interface SkillListRequest {
   readonly sessionId: SessionId
+  /**
+   * Include skills the composer hides because they are model-only. The `/`
+   * skill source omits this flag and keeps its user-invocable-only view; the
+   * Skills browser passes `true` to show the complete catalog.
+   */
+  readonly includeModelOnly?: boolean
+  /**
+   * Omit each entry's routing description. The Skills browser lists names
+   * first and reads one skill's description with `skills/get` when it is
+   * selected; the `/` menu omits this flag because its rows show the text.
+   */
+  readonly brief?: boolean
 }
 
-/** One skill available to the Session's human-facing composer. */
+/** One skill available to the Session's skill surfaces. */
 export interface SkillEntry {
   /** Absolute SKILL.md path when supplied by a filesystem provider. */
   readonly path?: string
   /** Kebab-case identifier referenced as `/name`. */
   readonly name: string
-  /** Short routing description. */
-  readonly description: string
+  /** Short routing description; absent from a `brief` catalog read. */
+  readonly description?: string
   /** Optional extra routing guidance. */
   readonly whenToUse?: string
   /** Whether the same skill is also advertised to the model. */
   readonly modelInvocable: boolean
+  /** Whether the skill can be invoked from the human-facing composer. */
+  readonly userInvocable: boolean
+  /** Discovery source label that produced this winning skill (for example `user-agents`). */
+  readonly source: string
+  /**
+   * Whether this Host accepts an edit through `skills/save`: the winning
+   * provider supports updates, the skill has a file, and its source is a
+   * personal directory. The Host enforces this; the client only renders it.
+   */
+  readonly editable: boolean
 }
 
 /** Human-invocable skills visible through one Session's composition. */
 export interface SkillListValue {
   readonly skills: readonly SkillEntry[]
 }
+
+/** Session-addressed request for one skill's full definition. */
+export interface SkillGetRequest {
+  readonly sessionId: SessionId
+  readonly name: string
+}
+
+/** One skill's display metadata plus its Markdown instruction body. */
+export interface SkillGetValue extends SkillEntry {
+  /** Short routing description, always present in a detail read. */
+  readonly description: string
+  /** Markdown instruction body without frontmatter. */
+  readonly content: string
+}
+
+/** Session-addressed request to rewrite one editable skill. */
+export interface SkillSaveRequest {
+  readonly sessionId: SessionId
+  readonly name: string
+  readonly description: string
+  /** Replacement extra routing guidance, or `null` to remove it. */
+  readonly whenToUse?: string | null
+  /** Replacement Markdown instruction body without frontmatter. */
+  readonly content: string
+}
+
+/** The saved skill as the Host reads it back. */
+export type SkillSaveValue = SkillGetValue
 
 /** Session list request. */
 export interface SessionListRequest {

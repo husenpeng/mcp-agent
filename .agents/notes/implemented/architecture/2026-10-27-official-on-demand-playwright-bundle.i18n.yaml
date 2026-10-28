@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for 2026-10-27-official-on-demand-playwright-bundle.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-10-27-official-on-demand-playwright-bundle.md
+/agent-note-ship-playwright-browser-tools-as-an-on-demand-official-bundle:
+  en: 6d0a352f52c59547
+  zh: 13b003d13646841b
+/agent-note-ship-playwright-browser-tools-as-an-on-demand-official-bundle/problem:
+  en: 672858b1f8c08a5f
+  zh: b93fa838255d9dbc
+/agent-note-ship-playwright-browser-tools-as-an-on-demand-official-bundle/decision:
+  en: 32d8972436ceab40
+  zh: e8352ed326625bd9
+/agent-note-ship-playwright-browser-tools-as-an-on-demand-official-bundle/alternatives-considered:
+  en: 04c89d13b3b3d072
+  zh: 634f43a94ad533ca
+/agent-note-ship-playwright-browser-tools-as-an-on-demand-official-bundle/consequences:
+  en: 4489eab8463af942
+  zh: 1cd2d9a5d7b57770

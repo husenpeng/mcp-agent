@@ -14,6 +14,8 @@ declare global {
 
 const container = document.getElementById('root')
 if (container === null) throw new Error('desktop welcome: missing React root')
+// Published before the first paint so chrome-specific CSS applies immediately.
+document.documentElement.dataset.platform = window.dshWelcome.platform
 const root = createRoot(container)
 flushSync(() => { root.render(<Welcome api={window.dshWelcome} />) })
 window.addEventListener('pagehide', () => { root.unmount() }, { once: true })

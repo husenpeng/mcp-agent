@@ -58,7 +58,7 @@ vi.mock('electron', () => ({
     getVersion: () => '1.0.0',
     setAboutPanelOptions: vi.fn(),
     getAppPath: () => '/development-app',
-    getPath: (name: string) => name === 'userData' ? '/desktop-user-data' : `/development-${name}`,
+    getPath: (name: string) => name === 'userData' ? '/desktop-user-data' : name === 'logs' ? `/tmp/tomato-welcome-startup-logs-${process.pid}` : `/development-${name}`,
     setAppLogsPath: vi.fn(),
     getPreferredSystemLanguages: () => ['en-US'],
     on: (name: string, callback: (...args: unknown[]) => void) => { state.appListeners.set(name, callback) },
@@ -138,6 +138,11 @@ vi.mock('../src/welcome-backend.ts', () => ({
         return () => {}
       },
       state: state.accountState,
+      start: state.accountState,
+      cancel: state.accountState,
+      signOut: state.accountState,
+      window: () => undefined,
+      sessionId: () => undefined,
     },
   }),
 }))
@@ -179,7 +184,7 @@ it.each([false, true])('starts welcome onboarding without carrying update focus 
   state.hasApiKey = false
   state.operations = undefined
   state.accountState.mockResolvedValue({ status: 'signed-out', attempt: null, links: { usageUrl: '', topUpUrl: '' } })
-  if (updated) vi.stubGlobal('process', { ...process, platform: 'win32', argv: ['desktop', '--updated'] })
+  if (updated) vi.stubGlobal('process', { ...process, platform: 'win32', argv: ['desktop', '--updated'], on: process.on.bind(process), once: process.once.bind(process), removeListener: process.removeListener.bind(process) })
   vi.useFakeTimers()
   vi.stubEnv('DSH_CLIENT_VERSION', '1.2.3')
   vi.stubEnv('DSH_DESKTOP_DEV_PROJECT_DIR', '/development-profile')
@@ -290,7 +295,8 @@ it.each([false, true])('starts welcome onboarding without carrying update focus 
   state.focusWorkspace.mockClear()
   vi.stubEnv('DSH_DESKTOP_OPEN_DEVTOOLS', '1')
   state.accountListener!({ ...account, status: 'credential-stored', attempt: { id: attemptId, phase: 'succeeded' } })
-  await vi.waitFor(() => { expect(state.showInactiveWorkspace).toHaveBeenCalledOnce() })
+  await vi.waitFor(() => { expect(contents.send).toHaveBeenCalledWith(DESKTOP_IPC.accountChanged) })
+  expect(state.showInactiveWorkspace).not.toHaveBeenCalled()
   expect(state.showWorkspace).not.toHaveBeenCalled()
   expect(state.focusWorkspace).not.toHaveBeenCalled()
   expect(state.moveTopWorkspace).not.toHaveBeenCalled()

@@ -1,0 +1,31 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/tomato/account/README.md
+/:
+  en: dbf7cde8915d24cf
+  zh: 2357e41705330702
+/tomato-account:
+  en: 54628567ab802107
+  zh: e4d583ca917d9396
+/tomato-account/summary:
+  en: 9285056467948bf9
+  zh: 42e3f9995adb81a3
+/tomato-account/table-of-contents:
+  en: 2e89ddb1e73218cb
+  zh: 0cd809ced2654bc9
+/tomato-account/use-this-package:
+  en: 5000d4c5398b65e3
+  zh: e0fc9a7ab8916387
+/tomato-account/model-experience:
+  en: 8b888e39d4a352e3
+  zh: 957c40cd5af2382a
+/tomato-account/model-experience/kv-cache-effect:
+  en: ca75c51c89c2c9b0
+  zh: bacec35330ccc487
+/tomato-account/known-limitations-and-deferred-work:
+  en: 6021d9cbef96a2f0
+  zh: f2af10268b278fb6
+/tomato-account/known-limitations-and-deferred-work/dev-note:
+  en: 1f2c635f47d6a5ea
+  zh: e6394b0839996784

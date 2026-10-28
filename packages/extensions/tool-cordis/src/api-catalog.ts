@@ -2766,10 +2766,24 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     methods: [
       {
         signature: '@Remote async list(request: SkillListRequest, signal: AbortSignal): Promise<SkillListValue>',
-        description: 'List the user-invocable skills visible to one Session composition.',
+        description: 'List the skills visible to one Session composition.',
         parameters: [{ name: 'request', description: 'Session identity whose cwd and preset select the catalog view.' }, { name: 'signal', description: 'caller lifetime carried by the Remote transport; admitted catalog reads retain their existing completion semantics.' }],
-        returns: 'user-invocable skill metadata without loading skill bodies.',
+        returns: 'skill metadata without loading bodies. User-invocable skills only unless `includeModelOnly` requests the complete catalog.',
         throws: ['RemoteError when the Session cannot be inspected or no registry can serve it.'],
+      },
+      {
+        signature: '@Remote async get(request: SkillGetRequest, signal: AbortSignal): Promise<SkillGetValue>',
+        description: 'Read one skill\'s display metadata and instruction body.',
+        parameters: [{ name: 'request', description: 'Session identity and the kebab-case skill name.' }, { name: 'signal', description: 'caller lifetime carried by the Remote transport.' }],
+        returns: 'the skill definition, including its Markdown body.',
+        throws: ['RemoteError when the Session cannot be inspected, no registry can serve it, or the skill is absent.'],
+      },
+      {
+        signature: '@Remote async save(request: SkillSaveRequest, signal: AbortSignal): Promise<SkillSaveValue>',
+        description: 'Rewrite one personal skill\'s description, routing hint, and body through its owning provider. The Host resolves the file from the winning catalog entry, so the request never supplies a path.',
+        parameters: [{ name: 'request', description: 'Session identity, skill name, and replacement fields.' }, { name: 'signal', description: 'caller lifetime carried by the Remote transport.' }],
+        returns: 'the saved skill as a fresh read.',
+        throws: ['RemoteError when the request is invalid, the Session cannot be inspected, the skill is absent, or its source/provider is not editable.'],
       },
     ],
   },
@@ -2995,6 +3009,12 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         description: 'Load and validate the winning candidate, passing its opaque discovery locator back to the provider. Cancellation is rechecked after selection, including cache hits, and raced against loading so an uncooperative provider cannot hang the caller.',
         parameters: [{ name: 'name', description: 'kebab-case skill name.' }, { name: 'options', description: 'view options; `scope` selects the viewing agent\'s layers, `cwd` selects workspace-sensitive skills, and `signal` cancels work.' }],
         returns: 'the full skill, including body content, or `undefined`.',
+      },
+      {
+        signature: 'async update(name: string, patch: SkillUpdatePatch, options: SkillViewOptions = {}): Promise<SkillDefinition | undefined>',
+        description: 'Apply one content or metadata change to the winning skill and return its new definition. The owning provider performs the write; the registry then invalidates its catalog cache and notifies `skills/change` listeners, so a subsequent read sees the update even without a filesystem watcher.',
+        parameters: [{ name: 'name', description: 'kebab-case skill name.' }, { name: 'patch', description: 'fields to replace; omitted fields stay unchanged.' }, { name: 'options', description: 'view options; `scope` selects the viewing agent\'s layers, `cwd` selects workspace-sensitive skills, and `signal` cancels work.' }],
+        returns: 'the updated skill, or `undefined` when the skill is absent or its winning provider cannot update.',
       },
     ],
   },
@@ -8038,7 +8058,15 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'SkillEntry',
-    declaration: 'export interface SkillEntry {\n    readonly path?: string;\n    readonly name: string;\n    readonly description: string;\n    readonly whenToUse?: string;\n    readonly modelInvocable: boolean;\n}',
+    declaration: 'export interface SkillEntry {\n    readonly path?: string;\n    readonly name: string;\n    readonly description?: string;\n    readonly whenToUse?: string;\n    readonly modelInvocable: boolean;\n    readonly userInvocable: boolean;\n    readonly source: string;\n    readonly editable: boolean;\n}',
+  },
+  {
+    name: 'SkillGetRequest',
+    declaration: 'export interface SkillGetRequest {\n    readonly sessionId: SessionId;\n    readonly name: string;\n}',
+  },
+  {
+    name: 'SkillGetValue',
+    declaration: 'export interface SkillGetValue extends SkillEntry {\n    readonly description: string;\n    readonly content: string;\n}',
   },
   {
     name: 'SkillInvocationPolicy',
@@ -8046,7 +8074,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'SkillListRequest',
-    declaration: 'export interface SkillListRequest {\n    readonly sessionId: SessionId;\n}',
+    declaration: 'export interface SkillListRequest {\n    readonly sessionId: SessionId;\n    readonly includeModelOnly?: boolean;\n    readonly brief?: boolean;\n}',
   },
   {
     name: 'SkillListValue',
@@ -8058,7 +8086,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'SkillProvider',
-    declaration: 'export interface SkillProvider {\n    readonly name: string;\n    readonly list: (options: SkillLookupOptions) => Promise<readonly SkillCandidate[] | SkillProviderObservation>;\n    readonly get: (candidate: SkillCandidate, options: SkillLookupOptions) => Promise<SkillDefinition | undefined>;\n}',
+    declaration: 'export interface SkillProvider {\n    readonly name: string;\n    readonly list: (options: SkillLookupOptions) => Promise<readonly SkillCandidate[] | SkillProviderObservation>;\n    readonly get: (candidate: SkillCandidate, options: SkillLookupOptions) => Promise<SkillDefinition | undefined>;\n    readonly update?: (candidate: SkillCandidate, patch: SkillUpdatePatch, options: SkillLookupOptions) => Promise<SkillDefinition | undefined>;\n}',
   },
   {
     name: 'SkillProviderControl',
@@ -8077,12 +8105,24 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type SkillResourceBase = {\n    readonly kind: \'directory\';\n    readonly path: string;\n} | {\n    readonly kind: \'url\';\n    readonly url: string;\n} | {\n    readonly kind: \'opaque\';\n    readonly description: string;\n};',
   },
   {
+    name: 'SkillSaveRequest',
+    declaration: 'export interface SkillSaveRequest {\n    readonly sessionId: SessionId;\n    readonly name: string;\n    readonly description: string;\n    readonly whenToUse?: string | null;\n    readonly content: string;\n}',
+  },
+  {
+    name: 'SkillSaveValue',
+    declaration: 'export type SkillSaveValue = SkillGetValue;',
+  },
+  {
     name: 'SkillSource',
     declaration: 'export type SkillSource = \'project-dsh\' | \'project-agents\' | \'runtime\' | \'user-dsh\' | \'user-agents\' | \'custom\' | \'bundled\' | (string & {});',
   },
   {
     name: 'SkillSummary',
-    declaration: 'export interface SkillSummary {\n    readonly path?: string;\n    readonly name: string;\n    readonly description: string;\n    readonly whenToUse?: string;\n    readonly invocation: SkillInvocationPolicy;\n    readonly source: SkillSource;\n    readonly provider: string;\n    readonly resourceBase?: SkillResourceBase;\n}',
+    declaration: 'export interface SkillSummary {\n    readonly path?: string;\n    readonly name: string;\n    readonly description: string;\n    readonly whenToUse?: string;\n    readonly invocation: SkillInvocationPolicy;\n    readonly source: SkillSource;\n    readonly provider: string;\n    readonly resourceBase?: SkillResourceBase;\n    readonly updatable?: boolean;\n}',
+  },
+  {
+    name: 'SkillUpdatePatch',
+    declaration: 'export interface SkillUpdatePatch {\n    readonly description?: string;\n    readonly whenToUse?: string | null;\n    readonly content?: string;\n}',
   },
   {
     name: 'SkillViewOptions',

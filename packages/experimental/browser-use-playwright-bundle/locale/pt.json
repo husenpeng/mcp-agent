@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Navegador Playwright",
+    "description": "Oferece um Chromium próprio a cada sessão por meio do Playwright MCP. Instale a versão do Chromium esperada pelo Playwright antes do primeiro uso.",
+    "detail": "docs/DETAIL.md"
+  }
+}

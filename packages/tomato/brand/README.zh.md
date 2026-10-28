@@ -7,15 +7,16 @@ kind: "package-reference"
 
 [English](README.md) | 中文
 
-## Summary
+## 概述
 
-本包为 Tomato Harness 提供侧栏标志、侧栏名称与会话首页标志。它占用外壳声明的三个通用品牌槽，因此官方 `ui-brand-official` 的占位实现不会进入组合，界面里不出现鱼形标志或 DeepSeek 字标。本包不持有运行时状态，也不影响模型请求。
+本包为 Tomato AI 提供侧栏标志、侧栏名称与会话首页标志。它占用外壳声明的三个通用品牌槽，因此官方 `ui-brand-official` 的占位实现不会进入组合，界面里不出现鱼形标志或 DeepSeek 字标。本包不持有运行时状态，也不影响模型请求。
 
 ## 目录
 
 - [使用本包](#use-this-package)
 - [Model Experience](#model-experience)
 - [Known Limitations and Deferred Work](#known-limitations-and-deferred-work)
+- [开发备注](#dev-note)
 
 <a id="use-this-package"></a>
 
@@ -50,3 +51,14 @@ kind: "package-reference"
 - **标志为双端点渐变** —— 字形跟随品牌标志变量，而不是周边文字颜色。超过两个端点或按界面区分颜色的标志，要走主题的图标替换面，而不是本包。
 - **首页字标未注册** —— 外壳自带的首页兜底保持不变，只替换方形标志。
 - **浏览器标题是构建期值** —— `DSH_CLIENT_TITLE` 在构建时决定它，不在槽位体系内。
+
+<a id="dev-note"></a>
+
+### 开发备注
+
+<details>
+<summary>维护者工作上下文——点击展开</summary>
+
+无。
+
+</details>

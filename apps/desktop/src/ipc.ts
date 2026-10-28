@@ -17,6 +17,9 @@ export const DESKTOP_IPC = {
   enterWorkspace: 'dsh-desktop:enter-workspace',
   onboardingActive: 'dsh-desktop:onboarding-active',
   onboardingApiKey: 'dsh-desktop:onboarding-api-key',
+  accountOpenSignIn: 'dsh-desktop:account-open-sign-in',
+  accountSignOut: 'dsh-desktop:account-sign-out',
+  accountChanged: 'dsh-desktop:account-changed',
   bootFailed: 'dsh-desktop:boot-failed',
   browserAcquire: 'dsh-desktop:browser-acquire',
   browserRelease: 'dsh-desktop:browser-release',
@@ -74,9 +77,20 @@ export interface DesktopUpdatePresentation {
   readonly failure?: DesktopUpdateFailureKind
 }
 
+/** Native account entry points; the session id itself never crosses this bridge. */
+export interface DesktopAccountApi {
+  /** Open the consent-gated welcome entry for sign-in. */
+  openSignIn(): Promise<void>
+  /** Drop the stored session without leaving the workspace. */
+  signOut(): Promise<void>
+  /** @param listener - account-change recipient. @returns subscription disposer. */
+  subscribe(listener: () => void): () => void
+}
+
 /** Product documents cannot supply update versions, package URLs, or installation authorization. */
 export interface DshDesktopProductApi {
   readonly protocolVersion: 1
+  readonly account: DesktopAccountApi
   readonly browser: DesktopBrowserBridge
   readonly fileDrag: DesktopFileDrag
   readonly keyboard: DesktopKeyboardApi

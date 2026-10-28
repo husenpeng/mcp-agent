@@ -19,7 +19,7 @@ export const CLIENT_BUILD_PROFILE_SELECTOR = 'DSH_BUILD_CLIENT_PROFILE'
 /** Public client environment required by official DSH artifacts. */
 const OFFICIAL_CLIENT_BUILD_ENVIRONMENT = {
   DSH_CLIENT_BUILD_PROFILE: 'official',
-  DSH_CLIENT_TITLE: 'Tomato Harness',
+  DSH_CLIENT_TITLE: 'Tomato AI',
 } as const
 
 /** Public variable carrying the source commit embedded in client artifacts. */
@@ -132,7 +132,7 @@ export function repositoryClientBuildEnvironment(
     // Every build of this fork is a Tomato build, including the local one the
     // desktop launcher makes; without it the document title falls back to the
     // shell's generic local-build label.
-    DSH_CLIENT_TITLE: inherited.DSH_CLIENT_TITLE ?? 'Tomato Harness',
+    DSH_CLIENT_TITLE: inherited.DSH_CLIENT_TITLE ?? 'Tomato AI',
     DSH_CLIENT_VERSION: repositoryVersion(root),
   }
 }

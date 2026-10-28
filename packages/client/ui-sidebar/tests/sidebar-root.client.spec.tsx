@@ -372,16 +372,21 @@ describe('SidebarRoot shell', () => {
   })
 })
 
-it('keeps the macOS sidebar toggle in its top strip', () => {
+it('keeps the macOS sidebar brand and toggle in one top strip', () => {
   document.documentElement.dataset.platform = 'darwin'
   const shell = mountShell()
   fireEvent.click(screen.getByRole('button', { name: en['toggle.collapse'] }))
   expect(shell.toggleSidebar).toHaveBeenCalledOnce()
-  // The brand stays part of the logo row's window-drag surface: no button
-  // role (the global no-drag rule would subtract it); only the dedicated
-  // New Session capsule starts a session.
+  // One drag row holds the brand and the toggle, sharing the traffic-light
+  // strip: no button role for the brand (the global no-drag rule would
+  // subtract it); only the dedicated New Session capsule starts a session.
   expect(screen.getAllByRole('button', { name: 'New session' })).toHaveLength(1)
-  expect(screen.getByTestId('custom-brand-mark')).toBeTruthy()
+  const brand = screen.getByTestId('custom-brand-mark')
+  expect(brand).toBeTruthy()
+  expect(brand.closest('[data-window-drag]')).toBe(
+    screen.getByRole('button', { name: en['toggle.collapse'] }).closest('[data-window-drag]'),
+  )
+  expect(document.querySelectorAll('[data-window-drag]')).toHaveLength(1)
   fireEvent.click(screen.getByRole('button', { name: 'New session' }))
   expect(shell.trackEntryClick).toHaveBeenCalledExactlyOnceWith({ menu_name: 'new_session', position: 'sidebar' })
 })

@@ -64,7 +64,7 @@ describe.skipIf(!existsSync(preload('preload-app')))('built sandboxed Desktop pr
         if (id !== 'electron') throw new Error(`sandbox cannot load ${id}`)
         return electron
       },
-      process: { argv: ['electron', '--dsh-welcome-locale=en'], isMainFrame: true },
+      process: { argv: ['electron', '--dsh-welcome-locale=en'], platform: 'darwin', isMainFrame: true },
       location: new URL('dsh-app://app/'),
       exports: {},
     })
@@ -84,7 +84,8 @@ describe.skipIf(!existsSync(preload('preload-app')))('built sandboxed Desktop pr
       expect(send).toHaveBeenCalledWith('dsh-desktop:locale-changed', 'zh')
     } else {
       expect(exposed.has('dshWelcome')).toBe(true)
-      const bridge = exposed.get('dshWelcome') as { takeNotice(): Promise<unknown> }
+      const bridge = exposed.get('dshWelcome') as { platform: string; takeNotice(): Promise<unknown> }
+      expect(bridge.platform).toBe('darwin')
       void bridge.takeNotice()
       expect(invoke).toHaveBeenCalledWith('dsh-welcome:take-notice')
     }

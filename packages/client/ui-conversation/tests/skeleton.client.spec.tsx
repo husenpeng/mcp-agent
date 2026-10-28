@@ -645,6 +645,22 @@ describe('ConversationRoot resident composer', () => {
     expect(b.view.getByRole('textbox')).toBeTruthy()
   })
 
+  it('mounts the interactive dot canvas only in the hero phase', () => {
+    const hero = mount(sessionSnapshotOf({ blank: true }))
+    const canvas = hero.view.container.querySelector('canvas[data-dot-field]')
+    expect(canvas?.getAttribute('aria-hidden')).toBe('true')
+    expect(canvas?.parentElement?.getAttribute('data-phase')).toBe('hero')
+    const settling = mount(
+      sessionSnapshotOf({ blank: true, openState: 'loading' }),
+      undefined,
+      undefined,
+      { omitSummaryRow: true },
+    )
+    expect(settling.view.container.querySelector('canvas[data-dot-field]')).toBeNull()
+    const active = mount(sessionSnapshotOf({ blank: false }))
+    expect(active.view.container.querySelector('canvas[data-dot-field]')).toBeNull()
+  })
+
   it('same textarea DOM node survives the hero → active flip into the sticky scrollport', () => {
     const b = mount(sessionSnapshotOf({ blank: true }))
     const before = b.view.getByRole('textbox')

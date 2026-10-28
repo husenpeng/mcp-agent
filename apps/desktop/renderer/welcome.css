@@ -61,9 +61,53 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* The caption strip carries the product identity beside the native window
+   controls; macOS traffic lights sit at (21, 21), so the brand starts clear of
+   them, while the Windows caption keeps its own buttons on the right. */
 .titlebar {
   flex: 0 0 42px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
   app-region: drag;
+}
+
+html[data-platform='darwin'] .titlebar {
+  padding-left: 92px;
+}
+
+.titlebarBrand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.titlebarMark {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.titlebarMarkDark {
+  display: none;
+}
+
+body[data-ds-dark-theme] .titlebarMarkLight {
+  display: none;
+}
+
+body[data-ds-dark-theme] .titlebarMarkDark {
+  display: block;
+}
+
+.titlebarName {
+  font-family: var(--welcome-font-brand);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0.02em;
+  color: var(--dsw-alias-label-primary);
 }
 
 .welcome {
@@ -79,10 +123,11 @@ body {
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: safe center;
   gap: 24px;
-  overflow: hidden;
-  padding: 64px 48px 40px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 56px 48px 32px;
   background-color: var(--welcome-brand-panel);
   background-image: var(--welcome-glow);
   border-right: 1px solid var(--dsw-alias-border-l1);
@@ -215,15 +260,16 @@ body[data-ds-dark-theme] .brandLogoDark {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: safe center;
   gap: 16px;
-  padding: 48px 40px 40px;
+  padding: 32px 40px 24px;
+  overflow-y: auto;
   background: var(--welcome-auth-panel);
 }
 
 .authCard {
   width: min(420px, 100%);
-  padding: 34px;
+  padding: 30px;
   border-radius: 16px;
   background: var(--welcome-card);
   box-shadow: 0 0 0 1px var(--welcome-card-stroke), var(--welcome-card-shadow);
@@ -233,7 +279,7 @@ body[data-ds-dark-theme] .brandLogoDark {
 .statusCard {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
 .loginHeading {
@@ -258,7 +304,7 @@ body[data-ds-dark-theme] .brandLogoDark {
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  padding: 16px 0;
+  padding: 12px 0;
 }
 
 .feishuTile {

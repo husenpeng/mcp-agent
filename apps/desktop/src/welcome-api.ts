@@ -75,6 +75,8 @@ export interface WelcomeOperations {
 
 /** The renderer receives localized copy, login operations, and safe account snapshots. */
 export type WelcomeApi = DesktopLocale & WelcomeOperations & {
+  /** Shell platform for chrome-specific layout branches (published as `html[data-platform]`). */
+  readonly platform: string
   /** @param listener - safe account snapshot recipient. @returns subscription disposer. */
   onAccountState(listener: (state: WelcomeAccountView) => void): () => void
 }

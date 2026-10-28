@@ -14,6 +14,8 @@
 
 在单层内，重名项依次按 rank、提供方顺序和本地顺序确定优先级；摘要按名称排序。提供方的 `list()` 被拒绝时，系统会记录日志，并从不完整观测中省略该提供方的结果；显式的不完整观测会提供可用候选项，但不会使结果变得可缓存；格式错误的候选项快速失败。每个提供方工厂都会接收一项注册作用域内的控制能力；仅当该精确注册仍处于活动状态时，其 `invalidate()` 才会清除已完成目录；注册失败或 dispose（资源释放）时，其信号会中止。若提供方代次在发现进行期间发生变化，该发现会重试一次；若再次变化，则返回最新候选项，并将结果标为不完整且不予缓存。提供方和运行时变更会发出不带过滤条件的 `skills/change` 失效事件；该事件不携带 diff，因此消费方会使用自身的查找选项重新获取 `snapshot()`。
 
+提供方还可以实现 `update(candidate, patch, options)`。`ctx.skills.update(name, patch, options)` 会委托给胜出提供方，验证返回的定义，使其目录缓存失效，并触发 `skills/change`；摘要中的 `updatable: true` 仅在胜出提供方实现该方法时出现。patch 只命名 `description`、`whenToUse`（`null` 表示删除）或 `content`，从不包含存储路径。
+
 `SkillProvider.list()` 返回的数组是完整发现的简写形式。`SkillProviderObservation` 允许提供方公开仍可直接加载的候选项，同时报告该观测不具权威性。
 
 ```ts type-equiv
@@ -48,6 +50,20 @@ interface SkillProvider {
    * @returns the full skill body, or `undefined` if it is no longer loadable.
    */
   readonly get: (candidate: SkillCandidate, options: SkillLookupOptions) => Promise<SkillDefinition | undefined>
+  /**
+   * Apply one content or metadata change to a candidate this provider owns.
+   * Providers that cannot write omit this method; the registry reports such
+   * skills as not updatable.
+   * @param candidate - the winning candidate originally returned by this provider.
+   * @param patch - fields to replace; omitted fields stay unchanged.
+   * @param options - lookup options; `cwd` selects workspace-sensitive skills and `signal` cancels work.
+   * @returns the updated complete skill, or `undefined` when it is no longer writable.
+   */
+  readonly update?: (
+    candidate: SkillCandidate,
+    patch: SkillUpdatePatch,
+    options: SkillLookupOptions,
+  ) => Promise<SkillDefinition | undefined>
 }
 ```
 
@@ -122,6 +138,12 @@ interface SkillSummary {
   readonly provider: string
   /** Provider-specific base for relative resources. */
   readonly resourceBase?: SkillResourceBase
+  /**
+   * Whether the winning provider accepts body or metadata changes through
+   * {@link SkillRegistry.update}. The registry owns this fact; providers do not
+   * set it on their candidates.
+   */
+  readonly updatable?: boolean
 }
 ```
 
@@ -177,7 +199,7 @@ interface SkillDefinition extends SkillSummary {
 
 ```ts type-equiv
 /** Runtime skill contribution accepted by `ctx.skills.register()`. */
-type SkillRegistration = Omit<SkillDefinition, 'invocation' | 'provider'> & {
+type SkillRegistration = Omit<SkillDefinition, 'invocation' | 'provider' | 'updatable'> & {
   /** Invocation controls; omission permits both model and user surfaces. */
   readonly invocation?: SkillInvocationPolicy
   /** Provider label; omission uses the registry-owned runtime provider. */
@@ -252,13 +274,35 @@ Host service backing `ctx.remote.skills` without activating a cold Agent.
 
 ```ts cordis-catalog
 /**
- * List the user-invocable skills visible to one Session composition.
+ * List the skills visible to one Session composition.
  * @param request - Session identity whose cwd and preset select the catalog view.
  * @param signal - caller lifetime carried by the Remote transport; admitted catalog reads retain their existing completion semantics.
- * @returns user-invocable skill metadata without loading skill bodies.
+ * @returns skill metadata without loading bodies. User-invocable skills only
+ *   unless `includeModelOnly` requests the complete catalog.
  * @throws RemoteError when the Session cannot be inspected or no registry can serve it.
  */
 @Remote async list(request: SkillListRequest, signal: AbortSignal): Promise<SkillListValue>
+
+/**
+ * Read one skill's display metadata and instruction body.
+ * @param request - Session identity and the kebab-case skill name.
+ * @param signal - caller lifetime carried by the Remote transport.
+ * @returns the skill definition, including its Markdown body.
+ * @throws RemoteError when the Session cannot be inspected, no registry can serve it, or the skill is absent.
+ */
+@Remote async get(request: SkillGetRequest, signal: AbortSignal): Promise<SkillGetValue>
+
+/**
+ * Rewrite one personal skill's description, routing hint, and body through
+ * its owning provider. The Host resolves the file from the winning catalog
+ * entry, so the request never supplies a path.
+ * @param request - Session identity, skill name, and replacement fields.
+ * @param signal - caller lifetime carried by the Remote transport.
+ * @returns the saved skill as a fresh read.
+ * @throws RemoteError when the request is invalid, the Session cannot be inspected,
+ *   the skill is absent, or its source/provider is not editable.
+ */
+@Remote async save(request: SkillSaveRequest, signal: AbortSignal): Promise<SkillSaveValue>
 ```
 
 Source: [`packages/api/session-controller/src/skill-catalog.ts`](../../packages/api/session-controller/src/skill-catalog.ts)
@@ -323,6 +367,20 @@ async snapshot(options: SkillViewOptions = {}): Promise<SkillCatalogSnapshot>
  * @returns the full skill, including body content, or `undefined`.
  */
 async get(name: string, options: SkillViewOptions = {}): Promise<SkillDefinition | undefined>
+
+/**
+ * Apply one content or metadata change to the winning skill and return its new
+ * definition. The owning provider performs the write; the registry then
+ * invalidates its catalog cache and notifies `skills/change` listeners, so a
+ * subsequent read sees the update even without a filesystem watcher.
+ * @param name - kebab-case skill name.
+ * @param patch - fields to replace; omitted fields stay unchanged.
+ * @param options - view options; `scope` selects the viewing agent's layers,
+ *   `cwd` selects workspace-sensitive skills, and `signal` cancels work.
+ * @returns the updated skill, or `undefined` when the skill is absent or its
+ *   winning provider cannot update.
+ */
+async update(name: string, patch: SkillUpdatePatch, options: SkillViewOptions = {}): Promise<SkillDefinition | undefined>
 ```
 
 Source: [`packages/skill/skill/src/index.ts`](../../packages/skill/skill/src/index.ts)

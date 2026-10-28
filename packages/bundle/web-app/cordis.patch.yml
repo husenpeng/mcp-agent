@@ -35,7 +35,7 @@
 # `dsh.client` rows are the browser roster the modules node half scans into
 # window.__DSH_BOOT__; the modules row is simultaneously a host row.
 - insert:
-    # Tomato Harness reports through its own relay plugin; the DeepSeek product
+    # Tomato AI reports through its own relay plugin; the DeepSeek product
     # telemetry and the client-side product analytics rows stay off.
     - id: desktop-product-telemetry
       name: '@deepseek-ai/dsh-host-product-telemetry-otel'
@@ -125,8 +125,7 @@
 
     # Configuration-surface reads and writes over Typert Remote. Each method
     # reports an actionable error when its settings-domain provider is absent.
-    # Tomato Harness signs in through its own desktop token exchange, so the
-    # DeepSeek account section and its Remote controller stay off.
+    # Tomato AI replaces the DeepSeek account surface with `@tomato/account`.
     - id: ui-settings-account
       name: '@deepseek-ai/dsh-client-ui-settings-account'
       disabled: true
@@ -134,6 +133,30 @@
     - id: account-controller
       name: '@deepseek-ai/dsh-api-account-controller'
       disabled: true
+
+    # Same-origin browser gateway: /api/auth/* projects auth_service sessions,
+    # /api/services/* forwards only the configured service table. Host RPC,
+    # model requests, tool egress, and telemetry stay outside it.
+    - id: tomato-gateway
+      name: '@tomato/gateway'
+      config:
+        authServiceUrl: !!js process.env.AUTH_SERVICE_URL ?? ''
+        companyWebUrl: !!js process.env.TOMATO_WEB_URL ?? ''
+        services: {}
+
+    # hiCreator creator-data MCP over remote Streamable HTTP. The row stays
+    # disabled until HICREATOR_API_KEY is present, so a checkout without a key
+    # starts unchanged; tools appear as mcp__hicreator__<tool>. Usage bills the
+    # hiCreator workspace that owns the key.
+    - id: mcp-hicreator
+      name: '@deepseek-ai/dsh-mcp-client'
+      disabled: !!js "!process.env.HICREATOR_API_KEY"
+      config:
+        serverName: hicreator
+        transport: streamable-http
+        url: https://mcp.hicreator.ai/mcp
+        headers:
+          Authorization: !!js '`Bearer ${process.env.HICREATOR_API_KEY}`'
 
     - id: settings-controller
       name: '@deepseek-ai/dsh-api-settings-controller'
@@ -291,6 +314,11 @@
     - id: ui-sidebar-files
       name: '@deepseek-ai/dsh-client-ui-sidebar-files'
 
+    # The right Sidebar's Skills browser: every installed skill, its details,
+    # and edits to personal skill files.
+    - id: ui-skill-browser
+      name: '@deepseek-ai/dsh-client-ui-skill-browser'
+
     - id: ui-settings
       name: '@deepseek-ai/dsh-client-ui-settings'
 
@@ -324,13 +352,17 @@
       name: '@deepseek-ai/dsh-client-ui-chat'
 
     # Official occupants for the generic sidebar and conversation brand slots.
-    # Tomato Harness replaces them with `@tomato/brand`.
+    # Tomato AI replaces them with `@tomato/brand`.
     - id: ui-brand-official
       name: '@deepseek-ai/dsh-client-ui-brand-official'
       disabled: true
 
     - id: tomato-brand
       name: '@tomato/brand'
+
+    # Sidebar account launcher and Account settings section over the local gateway.
+    - id: tomato-account
+      name: '@tomato/account'
 
     - id: ui-attachment
       name: '@deepseek-ai/dsh-client-ui-attachment'

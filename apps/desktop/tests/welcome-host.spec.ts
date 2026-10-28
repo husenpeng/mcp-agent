@@ -2,6 +2,21 @@
 import { describe, expect, it, vi } from 'vitest'
 import { connectDesktopWelcome } from '../src/welcome-backend.ts'
 
+vi.mock('electron', () => ({
+  app: { getPath: () => '/tmp/tomato-welcome-host' },
+  safeStorage: {
+    isEncryptionAvailable: () => false,
+    encryptString: (value: string) => Buffer.from(value),
+    decryptString: (value: Buffer) => value.toString(),
+  },
+  session: {
+    fromPartition: () => ({
+      cookies: { get: async () => [], set: async () => undefined },
+      clearStorageData: async () => undefined,
+    }),
+  },
+}))
+
 function transport(preference?: string) {
   const keys = new Map<string, string>()
   const namespaces = [
@@ -90,7 +105,7 @@ describe('desktop welcome Web operations', () => {
     host.send.mockRejectedValueOnce(new Error('private credential sk-must-not-leak'))
     expect(await backend.save('sk-example')).toEqual({ ok: false })
     host.send.mockResolvedValueOnce(Response.json({ type: 'server-response', rpcId: 'other', result: { ok: true } }))
-    await expect(backend.read()).rejects.toThrow('Web RPC failed')
+    await expect(backend.read()).rejects.toThrow(/Web RPC .*failed/)
   })
 
 

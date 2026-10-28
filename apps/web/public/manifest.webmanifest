@@ -1,6 +1,6 @@
 {
-  "name": "DeepSeek Harness",
-  "short_name": "DSH",
+  "name": "Tomato AI",
+  "short_name": "Tomato AI",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

@@ -1,8 +1,8 @@
-# Tomato Harness
+# Tomato AI
 
 [English](README.md) | 中文
 
-Tomato Harness 是面向达人营销团队的内部桌面 agent。它在 Electron 外壳里运行 DeepSeek Harness（`dsh`）运行时，用公司账号登录，所有模型请求都走公司中转站，并把 turn 与工具活动上报到内部 OTLP relay，由 relay 转发 Langfuse。
+Tomato AI 是面向达人营销团队的内部桌面 agent。它在 Electron 外壳里运行 DeepSeek Harness（`dsh`）运行时，用公司账号登录，模型请求走用户在模型页配置的第三方 API，并把 turn 与工具活动上报到内部 OTLP relay，由 relay 转发 Langfuse。
 
 本仓库是 `deepseek-harness` 在提交 `22ddee3792` 的一次性硬分叉，不合并上游。上游包保留 `@deepseek-ai/*` 命名，番茄自有包使用 `@tomato/*`。全部分叉决策记录在 [docs/tomato/decisions.md](docs/tomato/decisions.md)。
 
@@ -39,7 +39,6 @@ Tomato Harness 是面向达人营销团队的内部桌面 agent。它在 Electro
 | 渲染进程（dsh Web 客户端） | 对话、工具卡、审批、设置、会话导航 | 凭证、文件系统访问 |
 | Host（`apps/desktop-host`） | dsh 运行时：agent 循环、会话、工具、模型请求、HTTP 与 WebSocket 服务 | 窗口、托盘、原生对话框 |
 | 公司登录服务 | 身份、会话策略、令牌签发 | 本机上的任何东西 |
-| 公司模型中转站 | 模型路由、按人配额、计量 | 业务数据 |
 | 公司 OTLP relay | trace 映射、Langfuse 凭证、脱敏 | 客户端状态 |
 
 Host 监听系统分配的环回端口；主进程用一次性 cookie 认证一次，然后把 `dsh-app://app/` 文档发出的应用 HTTP 请求转发过去。主进程与 Host 之间的 Node IPC 只承载启动注入、就绪、关停与退出检查。
@@ -65,14 +64,15 @@ $DSH_HOME/profiles/desktop/package.json      dsh.profile.bundles = [dsh-base, ds
 | 行 | 改动 |
 |---|---|
 | `system-prompt` 与四个预设 | 人格改为达人营销助手 |
-| `agent-default-model` | `tomato-relay` / `tomato-chat` |
-| `llm-pi-ai` | 一条手写路由：`api: openai-completions`、`apiKeyEnv: TOMATO_RELAY_API_KEY`、`baseURL` 指向本地 mock |
+| `agent-default-model` | 空的 provider/model：用户选择前没有默认模型 |
+| `llm-pi-ai` | 不预置路由；第三方 OpenAI 或 Anthropic 兼容端点由模型页声明 |
 | `deepseek-account`、`llm-deepseek`、`llm-deepseek-account`、`deepseek-llm-api-extensions`、`session-log-deepseek`、`plugin-package-inventory-deepseek` | `disabled: true` |
 | `session-telemetry-otel`、`product-analytics`、`desktop-product-telemetry` | `disabled: true` |
 | `web-search-deepseek`、`web-deepseek-api` | `disabled: true`；HTTP fetch 保留 |
 | `tomato-telemetry` | 新增行：把 span 发往 `TOMATO_OTLP_ENDPOINT` |
 | `ui-brand-official` | `disabled: true`；三个品牌槽由 `@tomato/brand` 提供 |
-| `ui-settings-account`、`account-controller` | `disabled: true` |
+| `ui-settings-account`、`account-controller` | `disabled: true`；由 `@tomato/account` 注册侧栏入口与设置账户页 |
+| `tomato-gateway` | 新增行：同源 `/api/auth/*` 与固定服务表 `/api/services/*` |
 
 ### 能力接缝
 
@@ -118,10 +118,10 @@ UI 插件只向自己未声明的槽位注册，并通过 `ctx.slots.inject` 等
 | 仓库模型 | 一次性硬分叉，不合并上游 | 产品已结构性分叉，台账式对照没有参照物 |
 | 产品代码 | `packages/tomato/*`、`@tomato/*` | 与上游一眼可分，又不必全仓改名 |
 | 改动位置 | 直接改两个随仓库发布的 bundle | 只有一处可读；另加一层反而藏住分歧 |
-| 模型接入 | `llm-pi-ai` 一条手写路由 | 内核零改动；中转站本就是 OpenAI 兼容端点 |
-| 模型清单 | 从 `GET /v1/models` 发现 | 目录由中转站拥有，写死会漂移 |
-| 登录 | 公司桌面令牌端点，浏览器跳回环监听 | 不内嵌浏览器，凭证不进 URL，令牌不经过渲染进程 |
-| 令牌存储 | Electron `safeStorage` + Host 凭证库 | 欢迎窗在 Host 启动前就能回答“是否已登录”；路由每次请求解析同一份值 |
+| 模型接入 | `llm-pi-ai`，路由由用户在模型页声明 | 不预置路由；任意 OpenAI 或 Anthropic 兼容第三方端点都无需改内核 |
+| 模型清单 | 按服务商从其列表发现，或手工填写 | 目录由服务商拥有，写死会漂移 |
+| 登录 | 隔离窗口中的公司飞书流程，经 BFF 一次性 handoff 交给本地网关 | 飞书密钥留在服务端，sessionId 不进 URL |
+| 会话存储 | Electron `safeStorage`，主进程注入 `X-Tomato-Session`；Web 用 httpOnly cookie | 渲染进程与凭证库都拿不到 sessionId |
 | 遥测 | 自写 OTLP 上报到内部 relay | Langfuse 凭证留在服务端；dsh 自带通道全关 |
 | 品牌 | 槽位占位 + 单色图形 | 槽位组合是受支持的方式；`currentColor` 自动跟随两套主题 |
 | 分发 | macOS arm64 未签名包，无自动更新 | 内部使用；签名与 feed 属于生产化工作 |
@@ -139,7 +139,7 @@ UI 插件只向自己未声明的槽位注册，并通过 `ctx.slots.inject` 等
 | 磁盘 | 约 3 GB | `node_modules`、构建缓存、Electron（约 300 MB）、primary runtime 载荷 |
 | 网络 | npm 源、PyPI、Electron 发布主机 | 载荷按固定版本下载；可用内部镜像 |
 
-首次运行无需其它准备：本地 mock 同时提供模型、登录与 relay，因此不需要任何凭证。
+首次运行需要准备一个模型服务商。账户入口需要 `AUTH_SERVICE_URL` 与 `TOMATO_WEB_URL` 才能登录；没有它们工作区仍可启动，本地会话照常工作。首条消息前需在「设置 → 模型」中添加第三方模型 API。
 
 <a id="initialize"></a>
 
@@ -173,14 +173,18 @@ ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ \
 两个终端：
 
 ```sh
-# 1) local stand-ins for the relay, the login service, and the OTLP sink
-pnpm run mock:tomato
+# 1) external login services: services-monorepo auth_service and the company BFF
+#    (their origins are configured on the gateway; see the handoff contract)
 
 # 2) the desktop application (builds, prepares the payload, launches Electron)
-TOMATO_OTLP_ENDPOINT=http://127.0.0.1:4010/v1/traces \
-TOMATO_AUTH_URL=http://127.0.0.1:4010 \
 pnpm run dev:desktop
 ```
+
+`dev:desktop` 从 `apps/desktop/config/development.env` 读取本地登录地址（`http://localhost:8020` 与 `http://localhost:3000`），无需在 shell 里导出；启动时显式给出的 `AUTH_SERVICE_URL` / `TOMATO_WEB_URL` 仍然优先。遥测等其余变量继续从继承环境读取，例如 `TOMATO_OTLP_ENDPOINT=http://127.0.0.1:4318/v1/traces pnpm run dev:desktop`。
+
+外部登录服务未启动时工作区仍可启动；账户入口显示“登录服务不可用”，本地会话、工具与已配置的模型服务商继续工作。
+
+打包产物会把所选打包文件里的 `DSH_DESKTOP_AUTH_SERVICE_URL` 与 `DSH_DESKTOP_TOMATO_WEB_URL` 封进应用 manifest（见[打包文档](apps/desktop/packaging/README.zh.md)）；上面的环境变量只用于源码启动，启动时显式给出的值仍会覆盖封装值。
 
 `dev:desktop` 会跑一次产物构建，在 `apps/desktop/.desktop-build/development` 下生成一次性工程，首次使用时准备 primary runtime（数百 MB 下载），然后启动 Electron，环境变量如下：
 
@@ -200,34 +204,52 @@ pnpm run dev:desktop
 
 ### 登录
 
-登录走公司 Web 应用的飞书路由，因此飞书开放平台无需登记桌面回跳地址，桌面也不持有任何飞书密钥：
+登录走公司 Web 应用的飞书路由。浏览器只访问本地同源网关；网关不持有任何飞书密钥：
 
-1. 欢迎窗的「登录」打开一个隔离的 Electron 窗口，地址为 `${TOMATO_WEB_URL}/api/auth/feishu/start`。
-2. BFF 向登录服务索取飞书授权链接，跳转飞书，并回到自己的源接收回调。用户在窗口里完成的正是网页端同一套登录。
-3. 桌面轮询该窗口的 cookie 分区取 BFF 下发的 `session_id`，再用 `POST ${TOMATO_AUTH_URL}/api/v1/auth/session/verify` 确认真实有效。
-4. 桌面用该会话向 `POST ${TOMATO_AUTH_URL}/api/v1/auth/desktop/token` 换长期令牌。服务端尚未提供该端点时返回 404，此时直接存储 session id，登录照常可用，等服务端补齐。
-5. 令牌加密写入 `userData/tomato-auth.json`，并以 `TOMATO_RELAY_API_KEY` 写进 Host 凭证库；登录窗口及其存储分区随即销毁。
+1. 欢迎窗的「登录」在隔离的 Electron 窗口打开 Host 的 `/api/auth/start`（Web 端用弹窗）。
+2. 网关生成 `state` 与 `verifier`，本地保存 verifier，只把 challenge 与 loopback 回调交给公司 BFF 的 `/api/auth/feishu/start`。
+3. BFF 在自己的源完成飞书 OAuth，用授权码向 auth_service 换会话，并签发绑定 challenge 的一次性 handoff code。
+4. BFF 回跳网关 `/api/auth/callback`；网关用 verifier 兑换 code，写入 httpOnly `tomato_session` cookie。
+5. Desktop 主进程读取一次该 cookie，把 sessionId 存入 `safeStorage`，转发 Host 请求时注入 `X-Tomato-Session`；渲染进程与 Host 凭证库都拿不到它。
+
+每次读取 `/api/auth/session` 与每次 `/api/services/*` 转发都会调用 auth_service 校验会话。登出先尽力调用 `/api/v1/auth/session/revoke`，无论远端是否成功都清本地状态。
 
 | 变量 | 默认值 | 含义 |
 |---|---|---|
-| `TOMATO_WEB_URL` | `https://test.tomatoai.vip` | 承载飞书 BFF 路由的公司 Web 应用 |
-| `TOMATO_AUTH_URL` | `http://127.0.0.1:4010` | 签发会话与桌面令牌的登录服务 |
+| `AUTH_SERVICE_URL` | `''` | auth_service 基础地址；为空时登录不可用 |
+| `TOMATO_WEB_URL` | `''` | 公司 BFF 基础地址；为空时登录不可用 |
+
+精确的 mint/redeem 契约见 [docs/tomato/auth-handoff-contract.md](docs/tomato/auth-handoff-contract.md)。两个端点属于服务端工作；落地前账户入口显示不可用，不使用 mock 兜底。
+
+<a id="configure-models"></a>
+
+### 配置模型服务商
+
+基础组合不预置模型路由。打开 **设置 → 模型**，选择 **Add model provider → Custom model API**，填写 Provider ID、端点、API 协议、至少一个模型与 API Key。页面把路由配置写进当前 profile，密钥只写不读，不会返回浏览器。
+
+| 数据 | 存放位置 | 保护方式 |
+|---|---|---|
+| 服务商配置（ID、显示名、协议、base URL、模型） | `$DSH_HOME/profiles/desktop/cordis.patch.yml` | 归属当前 OS 用户的明文 YAML |
+| API Key（`<ROUTE>_API_KEY`） | `$DSH_HOME/.credentials.yaml` | 权限 0600；POSIX 下拒绝其他用户可读；Client 只能看到已配置/缺失状态 |
+| 桌面登录会话 | `userData/tomato-auth.json` | 可用时由 `safeStorage` 加密；只由主进程以 `X-Tomato-Session` 注入 |
+
+凭证文件是靠 OS 用户权限保护的明文 YAML。agent 的工具进程以同一 OS 用户运行，因此文件权限防不了 agent 自己读取。自定义服务商的 `headers` 仍属于 `cordis.patch.yml` 的部署配置，页面不提供编辑。
 
 <a id="local-services"></a>
 
-## 本地服务
+## 本地网关
 
-`pnpm run mock:tomato` 在 4010 端口用一个进程同时提供三个外部依赖：
+公司服务只经 Host 的同源网关访问。网关没有 mock 路由：
 
 | 路由 | 提供 |
 |---|---|
-| `GET /v1/models` | 供模型选择页使用的双模型目录 |
-| `POST /v1/chat/completions` | OpenAI 兼容 SSE；提示中出现「列出目录」时产生一次 `bash` 工具调用 |
-| `GET /desktop/authorize` | 登录页；立即批准并带 code 跳回 CLI 监听地址 |
-| `POST /desktop/token` | 用该 code 换令牌 |
-| `POST /v1/traces` | 接收 OTLP 批次并记录大小 |
+| `GET /api/auth/start` | 创建登录尝试并跳转公司 BFF |
+| `GET /api/auth/callback` | 兑换 handoff code 并写入 `tomato_session` |
+| `GET /api/auth/session` | 经 auth_service 校验的三态账户投影 |
+| `POST /api/auth/logout` | 尽力吊销 auth_service 会话并清 cookie |
+| `/api/services/<service>/<path>` | 固定服务表转发，注入已验证用户身份；浏览器不能指定 host |
 
-接入真实公司服务只需改三处：路由的 `baseURL`（模型页或 profile patch）、`TOMATO_AUTH_URL`、`TOMATO_OTLP_ENDPOINT`。
+auth_service、公司 BFF 与后续服务都是外部进程。分别启动它们并填入 `AUTH_SERVICE_URL` / `TOMATO_WEB_URL`；两者为空时网关照常启动，登录显示不可用。OTLP 遥测仍由 Host 直接发往 `TOMATO_OTLP_ENDPOINT`，不经过网关。
 
 <a id="logging-and-developer-mode"></a>
 
@@ -235,7 +257,7 @@ pnpm run dev:desktop
 
 ### 诊断日志
 
-外壳在平台日志目录下按天写一份滚动文本日志（目录跟随应用名：未打包启动为 `~/Library/Logs/Harness Dev/`，打包后为 `~/Library/Logs/Tomato Harness/`）：
+外壳在平台日志目录下按天写一份滚动文本日志（目录跟随应用名：未打包启动为 `~/Library/Logs/Harness Dev/`，打包后为 `~/Library/Logs/Tomato AI/`）：
 
 ```text
 2026-10-24T05:12:31.481Z [info] shell started (version 0.2.1-rc.3, developer=true) { electron: '44.7.0', ... }
@@ -245,7 +267,7 @@ pnpm run dev:desktop
 2026-10-24T05:13:02.115Z [error] fatal (renderer) Error: …
 ```
 
-记录的通道：`info`（生命周期）、`host`（Host 的 stdout 与 stderr，同时原样透传到终端）、`renderer`（错误级控制台行，带 bundle 位置）、`warn`、`error`（未捕获异常、未处理 rejection 与所有致命路径）。文件到 8 MB 滚动，按修改时间保留五份。写入前会对凭证形态的片段做脱敏：Bearer 令牌、`sk-…` 密钥、`TOMATO_RELAY_API_KEY=…` 赋值与 `?token=` 查询值。
+记录的通道：`info`（生命周期）、`host`（Host 的 stdout 与 stderr，同时原样透传到终端）、`renderer`（错误级控制台行，带 bundle 位置）、`warn`、`error`（未捕获异常、未处理 rejection 与所有致命路径）。文件到 8 MB 滚动，按修改时间保留五份。写入前会对凭证形态的片段做脱敏：Bearer 令牌、`sk-…` 密钥与 `?token=` 查询值。
 
 ### 开发者模式
 
@@ -276,10 +298,10 @@ M1 是内部使用、未签名、未发布的构建。以下缺口按对推广�
 
 ### 阻塞项
 
-1. **服务端端点** —— 桌面令牌端点（`/desktop/authorize`、`/desktop/token`）、内部 OTLP relay 与业务 MCP 网关目前都是 mock。三者都需要真实实现、确定的令牌有效期与吊销机制。
+1. **服务端端点** —— auth_service 与公司 BFF 尚未实现 handoff mint/redeem 契约，业务 MCP 网关也未实现。落地前登录不可用；不保留 mock 兜底。
 2. **签名与公证** —— 未签名包会在每台机器上被 Gatekeeper 拦住，非技术用户无法安装。签名需要 Developer ID 证书、`notarize` 与稳定的 bundle id（`DSH_DESKTOP_APP_ID`）。
 3. **更新通道** —— 没有 feed、没有更新策略、没有回滚。发布意味着选定 feed 主机、通道名，以及更新是否强制。
-4. **静态凭证保护** —— `safeStorage` 不可用时（Linux 无 keyring，或钥匙串被锁）令牌文件退化为明文。打包的 macOS 版有钥匙串访问权，但该退化路径应改为拒绝启动而非静默降级。
+4. **静态凭证保护** —— `safeStorage` 不可用时（Linux 无 keyring，或钥匙串被锁）会话文件退化为明文。打包的 macOS 版有钥匙串访问权，但该退化路径应改为拒绝启动而非静默降级。
 5. **权限姿态** —— `danger-full-access` 允许模型输出直接驱动本机命令。生产构建应隐藏该档位，或要求逐机显式解锁。
 
 ### 重要项
@@ -289,7 +311,7 @@ M1 是内部使用、未签名、未发布的构建。以下缺口按对推广�
 8. **会话数据生命周期** —— JSONL 会话在 Harness home 下持续累积，没有留存策略、导出或按人配额。
 9. **业务 UI** —— MCP 工具的业务卡片与右侧栏详情属 M2；在此之前业务结果只渲染为通用 JSON 卡片。
 10. **本地化覆盖** —— 外壳支持八种语言，但业务文案与新产品名只审阅了中英文。
-11. **模型目录漂移** —— 占位模型 `tomato-chat` 只能通过中转站的列表解析。中转站离线或不提供列表时，选择器会停在一个网关未必支持的模型上。
+11. **模型配置依赖人工** —— 不预置路由，也没有组织级默认模型。首次运行必须先添加第三方端点与密钥才能发消息。
 12. **可访问性与键盘** —— 欢迎流程与开发者菜单未经过仓库的 UI 审查技能覆盖，发布前应做一次屏幕阅读器检查。
 
 ### 可选项
@@ -306,9 +328,10 @@ M1 是内部使用、未签名、未发布的构建。以下缺口按对推广�
 |---|---|---|
 | `Downloading Electron binary...` 长时间不结束 | 发布主机慢或被阻断 | 按上文用 `ELECTRON_MIRROR` 重装 |
 | `dev:desktop` 报 `The operation was aborted due to timeout` | primary runtime 下载超时 | 先跑 `pnpm --filter @deepseek-ai/dsh-desktop run prepare:primary-runtime`，或调大 `DSH_RESOURCE_DOWNLOAD_TIMEOUT_MS` |
-| 欢迎窗出现但登录从不返回 | `TOMATO_AUTH_URL` 上没有登录服务 | 启动 `pnpm run mock:tomato`，确认端口一致 |
-| 对话回复报缺少凭证 | 令牌没有写进 Host 凭证库 | 重新登录；交换时外壳会写入 `TOMATO_RELAY_API_KEY` |
-| 模型列表为空 | 中转站没有 `/v1/models` | 用 `curl $TOMATO_RELAY_BASE_URL/models` 确认 |
+| 登录显示服务不可用 | `AUTH_SERVICE_URL` 或 `TOMATO_WEB_URL` 为空/不可达，或 BFF 没有 handoff 端点 | 填入两个地址并核对 `docs/tomato/auth-handoff-contract.md` |
+| 对话回复报缺少凭证 | 该路由的 API Key 没有存进凭证库 | 在「设置 → 模型」重新输入密钥；密钥写入凭证库，不写进 profile |
+| 模型列表为空 | 尚未配置服务商，或其列表请求失败 | 在「设置 → 模型」添加或编辑服务商，再用 **Fetch available models** 探测 |
+| 发消息时提示选择模型 | 还没有默认模型 | 在输入框的模型选择器里选一个，或先配置服务商 |
 | 找不到日志 | `app.setAppLogsPath()` 决定平台目录 | 跑 `pnpm run dev:desktop`，看它打印的 `userData` 路径，日志就在旁边 |
 
 ## License

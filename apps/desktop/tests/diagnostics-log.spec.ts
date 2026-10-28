@@ -34,7 +34,7 @@ describe('diagnostics log', () => {
   it('redacts credential shapes before writing', () => {
     expect(redact('authorization: Bearer abc.def-123')).toBe('authorization: Bearer [redacted]')
     expect(redact('key sk-abcdefghijklmnop')).toBe('key [redacted-token]')
-    expect(redact('TOMATO_RELAY_API_KEY=tomato-local-token-x')).toBe('TOMATO_RELAY_API_KEY=[redacted]')
+    expect(redact('DEEPSEEK_API_KEY=local-token-x')).toBe('DEEPSEEK_API_KEY=[redacted]')
     expect(redact('http://host/cb?code=abc&state=1')).toBe('http://host/cb?code=[redacted]&state=1')
     expect(redact('ordinary text')).toBe('ordinary text')
 

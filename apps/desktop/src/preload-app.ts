@@ -14,6 +14,15 @@ import type { FileDragHandle } from '@deepseek-ai/dsh-util-file-drag'
 function createProductApi(): DshDesktopProductApi {
   return {
     protocolVersion: 1,
+    account: {
+      openSignIn: () => ipcRenderer.invoke(DESKTOP_IPC.accountOpenSignIn) as Promise<void>,
+      signOut: () => ipcRenderer.invoke(DESKTOP_IPC.accountSignOut) as Promise<void>,
+      subscribe: (listener) => {
+        const handle = (): void => { listener() }
+        ipcRenderer.on(DESKTOP_IPC.accountChanged, handle)
+        return () => { ipcRenderer.off(DESKTOP_IPC.accountChanged, handle) }
+      },
+    },
     browser: createDesktopBrowserBridge(),
     fileDrag: {
       prepare: (source, requestId) => ipcRenderer.invoke(DESKTOP_IPC.fileDragPrepare, source, requestId) as

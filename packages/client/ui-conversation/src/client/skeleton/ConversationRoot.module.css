@@ -7,6 +7,31 @@
   background: var(--dsw-alias-bg-base);
 }
 
+/* Empty-hero page backdrop, matching the client-monorepo strategy landing:
+   4px dots on a 46px pitch, centered behind the whole column. The gradient is
+   the fallback for a canvas that cannot draw (reduced motion keeps a static
+   canvas frame instead); `DotField` hides it once its first frame lands.
+   `isolation` keeps the canvas's negative-z layer above this background and
+   below the hero content without leaving the column's stacking context. */
+.root[data-phase='hero'] {
+  isolation: isolate;
+  background-image: radial-gradient(circle, var(--dsw-alias-border-l3) 2px, transparent 2.4px);
+  background-position: center;
+  background-size: 46px 46px;
+}
+
+/* The canvas owns the dots once drawn; the attribute contract crosses CSS
+   module files without sharing a hashed class name. */
+.root[data-phase='hero']:has(> [data-dot-field][data-ready]) {
+  background-image: none;
+}
+
+/* The seat's transcript fade masks the docked scroller; in the centered hero
+   it would paint a base-colored band across the page dots. */
+.root[data-phase='hero'] .composerSeat {
+  background: none;
+}
+
 /* 76px with its rule: the height of the Sidebar's tab strip and header row
    (ui-dockkit `.tabStrip` 38px + the pane header's 38px), so the two rules
    meet at the column edge. The rows add up to it — 10px top inset, the 30px

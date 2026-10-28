@@ -1,5 +1,5 @@
 ---
-description: "Turn and tool spans for Tomato Harness, folded from durable session events and posted to the internal OTLP relay."
+description: "Turn and tool spans for Tomato AI, folded from durable session events and posted to the internal OTLP relay."
 kind: "package-reference"
 ---
 
@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-This package reports what Tomato Harness agents did: one span per turn and one child span per completed tool call, sent as OTLP/HTTP JSON to the internal relay that forwards to Langfuse. It derives everything from durable session events, sends no session content, and never delays the agent loop: a failing relay logs one warning and drops the batch.
+This package reports what Tomato AI agents did: one span per turn and one child span per completed tool call, sent as OTLP/HTTP JSON to the internal relay that forwards to Langfuse. It derives everything from durable session events, sends no session content, and never delays the agent loop: a failing relay logs one warning and drops the batch.
 
 ## Table of Contents
 
@@ -17,6 +17,7 @@ This package reports what Tomato Harness agents did: one span per turn and one c
 - [What is recorded](#what-is-recorded)
 - [Model Experience](#model-experience)
 - [Known Limitations and Deferred Work](#known-limitations-and-deferred-work)
+- [Dev Note](#dev-note)
 
 <a id="use-this-package"></a>
 
@@ -74,3 +75,14 @@ None; this package neither assembles nor sends a provider request.
 - **No content capture** — spans carry timing and outcome only. Prompt/response capture needs a deliberate decision about redaction and storage first.
 - **Best-effort delivery** — there is no durable outbox; a relay outage loses the batches produced while it is down.
 - **One span per tool call** — nested subagent turns produce their own traces through their own sessions, not as children of the parent turn.
+
+<a id="dev-note"></a>
+
+### Dev Note
+
+<details>
+<summary>Working context for maintainers — click to expand</summary>
+
+None.
+
+</details>

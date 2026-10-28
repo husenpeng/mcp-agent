@@ -45,6 +45,7 @@ import { openWelcomeWindow } from './welcome-window.ts'
 import { WELCOME_IPC, needsWelcome, type WelcomeNotice } from './welcome-api.ts'
 import { connectDesktopWelcome, type DesktopWelcomeBackend } from './welcome-backend.ts'
 import { webBaseUrl } from './tomato-auth.ts'
+import { resolveLoginEnvironment, withLoginEnvironment, type DesktopLoginEnvironment } from './login-environment.ts'
 import { DesktopUpdateJournal } from './update-journal.ts'
 import { DesktopUpdatePreparationError } from './update-error.ts'
 import { DesktopUpdateSchedule, resolveDesktopUpdateScheduleConfig } from './update-schedule.ts'
@@ -199,21 +200,28 @@ function developmentHostInspectPort(enabled: boolean): number | undefined {
  * @returns the sidebar fill hex for the active system color scheme.
  */
 function chromeFallbackFill(): string {
-  return nativeTheme.shouldUseDarkColors ? '#191b1c' : '#ffffff'
+  return nativeTheme.shouldUseDarkColors ? '#1b1b1c' : '#f9fafb'
 }
 
 /**
- * Add the effective Desktop palette to a Platform authorization URL so the
- * login page opens in the application's theme. `system` resolves through
- * `nativeTheme.shouldUseDarkColors`, which follows the theme source the
- * application preload publishes.
- * @param authorizeUrl - validated Platform authorization URL.
- * @returns the authorization URL carrying `theme=light` or `theme=dark`.
+ * Add the effective Desktop palette to a sign-in URL so the login page opens
+ * in the application's theme.
+ * @param authorizeUrl - validated sign-in URL.
+ * @returns the URL carrying `theme=light` or `theme=dark`.
+ */
+function themedAuthorizationUrl(authorizeUrl: string): string {
+  const target = new URL(authorizeUrl)
+  target.searchParams.set('theme', nativeTheme.shouldUseDarkColors ? 'dark' : 'light')
+  return target.href
+}
+
+/**
+ * Create one application window with the native material and platform chrome.
  */
 function createWindow(preload: string, show = false, primary = false): BrowserWindow {
   const window = new BrowserWindow({
     width: 1280,
-    height: 820,
+    height: 760,
     minWidth: 520,
     minHeight: 600,
     show,
@@ -347,12 +355,22 @@ async function main(): Promise<void> {
     return result.environment
   })
   let hostEnvironment: NodeJS.ProcessEnv = process.env
-  const prepareHostEnvironment = async (): Promise<void> => { hostEnvironment = await loginShell }
+  let loginEnvironment: DesktopLoginEnvironment | undefined
+  // Packaging seals the login origins into the application manifest; an explicit
+  // launch environment still wins for support and local testing.
+  const manifestRead: Promise<unknown> = readFile(join(app.getAppPath(), 'package.json'), 'utf8')
+    .then(contents => JSON.parse(contents) as unknown)
+  const prepareHostEnvironment = async (): Promise<void> => {
+    const [environment, manifest] = await Promise.all([loginShell, manifestRead])
+    loginEnvironment = resolveLoginEnvironment(manifest, environment)
+    hostEnvironment = withLoginEnvironment(environment, loginEnvironment)
+  }
   let quitting = false
   let startup: Promise<void> | undefined
   let workspaceRecovery: Promise<void> | undefined
   let mainWindow: BrowserWindow | undefined
   let welcomeWindow: BrowserWindow | undefined
+  let welcomeFromWorkspace = false
   const installFileDrag = (): (() => Promise<void>) => installDesktopFileDrag(
     event => assertProductSender(event),
     (address, signal) => {
@@ -487,7 +505,7 @@ async function main(): Promise<void> {
         diagnostics.write('info', `host ready at ${ready.url}`)
         if (ready.injections === undefined) throw new Error('Desktop Host did not provide boot injections')
         injections = ready.injections
-        welcomeBackend = await connectDesktopWelcome(ready.url, (input, init) => net.fetch(input, init))
+        welcomeBackend = await connectDesktopWelcome(ready.url, (input, init) => net.fetch(input, init), hostCookie)
         analyticsEnabled = await welcomeBackend.analyticsEnabled().catch(() => false)
         if (!reportedLaunch) { reportedLaunch = true; void track('desktop_app_launch', {}) }
         stopAccount?.()
@@ -506,11 +524,26 @@ async function main(): Promise<void> {
             returnedAttempt = attempt.id
             focusPrimaryWindow()
           }
-          if (state.status === 'credential-stored' && attempt?.phase === 'succeeded' && welcomeWindow !== undefined) void enterWorkspace({ activate: false }).catch(() => undefined)
-          if (previousAccountStatus === 'credential-stored' && state.status === 'signed-out') {
+          if (state.status === 'credential-stored' && attempt?.phase === 'succeeded' && welcomeWindow !== undefined) {
+            if (welcomeFromWorkspace) {
+              welcomeFromWorkspace = false
+              const window = welcomeWindow
+              welcomeWindow = undefined
+              window.close()
+              mainWindow?.webContents.send(DESKTOP_IPC.accountChanged)
+            } else {
+              // The workspace client mounted behind the welcome window and read the
+              // signed-out projection, so it must re-read the account after sign-in.
+              void enterWorkspace({ activate: false }).then(() => {
+                if (mainWindow !== undefined && !mainWindow.isDestroyed()) {
+                  mainWindow.webContents.send(DESKTOP_IPC.accountChanged)
+                }
+              }).catch(() => undefined)
+            }
+          }
+          if (previousAccountStatus === 'credential-stored' && state.status === 'signed-out' && !enteredWorkspace) {
             void readWelcomeState().then(async (value) => {
               if (needsWelcome(value) && !quitting) {
-                enteredWorkspace = false
                 await showWelcome()
                 if (welcomeWindow !== undefined && !welcomeWindow.isDestroyed()) welcomeWindow.webContents.send(WELCOME_IPC.state, state)
               }
@@ -524,8 +557,7 @@ async function main(): Promise<void> {
           void readWelcomeState().then(async (value) => {
             if (!needsWelcome(value) || quitting) return
             pendingWelcomeNotice = 'session-expired'
-            enteredWorkspace = false
-            await showWelcome()
+            await showWelcome(enteredWorkspace)
             const state = await accountBackend.state()
             if (welcomeWindow !== undefined && !welcomeWindow.isDestroyed()) welcomeWindow.webContents.send(WELCOME_IPC.state, state)
           }).catch(() => undefined)
@@ -623,7 +655,7 @@ async function main(): Promise<void> {
     return startup
   }
 
-  const manifest: unknown = JSON.parse(await readFile(join(app.getAppPath(), 'package.json'), 'utf8'))
+  const manifest = await manifestRead
   const updateChannel = desktopUpdateChannel(manifest)
   const updates = new DesktopUpdateCoordinator(
     publishUpdate,
@@ -711,13 +743,13 @@ async function main(): Promise<void> {
       url.pathname === '/design-platform.css' ? 'lib/welcome' : 'renderer'))
     if (url.hostname === 'app') {
       if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname.startsWith('/assets/')
-        || ['/favicon.svg', '/manifest.webmanifest'].includes(url.pathname)) {
+        || ['/favicon.svg', '/favicon-dark.svg', '/manifest.webmanifest'].includes(url.pathname)) {
         return serveWebDocument(request, join(resources.dsh, 'node_modules', '@deepseek-ai', 'dsh-web-frontend', 'dist'))
       }
       if (backend.host === undefined || hostUrl === undefined || hostCookie === undefined) {
         return Promise.resolve(new Response(null, { status: 503 }))
       }
-      return forwardWebRequest(request, hostUrl, hostCookie)
+      return forwardWebRequest(request, hostUrl, hostCookie, welcomeBackend?.account.sessionId())
     }
     return Promise.resolve(new Response(null, { status: 404 }))
   })
@@ -973,7 +1005,7 @@ async function main(): Promise<void> {
   const applicationIconPath = development ? join(app.getAppPath(), 'resources', 'icon-windows.png')
     : join(process.resourcesPath, 'icon.png')
   app.setAboutPanelOptions({
-    applicationName: 'DeepSeek Harness',
+    applicationName: currentDesktopLocale().messages.aboutProduct,
     applicationVersion: app.getVersion(),
     // The release has no separate build number; omit Electron's bundle version.
     version: '',
@@ -1197,25 +1229,25 @@ async function main(): Promise<void> {
   }
   let openingWelcome: Promise<void> | undefined
   /**
-   * Drop the stored token, hide the workspace, and return to the welcome window.
-   * The Host keeps running: only the credential and the visible window change.
+   * Drop the stored session and keep the workspace visible. The Host keeps
+   * running; only the account projection changes.
    */
   const signOut = async (): Promise<void> => {
     if (quitting) return
     await welcomeBackend?.account.signOut()
     diagnostics.write('info', 'signed out')
-    enteredWorkspace = false
-    if (mainWindow !== undefined && !mainWindow.isDestroyed()) mainWindow.hide()
-    await showWelcome()
+    if (mainWindow !== undefined && !mainWindow.isDestroyed()) mainWindow.webContents.send(DESKTOP_IPC.accountChanged)
   }
-  const showWelcome = (): Promise<void> => {
+  const showWelcome = (fromWorkspace = false): Promise<void> => {
     if (quitting) return Promise.resolve()
     if (welcomeWindow !== undefined && !welcomeWindow.isDestroyed()) {
+      welcomeFromWorkspace ||= fromWorkspace
       if (!welcomeWindow.isVisible()) void track('auth_page_view', {})
       welcomeWindow.show()
       welcomeWindow.focus()
       return Promise.resolve()
     }
+    welcomeFromWorkspace = fromWorkspace
     openingWelcome ??= (async () => {
       welcomeWindow = await openWelcomeWindow(locale, {
         analytics: track,
@@ -1227,7 +1259,7 @@ async function main(): Promise<void> {
         },
         startSignIn: async () => {
           if (welcomeBackend === undefined) throw new Error('desktop welcome: backend unavailable')
-          return welcomeBackend.account.start(desktopClientMetadata(locale.id))
+          return welcomeBackend.account.start()
         },
         cancelSignIn: async (id) => {
           if (welcomeBackend === undefined) throw new Error('desktop welcome: backend unavailable')
@@ -1238,20 +1270,36 @@ async function main(): Promise<void> {
           if (state?.attempt?.id !== id || state.attempt.phase !== 'waiting-browser' || state.attempt.authorizeUrl === undefined) {
             throw new Error('desktop welcome: login link is unavailable')
           }
-          await clipboard.writeText(state.attempt.authorizeUrl)
+          await clipboard.writeText(themedAuthorizationUrl(state.attempt.authorizeUrl))
         },
         openLegal: async (document) => {
           const path = document === 'terms' ? '/terms-conditions' : '/privacy-policy'
-          await shell.openExternal(new URL(path, webBaseUrl()).href)
+          await shell.openExternal(new URL(path, webBaseUrl({
+            TOMATO_WEB_URL: loginEnvironment?.tomatoWebUrl ?? process.env.TOMATO_WEB_URL,
+          })).href)
         },
         saveApiKey: async (apiKey) => {
           if (backend.host === undefined || welcomeBackend === undefined) return { ok: false }
           const saved = await welcomeBackend.save(apiKey)
           if (!saved.ok) return saved
-          await enterWorkspace()
+          if (welcomeFromWorkspace) {
+            welcomeFromWorkspace = false
+            const window = welcomeWindow
+            welcomeWindow = undefined
+            window?.close()
+          } else await enterWorkspace()
           return { ok: true }
         },
-        skip: enterWorkspace,
+        skip: async () => {
+          if (welcomeFromWorkspace) {
+            welcomeFromWorkspace = false
+            const window = welcomeWindow
+            welcomeWindow = undefined
+            window?.close()
+            return
+          }
+          await enterWorkspace()
+        },
       })
       const window = welcomeWindow
       window.once('closed', () => {
@@ -1262,17 +1310,29 @@ async function main(): Promise<void> {
       })
       window.once('closed', () => {
         if (welcomeWindow === window) welcomeWindow = undefined
+        const closedFromWorkspace = welcomeFromWorkspace
+        welcomeFromWorkspace = false
+        if (closedFromWorkspace) { mainWindow?.show(); return }
         if (enteredWorkspace || recovery.active) return
         // Nothing runs before the workspace opens. macOS keeps the Dock convention and drops the
         // unused main window so the next activation rebuilds the welcome; elsewhere the close quits.
         if (process.platform === 'darwin') mainWindow?.destroy()
         else app.quit()
       })
-      if (isQuitting() || recovery.active || enteredWorkspace) window.close()
-      else mainWindow?.hide()
+      if (isQuitting() || recovery.active) window.close()
+      else if (!welcomeFromWorkspace && enteredWorkspace) window.close()
+      else if (!welcomeFromWorkspace) mainWindow?.hide()
     })().finally(() => { openingWelcome = undefined })
     return openingWelcome
   }
+  ipcMain.handle(DESKTOP_IPC.accountOpenSignIn, async (event) => {
+    assertProductSender(event)
+    await showWelcome(true)
+  })
+  ipcMain.handle(DESKTOP_IPC.accountSignOut, async (event) => {
+    assertProductSender(event)
+    await signOut()
+  })
   const openInitialWindow = async (): Promise<void> => {
     if (quitting || recovery.active) return
     const state = await readWelcomeState()

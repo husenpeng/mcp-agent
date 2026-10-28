@@ -41,6 +41,8 @@ Catalog entries and loaded skills expose the resolved instruction-file path, so 
 
 The catalog and the body have separate lifecycles: discovery parses frontmatter into the catalog entry, and every load re-reads the current file, so editing a skill body needs no versioning or cache invalidation.
 
+The provider also implements the registry's optional `update` capability for skills it discovered: it re-reads the raw file, merges the requested description, routing hint, or body, and preserves every frontmatter key the patch does not name, including invocation booleans and nested metadata. The write is atomic; through `ctx.fs` it is fenced to the skill file's own directory, so a personal root outside the deployment workspace can be edited while project and packaged assets remain untouched by that path.
+
 ### Roots and priority
 
 Default roots are scanned in this provider's rank order:
@@ -97,6 +99,8 @@ This section explains how discovery and watching are organized; the observable b
 ### Design concept
 
 The provider is built on two separations. First, catalog versus body: discovery parses frontmatter into summaries, while every load re-reads the file, so body edits need no hash, revision, or cache invalidation. Second, discovery versus watching: `list()` scans roots and resolves the project root through `ctx.fs` when a filesystem service is present (falling back to abortable Node I/O), while a separate watch manager owns Chokidar handles, missing-root probes, and invalidation.
+
+Writes re-parse the same frontmatter grammar before serializing, so a malformed existing file is never rewritten, and unknown keys keep their values. The registry invalidates its catalog after a successful update, which is what a `watch: false` deployment relies on; the provider's own watcher would otherwise report the same change later.
 
 ### Source map
 

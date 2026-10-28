@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Playwright ブラウザ",
+    "description": "Playwright MCP を使用して、セッションごとに専用の Chromium を提供します。初回使用前に Playwright が要求する Chromium をインストールしてください。",
+    "detail": "docs/DETAIL.md"
+  }
+}

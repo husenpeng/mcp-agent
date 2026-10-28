@@ -1,8 +1,8 @@
-# Tomato Harness
+# Tomato AI
 
 English | [中文](README.zh.md)
 
-Tomato Harness is an internal desktop agent for creator marketing. It runs a DeepSeek Harness (`dsh`) runtime inside an Electron shell, signs in with the company account, sends every model request through the company relay, and reports turn and tool activity to an internal OTLP relay that forwards to Langfuse.
+Tomato AI is an internal desktop agent for creator marketing. It runs a DeepSeek Harness (`dsh`) runtime inside an Electron shell, signs in with the company account, sends model requests to the third-party API configured on the Models page, and reports turn and tool activity to an internal OTLP relay that forwards to Langfuse.
 
 This repository is a one-time hard fork of `deepseek-harness` at commit `22ddee3792`; it does not merge upstream. Upstream packages keep their `@deepseek-ai/*` names, and Tomato-specific packages use `@tomato/*`. [docs/tomato/decisions.md](docs/tomato/decisions.md) records every product and engineering decision behind this fork.
 
@@ -39,7 +39,6 @@ This repository is a one-time hard fork of `deepseek-harness` at commit `22ddee3
 | Renderer (the dsh web client) | Conversation, tool cards, approvals, settings, session navigation | Credentials, filesystem access |
 | Host (`apps/desktop-host`) | The dsh runtime: agent loop, sessions, tools, model requests, HTTP and WebSocket server | Windows, the tray, native dialogs |
 | Company login service | Identity, session policy, token issuance | Anything on the machine |
-| Company model relay | Model routing, per-person quota, accounting | Business data |
 | Company OTLP relay | Trace mapping, Langfuse credentials, redaction | Client state |
 
 The Host listens on an OS-assigned loopback port; the main process authenticates to it once with a one-shot cookie and forwards application HTTP requests from the `dsh-app://app/` document to it. Node IPC between main and Host carries boot injections, readiness, shutdown, and quit inspection.
@@ -65,14 +64,15 @@ Tomato's changes live in the two shipped bundle files, so a fresh profile inheri
 | Row | Change |
 |---|---|
 | `system-prompt`, four presets | Persona reads as a creator-marketing assistant |
-| `agent-default-model` | `tomato-relay` / `tomato-chat` |
-| `llm-pi-ai` | One hand-declared route: `api: openai-completions`, `apiKeyEnv: TOMATO_RELAY_API_KEY`, `baseURL` at the local mock |
+| `agent-default-model` | Empty provider/model: no default until the user selects one |
+| `llm-pi-ai` | No routes shipped; the Models page declares third-party OpenAI- or Anthropic-compatible endpoints |
 | `deepseek-account`, `llm-deepseek`, `llm-deepseek-account`, `deepseek-llm-api-extensions`, `session-log-deepseek`, `plugin-package-inventory-deepseek` | `disabled: true` |
 | `session-telemetry-otel`, `product-analytics`, `desktop-product-telemetry` | `disabled: true` |
 | `web-search-deepseek`, `web-deepseek-api` | `disabled: true`; HTTP fetch stays |
 | `tomato-telemetry` | New row: OTLP spans to `TOMATO_OTLP_ENDPOINT` |
 | `ui-brand-official` | `disabled: true`; `@tomato/brand` takes the three brand slots |
-| `ui-settings-account`, `account-controller` | `disabled: true` |
+| `ui-settings-account`, `account-controller` | `disabled: true`; `@tomato/account` registers the sidebar launcher and Account settings section |
+| `tomato-gateway` | New row: same-origin `/api/auth/*` and fixed-table `/api/services/*` |
 
 ### Capability seams
 
@@ -118,10 +118,10 @@ A UI plugin registers into a slot it does not declare, and waits on the owner's 
 | Repository model | One-time hard fork, no upstream merge | The product diverges structurally; ledger-style tracking would have no reference point |
 | Product codes | `packages/tomato/*`, `@tomato/*` | Distinguishable from upstream at a glance, without a repository-wide rename |
 | Change location | Direct edits to the two shipped bundles | One place to read; a new bundle layer would hide the divergence |
-| Model access | `llm-pi-ai` with one declared route | Zero kernel change; the relay is an OpenAI-compatible endpoint |
-| Model list | Discovered from `GET /v1/models` | The relay owns its catalog; a hard-coded id would drift |
-| Sign-in | Company desktop token endpoint, browser redirect to a loopback listener | No embedded browser, no credential in a URL; the token never reaches the renderer |
-| Token storage | Electron `safeStorage` under `userData`, plus the Host credential store | The welcome flow can answer "signed in?" before the Host starts; the relay route resolves the same value per request |
+| Model access | `llm-pi-ai` with user-declared routes on the Models page | No route ships; any OpenAI- or Anthropic-compatible third-party API works without kernel changes |
+| Model list | Discovered per provider from its listing, or entered by hand | The provider owns its catalog; a hard-coded id would drift |
+| Sign-in | Company Feishu flow through the company BFF, one-time handoff code to the local gateway | Feishu secrets stay server-side; the browser never receives the session id in a URL |
+| Token storage | Electron `safeStorage` under `userData`; the main process injects `X-Tomato-Session` | Neither the renderer nor the Host credential store receives the session id |
 | Telemetry | Own OTLP reporter to an internal relay | Langfuse credentials stay server-side; dsh's own channels are off |
 | Brand | Slot occupants plus a single-color glyph | Slot composition is the supported route; `currentColor` follows both themes |
 | Distribution | Unsigned macOS arm64 build, no auto-update | Internal audience; signing and feeds come with production |
@@ -139,7 +139,7 @@ A UI plugin registers into a slot it does not declare, and waits on the owner's 
 | Disk | ~3 GB | `node_modules`, `~/.dsh`-style build caches, Electron (≈300 MB), the primary runtime payload |
 | Network | npm registry, PyPI, `electron` release host | The payload downloads pinned archives; an internal mirror is fine |
 
-Optional for a first run: nothing. The local mock serves the model, login, and relay, so no credentials are needed.
+Optional for a first run: a model provider. The account surface needs `AUTH_SERVICE_URL` and `TOMATO_WEB_URL` for company sign-in; without them the workspace still starts and local sessions work. Add a third-party model API in Settings → Models before the first message.
 
 <a id="initialize"></a>
 
@@ -173,14 +173,18 @@ ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ \
 Two terminals:
 
 ```sh
-# 1) local stand-ins for the relay, the login service, and the OTLP sink
-pnpm run mock:tomato
+# 1) external login services: services-monorepo auth_service and the company BFF
+#    (their origins are configured on the gateway; see the handoff contract)
 
 # 2) the desktop application (builds, prepares the payload, launches Electron)
-TOMATO_OTLP_ENDPOINT=http://127.0.0.1:4010/v1/traces \
-TOMATO_AUTH_URL=http://127.0.0.1:4010 \
 pnpm run dev:desktop
 ```
+
+`dev:desktop` reads `apps/desktop/config/development.env` for its local login origins (`http://localhost:8020` and `http://localhost:3000`), so no shell exports are needed; an explicit `AUTH_SERVICE_URL` / `TOMATO_WEB_URL` in the launching shell still wins. Optional telemetry uses the inherited environment, for example `TOMATO_OTLP_ENDPOINT=http://127.0.0.1:4318/v1/traces pnpm run dev:desktop`.
+
+Without the external login services the workspace still starts; the account surface reports “sign-in service unavailable” and local sessions, tools, and the configured model provider keep working.
+
+Packaged builds seal `DSH_DESKTOP_AUTH_SERVICE_URL` and `DSH_DESKTOP_TOMATO_WEB_URL` from the selected packaging file into the application manifest (see [packaging](apps/desktop/packaging/README.md)); the variables above are only for source launches, and an explicit launch value still overrides a sealed one.
 
 `dev:desktop` runs the artifact build, materializes a disposable project under `apps/desktop/.desktop-build/development`, prepares the primary runtime on first use (a several-hundred-megabyte download), and launches Electron with:
 
@@ -200,34 +204,52 @@ Skip the rebuild on a later launch with `pnpm run start:desktop`.
 
 ### Sign-in
 
-Sign-in runs through the company web application's Feishu routes, so the Feishu developer console needs no desktop redirect URI and the desktop holds no Feishu secrets:
+Sign-in runs through the company web application's Feishu routes. The local gateway is the only origin the browser calls; it never holds Feishu secrets:
 
-1. The welcome window's **Sign in** button opens an isolated Electron window at `${TOMATO_WEB_URL}/api/auth/feishu/start`.
-2. The BFF asks the login service for the Feishu authorize URL, redirects to Feishu, and receives the callback at its own origin. The user signs in there exactly as they would on the web.
-3. The shell polls that window's cookie jar for the BFF's `session_id` cookie, and confirms it with `POST ${TOMATO_AUTH_URL}/api/v1/auth/session/verify`.
-4. The shell exchanges the session for a desktop token at `POST ${TOMATO_AUTH_URL}/api/v1/auth/desktop/token`. Until that endpoint exists the exchange answers 404 and the session id itself is stored, which keeps sign-in working while the server side catches up.
-5. The token is encrypted into `userData/tomato-auth.json` and written to the Host's credential store as `TOMATO_RELAY_API_KEY`; the sign-in window and its storage partition are destroyed.
+1. The welcome window's **Sign in** button opens the Host's `/api/auth/start` in an isolated Electron window (Web uses a popup).
+2. The gateway generates a `state` and a `verifier`, keeps the verifier, and redirects to the company BFF's `/api/auth/feishu/start` with the verifier challenge and a loopback callback.
+3. The BFF completes Feishu OAuth at its own origin, exchanges the code with auth_service, and mints a one-time handoff code bound to the challenge.
+4. The BFF redirects to the gateway's `/api/auth/callback`; the gateway redeems the code with the verifier and sets the httpOnly `tomato_session` cookie.
+5. Desktop reads that cookie once, stores the session id with `safeStorage`, and injects `X-Tomato-Session` on forwarded Host requests. The renderer and the Host credential store never receive it.
+
+Session state is verified with auth_service on every `/api/auth/session` read and every `/api/services/*` request. Sign-out attempts `/api/v1/auth/session/revoke`, then clears local state even when the upstream call fails.
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `TOMATO_WEB_URL` | `https://test.tomatoai.vip` | Company web app serving the Feishu BFF routes |
-| `TOMATO_AUTH_URL` | `http://127.0.0.1:4010` | Login service issuing sessions and desktop tokens |
+| `AUTH_SERVICE_URL` | `''` | auth_service base URL; empty keeps login unavailable |
+| `TOMATO_WEB_URL` | `''` | Company BFF base URL; empty keeps login unavailable |
+
+The exact mint/redeem contract is in [docs/tomato/auth-handoff-contract.md](docs/tomato/auth-handoff-contract.md). Both endpoints are server-side work; until they exist, the account surface reports unavailable and no mock fallback is used.
+
+<a id="configure-models"></a>
+
+### Configure a model provider
+
+No model route ships in the base composition. Open **Settings → Models**, choose **Add model provider → Custom model API**, and enter a Provider ID, endpoint, API protocol, at least one model, and the API key. The page writes the route profile into the active profile and stores the key write-only; the key never returns to the browser.
+
+| Data | Stored in | Protection |
+|---|---|---|
+| Provider profile (ID, display name, protocol, base URL, models) | `$DSH_HOME/profiles/desktop/cordis.patch.yml` | Plain YAML owned by the OS user |
+| API key (`<ROUTE>_API_KEY`) | `$DSH_HOME/.credentials.yaml` | Mode 0600; POSIX refuses a file other users can read; the Client receives only configured/missing state |
+| Desktop sign-in session | `userData/tomato-auth.json` | `safeStorage` encryption when available; injected only as `X-Tomato-Session` by the main process |
+
+The credential file is plaintext YAML guarded by OS user permissions. The agent runs tools as the same OS user, so file permissions do not isolate a key from the agent itself. Custom provider `headers` remain deployment configuration in `cordis.patch.yml`; the page does not edit them.
 
 <a id="local-services"></a>
 
-## Local services
+## Local gateway
 
-`pnpm run mock:tomato` is one process on port 4010 serving all three off-machine dependencies:
+For company services, the browser calls only the Host's same-origin gateway. It has no mock routes:
 
 | Route | Serves |
 |---|---|
-| `GET /v1/models` | A two-model catalog for the Models page |
-| `POST /v1/chat/completions` | OpenAI-compatible SSE; a prompt mentioning 「列出目录」 produces one `bash` tool call |
-| `GET /desktop/authorize` | The login page; approves immediately and redirects to the CLI listener with a code |
-| `POST /desktop/token` | Exchanges that code for a token |
-| `POST /v1/traces` | Accepts OTLP batches and logs their size |
+| `GET /api/auth/start` | Creates a login attempt and redirects to the company BFF |
+| `GET /api/auth/callback` | Redeems the handoff code and sets `tomato_session` |
+| `GET /api/auth/session` | Three-state account projection verified with auth_service |
+| `POST /api/auth/logout` | Revokes the auth_service session best-effort and clears the cookie |
+| `/api/services/<service>/<path>` | Fixed-table forwarding with verified-user identity; no browser-supplied host |
 
-Pointing a real deployment at the company services means changing three values: the relay `baseURL` (Models page or the profile patch), `TOMATO_AUTH_URL`, and `TOMATO_OTLP_ENDPOINT`.
+auth_service, the company BFF, and every future service entry are external processes. Run them separately and fill `AUTH_SERVICE_URL` / `TOMATO_WEB_URL`; the gateway starts with both empty and reports login unavailable. OTLP telemetry remains a direct Host request to `TOMATO_OTLP_ENDPOINT`, not a gateway route.
 
 <a id="logging-and-developer-mode"></a>
 
@@ -235,7 +257,7 @@ Pointing a real deployment at the company services means changing three values: 
 
 ### Diagnostic log
 
-The shell writes one rolling JSONL-style text log per day under the platform logs directory (`~/Library/Logs/Tomato Harness/` on macOS, `%APPDATA%\Tomato Harness\logs` on Windows under Electron's logs path):
+The shell writes one rolling JSONL-style text log per day under the platform logs directory (`~/Library/Logs/Tomato AI/` on macOS, `%APPDATA%\Tomato AI\logs` on Windows under Electron's logs path):
 
 ```text
 2026-10-24T05:12:31.481Z [info] shell started (version 0.2.1-rc.3, developer=true) { electron: '44.7.0', ... }
@@ -245,7 +267,7 @@ The shell writes one rolling JSONL-style text log per day under the platform log
 2026-10-24T05:13:02.115Z [error] fatal (renderer) Error: …
 ```
 
-Recorded channels: `info` (lifecycle), `host` (Host stdout and stderr, passed through unchanged to the terminal), `renderer` (error-level console lines with their bundle location), `warn`, and `error` (uncaught exceptions, unhandled rejections, and every fatal path). Files roll at 8 MB and keep five by modification time. Credential-shaped substrings — bearer tokens, `sk-…` keys, `TOMATO_RELAY_API_KEY=…` assignments, and `?token=` query values — are redacted before the line is written.
+Recorded channels: `info` (lifecycle), `host` (Host stdout and stderr, passed through unchanged to the terminal), `renderer` (error-level console lines with their bundle location), `warn`, and `error` (uncaught exceptions, unhandled rejections, and every fatal path). Files roll at 8 MB and keep five by modification time. Credential-shaped substrings — bearer tokens, `sk-…` keys, and `?token=` query values — are redacted before the line is written.
 
 ### Developer mode
 
@@ -276,10 +298,10 @@ M1 is an internal, unsigned, unreleased build. The gaps below are ordered by wha
 
 ### Blocking
 
-1. **Server endpoints** — the desktop token endpoint (`/desktop/authorize`, `/desktop/token`), the internal OTLP relay, and the business MCP gateway are mocks. Each needs a real implementation, an agreed token lifetime, and revocation.
+1. **Server endpoints** — auth_service and the company BFF do not implement the handoff mint/redeem contract yet, and the business MCP gateway is not implemented. Until they do, sign-in is unavailable; no mock fallback ships.
 2. **Code signing and notarization** — an unsigned build stops at Gatekeeper on every machine and cannot be installed by a non-technical user. Signing needs a Developer ID certificate, `notarize`, and a stable bundle id (`DSH_DESKTOP_APP_ID`).
 3. **Update channel** — there is no feed, no update policy, and no rollback. Shipping means choosing a feed host, a channel name, and whether updates are mandatory.
-4. **Secret hygiene at rest** — the token file falls back to plaintext when `safeStorage` is unavailable (Linux without a keyring, or a locked keychain). A packaged macOS build has Keychain access, but the fallback should refuse to start rather than silently downgrade.
+4. **Secret hygiene at rest** — the session file falls back to plaintext when `safeStorage` is unavailable (Linux without a keyring, or a locked keychain). A packaged macOS build has Keychain access, but the fallback should refuse to start rather than silently downgrade.
 5. **Permission posture** — `danger-full-access` lets model output drive arbitrary local commands. A production build should either hide that preset or require an explicit, per-machine unlock.
 
 ### Important
@@ -289,7 +311,7 @@ M1 is an internal, unsigned, unreleased build. The gaps below are ordered by wha
 8. **Session data lifecycle** — JSONL sessions accumulate under the Harness home with no retention policy, no export, and no per-user quota.
 9. **Business UIs** — tool cards for the MCP tools and the right-sidebar detail view are M2 work; until then business results render as generic JSON cards.
 10. **Localization coverage** — the shell ships eight languages, but the business copy and the new product name are only reviewed in Chinese and English.
-11. **Model catalog drift** — the declared `tomato-chat` placeholder resolves only through the relay's listing. An offline or listing-less relay leaves the picker on a model the gateway may not serve.
+11. **Model configuration is manual** — no route ships and there is no organization-managed default. A first run must add a third-party endpoint and key before it can send a message.
 12. **Accessibility and keyboard** — the welcome flow and the Developer menu are not covered by the repository's UI review skills; both should be checked with a screen reader before release.
 
 ### Nice to have
@@ -306,9 +328,10 @@ M1 is an internal, unsigned, unreleased build. The gaps below are ordered by wha
 |---|---|---|
 | `Downloading Electron binary...` never finishes | The release host is slow or blocked | Reinstall with `ELECTRON_MIRROR` as shown above |
 | `The operation was aborted due to timeout` from `dev:desktop` | The primary runtime download exceeded its timeout | Pre-run `pnpm --filter @deepseek-ai/dsh-desktop run prepare:primary-runtime`, or raise `DSH_RESOURCE_DOWNLOAD_TIMEOUT_MS` |
-| Welcome window shows, sign-in never returns | No login service reachable at `TOMATO_AUTH_URL` | Start `pnpm run mock:tomato`; confirm the port matches |
-| Conversation replies fail with a missing credential | The token was never written to the Host store | Sign in again; the shell writes `TOMATO_RELAY_API_KEY` on exchange |
-| Model list is empty | The relay has no `/v1/models` | Check `curl $TOMATO_RELAY_BASE_URL/models` |
+| Sign-in says the service is unavailable | `AUTH_SERVICE_URL` or `TOMATO_WEB_URL` is empty/unreachable, or the BFF lacks the handoff endpoints | Fill both values and verify the contract in `docs/tomato/auth-handoff-contract.md` |
+| Conversation replies fail with a missing credential | The route's API key was never stored | Re-enter the key on Settings → Models; it is written to the credential store, not the profile |
+| Model list is empty | No provider is configured, or its listing failed | Add or edit a provider on Settings → Models, then use **Fetch available models** |
+| Sending a message asks for a model | No default model is selected | Pick a model from the composer, or configure a provider first |
 | Logs are missing | `app.setAppLogsPath()` picks the platform directory | Run `pnpm run dev:desktop` and read the printed `userData` path; logs sit beside it |
 
 ## License

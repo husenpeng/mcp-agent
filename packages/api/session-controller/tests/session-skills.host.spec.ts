@@ -65,11 +65,13 @@ describe('SessionSkillCatalog', () => {
         whenToUse: 'Before publishing.',
         path: '/cold/project/.agents/skills/review/SKILL.md',
         invocation: { modelInvocable: true, userInvocable: true },
+        source: 'project-agents',
       },
       {
         name: 'model-only',
         description: 'Not shown to the user.',
         invocation: { modelInvocable: true, userInvocable: false },
+        source: 'project-agents',
       },
     ]))
     ctx.provide('skills', { list } as never)
@@ -82,6 +84,9 @@ describe('SessionSkillCatalog', () => {
         whenToUse: 'Before publishing.',
         path: '/cold/project/.agents/skills/review/SKILL.md',
         modelInvocable: true,
+        userInvocable: true,
+        source: 'project-agents',
+        editable: false,
       }],
     })
     expect(observeSession).toHaveBeenCalledWith(sessionId)
@@ -135,6 +140,7 @@ describe('SessionSkillCatalog', () => {
       name: 'preset-owned',
       description: 'Composed for this Agent.',
       invocation: { modelInvocable: false, userInvocable: true },
+      source: 'project-agents',
     }]))
     const acquireScope = vi.fn()
     ctx.provide('agentPresets', {
@@ -148,6 +154,9 @@ describe('SessionSkillCatalog', () => {
         name: 'preset-owned',
         description: 'Composed for this Agent.',
         modelInvocable: false,
+        userInvocable: true,
+        source: 'project-agents',
+        editable: false,
       }],
     })
     expect(scopedList).toHaveBeenCalledWith({ cwd: '/live/current', scope: agent })
@@ -260,5 +269,282 @@ describe('SessionSkillCatalog', () => {
       .rejects.toMatchObject({
         code: 'gateway/internal', message: 'skill listing failed: Error: catalog offline',
       })
+  })
+
+  it('includes model-only skills on request and marks only personal files editable', async () => {
+    const ctx = await context()
+    const sessionId = SessionId('browser-skills')
+    ctx.provide('sessionQuery', {
+      observeSession: () => Promise.resolve(observation(sessionId, { cwd: '/project' })),
+    } as never)
+    const list = vi.fn(() => Promise.resolve([
+      {
+        name: 'personal',
+        description: 'Personal',
+        path: '/home/u/.agents/skills/personal/SKILL.md',
+        invocation: { modelInvocable: true, userInvocable: true },
+        source: 'user-agents',
+        updatable: true,
+      },
+      {
+        name: 'project',
+        description: 'Project',
+        path: '/project/.agents/skills/project/SKILL.md',
+        invocation: { modelInvocable: true, userInvocable: true },
+        source: 'project-agents',
+        updatable: true,
+      },
+      {
+        name: 'model-only',
+        description: 'Model only',
+        invocation: { modelInvocable: true, userInvocable: false },
+        source: 'bundled',
+      },
+    ]))
+    ctx.provide('skills', { list } as never)
+    const catalog = new SessionSkillCatalog(ctx)
+
+    const result = await catalog
+      .list({ sessionId, includeModelOnly: true }, new AbortController().signal)
+
+    expect(result.skills).toEqual([
+      {
+        name: 'personal',
+        description: 'Personal',
+        path: '/home/u/.agents/skills/personal/SKILL.md',
+        modelInvocable: true,
+        userInvocable: true,
+        source: 'user-agents',
+        editable: true,
+      },
+      {
+        name: 'project',
+        description: 'Project',
+        path: '/project/.agents/skills/project/SKILL.md',
+        modelInvocable: true,
+        userInvocable: true,
+        source: 'project-agents',
+        editable: false,
+      },
+      {
+        name: 'model-only',
+        description: 'Model only',
+        modelInvocable: true,
+        userInvocable: false,
+        source: 'bundled',
+        editable: false,
+      },
+    ])
+
+    const brief = await catalog
+      .list({ sessionId, includeModelOnly: true, brief: true }, new AbortController().signal)
+    expect(brief.skills.map(skill => skill.description)).toEqual([undefined, undefined, undefined])
+    expect(brief.skills.map(skill => [skill.name, skill.editable])).toEqual([
+      ['personal', true],
+      ['project', false],
+      ['model-only', false],
+    ])
+  })
+
+  it('reads one skill with its body and passes the caller signal to the provider', async () => {
+    const ctx = await context()
+    const sessionId = SessionId('read-skill')
+    ctx.provide('sessionQuery', {
+      observeSession: () => Promise.resolve(observation(sessionId, { cwd: '/project' })),
+    } as never)
+    const get = vi.fn(() => Promise.resolve({
+      name: 'personal',
+      description: 'Personal',
+      whenToUse: 'When testing',
+      path: '/home/u/.agents/skills/personal/SKILL.md',
+      invocation: { modelInvocable: true, userInvocable: true },
+      source: 'user-agents',
+      updatable: true,
+      provider: 'filesystem',
+      content: 'Body text.',
+    }))
+    ctx.provide('skills', { get } as never)
+    const signal = new AbortController().signal
+
+    const result = await new SessionSkillCatalog(ctx).get({ sessionId, name: 'personal' }, signal)
+
+    expect(result).toMatchObject({
+      name: 'personal',
+      description: 'Personal',
+      whenToUse: 'When testing',
+      content: 'Body text.',
+      editable: true,
+      source: 'user-agents',
+    })
+    expect(get).toHaveBeenCalledWith('personal', { cwd: '/project', scope: undefined, signal })
+  })
+
+  it('reports an absent skill and a provider read failure distinctly', async () => {
+    const ctx = await context()
+    const sessionId = SessionId('read-failures')
+    ctx.provide('sessionQuery', {
+      observeSession: () => Promise.resolve(observation(sessionId, { cwd: '/project' })),
+    } as never)
+    const registry: { get: () => Promise<unknown> } = { get: () => Promise.resolve(undefined) }
+    ctx.provide('skills', registry as never)
+    const catalog = new SessionSkillCatalog(ctx)
+
+    await expect(catalog.get(
+      { sessionId, name: 'missing' },
+      new AbortController().signal,
+    )).rejects.toMatchObject({ code: 'skill/not-found' })
+
+    registry.get = () => Promise.reject(new Error('offline'))
+    await expect(catalog.get(
+      { sessionId, name: 'personal' },
+      new AbortController().signal,
+    )).rejects.toMatchObject({ code: 'gateway/internal', message: 'skill read failed: Error: offline' })
+  })
+
+  it('saves a personal skill and returns the provider readback', async () => {
+    const ctx = await context()
+    const sessionId = SessionId('save-skill')
+    ctx.provide('sessionQuery', {
+      observeSession: () => Promise.resolve(observation(sessionId, { cwd: '/project' })),
+    } as never)
+    const summary = {
+      name: 'personal',
+      description: 'Before',
+      path: '/home/u/.agents/skills/personal/SKILL.md',
+      invocation: { modelInvocable: true, userInvocable: true },
+      source: 'user-agents',
+      updatable: true,
+    }
+    const snapshot = vi.fn(() => Promise.resolve({ skills: [summary], complete: true }))
+    const update = vi.fn(() => Promise.resolve({
+      ...summary,
+      description: 'After',
+      whenToUse: 'Use when testing',
+      provider: 'filesystem',
+      content: 'After body.',
+    }))
+    ctx.provide('skills', { snapshot, update } as never)
+    const signal = new AbortController().signal
+
+    const result = await new SessionSkillCatalog(ctx).save({
+      sessionId,
+      name: 'personal',
+      description: '  After  ',
+      whenToUse: ' Use when testing ',
+      content: 'After body.',
+    }, signal)
+
+    expect(update).toHaveBeenCalledWith('personal', {
+      description: 'After',
+      whenToUse: 'Use when testing',
+      content: 'After body.',
+    }, { cwd: '/project', scope: undefined, signal })
+    expect(result).toMatchObject({
+      name: 'personal',
+      description: 'After',
+      whenToUse: 'Use when testing',
+      content: 'After body.',
+      editable: true,
+    })
+  })
+
+  it('refuses to save a project skill and a skill that vanished after lookup', async () => {
+    const ctx = await context()
+    const sessionId = SessionId('save-refusals')
+    ctx.provide('sessionQuery', {
+      observeSession: () => Promise.resolve(observation(sessionId, { cwd: '/project' })),
+    } as never)
+    const project = {
+      name: 'project',
+      description: 'Project',
+      path: '/project/.agents/skills/project/SKILL.md',
+      invocation: { modelInvocable: true, userInvocable: true },
+      source: 'project-agents',
+      updatable: true,
+    }
+    const update = vi.fn()
+    const personal = { ...project, name: 'personal', source: 'user-agents' }
+    const snapshot = vi.fn()
+      .mockResolvedValueOnce({ skills: [project], complete: true })
+      .mockResolvedValueOnce({ skills: [personal], complete: true })
+    ctx.provide('skills', { snapshot, update } as never)
+    const catalog = new SessionSkillCatalog(ctx)
+
+    await expect(catalog.save({
+      sessionId, name: 'project', description: 'After', content: 'Body.',
+    }, new AbortController().signal)).rejects.toMatchObject({ code: 'skill/not-editable' })
+    expect(update).not.toHaveBeenCalled()
+
+    await expect(catalog.save({
+      sessionId, name: 'personal', description: 'After', content: 'Body.',
+    }, new AbortController().signal)).rejects.toMatchObject({ code: 'skill/not-found' })
+  })
+
+  it('reports a skill that disappears after the save lookup', async () => {
+    const ctx = await context()
+    const sessionId = SessionId('save-vanished')
+    ctx.provide('sessionQuery', {
+      observeSession: () => Promise.resolve(observation(sessionId, { cwd: '/project' })),
+    } as never)
+    ctx.provide('skills', {
+      snapshot: () => Promise.resolve({ skills: [], complete: true }),
+    } as never)
+    const catalog = new SessionSkillCatalog(ctx)
+
+    await expect(catalog.save({
+      sessionId, name: 'personal', description: 'After', content: 'Body.',
+    }, new AbortController().signal)).rejects.toMatchObject({ code: 'skill/not-found' })
+  })
+
+  it('rejects invalid save requests before resolving the Session', async () => {
+    const ctx = await context()
+    const sessionId = SessionId('save-invalid')
+    const observeSession = vi.fn()
+    ctx.provide('sessionQuery', { observeSession } as never)
+    const catalog = new SessionSkillCatalog(ctx)
+    const request = { sessionId, name: 'personal', description: 'Description', content: 'Body.' }
+
+    await expect(catalog.save({ ...request, name: 'Bad_Name' }, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'skill/invalid' })
+    await expect(catalog.save({ ...request, description: '   ' }, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'skill/invalid' })
+    await expect(catalog.save({ ...request, description: 'x'.repeat(4097) }, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'skill/invalid' })
+    await expect(catalog.save({ ...request, whenToUse: 'x'.repeat(4097) }, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'skill/invalid' })
+    await expect(catalog.save({ ...request, content: 'x'.repeat(256 * 1024 + 1) }, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'skill/invalid' })
+    expect(observeSession).not.toHaveBeenCalled()
+  })
+
+  it('classifies save lookup and provider failures', async () => {
+    const ctx = await context()
+    const sessionId = SessionId('save-failures')
+    ctx.provide('sessionQuery', {
+      observeSession: () => Promise.resolve(observation(sessionId, { cwd: '/project' })),
+    } as never)
+    const request = { sessionId, name: 'personal', description: 'Description', content: 'Body.' }
+
+    const registry: {
+      snapshot: () => Promise<unknown>
+      update?: () => Promise<unknown>
+    } = { snapshot: () => Promise.reject(new Error('catalog offline')) }
+    ctx.provide('skills', registry as never)
+    const catalog = new SessionSkillCatalog(ctx)
+    await expect(catalog.save(request, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'gateway/internal', message: 'skill lookup failed: Error: catalog offline' })
+
+    const personal = {
+      name: 'personal',
+      description: 'Before',
+      path: '/home/u/.agents/skills/personal/SKILL.md',
+      invocation: { modelInvocable: true, userInvocable: true },
+      source: 'user-agents',
+      updatable: true,
+    }
+    registry.snapshot = () => Promise.resolve({ skills: [personal], complete: true })
+    registry.update = () => Promise.reject(new Error('disk full'))
+    await expect(catalog.save(request, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'gateway/internal', message: 'skill save failed: Error: disk full' })
   })
 })

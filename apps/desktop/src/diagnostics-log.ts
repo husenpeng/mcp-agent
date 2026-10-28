@@ -38,7 +38,7 @@ const MAX_FILE_BYTES = 8 * 1024 * 1024
 const SECRET_PATTERNS: readonly [RegExp, string][] = [
   [/Bearer\s+[A-Za-z0-9._~+/-]+=*/gu, 'Bearer [redacted]'],
   [/\b(?:sk|pk|ghp|github_pat|xox[baprs])[-_][A-Za-z0-9_-]{12,}/gu, '[redacted-token]'],
-  [/\b(TOMATO_RELAY_API_KEY|DEEPSEEK_API_KEY|OPENAI_API_KEY|ANTHROPIC_API_KEY|TOMATO_OTLP_TOKEN)\s*[=:]\s*\S+/gu, '$1=[redacted]'],
+  [/\b(DEEPSEEK_API_KEY|OPENAI_API_KEY|ANTHROPIC_API_KEY|TOMATO_OTLP_TOKEN)\s*[=:]\s*\S+/gu, '$1=[redacted]'],
   [/([?&](?:token|key|secret|password|code)=)[^&\s]+/giu, '$1[redacted]'],
 ]
 

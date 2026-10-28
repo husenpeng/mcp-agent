@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Playwright 浏览器",
+    "description": "通过 Playwright MCP 为每个会话提供独立的 Chromium。首次使用前请安装 Playwright 所需的 Chromium 构建。",
+    "detail": "docs/DETAIL.zh.md"
+  }
+}

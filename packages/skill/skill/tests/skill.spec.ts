@@ -1044,6 +1044,171 @@ describe('SkillRegistry registry', () => {
   })
 })
 
+describe('SkillRegistry updates', () => {
+  function writableCandidate(name = 'editable-skill', provider = 'writable'): SkillCandidate {
+    return {
+      name,
+      description: 'Before',
+      invocation: { modelInvocable: true, userInvocable: true },
+      provider,
+      source: 'user-agents',
+      rank: 10,
+      locator: { content: 'Before body.' },
+    }
+  }
+
+  it('reports the winning provider capability and refreshes the catalog after an update', async () => {
+    const ctx = new Context()
+    await ctx.plugin(SkillRegistry)
+    let candidate = writableCandidate()
+    let listCalls = 0
+    let changes = 0
+    ctx.on('skills/change', () => { changes += 1 })
+    registerProvider(ctx, {
+      name: 'writable',
+      async list() {
+        listCalls += 1
+        return [candidate]
+      },
+      async get(entry) {
+        return { ...entry, content: (entry.locator as { content: string }).content }
+      },
+      async update(entry, patch) {
+        candidate = {
+          ...entry,
+          description: patch.description ?? candidate.description,
+          ...patch.whenToUse === null ? {} : patch.whenToUse === undefined ? {} : { whenToUse: patch.whenToUse },
+          locator: { content: patch.content ?? (candidate.locator as { content: string }).content },
+        }
+        return { ...candidate, content: (candidate.locator as { content: string }).content }
+      },
+    })
+    changes = 0
+
+    const listed = await ctx.skills.list()
+    expect(listed).toHaveLength(1)
+    expect(listed[0]).toMatchObject({ name: 'editable-skill', updatable: true })
+    expect(listCalls).toBe(1)
+    expect(changes).toBe(0)
+
+    const updated = await ctx.skills.update('editable-skill', {
+      description: 'After',
+      whenToUse: 'Use when testing',
+      content: 'After body.',
+    })
+    expect(updated).toMatchObject({
+      name: 'editable-skill',
+      description: 'After',
+      whenToUse: 'Use when testing',
+      content: 'After body.',
+    })
+    expect(changes).toBe(1)
+    expect((await ctx.skills.list())[0]).toMatchObject({ description: 'After', whenToUse: 'Use when testing' })
+    expect(listCalls).toBe(2)
+  })
+
+  it('returns undefined for missing, invalid, non-updatable, or vanished skills', async () => {
+    const ctx = new Context()
+    await ctx.plugin(SkillRegistry)
+    registerProvider(ctx, new MemoryProvider([memorySkill('read-only-skill', 'Read only', 10)]))
+    registerProvider(ctx, {
+      name: 'vanishing-writer',
+      async list() {
+        return [writableCandidate('vanishing-skill', 'vanishing-writer')]
+      },
+      async get(entry) {
+        return { ...entry, content: 'body' }
+      },
+      async update() {
+        return undefined
+      },
+    })
+
+    expect((await ctx.skills.list()).find(skill => skill.name === 'read-only-skill')?.updatable).toBeUndefined()
+    await expect(ctx.skills.update('read-only-skill', { description: 'x' })).resolves.toBeUndefined()
+    await expect(ctx.skills.update('missing-skill', { description: 'x' })).resolves.toBeUndefined()
+    await expect(ctx.skills.update('Bad_Name', { description: 'x' })).resolves.toBeUndefined()
+    await expect(ctx.skills.update('vanishing-skill', { content: 'x' })).resolves.toBeUndefined()
+  })
+
+  it('cancels a pending provider update and rejects a result that changes identity', async () => {
+    const ctx = new Context()
+    await ctx.plugin(SkillRegistry)
+    let markStarted!: () => void
+    const started = new Promise<void>((resolve) => { markStarted = resolve })
+    let release!: () => void
+    const held = new Promise<void>((resolve) => { release = resolve })
+    let seenSignal: AbortSignal | undefined
+    registerProvider(ctx, {
+      name: 'slow-writer',
+      async list() {
+        return [writableCandidate('slow-skill', 'slow-writer')]
+      },
+      async get(entry) {
+        return { ...entry, content: 'body' }
+      },
+      async update(_candidate, _patch, options) {
+        seenSignal = options.signal
+        markStarted()
+        await held
+        return { ...writableCandidate('slow-skill', 'slow-writer'), content: 'body' }
+      },
+    })
+    const controller = new AbortController()
+    const reason = new Error('stop update')
+    const pending = ctx.skills.update('slow-skill', { content: 'changed' }, { signal: controller.signal })
+    await started
+    controller.abort(reason)
+    await expect(pending).rejects.toBe(reason)
+    release()
+    expect(seenSignal).toBe(controller.signal)
+  })
+
+  it('invalidates and rejects an update whose provider renames or corrupts the skill', async () => {
+    const ctx = new Context()
+    await ctx.plugin(SkillRegistry)
+    let listCalls = 0
+    registerProvider(ctx, {
+      name: 'renaming-writer',
+      async list() {
+        listCalls += 1
+        return [writableCandidate('original-name', 'renaming-writer')]
+      },
+      async get(entry) {
+        return { ...entry, content: 'body' }
+      },
+      async update(entry) {
+        return { ...entry, name: 'renamed-skill', content: 'body' }
+      },
+    })
+
+    await expect(ctx.skills.update('original-name', { content: 'changed' })).resolves.toBeUndefined()
+    await ctx.skills.list()
+    expect(listCalls).toBe(2)
+    expect(await ctx.skills.get('original-name')).toMatchObject({ name: 'original-name' })
+    expect(await ctx.skills.get('renamed-skill')).toBeUndefined()
+  })
+
+  it('rejects an invalid definition returned by a provider update', async () => {
+    const ctx = new Context()
+    await ctx.plugin(SkillRegistry)
+    registerProvider(ctx, {
+      name: 'corrupting-writer',
+      async list() {
+        return [writableCandidate('corrupt-skill', 'corrupting-writer')]
+      },
+      async get(entry) {
+        return { ...entry, content: 'body' }
+      },
+      async update(entry) {
+        return { ...entry, description: '', content: 'body' }
+      },
+    })
+
+    await expect(ctx.skills.update('corrupt-skill', { description: '' })).rejects.toThrow('requires a description')
+  })
+})
+
 describe('renderSkillContent', () => {
   it('renders a directory-based skill with the shared wrapper', () => {
     const text = renderSkillContent({

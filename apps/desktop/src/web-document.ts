@@ -72,9 +72,10 @@ const PLUGIN_BUNDLE_PATH = /^\/plugins\//u
  * @param request - Request from the application origin.
  * @param host - Owned Host URL.
  * @param cookie - Host-issued authentication cookie.
+ * @param sessionId - stored gateway session id, injected for account-aware routes.
  * @returns Host response without connection-level headers.
  */
-export async function forwardWebRequest(request: Request, host: string, cookie: string): Promise<Response> {
+export async function forwardWebRequest(request: Request, host: string, cookie: string, sessionId?: string): Promise<Response> {
   const source = new URL(request.url)
   const origin = request.headers.get('origin')
   if (origin !== null && origin !== 'dsh-app://app') return new Response(null, { status: 403 })
@@ -82,8 +83,9 @@ export async function forwardWebRequest(request: Request, host: string, cookie: 
   target.pathname = source.pathname
   target.search = source.search
   const headers = new Headers(request.headers)
-  for (const name of ['host', 'origin', 'cookie', 'sec-fetch-site']) headers.delete(name)
+  for (const name of ['host', 'origin', 'cookie', 'sec-fetch-site', 'x-tomato-session']) headers.delete(name)
   headers.set('cookie', cookie)
+  if (sessionId !== undefined) headers.set('x-tomato-session', sessionId)
   const init = { method: request.method, headers, body: request.body, signal: request.signal, duplex: 'half', redirect: 'manual' as const }
   const response = await fetch(target, init)
   const outgoing = new Headers(response.headers)

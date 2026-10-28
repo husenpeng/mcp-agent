@@ -1,17 +1,15 @@
 /**
- * Render the install icons of the Web application from the official
- * application tile.
+ * Render the install icons of the Web application from its application tile.
  *
  * A browser installs a Web App only with a raster 192px and a 512px icon, masks
  * the icon it puts on the home screen, and has no manifest support for iOS,
- * which reads `apple-touch-icon` instead. The whale favicon is the bare mark
- * drawn edge to edge: handed to a launcher directly it loses its fins to the
- * mask, and it carries neither the tile nor a background of its own. This
- * script rasterizes the official application tile (`apps/desktop/resources/icon.svg`,
- * the artwork the desktop application ships) into the committed PNGs under
- * `public/`. Every variant crops the tile's drop shadow, which belongs to a
- * desktop window rather than a launcher; the maskable variant additionally
- * scales the whale inside the safe zone a platform mask may crop, leaving the
+ * which reads `apple-touch-icon` instead. The favicon is the bare tomato mark
+ * drawn edge to edge: handed to a launcher directly it loses its leaf to the
+ * mask and carries no background of its own. This script rasterizes the Web
+ * application's tile (`apps/web/assets/app-icon.svg`) into the committed PNGs
+ * under `public/`. Every variant crops the tile's drop shadow, which belongs
+ * to a desktop window rather than a launcher; the maskable variant additionally
+ * scales the mark inside the safe zone a platform mask may crop, leaving the
  * tile's own gradient to fill the icon so no mask meets a seam.
  *
  * The committed PNGs are the output; rerun
@@ -25,8 +23,8 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { assertNever } from '@deepseek-ai/dsh-util-values'
 
-/** Vector source owned by the desktop application; 1104 units square with the tile inset. */
-export const TILE_SOURCE = fileURLToPath(new URL('../../desktop/resources/icon.svg', import.meta.url))
+/** Vector tile owned by the Web application; 1104 units square with the tile inset. */
+export const TILE_SOURCE = fileURLToPath(new URL('../assets/app-icon.svg', import.meta.url))
 
 /** Directory the generated PNGs are committed to. */
 export const ICON_OUTPUT_DIRECTORY = fileURLToPath(new URL('../public/', import.meta.url))
@@ -48,8 +46,8 @@ const RENDER_SCALE = 4
 
 /**
  * Fraction of a maskable icon the artwork keeps: the platform may crop the
- * border outside it. The tile's own ink reaches 0.461 of its edge from the
- * centre, so 0.868 is the largest scale a circular mask still shows whole;
+ * border outside it. The tile's own ink reaches 0.42 of its edge from the
+ * centre, so 0.952 is the largest scale a circular mask still shows whole;
  * `pwa-manifest.e2e.ts` checks the committed artwork against that circle.
  */
 export const MASKABLE_ARTWORK_SCALE = 0.82
@@ -61,10 +59,10 @@ export const MASKABLE_SAFE_RADIUS_RATIO = 0.4
 const SOURCE_ROOT = /^<svg[^>]*>/u
 
 /** The tile group's drop shadow; stripped because a launcher icon has no window around it. */
-const TILE_SHADOW_GROUP = '<g filter="url(#filter0_d_1637_371)">'
+const TILE_SHADOW_GROUP = '<g filter="url(#tile-shadow)">'
 
-/** The whale group inside the tile; the only element a maskable icon scales. */
-const TILE_ARTWORK_GROUP = '<g filter="url(#filter1_ddi_1637_371)">'
+/** The mark group inside the tile; the only element a maskable icon scales. */
+const TILE_ARTWORK_GROUP = '<g filter="url(#mark-shadow)">'
 
 /** One committed install icon: the manifest or link member it serves and its edge in pixels. */
 export interface AppIconVariant {
@@ -113,7 +111,7 @@ function reparent(source: string): string {
 
 /**
  * Rewrite the tile source so the icon canvas is exactly the tile.
- * @param source - complete `icon.svg` document.
+ * @param source - complete `app-icon.svg` document.
  * @returns an SVG document whose 1024-unit square is the tile without its shadow.
  */
 export function tileDocument(source: string): string {
@@ -123,8 +121,8 @@ export function tileDocument(source: string): string {
 /**
  * Rewrite the tile source into a maskable icon. The tile keeps its own gradient
  * and extent, so the icon's border is the real tile rather than an extension;
- * only the whale scales into the safe zone a platform mask may crop.
- * @param source - complete `icon.svg` document.
+ * only the mark scales into the safe zone a platform mask may crop.
+ * @param source - complete `app-icon.svg` document.
  * @returns an SVG document whose artwork survives a circular mask whole.
  */
 export function maskableDocument(source: string): string {
@@ -165,7 +163,7 @@ function documentForVariant(source: string, kind: AppIconVariant['kind']): strin
 
 /**
  * Render every install icon from the tile source.
- * @param source - complete `icon.svg` document.
+ * @param source - complete `app-icon.svg` document.
  * @returns one PNG per {@link APP_ICON_VARIANTS} entry, in declaration order.
  */
 export async function renderAppIcons(source: string): Promise<readonly { variant: AppIconVariant; png: Buffer }[]> {

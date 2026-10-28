@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Браузер Playwright",
+    "description": "Предоставляет каждому сеансу собственный Chromium через Playwright MCP. Перед первым использованием установите сборку Chromium, требуемую Playwright.",
+    "detail": "docs/DETAIL.md"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Playwright-Browser",
+    "description": "Stellt jeder Sitzung über Playwright MCP ein eigenes Chromium zur Verfügung. Installieren Sie vor der ersten Verwendung den von Playwright erwarteten Chromium-Build.",
+    "detail": "docs/DETAIL.md"
+  }
+}

@@ -14,6 +14,8 @@ Mount [`dsh-browser-use`](../../packages/browser-use/browser-use/README.md) and 
 | [Chrome DevTools MCP](../../packages/experimental/browser-use-chrome-devtools-mcp/README.md) | Chrome DevTools inspection and control through MCP |
 | [Stagehand](../../packages/experimental/browser-use-stagehand-native/README.md) | Native browser operations with AI-assisted actions, observation, and extraction |
 
+The Playwright provider also ships as the [on-demand bundle](../../packages/experimental/browser-use-playwright-bundle/README.md): Plugins lists it before installation, installing it mounts the service and a fixed `launch`/`headless` provider, and the package is not part of the default installation.
+
 The shared service registers only a name and rejects any second provider, including another instance with the same name. It has no common browser-operation methods, browser resources, or model-controlled selector. Provider configuration in a profile or preset selects launch or attachment for that activation.
 
 ## Session ownership

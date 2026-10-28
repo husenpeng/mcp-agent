@@ -72,6 +72,8 @@ The shared image slot props keep display choices separate from durable reference
 
 The composer uses a minimum 16px draft font on coarse-pointer devices to avoid focus-triggered browser zoom; larger font preferences still apply.
 
+The empty-Session hero paints its dot field on a shell-owned decorative canvas: dots tint toward the pointer, a fast move pushes them away with a spring return, and a click sends a shockwave. The canvas is hidden from the accessibility tree, never a hit target, draws behind the column, and falls back to the static CSS dots until its first frame lands or when the platform cannot draw; reduced motion keeps a static canvas frame.
+
 The composer measures its expanded control groups after size, content, visibility, or font-loading changes. If they cannot share a line, the row sets `--dsh-composer-model-text-display: none` and `--dsh-composer-model-icon-display: block` for the model seat; their defaults are `block` and `none`. Wrapping remains available if even the icon cannot fit.
 
 The context meter follows the [statistics-control radius](../../../docs/ui-radius.md#radius-scale).
@@ -197,6 +199,7 @@ None; Conversation assembly and browser input state do not alter provider-side p
 
 - **Only registered targets can render** — the shell deliberately has no implicit fallback target beyond the registered `chat` preference.
 - **Factory occurrences inherit their render-position Session** — `conversation.content` does not accept an independently addressed Session; that requires a separate Session-provider capability.
+- **Hero dot interaction is main-occurrence only** — embedded Conversation occurrences keep their plain background, and canvas colors follow the theme presenter's body projection rather than a theme service.
 
 
 <a id="dev-note"></a>

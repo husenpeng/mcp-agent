@@ -177,7 +177,9 @@
    margins cancel the root padding) so it clears the traffic lights at
    (16, 18). The strip marks itself `data-window-drag` in markup (SidebarRoot), so
    its own run is the column's draggable geometry and no frame band has to match
-   the strip's height; the toggle inside subtracts via the base.css rule. */
+   the strip's height; the toggle and the brand's local-build copies subtract
+   via the base.css rule. Expanded, the strip also carries the product
+   identity. */
 .topStrip {
   flex: none;
   display: flex;
@@ -192,31 +194,35 @@
   padding: 0 12px 2px;
 }
 
+/* Expanded, the identity starts clear of the traffic-light cluster, which
+   ends around x 84 of the window. */
+.topStripWide {
+  justify-content: space-between;
+  padding-left: 88px;
+}
+
 /* Window fullscreen hides the traffic lights (html[data-fullscreen], desktop
-   preload): the toggle takes their spot at the strip's left edge. */
-:global([data-fullscreen]) .topStrip {
+   preload): the toggle takes their spot at the strip's left edge, and the
+   brand drops the clearance that only the windowed controls need. */
+:global([data-fullscreen]) .topStrip:not(.topStripWide) {
   justify-content: flex-start;
 }
 
-/* The strip's full 52px foot leaves the wordmark too low; the content column
-   tucks 12px back under it, still clear of the toggle (28px control centered
-   in the strip ends at y 40). */
-.topStrip + .logoRow {
-  margin-top: -12px;
+:global([data-fullscreen]) .topStripWide {
+  padding-left: 12px;
 }
 
 /* Logo row (figma pad (4,8,4,8)): expanded keeps the panel toggle at the
    right edge; the rail gives every control the same base left anchor before
-   the shared entry translation is applied. macOS hiddenInset titlebar: the row
-   is marked `data-window-drag` in markup (SidebarRoot), so ui-web base.css's
-   single darwin rule carries the drag over its own box — below the top strip
-   (40–100px: the strip's 52px foot with the row's -12px tuck). The brand rides
-   that box (SidebarRoot renders the wordmark as a plain span there, so the
-   global interactive no-drag rule never subtracts it; only the local-build
-   fallbacks opt out through .copyVersion); the dedicated New
-   Session button below keeps the pointer and keyboard paths. Safe as a drag
-   source: it precedes the sidebar's overlay slots in document order, so their
-   no-drag still wins. */
+   the shared entry translation is applied. The row is marked
+   `data-window-drag` in markup (SidebarRoot), so ui-web base.css carries the
+   drag over its own box where it renders; macOS shows the identity in the
+   top strip instead and drops this row. The brand rides that box (SidebarRoot
+   renders the wordmark as a plain span there, so the global interactive
+   no-drag rule never subtracts it; only the local-build fallbacks opt out
+   through .copyVersion); the dedicated New Session button below keeps the
+   pointer and keyboard paths. Safe as a drag source: it precedes the sidebar's
+   overlay slots in document order, so their no-drag still wins. */
 .logoRow {
   flex: none;
   display: flex;

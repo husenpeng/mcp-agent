@@ -43,6 +43,8 @@ class TestFileSystem extends FileSystem {
   statOverrides = new Map<string, FsInfo | undefined>()
   statSignals: Array<AbortSignal | undefined> = []
   readTextSignals: Array<AbortSignal | undefined> = []
+  writeTextSignals: Array<AbortSignal | undefined> = []
+  writeTextPolicies: unknown[] = []
   readTextOverride?: (target: FsTarget, signal?: AbortSignal) => Promise<string>
 
   override async resolve(path: string): Promise<FsTarget> {
@@ -140,7 +142,15 @@ class TestFileSystem extends FileSystem {
     return result
   }
 
-  override async writeText(target: FsTarget, content: string): Promise<FsWriteOutcome> {
+  override async writeText(
+    target: FsTarget,
+    content: string,
+    _expected?: unknown,
+    signal?: AbortSignal,
+    sandboxPolicy?: unknown,
+  ): Promise<FsWriteOutcome> {
+    this.writeTextSignals.push(signal)
+    this.writeTextPolicies.push(sandboxPolicy)
     await mkdir(dirname(target.displayPath), { recursive: true })
     await writeFile(target.displayPath, content)
     return { operation: 'create', version: FsVersion('test'), before: null, after: content }
@@ -636,6 +646,148 @@ describe('FileSystemSkillProvider', () => {
     await expect(loading).rejects.toBe(reason)
     expect(fs.statSignals).toEqual([controller.signal])
     expect(fs.readTextSignals).toEqual([controller.signal])
+  })
+
+  it('updates a directory skill in place while preserving unknown frontmatter', async () => {
+    const home = await tempDir('skill-update-home')
+    const directory = join(home, '.agents/skills/editable')
+    await mkdir(directory, { recursive: true })
+    await writeFile(join(directory, 'SKILL.md'), [
+      '---',
+      'name: editable',
+      'description: Before',
+      'whenToUse: Before use',
+      'disable-model-invocation: true',
+      'metadata:',
+      '  owner: team-a',
+      '---',
+      '',
+      'Before body.',
+      '',
+    ].join('\n'))
+    const ctx = await setupLocal(home)
+
+    const updated = await ctx.skills.update('editable', {
+      description: 'After',
+      whenToUse: 'After use',
+      content: 'After body.',
+    })
+
+    expect(updated).toMatchObject({
+      name: 'editable',
+      description: 'After',
+      whenToUse: 'After use',
+      content: 'After body.',
+      source: 'user-agents',
+      invocation: { modelInvocable: false, userInvocable: true },
+    })
+    const text = await readFile(join(directory, 'SKILL.md'), 'utf8')
+    expect(text).toContain('disable-model-invocation: true')
+    expect(text).toContain('owner: team-a')
+    expect(text).toContain('description: After')
+    expect(text.endsWith('After body.\n')).toBe(true)
+    expect((await ctx.skills.list()).find(skill => skill.name === 'editable')?.description).toBe('After')
+  })
+
+  it('clears whenToUse on a flat skill', async () => {
+    const home = await tempDir('skill-update-flat')
+    const root = join(home, '.dsh/skills')
+    await mkdir(root, { recursive: true })
+    await writeFile(join(root, 'flat-editable.md'), '---\nname: flat-editable\ndescription: Flat\nwhenToUse: Old hint\n---\n\nFlat body.\n')
+    const ctx = await setupLocal(home)
+
+    const updated = await ctx.skills.update('flat-editable', { whenToUse: null })
+
+    expect(updated).toMatchObject({ name: 'flat-editable', description: 'Flat', content: 'Flat body.' })
+    expect(updated?.whenToUse).toBeUndefined()
+    const text = await readFile(join(root, 'flat-editable.md'), 'utf8')
+    expect(text).not.toContain('whenToUse')
+    expect((await ctx.skills.get('flat-editable'))?.whenToUse).toBeUndefined()
+  })
+
+  it('returns undefined when the skill file loses valid frontmatter before an update', async () => {
+    const home = await tempDir('skill-update-malformed')
+    const root = join(home, '.dsh/skills')
+    await writeSkill(root, 'broken', 'Broken')
+    const ctx = await setupLocal(home)
+    await ctx.skills.list()
+    await writeFile(join(root, 'broken/SKILL.md'), 'no frontmatter here\n')
+
+    await expect(ctx.skills.update('broken', { description: 'After' })).resolves.toBeUndefined()
+  })
+
+  it('writes an empty body through the filesystem without a lookup signal', async () => {
+    const home = await tempDir('skill-update-empty')
+    const root = join(home, '.agents/skills')
+    await writeSkill(root, 'empty-body', 'Before', 'Before body.')
+    const ctx = new Context()
+    await ctx.plugin(TestFileSystem)
+    const fs = ctx.fs as TestFileSystem
+    await ctx.plugin(SkillRegistry)
+    await ctx.plugin(SkillFileSystem, { dshHome: join(home, '.dsh'), agentsHome: join(home, '.agents'), watch: false })
+
+    const updated = await ctx.skills.update('empty-body', { content: '' })
+
+    expect(updated).toMatchObject({ name: 'empty-body', content: '' })
+    expect(fs.writeTextSignals).toEqual([undefined])
+    const text = await readFile(join(root, 'empty-body/SKILL.md'), 'utf8')
+    expect(text.endsWith('---\n\n')).toBe(true)
+  })
+
+  it('returns undefined when the write leaves an unreadable skill file', async () => {
+    const home = await tempDir('skill-update-corrupt')
+    const root = join(home, '.agents/skills')
+    await writeSkill(root, 'corrupt-write', 'Before')
+    const ctx = new Context()
+    await ctx.plugin(TestFileSystem)
+    const fs = ctx.fs as TestFileSystem
+    await ctx.plugin(SkillRegistry)
+    await ctx.plugin(SkillFileSystem, { dshHome: join(home, '.dsh'), agentsHome: join(home, '.agents'), watch: false })
+    fs.writeText = async (target, _content, _expected, _signal, _policy) => {
+      await writeFile(target.displayPath, 'no frontmatter here\n')
+      return { operation: 'update', version: FsVersion('test'), before: null, after: 'no frontmatter here\n' }
+    }
+
+    await expect(ctx.skills.update('corrupt-write', { description: 'After' })).resolves.toBeUndefined()
+  })
+
+  it('returns undefined when the skill file disappears before an update', async () => {
+    const home = await tempDir('skill-update-missing')
+    const directory = join(home, '.dsh/skills/gone')
+    await mkdir(directory, { recursive: true })
+    await writeFile(join(directory, 'SKILL.md'), '---\nname: gone\ndescription: Gone\n---\n\nGone body.\n')
+    const ctx = await setupLocal(home)
+    await ctx.skills.list()
+    await rm(directory, { recursive: true, force: true })
+
+    await expect(ctx.skills.update('gone', { description: 'After' })).resolves.toBeUndefined()
+  })
+
+  it('writes a filesystem-backed update with a narrow fence and reloads it', async () => {
+    const home = await tempDir('skill-update-fs')
+    const root = join(home, '.agents/skills')
+    await writeSkill(root, 'fs-editable', 'Before')
+    const ctx = new Context()
+    await ctx.plugin(TestFileSystem)
+    const fs = ctx.fs as TestFileSystem
+    await ctx.plugin(SkillRegistry)
+    await ctx.plugin(SkillFileSystem, { dshHome: join(home, '.dsh'), agentsHome: join(home, '.agents'), watch: false })
+    const controller = new AbortController()
+
+    const updated = await ctx.skills.update('fs-editable', {
+      description: 'After',
+      content: 'New body.',
+    }, { signal: controller.signal })
+
+    expect(updated).toMatchObject({ description: 'After', content: 'New body.' })
+    expect(fs.writeTextSignals).toEqual([controller.signal])
+    expect(fs.writeTextPolicies).toEqual([{
+      mode: 'workspace-write',
+      workspaceRoot: join(root, 'fs-editable'),
+    }])
+    const text = await readFile(join(root, 'fs-editable/SKILL.md'), 'utf8')
+    expect(text).toContain('description: After')
+    expect(text.endsWith('New body.\n')).toBe(true)
   })
 
   it('refreshes additions, metadata changes, deletions, and a recreated missing root', { timeout: 20000 }, async () => {

@@ -10,6 +10,12 @@ export const MACOS_TEAM_ID_ENV: 'DSH_DESKTOP_MACOS_TEAM_ID'
 /** Environment variable that selects the npm registry used for the bundled runtime install. */
 export const NPM_REGISTRY_ENV: 'DSH_DESKTOP_NPM_REGISTRY'
 
+/** Environment variable carrying the auth_service origin sealed into the application. */
+export const AUTH_SERVICE_URL_ENV: 'DSH_DESKTOP_AUTH_SERVICE_URL'
+
+/** Environment variable carrying the company BFF origin sealed into the application. */
+export const TOMATO_WEB_URL_ENV: 'DSH_DESKTOP_TOMATO_WEB_URL'
+
 /** Public identity expected on a macOS release. */
 export interface MacOSSigningEnvironment {
   readonly signingIdentity: string
@@ -69,3 +75,18 @@ export function resolveMacOSSigningEnvironment(env: NodeJS.ProcessEnv): MacOSSig
  * @returns Notary credentials without the submitted artifact path.
  */
 export function resolveMacOSNotarizationEnvironment(env: NodeJS.ProcessEnv): MacOSNotarizationEnvironment
+
+/** Login service origins sealed into the packaged application. */
+export interface DesktopLoginEnvironment {
+  /** auth_service origin, or an empty string when login is unconfigured. */
+  readonly authServiceUrl: string
+  /** Company BFF origin, or an empty string when login is unconfigured. */
+  readonly tomatoWebUrl: string
+}
+
+/**
+ * Resolve the login service origins sealed into the packaged application.
+ * @param env - Packaging environment.
+ * @returns Origins, both empty when no login services are configured.
+ */
+export function resolveDesktopLoginEnvironment(env: NodeJS.ProcessEnv): DesktopLoginEnvironment

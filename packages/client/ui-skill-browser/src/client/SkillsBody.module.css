@@ -1,0 +1,246 @@
+/* The panel is a master-detail frame: a fixed strip, then a name list beside
+   the selected skill's detail. It stacks when the Sidebar itself is narrow. */
+.root {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  color: var(--dsw-alias-label-primary);
+  font-size: var(--dsh-content-font-size-secondary, 13px);
+  line-height: 1.5;
+  container-type: inline-size;
+}
+
+.header {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 4px;
+  align-items: center;
+  box-sizing: border-box;
+  height: 38px;
+  padding: 0 6px 0 16px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l3);
+}
+
+.heading {
+  font-weight: 500;
+}
+
+.count {
+  margin-right: auto;
+  margin-left: 2px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+}
+
+/* The same icon button as the Sidebar's strip controls above it. */
+.tool {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 6px;
+  color: var(--dsw-alias-label-secondary);
+  line-height: 1;
+  background: transparent;
+  border: none;
+  border-radius: var(--dsw-radius-sm);
+  cursor: pointer;
+}
+
+.tool svg {
+  width: 15px;
+  height: 15px;
+}
+
+@media (hover: hover) {
+  .tool:hover {
+    color: var(--dsw-alias-label-primary);
+    background: var(--dsw-alias-interactive-bg-hover);
+  }
+}
+
+.main {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.listPane {
+  display: flex;
+  flex: 0 0 38%;
+  flex-direction: column;
+  min-width: 150px;
+  min-height: 0;
+  border-right: 0.5px solid var(--dsw-alias-border-l3);
+}
+
+.detailPane {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 6px;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.body::-webkit-scrollbar-track {
+  margin: 2px;
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cardItem {
+  margin: 0;
+  padding: 0;
+}
+
+.card {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: var(--dsw-radius-md);
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .card:hover {
+    background: var(--dsw-alias-interactive-bg-hover);
+  }
+}
+
+.card:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 1px;
+}
+
+.selected {
+  background: var(--dsw-alias-interactive-bg-active);
+}
+
+.cardName {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardTags {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+}
+
+.sentinel {
+  height: 1px;
+}
+
+.empty {
+  margin: 0;
+  padding: 12px 4px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.placeholder {
+  margin: auto;
+  padding: 24px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+}
+
+.failure {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 4px;
+}
+
+.failureLine,
+.inlineFailure {
+  margin: 0;
+  color: var(--dsw-alias-state-error-primary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.inlineFailure {
+  padding: 0 4px 8px;
+}
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.skeletonCard {
+  display: block;
+  height: 32px;
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-skeleton);
+  animation: dsh-skill-browser-skeleton 2s cubic-bezier(0.36, 0, 0.64, 1) infinite;
+}
+
+/* The chip's title glyph, matching the folder sheet of the workspace tree. */
+.titleIcon {
+  flex: none;
+  color: var(--dsw-alias-label-secondary);
+}
+
+@container (max-width: 560px) {
+  .main {
+    flex-direction: column;
+  }
+
+  .listPane {
+    flex: 0 0 auto;
+    max-height: 42%;
+    border-right: none;
+    border-bottom: 0.5px solid var(--dsw-alias-border-l3);
+  }
+
+  .detailPane {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}
+
+@keyframes dsh-skill-browser-skeleton {
+  0% { opacity: 1; }
+  40% { opacity: 0.6; }
+  80%, 100% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeletonCard { animation: none; }
+}

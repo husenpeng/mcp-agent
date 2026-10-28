@@ -9,14 +9,14 @@
  * @module @deepseek-ai/dsh-skill-filesystem
  */
 
-import { access, lstat, readdir, readFile, realpath, stat } from 'node:fs/promises'
+import { access, lstat, readdir, readFile, realpath, stat, writeFile } from 'node:fs/promises'
 import { unwatchFile, watchFile, type Stats } from 'node:fs'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import chokidar from 'chokidar'
 import z from '@deepseek-ai/schemastery'
 import type Schema from '@deepseek-ai/schemastery'
-import { parse as parseYaml } from 'yaml'
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
 import type { FileSystem, FsDirEntry, FsTarget } from '@deepseek-ai/dsh-fs'
 import { canonicalizeWatchPath, resolveAgentsHome, resolveDshHome } from '@deepseek-ai/dsh-home-paths'
 import {
@@ -30,6 +30,7 @@ import {
   type SkillProviderControl,
   type SkillProviderObservation,
   type SkillSource,
+  type SkillUpdatePatch,
 } from '@deepseek-ai/dsh-skill'
 
 const PROJECT_DSH_RANK = 100
@@ -210,6 +211,45 @@ export class FileSystemSkillProvider implements SkillProvider {
     const locator = candidate.locator as LocalLocator
     const parsed = await parseSkillFile(locator.path, this.ctx, options.signal, candidate.source === 'bundled')
     if (parsed === undefined) return undefined
+    return this.definition(candidate, locator, parsed)
+  }
+
+  /**
+   * Rewrite one local skill file, preserving frontmatter keys the patch does not
+   * name. The file is written atomically through the filesystem service when one
+   * is mounted; otherwise the provider writes it directly, matching how it reads
+   * host-local roots without that service.
+   * @param candidate - the winning candidate returned by this provider.
+   * @param patch - description, extra routing guidance, or Markdown body to replace.
+   * @param options - lookup options whose signal cancels the read and write.
+   * @returns the reloaded local skill, or `undefined` when the file or its frontmatter disappeared.
+   */
+  async update(
+    candidate: SkillCandidate,
+    patch: SkillUpdatePatch,
+    options: SkillLookupOptions,
+  ): Promise<SkillDefinition | undefined> {
+    const locator = candidate.locator as LocalLocator
+    const trustedHost = candidate.source === 'bundled'
+    const raw = await readSkillText(this.ctx, locator.path, options.signal, trustedHost)
+    options.signal?.throwIfAborted()
+    if (raw === undefined) return undefined
+    const parsed = parseFrontmatter(raw.content)
+    if (parsed === undefined) return undefined
+    const data = { ...parsed.data }
+    if (patch.description !== undefined) data.description = patch.description
+    if (patch.whenToUse === null) delete data.whenToUse
+    else if (patch.whenToUse !== undefined) data.whenToUse = patch.whenToUse
+    const body = (patch.content ?? parsed.body).trim()
+    const text = `---\n${stringifyYaml(data)}---\n\n${body}${body === '' ? '' : '\n'}`
+    await writeSkillText(this.ctx, locator.path, text, options.signal)
+    options.signal?.throwIfAborted()
+    const reloaded = await parseSkillFile(locator.path, this.ctx, options.signal, trustedHost)
+    if (reloaded === undefined) return undefined
+    return this.definition(candidate, locator, reloaded)
+  }
+
+  private definition(candidate: SkillCandidate, locator: LocalLocator, parsed: ParsedSkill): SkillDefinition {
     return {
       name: parsed.name,
       description: parsed.description,
@@ -864,6 +904,26 @@ async function readSkillText(ctx: Context, path: string, signal?: AbortSignal, t
     if (isAbsentSkillPathError(error)) return undefined
     throw error
   }
+}
+
+/**
+ * Write one local skill file atomically. Through the filesystem service the
+ * write is fenced to the file's own directory: this is a trusted, user-initiated
+ * edit of a discovered skill, not a model tool call, so it must not inherit a
+ * deployment workspace fence that excludes a personal skill root.
+ */
+async function writeSkillText(ctx: Context, path: string, content: string, signal?: AbortSignal): Promise<void> {
+  signal?.throwIfAborted()
+  const fs = optionalFileSystem(ctx)
+  if (fs === undefined) {
+    await writeFile(path, content, 'utf8')
+    return
+  }
+  const target = await fs.resolve(path, signal === undefined ? undefined : { signal })
+  await fs.writeText(target, content, undefined, signal, {
+    mode: 'workspace-write',
+    workspaceRoot: dirname(path),
+  })
 }
 
 async function readSkillTextFromFileSystem(

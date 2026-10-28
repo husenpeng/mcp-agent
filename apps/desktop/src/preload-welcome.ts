@@ -11,8 +11,12 @@ import {
 const prefix = '--dsh-welcome-locale='
 const locale = process.argv.find(argument => argument.startsWith(prefix))?.slice(prefix.length)
 if (locale === undefined) throw new Error('desktop welcome: missing window locale')
+// The preload runs before the document element exists; the renderer marks
+// `<html data-platform>` from this field before its first paint so
+// chrome-specific CSS (traffic-light clearance) applies without a flash.
 const api: WelcomeApi = {
   ...resolveDesktopLocale(locale),
+  platform: process.platform,
   analytics: async (eventName, attributes) => {
     if (await api.analyticsEnabled()) await ipcRenderer.invoke(WELCOME_IPC.analytics, eventName, attributes)
   },

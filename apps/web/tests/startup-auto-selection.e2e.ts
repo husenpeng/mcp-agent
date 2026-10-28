@@ -41,13 +41,33 @@ describe('web e2e: startup auto-selection', () => {
   it('keeps the resident Hero and composer nodes when the first Workspace session appears', async () => {
     onTestFailed(() => saveFailureShot(page, 'web-e2e-first-workspace-stable-tree'))
     await page.locator(`${ROOT_PHASE}[data-phase="hero"]`).waitFor({ timeout: 15_000 })
+    // The interactive dot field replaces the CSS fallback once its first frame
+    // lands; it must stay outside the hit path so the composer remains clickable.
+    const field = page.locator('canvas[data-dot-field]')
+    await expect.poll(() => field.evaluate(node => node.hasAttribute('data-ready')), { timeout: 15_000 }).toBe(true)
+    expect(await field.evaluate(node => ({
+      pointerEvents: getComputedStyle(node).pointerEvents,
+      zIndex: getComputedStyle(node).zIndex,
+      ariaHidden: node.getAttribute('aria-hidden'),
+    }))).toEqual({ pointerEvents: 'none', zIndex: '-1', ariaHidden: 'true' })
+    expect(await page.locator(`${ROOT_PHASE}[data-phase="hero"]`).evaluate(node => getComputedStyle(node).backgroundImage))
+      .toBe('none')
+    expect(await page.evaluate(() => {
+      const composer = document.querySelector('[data-composer-input]')
+      if (composer === null) return false
+      const box = composer.getBoundingClientRect()
+      const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2)
+      return hit?.closest('[data-composer-input]') !== null
+    })).toBe(true)
     const headline = page.getByText('Into the Unknown', { exact: true })
     // The headline text sits in its own span inside the title group; the fish
     // hitbox precedes the group, not the text span.
     const fishHitbox = headline.locator('xpath=../preceding-sibling::span[1]')
     const fish = fishHitbox.locator('svg')
+    // The visible title span is gradient-clipped (transparent ink); the fish
+    // inherits the surrounding headline ink, so compare against that group.
     expect(await fish.evaluate(node => getComputedStyle(node).color))
-      .toBe(await headline.evaluate(node => getComputedStyle(node).color))
+      .toBe(await headline.locator('xpath=..').evaluate(node => getComputedStyle(node).color))
     await fishHitbox.hover()
     expect(await fish.evaluate(node => getComputedStyle(node).animationName)).not.toBe('none')
     await page.evaluate(() => {

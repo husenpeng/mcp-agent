@@ -14,6 +14,8 @@
 | [Chrome DevTools MCP](../../packages/experimental/browser-use-chrome-devtools-mcp/README.zh.md) | 通过 MCP 进行 Chrome DevTools 检查与控制 |
 | [Stagehand](../../packages/experimental/browser-use-stagehand-native/README.zh.md) | 原生浏览器操作，支持 AI（人工智能）辅助的动作、观测与提取 |
 
+Playwright 提供方还提供[按需组合包](../../packages/experimental/browser-use-playwright-bundle/README.zh.md)：插件页在安装前即可列出，安装后会挂载共享服务与固定的 `launch`/`headless` 提供方，且该包不进入默认安装。
+
 共享服务只注册名称，并拒绝任何第二次提供方注册，包括同名实例。它不包含通用浏览器操作方法、浏览器资源或模型控制的选择器。Profile 或 preset 中的提供方配置为此次激活选择启动或附加模式。
 
 ## Session 所有权

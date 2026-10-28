@@ -73,4 +73,5 @@ export const OPTIONAL_BUNDLES: readonly string[] = [
 export const ON_DEMAND_BUNDLES: readonly string[] = [
   '@deepseek-ai/dsh-subagent-claude-code',
   '@deepseek-ai/dsh-subagent-codex',
+  '@deepseek-ai/dsh-experimental-browser-use-playwright-bundle',
 ]

@@ -147,7 +147,13 @@ export function Welcome({ api }: { api: WelcomeApi }) {
 
   return <>
     {expiryNotice && <Toast text={m.welcomeSessionExpired} onDone={() => { setExpiryNotice(false) }} />}
-    <div className="titlebar" aria-hidden="true" />
+    <div className="titlebar" aria-hidden="true">
+      <span className="titlebarBrand">
+        <img className="titlebarMark titlebarMarkLight" src="assets/tomato-mark-light.svg" alt="" width="18" height="18" />
+        <img className="titlebarMark titlebarMarkDark" src="assets/tomato-mark-dark.svg" alt="" width="18" height="18" />
+        <span className="titlebarName" translate="no">Tomato AI</span>
+      </span>
+    </div>
     <main className="welcome" aria-labelledby={headingId}>
       <BrandPanel messages={m} />
       <section className="authPane">

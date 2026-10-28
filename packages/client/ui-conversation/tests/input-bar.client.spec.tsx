@@ -1045,11 +1045,14 @@ describe('running and lock semantics', () => {
     const { textarea, button, stop, sink, shell } = bench({ running: true })
     expect(textarea.getAttribute('aria-disabled')).not.toBe('true')
     expect(button.getAttribute('aria-label')).toBe('停止生成')
+    // The busy Stop paints the reference loading glyph; Send keeps the arrow.
+    expect(button.querySelector('svg[data-icon="dsw-icon-loading-outline-regular"]')).not.toBeNull()
     fireEvent.click(button)
     expect(stop).toHaveBeenCalledTimes(1)
 
     writeDraft(shell, '排队消息')
     expect(button.getAttribute('aria-label')).toBe('排队发送')
+    expect(button.querySelector('svg[data-icon]')).toBeNull()
     writeDraft(shell, '   ')
     expect(button.getAttribute('aria-label')).toBe('停止生成')
     writeDraft(shell, '排队消息2')

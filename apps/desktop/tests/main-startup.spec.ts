@@ -93,6 +93,7 @@ const harness = await vi.hoisted(async () => {
     })
     readonly shown = deferred()
     readonly show = vi.fn(() => { this.shown.resolve() })
+    readonly showInactive = vi.fn()
     readonly hide = vi.fn()
     readonly focus = vi.fn()
     readonly moveTop = vi.fn()
@@ -121,6 +122,7 @@ const harness = await vi.hoisted(async () => {
       this.webContents.mainFrame.url = url
       if (url === 'dsh-app://app/') navigated.resolve()
     }
+    async loadFile(path: string) { this.urls.push(path) }
     static getAllWindows() { return windows.filter(window => !window.destroyed) }
     setMenu() {}
     getContentBounds() { return { x: 0, y: 0, width: 900, height: 650 } }
@@ -293,6 +295,17 @@ vi.mock('../src/policy-test-auth.ts', () => ({ DesktopPolicyTestAuth: class {
   readonly request: typeof fetch = (input, init) => fetch(input, init)
 } }))
 
+function stubProcess(overrides: Record<string, unknown>): void {
+  const active = process
+  vi.stubGlobal('process', {
+    ...active,
+    on: active.on.bind(active),
+    once: active.once.bind(active),
+    removeListener: active.removeListener.bind(active),
+    ...overrides,
+  })
+}
+
 vi.mock('electron', () => ({
   app: harness.app,
   BrowserWindow: harness.FakeWindow,
@@ -388,7 +401,7 @@ vi.mock('../src/welcome-backend.ts', () => ({
     readLocalePreference: async () => null,
     read: async (): Promise<unknown> => (await harness.hosts.at(-1)!.fetch()).json() as Promise<unknown>,
     save: async () => ({ ok: true }),
-    account: { watch: harness.watchAccount, state: async () => ({ status: 'signed-out', attempt: null }) },
+    account: { watch: harness.watchAccount, state: async () => ({ status: 'signed-out', attempt: null }), window: () => undefined, sessionId: () => undefined },
   }),
 }))
 
@@ -439,7 +452,7 @@ beforeEach(() => {
   vi.stubEnv('DSH_DESKTOP_PNPM_ENTRY', 'test-pnpm')
   vi.stubEnv('DSH_DESKTOP_DSH_DIR', 'test-runtime')
   vi.stubEnv('DSH_DESKTOP_PRIMARY_RUNTIME_DIR', 'test-primary-runtime')
-  vi.stubGlobal('process', { ...process, platform: 'win32', arch: 'x64', resourcesPath: 'desktop-test-resources' })
+  stubProcess({ platform: 'win32', arch: 'x64', resourcesPath: 'desktop-test-resources' })
   vi.stubEnv('DSH_DESKTOP_HOST_INSPECT_PORT', undefined)
   vi.stubEnv('DSH_DESKTOP_DEV_PROJECT_DIR', undefined)
   vi.stubEnv('DSH_DESKTOP_MANDATORY_UPDATE_CONFIG', undefined)
@@ -543,7 +556,7 @@ describe('desktop main startup', () => {
   })
 
   it('installs hidden native DevTools shortcuts in the macOS application menu', async () => {
-    vi.stubGlobal('process', { ...process, platform: 'darwin' })
+    stubProcess({ platform: 'darwin' })
     await readyForUpdate()
     expect(applicationMenuItems().slice(-2)).toEqual([
       { role: 'toggleDevTools', visible: false },
@@ -558,7 +571,7 @@ describe('desktop main startup', () => {
     ['win32', true, 'zh-CN'],
     ['win32', false, 'en-US'],
   ] as const)('offers the About command before other commands on %s (packaged=%s, locale=%s)', async (platform, packaged, locale) => {
-    vi.stubGlobal('process', { ...process, platform })
+    stubProcess({ platform })
     harness.app.isPackaged = packaged
     vi.spyOn(harness.app, 'getLocale').mockReturnValue(locale)
     vi.spyOn(harness.app, 'getPreferredSystemLanguages').mockReturnValue([locale])
@@ -568,7 +581,7 @@ describe('desktop main startup', () => {
     const options = harness.app.setAboutPanelOptions.mock.calls[0]![0]
     const expected = JSON.parse(readFileSync(new URL('./expected/about-panel.json', import.meta.url), 'utf8')) as Record<string, unknown>
     const [about, separator] = submenu
-    expect({ menu: [{ label: about!.label, role: about!.role }, separator], options: { ...options, iconPath: '<app icon>' } })
+    expect({ menu: [{ label: about!.label, ...about!.role === undefined ? {} : { role: about!.role } }, separator], options: { ...options, iconPath: '<app icon>' } })
       .toEqual(expected[`${platform}:${locale}`])
     expect(options.iconPath).toBe(packaged ? join('desktop-test-resources', 'icon.png')
       : join('desktop-test-app', 'resources', 'icon-windows.png'))
@@ -579,7 +592,7 @@ describe('desktop main startup', () => {
     await vi.advanceTimersByTimeAsync(0)
     const zh = locale === 'zh-CN'
     expect(harness.dialog.showMessageBox).toHaveBeenLastCalledWith(expect.objectContaining({
-      type: 'info', title: zh ? '关于 DeepSeek Harness' : 'About DeepSeek Harness', message: 'DeepSeek Harness',
+      type: 'info', title: zh ? '关于 Tomato AI' : 'About Tomato AI', message: 'Tomato AI',
       detail: zh ? '版本 V1.0.0' : 'Version V1.0.0', buttons: [zh ? '确定' : 'OK'], cancelId: 0,
     }))
     // A dialog that cannot open is logged, not surfaced as an unhandled rejection.
@@ -997,7 +1010,7 @@ describe('desktop main startup', () => {
     expect(() => handler(event, 'application', NaN, 34)).toThrow('invalid popup request')
     const application = handler(event, 'application', 48, 34)
     expect(harness.menu.buildFromTemplate.mock.lastCall![0].map(item => item.label ?? item.type)).toEqual([
-      '关于 DeepSeek Harness', 'separator', '检查更新…', '管理 dsh 命令…', 'separator', '退出',
+      '关于 Tomato AI', 'separator', '检查更新…', '管理 dsh 命令…', 'separator', '退出登录', 'separator', '退出',
     ])
     expect(harness.popup.mock.lastCall![0]).toMatchObject({ window, x: 48, y: 34 })
     expect(harness.popup.mock.lastCall![0].callback).toBeTypeOf('function')
@@ -1034,8 +1047,8 @@ describe('desktop main startup', () => {
       : ['Application', 'editMenu'])
     const application = template[0]!.submenu as MenuItemConstructorOptions[]
     expect(application.filter(item => item.visible !== false).map(describeItem)).toEqual(platform === 'darwin'
-      ? ['about', 'separator', en.checkUpdatesMenu, en.cliCommandMenu, 'separator', 'hide', 'hideOthers', 'unhide', 'separator', 'quit']
-      : ['about', 'separator', en.checkUpdatesMenu, 'separator', 'quit'])
+      ? ['about', 'separator', en.checkUpdatesMenu, en.cliCommandMenu, 'separator', en.signOutMenu, 'separator', 'hide', 'hideOthers', 'unhide', 'separator', 'quit']
+      : ['about', 'separator', en.checkUpdatesMenu, 'separator', en.signOutMenu, 'separator', 'quit'])
     expect(harness.menu.setApplicationMenu).toHaveBeenCalledOnce()
   })
 
@@ -1214,7 +1227,7 @@ describe('desktop main startup', () => {
     ['darwin', ['--updated'], false],
     ['linux', ['--updated'], false],
   ] as const)('raises the first workspace only for a Windows installer restart (%s, %j)', async (platform, args, raises) => {
-    vi.stubGlobal('process', { ...process, platform, argv: ['desktop', ...args] })
+    stubProcess({ platform, argv: ['desktop', ...args] })
     await import('../src/main.ts')
     await harness.preparing.promise
     const window = harness.windows[0]!
@@ -1242,7 +1255,7 @@ describe('desktop main startup', () => {
   it.each([
     ['win32', 'zh-CN'], ['win32', 'en-US'], ['darwin', 'zh-CN'], ['darwin', 'en-US'],
   ] as const)('records the restart confirmation on %s in %s', async (platform, language) => {
-    vi.stubGlobal('process', { ...process, platform })
+    stubProcess({ platform })
     vi.spyOn(harness.app, 'getPreferredSystemLanguages').mockReturnValue([language])
     await readyForUpdate()
     harness.updateState = { phase: 'ready', version: '0.1.7-alpha.2' }
@@ -1305,7 +1318,7 @@ describe('desktop main startup', () => {
   })
 
   it('hides a macOS owner with a mandatory view without quitting or stopping the Host', async () => {
-    vi.stubGlobal('process', { ...process, platform: 'darwin' })
+    stubProcess({ platform: 'darwin' })
     harness.embeddedPolicy = { origin: 'https://policy.example.com', allowedPageOrigins: ['https://downloads.example.com'] }
     vi.stubGlobal('fetch', vi.fn(async () => Response.json({ code: 40005, data: {
       show_content: { title: 'Update required', detail: 'Please update' }, desktop_app_link: 'https://downloads.example.com/',
@@ -1349,7 +1362,7 @@ describe('desktop main startup', () => {
   })
 
   it('leaves macOS fullscreen before hiding on close and reopens the hidden window on activate', async () => {
-    vi.stubGlobal('process', { ...process, platform: 'darwin', arch: 'arm64', resourcesPath: 'desktop-test-resources' })
+    stubProcess({ platform: 'darwin', arch: 'arm64', resourcesPath: 'desktop-test-resources' })
     await readyWorkspace()
     const window = harness.windows[0]!
     expect(harness.trays).toHaveLength(0)
@@ -1366,7 +1379,7 @@ describe('desktop main startup', () => {
   })
 
   it('skips the confirmation during a macOS shutdown but asks again once a cancelled shutdown returns focus', async () => {
-    vi.stubGlobal('process', { ...process, platform: 'darwin', arch: 'arm64', resourcesPath: 'desktop-test-resources' })
+    stubProcess({ platform: 'darwin', arch: 'arm64', resourcesPath: 'desktop-test-resources' })
     const host = await readyWorkspace()
     const window = harness.windows[0]!
     host.inspectQuit.mockResolvedValue({ activeTasks: true, scheduledTasks: false })
@@ -1871,7 +1884,7 @@ describe('desktop main startup', () => {
   })
 
   it.each([false, true])('waits for macOS to leave fullscreen before installation confirmation, mandatory: %s', async (mandatory) => {
-    vi.stubGlobal('process', { ...process, platform: 'darwin' })
+    stubProcess({ platform: 'darwin' })
     if (mandatory) {
       harness.embeddedPolicy = { origin: 'https://policy.example.com', allowedPageOrigins: ['https://downloads.example.com'] }
       vi.stubGlobal('fetch', vi.fn(async () => Response.json({ code: 40005, data: {
@@ -1903,7 +1916,7 @@ describe('desktop main startup', () => {
   })
 
   it('keeps the Host running after a fullscreen timeout and accepts a later retry', async () => {
-    vi.stubGlobal('process', { ...process, platform: 'darwin' })
+    stubProcess({ platform: 'darwin' })
     const host = await readyForUpdate()
     const window = harness.windows[0]!
     window.fullscreen = true
@@ -1926,7 +1939,7 @@ describe('desktop main startup', () => {
   })
 
   it.each([false, true])('cancels installation when the fullscreen product window closes, mandatory: %s', async (mandatory) => {
-    vi.stubGlobal('process', { ...process, platform: 'darwin' })
+    stubProcess({ platform: 'darwin' })
     if (mandatory) {
       harness.embeddedPolicy = { origin: 'https://policy.example.com', allowedPageOrigins: ['https://downloads.example.com'] }
       vi.stubGlobal('fetch', vi.fn(async () => Response.json({ code: 40005, data: {
@@ -2509,23 +2522,25 @@ it.each(['failed', 'expired'] as const)('focuses DSH once when browser authoriza
   expect(window.focus).toHaveBeenCalledTimes(1)
 })
 
-it.each([['light', false], ['dark', true]] as const)('opens Platform authorization in the effective %s palette', async (theme, shouldUseDarkColors) => {
+
+it('refreshes the workspace account after an initial welcome sign-in', async () => {
   await import('../src/main.ts')
   await harness.preparing.promise
   harness.prepared.resolve()
   await harness.hostStarted.promise
+  harness.hosts[0]!.fetch.mockResolvedValue(Response.json({ hasApiKey: false, writable: false, localePreference: null }))
   harness.hosts[0]!.ready.resolve()
   await Promise.resolve(invoke(DESKTOP_IPC.boot))
-  harness.nativeTheme.shouldUseDarkColors = shouldUseDarkColors
-  const state: AccountView = {
-    status: 'signed-out', links: { usageUrl: 'https://platform.deepseek.com/usage', topUpUrl: 'https://platform.deepseek.com/top_up' },
-    attempt: { id: 'test-theme-attempt' as NonNullable<AccountView['attempt']>['id'], phase: 'waiting-browser',
-      authorizeUrl: 'https://platform.deepseek.com/dsh/authorize?state=state-1' },
-  }
-  harness.publishAccount(state)
-  harness.publishAccount(state)
-  expect(harness.openExternal).toHaveBeenCalledExactlyOnceWith(`https://platform.deepseek.com/dsh/authorize?state=state-1&theme=${theme}`)
+  expect(harness.windows).toHaveLength(2)
+  const window = harness.windows[0]!
+  window.webContents.send.mockClear()
+  harness.publishAccount({
+    status: 'credential-stored', links: { usageUrl: 'https://platform.test/usage', topUpUrl: 'https://platform.test/top_up' },
+    attempt: { id: 'test-succeeded-attempt' as NonNullable<AccountView['attempt']>['id'], phase: 'succeeded' },
+  })
+  await vi.waitFor(() => { expect(window.webContents.send).toHaveBeenCalledWith(DESKTOP_IPC.accountChanged) })
 })
+
 
 it('disables native product events for a disabled Desktop launch', async () => {
   harness.analyticsEnabled = false

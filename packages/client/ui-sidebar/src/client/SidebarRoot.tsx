@@ -262,6 +262,49 @@ export function SidebarRoot({
       </button>
     </Tooltip>
   )
+  // Expanded brand: the mark and name are independent slots; the shell owns
+  // their shared baseline, spacing, and height. On macOS the surrounding
+  // element stays a plain span so the window-drag surface never subtracts
+  // itself through the global no-drag rule.
+  const brandIdentity = (
+    <span className={css.brandIdentity} aria-hidden="true">
+      <span className={css.brandMark}>
+        {renderSlot('sidebar.brand.mark', { size: 24 }, {
+          fallback: buildVersion === undefined
+            ? <FishLogo size={24} />
+            : <span className={css.copyVersion} data-copy-version onClick={copyVersion(buildVersion)}><FishLogo size={24} /></span>,
+        })}
+      </span>
+      <span className={css.brandName}>
+        {renderSlot('sidebar.brand.name', {}, {
+          fallback: buildVersion === undefined
+            ? <span className={css.fallbackBrandName}>{t('brand.localBuild')}</span>
+            : (
+              <span className={clsx(css.localBuildBrand, css.copyVersion)} data-copy-version onClick={copyVersion(buildVersion)}>
+                <span className={css.localBuildTitle}>{t('brand.localBuild')}</span>
+                <span className={css.buildVersion}>{buildVersion}</span>
+              </span>
+            ),
+        })}
+      </span>
+    </span>
+  )
+  const brand = darwinDesktop || !canStartSession
+    ? <span className={clsx(css.brand, css.wide)}>{brandIdentity}</span>
+    : (
+      <button
+        type="button"
+        className={clsx(css.brand, css.wide)}
+        aria-label={t('session.new.label')}
+        aria-keyshortcuts={newShortcut?.aria}
+        onClick={(event) => {
+          if ((event.target as Element).closest('[data-copy-version]') !== null) return
+          openNewSession()
+        }}
+      >
+        {brandIdentity}
+      </button>
+    )
 
   return (
     <div
@@ -278,58 +321,24 @@ export function SidebarRoot({
       onPointerLeave={() => { armLinger() }}
     >
       {/* macOS hiddenInset titlebar: the strip shares the row with the
-          traffic lights and keeps the toggle at the sidebar's top-right. */}
-      {darwinDesktop && <div className={css.topStrip} data-window-drag>{toggle}</div>}
-      <div className={css.logoRow} data-window-drag>
-        {/* Expanded, the brand doubles as a New Session shortcut while the
-            access snapshot allows `session/create` — except on
-            macOS, where it stays part of the logo row's window-drag surface
-            (a button would subtract itself through the global no-drag rule);
-            the collapsed rail's logo is the expand toggle below instead.
-            Mouse clicks on the local-build fallbacks copy the version instead. */}
-        {wide && (() => {
-          const identity = (
-            <span className={css.brandIdentity} aria-hidden="true">
-              <span className={css.brandMark}>
-                {renderSlot('sidebar.brand.mark', { size: 24 }, {
-                  fallback: buildVersion === undefined
-                    ? <FishLogo size={24} />
-                    : <span className={css.copyVersion} data-copy-version onClick={copyVersion(buildVersion)}><FishLogo size={24} /></span>,
-                })}
-              </span>
-              <span className={css.brandName}>
-                {renderSlot('sidebar.brand.name', {}, {
-                  fallback: buildVersion === undefined
-                    ? <span className={css.fallbackBrandName}>{t('brand.localBuild')}</span>
-                    : (
-                      <span className={clsx(css.localBuildBrand, css.copyVersion)} data-copy-version onClick={copyVersion(buildVersion)}>
-                        <span className={css.localBuildTitle}>{t('brand.localBuild')}</span>
-                        <span className={css.buildVersion}>{buildVersion}</span>
-                      </span>
-                    ),
-                })}
-              </span>
-            </span>
-          )
-          return darwinDesktop || !canStartSession
-            ? <span className={clsx(css.brand, css.wide)}>{identity}</span>
-            : (
-              <button
-                type="button"
-                className={clsx(css.brand, css.wide)}
-                aria-label={t('session.new.label')}
-                aria-keyshortcuts={newShortcut?.aria}
-                onClick={(event) => {
-                  if ((event.target as Element).closest('[data-copy-version]') !== null) return
-                  openNewSession()
-                }}
-              >
-                {identity}
-              </button>
-            )
-        })()}
-        {!darwinDesktop && toggle}
-      </div>
+          traffic lights, carries the product identity clear of them, and keeps
+          the toggle at the sidebar's top-right. That identity is a plain span
+          so the drag surface never subtracts itself through the global no-drag
+          rule; the dedicated New Session button below keeps the pointer and
+          keyboard paths. Elsewhere the logo row keeps its own layout. */}
+      {darwinDesktop
+        ? (
+          <div className={clsx(css.topStrip, wide && css.topStripWide)} data-window-drag>
+            {wide && brand}
+            {toggle}
+          </div>
+        )
+        : (
+          <div className={css.logoRow} data-window-drag>
+            {wide && brand}
+            {toggle}
+          </div>
+        )}
 
       {/* The label fades before the hover/focus shortcut, including on translucent backgrounds. */}
       {canStartSession && (

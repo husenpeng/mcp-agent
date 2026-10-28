@@ -115,6 +115,7 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@deepseek-ai/dsh-client-ui-sidebar-right` | no | Right Sidebar: the docking surface's session-bound state, its panel and header expand control, and the navigation service over it |
 | `@deepseek-ai/dsh-client-ui-sidebar-terminal` | no | Interactive shell tabs for the right Sidebar |
 | `@deepseek-ai/dsh-client-ui-skill` | no | Web skill references and the dedicated skill tool row |
+| `@deepseek-ai/dsh-client-ui-skill-browser` | no | Skills tab type for the right Sidebar: browse every installed skill, open its details, and edit personal skill files |
 | `@deepseek-ai/dsh-client-ui-subagent` | no | Subagent conversation catalog, continuation routing UI, and '@' reference source |
 | `@deepseek-ai/dsh-client-ui-theme` | yes | Theme plugin: Host bootstrap for the pre-plugin palette; ThemeRuntime for light/dark/system state and icon replacements; --dsw-* token styles and Appearance settings row |
 | `@deepseek-ai/dsh-client-ui-tool` | no | Client Tool call-tree renderer and keyed per-tool presentation slot |
@@ -496,6 +497,15 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | Package | Config | Description |
 |---|---|---|
 | `@deepseek-ai/dsh-tool-todo` | yes | Model-facing todo_write tool over the DeepSeek Harness event-sourced session log |
+
+## tomato
+
+| Package | Config | Description |
+|---|---|---|
+| `@tomato/account` | no | Tomato account surface: sidebar launcher and settings page over the local gateway's auth_service session |
+| `@tomato/brand` | no | Tomato brand occupants for the sidebar and conversation-hero slots |
+| `@tomato/gateway` | yes | Tomato local gateway: same-origin auth routes and a fixed-table HTTP forwarder for company services |
+| `@tomato/telemetry` | yes | Session-event traces for Tomato AI, delivered as OTLP/HTTP JSON to the internal relay |
 
 ## typert
 

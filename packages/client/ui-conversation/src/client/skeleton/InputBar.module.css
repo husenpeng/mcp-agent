@@ -391,9 +391,11 @@
   cursor: default;
 }
 
-/* Primary send (figma IconButton 34:10465): 34px circle, #3964FE light /
-   #679EFE dark — the info-fill pair (500→400), NOT button-primary (ink);
-   white glyph; empty text = 0.4 opacity. */
+/* Primary send, matching the client-monorepo strategy composer action
+   (BriefChainlitView's send Button): the brand CTA gradient on the figma
+   34px circle, white glyph, disabled 40%. Hover keeps the fill unchanged;
+   a press shrinks it slightly. The hero variant takes the reference's
+   larger 38px seat. */
 .primary {
   display: grid;
   place-items: center;
@@ -403,27 +405,50 @@
   border: none;
   border-radius: 999px;
   corner-shape: round;
-  background: var(--dsw-alias-button-info-fill);
-  /* Static white, not the foreground token: the arrow stays white on the blue
-     fill in both themes (design 34:10465). */
+  background-color: var(--dsw-alias-button-primary-fill);
+  background-image: var(--dsw-brand-gradient-cta);
+  /* Static white, not the foreground token: the arrow stays white on the
+     gradient fill in both themes. */
   color: #fff;
   cursor: pointer;
-  transition: background-color 100ms ease;
+  transition:
+    transform var(--ds-transition-duration-fast) var(--ds-ease-in-out),
+    opacity var(--ds-transition-duration-fast) var(--ds-ease-in-out);
   /* Opts out of the row's 2px downward shift (.row top pad): the send circle
      keeps its original seat while the smaller chips sit lower. Transform, not
      margin, so flex centering math is untouched. */
   transform: translateY(-2px);
 }
 
-@media (hover: hover) {
-  .primary:hover:not(:disabled) {
-    background: var(--dsw-alias-button-info-hover);
-  }
+.hero .primary {
+  width: 38px;
+  height: 38px;
+}
+
+.primary:active:not(:disabled) {
+  transform: translateY(-2px) scale(0.97);
 }
 
 .primary:disabled {
   opacity: 0.4;
-  cursor: default;
+  cursor: not-allowed;
+}
+
+/* Running Stop renders the reference's loading glyph instead of the square. */
+.spinner {
+  animation: input-send-spin 1s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}
+
+@keyframes input-send-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .retry {

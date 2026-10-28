@@ -1,5 +1,5 @@
 /**
- * OTLP/HTTP JSON span documents for Tomato Harness session activity.
+ * OTLP/HTTP JSON span documents for Tomato AI session activity.
  *
  * One trace describes one turn: a root span for the turn and one child span per
  * completed tool call. Everything here is a pure function of session events and
@@ -24,7 +24,11 @@ export interface SpanDraft {
 /** A span-level attribute value in OTLP/JSON encoding. */
 type OtlpValue = { stringValue: string } | { intValue: string } | { boolValue: boolean }
 
-/** `time` is epoch milliseconds; OTLP wants nanoseconds as a decimal string. */
+/**
+ * `time` is epoch milliseconds; OTLP wants nanoseconds as a decimal string.
+ * @param epochMilliseconds - epoch timestamp in milliseconds.
+ * @returns the timestamp as OTLP nanoseconds.
+ */
 export function nanos(epochMilliseconds: number): string {
   return `${BigInt(Math.trunc(epochMilliseconds)) * 1_000_000n}`
 }
@@ -63,7 +67,9 @@ export function otlpDocument(
           startTimeUnixNano: span.startTimeUnixNano,
           endTimeUnixNano: span.endTimeUnixNano,
           attributes: Object.entries(span.attributes).map(([key, value]) => ({ key, value: attributeValue(value) })),
-          status: span.status.code === 0 ? { code: 0 } : { code: 2, ...span.status.message === undefined ? {} : { message: span.status.message } },
+          status: span.status.code === 0
+            ? { code: 0 }
+            : { code: 2, ...span.status.message === undefined ? {} : { message: span.status.message } },
         })),
       }],
     }],
