@@ -13,6 +13,7 @@
 - **包名**：全部 `@deepseek-ai/*` 改为 `@tomato/*`，`dsh-` 前缀剥离。显式映射：`@deepseek-ai/dsh` → `@tomato/cli`，`dsh-brand` → `@tomato/branded`，`dsh-root` → `@tomato/harness`，`dsh-subagent-dsh-sdk` → `@tomato/subagent-sdk`。`vendor/` 与 `native/` 一并改名。
 - **运行时标识**：`DSH_` → `TOMATO_`；`Dsh*` / `dsh*` 标识符 → `Tomato*` / `tomato*`；`__DSH_*__` 全局与 `SCREAMING_DSH` 常量同步改名；CLI `dsh` → `tomato`；home `~/.dsh` → `~/.tomato`；`package.json` 清单字段 `dsh` → `tomato`；设置键 `dsh.*` → `tomato.*`；URI scheme `dsh-app://`、`dsh-resource://`、`dsh-session:` → `tomato-*`；发布 tag `dsh-v*` → `tomato-v*`。
 - **桌面身份**：`com.deepseek.dsh` → `vip.tomatoai.desktop`；本地无签名构建 `com.deepseek.harness` → `vip.tomatoai.harness`。
+- **已发布会话数据**：标题消息的 source kind 改为 `@tomato/session-title-llm`；`MessageSourceMap` 继续声明旧的 `dsh-session-title-llm`，v3→v4 迁移把旧值映射为新值，因此旧会话仍可读。persistence 哈希种子与历史 release tag 前缀属于协议常量，保持原样（[持久化变更记录](../../persistence-changes/2026-10-28-tomato-namespace.md)）。
 - **保留的外部身份**：`DEEPSEEK_API_KEY`、`DEEPSEEK_BASE_URL`、`api.deepseek.com`、`deepseek-*` 模型 id、`deepseek-official` / `deepseek-account` / `deepseek-api-key` provider id、适配器包名中的 `deepseek` leaf（如 `@tomato/llm-deepseek`）、上游仓库 slug `deepseek-harness`，以及真实第三方包 `@deepseek-ai/libreoffice-kit*`。
 - **冻结的历史记录**：`.agents/notes/`、`docs/upgrade-guide/`、`docs/persistence-changes/`、`docs/tomato/adr/`、`scripts/snapshots/` 不重写。
 - **技能目录名保留**：`.agents/skills/dsh-*` 不改名。归档 Agent Note 的封印禁止修改内容，而这些笔记链接到技能目录；技能名属于工具标识，不是 harness 运行时命名。
