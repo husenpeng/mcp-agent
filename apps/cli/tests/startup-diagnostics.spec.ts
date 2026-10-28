@@ -3,17 +3,17 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { inspect } from 'node:util'
 import { describe, expect, it, onTestFinished, vi } from 'vitest'
-import { StartupError } from '@deepseek-ai/dsh-app-boot'
+import { StartupError } from '@tomato/app-boot'
 import { reportStartupFailure } from '../src/startup-diagnostics.ts'
 
 async function home(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'dsh-startup-diagnostics-'))
+  const dir = await mkdtemp(join(tmpdir(), 'tomato-startup-diagnostics-'))
   onTestFinished(() => rm(dir, { recursive: true, force: true }))
   return dir
 }
 
 function startupError(reason: unknown): StartupError {
-  const error = new StartupError('dsh: startup failed: 1 required plugin did not activate', [
+  const error = new StartupError('tomato: startup failed: 1 required plugin did not activate', [
     { id: 'webserver', module: './webserver.mjs', required: true, fiberState: 3, outcome: { kind: 'failed', error: reason } },
     { id: 'waiting', module: './waiting.mjs', required: false, fiberState: 0, outcome: { kind: 'pending', missing: ['webServer'] } },
   ])
@@ -33,7 +33,7 @@ describe('startup diagnostic files', () => {
     })
     onTestFinished(() => { write.mockRestore() })
     await reportStartupFailure(startupError('failed'), { home: dir, version: '1.2.3', profile: 'web' })
-    expect(write).toHaveBeenCalledWith(expect.stringContaining('dsh: startup failed:'), expect.any(Function))
+    expect(write).toHaveBeenCalledWith(expect.stringContaining('tomato: startup failed:'), expect.any(Function))
     expect(write).toHaveBeenCalledWith(expect.stringContaining(`Full diagnostics: ${join(dir, 'logs')}`), expect.any(Function))
   })
 
@@ -129,8 +129,8 @@ describe('startup diagnostic files', () => {
       home: dir, version: '1.2.3', profile: 'web',
     }, (text) => { chunks.push(text) })
     const output = chunks.join('')
-    expect(output).toContain('dsh: startup failed:')
-    expect(output).toContain('dsh: warning: could not write startup diagnostics:')
+    expect(output).toContain('tomato: startup failed:')
+    expect(output).toContain('tomato: warning: could not write startup diagnostics:')
     expect(output).toContain('Full diagnostics:\n')
     expect(output).toContain('original details')
     expect(output).toContain('CUSTOM')

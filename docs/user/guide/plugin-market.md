@@ -38,7 +38,7 @@ Indexes are third-party content. An index chooses each plugin's title, descripti
 
 An index is a UTF-8 JSON file, at most 128 MiB by default, served with a 2xx status and without redirects. Put it on any static host, for example GitLab Pages, GitHub Pages, or an object store behind https.
 
-Icons can be inline or separate files. An inline icon is a base64 `data:` URL in the index; it needs no extra request but makes the index larger. A separate icon is a URL. A relative icon resolves against the index URL, the way an image in a web page resolves against the page: for an index at `https://market.example/dsh/index.json`, `"icon": "icons/foo.svg"` loads `https://market.example/dsh/icons/foo.svg`. Publishing the index and an `icons/` directory side by side therefore works on any host without editing the file. An absolute icon URL on another origin (scheme, host, and port) must use `https:`.
+Icons can be inline or separate files. An inline icon is a base64 `data:` URL in the index; it needs no extra request but makes the index larger. A separate icon is a URL. A relative icon resolves against the index URL, the way an image in a web page resolves against the page: for an index at `https://market.example/tomato/index.json`, `"icon": "icons/foo.svg"` loads `https://market.example/tomato/icons/foo.svg`. Publishing the index and an `icons/` directory side by side therefore works on any host without editing the file. An absolute icon URL on another origin (scheme, host, and port) must use `https:`.
 
 This is a minimal index with one npm plugin and one plugin from a Git monorepo:
 
@@ -48,27 +48,27 @@ This is a minimal index with one npm plugin and one plugin from a Git monorepo:
   "title": { "en": "Team plugins", "zh": "团队插件" },
   "plugins": [
     {
-      "name": "dsh-plugin-foo",
+      "name": "tomato-plugin-foo",
       "title": "Foo",
       "description": "Adds the foo tool",
       "icon": "icons/foo.svg",
       "author": "Jane Doe",
-      "homepage": "https://github.com/jane/dsh-plugin-foo#readme",
-      "repository": { "url": "https://github.com/jane/dsh-plugin-foo" },
+      "homepage": "https://github.com/jane/tomato-plugin-foo#readme",
+      "repository": { "url": "https://github.com/jane/tomato-plugin-foo" },
       "versions": [
-        { "version": "1.1.0", "publishTimestamp": 1790476800, "source": { "type": "npm" }, "engines": { "dsh": ">=0.2.0-rc.2" } },
+        { "version": "1.1.0", "publishTimestamp": 1790476800, "source": { "type": "npm" }, "engines": { "tomato": ">=0.2.0-rc.2" } },
         { "version": "1.0.0", "publishTimestamp": 1788000000, "source": { "type": "npm" } }
       ]
     },
     {
-      "name": "@team/dsh-bar",
+      "name": "@team/tomato-bar",
       "versions": [
         {
           "version": "0.3.0",
           "publishTimestamp": 1789000000,
           "source": {
             "type": "git",
-            "url": "https://gitlab.example.com/team/dsh-plugins",
+            "url": "https://gitlab.example.com/team/tomato-plugins",
             "commit": "3f9c2e1d8a4b6c0e7f1a2b3c4d5e6f708192a3b4",
             "path": "packages/bar"
           }
@@ -87,17 +87,17 @@ TOMATO rejects the whole index when any rule below is violated and shows the rea
 The repository includes a [reference generator](../../../apps/plugin-market-generator/README.md) that builds an index from a plain list. Write one npm package name or https Git repository URL per line; blank lines and lines starting with `#` are ignored:
 
 ```text
-@team/dsh-foo
-https://gitlab.example.com/team/dsh-plugins
+@team/tomato-foo
+https://gitlab.example.com/team/tomato-plugins
 ```
 
 Run it from a TOMATO checkout:
 
 ```sh
-pnpm --filter @deepseek-ai/dsh-plugin-market-generator start --input plugins.txt --output site/index.json --title "Team plugins"
+pnpm --filter @tomato/plugin-market-generator start --input plugins.txt --output site/index.json --title "Team plugins"
 ```
 
-For an npm package, the index lists every version that is neither deprecated nor private and declares `dsh.bundle`. For a Git repository, it finds the bundle packages on the default branch whose `package.json` does not set `"private": true` and lists their versions at `vX.Y.Z`, `X.Y.Z`, and `<name>@X.Y.Z` tags, plus each package's version on the default branch. Titles, descriptions, icons, authors, and homepages come from each plugin's highest version. Paths are relative to the directory where you run pnpm.
+For an npm package, the index lists every version that is neither deprecated nor private and declares `tomato.bundle`. For a Git repository, it finds the bundle packages on the default branch whose `package.json` does not set `"private": true` and lists their versions at `vX.Y.Z`, `X.Y.Z`, and `<name>@X.Y.Z` tags, plus each package's version on the default branch. Titles, descriptions, icons, authors, and homepages come from each plugin's highest version. Paths are relative to the directory where you run pnpm.
 
 The generator only downloads and reads files; it never installs packages or runs their code. It keeps a cache in `.plugin-market-cache` next to the list, so a repeated run downloads only new versions and commits. Publish the output directory, `index.json` together with its `icons/` directory, as described above.
 
@@ -132,9 +132,9 @@ Text fields marked `LocalizedText` are a string or an object of strings keyed by
 | `version` | yes | Exact SemVer version, unique within the plugin. |
 | `publishTimestamp` | yes | Publish time in Unix seconds. |
 | `source` | yes | `{ "type": "npm", "registry"?: url }`, or `{ "type": "git", "url": https-url, "commit": 40-hex-sha, "path"?: directory }`. |
-| `engines.dsh` | no | SemVer range of TOMATO versions this version runs on; absent means any. |
+| `engines.tomato` | no | SemVer range of TOMATO versions this version runs on; absent means any. |
 
-TOMATO installs an npm version as `name@version`, asking `registry` first when present, and a Git version as `git+<url>.git#<commit>` with `&path:/<path>` for a package in a subdirectory. `engines.dsh` should match the package's own `engines.dsh`, which TOMATO checks again at installation; a package without one is checked against its `@deepseek-ai/dsh*` peer dependencies instead. The [format note](../../../.agents/notes/implemented/feature/2026-10-02-plugin-market-index-format.md) defines every rule.
+TOMATO installs an npm version as `name@version`, asking `registry` first when present, and a Git version as `git+<url>.git#<commit>` with `&path:/<path>` for a package in a subdirectory. `engines.tomato` should match the package's own `engines.tomato`, which TOMATO checks again at installation; a package without one is checked against its `@tomato/cli*` peer dependencies instead. The [format note](../../../.agents/notes/implemented/feature/2026-10-02-plugin-market-index-format.md) defines every rule.
 
 <a id="further-exploration"></a>
 ## Further Exploration

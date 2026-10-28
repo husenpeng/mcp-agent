@@ -18,14 +18,14 @@
 
 - id: shell-env
   config:
-    tomatoHome: './.dsh-home'
+    tomatoHome: './.tomato-home'
 
 - id: agent-instructions
   disabled: true
 
 - id: skill-filesystem
   config:
-    tomatoHome: './.dsh-home'
+    tomatoHome: './.tomato-home'
     agentsHome: './.agents-home'
 
 - id: session-persistence-jsonl

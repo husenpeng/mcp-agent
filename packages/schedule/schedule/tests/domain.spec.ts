@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { SessionLogOffset } from '@deepseek-ai/dsh-session'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
+import { SessionLogOffset } from '@tomato/session'
+import type { SessionEvent } from '@tomato/session'
 import {
   ScheduleId,
   ScheduleInputError,

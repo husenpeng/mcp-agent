@@ -2,25 +2,25 @@
  * JSON-RPC methods and notifications for out-of-process harness SDKs.
  * The surrounding context owns plugins, persistence, and configured adapters.
  *
- * @module @deepseek-ai/dsh-sdk-jsonrpc-server/server
+ * @module @tomato/sdk-jsonrpc-server/server
  */
 
-import type { Context } from '@deepseek-ai/cordis'
+import type { Context } from '@tomato/cordis'
 import { resolve } from 'node:path'
 import { SdkUserQuestionBridge } from './user-questions.ts'
-import { brandString } from '@deepseek-ai/dsh-brand'
-import type { Agent, AgentHandle } from '@deepseek-ai/dsh-agent'
-import { admitEncodedImages, type EncodedImageAttachment, type ImageAttachmentRef } from '@deepseek-ai/dsh-attachment'
-import { createUserMessage, ReasoningEffortId, type ContentBlock, type LlmRuntime } from '@deepseek-ai/dsh-llm'
-import { carrierKeyOf, type Scoped } from '@deepseek-ai/dsh-scope'
-import type { SessionId, SessionLogOffset } from '@deepseek-ai/dsh-session'
-import type {} from '@deepseek-ai/dsh-working-directory'
-import type {} from '@deepseek-ai/dsh-user-approval'
+import { brandString } from '@tomato/branded'
+import type { Agent, AgentHandle } from '@tomato/agent'
+import { admitEncodedImages, type EncodedImageAttachment, type ImageAttachmentRef } from '@tomato/attachment'
+import { createUserMessage, ReasoningEffortId, type ContentBlock, type LlmRuntime } from '@tomato/llm'
+import { carrierKeyOf, type Scoped } from '@tomato/scope'
+import type { SessionId, SessionLogOffset } from '@tomato/session'
+import type {} from '@tomato/working-directory'
+import type {} from '@tomato/user-approval'
 
-import type {} from '@deepseek-ai/dsh-schedule'
-import type SubagentRuntime from '@deepseek-ai/dsh-subagent'
-import type { SubagentRunEndInfo } from '@deepseek-ai/dsh-subagent'
-import * as LlmDeepSeek from '@deepseek-ai/dsh-llm-deepseek-api-key'
+import type {} from '@tomato/schedule'
+import type SubagentRuntime from '@tomato/subagent'
+import type { SubagentRunEndInfo } from '@tomato/subagent'
+import * as LlmDeepSeek from '@tomato/llm-deepseek-api-key'
 import type {
   ApprovalRequestParams,
   InitializeParams,
@@ -37,7 +37,7 @@ import type {
   SdkEncodedImageBlock,
   SubagentFinishedNotification,
   SubagentStartedNotification,
-} from '@deepseek-ai/dsh-sdk-protocol'
+} from '@tomato/sdk-protocol'
 
 interface SessionRecord {
   handle: AgentHandle
@@ -454,7 +454,7 @@ export class HarnessSdkJsonRpcServer {
       case 'shutdown':
         return this.shutdown()
       default:
-        throw new Error(`unknown DeepSeek Harness SDK runtime method: ${method}`)
+        throw new Error(`unknown Tomato Harness SDK runtime method: ${method}`)
     }
   }
 
@@ -482,7 +482,7 @@ export class HarnessSdkJsonRpcServer {
     // No preset composition: this server's compositions keep the model-facing
     // rows in the host plane, so this agent reads them from the global layer. A
     // deployment that configures a roster has to join one here first
-    // (@deepseek-ai/dsh-agent-preset-registry README, "Composing a child agent").
+    // (@tomato/agent-preset-registry README, "Composing a child agent").
     const agentOptions = {
       provider: this.provider,
       model: this.model,

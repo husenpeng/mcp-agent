@@ -1,6 +1,6 @@
 {
-  "name": "@deepseek-ai/dsh-tools",
-  "description": "Tool registry and execution pipeline for the DeepSeek Harness",
+  "name": "@tomato/tools",
+  "description": "Tool registry and execution pipeline for the Tomato Harness",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -40,30 +40,30 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-agent": "workspace:*",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-scope": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-system-prompt": "workspace:*",
-    "@deepseek-ai/dsh-user-approval": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/agent": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/scope": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/system-prompt": "workspace:*",
+    "@tomato/user-approval": "workspace:*"
   },
   "dependencies": {
-    "@deepseek-ai/dsh-brand": "workspace:*",
-    "@deepseek-ai/dsh-util-values": "workspace:*",
-    "@deepseek-ai/schemastery": "workspace:~"
+    "@tomato/branded": "workspace:*",
+    "@tomato/util-values": "workspace:*",
+    "@tomato/schemastery": "workspace:~"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-agent": "workspace:*",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-scope": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-session-projection": "workspace:*",
-    "@deepseek-ai/dsh-system-prompt": "workspace:*",
-    "@deepseek-ai/dsh-tool-executor-native": "workspace:*",
-    "@deepseek-ai/dsh-tool-testkit": "workspace:*",
-    "@deepseek-ai/dsh-user-approval": "workspace:*",
-    "@deepseek-ai/dsh-agent-loop-testkit": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/agent": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/scope": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/system-prompt": "workspace:*",
+    "@tomato/tool-executor-native": "workspace:*",
+    "@tomato/tool-testkit": "workspace:*",
+    "@tomato/user-approval": "workspace:*",
+    "@tomato/agent-loop-testkit": "workspace:*"
   }
 }

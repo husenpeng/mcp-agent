@@ -44,9 +44,9 @@ FS_SEARCH_TEXT = "filesystem search smoke ok"
 FS_SEARCH_MARKER = "PACKAGED_FS_SEARCH_OK"
 MCP_PROMPT = "Exercise the packaged MCP client with one external stdio server."
 MCP_TEXT = "MCP client smoke ok"
-PROFILE_PLUGIN_PROMPT = "Verify the Python-installed dsh profile plugin."
+PROFILE_PLUGIN_PROMPT = "Verify the Python-installed tomato profile plugin."
 PROFILE_PLUGIN_TEXT = "profile plugin smoke ok"
-PROFILE_PLUGIN_MARKER = "PYTHON_INSTALLED_DSH_PROFILE_PLUGIN"
+PROFILE_PLUGIN_MARKER = "PYTHON_INSTALLED_TOMATO_PROFILE_PLUGIN"
 AUTHORING_PROMPT = "Query the packaged Python environment for Office authoring."
 IS_WINDOWS = sys.platform == "win32"
 MINIMAL_SHELL_TOOL = "pwsh" if IS_WINDOWS else "bash"
@@ -240,7 +240,7 @@ def write_profile_patch(
     sessions: Path,
     patches: list[dict[str, object]],
 ) -> Path:
-    """Write one JSON-form dsh profile patch with deterministic persistence."""
+    """Write one JSON-form tomato profile patch with deterministic persistence."""
     path = root / name
     path.write_text(json.dumps([
         {
@@ -278,9 +278,9 @@ def write_advanced_profile_patch(
             },
         },
         {"insert": [
-            {"id": "ptc-runtime", "name": "@deepseek-ai/dsh-ptc-runtime-node"},
-            {"id": "cordis-host-runner", "name": "@deepseek-ai/dsh-cordis-host-runner"},
-            {"id": "cordis-tool", "name": "@deepseek-ai/dsh-tool-cordis"},
+            {"id": "ptc-runtime", "name": "@tomato/ptc-runtime-node"},
+            {"id": "cordis-host-runner", "name": "@tomato/cordis-host-runner"},
+            {"id": "cordis-tool", "name": "@tomato/tool-cordis"},
         ]},
     ])
 
@@ -290,7 +290,7 @@ def write_mcp_patch(root: Path, sessions: Path, server_script: Path) -> Path:
     return write_profile_patch(root, "mcp.patch.yml", sessions, [{
         "insert": [{
             "id": "mcp-fixture",
-            "name": "@deepseek-ai/dsh-mcp-client",
+            "name": "@tomato/mcp-client",
             "config": {
                 "serverName": "fixture",
                 "transport": "stdio",
@@ -902,7 +902,7 @@ def main() -> None:
 def smoke_sdk_authoring(base_url: str, executable: Path, update_snapshots: bool) -> None:
     """Query the bundled Python and switch skills without replacing that environment."""
 
-    with tempfile.TemporaryDirectory(prefix="dsh-sdk-authoring-cache-") as cache_directory:
+    with tempfile.TemporaryDirectory(prefix="tomato-sdk-authoring-cache-") as cache_directory:
         _smoke_sdk_authoring_cached(base_url, executable, update_snapshots, Path(cache_directory))
 
 
@@ -914,7 +914,7 @@ def _smoke_sdk_authoring_cached(base_url: str, executable: Path, update_snapshot
     resources = primary.parent
     manifest = json.loads((primary / "runtime.json").read_text())
     for mode in ("default", "replacement", "disabled"):
-        with tempfile.TemporaryDirectory(prefix="dsh-sdk-authoring-") as temporary:
+        with tempfile.TemporaryDirectory(prefix="tomato-sdk-authoring-") as temporary:
             root = Path(temporary).resolve()
             home = root / "home"
             if mode == "replacement":
@@ -959,7 +959,7 @@ def _smoke_sdk_authoring_cached(base_url: str, executable: Path, update_snapshot
             assert Path(dependencies["node"]).is_relative_to(resources), dependencies
             assert Path(dependencies["pnpm"]).is_relative_to(resources), dependencies
             assert dependencies["pythonDistributions"] == manifest["pythonPackages"], dependencies
-            assert not (home / "dsh-runtimes").exists()
+            assert not (home / "tomato-runtimes").exists()
             if mode == "default":
                 subprocess.run([
                     str(python), "-I", "-B", str(Path(__file__).parent / "primary-runtime/smoke.py"),
@@ -990,7 +990,7 @@ def smoke_sdk_office(executable: Path) -> None:
     checks_path = Path(__file__).resolve().parent / "fixtures/office-render.py"
     checks = runpy.run_path(checks_path)
     artifacts = os.environ.get("TOMATO_OFFICE_TEST_ARTIFACTS")
-    with checks["workspace"](None if artifacts is None else Path(artifacts), prefix="dsh-sdk-office-") as root:
+    with checks["workspace"](None if artifacts is None else Path(artifacts), prefix="tomato-sdk-office-") as root:
         relocated = root / executable.name
         stem = executable.name.removesuffix(".exe")
         resources = executable.with_name(stem.removeprefix("deepseek-harness-sdk-runtime-"))
@@ -1010,7 +1010,7 @@ def smoke_sdk_office(executable: Path) -> None:
         expected_backend = "wasm" if selected == "wasm" else "native"
         engines = [
             json.loads(manifest.read_text())["engine"]["kind"]
-            for manifest in (office / "node_modules/@deepseek-ai").glob("libreoffice-kit-*/prebuilds.json")
+            for manifest in (office / "node_modules/@tomato").glob("libreoffice-kit-*/prebuilds.json")
         ]
         if engines != [expected_backend]:
             raise AssertionError(f"Office sidecar must contain only {expected_backend}: {engines}")
@@ -1152,7 +1152,7 @@ def smoke_sdk_live() -> None:
     if not base_url:
         raise AssertionError("sdk-live requires an explicit DEEPSEEK_BASE_URL")
 
-    with tempfile.TemporaryDirectory(prefix="dsh-sdk-live-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="tomato-sdk-live-") as temporary:
         root = Path(temporary).resolve()
         dsh_home = root / "home"
         sessions = dsh_home / "sessions"
@@ -1257,7 +1257,7 @@ def safe_turn_end(value: object) -> object:
 def smoke_sdk_default(base_url: str) -> None:
     from deepseek_harness import DeepSeekHarness
 
-    with tempfile.TemporaryDirectory(prefix="dsh-sdk-default-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="tomato-sdk-default-") as temporary:
         root = Path(temporary).resolve()
         dsh_home = root / "home"
         sessions = dsh_home / "sessions"
@@ -1291,7 +1291,7 @@ def smoke_sdk_custom(base_url: str, executable: Path) -> None:
         ("ptc", ((CODE_PROMPT, CODE_WORKER_TEXT),)),
     )
     for mode, turns in cases:
-        with tempfile.TemporaryDirectory(prefix=f"dsh-sdk-custom-{mode}-") as temporary:
+        with tempfile.TemporaryDirectory(prefix=f"tomato-sdk-custom-{mode}-") as temporary:
             root = Path(temporary).resolve()
             dsh_home = root / "home"
             sessions = dsh_home / "sessions"
@@ -1325,7 +1325,7 @@ def smoke_sdk_minimal(
 
     # One mock model serves every scenario of a run, so the snapshot takes this turn's slice.
     first_request = len(MockModelHandler.requests)
-    with tempfile.TemporaryDirectory(prefix="dsh-sdk-minimal-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="tomato-sdk-minimal-") as temporary:
         root = Path(temporary).resolve()
         dsh_home = root / "home"
         sessions = dsh_home / "sessions"
@@ -1380,7 +1380,7 @@ def smoke_sdk_dynamic_tools(base_url: str, executable: Path, update_snapshots: b
     from deepseek_harness import DeepSeekHarness
 
     first_request = len(MockModelHandler.requests)
-    with tempfile.TemporaryDirectory(prefix="dsh-sdk-dynamic-tools-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="tomato-sdk-dynamic-tools-") as temporary:
         root = Path(temporary).resolve()
         dsh_home = root / "home"
         user_home = root / "user-home"
@@ -1433,7 +1433,7 @@ def smoke_sdk_fs_search(base_url: str, executable: Path) -> None:
     """Exercise real grep and glob spawns through the packaged executable."""
     from deepseek_harness import DeepSeekHarness
 
-    with tempfile.TemporaryDirectory(prefix="dsh-sdk-fs-search-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="tomato-sdk-fs-search-") as temporary:
         root = Path(temporary).resolve()
         (root / "needle.txt").write_text(f"{FS_SEARCH_MARKER}\n")
         dsh_home = root / "home"
@@ -1467,7 +1467,7 @@ def smoke_sdk_spawn_node(base_url: str, executable: Path) -> None:
     """A shell command starting with `node` must reach the machine's Node, not the executable."""
     from deepseek_harness import DeepSeekHarness
 
-    with tempfile.TemporaryDirectory(prefix="dsh-sdk-spawn-node-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="tomato-sdk-spawn-node-") as temporary:
         root = Path(temporary).resolve()
         dsh_home = root / "home"
         sessions = dsh_home / "sessions"
@@ -1497,7 +1497,7 @@ def smoke_sdk_mcp(base_url: str, executable: Path | None) -> None:
     """Discover and call an external stdio MCP tool through the packaged client."""
     from deepseek_harness import DeepSeekHarness
 
-    with tempfile.TemporaryDirectory(prefix="dsh-sdk-mcp-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="tomato-sdk-mcp-") as temporary:
         root = Path(temporary).resolve()
         dsh_home = root / "home"
         sessions = dsh_home / "sessions"
@@ -1534,25 +1534,25 @@ def smoke_sdk_mcp(base_url: str, executable: Path | None) -> None:
 
 
 def smoke_sdk_profile_plugin(base_url: str) -> None:
-    """Install an external bundle through Python's dsh command and load it in the SDK."""
+    """Install an external bundle through Python's tomato command and load it in the SDK."""
     from deepseek_harness import DeepSeekHarness
 
-    with tempfile.TemporaryDirectory(prefix="dsh-sdk-profile-plugin-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="tomato-sdk-profile-plugin-") as temporary:
         root = Path(temporary).resolve()
         dsh_home = root / "home"
         plugin = root / "plugin"
         plugin.mkdir()
         (plugin / "package.json").write_text(json.dumps({
-            "name": "dsh-python-blackbox-plugin",
+            "name": "tomato-python-blackbox-plugin",
             "version": "1.0.0",
             "private": True,
             "type": "module",
             "exports": "./index.js",
-            "peerDependencies": {"@deepseek-ai/cordis": "*"},
-            "dsh": {"bundle": {"patch": "./cordis.patch.yml"}},
+            "peerDependencies": {"@tomato/cordis": "*"},
+            "tomato": {"bundle": {"patch": "./cordis.patch.yml"}},
         }, indent=2))
         (plugin / "index.js").write_text(
-            "import { Context } from '@deepseek-ai/cordis'\n"
+            "import { Context } from '@tomato/cordis'\n"
             "export const name = 'python-sdk-blackbox-plugin'\n"
             "export const inject = ['systemPrompt']\n"
             "export function apply(ctx) {\n"
@@ -1565,13 +1565,13 @@ def smoke_sdk_profile_plugin(base_url: str) -> None:
             "}\n"
         )
         (plugin / "cordis.patch.yml").write_text(json.dumps([{
-            "insert": [{"id": "python-sdk-blackbox-plugin", "name": "dsh-python-blackbox-plugin"}],
+            "insert": [{"id": "python-sdk-blackbox-plugin", "name": "tomato-python-blackbox-plugin"}],
         }], indent=2))
 
-        dsh = Path(sysconfig.get_path("scripts")) / ("dsh.exe" if IS_WINDOWS else "dsh")
+        tomato = Path(sysconfig.get_path("scripts")) / ("tomato.exe" if IS_WINDOWS else "tomato")
         environment = {**os.environ, "TOMATO_HOME": str(dsh_home)}
         installed = subprocess.run(
-            [str(dsh), "plugin", "--profile", "sdk", "add", f"file:{plugin}"],
+            [str(tomato), "plugin", "--profile", "sdk", "add", f"file:{plugin}"],
             cwd=root,
             env=environment,
             text=True,
@@ -1580,15 +1580,15 @@ def smoke_sdk_profile_plugin(base_url: str) -> None:
         )
         if installed.returncode != 0:
             raise AssertionError(
-                f"Python-installed dsh could not add the external profile plugin: "
+                f"Python-installed tomato could not add the external profile plugin: "
                 f"returncode={installed.returncode} (0x{installed.returncode & 0xffffffff:08x}) "
                 f"stdout={installed.stdout!r} stderr={installed.stderr!r}"
             )
         manifest = json.loads((dsh_home / "profiles" / "sdk" / "package.json").read_text())
-        if "dsh-python-blackbox-plugin" not in manifest.get("dependencies", {}):
-            raise AssertionError(f"dsh plugin did not record the external dependency: {manifest}")
-        if "dsh-python-blackbox-plugin" not in manifest["dsh"]["profile"]["bundles"]:
-            raise AssertionError(f"dsh plugin did not activate the external bundle: {manifest}")
+        if "tomato-python-blackbox-plugin" not in manifest.get("dependencies", {}):
+            raise AssertionError(f"tomato plugin did not record the external dependency: {manifest}")
+        if "tomato-python-blackbox-plugin" not in manifest["tomato"]["profile"]["bundles"]:
+            raise AssertionError(f"tomato plugin did not activate the external bundle: {manifest}")
 
         harness = DeepSeekHarness(
             provider="deepseek-official",
@@ -1627,7 +1627,7 @@ def smoke_sdk_snapshot_mode(
     """Drive one supported presentation through the SDK and persistent Session log."""
     from deepseek_harness import DeepSeekHarness
 
-    with tempfile.TemporaryDirectory(prefix="dsh-sdk-snapshot-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="tomato-sdk-snapshot-") as temporary:
         root = Path(temporary).resolve()
         dsh_home = root / "home"
         sessions = dsh_home / "sessions"
@@ -1645,7 +1645,7 @@ def smoke_sdk_snapshot_mode(
                 "parentSessionId": SNAPSHOT_SESSION_ID, "prompt": SNAPSHOT_WORKFLOW_CHILD_PROMPT,
                 "direct": {"prompt": SNAPSHOT_DIRECT_CHILD_PROMPT, "callId": "advanced-direct-child"},
             }},
-            {"id": "snapshot-message-feedback", "name": "@deepseek-ai/dsh-message-feedback",
+            {"id": "snapshot-message-feedback", "name": "@tomato/message-feedback",
              "config": {"maxNoteBytes": 1024}},
             {"id": "snapshot-feedback-producer", "name": (
                 Path(__file__).resolve().parent.parent / "snapshots/sdk/text-turn/feedback-producer.mjs"
@@ -1755,7 +1755,7 @@ def smoke_sdk_restart_snapshot(base_url: str, executable: Path, update_snapshots
     """Check isolated sessions and explicit history restoration across runtime restarts."""
     from deepseek_harness import DeepSeekHarness
 
-    with tempfile.TemporaryDirectory(prefix="dsh-sdk-restart-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="tomato-sdk-restart-") as temporary:
         root = Path(temporary).resolve()
         dsh_home = root / "home"
         sessions = dsh_home / "sessions"
@@ -1880,7 +1880,7 @@ def smoke_sdk_scheduler_recovery(base_url: str, executable: Path, update_snapsho
     from deepseek_harness import DeepSeekHarness
 
     first_request = len(MockModelHandler.requests)
-    with tempfile.TemporaryDirectory(prefix="dsh-sdk-scheduler-recovery-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="tomato-sdk-scheduler-recovery-") as temporary:
         root = Path(temporary).resolve()
         dsh_home = root / "home"
         sessions = dsh_home / "sessions"
@@ -1967,7 +1967,7 @@ def smoke_sdk_scheduler_recovery(base_url: str, executable: Path, update_snapsho
 
 
 def smoke_direct(base_url: str, executable: Path) -> None:
-    with tempfile.TemporaryDirectory(prefix="dsh-direct-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="tomato-direct-") as temporary:
         root = Path(temporary).resolve()
         dsh_home = root / "home"
         sessions = dsh_home / "sessions"
@@ -2009,7 +2009,7 @@ def smoke_direct(base_url: str, executable: Path) -> None:
 
 def smoke_packaged_runner(executable: Path) -> None:
     """Exercise the private subprocess runner through the single-file entry."""
-    with tempfile.TemporaryDirectory(prefix="dsh-packaged-runner-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="tomato-packaged-runner-") as temporary:
         root = Path(temporary).resolve()
         target_script = (
             "import os,sys; "

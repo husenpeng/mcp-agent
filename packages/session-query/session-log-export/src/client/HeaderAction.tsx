@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import type { ObservableSnapshot } from '@deepseek-ai/dsh-client-store'
-import type { InjectFace } from '@deepseek-ai/dsh-client-ui-slots'
-import type { SessionId } from '@deepseek-ai/dsh-session/types'
+import type { ObservableSnapshot } from '@tomato/client-store'
+import type { InjectFace } from '@tomato/client-ui-slots'
+import type { SessionId } from '@tomato/session/types'
 import {
   Button, IconCopyOutlineRegular, IconDownloadOutlineRegular, IconEllipsisOutlineRegular,
   IconPaperPlaneOutlineRegular, Menu,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@tomato/client-ui-primitives'
 import { SessionLogDownloadDialog, type SessionLogDownloadDialogProps } from './Dialog.tsx'
 import type { SessionLogDownloadDialogInjected } from './Dialog.tsx'
 import type { SessionMarkdownCopyState } from './copy-controller.ts'

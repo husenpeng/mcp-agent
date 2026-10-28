@@ -1,14 +1,14 @@
 /** Window-local Inspector frontend in the layout's bottom slot. */
-import type { Context } from '@deepseek-ai/cordis'
+import type { Context } from '@tomato/cordis'
 import { useCallback, useId, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
-import { Button, IconCloseOutlineRegular, Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { HostObservable, InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
-import type { ShortcutCommandId } from '@deepseek-ai/dsh-client-shortcuts/client'
-import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
-import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
-import type {} from '@deepseek-ai/dsh-client-locale/client'
+import { createSnapshotStore } from '@tomato/client-store'
+import { Button, IconCloseOutlineRegular, Tooltip } from '@tomato/client-ui-primitives'
+import type { HostObservable, InjectFace, PropsLocale, PropsRuntime } from '@tomato/client-ui-slots'
+import type { ShortcutCommandId } from '@tomato/client-shortcuts/client'
+import type {} from '@tomato/client-ui-layout/client'
+import type {} from '@tomato/client-ui-renderer/client'
+import type {} from '@tomato/client-locale/client'
 import type { InspectorSourceId } from '../../shared/bridge/ids.ts'
 import { bindInspectorKeyboard } from './keyboard.ts'
 import { InspectorResizeHandle } from './resize.tsx'
@@ -46,7 +46,7 @@ function InspectorPage({ t, frontendUrl, close, bindFrame, usePanel }:
       </Tooltip>
     </header>
     {state !== 'unopened' && <iframe ref={frameRef} className={css.page} src={frontendUrl} title={t('frameTitle')}
-      name="dsh-nodejs-inspector" referrerPolicy="no-referrer" data-inspector-devtools />}
+      name="tomato-nodejs-inspector" referrerPolicy="no-referrer" data-inspector-devtools />}
   </section>
 }
 

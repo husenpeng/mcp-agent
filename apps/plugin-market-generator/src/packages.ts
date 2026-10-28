@@ -20,15 +20,15 @@ export interface Manifest {
   readonly exports?: unknown
   readonly engines?: unknown
   readonly peerDependencies?: unknown
-  readonly dsh?: { readonly bundle?: unknown }
+  readonly tomato?: { readonly bundle?: unknown }
 }
 
 /** Depth limit of the fallback scan, counted in directories below the repository root. */
 const SCAN_DEPTH = 3
 const SKIPPED_DIRECTORIES = new Set(['node_modules', 'test', 'tests', 'fixtures', 'examples', 'example'])
-const TOMATO_PEER = /^@deepseek-ai\/dsh(?:-|$)/u
+const TOMATO_PEER = /^@tomato\//u
 /** Ranges that installation reads as the running TOMATO version. */
-const CURRENT_DSH = new Set(['workspace:*', 'workspace:^', 'workspace:~'])
+const CURRENT_TOMATO = new Set(['workspace:*', 'workspace:^', 'workspace:~'])
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -56,10 +56,10 @@ export async function readManifest(files: PackageFiles, dir: string): Promise<Ma
 /**
  * Whether a manifest declares a TOMATO bundle.
  * @param manifest - parsed manifest, or undefined for a directory without one.
- * @returns true when `dsh.bundle` is an object whose `patch` is a string or an array of strings.
+ * @returns true when `tomato.bundle` is an object whose `patch` is a string or an array of strings.
  */
 export function isBundle(manifest: Manifest | undefined): boolean {
-  const bundle = manifest?.dsh?.bundle
+  const bundle = manifest?.tomato?.bundle
   if (!isObject(bundle)) return false
   return typeof bundle.patch === 'string' || (Array.isArray(bundle.patch) && bundle.patch.every(file => typeof file === 'string'))
 }
@@ -81,8 +81,8 @@ const invalidRange = (range: string): Error => new Error(`TOMATO range ${JSON.st
 const MAX_RANGE_ALTERNATIVES = 256
 
 /**
- * The `engines.dsh` range an index lists for a manifest: its own `engines.dsh` string, otherwise the conjunction of
- * its `@deepseek-ai/dsh` and `@deepseek-ai/dsh-*` peer ranges. A peer of exactly `workspace:*`, `workspace:^`, or
+ * The `engines.tomato` range an index lists for a manifest: its own `engines.tomato` string, otherwise the conjunction of
+ * its `@tomato/cli` and `@tomato/*` peer ranges. A peer of exactly `workspace:*`, `workspace:^`, or
  * `workspace:~` means the running TOMATO version, and a `*` range admits every version; both impose nothing. A single
  * remaining range is listed as written. Several ranges are combined: the conjunction combines one `||` alternative of
  * each range, keeps each comparator once, and drops combinations that no version satisfies, prereleases included.
@@ -91,10 +91,10 @@ const MAX_RANGE_ALTERNATIVES = 256
  *   with every TOMATO version: an empty, `workspace:`, or invalid range, or ranges that no version satisfies together.
  */
 export function tomatoRange(manifest: Manifest): string | undefined | Error {
-  const declared = isObject(manifest.engines) ? manifest.engines.dsh : undefined
+  const declared = isObject(manifest.engines) ? manifest.engines.tomato : undefined
   const ranges = typeof declared === 'string' ? [declared]
     : Object.entries(isObject(manifest.peerDependencies) ? manifest.peerDependencies : {})
-      .flatMap(([name, range]) => TOMATO_PEER.test(name) && typeof range === 'string' && !CURRENT_DSH.has(range) ? [range] : [])
+      .flatMap(([name, range]) => TOMATO_PEER.test(name) && typeof range === 'string' && !CURRENT_TOMATO.has(range) ? [range] : [])
   const used = [...new Set(ranges.map(range => range.trim()))].filter(range => range !== '*')
   if (used.length === 0) return undefined
   let combinations: string[][] = [[]]

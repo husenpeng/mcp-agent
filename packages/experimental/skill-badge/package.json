@@ -1,6 +1,6 @@
 {
-  "name": "@deepseek-ai/dsh-skill-badge",
-  "description": "Bundled dsh badge skill provider for DeepSeek Harness",
+  "name": "@tomato/skill-badge",
+  "description": "Bundled tomato badge skill provider for Tomato Harness",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -31,11 +31,11 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-skill": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/skill": "workspace:*",
+    "@tomato/cordis": "workspace:~"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-skill": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/skill": "workspace:*",
+    "@tomato/cordis": "workspace:~"
   }
 }

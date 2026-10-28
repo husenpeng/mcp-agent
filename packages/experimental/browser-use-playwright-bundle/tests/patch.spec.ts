@@ -1,13 +1,13 @@
 /** The on-demand patch mounts the shared service before the fixed Playwright launch provider. */
 import { readFile } from 'node:fs/promises'
-import { Context } from '@deepseek-ai/cordis'
-import Loader, { type EntryOptions } from '@deepseek-ai/cordis-plugin-loader'
-import { entryListSchema } from '@deepseek-ai/cordis-plugin-include'
+import { Context } from '@tomato/cordis'
+import Loader, { type EntryOptions } from '@tomato/cordis-plugin-loader'
+import { entryListSchema } from '@tomato/cordis-plugin-include'
 import { load } from 'js-yaml'
 import { expect, it, vi } from 'vitest'
 
-const SERVICE = '@deepseek-ai/dsh-browser-use'
-const PROVIDER = '@deepseek-ai/dsh-experimental-browser-use-playwright-mcp'
+const SERVICE = '@tomato/browser-use'
+const PROVIDER = '@tomato/experimental-browser-use-playwright-mcp'
 
 async function patchRows(): Promise<EntryOptions[]> {
   const patch = load(await readFile(new URL('../cordis.patch.yml', import.meta.url), 'utf8'), {

@@ -6,11 +6,11 @@
  * request generation per tab keeps a superseded settlement from repainting a
  * newer view, and the tab record's signal ends a bucket when the tab closes.
  */
-import type { BoundActions } from '@deepseek-ai/dsh-client-store'
-import type { ClientRemote, RemoteFailure } from '@deepseek-ai/dsh-api-remotes/client'
-import type { TabId } from '@deepseek-ai/dsh-client-ui-dockkit'
-import type { SessionId } from '@deepseek-ai/dsh-session/types'
-import { RemoteError } from '@deepseek-ai/dsh-typert-protocol'
+import type { BoundActions } from '@tomato/client-store'
+import type { ClientRemote, RemoteFailure } from '@tomato/api-remotes/client'
+import type { TabId } from '@tomato/client-ui-dockkit'
+import type { SessionId } from '@tomato/session/types'
+import { RemoteError } from '@tomato/typert-protocol'
 import type { createSkillBrowserStore } from './store.ts'
 
 /** The Remote slice this package calls, exactly as the generated client declares it. */

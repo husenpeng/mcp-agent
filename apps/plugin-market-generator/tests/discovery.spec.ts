@@ -12,7 +12,7 @@ function tree(contents: Record<string, string | Uint8Array>): PackageFiles {
   })))
 }
 
-const bundle = (name: string, extra: object = {}): string => JSON.stringify({ name, version: '1.0.0', dsh: { bundle: { patch: './cordis.patch.yml' } }, ...extra })
+const bundle = (name: string, extra: object = {}): string => JSON.stringify({ name, version: '1.0.0', tomato: { bundle: { patch: './cordis.patch.yml' } }, ...extra })
 
 async function readDisplay(files: PackageFiles, manifest: Manifest, inlineBytes = 100) {
   const warnings: string[] = []
@@ -22,9 +22,9 @@ async function readDisplay(files: PackageFiles, manifest: Manifest, inlineBytes 
 
 describe('parseSources', () => {
   it('reads package names and repository URLs, ignoring comments, blanks, and repeats', () => {
-    expect(parseSources('# market\n\n@scope/dsh-a\ndsh-b\nhttps://github.com/o/r.git\nhttps://github.com/o/r/\ndsh-b\nhttps://gitlab.example.com/g/sub/r\n')).toEqual([
-      { kind: 'npm', line: '@scope/dsh-a', name: '@scope/dsh-a' },
-      { kind: 'npm', line: 'dsh-b', name: 'dsh-b' },
+    expect(parseSources('# market\n\n@scope/tomato-a\ndsh-b\nhttps://github.com/o/r.git\nhttps://github.com/o/r/\ndsh-b\nhttps://gitlab.example.com/g/sub/r\n')).toEqual([
+      { kind: 'npm', line: '@scope/tomato-a', name: '@scope/tomato-a' },
+      { kind: 'npm', line: 'tomato-b', name: 'tomato-b' },
       { kind: 'git', line: 'https://github.com/o/r.git', url: 'https://github.com/o/r' },
       { kind: 'git', line: 'https://gitlab.example.com/g/sub/r', url: 'https://gitlab.example.com/g/sub/r' },
     ])
@@ -50,7 +50,7 @@ describe('isBundle and tomatoRange', () => {
   it('accepts only a bundle whose patch is a string or a list of strings', () => {
     expect([
       { patch: 'a.yml' }, { patch: ['a.yml', 'b.yml'] }, { patch: [] }, { patch: [1] }, {}, [], null, 'a.yml',
-    ].map(value => isBundle({ dsh: { bundle: value } }))).toEqual([true, true, true, false, false, false, false, false])
+    ].map(value => isBundle({ tomato: { bundle: value } }))).toEqual([true, true, true, false, false, false, false, false])
     expect(isBundle(undefined)).toBe(false)
   })
 
@@ -59,35 +59,35 @@ describe('isBundle and tomatoRange', () => {
     expect(isPrivate(undefined)).toBe(false)
   })
 
-  it('copies engines.dsh, else joins TOMATO peer ranges, and refuses ranges installation rejects', () => {
-    expect(tomatoRange({ engines: { dsh: '>=0.2.0' }, peerDependencies: { '@deepseek-ai/dsh': '1' } })).toBe('>=0.2.0')
-    expect(tomatoRange({ peerDependencies: { react: '18', '@deepseek-ai/dsh-agent': 'workspace:*', '@deepseek-ai/dsh': '*' } })).toBeUndefined()
-    // Installation refuses an empty range, any `workspace:` engines.dsh, and a padded workspace peer on every TOMATO version.
+  it('copies engines.tomato, else joins TOMATO peer ranges, and refuses ranges installation rejects', () => {
+    expect(tomatoRange({ engines: { tomato: '>=0.2.0' }, peerDependencies: { '@tomato/cli': '1' } })).toBe('>=0.2.0')
+    expect(tomatoRange({ peerDependencies: { react: '18', '@tomato/agent': 'workspace:*', '@tomato/cli': '*' } })).toBeUndefined()
+    // Installation refuses an empty range, any `workspace:` engines.tomato, and a padded workspace peer on every TOMATO version.
     for (const manifest of [
-      { peerDependencies: { '@deepseek-ai/dsh': ' ' } }, { engines: { dsh: '' } }, { engines: { dsh: 'workspace:*' } },
-      { peerDependencies: { '@deepseek-ai/dsh': ' workspace:*' } },
+      { peerDependencies: { '@tomato/cli': ' ' } }, { engines: { tomato: '' } }, { engines: { tomato: 'workspace:*' } },
+      { peerDependencies: { '@tomato/cli': ' workspace:*' } },
     ]) expect(tomatoRange(manifest)).toBeInstanceOf(Error)
-    expect(tomatoRange({ engines: { dsh: '>1 <1' } })).toEqual(new Error('no TOMATO version satisfies the TOMATO range: >1 <1'))
-    expect(tomatoRange({ engines: { dsh: ' * ' } })).toBeUndefined()
+    expect(tomatoRange({ engines: { tomato: '>1 <1' } })).toEqual(new Error('no TOMATO version satisfies the TOMATO range: >1 <1'))
+    expect(tomatoRange({ engines: { tomato: ' * ' } })).toBeUndefined()
     expect(tomatoRange({ engines: { node: '22' }, peerDependencies: [] })).toBeUndefined()
     expect(tomatoRange({
-      peerDependencies: { '@deepseek-ai/dsh-a': '^0.2.0 || ^0.3.0', '@deepseek-ai/dsh-b': '>=0.2.1', '@deepseek-ai/dsh-c': '>=0.2.1', '@deepseek-ai/dsh-d': '<1 ||' },
+      peerDependencies: { '@tomato/a': '^0.2.0 || ^0.3.0', '@tomato/b': '>=0.2.1', '@tomato/c': '>=0.2.1', '@tomato/d': '<1 ||' },
     })).toBe('>=0.2.0 <0.3.0-0 >=0.2.1 || >=0.3.0 <0.4.0-0 >=0.2.1')
     // A hyphen range is expanded before combining, and combinations no version satisfies are dropped.
-    expect(tomatoRange({ peerDependencies: { '@deepseek-ai/dsh': '1.0.0 - 2.0.0', '@deepseek-ai/dsh-x': '>=1.5.0 || <0.5.0' } })).toBe('>=1.0.0-0 <2.0.1-0 >=1.5.0')
-    expect(tomatoRange({ peerDependencies: { '@deepseek-ai/dsh': '^0.1.0', '@deepseek-ai/dsh-x': '^0.2.0' } }))
+    expect(tomatoRange({ peerDependencies: { '@tomato/cli': '1.0.0 - 2.0.0', '@tomato/x': '>=1.5.0 || <0.5.0' } })).toBe('>=1.0.0-0 <2.0.1-0 >=1.5.0')
+    expect(tomatoRange({ peerDependencies: { '@tomato/cli': '^0.1.0', '@tomato/x': '^0.2.0' } }))
       .toEqual(new Error('no TOMATO version satisfies every TOMATO peer range: ^0.1.0, ^0.2.0'))
-    expect(tomatoRange({ peerDependencies: { '@deepseek-ai/dsh': '^0.2.0-rc.1' } })).toBe('^0.2.0-rc.1')
-    expect(tomatoRange({ peerDependencies: { '@deepseek-ai/dsh': '>=0.1.0 || *', '@deepseek-ai/dsh-x': '^0.2.0 || *' } })).toBeUndefined()
-    expect(tomatoRange({ peerDependencies: { '@deepseek-ai/dsh': '<0.1.0', '@deepseek-ai/dsh-x': '>=0.2.0' } }))
+    expect(tomatoRange({ peerDependencies: { '@tomato/cli': '^0.2.0-rc.1' } })).toBe('^0.2.0-rc.1')
+    expect(tomatoRange({ peerDependencies: { '@tomato/cli': '>=0.1.0 || *', '@tomato/x': '^0.2.0 || *' } })).toBeUndefined()
+    expect(tomatoRange({ peerDependencies: { '@tomato/cli': '<0.1.0', '@tomato/x': '>=0.2.0' } }))
       .toEqual(new Error('no TOMATO version satisfies every TOMATO peer range: <0.1.0, >=0.2.0'))
-    expect(tomatoRange({ peerDependencies: { '@deepseek-ai/dsh': '*', '@deepseek-ai/dsh-x': '>=0' } })).toBeUndefined()
-    expect(tomatoRange({ peerDependencies: { '@deepseek-ai/dsh-llm': '*', '@deepseek-ai/dsh-x': '*' } })).toBeUndefined()
-    const wide = Object.fromEntries(Array.from({ length: 3 }, (_, peer) => [`@deepseek-ai/dsh-${peer}`, Array.from({ length: 10 }, (_, minor) => `>=0.${minor}.${peer}`).join(' || ')]))
+    expect(tomatoRange({ peerDependencies: { '@tomato/cli': '*', '@tomato/x': '>=0' } })).toBeUndefined()
+    expect(tomatoRange({ peerDependencies: { '@tomato/llm': '*', '@tomato/x': '*' } })).toBeUndefined()
+    const wide = Object.fromEntries(Array.from({ length: 3 }, (_, peer) => [`@tomato/${peer}`, Array.from({ length: 10 }, (_, minor) => `>=0.${minor}.${peer}`).join(' || ')]))
     expect(tomatoRange({ peerDependencies: wide })).toEqual(new Error('TOMATO peer ranges combine into more than 256 alternatives'))
-    expect(tomatoRange({ peerDependencies: { '@deepseek-ai/dsh-a': 'workspace:>=1' } })).toEqual(new Error('TOMATO range "workspace:>=1" is not a valid SemVer range'))
-    expect(tomatoRange({ engines: { dsh: 'not a range' } })).toBeInstanceOf(Error)
-    expect(tomatoRange({ peerDependencies: { '@deepseek-ai/dsh': '>=0.2.0', '@deepseek-ai/dsh-x': 'not a range' } })).toEqual(new Error('TOMATO range "not a range" is not a valid SemVer range'))
+    expect(tomatoRange({ peerDependencies: { '@tomato/a': 'workspace:>=1' } })).toEqual(new Error('TOMATO range "workspace:>=1" is not a valid SemVer range'))
+    expect(tomatoRange({ engines: { tomato: 'not a range' } })).toBeInstanceOf(Error)
+    expect(tomatoRange({ peerDependencies: { '@tomato/cli': '>=0.2.0', '@tomato/x': 'not a range' } })).toEqual(new Error('TOMATO range "not a range" is not a valid SemVer range'))
   })
 })
 
@@ -99,25 +99,25 @@ describe('findBundlePackages', () => {
   it('expands package.json and pnpm workspace globs', async () => {
     const files = tree({
       'package.json': JSON.stringify({ name: 'mono', private: true, workspaces: { packages: ['plugins/*'] } }),
-      'pnpm-workspace.yaml': 'packages:\n  - tools/**\n  - single\n  - "!plugins/excluded"\n  - "packages/*/*"\n  - "dsh-*"\n  - missing\n',
+      'pnpm-workspace.yaml': 'packages:\n  - tools/**\n  - single\n  - "!plugins/excluded"\n  - "packages/*/*"\n  - "tomato-*"\n  - missing\n',
       'plugins/a/package.json': bundle('a'),
       'plugins/lib/package.json': JSON.stringify({ name: 'lib', version: '1.0.0' }),
       'tools/group/b/package.json': bundle('b'),
       'single/package.json': bundle('single'),
       'packages/core/c/package.json': bundle('c'),
-      'dsh-x/package.json': bundle('x'),
+      'tomato-x/package.json': bundle('x'),
       'other/package.json': bundle('other'),
     })
     const warnings: string[] = []
-    expect(await findBundlePackages(files, (message) => { warnings.push(message) })).toEqual(['dsh-x', 'packages/core/c', 'plugins/a', 'single', 'tools/group/b'])
+    expect(await findBundlePackages(files, (message) => { warnings.push(message) })).toEqual(['tomato-x', 'packages/core/c', 'plugins/a', 'single', 'tools/group/b'])
     expect(warnings).toEqual(['workspace glob "missing" matches no directory'])
   })
 
   it('scans three levels without a root manifest, skipping test, example, hidden, and node_modules trees', async () => {
     const files = tree({
-      'dsh-pet/package.json': bundle('pet'),
-      'dsh-pet/runtime/helper/package.json': bundle('nested-under-bundle'),
-      'plugins/dsh/package.json': bundle('dsh'),
+      'tomato-pet/package.json': bundle('pet'),
+      'tomato-pet/runtime/helper/package.json': bundle('nested-under-bundle'),
+      'plugins/tomato/package.json': bundle('tomato'),
       'a/b/c/package.json': bundle('deep'),
       'a/b/c/d/package.json': bundle('under-bundle'),
       'x/y/z/w/package.json': bundle('too-deep'),
@@ -127,7 +127,7 @@ describe('findBundlePackages', () => {
       'broken/package.json': '{',
       'array/package.json': '[]',
     })
-    expect(await findBundlePackages(files)).toEqual(['a/b/c', 'dsh-pet', 'plugins/dsh'])
+    expect(await findBundlePackages(files)).toEqual(['a/b/c', 'tomato-pet', 'plugins/tomato'])
     expect(await readManifest(files, 'broken')).toBeUndefined()
     expect(await readManifest(files, 'array')).toBeUndefined()
   })
@@ -160,32 +160,32 @@ describe('readDisplayMetadata', () => {
     { keywords: ['search', '', ' search ', 'search', '搜索'] },
     { keywords: [] },
   ])('preserves manifest keywords $keywords', async ({ keywords }) => {
-    const result = await readDisplay(tree({}), { name: 'dsh-a', keywords })
-    expect(result).toEqual({ display: { title: 'dsh-a', metadata: { keywords } }, warnings: [] })
+    const result = await readDisplay(tree({}), { name: 'tomato-a', keywords })
+    expect(result).toEqual({ display: { title: 'tomato-a', metadata: { keywords } }, warnings: [] })
   })
 
   it('omits metadata without manifest keywords', async () => {
-    expect(await readDisplay(tree({}), { name: 'dsh-a' })).toEqual({ display: { title: 'dsh-a' }, warnings: [] })
+    expect(await readDisplay(tree({}), { name: 'tomato-a' })).toEqual({ display: { title: 'tomato-a' }, warnings: [] })
   })
 
   it.each([['search', 1], [null], 'search', null, 1, false, {}].map(keywords => ({ keywords })))('warns and omits invalid keywords $keywords entirely', async ({ keywords }) => {
-    const result = await readDisplay(tree({}), { name: 'dsh-a', keywords })
+    const result = await readDisplay(tree({}), { name: 'tomato-a', keywords })
     expect(result).toEqual({
-      display: { title: 'dsh-a' },
+      display: { title: 'tomato-a' },
       warnings: ['package.json keywords must be an array of strings; it is omitted'],
     })
   })
 
   it.each([
-    ['github:jane/dsh-a', { url: 'https://github.com/jane/dsh-a' }],
-    ['jane/dsh-a', { url: 'https://github.com/jane/dsh-a' }],
-    ['  github:jane/dsh-a  ', { url: 'https://github.com/jane/dsh-a' }],
-    ['github:jane/dsh-a#semver:^1', { url: 'https://github.com/jane/dsh-a' }],
+    ['github:jane/tomato-a', { url: 'https://github.com/jane/tomato-a' }],
+    ['jane/tomato-a', { url: 'https://github.com/jane/tomato-a' }],
+    ['  github:jane/tomato-a  ', { url: 'https://github.com/jane/tomato-a' }],
+    ['github:jane/tomato-a#semver:^1', { url: 'https://github.com/jane/tomato-a' }],
     [{ type: 'git', url: 'git+ssh://git@github.com/jane/plugins.git', directory: 'packages/a' }, { url: 'https://github.com/jane/plugins', directory: 'packages/a' }],
     [{ url: 'git+https://u:p@git.example/g/sub/r.git?x=1#main', directory: './packages/a/' }, { url: 'https://git.example/g/sub/r', directory: 'packages/a' }],
     [{ url: 'http://git.intranet/o/r' }, { url: 'http://git.intranet/o/r' }],
   ])('converts the manifest repository %j to its web page', async (repository, expected) => {
-    expect(await readDisplay(tree({}), { name: 'dsh-a', repository })).toEqual({ display: { title: 'dsh-a', repository: expected }, warnings: [] })
+    expect(await readDisplay(tree({}), { name: 'tomato-a', repository })).toEqual({ display: { title: 'tomato-a', repository: expected }, warnings: [] })
   })
 
   it.each([
@@ -194,28 +194,28 @@ describe('readDisplayMetadata', () => {
     { directory: 'packages/a' },
     3,
   ])('warns and omits a repository %j without an http(s) page', async (repository) => {
-    expect(await readDisplay(tree({}), { name: 'dsh-a', repository })).toEqual({
-      display: { title: 'dsh-a' },
+    expect(await readDisplay(tree({}), { name: 'tomato-a', repository })).toEqual({
+      display: { title: 'tomato-a' },
       warnings: [`package.json repository ${JSON.stringify(repository)} names no http(s) repository page; it is omitted`],
     })
   })
 
   it.each(['../a', 'a/./b', 'a b', 4])('keeps the repository but omits the directory %j', async (directory) => {
-    expect(await readDisplay(tree({}), { name: 'dsh-a', repository: { url: 'https://github.com/o/r', directory } })).toEqual({
-      display: { title: 'dsh-a', repository: { url: 'https://github.com/o/r' } },
+    expect(await readDisplay(tree({}), { name: 'tomato-a', repository: { url: 'https://github.com/o/r', directory } })).toEqual({
+      display: { title: 'tomato-a', repository: { url: 'https://github.com/o/r' } },
       warnings: [`package.json repository.directory ${JSON.stringify(directory)} is not a relative directory; it is omitted`],
     })
   })
 
   it('copies an http(s) homepage as written and reports any other value without a substitute', async () => {
-    const homepage = 'https://github.com/jane/dsh-a#readme'
-    expect((await readDisplay(tree({}), { name: 'dsh-a', homepage })).display).toEqual({ title: 'dsh-a', homepage })
+    const homepage = 'https://github.com/jane/tomato-a#readme'
+    expect((await readDisplay(tree({}), { name: 'tomato-a', homepage })).display).toEqual({ title: 'tomato-a', homepage })
     // A repository stays its own field and does not replace a rejected homepage.
-    const manifest = { name: 'dsh-a', homepage: 'javascript:alert(1)', repository: 'https://github.com/jane/dsh-a' }
+    const manifest = { name: 'tomato-a', homepage: 'javascript:alert(1)', repository: 'https://github.com/jane/tomato-a' }
     const rejected = await readDisplay(tree({}), manifest)
-    expect(rejected.display).toEqual({ title: 'dsh-a', repository: { url: 'https://github.com/jane/dsh-a' } })
+    expect(rejected.display).toEqual({ title: 'tomato-a', repository: { url: 'https://github.com/jane/tomato-a' } })
     expect(rejected.warnings).toEqual(['package.json homepage "javascript:alert(1)" is not an http(s) URL; it is omitted'])
-    expect((await readDisplay(tree({}), { name: 'dsh-a', homepage: 'docs/readme' })).display).toEqual({ title: 'dsh-a' })
+    expect((await readDisplay(tree({}), { name: 'tomato-a', homepage: 'docs/readme' })).display).toEqual({ title: 'tomato-a' })
   })
 
   it('combines locale meta with manifest fallbacks, reports unusable locale files, and reads the author', async () => {
@@ -232,7 +232,7 @@ describe('readDisplayMetadata', () => {
       'locale/ko.json': JSON.stringify({}),
       'locale/readme.md': 'not a locale',
     })
-    const { display, warnings } = await readDisplay(files, { name: 'dsh-a', description: 'Does A', author: { name: 'Jane', email: 'j@example.com' } })
+    const { display, warnings } = await readDisplay(files, { name: 'tomato-a', description: 'Does A', author: { name: 'Jane', email: 'j@example.com' } })
     expect(display).toEqual({ title: { en: 'Alpha', fr: 'Alpha (fr)', zh: '甲' }, description: { en: 'Does A', zh: '做甲' }, author: 'Jane' })
     expect(warnings).toEqual([
       'locale file locale/Bad_Name.json ignored: its name is not a language id',
@@ -245,12 +245,12 @@ describe('readDisplayMetadata', () => {
   })
 
   it('reads no locale directory without locale/en.json and returns plain strings without translations', async () => {
-    expect((await readDisplay(tree({ 'locale/zh.json': JSON.stringify({ meta: { title: '甲' } }) }), { name: 'dsh-a', author: 'Jane <j@example.com>' })).display)
-      .toEqual({ title: 'dsh-a', author: 'Jane' })
-    expect((await readDisplay(tree({ 'locale/en.json': JSON.stringify({ meta: { description: 'English only' } }) }), { name: 'dsh-a', author: { url: 'x' } })).display)
-      .toEqual({ title: 'dsh-a', description: 'English only' })
-    expect((await readDisplay(tree({ 'locale/en.json': '{}', 'locale/zh.json': JSON.stringify({ meta: { description: '只有中文' } }) }), { name: 'dsh-a' })).display)
-      .toEqual({ title: 'dsh-a' })
+    expect((await readDisplay(tree({ 'locale/zh.json': JSON.stringify({ meta: { title: '甲' } }) }), { name: 'tomato-a', author: 'Jane <j@example.com>' })).display)
+      .toEqual({ title: 'tomato-a', author: 'Jane' })
+    expect((await readDisplay(tree({ 'locale/en.json': JSON.stringify({ meta: { description: 'English only' } }) }), { name: 'tomato-a', author: { url: 'x' } })).display)
+      .toEqual({ title: 'tomato-a', description: 'English only' })
+    expect((await readDisplay(tree({ 'locale/en.json': '{}', 'locale/zh.json': JSON.stringify({ meta: { description: '只有中文' } }) }), { name: 'tomato-a' })).display)
+      .toEqual({ title: 'tomato-a' })
   })
 
   it('resolves locale files and the icon through the exports map', async () => {
@@ -264,16 +264,16 @@ describe('readDisplayMetadata', () => {
       'icon.svg': '<svg>unexported</svg>',
     })
     const { display, warnings } = await readDisplay(files, {
-      name: 'dsh-a',
+      name: 'tomato-a',
       exports: { './locale/fr.json': './other/fr.json', './locale/*': './dist/locale/*', './icon': { types: './icon.d.ts', default: './art/icon.svg' } },
     })
     expect(display).toEqual({ title: { en: 'Alpha', zh: '甲' }, icon: 'data:image/svg+xml;base64,PHN2Zy8+' })
     expect(warnings).toEqual(['locale file dist/locale/fr.json ignored: ./locale/fr.json does not resolve into dist/locale'])
-    expect((await readDisplay(files, { name: 'dsh-a', exports: { '.': './index.js' } })).display).toEqual({ title: 'dsh-a' })
+    expect((await readDisplay(files, { name: 'tomato-a', exports: { '.': './index.js' } })).display).toEqual({ title: 'tomato-a' })
     const flat = tree({ 'en.json': JSON.stringify({ meta: { title: 'Alpha' } }), 'zh.json': JSON.stringify({ meta: { title: '甲' } }), 'package.json': '{}' })
     expect((await readDisplay(flat, { exports: { './locale/*': './*' } })).display).toEqual({ title: { en: 'Alpha', zh: '甲' } })
     expect((await readDisplay(flat, {})).display).toEqual({})
-    expect((await readDisplay(files, { name: 'dsh-a', exports: { './locale/en.json': './../outside.json' } })).display).toEqual({ title: 'dsh-a' })
+    expect((await readDisplay(files, { name: 'tomato-a', exports: { './locale/en.json': './../outside.json' } })).display).toEqual({ title: 'tomato-a' })
   })
 
   it('inlines small icons, returns larger ones as files, and prefers the manifest icon', async () => {

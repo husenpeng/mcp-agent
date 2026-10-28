@@ -3,71 +3,71 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/bundle/web-app/README.md
 /:
-  en: af2e4e5296596e8f
-  zh: 70c0b5ac93209d00
-/deepseek-ai-dsh-web-app:
-  en: a85684740ecd278a
-  zh: 7c54099b9edccf01
-/deepseek-ai-dsh-web-app/summary:
-  en: 0a2a9876194543e5
-  zh: ff472776a44ae260
-/deepseek-ai-dsh-web-app/table-of-contents:
+  en: ec0a36e96c569d2e
+  zh: ba39fcc68e21913f
+/tomato-web-app:
+  en: 12f279079382360e
+  zh: f68008f254519e67
+/tomato-web-app/summary:
+  en: a94c6a50afd46e45
+  zh: 5fb76fc9581c2121
+/tomato-web-app/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
-/deepseek-ai-dsh-web-app/use-this-package:
+/tomato-web-app/use-this-package:
   en: 3bd37b85139d2fa7
   zh: ba86c807eb83866e
-/deepseek-ai-dsh-web-app/use-this-package/starting-the-web-gui:
-  en: e3cac911f080d8ef
-  zh: 60749e9f5c39c1bc
-/deepseek-ai-dsh-web-app/use-this-package/configuration:
-  en: b1787804544f2587
-  zh: ce09d2c248ffd999
-/deepseek-ai-dsh-web-app/use-this-package/listening-trust-and-public-deployments:
-  en: e6ddea1d2fc40501
-  zh: ff08b6fa3fc24136
-/deepseek-ai-dsh-web-app/use-this-package/running-over-ssh:
-  en: df205a26b6d49168
-  zh: e46ed7cf9e06248a
-/deepseek-ai-dsh-web-app/use-this-package/per-session-agent-setup:
-  en: fdf38cb6e1b24464
-  zh: c14a8bcac9d4e5cd
-/deepseek-ai-dsh-web-app/understand-the-implementation:
-  en: 323742a00cfe67b2
-  zh: eff5245a82fc16e7
-/deepseek-ai-dsh-web-app/understand-the-implementation/patch-semantics:
+/tomato-web-app/use-this-package/starting-the-web-gui:
+  en: a70e515c64fea391
+  zh: 4e82f1555cdceb44
+/tomato-web-app/use-this-package/configuration:
+  en: b3668a82efc43365
+  zh: db2c50f760471407
+/tomato-web-app/use-this-package/listening-trust-and-public-deployments:
+  en: 705d0ae1dbf76827
+  zh: 396ca133316b1fef
+/tomato-web-app/use-this-package/running-over-ssh:
+  en: 15dc174f5bbf6715
+  zh: a45d7177dc287119
+/tomato-web-app/use-this-package/per-session-agent-setup:
+  en: 845c81bced1bcad3
+  zh: 14915cdc67114a4d
+/tomato-web-app/understand-the-implementation:
+  en: c1d2fa0b97d6d094
+  zh: ca53684b934bb89e
+/tomato-web-app/understand-the-implementation/patch-semantics:
   en: a6d126f30b1594d7
   zh: 7f0ccc8a55d6f743
-/deepseek-ai-dsh-web-app/understand-the-implementation/advertised-application-url:
-  en: 0b22e03e28d41420
-  zh: fd45a97dd4336c25
-/deepseek-ai-dsh-web-app/understand-the-implementation/readiness:
+/tomato-web-app/understand-the-implementation/advertised-application-url:
+  en: 969cb98e78fb148b
+  zh: e96b5ce9ee5b46cb
+/tomato-web-app/understand-the-implementation/readiness:
   en: 973128fd346869df
   zh: 54e6792f9f82a192
-/deepseek-ai-dsh-web-app/understand-the-implementation/source-map:
-  en: 58800b6f2142c34f
-  zh: 10bf512b16db1cb8
-/deepseek-ai-dsh-web-app/further-exploration:
-  en: f81694f7424e2988
-  zh: 6643f9227039e228
-/deepseek-ai-dsh-web-app/model-experience:
+/tomato-web-app/understand-the-implementation/source-map:
+  en: 17a2af82e887f2e2
+  zh: dc6c8041fcbe1885
+/tomato-web-app/further-exploration:
+  en: 61ccf7b16376884a
+  zh: 2141bc320a1f54d1
+/tomato-web-app/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
-/deepseek-ai-dsh-web-app/model-experience/web-runtime-variable:
+/tomato-web-app/model-experience/web-runtime-variable:
   en: 623bf8a0bf05599d
   zh: 398ded2e7b20c1ea
-/deepseek-ai-dsh-web-app/model-experience/web-runtime-variable/what-the-model-sees:
-  en: ebaddc153ad7a835
-  zh: 21aa60f73d14f26c
-/deepseek-ai-dsh-web-app/model-experience/web-runtime-variable/token-effect:
+/tomato-web-app/model-experience/web-runtime-variable/what-the-model-sees:
+  en: f954ee6fcd780a70
+  zh: 89eac62b5dc84c73
+/tomato-web-app/model-experience/web-runtime-variable/token-effect:
   en: 449fbfa3986f98f0
   zh: a7d66333594ab2dd
-/deepseek-ai-dsh-web-app/model-experience/web-runtime-variable/kv-cache-effect:
+/tomato-web-app/model-experience/web-runtime-variable/kv-cache-effect:
   en: 37542a8b81a744f5
   zh: c0048aaadecae296
-/deepseek-ai-dsh-web-app/known-limitations-and-deferred-work:
-  en: 635c1336e2f4e821
-  zh: caabdecb02e2df14
-/deepseek-ai-dsh-web-app/known-limitations-and-deferred-work/dev-note:
+/tomato-web-app/known-limitations-and-deferred-work:
+  en: 6673e3bda5faffc8
+  zh: 3835db5d4ecb6cef
+/tomato-web-app/known-limitations-and-deferred-work/dev-note:
   en: 3f81b4f3beb74a0d
   zh: 2e377ca40822d093

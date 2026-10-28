@@ -7,20 +7,20 @@
  * removes it (HMR safety). The carrier and framework are exercised unmodified.
  */
 
-import * as NativeToolExecutor from '@deepseek-ai/dsh-tool-executor-native'
+import * as NativeToolExecutor from '@tomato/tool-executor-native'
 import { describe, expect, it } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import AgentRegistry from '@deepseek-ai/dsh-agent'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
-import SessionStore from '@deepseek-ai/dsh-session'
-import type { Session } from '@deepseek-ai/dsh-session'
-import type { TodoItem } from '@deepseek-ai/dsh-tool-todo'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime from '@deepseek-ai/dsh-tools'
-import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
-import UserQuestionService from '@deepseek-ai/dsh-user-questions'
-import * as ToolTodo from '@deepseek-ai/dsh-tool-todo'
+import { Context } from '@tomato/cordis'
+import AgentRegistry from '@tomato/agent'
+import type { Agent } from '@tomato/agent'
+import { createUserMessage } from '@tomato/llm'
+import SessionStore from '@tomato/session'
+import type { Session } from '@tomato/session'
+import type { TodoItem } from '@tomato/tool-todo'
+import SystemPrompt from '@tomato/system-prompt'
+import ToolRuntime from '@tomato/tools'
+import SessionProjectionRegistry from '@tomato/session-projection'
+import UserQuestionService from '@tomato/user-questions'
+import * as ToolTodo from '@tomato/tool-todo'
 
 interface Bench {
   ctx: Context

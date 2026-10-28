@@ -10,14 +10,14 @@
  */
 import { describe, expect, it } from 'vitest'
 import { act, render } from '@testing-library/react'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@tomato/cordis'
 import { useSyncExternalStore } from 'react'
-import type { SessionReference } from '@deepseek-ai/dsh-api-session-controller/client'
-import type { SessionProviderComponent, StoredEntry } from '@deepseek-ai/dsh-client-ui-slots'
-import type {} from '@deepseek-ai/dsh-client-ui-session/client'
+import type { SessionReference } from '@tomato/api-session-controller/client'
+import type { SessionProviderComponent, StoredEntry } from '@tomato/client-ui-slots'
+import type {} from '@tomato/client-ui-session/client'
 import type {
   ScopedStandardSourceBinding, SlotRendererHost, SlotScopeAdapter, StandardSourceBinding,
-} from '@deepseek-ai/dsh-client-ui-renderer/client'
+} from '@tomato/client-ui-renderer/client'
 import { createSlotRenderer } from '../src/client/scoped-slots.tsx'
 
 type SessionBinding = ScopedStandardSourceBinding

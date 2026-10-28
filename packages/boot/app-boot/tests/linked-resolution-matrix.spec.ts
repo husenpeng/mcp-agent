@@ -102,7 +102,7 @@ const loader = loaderModule.getOrInitializeCascadedLoader()
 const methods: readonly Method[] = ['esm-resolve', 'esm-meta-resolve', 'esm-import', 'cjs-resolve', 'cjs-require', 'cjs-paths', 'metadata']
 const layouts: readonly Layout[] = ['single-flat', 'single-pnpm', 'pnpm-monorepo']
 // These are real request spellings; each fixture supplies its own package implementations.
-const names = ['@deepseek-ai/dsh-tools', 'react'] as const
+const names = ['@tomato/tools', 'react'] as const
 const copyBits: readonly [Source, number][] = [
   ['local', 1], ['parent', 2], ['profile', 4], ['private', 8], ['workspace', 16],
 ]
@@ -293,14 +293,14 @@ function manifest(path: string, content: Record<string, unknown>): void {
 
 class MatrixFixture {
   // Node keeps resolved paths and modules after cleanup; no fixture may reuse an earlier fixture's path.
-  readonly root = realpathSync.native(mkdtempSync(join(tmpdir(), `dsh-linked-matrix-${++fixtureSequence}-`)))
+  readonly root = realpathSync.native(mkdtempSync(join(tmpdir(), `tomato-linked-matrix-${++fixtureSequence}-`)))
   readonly home = join(this.root, 'home')
   readonly profileDir = join(this.home, 'profiles', 'web')
   readonly workspace = join(this.root, 'work', 'workspace')
   readonly packageDir: string
   readonly sources = new Map<string, Source>()
   readonly importerDir: string
-  readonly installDir = join(this.root, 'installation', 'node_modules', '@deepseek-ai', 'dsh')
+  readonly installDir = join(this.root, 'installation', 'node_modules', '@tomato', 'tomato')
   readonly runtimeDir: string
   readonly peerProjection: PeerProjection[] = []
 
@@ -319,7 +319,7 @@ class MatrixFixture {
   setup(): void {
     const value = this.scenario
     manifest(this.installDir, {
-      name: '@deepseek-ai/dsh', version: '1.0.0',
+      name: '@tomato/cli', version: '1.0.0',
       dependencies: value.inRuntime ? { [value.name]: '*' } : {},
     })
     if (value.inRuntime) this.package(this.runtimeDir, 'runtime')

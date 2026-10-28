@@ -10,7 +10,7 @@
  */
 
 import { randomBytes } from 'node:crypto'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
+import type { SessionEvent } from '@tomato/session'
 import { nanos, type SpanDraft } from './spans.ts'
 
 /** A random 16-byte trace id as 32 lowercase hex characters. */

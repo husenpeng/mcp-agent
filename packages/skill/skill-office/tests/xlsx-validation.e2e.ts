@@ -5,10 +5,10 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { execa } from 'execa'
 import { describe, expect, it, onTestFinished } from 'vitest'
-import { runLoaderSmoke } from '@deepseek-ai/dsh-loader-smoke'
-import { readImageFile } from '@deepseek-ai/dsh-attachment-local'
-import { parseSessionLog } from '@deepseek-ai/dsh-llm-replay'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
+import { runLoaderSmoke } from '@tomato/loader-smoke'
+import { readImageFile } from '@tomato/attachment-local'
+import { parseSessionLog } from '@tomato/llm-replay'
+import type { SessionEvent } from '@tomato/session'
 import { expectNoRenderContext, officeModelPatches } from './fixtures/real-office.ts'
 import { renderCliFixture } from './fixtures/render-cli.ts'
 
@@ -68,13 +68,13 @@ describe.skipIf(!process.env.DEEPSEEK_API_KEY || !runtime).each(['native', 'ptc'
     let original: Buffer | undefined
     let previewHasContent = false
     let fixtureCalls: { args: string[]; status: number | null }[] = []
-    const controlRoot = await mkdtemp(join(tmpdir(), 'dsh-xlsx-control-test-'))
+    const controlRoot = await mkdtemp(join(tmpdir(), 'tomato-xlsx-control-test-'))
     onTestFinished(() => rm(controlRoot, { recursive: true, force: true }))
     const configPath = join(controlRoot, 'office.patch.json')
     const sessionRoot = join(controlRoot, 'sessions'), imageRoot = join(controlRoot, 'image-store')
     await runLoaderSmoke({
       label: `Excel ${kind} validation`,
-      tempDirPrefix: 'dsh-xlsx-validation-',
+      tempDirPrefix: 'tomato-xlsx-validation-',
       binScript: join(repo, 'apps/cli/src/bin.ts'),
       sourceImport: 'tsx/esm',
       tsconfigPath: join(repo, 'tsconfig.base.json'),
@@ -99,8 +99,8 @@ describe.skipIf(!process.env.DEEPSEEK_API_KEY || !runtime).each(['native', 'ptc'
         const fixture = kind === 'blank' || kind === 'formula'
           ? await renderCliFixture(controlRoot, python!, kind === 'blank') : undefined
         await writeFile(configPath, JSON.stringify([
-          { insert: [{ id: 'skill-office', name: '@deepseek-ai/dsh-skill-office', config: { assetRoot, node: process.execPath, ...fixture ? { cli: fixture.cli } : {} } }] },
-          { insert: [{ id: 'workspace-dependencies', name: '@deepseek-ai/dsh-tool-workspace-dependencies', config: { source: runtime! } }] },
+          { insert: [{ id: 'skill-office', name: '@tomato/skill-office', config: { assetRoot, node: process.execPath, ...fixture ? { cli: fixture.cli } : {} } }] },
+          { insert: [{ id: 'workspace-dependencies', name: '@tomato/tool-workspace-dependencies', config: { source: runtime! } }] },
           ...officeModelPatches(),
           { id: 'attachment-local', config: { tomatoHome: imageRoot } },
           { id: 'session-persistence-jsonl', config: { root: sessionRoot, compression: 'none' } },

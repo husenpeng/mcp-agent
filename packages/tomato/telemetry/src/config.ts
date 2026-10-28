@@ -1,4 +1,4 @@
-import z from '@deepseek-ai/schemastery'
+import z from '@tomato/schemastery'
 
 /** Plugin configuration for the OTLP relay reporter. */
 export interface Config {

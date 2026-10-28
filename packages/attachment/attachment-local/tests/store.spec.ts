@@ -6,7 +6,7 @@ import { dirname, join, parse, resolve } from 'node:path'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import sharp from 'sharp'
-import type { ImageAttachmentLimits } from '@deepseek-ai/dsh-attachment'
+import type { ImageAttachmentLimits } from '@tomato/attachment'
 import type { NormalizationPolicy } from '../src/normalization.ts'
 import {
   commitPreparedImageFile,
@@ -59,7 +59,7 @@ const LIMITS: ImageAttachmentLimits = {
 const roots: string[] = []
 
 async function root(): Promise<string> {
-  const value = await mkdtemp(join(tmpdir(), 'dsh-attachment-'))
+  const value = await mkdtemp(join(tmpdir(), 'tomato-attachment-'))
   roots.push(value)
   return join(value, 'attachments', 'v1')
 }

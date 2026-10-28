@@ -2,20 +2,20 @@
 
 import { performance } from 'node:perf_hooks'
 import { scheduler } from 'node:timers/promises'
-import { Context } from '@deepseek-ai/cordis'
-import AgentLoop from '@deepseek-ai/dsh-agent-loop'
-import { mountAgentLoopTestDependencies } from '@deepseek-ai/dsh-agent-loop-testkit'
-import { agentPresetProjectionDefinition } from '@deepseek-ai/dsh-agent-preset-registry'
+import { Context } from '@tomato/cordis'
+import AgentLoop from '@tomato/agent-loop'
+import { mountAgentLoopTestDependencies } from '@tomato/agent-loop-testkit'
+import { agentPresetProjectionDefinition } from '@tomato/agent-preset-registry'
 import SessionStore, {
   interruptedTurnClosers,
   SessionId,
   SessionLogOffset,
   SessionPreparation,
-} from '@deepseek-ai/dsh-session'
-import AgentRegistry, { type AgentHandle } from '@deepseek-ai/dsh-agent'
-import * as JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
-import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
-import SessionQueryEngine from '@deepseek-ai/dsh-session-query'
+} from '@tomato/session'
+import AgentRegistry, { type AgentHandle } from '@tomato/agent'
+import * as JsonlSessionPersistence from '@tomato/session-persistence-jsonl'
+import SessionProjectionRegistry from '@tomato/session-projection'
+import SessionQueryEngine from '@tomato/session-query'
 import type {
   SessionEventSearchPage,
   SessionEventSearchRequest,
@@ -23,11 +23,11 @@ import type {
   SessionSearchHit,
   SessionSearchPage,
   SessionSearchRequest,
-} from '@deepseek-ai/dsh-session-query'
-import * as SessionStatsPlugin from '@deepseek-ai/dsh-session-stats'
-import SessionTitleService from '@deepseek-ai/dsh-session-title'
-import * as SessionTurnOutlinePlugin from '@deepseek-ai/dsh-session-turn-outline'
-import TokenMeter from '@deepseek-ai/dsh-token-meter'
+} from '@tomato/session-query'
+import * as SessionStatsPlugin from '@tomato/session-stats'
+import SessionTitleService from '@tomato/session-title'
+import * as SessionTurnOutlinePlugin from '@tomato/session-turn-outline'
+import TokenMeter from '@tomato/token-meter'
 // These Host-only adapters have no public Node export and are compiled into the benchmark worker.
 import { SessionHistoryController } from '../../packages/api/session-controller/src/history.ts'
 import { assertBuiltBenchmarkRuntime } from '../support/built-worker.ts'
@@ -289,7 +289,7 @@ class SessionBenchmarkHost {
 }
 
 assertBuiltBenchmarkRuntime(import.meta.url, {
-  '@deepseek-ai/dsh-session-persistence-jsonl': import.meta.resolve('@deepseek-ai/dsh-session-persistence-jsonl'),
+  '@tomato/session-persistence-jsonl': import.meta.resolve('@tomato/session-persistence-jsonl'),
 })
 
 const [root, scenarioValue] = process.argv.slice(2)

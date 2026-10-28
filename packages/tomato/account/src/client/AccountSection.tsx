@@ -1,7 +1,7 @@
 /** Account settings page: identity, three-state status, sign-in, sign-out, and retry. */
 
-import { Button, IconRefreshOutlineMedium, IconUserOutlineMedium } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
+import { Button, IconRefreshOutlineMedium, IconUserOutlineMedium } from '@tomato/client-ui-primitives'
+import type { InjectFace, PropsLocale } from '@tomato/client-ui-slots'
 import { AccountAvatar } from './AccountAvatar.tsx'
 import type { AccountInjected } from './AccountLauncher.tsx'
 import css from './Account.module.css'

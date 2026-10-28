@@ -1,6 +1,6 @@
 /** IPC frames between the owner host plugin and its one tunnel worker, plus the Relay wire frames. */
 
-import type { Branded } from '@deepseek-ai/dsh-brand'
+import type { Branded } from '@tomato/branded'
 
 export * from './viewer-states.ts'
 

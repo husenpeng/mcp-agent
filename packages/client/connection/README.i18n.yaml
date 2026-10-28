@@ -5,33 +5,33 @@
 /:
   en: 13b131457d03a224
   zh: 6dedd0706d5ffc0a
-/deepseek-ai-dsh-client-connection:
-  en: 142fb403b92c8af8
-  zh: bb52a8ccf7ca4402
-/deepseek-ai-dsh-client-connection/summary:
+/tomato-client-connection:
+  en: 22015f7bcda90d88
+  zh: c04f2e94eb91421c
+/tomato-client-connection/summary:
   en: a83b5e9fd1968062
   zh: ac68628e185a4bff
-/deepseek-ai-dsh-client-connection/table-of-contents:
+/tomato-client-connection/table-of-contents:
   en: 18792bf2fb4f8030
   zh: 84c63acc7e0099ae
-/deepseek-ai-dsh-client-connection/use-this-package:
-  en: da6810858bf74a86
-  zh: d623e510ec74520f
-/deepseek-ai-dsh-client-connection/browser-authentication-and-request-trust:
-  en: e2154aa9caa859b4
-  zh: 32832efe4dc37c06
-/deepseek-ai-dsh-client-connection/connection-generation:
-  en: d9fe48c025ace7ce
-  zh: 0e23b299fbf25ae6
-/deepseek-ai-dsh-client-connection/model-experience:
+/tomato-client-connection/use-this-package:
+  en: 2c9d857d53147ea4
+  zh: 2983b27068e0ae7a
+/tomato-client-connection/browser-authentication-and-request-trust:
+  en: 3aa2a438cab3b4f6
+  zh: 411064365f2aa03c
+/tomato-client-connection/connection-generation:
+  en: e8e00731c7cc4c60
+  zh: 55e69c6c1dade9ae
+/tomato-client-connection/model-experience:
   en: 88bbc33fe9ae9df8
   zh: bfbab6d51b4abd40
-/deepseek-ai-dsh-client-connection/model-experience/kv-cache-effect:
+/tomato-client-connection/model-experience/kv-cache-effect:
   en: ca75c51c89c2c9b0
   zh: de54f3467ef3b9be
-/deepseek-ai-dsh-client-connection/known-limitations-and-deferred-work:
-  en: a860aa95302e4f02
-  zh: 4df79a08b5fe018e
-/deepseek-ai-dsh-client-connection/known-limitations-and-deferred-work/dev-note:
+/tomato-client-connection/known-limitations-and-deferred-work:
+  en: f289841a4cc506ca
+  zh: 57b33d34097a4aac
+/tomato-client-connection/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: e88aeb617ffb74ea

@@ -1,6 +1,6 @@
 /** Copy adapters shared by the list and detail views. */
-import type { RemoteFailure } from '@deepseek-ai/dsh-api-remotes/client'
-import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
+import type { RemoteFailure } from '@tomato/api-remotes/client'
+import type { TranslateNS } from '@tomato/client-ui-slots'
 import type {} from './locales.ts'
 
 /**
@@ -11,10 +11,10 @@ import type {} from './locales.ts'
  */
 export function sourceLabel(t: TranslateNS<'skillBrowser'>, source: string): string {
   switch (source) {
-    case 'user-dsh':
+    case 'user-tomato':
     case 'user-agents':
       return t('source.personal')
-    case 'project-dsh':
+    case 'project-tomato':
     case 'project-agents':
       return t('source.project')
     case 'custom':

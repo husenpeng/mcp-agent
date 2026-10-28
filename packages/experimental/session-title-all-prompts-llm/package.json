@@ -1,6 +1,6 @@
 {
-  "name": "@deepseek-ai/dsh-session-title-all-prompts-llm",
-  "description": "All-user-messages LLM provider plugin for DeepSeek Harness session titles",
+  "name": "@tomato/session-title-all-prompts-llm",
+  "description": "All-user-messages LLM provider plugin for Tomato Harness session titles",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -24,23 +24,23 @@
   "files": ["locale/*.json", "lib/index.js", "lib/types/**/*.d.ts"],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-session-title": "workspace:*",
-    "@deepseek-ai/dsh-session-title-llm": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/llm": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-title": "workspace:*",
+    "@tomato/session-title-llm": "workspace:*",
+    "@tomato/cordis": "workspace:~"
   },
   "dependencies": {
-    "@deepseek-ai/dsh-util-values": "workspace:*",
-    "@deepseek-ai/schemastery": "workspace:~"
+    "@tomato/util-values": "workspace:*",
+    "@tomato/schemastery": "workspace:~"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-session-title": "workspace:*",
-    "@deepseek-ai/dsh-session-title-llm": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-session-projection": "workspace:*",
-    "@deepseek-ai/dsh-agent-loop": "workspace:*"
+    "@tomato/llm": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-title": "workspace:*",
+    "@tomato/session-title-llm": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/agent-loop": "workspace:*"
   }
 }

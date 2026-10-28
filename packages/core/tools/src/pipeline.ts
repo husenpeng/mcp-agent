@@ -1,12 +1,12 @@
 /** Shared tool invocation policy, cancellation, and result settlement. @module */
-import type { Context } from '@deepseek-ai/cordis'
-import type { ScopeKey } from '@deepseek-ai/dsh-scope'
-import { scopeTarget } from '@deepseek-ai/dsh-scope'
-import type { ContentBlock } from '@deepseek-ai/dsh-llm'
-import { HarnessError } from '@deepseek-ai/dsh-llm'
-import type { UserMessage } from '@deepseek-ai/dsh-session'
-import type {} from '@deepseek-ai/dsh-user-approval'
-import { assertNever, deepFreeze, snapshotJsonValue, type JsonValue } from '@deepseek-ai/dsh-util-values'
+import type { Context } from '@tomato/cordis'
+import type { ScopeKey } from '@tomato/scope'
+import { scopeTarget } from '@tomato/scope'
+import type { ContentBlock } from '@tomato/llm'
+import { HarnessError } from '@tomato/llm'
+import type { UserMessage } from '@tomato/session'
+import type {} from '@tomato/user-approval'
+import { assertNever, deepFreeze, snapshotJsonValue, type JsonValue } from '@tomato/util-values'
 import { TOOL_ABORTED, TOOL_ABORTED_BEFORE_DISPATCH, ToolNotFoundError, ToolOutputError } from './contracts.ts'
 import { validateJsonSchemaValue } from './json-schema.ts'
 import type { ToolsService } from './index.ts'
@@ -689,7 +689,7 @@ function errorInfo(error: unknown): ToolErrorInfo | undefined {
 
 /** Mint a same-process correlation token whose identity is its value. */
 function createExecutionToken(): ToolExecutionToken {
-  return Symbol('dsh.tool.execution') as ToolExecutionToken
+  return Symbol('tomato.tool.execution') as ToolExecutionToken
 }
 
 function toolErrorResult(error: unknown): ToolExecutionResult {

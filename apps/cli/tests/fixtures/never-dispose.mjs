@@ -4,16 +4,16 @@ import { existsSync } from 'node:fs'
 
 /**
  * Register a disposer that keeps process shutdown pending until it is forced.
- * @param {import('@deepseek-ai/cordis').Context} ctx - loader-mounted test plugin context.
+ * @param {import('@tomato/cordis').Context} ctx - loader-mounted test plugin context.
  */
 export function apply(ctx) {
   const keepAlive = setInterval(() => {}, 60_000)
-  process.stderr.write('dsh-test: never-dispose ready\n')
+  process.stderr.write('tomato-test: never-dispose ready\n')
   ctx.effect(() => async () => {
     clearInterval(keepAlive)
     const armFile = process.env.TOMATO_TEST_SHUTDOWN_ARM_FILE
     if (armFile === undefined || !existsSync(armFile)) return
-    process.stderr.write('dsh-test: never-dispose started\n')
+    process.stderr.write('tomato-test: never-dispose started\n')
     await new Promise(() => {})
   })
 }

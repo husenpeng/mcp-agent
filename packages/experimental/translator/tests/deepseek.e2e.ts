@@ -1,10 +1,10 @@
 /** Explicitly enabled billed Flash smoke through the actual native official provider. */
-import type { ModuleLoaderV2 } from '@deepseek-ai/cordis-plugin-loader'
-import { boot } from '@deepseek-ai/dsh-app-boot'
-import LlmRuntime from '@deepseek-ai/dsh-llm'
-import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
-import * as JsonlPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
-import * as Official from '@deepseek-ai/dsh-llm-deepseek-api-key'
+import type { ModuleLoaderV2 } from '@tomato/cordis-plugin-loader'
+import { boot } from '@tomato/app-boot'
+import LlmRuntime from '@tomato/llm'
+import SessionStore, { SessionId } from '@tomato/session'
+import * as JsonlPersistence from '@tomato/session-persistence-jsonl'
+import * as Official from '@tomato/llm-deepseek-api-key'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -14,23 +14,23 @@ import Translator from '../src/index.ts'
 const enabled = process.env.TOMATO_TRANSLATION_DEEPSEEK_LIVE === '1' && (process.env.DEEPSEEK_API_KEY?.length ?? 0) > 0
 
 it.skipIf(!enabled)('translates a small independent billed query with exact Flash and thinking off', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-paid-translation-live-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-paid-translation-live-'))
   const previousHome = process.env.TOMATO_HOME
   process.env.TOMATO_HOME = root
   let close: (() => Promise<void>) | undefined
   try {
     const configPath = join(root, 'cordis.yml')
     await writeFile(configPath, JSON.stringify([
-      { id: 'llm', name: '@deepseek-ai/dsh-llm' },
-      { id: 'sessions', name: '@deepseek-ai/dsh-session' },
-      { id: 'storage', name: '@deepseek-ai/dsh-session-persistence-jsonl', config: { root: join(root, 'sessions'), compression: 'none' } },
-      { id: 'official-live-owner', name: '@deepseek-ai/dsh-llm-deepseek-api-key' },
-      { id: 'translator', name: '@deepseek-ai/dsh-experimental-translator', config: { deepseekMaxOutputTokens: 128 } },
+      { id: 'llm', name: '@tomato/llm' },
+      { id: 'sessions', name: '@tomato/session' },
+      { id: 'storage', name: '@tomato/session-persistence-jsonl', config: { root: join(root, 'sessions'), compression: 'none' } },
+      { id: 'official-live-owner', name: '@tomato/llm-deepseek-api-key' },
+      { id: 'translator', name: '@tomato/experimental-translator', config: { deepseekMaxOutputTokens: 128 } },
     ]))
     const modules = new Map<string, unknown>([
-      ['@deepseek-ai/dsh-llm', LlmRuntime], ['@deepseek-ai/dsh-session', SessionStore],
-      ['@deepseek-ai/dsh-session-persistence-jsonl', JsonlPersistence],
-      ['@deepseek-ai/dsh-llm-deepseek-api-key', Official], ['@deepseek-ai/dsh-experimental-translator', Translator],
+      ['@tomato/llm', LlmRuntime], ['@tomato/session', SessionStore],
+      ['@tomato/session-persistence-jsonl', JsonlPersistence],
+      ['@tomato/llm-deepseek-api-key', Official], ['@tomato/experimental-translator', Translator],
     ])
     const ctx = await boot('paid-translation-live', configPath, [], (host) => {
       const source: ModuleLoaderV2 = {

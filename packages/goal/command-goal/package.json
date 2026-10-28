@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-command-goal",
+  "name": "@tomato/command-goal",
   "description": "Human-facing slash command for persisted same-session goals",
   "version": "0.2.1-rc.3",
   "publishConfig": {
@@ -29,21 +29,21 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-commands": "workspace:*",
-    "@deepseek-ai/dsh-goal": "workspace:*",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/commands": "workspace:*",
+    "@tomato/goal": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/cordis": "workspace:~"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
-    "@deepseek-ai/dsh-agent": "workspace:*",
-    "@deepseek-ai/dsh-agent-loop": "workspace:*",
-    "@deepseek-ai/dsh-agent-loop-testkit": "workspace:*",
-    "@deepseek-ai/dsh-commands": "workspace:*",
-    "@deepseek-ai/dsh-goal": "workspace:*",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-session-projection": "workspace:*"
+    "@tomato/cordis-plugin-loader": "workspace:~",
+    "@tomato/agent": "workspace:*",
+    "@tomato/agent-loop": "workspace:*",
+    "@tomato/agent-loop-testkit": "workspace:*",
+    "@tomato/commands": "workspace:*",
+    "@tomato/goal": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/session-projection": "workspace:*"
   }
 }

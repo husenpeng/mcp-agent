@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-tool-testkit",
+  "name": "@tomato/tool-testkit",
   "description": "Tool definition and execution fixtures for tests and benchmarks",
   "version": "0.2.1-rc.3",
   "publishConfig": {
@@ -27,14 +27,14 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-tools": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/llm": "workspace:*",
+    "@tomato/tools": "workspace:*"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-system-prompt": "workspace:*",
-    "@deepseek-ai/dsh-tools": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/llm": "workspace:*",
+    "@tomato/system-prompt": "workspace:*",
+    "@tomato/tools": "workspace:*"
   }
 }

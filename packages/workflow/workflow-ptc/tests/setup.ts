@@ -2,24 +2,24 @@ import { externalTestParent } from '../../../subagent/subagent/tests/external-ac
 import { mkdtemp, mkdir, rm } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import type { Context } from '@deepseek-ai/cordis'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import AgentRegistry from '@deepseek-ai/dsh-agent'
-import SessionStore from '@deepseek-ai/dsh-session'
-import SessionProjections from '@deepseek-ai/dsh-session-projection'
-import * as JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
-import FileSystem from '@deepseek-ai/dsh-fs-local'
-import Subprocess from '@deepseek-ai/dsh-subprocess-local'
-import Sandbox from '@deepseek-ai/dsh-sandbox-local'
-import SandboxPolicy from '@deepseek-ai/dsh-sandbox-policy'
-import type { SandboxMode } from '@deepseek-ai/dsh-sandbox'
-import NodePtcRuntime from '@deepseek-ai/dsh-ptc-runtime-node'
-import type { Config as NodeRuntimeConfig } from '@deepseek-ai/dsh-ptc-runtime-node'
+import type { Context } from '@tomato/cordis'
+import type { Agent } from '@tomato/agent'
+import AgentRegistry from '@tomato/agent'
+import SessionStore from '@tomato/session'
+import SessionProjections from '@tomato/session-projection'
+import * as JsonlSessionPersistence from '@tomato/session-persistence-jsonl'
+import FileSystem from '@tomato/fs-local'
+import Subprocess from '@tomato/subprocess-local'
+import Sandbox from '@tomato/sandbox-local'
+import SandboxPolicy from '@tomato/sandbox-policy'
+import type { SandboxMode } from '@tomato/sandbox'
+import NodePtcRuntime from '@tomato/ptc-runtime-node'
+import type { Config as NodeRuntimeConfig } from '@tomato/ptc-runtime-node'
 import { onTestFinished } from 'vitest'
 
 /** Mount real Node execution services with a private working directory and awaited cleanup. */
 export async function mountPtcRuntime(ctx: Context, mode: SandboxMode = 'danger-full-access', executionMode: NodeRuntimeConfig['executionMode'] = 'per-call') {
-  const root = await mkdtemp(join(homedir(), '.dsh-workflow-test-'))
+  const root = await mkdtemp(join(homedir(), '.tomato-workflow-test-'))
   onTestFinished(async () => {
     await ctx.fiber.dispose()
     await rm(root, { recursive: true, force: true })

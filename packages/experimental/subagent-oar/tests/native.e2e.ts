@@ -4,10 +4,10 @@ import { randomUUID } from 'node:crypto'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@tomato/cordis'
 import { expect, it } from 'vitest'
-import SubagentRuntime from '@deepseek-ai/dsh-subagent'
-import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
+import SubagentRuntime from '@tomato/subagent'
+import SessionProjectionRegistry from '@tomato/session-projection'
 import { externalTestParent, startExternalActivation } from '../../../subagent/subagent/tests/external-activation-helpers.ts'
 import { mountWorkingDirectoryFixture } from '../../../subagent/subagent/tests/working-directory-fixture.ts'
 import * as oar from '../src/index.ts'
@@ -16,7 +16,7 @@ it.skipIf(process.env.TOMATO_OAR_E2E !== '1').for(['codex', 'claude'])(
   'delegates a file task to installed %s through the registered OAR provider',
   { timeout: 180_000, retry: 0 },
   async (runtime, test) => {
-    const root = await mkdtemp(join(tmpdir(), `dsh-oar-live-${runtime}-`))
+    const root = await mkdtemp(join(tmpdir(), `tomato-oar-live-${runtime}-`))
     const ctx = new Context()
     test.onTestFinished(async () => {
       await ctx.fiber.dispose()

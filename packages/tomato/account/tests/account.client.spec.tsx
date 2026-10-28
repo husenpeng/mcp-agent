@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
-import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
+import { createSnapshotStore } from '@tomato/client-store'
 import { AccountController } from '../src/client/account-controller.ts'
 import { AccountSection } from '../src/client/AccountSection.tsx'
 import type { AccountSnapshot } from '../src/client/account-controller.ts'

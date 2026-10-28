@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-util-file-drag",
+  "name": "@tomato/util-file-drag",
   "description": "Shared file drag names and native transfer requests",
   "version": "0.2.1-rc.3",
   "publishConfig": {
@@ -27,11 +27,11 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/cordis": "workspace:~"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-brand": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/branded": "workspace:*"
   },
   "dependencies": {
     "mime": "^4.1.1"

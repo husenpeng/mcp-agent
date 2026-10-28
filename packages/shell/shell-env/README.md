@@ -3,13 +3,13 @@ description: "The managed TOMATO_* shell environment for users and maintainers c
 kind: "package-reference"
 ---
 
-# @deepseek-ai/dsh-shell-env
+# @tomato/shell-env
 
 English | [中文](README.zh.md)
 
 ## Summary
 
-`dsh-shell-env` provides the trusted `TOMATO_*` environment that every model shell call — bash or pwsh — runs with: built-in facts such as `TOMATO_HOME`, `TOMATO_SHELL=1`, the agent's `TOMATO_SESSION_ID`, and the launched profile's `TOMATO_PROFILE` and `TOMATO_PROFILE_DIR`. Plugin authors can register their own facts with declared keys, collected per execution and disposed with their plugin; duplicate ownership or undeclared runtime keys fail loudly instead of silently overwriting. The registry changes nothing else the model sees — the shell tools own their own schemas and prompts. Choose it in any composition that mounts a model shell tool; configuration only picks the Harness home directory.
+`@tomato/shell-env` provides the trusted `TOMATO_*` environment that every model shell call — bash or pwsh — runs with: built-in facts such as `TOMATO_HOME`, `TOMATO_SHELL=1`, the agent's `TOMATO_SESSION_ID`, and the launched profile's `TOMATO_PROFILE` and `TOMATO_PROFILE_DIR`. Plugin authors can register their own facts with declared keys, collected per execution and disposed with their plugin; duplicate ownership or undeclared runtime keys fail loudly instead of silently overwriting. The registry changes nothing else the model sees — the shell tools own their own schemas and prompts. Choose it in any composition that mounts a model shell tool; configuration only picks the Harness home directory.
 
 ## Table of Contents
 
@@ -25,19 +25,19 @@ English | [中文](README.zh.md)
 <a id="use-this-package"></a>
 ## Use this package
 
-Load this plugin in any composition that mounts a model shell tool (`dsh-tool-bash` or `dsh-tool-pwsh`): each foreground or background shell call then runs with a freshly collected managed environment instead of whatever `TOMATO_*` values the process inherited.
+Load this plugin in any composition that mounts a model shell tool (`@tomato/tool-bash` or `@tomato/tool-pwsh`): each foreground or background shell call then runs with a freshly collected managed environment instead of whatever `TOMATO_*` values the process inherited.
 
 ### What every shell call receives
 
-Every call receives `TOMATO_HOME` (the absolute Harness home), `TOMATO_SHELL=1`, and, for agent calls, `TOMATO_SESSION_ID` (the calling session's id). When the launcher provided a profile context, every call also receives `TOMATO_PROFILE` (the profile name) and `TOMATO_PROFILE_DIR` (its absolute directory; its `node_modules` holds only profile-installed packages, while the harness's own bundles resolve from the dsh installation); compositions booted without a profile omit both.
+Every call receives `TOMATO_HOME` (the absolute Harness home), `TOMATO_SHELL=1`, and, for agent calls, `TOMATO_SESSION_ID` (the calling session's id). When the launcher provided a profile context, every call also receives `TOMATO_PROFILE` (the profile name) and `TOMATO_PROFILE_DIR` (its absolute directory; its `node_modules` holds only profile-installed packages, while the harness's own bundles resolve from the tomato installation); compositions booted without a profile omit both.
 
 ### Adding your own environment facts
 
 Other plugins contribute facts by registering a contributor with a stable name, the complete set of `TOMATO_*` keys it may return, a description per key, and a resolver that computes values for one execution:
 
 ```ts
-import type { Context } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-shell-env'
+import type { Context } from '@tomato/cordis'
+import type {} from '@tomato/shell-env'
 
 export const inject = ['shellEnv']
 
@@ -54,11 +54,11 @@ Contributors must declare every key they return; returning an undeclared or non-
 
 ### Choosing the Harness home
 
-The single config field picks the home directory exposed as `TOMATO_HOME`; the default resolution order is the `tomatoHome` config, then ambient `$TOMATO_HOME`, then `~/.dsh`.
+The single config field picks the home directory exposed as `TOMATO_HOME`; the default resolution order is the `tomatoHome` config, then ambient `$TOMATO_HOME`, then `~/.tomato`.
 
 | Field | Default | Meaning |
 |---|---|---|
-| `tomatoHome` | `$TOMATO_HOME`, then `~/.dsh` | Absolute Harness home exposed as `TOMATO_HOME` |
+| `tomatoHome` | `$TOMATO_HOME`, then `~/.tomato` | Absolute Harness home exposed as `TOMATO_HOME` |
 
 The generated [configuration catalog](../../../docs/config-catalog.md#deepseek-aidsh-shell-env) is the exhaustive source for every accepted field and its JSDoc.
 
@@ -113,7 +113,7 @@ Read these pages when the package-level contract is not enough. They move from t
 <a id="model-experience"></a>
 ## Model Experience
 
-Indirectly, through the shell tools (`dsh-tool-bash`, `dsh-tool-pwsh`), which expose this registry's managed `TOMATO_*` facts in every shell-tool call.
+Indirectly, through the shell tools (`@tomato/tool-bash`, `@tomato/tool-pwsh`), which expose this registry's managed `TOMATO_*` facts in every shell-tool call.
 
 #### KV Cache effect
 

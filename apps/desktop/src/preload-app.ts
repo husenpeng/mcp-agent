@@ -1,6 +1,6 @@
 /** Origin-scoped boot, native directory selection, host paths of picked files, and update presentation with native confirmation actions. */
 
-import type { DesktopShortcutInput, ShortcutConfigSnapshot, ShortcutSaveResult } from '@deepseek-ai/dsh-client-shortcuts/protocol'
+import type { DesktopShortcutInput, ShortcutConfigSnapshot, ShortcutSaveResult } from '@tomato/client-shortcuts/protocol'
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import { DESKTOP_IPC, SCHEME, type TomatoDesktopProductApi, type DesktopUpdatePresentation } from './ipc.ts'
 import { PLATFORM_IPC } from './platform-ipc.ts'
@@ -9,7 +9,7 @@ import { syncNativeTheme } from './preload-theme.ts'
 import { syncWindowsAppearance } from './preload-windows.ts'
 import { installMandatoryUpdateOverlay } from './preload-mandatory-overlay.ts'
 import { createDesktopBrowserBridge } from './preload-browser.ts'
-import type { FileDragHandle } from '@deepseek-ai/dsh-util-file-drag'
+import type { FileDragHandle } from '@tomato/util-file-drag'
 
 function createProductApi(): TomatoDesktopProductApi {
   return {
@@ -94,13 +94,13 @@ if (location.protocol === `${SCHEME}:` && location.hostname === 'app') {
   })
   syncWindowsAppearance()
   if (process.platform === 'win32') installMandatoryUpdateOverlay()
-  contextBridge.exposeInMainWorld('__DSH_DIRECTORY_PICKER__', {
+  contextBridge.exposeInMainWorld('__TOMATO_DIRECTORY_PICKER__', {
     pick: () => ipcRenderer.invoke(DESKTOP_IPC.directoryPick) as Promise<string | null>,
   })
   // The composer cites dropped, picked, and pasted files and folders that
   // have a real path as `@path` references instead of uploading them; a
   // File without one (pasted bytes) answers '' and uploads as before.
-  contextBridge.exposeInMainWorld('__DSH_HOST_PATHS__', {
+  contextBridge.exposeInMainWorld('__TOMATO_HOST_PATHS__', {
     pathFor: (file: File) => webUtils.getPathForFile(file),
   })
   contextBridge.exposeInMainWorld('tomatoDesktopBoot', {
@@ -121,7 +121,7 @@ syncNativeTheme()
 contextBridge.exposeInMainWorld('tomatoDesktop', location.protocol === `${SCHEME}:` && location.hostname === 'app' && process.isMainFrame ? createProductApi() : { protocolVersion: 1 })
 
 if (location.protocol === `${SCHEME}:` && location.hostname === 'app') {
-  contextBridge.exposeInMainWorld('__DSH_LOCALE__', {
+  contextBridge.exposeInMainWorld('__TOMATO_LOCALE__', {
     read: () => ipcRenderer.invoke(DESKTOP_IPC.localeBootstrap),
     onChange: (locale: string) => { ipcRenderer.send(DESKTOP_IPC.localeChanged, locale) },
   })

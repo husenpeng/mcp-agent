@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@tomato/cordis'
 import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { credentialKey, credentialRef } from '@deepseek-ai/dsh-credentials'
+import { credentialKey, credentialRef } from '@tomato/credentials'
 import { LocalCredentialProvider } from '../src/index.ts'
 
 function writeCredentials(file: string, text: string): Promise<void> {
@@ -21,7 +21,7 @@ afterEach(async () => {
 })
 
 async function tempDir(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'dsh-cred-review-'))
+  const dir = await mkdtemp(join(tmpdir(), 'tomato-cred-review-'))
   cleanups.push(() => rm(dir, { recursive: true, force: true }))
   return dir
 }

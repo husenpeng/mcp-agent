@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { execa } from 'execa'
 import { expect, it } from 'vitest'
-import { resolveExampleLaunch } from '@deepseek-ai/dsh-loader-smoke'
+import { resolveExampleLaunch } from '@tomato/loader-smoke'
 
 interface Observation {
   kind: 'probe' | 'session'
@@ -14,7 +14,7 @@ interface Observation {
 }
 
 it('scrubs real native probes and leaves inherited Claude session markers removed', { timeout: 60_000, retry: 0 }, async (test) => {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-oar-environment-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-oar-environment-'))
   test.onTestFinished(() => rm(root, { recursive: true, force: true }))
   const nativeScript = fileURLToPath(new URL('./fixtures/environment-probe.mjs', import.meta.url))
   const executable = join(root, process.platform === 'win32' ? 'native-fixture.cmd' : 'native-fixture')

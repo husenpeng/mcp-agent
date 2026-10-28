@@ -1,6 +1,6 @@
 {
-  "name": "@deepseek-ai/dsh-spill-local",
-  "description": "Local-filesystem implementation of the DeepSeek Harness spill storage seam (private session-scoped files)",
+  "name": "@tomato/spill-local",
+  "description": "Local-filesystem implementation of the Tomato Harness spill storage seam (private session-scoped files)",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -29,19 +29,19 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-spill": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/spill": "workspace:*",
+    "@tomato/cordis": "workspace:~"
   },
   "dependencies": {
-    "@deepseek-ai/schemastery": "workspace:~"
+    "@tomato/schemastery": "workspace:~"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis-plugin-include": "workspace:~",
-    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
-    "@deepseek-ai/dsh-brand": "workspace:*",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-spill": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/cordis-plugin-include": "workspace:~",
+    "@tomato/cordis-plugin-loader": "workspace:~",
+    "@tomato/branded": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/spill": "workspace:*",
+    "@tomato/cordis": "workspace:~"
   }
 }

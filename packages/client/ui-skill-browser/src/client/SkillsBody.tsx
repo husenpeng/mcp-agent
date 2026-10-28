@@ -11,11 +11,11 @@
 import { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 import clsx from 'clsx'
-import { Button, Tooltip, IconRefreshOutlineRegular, IconSkillOutlineRegular, Tag } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { SkillEntry } from '@deepseek-ai/dsh-api-remotes/client'
+import { Button, Tooltip, IconRefreshOutlineRegular, IconSkillOutlineRegular, Tag } from '@tomato/client-ui-primitives'
+import type { SkillEntry } from '@tomato/api-remotes/client'
 import type {
   InjectFace, PropsLocale, PropsRuntime, PropsStore, TranslateNS,
-} from '@deepseek-ai/dsh-client-ui-slots'
+} from '@tomato/client-ui-slots'
 import type {} from './locales.ts'
 import type { SkillBrowserInjected } from './face.ts'
 import { failureLine, sourceLabel } from './format.ts'

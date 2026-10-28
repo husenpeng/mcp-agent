@@ -2,13 +2,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mkdir, symlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { FsVersion } from '@deepseek-ai/dsh-fs'
+import { FsVersion } from '@tomato/fs'
 import { failureOf, openWorkspace, signal, type Harness } from './harness.ts'
 
 let harness: Harness
 
 beforeEach(async () => {
-  harness = await openWorkspace('dsh-workspace-files-stat-')
+  harness = await openWorkspace('tomato-workspace-files-stat-')
 })
 
 afterEach(async () => {

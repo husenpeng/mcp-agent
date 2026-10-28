@@ -3,14 +3,14 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-10-27-official-on-demand-playwright-bundle.md
 /agent-note-ship-playwright-browser-tools-as-an-on-demand-official-bundle:
-  en: 6d0a352f52c59547
-  zh: 13b003d13646841b
+  en: 0ca856b7f067115a
+  zh: 4dfe4159709d021f
 /agent-note-ship-playwright-browser-tools-as-an-on-demand-official-bundle/problem:
   en: 672858b1f8c08a5f
   zh: b93fa838255d9dbc
 /agent-note-ship-playwright-browser-tools-as-an-on-demand-official-bundle/decision:
-  en: 32d8972436ceab40
-  zh: e8352ed326625bd9
+  en: 2814f8ebb20dd16e
+  zh: 1fb6fdf0e2dbb377
 /agent-note-ship-playwright-browser-tools-as-an-on-demand-official-bundle/alternatives-considered:
   en: 04c89d13b3b3d072
   zh: 634f43a94ad533ca

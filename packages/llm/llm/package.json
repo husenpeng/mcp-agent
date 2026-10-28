@@ -1,6 +1,6 @@
 {
-  "name": "@deepseek-ai/dsh-llm",
-  "description": "Provider-neutral LLM service interface for the DeepSeek Harness",
+  "name": "@tomato/llm",
+  "description": "Provider-neutral LLM service interface for the Tomato Harness",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -58,19 +58,19 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/cordis": "workspace:~"
   },
   "dependencies": {
-    "@deepseek-ai/dsh-util-crypto": "workspace:*",
-    "@deepseek-ai/schemastery": "workspace:~",
+    "@tomato/util-crypto": "workspace:*",
+    "@tomato/schemastery": "workspace:~",
     "zod": "4.4.3",
-    "@deepseek-ai/dsh-timeout": "workspace:*",
-    "@deepseek-ai/dsh-brand": "workspace:*",
-    "@deepseek-ai/dsh-util-values": "workspace:*",
-    "@deepseek-ai/dsh-typert-protocol": "workspace:*"
+    "@tomato/timeout": "workspace:*",
+    "@tomato/branded": "workspace:*",
+    "@tomato/util-values": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-attachment": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/attachment": "workspace:*",
+    "@tomato/cordis": "workspace:~"
   }
 }

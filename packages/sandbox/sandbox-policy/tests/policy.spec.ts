@@ -8,12 +8,12 @@ import { mkdirSync, mkdtempSync, rmSync, symlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve, sep } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import { SESSION_FORMAT_VERSION, Session, SessionId } from '@deepseek-ai/dsh-session'
-import SandboxPolicyService, { SANDBOX_MODES, setSandboxMode } from '@deepseek-ai/dsh-sandbox-policy'
-import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
-import SystemPrompt, { renderContextSnapshot, renderPrompt } from '@deepseek-ai/dsh-system-prompt'
+import { Context } from '@tomato/cordis'
+import type { Agent } from '@tomato/agent'
+import { SESSION_FORMAT_VERSION, Session, SessionId } from '@tomato/session'
+import SandboxPolicyService, { SANDBOX_MODES, setSandboxMode } from '@tomato/sandbox-policy'
+import SessionProjectionRegistry from '@tomato/session-projection'
+import SystemPrompt, { renderContextSnapshot, renderPrompt } from '@tomato/system-prompt'
 
 async function mounted(config: { mode?: 'read-only' | 'workspace-write' | 'danger-full-access'; workspaceRoot?: string; additionalWritableRoots?: string[] } = {}) {
   const ctx = new Context()
@@ -122,7 +122,7 @@ describe('SandboxPolicyService', () => {
   })
 
   it.skipIf(process.platform === 'win32')('preserves symlink-sensitive session cwd for its enforcing provider', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-policy-cwd-'))
+    const root = mkdtempSync(join(tmpdir(), 'tomato-policy-cwd-'))
     try {
       const lexical = join(root, 'lexical')
       const physical = join(root, 'physical')

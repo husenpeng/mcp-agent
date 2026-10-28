@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-`@tomato/gateway` 挂在 dsh Web Host 内、Connection 的 `/api` 前缀旁。它向浏览器提供同源的 `/api/auth/*` 登录、会话投影与登出路由，以及固定服务表驱动的 `/api/services/<service>/*` 转发。每个受保护请求都经 auth_service 校验并携带已验证用户 id；浏览器不能指定目标 host。Host RPC、模型请求、工具出站与 OTLP 遥测不经过本包。
+`@tomato/gateway` 挂在 tomato Web Host 内、Connection 的 `/api` 前缀旁。它向浏览器提供同源的 `/api/auth/*` 登录、会话投影与登出路由，以及固定服务表驱动的 `/api/services/<service>/*` 转发。每个受保护请求都经 auth_service 校验并携带已验证用户 id；浏览器不能指定目标 host。Host RPC、模型请求、工具出站与 OTLP 遥测不经过本包。
 
 ## 目录
 

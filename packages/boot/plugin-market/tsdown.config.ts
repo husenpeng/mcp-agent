@@ -15,7 +15,7 @@ export default defineConfig(({ env }) => env?.TOMATO_BUILD_FACE === 'client' ? [
   {
     entry: ['lib/types/worker.js'],
     // The Worker starts without the parent's profile resolver, so it carries its whole JavaScript closure.
-    deps: { alwaysBundle: [/^@deepseek-ai\//, /^semver(?:\/|$)/] },
+    deps: { alwaysBundle: [/^@tomato\//, /^semver(?:\/|$)/] },
     outDir: 'lib',
     format: ['cjs'],
     platform: 'node',

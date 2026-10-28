@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-llm-deepseek-account",
+  "name": "@tomato/llm-deepseek-account",
   "description": "DeepSeek account provider authentication and discovery",
   "version": "0.2.1-rc.3",
   "publishConfig": {
@@ -29,32 +29,32 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@deepseek-ai/cosmokit": "workspace:~",
-    "@deepseek-ai/schemastery": "workspace:~"
+    "@tomato/cosmokit": "workspace:~",
+    "@tomato/schemastery": "workspace:~"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-llm-deepseek": "workspace:*",
-    "@deepseek-ai/dsh-launch-environment": "workspace:*",
-    "@deepseek-ai/dsh-deepseek-account": "workspace:*",
-    "@deepseek-ai/cordis-plugin-loader": "workspace:~"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/llm": "workspace:*",
+    "@tomato/llm-deepseek": "workspace:*",
+    "@tomato/launch-environment": "workspace:*",
+    "@tomato/deepseek-account": "workspace:*",
+    "@tomato/cordis-plugin-loader": "workspace:~"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-llm-deepseek": "workspace:*",
-    "@deepseek-ai/dsh-launch-environment": "workspace:*",
-    "@deepseek-ai/dsh-deepseek-account": "workspace:*",
-    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
-    "@deepseek-ai/dsh-llm-deepseek-api-key": "workspace:*",
-    "@deepseek-ai/dsh-timeout": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/llm": "workspace:*",
+    "@tomato/llm-deepseek": "workspace:*",
+    "@tomato/launch-environment": "workspace:*",
+    "@tomato/deepseek-account": "workspace:*",
+    "@tomato/cordis-plugin-loader": "workspace:~",
+    "@tomato/llm-deepseek-api-key": "workspace:*",
+    "@tomato/timeout": "workspace:*"
   },
   "peerDependenciesMeta": {
-    "@deepseek-ai/dsh-deepseek-account": {
+    "@tomato/deepseek-account": {
       "optional": true
     },
-    "@deepseek-ai/cordis-plugin-loader": {
+    "@tomato/cordis-plugin-loader": {
       "optional": true
     }
   }

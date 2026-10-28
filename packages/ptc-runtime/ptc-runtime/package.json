@@ -1,6 +1,6 @@
 {
-  "name": "@deepseek-ai/dsh-ptc-runtime",
-  "description": "Abstract PTC execution seam (ctx.ptcRuntime) for the DeepSeek Harness",
+  "name": "@tomato/ptc-runtime",
+  "description": "Abstract PTC execution seam (ctx.ptcRuntime) for the Tomato Harness",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -27,11 +27,11 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-sandbox": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/sandbox": "workspace:*"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-sandbox": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/sandbox": "workspace:*"
   }
 }

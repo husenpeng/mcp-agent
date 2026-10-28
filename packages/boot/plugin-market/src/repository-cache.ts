@@ -10,9 +10,9 @@ import { existsSync } from 'node:fs'
 import { mkdir, mkdtemp, readdir, rename, rm, stat, utimes } from 'node:fs/promises'
 import { join } from 'node:path'
 import { execa } from 'execa'
-import { withFileLock } from '@deepseek-ai/dsh-atomic-write'
-import { scrubbedParentEnv } from '@deepseek-ai/dsh-subprocess'
-import { DetailFailure, readmeName, type FoundFile } from '@deepseek-ai/dsh-plugin-detail'
+import { withFileLock } from '@tomato/atomic-write'
+import { scrubbedParentEnv } from '@tomato/subprocess'
+import { DetailFailure, readmeName, type FoundFile } from '@tomato/plugin-detail'
 
 /**
  * Git deadlines one operation's lock waits for: an operation runs at most a fetch and a file read that contact the
@@ -258,10 +258,10 @@ export class RepositoryCache {
     // written after a completed fetch records the commit instead, and eviction removes it with the repository.
     const head = this.heads.get(url)
     const known = commit ?? (head !== undefined && head.expiresAt > Date.now() ? head.value : undefined)
-    if (known !== undefined && !(await this.git(['show-ref', '--verify', '--quiet', `refs/dsh/${known}`], repository, signal)).failed) return known
+    if (known !== undefined && !(await this.git(['show-ref', '--verify', '--quiet', `refs/tomato/${known}`], repository, signal)).failed) return known
     await this.fetch(repository, url, commit ?? 'HEAD', signal)
     const fetched = commit ?? (await this.run(repository, ['rev-parse', 'FETCH_HEAD'], signal)).toString('utf8').trim()
-    await this.run(repository, ['update-ref', `refs/dsh/${fetched}`, fetched], signal)
+    await this.run(repository, ['update-ref', `refs/tomato/${fetched}`, fetched], signal)
     if (commit === undefined) this.heads.set(url, { value: fetched, expiresAt: Date.now() + this.options.ttlMs })
     return fetched
   }

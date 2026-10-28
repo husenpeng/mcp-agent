@@ -1,6 +1,6 @@
 {
-  "name": "@deepseek-ai/dsh-webhook",
-  "description": "Fire-and-forget webhook rule runtime that creates Workspace-backed DeepSeek Harness Sessions",
+  "name": "@tomato/webhook",
+  "description": "Fire-and-forget webhook rule runtime that creates Workspace-backed Tomato Harness Sessions",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -34,31 +34,31 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-agent": "workspace:*",
-    "@deepseek-ai/dsh-agent-default-model": "workspace:*",
-    "@deepseek-ai/dsh-agent-preset-registry": "workspace:*",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-permission-presets": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-session-title": "workspace:*",
-    "@deepseek-ai/dsh-workspace": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/agent": "workspace:*",
+    "@tomato/agent-default-model": "workspace:*",
+    "@tomato/agent-preset-registry": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/permission-presets": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-title": "workspace:*",
+    "@tomato/workspace": "workspace:*"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/cordis-plugin-include": "workspace:~",
-    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
-    "@deepseek-ai/dsh-agent": "workspace:*",
-    "@deepseek-ai/dsh-agent-default-model": "workspace:*",
-    "@deepseek-ai/dsh-agent-preset-registry": "workspace:*",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-permission-presets": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-session-title": "workspace:*",
-    "@deepseek-ai/dsh-workspace": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/cordis-plugin-include": "workspace:~",
+    "@tomato/cordis-plugin-loader": "workspace:~",
+    "@tomato/agent": "workspace:*",
+    "@tomato/agent-default-model": "workspace:*",
+    "@tomato/agent-preset-registry": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/permission-presets": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-title": "workspace:*",
+    "@tomato/workspace": "workspace:*"
   },
   "dependencies": {
-    "@deepseek-ai/dsh-brand": "workspace:*",
-    "@deepseek-ai/dsh-util-values": "workspace:*"
+    "@tomato/branded": "workspace:*",
+    "@tomato/util-values": "workspace:*"
   }
 }

@@ -3,7 +3,7 @@ description: "开启可选 macOS Computer Use 及权限页面。"
 kind: "package-bundle"
 ---
 
-# @deepseek-ai/dsh-cua-bundle
+# @tomato/cua-bundle
 
 [English](README.md) | 中文
 
@@ -28,7 +28,7 @@ kind: "package-bundle"
 
 ```sh
 pnpm run build
-pnpm dsh web
+pnpm tomato web
 ```
 
 源码 Desktop 的启动方式和独立开发配置档见[桌面开发说明](../../../apps/desktop/README.zh.md)。需要使用 Computer Use 的配置档分别开启该功能。

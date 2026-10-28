@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[3]
 CLI = ROOT / 'apps' / 'cli' / 'lib' / 'bin.js'
 
 
-@pytest.mark.skipif(not CLI.exists(), reason='requires the built dsh profile runtime')
+@pytest.mark.skipif(not CLI.exists(), reason='requires the built tomato profile runtime')
 def test_account_provider_signout_snapshot(tmp_path: Path) -> None:
     with DeepSeekHarness(
         dsh_bin=str(CLI),

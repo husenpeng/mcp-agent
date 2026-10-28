@@ -1,6 +1,6 @@
 {
-  "name": "@deepseek-ai/dsh-session-persistence",
-  "description": "Abstract durable session persistence seam (ctx.sessionPersistence) for the DeepSeek Harness",
+  "name": "@tomato/session-persistence",
+  "description": "Abstract durable session persistence seam (ctx.sessionPersistence) for the Tomato Harness",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -27,19 +27,19 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-brand": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-timeout": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/branded": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/timeout": "workspace:*"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-brand": "workspace:*",
-    "@deepseek-ai/dsh-scope": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-timeout": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/branded": "workspace:*",
+    "@tomato/scope": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/timeout": "workspace:*"
   },
   "dependencies": {
-    "@deepseek-ai/dsh-util-values": "workspace:*"
+    "@tomato/util-values": "workspace:*"
   }
 }

@@ -61,10 +61,10 @@ it.skipIf(process.platform !== 'win32')('resets only the allocated checkout with
 it('routes manual packaging to the dedicated runner with explicit preset and signing selection', () => {
   expect(Object.keys(workflow.on)).toEqual(['workflow_dispatch'])
   expect(workflow.jobs.package).not.toHaveProperty('name')
-  expect(job['runs-on']).toBe('dsh-win-package-trial')
+  expect(job['runs-on']).toBe('tomato-win-package-trial')
   expect(JSON.stringify(job.env)).not.toContain('runner.')
   expect(job.steps.find(step => step.name === 'Configure persistent pnpm store')?.env?.TOMATO_DESKTOP_PACKAGE_CACHE_DIR)
-    .toBe('${{ runner.tool_cache }}/dsh-desktop-package-cache')
+    .toBe('${{ runner.tool_cache }}/tomato-desktop-package-cache')
   expect(workflow.concurrency).toEqual({ group: 'windows-desktop-package', 'cancel-in-progress': false })
   expect(workflow.permissions).toEqual({ contents: 'read' })
   expect(Object.keys(workflow.on.workflow_dispatch!.inputs).sort()).toEqual([

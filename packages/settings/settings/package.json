@@ -1,6 +1,6 @@
 {
-  "name": "@deepseek-ai/dsh-settings",
-  "description": "Abstract user-settings seam (ctx.settings) for the DeepSeek Harness",
+  "name": "@tomato/settings",
+  "description": "Abstract user-settings seam (ctx.settings) for the Tomato Harness",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -34,27 +34,27 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-brand": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/schemastery": "workspace:~"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/branded": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/schemastery": "workspace:~"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-brand": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/schemastery": "workspace:~",
-    "@deepseek-ai/cordis-plugin-timer": "workspace:~",
-    "@deepseek-ai/dsh-app-boot": "workspace:*",
-    "@deepseek-ai/dsh-hmr": "workspace:*",
-    "@deepseek-ai/dsh-agent-default-model": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/branded": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/schemastery": "workspace:~",
+    "@tomato/cordis-plugin-timer": "workspace:~",
+    "@tomato/app-boot": "workspace:*",
+    "@tomato/hmr": "workspace:*",
+    "@tomato/agent-default-model": "workspace:*",
     "yaml": "^2.8.1"
   },
   "dependencies": {
-    "@deepseek-ai/dsh-util-values": "workspace:*",
-    "@deepseek-ai/dsh-config-editor": "workspace:*",
-    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
-    "@deepseek-ai/cosmokit": "workspace:~",
+    "@tomato/util-values": "workspace:*",
+    "@tomato/config-editor": "workspace:*",
+    "@tomato/cordis-plugin-loader": "workspace:~",
+    "@tomato/cosmokit": "workspace:~",
     "yaml": "^2.8.1"
   }
 }

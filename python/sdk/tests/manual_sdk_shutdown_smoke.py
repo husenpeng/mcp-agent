@@ -10,7 +10,7 @@ from time import monotonic
 
 from deepseek_harness import DeepSeekHarness, DeepSeekHarnessConfig
 
-root = Path(mkdtemp(prefix="dsh-shutdown-"))
+root = Path(mkdtemp(prefix="tomato-shutdown-"))
 config = DeepSeekHarnessConfig(
     profile="sdk-minimal",
     dsh_home=str(root / "home"),

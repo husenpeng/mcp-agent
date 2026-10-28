@@ -1,6 +1,6 @@
 {
-  "name": "@deepseek-ai/dsh-tool-lsp",
-  "description": "Model-facing lsp tool over the DeepSeek Harness LSP capability seam (ctx.lsp) \u2014 one read-only tool with goToDefinition/findReferences/goToImplementation/hover operations, one-based UTF-16 cursor coordinates, bounded location rendering, and hover normalization",
+  "name": "@tomato/tool-lsp",
+  "description": "Model-facing lsp tool over the Tomato Harness LSP capability seam (ctx.lsp) \u2014 one read-only tool with goToDefinition/findReferences/goToImplementation/hover operations, one-based UTF-16 cursor coordinates, bounded location rendering, and hover normalization",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -29,34 +29,34 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-lsp": "workspace:*",
-    "@deepseek-ai/dsh-system-prompt": "workspace:*",
-    "@deepseek-ai/dsh-timeout": "workspace:*",
-    "@deepseek-ai/dsh-tools": "workspace:*",
-    "@deepseek-ai/dsh-working-directory": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/llm": "workspace:*",
+    "@tomato/lsp": "workspace:*",
+    "@tomato/system-prompt": "workspace:*",
+    "@tomato/timeout": "workspace:*",
+    "@tomato/tools": "workspace:*",
+    "@tomato/working-directory": "workspace:*"
   },
   "dependencies": {
-    "@deepseek-ai/dsh-util-values": "workspace:*",
-    "@deepseek-ai/schemastery": "workspace:~"
+    "@tomato/util-values": "workspace:*",
+    "@tomato/schemastery": "workspace:~"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-agent": "workspace:*",
-    "@deepseek-ai/dsh-fs-local": "workspace:*",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-lsp": "workspace:*",
-    "@deepseek-ai/dsh-lsp-stdio": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-subprocess-local": "workspace:*",
-    "@deepseek-ai/dsh-system-prompt": "workspace:*",
-    "@deepseek-ai/dsh-timeout": "workspace:*",
-    "@deepseek-ai/dsh-tool-call-timeout-policy": "workspace:*",
-    "@deepseek-ai/dsh-tool-executor-native": "workspace:*",
-    "@deepseek-ai/dsh-tool-testkit": "workspace:*",
-    "@deepseek-ai/dsh-tools": "workspace:*",
-    "@deepseek-ai/dsh-working-directory": "workspace:*",
-    "@deepseek-ai/dsh-agent-loop-testkit": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/agent": "workspace:*",
+    "@tomato/fs-local": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/lsp": "workspace:*",
+    "@tomato/lsp-stdio": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/subprocess-local": "workspace:*",
+    "@tomato/system-prompt": "workspace:*",
+    "@tomato/timeout": "workspace:*",
+    "@tomato/tool-call-timeout-policy": "workspace:*",
+    "@tomato/tool-executor-native": "workspace:*",
+    "@tomato/tool-testkit": "workspace:*",
+    "@tomato/tools": "workspace:*",
+    "@tomato/working-directory": "workspace:*",
+    "@tomato/agent-loop-testkit": "workspace:*"
   }
 }

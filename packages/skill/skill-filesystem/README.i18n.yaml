@@ -5,63 +5,63 @@
 /:
   en: ef9fab89ad1a57aa
   zh: 6d434e8a3dae16ca
-/deepseek-ai-dsh-skill-filesystem:
-  en: e0af59069c89278b
-  zh: 913d0088b2a7296d
-/deepseek-ai-dsh-skill-filesystem/summary:
-  en: ef659bb1fd748f41
-  zh: 9d40999be52526f5
-/deepseek-ai-dsh-skill-filesystem/table-of-contents:
+/tomato-skill-filesystem:
+  en: 9aa4cd6a64a85ef5
+  zh: bdc244dd4269a0bf
+/tomato-skill-filesystem/summary:
+  en: 397ed556e98005c3
+  zh: 1effad825e95b706
+/tomato-skill-filesystem/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
-/deepseek-ai-dsh-skill-filesystem/use-this-package:
+/tomato-skill-filesystem/use-this-package:
   en: 2fcfbaea3c62a766
   zh: 27c917ba822329e5
-/deepseek-ai-dsh-skill-filesystem/use-this-package/when-to-choose-it:
+/tomato-skill-filesystem/use-this-package/when-to-choose-it:
   en: 012a123601c7d8f2
   zh: 0e13f5e0d2e4ea7a
-/deepseek-ai-dsh-skill-filesystem/use-this-package/skill-format:
+/tomato-skill-filesystem/use-this-package/skill-format:
   en: e061b52e08586786
   zh: ec3d9d01b0fcf84a
-/deepseek-ai-dsh-skill-filesystem/use-this-package/roots-and-priority:
-  en: 265594f30ba5d848
-  zh: 5de6a94864cab8d6
-/deepseek-ai-dsh-skill-filesystem/use-this-package/mount-and-configure:
-  en: 5e7a4ff37f33f8a5
-  zh: 2f6dd45e696cb92b
-/deepseek-ai-dsh-skill-filesystem/use-this-package/change-detection:
+/tomato-skill-filesystem/use-this-package/roots-and-priority:
+  en: b8f55bc27cb52ca1
+  zh: bbd9ac75cf377d51
+/tomato-skill-filesystem/use-this-package/mount-and-configure:
+  en: 69a0aff340c4114b
+  zh: c7f93d06397152fe
+/tomato-skill-filesystem/use-this-package/change-detection:
   en: 77acbd43e89b6043
   zh: 8169bbbc55f3f114
-/deepseek-ai-dsh-skill-filesystem/use-this-package/observable-success-and-failures:
+/tomato-skill-filesystem/use-this-package/observable-success-and-failures:
   en: 272693c35012ffb5
   zh: bbbe788b11ef567f
-/deepseek-ai-dsh-skill-filesystem/understand-the-implementation:
+/tomato-skill-filesystem/understand-the-implementation:
   en: a95eb63f5a570c79
   zh: cd964a36cf8a3715
-/deepseek-ai-dsh-skill-filesystem/understand-the-implementation/design-concept:
+/tomato-skill-filesystem/understand-the-implementation/design-concept:
   en: 7a62861e8a1bd315
   zh: 6d799d65330ebd5e
-/deepseek-ai-dsh-skill-filesystem/understand-the-implementation/source-map:
+/tomato-skill-filesystem/understand-the-implementation/source-map:
   en: f9d3b4bdedb897a6
   zh: 962f7638d30741fd
-/deepseek-ai-dsh-skill-filesystem/understand-the-implementation/discovery-flow:
+/tomato-skill-filesystem/understand-the-implementation/discovery-flow:
   en: 7e26750408a63587
   zh: 9eed631a7bdf00ae
-/deepseek-ai-dsh-skill-filesystem/understand-the-implementation/watching-and-invalidation:
+/tomato-skill-filesystem/understand-the-implementation/watching-and-invalidation:
   en: e1f03485692f61a0
   zh: 7c3ce24eacc3a047
-/deepseek-ai-dsh-skill-filesystem/further-exploration:
-  en: 4d1bb82d69fadd8a
-  zh: 91f6f8fb6533c976
-/deepseek-ai-dsh-skill-filesystem/model-experience:
-  en: 2276cca067cd120a
-  zh: 9986d49d39228243
-/deepseek-ai-dsh-skill-filesystem/model-experience/kv-cache-effect:
+/tomato-skill-filesystem/further-exploration:
+  en: 255e46a8556c40d0
+  zh: 3158537928422414
+/tomato-skill-filesystem/model-experience:
+  en: 10f5f3e6fdc5932a
+  zh: a4a5ff768a62d471
+/tomato-skill-filesystem/model-experience/kv-cache-effect:
   en: 14ddbda337682082
   zh: 2e4dc3c26b45f62c
-/deepseek-ai-dsh-skill-filesystem/known-limitations-and-deferred-work:
+/tomato-skill-filesystem/known-limitations-and-deferred-work:
   en: a7f37a7b9e54945d
   zh: b9d3b15027757301
-/deepseek-ai-dsh-skill-filesystem/known-limitations-and-deferred-work/dev-note:
+/tomato-skill-filesystem/known-limitations-and-deferred-work/dev-note:
   en: 53584bc8292df1f9
   zh: 921253cd64aa7511

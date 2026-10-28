@@ -3,7 +3,7 @@ description: "Machine translation through anonymous endpoints or optional native
 kind: "package-reference"
 ---
 
-# @deepseek-ai/dsh-experimental-translator
+# @tomato/experimental-translator
 
 English | [中文](README.zh.md)
 
@@ -38,13 +38,13 @@ Mount the package as a Cordis service. Call `resolve({ text, targetLanguage, sou
 | `deepseekTimeoutMs` | `60000` | Deadline for native admission/output and `availableProviders()` discovery |
 | `deepseekMaxOutputTokens` | `8192` | Requested output-token cap for independent Flash translation |
 
-Endpoints accept HTTP(S) URLs without credentials or fragments. Native `fetch` uses the Host's global dispatcher and the HTTP proxy policy installed by the `dsh` launcher. No new translation library is required.
+Endpoints accept HTTP(S) URLs without credentials or fragments. Native `fetch` uses the Host's global dispatcher and the HTTP proxy policy installed by the `tomato` launcher. No new translation library is required.
 
 Supply an existing `sessionId` to retain translation requests and successful results in its Session log. A successful result is durably flushed before `translate()` returns and is reused after remounts or process restarts when the exact source text, source and target languages, provider, and translation recipe match. Saved results need only durable Session storage. A cache miss requires an active Session; consumers own its activation. Anonymous calls without `sessionId` remain stateless. Paid routes require `sessionId`; saved results are read before native admission and remain reusable when credentials or the native provider are unavailable. Only a cache miss can start a paid query. `availableProviders(signal?)` inspects native eligibility without inference.
 
 The GUI awaits the initial provider discovery before registering translation controls. If credential or model discovery stalls, this can delay anonymous controls for up to `deepseekTimeoutMs`; the service's discovery deadline returns the choices already discovered, including Bing and Google.
 
-A paid cache miss for nonempty text requires the actual `dsh-llm-deepseek-account` or `dsh-llm-deepseek-api-key` provider, its registered route, configured authentication, and the exact model id `deepseek-flash`. Displayed model names and version labels do not affect selection. `llm-pi-ai` does not qualify. Every fragment is a fresh query with thinking disabled, one user text, no conversation history, no tools, and no Agent turn.
+A paid cache miss for nonempty text requires the actual `@tomato/llm-deepseek-account` or `@tomato/llm-deepseek-api-key` provider, its registered route, configured authentication, and the exact model id `deepseek-flash`. Displayed model names and version labels do not affect selection. `llm-pi-ai` does not qualify. Every fragment is a fresh query with thinking disabled, one user text, no conversation history, no tools, and no Agent turn.
 
 The anonymous service maps `zh`, `zh-CN`, `zh-SG` and `zh-Hans` to Simplified Chinese, and `zh-TW`, `zh-HK`, `zh-MO` and `zh-Hant` to Traditional Chinese. Other tags pass through to the selected provider. Empty text returns an empty string without a network request.
 

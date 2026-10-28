@@ -2,12 +2,12 @@
  * Types for the TypeScript SDK client: launch options, notification shapes,
  * and owned activity results.
  *
- * @module @deepseek-ai/dsh-sdk-client/types
+ * @module @tomato/sdk-client/types
  */
 
-import type { ContentBlock, ReasoningEffortId } from '@deepseek-ai/dsh-llm'
-import type { SdkPromptContentBlock, SdkUserQuestionAnswer, SdkUserQuestionRequest } from '@deepseek-ai/dsh-sdk-protocol'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
+import type { ContentBlock, ReasoningEffortId } from '@tomato/llm'
+import type { SdkPromptContentBlock, SdkUserQuestionAnswer, SdkUserQuestionRequest } from '@tomato/sdk-protocol'
+import type { SessionEvent } from '@tomato/session'
 
 /** One server-to-client notification as received off the wire. */
 export interface HarnessNotification {
@@ -24,7 +24,7 @@ export type NotificationFilter = (notification: HarnessNotification) => boolean
 export interface HarnessClientOptions {
   /** Answer runtime questions without prescribing a UI; observe the signal to release host work on cancellation. */
   onUserQuestion?: (request: SdkUserQuestionRequest, context: { signal: AbortSignal }) => Promise<SdkUserQuestionAnswer>
-  /** Absolute or caller-relative dsh CLI module; omitted resolves this package's same-version dependency. */
+  /** Absolute or caller-relative tomato CLI module; omitted resolves this package's same-version dependency. */
   tomatoBin?: string
   /** Named profile serving the SDK protocol (default `sdk`). */
   profile?: string
@@ -32,13 +32,13 @@ export interface HarnessClientOptions {
   patches?: string[]
   /** Explicit Harness home for this child; relative paths resolve before spawn. */
   tomatoHome?: string
-  /** Working directory for the dsh process itself. */
+  /** Working directory for the tomato process itself. */
   processCwd?: string
   /**
    * The complete child environment, read when {@link HarnessClient.start}
    * spawns. `undefined` reads the parent env at that time; passing an object
    * reads that object at spawn and replaces the parent environment entirely, so callers own
-   * credential policy (see `scrubbedParentEnv` in `@deepseek-ai/dsh-subprocess`
+   * credential policy (see `scrubbedParentEnv` in `@tomato/subprocess`
    * for the shared scrub-then-merge base).
    */
   env?: NodeJS.ProcessEnv

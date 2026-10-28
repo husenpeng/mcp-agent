@@ -1,19 +1,19 @@
-import * as NativeToolExecutor from '@deepseek-ai/dsh-tool-executor-native'
+import * as NativeToolExecutor from '@tomato/tool-executor-native'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import LocalFileSystem from '@deepseek-ai/dsh-fs-local'
-import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
-import WorkingDirectory from '@deepseek-ai/dsh-working-directory'
-import { Context } from '@deepseek-ai/cordis'
+import LocalFileSystem from '@tomato/fs-local'
+import SessionProjectionRegistry from '@tomato/session-projection'
+import WorkingDirectory from '@tomato/working-directory'
+import { Context } from '@tomato/cordis'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import AgentRegistry from '@deepseek-ai/dsh-agent'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
-import SystemPrompt, { renderPrompt } from '@deepseek-ai/dsh-system-prompt'
-import ToolRegistry from '@deepseek-ai/dsh-tools'
-import { defineContentToolFixture } from '@deepseek-ai/dsh-tool-testkit'
-import { FILE_REFERENCE_PROMPT } from '@deepseek-ai/dsh-file-reference'
+import AgentRegistry from '@tomato/agent'
+import type { Agent } from '@tomato/agent'
+import SessionStore, { SessionId } from '@tomato/session'
+import SystemPrompt, { renderPrompt } from '@tomato/system-prompt'
+import ToolRegistry from '@tomato/tools'
+import { defineContentToolFixture } from '@tomato/tool-testkit'
+import { FILE_REFERENCE_PROMPT } from '@tomato/file-reference'
 import LocalFileReferenceService, { WorkspaceFileSearch } from '../src/index.ts'
 
 const roots: string[] = []
@@ -41,7 +41,7 @@ async function stubAgent(
   id = 'file-reference-agent',
   includeCwd = true,
 ): Promise<{ agent: Agent; dispose: () => Promise<void> }> {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-file-reference-service-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-file-reference-service-'))
   roots.push(root)
   await writeFile(join(root, 'README.md'), 'readme')
   const session = ctx.sessions.create(SessionId(id), { meta: includeCwd ? { cwd: root } : {} })
@@ -115,7 +115,7 @@ describe('LocalFileReferenceService', () => {
     const ctx = await harness()
     try {
       const { agent } = await stubAgent(ctx)
-      const nextRoot = await mkdtemp(join(tmpdir(), 'dsh-file-reference-next-'))
+      const nextRoot = await mkdtemp(join(tmpdir(), 'tomato-file-reference-next-'))
       roots.push(nextRoot)
       await writeFile(join(nextRoot, 'NEXT.md'), 'next')
       await ctx.plugin(LocalFileReferenceService)

@@ -3,59 +3,59 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-primitives/README.md
 /:
-  en: 6da33cc935e210c4
-  zh: 752948e68a6e2c32
-/deepseek-ai-dsh-client-ui-primitives:
-  en: e39769cae26393b8
-  zh: 8743c8cf561fec35
-/deepseek-ai-dsh-client-ui-primitives/summary:
-  en: a05472dce901d64f
-  zh: 6747ad81824a5c0d
-/deepseek-ai-dsh-client-ui-primitives/table-of-contents:
+  en: 38bafcff9f23dc1b
+  zh: 7249b94554115aff
+/tomato-client-ui-primitives:
+  en: e772e6f1895ea2c9
+  zh: 1936a2be25626067
+/tomato-client-ui-primitives/summary:
+  en: 994315f2694c32dc
+  zh: b2695e278c3d0d98
+/tomato-client-ui-primitives/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
-/deepseek-ai-dsh-client-ui-primitives/use-this-package:
+/tomato-client-ui-primitives/use-this-package:
   en: 10be7f75a1576575
   zh: abf2905d89b0da48
-/deepseek-ai-dsh-client-ui-primitives/use-this-package/component-catalog:
-  en: 3c79351ff2210ccb
-  zh: 4cbe07ded89bbaa1
-/deepseek-ai-dsh-client-ui-primitives/use-this-package/controls-and-icons:
-  en: b3744373b4b2c1fb
-  zh: 2dbde8ee0bfa5f28
-/deepseek-ai-dsh-client-ui-primitives/use-this-package/rendering-agent-output:
-  en: 31ed1a6239427512
-  zh: cb489d77de109d3f
-/deepseek-ai-dsh-client-ui-primitives/use-this-package/localizing-copy:
+/tomato-client-ui-primitives/use-this-package/component-catalog:
+  en: 22731781426f9fc3
+  zh: 5ff76b23ed697e37
+/tomato-client-ui-primitives/use-this-package/controls-and-icons:
+  en: 3c60d04a51d903e7
+  zh: 6246dffbdb6e645b
+/tomato-client-ui-primitives/use-this-package/rendering-agent-output:
+  en: 7c363db913bcca86
+  zh: 3d2b03d03aab36a8
+/tomato-client-ui-primitives/use-this-package/localizing-copy:
   en: a943603b74080ef5
   zh: 43f7a0188aff271b
-/deepseek-ai-dsh-client-ui-primitives/understand-the-implementation:
-  en: 846ac0f563a53a64
-  zh: bb89d7647bdcc1ab
-/deepseek-ai-dsh-client-ui-primitives/understand-the-implementation/source-map:
+/tomato-client-ui-primitives/understand-the-implementation:
+  en: 54c219655df2f45d
+  zh: 84d29a85046240e6
+/tomato-client-ui-primitives/understand-the-implementation/source-map:
   en: fd510d34404eb090
   zh: d05b0890db929ae6
-/deepseek-ai-dsh-client-ui-primitives/understand-the-implementation/input-modality:
-  en: cb61e1a37d6c27e5
-  zh: 1f3fa79dd5ab2e45
-/deepseek-ai-dsh-client-ui-primitives/understand-the-implementation/streaming-markdown:
+/tomato-client-ui-primitives/understand-the-implementation/input-modality:
+  en: db379e35c08f6a8c
+  zh: b08d66173f5e061d
+/tomato-client-ui-primitives/understand-the-implementation/streaming-markdown:
   en: 8bbfa14c27f3bfd7
   zh: 88f7548ac3a114e1
-/deepseek-ai-dsh-client-ui-primitives/understand-the-implementation/geometry-and-overflow:
+/tomato-client-ui-primitives/understand-the-implementation/geometry-and-overflow:
   en: 45f4cd1ef96bb6d2
   zh: f264d25b780ad1dc
-/deepseek-ai-dsh-client-ui-primitives/further-exploration:
-  en: abbbdbc9a7540743
-  zh: cf5bbeaedb3696d0
-/deepseek-ai-dsh-client-ui-primitives/model-experience:
+/tomato-client-ui-primitives/further-exploration:
+  en: 9621c2f9f15825a2
+  zh: 79d3f6ff8d357fbf
+/tomato-client-ui-primitives/model-experience:
   en: 3120df665299c634
   zh: 1d9f365d091d0d2a
-/deepseek-ai-dsh-client-ui-primitives/model-experience/kv-cache-effect:
+/tomato-client-ui-primitives/model-experience/kv-cache-effect:
   en: ca75c51c89c2c9b0
   zh: de54f3467ef3b9be
-/deepseek-ai-dsh-client-ui-primitives/known-limitations-and-deferred-work:
-  en: 9c5bc17e35af9d0b
-  zh: 4f1a142c7d56cf72
-/deepseek-ai-dsh-client-ui-primitives/known-limitations-and-deferred-work/dev-note:
+/tomato-client-ui-primitives/known-limitations-and-deferred-work:
+  en: 72ccc8d2acc3b5dd
+  zh: cc1ede6809e199ce
+/tomato-client-ui-primitives/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

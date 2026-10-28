@@ -1,20 +1,20 @@
-import { executeToolFixture } from '@deepseek-ai/dsh-tool-testkit'
+import { executeToolFixture } from '@tomato/tool-testkit'
 import { mkdtemp, mkdir, realpath, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { setImmediate } from 'node:timers/promises'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@tomato/cordis'
 import { describe, expect, it, vi } from 'vitest'
-import LocalFileSystem from '@deepseek-ai/dsh-fs-local'
-import WorkingDirectory, { type Config as WorkingDirectoryConfig } from '@deepseek-ai/dsh-working-directory'
-import { mountAgentLoopTestDependencies, mountAgentLoopTestHarness } from '@deepseek-ai/dsh-agent-loop-testkit'
-import { SessionId } from '@deepseek-ai/dsh-session'
-import { ToolCallId } from '@deepseek-ai/dsh-llm'
-import { renderContextSnapshot, renderPrompt } from '@deepseek-ai/dsh-system-prompt'
-import * as WorkingDirectoryTool from '@deepseek-ai/dsh-tool-working-directory'
+import LocalFileSystem from '@tomato/fs-local'
+import WorkingDirectory, { type Config as WorkingDirectoryConfig } from '@tomato/working-directory'
+import { mountAgentLoopTestDependencies, mountAgentLoopTestHarness } from '@tomato/agent-loop-testkit'
+import { SessionId } from '@tomato/session'
+import { ToolCallId } from '@tomato/llm'
+import { renderContextSnapshot, renderPrompt } from '@tomato/system-prompt'
+import * as WorkingDirectoryTool from '@tomato/tool-working-directory'
 
 async function fixture(config?: (root: string) => WorkingDirectoryConfig) {
-  const root = await realpath(await mkdtemp(join(tmpdir(), 'dsh-working-directory-')))
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'tomato-working-directory-')))
   const ctx = new Context()
   try {
     await mountAgentLoopTestDependencies(ctx, { systemPrompt: { includeRuntimeContext: false } })

@@ -3,7 +3,7 @@ description: "Web 插件页的「发现」标签页：搜索已配置的插件�
 kind: "package-reference"
 ---
 
-# @deepseek-ai/dsh-client-ui-plugin-market
+# @tomato/client-ui-plugin-market
 
 [English](README.md) | 中文
 
@@ -43,7 +43,7 @@ Host 的 [`pluginMarket.search`](../../boot/plugin-market/README.zh.md#use-this-
 <a id="understand-the-implementation"></a>
 ## 理解实现
 
-详细介绍的读取结果保存在第二个快照存储中，以索引 URL、条目、版本和语言为键；该部分在渲染时开始读取；npm 版本的读取先询问 Host 的注册表比较，npmmirror 响应最快时传入 `npmFileSources: ['npmmirror']`；只有某个键最新一次的读取才会让该部分得到结果；**重试**要求 Host 重新读取，而不是返回其缓存的结果；连接重置时丢弃所有读取结果，因为重启后的 Host 不再知道其图片使用的文档 id，所以每个已显示的部分会重新读取其文档。图片 URL 基于 `document.baseURI` 解析 `api/plugin-market/detail-file`，因此保留部署前缀，并在 Desktop 中使用 `dsh-app://app/` origin；[`MarkdownText`](../ui-primitives/README.zh.md) 对该路由接受此 origin。
+详细介绍的读取结果保存在第二个快照存储中，以索引 URL、条目、版本和语言为键；该部分在渲染时开始读取；npm 版本的读取先询问 Host 的注册表比较，npmmirror 响应最快时传入 `npmFileSources: ['npmmirror']`；只有某个键最新一次的读取才会让该部分得到结果；**重试**要求 Host 重新读取，而不是返回其缓存的结果；连接重置时丢弃所有读取结果，因为重启后的 Host 不再知道其图片使用的文档 id，所以每个已显示的部分会重新读取其文档。图片 URL 基于 `document.baseURI` 解析 `api/plugin-market/detail-file`，因此保留部署前缀，并在 Desktop 中使用 `tomato-app://app/` origin；[`MarkdownText`](../ui-primitives/README.zh.md) 对该路由接受此 origin。
 
 本插件把标签为**发现**的 `discover` 条目注册到 `plugins.tab`，即 [`ui-plugin-manager`](../ui-plugin-manager/README.zh.md) 声明的标签页 slot；owner props 提供 `install({ spec, registry?, title, version })` 和 `openPackage(name)`；发现页传入条目的本地化标题和所选版本。一个不依赖 React 的控制器在快照存储中拥有索引源读取、索引源编辑，以及所选索引的查询和已加载的页；选择另一个插件索引时从初始查询开始。之后的页发送第一页的 `fetchedAt`，来自已替换文档的页会让列表重新加载一次；再次被替换时读取失败。列表保留其结果所回答的查询，因此新查询加载期间或失败后，空状态文案仍与显示的结果一致；**重试**重新执行失败的读取：某个查询的前几页，或下一页。profile 的组合包变化时，重新加载所有已加载的页以刷新安装状态；索引不再声明的过滤条件或排序键会从查询中移除。尚未发送的搜索文本、打开的条目和确认对话框是组件状态。`presentation.ts` 中的纯函数根据文本得出查询顺序、移除未声明的 id、使用当前界面语言的 `Intl.Collator` 对声明排序，以及列出来源信息。图标以 `referrerpolicy="no-referrer"` 延迟加载，失败时回退到默认插画。
 

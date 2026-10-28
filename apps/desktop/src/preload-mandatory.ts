@@ -13,4 +13,4 @@ const api: MandatoryUpdateApi = {
     return () => { ipcRenderer.off(MANDATORY_IPC.state, handle) }
   },
 }
-if (location.href === 'dsh-app://shell/mandatory-update.html') contextBridge.exposeInMainWorld('tomatoMandatoryUpdate', api)
+if (location.href === 'tomato-app://shell/mandatory-update.html') contextBridge.exposeInMainWorld('tomatoMandatoryUpdate', api)

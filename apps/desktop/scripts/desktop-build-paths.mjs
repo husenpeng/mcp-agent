@@ -39,7 +39,7 @@ function assertSupportedTarget(target) {
  * Return the mutable preparation and artifact directories owned by one release target.
  * @param {'mac-arm64' | 'mac-x64' | 'win-x64'} target - Supported Desktop target name.
  * @param {NodeJS.ProcessEnv} environment - Packaging environment with an optional absolute cache directory.
- * @returns {{ root: string, artifacts: string, unsignedArtifacts: string, unnotarizedArtifacts: string, runtime: string, packageSet: string, dsh: string, tomatoPnpm: string, electron: string, packedDsh: string, packedVendor: string, packedLandlock: string, downloads: string, pnpmStore: string }} Target paths plus shared download and package caches.
+ * @returns {{ root: string, artifacts: string, unsignedArtifacts: string, unnotarizedArtifacts: string, runtime: string, packageSet: string, tomato: string, tomatoPnpm: string, electron: string, packedDsh: string, packedVendor: string, packedLandlock: string, downloads: string, pnpmStore: string }} Target paths plus shared download and package caches.
  */
 export function desktopTargetBuildPaths(target, environment = process.env) {
   assertSupportedTarget(target)
@@ -56,10 +56,10 @@ export function desktopTargetBuildPaths(target, environment = process.env) {
     unnotarizedArtifacts: join(root, 'unnotarized-artifacts'),
     runtime: join(root, 'runtime'),
     packageSet: join(root, 'package-set'),
-    dsh: join(root, 'dsh'),
-    tomatoPnpm: join(root, 'dsh-pnpm'),
+    tomato: join(root, 'tomato'),
+    tomatoPnpm: join(root, 'tomato-pnpm'),
     electron: join(root, 'electron'),
-    packedDsh: join(packed, 'dsh'),
+    packedDsh: join(packed, 'tomato'),
     packedVendor: join(packed, 'vendor'),
     packedLandlock: join(packed, 'landlock'),
     downloads: join(cacheRoot, 'downloads'),

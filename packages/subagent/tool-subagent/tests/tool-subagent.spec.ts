@@ -1,28 +1,28 @@
-import { ToolExecutionPipeline } from '@deepseek-ai/dsh-tools/pipeline'
-import { executeToolFixture } from '@deepseek-ai/dsh-tool-testkit'
+import { ToolExecutionPipeline } from '@tomato/tools/pipeline'
+import { executeToolFixture } from '@tomato/tool-testkit'
 import { mountWorkingDirectoryFixture } from '../../subagent/tests/working-directory-fixture.ts'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { Context } from '@deepseek-ai/cordis'
-import Loader from '@deepseek-ai/cordis-plugin-loader'
-import { ToolCallId, ReasoningEffortId } from '@deepseek-ai/dsh-llm'
-import { TOOL_ABORTED_BEFORE_DISPATCH } from '@deepseek-ai/dsh-tools'
-import { assembleContextFor } from '@deepseek-ai/dsh-agent'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import AgentLoop from '@deepseek-ai/dsh-agent-loop'
-import { mountAgentLoopTestDependencies } from '@deepseek-ai/dsh-agent-loop-testkit'
-import * as JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
-import SubagentRuntime from '@deepseek-ai/dsh-subagent'
-import type { SubagentStartRequest } from '@deepseek-ai/dsh-subagent'
-import * as SubagentSpawn from '@deepseek-ai/dsh-subagent-spawn-in-process'
+import { Context } from '@tomato/cordis'
+import Loader from '@tomato/cordis-plugin-loader'
+import { ToolCallId, ReasoningEffortId } from '@tomato/llm'
+import { TOOL_ABORTED_BEFORE_DISPATCH } from '@tomato/tools'
+import { assembleContextFor } from '@tomato/agent'
+import type { Agent } from '@tomato/agent'
+import AgentLoop from '@tomato/agent-loop'
+import { mountAgentLoopTestDependencies } from '@tomato/agent-loop-testkit'
+import * as JsonlSessionPersistence from '@tomato/session-persistence-jsonl'
+import SubagentRuntime from '@tomato/subagent'
+import type { SubagentStartRequest } from '@tomato/subagent'
+import * as SubagentSpawn from '@tomato/subagent-spawn-in-process'
 import { MockAdapter, textResponse } from '../../../core/agent-loop/tests/mock-adapter.ts'
 import { loadStoredSession } from '../../subagent/tests/persistence-helpers.ts'
 import * as mock from './scripted-provider.ts'
 import type { Config as toolConfig } from '../src/index.ts'
 import * as tool from '../src/index.ts'
-import { SessionId } from '@deepseek-ai/dsh-session'
+import { SessionId } from '@tomato/session'
 import {
   callSubagent,
   disposeSetupProvider,
@@ -48,14 +48,14 @@ async function delegationGuidance(ctx: Context, agent?: Agent): Promise<string[]
 }
 
 /**
- * Drives the REAL plugin body: mounts `dsh-tool-subagent` on a real
+ * Drives the REAL plugin body: mounts `@tomato/tool-subagent` on a real
  * `ToolRuntime` + `SubagentRuntime`, with a package-local scripted child
  * boundary, and invokes the registered `subagent` tool through
  * `ctx.tools.execute`. Everything downstream of the child boundary is the
  * shipping code path.
  */
 
-describe('dsh-tool-subagent', () => {
+describe('@tomato/tool-subagent', () => {
 
   it('rejects configured child agent options at mount when the provider cannot apply them', async () => {
     await expect(setup(
@@ -667,7 +667,7 @@ describe('dsh-tool-subagent', () => {
 
 })
 
-describe('dsh-tool-subagent local activation', () => {
+describe('@tomato/tool-subagent local activation', () => {
   const fixtures: { ctx: Context; root: string }[] = []
   afterEach(async () => {
     for (const { ctx, root } of fixtures.splice(0)) {
@@ -679,7 +679,7 @@ describe('dsh-tool-subagent local activation', () => {
   /** Boot the real continuable stack without any model-facing follow-up adapter. */
   async function continuableSetup() {
     const ctx = new Context()
-    const root = mkdtempSync(path.join(tmpdir(), 'dsh-tool-subagent-continuable-'))
+    const root = mkdtempSync(path.join(tmpdir(), 'tomato-tool-subagent-continuable-'))
     fixtures.push({ ctx, root })
     await mountAgentLoopTestDependencies(ctx)
     await ctx.plugin(JsonlSessionPersistence, { root })

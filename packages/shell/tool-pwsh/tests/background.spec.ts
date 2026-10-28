@@ -1,23 +1,23 @@
-import { executeToolFixture } from '@deepseek-ai/dsh-tool-testkit'
-import * as NativeToolExecutor from '@deepseek-ai/dsh-tool-executor-native'
-import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
+import { executeToolFixture } from '@tomato/tool-testkit'
+import * as NativeToolExecutor from '@tomato/tool-executor-native'
+import SessionProjectionRegistry from '@tomato/session-projection'
 import { describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import { ToolCallId } from '@deepseek-ai/dsh-llm'
-import { Session, SessionId } from '@deepseek-ai/dsh-session'
-import { SESSION_FORMAT_VERSION } from '@deepseek-ai/dsh-session/types'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime, { TOOL_ABORTED } from '@deepseek-ai/dsh-tools'
-import AgentRegistry from '@deepseek-ai/dsh-agent'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import { unsupportedModel, provideWorkingDirectoryFixture, unsupportedInbox } from '@deepseek-ai/dsh-agent-loop-testkit'
-import LocalJobRegistry from '@deepseek-ai/dsh-jobs-local'
-import * as ToolTasks from '@deepseek-ai/dsh-tool-jobs'
-import { ShellExecutor } from '@deepseek-ai/dsh-shell'
-import type { ShellExecRequest, ShellExecSpec, ShellExecution, ShellProcess } from '@deepseek-ai/dsh-shell'
+import { Context } from '@tomato/cordis'
+import { ToolCallId } from '@tomato/llm'
+import { Session, SessionId } from '@tomato/session'
+import { SESSION_FORMAT_VERSION } from '@tomato/session/types'
+import SystemPrompt from '@tomato/system-prompt'
+import ToolRuntime, { TOOL_ABORTED } from '@tomato/tools'
+import AgentRegistry from '@tomato/agent'
+import type { Agent } from '@tomato/agent'
+import { unsupportedModel, provideWorkingDirectoryFixture, unsupportedInbox } from '@tomato/agent-loop-testkit'
+import LocalJobRegistry from '@tomato/jobs-local'
+import * as ToolTasks from '@tomato/tool-jobs'
+import { ShellExecutor } from '@tomato/shell'
+import type { ShellExecRequest, ShellExecSpec, ShellExecution, ShellProcess } from '@tomato/shell'
 import { renderPwshPromoted } from '../src/render.ts'
-import * as ToolPwsh from '@deepseek-ai/dsh-tool-pwsh'
-import * as BashEnvPlugin from '@deepseek-ai/dsh-shell-env'
+import * as ToolPwsh from '@tomato/tool-pwsh'
+import * as BashEnvPlugin from '@tomato/shell-env'
 import { processSources, ringDelta } from '../src/background.ts'
 
 const testToolSignal = new AbortController().signal
@@ -456,7 +456,7 @@ describe('foreground commands as jobs (pwsh)', () => {
   })
 
   it('runs under the deadline kill when no job controller serves the owner', async () => {
-    // The same composition minus dsh-tool-jobs: the registry exists, so the
+    // The same composition minus @tomato/tool-jobs: the registry exists, so the
     // job-backed variant is registered, but admission refuses at the start
     // and the call runs under the executor's deadline instead.
     const ctx = new Context()

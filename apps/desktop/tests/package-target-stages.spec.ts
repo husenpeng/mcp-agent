@@ -52,7 +52,7 @@ it.each(['pack', 'runtime'] as const)('overlaps Windows preparation and waits fo
   const finished = new Set<string>()
   run.run.mockImplementation(async (stage) => {
     stages.push(stage)
-    if (stage.startsWith('run release:pack --family dsh ')) await pack.promise
+    if (stage.startsWith('run release:pack --family tomato ')) await pack.promise
     if (stage === 'run prepare:runtime --defer-primary-runtime-smoke') {
       await runtime.promise
       finished.add('runtime')
@@ -64,7 +64,7 @@ it.each(['pack', 'runtime'] as const)('overlaps Windows preparation and waits fo
   const outcome = operation.then(() => undefined, (error: unknown) => error)
   try {
     await vi.waitFor(() => {
-      expect(stages.some(stage => stage.startsWith('run release:pack --family dsh '))).toBe(true)
+      expect(stages.some(stage => stage.startsWith('run release:pack --family tomato '))).toBe(true)
       expect(stages).toContain('run prepare:runtime --defer-primary-runtime-smoke')
     })
     expect(stages).not.toContain('run sign:primary-runtime')
@@ -91,7 +91,7 @@ it.each(['pack', 'runtime'] as const)('drains the other Windows preparation afte
   let settled = false
   run.run.mockImplementation(async (stage) => {
     stages.push(stage)
-    if (stage.startsWith('run release:pack --family dsh ')) await pack.promise
+    if (stage.startsWith('run release:pack --family tomato ')) await pack.promise
     if (stage === 'run prepare:runtime --defer-primary-runtime-smoke') await runtime.promise
   })
   const outcome = packageTarget(parseDesktopPackageInvocation(['win-x64'], 'win32', 'x64'), environment, run).then(
@@ -100,7 +100,7 @@ it.each(['pack', 'runtime'] as const)('drains the other Windows preparation afte
   )
   try {
     await vi.waitFor(() => {
-      expect(stages.some(stage => stage.startsWith('run release:pack --family dsh '))).toBe(true)
+      expect(stages.some(stage => stage.startsWith('run release:pack --family tomato '))).toBe(true)
       expect(stages).toContain('run prepare:runtime --defer-primary-runtime-smoke')
     })
     ;(failed === 'pack' ? pack : runtime).reject(failure)
@@ -113,7 +113,7 @@ it.each(['pack', 'runtime'] as const)('drains the other Windows preparation afte
     expect(stages.some(stage => stage.startsWith('--dir apps/desktop-host pack'))).toBe(false)
     expect(stages.some(stage => stage.startsWith('--dir native/system'))).toBe(false)
     expect(stages.some(stage => stage.startsWith('run sign:primary-runtime'))).toBe(false)
-    expect(stages.some(stage => stage.startsWith('run prepare:packages') || stage.startsWith('run prepare:dsh'))).toBe(false)
+    expect(stages.some(stage => stage.startsWith('run prepare:packages') || stage.startsWith('run prepare:tomato'))).toBe(false)
     expect(writeFileSync).not.toHaveBeenCalled()
   } finally {
     pack.resolve(undefined)
@@ -130,7 +130,7 @@ it.each([undefined, '3'])('passes the package cache and selected compression to 
     ...(level === undefined ? {} : { TOMATO_DESKTOP_WINDOWS_COMPRESSION_LEVEL: level }),
     ELECTRON_BUILDER_COMPRESSION_LEVEL: '0',
   }, run)
-  const prepare = run.run.mock.calls.find(([stage]) => stage.startsWith('run prepare:dsh'))!
+  const prepare = run.run.mock.calls.find(([stage]) => stage.startsWith('run prepare:tomato'))!
   expect(prepare[3].env.TOMATO_DESKTOP_PACKAGE_CACHE_DIR).toBe(cache)
   const builder = run.run.mock.calls.find(([stage]) => stage.startsWith('exec electron-builder'))!
   expect(builder[3].env.ELECTRON_BUILDER_COMPRESSION_LEVEL).toBe(level ?? '0')
@@ -144,7 +144,7 @@ it.each([undefined, '2'])('uses bounded Windows packing while retaining signing 
   expect(packs).toHaveLength(2)
   for (const stage of packs) expect(stage).toContain(`--concurrency ${workers ?? '4'}`)
   expect(stages).toContain('preflight:windows-signing')
-  expect(stages).toContain('run sign:primary-runtime --dsh')
+  expect(stages).toContain('run sign:primary-runtime --tomato')
   expect(stages.at(-1)).toBe('exec tsx scripts/smoke-packaged-runtime.ts')
 })
 
@@ -157,7 +157,7 @@ it('requires one signing preflight before building, then records only the comple
     .toEqual(['preflight', 'artifacts'])
   expect(run.run.mock.calls[0]![3]).toMatchObject({ env: { TOMATO_DESKTOP_WINDOWS_TOKEN_PIN: 'fixture-pin' }, timeoutMs: 60_000 })
   expect(run.run.mock.calls[1]![3].env).not.toHaveProperty('TOMATO_DESKTOP_WINDOWS_TOKEN_PIN')
-  expect(stages.indexOf('run sign:primary-runtime --dsh')).toBeGreaterThan(stages.indexOf('run prepare:dsh --defer-runtime-smoke'))
+  expect(stages.indexOf('run sign:primary-runtime --tomato')).toBeGreaterThan(stages.indexOf('run prepare:tomato --defer-runtime-smoke'))
   expect(stages.at(-1)).toBe('exec tsx scripts/smoke-packaged-runtime.ts')
   for (const call of run.run.mock.calls) {
     if (call[0].startsWith('run prepare:') || call[0].includes('smoke-packaged-runtime')) {
@@ -170,7 +170,7 @@ it('requires one signing preflight before building, then records only the comple
   }
   expect(writeFileSync).toHaveBeenCalledOnce()
   const record = JSON.parse(vi.mocked(writeFileSync).mock.calls[0]![1] as string) as { publicUrl: string }
-  expect(record.publicUrl).toBe('https://updates.example.com/dsh-desk/0123456789abcdef0123456789abcdef/feeds/win-x64/')
+  expect(record.publicUrl).toBe('https://updates.example.com/tomato-desk/0123456789abcdef0123456789abcdef/feeds/win-x64/')
 })
 
 it('initializes shared storage only after acquiring the preflight stage lock', async () => {
@@ -183,7 +183,7 @@ it('initializes shared storage only after acquiring the preflight stage lock', a
   await packageTarget(parseDesktopPackageInvocation(['win-x64'], 'win32', 'x64'), environment, run)
 })
 
-it.each(['preflight:windows-signing', 'run build:official', 'run sign:primary-runtime', 'run prepare:dsh --defer-runtime-smoke', 'run sign:primary-runtime --dsh',
+it.each(['preflight:windows-signing', 'run build:official', 'run sign:primary-runtime', 'run prepare:tomato --defer-runtime-smoke', 'run sign:primary-runtime --tomato',
   'exec tsx scripts/smoke-packaged-runtime.ts',
   'exec electron-builder --config electron-builder.config.mjs --win --x64 --publish never'])
 ('never continues or records a release after %s fails', async (failure) => {
@@ -200,7 +200,7 @@ it.each(['--unsigned', '--prepare-only'])('keeps %s hardware-free and creates no
   expect(stages[0]).toBe(mode === '--unsigned' ? 'run build --profile local' : 'run build:official')
   expect(stages).not.toContain('preflight:windows-signing')
   expect(stages).not.toContain('run sign:primary-runtime')
-  expect(stages).not.toContain('run sign:primary-runtime --dsh')
+  expect(stages).not.toContain('run sign:primary-runtime --tomato')
   expect(withWindowsSigningStage).not.toHaveBeenCalled()
   for (const call of run.run.mock.calls) expect(call[3].env).not.toHaveProperty('TOMATO_DESKTOP_WINDOWS_TOKEN_PIN')
   expect(writeFileSync).not.toHaveBeenCalled()
@@ -226,7 +226,7 @@ it.each(['mac-arm64', 'mac-x64', 'win-x64'] as const)('selects branding from the
     const build = stages.find(stage => stage.startsWith('run build'))
     expect(build).toBe(unsigned ? 'run build --profile local' : 'run build:official')
     expect(stages.some(stage => stage.startsWith('exec tsx apps/desktop/scripts/pack-local-packages.ts'))).toBe(unsigned)
-    expect(stages.some(stage => stage.startsWith('run release:pack --family dsh'))).toBe(!unsigned)
+    expect(stages.some(stage => stage.startsWith('run release:pack --family tomato'))).toBe(!unsigned)
   }
 })
 
@@ -317,7 +317,7 @@ it.each([undefined, '2'])('passes macOS pack concurrency %s only to workspace pa
   expect(packs).toHaveLength(2)
   for (const call of packs) expect(call[2].slice(-2)).toEqual(['--concurrency', concurrency ?? '4'])
   for (const call of calls) {
-    expect(call[3].env.HTTP_PROXY).toBe(/^run prepare:(?:runtime|dsh)$/u.test(call[0]) ? 'http://downloads.example:8080' : undefined)
+    expect(call[3].env.HTTP_PROXY).toBe(/^run prepare:(?:runtime|tomato)$/u.test(call[0]) ? 'http://downloads.example:8080' : undefined)
   }
   expect(withMacOSNotarizationProxy).not.toHaveBeenCalled()
 })

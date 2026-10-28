@@ -5,99 +5,99 @@
 /:
   en: 4c3172f95eb524e1
   zh: dd92ec1300ad9cbe
-/deepseek-ai-dsh-compaction-basic:
-  en: 3ba5f9e37ab36328
-  zh: 2390a55415d4c27b
-/deepseek-ai-dsh-compaction-basic/summary:
+/tomato-compaction-basic:
+  en: 1e30c05a13dffa2a
+  zh: 3e76897e35724e9c
+/tomato-compaction-basic/summary:
   en: 31202d573182cc31
   zh: e0a0c96f67a9c1ba
-/deepseek-ai-dsh-compaction-basic/table-of-contents:
+/tomato-compaction-basic/table-of-contents:
   en: d152484eb41ac6b4
   zh: bda879a892f240f0
-/deepseek-ai-dsh-compaction-basic/use-this-package:
-  en: b40fa08b8ad55cca
-  zh: f8765a6f199c8c7b
-/deepseek-ai-dsh-compaction-basic/use-this-package/what-you-get:
+/tomato-compaction-basic/use-this-package:
+  en: 285c17338d136edc
+  zh: d89ce50480384634
+/tomato-compaction-basic/use-this-package/what-you-get:
   en: eb8e340061f72b98
   zh: 327a51037b2d1adf
-/deepseek-ai-dsh-compaction-basic/use-this-package/smallest-working-composition:
+/tomato-compaction-basic/use-this-package/smallest-working-composition:
   en: 4cb73d7a57908948
   zh: 7ba2ddc4c76e4957
-/deepseek-ai-dsh-compaction-basic/use-this-package/tuning-when-condensation-starts:
-  en: 3446c54c062d7e34
-  zh: fb502c941e508ae0
-/deepseek-ai-dsh-compaction-basic/use-this-package/what-happens-when-condensation-runs:
+/tomato-compaction-basic/use-this-package/tuning-when-condensation-starts:
+  en: 145c63aa9308a555
+  zh: 053a42f164fd41b4
+/tomato-compaction-basic/use-this-package/what-happens-when-condensation-runs:
   en: c872a8ef069596f0
   zh: b3a48e309ae830d4
-/deepseek-ai-dsh-compaction-basic/use-this-package/switching-models:
-  en: 48978abc46da1afa
-  zh: 11931af05db7b41f
-/deepseek-ai-dsh-compaction-basic/use-this-package/on-demand-condensation-with-compact:
-  en: 4c5067e4c57ca708
-  zh: 1c0e70319b9b2112
-/deepseek-ai-dsh-compaction-basic/use-this-package/trimming-oversized-tool-outputs:
-  en: 1d6a74c0dc874dc8
-  zh: bcfa95549308c030
-/deepseek-ai-dsh-compaction-basic/understand-the-implementation:
+/tomato-compaction-basic/use-this-package/switching-models:
+  en: da850ce41bf8de2d
+  zh: 7874a48f9415e544
+/tomato-compaction-basic/use-this-package/on-demand-condensation-with-compact:
+  en: 66d0672cc5603c6f
+  zh: 01122cdc8b853b4e
+/tomato-compaction-basic/use-this-package/trimming-oversized-tool-outputs:
+  en: 837084a097739329
+  zh: 24a4de9393f8ec6c
+/tomato-compaction-basic/understand-the-implementation:
   en: deb655b3b1860576
   zh: 79f56e41a9dfe01f
-/deepseek-ai-dsh-compaction-basic/understand-the-implementation/design-philosophy:
+/tomato-compaction-basic/understand-the-implementation/design-philosophy:
   en: ed2d43610d4eaa83
   zh: b46a1eaad396cdd7
-/deepseek-ai-dsh-compaction-basic/understand-the-implementation/automatic-triggers-and-overflow-recovery:
-  en: 9e6e472b0f3977d3
-  zh: fdc0e827c19ba401
-/deepseek-ai-dsh-compaction-basic/understand-the-implementation/summarization-mechanics:
+/tomato-compaction-basic/understand-the-implementation/automatic-triggers-and-overflow-recovery:
+  en: 51ae47461ccdff3f
+  zh: d4858c2e3c75e736
+/tomato-compaction-basic/understand-the-implementation/summarization-mechanics:
   en: 967531b71453eb88
   zh: c7919b46e36763e6
-/deepseek-ai-dsh-compaction-basic/understand-the-implementation/the-region-transaction:
+/tomato-compaction-basic/understand-the-implementation/the-region-transaction:
   en: f4330f6bff22d400
   zh: 46e16c51bb66a0f7
-/deepseek-ai-dsh-compaction-basic/understand-the-implementation/config-resolution:
+/tomato-compaction-basic/understand-the-implementation/config-resolution:
   en: 313e019b1a9f8aa8
   zh: 3c75d11b02adb693
-/deepseek-ai-dsh-compaction-basic/understand-the-implementation/source-map:
+/tomato-compaction-basic/understand-the-implementation/source-map:
   en: 3f1d7a55b790e623
   zh: 39e878c0785a885c
-/deepseek-ai-dsh-compaction-basic/further-exploration:
-  en: 84b5b81eb9b5965d
-  zh: 7000af0fa502fcc1
-/deepseek-ai-dsh-compaction-basic/model-experience:
+/tomato-compaction-basic/further-exploration:
+  en: 933aa18fba6205a6
+  zh: 988d81db55700d10
+/tomato-compaction-basic/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
-/deepseek-ai-dsh-compaction-basic/model-experience/conversation-history:
+/tomato-compaction-basic/model-experience/conversation-history:
   en: 2e1148dd0f39a281
   zh: cd68c9fff63534af
-/deepseek-ai-dsh-compaction-basic/model-experience/conversation-history/what-the-model-sees:
+/tomato-compaction-basic/model-experience/conversation-history/what-the-model-sees:
   en: 8d4325e6659bc314
   zh: f80e69305b39f4a3
-/deepseek-ai-dsh-compaction-basic/model-experience/conversation-history/what-the-model-sees/conversation-checkpoint-preamble:
+/tomato-compaction-basic/model-experience/conversation-history/what-the-model-sees/conversation-checkpoint-preamble:
   en: 129d1eaba2519330
   zh: 3ec517bdc6cb5ae3
-/deepseek-ai-dsh-compaction-basic/model-experience/conversation-history/token-effect:
+/tomato-compaction-basic/model-experience/conversation-history/token-effect:
   en: 872515a75b5a9726
   zh: c0045e1972bbac4e
-/deepseek-ai-dsh-compaction-basic/model-experience/conversation-history/kv-cache-effect:
+/tomato-compaction-basic/model-experience/conversation-history/kv-cache-effect:
   en: a22b43f321843aee
   zh: a5960da1bef34441
-/deepseek-ai-dsh-compaction-basic/model-experience/auxiliary-summarizer-request:
+/tomato-compaction-basic/model-experience/auxiliary-summarizer-request:
   en: 7169bd02a7a6c396
   zh: 7c62e3d4a97c73f7
-/deepseek-ai-dsh-compaction-basic/model-experience/auxiliary-summarizer-request/what-the-model-sees:
+/tomato-compaction-basic/model-experience/auxiliary-summarizer-request/what-the-model-sees:
   en: b7afcf1cc1c85c40
   zh: a112c5b3984c31dc
-/deepseek-ai-dsh-compaction-basic/model-experience/auxiliary-summarizer-request/what-the-model-sees/compaction-instruction-final-user-message:
+/tomato-compaction-basic/model-experience/auxiliary-summarizer-request/what-the-model-sees/compaction-instruction-final-user-message:
   en: 39a362ee4890dbdb
   zh: 3b98699120b1548e
-/deepseek-ai-dsh-compaction-basic/model-experience/auxiliary-summarizer-request/token-effect:
+/tomato-compaction-basic/model-experience/auxiliary-summarizer-request/token-effect:
   en: 5e0679cb7cb4291a
   zh: c9df8ebc526b05d9
-/deepseek-ai-dsh-compaction-basic/model-experience/auxiliary-summarizer-request/kv-cache-effect:
+/tomato-compaction-basic/model-experience/auxiliary-summarizer-request/kv-cache-effect:
   en: d31d3e3d46542c91
   zh: 5a42f873993e0c79
-/deepseek-ai-dsh-compaction-basic/known-limitations-and-deferred-work:
+/tomato-compaction-basic/known-limitations-and-deferred-work:
   en: e2514d868dd5abbb
   zh: a84fd6428d5c245a
-/deepseek-ai-dsh-compaction-basic/known-limitations-and-deferred-work/dev-note:
+/tomato-compaction-basic/known-limitations-and-deferred-work/dev-note:
   en: 1fec7b90c3b68c49
   zh: ad9ae54a598846d0

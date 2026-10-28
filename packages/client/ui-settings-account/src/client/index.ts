@@ -1,16 +1,16 @@
 /** Account settings registration and reconnecting Remote subscription. */
-import type {} from '@deepseek-ai/dsh-client-product-analytics/client'
-import type { TranscriptViewMode } from '@deepseek-ai/dsh-client-ui-chat/client'
-import type { Context } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-client-locale/client'
-import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
-import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
-import type {} from '@deepseek-ai/dsh-client-ui-theme/client'
-import type {} from '@deepseek-ai/dsh-client-ui-chat/client'
-import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
-import type {} from '@deepseek-ai/dsh-api-remote-access/client'
-import type {} from '@deepseek-ai/dsh-api-remotes/client'
-import type { AccountView, AccountDetails } from '@deepseek-ai/dsh-deepseek-account/types'
+import type {} from '@tomato/client-product-analytics/client'
+import type { TranscriptViewMode } from '@tomato/client-ui-chat/client'
+import type { Context } from '@tomato/cordis'
+import type {} from '@tomato/client-locale/client'
+import type {} from '@tomato/client-ui-settings/client'
+import type {} from '@tomato/client-ui-renderer/client'
+import type {} from '@tomato/client-ui-theme/client'
+import type {} from '@tomato/client-ui-chat/client'
+import type {} from '@tomato/client-ui-layout/client'
+import type {} from '@tomato/api-remote-access/client'
+import type {} from '@tomato/api-remotes/client'
+import type { AccountView, AccountDetails } from '@tomato/deepseek-account/types'
 import type { OnboardingChange } from './onboarding-contract.ts'
 import type { PlatformBridge } from './PlatformOverlay.tsx'
 import { ContactConfig, CONTACT_CONFIG_GLOBAL } from '../contact-config.ts'
@@ -37,7 +37,7 @@ export type { AccountMenuProps } from './AccountMenu.tsx'
 export type { AccountSnapshot } from './AccountSection.tsx'
 export type { AccountKey } from './locales.ts'
 
-declare module '@deepseek-ai/dsh-client-ui-slots' {
+declare module '@tomato/client-ui-slots' {
   interface LocaleNamespaceMap { 'settings.account': AccountKey }
 }
 
@@ -246,8 +246,8 @@ export function apply(ctx: Context): void {
     async start() {
       publish({ ...snapshot, loginVisible: true, loginFailed: false })
       const transport = (globalThis as typeof globalThis & {
-        __DSH_TRANSPORT__?: { streamBaseUrl?: string }
-      }).__DSH_TRANSPORT__
+        __TOMATO_TRANSPORT__?: { streamBaseUrl?: string }
+      }).__TOMATO_TRANSPORT__
       const request = async () => {
         const result = await ctx.remote.account.startSignIn(client(),
           desktop && transport?.streamBaseUrl !== undefined ? new URL(transport.streamBaseUrl).origin : window.location.origin,

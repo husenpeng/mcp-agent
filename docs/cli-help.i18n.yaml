@@ -5,30 +5,30 @@
 /:
   en: d11ca88bdc409249
   zh: d11ca88bdc409249
-/dsh-cli-help:
-  en: b7174eab3476579d
-  zh: 5ddab967320e3cff
-/dsh-cli-help/contents:
-  en: 00308bcc6dc90afd
-  zh: 16f7442b76686a02
-/dsh-cli-help/dsh:
-  en: e0695abcf7d8b521
-  zh: 712c23b3c8a115ca
-/dsh-cli-help/dsh-plugin:
-  en: adad99c125d0ac51
-  zh: f11024971184f737
-/dsh-cli-help/dsh-acp:
-  en: bcb0f84577ce5f03
-  zh: 4382e617006849db
-/dsh-cli-help/dsh-headless:
-  en: 878a1dd78017964d
-  zh: bb43d91b4beb9bda
-/dsh-cli-help/dsh-sdk:
-  en: 701f239c5157dedb
-  zh: ee11be2932b05ce4
-/dsh-cli-help/dsh-sdk-minimal:
-  en: 8f0d7548d299ffd3
-  zh: fa2262e70d6819a0
-/dsh-cli-help/dsh-web:
-  en: 5d073104e8954cc8
-  zh: 91cd28f7c6ac96ac
+/tomato-cli-help:
+  en: a16c5193ce6cafea
+  zh: b9a9573f8edfca1c
+/tomato-cli-help/contents:
+  en: 9b11c763126c3766
+  zh: d8cc06dc8f97b92e
+/tomato-cli-help/tomato:
+  en: 542f97b423724caf
+  zh: cc4dbc0ce44c63b7
+/tomato-cli-help/tomato-plugin:
+  en: b5dbf9b6b9871579
+  zh: 1b839116162254f6
+/tomato-cli-help/tomato-acp:
+  en: a1995d099ec144db
+  zh: 30ef95ba2b989748
+/tomato-cli-help/tomato-headless:
+  en: ffb3789743c745f3
+  zh: 60fb2cf548855106
+/tomato-cli-help/tomato-sdk:
+  en: 80736e2f4b5517b9
+  zh: c5257544d0e22a4d
+/tomato-cli-help/tomato-sdk-minimal:
+  en: c9c6e49713956dfb
+  zh: 1742454baa5975c8
+/tomato-cli-help/tomato-web:
+  en: 42fe46b56bd7bb12
+  zh: 32edf1cdd59cbfb6

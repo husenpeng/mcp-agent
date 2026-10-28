@@ -1,6 +1,6 @@
 """Opt-in macOS integration against a disposable two-window AppKit application.
 
-Build dsh-cua-native first, then run this file with Python 3. macOS Accessibility
+Build tomato-cua-native first, then run this file with Python 3. macOS Accessibility
 and Screen Recording permission must already be granted to the responsible host.
 The fixture records its own received actions; native dispatch success is not the
 assertion. --artifacts saves fixture-only screenshots and a private transcript.
@@ -101,8 +101,8 @@ def main():
     transcript = []
     if os.uname().sysname != "Darwin":
         raise RuntimeError("this opt-in check requires macOS")
-    with tempfile.TemporaryDirectory(prefix="dsh-cua-fixture-") as directory:
-        fixture_binary = Path(directory) / "dsh-cua-fixture"
+    with tempfile.TemporaryDirectory(prefix="tomato-cua-fixture-") as directory:
+        fixture_binary = Path(directory) / "tomato-cua-fixture"
         state_path = Path(directory) / "state.json"
         subprocess.run(["swiftc", str(ROOT / "tests" / "Fixture.swift"), "-o", str(fixture_binary)], check=True)
         fixture_args = [str(fixture_binary), str(state_path)]

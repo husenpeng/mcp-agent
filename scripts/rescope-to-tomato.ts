@@ -34,7 +34,7 @@
  */
 
 import { execFileSync } from 'node:child_process'
-import { existsSync, readFileSync, realpathSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -44,6 +44,7 @@ const root = resolve(import.meta.dirname, '..')
 const EXCLUDED_PREFIXES = [
   '.agents/notes/', // records what was true when written
   'docs/upgrade-guide/', // published upgrade history
+  'docs/persistence-changes/', // published release records
   'docs/tomato/adr/', // decision records
   'scripts/snapshots/', // recorded model payloads
 ] as const
@@ -70,6 +71,7 @@ const EXTERNAL_SCOPE_PATTERN = /@deepseek-ai\/libreoffice-kit[A-Za-z0-9._*-]*/g
 const LEAF_SPECIAL: Readonly<Record<string, string>> = {
   brand: 'branded',
   root: 'harness',
+  'subagent-dsh-sdk': 'subagent-sdk',
 }
 
 /** Complete package names that need an inner `dsh` removed too. */
@@ -80,13 +82,10 @@ const FULL_NAME_SPECIAL: ReadonlyArray<readonly [string, string]> = [
 ]
 
 const EXTENSIONS = [
-  '.ts', '.tsx', '.js', '.mjs', '.cjs', '.json', '.jsonl', '.yml', '.yaml',
+  '.ts', '.tsx', '.mts', '.cts', '.js', '.mjs', '.cjs', '.json', '.jsonl', '.yml', '.yaml',
   '.md', '.tpl', '.ps1', '.sh', '.py', '.cmd', '.bat', '.html', '.css',
-  '.txt', '.toml', '.env', '.example',
+  '.txt', '.toml', '.env', '.example', '.c', '.h', '.snap', '.patch',
 ] as const
-
-/** Extensionless files that are sources, not artifacts. */
-const EXTRA_INCLUDED = new Set(['apps/desktop/cli/dsh', 'apps/desktop/cli/dsh.cmd'])
 
 /**
  * Identify files the codemod must not scan.
@@ -99,7 +98,9 @@ export function isTomatoExcluded(file: string): boolean {
   if (file.endsWith('.i18n.yaml')) return true // blob-hash records
   if (/^vendor\/[^/]+\/README\.md$/.test(file)) return true // upstream files kept verbatim
   if (/^vendor\/[^/]+\/LICENSE$/.test(file)) return true
-  if (EXTRA_INCLUDED.has(file)) return false
+  // Extensionless sources (Makefile, Dockerfile, launchers) are text.
+  const name = file.slice(file.lastIndexOf('/') + 1)
+  if (!name.includes('.')) return false
   return !EXTENSIONS.some(extension => file.endsWith(extension))
 }
 
@@ -117,17 +118,20 @@ function packageLeaves(): { leaf: string; mapped: string }[] {
     const path = resolve(root, file)
     if (!existsSync(path)) continue
     const { name } = JSON.parse(readFileSync(path, 'utf8')) as { name?: string }
-    if (name === undefined || !name.startsWith('@deepseek-ai/dsh-')) continue
-    const leaf = name.slice('@deepseek-ai/dsh-'.length)
-    leaves.set(leaf, LEAF_SPECIAL[leaf] ?? leaf)
+    // The scan must work before and after the rename, so a resumed or checked
+    // tree derives the same leaf list from either spelling.
+    if (name === undefined) continue
+    if (name.startsWith('@deepseek-ai/dsh-')) leaves.set(name.slice('@deepseek-ai/dsh-'.length), LEAF_SPECIAL[name.slice('@deepseek-ai/dsh-'.length)] ?? name.slice('@deepseek-ai/dsh-'.length))
+    else if (name.startsWith('@tomato/')) leaves.set(name.slice('@tomato/'.length), name.slice('@tomato/'.length))
   }
+  for (const [leaf, mapped] of Object.entries(LEAF_SPECIAL)) leaves.set(leaf, mapped)
   return [...leaves].map(([leaf, mapped]) => ({ leaf, mapped })).sort((left, right) => right.leaf.length - left.leaf.length)
 }
 
 const LEAVES = packageLeaves()
 
 /** Longest-first alternation so `dsh-session-format` wins over `dsh-session`. */
-const LEAF_PATTERN = new RegExp(`\\bdsh-(${LEAVES.map(({ leaf }) => escapeRegExp(leaf)).join('|')})(?![A-Za-z0-9_-])`, 'g')
+const LEAF_PATTERN = new RegExp(`\\bdsh-(${LEAVES.map(({ leaf }) => escapeRegExp(leaf)).join('|')})(?![A-Za-z0-9_:-])`, 'g')
 const LEAF_MAP = new Map(LEAVES.map(({ leaf, mapped }) => [leaf, mapped]))
 
 /** Ordered rename layers; `--only` applies a subset when landing the change in steps. */
@@ -161,25 +165,32 @@ export function rescopeLine(line: string, only: ReadonlySet<RescopeLayer> = new 
     out = out.replace(/@deepseek-ai\/dsh-/g, '@tomato/')
     // Escaped scope inside a regular-expression literal.
     out = out.split('@deepseek-ai\\/').join('@tomato\\/')
-    out = out.replace(/@deepseek-ai(\/|:|(?![A-Za-z0-9_-]))/g, (match, tail: string) => `@tomato${tail}`)
+    out = out.replace(/@deepseek-ai(\/|:|(?![A-Za-z0-9_-]))/g, (_match, tail: string) => `@tomato${tail}`)
     // Bare package references in prose: `dsh-agent` names the `@tomato/agent` package.
     out = out.replace(LEAF_PATTERN, (_match, leaf: string) => `@tomato/${LEAF_MAP.get(leaf) ?? leaf}`)
-    out = out.split('subagent-dsh-sdk').join('subagent-sdk')
   }
 
   if (only.has('env')) {
-    // Environment namespace and the bare acronym.
-    out = out.replace(/\bDSH_/g, 'TOMATO_')
+    // Environment namespace and the bare acronym, including the
+    // `__DSH_...__` globals and `SCREAMING_CASE` identifiers.
+    out = out.replace(/DSH_/g, 'TOMATO_')
+    out = out.replace(/_DSH_/g, '_TOMATO_')
+    out = out.replace(/_DSH\b/g, '_TOMATO')
+    out = out.replace(/isDSH(?=[A-Z])/g, 'isTomato')
     out = out.replace(/\bDSH\b/g, 'TOMATO')
+    out = out.replace(/DSH(?=[A-Z])/g, 'TOMATO')
   }
 
   if (only.has('ident')) {
-    // Code identifiers that start with the old prefix.
-    out = out.replace(/\bDsh(?=[A-Z])/g, 'Tomato')
-    out = out.replace(/\bdsh(?=[A-Z])/g, 'tomato')
+    // Code identifiers that contain the old prefix, including mid-word forms
+    // such as `bundledDshVersion`.
+    out = out.replace(/Dsh(?=[A-Z])/g, 'Tomato')
+    out = out.replace(/dsh(?=[A-Z])/g, 'tomato')
   }
 
   if (only.has('cli')) {
+    // The package directory drops the inner `dsh` too.
+    out = out.split('subagent-dsh-sdk').join('subagent-sdk')
     // Remaining kebab tokens: release tags, URL schemes, temp-directory prefixes.
     out = out.replace(/\bdsh-/g, 'tomato-')
     // The command, home directory, manifest field, and settings namespace.
@@ -237,7 +248,7 @@ function main(): void {
     }))
   const files = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
     .split('\0')
-    .filter(file => file !== '' && !isTomatoExcluded(file) && existsSync(resolve(root, file)))
+    .filter(file => file !== '' && !isTomatoExcluded(file) && existsSync(resolve(root, file)) && statSync(resolve(root, file)).isFile())
 
   const counts = new Map<string, { files: number; lines: number }>()
   const outstanding: string[] = []

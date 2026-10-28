@@ -1,6 +1,6 @@
 {
-  "name": "@deepseek-ai/dsh-terminal-bash",
-  "description": "Persistent shell PTY backend over the DeepSeek Harness subprocess terminal primitive",
+  "name": "@tomato/terminal-bash",
+  "description": "Persistent shell PTY backend over the Tomato Harness subprocess terminal primitive",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -29,32 +29,32 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:*",
-    "@deepseek-ai/dsh-terminal": "workspace:*",
-    "@deepseek-ai/dsh-sandbox": "workspace:*",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-subprocess": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-working-directory": "workspace:*"
+    "@tomato/agent": "workspace:*",
+    "@tomato/terminal": "workspace:*",
+    "@tomato/sandbox": "workspace:*",
+    "@tomato/sandbox-policy": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/subprocess": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/working-directory": "workspace:*"
   },
   "dependencies": {
-    "@deepseek-ai/dsh-lazy-require": "workspace:*",
-    "@deepseek-ai/dsh-pwsh-local": "workspace:*",
-    "@deepseek-ai/schemastery": "workspace:~",
+    "@tomato/lazy-require": "workspace:*",
+    "@tomato/pwsh-local": "workspace:*",
+    "@tomato/schemastery": "workspace:~",
     "@xterm/headless": "^6.0.0"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:*",
-    "@deepseek-ai/dsh-agent-loop-testkit": "workspace:*",
-    "@deepseek-ai/dsh-terminal": "workspace:*",
-    "@deepseek-ai/dsh-sandbox": "workspace:*",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-session-projection": "workspace:*",
-    "@deepseek-ai/dsh-subprocess": "workspace:*",
-    "@deepseek-ai/dsh-subprocess-local": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-working-directory": "workspace:*"
+    "@tomato/agent": "workspace:*",
+    "@tomato/agent-loop-testkit": "workspace:*",
+    "@tomato/terminal": "workspace:*",
+    "@tomato/sandbox": "workspace:*",
+    "@tomato/sandbox-policy": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/subprocess": "workspace:*",
+    "@tomato/subprocess-local": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/working-directory": "workspace:*"
   }
 }

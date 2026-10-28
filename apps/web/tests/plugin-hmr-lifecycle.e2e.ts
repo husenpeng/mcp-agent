@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { chromium, type Browser, type Locator, type Page } from 'playwright'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import type { ChangeResult } from '@deepseek-ai/dsh-plugin-manager'
+import type { ChangeResult } from '@tomato/plugin-manager'
 import { launchWebScaffold, watchConsole, type WebScaffold } from './scaffold.ts'
 import { PLUGIN_TOGGLE_SETTLE_MS, ZH_BROWSER_LOCALE } from './support.ts'
 
@@ -42,7 +42,7 @@ describe('web e2e: plugin lifecycle with HMR', () => {
     await mkdir(dir, { recursive: true })
     await writeFile(join(dir, 'package.json'), JSON.stringify({
       name: NAME, version: `${label.replace(/\D/gu, '') || '0'}.0.0`, type: 'module', main: './index.mjs',
-      dsh: { bundle: { patch: './cordis.patch.yml' } },
+      tomato: { bundle: { patch: './cordis.patch.yml' } },
     }))
     await writeFile(join(dir, 'cordis.patch.yml'), `- insert:\n    - id: ${NAME}\n      name: ${NAME}\n`)
     await writeFile(join(dir, 'index.mjs'), `${body}
@@ -117,7 +117,7 @@ export function apply(ctx) {
   }
 
   beforeAll(async () => {
-    scratch = await mkdtemp(join(tmpdir(), 'dsh-plugin-hmr-'))
+    scratch = await mkdtemp(join(tmpdir(), 'tomato-plugin-hmr-'))
     tracePath = join(scratch, 'trace.log')
     await writeFile(tracePath, '')
     scaffold = await launchWebScaffold({ profile: { packages: [], packageManager: isolatedPnpm(scratch) } })
@@ -220,14 +220,14 @@ export function apply(ctx) {
 
 describe('web e2e: plugin installation without HMR', () => {
   it('asks for a restart after installing into a profile that applies changes at startup', async () => {
-    const scratch = await mkdtemp(join(tmpdir(), 'dsh-plugin-startup-'))
+    const scratch = await mkdtemp(join(tmpdir(), 'tomato-plugin-startup-'))
     let scaffold: WebScaffold | undefined
     let browser: Browser | undefined
     try {
       const dir = join(scratch, 'addon')
       await mkdir(dir)
       await writeFile(join(dir, 'package.json'), JSON.stringify({
-        name: NAME, version: '1.0.0', type: 'module', main: './index.mjs', dsh: { bundle: { patch: './cordis.patch.yml' } },
+        name: NAME, version: '1.0.0', type: 'module', main: './index.mjs', tomato: { bundle: { patch: './cordis.patch.yml' } },
       }))
       await writeFile(join(dir, 'cordis.patch.yml'), `- insert:\n    - id: ${NAME}\n      name: ${NAME}\n`)
       await writeFile(join(dir, 'index.mjs'), `export const name = '${NAME}'\nexport function apply() {}\n`)

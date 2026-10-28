@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-experimental-session-search",
+  "name": "@tomato/experimental-session-search",
   "description": "Give agents tools to search and read earlier sessions from the current workspace.",
   "version": "0.2.1-rc.3",
   "icon": "./icon.svg",
@@ -33,20 +33,20 @@
     "lib/types/**/*.d.ts"
   ],
   "license": "MIT",
-  "dsh": {
+  "tomato": {
     "bundle": {
       "patch": "./cordis.patch.yml",
       "listedByDefault": false
     }
   },
   "dependencies": {
-    "@deepseek-ai/dsh-session-query-sqlite": "workspace:*",
-    "@deepseek-ai/dsh-tool-session-query": "workspace:*"
+    "@tomato/session-query-sqlite": "workspace:*",
+    "@tomato/tool-session-query": "workspace:*"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/cordis": "workspace:~"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/cordis": "workspace:~"
   }
 }

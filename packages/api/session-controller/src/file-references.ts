@@ -1,12 +1,12 @@
 /** Session Controller adapter for Agent-scoped file-reference discovery. */
 
-import type { Context } from '@deepseek-ai/cordis'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import type {} from '@deepseek-ai/dsh-file-reference'
-import type { FileReferenceCandidate } from '@deepseek-ai/dsh-file-reference/types'
-import { Remote, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
+import type { Context } from '@tomato/cordis'
+import type { Agent } from '@tomato/agent'
+import type {} from '@tomato/file-reference'
+import type { FileReferenceCandidate } from '@tomato/file-reference/types'
+import { Remote, TypertRemoteService } from '@tomato/typert-protocol'
 
-declare module '@deepseek-ai/cordis' {
+declare module '@tomato/cordis' {
   interface Context {
     /** Host owner of the `fileReferences` Remote namespace. */
     sessionFileReferences: SessionFileReferences

@@ -3,17 +3,17 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-09-14-current-profile-plugin-management.md
 /agent-note-current-profile-plugin-management-shares-cli-transactions:
-  en: 86224d16fc754163
-  zh: 1c9948a6f80f2544
+  en: 83357a0060763b43
+  zh: 8c9bc881dd060b31
 /agent-note-current-profile-plugin-management-shares-cli-transactions/problem:
   en: 6bb727a659ba1503
   zh: d2ebf5c8164a807e
 /agent-note-current-profile-plugin-management-shares-cli-transactions/decision:
-  en: d2e13562b5aef903
-  zh: 07face30189c07fc
+  en: 05924d9a9d07623a
+  zh: 4644c1a62236c911
 /agent-note-current-profile-plugin-management-shares-cli-transactions/alternatives-considered:
-  en: 30c609de89084351
-  zh: 27f2747ad9d9b752
+  en: 2593bf50eb6a3afa
+  zh: 4d65679e12c8f401
 /agent-note-current-profile-plugin-management-shares-cli-transactions/consequences:
   en: a51baa71aa3fe3f4
   zh: 291db9e4ba5723d2

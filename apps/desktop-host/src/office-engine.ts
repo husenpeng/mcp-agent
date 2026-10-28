@@ -17,21 +17,21 @@ export function runtimeArchivePath(runtimeDir: string): string | undefined {
 /**
  * Keep engine executable and resource paths usable by native child processes outside Electron.
  * Hooks apply only to this thread; worker threads must install their own resolver.
- * @param runtimeDir - Prepared or ASAR-contained dsh runtime directory.
+ * @param runtimeDir - Prepared or ASAR-contained tomato runtime directory.
  * @returns Installed resolver for the Host lifetime, or undefined for a non-ASAR runtime.
  */
 export function installOfficeEngineResolution(runtimeDir: string): ModuleHooks | undefined {
   if (runtimeArchivePath(runtimeDir) === undefined) return undefined
   const root = realpathSync(runtimeDir)
   const archive = dirname(root)
-  const source = pathToFileURL(join(root, 'node_modules', '@deepseek-ai', 'libreoffice-kit-')).href
-  const destination = pathToFileURL(join(`${archive}.unpacked`, relative(archive, root), 'node_modules', '@deepseek-ai', 'libreoffice-kit-')).href
+  const source = pathToFileURL(join(root, 'node_modules', '@tomato', 'libreoffice-kit-')).href
+  const destination = pathToFileURL(join(`${archive}.unpacked`, relative(archive, root), 'node_modules', '@tomato', 'libreoffice-kit-')).href
   return registerHooks({
     resolve(specifier, context, nextResolve) {
       const resolved = nextResolve(specifier, context)
       if (!resolved.url.startsWith('file:')) return resolved
-      const engineRequest = /^@deepseek-ai\/libreoffice-kit-(?:darwin|win32|linux)-/u.test(specifier)
-      const engineTarget = /\/node_modules\/@deepseek-ai\/libreoffice-kit-(?:darwin|win32|linux)-[^/]+\//u
+      const engineRequest = /^@tomato\/libreoffice-kit-(?:darwin|win32|linux)-/u.test(specifier)
+      const engineTarget = /\/node_modules\/@tomato\/libreoffice-kit-(?:darwin|win32|linux)-[^/]+\//u
         .test(new URL(resolved.url).pathname)
       if (!engineRequest && !engineTarget) return resolved
       const canonical = pathToFileURL(realpathSync(fileURLToPath(resolved.url))).href

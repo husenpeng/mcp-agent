@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-client-ui-sidebar-terminal",
+  "name": "@tomato/client-ui-sidebar-terminal",
   "description": "Interactive shell tabs for the right Sidebar",
   "version": "0.2.1-rc.3",
   "publishConfig": {
@@ -26,14 +26,14 @@
     "./package.json": "./package.json",
     "./locale/*.json": "./locale/*.json"
   },
-  "dsh": {
+  "tomato": {
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-api-terminal-controller",
-        "@deepseek-ai/dsh-client-ui-sidebar-right",
-        "@deepseek-ai/dsh-api-remotes",
-        "@deepseek-ai/dsh-client-ui-theme",
-        "@deepseek-ai/dsh-client-shortcuts"
+        "@tomato/api-terminal-controller",
+        "@tomato/client-ui-sidebar-right",
+        "@tomato/api-remotes",
+        "@tomato/client-ui-theme",
+        "@tomato/client-shortcuts"
       ],
       "platform": "web"
     }
@@ -44,32 +44,32 @@
   },
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/cordis": "workspace:~"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-api-remotes": "workspace:*",
-    "@deepseek-ai/dsh-client-locale": "workspace:*",
-    "@deepseek-ai/dsh-client-store": "workspace:*",
-    "@deepseek-ai/dsh-client-test-runtime": "workspace:*",
-    "@deepseek-ai/dsh-client-ui-dockkit": "workspace:*",
-    "@deepseek-ai/dsh-client-ui-primitives": "workspace:*",
-    "@deepseek-ai/dsh-client-ui-renderer": "workspace:*",
-    "@deepseek-ai/dsh-client-ui-session": "workspace:*",
-    "@deepseek-ai/dsh-client-ui-sidebar-right": "workspace:*",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/api-remotes": "workspace:*",
+    "@tomato/client-locale": "workspace:*",
+    "@tomato/client-store": "workspace:*",
+    "@tomato/client-test-runtime": "workspace:*",
+    "@tomato/client-ui-dockkit": "workspace:*",
+    "@tomato/client-ui-primitives": "workspace:*",
+    "@tomato/client-ui-renderer": "workspace:*",
+    "@tomato/client-ui-session": "workspace:*",
+    "@tomato/client-ui-sidebar-right": "workspace:*",
+    "@tomato/client-ui-slots": "workspace:*",
+    "@tomato/session": "workspace:*",
     "@testing-library/react": "^16.3.3",
     "react": "^18.2.0",
     "clsx": "^2.0.0",
     "react-dom": "^18.2.0",
-    "@deepseek-ai/dsh-api-terminal-controller": "workspace:*",
+    "@tomato/api-terminal-controller": "workspace:*",
     "@xterm/xterm": "^6.0.0",
     "@xterm/addon-fit": "^0.11.0",
-    "@deepseek-ai/dsh-client-ui-layout": "workspace:*",
-    "@deepseek-ai/dsh-client-ui-conversation": "workspace:*",
-    "@deepseek-ai/dsh-client-ui-theme": "workspace:*",
-    "@deepseek-ai/dsh-client-shortcuts": "workspace:*"
+    "@tomato/client-ui-layout": "workspace:*",
+    "@tomato/client-ui-conversation": "workspace:*",
+    "@tomato/client-ui-theme": "workspace:*",
+    "@tomato/client-shortcuts": "workspace:*"
   },
   "files": [
     "locale/*.json",

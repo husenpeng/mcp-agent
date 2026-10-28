@@ -3,12 +3,12 @@
 // through one serialized read-modify-write so a rotating credential cannot be
 // lost between processes.
 import { afterEach, describe, expect, it } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@tomato/cordis'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { credentialKey, credentialKeyScope, credentialRef, parseCredentialKey } from '@deepseek-ai/dsh-credentials'
-import type { CredentialKey, CredentialRecord } from '@deepseek-ai/dsh-credentials'
+import { credentialKey, credentialKeyScope, credentialRef, parseCredentialKey } from '@tomato/credentials'
+import type { CredentialKey, CredentialRecord } from '@tomato/credentials'
 import { LocalCredentialProvider } from '../src/index.ts'
 
 /** Credential documents are seeded owner-only, exactly as the provider creates them. */
@@ -27,7 +27,7 @@ afterEach(async () => {
 })
 
 async function tempDir(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'dsh-cred-records-'))
+  const dir = await mkdtemp(join(tmpdir(), 'tomato-cred-records-'))
   cleanups.push(() => rm(dir, { recursive: true, force: true }))
   return dir
 }

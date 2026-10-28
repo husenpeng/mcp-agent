@@ -21,7 +21,7 @@ on:
         default: ''
         required: false
       source_ref:
-        description: '打包源码：test 支持仓库内分支或 dsh-v* tag；production 仅支持 master 或 dsh-v* tag；源码须包含 CI 适配脚本'
+        description: '打包源码：test 支持仓库内分支或 tomato-v* tag；production 仅支持 master 或 tomato-v* tag；源码须包含 CI 适配脚本'
         type: string
         default: master
         required: true
@@ -68,7 +68,7 @@ concurrency:
 
 jobs:
   package:
-    runs-on: dsh-win-package-trial
+    runs-on: tomato-win-package-trial
     timeout-minutes: 120
     defaults:
       run:
@@ -121,11 +121,11 @@ jobs:
           node -e "const fs=require('node:fs'); const ref=process.env.PACKAGE_SOURCE_REF;
           const cp=require('node:child_process'); const preset=process.env.TOMATO_PACKAGING_PRESET;
           if(!['test','production'].includes(preset)) throw Error('Unknown packaging preset');
-          const tag=/^dsh-v[0-9][0-9A-Za-z.-]*$/.test(ref);
-          if(preset==='production' && ref!=='master' && !tag) throw Error('Production source must be master or dsh-v*');
+          const tag=/^tomato-v[0-9][0-9A-Za-z.-]*$/.test(ref);
+          if(preset==='production' && ref!=='master' && !tag) throw Error('Production source must be master or tomato-v*');
           if(tag) {
           const v=JSON.parse(fs.readFileSync('package.json','utf8')).version;
-          if(ref!=='dsh-v'+v) throw Error('Source tag must match product version');
+          if(ref!=='tomato-v'+v) throw Error('Source tag must match product version');
           const tagged=cp.execFileSync('git',['rev-parse','--verify','refs/tags/'+ref+'^{commit}'],{encoding:'utf8'}).trim();
           const head=cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
           if(tagged!==head) throw Error('Checkout does not match source tag');
@@ -154,7 +154,7 @@ jobs:
       - name: Configure persistent pnpm store
         # PNPM_HOME belongs to this run; keep downloaded packages outside its temporary directory.
         env:
-          TOMATO_DESKTOP_PACKAGE_CACHE_DIR: ${{ runner.tool_cache }}/dsh-desktop-package-cache
+          TOMATO_DESKTOP_PACKAGE_CACHE_DIR: ${{ runner.tool_cache }}/tomato-desktop-package-cache
         run: |
           $storeRoot = Join-Path ([IO.Path]::GetPathRoot($env:GITHUB_WORKSPACE)) '.pnpm-store'
           $namespace = $env:PACKAGE_CACHE_NAMESPACE

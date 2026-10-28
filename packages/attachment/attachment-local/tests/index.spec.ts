@@ -1,5 +1,5 @@
-import { Context } from '@deepseek-ai/cordis'
-import { AttachmentId } from '@deepseek-ai/dsh-attachment'
+import { Context } from '@tomato/cordis'
+import { AttachmentId } from '@tomato/attachment'
 import { existsSync } from 'node:fs'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -66,7 +66,7 @@ describe('local attachment service', () => {
   })
 
   it('saves and reads through the service boundary', async () => {
-    const tomatoHome = await mkdtemp(join(tmpdir(), 'dsh-attachment-service-'))
+    const tomatoHome = await mkdtemp(join(tmpdir(), 'tomato-attachment-service-'))
     try {
       const service = new LocalAttachmentStore(new Context(), { tomatoHome })
       const data = Uint8Array.from(Buffer.from(
@@ -108,7 +108,7 @@ describe('local attachment service', () => {
   })
 
   it('commits a fully prepared image batch in input order', async () => {
-    const tomatoHome = await mkdtemp(join(tmpdir(), 'dsh-attachment-batch-success-'))
+    const tomatoHome = await mkdtemp(join(tmpdir(), 'tomato-attachment-batch-success-'))
     try {
       const service = new LocalAttachmentStore(new Context(), { tomatoHome })
       const first = new Uint8Array(await sharp({
@@ -132,7 +132,7 @@ describe('local attachment service', () => {
   })
 
   it.each([3, 4] as const)('admits a 16-bit %s-channel PNG as an 8-bit normalized object', async (channels) => {
-    const tomatoHome = await mkdtemp(join(tmpdir(), 'dsh-attachment-16-bit-'))
+    const tomatoHome = await mkdtemp(join(tmpdir(), 'tomato-attachment-16-bit-'))
     try {
       const service = new LocalAttachmentStore(new Context(), { tomatoHome })
       const source = new Uint8Array(await sharp({
@@ -151,7 +151,7 @@ describe('local attachment service', () => {
   })
 
   it('prepares every batch member before any write', async () => {
-    const tomatoHome = await mkdtemp(join(tmpdir(), 'dsh-attachment-batch-'))
+    const tomatoHome = await mkdtemp(join(tmpdir(), 'tomato-attachment-batch-'))
     try {
       const service = new LocalAttachmentStore(new Context(), { tomatoHome })
       const valid = Uint8Array.from(Buffer.from(
@@ -169,7 +169,7 @@ describe('local attachment service', () => {
   })
 
   it('validates without persisting: a rejected image leaves no storage root behind', async () => {
-    const tomatoHome = await mkdtemp(join(tmpdir(), 'dsh-attachment-validate-'))
+    const tomatoHome = await mkdtemp(join(tmpdir(), 'tomato-attachment-validate-'))
     try {
       const service = new LocalAttachmentStore(new Context(), { tomatoHome })
       await expect(service.validateImage({ data: Uint8Array.of(1, 2, 3), mediaType: 'image/png' }))

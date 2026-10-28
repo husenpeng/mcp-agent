@@ -32,10 +32,10 @@ export default async function open(url) {
     headers: { cookie: setCookie.split(';', 1)[0] },
   })
   const html = await response.text()
-  console.log(`dsh browser-open: ${JSON.stringify({
+  console.log(`tomato browser-open: ${JSON.stringify({
     url,
     status: response.status,
-    bootManifest: html.includes('__DSH_BOOT__'),
+    bootManifest: html.includes('__TOMATO_BOOT__'),
     apiKeyPresent: process.env.DEEPSEEK_API_KEY !== undefined,
     tomatoHomePresent: process.env.TOMATO_HOME !== undefined,
   })}`)
@@ -43,7 +43,7 @@ export default async function open(url) {
   // remains alive, so the assembled test detects an early helper exit.
   const launcher = spawn(process.execPath, [
     '--eval', handoffProbe,
-    '--', join(process.cwd(), `.dsh-browser-open-${process.ppid}`), String(process.pid),
+    '--', join(process.cwd(), `.tomato-browser-open-${process.ppid}`), String(process.pid),
   ], { stdio: 'ignore' })
   launcher.unref()
   return launcher

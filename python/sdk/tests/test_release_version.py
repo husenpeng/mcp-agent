@@ -146,7 +146,7 @@ def test_stage_runtime_copies_platform_payload(
         spawn_helper.chmod(0o755)
         expected[spawn_helper.name] = b"helper"
     office = executable.parent / f"{executable.name.removesuffix('.exe')}-office"
-    office_asset = office / "node_modules" / "@deepseek-ai" / "libreoffice-kit-wasm" / "assets" / "soffice.data"
+    office_asset = office / "node_modules" / "@tomato" / "libreoffice-kit-wasm" / "assets" / "soffice.data"
     office_asset.parent.mkdir(parents=True)
     office_asset.write_bytes(b"office data")
     resources = executable.with_name(executable.name.removeprefix("deepseek-harness-sdk-runtime-").removesuffix(".exe"))
@@ -168,7 +168,7 @@ def test_stage_runtime_copies_platform_payload(
     pyproject = (destination / "pyproject.toml").read_text()
     assert 'license = "MIT"' in pyproject
     assert 'license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]' in pyproject
-    assert 'dsh = "deepseek_harness_runtime:main"' in pyproject
+    assert 'tomato = "deepseek_harness_runtime:main"' in pyproject
     assert (destination / "platforms.json").read_bytes() == (
         ROOT / "python" / "sdk-runtime" / "platforms.json"
     ).read_bytes()

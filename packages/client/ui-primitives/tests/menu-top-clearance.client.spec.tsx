@@ -8,15 +8,15 @@ const root = document.documentElement
 let prior = ''
 
 beforeEach(() => {
-  prior = root.style.getPropertyValue('--dsh-frame-top-clearance')
-  root.style.setProperty('--dsh-frame-top-clearance', '48px')
+  prior = root.style.getPropertyValue('--tomato-frame-top-clearance')
+  root.style.setProperty('--tomato-frame-top-clearance', '48px')
 })
 
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
-  if (prior === '') root.style.removeProperty('--dsh-frame-top-clearance')
-  else root.style.setProperty('--dsh-frame-top-clearance', prior)
+  if (prior === '') root.style.removeProperty('--tomato-frame-top-clearance')
+  else root.style.setProperty('--tomato-frame-top-clearance', prior)
 })
 
 /**

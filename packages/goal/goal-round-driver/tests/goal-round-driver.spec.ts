@@ -1,20 +1,20 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import type { Agent, PreStepDecision } from '@deepseek-ai/dsh-agent'
-import { agentEvents } from '@deepseek-ai/dsh-agent'
-import AgentLoop from '@deepseek-ai/dsh-agent-loop'
-import { mountAgentLoopTestDependencies } from '@deepseek-ai/dsh-agent-loop-testkit'
-import GoalService, { GoalId } from '@deepseek-ai/dsh-goal'
-import type { GoalView } from '@deepseek-ai/dsh-goal'
-import { createUserMessage, LlmAdapter, LlmError  } from '@deepseek-ai/dsh-llm'
-import type { GenerateOptions, StreamChunk } from '@deepseek-ai/dsh-llm'
-import type { ContextFormed } from '@deepseek-ai/dsh-llm'
-import { SessionId } from '@deepseek-ai/dsh-session'
-import type { UserMessage } from '@deepseek-ai/dsh-session'
-import type { SubagentRuntime } from '@deepseek-ai/dsh-subagent'
+import { Context } from '@tomato/cordis'
+import type { Agent, PreStepDecision } from '@tomato/agent'
+import { agentEvents } from '@tomato/agent'
+import AgentLoop from '@tomato/agent-loop'
+import { mountAgentLoopTestDependencies } from '@tomato/agent-loop-testkit'
+import GoalService, { GoalId } from '@tomato/goal'
+import type { GoalView } from '@tomato/goal'
+import { createUserMessage, LlmAdapter, LlmError  } from '@tomato/llm'
+import type { GenerateOptions, StreamChunk } from '@tomato/llm'
+import type { ContextFormed } from '@tomato/llm'
+import { SessionId } from '@tomato/session'
+import type { UserMessage } from '@tomato/session'
+import type { SubagentRuntime } from '@tomato/subagent'
 import * as goalSession from '../src/index.ts'
 
-declare module '@deepseek-ai/dsh-llm' {
+declare module '@tomato/llm' {
   interface MessageSourceMap {
     'test': { kind: 'test' } & ContextFormed
   }

@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`@tomato/gateway` mounts in the dsh Web Host beside Connection's `/api` prefix. It gives the browser a same-origin `/api/auth/*` surface for Feishu login, session projection, and logout, and a fixed-table `/api/services/<service>/*` forwarder for company services. Every protected request is verified with auth_service and carries the verified user id; the browser never supplies a target host. Host RPC, model requests, tool egress, and OTLP telemetry stay outside this package.
+`@tomato/gateway` mounts in the tomato Web Host beside Connection's `/api` prefix. It gives the browser a same-origin `/api/auth/*` surface for Feishu login, session projection, and logout, and a fixed-table `/api/services/<service>/*` forwarder for company services. Every protected request is verified with auth_service and carries the verified user id; the browser never supplies a target host. Host RPC, model requests, tool egress, and OTLP telemetry stay outside this package.
 
 ## Table of Contents
 

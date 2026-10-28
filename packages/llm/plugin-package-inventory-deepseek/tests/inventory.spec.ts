@@ -3,16 +3,16 @@ import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { Context, LoggerLevel } from '@deepseek-ai/cordis'
-import Loader from '@deepseek-ai/cordis-plugin-loader'
-import Include from '@deepseek-ai/cordis-plugin-include'
-import AgentRegistry, { type Agent } from '@deepseek-ai/dsh-agent'
-import { SessionId } from '@deepseek-ai/dsh-session'
-import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
-import { createScope } from '@deepseek-ai/dsh-scope'
-import AgentPresets from '@deepseek-ai/dsh-agent-preset-registry'
-import { PluginPackages } from '@deepseek-ai/dsh-app-boot'
-import DeepSeekLlmApiExtensionRegistry from '@deepseek-ai/dsh-deepseek-llm-api-extensions'
+import { Context, LoggerLevel } from '@tomato/cordis'
+import Loader from '@tomato/cordis-plugin-loader'
+import Include from '@tomato/cordis-plugin-include'
+import AgentRegistry, { type Agent } from '@tomato/agent'
+import { SessionId } from '@tomato/session'
+import SessionProjectionRegistry from '@tomato/session-projection'
+import { createScope } from '@tomato/scope'
+import AgentPresets from '@tomato/agent-preset-registry'
+import { PluginPackages } from '@tomato/app-boot'
+import DeepSeekLlmApiExtensionRegistry from '@tomato/deepseek-llm-api-extensions'
 import * as PluginInventory from '../src/index.ts'
 
 const contexts: Context[] = []
@@ -40,7 +40,7 @@ async function packagePlugin(
 async function harness(
   enabled?: boolean, packageService = false,
 ): Promise<{ ctx: Context; root: string; disposeInventory: () => Promise<void> }> {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-plugin-packages-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-plugin-packages-'))
   roots.push(root)
   const ctx = new Context()
   contexts.push(ctx)

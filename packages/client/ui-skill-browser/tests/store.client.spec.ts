@@ -1,8 +1,8 @@
 /** Skills tab state: per-tab catalogs, the lazy cursor, detail reads, and save readback. */
 import { describe, expect, it } from 'vitest'
-import { RemoteError } from '@deepseek-ai/dsh-client-test-runtime'
-import type { SkillEntry, SkillGetValue } from '@deepseek-ai/dsh-api-remotes/client'
-import type { TabId } from '@deepseek-ai/dsh-client-ui-dockkit'
+import { RemoteError } from '@tomato/client-test-runtime'
+import type { SkillEntry, SkillGetValue } from '@tomato/api-remotes/client'
+import type { TabId } from '@tomato/client-ui-dockkit'
 import { createSkillBrowserStore, SKILL_PAGE_SIZE } from '../src/client/store.ts'
 
 const TAB = 'tab-1' as TabId

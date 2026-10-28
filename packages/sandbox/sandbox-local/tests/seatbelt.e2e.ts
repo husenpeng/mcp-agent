@@ -4,16 +4,16 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { homedir, tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import type { SandboxPolicy } from '@deepseek-ai/dsh-sandbox'
-import { LocalSandboxProvider } from '@deepseek-ai/dsh-sandbox-local'
+import { Context } from '@tomato/cordis'
+import type { SandboxPolicy } from '@tomato/sandbox'
+import { LocalSandboxProvider } from '@tomato/sandbox-local'
 import { seatbeltProfileArgs } from '../src/profiles.ts'
 import { checkExtraWrites, checkRedirectedRoot } from './extra-roots.ts'
 
 /**
  * Keyless backend integration through `confine()` and a real macOS Seatbelt process, with Linux
  * rungs forced off. Tests assert world effects and that the kernel denial matches the advertised
- * dialect; consumer coverage lives in dsh-bash-sandbox. Skips off macOS or when the profile probe
+ * dialect; consumer coverage lives in @tomato/bash-sandbox. Skips off macOS or when the profile probe
  * fails. HOME-based workspaces avoid Seatbelt's wholesale temp-directory grants, so
  * workspace-write proves the workspace-root grant itself.
  */
@@ -37,7 +37,7 @@ afterEach(async () => {
 })
 
 async function tempDir(base: string): Promise<string> {
-  const dir = await mkdtemp(join(base, 'dsh-seatbelt-e2e-'))
+  const dir = await mkdtemp(join(base, 'tomato-seatbelt-e2e-'))
   tempDirs.push(dir)
   return dir
 }
@@ -135,9 +135,9 @@ describe.skipIf(!seatbeltUsable)('sandbox-local: real Seatbelt confinement throu
     const gitEnv = {
       ...process.env,
       GIT_AUTHOR_NAME: 'TOMATO Test',
-      GIT_AUTHOR_EMAIL: 'dsh-test@example.invalid',
+      GIT_AUTHOR_EMAIL: 'tomato-test@example.invalid',
       GIT_COMMITTER_NAME: 'TOMATO Test',
-      GIT_COMMITTER_EMAIL: 'dsh-test@example.invalid',
+      GIT_COMMITTER_EMAIL: 'tomato-test@example.invalid',
       GIT_CONFIG_GLOBAL: '/dev/null',
       GIT_CONFIG_SYSTEM: '/dev/null',
     }

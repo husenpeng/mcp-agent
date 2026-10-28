@@ -1,20 +1,20 @@
-import { setSandboxMode } from '@deepseek-ai/dsh-sandbox-policy'
+import { setSandboxMode } from '@tomato/sandbox-policy'
 /** Actual request admission follows directory and permission changes made after assembly. */
 import { mkdtemp, mkdir, realpath, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { Context } from '@deepseek-ai/cordis'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
-import { Session, SessionId } from '@deepseek-ai/dsh-session'
-import { mountAgentLoopTestDependencies, mountAgentLoopTestHarness } from '@deepseek-ai/dsh-agent-loop-testkit'
-import SandboxPolicy from '@deepseek-ai/dsh-sandbox-policy'
-import ApprovalService from '@deepseek-ai/dsh-user-approval'
+import { Context } from '@tomato/cordis'
+import { createUserMessage } from '@tomato/llm'
+import { Session, SessionId } from '@tomato/session'
+import { mountAgentLoopTestDependencies, mountAgentLoopTestHarness } from '@tomato/agent-loop-testkit'
+import SandboxPolicy from '@tomato/sandbox-policy'
+import ApprovalService from '@tomato/user-approval'
 import { describe, expect, it, vi } from 'vitest'
 import { MockAdapter, textResponse } from '../../../core/agent-loop/tests/mock-adapter.ts'
 
 describe.each(['pre-step', 'prepareCall'] as const)('%s context changes', (phase) => {
   it.each([false, true])('admits current directory and permissions with optional context=%s', async (optional) => {
-    const root = await realpath(await mkdtemp(join(tmpdir(), 'dsh-directory-admission-')))
+    const root = await realpath(await mkdtemp(join(tmpdir(), 'tomato-directory-admission-')))
     const selected = join(root, 'selected')
     await mkdir(selected)
     const ctx = new Context()

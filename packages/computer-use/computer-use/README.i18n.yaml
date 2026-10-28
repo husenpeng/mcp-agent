@@ -5,33 +5,33 @@
 /:
   en: 5c5d7b5f1329ac1b
   zh: b68d332df957109f
-/deepseek-ai-dsh-computer-use:
-  en: 2efee0c5f0d577bc
-  zh: fef4b81bfc121052
-/deepseek-ai-dsh-computer-use/summary:
-  en: 4cb331c550852b23
-  zh: d638995ab250397b
-/deepseek-ai-dsh-computer-use/table-of-contents:
+/tomato-computer-use:
+  en: 4c3cf8fdbcd0d325
+  zh: 3f8d221c8d5e3cfa
+/tomato-computer-use/summary:
+  en: 0ebddb28433f8da7
+  zh: d56661ccec5096ba
+/tomato-computer-use/table-of-contents:
   en: d152484eb41ac6b4
   zh: 405b30feaf48c087
-/deepseek-ai-dsh-computer-use/use-this-package:
-  en: 0a298fbbcd8dbc00
-  zh: 950de2af46c87f82
-/deepseek-ai-dsh-computer-use/understand-the-implementation:
+/tomato-computer-use/use-this-package:
+  en: 48579db1264e7043
+  zh: 089bb3c7b1d84912
+/tomato-computer-use/understand-the-implementation:
   en: 181679887837591a
   zh: cc2e96766ce0aa63
-/deepseek-ai-dsh-computer-use/further-exploration:
-  en: 987295d677466c04
-  zh: 9d7b40a04786490e
-/deepseek-ai-dsh-computer-use/model-experience:
+/tomato-computer-use/further-exploration:
+  en: c014b6376541de3d
+  zh: 37f1c712a7371d4e
+/tomato-computer-use/model-experience:
   en: 8780c250dfaefaaa
   zh: 1c4b3598a131fb65
-/deepseek-ai-dsh-computer-use/model-experience/kv-cache-effect:
+/tomato-computer-use/model-experience/kv-cache-effect:
   en: 0cc866a67a19d08b
   zh: e1c3bb5ee2fed596
-/deepseek-ai-dsh-computer-use/known-limitations-and-deferred-work:
-  en: 6b8a90585a227a46
-  zh: 7e0e3bf026fd67e9
-/deepseek-ai-dsh-computer-use/known-limitations-and-deferred-work/dev-note:
+/tomato-computer-use/known-limitations-and-deferred-work:
+  en: 5d185acd5c0334b6
+  zh: 7336386576fb091b
+/tomato-computer-use/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 6c5f9788c6536776

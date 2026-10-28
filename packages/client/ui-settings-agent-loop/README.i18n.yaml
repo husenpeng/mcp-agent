@@ -3,35 +3,35 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-settings-agent-loop/README.md
 /:
-  en: 12adb999b01b035a
-  zh: 15ac17dd70c78e07
-/deepseek-ai-dsh-client-ui-settings-agent-loop:
-  en: 375e454589cac6c8
-  zh: 7d609e69bc62fa77
-/deepseek-ai-dsh-client-ui-settings-agent-loop/summary:
+  en: b0fe212145d1c8f1
+  zh: d7ea21d4a42df46a
+/tomato-client-ui-settings-agent-loop:
+  en: 797edc50cd15b58a
+  zh: c98885ab6b465dc1
+/tomato-client-ui-settings-agent-loop/summary:
   en: 42fc4bae4890b0f7
   zh: b11cbdc801aefb56
-/deepseek-ai-dsh-client-ui-settings-agent-loop/table-of-contents:
+/tomato-client-ui-settings-agent-loop/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
-/deepseek-ai-dsh-client-ui-settings-agent-loop/use-this-package:
+/tomato-client-ui-settings-agent-loop/use-this-package:
   en: 189a3f8d22570043
   zh: 6bda29a5eff7d4bd
-/deepseek-ai-dsh-client-ui-settings-agent-loop/understand-the-implementation:
+/tomato-client-ui-settings-agent-loop/understand-the-implementation:
   en: 6412d65e7c17da6a
   zh: 530d8b53c355efba
-/deepseek-ai-dsh-client-ui-settings-agent-loop/further-exploration:
-  en: 14267229f22a17b0
-  zh: e59359820f0c2c2f
-/deepseek-ai-dsh-client-ui-settings-agent-loop/model-experience:
+/tomato-client-ui-settings-agent-loop/further-exploration:
+  en: 748ea5790587389d
+  zh: 29c07cc3289288ce
+/tomato-client-ui-settings-agent-loop/model-experience:
   en: 6b7c6f82ab6c8435
   zh: 4517689c899abcbe
-/deepseek-ai-dsh-client-ui-settings-agent-loop/model-experience/kv-cache-effect:
+/tomato-client-ui-settings-agent-loop/model-experience/kv-cache-effect:
   en: ca75c51c89c2c9b0
   zh: 6e1c9a8fdde89577
-/deepseek-ai-dsh-client-ui-settings-agent-loop/known-limitations-and-deferred-work:
+/tomato-client-ui-settings-agent-loop/known-limitations-and-deferred-work:
   en: 4618f99cab06ba2d
   zh: b77328e55203863d
-/deepseek-ai-dsh-client-ui-settings-agent-loop/known-limitations-and-deferred-work/dev-note:
+/tomato-client-ui-settings-agent-loop/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: e88aeb617ffb74ea

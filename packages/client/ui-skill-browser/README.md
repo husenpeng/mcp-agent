@@ -1,9 +1,9 @@
 ---
-description: "The right Sidebar's Skills tab type for the dsh web client: every installed skill as a lazily revealed card list, with a detail page and an editor for personal skill files."
+description: "The right Sidebar's Skills tab type for the tomato web client: every installed skill as a lazily revealed card list, with a detail page and an editor for personal skill files."
 kind: "package-reference"
 ---
 
-# @deepseek-ai/dsh-client-ui-skill-browser
+# @tomato/client-ui-skill-browser
 
 English | [中文](README.zh.md)
 
@@ -24,7 +24,7 @@ Browse every skill the current Session composition can see, open one skill's met
 <a id="what-it-registers"></a>
 ## What it registers
 
-- **The type** — `ctx.sidebarRightTabs.register(...)` with kind `skills`, id `@deepseek-ai/dsh-client-ui-skill-browser`, band `builtin`, no address patterns, and one guide entry (order 40) whose title is the proper noun `Skills` in every language.
+- **The type** — `ctx.sidebarRightTabs.register(...)` with kind `skills`, id `@tomato/client-ui-skill-browser`, band `builtin`, no address patterns, and one guide entry (order 40) whose title is the proper noun `Skills` in every language.
 - **The body** — the keyed `sidebar.right.pane.tab` seat under that id. It receives the Session id and the tab record from the framework and calls only the injected face; the face talks to the Session-addressed `skills` Remote.
 - **The chip title** — the keyed `sidebar.right.pane.tab.title` seat under that id: the shared skill glyph before the type's label.
 
@@ -69,6 +69,6 @@ None in the panel itself. A later skill invocation embeds the edited body in its
 <details>
 <summary>Working context for maintainers — click to expand</summary>
 
-Writing is owned by `@deepseek-ai/dsh-skill-filesystem`: it rereads the raw file, merges the named fields into the existing YAML frontmatter, preserves unknown keys, and rewrites the body. The Remote restricts this capability to personal sources and resolves the target from the winning catalog entry, so the request never supplies a path. The provider's write is fenced to the skill file's own directory when it goes through `ctx.fs`, because a personal root normally sits outside the deployment workspace.
+Writing is owned by `@tomato/skill-filesystem`: it rereads the raw file, merges the named fields into the existing YAML frontmatter, preserves unknown keys, and rewrites the body. The Remote restricts this capability to personal sources and resolves the target from the winning catalog entry, so the request never supplies a path. The provider's write is fenced to the skill file's own directory when it goes through `ctx.fs`, because a personal root normally sits outside the deployment workspace.
 
 </details>

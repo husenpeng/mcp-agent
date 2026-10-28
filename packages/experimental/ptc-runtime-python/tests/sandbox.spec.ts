@@ -2,14 +2,14 @@ import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promis
 import { homedir } from 'node:os'
 import { createServer, type Socket } from 'node:net'
 import { basename, delimiter, join } from 'node:path'
-import { Context } from '@deepseek-ai/cordis'
-import Sandbox from '@deepseek-ai/dsh-sandbox-local'
-import SandboxPolicy from '@deepseek-ai/dsh-sandbox-policy'
-import SessionProjections from '@deepseek-ai/dsh-session-projection'
-import { SandboxUnavailableError } from '@deepseek-ai/dsh-sandbox'
-import { SessionId } from '@deepseek-ai/dsh-session'
+import { Context } from '@tomato/cordis'
+import Sandbox from '@tomato/sandbox-local'
+import SandboxPolicy from '@tomato/sandbox-policy'
+import SessionProjections from '@tomato/session-projection'
+import { SandboxUnavailableError } from '@tomato/sandbox'
+import { SessionId } from '@tomato/session'
 import { describe, expect, it, onTestFinished, vi } from 'vitest'
-import type { ConfinedArgv, SandboxMode } from '@deepseek-ai/dsh-sandbox'
+import type { ConfinedArgv, SandboxMode } from '@tomato/sandbox'
 import type { Config } from '../src/index.ts'
 import { PythonPtcRuntime } from '../src/index.ts'
 import { createRuntimeContext } from './setup.ts'
@@ -29,7 +29,7 @@ const sandboxUsable = await (async () => {
 
 async function setup(mode: SandboxMode = 'read-only', config: Config = {}) {
   // A home-directory fixture stays outside the Linux backend's writable /tmp.
-  const root = await mkdtemp(join(homedir(), '.dsh-python-sandbox-test-'))
+  const root = await mkdtemp(join(homedir(), '.tomato-python-sandbox-test-'))
   const cwd = join(root, 'workspace')
   await mkdir(cwd)
   const ctx = await createRuntimeContext({ mode, workspaceRoot: cwd })

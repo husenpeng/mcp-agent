@@ -64,7 +64,7 @@ verify_sha256() {
   esac
 }
 
-scratch="$(mktemp -d "${TMPDIR:-/tmp}/dsh-wine-gates.XXXXXX")"
+scratch="$(mktemp -d "${TMPDIR:-/tmp}/tomato-wine-gates.XXXXXX")"
 cleanup() {
   wineserver -k > /dev/null 2>&1 || true
   if [ "${TOMATO_WINE_GATE_KEEP:-0}" = '1' ]; then

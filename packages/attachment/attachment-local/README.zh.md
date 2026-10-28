@@ -3,13 +3,13 @@ description: "TOMATO_HOME 下附加图片的本地存储，供用户与维护者
 kind: "package-reference"
 ---
 
-# @deepseek-ai/dsh-attachment-local
+# @tomato/attachment-local
 
 [English](README.md) | 中文
 
 ## 概述
 
-在运行 TOMATO 的机器上，把图片与通用文件附件持久存储到 `TOMATO_HOME` 下。图片经过校验、针对模型请求完成规范化并按路由缓存；通用文件不设准入限制，按字节原样保存。即使上传时使用不同显示名称，相同字节也只存储一次；读取会校验文件长度与内容，之后收紧限制也不会让已接纳的图片不可读。随附的 `dsh` 组合无需配置即可使用本包。对象仅限本机，并且永远不会自动删除。
+在运行 TOMATO 的机器上，把图片与通用文件附件持久存储到 `TOMATO_HOME` 下。图片经过校验、针对模型请求完成规范化并按路由缓存；通用文件不设准入限制，按字节原样保存。即使上传时使用不同显示名称，相同字节也只存储一次；读取会校验文件长度与内容，之后收紧限制也不会让已接纳的图片不可读。随附的 `tomato` 组合无需配置即可使用本包。对象仅限本机，并且永远不会自动删除。
 
 ## 目录
 
@@ -32,12 +32,12 @@ kind: "package-reference"
 挂载插件，无需任何必填配置。下列默认值规定了可以附加的内容；生成的配置目录完整列出了所有字段。
 
 ```yaml
-- name: '@deepseek-ai/dsh-attachment-local'
+- name: '@tomato/attachment-local'
 ```
 
 | 字段 | 默认值 | 含义 |
 |---|---|---|
-| `tomatoHome` | 自动解析 | 显式 harness home；省略时依次跟随 `$TOMATO_HOME` 与 `~/.dsh` |
+| `tomatoHome` | 自动解析 | 显式 harness home；省略时依次跟随 `$TOMATO_HOME` 与 `~/.tomato` |
 | `maxImageBytes` | `50 MiB` | 单张图片接受的最大编码源字节数 |
 | `maxImagesPerMessage` | `20` | 单条提交消息接受的最大图片数量 |
 | `maxMessageImageBytes` | `200 MiB` | 单条提交消息接受的最大编码源图字节总数 |

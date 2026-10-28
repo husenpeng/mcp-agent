@@ -1,4 +1,4 @@
-import OTel from '@deepseek-ai/dsh-otel'
+import OTel from '@tomato/otel'
 /**
  * OTel backend unit tier: wire assertions against a scripted `node:http`
  * mock collector through the SDK's REAL pipeline (BatchLogRecordProcessor →
@@ -13,14 +13,14 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { gunzipSync } from 'node:zlib'
-import { Context } from '@deepseek-ai/cordis'
-import { getOrCreateAnonymousUserId } from '@deepseek-ai/dsh-anonymous-user-id'
-import Loader from '@deepseek-ai/cordis-plugin-loader'
-import { recordFeedback } from '@deepseek-ai/dsh-command-feedback'
-import { createAssistantMessage } from '@deepseek-ai/dsh-llm'
-import SessionStore, { SESSION_FORMAT_VERSION, Session, SessionId, SessionLogOffset, SessionSeq } from '@deepseek-ai/dsh-session'
-import MessageFeedbackService from '@deepseek-ai/dsh-message-feedback'
-import * as JsonlPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
+import { Context } from '@tomato/cordis'
+import { getOrCreateAnonymousUserId } from '@tomato/anonymous-user-id'
+import Loader from '@tomato/cordis-plugin-loader'
+import { recordFeedback } from '@tomato/command-feedback'
+import { createAssistantMessage } from '@tomato/llm'
+import SessionStore, { SESSION_FORMAT_VERSION, Session, SessionId, SessionLogOffset, SessionSeq } from '@tomato/session'
+import MessageFeedbackService from '@tomato/message-feedback'
+import * as JsonlPersistence from '@tomato/session-persistence-jsonl'
 import OpenTelemetrySessionBackend, { Config, DEFAULT_TELEMETRY_MODE, SessionTelemetryMode } from '../src/index.ts'
 
 interface Capture {
@@ -48,17 +48,17 @@ interface OtlpLogsRequest {
 const servers: Server[] = []
 
 // The backend resolves the harness home's anonymous user id at construction;
-// pin TOMATO_HOME to a temp dir so the suite never touches the ambient ~/.dsh.
+// pin TOMATO_HOME to a temp dir so the suite never touches the ambient ~/.tomato.
 let tempHome: string
-let previousDshHome: string | undefined
+let previousTomatoHome: string | undefined
 beforeAll(() => {
-  tempHome = mkdtempSync(join(tmpdir(), 'dsh-otel-home-'))
-  previousDshHome = process.env.TOMATO_HOME
+  tempHome = mkdtempSync(join(tmpdir(), 'tomato-otel-home-'))
+  previousTomatoHome = process.env.TOMATO_HOME
   process.env.TOMATO_HOME = tempHome
 })
 afterAll(() => {
-  if (previousDshHome === undefined) delete process.env.TOMATO_HOME
-  else process.env.TOMATO_HOME = previousDshHome
+  if (previousTomatoHome === undefined) delete process.env.TOMATO_HOME
+  else process.env.TOMATO_HOME = previousTomatoHome
   rmSync(tempHome, { recursive: true, force: true })
 })
 
@@ -171,8 +171,8 @@ describe('OpenTelemetrySessionBackend wire', () => {
     expect(resource).toContainEqual({ key: 'user.id', value: { stringValue: getOrCreateAnonymousUserId() } })
 
     const records = allRecords(captures)
-    const ledger = records.filter(r => r.scope === '@deepseek-ai/dsh-session-telemetry-otel')
-    const ops = records.filter(r => r.scope === '@deepseek-ai/dsh-session-telemetry-otel/ops')
+    const ledger = records.filter(r => r.scope === '@tomato/session-telemetry-otel')
+    const ops = records.filter(r => r.scope === '@tomato/session-telemetry-otel/ops')
 
     const start = ledger.find(r => r.record.attributes?.some(a => a.key === 'event.type' && a.value.stringValue === 'turn/start'))
     expect(start).toBeDefined()
@@ -532,7 +532,7 @@ describe('OpenTelemetrySessionBackend route and feedback', () => {
 
   it.each(['deepseek-official', 'mock', undefined])('uploads live ratings, notes and withdrawal for %s without further interaction', async (provider) => {
     const { url, captures } = await mockCollector()
-    const root = mkdtempSync(join(tmpdir(), 'dsh-otel-live-'))
+    const root = mkdtempSync(join(tmpdir(), 'tomato-otel-live-'))
     const ctx = new Context()
     ctx.plugin(OTel)
     try {
@@ -609,7 +609,7 @@ describe('OpenTelemetrySessionBackend route and feedback', () => {
 
   it.each([SessionTelemetryMode.FEEDBACK_ONLY])('restores a cold fork with its exact inherited cut in %s', async (mode) => {
     const { url, captures } = await mockCollector()
-    const root = mkdtempSync(join(tmpdir(), 'dsh-otel-cold-fork-'))
+    const root = mkdtempSync(join(tmpdir(), 'tomato-otel-cold-fork-'))
     const ctx = new Context()
     ctx.plugin(OTel)
     try {
@@ -665,7 +665,7 @@ describe('OpenTelemetrySessionBackend route and feedback', () => {
     ['mock', SessionTelemetryMode.DISABLED],
   ] as const)('captures cold put, note edit and withdrawal for %s in %s without opening a live Session', async (provider, mode) => {
     const { url, captures } = await mockCollector()
-    const root = mkdtempSync(join(tmpdir(), 'dsh-otel-cold-'))
+    const root = mkdtempSync(join(tmpdir(), 'tomato-otel-cold-'))
     const ctx = new Context()
     ctx.plugin(OTel)
     const warn = vi.spyOn(ctx.logger, 'warn').mockImplementation(() => {})
@@ -799,7 +799,7 @@ describe('OpenTelemetrySessionBackend config fails loud', () => {
   })
 })
 
-describe('dsh-session-telemetry-otel real-load-path guard', () => {
+describe('@tomato/session-telemetry-otel real-load-path guard', () => {
   it('keeps the Service class with inject/Config through unwrapExports', async () => {
     const module = await import('../src/index.ts')
     const loader = Object.create(Loader.prototype) as Loader

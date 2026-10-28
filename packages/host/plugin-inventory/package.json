@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-host-plugin-inventory",
+  "name": "@tomato/host-plugin-inventory",
   "description": "Read-only Remote projection of current Cordis Loader plugin state",
   "version": "0.2.1-rc.3",
   "publishConfig": {
@@ -49,24 +49,24 @@
     "zod": "4.4.3"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
-    "@deepseek-ai/dsh-agent-preset-registry": "workspace:*",
-    "@deepseek-ai/dsh-brand": "workspace:*",
-    "@deepseek-ai/dsh-typert-protocol": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/cordis-plugin-loader": "workspace:~",
+    "@tomato/agent-preset-registry": "workspace:*",
+    "@tomato/branded": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*",
+    "@tomato/cordis": "workspace:~"
   },
   "peerDependenciesMeta": {
-    "@deepseek-ai/dsh-agent-preset-registry": {
+    "@tomato/agent-preset-registry": {
       "optional": true
     }
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-app-boot": "workspace:*",
-    "@deepseek-ai/dsh-package-manifest": "workspace:*",
-    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
-    "@deepseek-ai/dsh-agent-preset-registry": "workspace:*",
-    "@deepseek-ai/dsh-brand": "workspace:*",
-    "@deepseek-ai/dsh-typert-protocol": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/app-boot": "workspace:*",
+    "@tomato/package-manifest": "workspace:*",
+    "@tomato/cordis-plugin-loader": "workspace:~",
+    "@tomato/agent-preset-registry": "workspace:*",
+    "@tomato/branded": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*",
+    "@tomato/cordis": "workspace:~"
   }
 }

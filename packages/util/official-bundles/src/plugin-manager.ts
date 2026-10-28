@@ -6,15 +6,15 @@
  * entry, installation-carried bundles, and unaddressable rows stay protected by their own rules.
  */
 export const PROTECTED_PLUGINS: ReadonlySet<string> = new Set([
-  '@deepseek-ai/dsh-plugin-manager', '@deepseek-ai/cordis-plugin-loader',
-  '@deepseek-ai/cordis-plugin-include', '@deepseek-ai/dsh-api-gateway',
-  '@deepseek-ai/dsh-host-webserver', '@deepseek-ai/dsh-client-modules',
-  '@deepseek-ai/dsh-client-ui-settings-plugin-inventory', '@deepseek-ai/dsh-client-ui-plugin-manager',
-  '@deepseek-ai/dsh-host-plugin-inventory', '@deepseek-ai/dsh-typert-registry',
-  '@deepseek-ai/dsh-api-remotes', '@deepseek-ai/dsh-api-remote-access',
-  '@deepseek-ai/cordis-plugin-timer', '@deepseek-ai/dsh-client-connection',
-  '@deepseek-ai/dsh-host-frontend-static', '@deepseek-ai/dsh-tools',
-  '@deepseek-ai/dsh-hmr',
+  '@tomato/plugin-manager', '@tomato/cordis-plugin-loader',
+  '@tomato/cordis-plugin-include', '@tomato/api-gateway',
+  '@tomato/host-webserver', '@tomato/client-modules',
+  '@tomato/client-ui-settings-plugin-inventory', '@tomato/client-ui-plugin-manager',
+  '@tomato/host-plugin-inventory', '@tomato/typert-registry',
+  '@tomato/api-remotes', '@tomato/api-remote-access',
+  '@tomato/cordis-plugin-timer', '@tomato/client-connection',
+  '@tomato/host-frontend-static', '@tomato/tools',
+  '@tomato/hmr',
 ])
 
 /**
@@ -22,13 +22,13 @@ export const PROTECTED_PLUGINS: ReadonlySet<string> = new Set([
  * Their Host availability and activation stay intact.
  */
 export const HIDDEN_BUNDLES: ReadonlySet<string> = new Set([
-  '@deepseek-ai/dsh-base',
-  '@deepseek-ai/dsh-web-app',
-  '@deepseek-ai/dsh-headless',
-  '@deepseek-ai/dsh-sdk-app',
-  '@deepseek-ai/dsh-acp-app',
-  '@deepseek-ai/dsh-sdk-minimal',
-  '@deepseek-ai/dsh-experimental-terminal-bundle',
+  '@tomato/base',
+  '@tomato/web-app',
+  '@tomato/headless',
+  '@tomato/sdk-app',
+  '@tomato/acp-app',
+  '@tomato/sdk-minimal',
+  '@tomato/experimental-terminal-bundle',
 ])
 
 /**
@@ -36,10 +36,10 @@ export const HIDDEN_BUNDLES: ReadonlySet<string> = new Set([
  * this list, decides whether a bundle appears on the main list.
  */
 export const EXTENSION_BUNDLES: readonly string[] = [
-  '@deepseek-ai/dsh-experimental-agent-team-profile',
-  '@deepseek-ai/dsh-experimental-voice-input-bundle',
-  '@deepseek-ai/dsh-experimental-plugin-market-bundle',
-  '@deepseek-ai/dsh-experimental-auto-review',
+  '@tomato/experimental-agent-team-profile',
+  '@tomato/experimental-voice-input-bundle',
+  '@tomato/experimental-plugin-market-bundle',
+  '@tomato/experimental-auto-review',
 ]
 
 /**
@@ -47,33 +47,33 @@ export const EXTENSION_BUNDLES: readonly string[] = [
  * which includes every eligible bundle, ranks them last in this order.
  */
 export const MORE_BUNDLES: readonly string[] = [
-  '@deepseek-ai/dsh-personalized-recommendations',
-  '@deepseek-ai/dsh-experimental-inspector-profile',
-  '@deepseek-ai/dsh-cua-bundle',
-  '@deepseek-ai/dsh-experimental-tool-worktree',
-  '@deepseek-ai/dsh-experimental-cot-translation-bundle',
-  '@deepseek-ai/dsh-experimental-session-search',
-  '@deepseek-ai/dsh-experimental-session-titles-bundle',
-  '@deepseek-ai/dsh-experimental-badge-skill-bundle',
-  '@deepseek-ai/dsh-experimental-ralph-bundle',
-  '@deepseek-ai/dsh-subagent-codex',
-  '@deepseek-ai/dsh-subagent-claude-code',
+  '@tomato/personalized-recommendations',
+  '@tomato/experimental-inspector-profile',
+  '@tomato/cua-bundle',
+  '@tomato/experimental-tool-worktree',
+  '@tomato/experimental-cot-translation-bundle',
+  '@tomato/experimental-session-search',
+  '@tomato/experimental-session-titles-bundle',
+  '@tomato/experimental-badge-skill-bundle',
+  '@tomato/experimental-ralph-bundle',
+  '@tomato/subagent-codex',
+  '@tomato/subagent-claude-code',
 ]
 
 /** Official bundles the plugin manager marks with the Experimental badge. */
 export const EXPERIMENTAL_BUNDLES: ReadonlySet<string> = new Set([
-  '@deepseek-ai/dsh-personalized-recommendations',
-  '@deepseek-ai/dsh-cua-bundle',
-  '@deepseek-ai/dsh-experimental-browser-use-playwright-bundle',
-  '@deepseek-ai/dsh-experimental-agent-team-profile',
-  '@deepseek-ai/dsh-experimental-voice-input-bundle',
-  '@deepseek-ai/dsh-experimental-auto-review',
-  '@deepseek-ai/dsh-experimental-inspector-profile',
-  '@deepseek-ai/dsh-experimental-tool-worktree',
-  '@deepseek-ai/dsh-experimental-cot-translation-bundle',
-  '@deepseek-ai/dsh-experimental-session-search',
-  '@deepseek-ai/dsh-experimental-session-titles-bundle',
-  '@deepseek-ai/dsh-experimental-badge-skill-bundle',
-  '@deepseek-ai/dsh-experimental-ralph-bundle',
-  '@deepseek-ai/dsh-experimental-plugin-market-bundle',
+  '@tomato/personalized-recommendations',
+  '@tomato/cua-bundle',
+  '@tomato/experimental-browser-use-playwright-bundle',
+  '@tomato/experimental-agent-team-profile',
+  '@tomato/experimental-voice-input-bundle',
+  '@tomato/experimental-auto-review',
+  '@tomato/experimental-inspector-profile',
+  '@tomato/experimental-tool-worktree',
+  '@tomato/experimental-cot-translation-bundle',
+  '@tomato/experimental-session-search',
+  '@tomato/experimental-session-titles-bundle',
+  '@tomato/experimental-badge-skill-bundle',
+  '@tomato/experimental-ralph-bundle',
+  '@tomato/experimental-plugin-market-bundle',
 ])

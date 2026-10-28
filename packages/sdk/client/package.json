@@ -1,6 +1,6 @@
 {
-  "name": "@deepseek-ai/dsh-sdk-client",
-  "description": "TypeScript client SDK for driving a DeepSeek Harness runtime subprocess over stdio JSON-RPC: the DeepSeekHarness high-level turns API and the lower-level HarnessClient",
+  "name": "@tomato/sdk-client",
+  "description": "TypeScript client SDK for driving a Tomato Harness runtime subprocess over stdio JSON-RPC: the DeepSeekHarness high-level turns API and the lower-level HarnessClient",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -26,19 +26,19 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@deepseek-ai/dsh": "workspace:*"
+    "@tomato/cli": "workspace:*"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-sdk-protocol": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/llm": "workspace:*",
+    "@tomato/sdk-protocol": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/cordis": "workspace:~"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-sdk-protocol": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-experimental-translator": "workspace:*"
+    "@tomato/llm": "workspace:*",
+    "@tomato/sdk-protocol": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/experimental-translator": "workspace:*"
   }
 }

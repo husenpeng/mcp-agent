@@ -1,27 +1,27 @@
-# Workspace-context snapshot patch: the harness exports TOMATO_HOME=<cwd>/.dsh and
+# Workspace-context snapshot patch: the harness exports TOMATO_HOME=<cwd>/.tomato and
 # TOMATO_AGENTS_HOME=<cwd>/.agents, so project-root and both user-global root
 # discoveries stay inside the scenario's temporary cwd.
 - id: agent-default-model
-  name: '@deepseek-ai/dsh-agent-default-model'
+  name: '@tomato/agent-default-model'
   config:
     provider: deepseek-official
     model: deepseek-v4-pro
 
 - id: session-persistence-jsonl
-  name: '@deepseek-ai/dsh-session-persistence-jsonl'
+  name: '@tomato/session-persistence-jsonl'
   config:
     root: !!js tomatoHomePath('sessions')
     compression: !!js 'process.env.TOMATO_SNAPSHOT === undefined ? ''zstd'' : ''none'''
 
 - id: agent-instructions
-  name: '@deepseek-ai/dsh-agent-instructions'
+  name: '@tomato/agent-instructions'
   config:
     maxBytes: 65536
     projectRootMarkers:
-      - .dsh-project
+      - .tomato-project
 
 - id: system-prompt
-  name: '@deepseek-ai/dsh-system-prompt'
+  name: '@tomato/system-prompt'
   config:
     personaPrefix: |
       You are a coding assistant powered by the {{model}} model.

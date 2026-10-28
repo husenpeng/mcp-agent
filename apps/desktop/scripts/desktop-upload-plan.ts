@@ -172,7 +172,7 @@ function uploadArtifact(
 }
 
 /**
- * Validate the completed package record, dsh version, update metadata, hashes, and target files.
+ * Validate the completed package record, tomato version, update metadata, hashes, and target files.
  * @param targetName - Fixed platform and architecture selected by the upload command.
  * @param options - Optional filesystem roots and environment for tests or release automation.
  * @returns A fixed installer upload or an update plan with channel metadata ordered last.
@@ -189,10 +189,10 @@ export async function createDesktopUploadPlan(
   const repositoryRoot = options.repositoryRoot ?? REPOSITORY_ROOT
   const appRoot = options.appRoot ?? APP_ROOT
   const artifactsRoot = options.artifactsRoot ?? desktopTargetBuildPaths(targetName).artifacts
-  const tomatoVersion = options.packagedProductVersion ?? await manifestVersion(join(repositoryRoot, 'package.json'), 'dsh package')
+  const tomatoVersion = options.packagedProductVersion ?? await manifestVersion(join(repositoryRoot, 'package.json'), 'tomato package')
   const desktopVersion = options.packagedProductVersion ?? await manifestVersion(join(appRoot, 'package.json'), 'desktop package')
   if (tomatoVersion !== desktopVersion) {
-    throw new Error(`desktop upload: desktop version ${desktopVersion} does not match current dsh version ${tomatoVersion}`)
+    throw new Error(`desktop upload: desktop version ${desktopVersion} does not match current tomato version ${tomatoVersion}`)
   }
 
   const update = resolveDesktopUploadConfig(environment, target.platform, target.arch)
@@ -207,7 +207,7 @@ export async function createDesktopUploadPlan(
     buildVersion = validateDesktopBuildVersion(recordedVersion, tomatoVersion)
   }
   catch (error) {
-    throw new Error(`desktop upload: ${targetName} package completion record holds ${recordedVersion}, which is not a build of dsh ${tomatoVersion}: ${
+    throw new Error(`desktop upload: ${targetName} package completion record holds ${recordedVersion}, which is not a build of tomato ${tomatoVersion}: ${
       error instanceof Error ? error.message : String(error)}`)
   }
   if (buildRecord.schemaVersion !== 1
@@ -277,7 +277,7 @@ export async function createDesktopUploadPlan(
     contents: dump(published),
   }
   artifacts.push(channelArtifact)
-  const latestFilename = `dsh-latest-${target.platform === 'darwin' ? 'macos' : 'windows'}-${target.arch}.${target.platform === 'darwin' ? 'dmg' : 'exe'}`
+  const latestFilename = `tomato-latest-${target.platform === 'darwin' ? 'macos' : 'windows'}-${target.arch}.${target.platform === 'darwin' ? 'dmg' : 'exe'}`
   const latestKey = `desktop/${latestFilename}`
   return {
     environment: update.environment,

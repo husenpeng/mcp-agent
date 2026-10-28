@@ -10,10 +10,10 @@ import { fileURLToPath } from 'node:url'
 import type { Browser, Page } from 'playwright'
 import { chromium } from 'playwright'
 import { afterAll, beforeAll, describe, expect, it, onTestFailed } from 'vitest'
-import { canonicalPath } from '@deepseek-ai/dsh-sandbox'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
-import type { WebTerminalId } from '@deepseek-ai/dsh-api-terminal-controller/types'
-import type {} from '@deepseek-ai/dsh-api-terminal-controller'
+import { canonicalPath } from '@tomato/sandbox'
+import type { SessionEvent } from '@tomato/session'
+import type { WebTerminalId } from '@tomato/api-terminal-controller/types'
+import type {} from '@tomato/api-terminal-controller'
 import {
   assertFinalWorkspaceSnapshot, assertFixtureInventory, fixtureUserPrompts, launchWebScaffold, recordFixture,
   watchConsole, webSnapshotMode, type WebScaffold,
@@ -78,7 +78,7 @@ describe('web e2e: current sandbox policy reaches the model before tools', () =>
         extraOverlayPath: fileURLToPath(new URL('./fixtures/sidebar-terminal.patch.yml', import.meta.url)),
       },
     })
-    outsideWorkspace = await mkdtemp(join(tmpdir(), 'dsh-user-terminal-'))
+    outsideWorkspace = await mkdtemp(join(tmpdir(), 'tomato-user-terminal-'))
     disposeApproval = scaffold.ctx.on('approval/request', () => Promise.resolve('allowed-once'), { prepend: true })
     scaffold.ctx.on('session/event', (session, event: SessionEvent) => {
       sessionWorkspace = session.header.cwd

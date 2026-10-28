@@ -12,7 +12,7 @@
     - text: 设置子智能体的递归层级、数量和模型。
   - listitem:
     - button "查看 网页搜索": 网页搜索
-    - text: 设置 DeepSeek 的搜索提供方。
+    - text: 设置 Tomato 的搜索提供方。
   - listitem:
     - button "查看 Agent 循环": Agent 循环
     - text: 控制 Agent 派发工具调用的方式。
@@ -49,6 +49,6 @@
     - status
     - switch "启用 @fixture/live-client"
   - listitem:
-    - button "查看 dsh-web-scaffold-defaults": dsh-web-scaffold-defaults
+    - button "查看 tomato-web-scaffold-defaults": tomato-web-scaffold-defaults
     - status
-    - switch "启用 dsh-web-scaffold-defaults" [checked]
+    - switch "启用 tomato-web-scaffold-defaults" [checked]

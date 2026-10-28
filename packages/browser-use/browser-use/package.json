@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-browser-use",
+  "name": "@tomato/browser-use",
   "description": "Exclusive named browser-use provider registration",
   "version": "0.2.1-rc.3",
   "publishConfig": {
@@ -34,11 +34,11 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-brand": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/branded": "workspace:*"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-brand": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/branded": "workspace:*"
   }
 }

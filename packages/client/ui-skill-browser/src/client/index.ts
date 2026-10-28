@@ -7,11 +7,11 @@
  * face, which calls the Session-addressed `skills` Remote; the body itself only
  * draws store state and hands gestures back.
  */
-import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-api-remotes/client'
-import type {} from '@deepseek-ai/dsh-client-locale/client'
-import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
-import type {} from '@deepseek-ai/dsh-client-ui-sidebar-right/client'
+import type { Context as ClientContext } from '@tomato/cordis'
+import type {} from '@tomato/api-remotes/client'
+import type {} from '@tomato/client-locale/client'
+import type {} from '@tomato/client-ui-renderer/client'
+import type {} from '@tomato/client-ui-sidebar-right/client'
 import { SKILLS_ID, skillsDefinition } from './definition.tsx'
 import { createSkillBrowserStore } from './store.ts'
 import { skillBrowserFace } from './face.ts'

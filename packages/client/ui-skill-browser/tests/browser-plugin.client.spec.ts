@@ -1,9 +1,9 @@
 /** Skills browser browser half: two-stage tab registration, dictionaries, and teardown. */
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@tomato/cordis'
 import { describe, expect, it, onTestFinished } from 'vitest'
-import { TestRemote } from '@deepseek-ai/dsh-client-test-runtime'
-import { SlotRegistry } from '@deepseek-ai/dsh-client-ui-renderer/client'
-import type { SidebarRightTabDefinition } from '@deepseek-ai/dsh-client-ui-sidebar-right/client'
+import { TestRemote } from '@tomato/client-test-runtime'
+import { SlotRegistry } from '@tomato/client-ui-renderer/client'
+import type { SidebarRightTabDefinition } from '@tomato/client-ui-sidebar-right/client'
 import { apply, inject } from '../src/client/index.ts'
 import { SKILLS_ID } from '../src/client/definition.tsx'
 import { en, zh } from '../src/client/locales.ts'

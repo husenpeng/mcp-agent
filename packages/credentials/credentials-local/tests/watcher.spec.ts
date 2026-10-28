@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@tomato/cordis'
 import { chmod, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { credentialRef } from '@deepseek-ai/dsh-credentials'
+import { credentialRef } from '@tomato/credentials'
 import { LocalCredentialProvider } from '../src/index.ts'
 
 const fsHarness = vi.hoisted(() => ({
@@ -72,7 +72,7 @@ afterEach(async () => {
 })
 
 async function tempDir(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'dsh-credentials-watch-'))
+  const dir = await mkdtemp(join(tmpdir(), 'tomato-credentials-watch-'))
   cleanups.push(() => rm(dir, { recursive: true, force: true }))
   return dir
 }
@@ -156,7 +156,7 @@ describe('watcher pipeline', () => {
     await fiber.dispose()
 
     expect(() => instance!.watcher.emit('error', Object.assign(
-      new Error("EPERM: operation not permitted, stat 'C:\\Temp\\dsh\\.credentials.yaml'"),
+      new Error("EPERM: operation not permitted, stat 'C:\\Temp\\tomato\\.credentials.yaml'"),
       { code: 'EPERM', syscall: 'stat' },
     ))).not.toThrow()
   })

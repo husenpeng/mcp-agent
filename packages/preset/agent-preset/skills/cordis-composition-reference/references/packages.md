@@ -8,495 +8,495 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-acp` | yes | Automation-only Agent Client Protocol server for driving DeepSeek Harness agents over JSON-RPC stdio |
+| `@tomato/acp` | yes | Automation-only Agent Client Protocol server for driving Tomato Harness agents over JSON-RPC stdio |
 
 ## api
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-api-account-controller` | no | Expose safe account operations over authenticated Remote |
-| `@deepseek-ai/dsh-api-gateway` | yes | Typert Remote Host dispatcher and Client API endpoint |
-| `@deepseek-ai/dsh-api-job-controller` | yes | Job Remote observation stream and the reference-counted client job-output service |
-| `@deepseek-ai/dsh-api-remote-access` | no | Method-level Remote access control for non-owner Peers and the per-Peer access snapshot |
-| `@deepseek-ai/dsh-api-remotes` | no | Remote BFF assembly for application-selected Host capabilities |
-| `@deepseek-ai/dsh-api-session-controller` | yes | Session Remote commands, cold reads, and live control transport |
-| `@deepseek-ai/dsh-api-settings-controller` | yes | Remote owner for the configuration surfaces over the settings-domain seams |
-| `@deepseek-ai/dsh-api-terminal-controller` | yes | Session-owned interactive terminals with shell discovery, screen recovery and typed Remote control |
-| `@deepseek-ai/dsh-api-workspace-controller` | yes | Workspace Remote commands and reconnect-safe state transport |
-| `@deepseek-ai/dsh-api-workspace-files` | yes | Workspace file service and Client resource provider: bounded reads, directory listing, and live metadata over the workspaceFiles Remote namespace |
+| `@tomato/api-account-controller` | no | Expose safe account operations over authenticated Remote |
+| `@tomato/api-gateway` | yes | Typert Remote Host dispatcher and Client API endpoint |
+| `@tomato/api-job-controller` | yes | Job Remote observation stream and the reference-counted client job-output service |
+| `@tomato/api-remote-access` | no | Method-level Remote access control for non-owner Peers and the per-Peer access snapshot |
+| `@tomato/api-remotes` | no | Remote BFF assembly for application-selected Host capabilities |
+| `@tomato/api-session-controller` | yes | Session Remote commands, cold reads, and live control transport |
+| `@tomato/api-settings-controller` | yes | Remote owner for the configuration surfaces over the settings-domain seams |
+| `@tomato/api-terminal-controller` | yes | Session-owned interactive terminals with shell discovery, screen recovery and typed Remote control |
+| `@tomato/api-workspace-controller` | yes | Workspace Remote commands and reconnect-safe state transport |
+| `@tomato/api-workspace-files` | yes | Workspace file service and Client resource provider: bounded reads, directory listing, and live metadata over the workspaceFiles Remote namespace |
 
 ## attachment
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-attachment-local` | yes | Private content-addressed TOMATO_HOME attachment storage |
+| `@tomato/attachment-local` | yes | Private content-addressed TOMATO_HOME attachment storage |
 
 ## boot
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-config-editor` | no | Persist plugin configuration through profile patches and Loader reconciliation |
-| `@deepseek-ai/dsh-hmr` | yes | Coordinated module and profile configuration hot reload |
-| `@deepseek-ai/dsh-plugin-manager` | yes | Current-profile plugin and bundle management shared by dsh CLI, Web and agent tools |
-| `@deepseek-ai/dsh-plugin-market` | yes | Configured plugin market indexes for the Web Discover page and the plugin_market agent tool |
+| `@tomato/config-editor` | no | Persist plugin configuration through profile patches and Loader reconciliation |
+| `@tomato/hmr` | yes | Coordinated module and profile configuration hot reload |
+| `@tomato/plugin-manager` | yes | Current-profile plugin and bundle management shared by tomato CLI, Web and agent tools |
+| `@tomato/plugin-market` | yes | Configured plugin market indexes for the Web Discover page and the plugin_market agent tool |
 
 ## browser-use
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-browser-use` | no | Exclusive named browser-use provider registration |
+| `@tomato/browser-use` | no | Exclusive named browser-use provider registration |
 
 ## bundle
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-acp-app` | no | The dsh ACP profile bundle: automation-only JSON-RPC stdio and process lifecycle over dsh-base |
-| `@deepseek-ai/dsh-headless` | yes | The dsh one-shot bundle: a direct core Agent/Session runner over dsh-base with no Host, HTTP, or browser layer |
-| `@deepseek-ai/dsh-sdk-app` | yes | The dsh SDK profile bundle: stdio JSON-RPC serving and process lifecycle over dsh-base |
-| `@deepseek-ai/dsh-web-app` | yes | The dsh browser-surface bundle: the web patch layer over dsh-base plus the runtime glue plugin (frontend dist serving, bash runtime variables, URL line) |
+| `@tomato/acp-app` | no | The tomato ACP profile bundle: automation-only JSON-RPC stdio and process lifecycle over @tomato/base |
+| `@tomato/headless` | yes | The tomato one-shot bundle: a direct core Agent/Session runner over @tomato/base with no Host, HTTP, or browser layer |
+| `@tomato/sdk-app` | yes | The tomato SDK profile bundle: stdio JSON-RPC serving and process lifecycle over @tomato/base |
+| `@tomato/web-app` | yes | The tomato browser-surface bundle: the web patch layer over @tomato/base plus the runtime glue plugin (frontend dist serving, bash runtime variables, URL line) |
 
 ## client
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-client-connection` | yes | Authenticated RPC transport and generation lifecycle |
-| `@deepseek-ai/dsh-client-file-upload` | no | Agent-scoped browser file upload, streaming intake, and staged receipt service |
-| `@deepseek-ai/dsh-client-hmr` | yes | Web client graph synchronization and rebuilt-bundle reload transport |
-| `@deepseek-ai/dsh-client-locale` | no | Locale plugin: Host-backed preference, extensible language catalog, browser fallback, and typed built-in dictionaries |
-| `@deepseek-ai/dsh-client-modules` | no | Client module system, dual-face: node half composes the __DSH_BOOT__ entry graph (incremental dsh.client scan, bundle route, index tap, webPlugins service); browser half is the lazy-CJS module table the vendored cordis Loader consumes as its internal seam |
-| `@deepseek-ai/dsh-client-product-analytics` | yes | Desktop product event collection and authenticated Host reporting |
-| `@deepseek-ai/dsh-client-resources` | no | Unified client resource model: protocol-registered providers turn URL addresses into live values, consumed through the useResource global standard hook |
-| `@deepseek-ai/dsh-client-shortcuts` | yes | Application keyboard command registry and physical-key routing |
-| `@deepseek-ai/dsh-client-ui-agent-preset` | no | Agent-preset surfaces: the default for later sessions, this session's seat, and the composition editor |
-| `@deepseek-ai/dsh-client-ui-approval` | no | Approval composer takeover over the scoped Remote Event waterfall |
-| `@deepseek-ai/dsh-client-ui-attachment` | no | Dynamic attachment presentation plugin for conversation input, message-image, and trajectory image slots |
-| `@deepseek-ai/dsh-client-ui-brand-official` | no | Official DeepSeek Harness brand occupants for the Web client's sidebar slots |
-| `@deepseek-ai/dsh-client-ui-chat` | no | Chat Conversation target, node definitions, renderers, and details surface |
-| `@deepseek-ai/dsh-client-ui-commands` | no | Client command surface: global directory cache, '/' source, three command UI kinds, popupSelect registry |
-| `@deepseek-ai/dsh-client-ui-conversation` | no | Target-neutral Conversation assembly, shell, composer, queue, and view navigation |
-| `@deepseek-ai/dsh-client-ui-deepseek-model-label-1017` | no | Temporary 1017 release badge for official DeepSeek Flash model labels |
-| `@deepseek-ai/dsh-client-ui-deliverables` | no | Changed-files card with per-file comparison tabs, delivery cards, and clickable final-response file references for Web |
-| `@deepseek-ai/dsh-client-ui-directory-picker-browse` | no | In-app directory browsing surface: the workspace directory-flow owner rendering the host's listing and creation primitives |
-| `@deepseek-ai/dsh-client-ui-directory-picker-native` | no | Native directory-picker surface: the renderless workspace directory-flow occupant driving the local Desktop or Host OS chooser |
-| `@deepseek-ai/dsh-client-ui-entry-customization` | no | Customize plugin entries in the left sidebar, conversation views, and right sidebar, and quickly create new plugins. |
-| `@deepseek-ai/dsh-client-ui-file-drag` | no | Application-owned file drag transfers and localized failure feedback |
-| `@deepseek-ai/dsh-client-ui-goal` | no | Session goal surface: GoalBar docked above the composer, read from the goal session projection |
-| `@deepseek-ai/dsh-client-ui-input-trigger` | no | Input trigger pipeline: '/' and '@' detection, candidate menu, pick routing to registered sources |
-| `@deepseek-ai/dsh-client-ui-jobs` | no | Session-header background-job list with on-demand streaming record panels |
-| `@deepseek-ai/dsh-client-ui-layout` | no | Shell plugin: three-column AppFrame with drag handles, ctx.layout viewing-state service (navigation + panels) |
-| `@deepseek-ai/dsh-client-ui-message-feedback` | no | The Web feedback surface: per-message Like/Dislike in the assistant-message action strip and the feedback dialog behind both ratings and /feedback, backed by the messageFeedback and sessionFeedback Host Remotes |
-| `@deepseek-ai/dsh-client-ui-model-selection` | no | Model selection over the shared model catalog, Session projection, and session.selectModel |
-| `@deepseek-ai/dsh-client-ui-open-in-app` | no | Web "Open In..." controls: the Session-header split button opening the workspace directory in an installed application, and the document preview's default-application controls for one file |
-| `@deepseek-ai/dsh-client-ui-permission-presets` | no | Permission surfaces: a new-session default in General settings and a current-session /permission popup over the permissions projection |
-| `@deepseek-ai/dsh-client-ui-plan` | no | Plan mode controls, persistent transcript plan cards, and sidebar Markdown previews |
-| `@deepseek-ai/dsh-client-ui-plugin-manager` | yes | Plugin management for the dsh web client: the sidebar Plugins panel installs, enables, disables, retries, and composes installed plugin packages |
-| `@deepseek-ai/dsh-client-ui-plugin-market` | no | Discover tab of the dsh web Plugins page: browse configured plugin market indexes and install their bundles |
-| `@deepseek-ai/dsh-client-ui-reference` | no | Unified Web @file and @session reference source |
-| `@deepseek-ai/dsh-client-ui-renderer` | no | Browser UI renderer: React slot bindings, ctx.uiRenderer, and the assembled application root |
-| `@deepseek-ai/dsh-client-ui-schedule` | no | Host task management page and Session reminder catalog |
-| `@deepseek-ai/dsh-client-ui-secret-mask` | no | Web display masking for recognized credentials in sent user text |
-| `@deepseek-ai/dsh-client-ui-session` | no | Session Controller adapter for React and session-scoped slots |
-| `@deepseek-ai/dsh-client-ui-settings` | no | Settings domain base plugin: shared configuration forms and the canonical settings slot-type contract |
-| `@deepseek-ai/dsh-client-ui-settings-account` | yes | Manage DeepSeek login and open Platform billing pages |
-| `@deepseek-ai/dsh-client-ui-settings-agent-loop` | no | Settings page of the agent loop on the dsh web client's Plugins page: the parallel tool-call cap of the agent-loop namespace |
-| `@deepseek-ai/dsh-client-ui-settings-general` | no | Settings ownerless-copy and product onboarding plugin: the General section, shell trigger/header chrome content, settings dictionaries, and the versioned welcome notice |
-| `@deepseek-ai/dsh-client-ui-settings-models` | yes | Models settings and shared product-onboarding dialogs over existing settings and credential joins |
-| `@deepseek-ai/dsh-client-ui-settings-plugin-inventory` | no | Read-only Cordis Loader inventory tab in Web Plugins settings |
-| `@deepseek-ai/dsh-client-ui-settings-plugins` | no | Built-in plugins settings section for the dsh web client: the Settings navigation entry and the tab chrome feature-owned tabs register into |
-| `@deepseek-ai/dsh-client-ui-settings-session-log` | no | General settings control for Session-log upload with DeepSeek API requests |
-| `@deepseek-ai/dsh-client-ui-settings-shell` | no | Settings page of the shell executor on the dsh web client's Plugins page: the command timeout and the per-stream output cap of the shell namespace |
-| `@deepseek-ai/dsh-client-ui-settings-subagent` | no | Settings page of Subagent delegation on the dsh web client's Plugins page: recursion depth, parallel capacity, and the models agents may choose for subagents |
-| `@deepseek-ai/dsh-client-ui-settings-web-search` | no | Settings page of the DeepSeek web-search provider on the dsh web client's Plugins page: its API key, endpoint, and per-request search budget |
-| `@deepseek-ai/dsh-client-ui-shortcuts` | no | Keyboard shortcut reference, recording, and local preference editing |
-| `@deepseek-ai/dsh-client-ui-sidebar` | no | Sidebar plugin: session multi-level tree, search, grouping, state dots |
-| `@deepseek-ai/dsh-client-ui-sidebar-browser` | no | Sandboxed Web browser tabs for the right Sidebar |
-| `@deepseek-ai/dsh-client-ui-sidebar-documentpreview` | yes | Extensible Sidebar previews for Office documents, spreadsheets, Markdown, code, images, PDF, HTML, and plain text |
-| `@deepseek-ai/dsh-client-ui-sidebar-files` | no | Workspace file tree tab type for the right Sidebar: lazy directory listing over the workspaceFiles Remote namespace, opening files into the Sidebar |
-| `@deepseek-ai/dsh-client-ui-sidebar-right` | no | Right Sidebar: the docking surface's session-bound state, its panel and header expand control, and the navigation service over it |
-| `@deepseek-ai/dsh-client-ui-sidebar-terminal` | no | Interactive shell tabs for the right Sidebar |
-| `@deepseek-ai/dsh-client-ui-skill` | no | Web skill references and the dedicated skill tool row |
-| `@deepseek-ai/dsh-client-ui-skill-browser` | no | Skills tab type for the right Sidebar: browse every installed skill, open its details, and edit personal skill files |
-| `@deepseek-ai/dsh-client-ui-subagent` | no | Subagent conversation catalog, continuation routing UI, and '@' reference source |
-| `@deepseek-ai/dsh-client-ui-theme` | yes | Theme plugin: Host bootstrap for the pre-plugin palette; ThemeRuntime for light/dark/system state and icon replacements; --dsw-* token styles and Appearance settings row |
-| `@deepseek-ai/dsh-client-ui-tool` | no | Client Tool call-tree renderer and keyed per-tool presentation slot |
-| `@deepseek-ai/dsh-client-ui-trajectory` | no | Trajectory event ledger with an interactive timing overview: pure-consumer plugin registering into the conversation ViewMap (no service) |
-| `@deepseek-ai/dsh-client-ui-user-questions` | no | Web ask_user_question composer takeover and plan-review presentation UI |
-| `@deepseek-ai/dsh-client-ui-workflow-run` | no | Durable workflow-run Conversation Node and nested member disclosure for dsh web |
-| `@deepseek-ai/dsh-client-ui-workspace` | no | Workspace picker plugin: one WorkspacePicker registered into the sidebar and empty-state workspace slots |
+| `@tomato/client-connection` | yes | Authenticated RPC transport and generation lifecycle |
+| `@tomato/client-file-upload` | no | Agent-scoped browser file upload, streaming intake, and staged receipt service |
+| `@tomato/client-hmr` | yes | Web client graph synchronization and rebuilt-bundle reload transport |
+| `@tomato/client-locale` | no | Locale plugin: Host-backed preference, extensible language catalog, browser fallback, and typed built-in dictionaries |
+| `@tomato/client-modules` | no | Client module system, dual-face: node half composes the __TOMATO_BOOT__ entry graph (incremental tomato.client scan, bundle route, index tap, webPlugins service); browser half is the lazy-CJS module table the vendored cordis Loader consumes as its internal seam |
+| `@tomato/client-product-analytics` | yes | Desktop product event collection and authenticated Host reporting |
+| `@tomato/client-resources` | no | Unified client resource model: protocol-registered providers turn URL addresses into live values, consumed through the useResource global standard hook |
+| `@tomato/client-shortcuts` | yes | Application keyboard command registry and physical-key routing |
+| `@tomato/client-ui-agent-preset` | no | Agent-preset surfaces: the default for later sessions, this session's seat, and the composition editor |
+| `@tomato/client-ui-approval` | no | Approval composer takeover over the scoped Remote Event waterfall |
+| `@tomato/client-ui-attachment` | no | Dynamic attachment presentation plugin for conversation input, message-image, and trajectory image slots |
+| `@tomato/client-ui-brand-official` | no | Official Tomato Harness brand occupants for the Web client's sidebar slots |
+| `@tomato/client-ui-chat` | no | Chat Conversation target, node definitions, renderers, and details surface |
+| `@tomato/client-ui-commands` | no | Client command surface: global directory cache, '/' source, three command UI kinds, popupSelect registry |
+| `@tomato/client-ui-conversation` | no | Target-neutral Conversation assembly, shell, composer, queue, and view navigation |
+| `@tomato/client-ui-deepseek-model-label-1017` | no | Temporary 1017 release badge for official DeepSeek Flash model labels |
+| `@tomato/client-ui-deliverables` | no | Changed-files card with per-file comparison tabs, delivery cards, and clickable final-response file references for Web |
+| `@tomato/client-ui-directory-picker-browse` | no | In-app directory browsing surface: the workspace directory-flow owner rendering the host's listing and creation primitives |
+| `@tomato/client-ui-directory-picker-native` | no | Native directory-picker surface: the renderless workspace directory-flow occupant driving the local Desktop or Host OS chooser |
+| `@tomato/client-ui-entry-customization` | no | Customize plugin entries in the left sidebar, conversation views, and right sidebar, and quickly create new plugins. |
+| `@tomato/client-ui-file-drag` | no | Application-owned file drag transfers and localized failure feedback |
+| `@tomato/client-ui-goal` | no | Session goal surface: GoalBar docked above the composer, read from the goal session projection |
+| `@tomato/client-ui-input-trigger` | no | Input trigger pipeline: '/' and '@' detection, candidate menu, pick routing to registered sources |
+| `@tomato/client-ui-jobs` | no | Session-header background-job list with on-demand streaming record panels |
+| `@tomato/client-ui-layout` | no | Shell plugin: three-column AppFrame with drag handles, ctx.layout viewing-state service (navigation + panels) |
+| `@tomato/client-ui-message-feedback` | no | The Web feedback surface: per-message Like/Dislike in the assistant-message action strip and the feedback dialog behind both ratings and /feedback, backed by the messageFeedback and sessionFeedback Host Remotes |
+| `@tomato/client-ui-model-selection` | no | Model selection over the shared model catalog, Session projection, and session.selectModel |
+| `@tomato/client-ui-open-in-app` | no | Web "Open In..." controls: the Session-header split button opening the workspace directory in an installed application, and the document preview's default-application controls for one file |
+| `@tomato/client-ui-permission-presets` | no | Permission surfaces: a new-session default in General settings and a current-session /permission popup over the permissions projection |
+| `@tomato/client-ui-plan` | no | Plan mode controls, persistent transcript plan cards, and sidebar Markdown previews |
+| `@tomato/client-ui-plugin-manager` | yes | Plugin management for the tomato web client: the sidebar Plugins panel installs, enables, disables, retries, and composes installed plugin packages |
+| `@tomato/client-ui-plugin-market` | no | Discover tab of the tomato web Plugins page: browse configured plugin market indexes and install their bundles |
+| `@tomato/client-ui-reference` | no | Unified Web @file and @session reference source |
+| `@tomato/client-ui-renderer` | no | Browser UI renderer: React slot bindings, ctx.uiRenderer, and the assembled application root |
+| `@tomato/client-ui-schedule` | no | Host task management page and Session reminder catalog |
+| `@tomato/client-ui-secret-mask` | no | Web display masking for recognized credentials in sent user text |
+| `@tomato/client-ui-session` | no | Session Controller adapter for React and session-scoped slots |
+| `@tomato/client-ui-settings` | no | Settings domain base plugin: shared configuration forms and the canonical settings slot-type contract |
+| `@tomato/client-ui-settings-account` | yes | Manage DeepSeek login and open Platform billing pages |
+| `@tomato/client-ui-settings-agent-loop` | no | Settings page of the agent loop on the tomato web client's Plugins page: the parallel tool-call cap of the agent-loop namespace |
+| `@tomato/client-ui-settings-general` | no | Settings ownerless-copy and product onboarding plugin: the General section, shell trigger/header chrome content, settings dictionaries, and the versioned welcome notice |
+| `@tomato/client-ui-settings-models` | yes | Models settings and shared product-onboarding dialogs over existing settings and credential joins |
+| `@tomato/client-ui-settings-plugin-inventory` | no | Read-only Cordis Loader inventory tab in Web Plugins settings |
+| `@tomato/client-ui-settings-plugins` | no | Built-in plugins settings section for the tomato web client: the Settings navigation entry and the tab chrome feature-owned tabs register into |
+| `@tomato/client-ui-settings-session-log` | no | General settings control for Session-log upload with DeepSeek API requests |
+| `@tomato/client-ui-settings-shell` | no | Settings page of the shell executor on the tomato web client's Plugins page: the command timeout and the per-stream output cap of the shell namespace |
+| `@tomato/client-ui-settings-subagent` | no | Settings page of Subagent delegation on the tomato web client's Plugins page: recursion depth, parallel capacity, and the models agents may choose for subagents |
+| `@tomato/client-ui-settings-web-search` | no | Settings page of the DeepSeek web-search provider on the tomato web client's Plugins page: its API key, endpoint, and per-request search budget |
+| `@tomato/client-ui-shortcuts` | no | Keyboard shortcut reference, recording, and local preference editing |
+| `@tomato/client-ui-sidebar` | no | Sidebar plugin: session multi-level tree, search, grouping, state dots |
+| `@tomato/client-ui-sidebar-browser` | no | Sandboxed Web browser tabs for the right Sidebar |
+| `@tomato/client-ui-sidebar-documentpreview` | yes | Extensible Sidebar previews for Office documents, spreadsheets, Markdown, code, images, PDF, HTML, and plain text |
+| `@tomato/client-ui-sidebar-files` | no | Workspace file tree tab type for the right Sidebar: lazy directory listing over the workspaceFiles Remote namespace, opening files into the Sidebar |
+| `@tomato/client-ui-sidebar-right` | no | Right Sidebar: the docking surface's session-bound state, its panel and header expand control, and the navigation service over it |
+| `@tomato/client-ui-sidebar-terminal` | no | Interactive shell tabs for the right Sidebar |
+| `@tomato/client-ui-skill` | no | Web skill references and the dedicated skill tool row |
+| `@tomato/client-ui-skill-browser` | no | Skills tab type for the right Sidebar: browse every installed skill, open its details, and edit personal skill files |
+| `@tomato/client-ui-subagent` | no | Subagent conversation catalog, continuation routing UI, and '@' reference source |
+| `@tomato/client-ui-theme` | yes | Theme plugin: Host bootstrap for the pre-plugin palette; ThemeRuntime for light/dark/system state and icon replacements; --dsw-* token styles and Appearance settings row |
+| `@tomato/client-ui-tool` | no | Client Tool call-tree renderer and keyed per-tool presentation slot |
+| `@tomato/client-ui-trajectory` | no | Trajectory event ledger with an interactive timing overview: pure-consumer plugin registering into the conversation ViewMap (no service) |
+| `@tomato/client-ui-user-questions` | no | Web ask_user_question composer takeover and plan-review presentation UI |
+| `@tomato/client-ui-workflow-run` | no | Durable workflow-run Conversation Node and nested member disclosure for tomato web |
+| `@tomato/client-ui-workspace` | no | Workspace picker plugin: one WorkspacePicker registered into the sidebar and empty-state workspace slots |
 
 ## compaction
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-command-compact` | no | Human-facing slash command for explicit session compaction |
-| `@deepseek-ai/dsh-compaction-basic` | yes | Token-meter-driven compaction policy and LLM summarization backend for the DeepSeek Harness |
-| `@deepseek-ai/dsh-compaction-image-offload` | no | Durable image offload for image-capable routes: replace over-budget request images with placeholders and retry |
-| `@deepseek-ai/dsh-compaction-tool-result-pruner` | yes | Replay-safe model-free head/middle/tail pruning for tool-result surface nodes |
+| `@tomato/command-compact` | no | Human-facing slash command for explicit session compaction |
+| `@tomato/compaction-basic` | yes | Token-meter-driven compaction policy and LLM summarization backend for the Tomato Harness |
+| `@tomato/compaction-image-offload` | no | Durable image offload for image-capable routes: replace over-budget request images with placeholders and retry |
+| `@tomato/compaction-tool-result-pruner` | yes | Replay-safe model-free head/middle/tail pruning for tool-result surface nodes |
 
 ## computer-use
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-computer-use` | no | Exclusive named computer-use provider registration |
+| `@tomato/computer-use` | no | Exclusive named computer-use provider registration |
 
 ## context
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-agent-instructions` | yes | Workspace context loader for AGENTS.md/CLAUDE.md instruction files |
-| `@deepseek-ai/dsh-file-reference-local` | yes | Local-filesystem ctx.fileReferences provider with bounded fuzzy indexes |
-| `@deepseek-ai/dsh-harness-dev-context` | no | Model context naming the DeepSeek Harness checkout and Web GUI URL without letting either change the system prompt |
-| `@deepseek-ai/dsh-session-reference` | yes | Cross-session snapshot references and durable untrusted model context (ctx.sessionReferenceResolver) |
-| `@deepseek-ai/dsh-time-context` | yes | Durable per-step context with the current time and elapsed time |
-| `@deepseek-ai/dsh-tmux-context` | yes | Opt-in durable per-step context with this agent's tmux pane and window location |
+| `@tomato/agent-instructions` | yes | Workspace context loader for AGENTS.md/CLAUDE.md instruction files |
+| `@tomato/file-reference-local` | yes | Local-filesystem ctx.fileReferences provider with bounded fuzzy indexes |
+| `@tomato/harness-dev-context` | no | Model context naming the Tomato Harness checkout and Web GUI URL without letting either change the system prompt |
+| `@tomato/session-reference` | yes | Cross-session snapshot references and durable untrusted model context (ctx.sessionReferenceResolver) |
+| `@tomato/time-context` | yes | Durable per-step context with the current time and elapsed time |
+| `@tomato/tmux-context` | yes | Opt-in durable per-step context with this agent's tmux pane and window location |
 
 ## core
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-agent` | no | Agent interface, registry, initiator scope, and event vocabulary for the DeepSeek Harness |
-| `@deepseek-ai/dsh-agent-default-model` | yes | Default model selection shared by Agent entry points |
-| `@deepseek-ai/dsh-agent-loop` | yes | The concrete agent loop plugin for the DeepSeek Harness |
-| `@deepseek-ai/dsh-agent-tool-presentation` | yes | Deprecated tool presentation selector; use dsh-tool-executor-native or dsh-tool-executor-ptc directly |
-| `@deepseek-ai/dsh-session` | no | Event-sourced session store for the DeepSeek Harness |
-| `@deepseek-ai/dsh-system-prompt` | yes | System prompt assembly registry for the DeepSeek Harness |
-| `@deepseek-ai/dsh-tool-executor-native` | no | Native tool execution plugin |
-| `@deepseek-ai/dsh-tool-executor-ptc` | yes | PTC program execution, tool bindings, and generated SDK prompts |
-| `@deepseek-ai/dsh-tools` | no | Tool registry and execution pipeline for the DeepSeek Harness |
+| `@tomato/agent` | no | Agent interface, registry, initiator scope, and event vocabulary for the Tomato Harness |
+| `@tomato/agent-default-model` | yes | Default model selection shared by Agent entry points |
+| `@tomato/agent-loop` | yes | The concrete agent loop plugin for the Tomato Harness |
+| `@tomato/agent-tool-presentation` | yes | Deprecated tool presentation selector; use @tomato/tool-executor-native or @tomato/tool-executor-ptc directly |
+| `@tomato/session` | no | Event-sourced session store for the Tomato Harness |
+| `@tomato/system-prompt` | yes | System prompt assembly registry for the Tomato Harness |
+| `@tomato/tool-executor-native` | no | Native tool execution plugin |
+| `@tomato/tool-executor-ptc` | yes | PTC program execution, tool bindings, and generated SDK prompts |
+| `@tomato/tools` | no | Tool registry and execution pipeline for the Tomato Harness |
 
 ## credentials
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-authorization` | no | Authorization seam (ctx.authorization): plugin-owned flows that obtain a credential through a conversation with the human |
-| `@deepseek-ai/dsh-credentials-local` | yes | File-backed credentials provider ($TOMATO_HOME/.env under the live process environment) for the DeepSeek Harness |
-| `@deepseek-ai/dsh-deepseek-account-platform` | yes | Authorize DeepSeek accounts through browser PKCE |
+| `@tomato/authorization` | no | Authorization seam (ctx.authorization): plugin-owned flows that obtain a credential through a conversation with the human |
+| `@tomato/credentials-local` | yes | File-backed credentials provider ($TOMATO_HOME/.env under the live process environment) for the Tomato Harness |
+| `@tomato/deepseek-account-platform` | yes | Authorize DeepSeek accounts through browser PKCE |
 
 ## deliverables
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-deliverable-file-references` | no | Shared model guidance for file links and deliverables across DeepSeek Harness hosts |
-| `@deepseek-ai/dsh-tool-present` | yes | Explicit workspace file delivery declarations for the DeepSeek Harness |
-| `@deepseek-ai/dsh-workspace-changes` | yes | Per-turn workspace file changes recorded from git working-tree snapshots and whole-file captures, with per-file comparisons, for the DeepSeek Harness |
+| `@tomato/deliverable-file-references` | no | Shared model guidance for file links and deliverables across Tomato Harness hosts |
+| `@tomato/tool-present` | yes | Explicit workspace file delivery declarations for the Tomato Harness |
+| `@tomato/workspace-changes` | yes | Per-turn workspace file changes recorded from git working-tree snapshots and whole-file captures, with per-file comparisons, for the Tomato Harness |
 
 ## document
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-office-to-pdf` | yes | Shared Office-to-PDF conversion with bounded queues and caching |
+| `@tomato/office-to-pdf` | yes | Shared Office-to-PDF conversion with bounded queues and caching |
 
 ## experimental
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-action-cards` | yes | Optional action cards below answers: one shared proposal tool, card state, user actions and status notices |
-| `@deepseek-ai/dsh-client-ui-action-cards` | no | Action cards below completed answers: the shared card frame, kind bodies and the compact tool row |
-| `@deepseek-ai/dsh-client-ui-creation-recommendations` | no | Body of the personalized page card: location choice, creation progress, Keep, Undo and Restore |
-| `@deepseek-ai/dsh-client-ui-plugin-recommendations` | no | Official plugin card body with catalog text and enabling |
-| `@deepseek-ai/dsh-creation-recommendations` | no | Create persistent removable interface plugins from explicit conversation needs |
-| `@deepseek-ai/dsh-cua` | no | Shared Computer Use application objects, authorization, and logged tool execution |
-| `@deepseek-ai/dsh-experimental-agent-team` | yes | Implicit-root Agent Teams roster, direct peer messaging, and shared task DAG |
-| `@deepseek-ai/dsh-experimental-api-speech-to-text` | yes | Authenticated experimental speech transcription for browser clients |
-| `@deepseek-ai/dsh-experimental-auto-review` | no | Per-tool LLM authorization review for the DeepSeek Harness Auto permission preset |
-| `@deepseek-ai/dsh-experimental-browser-use-chrome-devtools-mcp` | yes | Experimental per-Session Chromium browser tools through chrome-devtools-mcp |
-| `@deepseek-ai/dsh-experimental-browser-use-playwright-mcp` | yes | Experimental per-Session Chromium browser tools through @playwright/mcp |
-| `@deepseek-ai/dsh-experimental-browser-use-stagehand-native` | yes | Experimental Stagehand browser tools with separately configured native models |
-| `@deepseek-ai/dsh-experimental-claude-code-mods` | yes | Experimental bridge: load Claude Code mods (hooks modules) and run their hook chains on DeepSeek Harness extension points |
-| `@deepseek-ai/dsh-experimental-client-ui-agent-team` | no | Web Agent Teams roster, task board, and teammate navigation |
-| `@deepseek-ai/dsh-experimental-client-ui-claude-code-mods` | no | Web band above the prompt for Claude Code mods: draws each session's mod tree and sends button presses back to the bridge |
-| `@deepseek-ai/dsh-experimental-client-ui-cot-translation` | yes | Optional machine translation of expanded reasoning, preserving original Session text |
-| `@deepseek-ai/dsh-experimental-client-ui-voice-input` | no | Record speech and insert editable text into the conversation draft |
-| `@deepseek-ai/dsh-experimental-computer-use-cua-driver-mcp` | yes | Experimental computer use through an installed Cua Driver MCP executable |
-| `@deepseek-ai/dsh-experimental-computer-use-cua-driver-native` | no | Experimental computer-use provider embedding the Cua Driver native npm SDK |
-| `@deepseek-ai/dsh-experimental-cua-macos` | yes | macOS native provider for shared Computer Use application and window objects |
-| `@deepseek-ai/dsh-experimental-inspector` | yes | Experimental cross-realm CDP hub for Host debugging and Client Runtime inspection |
-| `@deepseek-ai/dsh-experimental-ptc-runtime-python` | yes | CPython subprocess implementation of the DeepSeek Harness PTC execution seam |
-| `@deepseek-ai/dsh-experimental-session-inspector` | no | Experimental virtualized Session log and live Chat group/node inspectors |
-| `@deepseek-ai/dsh-experimental-speech-to-text` | yes | Experimental speech recognition with independently selectable providers |
-| `@deepseek-ai/dsh-experimental-speech-to-text-sensevoice` | yes | Local SenseVoice ONNX transcription with a managed sherpa-onnx process |
-| `@deepseek-ai/dsh-experimental-subagent-oar` | yes | Experimental one-shot subagents through OAR runtimes |
-| `@deepseek-ai/dsh-experimental-tool-agent-team` | yes | Scoped model-facing Agent Teams tools over ctx.agentTeams |
-| `@deepseek-ai/dsh-experimental-tool-subagent-oar` | yes | Delegate standalone tasks to configured external subagent providers |
-| `@deepseek-ai/dsh-experimental-tool-worktree` | no | Model tool that creates and enters a new Git worktree |
-| `@deepseek-ai/dsh-experimental-translator` | yes | Machine translation with reusable Session results |
-| `@deepseek-ai/dsh-experimental-worktree` | yes | Creates a named Git worktree and changes the calling Session working directory |
-| `@deepseek-ai/dsh-hooks-claude-code` | yes | Bridge plugin: run a Claude Code hooks.json / settings hook config on the DeepSeek Harness interception seams |
-| `@deepseek-ai/dsh-hooks-codex` | yes | Bridge plugin: run a Codex hooks.json hook config on the DeepSeek Harness interception seams |
-| `@deepseek-ai/dsh-plugin-recommendations` | no | Official plugin suggestions with explicit user activation and persistent conversation decisions |
-| `@deepseek-ai/dsh-session-title-all-prompts-llm` | yes | All-user-messages LLM provider plugin for DeepSeek Harness session titles |
-| `@deepseek-ai/dsh-skill-badge` | no | Bundled dsh badge skill provider for DeepSeek Harness |
-| `@deepseek-ai/dsh-tool-ralph` | yes | Model-facing fresh-agent Ralph loop over the workflow and subagent seams |
-| `@deepseek-ai/dsh-tool-session-query` | yes | Workspace-authorized model-facing session history search, trace, and event read tools |
-| `@deepseek-ai/dsh-tool-terminal` | yes | Six model-facing persistent PTY tools with owner isolation and generic background-job integration |
-| `@deepseek-ai/dsh-webhook` | no | Fire-and-forget webhook rule runtime that creates Workspace-backed DeepSeek Harness Sessions |
-| `@deepseek-ai/dsh-webhook-github` | yes | Signed GitHub HTTP webhook adapter for the DeepSeek Harness webhook runtime |
+| `@tomato/action-cards` | yes | Optional action cards below answers: one shared proposal tool, card state, user actions and status notices |
+| `@tomato/client-ui-action-cards` | no | Action cards below completed answers: the shared card frame, kind bodies and the compact tool row |
+| `@tomato/client-ui-creation-recommendations` | no | Body of the personalized page card: location choice, creation progress, Keep, Undo and Restore |
+| `@tomato/client-ui-plugin-recommendations` | no | Official plugin card body with catalog text and enabling |
+| `@tomato/creation-recommendations` | no | Create persistent removable interface plugins from explicit conversation needs |
+| `@tomato/cua` | no | Shared Computer Use application objects, authorization, and logged tool execution |
+| `@tomato/experimental-agent-team` | yes | Implicit-root Agent Teams roster, direct peer messaging, and shared task DAG |
+| `@tomato/experimental-api-speech-to-text` | yes | Authenticated experimental speech transcription for browser clients |
+| `@tomato/experimental-auto-review` | no | Per-tool LLM authorization review for the Tomato Harness Auto permission preset |
+| `@tomato/experimental-browser-use-chrome-devtools-mcp` | yes | Experimental per-Session Chromium browser tools through chrome-devtools-mcp |
+| `@tomato/experimental-browser-use-playwright-mcp` | yes | Experimental per-Session Chromium browser tools through @playwright/mcp |
+| `@tomato/experimental-browser-use-stagehand-native` | yes | Experimental Stagehand browser tools with separately configured native models |
+| `@tomato/experimental-claude-code-mods` | yes | Experimental bridge: load Claude Code mods (hooks modules) and run their hook chains on Tomato Harness extension points |
+| `@tomato/experimental-client-ui-agent-team` | no | Web Agent Teams roster, task board, and teammate navigation |
+| `@tomato/experimental-client-ui-claude-code-mods` | no | Web band above the prompt for Claude Code mods: draws each session's mod tree and sends button presses back to the bridge |
+| `@tomato/experimental-client-ui-cot-translation` | yes | Optional machine translation of expanded reasoning, preserving original Session text |
+| `@tomato/experimental-client-ui-voice-input` | no | Record speech and insert editable text into the conversation draft |
+| `@tomato/experimental-computer-use-cua-driver-mcp` | yes | Experimental computer use through an installed Cua Driver MCP executable |
+| `@tomato/experimental-computer-use-cua-driver-native` | no | Experimental computer-use provider embedding the Cua Driver native npm SDK |
+| `@tomato/experimental-cua-macos` | yes | macOS native provider for shared Computer Use application and window objects |
+| `@tomato/experimental-inspector` | yes | Experimental cross-realm CDP hub for Host debugging and Client Runtime inspection |
+| `@tomato/experimental-ptc-runtime-python` | yes | CPython subprocess implementation of the Tomato Harness PTC execution seam |
+| `@tomato/experimental-session-inspector` | no | Experimental virtualized Session log and live Chat group/node inspectors |
+| `@tomato/experimental-speech-to-text` | yes | Experimental speech recognition with independently selectable providers |
+| `@tomato/experimental-speech-to-text-sensevoice` | yes | Local SenseVoice ONNX transcription with a managed sherpa-onnx process |
+| `@tomato/experimental-subagent-oar` | yes | Experimental one-shot subagents through OAR runtimes |
+| `@tomato/experimental-tool-agent-team` | yes | Scoped model-facing Agent Teams tools over ctx.agentTeams |
+| `@tomato/experimental-tool-subagent-oar` | yes | Delegate standalone tasks to configured external subagent providers |
+| `@tomato/experimental-tool-worktree` | no | Model tool that creates and enters a new Git worktree |
+| `@tomato/experimental-translator` | yes | Machine translation with reusable Session results |
+| `@tomato/experimental-worktree` | yes | Creates a named Git worktree and changes the calling Session working directory |
+| `@tomato/hooks-claude-code` | yes | Bridge plugin: run a Claude Code hooks.json / settings hook config on the Tomato Harness interception seams |
+| `@tomato/hooks-codex` | yes | Bridge plugin: run a Codex hooks.json hook config on the Tomato Harness interception seams |
+| `@tomato/plugin-recommendations` | no | Official plugin suggestions with explicit user activation and persistent conversation decisions |
+| `@tomato/session-title-all-prompts-llm` | yes | All-user-messages LLM provider plugin for Tomato Harness session titles |
+| `@tomato/skill-badge` | no | Bundled tomato badge skill provider for Tomato Harness |
+| `@tomato/tool-ralph` | yes | Model-facing fresh-agent Ralph loop over the workflow and subagent seams |
+| `@tomato/tool-session-query` | yes | Workspace-authorized model-facing session history search, trace, and event read tools |
+| `@tomato/tool-terminal` | yes | Six model-facing persistent PTY tools with owner isolation and generic background-job integration |
+| `@tomato/webhook` | no | Fire-and-forget webhook rule runtime that creates Workspace-backed Tomato Harness Sessions |
+| `@tomato/webhook-github` | yes | Signed GitHub HTTP webhook adapter for the Tomato Harness webhook runtime |
 
 ## extensions
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-client-ui-cordis` | no | Cordis dynamic-plugin definition card: the keyed cordis_define tool row with its run/stop switch |
-| `@deepseek-ai/dsh-cordis-client-runner` | no | Browser half of dynamic dual-half plugin packages: event subscription, closure evaluation, guard facade, and loader entries |
-| `@deepseek-ai/dsh-cordis-host-runner` | yes | Dynamic package definition registry, host-half sandbox lifecycle, and invoke handler table for model-mounted dual-half packages |
-| `@deepseek-ai/dsh-tool-cordis` | no | Read-only runtime API inspection for Harness plugin development |
+| `@tomato/client-ui-cordis` | no | Cordis dynamic-plugin definition card: the keyed cordis_define tool row with its run/stop switch |
+| `@tomato/cordis-client-runner` | no | Browser half of dynamic dual-half plugin packages: event subscription, closure evaluation, guard facade, and loader entries |
+| `@tomato/cordis-host-runner` | yes | Dynamic package definition registry, host-half sandbox lifecycle, and invoke handler table for model-mounted dual-half packages |
+| `@tomato/tool-cordis` | no | Read-only runtime API inspection for Harness plugin development |
 
 ## feedback
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-command-feedback` | no | Log-only session feedback: the record event, the sessionFeedback Host Remote, and the human-facing slash command |
-| `@deepseek-ai/dsh-message-feedback` | yes | Canonical Session-log ratings and notes for finalized assistant messages |
+| `@tomato/command-feedback` | no | Log-only session feedback: the record event, the sessionFeedback Host Remote, and the human-facing slash command |
+| `@tomato/message-feedback` | yes | Canonical Session-log ratings and notes for finalized assistant messages |
 
 ## fs
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-fs-local` | yes | Local-filesystem implementation of the DeepSeek Harness filesystem seam (ctx.fs) |
-| `@deepseek-ai/dsh-fs-observation-policy` | no | File-context policy plugin for the DeepSeek Harness — observed-state, read-before-edit, and version-guarded write/edit added over the ctx.fs provider seam through the fs/* event gate (no service API) |
-| `@deepseek-ai/dsh-fs-sandbox` | yes | Sandbox-enforcing implementation of the DeepSeek Harness filesystem seam: fences write/edit by the per-call sandbox mode (read-only denies mutation, workspace-write contains it to the workspace + temp roots) while reads pass through |
-| `@deepseek-ai/dsh-tool-fs` | yes | Model-facing filesystem tools (read, write, edit) over the DeepSeek Harness filesystem seam (ctx.fs) |
-| `@deepseek-ai/dsh-tool-fs-search` | yes | Model-facing filesystem discovery tools (glob, grep) backed by the packaged ripgrep binary (@vscode/ripgrep) |
-| `@deepseek-ai/dsh-tool-str-replace-editor` | yes | Model-facing view, create, literal replace, and line insert tool over the Harness filesystem service |
+| `@tomato/fs-local` | yes | Local-filesystem implementation of the Tomato Harness filesystem seam (ctx.fs) |
+| `@tomato/fs-observation-policy` | no | File-context policy plugin for the Tomato Harness — observed-state, read-before-edit, and version-guarded write/edit added over the ctx.fs provider seam through the fs/* event gate (no service API) |
+| `@tomato/fs-sandbox` | yes | Sandbox-enforcing implementation of the Tomato Harness filesystem seam: fences write/edit by the per-call sandbox mode (read-only denies mutation, workspace-write contains it to the workspace + temp roots) while reads pass through |
+| `@tomato/tool-fs` | yes | Model-facing filesystem tools (read, write, edit) over the Tomato Harness filesystem seam (ctx.fs) |
+| `@tomato/tool-fs-search` | yes | Model-facing filesystem discovery tools (glob, grep) backed by the packaged ripgrep binary (@vscode/ripgrep) |
+| `@tomato/tool-str-replace-editor` | yes | Model-facing view, create, literal replace, and line insert tool over the Harness filesystem service |
 
 ## goal
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-command-goal` | no | Human-facing slash command for persisted same-session goals |
-| `@deepseek-ai/dsh-goal` | yes | Event-sourced same-session goal state and lifecycle service for the DeepSeek Harness |
-| `@deepseek-ai/dsh-goal-round-driver` | no | Race-fenced same-session goal-round driver |
-| `@deepseek-ai/dsh-tool-goal` | yes | Model-facing same-session goal tools with execution-time authority checks |
+| `@tomato/command-goal` | no | Human-facing slash command for persisted same-session goals |
+| `@tomato/goal` | yes | Event-sourced same-session goal state and lifecycle service for the Tomato Harness |
+| `@tomato/goal-round-driver` | no | Race-fenced same-session goal-round driver |
+| `@tomato/tool-goal` | yes | Model-facing same-session goal tools with execution-time authority checks |
 
 ## guard
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-repeat-tool-reminder` | yes | Repeat-tool-call guard plugin: advisory reminders when an agent loops on identical tool calls |
-| `@deepseek-ai/dsh-tool-call-timeout-policy` | no | Tool-call timeout policy: a tools/execute wrapper that arms a per-tool deadline on exec.signal and returns TOOL_TIMEOUT when it wins |
+| `@tomato/repeat-tool-reminder` | yes | Repeat-tool-call guard plugin: advisory reminders when an agent loops on identical tool calls |
+| `@tomato/tool-call-timeout-policy` | no | Tool-call timeout policy: a tools/execute wrapper that arms a per-tool deadline on exec.signal and returns TOOL_TIMEOUT when it wins |
 
 ## host
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-host-directory-picker-auto` | no | Adaptive chooser of the directory-picker seam: resolves the host situation at boot and mounts the native or browse backend for the DeepSeek Harness web GUI host |
-| `@deepseek-ai/dsh-host-directory-picker-browse` | yes | In-app browsing backend of the directory-picker seam (listing/creation primitives over the host filesystem) |
-| `@deepseek-ai/dsh-host-directory-picker-native` | no | Native-OS-chooser backend of the directory-picker seam for the DeepSeek Harness web GUI host |
-| `@deepseek-ai/dsh-host-frontend-static` | yes | SPA dist server for the Web shell: owns the webserver fallback seat, serving explicit index entries and static assets with traversal rejection and 404 misses |
-| `@deepseek-ai/dsh-host-open-in-app` | yes | Host half of open-in-app: resolved application catalog, icons, and the launch endpoint as three webServer routes |
-| `@deepseek-ai/dsh-host-plugin-inventory` | no | Read-only Remote projection of current Cordis Loader plugin state |
-| `@deepseek-ai/dsh-host-product-telemetry-otel` | yes | Explicit product usage events exported through OpenTelemetry HTTP logs |
-| `@deepseek-ai/dsh-host-webserver` | yes | Web route-registration plugin: HTTP and upgrade routes, per-Peer index transform taps, and static dist fallback |
+| `@tomato/host-directory-picker-auto` | no | Adaptive chooser of the directory-picker seam: resolves the host situation at boot and mounts the native or browse backend for the Tomato Harness web GUI host |
+| `@tomato/host-directory-picker-browse` | yes | In-app browsing backend of the directory-picker seam (listing/creation primitives over the host filesystem) |
+| `@tomato/host-directory-picker-native` | no | Native-OS-chooser backend of the directory-picker seam for the Tomato Harness web GUI host |
+| `@tomato/host-frontend-static` | yes | SPA dist server for the Web shell: owns the webserver fallback seat, serving explicit index entries and static assets with traversal rejection and 404 misses |
+| `@tomato/host-open-in-app` | yes | Host half of open-in-app: resolved application catalog, icons, and the launch endpoint as three webServer routes |
+| `@tomato/host-plugin-inventory` | no | Read-only Remote projection of current Cordis Loader plugin state |
+| `@tomato/host-product-telemetry-otel` | yes | Explicit product usage events exported through OpenTelemetry HTTP logs |
+| `@tomato/host-webserver` | yes | Web route-registration plugin: HTTP and upgrade routes, per-Peer index transform taps, and static dist fallback |
 
 ## interaction
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-commands` | no | Plugin-owned human command registry for DeepSeek Harness UIs |
-| `@deepseek-ai/dsh-permission-presets` | yes | User-facing permission presets (ctx.permissionPresets) for the DeepSeek Harness: one product-level Permissions select bundling the sandbox-mode and approval-policy knobs, written through to their own session events |
-| `@deepseek-ai/dsh-tool-ask-user` | yes | Model-facing ask_user_question tool over the ctx.userQuestions seam |
-| `@deepseek-ai/dsh-user-approval` | yes | User-approval seam (ctx.approval) for the DeepSeek Harness: one-shot permission decisions dispatched to composed answerers over the approval/request waterfall, fail-closed by default |
-| `@deepseek-ai/dsh-user-questions` | no | Abstract user-questions seam (ctx.userQuestions) for asking the human during agent runs |
+| `@tomato/commands` | no | Plugin-owned human command registry for Tomato Harness UIs |
+| `@tomato/permission-presets` | yes | User-facing permission presets (ctx.permissionPresets) for the Tomato Harness: one product-level Permissions select bundling the sandbox-mode and approval-policy knobs, written through to their own session events |
+| `@tomato/tool-ask-user` | yes | Model-facing ask_user_question tool over the ctx.userQuestions seam |
+| `@tomato/user-approval` | yes | User-approval seam (ctx.approval) for the Tomato Harness: one-shot permission decisions dispatched to composed answerers over the approval/request waterfall, fail-closed by default |
+| `@tomato/user-questions` | no | Abstract user-questions seam (ctx.userQuestions) for asking the human during agent runs |
 
 ## jobs
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-jobs-local` | yes | Process-local implementation of the DeepSeek Harness background job registry seam |
-| `@deepseek-ai/dsh-tool-jobs` | yes | Model-facing background job control tools (job_output, job_list, job_kill) over the ctx.jobs registry |
+| `@tomato/jobs-local` | yes | Process-local implementation of the Tomato Harness background job registry seam |
+| `@tomato/tool-jobs` | yes | Model-facing background job control tools (job_output, job_list, job_kill) over the ctx.jobs registry |
 
 ## llm
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-deepseek-llm-api-extensions` | no | Additive request-field registry for the official DeepSeek LLM API adapter |
-| `@deepseek-ai/dsh-llm` | no | Provider-neutral LLM service interface for the DeepSeek Harness |
-| `@deepseek-ai/dsh-llm-deepseek-account` | yes | DeepSeek account provider authentication and discovery |
-| `@deepseek-ai/dsh-llm-deepseek-api-key` | yes | DeepSeek api-key provider authentication and discovery |
-| `@deepseek-ai/dsh-llm-pi-ai` | yes | pi-ai-backed DeepSeek adapter for the DeepSeek Harness LLM seam (design-verification twin of dsh-llm-deepseek) |
-| `@deepseek-ai/dsh-llm-retry` | yes | Provider-routed LLM request retry policy for the DeepSeek Harness |
-| `@deepseek-ai/dsh-plugin-package-inventory-deepseek` | yes | Active Loader-backed plugin package inventory for official DeepSeek LLM API requests |
-| `@deepseek-ai/dsh-token-meter` | yes | Replay-aware token measurement service (ctx.tokenMeter) for the DeepSeek Harness |
+| `@tomato/deepseek-llm-api-extensions` | no | Additive request-field registry for the official DeepSeek LLM API adapter |
+| `@tomato/llm` | no | Provider-neutral LLM service interface for the Tomato Harness |
+| `@tomato/llm-deepseek-account` | yes | DeepSeek account provider authentication and discovery |
+| `@tomato/llm-deepseek-api-key` | yes | DeepSeek api-key provider authentication and discovery |
+| `@tomato/llm-pi-ai` | yes | pi-ai-backed DeepSeek adapter for the Tomato Harness LLM seam (design-verification twin of @tomato/llm-deepseek) |
+| `@tomato/llm-retry` | yes | Provider-routed LLM request retry policy for the Tomato Harness |
+| `@tomato/plugin-package-inventory-deepseek` | yes | Active Loader-backed plugin package inventory for official DeepSeek LLM API requests |
+| `@tomato/token-meter` | yes | Replay-aware token measurement service (ctx.tokenMeter) for the Tomato Harness |
 
 ## lsp
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-lsp` | no | Abstract LSP capability seam (ctx.lsp) for the DeepSeek Harness — language-server provider registry keyed by branded id and extension mapping, order-independent per-query selection, normalized definition/references/implementation/hover requests and results, and the LspError taxonomy |
-| `@deepseek-ai/dsh-lsp-stdio` | yes | Generic stdio language-server provider for the DeepSeek Harness LSP capability seam (ctx.lsp) — spawns configured servers, translates JSON-RPC, and serves transient-open goToDefinition/findReferences/goToImplementation/hover queries in the host filesystem namespace |
-| `@deepseek-ai/dsh-tool-lsp` | yes | Model-facing lsp tool over the DeepSeek Harness LSP capability seam (ctx.lsp) — one read-only tool with goToDefinition/findReferences/goToImplementation/hover operations, one-based UTF-16 cursor coordinates, bounded location rendering, and hover normalization |
+| `@tomato/lsp` | no | Abstract LSP capability seam (ctx.lsp) for the Tomato Harness — language-server provider registry keyed by branded id and extension mapping, order-independent per-query selection, normalized definition/references/implementation/hover requests and results, and the LspError taxonomy |
+| `@tomato/lsp-stdio` | yes | Generic stdio language-server provider for the Tomato Harness LSP capability seam (ctx.lsp) — spawns configured servers, translates JSON-RPC, and serves transient-open goToDefinition/findReferences/goToImplementation/hover queries in the host filesystem namespace |
+| `@tomato/tool-lsp` | yes | Model-facing lsp tool over the Tomato Harness LSP capability seam (ctx.lsp) — one read-only tool with goToDefinition/findReferences/goToImplementation/hover operations, one-based UTF-16 cursor coordinates, bounded location rendering, and hover normalization |
 
 ## mcp
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-mcp-client` | yes | MCP client bridge: connects to MCP servers and registers their tools on ctx.tools |
-| `@deepseek-ai/dsh-mcp-resources` | no | Scoped MCP resource discovery and reading through shared model tools |
+| `@tomato/mcp-client` | yes | MCP client bridge: connects to MCP servers and registers their tools on ctx.tools |
+| `@tomato/mcp-resources` | no | Scoped MCP resource discovery and reading through shared model tools |
 
 ## plan
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-plan-mode` | yes | Logged per-agent plan mode with deployment guidance, a direct slash command, and a user-reviewed exit |
+| `@tomato/plan-mode` | yes | Logged per-agent plan mode with deployment guidance, a direct slash command, and a user-reviewed exit |
 
 ## preset
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-agent-preset` | yes | Declare an Agent capability composition in Cordis YAML |
-| `@deepseek-ai/dsh-agent-preset-registry` | yes | Declarative Agent preset registry and profile-backed editing |
-| `@deepseek-ai/dsh-persona` | yes | Composition-authored deployment persona section for the DeepSeek Harness |
+| `@tomato/agent-preset` | yes | Declare an Agent capability composition in Cordis YAML |
+| `@tomato/agent-preset-registry` | yes | Declarative Agent preset registry and profile-backed editing |
+| `@tomato/persona` | yes | Composition-authored deployment persona section for the Tomato Harness |
 
 ## ptc-runtime
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-ptc-runtime-node` | yes | Node PTC execution with per-call sandboxed processes or in-memory REPL state |
+| `@tomato/ptc-runtime-node` | yes | Node PTC execution with per-call sandboxed processes or in-memory REPL state |
 
 ## sandbox
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-sandbox-local` | yes | Local process-sandbox backends for the DeepSeek Harness sandbox seam: bwrap, the npm-distributed landlock-run launcher, macOS Seatbelt, or the Windows ACL restricted-token runner — functionally probed, fail-closed |
-| `@deepseek-ai/dsh-sandbox-policy` | yes | Per-call sandbox policy resolver and current model context: deployment fallbacks plus each session's mode and workspace root, shared by every enforcing capability family |
+| `@tomato/sandbox-local` | yes | Local process-sandbox backends for the Tomato Harness sandbox seam: bwrap, the npm-distributed landlock-run launcher, macOS Seatbelt, or the Windows ACL restricted-token runner — functionally probed, fail-closed |
+| `@tomato/sandbox-policy` | yes | Per-call sandbox policy resolver and current model context: deployment fallbacks plus each session's mode and workspace root, shared by every enforcing capability family |
 
 ## schedule
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-schedule` | yes | Host-wide durable reminders with shared management and original-Session delivery |
-| `@deepseek-ai/dsh-tool-schedule` | no | Model-facing reminder management tools (schedule_create, schedule_list, schedule_update, schedule_delete) over the Host ctx.schedule service |
+| `@tomato/schedule` | yes | Host-wide durable reminders with shared management and original-Session delivery |
+| `@tomato/tool-schedule` | no | Model-facing reminder management tools (schedule_create, schedule_list, schedule_update, schedule_delete) over the Host ctx.schedule service |
 
 ## sdk
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-sdk-jsonrpc-server` | yes | Stdio JSON-RPC server plugin for out-of-process DeepSeek Harness SDK clients |
+| `@tomato/sdk-jsonrpc-server` | yes | Stdio JSON-RPC server plugin for out-of-process Tomato Harness SDK clients |
 
 ## session
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-message-quotes` | no | Selected-text quotation and Markdown blockquote presentation |
-| `@deepseek-ai/dsh-session-checkpoint-policy` | no | Semantic session durability checkpoints before model requests and tool side effects |
-| `@deepseek-ai/dsh-session-log-deepseek` | yes | Incremental lossless session-log request extension for the official DeepSeek LLM API |
-| `@deepseek-ai/dsh-session-persistence-jsonl` | yes | JSONL durable session persistence backend for the DeepSeek Harness |
-| `@deepseek-ai/dsh-session-projection` | no | Session-projection seam: the merge-extensible projection type table, the provider contract, and the ctx.sessionProjections registry serving whole current values of log-derived per-session state |
-| `@deepseek-ai/dsh-session-projection-cache` | yes | Persisted projection cache (ctx.sessionProjectionCache): durable per-session checkpoint records on the session_projcache storage domain (per-record layout), throttled write-behind, and the cached listing read |
-| `@deepseek-ai/dsh-session-stats` | no | Whole-log conversation counts and wall times projection (sessionStats) for the DeepSeek Harness |
-| `@deepseek-ai/dsh-session-telemetry-otel` | yes | Feedback-authorized Session logs over byte-bounded OpenTelemetry HTTP requests |
-| `@deepseek-ai/dsh-session-title` | yes | Log-backed session title service and provider registry for the DeepSeek Harness |
-| `@deepseek-ai/dsh-session-title-first-prompt-llm` | yes | First-message LLM provider plugin for DeepSeek Harness session titles |
-| `@deepseek-ai/dsh-session-turn-outline` | no | Whole-log turn outline projection (turnOutline) for the DeepSeek Harness |
-| `@deepseek-ai/dsh-tool-working-directory` | no | Read and change the active Session working directory |
-| `@deepseek-ai/dsh-working-directory` | yes | Session working directories with durable changes and model context |
+| `@tomato/message-quotes` | no | Selected-text quotation and Markdown blockquote presentation |
+| `@tomato/session-checkpoint-policy` | no | Semantic session durability checkpoints before model requests and tool side effects |
+| `@tomato/session-log-deepseek` | yes | Incremental lossless session-log request extension for the official DeepSeek LLM API |
+| `@tomato/session-persistence-jsonl` | yes | JSONL durable session persistence backend for the Tomato Harness |
+| `@tomato/session-projection` | no | Session-projection seam: the merge-extensible projection type table, the provider contract, and the ctx.sessionProjections registry serving whole current values of log-derived per-session state |
+| `@tomato/session-projection-cache` | yes | Persisted projection cache (ctx.sessionProjectionCache): durable per-session checkpoint records on the session_projcache storage domain (per-record layout), throttled write-behind, and the cached listing read |
+| `@tomato/session-stats` | no | Whole-log conversation counts and wall times projection (sessionStats) for the Tomato Harness |
+| `@tomato/session-telemetry-otel` | yes | Feedback-authorized Session logs over byte-bounded OpenTelemetry HTTP requests |
+| `@tomato/session-title` | yes | Log-backed session title service and provider registry for the Tomato Harness |
+| `@tomato/session-title-first-prompt-llm` | yes | First-message LLM provider plugin for Tomato Harness session titles |
+| `@tomato/session-turn-outline` | no | Whole-log turn outline projection (turnOutline) for the Tomato Harness |
+| `@tomato/tool-working-directory` | no | Read and change the active Session working directory |
+| `@tomato/working-directory` | yes | Session working directories with durable changes and model context |
 
 ## session-query
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-session-log-export` | yes | Web Session-log ZIP export and Session Markdown copy |
-| `@deepseek-ai/dsh-session-query-sqlite` | yes | Concrete ctx.sessionQuery backend with SQLite FTS5 search |
+| `@tomato/session-log-export` | yes | Web Session-log ZIP export and Session Markdown copy |
+| `@tomato/session-query-sqlite` | yes | Concrete ctx.sessionQuery backend with SQLite FTS5 search |
 
 ## settings
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-settings` | no | Abstract user-settings seam (ctx.settings) for the DeepSeek Harness |
+| `@tomato/settings` | no | Abstract user-settings seam (ctx.settings) for the Tomato Harness |
 
 ## shell
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-bash-local` | yes | Local-subprocess implementation of the DeepSeek Harness bash executor seam |
-| `@deepseek-ai/dsh-bash-sandbox` | yes | Sandbox-consuming implementation of the DeepSeek Harness bash executor seam (confines every command via ctx.sandbox, reports denial/enforcement result facts) |
-| `@deepseek-ai/dsh-pwsh-local` | yes | Local PowerShell implementation of the DeepSeek Harness bash executor seam |
-| `@deepseek-ai/dsh-pwsh-sandbox` | yes | Sandbox-consuming implementation of the DeepSeek Harness PowerShell executor seam (confines every command via ctx.sandbox, reports denial/enforcement result facts) |
-| `@deepseek-ai/dsh-shell-env` | yes | Tool-independent managed TOMATO_* shell environment registry |
-| `@deepseek-ai/dsh-tool-bash` | yes | Model-facing bash tool with optional generic background-job and sandbox-escalation support |
-| `@deepseek-ai/dsh-tool-bash-persistent` | yes | Model-facing owner-scoped persistent Bash tool backed by the Harness PTY service |
-| `@deepseek-ai/dsh-tool-pwsh` | yes | Model-facing pwsh tool over the bash executor seam |
-| `@deepseek-ai/dsh-tool-pwsh-persistent` | yes | Model-facing owner-scoped persistent PowerShell tool backed by the Harness PTY service |
+| `@tomato/bash-local` | yes | Local-subprocess implementation of the Tomato Harness bash executor seam |
+| `@tomato/bash-sandbox` | yes | Sandbox-consuming implementation of the Tomato Harness bash executor seam (confines every command via ctx.sandbox, reports denial/enforcement result facts) |
+| `@tomato/pwsh-local` | yes | Local PowerShell implementation of the Tomato Harness bash executor seam |
+| `@tomato/pwsh-sandbox` | yes | Sandbox-consuming implementation of the Tomato Harness PowerShell executor seam (confines every command via ctx.sandbox, reports denial/enforcement result facts) |
+| `@tomato/shell-env` | yes | Tool-independent managed TOMATO_* shell environment registry |
+| `@tomato/tool-bash` | yes | Model-facing bash tool with optional generic background-job and sandbox-escalation support |
+| `@tomato/tool-bash-persistent` | yes | Model-facing owner-scoped persistent Bash tool backed by the Harness PTY service |
+| `@tomato/tool-pwsh` | yes | Model-facing pwsh tool over the bash executor seam |
+| `@tomato/tool-pwsh-persistent` | yes | Model-facing owner-scoped persistent PowerShell tool backed by the Harness PTY service |
 
 ## skill
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-skill` | yes | Agent skill provider registry for the DeepSeek Harness |
-| `@deepseek-ai/dsh-skill-filesystem` | yes | Local filesystem skill provider for the DeepSeek Harness |
-| `@deepseek-ai/dsh-skill-office` | yes | Bundled Word, PowerPoint, and Excel workflows and LibreOffice Kit operations |
-| `@deepseek-ai/dsh-tool-skill` | yes | Model-facing skill loading tool for the DeepSeek Harness |
-| `@deepseek-ai/dsh-tool-workspace-dependencies` | yes | The load_workspace_dependencies tool: absolute paths into a bundled Python, Node.js, and pnpm payload |
+| `@tomato/skill` | yes | Agent skill provider registry for the Tomato Harness |
+| `@tomato/skill-filesystem` | yes | Local filesystem skill provider for the Tomato Harness |
+| `@tomato/skill-office` | yes | Bundled Word, PowerPoint, and Excel workflows and LibreOffice Kit operations |
+| `@tomato/tool-skill` | yes | Model-facing skill loading tool for the Tomato Harness |
+| `@tomato/tool-workspace-dependencies` | yes | The load_workspace_dependencies tool: absolute paths into a bundled Python, Node.js, and pnpm payload |
 
 ## spill
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-spill-local` | yes | Local-filesystem implementation of the DeepSeek Harness spill storage seam (private session-scoped files) |
-| `@deepseek-ai/dsh-spill-policy` | yes | Token-budgeted tool-result retention with recoverable text and image paths |
+| `@tomato/spill-local` | yes | Local-filesystem implementation of the Tomato Harness spill storage seam (private session-scoped files) |
+| `@tomato/spill-policy` | yes | Token-budgeted tool-result retention with recoverable text and image paths |
 
 ## ssh
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-fs-ssh` | no | Filesystem provider over the shared POSIX SSH helper |
-| `@deepseek-ai/dsh-sandbox-ssh` | no | Remote POSIX sandbox argv provider over the shared SSH helper |
-| `@deepseek-ai/dsh-ssh` | yes | Shared OpenSSH connection and versioned POSIX remote helper |
-| `@deepseek-ai/dsh-subprocess-ssh` | no | Subprocess and terminal provider over the shared POSIX SSH helper |
+| `@tomato/fs-ssh` | no | Filesystem provider over the shared POSIX SSH helper |
+| `@tomato/sandbox-ssh` | no | Remote POSIX sandbox argv provider over the shared SSH helper |
+| `@tomato/ssh` | yes | Shared OpenSSH connection and versioned POSIX remote helper |
+| `@tomato/subprocess-ssh` | no | Subprocess and terminal provider over the shared POSIX SSH helper |
 
 ## storage
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-storage` | no | Storage hub (ctx.storage): named backend registry plus mounted data-form facilities for the DeepSeek Harness |
-| `@deepseek-ai/dsh-storage-domain` | yes | Domain data form (ctx.storage.domain): schema-validated, event-emitting KV domains over storage backends for the DeepSeek Harness |
-| `@deepseek-ai/dsh-storage-json` | yes | JSON file KV storage backend for the DeepSeek Harness storage hub |
-| `@deepseek-ai/dsh-storage-sqlite` | yes | SQLite storage backend (kv facet) for the DeepSeek Harness storage hub |
+| `@tomato/storage` | no | Storage hub (ctx.storage): named backend registry plus mounted data-form facilities for the Tomato Harness |
+| `@tomato/storage-domain` | yes | Domain data form (ctx.storage.domain): schema-validated, event-emitting KV domains over storage backends for the Tomato Harness |
+| `@tomato/storage-json` | yes | JSON file KV storage backend for the Tomato Harness storage hub |
+| `@tomato/storage-sqlite` | yes | SQLite storage backend (kv facet) for the Tomato Harness storage hub |
 
 ## subagent
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-subagent` | yes | Abstract subagent seam (ctx.subagents): named-provider registry for delegating to child agents |
-| `@deepseek-ai/dsh-subagent-acp` | yes | Out-of-process ACP subagent backend: drives a child agent in a spawned subprocess over the Agent Client Protocol |
-| `@deepseek-ai/dsh-subagent-claude-code` | yes | One-shot Claude Code subagent provider over the official Agent SDK |
-| `@deepseek-ai/dsh-subagent-codex` | yes | One-shot Codex subagent provider over the official app-server protocol |
-| `@deepseek-ai/dsh-subagent-dsh-sdk` | yes | Out-of-process SDK subagent backend: drives a child DeepSeek Harness runtime subprocess over stdio JSON-RPC through the TypeScript SDK client |
-| `@deepseek-ai/dsh-subagent-fork-in-process` | yes | In-process fork subagent backend: runs a child agent seeded with a prefix of the parent's log |
-| `@deepseek-ai/dsh-subagent-spawn-in-process` | yes | In-process spawn subagent backend: runs a fresh child agent on ctx.agents |
-| `@deepseek-ai/dsh-tool-subagent` | yes | Model-facing subagent delegation tool over the ctx.subagents seam |
-| `@deepseek-ai/dsh-tool-subagent-control` | no | Shared messaging, interruption, and child discovery tools for subagents |
+| `@tomato/subagent` | yes | Abstract subagent seam (ctx.subagents): named-provider registry for delegating to child agents |
+| `@tomato/subagent-acp` | yes | Out-of-process ACP subagent backend: drives a child agent in a spawned subprocess over the Agent Client Protocol |
+| `@tomato/subagent-claude-code` | yes | One-shot Claude Code subagent provider over the official Agent SDK |
+| `@tomato/subagent-codex` | yes | One-shot Codex subagent provider over the official app-server protocol |
+| `@tomato/subagent-sdk` | yes | Out-of-process SDK subagent backend: drives a child Tomato Harness runtime subprocess over stdio JSON-RPC through the TypeScript SDK client |
+| `@tomato/subagent-fork-in-process` | yes | In-process fork subagent backend: runs a child agent seeded with a prefix of the parent's log |
+| `@tomato/subagent-spawn-in-process` | yes | In-process spawn subagent backend: runs a fresh child agent on ctx.agents |
+| `@tomato/tool-subagent` | yes | Model-facing subagent delegation tool over the ctx.subagents seam |
+| `@tomato/tool-subagent-control` | no | Shared messaging, interruption, and child discovery tools for subagents |
 
 ## subprocess
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-subprocess-local` | no | Local-subprocess implementation of the DeepSeek Harness subprocess seam |
+| `@tomato/subprocess-local` | no | Local-subprocess implementation of the Tomato Harness subprocess seam |
 
 ## telemetry
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-otel` | no | Cordis service for independent ordinary-event and byte-bounded Session-log OTLP channels |
+| `@tomato/otel` | no | Cordis service for independent ordinary-event and byte-bounded Session-log OTLP channels |
 
 ## terminal
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-terminal` | no | Persistent PTY session seam for the DeepSeek Harness — owner-scoped ids, backend registry, interactive sends, reads, signals, and awaited cleanup |
-| `@deepseek-ai/dsh-terminal-bash` | yes | Persistent shell PTY backend over the DeepSeek Harness subprocess terminal primitive |
+| `@tomato/terminal` | no | Persistent PTY session seam for the Tomato Harness — owner-scoped ids, backend registry, interactive sends, reads, signals, and awaited cleanup |
+| `@tomato/terminal-bash` | yes | Persistent shell PTY backend over the Tomato Harness subprocess terminal primitive |
 
 ## test-support
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-llm-replay` | yes | Replay LLM plugin: short-circuits llm/stream with model chunks reconstructed from a recorded session JSONL (keyless snapshot tests) |
+| `@tomato/llm-replay` | yes | Replay LLM plugin: short-circuits llm/stream with model chunks reconstructed from a recorded session JSONL (keyless snapshot tests) |
 
 ## todo
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-tool-todo` | yes | Model-facing todo_write tool over the DeepSeek Harness event-sourced session log |
+| `@tomato/tool-todo` | yes | Model-facing todo_write tool over the Tomato Harness event-sourced session log |
 
 ## tomato
 
@@ -511,29 +511,29 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-typert-loader` | yes | Loader integration for generated Typert package contributions |
+| `@tomato/typert-loader` | yes | Loader integration for generated Typert package contributions |
 
 ## web
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-tool-web` | yes | Model-facing web tools (web_search, web_fetch) over the DeepSeek Harness web capability seam (ctx.web) |
-| `@deepseek-ai/dsh-web` | yes | Abstract web access capability seam (ctx.web) for the DeepSeek Harness — search/fetch provider registry, registration-order-independent selection, request/result vocabulary, and the WebError taxonomy |
-| `@deepseek-ai/dsh-web-deepseek-api` | yes | DeepSeek Search and Fetch API providers for the DeepSeek Harness web capability seam (ctx.web) |
-| `@deepseek-ai/dsh-web-fetch-http` | yes | Anonymous HTTP(S) fetch provider for the DeepSeek Harness web capability seam (ctx.web) |
-| `@deepseek-ai/dsh-web-search-deepseek` | yes | DeepSeek-backed search provider (native web_search via the Anthropic-compatible API) for the DeepSeek Harness web capability seam (ctx.web) |
-| `@deepseek-ai/dsh-web-search-exa` | yes | Exa-backed search provider for the DeepSeek Harness web capability seam (ctx.web) |
-| `@deepseek-ai/dsh-web-search-perplexity` | yes | Perplexity-backed search provider for the DeepSeek Harness web capability seam (ctx.web) |
+| `@tomato/tool-web` | yes | Model-facing web tools (web_search, web_fetch) over the Tomato Harness web capability seam (ctx.web) |
+| `@tomato/web` | yes | Abstract web access capability seam (ctx.web) for the Tomato Harness — search/fetch provider registry, registration-order-independent selection, request/result vocabulary, and the WebError taxonomy |
+| `@tomato/web-deepseek-api` | yes | DeepSeek Search and Fetch API providers for the Tomato Harness web capability seam (ctx.web) |
+| `@tomato/web-fetch-http` | yes | Anonymous HTTP(S) fetch provider for the Tomato Harness web capability seam (ctx.web) |
+| `@tomato/web-search-deepseek` | yes | DeepSeek-backed search provider (native web_search via the Anthropic-compatible API) for the Tomato Harness web capability seam (ctx.web) |
+| `@tomato/web-search-exa` | yes | Exa-backed search provider for the Tomato Harness web capability seam (ctx.web) |
+| `@tomato/web-search-perplexity` | yes | Perplexity-backed search provider for the Tomato Harness web capability seam (ctx.web) |
 
 ## workflow
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-tool-workflow` | yes | Model-facing workflow tool: run a JavaScript orchestration script over ctx.workflowEngine |
-| `@deepseek-ai/dsh-workflow-ptc` | yes | Workflow orchestration in the shared sandboxed Node PTC runtime |
+| `@tomato/tool-workflow` | yes | Model-facing workflow tool: run a JavaScript orchestration script over ctx.workflowEngine |
+| `@tomato/workflow-ptc` | yes | Workflow orchestration in the shared sandboxed Node PTC runtime |
 
 ## workspace
 
 | Package | Config | Description |
 |---|---|---|
-| `@deepseek-ai/dsh-workspace` | no | Workspace entity registry (ctx.workspaceRegistry): durable workspace records with validated session attachment over the domain data form for the DeepSeek Harness |
+| `@tomato/workspace` | no | Workspace entity registry (ctx.workspaceRegistry): durable workspace records with validated session attachment over the domain data form for the Tomato Harness |

@@ -1,7 +1,7 @@
 /** Select Official bundle packages from the running installation without importing provider code. */
 import { existsSync, globSync, readFileSync, realpathSync, statSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
-import { bundlePatchPaths, type ProfileManifest } from '@deepseek-ai/dsh-app-boot'
+import { bundlePatchPaths, type ProfileManifest } from '@tomato/app-boot'
 
 interface WorkspaceManifest extends ProfileManifest {
   main?: string
@@ -24,13 +24,13 @@ function manifestAt(file: string): WorkspaceManifest {
 export function officialBundleInstallTarget(name: string, installAnchor: string, version: string): { spec: string; version: string } {
   const anchor = realpathSync(installAnchor)
   const installation = manifestAt(anchor)
-  const source = installation.name === '@deepseek-ai/dsh'
+  const source = installation.name === '@tomato/cli'
     && Object.values(installation.dependencies ?? {}).some(value => value.startsWith('workspace:'))
   if (!source) return { spec: `${name}@${version}`, version }
   const root = resolve(dirname(anchor), '../..')
   if (anchor !== join(root, 'apps', 'cli', 'package.json')
     || !existsSync(join(root, 'package.json'))
-    || manifestAt(join(root, 'package.json')).name !== '@deepseek-ai/dsh-root') {
+    || manifestAt(join(root, 'package.json')).name !== '@tomato/harness') {
     throw new Error(`Official bundle ${name}: source TOMATO installation ${anchor} requires its complete workspace checkout`)
   }
   const matches = globSync('packages/*/*/package.json', { cwd: root })
@@ -42,14 +42,14 @@ export function officialBundleInstallTarget(name: string, installAnchor: string,
   }
   const { file, manifest } = selected
   const directory = realpathSync(dirname(file))
-  if (manifest.version !== version || manifest.private === true || manifest.dsh?.bundle === undefined) {
+  if (manifest.version !== version || manifest.private === true || manifest.tomato?.bundle === undefined) {
     throw new Error(`Official bundle ${name}: ${file} must declare a public bundle at TOMATO version ${version}`)
   }
   const main = typeof manifest.main === 'string' ? resolve(directory, manifest.main) : undefined
   if (main === undefined || !existsSync(main) || !statSync(main).isFile()) {
     throw new Error(`Official bundle ${name}: built runtime is missing in ${directory}; run pnpm install and pnpm run build in ${root}`)
   }
-  for (const patch of bundlePatchPaths(directory, manifest.dsh.bundle)) {
+  for (const patch of bundlePatchPaths(directory, manifest.tomato.bundle)) {
     if (!existsSync(patch) || !statSync(patch).isFile()) {
       throw new Error(`Official bundle ${name}: bundle patch ${patch} is missing; restore the checkout`)
     }

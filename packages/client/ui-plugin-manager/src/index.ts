@@ -1,11 +1,11 @@
 /** Host registry-response probing for the plugin installation dialog. */
 
-import type { Context } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
-import { Remote, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
+import type { Context } from '@tomato/cordis'
+import z from '@tomato/schemastery'
+import { MAX_TIMER_DELAY_MS } from '@tomato/timeout'
+import { Remote, TypertRemoteService } from '@tomato/typert-protocol'
 
-declare module '@deepseek-ai/cordis' {
+declare module '@tomato/cordis' {
   interface Context {
     pluginRegistryProbe: PluginRegistryProbe
   }

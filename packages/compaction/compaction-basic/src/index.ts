@@ -1,21 +1,21 @@
 /**
  * Basic replay-aware compaction backend.
  *
- * @module @deepseek-ai/dsh-compaction-basic
+ * @module @tomato/compaction-basic
  */
 
-import { Context } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import { CompactionEngine, ManualCompactionError } from '@deepseek-ai/dsh-compaction'
-import type { CompactionResult, CompactionTrigger } from '@deepseek-ai/dsh-compaction'
-import type { EpochHeader, Session, SessionSeq } from '@deepseek-ai/dsh-session'
-import { CONTEXT_WINDOW_EXCEEDED_CODE, LlmError } from '@deepseek-ai/dsh-llm'
-import type { LlmCallConfig } from '@deepseek-ai/dsh-llm'
-import { assertNever } from '@deepseek-ai/dsh-util-values'
-import type { Agent, PreStepDecision } from '@deepseek-ai/dsh-agent'
-import type { CommandId } from '@deepseek-ai/dsh-commands/brand'
+import { Context } from '@tomato/cordis'
+import z from '@tomato/schemastery'
+import { CompactionEngine, ManualCompactionError } from '@tomato/compaction'
+import type { CompactionResult, CompactionTrigger } from '@tomato/compaction'
+import type { EpochHeader, Session, SessionSeq } from '@tomato/session'
+import { CONTEXT_WINDOW_EXCEEDED_CODE, LlmError } from '@tomato/llm'
+import type { LlmCallConfig } from '@tomato/llm'
+import { assertNever } from '@tomato/util-values'
+import type { Agent, PreStepDecision } from '@tomato/agent'
+import type { CommandId } from '@tomato/commands/brand'
 // Type-only: makes the optional sibling service available to `ctx.get()`.
-import type {} from '@deepseek-ai/dsh-compaction-tool-result-pruner'
+import type {} from '@tomato/compaction-tool-result-pruner'
 import {
   resolveCompactSpec,
   resolveConfig,

@@ -1,6 +1,6 @@
 {
-  "name": "@deepseek-ai/dsh-experimental-badge-skill-bundle",
-  "description": "Let agents add a “powered by dsh” badge to documents, pull requests, and other outputs.",
+  "name": "@tomato/experimental-badge-skill-bundle",
+  "description": "Let agents add a “powered by tomato” badge to documents, pull requests, and other outputs.",
   "version": "0.2.1-rc.3",
   "icon": "./icon.svg",
   "publishConfig": {
@@ -33,18 +33,18 @@
     "lib/types/**/*.d.ts"
   ],
   "license": "MIT",
-  "dsh": {
+  "tomato": {
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
   },
   "dependencies": {
-    "@deepseek-ai/dsh-skill-badge": "workspace:*"
+    "@tomato/skill-badge": "workspace:*"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/cordis": "workspace:~"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/cordis": "workspace:~"
   }
 }

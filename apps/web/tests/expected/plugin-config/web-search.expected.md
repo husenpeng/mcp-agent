@@ -1,6 +1,6 @@
 - button "返回插件": 插件
 - heading "网页搜索" [level=3]
-- paragraph: 设置 DeepSeek 的搜索提供方。
+- paragraph: 设置 Tomato 的搜索提供方。
 - text: 启用新版 Web 搜索 API
 - switch "启用新版 Web 搜索 API" [checked]
 - paragraph:

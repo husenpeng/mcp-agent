@@ -1,0 +1,66 @@
+{
+  "name": "@tomato/subagent-sdk",
+  "description": "Out-of-process SDK subagent backend: drives a child Tomato Harness runtime subprocess over stdio JSON-RPC through the TypeScript SDK client",
+  "version": "0.2.1-rc.3",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/subagent/subagent-sdk"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@tomato/cordis": "workspace:~",
+    "@tomato/agent": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/sdk-client": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/subagent": "workspace:*",
+    "@tomato/subprocess": "workspace:*"
+  },
+  "dependencies": {
+    "@tomato/branded": "workspace:*",
+    "@tomato/schemastery": "workspace:~"
+  },
+  "devDependencies": {
+    "@tomato/cordis": "workspace:~",
+    "@tomato/cordis-plugin-loader": "workspace:~",
+    "@tomato/agent": "workspace:*",
+    "@tomato/agent-instructions": "workspace:*",
+    "@tomato/app-boot": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/llm-deepseek": "workspace:*",
+    "@tomato/llm-deepseek-api-key": "workspace:*",
+    "@tomato/loader-smoke": "workspace:*",
+    "@tomato/sdk-client": "workspace:*",
+    "@tomato/sdk-protocol": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-checkpoint-policy": "workspace:*",
+    "@tomato/session-persistence-jsonl": "workspace:*",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/skill-filesystem": "workspace:*",
+    "@tomato/subagent": "workspace:*",
+    "@tomato/subprocess": "workspace:*",
+    "@tomato/system-prompt": "workspace:*",
+    "@tomato/tool-subagent": "workspace:*"
+  }
+}

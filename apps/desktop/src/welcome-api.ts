@@ -1,21 +1,21 @@
 /** Operations available to the isolated native welcome renderer. */
 
-import type { AccountView, SignInAttemptId, SignInAttemptView } from '@deepseek-ai/dsh-deepseek-account/types'
-import type { ProductEventMap } from '@deepseek-ai/dsh-client-product-analytics/types'
+import type { AccountView, SignInAttemptId, SignInAttemptView } from '@tomato/deepseek-account/types'
+import type { ProductEventMap } from '@tomato/client-product-analytics/types'
 import type { DesktopLocale } from './locale.ts'
 
 /** Private native welcome channels, installed only while its window exists. */
 export const WELCOME_IPC = {
-  saveApiKey: 'dsh-welcome:save-api-key',
-  analytics: 'dsh-welcome:analytics',
-  analyticsEnabled: 'dsh-welcome:analytics-enabled',
-  skip: 'dsh-welcome:skip',
-  start: 'dsh-welcome:start',
-  cancel: 'dsh-welcome:cancel',
-  copyLink: 'dsh-welcome:copy-link',
-  openLegal: 'dsh-welcome:open-legal',
-  state: 'dsh-welcome:state',
-  takeNotice: 'dsh-welcome:take-notice',
+  saveApiKey: 'tomato-welcome:save-api-key',
+  analytics: 'tomato-welcome:analytics',
+  analyticsEnabled: 'tomato-welcome:analytics-enabled',
+  skip: 'tomato-welcome:skip',
+  start: 'tomato-welcome:start',
+  cancel: 'tomato-welcome:cancel',
+  copyLink: 'tomato-welcome:copy-link',
+  openLegal: 'tomato-welcome:open-legal',
+  state: 'tomato-welcome:state',
+  takeNotice: 'tomato-welcome:take-notice',
 } as const
 
 /** Legal pages the welcome card may open in the system browser. */

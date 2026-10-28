@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-action-cards",
+  "name": "@tomato/action-cards",
   "description": "Optional action cards below answers: one shared proposal tool, card state, user actions and status notices",
   "version": "0.2.1-rc.3",
   "publishConfig": {
@@ -36,28 +36,28 @@
   },
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-typert-protocol": "workspace:*",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-tools": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/typert-protocol": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/tools": "workspace:*",
+    "@tomato/session": "workspace:*"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-typert-protocol": "workspace:*",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-tools": "workspace:*",
-    "@deepseek-ai/dsh-agent": "workspace:*",
-    "@deepseek-ai/dsh-agent-loop": "workspace:*",
-    "@deepseek-ai/dsh-agent-loop-testkit": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-session-projection": "workspace:*",
-    "@deepseek-ai/dsh-api-remote-access": "workspace:*",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:*",
-    "@deepseek-ai/dsh-skill": "workspace:*",
-    "@deepseek-ai/dsh-tool-skill": "workspace:*",
-    "@deepseek-ai/dsh-tool-testkit": "workspace:*",
-    "@deepseek-ai/dsh-util-values": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/typert-protocol": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/tools": "workspace:*",
+    "@tomato/agent": "workspace:*",
+    "@tomato/agent-loop": "workspace:*",
+    "@tomato/agent-loop-testkit": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/api-remote-access": "workspace:*",
+    "@tomato/sandbox-policy": "workspace:*",
+    "@tomato/skill": "workspace:*",
+    "@tomato/tool-skill": "workspace:*",
+    "@tomato/tool-testkit": "workspace:*",
+    "@tomato/util-values": "workspace:*"
   },
   "dependencies": {
     "zod": "4.4.3"

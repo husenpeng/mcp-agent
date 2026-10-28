@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-tool-fs-search",
+  "name": "@tomato/tool-fs-search",
   "description": "Model-facing filesystem discovery tools (glob, grep) backed by the packaged ripgrep binary (@vscode/ripgrep)",
   "version": "0.2.1-rc.3",
   "publishConfig": {
@@ -30,36 +30,36 @@
   "license": "MIT",
   "dependencies": {
     "@vscode/ripgrep": "^1.18.0",
-    "@deepseek-ai/schemastery": "workspace:~"
+    "@tomato/schemastery": "workspace:~"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-output-retention": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-spill": "workspace:*",
-    "@deepseek-ai/dsh-subprocess": "workspace:*",
-    "@deepseek-ai/dsh-system-prompt": "workspace:*",
-    "@deepseek-ai/dsh-timeout": "workspace:*",
-    "@deepseek-ai/dsh-tools": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-working-directory": "workspace:*"
+    "@tomato/llm": "workspace:*",
+    "@tomato/output-retention": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/spill": "workspace:*",
+    "@tomato/subprocess": "workspace:*",
+    "@tomato/system-prompt": "workspace:*",
+    "@tomato/timeout": "workspace:*",
+    "@tomato/tools": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/working-directory": "workspace:*"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:*",
-    "@deepseek-ai/dsh-subprocess": "workspace:*",
-    "@deepseek-ai/dsh-subprocess-local": "workspace:*",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-output-retention": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-spill": "workspace:*",
-    "@deepseek-ai/dsh-system-prompt": "workspace:*",
-    "@deepseek-ai/dsh-timeout": "workspace:*",
-    "@deepseek-ai/dsh-tool-executor-native": "workspace:*",
-    "@deepseek-ai/dsh-tool-testkit": "workspace:*",
-    "@deepseek-ai/dsh-tools": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-scope": "workspace:*",
-    "@deepseek-ai/dsh-working-directory": "workspace:*",
-    "@deepseek-ai/dsh-agent-loop-testkit": "workspace:*"
+    "@tomato/agent": "workspace:*",
+    "@tomato/subprocess": "workspace:*",
+    "@tomato/subprocess-local": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/output-retention": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/spill": "workspace:*",
+    "@tomato/system-prompt": "workspace:*",
+    "@tomato/timeout": "workspace:*",
+    "@tomato/tool-executor-native": "workspace:*",
+    "@tomato/tool-testkit": "workspace:*",
+    "@tomato/tools": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/scope": "workspace:*",
+    "@tomato/working-directory": "workspace:*",
+    "@tomato/agent-loop-testkit": "workspace:*"
   }
 }

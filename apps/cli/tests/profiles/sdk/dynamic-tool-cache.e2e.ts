@@ -4,9 +4,9 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { lastAssistantStreamChunk, type RetryPolicyConfig, type TokenUsage } from '@deepseek-ai/dsh-llm'
-import { DeepSeekHarness } from '@deepseek-ai/dsh-sdk-client'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
+import { lastAssistantStreamChunk, type RetryPolicyConfig, type TokenUsage } from '@tomato/llm'
+import { DeepSeekHarness } from '@tomato/sdk-client'
+import type { SessionEvent } from '@tomato/session'
 import { describe, expect, it, onTestFinished } from 'vitest'
 
 const fixturePath = fileURLToPath(new URL('./fixtures/dynamic-tool-cache.mjs', import.meta.url))
@@ -73,7 +73,7 @@ function registryChanges(previous: ObservedRequest, request: ObservedRequest): {
 
 describe.skipIf(!process.env.DEEPSEEK_API_KEY)('SDK native tool updates with real DeepSeek', () => {
   it.each([false, true])('keeps the preceding conversation cached after a tool addition (prompt update: %s)', async (updatePrompt) => {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-sdk-tool-cache-'))
+    const root = await mkdtemp(join(tmpdir(), 'tomato-sdk-tool-cache-'))
     onTestFinished(async () => { await rm(root, { recursive: true, force: true }) })
     const sampleLabel = `CACHE_SAMPLE_${randomUUID()}`
     const evidencePath = join(root, 'requests.jsonl')

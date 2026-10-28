@@ -3,13 +3,13 @@ description: "Shared TypeScript declarations for package identity, runtime requi
 kind: "package-library"
 ---
 
-# @deepseek-ai/dsh-package-manifest
+# @tomato/package-manifest
 
 English | [中文](README.zh.md)
 
 ## Summary
 
-Use `TomatoPackageManifest` for package metadata, `TomatoManifest` for the public fields under `dsh`, and member types such as `TomatoClientManifest` for one domain. Each reader owns JSON parsing, validation, and default resolution.
+Use `TomatoPackageManifest` for package metadata, `TomatoManifest` for the public fields under `tomato`, and member types such as `TomatoClientManifest` for one domain. Each reader owns JSON parsing, validation, and default resolution.
 
 ## Table of Contents
 
@@ -28,14 +28,14 @@ Use `TomatoPackageManifest` for package metadata, `TomatoManifest` for the publi
 Import from the package root. Use a development dependency when only checking your own source; use a production dependency if your published declarations reference these types.
 
 ```ts
-import type { TomatoClientManifest, TomatoPackageManifest } from '@deepseek-ai/dsh-package-manifest'
+import type { TomatoClientManifest, TomatoPackageManifest } from '@tomato/package-manifest'
 
 const client: TomatoClientManifest = { platform: 'web' }
 const manifest: TomatoPackageManifest = {
-  name: 'example-dsh-plugin',
+  name: 'example-tomato-plugin',
   version: '1.0.0',
-  engines: { node: '>=24', dsh: '0.1.5-alpha.1' },
-  dsh: {
+  engines: { node: '>=24', tomato: '0.1.5-alpha.1' },
+  tomato: {
     manifestVersion: 1,
     bundle: { patch: './cordis.patch.yml' },
     client,
@@ -43,7 +43,7 @@ const manifest: TomatoPackageManifest = {
 }
 ```
 
-`TomatoPackageManifest` describes the package.json fields used by TOMATO, with required `name` and `version`; it includes dependency, peer, and optional dependency declarations but is not an exhaustive npm schema. Local profile readers use `Partial<TomatoPackageManifest>` because profiles need no published version. `TomatoManifest` describes only public author fields under `dsh`. `TomatoBundleManifest.patch` is one patch file path or an ordered list of them, each relative to the package root; the launcher applies a list in order as one bundle layer. TypeScript checks the example and erases `import type`; these interfaces do not parse JSON or write a file.
+`TomatoPackageManifest` describes the package.json fields used by TOMATO, with required `name` and `version`; it includes dependency, peer, and optional dependency declarations but is not an exhaustive npm schema. Local profile readers use `Partial<TomatoPackageManifest>` because profiles need no published version. `TomatoManifest` describes only public author fields under `tomato`. `TomatoBundleManifest.patch` is one patch file path or an ordered list of them, each relative to the package root; the launcher applies a list in order as one bundle layer. TypeScript checks the example and erases `import type`; these interfaces do not parse JSON or write a file.
 
 `TomatoBundleManifest.listedByDefault` is an optional boolean, defaulting to true. False hides an installation-carried bundle from the default GUI lists until the profile enables or installs it; the management inventory remains complete. [Plugin Manager](../../client/ui-plugin-manager/README.md#use-this-package) owns the display and explicit activation paths.
 
@@ -51,8 +51,8 @@ The following metadata fields are optional. Omitting them leaves the format vers
 
 | Field | Meaning |
 |---|---|
-| `dsh.manifestVersion` | Manifest format identifier; the declared format is `1`, independent of the npm package version and Session format version. |
-| `engines.dsh` | Author-declared compatible TOMATO versions as a SemVer range, including exact prerelease versions. This field sits beside `engines.node` and `engines.npm`; an engines object may omit `dsh`. |
+| `tomato.manifestVersion` | Manifest format identifier; the declared format is `1`, independent of the npm package version and Session format version. |
+| `engines.tomato` | Author-declared compatible TOMATO versions as a SemVer range, including exact prerelease versions. This field sits beside `engines.node` and `engines.npm`; an engines object may omit `tomato`. |
 
 `LocalizedText` carries literal text or a language map with a required English fallback. `PluginLocalizedMeta` carries optional display title, description, an image data URL resolved from a package root's `package.json.icon` or an exported `<specifier>/icon`, and metadata diagnostics for installed plugins. [App boot](../../boot/app-boot/README.md) reads these values; this package only supplies their types.
 
@@ -92,7 +92,7 @@ Type declarations add no model input, so provider cache reuse is unaffected.
 <a id="known-limitations-and-deferred-work"></a>
 
 - **Static typing only.** Consumers read and validate the JSON fields they use, then adapt the shared declarations to their runtime data. The package supplies no parser, getter helpers, file checks, or defaults.
-- **Compatibility is declarative.** Current installers and loaders do not enforce `dsh.manifestVersion` or `engines.dsh`; declaring a range does not reject incompatible hosts or validate SemVer syntax.
+- **Compatibility is declarative.** Current installers and loaders do not enforce `tomato.manifestVersion` or `engines.tomato`; declaring a range does not reject incompatible hosts or validate SemVer syntax.
 
 <a id="dev-note"></a>
 ### Dev Note

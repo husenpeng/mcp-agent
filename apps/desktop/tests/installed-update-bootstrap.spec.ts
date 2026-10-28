@@ -12,7 +12,7 @@ const versions = ['0.1.6-nightly.20260914.1', '0.1.6-nightly.20260914.2'] as con
 const source = { version: '0.1.5-rc.2', commit: 'a'.repeat(40), dirtyFiles: [] }
 
 async function fixture<T>(body: (directory: string) => Promise<T>): Promise<T> {
-  const directory = await mkdtemp(join(tmpdir(), 'dsh-update-bootstrap-'))
+  const directory = await mkdtemp(join(tmpdir(), 'tomato-update-bootstrap-'))
   try { return await body(directory) }
   finally { await rm(directory, { recursive: true, force: true }) }
 }
@@ -47,10 +47,10 @@ console.log(JSON.stringify({ paths: app.paths, home: process.env.TOMATO_HOME, jo
         expect(stderr).toBe('')
         results.push(JSON.parse(stdout))
       }
-      const root = join(directory, 'application-data/dsh-update-qualification', run.id)
+      const root = join(directory, 'application-data/tomato-update-qualification', run.id)
       expect(results).toEqual([0, 1].map(() => ({ paths: { userData: join(root, 'user-data'), sessionData: join(root, 'user-data') },
-        home: join(root, 'dsh-home'), journals: join(root, 'journals') })))
-      expect((await readdir(root)).sort()).toEqual(['dsh-home', 'journals', 'user-data'])
+        home: join(root, 'tomato-home'), journals: join(root, 'journals') })))
+      expect((await readdir(root)).sort()).toEqual(['tomato-home', 'journals', 'user-data'])
       await expect(prepareInstalledUpdateBootstrap(join(run.root, 'run.json'))).rejects.toMatchObject({ code: 'EEXIST' })
     })
   })
@@ -60,7 +60,7 @@ console.log(JSON.stringify({ paths: app.paths, home: process.env.TOMATO_HOME, jo
       const env = { TOMATO_HOME: 'existing' }
       const app = { getPath: () => directory, setPath: (): never => { throw new Error('unexpected path change') } }
       expect(() => configureInstalledUpdateIdentity(app, { id: 'a'.repeat(24), versions },
-        { version: versions[0], tomatoDesktopAppId: 'com.deepseek.dsh' }, env)).toThrow('identity')
+        { version: versions[0], tomatoDesktopAppId: 'vip.tomatoai.desktop' }, env)).toThrow('identity')
       expect(await readdir(directory)).toEqual([])
       expect(env).toEqual({ TOMATO_HOME: 'existing' })
     })

@@ -2,14 +2,14 @@
 import { mkdtemp, realpath, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { Context } from '@deepseek-ai/cordis'
-import { createUserMessage, LlmAdapter, ToolCallId } from '@deepseek-ai/dsh-llm'
-import type { GenerateOptions, LlmResolvedModelInfo, StreamChunk } from '@deepseek-ai/dsh-llm'
-import { SessionId } from '@deepseek-ai/dsh-session'
-import { mountAgentLoopTestDependencies, mountAgentLoopTestHarness } from '@deepseek-ai/dsh-agent-loop-testkit'
-import TokenMeter from '@deepseek-ai/dsh-token-meter'
-import { defineContentToolFixture } from '@deepseek-ai/dsh-tool-testkit'
-import BasicCompaction from '@deepseek-ai/dsh-compaction-basic'
+import { Context } from '@tomato/cordis'
+import { createUserMessage, LlmAdapter, ToolCallId } from '@tomato/llm'
+import type { GenerateOptions, LlmResolvedModelInfo, StreamChunk } from '@tomato/llm'
+import { SessionId } from '@tomato/session'
+import { mountAgentLoopTestDependencies, mountAgentLoopTestHarness } from '@tomato/agent-loop-testkit'
+import TokenMeter from '@tomato/token-meter'
+import { defineContentToolFixture } from '@tomato/tool-testkit'
+import BasicCompaction from '@tomato/compaction-basic'
 import { expect, it } from 'vitest'
 
 class CompactionAdapter extends LlmAdapter {
@@ -39,7 +39,7 @@ class CompactionAdapter extends LlmAdapter {
 }
 
 it('retains required cwd in the first request after proactive compaction with optional context disabled', async () => {
-  const root = await realpath(await mkdtemp(join(tmpdir(), 'dsh-compaction-admission-')))
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'tomato-compaction-admission-')))
   const ctx = new Context()
   try {
     await mountAgentLoopTestDependencies(ctx, {

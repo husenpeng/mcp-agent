@@ -1,0 +1,68 @@
+# SDK-profile patch for a deterministic parent model that selects a route for
+# a separate SDK child runtime. Both runtimes persist their request headers.
+
+- id: llm-deepseek
+  name: '@tomato/llm-deepseek-api-key'
+  disabled: true
+
+- id: tool-subagent
+  name: '@tomato/tool-subagent'
+  disabled: true
+
+- id: sdk-jsonrpc-server
+  name: '@tomato/sdk-jsonrpc-server'
+  disabled: true
+
+- id: session-persistence-jsonl
+  name: '@tomato/session-persistence-jsonl'
+  config:
+    root: !!js tomatoHomePath('sessions')
+    compression: none
+
+- insert:
+    - id: mock-llm
+      name: '../../../packages/subagent/subagent-sdk/tests/fixtures/loader/mock-delegating-llm.ts'
+      disabled: !!js process.env.TOMATO_SNAPSHOT !== 'record'
+
+    - id: subagent-sdk
+      name: '@tomato/subagent-sdk'
+      config:
+        profile: sdk
+        patches: !!js JSON.parse(process.env.TOMATO_TEST_CHILD_PATCHES ?? '[]')
+        tomatoHome: !!js process.env.TOMATO_TEST_CHILD_HOME
+        provider: mock
+        model: mock-routed
+        env:
+          TOMATO_TELEMETRY_DISABLED: '1'
+
+    - id: subagent-model-selection-settings
+      name: '@tomato/tool-subagent/model-selection-settings'
+      config:
+        enabled: true
+        allowedModels:
+          - provider: mock
+            model: mock-routed
+
+    - id: tool-subagent-sdk
+      name: '../../../packages/subagent/subagent-sdk/tests/fixtures/loader/scoped-tool-subagent.ts'
+      config:
+        provider: tomato-sdk
+        toolName: subagent
+        agentOptions:
+          maxTokens: 777
+        maxDepth: 'provider-managed'
+
+    - id: sdk-jsonrpc-server-dynamic-live
+      name: '@tomato/sdk-jsonrpc-server'
+      inject: [sdkAppStartup, loader]
+      disabled: !!js process.env.TOMATO_SNAPSHOT !== 'record'
+      config:
+        maxTokensAsSuccess: true
+
+- id: session-log-deepseek
+  config:
+    enabled: false
+
+- insert:
+    - id: await-external-subagents
+      name: '../../../packages/test-support/session-snapshot/tests/fixtures/subagent-settlement-barrier.ts'

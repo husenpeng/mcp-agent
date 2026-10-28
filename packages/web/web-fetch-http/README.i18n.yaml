@@ -5,57 +5,57 @@
 /:
   en: dba7f5089d194048
   zh: 956905ee19f6f362
-/deepseek-ai-dsh-web-fetch-http:
-  en: 2e839bfc4c365701
-  zh: 62dd5239ae93471c
-/deepseek-ai-dsh-web-fetch-http/summary:
-  en: afb0ecfdd563bced
-  zh: 734f74bf506e34e2
-/deepseek-ai-dsh-web-fetch-http/table-of-contents:
+/tomato-web-fetch-http:
+  en: ce1356b86a3534d6
+  zh: 4d834b2e32ed5e0d
+/tomato-web-fetch-http/summary:
+  en: 8188917f8c92ede3
+  zh: 756265f318492765
+/tomato-web-fetch-http/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
-/deepseek-ai-dsh-web-fetch-http/use-this-package:
+/tomato-web-fetch-http/use-this-package:
   en: 630b12516d53e905
   zh: eed124cfe9c8dc1f
-/deepseek-ai-dsh-web-fetch-http/use-this-package/when-to-choose-it:
+/tomato-web-fetch-http/use-this-package/when-to-choose-it:
   en: acb7517f571c38b8
   zh: 8ee9da18953ab65e
-/deepseek-ai-dsh-web-fetch-http/use-this-package/minimal-configuration:
-  en: e4534189d5230861
-  zh: 5905731d7b5d9c60
-/deepseek-ai-dsh-web-fetch-http/use-this-package/what-a-fetch-returns:
+/tomato-web-fetch-http/use-this-package/minimal-configuration:
+  en: 636742e48fc3c9aa
+  zh: f5b3f5000f499bf7
+/tomato-web-fetch-http/use-this-package/what-a-fetch-returns:
   en: 2d18cdcc9b53dd0f
   zh: 3bc6ca7c5933ee5d
-/deepseek-ai-dsh-web-fetch-http/use-this-package/transport-behavior:
+/tomato-web-fetch-http/use-this-package/transport-behavior:
   en: 584054eb465ae615
   zh: c421860ba79bfffc
-/deepseek-ai-dsh-web-fetch-http/use-this-package/failures-and-recovery:
+/tomato-web-fetch-http/use-this-package/failures-and-recovery:
   en: 35407f106dc65deb
   zh: 02118072fba68b8f
-/deepseek-ai-dsh-web-fetch-http/understand-the-implementation:
+/tomato-web-fetch-http/understand-the-implementation:
   en: 9842c69ad3636bb3
   zh: 3cdc3f816cbdd0cb
-/deepseek-ai-dsh-web-fetch-http/understand-the-implementation/design-philosophy:
-  en: 422128dac5eebdde
-  zh: 25ba5f49b305a056
-/deepseek-ai-dsh-web-fetch-http/understand-the-implementation/source-map:
+/tomato-web-fetch-http/understand-the-implementation/design-philosophy:
+  en: 3a965ad2900183fb
+  zh: 2c3950223e7fcec7
+/tomato-web-fetch-http/understand-the-implementation/source-map:
   en: 1f355ec2726ff61b
   zh: 076a0c259c94f22a
-/deepseek-ai-dsh-web-fetch-http/understand-the-implementation/read-path:
+/tomato-web-fetch-http/understand-the-implementation/read-path:
   en: f13cd16555fe39a5
   zh: 8f48cb659f2c272c
-/deepseek-ai-dsh-web-fetch-http/further-exploration:
-  en: eeaaf0b455673a1c
-  zh: 0874f9f44ff9a220
-/deepseek-ai-dsh-web-fetch-http/model-experience:
-  en: 5c488f8d23ce3e90
-  zh: 3cc8f8dc3ab60b65
-/deepseek-ai-dsh-web-fetch-http/model-experience/kv-cache-effect:
+/tomato-web-fetch-http/further-exploration:
+  en: 9f728e79f3dae8da
+  zh: b4a95bb05a9142ea
+/tomato-web-fetch-http/model-experience:
+  en: 68cd383848240af9
+  zh: 935a76eaf134d150
+/tomato-web-fetch-http/model-experience/kv-cache-effect:
   en: 40294c1c31b74824
   zh: d75d48f485447a74
-/deepseek-ai-dsh-web-fetch-http/known-limitations-and-deferred-work:
+/tomato-web-fetch-http/known-limitations-and-deferred-work:
   en: aa351dc3edaa6355
   zh: 5bb556857b389df7
-/deepseek-ai-dsh-web-fetch-http/known-limitations-and-deferred-work/dev-note:
+/tomato-web-fetch-http/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

@@ -3,7 +3,7 @@ description: "可选操作卡片的共享 Host 服务：propose_action 工具、
 kind: "package-reference"
 ---
 
-# @deepseek-ai/dsh-action-cards
+# @tomato/action-cards
 
 [English](README.md) | 中文
 

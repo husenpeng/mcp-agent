@@ -2,7 +2,7 @@
 
 English | [中文](github-review.zh.md)
 
-This opt-in overlay adds a signed GitHub endpoint to `dsh web`. When a pull request in the configured repository changes from draft to ready for review, the rule creates a titled root Session under the repository's Web Workspace and starts a read-only review prompt.
+This opt-in overlay adds a signed GitHub endpoint to `tomato web`. When a pull request in the configured repository changes from draft to ready for review, the rule creates a titled root Session under the repository's Web Workspace and starts a read-only review prompt.
 
 ## Prerequisites
 
@@ -25,12 +25,12 @@ printf '%s\n' "$TOMATO_GITHUB_WEBHOOK_SECRET"
 Install both experimental packages into the Web profile first. Profiles do not install peers automatically; the GitHub adapter needs the webhook runtime explicitly:
 
 ```sh
-dsh plugin --profile web add @deepseek-ai/dsh-webhook @deepseek-ai/dsh-webhook-github
+tomato plugin --profile web add @tomato/webhook @tomato/webhook-github
 export TOMATO_GITHUB_REVIEW_WORKSPACE=/path/to/deepseek-harness
-dsh web --patch "${TOMATO_HOME:-$HOME/.dsh}/profiles/web/node_modules/@deepseek-ai/dsh-webhook-github/examples/github-review/cordis.yml"
+tomato web --patch "${TOMATO_HOME:-$HOME/.tomato}/profiles/web/node_modules/@tomato/webhook-github/examples/github-review/cordis.yml"
 ```
 
-The adapter distributes the example, which loads from the profile's installation directory so its rule module can resolve profile-installed peers. Do not run the rule from an arbitrary directory outside the profile. To customize it, copy both example files to `$TOMATO_HOME/profiles/web/github-review/`, edit the configuration, and point `--patch` at that copy of `cordis.yml`; use `~/.dsh` when `TOMATO_HOME` is unset.
+The adapter distributes the example, which loads from the profile's installation directory so its rule module can resolve profile-installed peers. Do not run the rule from an arbitrary directory outside the profile. To customize it, copy both example files to `$TOMATO_HOME/profiles/web/github-review/`, edit the configuration, and point `--patch` at that copy of `cordis.yml`; use `~/.tomato` when `TOMATO_HOME` is unset.
 
 The repository example lives under `packages/experimental/webhook-github/examples/github-review/`. The CLI does not install webhook packages or list them as Official plugins; installing the packages and supplying the overlay are separate steps.
 
@@ -87,7 +87,7 @@ It can also map repositories to different local paths:
 ```js
 const workspacePath = {
   'deepseek-ai/deepseek-harness': '/path/to/deepseek-harness',
-  'deepseek-harness/dsh-sdk': '/path/to/dsh-sdk',
+  'deepseek-harness/tomato-sdk': '/path/to/tomato-sdk',
 }[payload.repository.full_name]
 if (workspacePath === undefined) return null
 ```

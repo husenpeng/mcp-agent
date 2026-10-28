@@ -1,20 +1,20 @@
 /** Environment variable that supplies the Electron application identifier. */
-export const DESKTOP_APP_ID_ENV: 'DSH_DESKTOP_APP_ID'
+export const DESKTOP_APP_ID_ENV: 'TOMATO_DESKTOP_APP_ID'
 
 /** Environment variable that supplies electron-builder's macOS certificate qualifier. */
-export const MACOS_SIGNING_IDENTITY_ENV: 'DSH_DESKTOP_MACOS_SIGNING_IDENTITY'
+export const MACOS_SIGNING_IDENTITY_ENV: 'TOMATO_DESKTOP_MACOS_SIGNING_IDENTITY'
 
 /** Environment variable that supplies the expected Apple Developer Team ID. */
-export const MACOS_TEAM_ID_ENV: 'DSH_DESKTOP_MACOS_TEAM_ID'
+export const MACOS_TEAM_ID_ENV: 'TOMATO_DESKTOP_MACOS_TEAM_ID'
 
 /** Environment variable that selects the npm registry used for the bundled runtime install. */
-export const NPM_REGISTRY_ENV: 'DSH_DESKTOP_NPM_REGISTRY'
+export const NPM_REGISTRY_ENV: 'TOMATO_DESKTOP_NPM_REGISTRY'
 
 /** Environment variable carrying the auth_service origin sealed into the application. */
-export const AUTH_SERVICE_URL_ENV: 'DSH_DESKTOP_AUTH_SERVICE_URL'
+export const AUTH_SERVICE_URL_ENV: 'TOMATO_DESKTOP_AUTH_SERVICE_URL'
 
 /** Environment variable carrying the company BFF origin sealed into the application. */
-export const TOMATO_WEB_URL_ENV: 'DSH_DESKTOP_TOMATO_WEB_URL'
+export const TOMATO_WEB_URL_ENV: 'TOMATO_DESKTOP_TOMATO_WEB_URL'
 
 /** Public identity expected on a macOS release. */
 export interface MacOSSigningEnvironment {

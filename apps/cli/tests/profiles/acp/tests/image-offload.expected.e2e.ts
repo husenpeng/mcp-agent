@@ -6,7 +6,7 @@ import { expect, it } from 'vitest'
 import {
   runScenario,
   type InputScript,
-} from '@deepseek-ai/dsh-session-snapshot'
+} from '@tomato/session-snapshot'
 
 const AGENT = {
   binScript: fileURLToPath(new URL('../../../../src/bin.ts', import.meta.url)),
@@ -54,7 +54,7 @@ it('pins Messages Files offload and inline fallback in assembled requests', asyn
             type: 'file',
             size_bytes: file.size,
             created_at: new Date(createdAt * 1_000).toISOString(),
-            filename: 'dsh-snapshot.png',
+            filename: 'tomato-snapshot.png',
             mime_type: file.type,
           }))
           return
@@ -124,7 +124,7 @@ it('pins Messages Files offload and inline fallback in assembled requests', asyn
     const accessText = (cwd: string): string => {
       const attachmentPath = join(
         cwd,
-        '.dsh',
+        '.tomato',
         'attachments',
         'v1',
         'objects',

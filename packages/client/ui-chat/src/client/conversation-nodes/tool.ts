@@ -1,11 +1,11 @@
-import type { Context } from '@deepseek-ai/cordis'
+import type { Context } from '@tomato/cordis'
 import type {
   ConversationMatch, ConversationNodeContext, ConversationNodeDefinition, PreparingToolCall, StartedToolCall,
   ToolCallBlock, ToolResultNode,
-} from '@deepseek-ai/dsh-client-ui-conversation/client'
-import { isAppendSurfaceEvent } from '@deepseek-ai/dsh-session/surface'
-import type {} from '@deepseek-ai/dsh-tool-executor-ptc/client'
-import { PartialArguments } from '@deepseek-ai/dsh-util-values'
+} from '@tomato/client-ui-conversation/client'
+import { isAppendSurfaceEvent } from '@tomato/session/surface'
+import type {} from '@tomato/tool-executor-ptc/client'
+import { PartialArguments } from '@tomato/util-values'
 import type { ChatNode, ToolChatData } from '../contract/chat-nodes.ts'
 import { CHAT_SYNTHETIC_SEQ_OFFSETS, chatNode, contextLocation } from './common.ts'
 

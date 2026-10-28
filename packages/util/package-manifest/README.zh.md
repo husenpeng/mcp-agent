@@ -3,13 +3,13 @@ description: "包身份、运行时要求和 TOMATO 插件元数据的共享 Typ
 kind: "package-library"
 ---
 
-# @deepseek-ai/dsh-package-manifest
+# @tomato/package-manifest
 
 [English](README.md) | 中文
 
 ## 概述
 
-使用 `TomatoPackageManifest` 描述包元数据、`TomatoManifest` 描述 `dsh` 下的公共字段，以及 `TomatoClientManifest` 等成员类型描述单个领域。各读取方负责 JSON 解析、校验和默认值解析。
+使用 `TomatoPackageManifest` 描述包元数据、`TomatoManifest` 描述 `tomato` 下的公共字段，以及 `TomatoClientManifest` 等成员类型描述单个领域。各读取方负责 JSON 解析、校验和默认值解析。
 
 ## 目录
 
@@ -28,14 +28,14 @@ kind: "package-library"
 从包根导入类型。仅检查自己的源码时使用开发依赖；若发布的声明文件引用这些类型，则使用生产依赖。
 
 ```ts
-import type { TomatoClientManifest, TomatoPackageManifest } from '@deepseek-ai/dsh-package-manifest'
+import type { TomatoClientManifest, TomatoPackageManifest } from '@tomato/package-manifest'
 
 const client: TomatoClientManifest = { platform: 'web' }
 const manifest: TomatoPackageManifest = {
-  name: 'example-dsh-plugin',
+  name: 'example-tomato-plugin',
   version: '1.0.0',
-  engines: { node: '>=24', dsh: '0.1.5-alpha.1' },
-  dsh: {
+  engines: { node: '>=24', tomato: '0.1.5-alpha.1' },
+  tomato: {
     manifestVersion: 1,
     bundle: { patch: './cordis.patch.yml' },
     client,
@@ -43,7 +43,7 @@ const manifest: TomatoPackageManifest = {
 }
 ```
 
-`TomatoPackageManifest` 描述 TOMATO 使用的 package.json 字段，其中 `name` 和 `version` 必填；它包含普通依赖、peer 依赖及可选依赖声明，未覆盖 npm 的所有字段。本地 profile 读取方使用 `Partial<TomatoPackageManifest>`，因为 profile 无需发布版本。`TomatoManifest` 仅描述 `dsh` 下的公共作者字段。`TomatoBundleManifest.patch` 是一个 patch 文件路径，或一个有序的路径列表，均相对于包根目录；launcher 按列表顺序把它们作为同一个组合包层应用。TypeScript 检查示例并删除 `import type`；这些接口不解析 JSON，也不写入文件。
+`TomatoPackageManifest` 描述 TOMATO 使用的 package.json 字段，其中 `name` 和 `version` 必填；它包含普通依赖、peer 依赖及可选依赖声明，未覆盖 npm 的所有字段。本地 profile 读取方使用 `Partial<TomatoPackageManifest>`，因为 profile 无需发布版本。`TomatoManifest` 仅描述 `tomato` 下的公共作者字段。`TomatoBundleManifest.patch` 是一个 patch 文件路径，或一个有序的路径列表，均相对于包根目录；launcher 按列表顺序把它们作为同一个组合包层应用。TypeScript 检查示例并删除 `import type`；这些接口不解析 JSON，也不写入文件。
 
 `TomatoBundleManifest.listedByDefault` 为可选布尔值，默认为 true。false 使随安装提供的组合包在 profile 启用或安装它之前不出现在默认 GUI 列表中；管理清单仍保持完整。[插件管理页](../../client/ui-plugin-manager/README.zh.md#use-this-package)管理展示与显式启用入口。
 
@@ -51,8 +51,8 @@ const manifest: TomatoPackageManifest = {
 
 | 字段 | 含义 |
 |---|---|
-| `dsh.manifestVersion` | manifest（元数据清单）格式标识；声明的格式为 `1`，独立于 npm 包版本和 Session 格式版本。 |
-| `engines.dsh` | 作者声明的兼容 TOMATO 版本，使用 SemVer 范围，也可填写精确的预发布版本。此字段与 `engines.node`、`engines.npm` 并列；engines 对象可省略 `dsh`。 |
+| `tomato.manifestVersion` | manifest（元数据清单）格式标识；声明的格式为 `1`，独立于 npm 包版本和 Session 格式版本。 |
+| `engines.tomato` | 作者声明的兼容 TOMATO 版本，使用 SemVer 范围，也可填写精确的预发布版本。此字段与 `engines.node`、`engines.npm` 并列；engines 对象可省略 `tomato`。 |
 
 `LocalizedText` 携带字面文本或带必需英文回退值的语言映射。`PluginLocalizedMeta` 携带已安装插件的可选展示标题、描述、从包根 `package.json.icon` 或导出的 `<标识>/icon` 解析的图片 data URL，以及元信息诊断。[App boot](../../boot/app-boot/README.zh.md) 读取这些值；本包只提供其类型。
 
@@ -92,7 +92,7 @@ const manifest: TomatoPackageManifest = {
 <a id="known-limitations-and-deferred-work"></a>
 
 - **仅提供静态类型。** 消费方读取并校验所需的 JSON 字段，再将共享声明适配为运行时数据。本包不提供解析器、getter helper、文件检查或默认值。
-- **兼容性仅作声明。** 当前安装器和加载器不强制检查 `dsh.manifestVersion` 或 `engines.dsh`；声明范围不会拒绝不兼容的宿主，也不会校验 SemVer 语法。
+- **兼容性仅作声明。** 当前安装器和加载器不强制检查 `tomato.manifestVersion` 或 `engines.tomato`；声明范围不会拒绝不兼容的宿主，也不会校验 SemVer 语法。
 
 <a id="dev-note"></a>
 ### 开发备注

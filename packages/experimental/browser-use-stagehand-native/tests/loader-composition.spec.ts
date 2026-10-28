@@ -1,24 +1,24 @@
 /** A real Loader and AgentLoop exercise independently configured browser inference and durable screenshots. */
 
-import * as NativeToolExecutor from '@deepseek-ai/dsh-tool-executor-native'
+import * as NativeToolExecutor from '@tomato/tool-executor-native'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { afterEach, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import Loader from '@deepseek-ai/cordis-plugin-loader'
-import Include from '@deepseek-ai/cordis-plugin-include'
-import AgentRegistry from '@deepseek-ai/dsh-agent'
-import AgentLoop from '@deepseek-ai/dsh-agent-loop'
-import BrowserUseRegistry from '@deepseek-ai/dsh-browser-use'
-import LocalAttachmentStore from '@deepseek-ai/dsh-attachment-local'
-import LlmRuntime, { LlmAdapter, ToolCallId, createUserMessage } from '@deepseek-ai/dsh-llm'
-import type { GenerateOptions, LlmResolvedModelInfo, StreamChunk } from '@deepseek-ai/dsh-llm'
-import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
-import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime from '@deepseek-ai/dsh-tools'
+import { Context } from '@tomato/cordis'
+import Loader from '@tomato/cordis-plugin-loader'
+import Include from '@tomato/cordis-plugin-include'
+import AgentRegistry from '@tomato/agent'
+import AgentLoop from '@tomato/agent-loop'
+import BrowserUseRegistry from '@tomato/browser-use'
+import LocalAttachmentStore from '@tomato/attachment-local'
+import LlmRuntime, { LlmAdapter, ToolCallId, createUserMessage } from '@tomato/llm'
+import type { GenerateOptions, LlmResolvedModelInfo, StreamChunk } from '@tomato/llm'
+import SessionStore, { SessionId } from '@tomato/session'
+import SessionProjectionRegistry from '@tomato/session-projection'
+import SystemPrompt from '@tomato/system-prompt'
+import ToolRuntime from '@tomato/tools'
 import * as Provider from '../src/index.ts'
 import { resetFixture, screenshotBase64 } from './fixtures/stagehand.ts'
 
@@ -74,26 +74,26 @@ afterEach(async () => {
 
 it('loads browser tools from cordis.yml, logs browser results, and admits the screenshot', async () => {
   resetFixture()
-  root = await mkdtemp(join(tmpdir(), 'dsh-stagehand-composition-'))
+  root = await mkdtemp(join(tmpdir(), 'tomato-stagehand-composition-'))
   const modules = new Map<string, unknown>([
-    ['@deepseek-ai/dsh-llm', LlmRuntime],
-    ['@deepseek-ai/dsh-session', SessionStore],
-    ['@deepseek-ai/dsh-session-projection', SessionProjectionRegistry],
+    ['@tomato/llm', LlmRuntime],
+    ['@tomato/session', SessionStore],
+    ['@tomato/session-projection', SessionProjectionRegistry],
 
-    ['@deepseek-ai/dsh-system-prompt', SystemPrompt],
-    ['@deepseek-ai/dsh-tools', ToolRuntime],
-    ['@deepseek-ai/dsh-tool-executor-native', NativeToolExecutor],
-    ['@deepseek-ai/dsh-agent', AgentRegistry],
-    ['@deepseek-ai/dsh-agent-loop', AgentLoop],
-    ['@deepseek-ai/dsh-attachment-local', LocalAttachmentStore],
-    ['@deepseek-ai/dsh-browser-use', BrowserUseRegistry],
-    ['@deepseek-ai/dsh-experimental-browser-use-stagehand-native', Provider],
+    ['@tomato/system-prompt', SystemPrompt],
+    ['@tomato/tools', ToolRuntime],
+    ['@tomato/tool-executor-native', NativeToolExecutor],
+    ['@tomato/agent', AgentRegistry],
+    ['@tomato/agent-loop', AgentLoop],
+    ['@tomato/attachment-local', LocalAttachmentStore],
+    ['@tomato/browser-use', BrowserUseRegistry],
+    ['@tomato/experimental-browser-use-stagehand-native', Provider],
   ])
   const configPath = join(root, 'cordis.yml')
   await writeFile(configPath, [...modules.keys()].flatMap(name => [
     `- name: '${name}'`,
-    ...name === '@deepseek-ai/dsh-attachment-local' ? ['  config:', `    tomatoHome: ${JSON.stringify(root)}`] : [],
-    ...name === '@deepseek-ai/dsh-experimental-browser-use-stagehand-native' ? ['  config:', '    mode: launch', '    model:', '      modelName: openai/gpt-5.4-mini', '      apiKey: fixture-model-key'] : [],
+    ...name === '@tomato/attachment-local' ? ['  config:', `    tomatoHome: ${JSON.stringify(root)}`] : [],
+    ...name === '@tomato/experimental-browser-use-stagehand-native' ? ['  config:', '    mode: launch', '    model:', '      modelName: openai/gpt-5.4-mini', '      apiKey: fixture-model-key'] : [],
   ]).join('\n') + '\n')
   const context = ctx = new Context()
   context.baseUrl = pathToFileURL(root).href + '/'

@@ -3,56 +3,56 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-sidebar/README.md
 /:
-  en: 7884381c2c554eca
-  zh: e6d7199a9bb2f0f8
-/deepseek-ai-dsh-client-ui-sidebar:
-  en: e357f49fb1d1710e
-  zh: 2e61922b104f77eb
-/deepseek-ai-dsh-client-ui-sidebar/summary:
-  en: af17f03561e5372b
-  zh: 91a1b9f6c7a51025
-/deepseek-ai-dsh-client-ui-sidebar/table-of-contents:
+  en: 64a1ddb1ee5b110a
+  zh: 1fedd2eb8b43f4bb
+/tomato-client-ui-sidebar:
+  en: 8603c755d5342c21
+  zh: cf22048d4c003c57
+/tomato-client-ui-sidebar/summary:
+  en: 8305fa0e709a37c0
+  zh: efefcfebd75ba9a7
+/tomato-client-ui-sidebar/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
-/deepseek-ai-dsh-client-ui-sidebar/use-this-package:
+/tomato-client-ui-sidebar/use-this-package:
   en: a970f0547496634f
   zh: 36ef9a85b26e19f1
-/deepseek-ai-dsh-client-ui-sidebar/use-this-package/brand-and-new-session:
-  en: 44db2d448bc2ea6d
-  zh: cbb1143afb524d5b
-/deepseek-ai-dsh-client-ui-sidebar/use-this-package/global-panel-entries:
+/tomato-client-ui-sidebar/use-this-package/brand-and-new-session:
+  en: 2006b05af459f463
+  zh: 70e38854f80b9c9b
+/tomato-client-ui-sidebar/use-this-package/global-panel-entries:
   en: e7f316023445511b
   zh: 6271c8c011533877
-/deepseek-ai-dsh-client-ui-sidebar/use-this-package/collapse-behavior:
-  en: 20e744360b4be2cc
-  zh: a90be7e8526bbb21
-/deepseek-ai-dsh-client-ui-sidebar/use-this-package/macos-desktop:
-  en: c731044796392d8a
-  zh: 26c5eb69670b9aad
-/deepseek-ai-dsh-client-ui-sidebar/use-this-package/scrollbars:
+/tomato-client-ui-sidebar/use-this-package/collapse-behavior:
+  en: bb000232f8db0d89
+  zh: dc8117f0e9dccd23
+/tomato-client-ui-sidebar/use-this-package/macos-desktop:
+  en: 0491783b159d0e94
+  zh: 031a75d7c78f91af
+/tomato-client-ui-sidebar/use-this-package/scrollbars:
   en: 9e7b31acee759f2b
   zh: 3a6beb63b23d26ae
-/deepseek-ai-dsh-client-ui-sidebar/use-this-package/click-analytics:
+/tomato-client-ui-sidebar/use-this-package/click-analytics:
   en: 8855ad013285a27e
   zh: f19b3e75c38c5b0a
-/deepseek-ai-dsh-client-ui-sidebar/understand-the-implementation:
+/tomato-client-ui-sidebar/understand-the-implementation:
   en: 39b5e3ca8ce8c5c2
   zh: 1d652b7554772dad
-/deepseek-ai-dsh-client-ui-sidebar/understand-the-implementation/slot-discipline:
+/tomato-client-ui-sidebar/understand-the-implementation/slot-discipline:
   en: 6eefc5c45abe8a8f
   zh: 20b651e48a0ea903
-/deepseek-ai-dsh-client-ui-sidebar/further-exploration:
-  en: 5083bbf74e47bb67
-  zh: 0236e569178756a2
-/deepseek-ai-dsh-client-ui-sidebar/model-experience:
+/tomato-client-ui-sidebar/further-exploration:
+  en: dc41bcdf304d3fdb
+  zh: 37c367219b3f9eeb
+/tomato-client-ui-sidebar/model-experience:
   en: 3120df665299c634
   zh: 1d9f365d091d0d2a
-/deepseek-ai-dsh-client-ui-sidebar/model-experience/kv-cache-effect:
+/tomato-client-ui-sidebar/model-experience/kv-cache-effect:
   en: ca75c51c89c2c9b0
   zh: de54f3467ef3b9be
-/deepseek-ai-dsh-client-ui-sidebar/known-limitations-and-deferred-work:
+/tomato-client-ui-sidebar/known-limitations-and-deferred-work:
   en: 2f1899e4d0c4db92
   zh: 700385e067a5a100
-/deepseek-ai-dsh-client-ui-sidebar/known-limitations-and-deferred-work/dev-note:
+/tomato-client-ui-sidebar/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

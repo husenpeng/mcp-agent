@@ -14,11 +14,11 @@
  * {@link installViewerCarrier} runs in the browser from its own source text, so it must reference no
  * module binding: every constant and helper it needs is declared inside its body.
  *
- * @module @deepseek-ai/dsh-experimental-liveshare-protocol
+ * @module @tomato/experimental-liveshare-protocol
  */
 
 /** Page global naming the share one viewer page presents; the Liveshare client plugin reads it. */
-export const LIVESHARE_VIEWER_GLOBAL = '__DSH_LIVESHARE_VIEWER__'
+export const LIVESHARE_VIEWER_GLOBAL = '__TOMATO_LIVESHARE_VIEWER__'
 
 /** Share one served viewer page presents. */
 export interface ViewerPageTarget {
@@ -37,7 +37,7 @@ export interface ViewerCarrierOptions extends ViewerPageTarget {
 
 /**
  * Install the viewer globals in the current page. Runs before the shell entry so the Connection
- * plugin finds `__DSH_TRANSPORT__` when it installs.
+ * plugin finds `__TOMATO_TRANSPORT__` when it installs.
  * @param options - Page target and read budget.
  */
 export function installViewerCarrier(options: ViewerCarrierOptions): void {
@@ -183,7 +183,7 @@ export function installViewerCarrier(options: ViewerCarrierOptions): void {
     })
   }
 
-  // Installed over the page's own fetch so app code that does not go through `__DSH_TRANSPORT__` still
+  // Installed over the page's own fetch so app code that does not go through `__TOMATO_TRANSPORT__` still
   // reaches the owner. Every request outside the forwarded set is handed to the fetch this replaced.
   const pageFetch = globalThis.fetch
   const carrierFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
@@ -290,8 +290,8 @@ export function installViewerCarrier(options: ViewerCarrierOptions): void {
   })
 
   const page = globalThis as Record<string, unknown>
-  page.__DSH_LIVESHARE_VIEWER__ = { basePath: options.basePath, shareId: options.shareId, sessionId: options.sessionId }
-  page.__DSH_TRANSPORT__ = { fetch: fetchCall, openStream }
+  page.__TOMATO_LIVESHARE_VIEWER__ = { basePath: options.basePath, shareId: options.shareId, sessionId: options.sessionId }
+  page.__TOMATO_TRANSPORT__ = { fetch: fetchCall, openStream }
 }
 
 /**

@@ -6,19 +6,19 @@
  * user roots, parses YAML frontmatter, and loads bodies through `ctx.fs` when a
  * filesystem service is present.
  *
- * @module @deepseek-ai/dsh-skill-filesystem
+ * @module @tomato/skill-filesystem
  */
 
 import { access, lstat, readdir, readFile, realpath, stat, writeFile } from 'node:fs/promises'
 import { unwatchFile, watchFile, type Stats } from 'node:fs'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
-import type { Context } from '@deepseek-ai/cordis'
+import type { Context } from '@tomato/cordis'
 import chokidar from 'chokidar'
-import z from '@deepseek-ai/schemastery'
-import type Schema from '@deepseek-ai/schemastery'
+import z from '@tomato/schemastery'
+import type Schema from '@tomato/schemastery'
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
-import type { FileSystem, FsDirEntry, FsTarget } from '@deepseek-ai/dsh-fs'
-import { canonicalizeWatchPath, resolveAgentsHome, resolveDshHome } from '@deepseek-ai/dsh-home-paths'
+import type { FileSystem, FsDirEntry, FsTarget } from '@tomato/fs'
+import { canonicalizeWatchPath, resolveAgentsHome, resolveTomatoHome } from '@tomato/home-paths'
 import {
   BUNDLED_SKILL_RANK,
   isSkillName,
@@ -31,12 +31,12 @@ import {
   type SkillProviderObservation,
   type SkillSource,
   type SkillUpdatePatch,
-} from '@deepseek-ai/dsh-skill'
+} from '@tomato/skill'
 
-const PROJECT_DSH_RANK = 100
+const PROJECT_TOMATO_RANK = 100
 const PROJECT_AGENTS_RANK = 200
 const CUSTOM_RANK = 300
-const USER_DSH_RANK = 400
+const USER_TOMATO_RANK = 400
 const USER_AGENTS_RANK = 500
 const DEFAULT_WATCH_STABILITY_THRESHOLD_MS = 200
 const DEFAULT_WATCH_POLL_INTERVAL_MS = 100
@@ -51,7 +51,7 @@ export interface Config {
   providerName?: string
   /** Whether project and user roots are included around custom roots. */
   includeDefaultRoots?: boolean
-  /** DeepSeek Harness config root. Defaults to `$TOMATO_HOME` or `~/.dsh`. */
+  /** Tomato Harness config root. Defaults to `$TOMATO_HOME` or `~/.tomato`. */
   tomatoHome?: string
   /** Shared agent config root. Defaults to `$TOMATO_AGENTS_HOME` or `~/.agents`. */
   agentsHome?: string
@@ -164,7 +164,7 @@ export class FileSystemSkillProvider implements SkillProvider {
   ) {
     this.name = config.providerName ?? 'filesystem'
     this.includeDefaultRoots = config.includeDefaultRoots ?? true
-    this.tomatoHome = resolveDshHome(config.tomatoHome)
+    this.tomatoHome = resolveTomatoHome(config.tomatoHome)
     this.agentsHome = resolveAgentsHome(config.agentsHome)
     this.customSkillDirs = (config.customSkillDirs ?? []).map(root => resolve(root))
     this.watchManager = new SkillWatchManager(ctx, control.invalidate, resolveWatchConfig(config))
@@ -286,14 +286,14 @@ export class FileSystemSkillProvider implements SkillProvider {
     if (this.includeDefaultRoots && cwd !== undefined) {
       const projectRoot = await findProjectRoot(resolve(cwd), optionalFileSystem(this.ctx))
       roots.push(
-        { path: join(projectRoot, '.dsh/skills'), source: 'project-dsh', rank: PROJECT_DSH_RANK, projectRoot },
+        { path: join(projectRoot, '.tomato/skills'), source: 'project-tomato', rank: PROJECT_TOMATO_RANK, projectRoot },
         { path: join(projectRoot, '.agents/skills'), source: 'project-agents', rank: PROJECT_AGENTS_RANK, projectRoot },
       )
     }
     roots.push(...this.customSkillDirs.map(path => ({ path, source: 'custom' as const, rank: CUSTOM_RANK })))
     if (this.includeDefaultRoots) {
       roots.push(
-        { path: join(this.tomatoHome, 'skills'), source: 'user-dsh', rank: USER_DSH_RANK, skipSystem: true },
+        { path: join(this.tomatoHome, 'skills'), source: 'user-tomato', rank: USER_TOMATO_RANK, skipSystem: true },
         { path: join(this.agentsHome, 'skills'), source: 'user-agents', rank: USER_AGENTS_RANK },
       )
     }

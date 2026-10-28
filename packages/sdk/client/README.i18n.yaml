@@ -3,56 +3,56 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/sdk/client/README.md
 /:
-  en: 09cb25e4bcf56851
-  zh: a0a5913941d23eff
-/deepseek-ai-dsh-sdk-client:
-  en: b786affe03adf63c
-  zh: aacb5d4af10ca477
-/deepseek-ai-dsh-sdk-client/summary:
-  en: 05b18f61ad4c2f54
-  zh: 19f88d7bcd2cca0f
-/deepseek-ai-dsh-sdk-client/table-of-contents:
+  en: 5390d4faf241d187
+  zh: 1862e3f10d300902
+/tomato-sdk-client:
+  en: 06e39da3b37d7898
+  zh: 03ea946971ec297a
+/tomato-sdk-client/summary:
+  en: ffa13f7de43a857d
+  zh: 9a9619a4c9c527d0
+/tomato-sdk-client/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
-/deepseek-ai-dsh-sdk-client/use-this-package:
-  en: 6c37c21a2e53376b
-  zh: e707d3e81c1242bd
-/deepseek-ai-dsh-sdk-client/use-this-package/running-agent-turns-with-deepseekharness:
+/tomato-sdk-client/use-this-package:
+  en: 7a95370c1e7ef3ce
+  zh: fe93f73b2b775a22
+/tomato-sdk-client/use-this-package/running-agent-turns-with-deepseekharness:
   en: 01c58dddd7e62de2
   zh: 6dbd46e244f3f135
-/deepseek-ai-dsh-sdk-client/use-this-package/lower-level-control-with-harnessclient:
-  en: 2eb13706964444cb
-  zh: a2640ec27b83113f
-/deepseek-ai-dsh-sdk-client/use-this-package/native-user-questions:
+/tomato-sdk-client/use-this-package/lower-level-control-with-harnessclient:
+  en: d224f83742378a75
+  zh: d0af9caec3fafa95
+/tomato-sdk-client/use-this-package/native-user-questions:
   en: ea40f378444c8153
   zh: 96e29c99aa5c15f0
-/deepseek-ai-dsh-sdk-client/understand-the-implementation:
+/tomato-sdk-client/understand-the-implementation:
   en: 8773f50c51da85f0
   zh: 4649ebc69357deb0
-/deepseek-ai-dsh-sdk-client/understand-the-implementation/design-concept:
-  en: 6632c06d819233cc
-  zh: 207d55d8217ec6b1
-/deepseek-ai-dsh-sdk-client/understand-the-implementation/source-map:
+/tomato-sdk-client/understand-the-implementation/design-concept:
+  en: f460be3b5ee45e3b
+  zh: faa82c30de657432
+/tomato-sdk-client/understand-the-implementation/source-map:
   en: a3c7978a80f5aba3
   zh: fdc4dfdafd2eccfa
-/deepseek-ai-dsh-sdk-client/understand-the-implementation/owned-activity-flow:
+/tomato-sdk-client/understand-the-implementation/owned-activity-flow:
   en: 94a42babac5f1c7d
   zh: df9e42ed02f7d002
-/deepseek-ai-dsh-sdk-client/understand-the-implementation/errors-and-teardown:
+/tomato-sdk-client/understand-the-implementation/errors-and-teardown:
   en: 165364de2cee0a9f
   zh: c4dc37b44e1e621e
-/deepseek-ai-dsh-sdk-client/further-exploration:
-  en: 1048b6b2c0954717
-  zh: 7ce29dd1ca545e06
-/deepseek-ai-dsh-sdk-client/model-experience:
+/tomato-sdk-client/further-exploration:
+  en: 60439690c5f62862
+  zh: 62f306760640020c
+/tomato-sdk-client/model-experience:
   en: e82a55513d3cd30e
   zh: ecd8c0875ff2fb87
-/deepseek-ai-dsh-sdk-client/model-experience/kv-cache-effect:
+/tomato-sdk-client/model-experience/kv-cache-effect:
   en: 7abe0be104a791e7
   zh: 445311f78b1069ca
-/deepseek-ai-dsh-sdk-client/known-limitations-and-deferred-work:
-  en: 60100c38c111a0b0
-  zh: 2085486bd36f5e48
-/deepseek-ai-dsh-sdk-client/known-limitations-and-deferred-work/dev-note:
+/tomato-sdk-client/known-limitations-and-deferred-work:
+  en: 27d11e47df2033b5
+  zh: b8d7b28befcf74eb
+/tomato-sdk-client/known-limitations-and-deferred-work/dev-note:
   en: 6177a56f053936a4
   zh: 0f4b20228c2d15da

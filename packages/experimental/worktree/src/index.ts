@@ -1,13 +1,13 @@
 /** Creates a new Git branch and checkout, then changes the calling Session's working directory. */
 
 import { randomUUID } from 'node:crypto'
-import { Context, Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import type {} from '@deepseek-ai/dsh-fs'
-import type {} from '@deepseek-ai/dsh-sandbox-policy'
-import type {} from '@deepseek-ai/dsh-working-directory'
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
+import { Context, Service } from '@tomato/cordis'
+import z from '@tomato/schemastery'
+import type { Agent } from '@tomato/agent'
+import type {} from '@tomato/fs'
+import type {} from '@tomato/sandbox-policy'
+import type {} from '@tomato/working-directory'
+import { MAX_TIMER_DELAY_MS } from '@tomato/timeout'
 import { PREPARE_DIRECTORY } from './directory.ts'
 import { runCommand } from './process.ts'
 import type { ProcessConfig } from './process.ts'
@@ -40,7 +40,7 @@ interface WorktreeSpec {
   revision: string
 }
 
-declare module '@deepseek-ai/cordis' {
+declare module '@tomato/cordis' {
   interface Context {
     worktrees: WorktreeService
   }

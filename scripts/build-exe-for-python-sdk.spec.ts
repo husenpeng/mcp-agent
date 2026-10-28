@@ -40,11 +40,11 @@ describe('Python runtime executable builder CLI', () => {
     const commands = result.stdout.split('\n').filter(line => line.includes('C:\\tools\\pnpm.cjs '))
     expect(commands[0]).toMatch(/ run verify-runtime-closure$/)
     expect(commands[1]?.endsWith(' ' + command)).toBe(true)
-    expect(commands[2]).toContain(' --filter dsh-python-runtime-closure deploy ')
+    expect(commands[2]).toContain(' --filter tomato-python-runtime-closure deploy ')
   })
 
   it('rejects simultaneous build modes before invoking pnpm', () => {
-    const setup = mkdtempSync(join(tmpdir(), 'dsh-python-build-mode-'))
+    const setup = mkdtempSync(join(tmpdir(), 'tomato-python-build-mode-'))
     temporaryDirectories.push(setup)
     const entrypoint = join(setup, 'pnpm.cjs')
     const commands = join(setup, 'commands.jsonl')
@@ -70,7 +70,7 @@ describe('Python runtime executable builder CLI', () => {
   })
 
   it('stops before artifact building or deployment when the closure check fails', () => {
-    const setup = mkdtempSync(join(tmpdir(), 'dsh-python-closure-'))
+    const setup = mkdtempSync(join(tmpdir(), 'tomato-python-closure-'))
     temporaryDirectories.push(setup)
     const entrypoint = join(setup, 'pnpm.cjs')
     const commands = join(setup, 'commands.jsonl')
@@ -112,12 +112,12 @@ describe('Python runtime executable builder CLI', () => {
     expect(cliConfig).not.toContain('runtime-bootstrap')
     expect(cliConfig).toContain("clean: ['lib/*.js']")
     expect(cliTsconfig).not.toContain('packages/subprocess/subprocess-local')
-    expect(cliManifest.dependencies).not.toHaveProperty('@deepseek-ai/dsh-subprocess-local')
-    expect(cliManifest.devDependencies).toHaveProperty('@deepseek-ai/dsh-subprocess-local')
-    expect(runtimeManifest.dependencies).toHaveProperty('@deepseek-ai/dsh-subprocess-local')
-    expect(bootstrap).toContain("import('@deepseek-ai/dsh/lib/bin.js')")
+    expect(cliManifest.dependencies).not.toHaveProperty('@tomato/subprocess-local')
+    expect(cliManifest.devDependencies).toHaveProperty('@tomato/subprocess-local')
+    expect(runtimeManifest.dependencies).toHaveProperty('@tomato/subprocess-local')
+    expect(bootstrap).toContain("import('@tomato/cli/lib/bin.js')")
     expect(bootstrap).toContain('await runCli()')
-    expect(bootstrap).toContain("import('@deepseek-ai/dsh-subprocess-local/runner')")
+    expect(bootstrap).toContain("import('@tomato/subprocess-local/runner')")
     expect(bootstrap).toContain('await runSelectedSubprocessRunner(selection)')
   })
 
@@ -132,8 +132,8 @@ describe('Python runtime executable builder CLI', () => {
     expect(result.status).toBe(0)
     expect(result.stdout).toContain(`${process.execPath} C:\\tools\\pnpm.cjs run verify-runtime-closure`)
     expect(result.stdout).not.toMatch(/\[dry-run\] .* run build(?::src)?$/m)
-    expect(result.stdout).toContain(`${process.execPath} C:\\tools\\pnpm.cjs --filter dsh-python-runtime-closure deploy`)
-    const deploy = result.stdout.split('\n').find(line => line.includes(' --filter dsh-python-runtime-closure deploy'))
+    expect(result.stdout).toContain(`${process.execPath} C:\\tools\\pnpm.cjs --filter tomato-python-runtime-closure deploy`)
+    const deploy = result.stdout.split('\n').find(line => line.includes(' --filter tomato-python-runtime-closure deploy'))
     expect(deploy).toContain('--prod --config.allow-unused-patches=true')
     expect(deploy).toContain('--config.hoist-workspace-packages=false')
     expect(result.stdout.split('--config.allow-unused-patches=true')).toHaveLength(2)
@@ -144,7 +144,7 @@ describe('Python runtime executable builder CLI', () => {
   })
 
   it('resolves the pnpm package behind a Windows command shim', () => {
-    const setup = mkdtempSync(join(tmpdir(), 'dsh-pnpm-home-'))
+    const setup = mkdtempSync(join(tmpdir(), 'tomato-pnpm-home-'))
     temporaryDirectories.push(setup)
     const home = join(setup, 'node_modules', '.bin')
     const entrypoint = join(setup, 'node_modules', 'pnpm', 'bin', 'pnpm.mjs')

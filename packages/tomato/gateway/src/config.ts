@@ -1,4 +1,4 @@
-import z from '@deepseek-ai/schemastery'
+import z from '@tomato/schemastery'
 
 /** Where the gateway adds the verified user id to an upstream request. */
 export type UserIdInjection = 'query' | 'body' | {

@@ -2,15 +2,15 @@
 
 [English](README.md) | 中文
 
-Tomato AI 是面向达人营销团队的内部桌面 agent。它在 Electron 外壳里运行 DeepSeek Harness（`dsh`）运行时，用公司账号登录，模型请求走用户在模型页配置的第三方 API，并把 turn 与工具活动上报到内部 OTLP relay，由 relay 转发 Langfuse。
+Tomato AI 是面向达人营销团队的内部桌面 agent。它在 Electron 外壳里内置 Tomato Harness（`tomato`）运行时，用公司账号登录，模型请求走用户在模型页配置的第三方 API，并把 turn 与工具活动上报到内部 OTLP relay，由 relay 转发 Langfuse。
 
-本仓库是 `deepseek-harness` 在提交 `22ddee3792` 的一次性硬分叉，不合并上游。上游包保留 `@deepseek-ai/*` 命名，番茄自有包使用 `@tomato/*`。全部分叉决策记录在 [docs/tomato/decisions.md](docs/tomato/decisions.md)。
+本仓库是 `deepseek-harness` 在提交 `22ddee3792` 的一次性硬分叉，不合并上游。仓库内全部包使用 `@tomato/*` 命名。全部分叉决策记录在 [docs/tomato/decisions.md](docs/tomato/decisions.md)。
 
 ## Summary
 
 - **外壳**：`apps/desktop`（Electron 主进程、preload、欢迎窗、更新、打包）与 `apps/desktop-host`（启动 `desktop` profile 的私有 Node Host 进程）。
-- **运行时**：dsh 的 Cordis 插件树。模型适配器、工具注册表、会话日志乃至 agent 循环本身都是插件，由多层 bundle 组成的 profile 挂载。
-- **产品界面**：dsh Web 客户端，由 Host 提供、通过 `dsh-app://` 方案加载；DeepSeek 账号、会话日志上传与产品分析各行已停用。
+- **运行时**：tomato 的 Cordis 插件树。模型适配器、工具注册表、会话日志乃至 agent 循环本身都是插件，由多层 bundle 组成的 profile 挂载。
+- **产品界面**：tomato Web 客户端，由 Host 提供、通过 `tomato-app://` 方案加载；DeepSeek 账号、会话日志上传与产品分析各行已停用。
 - **公司集成**：`@tomato/brand`（侧栏与首页标志）、`@tomato/telemetry`（turn 与工具 span），以及外壳的 `tomato-auth.ts`（浏览器登录、令牌交换、凭证写入）。
 
 ## Table of Contents
@@ -36,22 +36,22 @@ Tomato AI 是面向达人营销团队的内部桌面 agent。它在 Electron 外
 |---|---|---|
 | Electron 主进程（`apps/desktop`） | 窗口、托盘、菜单、快捷键、单实例、profile 初始化、凭证存储、更新与退出策略 | agent 行为、会话、工具、模型调用 |
 | Preload 脚本 | 渲染进程到主进程的白名单 IPC 桥接 | 任何业务逻辑 |
-| 渲染进程（dsh Web 客户端） | 对话、工具卡、审批、设置、会话导航 | 凭证、文件系统访问 |
-| Host（`apps/desktop-host`） | dsh 运行时：agent 循环、会话、工具、模型请求、HTTP 与 WebSocket 服务 | 窗口、托盘、原生对话框 |
+| 渲染进程（tomato Web 客户端） | 对话、工具卡、审批、设置、会话导航 | 凭证、文件系统访问 |
+| Host（`apps/desktop-host`） | tomato 运行时：agent 循环、会话、工具、模型请求、HTTP 与 WebSocket 服务 | 窗口、托盘、原生对话框 |
 | 公司登录服务 | 身份、会话策略、令牌签发 | 本机上的任何东西 |
 | 公司 OTLP relay | trace 映射、Langfuse 凭证、脱敏 | 客户端状态 |
 
-Host 监听系统分配的环回端口；主进程用一次性 cookie 认证一次，然后把 `dsh-app://app/` 文档发出的应用 HTTP 请求转发过去。主进程与 Host 之间的 Node IPC 只承载启动注入、就绪、关停与退出检查。
+Host 监听系统分配的环回端口；主进程用一次性 cookie 认证一次，然后把 `tomato-app://app/` 文档发出的应用 HTTP 请求转发过去。主进程与 Host 之间的 Node IPC 只承载启动注入、就绪、关停与退出检查。
 
 ### Profile 组合
 
 profile 是一叠 bundle 层，每层都是一个按 id 插入或覆盖的 `cordis.patch.yml`：
 
 ```text
-$TOMATO_HOME/profiles/desktop/package.json      dsh.profile.bundles = [dsh-base, dsh-web-app]
+$TOMATO_HOME/profiles/desktop/package.json      tomato.profile.bundles = [@tomato/base, @tomato/web-app]
         │
-        ├── @deepseek-ai/dsh-base        shared core: llm, session, tools, shell, fs, permissions, telemetry seams
-        ├── @deepseek-ai/dsh-web-app     browser surface: host controllers, web server, the client plugin roster
+        ├── @tomato/base        shared core: llm, session, tools, shell, fs, permissions, telemetry seams
+        ├── @tomato/web-app     browser surface: host controllers, web server, the client plugin roster
         │     ├── presets/standard.patch.yml   per-session agent composition
         │     ├── presets/ptc.patch.yml
         │     ├── presets/minimal.patch.yml
@@ -79,7 +79,7 @@ $TOMATO_HOME/profiles/desktop/package.json      dsh.profile.bundles = [dsh-base,
 每个能力都由三个角色组成，扩展只依赖定义，不依赖具体 provider：
 
 - **定义** —— 带 `ctx.<key>` 与共享类型的 Cordis `Service`，如 `ctx.agent`、`ctx.session`、`ctx.tools`、`ctx.llm`、`ctx.settings`、`ctx.credentials`、`ctx.slots`、`ctx.theme`。
-- **Provider** —— 唯一的具体实现，如 `ctx.llm` 背后的 `dsh-llm-pi-ai`、`ctx.sessions` 背后的 `dsh-session-persistence-jsonl`。
+- **Provider** —— 唯一的具体实现，如 `ctx.llm` 背后的 `@tomato/llm-pi-ai`、`ctx.sessions` 背后的 `@tomato/session-persistence-jsonl`。
 - **Consumer** —— 只注入定义的模型可见工具或 UI 插件。
 
 因此替换一个 provider 会同时移动整个世界：换掉 shell provider，Bash、PTY 与 LSP 一起迁移。
@@ -95,11 +95,11 @@ $TOMATO_HOME/profiles/desktop/package.json      dsh.profile.bundles = [dsh-base,
 
 - 每次注册都走 `ctx.effect()` 并返回 disposer，卸载插件只撤下它自己加的东西。
 - 配置随 profile 重载；模块根目录需要显式开启。
-- 会话以 JSONL 存在 `$TOMATO_HOME/sessions`；桌面端把状态放在开发或打包的 Harness home，绝不写用户日常使用的 `~/.dsh`。
+- 会话以 JSONL 存在 `$TOMATO_HOME/sessions`；桌面端把状态放在开发或打包的 Harness home，绝不写用户日常使用的 `~/.tomato`。
 
 ### 客户端插件组合
 
-Web 客户端本身就是一个 Cordis 应用。`dsh-client-modules` 扫描所有声明 `dsh.client` 的已挂载行，组合出 `window.__DSH_BOOT__`，并在 `/plugins/<id>/client.js` 提供各浏览器 bundle。UI 组合使用带类型的槽位：
+Web 客户端本身就是一个 Cordis 应用。`@tomato/client-modules` 扫描所有声明 `tomato.client` 的已挂载行，组合出 `window.__TOMATO_BOOT__`，并在 `/plugins/<id>/client.js` 提供各浏览器 bundle。UI 组合使用带类型的槽位：
 
 | 槽位 | 声明方 | 占位 |
 |---|---|---|
@@ -122,7 +122,7 @@ UI 插件只向自己未声明的槽位注册，并通过 `ctx.slots.inject` 等
 | 模型清单 | 按服务商从其列表发现，或手工填写 | 目录由服务商拥有，写死会漂移 |
 | 登录 | 隔离窗口中的公司飞书流程，经 BFF 一次性 handoff 交给本地网关 | 飞书密钥留在服务端，sessionId 不进 URL |
 | 会话存储 | Electron `safeStorage`，主进程注入 `X-Tomato-Session`；Web 用 httpOnly cookie | 渲染进程与凭证库都拿不到 sessionId |
-| 遥测 | 自写 OTLP 上报到内部 relay | Langfuse 凭证留在服务端；dsh 自带通道全关 |
+| 遥测 | 自写 OTLP 上报到内部 relay | Langfuse 凭证留在服务端；tomato 自带通道全关 |
 | 品牌 | 槽位占位 + 单色图形 | 槽位组合是受支持的方式；`currentColor` 自动跟随两套主题 |
 | 分发 | macOS arm64 未签名包，无自动更新 | 内部使用；签名与 feed 属于生产化工作 |
 
@@ -159,7 +159,7 @@ pnpm run build:artifacts      # Host, Client bundles, and the Web frontend (~30 
 
 ```sh
 ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ \
-  pnpm --filter @deepseek-ai/dsh-desktop exec install-electron
+  pnpm --filter @tomato/desktop exec install-electron
 ```
 
 <a id="run"></a>
@@ -261,9 +261,9 @@ auth_service、公司 BFF 与后续服务都是外部进程。分别启动它们
 
 ```text
 2026-10-24T05:12:31.481Z [info] shell started (version 0.2.1-rc.3, developer=true) { electron: '44.7.0', ... }
-2026-10-24T05:12:32.907Z [host] stdout: dsh web listening on http://127.0.0.1:52341
+2026-10-24T05:12:32.907Z [host] stdout: tomato web listening on http://127.0.0.1:52341
 2026-10-24T05:12:33.010Z [info] host ready at http://127.0.0.1:52341
-2026-10-24T05:13:02.114Z [renderer] http://dsh-app:3951/…:1 Uncaught TypeError: …
+2026-10-24T05:13:02.114Z [renderer] http://tomato-app:3951/…:1 Uncaught TypeError: …
 2026-10-24T05:13:02.115Z [error] fatal (renderer) Error: …
 ```
 
@@ -283,9 +283,9 @@ auth_service、公司 BFF 与后续服务都是外部进程。分别启动它们
 
 ### 从日志行定位客户端代码
 
-客户端 bundle 构建时生成 sourcemap，sources 被改写为 `../../../packages/<group>/<package>/src/…`，且 `sourcesContent` 内嵌原始 TSX；`dsh-client-modules` 在 bundle 旁以 `/plugins/<id>/client.js.map` 提供映射。因此日志里的位置有两条回溯路径：
+客户端 bundle 构建时生成 sourcemap，sources 被改写为 `../../../packages/<group>/<package>/src/…`，且 `sourcesContent` 内嵌原始 TSX；`@tomato/client-modules` 在 bundle 旁以 `/plugins/<id>/client.js.map` 提供映射。因此日志里的位置有两条回溯路径：
 
-1. **日志里**：`http://dsh-app:…/plugins/@tomato/brand/client.js:42` 给出插件与 bundle 行号。打开 `packages/tomato/brand/src/client/…`，DevTools → Sources 里的映射会落到准确的 TSX 行。
+1. **日志里**：`http://tomato-app:…/plugins/@tomato/brand/client.js:42` 给出插件与 bundle 行号。打开 `packages/tomato/brand/src/client/…`，DevTools → Sources 里的映射会落到准确的 TSX 行。
 2. **DevTools 里**：应用文档打开时，Sources 会直接列出 `packages/…` 文件（映射内嵌了源码），断点与抛错都落在作者写的那一行，而不是打包结果。
 
 Host 侧可用 `TOMATO_DESKTOP_HOST_INSPECT_PORT` 挂上 Node 调试器，Host 堆栈指向 `packages/…/lib/*.js`，同样有对应映射。
@@ -327,7 +327,7 @@ M1 是内部使用、未签名、未发布的构建。以下缺口按对推广�
 | 现象 | 原因 | 处理 |
 |---|---|---|
 | `Downloading Electron binary...` 长时间不结束 | 发布主机慢或被阻断 | 按上文用 `ELECTRON_MIRROR` 重装 |
-| `dev:desktop` 报 `The operation was aborted due to timeout` | primary runtime 下载超时 | 先跑 `pnpm --filter @deepseek-ai/dsh-desktop run prepare:primary-runtime`，或调大 `TOMATO_RESOURCE_DOWNLOAD_TIMEOUT_MS` |
+| `dev:desktop` 报 `The operation was aborted due to timeout` | primary runtime 下载超时 | 先跑 `pnpm --filter @tomato/desktop run prepare:primary-runtime`，或调大 `TOMATO_RESOURCE_DOWNLOAD_TIMEOUT_MS` |
 | 登录显示服务不可用 | `AUTH_SERVICE_URL` 或 `TOMATO_WEB_URL` 为空/不可达，或 BFF 没有 handoff 端点 | 填入两个地址并核对 `docs/tomato/auth-handoff-contract.md` |
 | 对话回复报缺少凭证 | 该路由的 API Key 没有存进凭证库 | 在「设置 → 模型」重新输入密钥；密钥写入凭证库，不写进 profile |
 | 模型列表为空 | 尚未配置服务商，或其列表请求失败 | 在「设置 → 模型」添加或编辑服务商，再用 **Fetch available models** 探测 |
@@ -336,4 +336,4 @@ M1 是内部使用、未签名、未发布的构建。以下缺口按对推广�
 
 ## License
 
-上游 dsh 采用 MIT 许可；见 [LICENSE](LICENSE) 与 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+上游 tomato 采用 MIT 许可；见 [LICENSE](LICENSE) 与 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

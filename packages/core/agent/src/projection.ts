@@ -1,8 +1,8 @@
 /** Shared pure fold of the Session's turn and step events. */
 import type { TurnBoundaryProjection } from './types.ts'
-import type { ProjectionDefinition } from '@deepseek-ai/dsh-session-projection'
-import type { SessionSeq } from '@deepseek-ai/dsh-session/types'
-import { brandNumber } from '@deepseek-ai/dsh-brand'
+import type { ProjectionDefinition } from '@tomato/session-projection'
+import type { SessionSeq } from '@tomato/session/types'
+import { brandNumber } from '@tomato/branded'
 import { z as zod } from 'zod'
 
 const sessionSeqSchema = zod.number().int().nonnegative().transform(brandNumber<SessionSeq>)

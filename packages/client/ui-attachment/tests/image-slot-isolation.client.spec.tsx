@@ -1,15 +1,15 @@
 // @vitest-environment jsdom
 /** Independent domain image positions with one shared official gallery Factory. */
-import * as fileDragPlugin from '@deepseek-ai/dsh-client-ui-file-drag/client'
+import * as fileDragPlugin from '@tomato/client-ui-file-drag/client'
 import { act, cleanup, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest'
-import { AttachmentId } from '@deepseek-ai/dsh-attachment'
-import { SessionId } from '@deepseek-ai/dsh-session/types'
-import { SlotTestRuntime } from '@deepseek-ai/dsh-client-test-runtime'
-import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
-import { UiConversation } from '@deepseek-ai/dsh-client-ui-conversation/src/client/conversation/assembly.ts'
-import { en, zh } from '@deepseek-ai/dsh-client-ui-conversation/src/client/locales.ts'
-import type { MessageImagesOwnerProps } from '@deepseek-ai/dsh-client-ui-conversation/client'
+import { AttachmentId } from '@tomato/attachment'
+import { SessionId } from '@tomato/session/types'
+import { SlotTestRuntime } from '@tomato/client-test-runtime'
+import { LocaleRuntime } from '@tomato/client-locale/client'
+import { UiConversation } from '@tomato/client-ui-conversation/src/client/conversation/assembly.ts'
+import { en, zh } from '@tomato/client-ui-conversation/src/client/locales.ts'
+import type { MessageImagesOwnerProps } from '@tomato/client-ui-conversation/client'
 import * as attachmentPlugin from '../src/client/index.ts'
 
 afterEach(cleanup)

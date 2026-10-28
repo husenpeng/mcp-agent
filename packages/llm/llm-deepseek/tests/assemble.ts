@@ -5,9 +5,9 @@
  * one-shot convenience method.
  */
 
-import { BlockAssembler } from '@deepseek-ai/dsh-llm'
-import type { Context } from '@deepseek-ai/cordis'
-import type { AssistantMessage, FinishReason, GenerateOptions, TokenUsage } from '@deepseek-ai/dsh-llm'
+import { BlockAssembler } from '@tomato/llm'
+import type { Context } from '@tomato/cordis'
+import type { AssistantMessage, FinishReason, GenerateOptions, TokenUsage } from '@tomato/llm'
 
 export interface AssembledResult {
   message: AssistantMessage

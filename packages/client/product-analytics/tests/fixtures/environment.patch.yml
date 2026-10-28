@@ -6,14 +6,14 @@
   disabled: true
 - insert:
     - id: product-telemetry-otel
-      name: '@deepseek-ai/dsh-host-product-telemetry-otel'
+      name: '@tomato/host-product-telemetry-otel'
       config:
         endpoint: !!js process.env.TOMATO_PRODUCT_TELEMETRY_TEST_ENDPOINT
-        serviceName: dsh-environment-test
+        serviceName: tomato-environment-test
         serviceVersion: synthetic-release
         compression: none
     - id: product-analytics
-      name: '@deepseek-ai/dsh-client-product-analytics'
+      name: '@tomato/client-product-analytics'
       config:
         enabled: true
         appVersion: synthetic-release

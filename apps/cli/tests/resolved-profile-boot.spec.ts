@@ -3,18 +3,18 @@ import { lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync 
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { Context } from '@deepseek-ai/cordis'
-import { createLaunchEnvironmentSnapshot } from '@deepseek-ai/dsh-launch-environment'
+import { Context } from '@tomato/cordis'
+import { createLaunchEnvironmentSnapshot } from '@tomato/launch-environment'
 import {
   boot, composeEntries, createRuntimeResolution,
   PluginPackages, type Profile,
-} from '@deepseek-ai/dsh-app-boot'
-import { installProxyFromEnvironment } from '@deepseek-ai/dsh-http-proxy'
+} from '@tomato/app-boot'
+import { installProxyFromEnvironment } from '@tomato/http-proxy'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { runProfile } from '../src/profile-boot.ts'
 
-vi.mock('@deepseek-ai/dsh-app-boot', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@deepseek-ai/dsh-app-boot')>()
+vi.mock('@tomato/app-boot', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tomato/app-boot')>()
   return {
     ...actual,
     boot: vi.fn(),
@@ -22,7 +22,7 @@ vi.mock('@deepseek-ai/dsh-app-boot', async (importOriginal) => {
     installFailLoud: vi.fn(),
   }
 })
-vi.mock('@deepseek-ai/dsh-http-proxy', () => ({ installProxyFromEnvironment: vi.fn() }))
+vi.mock('@tomato/http-proxy', () => ({ installProxyFromEnvironment: vi.fn() }))
 
 const homes: string[] = []
 afterEach(() => {
@@ -36,7 +36,7 @@ describe('runProfile with an application-owned profile', () => {
   it.each(
     ['composition', 'boot', 'watch', 'cleanup', 'tree-cleanup', 'both-cleanups'] as const,
   )('releases startup resources after a %s failure', async (stage) => {
-    const home = mkdtempSync(join(tmpdir(), 'dsh-profile-startup-failure-'))
+    const home = mkdtempSync(join(tmpdir(), 'tomato-profile-startup-failure-'))
     homes.push(home)
     mkdirSync(join(home, 'runtime'))
     writeFileSync(join(home, 'runtime/package.json'), '{"name":"test-runtime","version":"1.0.0"}')
@@ -87,7 +87,7 @@ describe('runProfile with an application-owned profile', () => {
   })
 
   it('uses shared layers, runtime resolution, and shutdown', async () => {
-    const home = mkdtempSync(join(tmpdir(), 'dsh-resolved-profile-'))
+    const home = mkdtempSync(join(tmpdir(), 'tomato-resolved-profile-'))
     homes.push(home)
     mkdirSync(join(home, 'runtime'))
     writeFileSync(join(home, 'runtime/package.json'), '{"name":"test-runtime","version":"1.0.0","exports":"./index.cjs"}')

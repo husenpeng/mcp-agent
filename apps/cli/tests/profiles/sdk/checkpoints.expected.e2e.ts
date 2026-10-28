@@ -5,7 +5,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { DeepSeekHarness } from '@deepseek-ai/dsh-sdk-client'
+import { DeepSeekHarness } from '@tomato/sdk-client'
 import { describe, expect, it, onTestFinished } from 'vitest'
 
 const tomatoBin = fileURLToPath(new URL('../../../lib/bin.js', import.meta.url))
@@ -13,7 +13,7 @@ const fixture = fileURLToPath(new URL('./fixtures/checkpoint-failure.mjs', impor
 
 describe.skipIf(!existsSync(tomatoBin))('sdk-minimal durability checkpoints', () => {
   it.each([false, true])('checkpoint storage failure with policy disabled=%s', async (disabled) => {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-sdk-checkpoint-'))
+    const root = await mkdtemp(join(tmpdir(), 'tomato-sdk-checkpoint-'))
     onTestFinished(async () => { await rm(root, { recursive: true, force: true }) })
     let modelRequests = 0
     const server = createServer((request, response) => {

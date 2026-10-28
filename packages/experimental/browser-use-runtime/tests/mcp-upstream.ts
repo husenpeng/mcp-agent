@@ -1,6 +1,6 @@
 /** Real upstream MCP browser checks against private loopback pages and disposable Chromium. */
-import { executeToolFixture } from '@deepseek-ai/dsh-tool-testkit'
-import * as NativeToolExecutor from '@deepseek-ai/dsh-tool-executor-native'
+import { executeToolFixture } from '@tomato/tool-testkit'
+import * as NativeToolExecutor from '@tomato/tool-executor-native'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
@@ -8,21 +8,21 @@ import { createServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { Context } from '@deepseek-ai/cordis'
-import type { Plugin } from '@deepseek-ai/cordis'
-import Loader from '@deepseek-ai/cordis-plugin-loader'
-import Include from '@deepseek-ai/cordis-plugin-include'
-import BrowserUse from '@deepseek-ai/dsh-browser-use'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import Tools from '@deepseek-ai/dsh-tools'
-import Llm from '@deepseek-ai/dsh-llm'
-import { ToolCallId } from '@deepseek-ai/dsh-llm'
-import Sessions, { SessionId } from '@deepseek-ai/dsh-session'
-import Agents from '@deepseek-ai/dsh-agent'
-import AgentLoop from '@deepseek-ai/dsh-agent-loop'
-import Projections from '@deepseek-ai/dsh-session-projection'
-import LocalFileSystem from '@deepseek-ai/dsh-fs-local'
-import WorkingDirectory from '@deepseek-ai/dsh-working-directory'
+import { Context } from '@tomato/cordis'
+import type { Plugin } from '@tomato/cordis'
+import Loader from '@tomato/cordis-plugin-loader'
+import Include from '@tomato/cordis-plugin-include'
+import BrowserUse from '@tomato/browser-use'
+import SystemPrompt from '@tomato/system-prompt'
+import Tools from '@tomato/tools'
+import Llm from '@tomato/llm'
+import { ToolCallId } from '@tomato/llm'
+import Sessions, { SessionId } from '@tomato/session'
+import Agents from '@tomato/agent'
+import AgentLoop from '@tomato/agent-loop'
+import Projections from '@tomato/session-projection'
+import LocalFileSystem from '@tomato/fs-local'
+import WorkingDirectory from '@tomato/working-directory'
 import { expect, vi } from 'vitest'
 import type { BrowserMcpConfig } from '../src/mcp.ts'
 
@@ -33,7 +33,7 @@ export async function verifyMcpBrowser(
   mode: 'launch' | 'attach',
 ): Promise<void> {
   const executable = process.env.TOMATO_BROWSER_EXECUTABLE!
-  const root = await mkdtemp(join(tmpdir(), 'dsh-browser-upstream-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-browser-upstream-'))
   const observed = new Set<string>()
   const server = createServer((request, response) => {
     observed.add(request.url!)

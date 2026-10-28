@@ -499,10 +499,10 @@ test('publishes setup phases without evaluating or installing dependencies', asy
 
 test('updates the App-owned run instead of creating another', async () => {
   const calls = []
-  const appRuns = [{ id: 42, app: { slug: 'dsh-weighted-approval' }, conclusion: 'success', external_id: 'weighted-approval-decision' }]
+  const appRuns = [{ id: 42, app: { slug: 'tomato-weighted-approval' }, conclusion: 'success', external_id: 'weighted-approval-decision' }]
   await runPublisher({
     event: pullRequestEvent(), policySource, runUrl: 'https://github.example/run/1', write: () => {},
-    checkAppSlug: 'dsh-weighted-approval',
+    checkAppSlug: 'tomato-weighted-approval',
     getOwnership: async () => ({ totalLines: 0, reviewerLines: {} }),
     getMergedCount: async () => 0,
     api: async (path, options = {}) => {
@@ -532,7 +532,7 @@ test('ignores job-token runs when the App token publishes', async () => {
   const jobRuns = [{ id: 7, app: { slug: 'github-actions' }, conclusion: 'success', external_id: 'weighted-approval-decision' }]
   await runPublisher({
     event: pullRequestEvent(), policySource, runUrl: 'https://github.example/run/1', write: () => {},
-    checkAppSlug: 'dsh-weighted-approval',
+    checkAppSlug: 'tomato-weighted-approval',
     getOwnership: async () => ({ totalLines: 0, reviewerLines: {} }),
     getMergedCount: async () => 0,
     api: async (path) => {

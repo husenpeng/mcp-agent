@@ -5,60 +5,60 @@
 /:
   en: 34b851d97ea0313e
   zh: 2fa00063647b6eee
-/deepseek-ai-dsh-mcp-resources:
-  en: 81abc44a56e1c7d3
-  zh: 34bb6d70ea0219a0
-/deepseek-ai-dsh-mcp-resources/summary:
-  en: 03c61c0b7beab085
-  zh: 4c5efe7fa7d8da36
-/deepseek-ai-dsh-mcp-resources/table-of-contents:
+/tomato-mcp-resources:
+  en: 777a7453f463c590
+  zh: e3b5be84072517c4
+/tomato-mcp-resources/summary:
+  en: 614b4f08db590011
+  zh: 9907dfc21dde0f86
+/tomato-mcp-resources/table-of-contents:
   en: d152484eb41ac6b4
   zh: 725b47765ee8f30b
-/deepseek-ai-dsh-mcp-resources/use-this-package:
-  en: 6df1a242b8679b3d
-  zh: 9dd9363d22d8a660
-/deepseek-ai-dsh-mcp-resources/use-this-package/server-configuration:
-  en: ec0195a4ad06b3ab
-  zh: 0b5c41a4f8ff511e
-/deepseek-ai-dsh-mcp-resources/use-this-package/discover-and-read:
+/tomato-mcp-resources/use-this-package:
+  en: 9864e81c33219529
+  zh: dcdae81dea4d84d1
+/tomato-mcp-resources/use-this-package/server-configuration:
+  en: 4e75ef4ce0719423
+  zh: 2d19334840ce731e
+/tomato-mcp-resources/use-this-package/discover-and-read:
   en: f7fb6597acd3c5dc
   zh: 9c59219fb4ab00d9
-/deepseek-ai-dsh-mcp-resources/understand-the-implementation:
-  en: ab308dbe70e82838
-  zh: 1eb73edc14c76516
-/deepseek-ai-dsh-mcp-resources/further-exploration:
-  en: 742e63ef8514fa7d
-  zh: cdadb4baa5275eb0
-/deepseek-ai-dsh-mcp-resources/model-experience:
+/tomato-mcp-resources/understand-the-implementation:
+  en: 237993b9569fd46f
+  zh: 19cbeb62e33de1d8
+/tomato-mcp-resources/further-exploration:
+  en: ce247d21e34af1cf
+  zh: a4222680cd6b9133
+/tomato-mcp-resources/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
-/deepseek-ai-dsh-mcp-resources/model-experience/shared-resource-tools:
+/tomato-mcp-resources/model-experience/shared-resource-tools:
   en: 520e0b6cb35e4285
   zh: 20a323f87e6d12fc
-/deepseek-ai-dsh-mcp-resources/model-experience/shared-resource-tools/what-the-model-sees:
-  en: a4bcd3734a1fbd07
-  zh: abc25fb23ebaf485
-/deepseek-ai-dsh-mcp-resources/model-experience/shared-resource-tools/token-effect:
+/tomato-mcp-resources/model-experience/shared-resource-tools/what-the-model-sees:
+  en: e5145bc61ce84f6a
+  zh: ed3854f9e28650d8
+/tomato-mcp-resources/model-experience/shared-resource-tools/token-effect:
   en: 92682e15ca9e90a5
   zh: 3487ef2adb89c9e4
-/deepseek-ai-dsh-mcp-resources/model-experience/shared-resource-tools/kv-cache-effect:
+/tomato-mcp-resources/model-experience/shared-resource-tools/kv-cache-effect:
   en: fdb450babcdf877b
   zh: f013ae46ce9e1125
-/deepseek-ai-dsh-mcp-resources/model-experience/resource-results:
+/tomato-mcp-resources/model-experience/resource-results:
   en: f46ae3151a215b4d
   zh: 8d15019792d3fe61
-/deepseek-ai-dsh-mcp-resources/model-experience/resource-results/what-the-model-sees:
+/tomato-mcp-resources/model-experience/resource-results/what-the-model-sees:
   en: 62d0a18c52283474
   zh: 70b2fbea70c98818
-/deepseek-ai-dsh-mcp-resources/model-experience/resource-results/token-effect:
+/tomato-mcp-resources/model-experience/resource-results/token-effect:
   en: e6fb5043a1ccc6ff
   zh: d15d2e7b5986d614
-/deepseek-ai-dsh-mcp-resources/model-experience/resource-results/kv-cache-effect:
+/tomato-mcp-resources/model-experience/resource-results/kv-cache-effect:
   en: ea0dfc069bf175c0
   zh: 3e1465e56ff79764
-/deepseek-ai-dsh-mcp-resources/known-limitations-and-deferred-work:
+/tomato-mcp-resources/known-limitations-and-deferred-work:
   en: 58d13dc99946c11d
   zh: 4099c46a1ca60512
-/deepseek-ai-dsh-mcp-resources/known-limitations-and-deferred-work/dev-note:
+/tomato-mcp-resources/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

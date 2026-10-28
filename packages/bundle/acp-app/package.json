@@ -1,6 +1,6 @@
 {
-  "name": "@deepseek-ai/dsh-acp-app",
-  "description": "The dsh ACP profile bundle: automation-only JSON-RPC stdio and process lifecycle over dsh-base",
+  "name": "@tomato/acp-app",
+  "description": "The tomato ACP profile bundle: automation-only JSON-RPC stdio and process lifecycle over @tomato/base",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -30,21 +30,21 @@
     "lib/types/**/*.d.ts"
   ],
   "license": "MIT",
-  "dsh": {
+  "tomato": {
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
   },
   "dependencies": {
-    "@deepseek-ai/dsh-acp": "workspace:*",
-    "@deepseek-ai/dsh-cmdline": "workspace:*",
+    "@tomato/acp": "workspace:*",
+    "@tomato/cmdline": "workspace:*",
     "commander": "^15.0.0"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/cordis": "workspace:~"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis-plugin-include": "workspace:~",
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/cordis-plugin-include": "workspace:~",
+    "@tomato/cordis": "workspace:~"
   }
 }

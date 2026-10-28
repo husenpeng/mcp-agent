@@ -1,4 +1,4 @@
-- alert: This session is already in use, possibly by another running TOMATO instance (such as dsh web or the desktop app). Quit other running TOMATO instances and try again.
+- alert: This session is already in use, possibly by another running TOMATO instance (such as tomato web or the desktop app). Quit other running TOMATO instances and try again.
 - textbox "Message or run a task, / commands, @ files or sessions":
   - paragraph: Queue submission to retry
 - button "Add files or run commands"

@@ -1,6 +1,6 @@
 {
-  "name": "@deepseek-ai/dsh-fs-sandbox",
-  "description": "Sandbox-enforcing implementation of the DeepSeek Harness filesystem seam: fences write/edit by the per-call sandbox mode (read-only denies mutation, workspace-write contains it to the workspace + temp roots) while reads pass through",
+  "name": "@tomato/fs-sandbox",
+  "description": "Sandbox-enforcing implementation of the Tomato Harness filesystem seam: fences write/edit by the per-call sandbox mode (read-only denies mutation, workspace-write contains it to the workspace + temp roots) while reads pass through",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -29,18 +29,18 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-fs": "workspace:*",
-    "@deepseek-ai/dsh-fs-local": "workspace:*",
-    "@deepseek-ai/dsh-sandbox": "workspace:*",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/fs": "workspace:*",
+    "@tomato/fs-local": "workspace:*",
+    "@tomato/sandbox": "workspace:*",
+    "@tomato/sandbox-policy": "workspace:*",
+    "@tomato/cordis": "workspace:~"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-fs": "workspace:*",
-    "@deepseek-ai/dsh-fs-local": "workspace:*",
-    "@deepseek-ai/dsh-sandbox": "workspace:*",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-session-projection": "workspace:*"
+    "@tomato/fs": "workspace:*",
+    "@tomato/fs-local": "workspace:*",
+    "@tomato/sandbox": "workspace:*",
+    "@tomato/sandbox-policy": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/session-projection": "workspace:*"
   }
 }

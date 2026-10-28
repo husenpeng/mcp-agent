@@ -1,11 +1,11 @@
 /** JSON-safe records and events of the plugin market Remote namespace. */
-import type { MarketIndexMetadata, MarketInstallTarget, MarketPlugin, MarketVersion } from '@deepseek-ai/dsh-plugin-market-index'
-import type { LocalizedText } from '@deepseek-ai/dsh-package-manifest'
-import type { Branded } from '@deepseek-ai/dsh-brand'
-import type {} from '@deepseek-ai/dsh-typert-protocol'
-import type { DetailFailureReason } from '@deepseek-ai/dsh-plugin-detail/types'
+import type { MarketIndexMetadata, MarketInstallTarget, MarketPlugin, MarketVersion } from '@tomato/plugin-market-index'
+import type { LocalizedText } from '@tomato/package-manifest'
+import type { Branded } from '@tomato/branded'
+import type {} from '@tomato/typert-protocol'
+import type { DetailFailureReason } from '@tomato/plugin-detail/types'
 
-declare module '@deepseek-ai/dsh-typert-protocol' {
+declare module '@tomato/typert-protocol' {
   interface RemoteErrorDetailsMap {
     /** An index URL is not http(s), or carries credentials or a fragment. */
     'plugin-market/invalid-index-url': { readonly url: string; readonly reason: string }
@@ -55,13 +55,13 @@ export interface MarketInstallation {
   readonly installedVersion?: string
 }
 
-/** Whether the running TOMATO version satisfies a version's `engines.dsh`, as TOMATO's installation check evaluates it. */
+/** Whether the running TOMATO version satisfies a version's `engines.tomato`, as TOMATO's installation check evaluates it. */
 export type MarketCompatibility =
   | { readonly compatible: true }
   | {
     readonly compatible: false
     readonly runtimeVersion: string
-    /** The unmet requirement, keyed `engines.dsh`. */
+    /** The unmet requirement, keyed `engines.tomato`. */
     readonly requirements: Readonly<Record<string, string>>
     /** Whether the profile holds a version exemption for this exact package and runtime version. */
     readonly exempted: boolean
@@ -159,7 +159,7 @@ export type PluginDetail =
   }
   | { readonly status: 'none' }
 
-declare module '@deepseek-ai/cordis' {
+declare module '@tomato/cordis' {
   interface Events {
     /**
      * The configured index sources changed.

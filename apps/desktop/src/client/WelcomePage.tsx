@@ -1,7 +1,7 @@
 /** Desktop welcome presentation; account operations stay in the preload. */
 import { useEffect, useRef, useState } from 'react'
-import { Toast } from '@deepseek-ai/dsh-client-ui-primitives/src/Toast.tsx'
-import { StateDot } from '@deepseek-ai/dsh-client-ui-primitives/src/StateDot.tsx'
+import { Toast } from '@tomato/client-ui-primitives/src/Toast.tsx'
+import { StateDot } from '@tomato/client-ui-primitives/src/StateDot.tsx'
 import type { WelcomeAccountView, WelcomeApi } from '../welcome-api.ts'
 import { BrandPanel } from './BrandPanel.tsx'
 import { LoginCard } from './LoginCard.tsx'

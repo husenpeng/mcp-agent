@@ -61,7 +61,7 @@ describe('packaged login environment', () => {
     try {
       await mkdir(join(root, 'presets'))
       await writeFile(join(root, 'presets/test.env'),
-        'TOMATO_DESKTOP_AUTO_UPDATE_ENV=test\nDSH_DESKTOP_AUTH_SERVICE_URL=https://auth.example.com\nDSH_DESKTOP_TOMATO_WEB_URL=https://app.example.com\n')
+        'TOMATO_DESKTOP_AUTO_UPDATE_ENV=test\nTOMATO_DESKTOP_AUTH_SERVICE_URL=https://auth.example.com\nTOMATO_DESKTOP_TOMATO_WEB_URL=https://app.example.com\n')
       const selected = loadDesktopPackageEnvironment('darwin', {
         TOMATO_PACKAGING_PRESET: 'test',
         TOMATO_PACKAGING_CONFIG_DIR: root,

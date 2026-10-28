@@ -3,17 +3,17 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-07-28-portable-execution-world-consumers.md
 /agent-note-portable-consumers-over-filesystem-and-subprocess-execution-worlds:
-  en: 42609904ffe19d80
-  zh: fcacbf7912df216c
+  en: 4170ad0af94ed4ac
+  zh: c5629d8542551bc8
 /agent-note-portable-consumers-over-filesystem-and-subprocess-execution-worlds/problem:
   en: 959a378a04f28e89
   zh: ff496169735b4d7b
 /agent-note-portable-consumers-over-filesystem-and-subprocess-execution-worlds/decision:
-  en: 69e97b0a63117d33
-  zh: 3c4188c40166264b
+  en: 23e9041275664c80
+  zh: d36a95260515e7d4
 /agent-note-portable-consumers-over-filesystem-and-subprocess-execution-worlds/remote-provider-ownership:
-  en: bde2e1fa8f3aeee0
-  zh: 42a13bb4cf540d6d
+  en: f75b44c763f93153
+  zh: 1e5efeb97be74965
 /agent-note-portable-consumers-over-filesystem-and-subprocess-execution-worlds/verification:
   en: b34540c3548ea98f
   zh: 79e53bda3981802c

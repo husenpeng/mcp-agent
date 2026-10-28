@@ -51,7 +51,7 @@ describe('StageSupervisor', () => {
     const stale: string[] = []
     const supervisor = new StageSupervisor((name) => { stale.push(name) })
     const polite = fakeStage('vite', ['SIGTERM'])
-    const stubborn = fakeStage('dsh web', ['SIGKILL'])
+    const stubborn = fakeStage('tomato web', ['SIGKILL'])
     supervisor.add(polite.handle)
     supervisor.add(stubborn.handle)
     await supervisor.stop({ signal: 'SIGTERM', graceMs: 20 })
@@ -63,7 +63,7 @@ describe('StageSupervisor', () => {
   it('waits for stages the terminal already interrupted before signaling survivors', async () => {
     const supervisor = new StageSupervisor(() => { throw new Error('unexpected stale report') })
     const interrupted = fakeStage('tsdown', [])
-    const survivor = fakeStage('dsh web', ['SIGTERM'])
+    const survivor = fakeStage('tomato web', ['SIGTERM'])
     supervisor.add(interrupted.handle)
     supervisor.add(survivor.handle)
     const stopping = supervisor.stop({ graceMs: 20 })
@@ -88,7 +88,7 @@ describe('parseDevWebArguments', () => {
     expect(() => parseDevWebArguments([flag])).toThrow(`invalid --poll interval "${flag}"`)
   })
 
-  it('separates its own flags from the arguments forwarded to dsh web', () => {
+  it('separates its own flags from the arguments forwarded to tomato web', () => {
     expect(parseDevWebArguments(['--skip-build', '--poll', '--no-open', '--port', '8080'])).toEqual({
       skipBuild: true, serve: true, pollInterval: 500, appArgs: ['--no-open', '--port', '8080'],
     })
@@ -103,13 +103,13 @@ describe('parseDevWebArguments', () => {
     expect(parseDevWebArguments(['--no-serve', '--'])).toMatchObject({ serve: false, appArgs: [] })
   })
 
-  it('rejects dsh web arguments when no server is started', () => {
-    expect(() => parseDevWebArguments(['--no-serve', '--no-open'])).toThrow('--no-serve leaves no dsh web process for --no-open')
+  it('rejects tomato web arguments when no server is started', () => {
+    expect(() => parseDevWebArguments(['--no-serve', '--no-open'])).toThrow('--no-serve leaves no tomato web process for --no-open')
   })
 })
 
 it('samples one local environment at startup without validating watcher outputs', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-dev-web-environment-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-dev-web-environment-'))
   try {
     await mkdir(join(root, 'apps/web/dist'), { recursive: true })
     await mkdir(join(root, 'packages/client/example/lib'), { recursive: true })
@@ -119,7 +119,7 @@ it('samples one local environment at startup without validating watcher outputs'
     writeClientBuildRecord(root, {
       TOMATO_CLIENT_BUILD_PROFILE: 'official',
       TOMATO_CLIENT_COMMIT_HASH: 'fffffff',
-      TOMATO_CLIENT_TITLE: 'DeepSeek Harness',
+      TOMATO_CLIENT_TITLE: 'Tomato Harness',
       TOMATO_CLIENT_VERSION: '1.2.2',
     })
     await writeFile(join(root, 'packages/client/example/lib/client.js'), 'module.exports = { changed: true }\n')
@@ -140,13 +140,13 @@ it('samples one local environment at startup without validating watcher outputs'
   }
 })
 
-it('discovers dsh.client packages with sibling roles', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-dev-web-discovery-'))
+it('discovers tomato.client packages with sibling roles', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'tomato-dev-web-discovery-'))
   try {
     const current = join(root, 'packages', 'client', 'current')
     await mkdir(current, { recursive: true })
     await writeFile(join(current, 'package.json'), JSON.stringify({
-      dsh: {
+      tomato: {
         bundle: { patch: './cordis.patch.yml' },
         client: { platform: 'web' },
         profile: { bundles: [] },
@@ -160,7 +160,7 @@ it('discovers dsh.client packages with sibling roles', async () => {
 })
 
 it('discovers client-preset packages the shell links, excluding loader-delivered and test infrastructure', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-dev-web-library-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-dev-web-library-'))
   try {
     const write = async (dir: string, manifest: unknown, config: string): Promise<void> => {
       await mkdir(join(root, dir), { recursive: true })
@@ -172,7 +172,7 @@ it('discovers client-preset packages the shell links, excluding loader-delivered
     // Linked by the compile shell: client preset, no loader-delivered half.
     await write('packages/client/linked', {}, clientPreset)
     // Loader-delivered: discoverPluginDirs owns it, so it must not appear twice.
-    await write('packages/client/delivered', { dsh: { client: { platform: 'web' } } }, clientPreset)
+    await write('packages/client/delivered', { tomato: { client: { platform: 'web' } } }, clientPreset)
     // Test infrastructure builds through the preset but never enters the shell graph.
     await write('packages/test-support/harness', {}, clientPreset)
     // Host package with its own config: not a client-face build at all.
@@ -185,11 +185,11 @@ it('discovers client-preset packages the shell links, excluding loader-delivered
 })
 
 it('rebuilds a client-plugin bundle after its source changes', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-dev-web-watch-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-dev-web-watch-'))
   let bundles: TsdownBundle[] = []
   try {
     await symlink(join(import.meta.dirname, '..', 'node_modules'), join(root, 'node_modules'), 'dir')
-    await writeFile(join(root, 'package.json'), JSON.stringify({ name: '@dsh-test/dev-web-watch', private: true, type: 'module' }))
+    await writeFile(join(root, 'package.json'), JSON.stringify({ name: '@tomato-test/dev-web-watch', private: true, type: 'module' }))
     await writeFile(join(root, 'tsdown.config.ts'), `
 import { defineConfig } from 'tsdown'
 export default defineConfig({

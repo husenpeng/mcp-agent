@@ -3,71 +3,71 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/bundle/headless/README.md
 /:
-  en: 68ff17b596cbc6aa
-  zh: 8c6f3d309403ba81
-/deepseek-ai-dsh-headless:
-  en: 605b67ee9f21d085
-  zh: df2687a69f362493
-/deepseek-ai-dsh-headless/summary:
-  en: 2c31f2cf129ed020
-  zh: 2b34e3640b011475
-/deepseek-ai-dsh-headless/table-of-contents:
+  en: 5b0afaca227cf43c
+  zh: e682a28dc214ba95
+/tomato-headless:
+  en: 1c612390067dee19
+  zh: e489df43a5f7a010
+/tomato-headless/summary:
+  en: 9715d0ab1fdecbf8
+  zh: 9df6f6b9a5249c6b
+/tomato-headless/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
-/deepseek-ai-dsh-headless/use-this-package:
+/tomato-headless/use-this-package:
   en: 4447012f4c84100d
   zh: faf579ae9f04c096
-/deepseek-ai-dsh-headless/use-this-package/running-a-one-shot-task:
-  en: b3d0ddfb56a1ac7f
-  zh: c1762158e49a4851
-/deepseek-ai-dsh-headless/use-this-package/credentials:
-  en: ca8217837ee9c698
-  zh: fa20daf27d4e09ef
-/deepseek-ai-dsh-headless/use-this-package/choosing-the-session-identity:
+/tomato-headless/use-this-package/running-a-one-shot-task:
+  en: 0edf5cdb3d72f5c0
+  zh: fc3cc1cf57c801f1
+/tomato-headless/use-this-package/credentials:
+  en: a2f730e8ee954902
+  zh: edd00cd2fe0f2956
+/tomato-headless/use-this-package/choosing-the-session-identity:
   en: 85120c2d6db2cac4
   zh: bac532df6c84e755
-/deepseek-ai-dsh-headless/use-this-package/supervising-implementation-tasks:
-  en: b10dee3026e8d999
-  zh: 63eda004e228a48a
-/deepseek-ai-dsh-headless/use-this-package/experimental-auto-review:
-  en: ac060bf78cf157b6
-  zh: 5e099abb8c10b96b
-/deepseek-ai-dsh-headless/use-this-package/machine-readable-output:
-  en: c8a90b16023eb04a
-  zh: 58eec3550ea70f34
-/deepseek-ai-dsh-headless/use-this-package/when-to-use-it:
-  en: 5262b93dcef0d489
-  zh: 1638965b2aabcd38
-/deepseek-ai-dsh-headless/use-this-package/help-and-task-errors:
-  en: ecd381558cf7b0e7
-  zh: a351efbf4a1a2ac5
-/deepseek-ai-dsh-headless/understand-the-implementation:
+/tomato-headless/use-this-package/supervising-implementation-tasks:
+  en: cfd3a1d8426f733e
+  zh: 972e9f325e4186b8
+/tomato-headless/use-this-package/experimental-auto-review:
+  en: 1938059a15ce5c6b
+  zh: 510417bacee8dcdb
+/tomato-headless/use-this-package/machine-readable-output:
+  en: 8d74727821cc0685
+  zh: 39c2244eb322a727
+/tomato-headless/use-this-package/when-to-use-it:
+  en: 7647d35e795c9561
+  zh: d9dbda3ed23a7f98
+/tomato-headless/use-this-package/help-and-task-errors:
+  en: df2253236c9dfcd1
+  zh: 7e6f29f22332751c
+/tomato-headless/understand-the-implementation:
   en: be1b73a6d0ee3902
   zh: bdba099685d68b27
-/deepseek-ai-dsh-headless/understand-the-implementation/run-flow:
-  en: fdef19c52550fdf8
-  zh: c4bab4fb6972cf10
-/deepseek-ai-dsh-headless/understand-the-implementation/patch-surface-over-base:
-  en: e192267973792ad1
-  zh: ef78428a68dff9e4
-/deepseek-ai-dsh-headless/understand-the-implementation/exit-mapping:
-  en: c2466d3d8a26177a
-  zh: b75743bfa2e7723a
-/deepseek-ai-dsh-headless/understand-the-implementation/source-map:
-  en: fbda2df5fd109682
-  zh: 3a92aec4d9dfd9c8
-/deepseek-ai-dsh-headless/further-exploration:
-  en: 65aebf0f8ab3047c
-  zh: 85616d3859073c4b
-/deepseek-ai-dsh-headless/model-experience:
+/tomato-headless/understand-the-implementation/run-flow:
+  en: b6f39fa30f789c52
+  zh: 1afd37938d0d8892
+/tomato-headless/understand-the-implementation/patch-surface-over-base:
+  en: 900db4ec4cf0ed77
+  zh: ea26059597124303
+/tomato-headless/understand-the-implementation/exit-mapping:
+  en: 213b3e01f2a4493c
+  zh: 6f9c7243c39bd1c1
+/tomato-headless/understand-the-implementation/source-map:
+  en: ec489ad2cf53ce81
+  zh: 13c8e3ce603163ba
+/tomato-headless/further-exploration:
+  en: c1d3b68c02577ddb
+  zh: cbed12a6ba7d5f38
+/tomato-headless/model-experience:
   en: c5a0991833f64dd7
   zh: 46f9feb255778f11
-/deepseek-ai-dsh-headless/model-experience/kv-cache-effect:
+/tomato-headless/model-experience/kv-cache-effect:
   en: 0b0f74b412c7c6d8
   zh: 6e8f918d0c4bf342
-/deepseek-ai-dsh-headless/known-limitations-and-deferred-work:
-  en: 94d8c7731c1435c3
-  zh: d0ddc9dd4e030b3f
-/deepseek-ai-dsh-headless/known-limitations-and-deferred-work/dev-note:
+/tomato-headless/known-limitations-and-deferred-work:
+  en: d5e668ffb447b776
+  zh: 39e210390ff34c2f
+/tomato-headless/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

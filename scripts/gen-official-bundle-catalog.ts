@@ -29,11 +29,11 @@ export function generateOfficialBundleCatalog(root: string, names: readonly stri
       dependencies?: Record<string, string>
       optionalDependencies?: Record<string, string>
       peerDependencies?: Record<string, string>
-      dsh?: { bundle?: { patch?: unknown } }
+      tomato?: { bundle?: { patch?: unknown } }
     }
     if (manifests.has(manifest.name)) throw new Error(`duplicate workspace package ${manifest.name}`)
     const runtime = ['dependencies', 'optionalDependencies', 'peerDependencies'] as const
-    manifests.set(manifest.name, { path, private: manifest.private === true, bundle: manifest.dsh?.bundle?.patch !== undefined,
+    manifests.set(manifest.name, { path, private: manifest.private === true, bundle: manifest.tomato?.bundle?.patch !== undefined,
       runtime: runtime.flatMap(section => Object.keys(manifest[section] ?? {})) })
   }
   const visited = new Set<string>()
@@ -43,11 +43,11 @@ export function generateOfficialBundleCatalog(root: string, names: readonly stri
     if (names.includes(name)) throw new Error(`${name}: on-demand providers must not be installed by the TOMATO distribution`)
     for (const dependency of manifests.get(name)?.runtime ?? []) checkInstallation(dependency)
   }
-  if (!manifests.has('@deepseek-ai/dsh')) throw new Error('Official catalog requires the TOMATO installation manifest')
-  checkInstallation('@deepseek-ai/dsh')
+  if (!manifests.has('@tomato/cli')) throw new Error('Official catalog requires the TOMATO installation manifest')
+  checkInstallation('@tomato/cli')
   return names.map((packageName) => {
     const entry = manifests.get(packageName)
-    if (entry === undefined || !entry.path.startsWith('packages/') || !packageName.startsWith('@deepseek-ai/dsh-') || entry.private || !entry.bundle) {
+    if (entry === undefined || !entry.path.startsWith('packages/') || !packageName.startsWith('@tomato/') || entry.private || !entry.bundle) {
       throw new Error(`${packageName}: Official catalog entries must be public TOMATO bundle packages`)
     }
     const parentURL = pathToFileURL(resolve(root, entry.path)).href

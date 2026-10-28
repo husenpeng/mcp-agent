@@ -3,23 +3,23 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/subsystems/shell.md
 /shell-executor:
-  en: c9aba02120c42608
-  zh: f76b6b9745015993
+  en: 3e25817be2d2089e
+  zh: d8a1a6c745c9d42b
 /shell-executor/managed-shell-environment-namespace:
-  en: f04b6ee0f2ec23d5
-  zh: 8c3104d8ce6c70e6
+  en: fd0966ce48d6dbb6
+  zh: 41feb8e3c21778cd
 /shell-executor/request-vs-spec-the-resolve-split:
-  en: a4f7d0ff18dce0c6
-  zh: d956cc599948fae8
+  en: 19bcc1fc638e6b75
+  zh: ea5e9a0ebf90cab5
 /shell-executor/foreground-runs-shellrunresult:
-  en: 471d328907ef0761
-  zh: d6b0b8e66e427394
+  en: 9d23c71bd1bf116d
+  zh: 446a92bc10b3fcc5
 /shell-executor/file-sandbox-shellsandboxinfo:
-  en: 7f84b75c4128768c
-  zh: cf389bfa6c8d24f3
+  en: fc3818fcba7b7ee0
+  zh: bd7fee34b9be976d
 /shell-executor/background-processes-shellprocess:
-  en: e5530a4d2b8f3aa3
-  zh: 72e4fd736c1a6d9d
+  en: be1f61731dd5ac9b
+  zh: d8703745852573eb
 /shell-executor/the-service:
-  en: b850ffb5f5b75ac6
-  zh: 796e57ae77e0e41f
+  en: 97560f3e846f0162
+  zh: d79a74151c80fb3f

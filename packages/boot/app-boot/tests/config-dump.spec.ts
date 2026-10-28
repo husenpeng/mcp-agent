@@ -13,10 +13,10 @@ import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { afterAll, describe, expect, it, vi } from 'vitest'
 import * as yaml from 'js-yaml'
-import { entryListSchema } from '@deepseek-ai/cordis-plugin-include'
+import { entryListSchema } from '@tomato/cordis-plugin-include'
 import { loadOverlayPatches, renderConfigDump } from '../src/index.ts'
 
-const NAME = 'dsh-test-bin'
+const NAME = 'tomato-test-bin'
 
 const tempRoots: string[] = []
 afterAll(() => {
@@ -24,7 +24,7 @@ afterAll(() => {
 })
 
 const tmp = (): string => {
-  const dir = mkdtempSync(join(tmpdir(), 'dsh-config-dump-'))
+  const dir = mkdtempSync(join(tmpdir(), 'tomato-config-dump-'))
   tempRoots.push(dir)
   return dir
 }

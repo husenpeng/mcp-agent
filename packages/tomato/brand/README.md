@@ -22,7 +22,7 @@ This package gives Tomato AI its own sidebar mark, sidebar name, and blank-sessi
 
 ## Use this package
 
-Mount this plugin in the browser roster and leave `@deepseek-ai/dsh-client-ui-brand-official` out of the same composition. Two declarations are filled:
+Mount this plugin in the browser roster and leave `@tomato/client-ui-brand-official` out of the same composition. Two declarations are filled:
 
 | Slot | Occupant | Owner props |
 |---|---|---|

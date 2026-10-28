@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-personalized-recommendations",
+  "name": "@tomato/personalized-recommendations",
   "description": "Personalized pages and built-in plugin recommendations offered as cards below answers",
   "version": "0.2.1-rc.3",
   "icon": "./icon.svg",
@@ -34,35 +34,35 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@deepseek-ai/dsh-action-cards": "workspace:*",
-    "@deepseek-ai/dsh-client-ui-action-cards": "workspace:*",
-    "@deepseek-ai/dsh-creation-recommendations": "workspace:*",
-    "@deepseek-ai/dsh-client-ui-creation-recommendations": "workspace:*",
-    "@deepseek-ai/dsh-plugin-recommendations": "workspace:*",
-    "@deepseek-ai/dsh-client-ui-plugin-recommendations": "workspace:*"
+    "@tomato/action-cards": "workspace:*",
+    "@tomato/client-ui-action-cards": "workspace:*",
+    "@tomato/creation-recommendations": "workspace:*",
+    "@tomato/client-ui-creation-recommendations": "workspace:*",
+    "@tomato/plugin-recommendations": "workspace:*",
+    "@tomato/client-ui-plugin-recommendations": "workspace:*"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/cordis": "workspace:~"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/cordis-plugin-include": "workspace:~",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/cordis-plugin-include": "workspace:~",
     "js-yaml": "^4.3.2",
-    "@deepseek-ai/cordis-plugin-timer": "workspace:~",
-    "@deepseek-ai/dsh-agent": "workspace:*",
-    "@deepseek-ai/dsh-api-remote-access": "workspace:*",
-    "@deepseek-ai/dsh-app-boot": "workspace:*",
-    "@deepseek-ai/dsh-hmr": "workspace:*",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-plugin-manager": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-session-projection": "workspace:*",
-    "@deepseek-ai/dsh-skill": "workspace:*",
-    "@deepseek-ai/dsh-system-prompt": "workspace:*",
-    "@deepseek-ai/dsh-tool-executor-native": "workspace:*",
-    "@deepseek-ai/dsh-tools": "workspace:*"
+    "@tomato/cordis-plugin-timer": "workspace:~",
+    "@tomato/agent": "workspace:*",
+    "@tomato/api-remote-access": "workspace:*",
+    "@tomato/app-boot": "workspace:*",
+    "@tomato/hmr": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/plugin-manager": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/skill": "workspace:*",
+    "@tomato/system-prompt": "workspace:*",
+    "@tomato/tool-executor-native": "workspace:*",
+    "@tomato/tools": "workspace:*"
   },
-  "dsh": {
+  "tomato": {
     "bundle": {
       "patch": "./cordis.patch.yml"
     }

@@ -1,24 +1,24 @@
 /** Cold Session history pagination and live-event source. */
 
-import type { Context } from '@deepseek-ai/cordis'
-import { Deque } from '@deepseek-ai/dsh-deque'
-import type { AssistantStreamFrame } from '@deepseek-ai/dsh-agent'
+import type { Context } from '@tomato/cordis'
+import { Deque } from '@tomato/deque'
+import type { AssistantStreamFrame } from '@tomato/agent'
 import {
   isAppendSurfaceEvent,
   SessionLogOffset,
   SessionSeq,
-} from '@deepseek-ai/dsh-session'
+} from '@tomato/session'
 import type {
   SessionEvent,
   SessionHeader,
   SessionId,
   SessionLogOffset as SessionLogOffsetType,
   SessionSeqCursor,
-} from '@deepseek-ai/dsh-session'
-import { SessionQueryError, type SessionObservation } from '@deepseek-ai/dsh-session-query'
-import type {} from '@deepseek-ai/dsh-subagent'
-import { RemoteError } from '@deepseek-ai/dsh-typert-protocol'
-import type { JsonValue } from '@deepseek-ai/dsh-util-values'
+} from '@tomato/session'
+import { SessionQueryError, type SessionObservation } from '@tomato/session-query'
+import type {} from '@tomato/subagent'
+import { RemoteError } from '@tomato/typert-protocol'
+import type { JsonValue } from '@tomato/util-values'
 import type {
   SessionAddress,
   SessionAssistantStreamFrame,

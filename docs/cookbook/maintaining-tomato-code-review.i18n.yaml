@@ -1,0 +1,22 @@
+# Bilingual-pair consistency record for maintaining-tomato-code-review.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/cookbook/maintaining-tomato-code-review.md
+/maintaining-the-tomato-code-review-skill:
+  en: 1d794acd43fc0870
+  zh: a08e00ad66826441
+/maintaining-the-tomato-code-review-skill/what-the-maintainer-receives:
+  en: e547c7704485c559
+  zh: 1039af472b7c6692
+/maintaining-the-tomato-code-review-skill/what-the-operator-does-with-a-candidate-diff:
+  en: 0fc6c9a411667325
+  zh: 6144b97c82f2f355
+/maintaining-the-tomato-code-review-skill/when-a-run-produces-no-candidate:
+  en: feb6d261939d6c19
+  zh: 044d8238cd6537d3
+/maintaining-the-tomato-code-review-skill/interruptions-and-handoff:
+  en: 0913c7c7e7b5fc1e
+  zh: 7912387bc782f5ea
+/maintaining-the-tomato-code-review-skill/where-the-operator-s-private-setup-lives:
+  en: ae06145764738c16
+  zh: d527b944db8c52be

@@ -15,7 +15,7 @@ if ($spec.schemaVersion -ne 1 -or $spec.runId -cnotmatch '^[a-f0-9]{24}$' -or
     [IO.Path]::GetFullPath($spec.executable) -cne $spec.executable) {
     throw 'Invalid test-only network plan; no network changes were made.'
 }
-$owner = "dsh-update-qualification:$($spec.runId):$($spec.sha512Hex)"
+$owner = "tomato-update-qualification:$($spec.runId):$($spec.sha512Hex)"
 $recordParent = Join-Path (Split-Path -Parent $planPath) 'records'
 [IO.Directory]::CreateDirectory($recordParent) | Out-Null
 $record = Join-Path $recordParent ([Guid]::NewGuid().ToString('N'))

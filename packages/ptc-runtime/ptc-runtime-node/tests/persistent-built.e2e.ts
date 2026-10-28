@@ -10,12 +10,12 @@ const built = ['lib/index.js', 'lib/persistent-process.js'].every(file => exists
 describe.skipIf(!built)('persistent PTC published exports', () => {
   it('retains variables through the built provider and sibling process entry', async () => {
     const script = `
-      const { Context } = await import('@deepseek-ai/cordis')
-      const { default: NodeRuntime } = await import('@deepseek-ai/dsh-ptc-runtime-node')
+      const { Context } = await import('@tomato/cordis')
+      const { default: NodeRuntime } = await import('@tomato/ptc-runtime-node')
       const ctx = new Context()
       try {
         for (const name of ['session-projection', 'fs-local', 'subprocess-local', 'sandbox-local', 'sandbox-policy']) {
-          await ctx.plugin((await import('@deepseek-ai/dsh-' + name)).default)
+          await ctx.plugin((await import('@tomato/' + name)).default)
         }
         await ctx.plugin(NodeRuntime, { executionMode: 'persistent-in-memory' })
         const stateOwner = {}

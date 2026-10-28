@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-api-workspace-files",
+  "name": "@tomato/api-workspace-files",
   "description": "Workspace file service and Client resource provider: bounded reads, directory listing, and live metadata over the workspaceFiles Remote namespace",
   "version": "0.2.1-rc.3",
   "publishConfig": {
@@ -38,11 +38,11 @@
     "./package.json": "./package.json",
     "./locale/*.json": "./locale/*.json"
   },
-  "dsh": {
+  "tomato": {
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-api-gateway",
-        "@deepseek-ai/dsh-client-resources"
+        "@tomato/api-gateway",
+        "@tomato/client-resources"
       ],
       "platform": "web"
     }
@@ -53,27 +53,27 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@deepseek-ai/dsh-deque": "workspace:*",
-    "@deepseek-ai/dsh-typert-protocol": "workspace:*",
-    "@deepseek-ai/schemastery": "workspace:~",
+    "@tomato/deque": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*",
+    "@tomato/schemastery": "workspace:~",
     "zod": "4.4.3"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/cordis": "workspace:~"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-api-gateway": "workspace:*",
-    "@deepseek-ai/dsh-api-remote-access": "workspace:*",
-    "@deepseek-ai/dsh-client-connection": "workspace:*",
-    "@deepseek-ai/dsh-client-resources": "workspace:*",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:*",
-    "@deepseek-ai/dsh-fs": "workspace:*",
-    "@deepseek-ai/dsh-remote-mock": "workspace:*",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-session-persistence": "workspace:*",
-    "@deepseek-ai/dsh-util-workspace-path": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/api-gateway": "workspace:*",
+    "@tomato/api-remote-access": "workspace:*",
+    "@tomato/client-connection": "workspace:*",
+    "@tomato/client-resources": "workspace:*",
+    "@tomato/client-ui-slots": "workspace:*",
+    "@tomato/fs": "workspace:*",
+    "@tomato/remote-mock": "workspace:*",
+    "@tomato/sandbox-policy": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-persistence": "workspace:*",
+    "@tomato/util-workspace-path": "workspace:*"
   },
   "files": [
     "locale/*.json",

@@ -1,21 +1,21 @@
 /** Session-addressed, cold-readable skill catalog Remote. */
 
-import type { Context } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-agent-preset-registry/types'
-import { SessionQueryError } from '@deepseek-ai/dsh-session-query'
+import type { Context } from '@tomato/cordis'
+import type {} from '@tomato/agent-preset-registry/types'
+import { SessionQueryError } from '@tomato/session-query'
 import {
   isSkillName, isUserInvocable,
   type SkillDefinition, type SkillRegistry, type SkillSummary, type SkillUpdatePatch,
-} from '@deepseek-ai/dsh-skill'
-import type {} from '@deepseek-ai/dsh-working-directory'
-import type { ScopeKey } from '@deepseek-ai/dsh-scope'
-import { Remote, RemoteError, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
+} from '@tomato/skill'
+import type {} from '@tomato/working-directory'
+import type { ScopeKey } from '@tomato/scope'
+import { Remote, RemoteError, TypertRemoteService } from '@tomato/typert-protocol'
 import type {
   SkillEntry, SkillGetRequest, SkillGetValue, SkillListRequest, SkillListValue,
   SkillSaveRequest, SkillSaveValue,
 } from './types.ts'
 
-declare module '@deepseek-ai/cordis' {
+declare module '@tomato/cordis' {
   interface Context {
     /** Host owner of the Session-addressed `skills` Remote namespace. */
     sessionSkillCatalog: SessionSkillCatalog
@@ -27,7 +27,7 @@ declare module '@deepseek-ai/cordis' {
  * Project, custom, bundled, and virtual roots stay read-only: editing them
  * would modify repository files or packaged assets the user did not select.
  */
-const PERSONAL_SKILL_SOURCES: ReadonlySet<string> = new Set(['user-dsh', 'user-agents'])
+const PERSONAL_SKILL_SOURCES: ReadonlySet<string> = new Set(['user-tomato', 'user-agents'])
 
 /** Largest accepted routing description, in characters. */
 const MAX_SKILL_DESCRIPTION_LENGTH = 4096
@@ -254,7 +254,7 @@ export class SessionSkillCatalog extends TypertRemoteService {
     if (registry === undefined) {
       throw new RemoteError(
         'gateway/internal',
-        'skill registry is absent: neither this session\'s agent preset nor the host composition mounts @deepseek-ai/dsh-skill',
+        'skill registry is absent: neither this session\'s agent preset nor the host composition mounts @tomato/skill',
         {},
       )
     }

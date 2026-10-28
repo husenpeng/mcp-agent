@@ -1,6 +1,6 @@
-import type { ImageMediaType } from '@deepseek-ai/dsh-attachment/types'
-import type { SessionId } from '@deepseek-ai/dsh-session/types'
-import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol'
+import type { ImageMediaType } from '@tomato/attachment/types'
+import type { SessionId } from '@tomato/session/types'
+import type { RemoteResult } from '@tomato/typert-protocol'
 import type { FileUploadValue, ImageUploadValue } from '../types.ts'
 
 /** Browser request body accepted by the background file-upload service. */

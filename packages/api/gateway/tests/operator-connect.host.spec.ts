@@ -6,16 +6,16 @@ import { IncomingMessage } from 'node:http'
 import { tmpdir } from 'node:os'
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { Context } from '@deepseek-ai/cordis'
-import Loader from '@deepseek-ai/cordis-plugin-loader'
-import Include from '@deepseek-ai/cordis-plugin-include'
-import * as Connection from '@deepseek-ai/dsh-client-connection'
-import LocalCredentials from '@deepseek-ai/dsh-credentials-local'
-import WebServer from '@deepseek-ai/dsh-host-webserver'
-import * as FrontendStatic from '@deepseek-ai/dsh-host-frontend-static'
-import TypertRegistry from '@deepseek-ai/dsh-typert-registry'
-import TypertGateway from '@deepseek-ai/dsh-api-gateway'
-import RemoteAccess from '@deepseek-ai/dsh-api-remote-access'
+import { Context } from '@tomato/cordis'
+import Loader from '@tomato/cordis-plugin-loader'
+import Include from '@tomato/cordis-plugin-include'
+import * as Connection from '@tomato/client-connection'
+import LocalCredentials from '@tomato/credentials-local'
+import WebServer from '@tomato/host-webserver'
+import * as FrontendStatic from '@tomato/host-frontend-static'
+import TypertRegistry from '@tomato/typert-registry'
+import TypertGateway from '@tomato/api-gateway'
+import RemoteAccess from '@tomato/api-remote-access'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import WebSocket from 'ws'
 import { z } from 'zod'
@@ -53,7 +53,7 @@ afterEach(async () => {
   }))
   await Promise.all(hosts.splice(0).map(host => host.ctx.fiber.dispose()))
   for (const root of roots.splice(0)) {
-    if (!isAbsolute(root) || dirname(root) !== resolve(tmpdir()) || !basename(root).startsWith('dsh-operator-connect-')) {
+    if (!isAbsolute(root) || dirname(root) !== resolve(tmpdir()) || !basename(root).startsWith('tomato-operator-connect-')) {
       throw new Error(`refusing unexpected fixture cleanup path: ${root}`)
     }
     await rm(root, { recursive: true, force: true })
@@ -203,19 +203,19 @@ describe('operator connect through Loader composition', () => {
 })
 
 async function boot(): Promise<Host> {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-operator-connect-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-operator-connect-'))
   roots.push(root)
   const distIndex = join(root, 'index.html')
   await writeFile(distIndex, '<head></head><body>operator fixture</body>')
   const configPath = join(root, 'cordis.yml')
   const rows = [
-    { name: '@deepseek-ai/dsh-credentials-local', config: { path: join(root, '.credentials.yaml'), watch: false } },
-    { name: '@deepseek-ai/dsh-host-webserver', config: { host: '127.0.0.1', port: 0 } },
-    { name: '@deepseek-ai/dsh-client-connection' },
-    { name: '@deepseek-ai/dsh-host-frontend-static', config: { distIndex } },
-    { name: '@deepseek-ai/dsh-typert-registry' },
-    { name: '@deepseek-ai/dsh-api-remote-access' },
-    { name: '@deepseek-ai/dsh-api-gateway' },
+    { name: '@tomato/credentials-local', config: { path: join(root, '.credentials.yaml'), watch: false } },
+    { name: '@tomato/host-webserver', config: { host: '127.0.0.1', port: 0 } },
+    { name: '@tomato/client-connection' },
+    { name: '@tomato/host-frontend-static', config: { distIndex } },
+    { name: '@tomato/typert-registry' },
+    { name: '@tomato/api-remote-access' },
+    { name: '@tomato/api-gateway' },
     { name: '@fixture/operator-connect' },
   ]
   await writeFile(configPath, rows.map(row => `- ${JSON.stringify({ ...row, name: `cordis:${row.name}` })}`).join('\n') + '\n')
@@ -225,13 +225,13 @@ async function boot(): Promise<Host> {
     await ctx.plugin(Loader)
     Object.assign(ctx.loader.builtins, {
       include: Include,
-      '@deepseek-ai/dsh-credentials-local': LocalCredentials,
-      '@deepseek-ai/dsh-host-webserver': WebServer,
-      '@deepseek-ai/dsh-client-connection': Connection,
-      '@deepseek-ai/dsh-host-frontend-static': FrontendStatic,
-      '@deepseek-ai/dsh-typert-registry': TypertRegistry,
-      '@deepseek-ai/dsh-api-remote-access': RemoteAccess,
-      '@deepseek-ai/dsh-api-gateway': TypertGateway,
+      '@tomato/credentials-local': LocalCredentials,
+      '@tomato/host-webserver': WebServer,
+      '@tomato/client-connection': Connection,
+      '@tomato/host-frontend-static': FrontendStatic,
+      '@tomato/typert-registry': TypertRegistry,
+      '@tomato/api-remote-access': RemoteAccess,
+      '@tomato/api-gateway': TypertGateway,
       '@fixture/operator-connect': OperatorConnectFixture,
     })
     await ctx.loader.create({ name: 'cordis:include', config: { path: pathToFileURL(configPath).href } })

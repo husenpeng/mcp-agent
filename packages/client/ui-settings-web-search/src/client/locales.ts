@@ -1,6 +1,6 @@
 /** Locale bundles for the web-search provider's settings page. */
 
-import type { SettingsFormLabels } from '@deepseek-ai/dsh-client-ui-primitives'
+import type { SettingsFormLabels } from '@tomato/client-ui-primitives'
 
 /** Locale keys the page renders. */
 export type WebSearchSettingsLocaleKey =
@@ -44,7 +44,7 @@ export const en: Record<WebSearchSettingsLocaleKey, string> = {
 /** Simplified Chinese copy. */
 export const zh: Record<WebSearchSettingsLocaleKey, string> = {
   title: '网页搜索',
-  description: '设置 DeepSeek 的搜索提供方。',
+  description: '设置 Tomato 的搜索提供方。',
   useSearchApi: '启用新版 Web 搜索 API',
   useSearchApiHint: '默认关闭，搜索通过 DeepSeek Messages 完成。新版 Web 搜索 API 功能与计费详见',
   searchGuide: '网页搜索与抓取指南',

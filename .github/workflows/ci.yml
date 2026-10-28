@@ -45,7 +45,7 @@ jobs:
           || vars.TOMATO_CI_FAILOVER_LINUX == 'selfhosted'
           && github.event.pull_request.user.login != 'dependabot[bot]'
           && fromJSON('["self-hosted", "linux", "x64", "vm-backup"]')
-          || 'dsh-ubuntu-24-04-16core' }}
+          || 'tomato-ubuntu-24-04-16core' }}
     name: node 24 / static
     env:
       # Shared hosts expose host CPUs, not an isolated allocation.
@@ -112,7 +112,7 @@ jobs:
           || vars.TOMATO_CI_FAILOVER_LINUX == 'selfhosted'
           && github.event.pull_request.user.login != 'dependabot[bot]'
           && fromJSON('["self-hosted", "linux", "x64", "vm-backup"]')
-          || 'dsh-ubuntu-24-04-16core' }}
+          || 'tomato-ubuntu-24-04-16core' }}
     name: node 24 / coverage
     env:
       # Shared hosts expose host CPUs, not an isolated allocation.
@@ -241,14 +241,14 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install benchmark browser and hosted dependencies
-        run: pnpm --filter @deepseek-ai/dsh-benchmarks exec playwright install --with-deps chromium
+        run: pnpm --filter @tomato/benchmarks exec playwright install --with-deps chromium
 
       - name: Run performance benchmarks
         env:
           TOMATO_GATE_VERBOSE: '1'
         run: pnpm run check:ci:bench
 
-      # The report global teardown renders benchmarks/.dsh-report after the run,
+      # The report global teardown renders benchmarks/.tomato-report after the run,
       # including after a failing budget assertion. A run that fails before
       # recording any timing has no report, so missing files warn instead of
       # failing the benchmark job a second time.
@@ -257,7 +257,7 @@ jobs:
         uses: actions/upload-artifact@v7.0.1
         with:
           name: benchmark-report
-          path: benchmarks/.dsh-report/
+          path: benchmarks/.tomato-report/
           include-hidden-files: true
           if-no-files-found: warn
           retention-days: 7
@@ -269,7 +269,7 @@ jobs:
           || vars.TOMATO_CI_FAILOVER_LINUX == 'selfhosted'
           && github.event.pull_request.user.login != 'dependabot[bot]'
           && fromJSON('["self-hosted", "linux", "x64", "vm-backup"]')
-          || 'dsh-ubuntu-24-04-16core' }}
+          || 'tomato-ubuntu-24-04-16core' }}
     name: node 24 / snapshots and artifacts
     env:
       # Shared hosts expose host CPUs, not an isolated allocation.
@@ -374,13 +374,13 @@ jobs:
         # Ephemeral runner images can carry Ubuntu mirrors whose HTTP endpoints are unreachable.
         run: |
           sudo find /etc/apt -maxdepth 2 -type f \( -name '*.list' -o -name '*.sources' \) -exec sed -i -E 's@http://([a-z]{2}\.)?archive\.ubuntu\.com/ubuntu@https://archive.ubuntu.com/ubuntu@g; s@http://security\.ubuntu\.com/ubuntu@https://security.ubuntu.com/ubuntu@g' {} +
-          pnpm --filter @deepseek-ai/dsh-web-frontend exec playwright install --with-deps chromium webkit
+          pnpm --filter @tomato/web-frontend exec playwright install --with-deps chromium webkit
 
       # The persistent VM image owns Playwright's Linux system packages; do
       # not mutate the shared host with apt on every failover run.
       - name: Install Playwright Chromium and WebKit on the failover VM
         if: vars.TOMATO_CI_FAILOVER_LINUX == 'selfhosted' && github.event.pull_request.user.login != 'dependabot[bot]'
-        run: pnpm --filter @deepseek-ai/dsh-web-frontend exec playwright install chromium webkit
+        run: pnpm --filter @tomato/web-frontend exec playwright install chromium webkit
 
       - name: Build and execute the Linux Office runtime
         run: CI=true pnpm run prepare:primary-runtime --target linux-x64 --output "$RUNNER_TEMP/office-runtime" --cache "$RUNNER_TEMP/office-runtime-downloads"

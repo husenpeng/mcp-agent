@@ -3,15 +3,15 @@
  * providers read one credential, so every case runs for both operations.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import AgentRegistry from '@deepseek-ai/dsh-agent'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import type { DeepSeekAccount } from '@deepseek-ai/dsh-deepseek-account'
-import { TOMATO_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot } from '@deepseek-ai/dsh-launch-environment'
-import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
-import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
-import WebRuntime from '@deepseek-ai/dsh-web'
-import * as webApiPlugin from '@deepseek-ai/dsh-web-deepseek-api'
+import { Context } from '@tomato/cordis'
+import AgentRegistry from '@tomato/agent'
+import type { Agent } from '@tomato/agent'
+import type { DeepSeekAccount } from '@tomato/deepseek-account'
+import { TOMATO_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot } from '@tomato/launch-environment'
+import SessionStore, { SessionId } from '@tomato/session'
+import SessionProjectionRegistry from '@tomato/session-projection'
+import WebRuntime from '@tomato/web'
+import * as webApiPlugin from '@tomato/web-deepseek-api'
 
 type Operation = 'search' | 'fetch'
 

@@ -12,7 +12,7 @@ import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { app, BrowserWindow, safeStorage, session } from 'electron'
-import type { AccountLinks, SignInAttemptView } from '@deepseek-ai/dsh-deepseek-account/types'
+import type { AccountLinks, SignInAttemptView } from '@tomato/deepseek-account/types'
 import type { WelcomeAccountView, WelcomeFeishuFailure, WelcomeSignInAttempt } from './welcome-api.ts'
 
 /** Gateway session cookie set by `/api/auth/callback`. */

@@ -1,18 +1,18 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { PassThrough } from 'node:stream'
-import { LocalPtySession } from '@deepseek-ai/dsh-terminal-bash/src/session.ts'
-import type { ResolvedConfig } from '@deepseek-ai/dsh-terminal-bash/src/config.ts'
-import type { TerminalSendOperation, TerminalSessionStatus, TerminalSignal } from '@deepseek-ai/dsh-terminal'
+import { LocalPtySession } from '@tomato/terminal-bash/src/session.ts'
+import type { ResolvedConfig } from '@tomato/terminal-bash/src/config.ts'
+import type { TerminalSendOperation, TerminalSessionStatus, TerminalSignal } from '@tomato/terminal'
 import type {
   SubprocessOutcome,
   SubprocessTerminalHandle,
   SubprocessTerminalSignal,
-} from '@deepseek-ai/dsh-subprocess'
-import { TerminalError } from '@deepseek-ai/dsh-terminal'
+} from '@tomato/subprocess'
+import { TerminalError } from '@tomato/terminal'
 import type {
   ProcessIdentity,
   ProcessInspector,
-} from '@deepseek-ai/dsh-subprocess-local/src/process-inspector.ts'
+} from '@tomato/subprocess-local/src/process-inspector.ts'
 
 class FakeInspector implements ProcessInspector {
   pgid: number | undefined = 456
@@ -170,7 +170,7 @@ describe('LocalPtySession readiness and output', () => {
       await vi.advanceTimersByTimeAsync(20)
       await pending
       expect(snapshot).not.toHaveBeenCalled()
-      expect(session.read({})).toMatchObject({ text: 'x'.repeat(59) + 'dsh> ', truncated: true })
+      expect(session.read({})).toMatchObject({ text: 'x'.repeat(59) + 'tomato> ', truncated: true })
       expect(snapshot).toHaveBeenCalledTimes(1)
     } finally {
       snapshot.mockRestore()
@@ -200,7 +200,7 @@ describe('LocalPtySession readiness and output', () => {
     responseGate.resolve(undefined)
     await vi.advanceTimersByTimeAsync(10)
     await pending
-    expect(session.motd).toBe('dsh> ')
+    expect(session.motd).toBe('tomato> ')
   })
 
   it('drains terminal replies before caller input and re-inspects after concurrent output', async () => {
@@ -551,7 +551,7 @@ describe('LocalPtySession readiness and output', () => {
       expect(settled).toBeUndefined()
 
       // The tail lands inside the tolerance and the exact prompt path settles the send.
-      terminal.emitData('dsh> ')
+      terminal.emitData('tomato> ')
       await vi.advanceTimersByTimeAsync(20)
       expect((await operation.done).waitReason).toBe('stdin_read')
     } finally {
@@ -631,7 +631,7 @@ describe('LocalPtySession readiness and output', () => {
     const inspector = new FakeInspector()
     const session = makeSession(terminal, inspector, config())
     await initialize(session, terminal)
-    expect(session.motd).toBe('dsh> ')
+    expect(session.motd).toBe('tomato> ')
 
     inspector.waiting = true
     const operation = session.startSend({ text: 'python3', submit: true })
@@ -1235,10 +1235,10 @@ describe('LocalPtySession readiness and output', () => {
     await vi.advanceTimersByTimeAsync(20)
     expect(settled).toBe(false)
 
-    terminal.emitData('dsh> ')
+    terminal.emitData('tomato> ')
     await vi.advanceTimersByTimeAsync(10)
     await initializing
-    expect(session.motd).toBe('dsh> ')
+    expect(session.motd).toBe('tomato> ')
   })
 
   it('does not attribute a delayed prior prompt to the current send', async () => {

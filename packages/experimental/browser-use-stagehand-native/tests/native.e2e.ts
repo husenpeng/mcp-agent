@@ -1,5 +1,5 @@
 /** Opt-in installed Stagehand smoke against an owned local page and optional real model. */
-import { executeToolFixture } from '@deepseek-ai/dsh-tool-testkit'
+import { executeToolFixture } from '@tomato/tool-testkit'
 
 import { createServer } from 'node:http'
 import { execFile, spawn } from 'node:child_process'
@@ -10,13 +10,13 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 import { expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import { mountAgentLoopTestDependencies, mountAgentLoopTestHarness } from '@deepseek-ai/dsh-agent-loop-testkit'
-import LocalAttachmentStore from '@deepseek-ai/dsh-attachment-local'
-import BrowserUseRegistry from '@deepseek-ai/dsh-browser-use'
-import { LlmAdapter, ToolCallId } from '@deepseek-ai/dsh-llm'
-import type { GenerateOptions, LlmResolvedModelInfo, StreamChunk } from '@deepseek-ai/dsh-llm'
-import { SessionId } from '@deepseek-ai/dsh-session'
+import { Context } from '@tomato/cordis'
+import { mountAgentLoopTestDependencies, mountAgentLoopTestHarness } from '@tomato/agent-loop-testkit'
+import LocalAttachmentStore from '@tomato/attachment-local'
+import BrowserUseRegistry from '@tomato/browser-use'
+import { LlmAdapter, ToolCallId } from '@tomato/llm'
+import type { GenerateOptions, LlmResolvedModelInfo, StreamChunk } from '@tomato/llm'
+import { SessionId } from '@tomato/session'
 import * as Provider from '../src/index.ts'
 import { stagehandModelSchema } from '../src/native.ts'
 import { nativeModel } from './fixtures/stagehand.ts'
@@ -35,7 +35,7 @@ it.skipIf(process.env.TOMATO_STAGEHAND_E2E !== '1')('launches and attaches to in
     response.setHeader('content-type', 'text/html')
     response.end('<!doctype html><title>Stagehand fixture</title><h1>Stagehand local smoke</h1><button onclick="this.textContent=\'Clicked\'">Click fixture</button>')
   })
-  const root = await mkdtemp(join(tmpdir(), 'dsh-stagehand-live-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-stagehand-live-'))
   const ctx = new Context()
   let external: ReturnType<typeof spawn> | undefined
   let exited: Promise<unknown> | undefined
@@ -145,7 +145,7 @@ it.skipIf(process.env.TOMATO_STAGEHAND_E2E !== '1' || !process.env.TOMATO_STAGEH
 it.skipIf(process.env.TOMATO_STAGEHAND_E2E !== '1' || process.platform === 'win32')('scrubs real Chromium environment and closes it during canceled Stagehand initialization', { timeout: 120_000, retry: 0 }, async () => {
   const executable = process.env.TOMATO_BROWSER_EXECUTABLE
   if (executable === undefined) throw new Error('TOMATO_STAGEHAND_E2E requires TOMATO_BROWSER_EXECUTABLE')
-  const root = await mkdtemp(join(tmpdir(), 'dsh-stagehand-acquire-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-stagehand-acquire-'))
   const marker = join(root, 'browser.json')
   const wrapper = join(root, 'chrome.mjs')
   const sockets = new Set<import('node:stream').Duplex>()

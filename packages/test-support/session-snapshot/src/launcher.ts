@@ -4,7 +4,7 @@
  * stdout tee, SDK client, update collection, permission fallback, and process
  * shutdown so e2e and snapshot suites do not each reconstruct that boundary.
  *
- * @module @deepseek-ai/dsh-session-snapshot/launcher
+ * @module @tomato/session-snapshot/launcher
  */
 
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process'
@@ -37,8 +37,8 @@ import {
   type SetSessionConfigOptionResponse,
   type SessionNotification,
 } from '@agentclientprotocol/sdk'
-import { entryListSchema, type PatchOptions } from '@deepseek-ai/cordis-plugin-include'
-import { resolveExampleLaunch } from '@deepseek-ai/dsh-loader-smoke'
+import { entryListSchema, type PatchOptions } from '@tomato/cordis-plugin-include'
+import { resolveExampleLaunch } from '@tomato/loader-smoke'
 
 const EXIT_MARKER_GRACE_MS = 250
 
@@ -57,7 +57,7 @@ export interface AgentUnderTest {
   libBinScript?: string | undefined
   /** Base config or profile patch loaded by the bin. */
   configPath: string
-  /** Named dsh profile; omitted only for test-only fake bins with their own config grammar. */
+  /** Named tomato profile; omitted only for test-only fake bins with their own config grammar. */
   profile?: string
   /** The repo tsconfig whose paths resolve unbuilt workspace imports. */
   tsconfigPath: string
@@ -129,7 +129,7 @@ export function launchAcpTestAgent(options: AcpTestLaunchOptions): LaunchedAcpTe
     ...agent.profile === undefined ? {} : { sourceImport: 'tsx/esm' },
     env: {
       ...options.env,
-      TOMATO_HOME: join(cwd, '.dsh'),
+      TOMATO_HOME: join(cwd, '.tomato'),
       TOMATO_AGENTS_HOME: join(cwd, '.agents'),
     },
   })
@@ -340,7 +340,7 @@ export function launchAcpTestAgent(options: AcpTestLaunchOptions): LaunchedAcpTe
   }
 }
 
-/** Build one dsh profile invocation from the base and optional scenario patches. */
+/** Build one tomato profile invocation from the base and optional scenario patches. */
 function profileArgs(
   profile: string,
   basePatch: string,
@@ -355,7 +355,7 @@ function profileArgs(
   const patches = snapshotMode === 'replay'
     ? [base, replayPatchPath(selected)]
     : [...new Set([base, selected])]
-  const materializedRoot = join(cwd, '.dsh-profile-patches')
+  const materializedRoot = join(cwd, '.tomato-profile-patches')
   mkdirSync(materializedRoot, { recursive: true })
   const materializedDir = mkdtempSync(join(materializedRoot, 'launch-'))
   const materialized = patches.map((file, index) => materializeProfilePatch(file, cwd, profile, materializedDir, index))
@@ -386,14 +386,14 @@ function packageDirFromPatch(source: string, packageName: string): string | unde
 
 /**
  * Install an authored patch's resolvable bare package into the temporary
- * profile. This mirrors `dsh plugin` while retaining the bare entry
+ * profile. This mirrors `tomato plugin` while retaining the bare entry
  * name and package identity used by request metadata.
  */
 function linkProfilePackage(source: string, cwd: string, profile: string, packageName: string): void {
   const packageDir = packageDirFromPatch(source, packageName)
-  // The package may instead belong to the dsh installation; profile boot heals those links.
+  // The package may instead belong to the tomato installation; profile boot heals those links.
   if (packageDir === undefined) return
-  const link = join(cwd, '.dsh', 'profiles', profile, 'node_modules', packageName)
+  const link = join(cwd, '.tomato', 'profiles', profile, 'node_modules', packageName)
   mkdirSync(dirname(link), { recursive: true })
   if (existsSync(link)) {
     if (realpathSync(link) !== packageDir) {

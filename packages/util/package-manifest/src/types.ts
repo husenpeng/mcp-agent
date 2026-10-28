@@ -1,7 +1,7 @@
 /**
  * Shared declarations for package.json fields and plugin display metadata.
  * Each reader owns JSON validation and resolved defaults.
- * @module @deepseek-ai/dsh-package-manifest/types
+ * @module @tomato/package-manifest/types
  */
 
 /** Package identity and metadata; local profile readers may accept a partial declaration. */
@@ -25,10 +25,10 @@ export interface TomatoPackageManifest {
   /** Runtime requirements; TOMATO compatibility is declarative until a reader enforces it. */
   engines?: TomatoEnginesManifest
   /** TOMATO-specific author declarations. */
-  dsh?: TomatoManifest
+  tomato?: TomatoManifest
 }
 
-/** Public author fields under `package.json.dsh`; a package may declare several roles. */
+/** Public author fields under `package.json.tomato`; a package may declare several roles. */
 export interface TomatoManifest {
   /** Manifest format version, independent of the npm package and Session format versions. */
   manifestVersion?: 1
@@ -58,7 +58,7 @@ export interface PluginLocalizedMeta {
 /** Runtime version requirements under `package.json.engines`. */
 export interface TomatoEnginesManifest {
   /** Compatible TOMATO versions as a SemVer range, including an exact version. */
-  dsh?: string
+  tomato?: string
   /** Compatible Node.js versions. */
   node?: string
   /** Compatible npm versions. */

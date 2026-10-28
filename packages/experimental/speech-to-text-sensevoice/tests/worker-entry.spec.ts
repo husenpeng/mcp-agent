@@ -37,7 +37,7 @@ async function launch(argument: string | undefined, token: string | undefined): 
   return { code, stdout, stderr }
 }
 
-const LAUNCH = { dataRoot: '/nonexistent/dsh-speech', model: 'model.onnx', tokens: 'tokens.txt', vad: 'vad.onnx' }
+const LAUNCH = { dataRoot: '/nonexistent/tomato-speech', model: 'model.onnx', tokens: 'tokens.txt', vad: 'vad.onnx' }
 
 it.each([
   ['a missing launch argument', undefined, TOKEN, 'invalid_type'],

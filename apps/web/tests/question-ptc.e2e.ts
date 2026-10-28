@@ -5,10 +5,10 @@ import { join } from 'node:path'
 import type { Browser, Page } from 'playwright'
 import { chromium } from 'playwright'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { ToolCallId } from '@deepseek-ai/dsh-llm/brand'
-import type { ReplayEntry } from '@deepseek-ai/dsh-llm-replay'
-import type {} from '@deepseek-ai/dsh-tool-executor-ptc/types'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
+import { ToolCallId } from '@tomato/llm/brand'
+import type { ReplayEntry } from '@tomato/llm-replay'
+import type {} from '@tomato/tool-executor-ptc/types'
+import type { SessionEvent } from '@tomato/session'
 import { launchWebScaffold, watchConsole, webSnapshotMode, type WebScaffold } from './scaffold.ts'
 import { connectFreshWorkspace, newEnglishPage } from './support.ts'
 
@@ -43,7 +43,7 @@ describe.skipIf(webSnapshotMode() === 'record')('web e2e: PTC answered question'
   const events: SessionEvent[] = []
 
   beforeAll(async () => {
-    directory = await mkdtemp(join(tmpdir(), 'dsh-question-ptc-'))
+    directory = await mkdtemp(join(tmpdir(), 'tomato-question-ptc-'))
     const replayOverride = join(directory, 'replay.override.json')
     await writeFile(replayOverride, JSON.stringify(script))
     scaffold = await launchWebScaffold({

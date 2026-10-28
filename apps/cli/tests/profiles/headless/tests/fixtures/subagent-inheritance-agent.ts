@@ -3,8 +3,8 @@
  * @module subagent-inheritance-agent
  */
 
-import type { Context } from '@deepseek-ai/cordis'
-import type { SessionId } from '@deepseek-ai/dsh-session'
+import type { Context } from '@tomato/cordis'
+import type { SessionId } from '@tomato/session'
 
 /** Fixture plugin name. */
 export const name = 'subagent-inheritance-agent'

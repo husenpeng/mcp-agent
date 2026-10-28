@@ -1,13 +1,13 @@
 /** Public plugin management records shared with clients. */
-import type { Branded } from '@deepseek-ai/dsh-brand'
-import type { PluginLocalizedMeta } from '@deepseek-ai/dsh-package-manifest'
-import type { PluginInventoryEntry } from '@deepseek-ai/dsh-host-plugin-inventory/types'
-export type { PluginEntryId } from '@deepseek-ai/dsh-host-plugin-inventory/types'
-import type { PluginEntryId } from '@deepseek-ai/dsh-host-plugin-inventory/types'
-import type {} from '@deepseek-ai/dsh-typert-protocol'
-import type { DetailFailureReason } from '@deepseek-ai/dsh-plugin-detail/types'
+import type { Branded } from '@tomato/branded'
+import type { PluginLocalizedMeta } from '@tomato/package-manifest'
+import type { PluginInventoryEntry } from '@tomato/host-plugin-inventory/types'
+export type { PluginEntryId } from '@tomato/host-plugin-inventory/types'
+import type { PluginEntryId } from '@tomato/host-plugin-inventory/types'
+import type {} from '@tomato/typert-protocol'
+import type { DetailFailureReason } from '@tomato/plugin-detail/types'
 
-declare module '@deepseek-ai/dsh-typert-protocol' {
+declare module '@tomato/typert-protocol' {
   interface RemoteErrorDetailsMap {
     /** The profile lists no such bundle, or its directory cannot be resolved. */
     'plugin-manager/unknown-bundle': { readonly name: string }
@@ -30,7 +30,7 @@ export interface IncompatiblePlugin {
   name: string
   version: string
   runtimeVersion: string
-  /** Only the requirements the running version does not satisfy, keyed `engines.dsh` or by TOMATO peer package name. */
+  /** Only the requirements the running version does not satisfy, keyed `engines.tomato` or by TOMATO peer package name. */
   requirements: Record<string, string>
 }
 
@@ -266,9 +266,10 @@ export interface PluginVersion {
   readonly prerelease: boolean
   /** The registry's deprecation message, when the version is deprecated. */
   readonly deprecated?: string
-  /** Whether the version declares a `dsh.bundle`; a version that does not cannot replace a bundle. */
+  /** Whether the version declares a `tomato.bundle`; a version that does not cannot replace a bundle. */
   readonly bundle: boolean
-  /** Present when the version's `engines.dsh` or TOMATO peers reject the running TOMATO version without an exemption for the exact pair. */
+  /** Present when the version's `engines.tomato` or TOMATO peers reject the
+   * running TOMATO version without an exemption for the exact pair. */
   readonly incompatible?: IncompatiblePlugin
 }
 
@@ -382,7 +383,7 @@ export interface PluginChange {
   readonly reason: 'plugin' | 'bundle' | 'install' | 'remove'
 }
 
-declare module '@deepseek-ai/cordis' {
+declare module '@tomato/cordis' {
   interface Events {
     /**
      * The profile's plugins, bundles, or composition changed: a manager

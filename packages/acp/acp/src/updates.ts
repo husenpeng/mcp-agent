@@ -1,9 +1,9 @@
 /** Standard ACP updates derived from committed TOMATO session events. */
 
-import type { Context } from '@deepseek-ai/cordis'
+import type { Context } from '@tomato/cordis'
 import type { SessionUpdate, ToolCallContent } from '@agentclientprotocol/sdk'
-import type { Session, SessionEvent } from '@deepseek-ai/dsh-session'
-import type {} from '@deepseek-ai/dsh-token-meter'
+import type { Session, SessionEvent } from '@tomato/session'
+import type {} from '@tomato/token-meter'
 import { assistantBlockToAcp } from './content.ts'
 
 /**

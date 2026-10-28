@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isRemoteJsonValue } from '@deepseek-ai/dsh-typert-protocol'
+import { isRemoteJsonValue } from '@tomato/typert-protocol'
 import {
   parseRemoteEventResult,
   parseRemoteStreamClientMessage,

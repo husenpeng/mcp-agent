@@ -2,11 +2,11 @@ import { mkdtemp, mkdir, readFile, readdir, rm, symlink } from 'node:fs/promises
 import { homedir } from 'node:os'
 import { createServer, type Socket } from 'node:net'
 import { delimiter, join } from 'node:path'
-import { Context } from '@deepseek-ai/cordis'
-import Sandbox from '@deepseek-ai/dsh-sandbox-local'
-import { SandboxUnavailableError } from '@deepseek-ai/dsh-sandbox'
+import { Context } from '@tomato/cordis'
+import Sandbox from '@tomato/sandbox-local'
+import { SandboxUnavailableError } from '@tomato/sandbox'
 import { describe, expect, it, onTestFinished, vi } from 'vitest'
-import type { PtcBindingFunction, PtcBindingNamespace, PtcRunRequest } from '@deepseek-ai/dsh-ptc-runtime'
+import type { PtcBindingFunction, PtcBindingNamespace, PtcRunRequest } from '@tomato/ptc-runtime'
 import type { Config } from '../src/index.ts'
 import { mountRuntime } from './setup.ts'
 
@@ -24,7 +24,7 @@ const sandboxUsable = await (async () => {
 })()
 
 async function setup(config: Config = {}, mode: 'read-only' | 'workspace-write' | 'danger-full-access' = 'danger-full-access') {
-  const root = await mkdtemp(join(homedir(), '.dsh-node-runtime-test-'))
+  const root = await mkdtemp(join(homedir(), '.tomato-node-runtime-test-'))
   const cwd = join(root, 'workspace')
   await mkdir(cwd)
   const ctx = new Context()
@@ -80,7 +80,7 @@ describe('Node program process', () => {
       program: `const {spawnSync}=await import("node:child_process"); const child=spawnSync(process.execPath,["-e",${JSON.stringify(childCode)}],{stdio:"inherit"}); if(child.status!==0) throw new Error(child.error?.message ?? "native child failed"); const native=JSON.parse((await import("node:fs")).readFileSync("native-observation.json","utf8")); return {env:Object.keys(process.env),native,observed:await tools.inspect({path:native.file})};`,
       bindings: bindings({ inspect: async (args) => {
         const path = (args as { path: string }).path
-        expect(path.startsWith(`${temp}\\dsh-`)).toBe(true)
+        expect(path.startsWith(`${temp}\\tomato-`)).toBe(true)
         return await readFile(path, 'utf8')
       } }),
     })
@@ -88,9 +88,9 @@ describe('Node program process', () => {
     const value = result.value as { env: string[]; native: { env: string[]; temp: string }; observed: string }
     expect(value.env).toEqual([])
     expect(value.native.env).not.toContain('TOMATO_TEST_RUNTIME_SECRET')
-    expect(value.native.temp.startsWith(`${temp}\\dsh-`)).toBe(true)
+    expect(value.native.temp.startsWith(`${temp}\\tomato-`)).toBe(true)
     expect(value.observed).toBe('native-temp')
-    expect((await readdir(join(tmp, 'dsh-acl-locks'))).some(name => name.endsWith('.lock'))).toBe(true)
+    expect((await readdir(join(tmp, 'tomato-acl-locks'))).some(name => name.endsWith('.lock'))).toBe(true)
   })
 
   it('returns binding values and preserves typed binding rejection', async () => {

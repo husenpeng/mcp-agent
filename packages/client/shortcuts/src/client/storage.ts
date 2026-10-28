@@ -3,7 +3,7 @@ import { ShortcutPersistence } from '../protocol.ts'
 import type { DesktopShortcutsApi, ShortcutConfigSnapshot, ShortcutDefinition, ShortcutPlatform } from '../protocol.ts'
 
 /** Browser-profile and origin-local preference key. */
-export const SHORTCUT_STORAGE_KEY = 'dsh.keybindings.v1'
+export const SHORTCUT_STORAGE_KEY = 'tomato.keybindings.v1'
 
 /**
  * Connect localStorage and same-origin external updates to the shared transaction coordinator.

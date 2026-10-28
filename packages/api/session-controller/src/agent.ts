@@ -2,16 +2,16 @@
 
 import { randomUUID } from 'node:crypto'
 import { mkdir } from 'node:fs/promises'
-import type { Context } from '@deepseek-ai/cordis'
-import type { Agent, AgentOptions, AgentSetup } from '@deepseek-ai/dsh-agent'
-import type {} from '@deepseek-ai/dsh-agent-default-model'
-import { installModelSelection } from '@deepseek-ai/dsh-agent'
-import type {} from '@deepseek-ai/dsh-agent-preset-registry'
-import { brandString } from '@deepseek-ai/dsh-brand'
-import type { Session, SessionId } from '@deepseek-ai/dsh-session'
-import { SessionQueryError, type SessionObservation } from '@deepseek-ai/dsh-session-query'
-import { RemoteError, remoteErrorOf } from '@deepseek-ai/dsh-typert-protocol'
-import type {} from '@deepseek-ai/dsh-typert-registry'
+import type { Context } from '@tomato/cordis'
+import type { Agent, AgentOptions, AgentSetup } from '@tomato/agent'
+import type {} from '@tomato/agent-default-model'
+import { installModelSelection } from '@tomato/agent'
+import type {} from '@tomato/agent-preset-registry'
+import { brandString } from '@tomato/branded'
+import type { Session, SessionId } from '@tomato/session'
+import { SessionQueryError, type SessionObservation } from '@tomato/session-query'
+import { RemoteError, remoteErrorOf } from '@tomato/typert-protocol'
+import type {} from '@tomato/typert-registry'
 
 /** Cold Session identity absent from persistence. */
 export class ApiSessionNotFound extends Error {}

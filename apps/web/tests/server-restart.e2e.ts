@@ -1,4 +1,4 @@
-/** Persisted Session recovery across two real dsh server processes on the same port. */
+/** Persisted Session recovery across two real tomato server processes on the same port. */
 import { spawn, type ChildProcess } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
 import { createServer } from 'node:http'
@@ -41,7 +41,7 @@ class RestartableServer {
     this.child = child
     const receive = (data: Buffer): void => {
       this.output += data.toString()
-      const url = /dsh web: (http:\/\/[^\s]+)/u.exec(this.output)?.[1]
+      const url = /tomato web: (http:\/\/[^\s]+)/u.exec(this.output)?.[1]
       if (url !== undefined) ready.resolve(url)
     }
     child.stdout?.on('data', receive)
@@ -85,7 +85,7 @@ class RestartableServer {
 }
 
 it.each([false, true])('keeps the same revision, Session and page across a server restart (delayed startup: %s)', async (holdStartup) => {
-  const world = await mkdtemp(join(tmpdir(), 'dsh-server-restart-'))
+  const world = await mkdtemp(join(tmpdir(), 'tomato-server-restart-'))
   onTestFinished(() => rm(world, { recursive: true, force: true }))
   const model = createServer((request, response) => {
     request.resume()

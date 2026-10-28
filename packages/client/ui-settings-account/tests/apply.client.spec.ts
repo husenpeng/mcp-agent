@@ -1,16 +1,16 @@
 // @vitest-environment jsdom
 /** Account operations in the shipped client composition, in Desktop and in a plain browser. */
 import { afterEach, beforeEach, expect, vi } from 'vitest'
-import { ok } from '@deepseek-ai/dsh-remote-mock'
-import { RemoteError } from '@deepseek-ai/dsh-typert-protocol'
-import { ClientRoster, createClientTest, type TestClient, webApp } from '@deepseek-ai/dsh-client-test-runtime/src/assembly/index.ts'
+import { ok } from '@tomato/remote-mock'
+import { RemoteError } from '@tomato/typert-protocol'
+import { ClientRoster, createClientTest, type TestClient, webApp } from '@tomato/client-test-runtime/src/assembly/index.ts'
 import type {
   AccountBonusBatch, AccountBonusOrderId, AccountDetails, AccountUserId, AccountView, SignInAttemptId,
-} from '@deepseek-ai/dsh-deepseek-account/types'
-import type { QuotaNoticeOwnerProps } from '@deepseek-ai/dsh-client-ui-chat/client'
-import type { ThemeRuntime } from '@deepseek-ai/dsh-client-ui-theme/client'
-import { resolveSlotLabel } from '@deepseek-ai/dsh-client-ui-slots'
-import type { JsonValue } from '@deepseek-ai/dsh-util-values'
+} from '@tomato/deepseek-account/types'
+import type { QuotaNoticeOwnerProps } from '@tomato/client-ui-chat/client'
+import type { ThemeRuntime } from '@tomato/client-ui-theme/client'
+import { resolveSlotLabel } from '@tomato/client-ui-slots'
+import type { JsonValue } from '@tomato/util-values'
 import { Config as OnboardingConfig } from '../src/index.ts'
 import { ChatSettingsSchema as ChatConfig } from '../../ui-chat/src/chat-settings.ts'
 import { DeveloperToolsSettingsSchema as SettingsConfig } from '../../ui-settings/src/developer-tools-settings.ts'
@@ -22,17 +22,17 @@ import type { AccountPlatformHostInjected } from '../src/client/AccountPlatformH
 import { AccountQuotaNotice } from '../src/client/AccountQuotaNotice.tsx'
 import type { AccountQuotaNoticeInjected } from '../src/client/AccountQuotaNotice.tsx'
 
-const SELF = '@deepseek-ai/dsh-client-ui-settings-account'
+const SELF = '@tomato/client-ui-settings-account'
 /** The account package's own roster: shipped Web rows with the DeepSeek account row restored. */
 const ACCOUNT_ROSTER = ClientRoster.of([
   ...webApp.without(['@tomato/account']).rows,
   { name: SELF, inject: [
-    '@deepseek-ai/dsh-api-remotes',
-    '@deepseek-ai/dsh-client-locale',
-    '@deepseek-ai/dsh-client-ui-chat',
-    '@deepseek-ai/dsh-client-ui-layout',
-    '@deepseek-ai/dsh-client-ui-settings',
-    '@deepseek-ai/dsh-client-ui-theme',
+    '@tomato/api-remotes',
+    '@tomato/client-locale',
+    '@tomato/client-ui-chat',
+    '@tomato/client-ui-layout',
+    '@tomato/client-ui-settings',
+    '@tomato/client-ui-theme',
   ], immediately: false },
 ])
 
@@ -371,7 +371,7 @@ it('navigates the preopened browser tab to the themed authorization page', async
   vi.spyOn(window, 'open').mockReturnValue(popup as Window)
   const c = await start()
   const actions = operations(c)
-  const attempt = { id: 'attempt' as SignInAttemptId, phase: 'waiting-browser' as const, authorizeUrl: 'https://platform.deepseek.com/dsh/authorize' }
+  const attempt = { id: 'attempt' as SignInAttemptId, phase: 'waiting-browser' as const, authorizeUrl: 'https://platform.deepseek.com/tomato/authorize' }
   mock.remote.account.startSignIn.mockResolvedValue(ok({ ...view, attempt: { id: attempt.id, phase: 'initializing' } }))
   await actions.start()
   c.mock.streams.push('account/watch', { ...view, attempt })
@@ -382,7 +382,7 @@ it('navigates the preopened browser tab to the themed authorization page', async
 it('uses the Desktop stream origin and exposes the native platform bridge', async ({ start, mock }) => {
   vi.stubGlobal('tomatoDesktop', {})
   const c = await start()
-  vi.stubGlobal('__DSH_TRANSPORT__', { streamBaseUrl: 'http://localhost:9876/stream' })
+  vi.stubGlobal('__TOMATO_TRANSPORT__', { streamBaseUrl: 'http://localhost:9876/stream' })
   const platform = { open: vi.fn(), setBounds: vi.fn(), close: vi.fn() }
   vi.stubGlobal('tomatoPlatform', platform)
   await c.reload(SELF)

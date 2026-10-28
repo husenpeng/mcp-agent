@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@tomato/cordis'
 import sharp from 'sharp'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -29,7 +29,7 @@ afterEach(async () => {
 
 describe('request image verification', () => {
   it('rejects an encoded request whose decoded facts disagree with the encoder result', async () => {
-    const tomatoHome = await mkdtemp(join(tmpdir(), 'dsh-request-verification-'))
+    const tomatoHome = await mkdtemp(join(tmpdir(), 'tomato-request-verification-'))
     homes.push(tomatoHome)
     const attachments = new LocalAttachmentStore(new Context(), { tomatoHome })
     const source = new Uint8Array(await sharp({

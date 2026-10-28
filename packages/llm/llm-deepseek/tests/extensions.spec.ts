@@ -3,15 +3,15 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi, type Mock } from 'vitest'
-import { Context, LoggerLevel } from '@deepseek-ai/cordis'
-import LlmRuntime from '@deepseek-ai/dsh-llm'
-import DeepSeekLlmApiExtensionRegistry from '@deepseek-ai/dsh-deepseek-llm-api-extensions'
-import type { DeepSeekLlmApiExtensionRequest } from '@deepseek-ai/dsh-deepseek-llm-api-extensions'
-import { SessionId } from '@deepseek-ai/dsh-session'
-import * as DeepSeek from '@deepseek-ai/dsh-llm-deepseek-api-key'
+import { Context, LoggerLevel } from '@tomato/cordis'
+import LlmRuntime from '@tomato/llm'
+import DeepSeekLlmApiExtensionRegistry from '@tomato/deepseek-llm-api-extensions'
+import type { DeepSeekLlmApiExtensionRequest } from '@tomato/deepseek-llm-api-extensions'
+import { SessionId } from '@tomato/session'
+import * as DeepSeek from '@tomato/llm-deepseek-api-key'
 import { adapter, assemble, options, sse, textEvents } from './helpers.ts'
 
-declare module '@deepseek-ai/dsh-deepseek-llm-api-extensions' {
+declare module '@tomato/deepseek-llm-api-extensions' {
   interface DeepSeekLlmApiExtensionMap {
     dsh_messages_test: { value: string }
   }
@@ -26,7 +26,7 @@ afterEach(async () => {
 })
 
 async function boot() {
-  const home = await mkdtemp(join(tmpdir(), 'dsh-messages-extensions-'))
+  const home = await mkdtemp(join(tmpdir(), 'tomato-messages-extensions-'))
   cleanup.push(() => rm(home, { recursive: true, force: true }))
   vi.stubEnv('TOMATO_HOME', home)
   vi.stubEnv('DEEPSEEK_API_KEY', 'test-key')

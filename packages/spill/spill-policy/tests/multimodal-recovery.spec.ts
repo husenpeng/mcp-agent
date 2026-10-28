@@ -1,37 +1,37 @@
 /** Real attachments, filesystem recovery, Node PTC, and DeepSeek image request bytes without a desktop or API key. */
-import { executeModelToolFixture } from '@deepseek-ai/dsh-tool-testkit'
-import * as NativeToolExecutor from '@deepseek-ai/dsh-tool-executor-native'
-import * as PtcToolExecutor from '@deepseek-ai/dsh-tool-executor-ptc'
+import { executeModelToolFixture } from '@tomato/tool-testkit'
+import * as NativeToolExecutor from '@tomato/tool-executor-native'
+import * as PtcToolExecutor from '@tomato/tool-executor-ptc'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { Context } from '@deepseek-ai/cordis'
-import { provideWorkingDirectoryFixture } from '@deepseek-ai/dsh-agent-loop-testkit'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import type { ImageAttachmentRef } from '@deepseek-ai/dsh-attachment'
-import LocalAttachments from '@deepseek-ai/dsh-attachment-local'
-import FileSystem from '@deepseek-ai/dsh-fs-local'
-import * as ToolFs from '@deepseek-ai/dsh-tool-fs'
+import { Context } from '@tomato/cordis'
+import { provideWorkingDirectoryFixture } from '@tomato/agent-loop-testkit'
+import type { Agent } from '@tomato/agent'
+import type { ImageAttachmentRef } from '@tomato/attachment'
+import LocalAttachments from '@tomato/attachment-local'
+import FileSystem from '@tomato/fs-local'
+import * as ToolFs from '@tomato/tool-fs'
 import {
   createAssistantMessage, createToolResultMessage, createUserMessage, LlmAdapter, LlmRuntime,
   resolveImageAttachmentAccess, ToolCallId,
-} from '@deepseek-ai/dsh-llm'
-import type { ContentBlock, GenerateOptions, ImageBlock, StreamChunk, UserMessage } from '@deepseek-ai/dsh-llm'
-import { deepSeekImageRequestPricing, resolveAdapterOptions } from '@deepseek-ai/dsh-llm-deepseek'
-import { prepareImages } from '@deepseek-ai/dsh-llm-deepseek/src/images.ts'
-import { serialize } from '@deepseek-ai/dsh-llm-deepseek/src/serialize.ts'
-import { createMcpToolDefinition } from '@deepseek-ai/dsh-mcp-client'
-import NodeRuntime from '@deepseek-ai/dsh-ptc-runtime-node'
-import Sandbox from '@deepseek-ai/dsh-sandbox-local'
-import SandboxPolicy from '@deepseek-ai/dsh-sandbox-policy'
-import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
-import SessionProjections from '@deepseek-ai/dsh-session-projection'
-import LocalSpillStore from '@deepseek-ai/dsh-spill-local'
-import Subprocess from '@deepseek-ai/dsh-subprocess-local'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import { estimateContent } from '@deepseek-ai/dsh-token-meter/estimate'
-import ToolRuntime from '@deepseek-ai/dsh-tools'
-import type { JsonValue } from '@deepseek-ai/dsh-util-values'
+} from '@tomato/llm'
+import type { ContentBlock, GenerateOptions, ImageBlock, StreamChunk, UserMessage } from '@tomato/llm'
+import { deepSeekImageRequestPricing, resolveAdapterOptions } from '@tomato/llm-deepseek'
+import { prepareImages } from '@tomato/llm-deepseek/src/images.ts'
+import { serialize } from '@tomato/llm-deepseek/src/serialize.ts'
+import { createMcpToolDefinition } from '@tomato/mcp-client'
+import NodeRuntime from '@tomato/ptc-runtime-node'
+import Sandbox from '@tomato/sandbox-local'
+import SandboxPolicy from '@tomato/sandbox-policy'
+import SessionStore, { SessionId } from '@tomato/session'
+import SessionProjections from '@tomato/session-projection'
+import LocalSpillStore from '@tomato/spill-local'
+import Subprocess from '@tomato/subprocess-local'
+import SystemPrompt from '@tomato/system-prompt'
+import { estimateContent } from '@tomato/token-meter/estimate'
+import ToolRuntime from '@tomato/tools'
+import type { JsonValue } from '@tomato/util-values'
 import sharp from 'sharp'
 import { describe, expect, it, onTestFinished, vi } from 'vitest'
 import * as SpillPolicy from '../src/index.ts'
@@ -46,7 +46,7 @@ const textOf = (content: readonly ContentBlock[]): string => content.filter(bloc
 const imagesOf = (content: readonly ContentBlock[]): ImageBlock[] => content.filter((block): block is ImageBlock => block.type === 'image')
 
 async function setup(mode: 'native' | 'ptc' = 'native') {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-image-recovery-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-image-recovery-'))
   const ctx = new Context()
   provideWorkingDirectoryFixture(ctx, root)
   onTestFinished(async () => {

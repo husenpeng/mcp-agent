@@ -1,8 +1,8 @@
 /** Scripted `skills` Remote for panel tests; no DOM assumptions. */
 import { vi } from 'vitest'
 import type { Mock } from 'vitest'
-import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol'
-import type { RemoteFailure, SkillEntry, SkillGetValue } from '@deepseek-ai/dsh-api-remotes/client'
+import type { RemoteResult } from '@tomato/typert-protocol'
+import type { RemoteFailure, SkillEntry, SkillGetValue } from '@tomato/api-remotes/client'
 import type { SkillBrowserRemote } from '../src/client/face.ts'
 
 /** Catalog entries the default script returns. */

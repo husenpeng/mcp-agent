@@ -13,7 +13,7 @@ import { mkdirSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { join, resolve } from 'node:path'
 import { execa } from 'execa'
-import { getDshRuntimeVersion } from '../packages/boot/app-boot/src/plugin-compatibility.ts'
+import { getTomatoRuntimeVersion } from '../packages/boot/app-boot/src/plugin-compatibility.ts'
 import { generateOfficialBundleCatalog } from './gen-official-bundle-catalog.ts'
 import {
   REGISTRY_MANIFEST_FILE,
@@ -133,7 +133,7 @@ async function main(): Promise<void> {
     })
 
     // 4. The manifest is the completion marker: only a fully packed run has one.
-    const source = sourceEvidence(root, getDshRuntimeVersion())
+    const source = sourceEvidence(root, getTomatoRuntimeVersion())
     const manifest = createRegistryManifest({
       buildId, source, entries, workspaceNames: selection.workspaceNames, artifacts,
     })

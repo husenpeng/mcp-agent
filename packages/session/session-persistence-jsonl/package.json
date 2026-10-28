@@ -1,6 +1,6 @@
 {
-  "name": "@deepseek-ai/dsh-session-persistence-jsonl",
-  "description": "JSONL durable session persistence backend for the DeepSeek Harness",
+  "name": "@tomato/session-persistence-jsonl",
+  "description": "JSONL durable session persistence backend for the Tomato Harness",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -30,24 +30,24 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-session-persistence": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/session": "workspace:*",
+    "@tomato/session-persistence": "workspace:*",
+    "@tomato/cordis": "workspace:~"
   },
   "dependencies": {
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-session-format": "workspace:*",
-    "@deepseek-ai/dsh-session-format-catalog": "workspace:*",
-    "@deepseek-ai/dsh-session-format-v3-to-v4": "workspace:*",
-    "@deepseek-ai/node-addon-system": "workspace:~",
-    "@deepseek-ai/schemastery": "workspace:~",
+    "@tomato/llm": "workspace:*",
+    "@tomato/session-format": "workspace:*",
+    "@tomato/session-format-catalog": "workspace:*",
+    "@tomato/session-format-v3-to-v4": "workspace:*",
+    "@tomato/node-addon-system": "workspace:~",
+    "@tomato/schemastery": "workspace:~",
     "koffi": "3.1.1",
     "p-limit": "7.3.3"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-session-format-v0-to-v1": "workspace:*",
-    "@deepseek-ai/dsh-session-persistence": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/session": "workspace:*",
+    "@tomato/session-format-v0-to-v1": "workspace:*",
+    "@tomato/session-persistence": "workspace:*",
+    "@tomato/cordis": "workspace:~"
   }
 }

@@ -29,7 +29,7 @@ const FILE_SETTINGS = ['TOMATO_DESKTOP_WINDOWS_CER_FILE', 'TOMATO_DESKTOP_WINDOW
 export function localMacOSPackageEnvironment(environment = process.env) {
   return {
     ...Object.fromEntries(Object.entries(environment).filter(([name]) => !AMBIENT_RELEASE_SETTING.test(name))),
-    TOMATO_DESKTOP_APP_ID: 'com.deepseek.harness',
+    TOMATO_DESKTOP_APP_ID: 'vip.tomatoai.harness',
     TOMATO_DESKTOP_UNSIGNED: '1',
   }
 }

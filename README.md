@@ -2,15 +2,15 @@
 
 English | [中文](README.zh.md)
 
-Tomato AI is an internal desktop agent for creator marketing. It runs a DeepSeek Harness (`dsh`) runtime inside an Electron shell, signs in with the company account, sends model requests to the third-party API configured on the Models page, and reports turn and tool activity to an internal OTLP relay that forwards to Langfuse.
+Tomato AI is an internal desktop agent for creator marketing. It runs a Tomato Harness (`tomato`) runtime inside an Electron shell, signs in with the company account, sends model requests to the third-party API configured on the Models page, and reports turn and tool activity to an internal OTLP relay that forwards to Langfuse.
 
-This repository is a one-time hard fork of `deepseek-harness` at commit `22ddee3792`; it does not merge upstream. Upstream packages keep their `@deepseek-ai/*` names, and Tomato-specific packages use `@tomato/*`. [docs/tomato/decisions.md](docs/tomato/decisions.md) records every product and engineering decision behind this fork.
+This repository is a one-time hard fork of `deepseek-harness` at commit `22ddee3792`; it does not merge upstream. Every package in this repository uses the `@tomato/*` scope. [docs/tomato/decisions.md](docs/tomato/decisions.md) records every product and engineering decision behind this fork.
 
 ## Summary
 
 - **Shell**: `apps/desktop` (Electron main, preloads, welcome window, updates, coding-free packaging) and `apps/desktop-host` (the private Node host process that boots a `desktop` profile).
-- **Runtime**: dsh's Cordis plugin tree. Every capability — the model adapter, the tool registry, the session log, the agent loop itself — is a plugin mounted from a profile composed of bundle layers.
-- **Product surface**: the dsh web client, served by the host and loaded through the `dsh-app://` scheme, with the DeepSeek account, session-log upload, and product analytics rows switched off.
+- **Runtime**: Tomato's Cordis plugin tree. Every capability — the model adapter, the tool registry, the session log, the agent loop itself — is a plugin mounted from a profile composed of bundle layers.
+- **Product surface**: the Tomato web client, served by the host and loaded through the `tomato-app://` scheme, with the DeepSeek account, session-log upload, and product analytics rows switched off.
 - **Company integration**: `@tomato/brand` (sidebar and hero marks), `@tomato/telemetry` (turn/tool spans), and the shell's `tomato-auth.ts` (browser sign-in, token exchange, credential write).
 
 ## Table of Contents
@@ -36,22 +36,22 @@ This repository is a one-time hard fork of `deepseek-harness` at commit `22ddee3
 |---|---|---|
 | Electron main (`apps/desktop`) | Window, tray, menus, shortcuts, single instance, profile initialization, credential storage, update and quit policy | Agent behavior, sessions, tools, model calls |
 | Preload scripts | Whitelisted IPC bridging from the renderer to the main process | Any business logic |
-| Renderer (the dsh web client) | Conversation, tool cards, approvals, settings, session navigation | Credentials, filesystem access |
-| Host (`apps/desktop-host`) | The dsh runtime: agent loop, sessions, tools, model requests, HTTP and WebSocket server | Windows, the tray, native dialogs |
+| Renderer (the tomato web client) | Conversation, tool cards, approvals, settings, session navigation | Credentials, filesystem access |
+| Host (`apps/desktop-host`) | The tomato runtime: agent loop, sessions, tools, model requests, HTTP and WebSocket server | Windows, the tray, native dialogs |
 | Company login service | Identity, session policy, token issuance | Anything on the machine |
 | Company OTLP relay | Trace mapping, Langfuse credentials, redaction | Client state |
 
-The Host listens on an OS-assigned loopback port; the main process authenticates to it once with a one-shot cookie and forwards application HTTP requests from the `dsh-app://app/` document to it. Node IPC between main and Host carries boot injections, readiness, shutdown, and quit inspection.
+The Host listens on an OS-assigned loopback port; the main process authenticates to it once with a one-shot cookie and forwards application HTTP requests from the `tomato-app://app/` document to it. Node IPC between main and Host carries boot injections, readiness, shutdown, and quit inspection.
 
 ### Profile composition
 
 A profile is a stack of bundle layers, each a `cordis.patch.yml` that inserts or overrides rows by id:
 
 ```text
-$TOMATO_HOME/profiles/desktop/package.json      dsh.profile.bundles = [dsh-base, dsh-web-app]
+$TOMATO_HOME/profiles/desktop/package.json      tomato.profile.bundles = [@tomato/base, @tomato/web-app]
         │
-        ├── @deepseek-ai/dsh-base        shared core: llm, session, tools, shell, fs, permissions, telemetry seams
-        ├── @deepseek-ai/dsh-web-app     browser surface: host controllers, web server, the client plugin roster
+        ├── @tomato/base        shared core: llm, session, tools, shell, fs, permissions, telemetry seams
+        ├── @tomato/web-app     browser surface: host controllers, web server, the client plugin roster
         │     ├── presets/standard.patch.yml   per-session agent composition
         │     ├── presets/ptc.patch.yml
         │     ├── presets/minimal.patch.yml
@@ -79,7 +79,7 @@ Tomato's changes live in the two shipped bundle files, so a fresh profile inheri
 Every capability has three roles, and extensions depend on the definition, never on a provider:
 
 - **Definition** — a Cordis `Service` with a `ctx.<key>` and shared types, e.g. `ctx.agent`, `ctx.session`, `ctx.tools`, `ctx.llm`, `ctx.settings`, `ctx.credentials`, `ctx.slots`, `ctx.theme`.
-- **Provider** — one concrete implementation, e.g. `dsh-llm-pi-ai` behind `ctx.llm`, `dsh-session-persistence-jsonl` behind `ctx.sessions`.
+- **Provider** — one concrete implementation, e.g. `@tomato/llm-pi-ai` behind `ctx.llm`, `@tomato/session-persistence-jsonl` behind `ctx.sessions`.
 - **Consumer** — a model-facing tool or a UI plugin that only injects the definition.
 
 Replacing a provider therefore moves the whole execution world at once: swapping the shell executor relocates Bash, PTY, and LSP together.
@@ -95,11 +95,11 @@ The session log is an append-only event stream. Any content that reaches a model
 
 - Every registration runs through `ctx.effect()` and returns a disposer, so unloading a plugin removes exactly what it added.
 - Configuration reloads per profile; module roots are opt-in.
-- Sessions survive restarts as JSONL under `$TOMATO_HOME/sessions`; the desktop keeps its state under a development or packaged Harness home, never the user's everyday `~/.dsh`.
+- Sessions survive restarts as JSONL under `$TOMATO_HOME/sessions`; the desktop keeps its state under a development or packaged Harness home, never the user's everyday `~/.tomato`.
 
 ### Client plugin composition
 
-The web client is itself a Cordis application. `dsh-client-modules` scans every mounted row that declares `dsh.client`, composes `window.__DSH_BOOT__`, and serves each browser bundle at `/plugins/<id>/client.js`. UI composition uses typed slots:
+The web client is itself a Cordis application. `@tomato/client-modules` scans every mounted row that declares `tomato.client`, composes `window.__TOMATO_BOOT__`, and serves each browser bundle at `/plugins/<id>/client.js`. UI composition uses typed slots:
 
 | Slot | Declared by | Occupant |
 |---|---|---|
@@ -122,7 +122,7 @@ A UI plugin registers into a slot it does not declare, and waits on the owner's 
 | Model list | Discovered per provider from its listing, or entered by hand | The provider owns its catalog; a hard-coded id would drift |
 | Sign-in | Company Feishu flow through the company BFF, one-time handoff code to the local gateway | Feishu secrets stay server-side; the browser never receives the session id in a URL |
 | Token storage | Electron `safeStorage` under `userData`; the main process injects `X-Tomato-Session` | Neither the renderer nor the Host credential store receives the session id |
-| Telemetry | Own OTLP reporter to an internal relay | Langfuse credentials stay server-side; dsh's own channels are off |
+| Telemetry | Own OTLP reporter to an internal relay | Langfuse credentials stay server-side; tomato's own channels are off |
 | Brand | Slot occupants plus a single-color glyph | Slot composition is the supported route; `currentColor` follows both themes |
 | Distribution | Unsigned macOS arm64 build, no auto-update | Internal audience; signing and feeds come with production |
 
@@ -136,7 +136,7 @@ A UI plugin registers into a slot it does not declare, and waits on the owner's 
 | pnpm | `11.28.5` | `packageManager` in the root manifest; `corepack enable` installs it |
 | Git | any recent | The build embeds the commit hash in client artifacts |
 | macOS | arm64 | The only distribution target; the shell also builds on Windows upstream |
-| Disk | ~3 GB | `node_modules`, `~/.dsh`-style build caches, Electron (≈300 MB), the primary runtime payload |
+| Disk | ~3 GB | `node_modules`, `~/.tomato`-style build caches, Electron (≈300 MB), the primary runtime payload |
 | Network | npm registry, PyPI, `electron` release host | The payload downloads pinned archives; an internal mirror is fine |
 
 Optional for a first run: a model provider. The account surface needs `AUTH_SERVICE_URL` and `TOMATO_WEB_URL` for company sign-in; without them the workspace still starts and local sessions work. Add a third-party model API in Settings → Models before the first message.
@@ -159,7 +159,7 @@ If Electron's binary download stalls, point it at a mirror and reinstall just th
 
 ```sh
 ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ \
-  pnpm --filter @deepseek-ai/dsh-desktop exec install-electron
+  pnpm --filter @tomato/desktop exec install-electron
 ```
 
 <a id="run"></a>
@@ -261,9 +261,9 @@ The shell writes one rolling JSONL-style text log per day under the platform log
 
 ```text
 2026-10-24T05:12:31.481Z [info] shell started (version 0.2.1-rc.3, developer=true) { electron: '44.7.0', ... }
-2026-10-24T05:12:32.907Z [host] stdout: dsh web listening on http://127.0.0.1:52341
+2026-10-24T05:12:32.907Z [host] stdout: tomato web listening on http://127.0.0.1:52341
 2026-10-24T05:12:33.010Z [info] host ready at http://127.0.0.1:52341
-2026-10-24T05:13:02.114Z [renderer] http://dsh-app:3951/…:1 Uncaught TypeError: …
+2026-10-24T05:13:02.114Z [renderer] http://tomato-app:3951/…:1 Uncaught TypeError: …
 2026-10-24T05:13:02.115Z [error] fatal (renderer) Error: …
 ```
 
@@ -283,9 +283,9 @@ Developer mode adds a Developer submenu and keeps DevTools reachable in a packag
 
 ### Locating client code from a log line
 
-Client bundles are built with sourcemaps whose sources are rewritten to `../../../packages/<group>/<package>/src/…` and whose `sourcesContent` carries the original TSX; `dsh-client-modules` serves the map beside the bundle at `/plugins/<id>/client.js.map`. A logged location therefore resolves two ways:
+Client bundles are built with sourcemaps whose sources are rewritten to `../../../packages/<group>/<package>/src/…` and whose `sourcesContent` carries the original TSX; `@tomato/client-modules` serves the map beside the bundle at `/plugins/<id>/client.js.map`. A logged location therefore resolves two ways:
 
-1. **In the log**: `http://dsh-app:…/plugins/@tomato/brand/client.js:42` names the plugin and bundle line. Open `packages/tomato/brand/src/client/…` — the map in DevTools → Sources shows the exact TSX line.
+1. **In the log**: `http://tomato-app:…/plugins/@tomato/brand/client.js:42` names the plugin and bundle line. Open `packages/tomato/brand/src/client/…` — the map in DevTools → Sources shows the exact TSX line.
 2. **In DevTools**: with the application document open, Sources lists `packages/…` files because the map carries their text; a breakpoint or a thrown error lands on the authored line, not the bundled one.
 
 For the Host side, `TOMATO_DESKTOP_HOST_INSPECT_PORT` attaches a Node inspector to the Host process, and Host stack traces address `packages/…/lib/*.js` with matching maps.
@@ -327,7 +327,7 @@ M1 is an internal, unsigned, unreleased build. The gaps below are ordered by wha
 | Symptom | Cause | Fix |
 |---|---|---|
 | `Downloading Electron binary...` never finishes | The release host is slow or blocked | Reinstall with `ELECTRON_MIRROR` as shown above |
-| `The operation was aborted due to timeout` from `dev:desktop` | The primary runtime download exceeded its timeout | Pre-run `pnpm --filter @deepseek-ai/dsh-desktop run prepare:primary-runtime`, or raise `TOMATO_RESOURCE_DOWNLOAD_TIMEOUT_MS` |
+| `The operation was aborted due to timeout` from `dev:desktop` | The primary runtime download exceeded its timeout | Pre-run `pnpm --filter @tomato/desktop run prepare:primary-runtime`, or raise `TOMATO_RESOURCE_DOWNLOAD_TIMEOUT_MS` |
 | Sign-in says the service is unavailable | `AUTH_SERVICE_URL` or `TOMATO_WEB_URL` is empty/unreachable, or the BFF lacks the handoff endpoints | Fill both values and verify the contract in `docs/tomato/auth-handoff-contract.md` |
 | Conversation replies fail with a missing credential | The route's API key was never stored | Re-enter the key on Settings → Models; it is written to the credential store, not the profile |
 | Model list is empty | No provider is configured, or its listing failed | Add or edit a provider on Settings → Models, then use **Fetch available models** |
@@ -336,4 +336,4 @@ M1 is an internal, unsigned, unreleased build. The gaps below are ordered by wha
 
 ## License
 
-Upstream dsh is MIT-licensed; see [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Upstream tomato is MIT-licensed; see [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

@@ -3,7 +3,7 @@ description: "Program-based tool execution, generated SDKs, and nested-call limi
 kind: "package-reference"
 ---
 
-# @deepseek-ai/dsh-tool-executor-ptc
+# @tomato/tool-executor-ptc
 
 English | [中文](README.zh.md)
 
@@ -25,10 +25,10 @@ Use this executor when models should call tools through `run_code` programs. Mou
 <a id="use-this-package"></a>
 ## Use this package
 
-Add this row to a composition with `dsh-tools` mounted. The nearest scoped executor selects tool behavior; one scope permits only one executor.
+Add this row to a composition with `@tomato/tools` mounted. The nearest scoped executor selects tool behavior; one scope permits only one executor.
 
 ```yaml
-- name: '@deepseek-ai/dsh-tool-executor-ptc'
+- name: '@tomato/tool-executor-ptc'
   config:
     maxParallelSubCalls: 10
 ```
@@ -37,7 +37,7 @@ Root `run_code` calls are exclusive and execute serially. `maxParallelSubCalls` 
 
 This package declares `ctx.ptcRuntime` and `ctx.systemPrompt` as required injections; Agent-owned programs need `ctx.workingDirectory`. The executor activates only after its runtime is available and withdraws when that runtime unloads. An enabled PTC executor without a runtime stops application startup. A withdrawn PTC selection never falls back to native execution.
 
-Shared dispatch events and the `ptc-mode` message-source declaration live in `@deepseek-ai/dsh-tool-executor-ptc/types`; Client code imports the same declarations through `@deepseek-ai/dsh-tool-executor-ptc/client`. Both entries exclude Host service declarations. Host policy extensions use `import type` from the package entry for `PtcDispatchLog` and `tools/ptc-dispatch-log` without mounting the executor.
+Shared dispatch events and the `ptc-mode` message-source declaration live in `@tomato/tool-executor-ptc/types`; Client code imports the same declarations through `@tomato/tool-executor-ptc/client`. Both entries exclude Host service declarations. Host policy extensions use `import type` from the package entry for `PtcDispatchLog` and `tools/ptc-dispatch-log` without mounting the executor.
 
 [Configuration catalog](../../../docs/config-catalog.md#deepseek-aidsh-tool-executor-ptc)
 

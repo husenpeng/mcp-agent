@@ -4,7 +4,7 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { DeepSeekHarness, type SdkUserQuestionRequest } from '@deepseek-ai/dsh-sdk-client'
+import { DeepSeekHarness, type SdkUserQuestionRequest } from '@tomato/sdk-client'
 import { clearAmbientProxyEnv } from '../../../../../scripts/test-proxy-environment.ts'
 import { expect, it, onTestFinished } from 'vitest'
 import { messagesResponse } from './fixtures/messages-response.ts'
@@ -54,7 +54,7 @@ it.each([
   const seen: SdkUserQuestionRequest[] = []
   const entered = Promise.withResolvers<AbortSignal>()
   const harness = state.harness = new DeepSeekHarness({
-    cwd: root, tomatoHome: join(root, '.dsh'), env, model: 'deepseek-v4-pro', maxTokens: 1234, initializeTimeoutMs: 30_000,
+    cwd: root, tomatoHome: join(root, '.tomato'), env, model: 'deepseek-v4-pro', maxTokens: 1234, initializeTimeoutMs: 30_000,
     patches: mode === 'ptc' ? [fileURLToPath(new URL('../../../config/examples/ptc.yml', import.meta.url))] : [],
     onUserQuestion: async (request, { signal }) => {
       expect(signal.aborted).toBe(false)

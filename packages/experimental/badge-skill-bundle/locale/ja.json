@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "TOMATO バッジスキル",
-    "description": "エージェントが文書や PR などの成果物に「powered by dsh」バッジを追加できます。",
+    "description": "エージェントが文書や PR などの成果物に「powered by tomato」バッジを追加できます。",
     "detail": "docs/DETAIL.md"
   }
 }

@@ -11,9 +11,9 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { Context } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-client-connection'
-import type {} from '@deepseek-ai/dsh-host-webserver'
+import type { Context } from '@tomato/cordis'
+import type {} from '@tomato/client-connection'
+import type {} from '@tomato/host-webserver'
 import { AuthRoutes } from './auth-routes.ts'
 import { AuthService } from './auth-service.ts'
 import { Config } from './config.ts'

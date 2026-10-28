@@ -1,17 +1,17 @@
-import AgentRegistry from '@deepseek-ai/dsh-agent'
-import { Context } from '@deepseek-ai/cordis'
+import AgentRegistry from '@tomato/agent'
+import { Context } from '@tomato/cordis'
 import { describe, expect, it, onTestFinished, vi } from 'vitest'
-import LlmRuntime, { createUserMessage, markAgentLoopRequest } from '@deepseek-ai/dsh-llm'
-import { deepFreeze } from '@deepseek-ai/dsh-util-values'
-import SessionStore, { SessionId, SessionSeq } from '@deepseek-ai/dsh-session'
-import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
+import LlmRuntime, { createUserMessage, markAgentLoopRequest } from '@tomato/llm'
+import { deepFreeze } from '@tomato/util-values'
+import SessionStore, { SessionId, SessionSeq } from '@tomato/session'
+import SessionProjectionRegistry from '@tomato/session-projection'
 import SessionTitleService, {
   SessionTitleProviderId,
   type SessionTitleProvider,
   type SessionTitleProviderRequest,
   type SessionTitleProviderResult,
   type SessionTitleSnapshot,
-} from '@deepseek-ai/dsh-session-title'
+} from '@tomato/session-title'
 
 const CONFIG = {
   fallbackMaxWords: 5,

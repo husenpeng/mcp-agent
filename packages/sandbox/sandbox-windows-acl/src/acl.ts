@@ -18,7 +18,7 @@
  * DACL, and the whole get-merge-set sequence runs under a per-path exclusive
  * LockFileEx lock (see {@link withPathLock}) so concurrent sandbox instances
  * cannot clobber each other's ACEs.
- * @module @deepseek-ai/dsh-sandbox-windows-acl/acl
+ * @module @tomato/sandbox-windows-acl/acl
  */
 
 import { createHash } from 'node:crypto'
@@ -62,7 +62,7 @@ export function buildExplicitAccess(
 }
 
 /**
- * One lock file per protected path: `<GetTempPathW()>\dsh-acl-locks\<first 16
+ * One lock file per protected path: `<GetTempPathW()>\tomato-acl-locks\<first 16
  * hex of sha256(lowercased path)>.lock`. The lock root derives from
  * GetTempPathW (never from runner argv or TOMATO_HOME), and the lowercasing
  * maps Windows's case-insensitive path spellings onto one lock.
@@ -72,7 +72,7 @@ export function buildExplicitAccess(
  */
 export function lockFilePath(api: Win32Bindings, path: string): string {
   const digest = createHash('sha256').update(path.toLowerCase()).digest('hex').slice(0, 16)
-  return join(getTempPath(api), 'dsh-acl-locks', `${digest}.lock`)
+  return join(getTempPath(api), 'tomato-acl-locks', `${digest}.lock`)
 }
 
 /**

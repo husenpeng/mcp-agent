@@ -38,7 +38,7 @@ TOMATO 不内置任何索引源。选择**发现**，点击**添加索引源**�
 
 索引是 UTF-8 编码的 JSON 文件，默认不超过 128 MiB，以 2xx 状态码返回且不经过重定向。把它放到任意静态主机上即可，例如 GitLab Pages、GitHub Pages，或通过 https 访问的对象存储。
 
-图标可以内联，也可以是单独的文件。内联图标是索引中的 base64 `data:` URL；它不需要额外请求，但会使索引变大。单独的图标是一个 URL。相对图标相对于索引 URL 解析，与网页中的图片相对于页面解析的方式相同：对于位于 `https://market.example/dsh/index.json` 的索引，`"icon": "icons/foo.svg"` 会加载 `https://market.example/dsh/icons/foo.svg`。因此把索引和 `icons/` 目录并排发布，在任何主机上都能使用，无需修改文件。指向其他源（协议、主机和端口）的绝对图标 URL 必须使用 `https:`。
+图标可以内联，也可以是单独的文件。内联图标是索引中的 base64 `data:` URL；它不需要额外请求，但会使索引变大。单独的图标是一个 URL。相对图标相对于索引 URL 解析，与网页中的图片相对于页面解析的方式相同：对于位于 `https://market.example/tomato/index.json` 的索引，`"icon": "icons/foo.svg"` 会加载 `https://market.example/tomato/icons/foo.svg`。因此把索引和 `icons/` 目录并排发布，在任何主机上都能使用，无需修改文件。指向其他源（协议、主机和端口）的绝对图标 URL 必须使用 `https:`。
 
 下面是一个最小的索引，包含一个 npm 插件和一个来自 Git monorepo 的插件：
 
@@ -48,27 +48,27 @@ TOMATO 不内置任何索引源。选择**发现**，点击**添加索引源**�
   "title": { "en": "Team plugins", "zh": "团队插件" },
   "plugins": [
     {
-      "name": "dsh-plugin-foo",
+      "name": "tomato-plugin-foo",
       "title": "Foo",
       "description": "Adds the foo tool",
       "icon": "icons/foo.svg",
       "author": "Jane Doe",
-      "homepage": "https://github.com/jane/dsh-plugin-foo#readme",
-      "repository": { "url": "https://github.com/jane/dsh-plugin-foo" },
+      "homepage": "https://github.com/jane/tomato-plugin-foo#readme",
+      "repository": { "url": "https://github.com/jane/tomato-plugin-foo" },
       "versions": [
-        { "version": "1.1.0", "publishTimestamp": 1790476800, "source": { "type": "npm" }, "engines": { "dsh": ">=0.2.0-rc.2" } },
+        { "version": "1.1.0", "publishTimestamp": 1790476800, "source": { "type": "npm" }, "engines": { "tomato": ">=0.2.0-rc.2" } },
         { "version": "1.0.0", "publishTimestamp": 1788000000, "source": { "type": "npm" } }
       ]
     },
     {
-      "name": "@team/dsh-bar",
+      "name": "@team/tomato-bar",
       "versions": [
         {
           "version": "0.3.0",
           "publishTimestamp": 1789000000,
           "source": {
             "type": "git",
-            "url": "https://gitlab.example.com/team/dsh-plugins",
+            "url": "https://gitlab.example.com/team/tomato-plugins",
             "commit": "3f9c2e1d8a4b6c0e7f1a2b3c4d5e6f708192a3b4",
             "path": "packages/bar"
           }
@@ -87,17 +87,17 @@ TOMATO 不内置任何索引源。选择**发现**，点击**添加索引源**�
 仓库包含一个[参考生成器](../../../apps/plugin-market-generator/README.zh.md)，可以从一份纯文本列表构建索引。每行写一个 npm 包名或 https Git 仓库 URL；空行和以 `#` 开头的行会被忽略：
 
 ```text
-@team/dsh-foo
-https://gitlab.example.com/team/dsh-plugins
+@team/tomato-foo
+https://gitlab.example.com/team/tomato-plugins
 ```
 
 在 TOMATO 代码仓库中运行它：
 
 ```sh
-pnpm --filter @deepseek-ai/dsh-plugin-market-generator start --input plugins.txt --output site/index.json --title "Team plugins"
+pnpm --filter @tomato/plugin-market-generator start --input plugins.txt --output site/index.json --title "Team plugins"
 ```
 
-对于 npm 包，索引列出所有未弃用、未设为私有且声明了 `dsh.bundle` 的版本。对于 Git 仓库，生成器在默认分支上查找 `package.json` 没有设置 `"private": true` 的组合包，列出它们在 `vX.Y.Z`、`X.Y.Z` 和 `<name>@X.Y.Z` 标签处的版本，以及每个包在默认分支上的版本。标题、描述、图标、作者和主页取自每个插件的最高版本。路径相对于你运行 pnpm 的目录。
+对于 npm 包，索引列出所有未弃用、未设为私有且声明了 `tomato.bundle` 的版本。对于 Git 仓库，生成器在默认分支上查找 `package.json` 没有设置 `"private": true` 的组合包，列出它们在 `vX.Y.Z`、`X.Y.Z` 和 `<name>@X.Y.Z` 标签处的版本，以及每个包在默认分支上的版本。标题、描述、图标、作者和主页取自每个插件的最高版本。路径相对于你运行 pnpm 的目录。
 
 生成器只下载和读取文件，从不安装包或运行其代码。它在列表旁的 `.plugin-market-cache` 中保存缓存，因此再次运行时只下载新的版本和提交。按上文所述发布输出目录，即 `index.json` 及其 `icons/` 目录。
 
@@ -132,9 +132,9 @@ pnpm --filter @deepseek-ai/dsh-plugin-market-generator start --input plugins.txt
 | `version` | 是 | 精确的 SemVer 版本，在插件内唯一。 |
 | `publishTimestamp` | 是 | 发布时间，Unix 秒。 |
 | `source` | 是 | `{ "type": "npm", "registry"?: url }`，或 `{ "type": "git", "url": https-url, "commit": 40 位十六进制 SHA, "path"?: 目录 }`。 |
-| `engines.dsh` | 否 | 该版本可运行的 TOMATO 版本的 SemVer 范围；缺省表示任意版本。 |
+| `engines.tomato` | 否 | 该版本可运行的 TOMATO 版本的 SemVer 范围；缺省表示任意版本。 |
 
-TOMATO 将 npm 版本安装为 `name@version`，存在 `registry` 时先询问它；将 Git 版本安装为 `git+<url>.git#<commit>`，包位于子目录时追加 `&path:/<path>`。`engines.dsh` 应与包自身的 `engines.dsh` 一致，TOMATO 会在安装时再次检查；没有该字段的包改为按其 `@deepseek-ai/dsh*` peer 依赖检查。[格式说明](../../../.agents/notes/implemented/feature/2026-10-02-plugin-market-index-format.zh.md)定义了全部规则。
+TOMATO 将 npm 版本安装为 `name@version`，存在 `registry` 时先询问它；将 Git 版本安装为 `git+<url>.git#<commit>`，包位于子目录时追加 `&path:/<path>`。`engines.tomato` 应与包自身的 `engines.tomato` 一致，TOMATO 会在安装时再次检查；没有该字段的包改为按其 `@tomato/cli*` peer 依赖检查。[格式说明](../../../.agents/notes/implemented/feature/2026-10-02-plugin-market-index-format.zh.md)定义了全部规则。
 
 <a id="further-exploration"></a>
 ## 延伸阅读

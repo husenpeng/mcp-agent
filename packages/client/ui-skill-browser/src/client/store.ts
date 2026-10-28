@@ -6,10 +6,10 @@
  * independently. Async settlement and bucket cleanup live in `face.ts`; this
  * module only declares state and the write set.
  */
-import { defineStore, type EngineStoreHandle } from '@deepseek-ai/dsh-client-store'
-import type { RemoteFailure } from '@deepseek-ai/dsh-api-remotes/client'
-import type { SkillEntry, SkillGetValue } from '@deepseek-ai/dsh-api-remotes/client'
-import type { TabId } from '@deepseek-ai/dsh-client-ui-dockkit'
+import { defineStore, type EngineStoreHandle } from '@tomato/client-store'
+import type { RemoteFailure } from '@tomato/api-remotes/client'
+import type { SkillEntry, SkillGetValue } from '@tomato/api-remotes/client'
+import type { TabId } from '@tomato/client-ui-dockkit'
 
 /** Cards revealed before the reader scrolls to the sentinel. */
 export const SKILL_PAGE_SIZE = 24

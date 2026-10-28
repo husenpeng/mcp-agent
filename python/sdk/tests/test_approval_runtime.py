@@ -22,7 +22,7 @@ def test_python_approval_controls_runtime_operation(tmp_path: Path, outcome: str
     node = shutil.which("node")
     binary = repo / "apps/cli/lib/bin.js"
     if node is None or not binary.exists():
-        pytest.skip("requires Node and built dsh CLI")
+        pytest.skip("requires Node and built tomato CLI")
     fixture = repo / "packages/sdk/server/tests/fixtures/approval.mjs"
     marker = tmp_path / "approved.txt"
     patch = tmp_path / "approval.patch.yml"

@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-api-account-controller",
+  "name": "@tomato/api-account-controller",
   "description": "Expose safe account operations over authenticated Remote",
   "version": "0.2.1-rc.3",
   "publishConfig": {
@@ -49,15 +49,15 @@
     "zod": "4.4.3"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-deepseek-account": "workspace:*",
-    "@deepseek-ai/dsh-typert-protocol": "workspace:*",
-    "@deepseek-ai/dsh-agent": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/deepseek-account": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*",
+    "@tomato/agent": "workspace:*"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-deepseek-account": "workspace:*",
-    "@deepseek-ai/dsh-typert-protocol": "workspace:*",
-    "@deepseek-ai/dsh-agent": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/deepseek-account": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*",
+    "@tomato/agent": "workspace:*"
   }
 }

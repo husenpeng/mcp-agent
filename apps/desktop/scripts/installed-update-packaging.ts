@@ -36,7 +36,7 @@ async function absent(path: string): Promise<boolean> {
  * @param stateFile Per-user signing interlock; an isolated file may be supplied by tests, not the CLI.
  * @returns Nothing when absent; an inaccessible or existing file rejects before credentials are loaded.
  */
-export async function assertInstalledUpdateSigningClear(stateFile = join(homedir(), '.dsh-desktop-signing', 'attempt.json')): Promise<void> {
+export async function assertInstalledUpdateSigningClear(stateFile = join(homedir(), '.tomato-desktop-signing', 'attempt.json')): Promise<void> {
   if (!await absent(stateFile)) throw new InstalledUpdateSigningHoldError()
 }
 
@@ -52,7 +52,7 @@ export function installedUpdatePackagingEnvironment(environment: NodeJS.ProcessE
 
 async function inputHashes(manifest: string, version: string, environment: NodeJS.ProcessEnv): Promise<object> {
   const run = await readInstalledUpdateRun(manifest)
-  const paths = [manifest, join(run.root, 'application/result.json'), join(run.root, version, 'dsh/desktop-runtime.json'),
+  const paths = [manifest, join(run.root, 'application/result.json'), join(run.root, version, 'tomato/desktop-runtime.json'),
     join(REPOSITORY, 'pnpm-lock.yaml'), join(APP_ROOT, 'package.json'),
     ...['electron-builder-config.mjs', 'installed-update-builder.ts', 'build-installed-update-worker.mjs',
       'windows-sign.mjs', 'windows-sign.cmd', 'windows-signing-state.mjs', 'windows-timestamp.mjs', 'windows-directory-installer.mjs',

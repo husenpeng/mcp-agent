@@ -1,7 +1,7 @@
 /** Tomato brand occupants: the sidebar mark, name, and hero mark. */
 import { useId } from 'react'
-import type { SidebarBrandMarkOwnerProps } from '@deepseek-ai/dsh-client-ui-sidebar/client'
-import type { HeroBrandMarkOwnerProps } from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type { SidebarBrandMarkOwnerProps } from '@tomato/client-ui-sidebar/client'
+import type { HeroBrandMarkOwnerProps } from '@tomato/client-ui-conversation/client'
 import { TOMATO_MARK_PATH, TOMATO_MARK_VIEWBOX } from './mark.ts'
 import css from './Brand.module.css'
 

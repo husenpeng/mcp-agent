@@ -1,44 +1,44 @@
 /** Typed preload operations exposed only by the Electron shell. */
 
-import type { DesktopKeyboardApi, DesktopShortcutsApi } from '@deepseek-ai/dsh-client-shortcuts/protocol'
+import type { DesktopKeyboardApi, DesktopShortcutsApi } from '@tomato/client-shortcuts/protocol'
 import type { IpcMainInvokeEvent } from 'electron'
-import type { DesktopBrowserBridge } from '@deepseek-ai/dsh-client-ui-sidebar-browser/types'
-import type { DesktopFileDrag } from '@deepseek-ai/dsh-util-file-drag'
+import type { DesktopBrowserBridge } from '@tomato/client-ui-sidebar-browser/types'
+import type { DesktopFileDrag } from '@tomato/util-file-drag'
 
 /** IPC channel names kept private to the desktop application bundle. */
 export const DESKTOP_IPC = {
-  shortcutsInput: 'dsh-desktop:shortcuts-input',
-  shortcutsCloseWindow: 'dsh-desktop:shortcuts-close-window',
-  shortcutsGet: 'dsh-desktop:shortcuts-get',
-  shortcutsEdit: 'dsh-desktop:shortcuts-edit',
-  shortcutsChanged: 'dsh-desktop:shortcuts-changed',
-  shortcutsRecording: 'dsh-desktop:shortcuts-recording',
-  boot: 'dsh-desktop:boot',
-  enterWorkspace: 'dsh-desktop:enter-workspace',
-  onboardingActive: 'dsh-desktop:onboarding-active',
-  onboardingApiKey: 'dsh-desktop:onboarding-api-key',
-  accountOpenSignIn: 'dsh-desktop:account-open-sign-in',
-  accountSignOut: 'dsh-desktop:account-sign-out',
-  accountChanged: 'dsh-desktop:account-changed',
-  bootFailed: 'dsh-desktop:boot-failed',
-  browserAcquire: 'dsh-desktop:browser-acquire',
-  browserRelease: 'dsh-desktop:browser-release',
-  browserOpenRequested: 'dsh-desktop:browser-open-requested',
-  directoryPick: 'dsh-desktop:directory-pick',
-  fileDragPrepare: 'dsh-desktop:file-drag-prepare',
-  fileDragCancel: 'dsh-desktop:file-drag-cancel',
-  fileDragStart: 'dsh-desktop:file-drag-start',
-  fileDragRelease: 'dsh-desktop:file-drag-release',
-  deviceInfo: 'dsh-desktop:device-info',
-  localeBootstrap: 'dsh-desktop:locale-bootstrap',
-  localeChanged: 'dsh-desktop:locale-changed',
-  updatesStatus: 'dsh-desktop:updates-status',
-  updatesOpen: 'dsh-desktop:updates-open',
-  updatesPresentation: 'dsh-desktop:updates-presentation',
-  nativeThemeSet: 'dsh-desktop:native-theme-set',
-  windowFullscreen: 'dsh-desktop:window-fullscreen',
-  windowsAppearance: 'dsh-desktop:windows-appearance',
-  windowsMenu: 'dsh-desktop:windows-menu',
+  shortcutsInput: 'tomato-desktop:shortcuts-input',
+  shortcutsCloseWindow: 'tomato-desktop:shortcuts-close-window',
+  shortcutsGet: 'tomato-desktop:shortcuts-get',
+  shortcutsEdit: 'tomato-desktop:shortcuts-edit',
+  shortcutsChanged: 'tomato-desktop:shortcuts-changed',
+  shortcutsRecording: 'tomato-desktop:shortcuts-recording',
+  boot: 'tomato-desktop:boot',
+  enterWorkspace: 'tomato-desktop:enter-workspace',
+  onboardingActive: 'tomato-desktop:onboarding-active',
+  onboardingApiKey: 'tomato-desktop:onboarding-api-key',
+  accountOpenSignIn: 'tomato-desktop:account-open-sign-in',
+  accountSignOut: 'tomato-desktop:account-sign-out',
+  accountChanged: 'tomato-desktop:account-changed',
+  bootFailed: 'tomato-desktop:boot-failed',
+  browserAcquire: 'tomato-desktop:browser-acquire',
+  browserRelease: 'tomato-desktop:browser-release',
+  browserOpenRequested: 'tomato-desktop:browser-open-requested',
+  directoryPick: 'tomato-desktop:directory-pick',
+  fileDragPrepare: 'tomato-desktop:file-drag-prepare',
+  fileDragCancel: 'tomato-desktop:file-drag-cancel',
+  fileDragStart: 'tomato-desktop:file-drag-start',
+  fileDragRelease: 'tomato-desktop:file-drag-release',
+  deviceInfo: 'tomato-desktop:device-info',
+  localeBootstrap: 'tomato-desktop:locale-bootstrap',
+  localeChanged: 'tomato-desktop:locale-changed',
+  updatesStatus: 'tomato-desktop:updates-status',
+  updatesOpen: 'tomato-desktop:updates-open',
+  updatesPresentation: 'tomato-desktop:updates-presentation',
+  nativeThemeSet: 'tomato-desktop:native-theme-set',
+  windowFullscreen: 'tomato-desktop:window-fullscreen',
+  windowsAppearance: 'tomato-desktop:windows-appearance',
+  windowsMenu: 'tomato-desktop:windows-menu',
 } as const
 
 /** Desktop release update state rendered by desktop-owned UI. */
@@ -108,7 +108,7 @@ export interface TomatoDesktopProductApi {
 }
 
 /** Scheme of Desktop-owned application documents. */
-export const SCHEME = 'dsh-app'
+export const SCHEME = 'tomato-app'
 
 /**
  * Reject IPC outside the allowed Desktop document origins.
@@ -117,9 +117,9 @@ export const SCHEME = 'dsh-app'
  */
 export function assertDesktopSender(event: IpcMainInvokeEvent, hostnames: readonly string[]): void {
   const senderFrame = event.senderFrame
-  if (senderFrame === null) throw new Error('dsh desktop: rejected IPC without a sender frame')
+  if (senderFrame === null) throw new Error('tomato desktop: rejected IPC without a sender frame')
   const url = new URL(senderFrame.url)
   if (url.protocol !== `${SCHEME}:` || !hostnames.includes(url.hostname)) {
-    throw new Error('dsh desktop: rejected IPC from an unowned renderer')
+    throw new Error('tomato desktop: rejected IPC from an unowned renderer')
   }
 }

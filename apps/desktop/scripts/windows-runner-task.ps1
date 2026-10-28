@@ -22,7 +22,7 @@ for ($ancestor = [IO.DirectoryInfo]::new($RunnerRoot); $null -ne $ancestor; $anc
 $sid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
 $digest = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($RunnerRoot.ToUpperInvariant())))
 $taskName = 'TOMATO-Packaging-' + $digest.Substring(0,16)
-$serviceDir = Join-Path $RunnerRoot 'dsh-task'
+$serviceDir = Join-Path $RunnerRoot 'tomato-task'
 $task = Get-ScheduledTask -TaskPath '\' | Where-Object TaskName -eq $taskName
 if ($task -and $task.Description -ne "TOMATO packaging runner: $RunnerRoot; owner: $sid") { throw 'Task ownership differs; inspect it in Task Scheduler.' }
 

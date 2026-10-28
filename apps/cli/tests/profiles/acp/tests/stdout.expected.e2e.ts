@@ -6,16 +6,16 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { PROTOCOL_VERSION } from '@agentclientprotocol/sdk'
-import { launchAcpTestAgent, type AgentUnderTest, type LaunchedAcpTestAgent } from '@deepseek-ai/dsh-session-snapshot'
+import { launchAcpTestAgent, type AgentUnderTest, type LaunchedAcpTestAgent } from '@tomato/session-snapshot'
 import { expect, it } from 'vitest'
 import { cleanupAcpExampleTest } from './cleanup.ts'
 
 it('keeps account model-listing diagnostics on stderr during API-key session creation', async () => {
-  const cwd = await mkdtemp(join(tmpdir(), 'dsh-acp-stdout-'))
+  const cwd = await mkdtemp(join(tmpdir(), 'tomato-acp-stdout-'))
   const token = 'acp-catalog-fixture-token'
   const requests: Array<{ method: string | undefined; path: string | undefined; token: string | string[] | undefined }> = []
   const server = createServer((request, response) => {
-    requests.push({ method: request.method, path: request.url, token: request.headers['x-dsh-auth-token'] })
+    requests.push({ method: request.method, path: request.url, token: request.headers['x-tomato-auth-token'] })
     request.resume()
     if (request.method !== 'GET' || request.url !== '/models') {
       response.writeHead(500).end('unexpected request')
@@ -38,8 +38,8 @@ it('keeps account model-listing diagnostics on stderr during API-key session cre
     const address = server.address()
     if (address === null || typeof address === 'string') throw new Error('account catalog server has no port')
     const origin = `http://127.0.0.1:${address.port}`
-    await mkdir(join(cwd, '.dsh'))
-    await writeFile(join(cwd, '.dsh', '.credentials.yaml'), JSON.stringify({
+    await mkdir(join(cwd, '.tomato'))
+    await writeFile(join(cwd, '.tomato', '.credentials.yaml'), JSON.stringify({
       version: 1,
       records: {
         'deepseek-account-platform/default': { kind: 'grant', payload: { version: 1, token, issuer: origin } },

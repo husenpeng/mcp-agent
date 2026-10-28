@@ -1,13 +1,13 @@
 /** Agent-facing current-profile management using the same service as Web controls. */
-import { assertNever } from '@deepseek-ai/dsh-util-values'
-import type { Context } from '@deepseek-ai/cordis'
+import { assertNever } from '@tomato/util-values'
+import type { Context } from '@tomato/cordis'
 import type {} from './index.ts'
-import type {} from '@deepseek-ai/dsh-sandbox-policy'
-import type {} from '@deepseek-ai/dsh-user-approval'
-import { approveEscalation } from '@deepseek-ai/dsh-sandbox'
+import type {} from '@tomato/sandbox-policy'
+import type {} from '@tomato/user-approval'
+import { approveEscalation } from '@tomato/sandbox'
 import type { ChangeResult, ManagementError, PluginEntryId, PluginInstallFailureKind, RestartReason } from './types.ts'
-import { defineTool } from '@deepseek-ai/dsh-tools'
-import { getDshRuntimeVersion } from '@deepseek-ai/dsh-app-boot'
+import { defineTool } from '@tomato/tools'
+import { getTomatoRuntimeVersion } from '@tomato/app-boot'
 
 /** What the model does next for each refusal the manager reports. */
 const ERROR_STEPS: Record<ManagementError['code'], string> = {
@@ -17,9 +17,9 @@ const ERROR_STEPS: Record<ManagementError['code'], string> = {
   'invalid-spec': 'Retry with an npm package name, a git URL, a tarball URL, or an absolute local directory.',
   'already-installed': 'The package is already installed; to install another version, call remove_bundle first, then install_bundle again.',
   'ambiguous-install': 'The dependency change named no single package; call list_bundles to see what was installed.',
-  'not-bundle': 'The package declares no dsh.bundle and cannot be managed as a plugin; install a TOMATO plugin bundle instead.',
+  'not-bundle': 'The package declares no tomato.bundle and cannot be managed as a plugin; install a TOMATO plugin bundle instead.',
   'not-removable': 'Call list_bundles; only bundles marked removable can be removed.',
-  'stop-profile': 'This profile runs without HMR; tell the user to stop TOMATO and run `dsh plugin --profile <profile> remove <bundle>`.',
+  'stop-profile': 'This profile runs without HMR; tell the user to stop TOMATO and run `tomato plugin --profile <profile> remove <bundle>`.',
   'bundle-in-use': 'Call list_plugins, disable the entries from other layers that still use this bundle, then retry.',
   'stale-approval': 'Call install_bundle again without approvedBuilds to read the current pendingBuilds.',
   'incompatible-version': 'Install a version compatible with the running TOMATO. A version exemption needs the user\'s explicit acceptance of crash and data-loss risk.',
@@ -84,7 +84,7 @@ export const inject = ['tools', 'pluginManager', 'sandboxPolicy']
 export function apply(ctx: Context): void {
   ctx.tools.register(defineTool({
     name: 'plugin_manager',
-    description: 'List plugins or bundles in the current profile, enable or disable them, install a bundle, or remove an installed bundle. Every action requires danger-full-access permission or approval for this call. Approval does not change the session permission mode. Changes affect every session in this profile. List first to obtain exact identifiers. Package installation can execute allowed build scripts. Live profiles apply changes immediately, including upgrades of installed packages; a change result that is not applied carries nextStep, which says what to do or tell the user. Unmet TOMATO version requirements (engines.dsh, else TOMATO peer dependencies) block installation and activation. Version exemptions risk crashes and data loss: warn the user and obtain explicit permission for the exact plugin and runtime versions before granting one.',
+    description: 'List plugins or bundles in the current profile, enable or disable them, install a bundle, or remove an installed bundle. Every action requires danger-full-access permission or approval for this call. Approval does not change the session permission mode. Changes affect every session in this profile. List first to obtain exact identifiers. Package installation can execute allowed build scripts. Live profiles apply changes immediately, including upgrades of installed packages; a change result that is not applied carries nextStep, which says what to do or tell the user. Unmet TOMATO version requirements (engines.tomato, else TOMATO peer dependencies) block installation and activation. Version exemptions risk crashes and data loss: warn the user and obtain explicit permission for the exact plugin and runtime versions before granting one.',
     parameters: {
       action: { type: 'string', required: true, enum: ['list_plugins', 'list_bundles', 'set_plugin', 'set_bundle', 'install_bundle', 'remove_bundle', 'list_version_exemptions', 'set_version_exemption'], description: 'Management operation.' },
       target: { type: 'string', description: 'Plugin entry id, bundle package name, or installation spec, according to action. For an Official catalog entry, pass list_bundles installTarget.spec to install_bundle.' },
@@ -111,7 +111,7 @@ export function apply(ctx: Context): void {
       const manager = ctx.pluginManager
       switch (args.action) {
         case 'list_version_exemptions':
-          return JSON.stringify({ runtimeVersion: getDshRuntimeVersion(), ...manager.listVersionExemptions() })
+          return JSON.stringify({ runtimeVersion: getTomatoRuntimeVersion(), ...manager.listVersionExemptions() })
         case 'set_version_exemption':
           if (args.target === undefined || args.runtimeVersion === undefined || args.enabled === undefined) {
             throw new Error('target package-name@version, runtimeVersion, and enabled are required')

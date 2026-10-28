@@ -3,16 +3,16 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { PassThrough } from 'node:stream'
-import { Context } from '@deepseek-ai/cordis'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import type { SessionEvent, SessionId } from '@deepseek-ai/dsh-session'
-import type { SandboxExecutionPolicy, SandboxMode } from '@deepseek-ai/dsh-sandbox'
-import { SubprocessExecutableNotFoundError, type SubprocessRuntime, type SubprocessTerminalEnvironment, type SubprocessTerminalHandle } from '@deepseek-ai/dsh-subprocess'
-import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
+import { Context } from '@tomato/cordis'
+import type { Agent } from '@tomato/agent'
+import type { SessionEvent, SessionId } from '@tomato/session'
+import type { SandboxExecutionPolicy, SandboxMode } from '@tomato/sandbox'
+import { SubprocessExecutableNotFoundError, type SubprocessRuntime, type SubprocessTerminalEnvironment, type SubprocessTerminalHandle } from '@tomato/subprocess'
+import LocalSubprocessRuntime from '@tomato/subprocess-local'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { TerminalController, type Config } from '../src/index.ts'
 import { inputChannel } from './input.ts'
-import type { RemoteInvocation, PeerId } from '@deepseek-ai/dsh-typert-protocol'
+import type { RemoteInvocation, PeerId } from '@tomato/typert-protocol'
 import { resolveShell } from '../src/shells.ts'
 import type { TerminalInput, WebTerminalId } from '../src/types.ts'
 
@@ -569,7 +569,7 @@ describe('shell resolution', () => {
 })
 
 it.skipIf(process.platform === 'win32')('runs a real interactive shell with completion, TERM and live window dimensions', async () => {
-  const cwd = await mkdtemp(join(tmpdir(), 'dsh-web-terminal-'))
+  const cwd = await mkdtemp(join(tmpdir(), 'tomato-web-terminal-'))
   const ctx = new Context()
   const runtime = await ctx.plugin(LocalSubprocessRuntime)
   try {

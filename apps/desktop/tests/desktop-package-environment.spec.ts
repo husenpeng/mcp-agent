@@ -64,7 +64,7 @@ describe('Desktop local packaging configuration', () => {
         loadDesktopPackageEnvironment('win32', environment, directory, { unsigned: true }),
       ).compressionLevel
       expect(load(parent)).toBe(3)
-      await writeFile(path, `TOMATO_DESKTOP_AUTO_UPDATE_ENV=${preset}\nDSH_DESKTOP_WINDOWS_COMPRESSION_LEVEL=9\n`)
+      await writeFile(path, `TOMATO_DESKTOP_AUTO_UPDATE_ENV=${preset}\nTOMATO_DESKTOP_WINDOWS_COMPRESSION_LEVEL=9\n`)
       expect(load(parent)).toBe(9)
       expect(load({ ...parent, PACKAGE_WINDOWS_COMPRESSION_LEVEL: '3' })).toBe(3)
       expect(load({ ...parent, PACKAGE_WINDOWS_COMPRESSION_LEVEL: '7' })).toBe(7)
@@ -114,7 +114,7 @@ describe('Desktop local packaging configuration', () => {
     const local = localMacOSPackageEnvironment(parent)
     expect(local).toEqual({
       PATH: parent.PATH, HTTPS_PROXY: parent.HTTPS_PROXY, TOMATO_DESKTOP_NPM_REGISTRY: parent.TOMATO_DESKTOP_NPM_REGISTRY,
-      TOMATO_DESKTOP_APP_ID: 'com.deepseek.harness', TOMATO_DESKTOP_UNSIGNED: '1',
+      TOMATO_DESKTOP_APP_ID: 'vip.tomatoai.harness', TOMATO_DESKTOP_UNSIGNED: '1',
     })
     expect(() => { validateDesktopPackageEnvironment(local, MACOS, { unsigned: true }) }).not.toThrow()
     expect(parent.TOMATO_DESKTOP_UNSIGNED).toBe('0')
@@ -166,7 +166,7 @@ describe('Desktop local packaging configuration', () => {
 
   it('selects the platform file, preserves literal secrets, and excludes stale ambient release settings', async () => {
     await withDirectory(async (directory) => {
-      await writeFile(join(directory, '.env.windows'), '\uFEFFDSH_DESKTOP_APP_ID=com.example.windows\r\nDSH_DESKTOP_WINDOWS_TOKEN_PIN=" #!$%&literal "\r\nDSH_DESKTOP_WINDOWS_CER_FILE="keys/public certificate.cer"\r\n')
+      await writeFile(join(directory, '.env.windows'), '\uFEFFTOMATO_DESKTOP_APP_ID=com.example.windows\r\nTOMATO_DESKTOP_WINDOWS_TOKEN_PIN=" #!$%&literal "\r\nTOMATO_DESKTOP_WINDOWS_CER_FILE="keys/public certificate.cer"\r\n')
       await writeFile(join(directory, '.env.macos'), 'TOMATO_DESKTOP_APP_ID=com.example.mac\nAPPLE_KEYCHAIN_PROFILE=release\nCSC_LINK=keys/signing.p12\nCSC_KEY_PASSWORD=" # literal "\n')
       const parent = {
         PATH: 'build-tools', TOMATO_DESKTOP_APP_ID: 'com.stale.desktop',
@@ -319,7 +319,7 @@ describe('Desktop local packaging configuration', () => {
 
 it('owns macOS tuning in the local file and validates it before signing credentials', async () => {
   await withDirectory(async (directory) => {
-    await writeFile(join(directory, '.env.macos'), 'TOMATO_DESKTOP_MACOS_PACK_CONCURRENCY=2\nDSH_DESKTOP_MACOS_DOWNLOAD_PROXY=http://proxy.example:8080\nDSH_DESKTOP_MACOS_NOTARIZATION_PROXY=\n')
+    await writeFile(join(directory, '.env.macos'), 'TOMATO_DESKTOP_MACOS_PACK_CONCURRENCY=2\nTOMATO_DESKTOP_MACOS_DOWNLOAD_PROXY=http://proxy.example:8080\nTOMATO_DESKTOP_MACOS_NOTARIZATION_PROXY=\n')
     const env = loadDesktopPackageEnvironment('darwin', { TOMATO_DESKTOP_MACOS_PACK_CONCURRENCY: '99' }, directory)
     expect(env.TOMATO_DESKTOP_MACOS_PACK_CONCURRENCY).toBe('2')
     expect(env.TOMATO_DESKTOP_MACOS_NOTARIZATION_PROXY).toBe('')

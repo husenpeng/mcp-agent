@@ -22,7 +22,7 @@ kind: "package-reference"
 
 ## 使用本包
 
-在浏览器插件清单中挂载本插件，并让同一组合不包含 `@deepseek-ai/dsh-client-ui-brand-official`。填入两个声明：
+在浏览器插件清单中挂载本插件，并让同一组合不包含 `@tomato/client-ui-brand-official`。填入两个声明：
 
 | 槽位 | 占位组件 | Owner props |
 |---|---|---|

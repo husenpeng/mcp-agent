@@ -5,45 +5,45 @@
 /:
   en: b2fce08b0fa865da
   zh: 97e214d87ded4b54
-/deepseek-ai-dsh-sdk-minimal:
-  en: 807c43eedba7d53e
-  zh: 9f1efe5d6ac393f7
-/deepseek-ai-dsh-sdk-minimal/summary:
-  en: 31b83af058b212f9
-  zh: 289678ac3738ee5e
-/deepseek-ai-dsh-sdk-minimal/table-of-contents:
+/tomato-sdk-minimal:
+  en: 47be11c47910f203
+  zh: f6daeedff2a2a0d6
+/tomato-sdk-minimal/summary:
+  en: e489decd417a0ba5
+  zh: 44966287b949bd1e
+/tomato-sdk-minimal/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
-/deepseek-ai-dsh-sdk-minimal/use-this-package:
-  en: 44072e053b253924
-  zh: fecb1b7986ac05d4
-/deepseek-ai-dsh-sdk-minimal/understand-the-implementation:
-  en: 5db5d8f041867958
-  zh: bff5ef3a2e140712
-/deepseek-ai-dsh-sdk-minimal/understand-the-implementation/source-map:
+/tomato-sdk-minimal/use-this-package:
+  en: 86fc25c0011c50f2
+  zh: e00fb738657bf5a3
+/tomato-sdk-minimal/understand-the-implementation:
+  en: d75a1707fd7dce6e
+  zh: 3f395bc43424ac02
+/tomato-sdk-minimal/understand-the-implementation/source-map:
   en: 3784c554e96ab004
   zh: 0a05d4fe1e26b3b1
-/deepseek-ai-dsh-sdk-minimal/further-exploration:
-  en: 6909fc128c321153
-  zh: 7d2a0866efdc5a69
-/deepseek-ai-dsh-sdk-minimal/model-experience:
+/tomato-sdk-minimal/further-exploration:
+  en: c525bf757893bd4f
+  zh: ce25f7f1857a8c24
+/tomato-sdk-minimal/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
-/deepseek-ai-dsh-sdk-minimal/model-experience/minimal-coding-agent-composition:
+/tomato-sdk-minimal/model-experience/minimal-coding-agent-composition:
   en: bd87e16b0c6e0506
   zh: c8ee5e3b4578754e
-/deepseek-ai-dsh-sdk-minimal/model-experience/minimal-coding-agent-composition/what-the-model-sees:
-  en: df40d9529b566cfa
-  zh: 4678769b4f85120b
-/deepseek-ai-dsh-sdk-minimal/model-experience/minimal-coding-agent-composition/token-effect:
-  en: 9b7a23c7a447eb22
-  zh: e01bfd06d19b7d18
-/deepseek-ai-dsh-sdk-minimal/model-experience/minimal-coding-agent-composition/kv-cache-effect:
+/tomato-sdk-minimal/model-experience/minimal-coding-agent-composition/what-the-model-sees:
+  en: 921a39aa8d01791a
+  zh: 7cece3c05cf69466
+/tomato-sdk-minimal/model-experience/minimal-coding-agent-composition/token-effect:
+  en: 723d73ecf71512d2
+  zh: 4084405b3f67668f
+/tomato-sdk-minimal/model-experience/minimal-coding-agent-composition/kv-cache-effect:
   en: dd887b6519f40ab3
   zh: a98e56411fdc79df
-/deepseek-ai-dsh-sdk-minimal/known-limitations-and-deferred-work:
-  en: 00c4192d6af9f621
-  zh: 460451ab6dc07c3a
-/deepseek-ai-dsh-sdk-minimal/known-limitations-and-deferred-work/dev-note:
+/tomato-sdk-minimal/known-limitations-and-deferred-work:
+  en: 96c3424abeed332b
+  zh: af31930c4caa672a
+/tomato-sdk-minimal/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: e88aeb617ffb74ea

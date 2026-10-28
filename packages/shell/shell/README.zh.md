@@ -3,7 +3,7 @@ description: "面向开发者与维护者的 shell 执行器 seam 说明，用�
 kind: "package-reference"
 ---
 
-# @deepseek-ai/dsh-shell
+# @tomato/shell
 
 [English](README.md) | 中文
 
@@ -53,11 +53,11 @@ seam 只有两种到期策略，没有任何移交协议。`'kill'` 在 deadline
 
 ### 选择并组合一个执行器
 
-seam 本身不是执行器：每个组合只挂载一个提供方，工具即可不加改动地工作。在 POSIX 上，`dsh-bash-local` 以全新的 `bash -c` 进程运行命令，`dsh-bash-sandbox` 则通过沙箱能力限制每条命令；在 Windows 上，对应实现是 `dsh-pwsh-local` 与 `dsh-pwsh-sandbox`。`bash` 与 `pwsh` 工具只在挂载沙箱执行器时公布升权字段。最小的组合只需执行器本身：
+seam 本身不是执行器：每个组合只挂载一个提供方，工具即可不加改动地工作。在 POSIX 上，`@tomato/bash-local` 以全新的 `bash -c` 进程运行命令，`@tomato/bash-sandbox` 则通过沙箱能力限制每条命令；在 Windows 上，对应实现是 `@tomato/pwsh-local` 与 `@tomato/pwsh-sandbox`。`bash` 与 `pwsh` 工具只在挂载沙箱执行器时公布升权字段。最小的组合只需执行器本身：
 
 ```yaml
 - id: bash
-  name: '@deepseek-ai/dsh-bash-local'
+  name: '@tomato/bash-local'
   config:
     cwd: /path/to/workspace
 ```
@@ -119,7 +119,7 @@ seam 本身不是执行器：每个组合只挂载一个提供方，工具即可
 <a id="model-experience"></a>
 ## 模型体验
 
-通过 `dsh-tool-bash` 间接影响；该工具会将执行器输出与沙箱事实转为指引和保留的工具结果 token。
+通过 `@tomato/tool-bash` 间接影响；该工具会将执行器输出与沙箱事实转为指引和保留的工具结果 token。
 
 #### KV Cache 影响
 

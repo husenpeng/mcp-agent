@@ -3,13 +3,13 @@ description: "实验性桥接：把 Claude Code 模组作为 TOMATO 插件运行
 kind: "package-reference"
 ---
 
-# @deepseek-ai/dsh-experimental-claude-code-mods
+# @tomato/experimental-claude-code-mods
 
 [English](README.md) | 中文
 
 ## 概述
 
-在智能体运行中执行 [Claude Code 模组](https://code.claude.com/docs/en/plugins/mods/overview)：用 `defineMod` 包装模组的 `register(on, options)`，在本桥接之后作为插件挂载，其钩子即可通过同一套 `$`、`e`、`next` 链守卫工具调用、改写提示词、添加命令与工具、读取会话事实，并在提示框上方绘制一条横幅。桥接需要 `dsh-working-directory` 和 `dsh-agent`，每次 `$` 调用都落在一个已组合的 harness 服务上。它是 alpha 阶段的接口兼容性演示：未服务的事件在加载时报告，未服务的 `$` 成员以指明缺口的消息失败，[兼容性页面](../../../docs/subsystems/claude-code-mods.zh.md) 列出了全部差异。
+在智能体运行中执行 [Claude Code 模组](https://code.claude.com/docs/en/plugins/mods/overview)：用 `defineMod` 包装模组的 `register(on, options)`，在本桥接之后作为插件挂载，其钩子即可通过同一套 `$`、`e`、`next` 链守卫工具调用、改写提示词、添加命令与工具、读取会话事实，并在提示框上方绘制一条横幅。桥接需要 `@tomato/working-directory` 和 `@tomato/agent`，每次 `$` 调用都落在一个已组合的 harness 服务上。它是 alpha 阶段的接口兼容性演示：未服务的事件在加载时报告，未服务的 `$` 成员以指明缺口的消息失败，[兼容性页面](../../../docs/subsystems/claude-code-mods.zh.md) 列出了全部差异。
 
 ## 目录
 
@@ -29,7 +29,7 @@ kind: "package-reference"
 
 ```ts
 // mods/token-weather/index.ts — `register` is the mod's own hooks module (`./hooks/token-weather.mjs`).
-import { defineMod, type ModOn } from '@deepseek-ai/dsh-experimental-claude-code-mods'
+import { defineMod, type ModOn } from '@tomato/experimental-claude-code-mods'
 
 declare const register: (on: ModOn, options: Readonly<Record<string, unknown>>) => void
 
@@ -37,7 +37,7 @@ export default defineMod({ name: 'token-weather', version: '0.1.0', root: import
 ```
 
 ```yaml
-- name: '@deepseek-ai/dsh-experimental-claude-code-mods'
+- name: '@tomato/experimental-claude-code-mods'
 - name: './mods/blast-radius/index.ts'
 - name: './mods/token-weather/index.ts'
   config:
@@ -101,7 +101,7 @@ Blast Radius 的 TOMATO 包装使用当前运行的可执行文件提供 Node �
 <a id="test-a-mod"></a>
 ### 测试模组
 
-来自 `@deepseek-ai/dsh-experimental-claude-code-mods/testing` 的 `createModTestKit` 加载 `defineMod` 插件或裸定义，并以桩在底层回答的方式让事件穿过它们，形态与 `claude-code/testing` 相同：`kit.on('tool.call', () => ({ result: 'ok' }))` 代替引擎作答，`kit.$.tool.call({ tool: 'Bash', command: 'ls' })` 触发事件，`kit.$.ui.mount({ component: 'AbovePrompt' })` 渲染横幅并查找或按下其元素，`mock.store(kit.on)` 从内存回答 `$.store`。在本仓库内，`claude-code/testing` 解析为该工具包加上 Vitest 的 `describe`、`test`、`expect`，因此[示例模组的测试](examples/token-weather/tests/token-weather.test.ts)按为 `claude plugin test` 编写的原样运行。
+来自 `@tomato/experimental-claude-code-mods/testing` 的 `createModTestKit` 加载 `defineMod` 插件或裸定义，并以桩在底层回答的方式让事件穿过它们，形态与 `claude-code/testing` 相同：`kit.on('tool.call', () => ({ result: 'ok' }))` 代替引擎作答，`kit.$.tool.call({ tool: 'Bash', command: 'ls' })` 触发事件，`kit.$.ui.mount({ component: 'AbovePrompt' })` 渲染横幅并查找或按下其元素，`mock.store(kit.on)` 从内存回答 `$.store`。在本仓库内，`claude-code/testing` 解析为该工具包加上 Vitest 的 `describe`、`test`、`expect`，因此[示例模组的测试](examples/token-weather/tests/token-weather.test.ts)按为 `claude plugin test` 编写的原样运行。
 
 -----
 
@@ -148,7 +148,7 @@ Blast Radius 的 TOMATO 包装使用当前运行的可执行文件提供 Node �
 - [Claude Code 模组参考](https://code.claude.com/docs/en/plugins/mods/reference) — 本桥接镜像的事件、方法与限制。
 - [Web 横幅](../client-ui-claude-code-mods/README.zh.md) — 在输入停靠区绘制 `ui.render` 树的 Client 包。
 - [实验性包](../README.zh.md) — 发布策略与依赖隔离。
-- [Claude Code 钩子桥接](../hooks-claude-code/README.zh.md) — 设置钩子桥接；插件 `hooks.json` 中的设置钩子需要 `dsh-hooks-claude-code`。
+- [Claude Code 钩子桥接](../hooks-claude-code/README.zh.md) — 设置钩子桥接；插件 `hooks.json` 中的设置钩子需要 `@tomato/hooks-claude-code`。
 - [工具执行流水线](../../../docs/tool-execution-pipeline.zh.md) — `tool.call` 所包裹的瀑布流。
 - [人类命令](../../interaction/commands/README.zh.md) — `$.command.register` 落到的注册表。
 
@@ -207,7 +207,7 @@ Message from the "<plugin>" mod:
 - **无沙箱、无静态分析、无热重载** — 钩子模块以 Node 全局对象在进程内运行，拥有本进程的全部权限（环境变量、网络、文件系统与工具）；仅 `$` 访问规则、`claude plugin validate`、类型生成、`--plugin-dir` 监视与会话内模组编写流程均未实现。只挂载你愿意作为插件运行的模组。再次挂载模组会在同一已求值模块上重新运行 `register`，模块级变量保留其值。
 - **`turn.complete` 文本** — 钩子返回的 `{ text }` 到达宿主日志，而非答案下方的一行；`durationMs` 从该轮的 `turn/start` 起算。
 - **`$.session.usage`** — 在 token 计量器得知路由的上下文窗口与提供商用量报告之前，`window` 为 `0` 且无 `percent`；未挂载 token-meter 服务时，token 数缺席且 `window` 为 `0`。`rateLimits` 始终为空。`$.fs.stat` 报告 `mtimeMs: 0`。
-- **`plugin.json` 与 `hooks.json`** — 不读取；`defineMod` 承载身份，插件的设置钩子需要 `@deepseek-ai/dsh-hooks-claude-code`。
+- **`plugin.json` 与 `hooks.json`** — 不读取；`defineMod` 承载身份，插件的设置钩子需要 `@tomato/hooks-claude-code`。
 
 <a id="dev-note"></a>
 ### 开发备注

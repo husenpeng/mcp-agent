@@ -782,7 +782,7 @@
     "224aa11d4d5f88c4": {"kind":"object","properties":[{"name":"form","type":"fee1caf8ab6a65c1","optional":false},{"name":"kind","type":"23af3759678a30de","optional":false}],"indices":[]},
     "234142ee4f996f38": {"kind":"literal","value":"pending"},
     "237c004c73b6b288": {"kind":"literal","value":"goal/change"},
-    "23af3759678a30de": {"kind":"literal","value":"dsh-session-title-llm"},
+    "23af3759678a30de": {"kind":"literal","value":"@tomato/session-title-llm"},
     "24a8188c4d61b70a": {"kind":"literal","value":"job/registered"},
     "24b10f7cdae64928": {"kind":"literal","value":"runtime-context"},
     "24ce31aa528272e5": {"kind":"object","properties":[{"name":"kind","type":"99e7e7d7fed55ae6","optional":false}],"indices":[]},

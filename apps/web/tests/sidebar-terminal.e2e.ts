@@ -4,10 +4,10 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium, type Browser, type Page } from 'playwright'
 import { afterEach, beforeEach, describe, expect, it, onTestFailed, vi } from 'vitest'
-import { createMessage, createUserMessage } from '@deepseek-ai/dsh-llm'
-import type {} from '@deepseek-ai/dsh-api-terminal-controller'
-import type { SubprocessTerminalHandle } from '@deepseek-ai/dsh-subprocess'
-import { createProcessInspector, type ProcessIdentity } from '@deepseek-ai/dsh-subprocess-local/src/process-inspector.ts'
+import { createMessage, createUserMessage } from '@tomato/llm'
+import type {} from '@tomato/api-terminal-controller'
+import type { SubprocessTerminalHandle } from '@tomato/subprocess'
+import { createProcessInspector, type ProcessIdentity } from '@tomato/subprocess-local/src/process-inspector.ts'
 import { compareOrRefreshGolden, launchWebScaffold, watchConsole, webSnapshotMode, type WebScaffold } from './scaffold.ts'
 import { openSettings, connectFreshWorkspace, saveFailureShot } from './support.ts'
 
@@ -406,7 +406,7 @@ describe.skipIf(process.platform === 'win32')('Web sidebar terminal', () => {
     expect(handles).toHaveLength(0)
     await selector.click()
     await page.getByRole('menuitem', { name: 'sh', exact: true }).click()
-    expect(await page.evaluate(() => localStorage.getItem('dsh.terminal.shell'))).toBe('/bin/sh')
+    expect(await page.evaluate(() => localStorage.getItem('tomato.terminal.shell'))).toBe('/bin/sh')
     await page.locator('.xterm-helper-textarea:visible').waitFor()
     await command(page, "printf 'CHOSEN_SHELL:%s\\n' \"$0\"")
     const screen = page.locator('.xterm-rows:visible')
@@ -475,7 +475,7 @@ describe.skipIf(process.platform === 'win32')('Web sidebar terminal', () => {
     expect(await second.locator('.xterm-rows:visible').innerText()).not.toContain('WINDOW_A')
     expect(await page.locator('.xterm-rows:visible').innerText()).not.toContain('WINDOW_B')
     const bindings = () => page.evaluate(() => Object.keys(localStorage)
-      .filter(key => key.startsWith('dsh.terminal.binding.v1.')).map(key => localStorage.getItem(key)))
+      .filter(key => key.startsWith('tomato.terminal.binding.v1.')).map(key => localStorage.getItem(key)))
     const saved = await bindings()
     expect(saved).toHaveLength(2)
     const closed = Promise.withResolvers<undefined>()

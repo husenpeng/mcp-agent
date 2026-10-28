@@ -1,15 +1,15 @@
 ---
-description: "让 Agent 为文档、PR 等产出添加「powered by dsh」徽章。"
+description: "让 Agent 为文档、PR 等产出添加「powered by tomato」徽章。"
 kind: "package-bundle"
 ---
 
-# @deepseek-ai/dsh-experimental-badge-skill-bundle
+# @tomato/experimental-badge-skill-bundle
 
 [English](README.md) | 中文
 
 ## 概述
 
-让预设支持技能加载的智能体为文档、PR 等产出添加「powered by dsh」徽章。共享提供者不添加模型工具。 Web 和 Desktop 随附此功能，默认关闭。在插件页选择它即可启用。
+让预设支持技能加载的智能体为文档、PR 等产出添加「powered by tomato」徽章。共享提供者不添加模型工具。 Web 和 Desktop 随附此功能，默认关闭。在插件页选择它即可启用。
 
 ## 目录
 

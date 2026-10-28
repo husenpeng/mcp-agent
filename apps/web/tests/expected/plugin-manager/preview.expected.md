@@ -4,8 +4,8 @@
 - heading "TOMATO 徽章技能" [level=3]
 - text: v{{version}} 实验性
 - paragraph:
-  - code: "@deepseek-ai/dsh-experimental-badge-skill-bundle"
-- paragraph: 让 Agent 为文档、PR 等产出添加「powered by dsh」徽章。
+  - code: "@tomato/experimental-badge-skill-bundle"
+- paragraph: 让 Agent 为文档、PR 等产出添加「powered by tomato」徽章。
 - region "详细介绍":
   - paragraph:
     - img "TOMATO 徽章技能功能预览"
@@ -15,7 +15,7 @@
   - listitem:
     - text: TOMATO 提供官方 powered-by-TOMATO 徽章技能。
     - code: skill-badge
-    - code: "@deepseek-ai/dsh-skill-badge"
+    - code: "@tomato/skill-badge"
     - text: 已关闭
 - heading "来源信息" [level=4]
 - term: 代码来源

@@ -1,33 +1,33 @@
 /** Native helper replacement is synchronized with Agent and provider disposal. */
-import { executeToolFixture } from '@deepseek-ai/dsh-tool-testkit'
+import { executeToolFixture } from '@tomato/tool-testkit'
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { setImmediate } from 'node:timers/promises'
-import { Context, FiberState } from '@deepseek-ai/cordis'
-import Loader from '@deepseek-ai/cordis-plugin-loader'
-import Timer from '@deepseek-ai/cordis-plugin-timer'
-import { initProfile, mountRootInclude, readProfilePatches, type ProfileContext } from '@deepseek-ai/dsh-app-boot'
-import ConfigEditor from '@deepseek-ai/dsh-config-editor'
-import Settings from '@deepseek-ai/dsh-settings'
-import Hmr from '@deepseek-ai/dsh-hmr'
-import { mountAgentLoopTestDependencies, mountAgentLoopTestHarness } from '@deepseek-ai/dsh-agent-loop-testkit'
-import ComputerUseRegistry from '@deepseek-ai/dsh-computer-use'
-import LocalAttachmentStore from '@deepseek-ai/dsh-attachment-local'
-import FileSystem from '@deepseek-ai/dsh-fs-local'
-import UserQuestions from '@deepseek-ai/dsh-user-questions'
-import NodeRuntime from '@deepseek-ai/dsh-ptc-runtime-node'
-import Sandbox from '@deepseek-ai/dsh-sandbox-local'
-import SandboxPolicy from '@deepseek-ai/dsh-sandbox-policy'
-import { LlmAdapter, ToolCallId, type LlmResolvedModelInfo, type StreamChunk } from '@deepseek-ai/dsh-llm'
-import { SessionId } from '@deepseek-ai/dsh-session'
-import Subprocess from '@deepseek-ai/dsh-subprocess'
+import { Context, FiberState } from '@tomato/cordis'
+import Loader from '@tomato/cordis-plugin-loader'
+import Timer from '@tomato/cordis-plugin-timer'
+import { initProfile, mountRootInclude, readProfilePatches, type ProfileContext } from '@tomato/app-boot'
+import ConfigEditor from '@tomato/config-editor'
+import Settings from '@tomato/settings'
+import Hmr from '@tomato/hmr'
+import { mountAgentLoopTestDependencies, mountAgentLoopTestHarness } from '@tomato/agent-loop-testkit'
+import ComputerUseRegistry from '@tomato/computer-use'
+import LocalAttachmentStore from '@tomato/attachment-local'
+import FileSystem from '@tomato/fs-local'
+import UserQuestions from '@tomato/user-questions'
+import NodeRuntime from '@tomato/ptc-runtime-node'
+import Sandbox from '@tomato/sandbox-local'
+import SandboxPolicy from '@tomato/sandbox-policy'
+import { LlmAdapter, ToolCallId, type LlmResolvedModelInfo, type StreamChunk } from '@tomato/llm'
+import { SessionId } from '@tomato/session'
+import Subprocess from '@tomato/subprocess'
 import { expect, it, onTestFinished, vi } from 'vitest'
 import sharp from 'sharp'
-import type { ImageAttachmentRef } from '@deepseek-ai/dsh-attachment'
+import type { ImageAttachmentRef } from '@tomato/attachment'
 import * as NativeProvider from '../src/index.ts'
-import type { NativeClient } from '@deepseek-ai/dsh-cua/native-client'
+import type { NativeClient } from '@tomato/cua/native-client'
 import type { NativeBuildSpec } from '../src/native-build.ts'
 
 const native = vi.hoisted(() => ({
@@ -41,8 +41,8 @@ vi.mock('../src/native-build.ts', async importOriginal => ({
   nativeHostArchitecture: native.architecture,
   prepareNativeExecutable: native.prepare,
 }))
-vi.mock('@deepseek-ai/dsh-cua/native-client', async importOriginal => ({
-  ...await importOriginal<typeof import('@deepseek-ai/dsh-cua/native-client')>(),
+vi.mock('@tomato/cua/native-client', async importOriginal => ({
+  ...await importOriginal<typeof import('@tomato/cua/native-client')>(),
   NativeClient: class {
     disposed = false
     constructor(...args: ConstructorParameters<typeof NativeClient>) {
@@ -276,7 +276,7 @@ it('retains the computer-use registration until permission helper cleanup settle
   const closing = f.provider.dispose()
   try {
     await entered.promise
-    expect(registry.providerName).toBe('dsh-cua')
+    expect(registry.providerName).toBe('@tomato/cua')
     release.resolve(undefined)
     await closing
     expect(registry.providerName).toBeUndefined()
@@ -400,7 +400,7 @@ it('preserves screenshot attachments and invalidates pixel coordinates when wind
   const f = await setup({ provider: 'image-fixture', model: 'vision' })
   await selectApplication(f)
   f.ctx.llm.registerAdapter(['image-fixture'], new ImageAdapter())
-  const root = await mkdtemp(join(tmpdir(), 'dsh-cua-image-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-cua-image-'))
   onTestFinished(async () => { await f.ctx.fiber.dispose(); await rm(root, { recursive: true, force: true }) })
   await f.ctx.plugin(LocalAttachmentStore, { tomatoHome: root })
   const data = imageData
@@ -438,7 +438,7 @@ it('maps the actual model-request image pixels back to native points without sto
     }
   }
   f.ctx.llm.registerAdapter(['image-fixture'], new ResizingAdapter())
-  const root = await mkdtemp(join(tmpdir(), 'dsh-cua-coordinate-image-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-cua-coordinate-image-'))
   onTestFinished(async () => { await f.ctx.fiber.dispose(); await rm(root, { recursive: true, force: true }) })
   await f.ctx.plugin(LocalAttachmentStore, { tomatoHome: root })
   const save = vi.spyOn(f.ctx.attachments, 'saveImages')
@@ -462,7 +462,7 @@ it.each([{ pixelWidth: 2 }, { pixelHeight: 2 }])('rejects native screenshot dime
   const f = await setup({ provider: 'image-fixture', model: 'vision' })
   await selectApplication(f)
   f.ctx.llm.registerAdapter(['image-fixture'], new ImageAdapter())
-  const root = await mkdtemp(join(tmpdir(), 'dsh-cua-image-metadata-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-cua-image-metadata-'))
   onTestFinished(async () => { await f.ctx.fiber.dispose(); await rm(root, { recursive: true, force: true }) })
   await f.ctx.plugin(LocalAttachmentStore, { tomatoHome: root })
   native.request.mockResolvedValue({ ...imageMetadata, ...invalid, mimeType: 'image/png', data: imageData })
@@ -486,7 +486,7 @@ it.each(['unresolved', 'unknown', 'text-only', 'provider-error'] as const)(
   'refuses screenshot capture and storage for a %s model route', async (route) => {
     const f = await setup(route === 'unresolved' ? undefined : { provider: 'image-fixture', model: 'vision' })
     await selectApplication(f)
-    const root = await mkdtemp(join(tmpdir(), 'dsh-cua-image-route-'))
+    const root = await mkdtemp(join(tmpdir(), 'tomato-cua-image-route-'))
     onTestFinished(async () => { await f.ctx.fiber.dispose(); await rm(root, { recursive: true, force: true }) })
     await f.ctx.plugin(LocalAttachmentStore, { tomatoHome: root })
     const saved = vi.spyOn(f.ctx.attachments, 'saveImages')
@@ -509,7 +509,7 @@ it('returns an image-admission failure without emitting a successful screenshot'
   const f = await setup({ provider: 'image-fixture', model: 'vision' })
   await selectApplication(f)
   f.ctx.llm.registerAdapter(['image-fixture'], new ImageAdapter())
-  const root = await mkdtemp(join(tmpdir(), 'dsh-cua-image-invalid-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-cua-image-invalid-'))
   onTestFinished(async () => { await f.ctx.fiber.dispose(); await rm(root, { recursive: true, force: true }) })
   await f.ctx.plugin(LocalAttachmentStore, { tomatoHome: root })
   native.request.mockResolvedValue({ ...imageMetadata, mimeType: 'image/png', data: 'AQ==' })
@@ -529,7 +529,7 @@ it.each([
   const f = await setup({ provider: 'image-fixture', model: 'vision' })
   await selectApplication(f)
   f.ctx.llm.registerAdapter(['image-fixture'], new ImageAdapter())
-  const root = await mkdtemp(join(tmpdir(), 'dsh-cua-image-disposal-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-cua-image-disposal-'))
   onTestFinished(async () => { try { await f.ctx.fiber.dispose() } finally { await rm(root, { recursive: true, force: true }) } })
   await f.ctx.plugin(LocalAttachmentStore, { tomatoHome: root })
   native.request.mockResolvedValue({ ...imageMetadata, mimeType: 'image/png', data: imageData })
@@ -556,7 +556,7 @@ it.each([
     let closed = false
     closing = (owner === 'provider' ? f.provider.dispose()
       : owner === 'agent' ? f.handle.dispose()
-        : f.ctx.cuaAccess.revoke('a'.repeat(64) as import('@deepseek-ai/dsh-cua/types').CuaApplicationId)).then(() => { closed = true })
+        : f.ctx.cuaAccess.revoke('a'.repeat(64) as import('@tomato/cua/types').CuaApplicationId)).then(() => { closed = true })
     await setImmediate()
     expect(admissionSignal?.aborted).toBe(true)
     expect(closed).toBe(false)
@@ -589,7 +589,7 @@ it('prepares the selected native component before registering CUA and creates no
 
 it('adds an installation-owned bridge URL when persistent PTC is available', async () => {
   const f = await setup()
-  const text = async () => (await f.ctx.systemPrompt.assemble()).sections.find(section => section.name === 'computer-use:dsh-cua')?.text
+  const text = async () => (await f.ctx.systemPrompt.assemble()).sections.find(section => section.name === 'computer-use:@tomato/cua')?.text
   expect(await text()).not.toContain('Persistent PTC initialization:')
   await f.ctx.plugin(FileSystem)
   await f.ctx.plugin(Sandbox)
@@ -663,7 +663,7 @@ it('stores signed application consent in the current profile and refuses unavail
   await mkdir(bundle, { recursive: true })
   await writeFile(join(home, 'package.json'), '{"name":"test-installation"}\n')
   await writeFile(join(bundle, 'package.json'), JSON.stringify({ name: 'permission-fixture-bundle', version: '1.0.0',
-    dsh: { bundle: { patch: 'cordis.patch.yml' } } }))
+    tomato: { bundle: { patch: 'cordis.patch.yml' } } }))
   await writeFile(join(bundle, 'cordis.patch.yml'), JSON.stringify([{ insert: [{ id: 'cua', name: 'cordis:cua', config }] }]))
   await writeFile(join(dir, 'cordis.yml'), '[]\n')
   const profile: ProfileContext = { name: 'test', startedBundles: ['permission-fixture-bundle'], dir,

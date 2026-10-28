@@ -3,17 +3,17 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-10-09-cua-shared-native-helper.md
 /agent-note-shared-native-cua-process-with-agent-scoped-state:
-  en: 65056aee19bf6b22
-  zh: 9823fa0c33497ff9
+  en: f7b05e60868b1471
+  zh: b6cb0f4d363840aa
 /agent-note-shared-native-cua-process-with-agent-scoped-state/problem:
   en: 386864a282e5ad58
   zh: a4ea75ec70eb7778
 /agent-note-shared-native-cua-process-with-agent-scoped-state/decision:
-  en: ebf231a6aad109bb
-  zh: 53b553e679569da1
+  en: b844f9dc24fae188
+  zh: 776e41e088611ee9
 /agent-note-shared-native-cua-process-with-agent-scoped-state/alternatives-considered:
-  en: 883f71387f599160
-  zh: 4b5f1450be799397
+  en: 8310fb7d696f67fb
+  zh: f33a6a450a4cb795
 /agent-note-shared-native-cua-process-with-agent-scoped-state/consequences:
   en: 518a4abf2c4c95be
   zh: 72bf2b9817975368

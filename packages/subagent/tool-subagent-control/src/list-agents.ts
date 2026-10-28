@@ -5,14 +5,14 @@
  * registration and disposal alongside messaging and interruption.
  */
 
-import type { Context } from '@deepseek-ai/cordis'
-import { defineTool } from '@deepseek-ai/dsh-tools'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import type { SessionId } from '@deepseek-ai/dsh-session'
+import type { Context } from '@tomato/cordis'
+import { defineTool } from '@tomato/tools'
+import type { Agent } from '@tomato/agent'
+import type { SessionId } from '@tomato/session'
 import type {
   SubagentCatalogEntry, SubagentDescendantListEntry, SubagentListEntry,
-} from '@deepseek-ai/dsh-subagent'
-import { assertNever } from '@deepseek-ai/dsh-util-values'
+} from '@tomato/subagent'
+import { assertNever } from '@tomato/util-values'
 
 type ListAgentsScope = 'children' | 'descendants'
 

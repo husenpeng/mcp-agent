@@ -1,19 +1,19 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import AgentRegistry from '@deepseek-ai/dsh-agent'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import type { Session } from '@deepseek-ai/dsh-session'
-import WebRuntime from '@deepseek-ai/dsh-web'
-import type { DeepSeekAccount } from '@deepseek-ai/dsh-deepseek-account'
-import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
-import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
+import { Context } from '@tomato/cordis'
+import AgentRegistry from '@tomato/agent'
+import type { Agent } from '@tomato/agent'
+import type { Session } from '@tomato/session'
+import WebRuntime from '@tomato/web'
+import type { DeepSeekAccount } from '@tomato/deepseek-account'
+import SessionStore, { SessionId } from '@tomato/session'
+import SessionProjectionRegistry from '@tomato/session-projection'
 import {
   DeepSeekSearchApiProvider,
   DEEPSEEK_WEB_API_BASE_URL,
   mapSearchResponse,
   type DeepSeekSearchApiOptions,
-} from '@deepseek-ai/dsh-web-deepseek-api'
-import * as webApiPlugin from '@deepseek-ai/dsh-web-deepseek-api'
+} from '@tomato/web-deepseek-api'
+import * as webApiPlugin from '@tomato/web-deepseek-api'
 
 /** Construct the provider over a fixed options value; production passes a live thunk. */
 const searchProvider = (options: DeepSeekSearchApiOptions): DeepSeekSearchApiProvider =>
@@ -255,7 +255,7 @@ describe('Search API account route', () => {
       await ctx.agents.withInitiator({ session } as Agent, () => ctx.web.search({ query: 'q' }))
       expect(asked).toEqual(['https://api.deepseek.com/v1/tools/search'])
       const headers = (fetchMock.mock.calls[0]?.[1]?.headers ?? {}) as Record<string, string>
-      expect(headers['x-dsh-auth-token']).toBe('account-token')
+      expect(headers['x-tomato-auth-token']).toBe('account-token')
       expect(headers).not.toHaveProperty('authorization')
       expect(headers).not.toHaveProperty('x-api-key')
     } finally { await ctx.fiber.dispose() }

@@ -3,7 +3,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, waitFor, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import type { SkillEntry } from '@deepseek-ai/dsh-api-remotes/client'
+import type { SkillEntry } from '@tomato/api-remotes/client'
 import { zh } from '../src/client/locales.ts'
 import { SkillsTitle } from '../src/client/SkillsBody.tsx'
 import { mountBody } from './mount.client.tsx'

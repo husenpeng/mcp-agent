@@ -2,13 +2,13 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import { LocalBashExecutor } from '@deepseek-ai/dsh-bash-local'
-import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
-import SubprocessRuntime from '@deepseek-ai/dsh-subprocess'
-import type { SubprocessHandle, SubprocessOutcome, SubprocessOutputReader } from '@deepseek-ai/dsh-subprocess'
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
-import type { ShellExecSpec, ShellExecution, ShellProcess, ShellRunResult } from '@deepseek-ai/dsh-shell'
+import { Context } from '@tomato/cordis'
+import { LocalBashExecutor } from '@tomato/bash-local'
+import LocalSubprocessRuntime from '@tomato/subprocess-local'
+import SubprocessRuntime from '@tomato/subprocess'
+import type { SubprocessHandle, SubprocessOutcome, SubprocessOutputReader } from '@tomato/subprocess'
+import { MAX_TIMER_DELAY_MS } from '@tomato/timeout'
+import type { ShellExecSpec, ShellExecution, ShellProcess, ShellRunResult } from '@tomato/shell'
 
 /** Historical foreground shorthand over the unified execute() seam. */
 async function run(x: { execute(spec: ShellExecSpec): Promise<ShellExecution> }, spec: ShellExecSpec): Promise<ShellRunResult> {
@@ -21,7 +21,7 @@ function start(x: { execute(spec: ShellExecSpec): Promise<ShellExecution> }, spe
 }
 
 
-const spillDir = mkdtempSync(join(tmpdir(), 'dsh-bash-exec-spec-'))
+const spillDir = mkdtempSync(join(tmpdir(), 'tomato-bash-exec-spec-'))
 
 afterAll(() => {
   rmSync(spillDir, { recursive: true, force: true })
@@ -148,7 +148,7 @@ describe('LocalBashExecutor.run', () => {
 
   it('rejects on spawn failure (bad workdir)', async () => {
     const { bash } = await setup()
-    await expect(run(bash, bash.resolve({ command: 'true', workdir: '/nonexistent-dsh' }))).rejects.toThrow(/ENOENT/)
+    await expect(run(bash, bash.resolve({ command: 'true', workdir: '/nonexistent-tomato' }))).rejects.toThrow(/ENOENT/)
   })
 
   it('resolve() carries stdin/env/tomatoEnv onto the spec, and run() threads them to the command', async () => {
@@ -157,14 +157,14 @@ describe('LocalBashExecutor.run', () => {
       command: 'cat; echo "[$SEAM_VAR][$TOMATO_SEAM_VAR]"',
       stdin: 'piped\n',
       env: { SEAM_VAR: 'env-ok' },
-      tomatoEnv: { TOMATO_SEAM_VAR: 'dsh-ok' },
+      tomatoEnv: { TOMATO_SEAM_VAR: 'tomato-ok' },
     })
     // resolve() keeps the optional input/environment fields verbatim.
     expect(spec.stdin).toBe('piped\n')
     expect(spec.env).toEqual({ SEAM_VAR: 'env-ok' })
-    expect(spec.tomatoEnv).toEqual({ TOMATO_SEAM_VAR: 'dsh-ok' })
+    expect(spec.tomatoEnv).toEqual({ TOMATO_SEAM_VAR: 'tomato-ok' })
     const result = await run(bash, spec)
-    expect(result.stdout.text).toBe('piped\n[env-ok][dsh-ok]\n')
+    expect(result.stdout.text).toBe('piped\n[env-ok][tomato-ok]\n')
   })
 
   it('resolve() omits stdin/env/tomatoEnv when the request supplies none', async () => {
@@ -204,9 +204,9 @@ describe('LocalBashExecutor.start (background process handles)', () => {
       command: 'cat; echo "[$BG_VAR][$TOMATO_BG_VAR]"',
       stdin: 'bg-stdin\n',
       env: { BG_VAR: 'bg-env' },
-      tomatoEnv: { TOMATO_BG_VAR: 'bg-dsh-env' },
+      tomatoEnv: { TOMATO_BG_VAR: 'bg-tomato-env' },
     })))
-    const output = await readUntil(proc, '[bg-env][bg-dsh-env]')
+    const output = await readUntil(proc, '[bg-env][bg-tomato-env]')
     expect(output).toContain('bg-stdin')
     await proc.done
     expect(proc.exitCode).toBe(0)
@@ -440,7 +440,7 @@ describe('LocalBashExecutor.start (background process handles)', () => {
 
   it('an asynchronous creation failure settles as killed with a stage-neutral note', async () => {
     const { bash } = await setup()
-    const proc = (await start(bash, bash.resolve({ command: 'true', workdir: '/nonexistent-dsh' })))
+    const proc = (await start(bash, bash.resolve({ command: 'true', workdir: '/nonexistent-tomato' })))
     // done resolves (never rejects) even though the process never ran.
     await expect(proc.done).resolves.toBeUndefined()
     expect(proc.status).toBe('killed')

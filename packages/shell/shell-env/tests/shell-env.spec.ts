@@ -1,5 +1,5 @@
 /**
- * Registry tests for `@deepseek-ai/dsh-shell-env`: built-in facts, contributor
+ * Registry tests for `@tomato/shell-env`: built-in facts, contributor
  * ownership and validation, collection ordering, effect-scoped disposal, and
  * the explicit disposer contract.
  */
@@ -7,13 +7,13 @@
 import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import { ToolCallId } from '@deepseek-ai/dsh-llm'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import { SESSION_FORMAT_VERSION } from '@deepseek-ai/dsh-session'
-import type { ToolExecution } from '@deepseek-ai/dsh-tools'
-import { ShellEnvRegistry } from '@deepseek-ai/dsh-shell-env'
-import * as BashEnvPlugin from '@deepseek-ai/dsh-shell-env'
+import { Context } from '@tomato/cordis'
+import { ToolCallId } from '@tomato/llm'
+import type { Agent } from '@tomato/agent'
+import { SESSION_FORMAT_VERSION } from '@tomato/session'
+import type { ToolExecution } from '@tomato/tools'
+import { ShellEnvRegistry } from '@tomato/shell-env'
+import * as BashEnvPlugin from '@tomato/shell-env'
 
 const testToolSignal = new AbortController().signal
 
@@ -42,14 +42,14 @@ function execution(sessionId?: string): ToolExecution {
 describe('ShellEnvRegistry', () => {
   it('collects unconditional shell facts and the current agent session id', () => {
     const ctx = new Context()
-    const registry = new ShellEnvRegistry(ctx, { tomatoHome: './test-dsh-home' })
+    const registry = new ShellEnvRegistry(ctx, { tomatoHome: './test-tomato-home' })
 
     expect(registry.collect(execution())).toEqual({
-      TOMATO_HOME: resolve('./test-dsh-home'),
+      TOMATO_HOME: resolve('./test-tomato-home'),
       TOMATO_SHELL: '1',
     })
     expect(registry.collect(execution('session-a'))).toEqual({
-      TOMATO_HOME: resolve('./test-dsh-home'),
+      TOMATO_HOME: resolve('./test-tomato-home'),
       TOMATO_SESSION_ID: 'session-a',
       TOMATO_SHELL: '1',
     })
@@ -58,10 +58,10 @@ describe('ShellEnvRegistry', () => {
   it('collects the launcher-provided profile name and directory when a profile context exists', () => {
     const ctx = new Context()
     ctx.provide('profileContext', {
-      name: 'web', dir: '/profiles/web', patchPath: '/profiles/web/cordis.patch.yml', installAnchor: '/dsh/package.json',
+      name: 'web', dir: '/profiles/web', patchPath: '/profiles/web/cordis.patch.yml', installAnchor: '/tomato/package.json',
       cwd: '/work', home: '/home', startedBundles: [], overlays: [], telemetryDisabledEnv: undefined,
     })
-    const registry = new ShellEnvRegistry(ctx, { tomatoHome: './test-dsh-home' })
+    const registry = new ShellEnvRegistry(ctx, { tomatoHome: './test-tomato-home' })
     expect(registry.collect(execution())).toMatchObject({ TOMATO_PROFILE: 'web', TOMATO_PROFILE_DIR: '/profiles/web' })
     expect(() => registry.register({
       name: 'profile-claimer',
@@ -71,18 +71,18 @@ describe('ShellEnvRegistry', () => {
   })
 
   it('resolves TOMATO_HOME from the ambient override or the user-home default', () => {
-    vi.stubEnv('TOMATO_HOME', './ambient-dsh-home')
+    vi.stubEnv('TOMATO_HOME', './ambient-tomato-home')
     const fromEnvironment = new ShellEnvRegistry(new Context())
-    expect(fromEnvironment.collect(execution()).TOMATO_HOME).toBe(resolve('./ambient-dsh-home'))
+    expect(fromEnvironment.collect(execution()).TOMATO_HOME).toBe(resolve('./ambient-tomato-home'))
 
     vi.stubEnv('TOMATO_HOME', undefined)
     const fromDefault = new ShellEnvRegistry(new Context())
-    expect(fromDefault.collect(execution()).TOMATO_HOME).toBe(join(homedir(), '.dsh'))
+    expect(fromDefault.collect(execution()).TOMATO_HOME).toBe(join(homedir(), '.tomato'))
   })
 
   it('collects declared contributor variables and omits unavailable values', () => {
     const ctx = new Context()
-    const registry = new ShellEnvRegistry(ctx, { tomatoHome: './test-dsh-home' })
+    const registry = new ShellEnvRegistry(ctx, { tomatoHome: './test-tomato-home' })
     registry.register({
       name: 'optional-session-fact',
       variables: {
@@ -117,7 +117,7 @@ describe('ShellEnvRegistry', () => {
 
   it('rejects duplicate variable ownership at registration time', () => {
     const ctx = new Context()
-    const registry = new ShellEnvRegistry(ctx, { tomatoHome: './test-dsh-home' })
+    const registry = new ShellEnvRegistry(ctx, { tomatoHome: './test-tomato-home' })
     registry.register({
       name: 'first',
       variables: { TOMATO_SHARED: { description: 'First owner.' } },
@@ -132,7 +132,7 @@ describe('ShellEnvRegistry', () => {
   })
 
   it('rejects duplicate contributor names and malformed declarations', () => {
-    const registry = new ShellEnvRegistry(new Context(), { tomatoHome: './test-dsh-home' })
+    const registry = new ShellEnvRegistry(new Context(), { tomatoHome: './test-tomato-home' })
     registry.register({
       name: 'declared',
       variables: { TOMATO_DECLARED: { description: 'Declared fact.' } },
@@ -168,7 +168,7 @@ describe('ShellEnvRegistry', () => {
 
   it('rejects undeclared variables returned by a contributor', () => {
     const ctx = new Context()
-    const registry = new ShellEnvRegistry(ctx, { tomatoHome: './test-dsh-home' })
+    const registry = new ShellEnvRegistry(ctx, { tomatoHome: './test-tomato-home' })
     registry.register({
       name: 'drifted-provider',
       variables: { TOMATO_DECLARED: { description: 'Declared fact.' } },
@@ -179,7 +179,7 @@ describe('ShellEnvRegistry', () => {
   })
 
   it('rejects non-string values returned by a contributor', () => {
-    const registry = new ShellEnvRegistry(new Context(), { tomatoHome: './test-dsh-home' })
+    const registry = new ShellEnvRegistry(new Context(), { tomatoHome: './test-tomato-home' })
     registry.register({
       name: 'wrong-value-type',
       variables: { TOMATO_STRING: { description: 'String fact.' } },
@@ -191,7 +191,7 @@ describe('ShellEnvRegistry', () => {
 
   it('removes an effect-scoped contributor when its plugin is disposed', async () => {
     const ctx = new Context()
-    const registry = new ShellEnvRegistry(ctx, { tomatoHome: './test-dsh-home' })
+    const registry = new ShellEnvRegistry(ctx, { tomatoHome: './test-tomato-home' })
     const fiber = await ctx.plugin({
       inject: ['shellEnv'],
       apply(inner: Context) {
@@ -209,7 +209,7 @@ describe('ShellEnvRegistry', () => {
   })
 
   it('returns an explicit contributor disposer', () => {
-    const registry = new ShellEnvRegistry(new Context(), { tomatoHome: './test-dsh-home' })
+    const registry = new ShellEnvRegistry(new Context(), { tomatoHome: './test-tomato-home' })
     const dispose = registry.register({
       name: 'explicit-disposal',
       variables: { TOMATO_EXPLICIT_DISPOSAL: { description: 'Explicitly disposed fact.' } },

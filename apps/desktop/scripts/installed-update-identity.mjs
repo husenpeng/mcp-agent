@@ -12,12 +12,12 @@ import { join } from 'node:path'
  */
 export function configureInstalledUpdateIdentity(app, run, metadata, environment) {
   if (!/^[a-f0-9]{24}$/u.test(run.id) || run.versions.length !== 2
-    || metadata.tomatoDesktopAppId !== `com.deepseek.dsh.qualification.q${run.id}`
+    || metadata.tomatoDesktopAppId !== `vip.tomatoai.desktop.qualification.q${run.id}`
     || !run.versions.includes(metadata.version)) {
     throw new Error('installed update: qualification package identity does not match its bootstrap')
   }
-  const root = join(app.getPath('appData'), 'dsh-update-qualification', run.id)
-  const paths = { root, userData: join(root, 'user-data'), harnessHome: join(root, 'dsh-home'), journals: join(root, 'journals') }
+  const root = join(app.getPath('appData'), 'tomato-update-qualification', run.id)
+  const paths = { root, userData: join(root, 'user-data'), harnessHome: join(root, 'tomato-home'), journals: join(root, 'journals') }
   for (const directory of [paths.userData, paths.harnessHome, paths.journals]) mkdirSync(directory, { recursive: true })
   app.setPath('userData', paths.userData)
   app.setPath('sessionData', paths.userData)

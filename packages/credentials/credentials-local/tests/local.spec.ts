@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@tomato/cordis'
 import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
-import { credentialRef } from '@deepseek-ai/dsh-credentials'
-import { createLaunchEnvironmentSnapshot, TOMATO_LAUNCH_ENVIRONMENT_KEY } from '@deepseek-ai/dsh-launch-environment'
-import type { CredentialRef } from '@deepseek-ai/dsh-credentials'
+import { credentialRef } from '@tomato/credentials'
+import { createLaunchEnvironmentSnapshot, TOMATO_LAUNCH_ENVIRONMENT_KEY } from '@tomato/launch-environment'
+import type { CredentialRef } from '@tomato/credentials'
 import { LocalCredentialProvider, resolveSpec } from '../src/index.ts'
 
 function writeCredentials(file: string, text: string): Promise<void> {
@@ -23,7 +23,7 @@ afterEach(async () => {
 })
 
 async function tempDir(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'dsh-credentials-local-'))
+  const dir = await mkdtemp(join(tmpdir(), 'tomato-credentials-local-'))
   cleanups.push(() => rm(dir, { recursive: true, force: true }))
   return dir
 }
@@ -53,8 +53,8 @@ describe('resolveSpec', () => {
   })
 
   it('lets an explicit path win over the home', () => {
-    const spec = resolveSpec({ path: '/etc/dsh/creds.yaml', tomatoHome: '/ignored', watch: false, debounceMs: 5 })
-    expect(spec).toEqual({ filename: resolve('/etc/dsh/creds.yaml'), watch: false, debounceMs: 5 })
+    const spec = resolveSpec({ path: '/etc/tomato/creds.yaml', tomatoHome: '/ignored', watch: false, debounceMs: 5 })
+    expect(spec).toEqual({ filename: resolve('/etc/tomato/creds.yaml'), watch: false, debounceMs: 5 })
   })
 })
 
@@ -126,7 +126,7 @@ describe('layer ladder', () => {
     await writeCredentials(path, 'version: 1\nrefs:\n  TOMATO_CRED_TEST: stored\n')
     const ctx = await bootLayered(path, [
       { source: 'process', values: {} },
-      { source: 'user-env', path: '/home/.dsh/.env', values: { TOMATO_CRED_TEST: 'older-user-env' } },
+      { source: 'user-env', path: '/home/.tomato/.env', values: { TOMATO_CRED_TEST: 'older-user-env' } },
     ])
     expect(await ctx.credentials.resolve(KEY)).toEqual({ value: 'stored', source: 'file' })
     // A key sitting in the user's .env does not make the stored one
@@ -153,7 +153,7 @@ describe('layer ladder', () => {
     const dir = await tempDir()
     const ctx = await bootLayered(join(dir, '.credentials.yaml'), [
       { source: 'process', values: {} },
-      { source: 'user-env', path: '/home/.dsh/.env', values: { TOMATO_CRED_TEST: 'from-user-env' } },
+      { source: 'user-env', path: '/home/.tomato/.env', values: { TOMATO_CRED_TEST: 'from-user-env' } },
     ])
     expect(await ctx.credentials.resolve(KEY)).toEqual({ value: 'from-user-env', source: 'user-env' })
     // Writable: storing a key replaces it as the effective one.
@@ -169,7 +169,7 @@ describe('layer ladder', () => {
     const layers = [
       { source: 'process' as const, values: {} },
       { source: 'project-env' as const, path: '/work/.env', values: { TOMATO_CRED_TEST: 'from-project' } },
-      { source: 'user-env' as const, path: '/home/.dsh/.env', values: { TOMATO_CRED_TEST: 'from-user' } },
+      { source: 'user-env' as const, path: '/home/.tomato/.env', values: { TOMATO_CRED_TEST: 'from-user' } },
     ]
     const bare = await bootLayered(path, layers)
     expect(await bare.credentials.resolve(KEY)).toEqual({ value: 'from-project', source: 'project-env' })
@@ -227,7 +227,7 @@ describe('layer ladder', () => {
     await writeCredentials(path, 'version: 1\nrefs:\n  TOMATO_CRED_TEST: stored\n')
     const ctx = await bootLayered(path, [
       { source: 'process', values: { TOMATO_CRED_TEST: 'from-shell' } },
-      { source: 'user-env', path: '/home/.dsh/.env', values: { TOMATO_CRED_TEST: 'from-user-env' } },
+      { source: 'user-env', path: '/home/.tomato/.env', values: { TOMATO_CRED_TEST: 'from-user-env' } },
     ])
     expect(await ctx.credentials.resolve(KEY)).toEqual({ value: 'stored', source: 'file' })
     expect(await ctx.credentials.describe(KEY)).toEqual({ configured: true, source: 'file', writable: true })
@@ -249,12 +249,12 @@ describe('document validation', () => {
     // the first request instead of at load. (The recognized all-string flat
     // layout upgrades in place instead — migration.spec owns that path.)
     ['the flat layout with a non-string value', 'TOMATO_CRED_TEST: [nope]\n', /nest the existing 1 entry under/],
-    ['the flat layout with several entries and a non-string value', 'TOMATO_CRED_TEST: a\nDSH_CRED_OTHER: [b]\n',
+    ['the flat layout with several entries and a non-string value', 'TOMATO_CRED_TEST: a\nTOMATO_CRED_OTHER: [b]\n',
       /nest the existing 2 entries under/],
     ['the flat layout with an empty value', 'TOMATO_CRED_TEST: ""\n', /pre-release flat layout/],
     ['the flat layout with an unaddressable key', 'not-a-ref: value\n', /pre-release flat layout/],
     ['the flat layout with a non-string key', '1: a\n', /pre-release flat layout/],
-    ['the flat layout under document directives', '%YAML 1.2\n---\nDSH_CRED_TEST: a\n',
+    ['the flat layout under document directives', '%YAML 1.2\n---\nTOMATO_CRED_TEST: a\n',
       /pre-release flat layout/],
     ['a future version', 'version: 2\nrefs: {}\n', /this build reads version 1/],
     ['a non-mapping refs section', 'version: 1\nrefs: nope\n', /"refs" .* must be a mapping/],

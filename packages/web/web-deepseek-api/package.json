@@ -1,6 +1,6 @@
 {
-  "name": "@deepseek-ai/dsh-web-deepseek-api",
-  "description": "DeepSeek Search and Fetch API providers for the DeepSeek Harness web capability seam (ctx.web)",
+  "name": "@tomato/web-deepseek-api",
+  "description": "DeepSeek Search and Fetch API providers for the Tomato Harness web capability seam (ctx.web)",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -29,31 +29,31 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:*",
-    "@deepseek-ai/dsh-credentials": "workspace:*",
-    "@deepseek-ai/dsh-deepseek-account": "workspace:*",
-    "@deepseek-ai/dsh-launch-environment": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-web": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/agent": "workspace:*",
+    "@tomato/credentials": "workspace:*",
+    "@tomato/deepseek-account": "workspace:*",
+    "@tomato/launch-environment": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/web": "workspace:*",
+    "@tomato/cordis": "workspace:~"
   },
   "dependencies": {
-    "@deepseek-ai/schemastery": "workspace:~"
+    "@tomato/schemastery": "workspace:~"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:*",
-    "@deepseek-ai/dsh-credentials": "workspace:*",
-    "@deepseek-ai/dsh-credentials-local": "workspace:*",
-    "@deepseek-ai/dsh-deepseek-account": "workspace:*",
-    "@deepseek-ai/dsh-launch-environment": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-session-projection": "workspace:*",
-    "@deepseek-ai/dsh-web": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-http-proxy": "workspace:*"
+    "@tomato/agent": "workspace:*",
+    "@tomato/credentials": "workspace:*",
+    "@tomato/credentials-local": "workspace:*",
+    "@tomato/deepseek-account": "workspace:*",
+    "@tomato/launch-environment": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/web": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/http-proxy": "workspace:*"
   },
   "peerDependenciesMeta": {
-    "@deepseek-ai/dsh-deepseek-account": {
+    "@tomato/deepseek-account": {
       "optional": true
     }
   }

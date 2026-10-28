@@ -64,30 +64,30 @@ describe.skipIf(!existsSync(preload('preload-app')))('built sandboxed Desktop pr
         if (id !== 'electron') throw new Error(`sandbox cannot load ${id}`)
         return electron
       },
-      process: { argv: ['electron', '--dsh-welcome-locale=en'], platform: 'darwin', isMainFrame: true },
-      location: new URL('dsh-app://app/'),
+      process: { argv: ['electron', '--tomato-welcome-locale=en'], platform: 'darwin', isMainFrame: true },
+      location: new URL('tomato-app://app/'),
       exports: {},
     })
     if (name === 'preload-app') {
       const product = exposed.get('tomatoDesktop') as { deviceInfo(): Promise<string> }
       invoke.mockResolvedValueOnce('platform=darwin; memory_gib=32.0')
       await expect(product.deviceInfo()).resolves.toBe('platform=darwin; memory_gib=32.0')
-      expect(invoke).toHaveBeenCalledWith('dsh-desktop:device-info')
+      expect(invoke).toHaveBeenCalledWith('tomato-desktop:device-info')
       browser.loadTheme('dark')
-      expect(send).toHaveBeenCalledWith('dsh-desktop:native-theme-set', 'dark')
+      expect(send).toHaveBeenCalledWith('tomato-desktop:native-theme-set', 'dark')
       browser.changeTheme('light')
-      expect(send).toHaveBeenCalledWith('dsh-desktop:native-theme-set', 'light')
-      const bridge = exposed.get('__DSH_LOCALE__') as { read(): unknown; onChange(locale: string): void }
+      expect(send).toHaveBeenCalledWith('tomato-desktop:native-theme-set', 'light')
+      const bridge = exposed.get('__TOMATO_LOCALE__') as { read(): unknown; onChange(locale: string): void }
       bridge.read()
-      expect(invoke).toHaveBeenCalledWith('dsh-desktop:locale-bootstrap')
+      expect(invoke).toHaveBeenCalledWith('tomato-desktop:locale-bootstrap')
       bridge.onChange('zh')
-      expect(send).toHaveBeenCalledWith('dsh-desktop:locale-changed', 'zh')
+      expect(send).toHaveBeenCalledWith('tomato-desktop:locale-changed', 'zh')
     } else {
       expect(exposed.has('tomatoWelcome')).toBe(true)
       const bridge = exposed.get('tomatoWelcome') as { platform: string; takeNotice(): Promise<unknown> }
       expect(bridge.platform).toBe('darwin')
       void bridge.takeNotice()
-      expect(invoke).toHaveBeenCalledWith('dsh-welcome:take-notice')
+      expect(invoke).toHaveBeenCalledWith('tomato-welcome:take-notice')
     }
   })
 })

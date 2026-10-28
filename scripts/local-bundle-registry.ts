@@ -199,7 +199,7 @@ export function readWorkspacePackages(root: string): Map<string, WorkspacePackag
  */
 export function readReleaseMembers(root: string): Map<string, ReleaseEntry> {
   const members = new Map<string, ReleaseEntry>()
-  for (const id of ['dsh', 'vendor']) {
+  for (const id of ['tomato', 'vendor']) {
     const family = releaseFamily(id)
     for (const member of family.members(root)) members.set(member.name, { family, member })
   }
@@ -211,7 +211,7 @@ export function readReleaseMembers(root: string): Map<string, ReleaseEntry> {
  * @param root - repository root containing the release families.
  */
 export function verifyReleaseVersions(root: string): void {
-  for (const id of ['dsh', 'vendor']) {
+  for (const id of ['tomato', 'vendor']) {
     const family = releaseFamily(id)
     family.verifyVersions(family.members(root))
   }
@@ -238,10 +238,10 @@ export function verifyBuiltBundles(options: {
     if (!existsSync(entry) || !statSync(entry).isFile()) {
       throw new Error(`${name}: built runtime is missing at ${entry}; run pnpm run build:official first`)
     }
-    const dsh = member.manifest.dsh
-    if (!isRecord(dsh) || !isRecord(dsh.bundle)) throw new Error(`${name} declares no dsh.bundle`)
+    const tomato = member.manifest.tomato
+    if (!isRecord(tomato) || !isRecord(tomato.bundle)) throw new Error(`${name} declares no tomato.bundle`)
     const patches = declaredBundlePatches(member.manifest)
-    if (patches.length === 0) throw new Error(`${name}: dsh.bundle.patch must be a file path or a list of file paths`)
+    if (patches.length === 0) throw new Error(`${name}: tomato.bundle.patch must be a file path or a list of file paths`)
     for (const patch of patches) {
       const path = join(member.directory, patch)
       if (!existsSync(path) || !statSync(path).isFile()) throw new Error(`${name}: bundle patch ${path} is missing`)
@@ -739,9 +739,9 @@ function payloadPath(file: string): string {
  * @returns Package-relative patch paths, or nothing when the package is not a bundle.
  */
 function declaredBundlePatches(manifest: Record<string, unknown>): string[] {
-  const dsh = manifest.dsh
-  if (!isRecord(dsh) || !isRecord(dsh.bundle)) return []
-  const declared = dsh.bundle.patch
+  const tomato = manifest.tomato
+  if (!isRecord(tomato) || !isRecord(tomato.bundle)) return []
+  const declared = tomato.bundle.patch
   if (typeof declared === 'string') return [declared]
   return Array.isArray(declared) && declared.every(entry => typeof entry === 'string') ? declared : []
 }

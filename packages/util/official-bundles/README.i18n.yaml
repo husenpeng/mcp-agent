@@ -3,44 +3,44 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/util/official-bundles/README.md
 /:
-  en: 6ef5705aaf6fee34
-  zh: e587b9572fc644bf
-/deepseek-ai-dsh-official-bundles:
-  en: 9095133679593012
-  zh: ac6b05dc3eff68b6
-/deepseek-ai-dsh-official-bundles/summary:
-  en: fa3e54ab1672f7ea
-  zh: 6ab2abb75f1365b4
-/deepseek-ai-dsh-official-bundles/table-of-contents:
+  en: 929c26633b02ed2a
+  zh: aecd9a33429ad595
+/tomato-official-bundles:
+  en: 451cd7d1c915af46
+  zh: abbf92e4a132f614
+/tomato-official-bundles/summary:
+  en: 7b355e88b53567d1
+  zh: 2d007ac3cb2e9b01
+/tomato-official-bundles/table-of-contents:
   en: 80b31a934611cb4a
   zh: 05f3f7f9cb2fd881
-/deepseek-ai-dsh-official-bundles/use-this-package:
+/tomato-official-bundles/use-this-package:
   en: 1cb89d16a6de115c
   zh: 75925ae7a16278ad
-/deepseek-ai-dsh-official-bundles/use-this-package/profile-templates:
-  en: 60ef21314c76c3ec
-  zh: f769091957235e12
-/deepseek-ai-dsh-official-bundles/use-this-package/optional-and-retired-bundles:
-  en: 8d94e2b44efb9c1d
-  zh: c049a19e471d188b
-/deepseek-ai-dsh-official-bundles/use-this-package/plugin-manager-lists:
-  en: 27c22abdfff69a41
-  zh: e60d828cdb75c263
-/deepseek-ai-dsh-official-bundles/use-this-package/on-demand-bundles:
+/tomato-official-bundles/use-this-package/profile-templates:
+  en: 6befa51c6ff5bac6
+  zh: 88d91b68fede15a8
+/tomato-official-bundles/use-this-package/optional-and-retired-bundles:
+  en: ef3d79d8e15cb75f
+  zh: dac676b8a6e90c8d
+/tomato-official-bundles/use-this-package/plugin-manager-lists:
+  en: 56cb3dfdf4ef53fe
+  zh: 52057511569477fb
+/tomato-official-bundles/use-this-package/on-demand-bundles:
   en: 10dac368736afde3
   zh: 7684ca22ba4b5a67
-/deepseek-ai-dsh-official-bundles/understand-the-implementation:
+/tomato-official-bundles/understand-the-implementation:
   en: 3fb2b58db529d8be
   zh: 46064459a23d458d
-/deepseek-ai-dsh-official-bundles/understand-the-implementation/source-map:
+/tomato-official-bundles/understand-the-implementation/source-map:
   en: bbd3b4f82e6349d9
   zh: f1e056d14620519d
-/deepseek-ai-dsh-official-bundles/further-exploration:
-  en: 16a331e64c81b2a5
-  zh: abfe9b1a1294b6b3
-/deepseek-ai-dsh-official-bundles/known-limitations-and-deferred-work:
-  en: 6631976cc7404166
-  zh: edb2094b17bc4009
-/deepseek-ai-dsh-official-bundles/known-limitations-and-deferred-work/dev-note:
+/tomato-official-bundles/further-exploration:
+  en: 33fc1388046277b3
+  zh: a0e4b388230a0d4d
+/tomato-official-bundles/known-limitations-and-deferred-work:
+  en: c99269847767f837
+  zh: 8349ec5d817df966
+/tomato-official-bundles/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

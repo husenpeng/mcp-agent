@@ -1,11 +1,11 @@
-import { executeToolFixture } from '@deepseek-ai/dsh-tool-testkit'
+import { executeToolFixture } from '@tomato/tool-testkit'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ToolCallId } from '@deepseek-ai/dsh-llm'
-import { SessionId } from '@deepseek-ai/dsh-session'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import type { ToolExecutionToken } from '@deepseek-ai/dsh-tools'
+import { ToolCallId } from '@tomato/llm'
+import { SessionId } from '@tomato/session'
+import type { Agent } from '@tomato/agent'
+import type { ToolExecutionToken } from '@tomato/tools'
 import * as ToolSchedule from '../src/index.ts'
-import { MAX_TITLE_LENGTH, REQUIRED_TITLE_MESSAGE, ScheduleId, createAfterScheduleRecord, scheduleDomain } from '@deepseek-ai/dsh-schedule'
+import { MAX_TITLE_LENGTH, REQUIRED_TITLE_MESSAGE, ScheduleId, createAfterScheduleRecord, scheduleDomain } from '@tomato/schedule'
 import { agentFor, harness, mountToolSchedule } from './harness.ts'
 
 const tests: Awaited<ReturnType<typeof harness>>[] = []

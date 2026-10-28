@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path'
 import { expect, it, onTestFinished } from 'vitest'
 import { officialBundleInstallTarget } from '../src/official-install-target.ts'
 
-const name = '@deepseek-ai/dsh-subagent-codex'
+const name = '@tomato/subagent-codex'
 const version = '0.2.1-alpha.1'
 
 function fixture() {
@@ -14,11 +14,11 @@ function fixture() {
   const root = realpathSync(temporary)
   const anchor = join(root, 'apps', 'cli', 'package.json')
   mkdirSync(dirname(anchor), { recursive: true })
-  writeFileSync(join(root, 'package.json'), JSON.stringify({ name: '@deepseek-ai/dsh-root' }))
-  writeFileSync(anchor, JSON.stringify({ name: '@deepseek-ai/dsh', version, dependencies: { '@deepseek-ai/dsh-app-boot': 'workspace:*' } }))
+  writeFileSync(join(root, 'package.json'), JSON.stringify({ name: '@tomato/harness' }))
+  writeFileSync(anchor, JSON.stringify({ name: '@tomato/cli', version, dependencies: { '@tomato/app-boot': 'workspace:*' } }))
   const directory = join(root, 'packages', 'relocated', 'native-provider')
   mkdirSync(join(directory, 'lib'), { recursive: true })
-  writeFileSync(join(directory, 'package.json'), JSON.stringify({ name, version, main: 'lib/index.js', dsh: { bundle: { patch: './cordis.patch.yml' } } }))
+  writeFileSync(join(directory, 'package.json'), JSON.stringify({ name, version, main: 'lib/index.js', tomato: { bundle: { patch: './cordis.patch.yml' } } }))
   writeFileSync(join(directory, 'lib', 'index.js'), 'export function apply() {}\n')
   writeFileSync(join(directory, 'cordis.patch.yml'), '[]\n')
   return { root, anchor, directory }
@@ -26,13 +26,13 @@ function fixture() {
 
 it('offers an exact prerelease registry target for a packed installation inside a checkout', () => {
   const { anchor } = fixture()
-  writeFileSync(anchor, JSON.stringify({ name: '@deepseek-ai/dsh', version, dependencies: { '@deepseek-ai/dsh-app-boot': version } }))
+  writeFileSync(anchor, JSON.stringify({ name: '@tomato/cli', version, dependencies: { '@tomato/app-boot': version } }))
   expect(officialBundleInstallTarget(name, anchor, version)).toEqual({ spec: `${name}@${version}`, version })
 })
 
 it('keeps an installation without workspace dependencies on the registry path', () => {
   const { anchor } = fixture()
-  writeFileSync(anchor, JSON.stringify({ name: '@deepseek-ai/dsh', version }))
+  writeFileSync(anchor, JSON.stringify({ name: '@tomato/cli', version }))
   expect(officialBundleInstallTarget(name, anchor, version)).toEqual({ spec: `${name}@${version}`, version })
 })
 
@@ -43,7 +43,7 @@ it('finds the package by manifest name rather than assuming its workspace direct
 
 it('follows the CLI directory link used by an unpackaged Desktop application', () => {
   const { root, anchor, directory } = fixture()
-  const link = join(root, 'desktop-runtime', 'node_modules', '@deepseek-ai', 'dsh')
+  const link = join(root, 'desktop-runtime', 'node_modules', '@tomato', 'tomato')
   mkdirSync(dirname(link), { recursive: true })
   symlinkSync(dirname(anchor), link, process.platform === 'win32' ? 'junction' : 'dir')
   expect(officialBundleInstallTarget(name, join(link, 'package.json'), version)).toEqual({ spec: `link:${directory}`, version })
@@ -70,7 +70,7 @@ it.each(['missing', 'duplicate'])('refuses a %s workspace package without offeri
 })
 
 it.each([
-  { version: '0.1.0' }, { private: true }, { dsh: {} },
+  { version: '0.1.0' }, { private: true }, { tomato: {} },
 ])('refuses a workspace package with invalid release or bundle metadata: %j', (changes) => {
   const { anchor, directory } = fixture()
   const file = join(directory, 'package.json')

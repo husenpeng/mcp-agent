@@ -3,7 +3,7 @@ description: "面向用户与维护者的进程外 ACP（Agent Client Protocol�
 kind: "package-reference"
 ---
 
-# @deepseek-ai/dsh-subagent-acp
+# @tomato/subagent-acp
 
 [English](README.md) | 中文
 
@@ -45,14 +45,14 @@ kind: "package-reference"
 
 生成的[配置目录](../../../docs/config-catalog.zh.md#deepseek-aidsh-subagent-acp)是每个受支持字段及其 JSDoc 的穷尽式真源。
 
-DeepSeek Harness 子进程使用产品启动器和一个显式的绝对路径 `TOMATO_HOME`。隔离的 home 可防止嵌套运行时发现启动者个人的 profile 或凭据；通用 ACP 提供方不会把这一要求强加给非 TOMATO agent。
+Tomato Harness 子进程使用产品启动器和一个显式的绝对路径 `TOMATO_HOME`。隔离的 home 可防止嵌套运行时发现启动者个人的 profile 或凭据；通用 ACP 提供方不会把这一要求强加给非 TOMATO agent。
 
 ```yaml
 - id: subagent-acp
-  name: '@deepseek-ai/dsh-subagent-acp'
+  name: '@tomato/subagent-acp'
   config:
     providerName: acp
-    command: dsh
+    command: tomato
     args: ['--profile', 'acp', '--patch', '/absolute/path/to/acp.patch.yml']
     permission: reject
     env:
@@ -110,9 +110,9 @@ spawn、初始化或新建会话失败会在发布前拒绝，通常先证明 ma
 当包级约定不够用时阅读以下页面。它们从本后端逐步进入它接入的 seam 与它驱动的协议。
 
 - [Subagent 子系统](../../../docs/subsystems/subagent.zh.md)——服务约定、提供方约定与终态结果语义。
-- [dsh-subagent seam](../subagent/README.zh.md)——本提供方注册于其上的注册表与启动 API。
+- [@tomato/subagent seam](../subagent/README.zh.md)——本提供方注册于其上的注册表与启动 API。
 - [Agent Client Protocol 自动化服务器](../../acp/acp/README.zh.md)——本提供方作为客户端驱动的仅自动化服务器。
-- [dsh-subprocess seam](../../subprocess/subprocess/README.zh.md)——每次运行背后的进程 spawn 与清理机制。
+- [@tomato/subprocess seam](../../subprocess/subprocess/README.zh.md)——每次运行背后的进程 spawn 与清理机制。
 - [生成配置目录](../../../docs/config-catalog.zh.md#deepseek-aidsh-subagent-acp)——每个受支持配置字段及其源声明。
 
 -----
@@ -138,7 +138,7 @@ spawn、初始化或新建会话失败会在发布前拒绝，通常先证明 ma
 
 #### 模型看到什么
 
-通过 `dsh-tool-subagent`，父模型先收到 child id，随后收到含最终或部分 assistant 文本、停止原因与安全诊断的完成通知。父会话独立保存外部任务身份和完整终态结果。中间消息与工具通信不进入父会话。
+通过 `@tomato/tool-subagent`，父模型先收到 child id，随后收到含最终或部分 assistant 文本、停止原因与安全诊断的完成通知。父会话独立保存外部任务身份和完整终态结果。中间消息与工具通信不进入父会话。
 
 #### Token 影响
 

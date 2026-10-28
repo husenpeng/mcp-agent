@@ -1,6 +1,6 @@
 /**
- * Resolve the public SDK launch configuration to one dsh subprocess.
- * @module @deepseek-ai/dsh-sdk-client/launch
+ * Resolve the public SDK launch configuration to one tomato subprocess.
+ * @module @tomato/sdk-client/launch
  */
 
 import { existsSync, readFileSync } from 'node:fs'
@@ -26,7 +26,7 @@ export interface RuntimeProcessOptions {
   disposeGraceMs?: number
 }
 
-/** Node argv plus internal profile patches required by one resolved dsh entry. */
+/** Node argv plus internal profile patches required by one resolved tomato entry. */
 export interface TomatoNodeLaunch {
   /** Arguments before the profile selector. */
   nodeArgs: string[]
@@ -47,48 +47,48 @@ function manifest(url: string): PackageManifest {
 }
 
 /**
- * Resolve and version-check a dsh executable from package manifests.
- * @param tomatoManifestUrl - resolved URL of the dsh package manifest.
+ * Resolve and version-check a tomato executable from package manifests.
+ * @param tomatoManifestUrl - resolved URL of the tomato package manifest.
  * @param clientManifestUrl - resolved URL of the SDK client manifest.
- * @returns the absolute dsh executable path.
+ * @returns the absolute tomato executable path.
  */
-export function resolveDshBinFromManifests(tomatoManifestUrl: string, clientManifestUrl: string): string {
+export function resolveTomatoBinFromManifests(tomatoManifestUrl: string, clientManifestUrl: string): string {
   const tomatoManifest = manifest(tomatoManifestUrl)
   const clientManifest = manifest(clientManifestUrl)
   if (typeof tomatoManifest.version !== 'string' || tomatoManifest.version !== clientManifest.version) {
-    throw new Error(`dsh SDK client ${String(clientManifest.version)} requires the same dsh version, got ${String(tomatoManifest.version)}`)
+    throw new Error(`tomato SDK client ${String(clientManifest.version)} requires the same tomato version, got ${String(tomatoManifest.version)}`)
   }
   const bin = typeof tomatoManifest.bin === 'object' && tomatoManifest.bin !== null
-    ? (tomatoManifest.bin as Record<string, unknown>).dsh
+    ? (tomatoManifest.bin as Record<string, unknown>).tomato
     : tomatoManifest.bin
-  if (typeof bin !== 'string' || bin === '') throw new Error('@deepseek-ai/dsh declares no dsh executable')
+  if (typeof bin !== 'string' || bin === '') throw new Error('@tomato/cli declares no tomato executable')
   return resolve(dirname(fileURLToPath(tomatoManifestUrl)), bin)
 }
 
 /**
- * Resolve and version-check the built dsh executable installed with this SDK.
+ * Resolve and version-check the built tomato executable installed with this SDK.
  * @returns the absolute built executable path, whether or not it exists in a source checkout.
  */
-export function installedDshBin(): string {
-  return resolveDshBinFromManifests(
-    import.meta.resolve('@deepseek-ai/dsh/package.json'),
+export function installedTomatoBin(): string {
+  return resolveTomatoBinFromManifests(
+    import.meta.resolve('@tomato/cli/package.json'),
     new URL('../package.json', import.meta.url).href,
   )
 }
 
 /**
- * Resolve the Node launch for one same-version dsh package.
- * @param tomatoManifestUrl - resolved URL of the dsh package manifest.
+ * Resolve the Node launch for one same-version tomato package.
+ * @param tomatoManifestUrl - resolved URL of the tomato package manifest.
  * @param clientManifestUrl - resolved URL of the SDK client manifest.
  * @param sourceLoaderUrl - optional absolute tsx loader URL for deterministic tests.
  * @returns built output, or the source entry plus its compatibility patch and tsx environment.
  */
-export function resolveDshNodeLaunchFromManifests(
+export function resolveTomatoNodeLaunchFromManifests(
   tomatoManifestUrl: string,
   clientManifestUrl: string,
   sourceLoaderUrl?: string,
 ): TomatoNodeLaunch {
-  const bin = resolveDshBinFromManifests(tomatoManifestUrl, clientManifestUrl)
+  const bin = resolveTomatoBinFromManifests(tomatoManifestUrl, clientManifestUrl)
   if (existsSync(bin)) return { nodeArgs: [bin], patches: [], environment: {} }
 
   const packageDir = dirname(fileURLToPath(tomatoManifestUrl))
@@ -97,7 +97,7 @@ export function resolveDshNodeLaunchFromManifests(
   const sourceTsconfig = resolve(packageDir, 'tsconfig.json')
   if (!existsSync(sourceBin) || !existsSync(sourcePatch) || !existsSync(sourceTsconfig)) {
     throw new Error(
-      `@deepseek-ai/dsh is missing its built executable ${bin} and complete source launch files ${sourceBin}, ${sourcePatch}, ${sourceTsconfig}`,
+      `@tomato/cli is missing its built executable ${bin} and complete source launch files ${sourceBin}, ${sourcePatch}, ${sourceTsconfig}`,
     )
   }
   const loader = sourceLoaderUrl ?? import.meta.resolve('tsx/esm')
@@ -109,29 +109,29 @@ export function resolveDshNodeLaunchFromManifests(
 }
 
 /**
- * Resolve the installed dsh package to a built or source Node launch.
+ * Resolve the installed tomato package to a built or source Node launch.
  * @returns the launch descriptor for the current checkout or installed package.
  */
-function installedDshNodeLaunch(): TomatoNodeLaunch {
-  return resolveDshNodeLaunchFromManifests(
-    import.meta.resolve('@deepseek-ai/dsh/package.json'),
+function installedTomatoNodeLaunch(): TomatoNodeLaunch {
+  return resolveTomatoNodeLaunchFromManifests(
+    import.meta.resolve('@tomato/cli/package.json'),
     new URL('../package.json', import.meta.url).href,
   )
 }
 
 /**
- * Resolve caller-relative filesystem inputs and construct canonical dsh argv.
+ * Resolve caller-relative filesystem inputs and construct canonical tomato argv.
  * @param options - public SDK launch options.
  * @param callerCwd - parent-process directory used for lexical resolution.
  * @returns one generic subprocess spec for the JSON-RPC transport.
  */
-export function resolveDshLaunch(
+export function resolveTomatoLaunch(
   options: HarnessClientOptions = {},
   callerCwd: string = process.cwd(),
 ): RuntimeProcessOptions {
   const profile = options.profile ?? 'sdk'
   const tomatoLaunch = options.tomatoBin === undefined
-    ? installedDshNodeLaunch()
+    ? installedTomatoNodeLaunch()
     : { nodeArgs: [resolve(callerCwd, options.tomatoBin)], patches: [], environment: {} }
   const patches = [
     ...tomatoLaunch.patches,
@@ -147,7 +147,7 @@ export function resolveDshLaunch(
       ...tomatoLaunch.environment,
       ...tomatoHome === undefined ? {} : { TOMATO_HOME: tomatoHome },
     }),
-    description: `dsh profile ${JSON.stringify(profile)}`,
+    description: `tomato profile ${JSON.stringify(profile)}`,
     initializeTimeoutMs: options.initializeTimeoutMs ?? DEFAULT_INITIALIZE_TIMEOUT_MS,
     ...options.requestTimeoutMs === undefined ? {} : { requestTimeoutMs: options.requestTimeoutMs },
     ...options.shutdownTimeoutMs === undefined ? {} : { shutdownTimeoutMs: options.shutdownTimeoutMs },

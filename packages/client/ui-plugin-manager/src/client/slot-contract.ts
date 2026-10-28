@@ -18,9 +18,9 @@
  * all. The page draws the title, icon, and crumb itself.
  */
 
-import type {} from '@deepseek-ai/dsh-client-ui-slots'
-import type { BundleInfo } from '@deepseek-ai/dsh-api-remotes/client'
-import type { ConfigForm, ConfigFormSnapshot } from '@deepseek-ai/dsh-client-ui-settings/client'
+import type {} from '@tomato/client-ui-slots'
+import type { BundleInfo } from '@tomato/api-remotes/client'
+import type { ConfigForm, ConfigFormSnapshot } from '@tomato/client-ui-settings/client'
 
 /** The view the page asks a configuration entry for. */
 export interface PluginConfigViewProps {
@@ -112,7 +112,7 @@ export interface PluginAddActionsProps {
   readonly onDismiss: () => void
 }
 
-declare module '@deepseek-ai/dsh-client-ui-slots' {
+declare module '@tomato/client-ui-slots' {
   interface SlotMap {
     /** Additional MenuItemButton rows after installation: 72px high, with a title and a description capped at two lines. */
     'plugins.add.actions': { kind: 'list'; scope: 'root'; owner: PluginAddActionsProps }

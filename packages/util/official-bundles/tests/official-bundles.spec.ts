@@ -6,9 +6,9 @@ import { OFFICIAL_ON_DEMAND_CATALOG, ON_DEMAND_BUNDLES, PROFILE_TEMPLATES } from
 describe('Official on-demand catalog', () => {
   it('offers every admitted runtime-bearing bundle with offline localized metadata', () => {
     expect(ON_DEMAND_BUNDLES).toEqual([
-      '@deepseek-ai/dsh-subagent-claude-code',
-      '@deepseek-ai/dsh-subagent-codex',
-      '@deepseek-ai/dsh-experimental-browser-use-playwright-bundle',
+      '@tomato/subagent-claude-code',
+      '@tomato/subagent-codex',
+      '@tomato/experimental-browser-use-playwright-bundle',
     ])
     expect(OFFICIAL_ON_DEMAND_CATALOG.map(entry => entry.packageName)).toEqual(ON_DEMAND_BUNDLES)
     for (const entry of OFFICIAL_ON_DEMAND_CATALOG) {
@@ -26,11 +26,11 @@ describe('Official on-demand catalog', () => {
 describe('Shipped profile templates', () => {
   it('stack each mode bundle on base except the standalone minimal SDK', () => {
     expect(PROFILE_TEMPLATES).toEqual({
-      acp: { bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-acp-app'] },
-      web: { bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app'] },
-      headless: { bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-headless'] },
-      sdk: { bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-sdk-app'] },
-      'sdk-minimal': { bundles: ['@deepseek-ai/dsh-sdk-minimal'] },
+      acp: { bundles: ['@tomato/base', '@tomato/acp-app'] },
+      web: { bundles: ['@tomato/base', '@tomato/web-app'] },
+      headless: { bundles: ['@tomato/base', '@tomato/headless'] },
+      sdk: { bundles: ['@tomato/base', '@tomato/sdk-app'] },
+      'sdk-minimal': { bundles: ['@tomato/sdk-minimal'] },
     })
   })
 })

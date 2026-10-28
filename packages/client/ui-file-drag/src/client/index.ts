@@ -1,11 +1,11 @@
 /** Cordis-owned file transfers and localized feedback shared across independent entries. */
-import type { Context } from '@deepseek-ai/cordis'
-import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
-import type { DesktopFileDrag } from '@deepseek-ai/dsh-util-file-drag'
-import type { FileDragActions } from '@deepseek-ai/dsh-client-ui-primitives'
-import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
-import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
-import type {} from '@deepseek-ai/dsh-client-locale/client'
+import type { Context } from '@tomato/cordis'
+import { createSnapshotStore } from '@tomato/client-store'
+import type { DesktopFileDrag } from '@tomato/util-file-drag'
+import type { FileDragActions } from '@tomato/client-ui-primitives'
+import type {} from '@tomato/client-ui-renderer/client'
+import type {} from '@tomato/client-ui-layout/client'
+import type {} from '@tomato/client-locale/client'
 import { FileDragFeedback, type FileDragFailure, type FileDragFeedbackInjected } from './feedback.tsx'
 import { FileTransfers } from './transfers.ts'
 import { en, ja, es, fr, de, ru, pt, zh } from './locales.ts'
@@ -17,7 +17,7 @@ export interface FileDragService {
   readonly read: (transfer: DataTransfer) => File | undefined
 }
 
-declare module '@deepseek-ai/cordis' {
+declare module '@tomato/cordis' {
   interface Context {
     /** File transfer ownership scoped to this plugin's lifetime. */
     fileDrag: FileDragService

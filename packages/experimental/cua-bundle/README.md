@@ -3,7 +3,7 @@ description: "Enable optional macOS Computer Use and its permission page."
 kind: "package-bundle"
 ---
 
-# @deepseek-ai/dsh-cua-bundle
+# @tomato/cua-bundle
 
 English | [中文](README.zh.md)
 
@@ -28,7 +28,7 @@ This workflow targets developers running macOS Web or unpackaged Desktop from so
 
 ```sh
 pnpm run build
-pnpm dsh web
+pnpm tomato web
 ```
 
 For the source Desktop launcher and its separate development profile, follow [Desktop development](../../../apps/desktop/README.md). Enable Computer Use in each profile that needs it.

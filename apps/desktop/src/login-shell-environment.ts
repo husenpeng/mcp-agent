@@ -5,7 +5,7 @@ import { homedir, userInfo } from 'node:os'
 import type { Readable } from 'node:stream'
 import { resolveDurationMs } from './duration-env.ts'
 
-const DELIMITER = '_DSH_SHELL_ENV_DELIMITER_'
+const DELIMITER = '_TOMATO_SHELL_ENV_DELIMITER_'
 const MARKER = Buffer.from(`\0${DELIMITER}\0`)
 const DUMP = `printf '\\0%s\\0' '${DELIMITER}'; command env -0 || exit; printf '\\0%s\\0' '${DELIMITER}'; exit`
 const FALLBACK_SHELLS = ['/bin/zsh', '/bin/bash', '/bin/sh'] as const

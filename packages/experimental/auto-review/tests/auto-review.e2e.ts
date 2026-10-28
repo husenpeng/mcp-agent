@@ -1,33 +1,33 @@
-import * as PtcToolExecutor from '@deepseek-ai/dsh-tool-executor-ptc'
+import * as PtcToolExecutor from '@tomato/tool-executor-ptc'
 import { randomUUID } from 'node:crypto'
-import { provideWorkingDirectoryFixture, mountAgentLoopTestDependencies } from '@deepseek-ai/dsh-agent-loop-testkit'
+import { provideWorkingDirectoryFixture, mountAgentLoopTestDependencies } from '@tomato/agent-loop-testkit'
 import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { Context } from '@deepseek-ai/cordis'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import AgentLoop from '@deepseek-ai/dsh-agent-loop'
-import { SandboxBashExecutor } from '@deepseek-ai/dsh-bash-sandbox'
-import { NodePtcRuntime } from '@deepseek-ai/dsh-ptc-runtime-node'
-import * as FsObservationPolicy from '@deepseek-ai/dsh-fs-observation-policy'
-import { SandboxedFileSystem } from '@deepseek-ai/dsh-fs-sandbox'
+import { Context } from '@tomato/cordis'
+import type { Agent } from '@tomato/agent'
+import AgentLoop from '@tomato/agent-loop'
+import { SandboxBashExecutor } from '@tomato/bash-sandbox'
+import { NodePtcRuntime } from '@tomato/ptc-runtime-node'
+import * as FsObservationPolicy from '@tomato/fs-observation-policy'
+import { SandboxedFileSystem } from '@tomato/fs-sandbox'
 import {
   createUserMessage, isAgentLoopRequest, ToolCallId,
   type StreamChunk,
-} from '@deepseek-ai/dsh-llm'
-import * as LlmDeepSeek from '@deepseek-ai/dsh-llm-deepseek-api-key'
-import PermissionPresetService, { AUTO_PRESET } from '@deepseek-ai/dsh-permission-presets'
-import SandboxProvider, { type ConfinedArgv, type SandboxPolicy } from '@deepseek-ai/dsh-sandbox'
-import SandboxPolicyService from '@deepseek-ai/dsh-sandbox-policy'
-import { SessionId, type SessionEvent } from '@deepseek-ai/dsh-session'
-import * as ShellEnv from '@deepseek-ai/dsh-shell-env'
-import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
-import * as ToolBash from '@deepseek-ai/dsh-tool-bash'
-import * as ToolFs from '@deepseek-ai/dsh-tool-fs'
-import { RUN_CODE_NAME } from '@deepseek-ai/dsh-tools'
-import ApprovalService, { setApprovalPolicy } from '@deepseek-ai/dsh-user-approval'
+} from '@tomato/llm'
+import * as LlmDeepSeek from '@tomato/llm-deepseek-api-key'
+import PermissionPresetService, { AUTO_PRESET } from '@tomato/permission-presets'
+import SandboxProvider, { type ConfinedArgv, type SandboxPolicy } from '@tomato/sandbox'
+import SandboxPolicyService from '@tomato/sandbox-policy'
+import { SessionId, type SessionEvent } from '@tomato/session'
+import * as ShellEnv from '@tomato/shell-env'
+import LocalSubprocessRuntime from '@tomato/subprocess-local'
+import * as ToolBash from '@tomato/tool-bash'
+import * as ToolFs from '@tomato/tool-fs'
+import { RUN_CODE_NAME } from '@tomato/tools'
+import ApprovalService, { setApprovalPolicy } from '@tomato/user-approval'
 import { expect, it, vi } from 'vitest'
-import * as AutoReview from '@deepseek-ai/dsh-experimental-auto-review'
+import * as AutoReview from '@tomato/experimental-auto-review'
 
 const PROVIDER = 'deepseek-official'
 const FLASH = 'deepseek-v4-flash'
@@ -252,13 +252,13 @@ it('certifies eight Auto risk/authorization cases with zero retries and zero ski
   retry: 0, timeout: 1_800_000,
 }, async () => {
   if (REAL && !process.env.DEEPSEEK_API_KEY) throw new Error('Real Auto certification requires DEEPSEEK_API_KEY')
-  const root = await mkdtemp(join(tmpdir(), 'dsh-auto-review-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-auto-review-'))
   const ctx = new Context()
   provideWorkingDirectoryFixture(ctx)
   try {
     await chmod(root, 0o700)
     const workspace = join(root, 'workspace')
-    const tomatoHome = join(root, 'dsh-home')
+    const tomatoHome = join(root, 'tomato-home')
     await mkdir(workspace)
     await mkdir(tomatoHome, { mode: 0o700 })
     vi.stubEnv('TOMATO_HOME', tomatoHome)
@@ -361,7 +361,7 @@ it('certifies eight Auto risk/authorization cases with zero retries and zero ski
 it.each(['native', 'ptc-inner'] as const)('feeds denial back, re-reviews a new call and accepts narrowed work through %s', {
   retry: 0,
 }, async (path) => {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-auto-review-recovery-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-auto-review-recovery-'))
   const ctx = new Context()
   provideWorkingDirectoryFixture(ctx)
   try {

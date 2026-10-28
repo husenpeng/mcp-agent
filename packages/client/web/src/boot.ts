@@ -3,12 +3,12 @@
  * framework-free boot page; plugin composition and the renderer handoff are
  * `bootClient` and `mountClient`. The dynamic UI renderer receives the mount
  * point after every client entry activates.
- * @module @deepseek-ai/dsh-client-web/src/boot
+ * @module @tomato/client-web/src/boot
  */
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@tomato/cordis'
 import type {
   BootManifest, ClientModuleCreateOptions, ClientModuleSystem, TomatoWindow,
-} from '@deepseek-ai/dsh-client-modules/client'
+} from '@tomato/client-modules/client'
 import { bootClient } from './boot-client.ts'
 import { BootPage } from './boot-page.ts'
 import { mountClient } from './mount.ts'
@@ -54,7 +54,7 @@ export class AppWebEntry {
       // next microtask; an asynchronous bootstrap resolves it after its last
       // row, or rejects it into the failure rendering below. An absent global
       // means no bootstrap owns the document and there is nothing to wait for.
-      await (globalThis as { __DSH_BOOT_READY__?: { promise: Promise<void> } }).__DSH_BOOT_READY__?.promise
+      await (globalThis as { __TOMATO_BOOT_READY__?: { promise: Promise<void> } }).__TOMATO_BOOT_READY__?.promise
       const win = globalThis as TomatoWindow
       const moduleLoader = win.__ModuleLoader__
       if (moduleLoader === undefined) {
@@ -62,14 +62,14 @@ export class AppWebEntry {
       }
       // A pre-injected transport (the worker preview page) owns bundle and asset
       // bytes; its loadBundle and resolveAsset are the defaults and explicit seams still win. The global
-      // is `ClientTransportHooks`, owned by @deepseek-ai/dsh-client-connection;
+      // is `ClientTransportHooks`, owned by @tomato/client-connection;
       // this structural slice reads two optional members without adding a
       // package edge.
       const transport = (globalThis as {
-        __DSH_TRANSPORT__?: Pick<ClientModuleCreateOptions, 'loadBundle' | 'resolveAsset'>
-      }).__DSH_TRANSPORT__
+        __TOMATO_TRANSPORT__?: Pick<ClientModuleCreateOptions, 'loadBundle' | 'resolveAsset'>
+      }).__TOMATO_TRANSPORT__
       this.modules = moduleLoader.create({
-        boot: win.__DSH_BOOT__,
+        boot: win.__TOMATO_BOOT__,
         staticModules: getStaticModules(),
         ...transport?.loadBundle === undefined ? {} : { loadBundle: transport.loadBundle },
         ...transport?.resolveAsset === undefined ? {} : { resolveAsset: transport.resolveAsset },

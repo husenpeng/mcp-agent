@@ -24,7 +24,7 @@ pnpm run dev:desktop
 | `POST /api/auth/logout` | 尽力吊销 auth_service 会话并清 cookie |
 | `/api/services/<service>/<path>` | 固定服务表转发，注入已验证 userId |
 
-`dev:desktop` 首次运行会准备 Electron 与 primary-runtime，可能下载数百 MB；后续启动走缓存。开发态的 Harness home 在 `apps/desktop/.desktop-build/development/home`，不会污染日常使用的 `~/.dsh`。
+`dev:desktop` 首次运行会准备 Electron 与 primary-runtime，可能下载数百 MB；后续启动走缓存。开发态的 Harness home 在 `apps/desktop/.desktop-build/development/home`，不会污染日常使用的 `~/.tomato`。
 
 模型不在网关中：启动后在「设置 → 模型」用 **Add model provider → Custom model API** 配置一个第三方 OpenAI 或 Anthropic 兼容端点，再在输入框的模型选择器里选中一个模型。
 

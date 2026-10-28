@@ -44,7 +44,7 @@ const sign = process.argv.includes('--signed') ? createWindowsTokenSigner({
 let succeeded = false
 try {
   Object.assign(process.env, {
-    TOMATO_DESKTOP_APP_ID: `com.deepseek.harness.installertest.n${id}`,
+    TOMATO_DESKTOP_APP_ID: `vip.tomatoai.harness.installertest.n${id}`,
     TOMATO_DESKTOP_TARGET_PLATFORM: 'win32', TOMATO_DESKTOP_TARGET_ARCH: 'x64',
     TOMATO_DESKTOP_UNSIGNED: '1', CSC_IDENTITY_AUTO_DISCOVERY: 'false', ELECTRON_BUILDER_7Z_FILTER: 'BCJ',
     TOMATO_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN: signingEnvironment.TOMATO_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN

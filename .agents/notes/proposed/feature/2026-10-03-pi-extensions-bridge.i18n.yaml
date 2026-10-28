@@ -3,11 +3,11 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/proposed/feature/2026-10-03-pi-extensions-bridge.md
 /agent-note-pi-extensions-bridge:
-  en: cd9f68956ba34672
-  zh: 1fc649c5eb0d3cf4
+  en: a788d6c432a61dfd
+  zh: 6abf4edc1054d984
 /agent-note-pi-extensions-bridge/problem:
-  en: eb4d3f10c3feedb4
-  zh: a1a1a75a724c9a8b
+  en: 725f1ae604c9767d
+  zh: d4a233d7f98b4c93
 /agent-note-pi-extensions-bridge/proposal:
   en: 56b36193ca6f829d
   zh: a31e226794c1ca90
@@ -27,11 +27,11 @@
   en: 70c74cf93526cfad
   zh: cab3efc2c109ad5a
 /agent-note-pi-extensions-bridge/proposal/extension-state:
-  en: be58f498b8d28548
-  zh: 4cc057f794c288bf
+  en: 77dc3b7e726a0924
+  zh: d4b0748c91a4c745
 /agent-note-pi-extensions-bridge/proposal/core-mechanisms-narrower-than-pi-s:
-  en: 9fa8297436332064
-  zh: 9a000e157940b0f8
+  en: 703e397a165e6d77
+  zh: 1c6158b270ff7f86
 /agent-note-pi-extensions-bridge/alternatives-considered:
   en: a3769b960278c17f
   zh: e7d86ff1aff243b8

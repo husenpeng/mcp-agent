@@ -5,60 +5,60 @@
 /:
   en: ab82ac4bcc012854
   zh: 3e2a2326e66f4bc3
-/deepseek-ai-dsh-skill:
-  en: 083f1e1c7ffedaad
-  zh: e52812b66ea22539
-/deepseek-ai-dsh-skill/summary:
-  en: dac8069f518e183c
-  zh: 2e4f2983030f9270
-/deepseek-ai-dsh-skill/table-of-contents:
+/tomato-skill:
+  en: ba0b4deb9d43cb52
+  zh: 072fb64f18978651
+/tomato-skill/summary:
+  en: a7551432fe4ddac3
+  zh: ca66d7016d6694ef
+/tomato-skill/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
-/deepseek-ai-dsh-skill/use-this-package:
+/tomato-skill/use-this-package:
   en: cb13ae81a3e0ae68
   zh: e709d66f4b6b4dd5
-/deepseek-ai-dsh-skill/use-this-package/when-to-choose-it:
-  en: ce05cda6706f18b7
-  zh: 3262ebdaf645cb9a
-/deepseek-ai-dsh-skill/use-this-package/mount-and-configure:
-  en: b8f130e081d14307
-  zh: d227ad3298b20238
-/deepseek-ai-dsh-skill/use-this-package/what-the-registry-gives-you:
+/tomato-skill/use-this-package/when-to-choose-it:
+  en: 72cb97ba6b1db6eb
+  zh: 907eb7245fadd478
+/tomato-skill/use-this-package/mount-and-configure:
+  en: 567c9937cf3eba42
+  zh: 40cedbc91d759e5e
+/tomato-skill/use-this-package/what-the-registry-gives-you:
   en: f5ae9747d07c97d1
   zh: c38d695418ff9a63
-/deepseek-ai-dsh-skill/use-this-package/observable-success-and-failures:
+/tomato-skill/use-this-package/observable-success-and-failures:
   en: d181454439ef7408
   zh: 2eecad070bd13b98
-/deepseek-ai-dsh-skill/understand-the-implementation:
+/tomato-skill/understand-the-implementation:
   en: 89be1dad151abb04
   zh: 9a1915c4d55bb9d2
-/deepseek-ai-dsh-skill/understand-the-implementation/design-concept:
+/tomato-skill/understand-the-implementation/design-concept:
   en: c0fb1850f00f24b1
   zh: 226883ab5635435d
-/deepseek-ai-dsh-skill/understand-the-implementation/source-map:
+/tomato-skill/understand-the-implementation/source-map:
   en: c7f6f2ecb227c68b
   zh: b2e924975aec9692
-/deepseek-ai-dsh-skill/understand-the-implementation/catalog-collection:
+/tomato-skill/understand-the-implementation/catalog-collection:
   en: 58a9b57dc504b69f
   zh: 8fe8011247bc3f2b
-/deepseek-ai-dsh-skill/understand-the-implementation/loading-and-staleness:
+/tomato-skill/understand-the-implementation/loading-and-staleness:
   en: 95217bff7a97e5f8
   zh: c22a670954f0f0c6
-/deepseek-ai-dsh-skill/understand-the-implementation/invalidation:
+/tomato-skill/understand-the-implementation/invalidation:
   en: d73258316127f5b5
   zh: ddc6690f88922782
-/deepseek-ai-dsh-skill/further-exploration:
-  en: 6aeabc2349d39438
-  zh: 91855eb502e5f12f
-/deepseek-ai-dsh-skill/model-experience:
-  en: 84f7d6e986f88425
-  zh: 0fdc2326d8efb13e
-/deepseek-ai-dsh-skill/model-experience/kv-cache-effect:
+/tomato-skill/further-exploration:
+  en: 453efa5b2c361b46
+  zh: beb37b33207071a3
+/tomato-skill/model-experience:
+  en: eb608efbf2c3e828
+  zh: 0d882e739b2982b5
+/tomato-skill/model-experience/kv-cache-effect:
   en: 628a45ff9f6b0e74
   zh: fda70b0eed2df1d7
-/deepseek-ai-dsh-skill/known-limitations-and-deferred-work:
+/tomato-skill/known-limitations-and-deferred-work:
   en: c5456e001203fd7a
   zh: 3cc6fa50700eec13
-/deepseek-ai-dsh-skill/known-limitations-and-deferred-work/dev-note:
+/tomato-skill/known-limitations-and-deferred-work/dev-note:
   en: 259ce6914314397d
   zh: d500b1f988a83999

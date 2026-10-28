@@ -49,7 +49,7 @@ describe('desktop macOS release signature', () => {
   it('loads release identifiers from the environment and requires code signing', async () => {
     const { createElectronBuilderConfig } = await import('../electron-builder.config.mjs')
     const config = createElectronBuilderConfig(RELEASE_ENVIRONMENT, 'darwin', 'arm64')
-    expect(config.protocols).toEqual([{ name: 'Tomato AI', schemes: ['dsh'] }])
+    expect(config.protocols).toEqual([{ name: 'Tomato AI', schemes: ['tomato'] }])
     expect(portablePath(config.directories.output)).toContain('/.desktop-build/targets/mac-arm64/artifacts')
     expect(config.mac.extendInfo.NSMicrophoneUsageDescription).toContain('microphone')
     expect(config.mac.extendInfo.CFBundleLocalizations).toEqual(SHIPPED_LOCALE_IDS.map(id => id === 'zh' ? 'zh_CN' : id))
@@ -66,10 +66,10 @@ describe('desktop macOS release signature', () => {
     if (!tomatoFiles || !tomatoNodeModules || typeof tomatoFiles === 'string' || typeof tomatoNodeModules === 'string') {
       throw new Error('desktop TOMATO resources must use electron-builder file mappings')
     }
-    expect(portablePath(tomatoFiles.from)).toContain('/.desktop-build/targets/mac-arm64/dsh')
-    expect(tomatoFiles.to).toBe('dsh')
-    expect(portablePath(tomatoNodeModules.from)).toContain('/.desktop-build/targets/mac-arm64/dsh/node_modules')
-    expect(tomatoNodeModules.to).toBe('dsh/node_modules')
+    expect(portablePath(tomatoFiles.from)).toContain('/.desktop-build/targets/mac-arm64/tomato')
+    expect(tomatoFiles.to).toBe('tomato')
+    expect(portablePath(tomatoNodeModules.from)).toContain('/.desktop-build/targets/mac-arm64/tomato/node_modules')
+    expect(tomatoNodeModules.to).toBe('tomato/node_modules')
     expect(config.asarUnpack).toEqual(expect.arrayContaining([
       '**/*.{node,dylib,dll,so,exe}',
       '**/@vscode/ripgrep-*/bin/rg',
@@ -80,7 +80,7 @@ describe('desktop macOS release signature', () => {
         identity: RELEASE_ENVIRONMENT.TOMATO_DESKTOP_MACOS_SIGNING_IDENTITY,
         forceCodeSigning: true,
         notarize: true,
-        signIgnore: ['/Contents/Resources/app\\.asar\\.unpacked/dsh(?:/|$)', '/Contents/Resources/runtime/primary-runtime(?:/|$)', '\\.pak$'],
+        signIgnore: ['/Contents/Resources/app\\.asar\\.unpacked/tomato(?:/|$)', '/Contents/Resources/runtime/primary-runtime(?:/|$)', '\\.pak$'],
       },
       dmg: {
         format: 'ULMO',
@@ -89,7 +89,7 @@ describe('desktop macOS release signature', () => {
       },
       publish: [{
         provider: 'generic',
-        url: 'https://desktop-updates.example.com/dsh-desk/0123456789abcdef0123456789abcdef/feeds/mac-arm64/',
+        url: 'https://desktop-updates.example.com/tomato-desk/0123456789abcdef0123456789abcdef/feeds/mac-arm64/',
         channel: 'nightly',
       }],
     })
@@ -252,8 +252,8 @@ describe('desktop macOS release signature', () => {
       appleApiIssuer: RELEASE_ENVIRONMENT.APPLE_API_ISSUER,
     })
     expect(resolveMacOSNotarizationEnvironment({
-      APPLE_KEYCHAIN_PROFILE: 'dsh-notary',
-    })).toEqual({ keychainProfile: 'dsh-notary' })
+      APPLE_KEYCHAIN_PROFILE: 'tomato-notary',
+    })).toEqual({ keychainProfile: 'tomato-notary' })
     expect(() => resolveMacOSNotarizationEnvironment({})).toThrow(/macOS packaging requires/u)
     expect(() => resolveMacOSNotarizationEnvironment({ APPLE_API_KEY: '/tmp/key.p8' })).toThrow(/APPLE_API_KEY_ID/u)
   })

@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-ptc-runtime-node",
+  "name": "@tomato/ptc-runtime-node",
   "description": "Node PTC execution with per-call sandboxed processes or in-memory REPL state",
   "version": "0.2.1-rc.3",
   "publishConfig": {
@@ -34,32 +34,32 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-ptc-runtime": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-timeout": "workspace:*",
-    "@deepseek-ai/dsh-fs": "workspace:*",
-    "@deepseek-ai/dsh-subprocess": "workspace:*",
-    "@deepseek-ai/dsh-sandbox": "workspace:*",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/ptc-runtime": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/timeout": "workspace:*",
+    "@tomato/fs": "workspace:*",
+    "@tomato/subprocess": "workspace:*",
+    "@tomato/sandbox": "workspace:*",
+    "@tomato/sandbox-policy": "workspace:*"
   },
   "dependencies": {
-    "@deepseek-ai/dsh-util-values": "workspace:*",
-    "@deepseek-ai/schemastery": "workspace:~",
+    "@tomato/util-values": "workspace:*",
+    "@tomato/schemastery": "workspace:~",
     "birpc": "4.2.0"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-ptc-runtime": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-timeout": "workspace:*",
-    "@deepseek-ai/dsh-fs": "workspace:*",
-    "@deepseek-ai/dsh-subprocess": "workspace:*",
-    "@deepseek-ai/dsh-sandbox": "workspace:*",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:*",
-    "@deepseek-ai/dsh-fs-local": "workspace:*",
-    "@deepseek-ai/dsh-subprocess-local": "workspace:*",
-    "@deepseek-ai/dsh-session-projection": "workspace:*",
-    "@deepseek-ai/dsh-sandbox-local": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/ptc-runtime": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/timeout": "workspace:*",
+    "@tomato/fs": "workspace:*",
+    "@tomato/subprocess": "workspace:*",
+    "@tomato/sandbox": "workspace:*",
+    "@tomato/sandbox-policy": "workspace:*",
+    "@tomato/fs-local": "workspace:*",
+    "@tomato/subprocess-local": "workspace:*",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/sandbox-local": "workspace:*"
   }
 }

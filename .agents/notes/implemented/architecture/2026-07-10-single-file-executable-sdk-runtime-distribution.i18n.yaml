@@ -3,8 +3,8 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-07-10-single-file-executable-sdk-runtime-distribution.md
 /agent-note-single-file-executable-sdk-runtime-distribution-single-exe:
-  en: 00b5d91d3e44a9f8
-  zh: eabd3c4b338249b3
+  en: 7a4b5d926e1fb8ef
+  zh: c571573ba148c4fd
 /agent-note-single-file-executable-sdk-runtime-distribution-single-exe/problem:
   en: 112178b76e5209f6
   zh: 68726254ae530566
@@ -15,26 +15,26 @@
   en: f1c2b60e9474111d
   zh: 5de398b5e8554429
 /agent-note-single-file-executable-sdk-runtime-distribution-single-exe/decision/the-serving-interface-is-a-plugin-inside-the-dsh-application:
-  en: 5fdde26e9e8c6108
-  zh: 629559d733c1f0c5
+  en: 5ed174a35725d3e8
+  zh: b42669694f52ab0e
 /agent-note-single-file-executable-sdk-runtime-distribution-single-exe/decision/plugin-resolution-the-vfs-holds-a-real-package-tree-the-closure-manifest-is-the-deploy-root:
-  en: 985e0eb63f3d1fd6
-  zh: 337cc44fadc6227e
+  en: c327c9f6aef7382d
+  zh: b24519122813777d
 /agent-note-single-file-executable-sdk-runtime-distribution-single-exe/decision/build-pipeline-and-artifacts:
-  en: 9d885e8d58bc8bbb
-  zh: 41a9779fbdea8a1a
+  en: 1f0cd3cb2fb75446
+  zh: 4416643a5963652d
 /agent-note-single-file-executable-sdk-runtime-distribution-single-exe/decision/python-sdk-distribution-two-carriers-exe-for-production-node-for-development:
-  en: b2a740a1ab7a5002
-  zh: a48be6ca6fc65912
+  en: 7fdb74765fab926d
+  zh: 8899d7bae6926ff8
 /agent-note-single-file-executable-sdk-runtime-distribution-single-exe/decision/naming-lineage:
   en: 31a5aecb8bf828bb
   zh: 2dffb6fd2e0f8194
 /agent-note-single-file-executable-sdk-runtime-distribution-single-exe/packaged-workflow-and-code-execution:
-  en: 0426f598f3f44e64
-  zh: fc66728e17f3bcfb
+  en: 1509a4d5b594b0bd
+  zh: a02ccb8c3d843412
 /agent-note-single-file-executable-sdk-runtime-distribution-single-exe/testing:
-  en: 8e7f46bbb595afa9
-  zh: 4641894ed285d717
+  en: 73fd7fe00df509e3
+  zh: 183dccb34922de8d
 /agent-note-single-file-executable-sdk-runtime-distribution-single-exe/alternatives-considered:
   en: 50d965ca81a401ba
   zh: 0c6296245b97b9ac

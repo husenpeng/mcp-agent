@@ -7,11 +7,11 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import type {
   IncompatiblePlugin, PluginUpdateResult, PluginUpdateStep, PluginVersion, PluginVersionList, Registry, RegistryAttempt,
-} from '@deepseek-ai/dsh-api-remotes/client'
+} from '@tomato/api-remotes/client'
 import {
   Button, Checkbox, IconCheckOutlineRegular, IconChevronDownOutlineRegular, IconChevronRightOutlineRegular, IconCloseOutlineRegular,
   IconDownloadOutlineRegular, IconRefreshOutlineRegular, IconWarningOutlineRegular, Modal, StateDot, Tag, Tooltip,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@tomato/client-ui-primitives'
 import { installable, updateCandidate, type PackageView, type UpdateState, type VersionCheck } from './manager-store.ts'
 import { managementText, registryText, restartText, type Translate } from './presentation.ts'
 import css from './PluginManagerPage.module.css'
@@ -42,7 +42,7 @@ function registryName(registry: Registry, t: Translate): string {
   return registryText(registry, t, null).name
 }
 
-/** The TOMATO requirements an incompatible version states, as one phrase: `engines.dsh` or TOMATO peer ranges. */
+/** The TOMATO requirements an incompatible version states, as one phrase: `engines.tomato` or TOMATO peer ranges. */
 function peersText(incompatible: IncompatiblePlugin): string {
   return Object.entries(incompatible.requirements).map(([name, range]) => `${name} ${range}`).join(', ')
 }

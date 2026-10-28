@@ -3,12 +3,12 @@ import {
   RemoteStream,
   RemoteStreamCarrierError,
   type RemoteStreamOptions,
-} from '@deepseek-ai/dsh-api-gateway/client'
-import { RemoteError } from '@deepseek-ai/dsh-typert-protocol'
-import { streamHandle } from '@deepseek-ai/dsh-remote-mock'
-import { LlmAttemptId } from '@deepseek-ai/dsh-llm'
-import { SESSION_FORMAT_VERSION } from '@deepseek-ai/dsh-session/types'
-import type { RemoteResult, RemoteStreamHandle } from '@deepseek-ai/dsh-typert-protocol'
+} from '@tomato/api-gateway/client'
+import { RemoteError } from '@tomato/typert-protocol'
+import { streamHandle } from '@tomato/remote-mock'
+import { LlmAttemptId } from '@tomato/llm'
+import { SESSION_FORMAT_VERSION } from '@tomato/session/types'
+import type { RemoteResult, RemoteStreamHandle } from '@tomato/typert-protocol'
 import {
   createSessionControlStream,
   SessionEventStream,

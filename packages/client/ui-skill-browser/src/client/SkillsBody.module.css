@@ -7,7 +7,7 @@
   height: 100%;
   min-height: 0;
   color: var(--dsw-alias-label-primary);
-  font-size: var(--dsh-content-font-size-secondary, 13px);
+  font-size: var(--tomato-content-font-size-secondary, 13px);
   line-height: 1.5;
   container-type: inline-size;
 }
@@ -208,7 +208,7 @@
   height: 32px;
   border-radius: var(--dsw-radius-md);
   background: var(--dsw-alias-bg-skeleton);
-  animation: dsh-skill-browser-skeleton 2s cubic-bezier(0.36, 0, 0.64, 1) infinite;
+  animation: tomato-skill-browser-skeleton 2s cubic-bezier(0.36, 0, 0.64, 1) infinite;
 }
 
 /* The chip's title glyph, matching the folder sheet of the workspace tree. */
@@ -235,7 +235,7 @@
   }
 }
 
-@keyframes dsh-skill-browser-skeleton {
+@keyframes tomato-skill-browser-skeleton {
   0% { opacity: 1; }
   40% { opacity: 0.6; }
   80%, 100% { opacity: 1; }

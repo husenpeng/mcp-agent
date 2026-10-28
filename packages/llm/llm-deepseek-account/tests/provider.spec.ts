@@ -2,10 +2,10 @@
 import { createServer } from 'node:http'
 import type { IncomingMessage, Server, ServerResponse } from 'node:http'
 import { afterEach, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import LlmRuntime, { ReasoningEffortId } from '@deepseek-ai/dsh-llm'
-import type { DeepSeekAccount } from '@deepseek-ai/dsh-deepseek-account'
-import * as ApiKey from '@deepseek-ai/dsh-llm-deepseek-api-key'
+import { Context } from '@tomato/cordis'
+import LlmRuntime, { ReasoningEffortId } from '@tomato/llm'
+import type { DeepSeekAccount } from '@tomato/deepseek-account'
+import * as ApiKey from '@tomato/llm-deepseek-api-key'
 import * as Account from '../src/index.ts'
 
 const MESSAGES = { output_modalities: ['text'], api_capabilities: { anthropic_messages: {} } }
@@ -77,7 +77,7 @@ it('keeps discovery and disposal independent across the two credential routes', 
   expect(await ctx.llm.listModels('deepseek-account')).toEqual([])
   token = 'second-account-token'
   expect(await ctx.llm.listModels('deepseek-account')).toHaveLength(2)
-  expect(server.requests.map(request => request.headers['x-dsh-auth-token'])).toEqual(['fixture-account-token', 'second-account-token'])
+  expect(server.requests.map(request => request.headers['x-tomato-auth-token'])).toEqual(['fixture-account-token', 'second-account-token'])
   await account.dispose()
   expect(ctx.llm.listProviders().map(row => row.id)).toEqual(['deepseek-official'])
   await official.dispose()
@@ -124,7 +124,7 @@ it('hides and refuses listed models this build cannot serve before any inference
   await expect(ctx.llm.prepareCall({ provider: 'deepseek-account', model: 'deepseek-v5' })).rejects.toMatchObject({ code: 'MODEL_UNSUPPORTED' })
   await expect(ctx.llm.prepareCall({ provider: 'deepseek-account', model: 'deepseek-v4-pro' })).rejects.toMatchObject({ code: 'MODEL_UNSUPPORTED' })
   await expect(ctx.llm.prepareCall({ provider: 'deepseek-account', model: 'deepseek-v5-next' }))
-    .rejects.toMatchObject({ code: 'CLIENT_UPGRADE_REQUIRED', message: expect.stringMatching(/requires DeepSeek Harness 99\.0\.0-alpha\.1 or later; current version is /) as string })
+    .rejects.toMatchObject({ code: 'CLIENT_UPGRADE_REQUIRED', message: expect.stringMatching(/requires Tomato Harness 99\.0\.0-alpha\.1 or later; current version is /) as string })
   await expect(ctx.llm.prepareCall({ provider: 'deepseek-account', model: 'unlisted-pass-through' })).resolves.toBeDefined()
   expect(server.requests.map(request => request.url)).toEqual(['/models'])
   expect(diagnostic).toHaveBeenCalledExactlyOnceWith('[llm-deepseek-account]', expect.stringContaining('loaded 5 model(s), skipped 0 row(s)') as string)
@@ -134,7 +134,7 @@ it('hides and refuses listed models this build cannot serve before any inference
 it('applies model overrides and reports stale ones on the provider directory until they resolve', async () => {
   let token = 'first-account'
   const server = await listing((request, response) => {
-    const rows = request.headers['x-dsh-auth-token'] === 'first-account' ? [FLASH] : [FLASH, { ...PRO, id: 'deepseek-v5', ...requires('0.0.1') }]
+    const rows = request.headers['x-tomato-auth-token'] === 'first-account' ? [FLASH] : [FLASH, { ...PRO, id: 'deepseek-v5', ...requires('0.0.1') }]
     json({ data: rows })(request, response)
   })
   const ctx = await host(server.origin, () => token)

@@ -9,7 +9,7 @@
 浏览器 / Desktop
   │ GET /api/auth/start
   ▼
-本地网关（dsh Host，同源）
+本地网关（tomato Host，同源）
   │ 302 带 clientState + returnTo
   ▼
 公司 BFF /api/auth/feishu/start

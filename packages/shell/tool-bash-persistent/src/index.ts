@@ -1,17 +1,17 @@
 /**
  * Model-facing persistent `bash` tool over the owner-scoped PTY seam.
- * @module @deepseek-ai/dsh-tool-bash-persistent
+ * @module @tomato/tool-bash-persistent
  */
 
-import type {} from '@deepseek-ai/dsh-working-directory'
+import type {} from '@tomato/working-directory'
 import { randomUUID } from 'node:crypto'
-import type { Context } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import { truncateWithoutSplittingSurrogatePair } from '@deepseek-ai/dsh-output-retention'
-import type { TerminalReadResult, TerminalSessionId } from '@deepseek-ai/dsh-terminal'
-import { deadline, timeoutOf } from '@deepseek-ai/dsh-timeout'
-import { defineTool } from '@deepseek-ai/dsh-tools'
+import type { Context } from '@tomato/cordis'
+import z from '@tomato/schemastery'
+import type { Agent } from '@tomato/agent'
+import { truncateWithoutSplittingSurrogatePair } from '@tomato/output-retention'
+import type { TerminalReadResult, TerminalSessionId } from '@tomato/terminal'
+import { deadline, timeoutOf } from '@tomato/timeout'
+import { defineTool } from '@tomato/tools'
 
 // TODO: Replace the file-search advice; arbitrary command output need not come from a searchable file.
 const TRUNCATED_MESSAGE = '<response clipped><NOTE>To save on context only part of this file has been shown to you. You should retry this tool after you have searched inside the file with `grep -n` in order to find the line numbers of what you are looking for.</NOTE>'
@@ -66,8 +66,8 @@ function maybeTruncate(content: string, maxOutputChars: number, incomplete = fal
 function markers(): CommandMarkers {
   const nonce = randomUUID()
   return {
-    start: `__DSH_PERSISTENT_BASH_START_${nonce}__`,
-    end: `__DSH_PERSISTENT_BASH_END_${nonce}:`,
+    start: `__TOMATO_PERSISTENT_BASH_START_${nonce}__`,
+    end: `__TOMATO_PERSISTENT_BASH_END_${nonce}:`,
   }
 }
 

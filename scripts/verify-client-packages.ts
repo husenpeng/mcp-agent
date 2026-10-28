@@ -22,7 +22,7 @@ const CONFIG_GLOB = 'packages/*/*/tsdown.config.ts'
 const PLATFORM_SOURCE = 'packages/client/web/src/platform.ts'
 const PARSER_PRELOAD_SOURCE = 'packages/client/modules/src/index.ts'
 const STATIC_PRESET_SOURCE = 'packages/client/tsdown.client.ts'
-const CORDIS = '@deepseek-ai/cordis'
+const CORDIS = '@tomato/cordis'
 /** Stylesheet requests the dynamic build preset compiles: CSS Modules, global sheets, and `?inline` text. */
 const STYLESHEET_REQUEST = /\.css(?:\?inline)?$/u
 const INLINE_STYLESHEET_QUERY = /\?inline$/u
@@ -40,11 +40,11 @@ export interface ClientDeclaration {
   readonly name: string
   readonly manifest: string
   readonly dynamic: boolean
-  /** String `dsh.client.platform`; undefined without a row or a string platform. */
+  /** String `tomato.client.platform`; undefined without a row or a string platform. */
   readonly platform: string | undefined
   readonly external: readonly string[]
   readonly runtimeSourceUses: Readonly<Record<string, readonly string[]>>
-  /** Exact runtime specifiers used to validate `dsh.client.external` declarations. */
+  /** Exact runtime specifiers used to validate `tomato.client.external` declarations. */
   readonly runtimeSourceSpecifiers: Readonly<Record<string, readonly string[]>>
   /** Informational package dependencies declared by the row. */
   readonly inject: readonly string[]
@@ -292,7 +292,7 @@ function collectSourceFileUses(
 /**
  * Read browser-module declarations from workspace manifests.
  * @param root - Absolute repository root.
- * @returns Declarations and malformed dsh.client fields.
+ * @returns Declarations and malformed tomato.client fields.
  */
 export function readClientDeclarations(root: string): ClientDeclarations {
   const malformed: string[] = []
@@ -324,7 +324,7 @@ interface ManifestDocument {
 }
 
 /**
- * Repair malformed or redundant `dsh.client` declaration entries.
+ * Repair malformed or redundant `tomato.client` declaration entries.
  * @param root - Absolute repository root.
  * @param facts - Facts used by the verification pass.
  * @returns Repository-relative manifests written by the fixer.
@@ -346,8 +346,8 @@ export function fixClientPackageManifests(root: string, facts: ClientPackageFact
   const baseline = new Set([...facts.platformModules, ...facts.preloadedExternals])
   for (const declaration of facts.declarations.filter(entry => entry.dynamic)) {
     const target = document(declaration.manifest)
-    const dsh = isRecord(target.manifest.dsh) ? target.manifest.dsh : undefined
-    const client = isRecord(dsh?.client) ? dsh.client : undefined
+    const tomato = isRecord(target.manifest.tomato) ? target.manifest.tomato : undefined
+    const client = isRecord(tomato?.client) ? tomato.client : undefined
     if (client === undefined) continue
     target.changed = normalizeClientArray(client, 'inject', () => false) || target.changed
     target.changed = normalizeClientArray(
@@ -393,13 +393,13 @@ function collectModeViolations(facts: ClientPackageFacts): string[] {
   for (const pkg of facts.packages) {
     if (pkg.dynamic && pkg.staticLinked) {
       violations.push(
-        pkg.manifest + ': ' + pkg.name + ' declares dsh.client and uses the staticLinked preset;'
+        pkg.manifest + ': ' + pkg.name + ' declares tomato.client and uses the staticLinked preset;'
         + ' a client package must be dynamic or statically linked, not both',
       )
     } else if (!pkg.dynamic && !pkg.staticLinked) {
       violations.push(
         pkg.manifest + ': ' + pkg.name + ' has no supported client package mode;'
-        + ' declare dsh.client or use the staticLinked preset',
+        + ' declare tomato.client or use the staticLinked preset',
       )
     }
   }
@@ -419,7 +419,7 @@ function collectModeViolations(facts: ClientPackageFacts): string[] {
     if (rowPackageOf(specifier, rows) === undefined) {
       violations.push(
         PLATFORM_SOURCE + ': parser-preloaded external ' + JSON.stringify(specifier)
-        + ' has no dynamic dsh.client row',
+        + ' has no dynamic tomato.client row',
       )
     }
     if (!facts.parserPreloadIds.includes(stripClientSuffix(specifier))) {
@@ -449,9 +449,9 @@ function collectModuleViolations(facts: ClientPackageFacts): string[] {
     for (const field of ['external', 'inject'] as const) {
       const seen = new Set<string>()
       for (const value of pkg[field]) {
-        if (value === '') violations.push(pkg.manifest + ': dsh.client.' + field + ' contains an empty value')
+        if (value === '') violations.push(pkg.manifest + ': tomato.client.' + field + ' contains an empty value')
         else if (seen.has(value)) {
-          violations.push(pkg.manifest + ': dsh.client.' + field + ' lists ' + JSON.stringify(value) + ' twice')
+          violations.push(pkg.manifest + ': tomato.client.' + field + ' lists ' + JSON.stringify(value) + ' twice')
         }
         seen.add(value)
       }
@@ -461,14 +461,14 @@ function collectModuleViolations(facts: ClientPackageFacts): string[] {
       if (specifier === '') continue
       if (baseline.has(specifier)) {
         violations.push(
-          pkg.manifest + ': dsh.client.external repeats baseline module ' + JSON.stringify(specifier)
+          pkg.manifest + ': tomato.client.external repeats baseline module ' + JSON.stringify(specifier)
           + '; remove the explicit declaration',
         )
         continue
       }
       const supplier = rowPackageOf(specifier, rows)
       if (supplier === pkg.name) {
-        violations.push(pkg.manifest + ': dsh.client.external names its own row ' + JSON.stringify(specifier))
+        violations.push(pkg.manifest + ': tomato.client.external names its own row ' + JSON.stringify(specifier))
       } else if (supplier !== undefined) {
         if (pkg.manifest.startsWith('packages/client/')) {
           violations.push(
@@ -479,7 +479,7 @@ function collectModuleViolations(facts: ClientPackageFacts): string[] {
         }
         if (pkg.runtimeSourceSpecifiers[specifier] === undefined) {
           violations.push(
-            pkg.manifest + ': dsh.client.external ' + JSON.stringify(specifier)
+            pkg.manifest + ': tomato.client.external ' + JSON.stringify(specifier)
             + ' has no runtime import or re-export in production source; remove the stale declaration',
           )
           continue
@@ -488,10 +488,10 @@ function collectModuleViolations(facts: ClientPackageFacts): string[] {
       } else {
         const owner = stripClientSuffix(specifier)
         violations.push(
-          pkg.manifest + ': dsh.client.external ' + JSON.stringify(specifier) + ' has no supplier;'
+          pkg.manifest + ': tomato.client.external ' + JSON.stringify(specifier) + ' has no supplier;'
           + (byName.has(owner)
             ? ' workspace package ' + owner
-              + ' declares no dynamic dsh.client row and the shell does not seed this specifier'
+              + ' declares no dynamic tomato.client row and the shell does not seed this specifier'
             : ' no dynamic row or PLATFORM_MODULES entry answers it'),
         )
       }
@@ -553,7 +553,7 @@ function formatCycle(
   const entry = cycle[0]
   const chain = cycle.map(edge => edge.from + ' --(' + edge.specifier + ')-->').join(' ')
   const manifest = entry === undefined ? 'packages/client' : byName.get(entry.from)?.manifest ?? entry.from
-  return manifest + ': synchronous dsh.client.external cycle: ' + chain + ' ' + (entry?.from ?? '')
+  return manifest + ': synchronous tomato.client.external cycle: ' + chain + ' ' + (entry?.from ?? '')
 }
 
 /** Whether the dynamic build preset builds this package's browser face, the only face that emits package assets. */
@@ -575,7 +575,7 @@ function collectAssetViolations(facts: ClientPackageFacts): string[] {
     }
     if (declared && !covered) {
       violations.push(
-        pkg.manifest + ': ' + pkg.name + ' declares ' + exportKey + ' without a dsh.client row for platform "web";'
+        pkg.manifest + ': ' + pkg.name + ' declares ' + exportKey + ' without a tomato.client row for platform "web";'
         + ' only dynamic Web Client packages publish package assets',
       )
     }
@@ -599,7 +599,7 @@ function collectAssetViolations(facts: ClientPackageFacts): string[] {
 
 interface Manifest {
   name?: unknown
-  dsh?: unknown
+  tomato?: unknown
   exports?: unknown
   dependencies?: Record<string, string>
   peerDependencies?: Record<string, string>
@@ -613,8 +613,8 @@ function readDeclaration(
 ): ClientDeclaration | undefined {
   const manifest = JSON.parse(readFileSync(resolve(root, manifestPath), 'utf8')) as Manifest
   if (typeof manifest.name !== 'string') return undefined
-  const dsh = isRecord(manifest.dsh) ? manifest.dsh : undefined
-  const rawClient = dsh?.client
+  const tomato = isRecord(manifest.tomato) ? manifest.tomato : undefined
+  const rawClient = tomato?.client
   const assetExport = isRecord(manifest.exports) ? manifest.exports[PACKAGE_ASSET_EXPORT] : undefined
   const rowless = {
     name: manifest.name, manifest: manifestPath, dynamic: false, platform: undefined, external: [], inject: [],
@@ -622,7 +622,7 @@ function readDeclaration(
   } satisfies ClientDeclaration
   if (rawClient === undefined) return rowless
   if (!isRecord(rawClient)) {
-    malformed.push(manifestPath + ': ' + manifest.name + ' dsh.client must be an object')
+    malformed.push(manifestPath + ': ' + manifest.name + ' tomato.client must be an object')
     return rowless
   }
   return {
@@ -648,7 +648,7 @@ function stringArray(
 ): readonly string[] {
   if (value === undefined) return []
   if (!Array.isArray(value) || value.some(entry => typeof entry !== 'string')) {
-    malformed.push(manifestPath + ': ' + packageName + ' dsh.client.' + field + ' must be a string array')
+    malformed.push(manifestPath + ': ' + packageName + ' tomato.client.' + field + ' must be a string array')
     return []
   }
   return value as string[]

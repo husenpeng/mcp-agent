@@ -3,23 +3,23 @@
  * Provider lifecycle controls tool registration and context-sensitive schema
  * wording. Every delegation starts a managed activation and returns its child
  * id; the subagent runtime owns result delivery and resource cleanup.
- * @module @deepseek-ai/dsh-tool-subagent
+ * @module @tomato/tool-subagent
  */
 
-import type { Context } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import { scopeChainOf, scopeOf } from '@deepseek-ai/dsh-scope'
-import { defineTool } from '@deepseek-ai/dsh-tools'
-import type { ToolDefinition } from '@deepseek-ai/dsh-tools'
-import type { Agent, AgentOptions } from '@deepseek-ai/dsh-agent'
-import { ReasoningEffortId } from '@deepseek-ai/dsh-llm'
-import type { ContentBlock } from '@deepseek-ai/dsh-llm'
+import type { Context } from '@tomato/cordis'
+import z from '@tomato/schemastery'
+import { scopeChainOf, scopeOf } from '@tomato/scope'
+import { defineTool } from '@tomato/tools'
+import type { ToolDefinition } from '@tomato/tools'
+import type { Agent, AgentOptions } from '@tomato/agent'
+import { ReasoningEffortId } from '@tomato/llm'
+import type { ContentBlock } from '@tomato/llm'
 import {
   assertSubagentMaxDepth,
   delegationDepthOf,
   parentAgentOptionsForDelegation,
-} from '@deepseek-ai/dsh-subagent'
-import type { SubagentProvider } from '@deepseek-ai/dsh-subagent'
+} from '@tomato/subagent'
+import type { SubagentProvider } from '@tomato/subagent'
 import {
   assertAllowedModelSelection,
   hasConfiguredLlmSelection,

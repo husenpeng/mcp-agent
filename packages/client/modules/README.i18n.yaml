@@ -5,72 +5,72 @@
 /:
   en: 97d39db1617684ea
   zh: de11ba354583a044
-/deepseek-ai-dsh-client-modules:
-  en: ee2f6f3ccafafa13
-  zh: 3a37d4c4b69708dd
-/deepseek-ai-dsh-client-modules/summary:
-  en: ab7ece5891dd6289
-  zh: b9b5baab328be517
-/deepseek-ai-dsh-client-modules/table-of-contents:
+/tomato-client-modules:
+  en: 1d6156bfed4c7fb7
+  zh: c42c75abe7aa3d50
+/tomato-client-modules/summary:
+  en: 4a5bdf8099737650
+  zh: 7afc8d02d9d89a10
+/tomato-client-modules/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
-/deepseek-ai-dsh-client-modules/use-this-package:
-  en: 25f536f156ec0bcc
-  zh: a522355b3e0edeae
-/deepseek-ai-dsh-client-modules/use-this-package/declaring-a-client-plugin:
-  en: cc0eb2c35a7a0998
-  zh: 0e1df23869410c7a
-/deepseek-ai-dsh-client-modules/use-this-package/package-assets:
+/tomato-client-modules/use-this-package:
+  en: 3d467f6ab3fa0a38
+  zh: 73cbeae649f19412
+/tomato-client-modules/use-this-package/declaring-a-client-plugin:
+  en: e16808c070ff6c05
+  zh: 62b7c6bc6e0bbf3d
+/tomato-client-modules/use-this-package/package-assets:
   en: 529af1eb8bf1acf2
   zh: 7d891a5dfa90c625
-/deepseek-ai-dsh-client-modules/use-this-package/what-the-browser-loads:
+/tomato-client-modules/use-this-package/what-the-browser-loads:
   en: 1383d68472b3c057
   zh: 94dd7d9abbdbccf3
-/deepseek-ai-dsh-client-modules/use-this-package/live-plugin-composition:
+/tomato-client-modules/use-this-package/live-plugin-composition:
   en: 45740a56e931d094
   zh: fa44cf77c86019af
-/deepseek-ai-dsh-client-modules/use-this-package/host-release-changes:
+/tomato-client-modules/use-this-package/host-release-changes:
   en: 5c0aa6f1d8df8e1c
   zh: 34005131c9bdce3b
-/deepseek-ai-dsh-client-modules/use-this-package/sharing-modules:
-  en: 1778b5a63ecde5e8
-  zh: 537b4f8c755af8ad
-/deepseek-ai-dsh-client-modules/use-this-package/build-requirements:
+/tomato-client-modules/use-this-package/sharing-modules:
+  en: 0e3833788606e9d0
+  zh: 0c6c08db11cc7b6e
+/tomato-client-modules/use-this-package/build-requirements:
   en: b6a4d3b901c89efe
   zh: 615b5f3eec41f281
-/deepseek-ai-dsh-client-modules/understand-the-implementation:
+/tomato-client-modules/understand-the-implementation:
   en: 7ab11d2c2bdc6eaa
   zh: 54c3c9091cf59711
-/deepseek-ai-dsh-client-modules/understand-the-implementation/design-concept:
-  en: 49dcadc166c2d06e
-  zh: bbf67c6dc47f4ead
-/deepseek-ai-dsh-client-modules/understand-the-implementation/lazy-cjs-model:
+/tomato-client-modules/understand-the-implementation/design-concept:
+  en: 82709efe0a418ce0
+  zh: b7f2b6504baef289
+/tomato-client-modules/understand-the-implementation/lazy-cjs-model:
   en: 6d16b74acb333e3b
   zh: fcb3a20cc8c39e4a
-/deepseek-ai-dsh-client-modules/understand-the-implementation/incremental-composition:
-  en: d2c42ee89ca84f7b
-  zh: 70ee9dd5e6aa5327
-/deepseek-ai-dsh-client-modules/understand-the-implementation/boot-manifest-injection:
+/tomato-client-modules/understand-the-implementation/incremental-composition:
+  en: 7b2545cdc236f070
+  zh: c49f43cfd9316d1f
+/tomato-client-modules/understand-the-implementation/boot-manifest-injection:
   en: 253d9f265cd83ed0
   zh: 9d0f8df84d9d3ac9
-/deepseek-ai-dsh-client-modules/understand-the-implementation/entry-ownership:
+/tomato-client-modules/understand-the-implementation/entry-ownership:
   en: df2994f9ff8872c9
   zh: cd776526ed2b51e6
-/deepseek-ai-dsh-client-modules/understand-the-implementation/source-map:
-  en: d8b5407a0279a3f9
-  zh: 27af3437fad78672
-/deepseek-ai-dsh-client-modules/further-exploration:
-  en: 7e5b283efe4f1d16
-  zh: 79472b64a0d759fe
-/deepseek-ai-dsh-client-modules/model-experience:
+/tomato-client-modules/understand-the-implementation/source-map:
+  en: c9cc6e9680dda1b6
+  zh: b61fbeb699090cdc
+/tomato-client-modules/further-exploration:
+  en: 95ffe4249f3c4eb7
+  zh: 69dcd230b4d18d18
+/tomato-client-modules/model-experience:
   en: abb2fc0416e1482c
   zh: 0e8a913d424a0c28
-/deepseek-ai-dsh-client-modules/model-experience/kv-cache-effect:
+/tomato-client-modules/model-experience/kv-cache-effect:
   en: ca75c51c89c2c9b0
   zh: de54f3467ef3b9be
-/deepseek-ai-dsh-client-modules/known-limitations-and-deferred-work:
+/tomato-client-modules/known-limitations-and-deferred-work:
   en: 97127ddc35daf6d4
   zh: 1417b06046b01067
-/deepseek-ai-dsh-client-modules/known-limitations-and-deferred-work/dev-note:
+/tomato-client-modules/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-client-connection",
+  "name": "@tomato/client-connection",
   "description": "Authenticated RPC transport and generation lifecycle",
   "version": "0.2.1-rc.3",
   "publishConfig": {
@@ -28,7 +28,7 @@
     "./package.json": "./package.json",
     "./locale/*.json": "./locale/*.json"
   },
-  "dsh": {
+  "tomato": {
     "client": {
       "inject": [],
       "platform": "web",
@@ -37,8 +37,8 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@deepseek-ai/dsh-credentials": "workspace:*",
-    "@deepseek-ai/schemastery": "workspace:~",
+    "@tomato/credentials": "workspace:*",
+    "@tomato/schemastery": "workspace:~",
     "zod": "4.4.3"
   },
   "files": [
@@ -49,17 +49,17 @@
     "lib/types/**/*.d.ts"
   ],
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-scope": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/scope": "workspace:*"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-attachment": "workspace:*",
-    "@deepseek-ai/dsh-brand": "workspace:*",
-    "@deepseek-ai/dsh-host-webserver": "workspace:*",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-scope": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-typert-protocol": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/attachment": "workspace:*",
+    "@tomato/branded": "workspace:*",
+    "@tomato/host-webserver": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/scope": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*"
   }
 }

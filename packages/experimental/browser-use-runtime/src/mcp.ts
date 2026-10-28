@@ -1,17 +1,17 @@
 /** Session-owned MCP browser processes and provider catalog activation. @module */
 
-import type { Context } from '@deepseek-ai/cordis'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import Schema from '@deepseek-ai/schemastery'
-import { BrowserUseProviderName } from '@deepseek-ai/dsh-browser-use/brand'
-import * as McpClient from '@deepseek-ai/dsh-mcp-client'
-import { createScope } from '@deepseek-ai/dsh-scope'
-import type { Scope } from '@deepseek-ai/dsh-scope'
+import type { Context } from '@tomato/cordis'
+import type { Agent } from '@tomato/agent'
+import Schema from '@tomato/schemastery'
+import { BrowserUseProviderName } from '@tomato/browser-use/brand'
+import * as McpClient from '@tomato/mcp-client'
+import { createScope } from '@tomato/scope'
+import type { Scope } from '@tomato/scope'
 import { SessionResources } from './index.ts'
-import type {} from '@deepseek-ai/dsh-browser-use'
-import type {} from '@deepseek-ai/dsh-tools'
-import type {} from '@deepseek-ai/dsh-system-prompt'
-import type {} from '@deepseek-ai/dsh-working-directory'
+import type {} from '@tomato/browser-use'
+import type {} from '@tomato/tools'
+import type {} from '@tomato/system-prompt'
+import type {} from '@tomato/working-directory'
 
 /** Browser launch settings shared by the MCP integrations. */
 export interface BrowserMcpLaunchConfig {

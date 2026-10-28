@@ -1,8 +1,8 @@
 /** Skills tab async face: catalog generations, detail reads, saves, and tab-lifetime cleanup. */
 import { describe, expect, it, vi } from 'vitest'
-import type { SessionId } from '@deepseek-ai/dsh-session/types'
-import type { TabId } from '@deepseek-ai/dsh-client-ui-dockkit'
-import type { SkillGetValue } from '@deepseek-ai/dsh-api-remotes/client'
+import type { SessionId } from '@tomato/session/types'
+import type { TabId } from '@tomato/client-ui-dockkit'
+import type { SkillGetValue } from '@tomato/api-remotes/client'
 import { skillBrowserFace } from '../src/client/face.ts'
 import { createSkillBrowserStore } from '../src/client/store.ts'
 import { BRIEF_CATALOG, CATALOG, detailOf, failure, scriptedRemote } from './scripted-remote.client.ts'

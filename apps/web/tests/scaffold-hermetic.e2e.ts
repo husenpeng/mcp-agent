@@ -2,9 +2,9 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, it } from 'vitest'
-import type {} from '@deepseek-ai/dsh-skill'
-import { SessionId } from '@deepseek-ai/dsh-session'
-import type {} from '@deepseek-ai/dsh-agent-preset-registry'
+import type {} from '@tomato/skill'
+import { SessionId } from '@tomato/session'
+import type {} from '@tomato/agent-preset-registry'
 import { launchWebScaffold, type WebScaffold } from './scaffold.ts'
 
 async function writeSkill(root: string, name: string): Promise<void> {
@@ -20,17 +20,17 @@ Ambient host state.
 }
 
 it('isolates replay skill discovery from every ambient host root', async () => {
-  const ambient = await mkdtemp(join(tmpdir(), 'dsh-web-ambient-skills-'))
-  const tomatoHome = join(ambient, 'dsh-home')
+  const ambient = await mkdtemp(join(tmpdir(), 'tomato-web-ambient-skills-'))
+  const tomatoHome = join(ambient, 'tomato-home')
   const agentsHome = join(ambient, 'agents-home')
   const bundled = join(ambient, 'bundled')
   await Promise.all([
-    writeSkill(join(tomatoHome, 'skills'), 'ambient-dsh'),
+    writeSkill(join(tomatoHome, 'skills'), 'ambient-tomato'),
     writeSkill(join(agentsHome, 'skills'), 'ambient-agents'),
     writeSkill(bundled, 'ambient-bundled'),
   ])
 
-  const originalDshHome = process.env.TOMATO_HOME
+  const originalTomatoHome = process.env.TOMATO_HOME
   const originalAgentsHome = process.env.TOMATO_AGENTS_HOME
   const originalBundled = process.env.TOMATO_BUNDLED_SKILL_DIR
   process.env.TOMATO_HOME = tomatoHome
@@ -52,7 +52,7 @@ it('isolates replay skill discovery from every ambient host root', async () => {
       const skills = ctx.get('skills')
       if (skills === undefined) throw new Error('the composition mounts no skill registry')
       const names = (await skills.list({ cwd: scaffold.workspaceCwd, scope: handle.agent })).map(skill => skill.name)
-      expect(names).not.toContain('ambient-dsh')
+      expect(names).not.toContain('ambient-tomato')
       expect(names).not.toContain('ambient-agents')
       expect(names).not.toContain('ambient-bundled')
     } finally {
@@ -62,8 +62,8 @@ it('isolates replay skill discovery from every ambient host root', async () => {
     try {
       await scaffold?.close()
     } finally {
-      if (originalDshHome === undefined) delete process.env.TOMATO_HOME
-      else process.env.TOMATO_HOME = originalDshHome
+      if (originalTomatoHome === undefined) delete process.env.TOMATO_HOME
+      else process.env.TOMATO_HOME = originalTomatoHome
       if (originalAgentsHome === undefined) delete process.env.TOMATO_AGENTS_HOME
       else process.env.TOMATO_AGENTS_HOME = originalAgentsHome
       if (originalBundled === undefined) delete process.env.TOMATO_BUNDLED_SKILL_DIR

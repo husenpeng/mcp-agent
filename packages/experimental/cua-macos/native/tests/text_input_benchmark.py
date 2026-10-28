@@ -118,7 +118,7 @@ def run_sample(args, label, repeat, length, artifacts, summary, deadline):
     summary["samples"].append(sample)
     owned = []
     state_path = None
-    with tempfile.TemporaryDirectory(prefix="dsh-cua-text-input-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="tomato-cua-text-input-") as temporary:
         work = Path(temporary)
         token = uuid.uuid4().hex
         state_path = work / "state.json"

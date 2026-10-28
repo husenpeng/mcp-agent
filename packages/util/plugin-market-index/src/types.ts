@@ -1,9 +1,9 @@
 /**
  * Validated plugin market index records.
- * @module @deepseek-ai/dsh-plugin-market-index/types
+ * @module @tomato/plugin-market-index/types
  */
 
-import type { LocalizedText } from '@deepseek-ai/dsh-package-manifest'
+import type { LocalizedText } from '@tomato/package-manifest'
 
 /** A market-declared category or label: an opaque id's display title. */
 export interface MarketDeclaration {
@@ -60,7 +60,7 @@ export type MarketSource =
 /** Runtime requirements of one version. */
 export interface MarketEngines {
   /** SemVer range of TOMATO versions the version runs on; absent means any TOMATO version. */
-  readonly dsh?: string
+  readonly tomato?: string
 }
 
 /** One installable version of a plugin. */

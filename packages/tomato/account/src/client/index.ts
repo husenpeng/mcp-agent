@@ -2,14 +2,14 @@
  * Tomato account plugin, browser half: the sidebar launcher and Account
  * settings section over the local gateway's `/api/auth/*` routes.
  */
-import type { Context as ClientContext } from '@deepseek-ai/cordis'
+import type { Context as ClientContext } from '@tomato/cordis'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
-import type {} from '@deepseek-ai/dsh-client-locale/client'
+import type {} from '@tomato/client-locale/client'
 // Type-only: pulls the settings shell's SlotMap merge (`settings.launcher`, `settings.section`).
-import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
+import type {} from '@tomato/client-ui-settings/client'
 // Type-only: pulls the locale namespace map into this program.
-import type {} from '@deepseek-ai/dsh-client-ui-slots'
-import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
+import type {} from '@tomato/client-ui-slots'
+import type {} from '@tomato/client-ui-renderer/client'
 import { AccountController } from './account-controller.ts'
 import { AccountLauncher, type AccountInjected } from './AccountLauncher.tsx'
 import { AccountSection } from './AccountSection.tsx'
@@ -20,7 +20,7 @@ export type { AccountSectionProps } from './AccountSection.tsx'
 export type { AccountSnapshot, AccountUser, DesktopAccountBridge } from './account-controller.ts'
 export type { AccountKey } from './locales.ts'
 
-declare module '@deepseek-ai/dsh-client-ui-slots' {
+declare module '@tomato/client-ui-slots' {
   interface LocaleNamespaceMap {
     /** Account launcher and settings page copy. */
     'settings.account': AccountKey

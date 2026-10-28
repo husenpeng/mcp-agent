@@ -3,17 +3,17 @@ import { mkdir, mkdtemp, realpath, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, it } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import AgentLoop from '@deepseek-ai/dsh-agent-loop'
-import { mountAgentLoopTestDependencies } from '@deepseek-ai/dsh-agent-loop-testkit'
-import LocalFileSystem from '@deepseek-ai/dsh-fs-local'
-import { SessionId } from '@deepseek-ai/dsh-session'
-import * as JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
-import WorkingDirectory from '@deepseek-ai/dsh-working-directory'
+import { Context } from '@tomato/cordis'
+import AgentLoop from '@tomato/agent-loop'
+import { mountAgentLoopTestDependencies } from '@tomato/agent-loop-testkit'
+import LocalFileSystem from '@tomato/fs-local'
+import { SessionId } from '@tomato/session'
+import * as JsonlSessionPersistence from '@tomato/session-persistence-jsonl'
+import WorkingDirectory from '@tomato/working-directory'
 import ClaudeCodeMods, { defineMod } from '../src/index.ts'
 
 it('reports the final committed cwd when a persisted Session resumes, retaining its original project', async () => {
-  const root = await realpath(await mkdtemp(join(tmpdir(), 'dsh-mods-resume-directory-')))
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'tomato-mods-resume-directory-')))
   const origin = join(root, 'project')
   const current = join(origin, 'current')
   await mkdir(current, { recursive: true })

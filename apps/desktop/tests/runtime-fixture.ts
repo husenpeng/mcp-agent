@@ -25,23 +25,23 @@ export function writePackage(modules: string, name: string, fields: Record<strin
 /**
  * Seal a minimal release containing Host entry files and a shared Cordis package.
  * @param root - New runtime directory.
- * @param version - Shell and dsh version.
+ * @param version - Shell and tomato version.
  * @param nodeVersion - Bundled Node version recorded in resource metadata.
  * @returns Sealed runtime metadata.
  */
 export function runtimeFixture(root: string, version = '1.0.0', nodeVersion = '24.17.0'): DesktopRuntimeDescriptor {
-  const names = ['@deepseek-ai/dsh', '@deepseek-ai/dsh-desktop-host', '@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app', '@deepseek-ai/cordis']
+  const names = ['@tomato/cli', '@tomato/desktop-host', '@tomato/base', '@tomato/web-app', '@tomato/cordis']
   for (const name of names) {
-    const bundle = name === '@deepseek-ai/dsh-base' || name === '@deepseek-ai/dsh-web-app'
+    const bundle = name === '@tomato/base' || name === '@tomato/web-app'
     const path = writePackage(join(root, 'node_modules'), name, {
       version,
-      ...(name === '@deepseek-ai/dsh' ? { dependencies: Object.fromEntries(names.slice(1).map(dependency => [dependency, version])) } : {}),
-      ...(bundle ? { dsh: { bundle: { patch: './bundle.yml' } } } : {}),
+      ...(name === '@tomato/cli' ? { dependencies: Object.fromEntries(names.slice(1).map(dependency => [dependency, version])) } : {}),
+      ...(bundle ? { tomato: { bundle: { patch: './bundle.yml' } } } : {}),
     })
     if (bundle) writeFileSync(join(path, 'bundle.yml'), '[]\n')
   }
   for (const file of DESKTOP_HOST_RUNTIME_FILES) {
-    const path = join(root, 'node_modules', '@deepseek-ai/dsh-desktop-host', file)
+    const path = join(root, 'node_modules', '@tomato/desktop-host', file)
     mkdirSync(join(path, '..'), { recursive: true })
     writeFileSync(path, '')
   }

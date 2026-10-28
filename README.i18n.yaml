@@ -3,11 +3,11 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write README.md
 /tomato-ai:
-  en: 4f6810348349ae91
-  zh: 02a1b78a2d8dff56
+  en: 31f6e5b40d85d205
+  zh: 49cf8f27303d9c98
 /tomato-ai/summary:
-  en: b2526c284a31ae7f
-  zh: ecbc44843fa7fb96
+  en: 5ee72774e40b81ea
+  zh: 99a6b4852d4ba10a
 /tomato-ai/table-of-contents:
   en: 915bc7c3bcd140a3
   zh: 55a91940d49d1889
@@ -15,28 +15,28 @@
   en: a7e56472b11bd3c8
   zh: 6150d900a0920ce9
 /tomato-ai/architecture/processes:
-  en: 35aa365534520534
-  zh: 3f1f712af6b4cffd
+  en: 393b04a96bc0d056
+  zh: 329bfc6d408434ec
 /tomato-ai/architecture/profile-composition:
   en: 82894669581daa08
   zh: 9188e3189281f7a2
 /tomato-ai/architecture/capability-seams:
-  en: 205679657317e669
-  zh: c382be17c66d03bc
+  en: 6788a1f723e7b2b8
+  zh: 24c95a0c280a451f
 /tomato-ai/architecture/model-visible-equals-logged:
   en: 82054628e117bc8c
   zh: ca330ccee8ac38ed
 /tomato-ai/architecture/threading-and-lifecycle:
-  en: ab88c68a595426df
-  zh: 168ff4e940069203
+  en: b8756335c9cddba2
+  zh: c5b1e10ff3e93b14
 /tomato-ai/architecture/client-plugin-composition:
-  en: 5abb50d372eb4d9f
-  zh: 4504a0dbd702ff82
+  en: 4baf6bbcba9e6906
+  zh: 63ad92912e7dd649
 /tomato-ai/design-decisions:
-  en: 128c32277f87f9a6
-  zh: 6aac2f7dd31f65dc
+  en: 9887a551dc68aa23
+  zh: 44ba6bd792e8e111
 /tomato-ai/prerequisites:
-  en: e0bfe2105edd7521
+  en: 34e2e7db933b7f20
   zh: c2102dfa4f251195
 /tomato-ai/initialize:
   en: 8dfd610e1d60f2ed
@@ -45,14 +45,14 @@
   en: 8bcfe486110004e4
   zh: 5491f0aa70750247
 /tomato-ai/run/run-from-source:
-  en: 368e8db533545d2c
-  zh: b16396d714f9cb72
+  en: 4f74c0bfd2b6419d
+  zh: 52933e439271fedd
 /tomato-ai/run/sign-in:
   en: ad18a337f1ebf048
   zh: 45b838114fa4261a
 /tomato-ai/run/configure-a-model-provider:
-  en: a814216c82266252
-  zh: 2dcb05f2ea549257
+  en: f08b9e88bfe1c34b
+  zh: 8dbf55cf553153b4
 /tomato-ai/local-gateway:
   en: 1ea52d353e59d875
   zh: ad62f51e41aa59dc
@@ -66,14 +66,14 @@
   en: f00650e4686d2e1c
   zh: 6a14c8b7f39a8fae
 /tomato-ai/logging-and-developer-mode/locating-client-code-from-a-log-line:
-  en: 8f7b8776ffa01d8b
-  zh: bac6f198cb89d92b
+  en: c4d77d56b9af3eaf
+  zh: 640ae5952debf0c5
 /tomato-ai/production-readiness:
   en: a55225845e6eaf35
   zh: 7c103dfd5414c633
 /tomato-ai/production-readiness/blocking:
-  en: 7716ce515ac5332e
-  zh: 89ef04169f6da148
+  en: d5a3410ca9b09b9b
+  zh: ac5a7c9a42375f11
 /tomato-ai/production-readiness/important:
   en: 7ea900ec3ba4bde8
   zh: d8d18b3bcbfc7438
@@ -81,8 +81,8 @@
   en: a60f90f9619e1bf0
   zh: 32e76cd0cb33fbfe
 /tomato-ai/troubleshooting:
-  en: b5ada21fc0c3ec5a
-  zh: 0a5f587bf44cd942
+  en: 014fcf2b39623448
+  zh: 95093101ed754213
 /tomato-ai/license:
-  en: 79b07e1b27e5346a
-  zh: 4c86653a4f5d232a
+  en: d871be4214c5f674
+  zh: 660694a2e4ed5c6f

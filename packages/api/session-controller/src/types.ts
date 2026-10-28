@@ -1,20 +1,20 @@
 /** Browser-safe request, result, and lifecycle vocabulary for the Session Remote service. */
 
-import type {} from '@deepseek-ai/dsh-agent/types'
-import type { NativeFileApplication } from '@deepseek-ai/dsh-native-command/types'
+import type {} from '@tomato/agent/types'
+import type { NativeFileApplication } from '@tomato/native-command/types'
 import type {
   AttachmentIdType, ImageAttachmentLimits, ImageAttachmentRef, ImageMediaType,
-} from '@deepseek-ai/dsh-attachment'
-import type { Branded } from '@deepseek-ai/dsh-brand'
-import type { LlmAttemptId, MessageId } from '@deepseek-ai/dsh-llm/brand'
-import type { TextBlock } from '@deepseek-ai/dsh-llm'
-import type { SessionId, SessionSeqCursor } from '@deepseek-ai/dsh-session/types'
-import type { SessionProjectionMap, SessionProjectionSummaryExcluded, SessionProjectionSummaryValues } from '@deepseek-ai/dsh-session-projection/types'
-import type { Principal } from '@deepseek-ai/dsh-typert-protocol'
-import type { JsonValue } from '@deepseek-ai/dsh-util-values'
-import type { WorkspaceId } from '@deepseek-ai/dsh-workspace/types'
+} from '@tomato/attachment'
+import type { Branded } from '@tomato/branded'
+import type { LlmAttemptId, MessageId } from '@tomato/llm/brand'
+import type { TextBlock } from '@tomato/llm'
+import type { SessionId, SessionSeqCursor } from '@tomato/session/types'
+import type { SessionProjectionMap, SessionProjectionSummaryExcluded, SessionProjectionSummaryValues } from '@tomato/session-projection/types'
+import type { Principal } from '@tomato/typert-protocol'
+import type { JsonValue } from '@tomato/util-values'
+import type { WorkspaceId } from '@tomato/workspace/types'
 
-declare module '@deepseek-ai/dsh-session-projection/types' {
+declare module '@tomato/session-projection/types' {
   interface SessionProjectionMap {
     /** Persisted facts used to summarize a Session without activating it. */
     sessionListMetadata: SessionListMetadata
@@ -173,7 +173,7 @@ export const SESSION_SEARCH_RESULT_LIMIT = 20
 /** Maximum search snippet length in Unicode code points. */
 export const SESSION_SEARCH_SNIPPET_MAX_CODE_POINTS = 240
 
-declare module '@deepseek-ai/dsh-typert-protocol' {
+declare module '@tomato/typert-protocol' {
   interface RemoteErrorDetailsMap {
     'session/provider-credentials-unavailable': Record<string, never>
     'session/provider-models-unavailable': { readonly provider: string }
@@ -432,7 +432,7 @@ export interface SessionOpenWorkspacePathValue {
 /** Client-minted prompt identity used to reconcile optimistic and durable messages. */
 export type SessionRequestId = Branded<'session-request-id'>
 
-declare module '@deepseek-ai/dsh-llm' {
+declare module '@tomato/llm' {
   interface MessageSourceMap {
     /**
      * Browser prompt correlation, optional Host-validated time zone, and the
@@ -622,7 +622,7 @@ export type SessionControlFrame =
   | { readonly type: 'baseline'; readonly value: SessionControlBaseline }
   | ({ readonly type: 'projection' } & SessionProjectionUpdate)
 
-declare module '@deepseek-ai/cordis' {
+declare module '@tomato/cordis' {
   interface Events {
     /**
      * A Session became visible or its Agent was created or disposed.

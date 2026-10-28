@@ -3,14 +3,14 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-09-27-web-search-offered-by-provider-readiness.md
 /agent-note-offer-web-search-and-web-fetch-only-while-the-selected-provider-is-ready:
-  en: 9163af91ea0e030d
-  zh: 92e44043b999d32f
+  en: e50a1eeeccb27117
+  zh: 7b500a3b3a928f17
 /agent-note-offer-web-search-and-web-fetch-only-while-the-selected-provider-is-ready/problem:
-  en: 6fac3c73a4415c83
-  zh: f65b61cc1705348b
+  en: d5419caf5366f162
+  zh: 9ba24abfdb0f3778
 /agent-note-offer-web-search-and-web-fetch-only-while-the-selected-provider-is-ready/decision:
-  en: 458416ed7e47f644
-  zh: 8b4dd820228e9dfd
+  en: c4de3a46298bd802
+  zh: 69c075ca6bbec1a8
 /agent-note-offer-web-search-and-web-fetch-only-while-the-selected-provider-is-ready/alternatives-considered:
   en: b731254983be656d
   zh: 5dee2b09f7faa537

@@ -5,24 +5,24 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, it, onTestFinished } from 'vitest'
 import * as yaml from 'js-yaml'
-import type { Context } from '@deepseek-ai/cordis'
-import { entryListSchema } from '@deepseek-ai/cordis-plugin-include'
-import Timer from '@deepseek-ai/cordis-plugin-timer'
-import { boot, initProfile, loadProfileDirectory, readProfilePatches, type ProfileContext } from '@deepseek-ai/dsh-app-boot'
-import Hmr from '@deepseek-ai/dsh-hmr'
-import PluginManager from '@deepseek-ai/dsh-plugin-manager'
-import Sessions from '@deepseek-ai/dsh-session'
-import Projections from '@deepseek-ai/dsh-session-projection'
-import Agents from '@deepseek-ai/dsh-agent'
-import Llm from '@deepseek-ai/dsh-llm'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import Tools from '@deepseek-ai/dsh-tools'
-import * as NativeToolExecutor from '@deepseek-ai/dsh-tool-executor-native'
-import Skills from '@deepseek-ai/dsh-skill'
-import Access from '@deepseek-ai/dsh-api-remote-access'
-import * as ActionCards from '@deepseek-ai/dsh-action-cards'
-import * as Pages from '@deepseek-ai/dsh-creation-recommendations'
-import * as Plugins from '@deepseek-ai/dsh-plugin-recommendations'
+import type { Context } from '@tomato/cordis'
+import { entryListSchema } from '@tomato/cordis-plugin-include'
+import Timer from '@tomato/cordis-plugin-timer'
+import { boot, initProfile, loadProfileDirectory, readProfilePatches, type ProfileContext } from '@tomato/app-boot'
+import Hmr from '@tomato/hmr'
+import PluginManager from '@tomato/plugin-manager'
+import Sessions from '@tomato/session'
+import Projections from '@tomato/session-projection'
+import Agents from '@tomato/agent'
+import Llm from '@tomato/llm'
+import SystemPrompt from '@tomato/system-prompt'
+import Tools from '@tomato/tools'
+import * as NativeToolExecutor from '@tomato/tool-executor-native'
+import Skills from '@tomato/skill'
+import Access from '@tomato/api-remote-access'
+import * as ActionCards from '@tomato/action-cards'
+import * as Pages from '@tomato/creation-recommendations'
+import * as Plugins from '@tomato/plugin-recommendations'
 
 interface Row { readonly id: string; readonly name: string }
 
@@ -30,9 +30,9 @@ const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.
   name: string
   publishConfig: { access: string }
   dependencies: Record<string, string>
-  dsh: { bundle: { patch: string } }
+  tomato: { bundle: { patch: string } }
 }
-const patch = yaml.load(readFileSync(new URL(`../${manifest.dsh.bundle.patch}`, import.meta.url), 'utf8'), {
+const patch = yaml.load(readFileSync(new URL(`../${manifest.tomato.bundle.patch}`, import.meta.url), 'utf8'), {
   schema: entryListSchema,
 }) as { insert: Row[] }[]
 const rows = patch[0]?.insert ?? []
@@ -44,30 +44,30 @@ function browserRow(): object {
 
 /** Source modules standing in for the row packages, which the Loader would otherwise import from their built lib. */
 const MODULES: Readonly<Record<string, object>> = {
-  '@deepseek-ai/dsh-action-cards': ActionCards,
-  '@deepseek-ai/dsh-client-ui-action-cards': browserRow(),
-  '@deepseek-ai/dsh-creation-recommendations': Pages,
-  '@deepseek-ai/dsh-client-ui-creation-recommendations': browserRow(),
-  '@deepseek-ai/dsh-plugin-recommendations': Plugins,
-  '@deepseek-ai/dsh-client-ui-plugin-recommendations': browserRow(),
+  '@tomato/action-cards': ActionCards,
+  '@tomato/client-ui-action-cards': browserRow(),
+  '@tomato/creation-recommendations': Pages,
+  '@tomato/client-ui-creation-recommendations': browserRow(),
+  '@tomato/plugin-recommendations': Plugins,
+  '@tomato/client-ui-plugin-recommendations': browserRow(),
 }
 
 it('publishes one layer inserting the card service, the card display and both features with their card bodies', () => {
   expect(manifest.publishConfig.access).toBe('public')
-  expect(manifest.dsh.bundle.patch).toBe('./cordis.patch.yml')
+  expect(manifest.tomato.bundle.patch).toBe('./cordis.patch.yml')
   expect(patch).toEqual([{ insert: [
-    { id: 'action-cards', name: '@deepseek-ai/dsh-action-cards' },
-    { id: 'client-ui-action-cards', name: '@deepseek-ai/dsh-client-ui-action-cards' },
-    { id: 'creation-recommendations', name: '@deepseek-ai/dsh-creation-recommendations' },
-    { id: 'client-ui-creation-recommendations', name: '@deepseek-ai/dsh-client-ui-creation-recommendations' },
-    { id: 'plugin-recommendations', name: '@deepseek-ai/dsh-plugin-recommendations' },
-    { id: 'client-ui-plugin-recommendations', name: '@deepseek-ai/dsh-client-ui-plugin-recommendations' },
+    { id: 'action-cards', name: '@tomato/action-cards' },
+    { id: 'client-ui-action-cards', name: '@tomato/client-ui-action-cards' },
+    { id: 'creation-recommendations', name: '@tomato/creation-recommendations' },
+    { id: 'client-ui-creation-recommendations', name: '@tomato/client-ui-creation-recommendations' },
+    { id: 'plugin-recommendations', name: '@tomato/plugin-recommendations' },
+    { id: 'client-ui-plugin-recommendations', name: '@tomato/client-ui-plugin-recommendations' },
   ] }])
   expect(Object.keys(manifest.dependencies).sort()).toEqual(rows.map(row => row.name).sort())
 })
 
 it('addresses every row through its own id and switches the shared card service and each feature', async () => {
-  const home = await mkdtemp(join(tmpdir(), 'dsh-personalized-recommendations-'))
+  const home = await mkdtemp(join(tmpdir(), 'tomato-personalized-recommendations-'))
   let owner: Context | undefined
   onTestFinished(async () => { await owner?.fiber.dispose(); await rm(home, { recursive: true, force: true }) })
   const dir = join(home, 'profiles', 'test')
@@ -78,7 +78,7 @@ it('addresses every row through its own id and switches the shared card service 
     const path = join(root, 'node_modules', name)
     await mkdir(path, { recursive: true })
     await writeFile(join(path, 'package.json'), JSON.stringify({
-      name, version: '1.0.0', dsh: { bundle: { patch: './cordis.patch.yml' } },
+      name, version: '1.0.0', tomato: { bundle: { patch: './cordis.patch.yml' } },
     }))
     await writeFile(join(path, 'cordis.patch.yml'), JSON.stringify([{ insert: inserted }]))
   }

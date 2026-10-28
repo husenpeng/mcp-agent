@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-experimental-translator",
+  "name": "@tomato/experimental-translator",
   "description": "Machine translation with reusable Session results",
   "version": "0.2.1-rc.3",
   "publishConfig": {
@@ -34,37 +34,37 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@deepseek-ai/schemastery": "workspace:~"
+    "@tomato/schemastery": "workspace:~"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-timeout": "workspace:*",
-    "@deepseek-ai/dsh-util-values": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-session-persistence": "workspace:*",
-    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-credentials": "workspace:*",
-    "@deepseek-ai/dsh-launch-environment": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/timeout": "workspace:*",
+    "@tomato/util-values": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-persistence": "workspace:*",
+    "@tomato/cordis-plugin-loader": "workspace:~",
+    "@tomato/llm": "workspace:*",
+    "@tomato/credentials": "workspace:*",
+    "@tomato/launch-environment": "workspace:*"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-app-boot": "workspace:*",
-    "@deepseek-ai/dsh-timeout": "workspace:*",
-    "@deepseek-ai/dsh-util-values": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-session-persistence": "workspace:*",
-    "@deepseek-ai/dsh-session-persistence-jsonl": "workspace:*",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
-    "@deepseek-ai/dsh-credentials": "workspace:*",
-    "@deepseek-ai/dsh-launch-environment": "workspace:*",
-    "@deepseek-ai/dsh-llm-deepseek": "workspace:*",
-    "@deepseek-ai/dsh-llm-deepseek-api-key": "workspace:*",
-    "@deepseek-ai/dsh-llm-deepseek-account": "workspace:*",
-    "@deepseek-ai/dsh-deepseek-account": "workspace:*",
-    "@deepseek-ai/dsh-deepseek-llm-api-extensions": "workspace:*",
-    "@deepseek-ai/dsh-session-log-deepseek": "workspace:*",
-    "@deepseek-ai/dsh-session-query-sqlite": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/app-boot": "workspace:*",
+    "@tomato/timeout": "workspace:*",
+    "@tomato/util-values": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-persistence": "workspace:*",
+    "@tomato/session-persistence-jsonl": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/cordis-plugin-loader": "workspace:~",
+    "@tomato/credentials": "workspace:*",
+    "@tomato/launch-environment": "workspace:*",
+    "@tomato/llm-deepseek": "workspace:*",
+    "@tomato/llm-deepseek-api-key": "workspace:*",
+    "@tomato/llm-deepseek-account": "workspace:*",
+    "@tomato/deepseek-account": "workspace:*",
+    "@tomato/deepseek-llm-api-extensions": "workspace:*",
+    "@tomato/session-log-deepseek": "workspace:*",
+    "@tomato/session-query-sqlite": "workspace:*"
   }
 }

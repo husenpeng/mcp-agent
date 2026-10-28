@@ -45,7 +45,7 @@ describe('packaged runtime verification', () => {
 
   it('requires the version installed-update qualification wrote into its private runtime', async () => {
     // Qualification rewrites the runtime's own version, so comparing against the product version would always fail.
-    expect(await requiredRuntimeVersion('/qualification/dsh', '0.1.6-alpha.2.20260921.1')).toBe('0.1.6-alpha.2.20260921.1')
+    expect(await requiredRuntimeVersion('/qualification/tomato', '0.1.6-alpha.2.20260921.1')).toBe('0.1.6-alpha.2.20260921.1')
   })
 
   it('does not let a build version change what the bundled runtime must declare', async () => {

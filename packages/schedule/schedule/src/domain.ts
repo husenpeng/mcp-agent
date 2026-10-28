@@ -1,6 +1,6 @@
 /**
  * Strict Schedule decoding, replay, time validation, and framing.
- * @module @deepseek-ai/dsh-schedule
+ * @module @tomato/schedule
  */
 
 import { Temporal } from '@js-temporal/polyfill'
@@ -14,12 +14,12 @@ import {
   parseLocalCalendar,
   parseOffsetInstant,
   resolveLocalInstant,
-} from '@deepseek-ai/dsh-util-time'
+} from '@tomato/util-time'
 import type {
   InstantRejection, LocalCalendarRejection, LocalCalendarTime, TimeZoneRejection,
-} from '@deepseek-ai/dsh-util-time'
-import { SessionLogOffset } from '@deepseek-ai/dsh-session'
-import type { SessionEvent, SessionLogOffset as SessionLogOffsetType } from '@deepseek-ai/dsh-session'
+} from '@tomato/util-time'
+import { SessionLogOffset } from '@tomato/session'
+import type { SessionEvent, SessionLogOffset as SessionLogOffsetType } from '@tomato/session'
 import type {
   AfterScheduleRecord,
   AtInput,

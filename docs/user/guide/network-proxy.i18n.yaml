@@ -2,24 +2,24 @@
 # section, a hash of its English and Chinese blocks outside code blocks and generated regions.
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/user/guide/network-proxy.md
-/run-dsh-behind-a-network-proxy:
-  en: 7659888fbb3e2e0d
-  zh: 96c019583f5bf7ab
-/run-dsh-behind-a-network-proxy/export-the-variables:
-  en: 6c92d33cc57ced2a
-  zh: 653b6ffeb4d102b0
-/run-dsh-behind-a-network-proxy/why-your-browser-is-proxied-but-your-terminal-is-not:
-  en: d565b202923482a1
-  zh: 7eb5a36a3d7504d7
-/run-dsh-behind-a-network-proxy/choose-what-stays-direct:
-  en: 307f5b01e6e09661
-  zh: 39eccb0287afc128
-/run-dsh-behind-a-network-proxy/limits-worth-knowing:
-  en: a2d2a969d1a76624
-  zh: 83b06f86d6002275
-/run-dsh-behind-a-network-proxy/what-stays-direct:
-  en: 34b04f98af3e09ae
-  zh: 4c530b755b552942
-/run-dsh-behind-a-network-proxy/check-that-it-worked:
-  en: d7455972489f79a8
-  zh: 1e7295e10a211769
+/run-tomato-behind-a-network-proxy:
+  en: 2670a535d0f30b9d
+  zh: c3131a7a2ffd28f0
+/run-tomato-behind-a-network-proxy/export-the-variables:
+  en: 2a37f9438e82fa40
+  zh: 0f09dcc952804fec
+/run-tomato-behind-a-network-proxy/why-your-browser-is-proxied-but-your-terminal-is-not:
+  en: f19847ada1f2be47
+  zh: 9352cc93e8067006
+/run-tomato-behind-a-network-proxy/choose-what-stays-direct:
+  en: aa493f6899ac6c8f
+  zh: 1973ce5140b94938
+/run-tomato-behind-a-network-proxy/limits-worth-knowing:
+  en: e0626ae0beb8129d
+  zh: 4a8929da2f4b1b34
+/run-tomato-behind-a-network-proxy/what-stays-direct:
+  en: d11eb6f1a2b39d52
+  zh: a2a320ca533e96b1
+/run-tomato-behind-a-network-proxy/check-that-it-worked:
+  en: 77bcd293191655cc
+  zh: 1c77b9a7dd381a33

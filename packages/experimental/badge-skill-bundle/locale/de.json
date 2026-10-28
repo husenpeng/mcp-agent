@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "TOMATO-Abzeichen-Fertigkeit",
-    "description": "Lassen Sie Agenten Dokumente, Pull-Requests und andere Ausgaben mit einem „powered by dsh“-Badge versehen.",
+    "description": "Lassen Sie Agenten Dokumente, Pull-Requests und andere Ausgaben mit einem „powered by tomato“-Badge versehen.",
     "detail": "docs/DETAIL.md"
   }
 }

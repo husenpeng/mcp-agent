@@ -1,9 +1,9 @@
 ---
-description: "dsh web 客户端右侧栏的 Skills 标签页类型：以滚动懒加载的卡片浏览全部已安装 skill，并提供详情页与个人 skill 文件编辑。"
+description: "tomato web 客户端右侧栏的 Skills 标签页类型：以滚动懒加载的卡片浏览全部已安装 skill，并提供详情页与个人 skill 文件编辑。"
 kind: "package-reference"
 ---
 
-# @deepseek-ai/dsh-client-ui-skill-browser
+# @tomato/client-ui-skill-browser
 
 [English](README.md) | 中文
 
@@ -24,7 +24,7 @@ kind: "package-reference"
 <a id="what-it-registers"></a>
 ## 注册内容
 
-- **类型** — `ctx.sidebarRightTabs.register(...)`：kind 为 `skills`，id 为 `@deepseek-ai/dsh-client-ui-skill-browser`，band 为 `builtin`，不声明地址模式；指南条目顺序为 40，标题在所有语言中都是专有名词 `Skills`。
+- **类型** — `ctx.sidebarRightTabs.register(...)`：kind 为 `skills`，id 为 `@tomato/client-ui-skill-browser`，band 为 `builtin`，不声明地址模式；指南条目顺序为 40，标题在所有语言中都是专有名词 `Skills`。
 - **页面主体** — 同一 id 下的键控 `sidebar.right.pane.tab` 席位。框架传入 Session id 与 tab 记录，主体只调用注入的 face；face 调用按 Session 寻址的 `skills` Remote。
 - **标签标题** — 同一 id 下的键控 `sidebar.right.pane.tab.title` 席位：类型标签前绘制共享的 skill 字形。
 
@@ -69,6 +69,6 @@ kind: "package-reference"
 <details>
 <summary>维护者工作上下文——点击展开</summary>
 
-写入能力由 `@deepseek-ai/dsh-skill-filesystem` 拥有：它重读原始文件，把指定字段合并到既有 YAML frontmatter，保留未知键，并重写正文。Remote 将这一能力限制在个人来源，并从获胜 catalog 条目解析目标，因此请求从不携带路径。当写入经过 `ctx.fs` 时，provider 把可写范围限定在该 skill 文件所在目录，因为个人根目录通常位于部署 workspace 之外。
+写入能力由 `@tomato/skill-filesystem` 拥有：它重读原始文件，把指定字段合并到既有 YAML frontmatter，保留未知键，并重写正文。Remote 将这一能力限制在个人来源，并从获胜 catalog 条目解析目标，因此请求从不携带路径。当写入经过 `ctx.fs` 时，provider 把可写范围限定在该 skill 文件所在目录，因为个人根目录通常位于部署 workspace 之外。
 
 </details>

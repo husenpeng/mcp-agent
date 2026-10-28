@@ -3,7 +3,7 @@ description: "Shared Host service of optional action cards: the propose_action t
 kind: "package-reference"
 ---
 
-# @deepseek-ai/dsh-action-cards
+# @tomato/action-cards
 
 English | [中文](README.zh.md)
 

@@ -9,8 +9,8 @@
  * @module @tomato/telemetry
  */
 
-import type { Context } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-session'
+import type { Context } from '@tomato/cordis'
+import type {} from '@tomato/session'
 import { Config } from './config.ts'
 import { TurnRecorder } from './recorder.ts'
 import { nanos, otlpDocument, type SpanDraft } from './spans.ts'

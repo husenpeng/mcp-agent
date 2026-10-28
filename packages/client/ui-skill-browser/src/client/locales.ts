@@ -4,9 +4,9 @@
  * The tab type name is the proper noun "Skills" in every language by product
  * decision; everything else is ordinary interface copy.
  */
-import type {} from '@deepseek-ai/dsh-client-ui-slots'
+import type {} from '@tomato/client-ui-slots'
 
-declare module '@deepseek-ai/dsh-client-ui-slots' {
+declare module '@tomato/client-ui-slots' {
   interface LocaleNamespaceMap {
     /** Skills browser list, detail, editor, source badges, and Markdown chrome. */
     skillBrowser: SkillBrowserKey

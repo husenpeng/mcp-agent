@@ -3,7 +3,7 @@ description: "通过 OAR 添加实验性单次编程智能体委派，并允许�
 kind: "package-reference"
 ---
 
-# @deepseek-ai/dsh-experimental-subagent-oar
+# @tomato/experimental-subagent-oar
 
 [English](README.md) | 中文
 
@@ -29,12 +29,12 @@ kind: "package-reference"
 
 委派前，请先安装并认证原生 Codex 和 Claude Code CLI。TOMATO Host 必须能访问它们的可执行文件。提供方在接受委派之前不会启动原生会话。
 
-在组合中将此提供方和 `@deepseek-ai/dsh-experimental-tool-subagent-oar` 声明为依赖，然后通过 Profile 补丁添加这些行：
+在组合中将此提供方和 `@tomato/experimental-tool-subagent-oar` 声明为依赖，然后通过 Profile 补丁添加这些行：
 
 ```yaml
 - insert:
     - id: experimental-subagent-oar-codex
-      name: '@deepseek-ai/dsh-experimental-subagent-oar'
+      name: '@tomato/experimental-subagent-oar'
       config:
         runtime: codex
         providerName: oar-codex
@@ -42,7 +42,7 @@ kind: "package-reference"
           - -c
           - sandbox_mode="workspace-write"
     - id: experimental-subagent-oar-claude
-      name: '@deepseek-ai/dsh-experimental-subagent-oar'
+      name: '@tomato/experimental-subagent-oar'
       config:
         runtime: claude
         providerName: oar-claude
@@ -52,14 +52,14 @@ kind: "package-reference"
           - --permission-prompts
           - none
     - id: tool-subagent-oar
-      name: '@deepseek-ai/dsh-experimental-tool-subagent-oar'
+      name: '@tomato/experimental-tool-subagent-oar'
       config:
         providers:
           codex: oar-codex
           claude: oar-claude
 ```
 
-通过 `dsh` Profile 启动完成后的组合。此示例为每个提供方分配不同名称，并在模型可以委派任务之前固定原生权限参数。
+通过 `tomato` Profile 启动完成后的组合。此示例为每个提供方分配不同名称，并在模型可以委派任务之前固定原生权限参数。
 
 ### 提供的能力
 

@@ -9,32 +9,32 @@
  * background job wiring, and the UI presenters. Real-pwsh behavior
  * is pinned separately in integration.spec.ts.
  */
-import { executeToolFixture } from '@deepseek-ai/dsh-tool-testkit'
+import { executeToolFixture } from '@tomato/tool-testkit'
 
-import * as NativeToolExecutor from '@deepseek-ai/dsh-tool-executor-native'
-import { provideWorkingDirectoryFixture } from '@deepseek-ai/dsh-agent-loop-testkit'
+import * as NativeToolExecutor from '@tomato/tool-executor-native'
+import { provideWorkingDirectoryFixture } from '@tomato/agent-loop-testkit'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@tomato/cordis'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve as resolvePath } from 'node:path'
-import { ToolCallId } from '@deepseek-ai/dsh-llm'
-import SystemPrompt, { renderPrompt } from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime, { TOOL_ABORTED, TOOL_ABORTED_BEFORE_DISPATCH } from '@deepseek-ai/dsh-tools'
-import LocalJobRegistry from '@deepseek-ai/dsh-jobs-local'
-import * as ToolJobs from '@deepseek-ai/dsh-tool-jobs'
-import AgentRegistry from '@deepseek-ai/dsh-agent'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import { SESSION_FORMAT_VERSION, SessionId, SessionLogOffset, SessionSeq } from '@deepseek-ai/dsh-session'
-import ApprovalService from '@deepseek-ai/dsh-user-approval'
-import type { ApprovalOutcome } from '@deepseek-ai/dsh-user-approval'
-import { ShellExecutor } from '@deepseek-ai/dsh-shell'
-import type { ShellExecRequest, ShellExecSpec, ShellExecution, ShellProcess, ShellRunResult } from '@deepseek-ai/dsh-shell'
-import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
-import SandboxPolicyService from '@deepseek-ai/dsh-sandbox-policy'
-import { escalationHintMarker, sandboxDenialMarker } from '@deepseek-ai/dsh-sandbox'
-import * as ToolPwsh from '@deepseek-ai/dsh-tool-pwsh'
-import * as BashEnvPlugin from '@deepseek-ai/dsh-shell-env'
+import { ToolCallId } from '@tomato/llm'
+import SystemPrompt, { renderPrompt } from '@tomato/system-prompt'
+import ToolRuntime, { TOOL_ABORTED, TOOL_ABORTED_BEFORE_DISPATCH } from '@tomato/tools'
+import LocalJobRegistry from '@tomato/jobs-local'
+import * as ToolJobs from '@tomato/tool-jobs'
+import AgentRegistry from '@tomato/agent'
+import type { Agent } from '@tomato/agent'
+import { SESSION_FORMAT_VERSION, SessionId, SessionLogOffset, SessionSeq } from '@tomato/session'
+import ApprovalService from '@tomato/user-approval'
+import type { ApprovalOutcome } from '@tomato/user-approval'
+import { ShellExecutor } from '@tomato/shell'
+import type { ShellExecRequest, ShellExecSpec, ShellExecution, ShellProcess, ShellRunResult } from '@tomato/shell'
+import SessionProjectionRegistry from '@tomato/session-projection'
+import SandboxPolicyService from '@tomato/sandbox-policy'
+import { escalationHintMarker, sandboxDenialMarker } from '@tomato/sandbox'
+import * as ToolPwsh from '@tomato/tool-pwsh'
+import * as BashEnvPlugin from '@tomato/shell-env'
 import { processOutcome } from '../src/background.ts'
 import { renderPwshJobRead, renderPwshResult } from '../src/render.ts'
 
@@ -439,7 +439,7 @@ describe('argument validation', () => {
 
 describe('execution through the bash seam', () => {
   it('forwards command, session cwd, timeout, and managed TOMATO_* environment', async () => {
-    const tomatoHome = mkdtempSync(join(tmpdir(), 'dsh-tool-pwsh-home-'))
+    const tomatoHome = mkdtempSync(join(tmpdir(), 'tomato-tool-pwsh-home-'))
     tempDirs.push(tomatoHome)
     const { ctx, bash } = await setup({}, tomatoHome)
     bash.handler = () => runResult('hi\n')
@@ -591,7 +591,7 @@ describe('execution through the bash seam', () => {
 describe('per-call sandbox policy resolution', () => {
   it('stamps the CALLING SESSION\'s resolved policy onto the request (session cwd, not the server launch dir)', async () => {
     const { ctx, bash } = await setupSandboxed()
-    const sessionCwd = mkdtempSync(join(tmpdir(), 'dsh-tool-pwsh-policy-'))
+    const sessionCwd = mkdtempSync(join(tmpdir(), 'tomato-tool-pwsh-policy-'))
     tempDirs.push(sessionCwd)
     const agent = await registerFakeAgent(ctx, 'policy-session')
     Object.assign(agent.session.header, { cwd: sessionCwd })
@@ -861,7 +861,7 @@ describe('background execution through the job runtime', () => {
     const { ctx } = await setup() // no LocalJobRegistry / ToolJobs
     const result = await call(ctx, 'pwsh', { command: 'Start-Sleep -Seconds 60', description: 'test command', run_in_background: true })
     expect(result.isError).toBe(true)
-    expect(text(result)).toContain('background jobs unavailable: load @deepseek-ai/dsh-jobs and @deepseek-ai/dsh-tool-jobs')
+    expect(text(result)).toContain('background jobs unavailable: load @tomato/jobs and @tomato/tool-jobs')
   })
 
   it('a pre-aborted call is skipped before the process starts', async () => {
@@ -1247,7 +1247,7 @@ describe('resolved launch directory metadata', () => {
     { background: true, workdir: 'relative' },
   ])('records the executor directory for background=$background and workdir=$workdir', async ({ background, workdir }) => {
     const { ctx, bash } = await setupWithJobs()
-    const directory = mkdtempSync(join(tmpdir(), 'dsh-pwsh-cwd-meta-'))
+    const directory = mkdtempSync(join(tmpdir(), 'tomato-pwsh-cwd-meta-'))
     bash.handler = () => runResult('metadata-ok')
     bash.backgroundHandler = () => fakeProcess('metadata-ok')
     const current = join(directory, 'current')

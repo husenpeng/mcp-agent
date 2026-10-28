@@ -3,7 +3,7 @@ description: "按需安装 Playwright MCP 浏览器工具，每个会话独立 C
 kind: "package-bundle"
 ---
 
-# @deepseek-ai/dsh-experimental-browser-use-playwright-bundle
+# @tomato/experimental-browser-use-playwright-bundle
 
 [English](README.md) | 中文
 
@@ -25,7 +25,7 @@ kind: "package-bundle"
 <a id="use-this-package"></a>
 ## 使用本包
 
-打开 **插件**，在官方组合包中找到 **Playwright 浏览器** 并打开开关。Host 会按当前安装版本安装 `@deepseek-ai/dsh-experimental-browser-use-playwright-bundle` 并选中其层；关闭开关只取消选中，依赖仍保留。源码工作区安装 `link:` 依赖，正式安装则固定到发布版本。
+打开 **插件**，在官方组合包中找到 **Playwright 浏览器** 并打开开关。Host 会按当前安装版本安装 `@tomato/experimental-browser-use-playwright-bundle` 并选中其层；关闭开关只取消选中，依赖仍保留。源码工作区安装 `link:` 依赖，正式安装则固定到发布版本。
 
 本包固定使用的 Playwright 版本需要对应的 Chromium 构建。先在本机运行一次 `npx playwright install chromium`，或用 profile patch 替换提供方行并设置 `executablePath`。缺少浏览器时，每个新 Session 的 MCP 启动都会失败，并报告提供方的启动错误。
 

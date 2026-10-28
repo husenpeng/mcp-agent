@@ -6,7 +6,7 @@ import { createInterface } from 'node:readline'
 import { fileURLToPath } from 'node:url'
 import { execa } from 'execa'
 import { expect, it } from 'vitest'
-import { resolveExampleLaunch } from '@deepseek-ai/dsh-loader-smoke'
+import { resolveExampleLaunch } from '@tomato/loader-smoke'
 
 it.each([
   { state: 'idle', cancelFirst: false },
@@ -14,7 +14,7 @@ it.each([
   { state: 'idle', cancelFirst: true },
   { state: 'running', cancelFirst: true },
 ])('preserves Agent cleanup during Web shutdown ($state, cancel first: $cancelFirst)', { retry: 0 }, async ({ state, cancelFirst }) => {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-web-agent-shutdown-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-web-agent-shutdown-'))
   try {
     const patch = join(root, 'shutdown.patch.yml')
     const resultPath = join(root, 'result.json')
@@ -34,7 +34,7 @@ it.each([
       tsconfigPath: fileURLToPath(new URL('../../../tsconfig.json', import.meta.url)),
       configArgs: ['--profile', 'web', '--patch', patch, '--no-open', '--port', '0'],
       env: {
-        TOMATO_HOME: join(root, '.dsh'),
+        TOMATO_HOME: join(root, '.tomato'),
         TOMATO_AGENTS_HOME: join(root, '.agents'),
         TOMATO_TELEMETRY_DISABLED: '1',
       },
@@ -59,7 +59,7 @@ it.each([
       expect(result.timedOut, result.stderr).toBe(false)
       expect(result.signal, result.stderr).toBeUndefined()
       expect(result.exitCode, result.stderr).toBe(0)
-      expect(result.stderr).not.toMatch(/dsh: fatal|projection registration is not active/u)
+      expect(result.stderr).not.toMatch(/tomato: fatal|projection registration is not active/u)
       const evidence: unknown = JSON.parse(await readFile(resultPath, 'utf8'))
       expect(evidence).toMatchObject({
         abortHandled: 1,

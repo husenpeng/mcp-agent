@@ -51,15 +51,15 @@ SDK 场景会比对 `scripts/snapshots/python-sdk-single-exe/` 下已提交的�
 ```python
 from deepseek_harness import DeepSeekHarness
 
-with DeepSeekHarness(dsh_home="/absolute/path/to/test-dsh-home") as harness:
+with DeepSeekHarness(dsh_home="/absolute/path/to/test-tomato-home") as harness:
     print(harness.run("say hi").final_response)
 ```
 
-也可以导出非空 `TOMATO_HOME`。SDK 会拒绝可能静默使用 `~/.dsh` 的启动。
+也可以导出非空 `TOMATO_HOME`。SDK 会拒绝可能静默使用 `~/.tomato` 的启动。
 
 ## 针对 Node 源码运行
 
-仓库贡献者可以选择以下任一开发路径；两者都执行普通的 `dsh --profile sdk` 启动器：
+仓库贡献者可以选择以下任一开发路径；两者都执行普通的 `tomato --profile sdk` 启动器：
 
 - 设置 `TOMATO_RUNTIME_MODE=node`，在系统 Node `>=24.9` 上使用已构建的 Node 载体。构建脚本会刷新该载体，但分发物绝不会包含或自动选择它。
 - 将 `dsh_bin` 设置为已构建 `apps/cli/lib/bin.js` 的绝对路径，直接验证当前 checkout 的 CLI。请显式提供 `dsh_home`，并按需提供 `profile` 与有序 `patches`。

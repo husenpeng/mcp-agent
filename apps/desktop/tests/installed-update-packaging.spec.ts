@@ -40,7 +40,7 @@ vi.mock('../scripts/packaging-run.mjs', async (original) => {
 const versions = ['0.1.6-nightly.20260914.1', '0.1.6-nightly.20260914.2'] as const
 
 async function fixture(body: (manifest: string, root: string) => Promise<void>): Promise<void> {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-packaging-entry-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-packaging-entry-'))
   const previous = { ...state }
   try {
     state.home = root
@@ -52,8 +52,8 @@ async function fixture(body: (manifest: string, root: string) => Promise<void>):
     await writeFile(tool, 'inert unused signer fixture')
     await mkdir(join(run.root, 'application'))
     await writeFile(join(run.root, 'application/result.json'), '{}')
-    await mkdir(join(run.root, versions[0], 'dsh'), { recursive: true })
-    await writeFile(join(run.root, versions[0], 'dsh/desktop-runtime.json'), '{}')
+    await mkdir(join(run.root, versions[0], 'tomato'), { recursive: true })
+    await writeFile(join(run.root, versions[0], 'tomato/desktop-runtime.json'), '{}')
     state.settings = { ...Object.fromEntries(Object.entries(process.env)
       .filter(([name]) => !/KEY|SECRET|TOKEN|PASSWORD|^NODE_OPTIONS$/iu.test(name))),
     TOMATO_DESKTOP_WINDOWS_CER_FILE: certificate, TOMATO_DESKTOP_WINDOWS_SIGNTOOL: tool,
@@ -65,15 +65,15 @@ async function fixture(body: (manifest: string, root: string) => Promise<void>):
 describe('operator-driven packaging entry', () => {
   it('refuses the interlock before loading credentials, confirmation, or child allocation and preserves it byte-for-byte', async () => {
     await fixture(async (manifest, root) => {
-      const lock = join(root, '.dsh-desktop-signing/attempt.json')
-      await mkdir(join(root, '.dsh-desktop-signing'))
+      const lock = join(root, '.tomato-desktop-signing/attempt.json')
+      await mkdir(join(root, '.tomato-desktop-signing'))
       await writeFile(lock, 'retained incident record')
       const confirm = vi.fn(async () => true)
       await expect(packageInstalledUpdate(manifest, versions[0], { execute: true, confirm })).rejects.toThrow('interlock exists')
       expect(state.loads).toBe(0)
       expect(confirm).not.toHaveBeenCalled()
       expect(await readFile(lock, 'utf8')).toBe('retained incident record')
-      expect(await readdir(join(manifest, '..', versions[0]))).toEqual(['dsh'])
+      expect(await readdir(join(manifest, '..', versions[0]))).toEqual(['tomato'])
       await expect(assertInstalledUpdateSigningClear(lock)).rejects.toThrow('interlock exists')
     })
   })
@@ -92,7 +92,7 @@ describe('operator-driven packaging entry', () => {
       expect(await packageInstalledUpdate(manifest, versions[0], { execute: false, confirm }))
         .toMatchObject({ mode: 'check', childLaunched: false, signed: false })
       expect(confirm).not.toHaveBeenCalled()
-      expect(await readdir(join(manifest, '..', versions[0]))).toEqual(['dsh'])
+      expect(await readdir(join(manifest, '..', versions[0]))).toEqual(['tomato'])
     })
   })
 
@@ -122,11 +122,11 @@ describe('operator-driven packaging entry', () => {
       await expect(packageInstalledUpdate(manifest, versions[0], { execute: true, confirm: async () => false }))
         .rejects.toThrow('did not confirm')
       await expect(packageInstalledUpdate(manifest, versions[0], { execute: true, confirm: async () => {
-        await mkdir(join(root, '.dsh-desktop-signing'))
-        await writeFile(join(root, '.dsh-desktop-signing/attempt.json'), 'another operation acquired the token')
+        await mkdir(join(root, '.tomato-desktop-signing'))
+        await writeFile(join(root, '.tomato-desktop-signing/attempt.json'), 'another operation acquired the token')
         return true
       } })).rejects.toThrow('interlock exists')
-      expect(await readdir(join(manifest, '..', versions[0]))).toEqual(['dsh'])
+      expect(await readdir(join(manifest, '..', versions[0]))).toEqual(['tomato'])
     })
   })
 

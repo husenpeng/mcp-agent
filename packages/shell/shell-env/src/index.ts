@@ -1,23 +1,23 @@
 /**
  * Tool-independent shell environment plugin: owns the `ctx.shellEnv` registry of
  * trusted, per-execution `TOMATO_*` variables consumed by the model-facing shell
- * tools (`dsh-tool-bash`, `dsh-tool-pwsh`). Built-in shell facts are owned by
+ * tools (`@tomato/tool-bash`, `@tomato/tool-pwsh`). Built-in shell facts are owned by
  * the registry itself while plugins can register additional, enumerable facts
  * with effect-scoped disposal.
  *
- * @module @deepseek-ai/dsh-shell-env
+ * @module @tomato/shell-env
  */
 
-import { Service, type Context } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import { TOMATO_ENV_PREFIX } from '@deepseek-ai/dsh-shell'
-import type { TomatoEnvironment, TomatoEnvironmentKey } from '@deepseek-ai/dsh-shell'
-import { TOMATO_HOME_ENV, resolveDshHome } from '@deepseek-ai/dsh-home-paths'
-import type { ToolExecution } from '@deepseek-ai/dsh-tools'
+import { Service, type Context } from '@tomato/cordis'
+import z from '@tomato/schemastery'
+import { TOMATO_ENV_PREFIX } from '@tomato/shell'
+import type { TomatoEnvironment, TomatoEnvironmentKey } from '@tomato/shell'
+import { TOMATO_HOME_ENV, resolveTomatoHome } from '@tomato/home-paths'
+import type { ToolExecution } from '@tomato/tools'
 // Declares `Context.profileContext`, the launcher-provided profile the built-ins read.
-import type {} from '@deepseek-ai/dsh-app-boot'
+import type {} from '@tomato/app-boot'
 
-declare module '@deepseek-ai/cordis' {
+declare module '@tomato/cordis' {
   interface Context {
     shellEnv: ShellEnvRegistry
   }
@@ -28,7 +28,7 @@ export const inject: string[] = []
 
 /** Plugin config (all optional — the built-in facts resolve without defaults). */
 export interface Config {
-  /** DeepSeek Harness home directory exposed as `TOMATO_HOME`; defaults to `$TOMATO_HOME` or `~/.dsh`. */
+  /** Tomato Harness home directory exposed as `TOMATO_HOME`; defaults to `$TOMATO_HOME` or `~/.tomato`. */
   tomatoHome?: string
 }
 
@@ -102,7 +102,7 @@ export class ShellEnvRegistry extends Service {
    */
   constructor(ctx: Context, config: Config = {}) {
     super(ctx, 'shellEnv')
-    this.tomatoHome = resolveDshHome(config.tomatoHome)
+    this.tomatoHome = resolveTomatoHome(config.tomatoHome)
   }
 
   /**

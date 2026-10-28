@@ -1,7 +1,7 @@
 /**
  * Keyless snapshot coverage for the TypeScript SDK path: each scenario spawns
- * the real `dsh --profile sdk` or `sdk-minimal` runtime through
- * `@deepseek-ai/dsh-sdk-client`, drives one turn over stdio JSON-RPC,
+ * the real `tomato --profile sdk` or `sdk-minimal` runtime through
+ * `@tomato/sdk-client`, drives one turn over stdio JSON-RPC,
  * and pins the SDK `RunResult`, the complete notification stream, and the
  * persisted session logs. Replay serves recorded model
  * responses via `llm-replay` (`cordis.snapshot.yml`); `TOMATO_SNAPSHOT=record`
@@ -54,16 +54,16 @@ import {
   type NormalizeContext,
   type SnapshotManifest,
   type WorkspaceSnapshotEntry,
-} from '@deepseek-ai/dsh-session-snapshot'
+} from '@tomato/session-snapshot'
 import {
   DeepSeekHarness,
   type HarnessNotification,
   type NotificationSubscription,
   type RunResult,
   type SdkPromptContentBlock,
-} from '@deepseek-ai/dsh-sdk-client'
-import { SESSION_FORMAT_VERSION } from '@deepseek-ai/dsh-session'
-import { deriveReplayScript, parseSessionLog } from '@deepseek-ai/dsh-llm-replay'
+} from '@tomato/sdk-client'
+import { SESSION_FORMAT_VERSION } from '@tomato/session'
+import { deriveReplayScript, parseSessionLog } from '@tomato/llm-replay'
 
 const corpusRoot = fileURLToPath(new URL('../', import.meta.url))
 
@@ -83,17 +83,17 @@ const refreshing = mode === 'refresh'
 const sessionWriteMode = recording ? 'record' : refreshing ? 'refresh' : 'replay'
 const RUNTIME_WORKSPACE_ENTRIES = [
   '.agents',
-  '.child-dsh',
-  '.dsh',
+  '.child-tomato',
+  '.tomato',
   '.replay-fixtures',
   '.snapshot-patches',
 ] as const
 const tomatoSdkDiagnosticChildPatch = fileURLToPath(new URL(
-  './subagent-dsh-sdk-diagnostic/child.cordis.yml',
+  './subagent-sdk-diagnostic/child.cordis.yml',
   import.meta.url,
 ))
 const tomatoSdkChildConfig = fileURLToPath(new URL(
-  '../../packages/subagent/subagent-dsh-sdk/tests/fixtures/loader/child.patch.yml',
+  '../../packages/subagent/subagent-sdk/tests/fixtures/loader/child.patch.yml',
   import.meta.url,
 ))
 
@@ -140,7 +140,7 @@ const SDK_ASSERTIONS: Readonly<Record<string, SdkAssertions>> = {
     expectedFinalResponse: 'SDK snapshot OK',
     runtimeContext: {
       includes: ['Current working directory:'],
-      excludes: ['Current DeepSeek Harness implementation checkout:', 'Current DeepSeek Harness Web GUI URL:'],
+      excludes: ['Current Tomato Harness implementation checkout:', 'Current Tomato Harness Web GUI URL:'],
     },
   },
   'desktop-ptc-context': { expectedFinalResponse: 'SDK snapshot OK' },
@@ -179,8 +179,8 @@ const SDK_ASSERTIONS: Readonly<Record<string, SdkAssertions>> = {
   'subagent-continuable': {
     environment: { TOMATO_SNAPSHOT_HUMAN_STEER: '1' },
   },
-  'subagent-dsh-sdk-diagnostic': {
-    expectedFinalResponse: 'PARENT_OBSERVED_DSH_SDK_DIAGNOSTIC',
+  'subagent-sdk-diagnostic': {
+    expectedFinalResponse: 'PARENT_OBSERVED_TOMATO_SDK_DIAGNOSTIC',
     environment: { TOMATO_TEST_CHILD_PATCH: tomatoSdkDiagnosticChildPatch },
   },
   'persistent-tools': {
@@ -193,7 +193,7 @@ const SDK_ASSERTIONS: Readonly<Record<string, SdkAssertions>> = {
       excludes: ['workspace-write'],
     },
   },
-  'subagent-dsh-sdk-dynamic-route': {
+  'subagent-sdk-dynamic-route': {
     environment: { TOMATO_TEST_PARENT_PROVIDER: 'deepseek-official' },
     tomatoSdkChild: {
       config: tomatoSdkChildConfig,
@@ -574,8 +574,8 @@ const legacySdkCompositions = new Set([
   'ptc',
   'sdk-account-provider-signout',
   'sdk-default',
-  'sdk-dsh-sdk-diagnostic',
-  'sdk-dsh-sdk-dynamic-route',
+  'sdk-tomato-sdk-diagnostic',
+  'sdk-tomato-sdk-dynamic-route',
   'sdk-minimal',
   'sdk-serial-created',
   'sdk-upload',
@@ -622,7 +622,7 @@ async function runScenario(scenario: CorpusScenario): Promise<{
     workspacePrefix += '-'.repeat(paddingLength)
   }
   const cwd = await realpath(await mkdtemp(join(workspaceParent, workspacePrefix)))
-  const tomatoHome = join(cwd, '.dsh')
+  const tomatoHome = join(cwd, '.tomato')
   const sessionsRoot = join(tomatoHome, 'sessions')
   const replayFixtures = recording ? [] : await hydrateReplayFixtures(scenario, cwd)
   const fixtureContents = await Promise.all((await fixtureFiles(scenario)).map(file => readFile(file, 'utf8')))
@@ -642,7 +642,7 @@ async function runScenario(scenario: CorpusScenario): Promise<{
   let childSessionsRoot: string | undefined
   let childEnvironment: Record<string, string> = {}
   if (assertions.tomatoSdkChild !== undefined) {
-    const childHome = join(cwd, '.child-dsh')
+    const childHome = join(cwd, '.child-tomato')
     const legacyChildPatch = materializeProfilePatch(legacySdkContextPatch, cwd, 'sdk', patchRoot, patches.length)
     const childPatch = materializeProfilePatch(assertions.tomatoSdkChild.config, cwd, 'sdk', patchRoot, patches.length + 1)
     await mkdir(childHome, { recursive: true })
@@ -845,8 +845,8 @@ async function runScenario(scenario: CorpusScenario): Promise<{
 }
 
 /** Order logs parent-first, children by creation time (fixture layout order). */
-function orderLogs(logs: PersistedLog[], expectedCount: number, separateDshSdkChild: boolean): PersistedLog[] {
-  if (separateDshSdkChild) {
+function orderLogs(logs: PersistedLog[], expectedCount: number, separateTomatoSdkChild: boolean): PersistedLog[] {
+  if (separateTomatoSdkChild) {
     expect(logs).toHaveLength(expectedCount)
     return logs
   }
@@ -986,7 +986,7 @@ describe('TypeScript SDK snapshots over the jsonrpc runtime', () => {
       && (scenario.manifest.recording === 'authored' || scenario.manifest.sessionFormat !== undefined)
       ? it.skip
       : it
-    scenarioTest(`${mode}s ${scenario.name} through dsh --profile ${scenario.manifest.profile}`, async () => {
+    scenarioTest(`${mode}s ${scenario.name} through tomato --profile ${scenario.manifest.profile}`, async () => {
       const scenarioDir = scenario.dir
       const retained = scenario.manifest.sessionFormat !== undefined
       const notificationsExpectedPath = join(scenarioDir, retained ? 'notifications.current.expected.jsonl' : 'notifications.expected.jsonl')
@@ -1045,17 +1045,17 @@ describe('TypeScript SDK snapshots over the jsonrpc runtime', () => {
           .toBeGreaterThan(events.findIndex(event => event.type === 'compaction/summary'))
       }
       expect(logs.some(log => log.content.includes('llm-replay: script exhausted')), `${scenario.name}: replay script covers every model request`).toBe(false)
-      if (scenario.name === 'subagent-dsh-sdk-diagnostic' || scenario.name === 'subagent-dsh-sdk-dynamic-route') {
+      if (scenario.name === 'subagent-sdk-diagnostic' || scenario.name === 'subagent-sdk-dynamic-route') {
         const parentEvents = records(ordered[0]!.content)
         const notices = parentEvents.filter(event => event.type === 'user/message'
           && (event.data as JsonObject | undefined)?.source !== undefined
           && ((event.data as JsonObject).source as JsonObject).kind === 'subagent-settled')
-        const expectedCount = scenario.name === 'subagent-dsh-sdk-diagnostic' ? 2 : 1
+        const expectedCount = scenario.name === 'subagent-sdk-diagnostic' ? 2 : 1
         expect(notices).toHaveLength(expectedCount)
         const catalog = parentEvents.filter(event => event.type === 'subagent/catalog')
         expect(catalog).toHaveLength(expectedCount)
         expect(catalog.every(event => (event.data as JsonObject).mode === 'external')).toBe(true)
-        const expectedContent = scenario.name === 'subagent-dsh-sdk-diagnostic'
+        const expectedContent = scenario.name === 'subagent-sdk-diagnostic'
           ? 'partial child loader answer'
           : 'child route: mock/mock-routed/max/777; cwd:'
         for (const notice of notices) expect(JSON.stringify(notice)).toContain(expectedContent)

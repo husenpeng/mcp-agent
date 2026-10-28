@@ -4,7 +4,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { DeepSeekHarness } from '@deepseek-ai/dsh-sdk-client'
+import { DeepSeekHarness } from '@tomato/sdk-client'
 import { clearAmbientProxyEnv } from '../../../../../scripts/test-proxy-environment.ts'
 import { expect, it, onTestFinished, vi } from 'vitest'
 import { messagesResponse } from './fixtures/messages-response.ts'
@@ -52,7 +52,7 @@ it('delivers an overdue reminder with the SDK route and lets the client resume t
   const env = { ...process.env, TOMATO_PERMISSION_MODE: 'danger-full-access', TOMATO_TELEMETRY_DISABLED: '1',
     DEEPSEEK_API_KEY: 'keyless-schedule-fixture', DEEPSEEK_BASE_URL: `http://127.0.0.1:${String(address.port)}` }
   clearAmbientProxyEnv(env)
-  const first = new DeepSeekHarness({ cwd: root, tomatoHome: join(root, '.dsh'), patches: [patch],
+  const first = new DeepSeekHarness({ cwd: root, tomatoHome: join(root, '.tomato'), patches: [patch],
     model: 'deepseek-v4-pro', maxTokens: 5678, initializeTimeoutMs: 30_000,
     env: { ...env, TOMATO_TEST_SCHEDULE_NOW: String(Date.parse('2030-01-01T00:00:00Z')) } })
   clients.push(first)
@@ -60,7 +60,7 @@ it('delivers an overdue reminder with the SDK route and lets the client resume t
   expect(requests).toHaveLength(2)
   await first.close()
   restarting = true
-  const second = new DeepSeekHarness({ cwd: root, tomatoHome: join(root, '.dsh'), patches: [patch],
+  const second = new DeepSeekHarness({ cwd: root, tomatoHome: join(root, '.tomato'), patches: [patch],
     model: 'deepseek-v4-flash', maxTokens: 1234, initializeTimeoutMs: 30_000,
     env: { ...env, TOMATO_TEST_SCHEDULE_NOW: String(Date.parse('2030-01-03T00:00:00Z')) } })
   clients.push(second)

@@ -1,6 +1,6 @@
 {
-  "name": "@deepseek-ai/dsh-sdk-app",
-  "description": "The dsh SDK profile bundle: stdio JSON-RPC serving and process lifecycle over dsh-base",
+  "name": "@tomato/sdk-app",
+  "description": "The tomato SDK profile bundle: stdio JSON-RPC serving and process lifecycle over @tomato/base",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -30,34 +30,34 @@
     "lib/types/**/*.d.ts"
   ],
   "license": "MIT",
-  "dsh": {
+  "tomato": {
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
   },
   "dependencies": {
-    "@deepseek-ai/dsh-cmdline": "workspace:*",
-    "@deepseek-ai/dsh-sdk-jsonrpc-server": "workspace:*",
-    "@deepseek-ai/schemastery": "workspace:~",
+    "@tomato/cmdline": "workspace:*",
+    "@tomato/sdk-jsonrpc-server": "workspace:*",
+    "@tomato/schemastery": "workspace:~",
     "commander": "^15.0.0",
-    "@deepseek-ai/dsh-skill-office": "workspace:*",
-    "@deepseek-ai/dsh-tool-workspace-dependencies": "workspace:*",
-    "@deepseek-ai/dsh-client-connection": "workspace:*",
-    "@deepseek-ai/dsh-client-file-upload": "workspace:*",
-    "@deepseek-ai/dsh-workspace": "workspace:*",
-    "@deepseek-ai/dsh-schedule": "workspace:*",
-    "@deepseek-ai/dsh-time-context": "workspace:*",
-    "@deepseek-ai/dsh-tool-schedule": "workspace:*",
-    "@deepseek-ai/dsh-tool-ask-user": "workspace:*",
-    "@deepseek-ai/dsh-tool-present": "workspace:*",
-    "@deepseek-ai/dsh-file-reference-local": "workspace:*",
-    "@deepseek-ai/dsh-deliverable-file-references": "workspace:*"
+    "@tomato/skill-office": "workspace:*",
+    "@tomato/tool-workspace-dependencies": "workspace:*",
+    "@tomato/client-connection": "workspace:*",
+    "@tomato/client-file-upload": "workspace:*",
+    "@tomato/workspace": "workspace:*",
+    "@tomato/schedule": "workspace:*",
+    "@tomato/time-context": "workspace:*",
+    "@tomato/tool-schedule": "workspace:*",
+    "@tomato/tool-ask-user": "workspace:*",
+    "@tomato/tool-present": "workspace:*",
+    "@tomato/file-reference-local": "workspace:*",
+    "@tomato/deliverable-file-references": "workspace:*"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/cordis": "workspace:~"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis-plugin-include": "workspace:~",
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/cordis-plugin-include": "workspace:~",
+    "@tomato/cordis": "workspace:~"
   }
 }

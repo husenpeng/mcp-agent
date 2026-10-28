@@ -3,7 +3,7 @@ description: "提供一个外部子智能体工具，为每个任务选择已配
 kind: "package-reference"
 ---
 
-# @deepseek-ai/dsh-experimental-tool-subagent-oar
+# @tomato/experimental-tool-subagent-oar
 
 [English](README.md) | 中文
 
@@ -36,7 +36,7 @@ kind: "package-reference"
 在 `oar-codex` 和 `oar-claude` 已注册的情况下，在组合中挂载此行：
 
 ```yaml
-- name: '@deepseek-ai/dsh-experimental-tool-subagent-oar'
+- name: '@tomato/experimental-tool-subagent-oar'
   config:
     providers:
       codex: oar-codex

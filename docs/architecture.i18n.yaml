@@ -2,36 +2,36 @@
 # section, a hash of its English and Chinese blocks outside code blocks and generated regions.
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/architecture.md
-/deepseek-harness-architecture:
-  en: 20678ed3f962afba
-  zh: 87a2b81675d93346
-/deepseek-harness-architecture/cordis:
-  en: da5060e577578ea7
-  zh: 2e77d570e32d8938
-/deepseek-harness-architecture/profiles-and-bundles:
-  en: 21423f481b18b0be
-  zh: 5343bd7ea0fae5bc
-/deepseek-harness-architecture/application-launch:
-  en: 334b4f390b6e376b
-  zh: ce094f24c6162be3
-/deepseek-harness-architecture/desktop-application:
-  en: b9eeb18645121a8b
-  zh: 70d87a12c43e042a
-/deepseek-harness-architecture/core-packages:
-  en: 20ef882e44b06a10
-  zh: c10c3934ed5570e9
-/deepseek-harness-architecture/events:
-  en: 693407efb233f961
-  zh: 37b9dd0677d4405c
-/deepseek-harness-architecture/turn-flow:
-  en: 1a79a70b62c04cdb
-  zh: c86d765e21430405
-/deepseek-harness-architecture/session-log:
-  en: 8a7f19b95d426c99
-  zh: d5bb0538404e20ea
-/deepseek-harness-architecture/capability-seams:
-  en: a5bc20c3f2a1b370
-  zh: 91773a281410b2f4
-/deepseek-harness-architecture/where-new-behavior-goes:
-  en: ee73b1861378b099
-  zh: 9a182be609485f67
+/tomato-harness-architecture:
+  en: 680b7dfc8d30fbcd
+  zh: 420f697bba46c16e
+/tomato-harness-architecture/cordis:
+  en: 74988019fcd057b6
+  zh: 6bdc411c551dfdbd
+/tomato-harness-architecture/profiles-and-bundles:
+  en: 0356cff75175213a
+  zh: 70fc3d672041412c
+/tomato-harness-architecture/application-launch:
+  en: 67f093fce57a5dd1
+  zh: b2dc92df9f5362a9
+/tomato-harness-architecture/desktop-application:
+  en: efc8977777cb75a5
+  zh: 7e0def674ebe31c5
+/tomato-harness-architecture/core-packages:
+  en: e991bb5811084c3d
+  zh: f852702af21f04d6
+/tomato-harness-architecture/events:
+  en: f7ad57706ae028f1
+  zh: 4db678b405454aa2
+/tomato-harness-architecture/turn-flow:
+  en: 6c0a2c5f07d0f428
+  zh: 9f0804d98f81e7f2
+/tomato-harness-architecture/session-log:
+  en: d6c0fc832ebf0717
+  zh: 4cd083f9da3cab28
+/tomato-harness-architecture/capability-seams:
+  en: 428379d24c9b2ae7
+  zh: 4d93cd7e974bc131
+/tomato-harness-architecture/where-new-behavior-goes:
+  en: c043270ade98522b
+  zh: 722ce849535a6719

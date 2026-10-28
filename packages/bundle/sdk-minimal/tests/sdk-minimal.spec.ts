@@ -5,64 +5,64 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import * as yaml from 'js-yaml'
 import { describe, expect, it } from 'vitest'
-import { entryListSchema } from '@deepseek-ai/cordis-plugin-include'
+import { entryListSchema } from '@tomato/cordis-plugin-include'
 
 function packageName(specifier: string): string {
   return specifier.startsWith('@') ? specifier.split('/').slice(0, 2).join('/') : specifier.split('/')[0]!
 }
 
-describe('dsh-sdk-minimal bundle', () => {
+describe('@tomato/sdk-minimal bundle', () => {
   it('declares one standalone allowlisted tree with every row dependency', () => {
     const root = fileURLToPath(new URL('..', import.meta.url))
     const manifest = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8')) as {
       dependencies?: Record<string, string>
-      dsh?: { bundle?: { patch?: string } }
+      tomato?: { bundle?: { patch?: string } }
     }
-    expect(manifest.dsh?.bundle?.patch).toBe('./cordis.patch.yml')
+    expect(manifest.tomato?.bundle?.patch).toBe('./cordis.patch.yml')
     const patches = yaml.load(
-      readFileSync(resolve(root, manifest.dsh!.bundle!.patch!), 'utf8'),
+      readFileSync(resolve(root, manifest.tomato!.bundle!.patch!), 'utf8'),
       { schema: entryListSchema },
     ) as Array<{ insert?: Array<{ id?: string; inject?: string[]; name?: string; config?: Record<string, unknown>; disabled?: unknown }> }>
     expect(patches).toHaveLength(1)
     const rows = patches[0]?.insert ?? []
     expect(rows.map(row => [row.id, row.name])).toEqual([
-      ['sdk-app-startup', '@deepseek-ai/dsh-sdk-app'],
-      ['sdk-jsonrpc-server', '@deepseek-ai/dsh-sdk-jsonrpc-server'],
-      ['deepseek-llm-api-extensions', '@deepseek-ai/dsh-deepseek-llm-api-extensions'],
-      ['session-log-deepseek', '@deepseek-ai/dsh-session-log-deepseek'],
-      ['plugin-package-inventory-deepseek', '@deepseek-ai/dsh-plugin-package-inventory-deepseek'],
-      ['llm-deepseek', '@deepseek-ai/dsh-llm-deepseek-api-key'],
-      ['sandbox', '@deepseek-ai/dsh-sandbox-local'],
-      ['filesystem', '@deepseek-ai/dsh-fs-local'],
-      ['attachment-local', '@deepseek-ai/dsh-attachment-local'],
-      ['tool-fs', '@deepseek-ai/dsh-tool-fs'],
-      ['working-directory', '@deepseek-ai/dsh-working-directory'],
-      ['tool-working-directory', '@deepseek-ai/dsh-tool-working-directory'],
-      ['session-projection', '@deepseek-ai/dsh-session-projection'],
-      ['token-meter', '@deepseek-ai/dsh-token-meter'],
-      ['compaction-basic', '@deepseek-ai/dsh-compaction-basic'],
-      ['image-offload', '@deepseek-ai/dsh-compaction-image-offload'],
-      ['sandbox-policy', '@deepseek-ai/dsh-sandbox-policy'],
-      ['subprocess', '@deepseek-ai/dsh-subprocess-local'],
-      ['pty', '@deepseek-ai/dsh-terminal'],
-      ['terminal-bash', '@deepseek-ai/dsh-terminal-bash'],
-      ['terminal-pwsh', '@deepseek-ai/dsh-terminal-bash'],
-      ['timer', '@deepseek-ai/cordis-plugin-timer'],
-      ['llm', '@deepseek-ai/dsh-llm'],
-      ['session', '@deepseek-ai/dsh-session'],
-      ['session-title', '@deepseek-ai/dsh-session-title'],
-      ['system-prompt', '@deepseek-ai/dsh-system-prompt'],
-      ['tools', '@deepseek-ai/dsh-tools'],
-      ['tool-executor-native', '@deepseek-ai/dsh-tool-executor-native'],
-      ['mcp-resources', '@deepseek-ai/dsh-mcp-resources'],
-      ['agent', '@deepseek-ai/dsh-agent'],
-      ['llm-retry', '@deepseek-ai/dsh-llm-retry'],
-      ['jobs', '@deepseek-ai/dsh-jobs-local'],
-      ['agent-loop', '@deepseek-ai/dsh-agent-loop'],
-      ['persistent-bash', '@deepseek-ai/dsh-tool-bash-persistent'],
-      ['persistent-pwsh', '@deepseek-ai/dsh-tool-pwsh-persistent'],
-      ['sessions', '@deepseek-ai/dsh-session-persistence-jsonl'],
-      ['session-checkpoint-policy', '@deepseek-ai/dsh-session-checkpoint-policy'],
+      ['sdk-app-startup', '@tomato/sdk-app'],
+      ['sdk-jsonrpc-server', '@tomato/sdk-jsonrpc-server'],
+      ['deepseek-llm-api-extensions', '@tomato/deepseek-llm-api-extensions'],
+      ['session-log-deepseek', '@tomato/session-log-deepseek'],
+      ['plugin-package-inventory-deepseek', '@tomato/plugin-package-inventory-deepseek'],
+      ['llm-deepseek', '@tomato/llm-deepseek-api-key'],
+      ['sandbox', '@tomato/sandbox-local'],
+      ['filesystem', '@tomato/fs-local'],
+      ['attachment-local', '@tomato/attachment-local'],
+      ['tool-fs', '@tomato/tool-fs'],
+      ['working-directory', '@tomato/working-directory'],
+      ['tool-working-directory', '@tomato/tool-working-directory'],
+      ['session-projection', '@tomato/session-projection'],
+      ['token-meter', '@tomato/token-meter'],
+      ['compaction-basic', '@tomato/compaction-basic'],
+      ['image-offload', '@tomato/compaction-image-offload'],
+      ['sandbox-policy', '@tomato/sandbox-policy'],
+      ['subprocess', '@tomato/subprocess-local'],
+      ['pty', '@tomato/terminal'],
+      ['terminal-bash', '@tomato/terminal-bash'],
+      ['terminal-pwsh', '@tomato/terminal-bash'],
+      ['timer', '@tomato/cordis-plugin-timer'],
+      ['llm', '@tomato/llm'],
+      ['session', '@tomato/session'],
+      ['session-title', '@tomato/session-title'],
+      ['system-prompt', '@tomato/system-prompt'],
+      ['tools', '@tomato/tools'],
+      ['tool-executor-native', '@tomato/tool-executor-native'],
+      ['mcp-resources', '@tomato/mcp-resources'],
+      ['agent', '@tomato/agent'],
+      ['llm-retry', '@tomato/llm-retry'],
+      ['jobs', '@tomato/jobs-local'],
+      ['agent-loop', '@tomato/agent-loop'],
+      ['persistent-bash', '@tomato/tool-bash-persistent'],
+      ['persistent-pwsh', '@tomato/tool-pwsh-persistent'],
+      ['sessions', '@tomato/session-persistence-jsonl'],
+      ['session-checkpoint-policy', '@tomato/session-checkpoint-policy'],
     ])
     expect(rows.find(row => row.id === 'sdk-app-startup')?.config).toEqual({ profile: 'sdk-minimal' })
     expect(rows.find(row => row.id === 'sdk-jsonrpc-server')).toMatchObject({

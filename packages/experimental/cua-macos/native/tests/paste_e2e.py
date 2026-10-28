@@ -29,7 +29,7 @@ def main():
     transcript = []
     processes = []
     helper = None
-    with tempfile.TemporaryDirectory(prefix="dsh-cua-paste-") as directory:
+    with tempfile.TemporaryDirectory(prefix="tomato-cua-paste-") as directory:
         root = Path(directory)
         binary = root / "paste-fixture"
         subprocess.run(["swiftc", str(ROOT / "tests/PasteFixture.swift"), "-o", str(binary)], check=True)

@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-session-telemetry-otel",
+  "name": "@tomato/session-telemetry-otel",
   "description": "Feedback-authorized Session logs over byte-bounded OpenTelemetry HTTP requests",
   "version": "0.2.1-rc.3",
   "publishConfig": {
@@ -30,35 +30,35 @@
   "license": "MIT",
   "dependencies": {
     "@opentelemetry/api-logs": "0.222.0",
-    "@deepseek-ai/schemastery": "workspace:~"
+    "@tomato/schemastery": "workspace:~"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-command-feedback": "workspace:*",
-    "@deepseek-ai/dsh-message-feedback": "workspace:*",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-session-telemetry": "workspace:*",
-    "@deepseek-ai/dsh-anonymous-user-id": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-otel": "workspace:*"
+    "@tomato/command-feedback": "workspace:*",
+    "@tomato/message-feedback": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-telemetry": "workspace:*",
+    "@tomato/anonymous-user-id": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/otel": "workspace:*"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis-plugin-logger-console": "workspace:~",
-    "@deepseek-ai/cordis-plugin-loader": "workspace:~",
-    "@deepseek-ai/dsh-app-boot": "workspace:*",
-    "@deepseek-ai/dsh-bash-local": "workspace:*",
-    "@deepseek-ai/dsh-command-feedback": "workspace:*",
-    "@deepseek-ai/dsh-message-feedback": "workspace:*",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-loader-smoke": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-session-checkpoint-policy": "workspace:*",
-    "@deepseek-ai/dsh-session-persistence-jsonl": "workspace:*",
-    "@deepseek-ai/dsh-session-telemetry": "workspace:*",
-    "@deepseek-ai/dsh-subprocess-local": "workspace:*",
-    "@deepseek-ai/dsh-anonymous-user-id": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-http-proxy": "workspace:*",
-    "@deepseek-ai/dsh-otel": "workspace:*"
+    "@tomato/cordis-plugin-logger-console": "workspace:~",
+    "@tomato/cordis-plugin-loader": "workspace:~",
+    "@tomato/app-boot": "workspace:*",
+    "@tomato/bash-local": "workspace:*",
+    "@tomato/command-feedback": "workspace:*",
+    "@tomato/message-feedback": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/loader-smoke": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-checkpoint-policy": "workspace:*",
+    "@tomato/session-persistence-jsonl": "workspace:*",
+    "@tomato/session-telemetry": "workspace:*",
+    "@tomato/subprocess-local": "workspace:*",
+    "@tomato/anonymous-user-id": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/http-proxy": "workspace:*",
+    "@tomato/otel": "workspace:*"
   }
 }

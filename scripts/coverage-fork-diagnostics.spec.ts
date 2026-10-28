@@ -25,7 +25,7 @@ afterEach(async () => {
 })
 
 async function fixture(exitCode: number, early = false): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-coverage-fork-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-coverage-fork-'))
   roots.push(root)
   await mkdir(join(root, 'workers'))
   // The public pool's distPath selects a plain Node protocol fixture, not a nested Vitest run.
@@ -129,7 +129,7 @@ const cancel: WorkerRequest = { __vitest_worker_request__: true, type: 'cancel' 
 const stop: WorkerRequest = { __vitest_worker_request__: true, type: 'stop' }
 
 async function configuredPool(pool: 'stock' | 'diagnostic', outcome: 'exit' | 'pass', signal: AbortSignal) {
-  const cacheDir = await mkdtemp(join(tmpdir(), 'dsh-configured-fork-cache-'))
+  const cacheDir = await mkdtemp(join(tmpdir(), 'tomato-configured-fork-cache-'))
   roots.push(cacheDir)
   const controller = new AbortController()
   const result = runGate({

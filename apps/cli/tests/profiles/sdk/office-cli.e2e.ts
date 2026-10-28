@@ -21,7 +21,7 @@ const executable = process.env.TOMATO_OFFICE_TEST_EXECUTABLE ?? process.execPath
 const entry = process.env.TOMATO_OFFICE_TEST_ENTRY ?? join(repo, 'apps/cli/lib/bin.js')
 
 it.skipIf(!process.env.DEEPSEEK_API_KEY || process.platform === 'win32')(`agent discovers and executes the ${carrier} Office CLI without Node on PATH`, async () => {
-  const root = await mkdtemp(join(tmpdir(), 'dsh office discovery '))
+  const root = await mkdtemp(join(tmpdir(), 'tomato office discovery '))
   try {
     await writeFile(join(root, 'input.docx'), zipSync({
       '[Content_Types].xml': strToU8('<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>'),

@@ -9,9 +9,9 @@ import { productWebBundleIsolation } from './product-isolation.ts'
 import { katexWoff2Fonts } from './katex-fonts.ts'
 
 const src = (rel: string): string => fileURLToPath(new URL(rel, import.meta.url))
-const STANDALONE_ERROR = 'apps/web is not a standalone application: bare Vite cannot inject window.__DSH_BOOT__. '
-  + 'From a repository checkout, run `pnpm dsh web`; an installed package uses `dsh web`. '
-  + 'For client-plugin HMR, run `pnpm run dev:web`, which starts `dsh web` and the rebuild watchers together.'
+const STANDALONE_ERROR = 'apps/web is not a standalone application: bare Vite cannot inject window.__TOMATO_BOOT__. '
+  + 'From a repository checkout, run `pnpm tomato web`; an installed package uses `tomato web`. '
+  + 'For client-plugin HMR, run `pnpm run dev:web`, which starts `tomato web` and the rebuild watchers together.'
 const DEFAULT_CLIENT_TITLE = 'Tomato AI'
 
 /** Escape build-time text before placing it in the HTML title element. */
@@ -23,7 +23,7 @@ function escapeHtmlText(value: string): string {
 function clientDocumentTitle(): Plugin {
   const title = escapeHtmlText(process.env.TOMATO_CLIENT_TITLE ?? DEFAULT_CLIENT_TITLE)
   return {
-    name: 'dsh-client-document-title',
+    name: 'tomato-client-document-title',
     transformIndexHtml(html) {
       return html.replace('<title>TOMATO Local Build</title>', `<title>${title}</title>`)
     },
@@ -33,7 +33,7 @@ function clientDocumentTitle(): Plugin {
 /** Keep the redistribution license beside the bundled brand font. */
 function brandFontLicense(): Plugin {
   return {
-    name: 'dsh-brand-font-license',
+    name: 'tomato-brand-font-license',
     async generateBundle() {
       this.emitFile({
         type: 'asset',
@@ -47,7 +47,7 @@ function brandFontLicense(): Plugin {
 /** Fail before a Vite dev or preview server can expose the boot-manifest-free shell. */
 function rejectStandaloneServe(): Plugin {
   return {
-    name: 'dsh-reject-standalone-web-serve',
+    name: 'tomato-reject-standalone-web-serve',
     config(_config, env) {
       if (env.command === 'serve') throw new Error(STANDALONE_ERROR)
     },
@@ -67,7 +67,7 @@ function emitPreviewPage(): Plugin {
   let written = false
   let outputDirectory = ''
   return {
-    name: 'dsh-emit-preview-page',
+    name: 'tomato-emit-preview-page',
     configResolved(config) {
       write = config.build.write
       outputDirectory = resolve(config.root, config.build.outDir)

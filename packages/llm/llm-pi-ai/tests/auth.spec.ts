@@ -2,10 +2,10 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import LocalCredentialProvider from '@deepseek-ai/dsh-credentials-local'
-import { credentialKey, credentialRef } from '@deepseek-ai/dsh-credentials'
-import { createLaunchEnvironmentSnapshot, TOMATO_LAUNCH_ENVIRONMENT_KEY } from '@deepseek-ai/dsh-launch-environment'
+import { Context } from '@tomato/cordis'
+import LocalCredentialProvider from '@tomato/credentials-local'
+import { credentialKey, credentialRef } from '@tomato/credentials'
+import { createLaunchEnvironmentSnapshot, TOMATO_LAUNCH_ENVIRONMENT_KEY } from '@tomato/launch-environment'
 import { authContextFrom, credentialStoreFrom, recordKeyFor } from '../src/auth.ts'
 
 const home = vi.hoisted(() => ({ unavailable: false }))
@@ -31,7 +31,7 @@ async function stored(
   layers?: Parameters<typeof createLaunchEnvironmentSnapshot>[0],
   initialRefs?: Record<string, string>,
 ): Promise<Context> {
-  const dir = await mkdtemp(join(tmpdir(), 'dsh-pi-auth-'))
+  const dir = await mkdtemp(join(tmpdir(), 'tomato-pi-auth-'))
   dirs.push(dir)
   const ctx = new Context()
   if (layers !== undefined) ctx.provide(TOMATO_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot(layers))
@@ -214,7 +214,7 @@ describe('pi-ai ambient auth context', () => {
     const ctx = await stored([
       { source: 'process', values: { OPENAI_API_KEY: 'from-launch' } },
       { source: 'project-env', path: '/work/.env', values: { OPENAI_API_KEY: 'from-project' } },
-      { source: 'user-env', path: '/home/.dsh/.env', values: { OPENAI_API_KEY: 'from-home' } },
+      { source: 'user-env', path: '/home/.tomato/.env', values: { OPENAI_API_KEY: 'from-home' } },
     ], { OPENAI_API_KEY: 'from-credentials' })
 
     await expect(authContextFrom(ctx).env('OPENAI_API_KEY')).resolves.toBe('from-credentials')
@@ -231,7 +231,7 @@ describe('pi-ai ambient auth context', () => {
   })
 
   it('answers about the host filesystem, expanding a leading ~', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'dsh-pi-home-'))
+    const dir = await mkdtemp(join(tmpdir(), 'tomato-pi-home-'))
     dirs.push(dir)
     await writeFile(join(dir, 'creds'), 'x')
     // Both spellings of "home": os.homedir() reads HOME on POSIX and
@@ -247,7 +247,7 @@ describe('pi-ai ambient auth context', () => {
   })
 
   it('checks an absolute path without reading the home directory', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'dsh-pi-home-'))
+    const dir = await mkdtemp(join(tmpdir(), 'tomato-pi-home-'))
     dirs.push(dir)
     await writeFile(join(dir, 'creds'), 'x')
     const context = authContextFrom(await stored())

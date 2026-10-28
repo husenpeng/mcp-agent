@@ -1,6 +1,6 @@
 /** React-free account state over the gateway's same-origin auth routes. */
 
-import { createSnapshotStore, type SnapshotStore } from '@deepseek-ai/dsh-client-store'
+import { createSnapshotStore, type SnapshotStore } from '@tomato/client-store'
 
 /** User fields the account surface renders. */
 export interface AccountUser {

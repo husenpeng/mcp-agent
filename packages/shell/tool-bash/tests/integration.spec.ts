@@ -1,23 +1,23 @@
-import { executeModelToolFixture } from '@deepseek-ai/dsh-tool-testkit'
-import * as PtcToolExecutor from '@deepseek-ai/dsh-tool-executor-ptc'
-import { createUserMessage, ToolCallId } from '@deepseek-ai/dsh-llm'
+import { executeModelToolFixture } from '@tomato/tool-testkit'
+import * as PtcToolExecutor from '@tomato/tool-executor-ptc'
+import { createUserMessage, ToolCallId } from '@tomato/llm'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@tomato/cordis'
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { SessionId, type SessionEvent } from '@deepseek-ai/dsh-session'
-import * as JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import AgentLoop from '@deepseek-ai/dsh-agent-loop'
-import { PtcRuntime, type PtcRunRequest, type PtcRunResult, type PtcRunSpec } from '@deepseek-ai/dsh-ptc-runtime'
-import { mountAgentLoopTestDependencies } from '@deepseek-ai/dsh-agent-loop-testkit'
-import LocalJobRegistry from '@deepseek-ai/dsh-jobs-local'
-import * as ToolJobs from '@deepseek-ai/dsh-tool-jobs'
-import { LocalBashExecutor } from '@deepseek-ai/dsh-bash-local'
-import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
-import * as ToolBash from '@deepseek-ai/dsh-tool-bash'
-import * as BashEnvPlugin from '@deepseek-ai/dsh-shell-env'
+import { SessionId, type SessionEvent } from '@tomato/session'
+import * as JsonlSessionPersistence from '@tomato/session-persistence-jsonl'
+import type { Agent } from '@tomato/agent'
+import AgentLoop from '@tomato/agent-loop'
+import { PtcRuntime, type PtcRunRequest, type PtcRunResult, type PtcRunSpec } from '@tomato/ptc-runtime'
+import { mountAgentLoopTestDependencies } from '@tomato/agent-loop-testkit'
+import LocalJobRegistry from '@tomato/jobs-local'
+import * as ToolJobs from '@tomato/tool-jobs'
+import { LocalBashExecutor } from '@tomato/bash-local'
+import LocalSubprocessRuntime from '@tomato/subprocess-local'
+import * as ToolBash from '@tomato/tool-bash'
+import * as BashEnvPlugin from '@tomato/shell-env'
 import { MockAdapter, textResponse, toolCallResponse } from '../../../core/agent-loop/tests/mock-adapter.ts'
 
 /**
@@ -97,7 +97,7 @@ async function pollUntil(predicate: () => boolean, timeoutMs = 5_000): Promise<v
 
 describe('bash tool through the agent loop', () => {
   it('logs the real nested shell launch directory after the Session changes directories again', async () => {
-    const root = realpathSync(mkdtempSync(join(tmpdir(), 'dsh-nested-bash-cwd-')))
+    const root = realpathSync(mkdtempSync(join(tmpdir(), 'tomato-nested-bash-cwd-')))
     dirs.push(root)
     const selected = join(root, 'selected')
     mkdirSync(selected)
@@ -138,9 +138,9 @@ describe('bash tool through the agent loop', () => {
   })
 
   it('first-turn bash receives session identity in a scrubbed TOMATO_* namespace', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-bash-session-env-'))
+    const root = mkdtempSync(join(tmpdir(), 'tomato-bash-session-env-'))
     dirs.push(root)
-    const tomatoHome = join(root, 'dsh-home')
+    const tomatoHome = join(root, 'tomato-home')
     vi.stubEnv('TOMATO_STALE_PARENT', 'stale')
     const adapter = new MockAdapter([
       toolCallResponse('call-1', 'bash', {
@@ -217,7 +217,7 @@ describe('bash tool through the agent loop', () => {
     // claim, which folds the notice into a turn whose scripted reply is final:
     // the turn then closes with an empty next-step inbox and the collection
     // entries are never reached.
-    const dir = mkdtempSync(join(tmpdir(), 'dsh-bg-'))
+    const dir = mkdtempSync(join(tmpdir(), 'tomato-bg-'))
     dirs.push(dir)
     const sentinel = join(dir, 'release')
     // The next model call reads the id from the prior tool result.

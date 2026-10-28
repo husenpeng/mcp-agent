@@ -29,7 +29,7 @@ it('confines signed Mac packaging to manual dispatch and a dedicated Apple Silic
   expect(workflow.on.workflow_dispatch).not.toHaveProperty('inputs.publish')
   expect(workflow.permissions).toEqual({ contents: 'read' })
   expect(workflow.concurrency).toEqual({ group: 'macos-desktop-package', 'cancel-in-progress': false })
-  expect(workflow.jobs.package!['runs-on']).toEqual(['self-hosted', 'macOS', 'ARM64', 'dsh-mac-package-trial'])
+  expect(workflow.jobs.package!['runs-on']).toEqual(['self-hosted', 'macOS', 'ARM64', 'tomato-mac-package-trial'])
   const steps = workflow.jobs.package!.steps
   expect(steps.find(step => step.id === 'checkout')?.with).toMatchObject({ 'persist-credentials': false, clean: true })
   for (const step of steps) expect(step.run ?? '').not.toContain('${{ inputs.')
@@ -56,7 +56,7 @@ it('retains build inputs outside checkout and run-specific pnpm installations', 
   expect(JSON.stringify(env)).not.toContain('runner.')
   const steps = workflow.jobs.package!.steps
   const cache = steps.find(step => step.name === 'Configure persistent package caches')!
-  expect(cache.env?.TOMATO_DESKTOP_PACKAGE_CACHE_DIR).toBe('${{ runner.tool_cache }}/dsh-desktop-package-cache')
+  expect(cache.env?.TOMATO_DESKTOP_PACKAGE_CACHE_DIR).toBe('${{ runner.tool_cache }}/tomato-desktop-package-cache')
   expect(cache.run).toContain('PNPM_CONFIG_STORE_DIR=$TOMATO_DESKTOP_PACKAGE_CACHE_DIR/workspace-pnpm-store')
   expect(cache.run).toContain('TOMATO_DESKTOP_PACKAGE_CACHE_DIR=$TOMATO_DESKTOP_PACKAGE_CACHE_DIR')
   expect(steps.indexOf(cache)).toBeLessThan(steps.findIndex(step => step.name === 'Install locked dependencies'))

@@ -5,8 +5,8 @@ import { dirname, extname, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { JSDOM } from 'jsdom'
 import ts from 'typescript'
-import { applyEntryPatches, type PatchOptions } from '@deepseek-ai/cordis-plugin-include'
-import type { EntryOptions } from '@deepseek-ai/cordis-plugin-loader'
+import { applyEntryPatches, type PatchOptions } from '@tomato/cordis-plugin-include'
+import type { EntryOptions } from '@tomato/cordis-plugin-loader'
 import { bundlePatchPaths, composeEntries, loadOverlayPatches } from '../packages/boot/app-boot/src/index.ts'
 import type { TomatoBundleManifest } from '../packages/util/package-manifest/src/types.ts'
 import { assertNever } from '../packages/util/values/src/index.ts'
@@ -78,15 +78,15 @@ export function verifyProductUse(
     const manifest = JSON.parse(readFileSync(resolve(root, path), 'utf8')) as {
       name: string
       exports?: Record<string, unknown>
-      dsh?: { bundle?: TomatoBundleManifest; client?: unknown }
+      tomato?: { bundle?: TomatoBundleManifest; client?: unknown }
     }
     if (typeof manifest.name !== 'string' || manifest.name === '') throw new Error(`${path}: missing package name`)
     if (packages.has(manifest.name)) throw new Error(`${path}: duplicate package name ${manifest.name}`)
     const remote = manifest.exports?.['./remote']
-    const pkg: Package = { directory: dirname(path), name: manifest.name, client: manifest.dsh?.client !== undefined,
+    const pkg: Package = { directory: dirname(path), name: manifest.name, client: manifest.tomato?.client !== undefined,
       generatedRemote: isRecord(remote) && remote.default === './lib/typert.remote-client.js'
         && remote.types === './lib/typert.remote-client.d.ts',
-      ...(manifest.dsh?.bundle === undefined ? {} : { bundle: manifest.dsh.bundle }) }
+      ...(manifest.tomato?.bundle === undefined ? {} : { bundle: manifest.tomato.bundle }) }
     packages.set(pkg.name, pkg)
     directories.set(resolve(root, pkg.directory), pkg)
   }
@@ -154,7 +154,7 @@ export function verifyProductUse(
     if (target !== undefined) scanSource(target, reach)
     else if (pkg !== undefined && !/\.(?:json|css|svg|ya?ml)$/.test(specifier)) {
       failures.push(`${display(from)}: ${specifier} does not resolve to workspace source; add a tsconfig.base.json paths mapping`)
-    } else if (pkg === undefined && specifier.startsWith('@deepseek-ai/dsh-')) {
+    } else if (pkg === undefined && specifier.startsWith('@tomato/')) {
       failures.push(`${display(from)}: unknown workspace package ${specifier}`)
     }
   }
@@ -171,7 +171,7 @@ export function verifyProductUse(
         scanEntries(row.config as unknown[], from, reach, stack)
       }
       if (isAgentPresetEntry(row)) scanEntries(row.config.plugins, from, reach, stack)
-      if ((row.name !== '@deepseek-ai/cordis-plugin-include' && row.name !== 'cordis:include') || !isRecord(row.config)) continue
+      if ((row.name !== '@tomato/cordis-plugin-include' && row.name !== 'cordis:include') || !isRecord(row.config)) continue
       const path = row.config.path
       if (typeof path !== 'string') { failures.push(`${display(from)}: Include path must be a literal string`); continue }
       const filename = path.startsWith('file:') ? fileURLToPath(path) : resolve(dirname(from), path)
@@ -195,7 +195,7 @@ export function verifyProductUse(
   for (const name of PROFILES) if (!isRecord(templates[name])) failures.push(`${PROFILE_SOURCE}: missing shipped ${name} profile`)
   const layers = (names: readonly string[], reach: Reachability): PatchOptions[][] => names.flatMap((name) => {
     const pkg = packages.get(name)
-    if (pkg?.bundle === undefined) { failures.push(`${PROFILE_SOURCE}: ${name} must declare dsh.bundle.patch`); return [] }
+    if (pkg?.bundle === undefined) { failures.push(`${PROFILE_SOURCE}: ${name} must declare tomato.bundle.patch`); return [] }
     reach.packages.add(pkg.directory)
     return [bundlePatchPaths(resolve(root, pkg.directory), pkg.bundle).flatMap((path) => {
       configs.add(path)

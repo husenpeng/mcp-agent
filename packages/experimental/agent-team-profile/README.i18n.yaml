@@ -5,48 +5,48 @@
 /:
   en: e263a0edd266210f
   zh: c5779bf7f64631d3
-/deepseek-ai-dsh-experimental-agent-team-profile:
-  en: 3deb4b95d9e58c8d
-  zh: 0ba043a54428445e
-/deepseek-ai-dsh-experimental-agent-team-profile/summary:
-  en: 3ca34df3ee31841d
-  zh: a413140d89be2d05
-/deepseek-ai-dsh-experimental-agent-team-profile/table-of-contents:
+/tomato-experimental-agent-team-profile:
+  en: 3b50bbfcf0e2c6ec
+  zh: eda747f823719599
+/tomato-experimental-agent-team-profile/summary:
+  en: a5655e487ce53158
+  zh: 6469a4c85ead47a9
+/tomato-experimental-agent-team-profile/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
-/deepseek-ai-dsh-experimental-agent-team-profile/use-this-package:
+/tomato-experimental-agent-team-profile/use-this-package:
   en: bbff250eba0f1b89
   zh: 0a618f05cc88ee2b
-/deepseek-ai-dsh-experimental-agent-team-profile/use-this-package/install-into-a-profile:
-  en: 97ef5916c04bf2a1
-  zh: 51f9d2bc3fca7936
-/deepseek-ai-dsh-experimental-agent-team-profile/use-this-package/what-you-get:
-  en: f0e95e60095fc5cb
-  zh: 8c36603b423475d0
-/deepseek-ai-dsh-experimental-agent-team-profile/understand-the-implementation:
-  en: 1134189d1362aca0
-  zh: 581357c648eb61f7
-/deepseek-ai-dsh-experimental-agent-team-profile/further-exploration:
-  en: 2513c5cb830db597
-  zh: de3df83cb9fd2340
-/deepseek-ai-dsh-experimental-agent-team-profile/model-experience:
+/tomato-experimental-agent-team-profile/use-this-package/install-into-a-profile:
+  en: 1a2a0882c1b28bef
+  zh: d0c6797232c08fba
+/tomato-experimental-agent-team-profile/use-this-package/what-you-get:
+  en: 547289a6f1df60aa
+  zh: f26974983605702e
+/tomato-experimental-agent-team-profile/understand-the-implementation:
+  en: 824f4d9422c6ab67
+  zh: ab9e6a764616f592
+/tomato-experimental-agent-team-profile/further-exploration:
+  en: 2e52ce89235b5380
+  zh: 4a9ffd58757689e6
+/tomato-experimental-agent-team-profile/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
-/deepseek-ai-dsh-experimental-agent-team-profile/model-experience/team-policy-and-tools:
+/tomato-experimental-agent-team-profile/model-experience/team-policy-and-tools:
   en: 8e1e365ff3b0dfb2
   zh: c6c91fbf1e1df934
-/deepseek-ai-dsh-experimental-agent-team-profile/model-experience/team-policy-and-tools/what-the-model-sees:
-  en: f54dc1725b90365b
-  zh: 5a505996f7684231
-/deepseek-ai-dsh-experimental-agent-team-profile/model-experience/team-policy-and-tools/token-effect:
-  en: da8c178179ba50ba
-  zh: c53d5863bc14be79
-/deepseek-ai-dsh-experimental-agent-team-profile/model-experience/team-policy-and-tools/kv-cache-effect:
-  en: ac4c8d0ba492fa6a
-  zh: 16d4a05f2e719651
-/deepseek-ai-dsh-experimental-agent-team-profile/known-limitations-and-deferred-work:
-  en: 0413821c2fc20bea
-  zh: 53e135425dd82e12
-/deepseek-ai-dsh-experimental-agent-team-profile/known-limitations-and-deferred-work/dev-note:
+/tomato-experimental-agent-team-profile/model-experience/team-policy-and-tools/what-the-model-sees:
+  en: ca1ada91dac4b422
+  zh: f62c6abc52da9e7e
+/tomato-experimental-agent-team-profile/model-experience/team-policy-and-tools/token-effect:
+  en: 0a5bea3f525be473
+  zh: d2ed5e6bf0e7ad69
+/tomato-experimental-agent-team-profile/model-experience/team-policy-and-tools/kv-cache-effect:
+  en: cea285ea7065b068
+  zh: dc25d82fb4f240f9
+/tomato-experimental-agent-team-profile/known-limitations-and-deferred-work:
+  en: c863c486cdcf01fa
+  zh: a5b9431718d90441
+/tomato-experimental-agent-team-profile/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

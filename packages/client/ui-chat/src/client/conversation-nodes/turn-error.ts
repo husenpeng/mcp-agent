@@ -1,8 +1,8 @@
-import type { Context } from '@deepseek-ai/cordis'
+import type { Context } from '@tomato/cordis'
 import type {
   ConversationMatch, ConversationNodeContext, ConversationNodeDefinition, TurnErrorNode,
-} from '@deepseek-ai/dsh-client-ui-conversation/client'
-import type { TurnEndReason } from '@deepseek-ai/dsh-session/types'
+} from '@tomato/client-ui-conversation/client'
+import type { TurnEndReason } from '@tomato/session/types'
 import { chatNode } from './common.ts'
 import { displayFailure } from './event-projection.ts'
 

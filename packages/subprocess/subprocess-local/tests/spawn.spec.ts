@@ -12,8 +12,8 @@ import {
   taskkillProcessTree,
   validateSubprocessSpec,
 } from '../src/spawn.ts'
-import type { SubprocessHandle, SubprocessOutputReader } from '@deepseek-ai/dsh-subprocess'
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
+import type { SubprocessHandle, SubprocessOutputReader } from '@tomato/subprocess'
+import { MAX_TIMER_DELAY_MS } from '@tomato/timeout'
 import { waitWithAbort } from '../src/managed-owner.ts'
 
 vi.mock('node:child_process', async (importOriginal) => {
@@ -107,7 +107,7 @@ vi.mock('node:fs', async (importOriginal) => {
   }
 })
 
-const spillDir = mkdtempSync(join(tmpdir(), 'dsh-subprocess-spec-'))
+const spillDir = mkdtempSync(join(tmpdir(), 'tomato-subprocess-spec-'))
 
 /** Spill options for one collector test; failures are collected for assertions. */
 function spillOptions(maxBytes: number, dir = spillDir): { options: SpillOptions; failures: { error: unknown; label: string }[] } {
@@ -374,7 +374,7 @@ describe('spawnSubprocess', () => {
   })
 
   it('rejects with a spawn error for a nonexistent cwd', async () => {
-    await expect(spawnSubprocess(spec('echo hi', { cwd: '/nonexistent-dir-dsh-test' })).done)
+    await expect(spawnSubprocess(spec('echo hi', { cwd: '/nonexistent-dir-tomato-test' })).done)
       .rejects.toThrow(/ENOENT/)
   })
 
@@ -639,7 +639,7 @@ describe('OutputCollector', () => {
   })
 
   it('keeps collecting when the spill directory has been removed (ENOENT on open)', () => {
-    const removedDir = mkdtempSync(join(tmpdir(), 'dsh-subprocess-removed-'))
+    const removedDir = mkdtempSync(join(tmpdir(), 'tomato-subprocess-removed-'))
     rmSync(removedDir, { recursive: true, force: true })
     const { options, failures } = spillOptions(100, removedDir)
     const collector = new OutputCollector(4, 'enoent', options)
@@ -737,7 +737,7 @@ describe('logSpillFailure', () => {
 
 describe('spill failure reporting without an owner logger', () => {
   it('writes one stderr line for a bare spawn whose spill directory is gone', async () => {
-    const removedDir = mkdtempSync(join(tmpdir(), 'dsh-subprocess-removed-'))
+    const removedDir = mkdtempSync(join(tmpdir(), 'tomato-subprocess-removed-'))
     rmSync(removedDir, { recursive: true, force: true })
     const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
     try {
@@ -749,7 +749,7 @@ describe('spill failure reporting without an owner logger', () => {
       expect(result.stdout.truncated).toBe(true)
       expect(result.stdout.text).toContain('line-0200')
       expect(result.stdout.spillPath).toBeUndefined()
-      const lines = stderr.mock.calls.map(call => String(call[0])).filter(line => line.includes('dsh-subprocess-local:'))
+      const lines = stderr.mock.calls.map(call => String(call[0])).filter(line => line.includes('@tomato/subprocess-local:'))
       expect(lines).toHaveLength(1)
       expect(lines[0]).toContain('stdout spill failed; only the in-memory tail is retained')
       expect(lines[0]).toContain('ENOENT')
@@ -956,8 +956,8 @@ describe.skipIf(process.platform === 'win32')('tree-survivor escalation (termina
   })
 
   it('service teardown awaits tree survivors, not just handle settlement', async () => {
-    const { Context } = await import('@deepseek-ai/cordis')
-    const { default: LocalSubprocessRuntime } = await import('@deepseek-ai/dsh-subprocess-local')
+    const { Context } = await import('@tomato/cordis')
+    const { default: LocalSubprocessRuntime } = await import('@tomato/subprocess-local')
     const ctx = new Context()
     const fiber = await ctx.plugin(LocalSubprocessRuntime)
     ;(ctx.subprocess as InstanceType<typeof LocalSubprocessRuntime>).internals = { spillDir }
@@ -1281,7 +1281,7 @@ describe('coverage seams', () => {
   })
 
   it('a spawn-failed handle rejects done while waitForExit reports gone', async () => {
-    const running = spawnSubprocess(spec('true', { cwd: '/nonexistent-dir-dsh-dispose-test' }))
+    const running = spawnSubprocess(spec('true', { cwd: '/nonexistent-dir-tomato-dispose-test' }))
     await expect(running.done).rejects.toThrow()
     await expect(running.waitForExit()).resolves.toBe(true)
   })
@@ -1348,7 +1348,7 @@ describe('coverage seams', () => {
   })
 
   it('waitForExit on a failed spawn reports exited immediately', async () => {
-    const running = spawnSubprocess(spec('true', { cwd: '/nonexistent-dir-dsh-spawn-test' }))
+    const running = spawnSubprocess(spec('true', { cwd: '/nonexistent-dir-tomato-spawn-test' }))
     await expect(running.done).rejects.toThrow()
     await expect(running.waitForExit()).resolves.toBe(true)
   })
@@ -1496,7 +1496,7 @@ describe('environment and spill-file hardening', () => {
       { spillDir },
     ))
     const path = result.stdout.spillPath!
-    expect(path).toMatch(/dsh-subprocess-\d+-\d+-[0-9a-f]{12}-stdout\.log$/)
+    expect(path).toMatch(/tomato-subprocess-\d+-\d+-[0-9a-f]{12}-stdout\.log$/)
     const mode = statSync(path).mode & 0o777
     expect(mode).toBe(0o600)
   })
@@ -1507,7 +1507,7 @@ describe('environment and spill-file hardening', () => {
     ))
     const dir = dirname(result.stdout.spillPath!)
     defaultSpillDir = dir
-    expect(dir).toMatch(/dsh-subprocess-/)
+    expect(dir).toMatch(/tomato-subprocess-/)
     const mode = statSync(dir).mode & 0o777
     expect(mode).toBe(0o700)
   })

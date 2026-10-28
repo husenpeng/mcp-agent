@@ -43,7 +43,7 @@ afterEach(async () => {
 })
 
 const BUCKET = 'bj-toc-download-test-1320056602'
-const key = `dsh-desk/bin/qualification/${'a'.repeat(24)}/win-x64/package.exe`
+const key = `tomato-desk/bin/qualification/${'a'.repeat(24)}/win-x64/package.exe`
 
 /** Store whose SDK client sends every request to a fresh loopback origin. */
 async function store(responder: CosLoopbackResponder) {
@@ -88,7 +88,7 @@ describe('qualification COS transport with real SDK serialization over a loopbac
 
   it('streams a file-backed object with its declared length', async () => {
     const { store: cos, loopback } = await store((_request, response) => { answer(response, 200) })
-    const root = await mkdtemp(join(tmpdir(), 'dsh-cos-file-'))
+    const root = await mkdtemp(join(tmpdir(), 'tomato-cos-file-'))
     roots.push(root)
     const path = join(root, 'package.exe')
     await writeFile(path, 'file bytes')
@@ -182,7 +182,7 @@ describe('qualification COS transport with real SDK serialization over a loopbac
     expect(fetch).toHaveBeenCalledWith(url, expect.objectContaining({ redirect: 'error', cache: 'no-store' }))
     await expect(cos.publicRead(`${url}?fresh=1`)).rejects.toThrow('exact test public URL')
     await expect(cos.publicRead(url.replace('download-test', 'download'))).rejects.toThrow('exact test public URL')
-    await expect(cos.read('dsh-desk/feeds/nightly.yml')).rejects.toThrow('qualification namespace')
+    await expect(cos.read('tomato-desk/feeds/nightly.yml')).rejects.toThrow('qualification namespace')
   })
 
   it('refuses production settings without creating a request', async () => {

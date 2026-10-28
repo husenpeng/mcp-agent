@@ -50,7 +50,7 @@ function write(path: string, content: string): void {
 }
 
 function buildFixture(environment: Record<string, string>): string {
-  const fixtureRoot = mkdtempSync(join(tmpdir(), 'dsh-client-build-'))
+  const fixtureRoot = mkdtempSync(join(tmpdir(), 'tomato-client-build-'))
   roots.push(fixtureRoot)
   write(join(fixtureRoot, 'apps/web/dist/index.html'), '<main></main>')
   write(join(fixtureRoot, 'packages/client/example/lib/client.js'), 'module.exports = {}\n')
@@ -67,13 +67,13 @@ function git(root: string, args: readonly string[]): string {
 }
 
 function repositoryFixture(version = '1.2.3-rc.4'): string {
-  const fixtureRoot = mkdtempSync(join(tmpdir(), 'dsh-client-build-repository-'))
+  const fixtureRoot = mkdtempSync(join(tmpdir(), 'tomato-client-build-repository-'))
   roots.push(fixtureRoot)
   write(join(fixtureRoot, 'package.json'), `${JSON.stringify({ version })}\n`)
   write(join(fixtureRoot, 'tracked.txt'), 'committed\n')
   git(fixtureRoot, ['init'])
   git(fixtureRoot, ['config', 'user.name', 'TOMATO test'])
-  git(fixtureRoot, ['config', 'user.email', 'dsh-test@example.invalid'])
+  git(fixtureRoot, ['config', 'user.email', 'tomato-test@example.invalid'])
   git(fixtureRoot, ['config', 'commit.gpgsign', 'false'])
   git(fixtureRoot, ['add', 'package.json', 'tracked.txt'])
   git(fixtureRoot, ['commit', '-m', 'fixture'])
@@ -85,7 +85,7 @@ describe('client build environment', () => {
     const expected = {
       TOMATO_CLIENT_BUILD_PROFILE: 'official',
       TOMATO_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
-      TOMATO_CLIENT_TITLE: 'DeepSeek Harness',
+      TOMATO_CLIENT_TITLE: 'Tomato Harness',
       TOMATO_CLIENT_VERSION: '1.2.3',
     } as const
 
@@ -115,7 +115,7 @@ describe('client build environment', () => {
     expect(resolveClientBuildEnvironment(parent)).toEqual({
       TOMATO_CLIENT_BUILD_PROFILE: 'official',
       TOMATO_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
-      TOMATO_CLIENT_TITLE: 'DeepSeek Harness',
+      TOMATO_CLIENT_TITLE: 'Tomato Harness',
       TOMATO_CLIENT_VERSION: '1.2.3',
     })
     expect(() => {
@@ -131,13 +131,13 @@ describe('client build environment', () => {
     expect(clientBuildProcessEnvironment(parent, {
       TOMATO_CLIENT_BUILD_PROFILE: 'official',
       TOMATO_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
-      TOMATO_CLIENT_TITLE: 'DeepSeek Harness',
+      TOMATO_CLIENT_TITLE: 'Tomato Harness',
       TOMATO_CLIENT_VERSION: '1.2.3',
     })).toEqual({
       PATH: '/bin',
       TOMATO_CLIENT_BUILD_PROFILE: 'official',
       TOMATO_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
-      TOMATO_CLIENT_TITLE: 'DeepSeek Harness',
+      TOMATO_CLIENT_TITLE: 'Tomato Harness',
       TOMATO_CLIENT_VERSION: '1.2.3',
     })
     expect(repositoryCommitHash('/unused', { TOMATO_CLIENT_COMMIT_HASH: COMMIT_HASH })).toBe(COMMIT_HASH.slice(0, 7))
@@ -147,7 +147,7 @@ describe('client build environment', () => {
     const parent = {
       TOMATO_BUILD_CLIENT_PROFILE: 'official',
       TOMATO_CLIENT_BUILD_PROFILE: 'official',
-      TOMATO_CLIENT_TITLE: 'DeepSeek Harness',
+      TOMATO_CLIENT_TITLE: 'Tomato Harness',
       TOMATO_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
       TOMATO_CLIENT_VERSION: '1.2.3',
       TOMATO_CLIENT_GIT_DIRTY: dirty,
@@ -165,7 +165,7 @@ describe('client build environment', () => {
     expect(resolveClientBuildEnvironment({ ...parent, ...local }, 'official')).toEqual({
       TOMATO_CLIENT_BUILD_PROFILE: 'official',
       TOMATO_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
-      TOMATO_CLIENT_TITLE: 'DeepSeek Harness',
+      TOMATO_CLIENT_TITLE: 'Tomato Harness',
       TOMATO_CLIENT_VERSION: '1.2.3',
     })
   })
@@ -196,7 +196,7 @@ describe('client build environment', () => {
     expect(officialClientBuildEnvironment(fixtureRoot)).toEqual({
       TOMATO_CLIENT_BUILD_PROFILE: 'official',
       TOMATO_CLIENT_COMMIT_HASH: commit,
-      TOMATO_CLIENT_TITLE: 'DeepSeek Harness',
+      TOMATO_CLIENT_TITLE: 'Tomato Harness',
       TOMATO_CLIENT_VERSION: '1.2.3-rc.4',
     })
 
@@ -238,7 +238,7 @@ describe('client build environment', () => {
   })
 
   it('omits dirty metadata when repository metadata is unavailable', () => {
-    const fixtureRoot = mkdtempSync(join(tmpdir(), 'dsh-client-build-no-git-'))
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'tomato-client-build-no-git-'))
     roots.push(fixtureRoot)
     write(join(fixtureRoot, 'package.json'), '{"version":"2.0.0"}\n')
 
@@ -276,12 +276,12 @@ describe('client build environment', () => {
       'lib/types/index.js',
     ])({ env: { TOMATO_BUILD_FACE: 'client' } })
     if (!Array.isArray(configs)) throw new TypeError('client bundle config must be an array')
-    const dynamic = configs.find(config => config.name === '@deepseek-ai/dsh-client-ui-sidebar/client')
+    const dynamic = configs.find(config => config.name === '@tomato/client-ui-sidebar/client')
     expect(dynamic?.define).toMatchObject({
       'process.env': '{}',
       [PROBE_KEY]: '"shared-value"',
     })
-    const node = configs.find(config => config.name === '@deepseek-ai/dsh-client-ui-sidebar')
+    const node = configs.find(config => config.name === '@tomato/client-ui-sidebar')
     expect(node?.define).toMatchObject({ [PROBE_KEY]: '"shared-value"' })
     expect(node?.define).not.toHaveProperty(['process.env'])
 
@@ -305,7 +305,7 @@ describe('client build environment', () => {
     const officialEnvironment = {
       TOMATO_CLIENT_BUILD_PROFILE: 'official',
       TOMATO_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
-      TOMATO_CLIENT_TITLE: 'DeepSeek Harness',
+      TOMATO_CLIENT_TITLE: 'Tomato Harness',
       TOMATO_CLIENT_VERSION: '1.2.3',
     }
     const official = buildFixture(officialEnvironment)

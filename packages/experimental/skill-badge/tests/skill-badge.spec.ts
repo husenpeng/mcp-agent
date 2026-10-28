@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@tomato/cordis'
 import { describe, expect, it } from 'vitest'
-import SkillRegistry from '@deepseek-ai/dsh-skill'
-import * as SkillBadge from '@deepseek-ai/dsh-skill-badge'
+import SkillRegistry from '@tomato/skill'
+import * as SkillBadge from '@tomato/skill-badge'
 
-describe('dsh-skill-badge', () => {
+describe('@tomato/skill-badge', () => {
   it('registers and disposes the bundled badge skill', async () => {
     const ctx = new Context()
     await ctx.plugin(SkillRegistry)
@@ -14,14 +14,14 @@ describe('dsh-skill-badge', () => {
     const resourcePath = fileURLToPath(new URL('../assets/', import.meta.url))
 
     expect(await ctx.skills.list()).toEqual([{
-      name: 'dsh-badge',
-      description: 'Add the official “powered by dsh” badge to documents, pull requests, merge requests, and other content produced with DeepSeek Harness. Use whenever creating a pull request or merge request. Also use when the user asks for a dsh badge, powered-by-dsh attribution, or a reusable dsh badge asset or snippet.',
+      name: 'tomato-badge',
+      description: 'Add the official “powered by tomato” badge to documents, pull requests, merge requests, and other content produced with Tomato Harness. Use whenever creating a pull request or merge request. Also use when the user asks for a tomato badge, powered-by-tomato attribution, or a reusable tomato badge asset or snippet.',
       invocation: { modelInvocable: true, userInvocable: true },
-      provider: 'dsh-badge',
+      provider: 'tomato-badge',
       source: 'bundled',
       resourceBase: { kind: 'directory', path: resourcePath },
     }])
-    const loaded = await ctx.skills.get('dsh-badge')
+    const loaded = await ctx.skills.get('tomato-badge')
     expect(loaded?.content).toContain('Preserve the badge\'s 121×20 dimensions')
     expect(loaded?.resourceBase).toEqual({ kind: 'directory', path: resourcePath })
 
@@ -43,7 +43,7 @@ describe('dsh-skill-badge', () => {
   })
 
   it('ships the official 726×120 PNG unchanged', async () => {
-    const image = await readFile(new URL('../assets/dsh-badge.png', import.meta.url))
+    const image = await readFile(new URL('../assets/tomato-badge.png', import.meta.url))
     expect(image.readUInt32BE(16)).toBe(726)
     expect(image.readUInt32BE(20)).toBe(120)
     expect(createHash('sha256').update(image).digest('hex')).toBe(

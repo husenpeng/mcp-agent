@@ -1,8 +1,8 @@
 /** Authoritative Schedule queries and deletion for Session and Host catalogs. */
 
-import type { RemoteResult } from '@deepseek-ai/dsh-api-remotes/client'
-import type { HostObservable } from '@deepseek-ai/dsh-client-ui-slots'
-import type { ScheduleDeleteResult, ScheduleId, ScheduleRecord } from '@deepseek-ai/dsh-schedule/client'
+import type { RemoteResult } from '@tomato/api-remotes/client'
+import type { HostObservable } from '@tomato/client-ui-slots'
+import type { ScheduleDeleteResult, ScheduleId, ScheduleRecord } from '@tomato/schedule/client'
 
 /** How one deletion settled; the wiring reports it as a transient notice. */
 export type CatalogDeleteOutcome = 'deleted' | 'failed' | 'pending'

@@ -3,7 +3,7 @@ description: "Discover tab of the Web Plugins page: search configured plugin ind
 kind: "package-reference"
 ---
 
-# @deepseek-ai/dsh-client-ui-plugin-market
+# @tomato/client-ui-plugin-market
 
 English | [中文](README.zh.md)
 
@@ -43,7 +43,7 @@ Reading an index shows card skeletons. A failed read shows a short sentence with
 <a id="understand-the-implementation"></a>
 ## Understand the implementation
 
-Detail reads are kept in a second snapshot store keyed by index URL, entry, version, and language; a section starts its read when it renders, an npm version's read first asks the Host's registry comparison and passes `npmFileSources: ['npmmirror']` when npmmirror answered fastest, only the latest read of a key settles it, **Retry** asks the Host to read again instead of returning its cached result, and a connection reset forgets every read, because a restarted Host no longer knows the document ids its images use, so each shown section reads its document again. Image URLs resolve `api/plugin-market/detail-file` against `document.baseURI`, so they keep a deployment prefix and use the Desktop `dsh-app://app/` origin, which [`MarkdownText`](../ui-primitives/README.md) accepts for that route.
+Detail reads are kept in a second snapshot store keyed by index URL, entry, version, and language; a section starts its read when it renders, an npm version's read first asks the Host's registry comparison and passes `npmFileSources: ['npmmirror']` when npmmirror answered fastest, only the latest read of a key settles it, **Retry** asks the Host to read again instead of returning its cached result, and a connection reset forgets every read, because a restarted Host no longer knows the document ids its images use, so each shown section reads its document again. Image URLs resolve `api/plugin-market/detail-file` against `document.baseURI`, so they keep a deployment prefix and use the Desktop `tomato-app://app/` origin, which [`MarkdownText`](../ui-primitives/README.md) accepts for that route.
 
 The plugin registers the `discover` entry, labelled **Discover**, into `plugins.tab`, the tab slot that [`ui-plugin-manager`](../ui-plugin-manager/README.md) declares; the owner props provide `install({ spec, registry?, title, version })` and `openPackage(name)`; Discover passes the entry's localized title and the chosen version. A React-free controller owns source reads, source edits, and the selected index's query and loaded pages in a snapshot store; selecting another index starts from the initial query. Later pages send the first page's `fetchedAt`, and a page from a replaced document reloads the list once; a second replacement fails the read. The listing keeps the query its results answer, so the empty-state wording follows the shown results while a new query loads or after it fails, and **Retry** repeats the read that failed: the first pages of a query or the next page. A change to the profile's bundles reloads every loaded page to refresh installation status, and a filter or sort key the index no longer declares leaves the query. The unsent search text, the open entry, and the confirmation are component state. Pure helpers in `presentation.ts` derive the query order from the text, drop undeclared ids, order declarations with `Intl.Collator` in the active UI language, and list source facts. Icons load lazily with `referrerpolicy="no-referrer"` and fall back to the default artwork.
 

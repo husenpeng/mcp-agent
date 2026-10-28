@@ -1,8 +1,8 @@
 /** Tomato brand plugin, browser half: sidebar mark, sidebar name, and hero mark. */
-import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
-import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
-import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type { Context as ClientContext } from '@tomato/cordis'
+import type {} from '@tomato/client-ui-renderer/client'
+import type {} from '@tomato/client-ui-sidebar/client'
+import type {} from '@tomato/client-ui-conversation/client'
 import { TomatoBrandName, TomatoSidebarMark, TomatoMark } from './Brand.tsx'
 
 /** Required service: the UI slot registry. */

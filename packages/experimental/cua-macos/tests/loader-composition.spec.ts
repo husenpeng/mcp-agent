@@ -1,28 +1,28 @@
 /** Real Loader, AgentLoop and helper-process transport; only desktop and model responses are fixtures. */
-import { executeToolFixture } from '@deepseek-ai/dsh-tool-testkit'
-import * as NativeToolExecutor from '@deepseek-ai/dsh-tool-executor-native'
+import { executeToolFixture } from '@tomato/tool-testkit'
+import * as NativeToolExecutor from '@tomato/tool-executor-native'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { expect, it, onTestFinished } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import Loader from '@deepseek-ai/cordis-plugin-loader'
-import Include from '@deepseek-ai/cordis-plugin-include'
-import AgentRegistry from '@deepseek-ai/dsh-agent'
-import AgentLoop from '@deepseek-ai/dsh-agent-loop'
-import ComputerUseRegistry from '@deepseek-ai/dsh-computer-use'
-import LocalAttachmentStore from '@deepseek-ai/dsh-attachment-local'
-import LlmRuntime, { LlmAdapter, ToolCallId, createUserMessage } from '@deepseek-ai/dsh-llm'
-import type { GenerateOptions, LlmResolvedModelInfo, StreamChunk } from '@deepseek-ai/dsh-llm'
-import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
-import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime from '@deepseek-ai/dsh-tools'
-import SubprocessLocal from '@deepseek-ai/dsh-subprocess-local'
+import { Context } from '@tomato/cordis'
+import Loader from '@tomato/cordis-plugin-loader'
+import Include from '@tomato/cordis-plugin-include'
+import AgentRegistry from '@tomato/agent'
+import AgentLoop from '@tomato/agent-loop'
+import ComputerUseRegistry from '@tomato/computer-use'
+import LocalAttachmentStore from '@tomato/attachment-local'
+import LlmRuntime, { LlmAdapter, ToolCallId, createUserMessage } from '@tomato/llm'
+import type { GenerateOptions, LlmResolvedModelInfo, StreamChunk } from '@tomato/llm'
+import SessionStore, { SessionId } from '@tomato/session'
+import SessionProjectionRegistry from '@tomato/session-projection'
+import SystemPrompt from '@tomato/system-prompt'
+import ToolRuntime from '@tomato/tools'
+import SubprocessLocal from '@tomato/subprocess-local'
 import { z } from 'zod'
 import * as NativeProvider from '../src/index.ts'
-import { createCuaApi } from '@deepseek-ai/dsh-cua/api'
+import { createCuaApi } from '@tomato/cua/api'
 import { installNativeFixture, startFixtureHost } from './native-fixture.ts'
 
 const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADElEQVQImWNgZGIGAAAOAAeCcsnOAAAAAElFTkSuQmCC'
@@ -65,7 +65,7 @@ const AuditEvent = z.object({
 
 // The fixture uses a POSIX executable shebang; stream/protocol unit tests run on every host.
 it.skipIf(process.platform === 'win32')('shares one application between retained Agent objects while isolating native handles and releasing each connection', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'dsh-native-composition-'))
+  const root = await mkdtemp(join(tmpdir(), 'tomato-native-composition-'))
   const context = new Context()
   const fixture: { close?: () => Promise<void> } = {}
   onTestFinished(async () => {
@@ -139,7 +139,7 @@ it.skipIf(process.platform === 'win32')('shares one application between retained
   })
   expect(direct.isError).toBe(false)
   expect(direct.value).toMatchObject({ mimeType: 'image/png', data: png })
-  expect(context.computerUse.providerName).toBe('dsh-cua')
+  expect(context.computerUse.providerName).toBe('@tomato/cua')
   for (const [callId, activationRequested, beforePid, beforeWindowId] of [
     ['activate-first', true, 42, 99], ['activate-repeat', false, 9, 7],
   ] as const) {

@@ -1,36 +1,36 @@
 /** Platform-neutral assembly of generated Host Remote contributions. */
 
-import type { Context } from '@deepseek-ai/cordis'
-import productAnalyticsRemote from '@deepseek-ai/dsh-client-product-analytics/remote'
-export type {} from '@deepseek-ai/dsh-client-product-analytics/remote'
-import agentPresetsRemote from '@deepseek-ai/dsh-agent-preset-registry/remote'
-import userQuestionsRemote from '@deepseek-ai/dsh-user-questions/remote'
-import commandsRemote from '@deepseek-ai/dsh-commands/remote'
-import accountRemote from '@deepseek-ai/dsh-api-account-controller/remote'
-import settingsControllerRemote from '@deepseek-ai/dsh-api-settings-controller/remote'
-import officeToPdfRemote from '@deepseek-ai/dsh-office-to-pdf/remote'
-import goalsRemote from '@deepseek-ai/dsh-goal/remote'
-import scheduleRemote from '@deepseek-ai/dsh-schedule/remote'
-import llmRemote from '@deepseek-ai/dsh-llm/remote'
-import dynamicRemote from '@deepseek-ai/dsh-cordis-host-runner/remote'
-import pluginManagerRemote from '@deepseek-ai/dsh-plugin-manager/remote'
-import pluginRegistryProbeRemote from '@deepseek-ai/dsh-client-ui-plugin-manager/remote'
-import pluginMarketRemote from '@deepseek-ai/dsh-plugin-market/remote'
-import pluginInventoryRemote from '@deepseek-ai/dsh-host-plugin-inventory/remote'
-import messageFeedbackRemote from '@deepseek-ai/dsh-message-feedback/remote'
-import permissionPresetsRemote from '@deepseek-ai/dsh-permission-presets/remote'
-import sessionFeedbackRemote from '@deepseek-ai/dsh-command-feedback/remote'
-import fileUploadsRemote from '@deepseek-ai/dsh-client-file-upload/remote'
-import sessionReferencesRemote from '@deepseek-ai/dsh-session-reference/remote'
-import subagentsRemote from '@deepseek-ai/dsh-subagent/remote'
-import sessionRemote from '@deepseek-ai/dsh-api-session-controller/remote'
-import jobRemote from '@deepseek-ai/dsh-api-job-controller/remote'
-import workspaceRemote from '@deepseek-ai/dsh-api-workspace-controller/remote'
-import terminalRemote from '@deepseek-ai/dsh-api-terminal-controller/remote'
-import workspaceFilesRemote from '@deepseek-ai/dsh-api-workspace-files/remote'
-import type { ClientRemote } from '@deepseek-ai/dsh-api-gateway/client'
+import type { Context } from '@tomato/cordis'
+import productAnalyticsRemote from '@tomato/client-product-analytics/remote'
+export type {} from '@tomato/client-product-analytics/remote'
+import agentPresetsRemote from '@tomato/agent-preset-registry/remote'
+import userQuestionsRemote from '@tomato/user-questions/remote'
+import commandsRemote from '@tomato/commands/remote'
+import accountRemote from '@tomato/api-account-controller/remote'
+import settingsControllerRemote from '@tomato/api-settings-controller/remote'
+import officeToPdfRemote from '@tomato/office-to-pdf/remote'
+import goalsRemote from '@tomato/goal/remote'
+import scheduleRemote from '@tomato/schedule/remote'
+import llmRemote from '@tomato/llm/remote'
+import dynamicRemote from '@tomato/cordis-host-runner/remote'
+import pluginManagerRemote from '@tomato/plugin-manager/remote'
+import pluginRegistryProbeRemote from '@tomato/client-ui-plugin-manager/remote'
+import pluginMarketRemote from '@tomato/plugin-market/remote'
+import pluginInventoryRemote from '@tomato/host-plugin-inventory/remote'
+import messageFeedbackRemote from '@tomato/message-feedback/remote'
+import permissionPresetsRemote from '@tomato/permission-presets/remote'
+import sessionFeedbackRemote from '@tomato/command-feedback/remote'
+import fileUploadsRemote from '@tomato/client-file-upload/remote'
+import sessionReferencesRemote from '@tomato/session-reference/remote'
+import subagentsRemote from '@tomato/subagent/remote'
+import sessionRemote from '@tomato/api-session-controller/remote'
+import jobRemote from '@tomato/api-job-controller/remote'
+import workspaceRemote from '@tomato/api-workspace-controller/remote'
+import terminalRemote from '@tomato/api-terminal-controller/remote'
+import workspaceFilesRemote from '@tomato/api-workspace-files/remote'
+import type { ClientRemote } from '@tomato/api-gateway/client'
 
-export type { ClientRemote } from '@deepseek-ai/dsh-api-gateway/client'
+export type { ClientRemote } from '@tomato/api-gateway/client'
 export type {
   BundleDetail, BundleInfo, BundleRowInfo, ChangeResult, IncompatiblePlugin, InspectOptions, InstallBundleOptions, InstallSpecKind,
   ManagementError, PackageResult,
@@ -38,58 +38,58 @@ export type {
   PluginInstallLogChunk, PluginInstallProgress, PluginInstallRequestId, PluginRegistries, PluginSpecInspection,
   PluginUpdateProgress, PluginUpdateResult, PluginUpdateStep, PluginVersion, PluginVersionList, RegistryAttempt,
   ReadOnlyReason, Registry, RestartReason,
-} from '@deepseek-ai/dsh-plugin-manager/types'
-export type {} from '@deepseek-ai/dsh-plugin-manager/remote'
-export type {} from '@deepseek-ai/dsh-client-ui-plugin-manager/remote'
-export type {} from '@deepseek-ai/dsh-plugin-market/remote'
+} from '@tomato/plugin-manager/types'
+export type {} from '@tomato/plugin-manager/remote'
+export type {} from '@tomato/client-ui-plugin-manager/remote'
+export type {} from '@tomato/plugin-market/remote'
 export type {
   MarketCompatibility, MarketIndexSummary, MarketInstallation, MarketInstallationStatus, MarketListingEntry, MarketListingVersion,
   MarketQuery, MarketSearchResult, MarketSort, PluginDetail, PluginDetailDocumentId, PluginDetailOrigin,
-} from '@deepseek-ai/dsh-plugin-market/types'
-export type { PluginInventorySnapshot } from '@deepseek-ai/dsh-host-plugin-inventory/types'
-export type {} from '@deepseek-ai/dsh-agent-preset-registry/remote'
-export type {} from '@deepseek-ai/dsh-user-questions/remote'
-export type {} from '@deepseek-ai/dsh-commands/remote'
-export type {} from '@deepseek-ai/dsh-api-settings-controller/remote'
-export type {} from '@deepseek-ai/dsh-api-account-controller/remote'
-export type {} from '@deepseek-ai/dsh-goal/remote'
-export type {} from '@deepseek-ai/dsh-schedule/remote'
-export type {} from '@deepseek-ai/dsh-office-to-pdf/remote'
-export type {} from '@deepseek-ai/dsh-llm/remote'
-export type {} from '@deepseek-ai/dsh-host-plugin-inventory/remote'
-export type {} from '@deepseek-ai/dsh-message-feedback/remote'
-export type {} from '@deepseek-ai/dsh-permission-presets/remote'
-export type {} from '@deepseek-ai/dsh-command-feedback/remote'
-export type {} from '@deepseek-ai/dsh-client-file-upload/remote'
-export type {} from '@deepseek-ai/dsh-session-reference/remote'
-export type {} from '@deepseek-ai/dsh-subagent/remote'
-export type * from '@deepseek-ai/dsh-subagent/client'
-export type {} from '@deepseek-ai/dsh-api-session-controller/remote'
-export type * from '@deepseek-ai/dsh-api-session-controller/types'
-export type {} from '@deepseek-ai/dsh-api-job-controller/remote'
-export type * from '@deepseek-ai/dsh-api-job-controller/types'
-export type {} from '@deepseek-ai/dsh-api-workspace-controller/remote'
-export type * from '@deepseek-ai/dsh-api-workspace-controller/types'
-export type {} from '@deepseek-ai/dsh-api-workspace-files/remote'
-export type * from '@deepseek-ai/dsh-api-workspace-files/types'
-export type {} from '@deepseek-ai/dsh-api-terminal-controller/remote'
-export type * from '@deepseek-ai/dsh-api-terminal-controller/types'
+} from '@tomato/plugin-market/types'
+export type { PluginInventorySnapshot } from '@tomato/host-plugin-inventory/types'
+export type {} from '@tomato/agent-preset-registry/remote'
+export type {} from '@tomato/user-questions/remote'
+export type {} from '@tomato/commands/remote'
+export type {} from '@tomato/api-settings-controller/remote'
+export type {} from '@tomato/api-account-controller/remote'
+export type {} from '@tomato/goal/remote'
+export type {} from '@tomato/schedule/remote'
+export type {} from '@tomato/office-to-pdf/remote'
+export type {} from '@tomato/llm/remote'
+export type {} from '@tomato/host-plugin-inventory/remote'
+export type {} from '@tomato/message-feedback/remote'
+export type {} from '@tomato/permission-presets/remote'
+export type {} from '@tomato/command-feedback/remote'
+export type {} from '@tomato/client-file-upload/remote'
+export type {} from '@tomato/session-reference/remote'
+export type {} from '@tomato/subagent/remote'
+export type * from '@tomato/subagent/client'
+export type {} from '@tomato/api-session-controller/remote'
+export type * from '@tomato/api-session-controller/types'
+export type {} from '@tomato/api-job-controller/remote'
+export type * from '@tomato/api-job-controller/types'
+export type {} from '@tomato/api-workspace-controller/remote'
+export type * from '@tomato/api-workspace-controller/types'
+export type {} from '@tomato/api-workspace-files/remote'
+export type * from '@tomato/api-workspace-files/types'
+export type {} from '@tomato/api-terminal-controller/remote'
+export type * from '@tomato/api-terminal-controller/types'
 // The forwarded-event allowlist's selection seat: without it in the consumer's
 // compilation face `TypertRemoteEvent` is `never` and every `$on` call fails.
 export type { ApiRemoteForwardedEvent } from '../types.ts'
 // The owner packages' client-safe `./types` exports supply the `Events`
 // signatures `$on` hands to a listener, so a consumer reads the very
 // declaration the Host emits rather than a flattened restatement of it.
-export type {} from '@deepseek-ai/dsh-commands/types'
-export type {} from '@deepseek-ai/dsh-cordis-host-runner/types'
-export type {} from '@deepseek-ai/dsh-credentials/types'
-export type {} from '@deepseek-ai/dsh-llm/types'
-export type {} from '@deepseek-ai/dsh-agent-preset-registry/types'
-export type {} from '@deepseek-ai/dsh-permission-presets/types'
-export type {} from '@deepseek-ai/dsh-settings/types'
-export type {} from '@deepseek-ai/dsh-user-approval/types'
-export type {} from '@deepseek-ai/dsh-user-questions/types'
-export type {} from '@deepseek-ai/dsh-api-session-controller/types'
+export type {} from '@tomato/commands/types'
+export type {} from '@tomato/cordis-host-runner/types'
+export type {} from '@tomato/credentials/types'
+export type {} from '@tomato/llm/types'
+export type {} from '@tomato/agent-preset-registry/types'
+export type {} from '@tomato/permission-presets/types'
+export type {} from '@tomato/settings/types'
+export type {} from '@tomato/user-approval/types'
+export type {} from '@tomato/user-questions/types'
+export type {} from '@tomato/api-session-controller/types'
 
 /**
  * The carrier's Client-facing types, re-exported so a business package names one
@@ -101,9 +101,9 @@ export type {
   MessageId,
   RpcId, RpcRequest, RpcResponse, RpcResult, SessionId,
   StreamChunk,
-} from '@deepseek-ai/dsh-client-connection/client'
-export type {} from '@deepseek-ai/dsh-api-gateway/client'
-export type {} from '@deepseek-ai/dsh-cordis-host-runner/remote'
+} from '@tomato/client-connection/client'
+export type {} from '@tomato/api-gateway/client'
+export type {} from '@tomato/cordis-host-runner/remote'
 
 // The payload vocabulary of the selected namespaces, re-exported so a Client
 // contribution can name what it sends and receives without importing a Host
@@ -141,34 +141,34 @@ export type {
   DynamicCordisStopResponse,
   DynamicCordisUndefineReceipt,
   RequestRunOutcome,
-} from '@deepseek-ai/dsh-cordis-host-runner/types'
+} from '@tomato/cordis-host-runner/types'
 // Credential state vocabulary for the credentials namespace (values never ride it).
-export type { CredentialInfo } from '@deepseek-ai/dsh-credentials/types'
+export type { CredentialInfo } from '@tomato/credentials/types'
 // Redacted namespace vocabulary for the settings namespace (secrets never ride
 // it). It travels with its seam, whose `./types` the Client face already reads.
 export type {
   SettingsDescribeValue, SettingsNamespaceView, SettingsPathOpView, SettingsSecretView,
-} from '@deepseek-ai/dsh-settings/types'
+} from '@tomato/settings/types'
 // Provider registry and discovery vocabulary for the llm namespace.
 export type {
   LlmConfigurableProvider, LlmDiscoveredModel,
   LlmModelDiscoveryRequest, LlmNativeAuth, LlmProviderInfo,
-} from '@deepseek-ai/dsh-llm/types'
+} from '@tomato/llm/types'
 // Reference-discovery result vocabulary for the fileReferences and
 // sessionReferenceResolver namespaces.
-export type { FileReferenceCandidate } from '@deepseek-ai/dsh-file-reference/types'
-export type { SessionReferenceMentionCandidate } from '@deepseek-ai/dsh-session-reference/types'
+export type { FileReferenceCandidate } from '@tomato/file-reference/types'
+export type { SessionReferenceMentionCandidate } from '@tomato/session-reference/types'
 
 // The Remote failure vocabulary, re-exported so business packages keep naming
 // this assembly alone. Types only: a value export would make spec imports load
 // this module's owner /remote artifacts; specs take RemoteError from
-// dsh-client-test-runtime instead.
+// @tomato/client-test-runtime instead.
 export type {
   RemoteErrorCode, RemoteErrorDetailsMap, RemoteFailure, RemoteResult,
-} from '@deepseek-ai/dsh-typert-protocol'
-export type { RemoteHostFacts } from '@deepseek-ai/dsh-api-gateway/client'
+} from '@tomato/typert-protocol'
+export type { RemoteHostFacts } from '@tomato/api-gateway/client'
 
-declare module '@deepseek-ai/cordis' {
+declare module '@tomato/cordis' {
   interface Context {
     /** Generated Remote namespaces selected by this Client assembly. */
     remote: ClientRemote

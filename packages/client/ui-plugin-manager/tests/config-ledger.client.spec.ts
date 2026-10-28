@@ -58,13 +58,13 @@ describe('configLedgerSource', () => {
     let title = 'Shell'
     b.register('plugins.item', { id: 'bash', label: () => title })
     b.register('plugins.item', { id: 'loop', label: 'Agent loop' })
-    b.register('plugins.bundle.config', { key: 'dsh-x' })
-    b.register('plugins.row.config', { key: rowConfigKey('dsh-x', 'row') })
+    b.register('plugins.bundle.config', { key: 'tomato-x' })
+    b.register('plugins.row.config', { key: rowConfigKey('tomato-x', 'row') })
 
     expect(source.getSnapshot()).toEqual({
       items: [{ id: 'bash', label: 'Shell' }, { id: 'loop', label: 'Agent loop' }],
-      bundles: new Set(['dsh-x']),
-      rows: new Set(['dsh-x#row']),
+      bundles: new Set(['tomato-x']),
+      rows: new Set(['tomato-x#row']),
     })
     // A label thunk is re-read when the locale moves, not before.
     title = '终端'

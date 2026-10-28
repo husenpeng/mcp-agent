@@ -3,32 +3,32 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-skill-browser/README.md
 /:
-  en: 5e3f104f63561c11
-  zh: 9e47fe516ddac627
-/deepseek-ai-dsh-client-ui-skill-browser:
-  en: 19d87bec2f144ab4
-  zh: eca4b3145c4ccd26
-/deepseek-ai-dsh-client-ui-skill-browser/summary:
-  en: bcba7cda88895d80
-  zh: 409441c177577a55
-/deepseek-ai-dsh-client-ui-skill-browser/table-of-contents:
+  en: 894c9b406e891de0
+  zh: 84b5a6ff0c046b79
+/tomato-client-ui-skill-browser:
+  en: 06513b0782d93026
+  zh: c4561063174870ca
+/tomato-client-ui-skill-browser/summary:
+  en: 282ea7ada3ef690b
+  zh: 0df155cc0e4f4758
+/tomato-client-ui-skill-browser/table-of-contents:
   en: a7b1bcef44d01a5e
   zh: 275696c977d3999d
-/deepseek-ai-dsh-client-ui-skill-browser/what-it-registers:
-  en: 68d15249321258d6
-  zh: 893463769584d3b8
-/deepseek-ai-dsh-client-ui-skill-browser/the-panel:
+/tomato-client-ui-skill-browser/what-it-registers:
+  en: bd5d58c92c4f69e5
+  zh: 2f7e3451ee8e7953
+/tomato-client-ui-skill-browser/the-panel:
   en: f4279cae2e70df51
   zh: bb3a2bfdfe9b0c29
-/deepseek-ai-dsh-client-ui-skill-browser/model-experience:
+/tomato-client-ui-skill-browser/model-experience:
   en: be84c696edcb14c5
   zh: 51b36c12a9fe963d
-/deepseek-ai-dsh-client-ui-skill-browser/model-experience/kv-cache-effect:
+/tomato-client-ui-skill-browser/model-experience/kv-cache-effect:
   en: 2b485b8f1cb01028
   zh: 02d13af7e9b00174
-/deepseek-ai-dsh-client-ui-skill-browser/known-limitations-and-deferred-work:
+/tomato-client-ui-skill-browser/known-limitations-and-deferred-work:
   en: c4ddc4918a808de9
   zh: 7205f179616a58b2
-/deepseek-ai-dsh-client-ui-skill-browser/known-limitations-and-deferred-work/dev-note:
-  en: 101e1c830d88d4b2
-  zh: 19ca7089ae04d4c1
+/tomato-client-ui-skill-browser/known-limitations-and-deferred-work/dev-note:
+  en: d1c873952d062ec7
+  zh: 72ec48427c8ced54

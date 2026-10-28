@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-fs-ssh",
+  "name": "@tomato/fs-ssh",
   "description": "Filesystem provider over the shared POSIX SSH helper",
   "version": "0.2.1-rc.3",
   "publishConfig": {
@@ -29,21 +29,21 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-ssh": "workspace:*",
-    "@deepseek-ai/dsh-fs": "workspace:*",
-    "@deepseek-ai/dsh-sandbox": "workspace:*",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/ssh": "workspace:*",
+    "@tomato/fs": "workspace:*",
+    "@tomato/sandbox": "workspace:*",
+    "@tomato/sandbox-policy": "workspace:*"
   },
   "dependencies": {
-    "@deepseek-ai/schemastery": "workspace:~",
+    "@tomato/schemastery": "workspace:~",
     "zod": "4.4.3"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-ssh": "workspace:*",
-    "@deepseek-ai/dsh-fs": "workspace:*",
-    "@deepseek-ai/dsh-sandbox": "workspace:*",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/ssh": "workspace:*",
+    "@tomato/fs": "workspace:*",
+    "@tomato/sandbox": "workspace:*",
+    "@tomato/sandbox-policy": "workspace:*"
   }
 }

@@ -1,14 +1,14 @@
-import OTel from '@deepseek-ai/dsh-otel'
+import OTel from '@tomato/otel'
 import { createServer, type Server } from 'node:http'
 import { once } from 'node:events'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { installProxyFromEnvironment } from '@deepseek-ai/dsh-http-proxy'
-import { recordFeedback } from '@deepseek-ai/dsh-command-feedback'
-import { Context } from '@deepseek-ai/cordis'
-import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
+import { installProxyFromEnvironment } from '@tomato/http-proxy'
+import { recordFeedback } from '@tomato/command-feedback'
+import { Context } from '@tomato/cordis'
+import SessionStore, { SessionId } from '@tomato/session'
 import OpenTelemetrySessionBackend, { SessionTelemetryMode } from '../src/index.ts'
 
 const seen: string[] = []
@@ -29,7 +29,7 @@ async function listen(server: Server): Promise<string> {
 }
 
 beforeAll(async () => {
-  home = mkdtempSync(join(tmpdir(), 'dsh-otel-egress-'))
+  home = mkdtempSync(join(tmpdir(), 'tomato-otel-egress-'))
   previousHome = process.env.TOMATO_HOME
   process.env.TOMATO_HOME = home
   const proxy = createServer((request, response) => {

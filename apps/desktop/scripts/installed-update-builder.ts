@@ -20,20 +20,20 @@ export async function createInstalledUpdateBuilderConfig(manifest: string, versi
     throw new Error('installed update: signed ordinary-update qualification requires matching test deployment settings')
   }
   const application = await verifyInstalledUpdateApplication(run.root)
-  const dsh = join(run.root, version, 'dsh')
-  await verifyDesktopRuntime(dsh, version, { platform: 'win32', arch: 'x64' })
+  const tomato = join(run.root, version, 'tomato')
+  await verifyDesktopRuntime(tomato, version, { platform: 'win32', arch: 'x64' })
   const config = createElectronBuilderConfig({ ...environment, TOMATO_DESKTOP_APP_ID: run.appId,
-    TOMATO_DESKTOP_TARGET_PLATFORM: 'win32', TOMATO_DESKTOP_TARGET_ARCH: 'x64', TOMATO_DESKTOP_UNSIGNED: '0' }, 'win32', 'x64', dsh, version)
+    TOMATO_DESKTOP_TARGET_PLATFORM: 'win32', TOMATO_DESKTOP_TARGET_ARCH: 'x64', TOMATO_DESKTOP_UNSIGNED: '0' }, 'win32', 'x64', tomato, version)
   return { ...config,
     productName: run.productName,
     directories: { ...config.directories, output: join(run.root, version, 'installer') },
-    extraMetadata: { ...config.extraMetadata, name: `dsh-update-test-${run.id}`, version, main: 'qualification-bootstrap.mjs' },
+    extraMetadata: { ...config.extraMetadata, name: `tomato-update-test-${run.id}`, version, main: 'qualification-bootstrap.mjs' },
     files: [
       { from: application, to: '.', filter: ['lib/*.js', 'lib/*.cjs', 'lib/welcome/design-platform.css', 'renderer/**/*', 'qualification-bootstrap.mjs', 'installed-update-identity.mjs'] },
       'package.json',
       ...config.files.filter((file): file is string => typeof file === 'string' && file.startsWith('!')),
-      { from: dsh, to: 'dsh', filter: ['**/*'] },
-      { from: join(dsh, 'node_modules'), to: 'dsh/node_modules', filter: ['**/*'] },
+      { from: tomato, to: 'tomato', filter: ['**/*'] },
+      { from: join(tomato, 'node_modules'), to: 'tomato/node_modules', filter: ['**/*'] },
     ],
     publish: [{ provider: 'generic' as const, url: `${run.origin}/${run.feedKey.slice(0, -'nightly.yml'.length)}`, channel: 'nightly' }],
   }

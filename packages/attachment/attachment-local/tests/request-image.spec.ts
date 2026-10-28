@@ -1,7 +1,7 @@
 import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@tomato/cordis'
 import sharp from 'sharp'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CompressionLimiter } from '../src/compression-limiter.ts'
@@ -10,7 +10,7 @@ import LocalAttachmentStore from '../src/index.ts'
 const homes: string[] = []
 
 async function home(): Promise<string> {
-  const tomatoHome = await mkdtemp(join(tmpdir(), 'dsh-request-image-'))
+  const tomatoHome = await mkdtemp(join(tmpdir(), 'tomato-request-image-'))
   homes.push(tomatoHome)
   return tomatoHome
 }

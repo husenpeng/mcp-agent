@@ -5,14 +5,14 @@
  * Under the `ask` approval policy a reviewer denial asks the user; under
  * `never` it is final.
  *
- * @module @deepseek-ai/dsh-experimental-auto-review
+ * @module @tomato/experimental-auto-review
  */
 
-import type {} from '@deepseek-ai/dsh-tool-executor-ptc/types'
-import type {} from '@deepseek-ai/dsh-working-directory'
-import { FiberState, type Context } from '@deepseek-ai/cordis'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import type {} from '@deepseek-ai/dsh-agent-instructions'
+import type {} from '@tomato/tool-executor-ptc/types'
+import type {} from '@tomato/working-directory'
+import { FiberState, type Context } from '@tomato/cordis'
+import type { Agent } from '@tomato/agent'
+import type {} from '@tomato/agent-instructions'
 import {
   BlockAssembler,
   type ContentBlock,
@@ -22,17 +22,17 @@ import {
   type StreamChunk,
   type ToolCallId,
   type ToolSchema,
-} from '@deepseek-ai/dsh-llm'
-import { deepFreeze } from '@deepseek-ai/dsh-util-values'
-import { AUTO_PRESET } from '@deepseek-ai/dsh-permission-presets'
-import type { Session, SessionEvent } from '@deepseek-ai/dsh-session'
-import type {} from '@deepseek-ai/dsh-subagent'
-import type {} from '@deepseek-ai/dsh-user-approval'
+} from '@tomato/llm'
+import { deepFreeze } from '@tomato/util-values'
+import { AUTO_PRESET } from '@tomato/permission-presets'
+import type { Session, SessionEvent } from '@tomato/session'
+import type {} from '@tomato/subagent'
+import type {} from '@tomato/user-approval'
 import {
   RUN_CODE_NAME,
   type PreToolDecision,
   type ToolExecution,
-} from '@deepseek-ai/dsh-tools'
+} from '@tomato/tools'
 import { deniedDisplayReason } from './locales.ts'
 
 /** Structured error name persisted for every final reviewer denial. */

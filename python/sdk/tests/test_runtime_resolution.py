@@ -241,7 +241,7 @@ def test_python_dsh_command_executes_the_bundled_cli(
     called: dict[str, object] = {}
     monkeypatch.setenv("TOMATO_HOME", "/explicit/home")
     monkeypatch.setattr(runtime, "resolve_bundled_launch_args", lambda: ("/runtime",))
-    monkeypatch.setattr(runtime, "sys", SimpleNamespace(platform="linux", argv=["dsh", "plugin", "--profile", "sdk", "list"]))
+    monkeypatch.setattr(runtime, "sys", SimpleNamespace(platform="linux", argv=["tomato", "plugin", "--profile", "sdk", "list"]))
 
     def execvpe(file: str, args: tuple[str, ...], env: dict[str, str]) -> None:
         called.update(file=file, args=args, home=env.get("TOMATO_HOME"))
@@ -260,7 +260,7 @@ def test_python_dsh_command_executes_the_bundled_cli(
 @pytest.mark.parametrize("returncode", [0, 37, 513])
 def test_windows_console_waits_and_forwards_runtime_status(monkeypatch: pytest.MonkeyPatch, returncode: int) -> None:
     monkeypatch.setenv("TOMATO_HOME", "/explicit/home")
-    monkeypatch.setattr(runtime, "sys", SimpleNamespace(platform="win32", argv=["dsh", "plugin", "argument with spaces", "中文"]))
+    monkeypatch.setattr(runtime, "sys", SimpleNamespace(platform="win32", argv=["tomato", "plugin", "argument with spaces", "中文"]))
     monkeypatch.setattr(runtime, "resolve_bundled_launch_args", lambda: ("runtime.exe",))
     called = []
 
@@ -294,7 +294,7 @@ def test_windows_console_branch_preserves_real_child_io_and_completion(tmp_path:
     )
     driver = (
         "import deepseek_harness_runtime as runtime; from types import SimpleNamespace; "
-        f"runtime.sys = SimpleNamespace(platform='win32', argv=['dsh', 'argument with spaces', '中文']); "
+        f"runtime.sys = SimpleNamespace(platform='win32', argv=['tomato', 'argument with spaces', '中文']); "
         f"runtime.resolve_bundled_launch_args = lambda: ({sys.executable!r}, {str(child)!r}); runtime.main()"
     )
     result = subprocess.run([sys.executable, "-c", driver], capture_output=True, text=True, encoding="utf-8",
@@ -326,7 +326,7 @@ def test_runtime_starts_independently_of_office_engine(
     assert runtime.bundled_runtime_path() == executable
     engine = next(office.glob("node_modules/@deepseek-ai/libreoffice-kit-*/prebuilds.json"))
     engine.unlink()
-    foreign = office / "node_modules/@deepseek-ai" / ("libreoffice-kit-darwin-arm64" if engine.parent.name == "libreoffice-kit-wasm" else "libreoffice-kit-wasm") / "prebuilds.json"
+    foreign = office / "node_modules/@tomato" / ("libreoffice-kit-darwin-arm64" if engine.parent.name == "libreoffice-kit-wasm" else "libreoffice-kit-wasm") / "prebuilds.json"
     foreign.parent.mkdir(parents=True, exist_ok=True)
     foreign.write_text("{}")
     assert runtime.bundled_runtime_path() == executable

@@ -12,7 +12,7 @@ import { setPublishedFiles, writeTypertWorkspace } from './typert-workspace.fixt
 const compiler = fileURLToPath(import.meta.resolve('typescript/bin/tsc'))
 
 function fixture(): { root: string; leaf: string } {
-  const root = mkdtempSync(join(tmpdir(), 'dsh-referenced-projects-'))
+  const root = mkdtempSync(join(tmpdir(), 'tomato-referenced-projects-'))
   onTestFinished(() => { removeFixtureSafely(root) })
   mkdirSync(join(root, 'packages'))
   const leaf = join(root, 'leaf package')
@@ -104,7 +104,7 @@ describe('internal artifact build order', () => {
     const expected = [
       ['exec', 'tsdown', '--config-loader', 'native', '--env.TOMATO_BUILD_FACE', 'host'],
       ...hostOnly ? [] : [
-        ['--filter', '@deepseek-ai/dsh-desktop', 'run', 'bundle'],
+        ['--filter', '@tomato/desktop', 'run', 'bundle'],
         ['exec', 'tsdown', '--config-loader', 'native', '--env.TOMATO_BUILD_FACE', 'client'],
       ],
     ]
@@ -154,7 +154,7 @@ describe('internal artifact build order', () => {
     expect(commands()).toEqual([
       ['run', 'build:native-system'],
       ['exec', 'tsdown', '--config-loader', 'native', '--env.TOMATO_BUILD_FACE', 'host'],
-      ['--filter', '@deepseek-ai/dsh-desktop', 'run', 'bundle'],
+      ['--filter', '@tomato/desktop', 'run', 'bundle'],
       ['exec', 'tsdown', '--config-loader', 'native', '--env.TOMATO_BUILD_FACE', 'client'],
       ['exec', 'tsdown', '--config-loader', 'native', '--config', 'benchmarks/tsdown.config.ts'],
       ['run', 'build:web'],
@@ -168,7 +168,7 @@ describe('internal artifact build order', () => {
 
 describe('bundle-free Host contracts', { timeout: 60_000 }, () => {
   function typertWorkspace(source?: string): { pkg: string; run: () => Promise<void>; outputs: () => string[] } {
-    const root = mkdtempSync(join(tmpdir(), 'dsh-host-contracts-'))
+    const root = mkdtempSync(join(tmpdir(), 'tomato-host-contracts-'))
     onTestFinished(() => { removeFixtureSafely(root) })
     const pkg = writeTypertWorkspace(root, source)
     const commands = recordedCommands(root)

@@ -1,11 +1,11 @@
 /** Sidebar account launcher: status, sign-in, sign-out, and settings entry. */
 
 import { useRef, useState } from 'react'
-import type { SnapshotStore } from '@deepseek-ai/dsh-client-store'
+import type { SnapshotStore } from '@tomato/client-store'
 import {
   IconCloseOutlineMedium, IconRefreshOutlineMedium, IconSettingsOutlineMedium, IconUserOutlineMedium, Menu, Toast,
-} from '@deepseek-ai/dsh-client-ui-primitives'
-import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+} from '@tomato/client-ui-primitives'
+import type { InjectFace, PropsLocale, PropsRuntime } from '@tomato/client-ui-slots'
 import { AccountAvatar } from './AccountAvatar.tsx'
 import type { AccountSnapshot } from './account-controller.ts'
 import css from './Account.module.css'

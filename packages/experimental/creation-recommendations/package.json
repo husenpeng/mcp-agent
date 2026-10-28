@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-creation-recommendations",
+  "name": "@tomato/creation-recommendations",
   "description": "Create persistent removable interface plugins from explicit conversation needs",
   "version": "0.2.1-rc.3",
   "publishConfig": {
@@ -30,34 +30,34 @@
   },
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-tools": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-skill": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/llm": "workspace:*",
+    "@tomato/tools": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/skill": "workspace:*"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-tools": "workspace:*",
-    "@deepseek-ai/dsh-agent": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-session-projection": "workspace:*",
-    "@deepseek-ai/dsh-plugin-manager": "workspace:*",
-    "@deepseek-ai/dsh-api-remote-access": "workspace:*",
-    "@deepseek-ai/dsh-subagent": "workspace:*",
-    "@deepseek-ai/dsh-app-boot": "workspace:*",
-    "@deepseek-ai/dsh-skill": "workspace:*",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:*",
-    "@deepseek-ai/dsh-tool-testkit": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/llm": "workspace:*",
+    "@tomato/tools": "workspace:*",
+    "@tomato/agent": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/plugin-manager": "workspace:*",
+    "@tomato/api-remote-access": "workspace:*",
+    "@tomato/subagent": "workspace:*",
+    "@tomato/app-boot": "workspace:*",
+    "@tomato/skill": "workspace:*",
+    "@tomato/sandbox-policy": "workspace:*",
+    "@tomato/tool-testkit": "workspace:*"
   },
   "dependencies": {
     "yaml": "^2.9.0",
     "resolve.exports": "^2.0.3",
     "zod": "4.4.3",
-    "@deepseek-ai/dsh-client-ui-creation-recommendations": "workspace:*",
-    "@deepseek-ai/dsh-action-cards": "workspace:*",
-    "@deepseek-ai/dsh-client-ui-action-cards": "workspace:*"
+    "@tomato/client-ui-creation-recommendations": "workspace:*",
+    "@tomato/action-cards": "workspace:*",
+    "@tomato/client-ui-action-cards": "workspace:*"
   },
   "files": [
     "icon.svg",

@@ -3,11 +3,11 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write apps/desktop/tests/README.md
 /desktop-local-update-verification:
-  en: 194f1f0f1ca90743
-  zh: 773ca28e04c8911f
+  en: 0944fe437fa2e612
+  zh: 1c35a5aa8d4938e1
 /desktop-local-update-verification/summary:
-  en: 94559f431b0b2151
-  zh: 1a22166a2bc59686
+  en: 9b2deb907659e291
+  zh: 67db2abd97bf9f41
 /desktop-local-update-verification/table-of-contents:
   en: 86afdf78fa613876
   zh: 66fad143d99e999f
@@ -15,11 +15,11 @@
   en: d086c3b38ce623f1
   zh: 8327c31092f5f174
 /desktop-local-update-verification/native-overlay-visibility:
-  en: 6f4de4503748f3e2
-  zh: 648370375f16e463
+  en: fe47e8f32517f469
+  zh: a7d019378f9664f7
 /desktop-local-update-verification/manual-walkthrough:
-  en: c4b4ee8763d8464a
-  zh: ee2159bc08966592
+  en: de077ac73e5f12c8
+  zh: 11e0b46e9c0e8af3
 /desktop-local-update-verification/evidence:
   en: dcb2473264c825d4
   zh: cebb2832efa15974

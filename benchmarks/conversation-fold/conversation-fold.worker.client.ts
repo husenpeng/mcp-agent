@@ -1,13 +1,13 @@
 /** Compiled worker for Client history folding and live tool preparation. */
 
 import { performance } from 'node:perf_hooks'
-import { Context } from '@deepseek-ai/cordis'
-import { AssistantStreamAccumulator } from '@deepseek-ai/dsh-llm/assistant-stream'
-import { LlmAttemptId, ToolCallId } from '@deepseek-ai/dsh-llm/brand'
-import type { StreamChunk } from '@deepseek-ai/dsh-llm'
-import type { SessionEvent } from '@deepseek-ai/dsh-session/types'
-import type { ChatNode, ChatSnapshot } from '@deepseek-ai/dsh-client-ui-chat/client'
-import type { SessionEventLikeEntry } from '@deepseek-ai/dsh-api-session-controller/client'
+import { Context } from '@tomato/cordis'
+import { AssistantStreamAccumulator } from '@tomato/llm/assistant-stream'
+import { LlmAttemptId, ToolCallId } from '@tomato/llm/brand'
+import type { StreamChunk } from '@tomato/llm'
+import type { SessionEvent } from '@tomato/session/types'
+import type { ChatNode, ChatSnapshot } from '@tomato/client-ui-chat/client'
+import type { SessionEventLikeEntry } from '@tomato/api-session-controller/client'
 // These Client-only fold modules have no plain-Node package export and are compiled into this worker.
 import { ConversationNodeAssembler } from '../../packages/client/ui-conversation/src/client/conversation/assembler.ts'
 import { ConversationEventRegistry } from '../../packages/client/ui-conversation/src/client/conversation/event-registry.ts'
@@ -258,12 +258,12 @@ function preparingTool(tool: 'write' | 'bash', characters: number, definitions: 
 }
 
 assertBuiltBenchmarkRuntime(import.meta.url, {
-  '@deepseek-ai/dsh-brand': import.meta.resolve('@deepseek-ai/dsh-brand'),
-  '@deepseek-ai/dsh-client-store': import.meta.resolve('@deepseek-ai/dsh-client-store'),
-  '@deepseek-ai/dsh-llm/assistant-stream': import.meta.resolve('@deepseek-ai/dsh-llm/assistant-stream'),
-  '@deepseek-ai/dsh-session/surface': import.meta.resolve('@deepseek-ai/dsh-session/surface'),
-  '@deepseek-ai/dsh-token-meter/client': import.meta.resolve('@deepseek-ai/dsh-token-meter/client'),
-  '@deepseek-ai/dsh-util-values': import.meta.resolve('@deepseek-ai/dsh-util-values'),
+  '@tomato/branded': import.meta.resolve('@tomato/branded'),
+  '@tomato/client-store': import.meta.resolve('@tomato/client-store'),
+  '@tomato/llm/assistant-stream': import.meta.resolve('@tomato/llm/assistant-stream'),
+  '@tomato/session/surface': import.meta.resolve('@tomato/session/surface'),
+  '@tomato/token-meter/client': import.meta.resolve('@tomato/token-meter/client'),
+  '@tomato/util-values': import.meta.resolve('@tomato/util-values'),
 })
 const scope = new Context()
 try {

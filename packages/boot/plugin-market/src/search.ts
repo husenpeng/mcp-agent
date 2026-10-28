@@ -1,8 +1,8 @@
 /** Filtering, fuzzy text matching, and ordering of one validated index's plugins. */
 import MiniSearch from 'minisearch'
-import type { LocalizedText } from '@deepseek-ai/dsh-package-manifest'
-import type { MarketDeclaration, MarketIndex, MarketPlugin } from '@deepseek-ai/dsh-plugin-market-index'
-import { assertNever } from '@deepseek-ai/dsh-util-values'
+import type { LocalizedText } from '@tomato/package-manifest'
+import type { MarketDeclaration, MarketIndex, MarketPlugin } from '@tomato/plugin-market-index'
+import { assertNever } from '@tomato/util-values'
 import type { MarketQuery } from './types.ts'
 
 /**

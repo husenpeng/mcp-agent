@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import { createMessage, createUserMessage } from '@deepseek-ai/dsh-llm'
-import type { TokenUsage } from '@deepseek-ai/dsh-llm'
-import SessionStore from '@deepseek-ai/dsh-session'
-import type { Session, SessionSeq } from '@deepseek-ai/dsh-session'
-import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
-import TokenMeter from '@deepseek-ai/dsh-token-meter'
-import type { ContextPressureProjection, TokenUsageProjection } from '@deepseek-ai/dsh-token-meter/client'
-import { RetryId } from '@deepseek-ai/dsh-llm-retry'
-import type { ContextFormed } from '@deepseek-ai/dsh-llm'
-import { CompactionId } from '@deepseek-ai/dsh-compaction'
+import { Context } from '@tomato/cordis'
+import { createMessage, createUserMessage } from '@tomato/llm'
+import type { TokenUsage } from '@tomato/llm'
+import SessionStore from '@tomato/session'
+import type { Session, SessionSeq } from '@tomato/session'
+import SessionProjectionRegistry from '@tomato/session-projection'
+import TokenMeter from '@tomato/token-meter'
+import type { ContextPressureProjection, TokenUsageProjection } from '@tomato/token-meter/client'
+import { RetryId } from '@tomato/llm-retry'
+import type { ContextFormed } from '@tomato/llm'
+import { CompactionId } from '@tomato/compaction'
 
-declare module '@deepseek-ai/dsh-llm' {
+declare module '@tomato/llm' {
   interface MessageSourceMap {
     'test': { kind: 'test' } & ContextFormed
   }

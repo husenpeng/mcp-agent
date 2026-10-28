@@ -3,17 +3,17 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/rejected/architecture/2026-06-16-typed-event-schemas.md
 /agent-note-runtime-schemas-for-the-event-vocabulary-zod-vs-the-merge-extensible-map-pattern:
-  en: 63685a0c0afc3f07
-  zh: 8f7e06562771ee1d
+  en: 912960da30493dcd
+  zh: ae5e834e88fc652b
 /agent-note-runtime-schemas-for-the-event-vocabulary-zod-vs-the-merge-extensible-map-pattern/problem:
-  en: 8b2780f7c75a81a9
-  zh: 62525da8b9750f84
+  en: c390209c10d621da
+  zh: ab64a258ddcb0f8f
 /agent-note-runtime-schemas-for-the-event-vocabulary-zod-vs-the-merge-extensible-map-pattern/why-this-is-not-a-persistence-change:
   en: 42d48e48d694d3de
   zh: f556f4624b55a480
 /agent-note-runtime-schemas-for-the-event-vocabulary-zod-vs-the-merge-extensible-map-pattern/blast-radius-measured:
-  en: ec70e76b82ba21b5
-  zh: 25fb4a60f8da5cb5
+  en: 415a9075a6d5f0e0
+  zh: 301bd36c4dc2c3a6
 /agent-note-runtime-schemas-for-the-event-vocabulary-zod-vs-the-merge-extensible-map-pattern/alternatives-considered:
   en: 6119e2aff3b6be5a
   zh: 76136ef5249c23eb

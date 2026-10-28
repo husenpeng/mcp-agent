@@ -3,12 +3,12 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import { credentialRef } from '@deepseek-ai/dsh-credentials'
-import LocalCredentialProvider from '@deepseek-ai/dsh-credentials-local'
-import { TOMATO_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot } from '@deepseek-ai/dsh-launch-environment'
-import WebRuntime from '@deepseek-ai/dsh-web'
-import * as webApiPlugin from '@deepseek-ai/dsh-web-deepseek-api'
+import { Context } from '@tomato/cordis'
+import { credentialRef } from '@tomato/credentials'
+import LocalCredentialProvider from '@tomato/credentials-local'
+import { TOMATO_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot } from '@tomato/launch-environment'
+import WebRuntime from '@tomato/web'
+import * as webApiPlugin from '@tomato/web-deepseek-api'
 
 const BASE = 'https://api.deepseek.test/v1/tools'
 
@@ -38,7 +38,7 @@ afterEach(() => { vi.unstubAllGlobals() })
 describe('web-deepseek-api API-key resolution', () => {
   it('resolves the referenced credential for each request, so a stored or rotated key needs no restart', async () => {
     const authorization = captureAuthorization()
-    const dir = await mkdtemp(join(tmpdir(), 'dsh-web-deepseek-api-credentials-'))
+    const dir = await mkdtemp(join(tmpdir(), 'tomato-web-deepseek-api-credentials-'))
     const ctx = new Context()
     try {
       await ctx.plugin(LocalCredentialProvider, { path: join(dir, '.credentials.yaml'), watch: false })

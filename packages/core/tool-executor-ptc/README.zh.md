@@ -3,7 +3,7 @@ description: "基于程序的工具执行、生成 SDK 与嵌套调用限制。"
 kind: "package-reference"
 ---
 
-# @deepseek-ai/dsh-tool-executor-ptc
+# @tomato/tool-executor-ptc
 
 [English](README.md) | 中文
 
@@ -25,10 +25,10 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
-将此行加入已经挂载 `dsh-tools` 的组合。最近作用域的执行器决定工具行为；同一作用域只允许一个执行器。
+将此行加入已经挂载 `@tomato/tools` 的组合。最近作用域的执行器决定工具行为；同一作用域只允许一个执行器。
 
 ```yaml
-- name: '@deepseek-ai/dsh-tool-executor-ptc'
+- name: '@tomato/tool-executor-ptc'
   config:
     maxParallelSubCalls: 10
 ```
@@ -37,7 +37,7 @@ kind: "package-reference"
 
 本包将 `ctx.ptcRuntime` 和 `ctx.systemPrompt` 声明为必需注入；带 Agent 的程序要求 `ctx.workingDirectory`。执行器在运行时可用后才激活，并在运行时卸载时撤回。启用 PTC 执行器但未提供运行时会阻止应用启动。已撤回的 PTC 选择不会回退到原生执行。
 
-共享分派事件与 `ptc-mode` 消息来源声明位于 `@deepseek-ai/dsh-tool-executor-ptc/types`；Client 代码通过 `@deepseek-ai/dsh-tool-executor-ptc/client` 导入同一组声明。两个入口都不引入 Host 服务声明。Host 策略扩展通过包主入口的 `import type` 获取 `PtcDispatchLog` 与 `tools/ptc-dispatch-log`，无需挂载执行器。
+共享分派事件与 `ptc-mode` 消息来源声明位于 `@tomato/tool-executor-ptc/types`；Client 代码通过 `@tomato/tool-executor-ptc/client` 导入同一组声明。两个入口都不引入 Host 服务声明。Host 策略扩展通过包主入口的 `import type` 获取 `PtcDispatchLog` 与 `tools/ptc-dispatch-log`，无需挂载执行器。
 
 [配置目录](../../../docs/config-catalog.zh.md#deepseek-aidsh-tool-executor-ptc)
 

@@ -29,7 +29,7 @@ const hooks = registerHooks({ resolve(specifier, context, next) {
 } })
 const server = await createUpdateServer()
 server.select('healthy', '0.1.6-nightly.1')
-process.env.TOMATO_DESKTOP_APP_ID = 'com.deepseek.qualification'
+process.env.TOMATO_DESKTOP_APP_ID = 'vip.tomatoai.desktop.qualification'
 process.env.TOMATO_DESKTOP_MANDATORY_UPDATE_CONFIG = JSON.stringify({ origin: new URL(server.url).origin,
   allowedPageOrigins: ['https://downloads.example.com'], intervalMs: 600_000, timeoutMs: 5000, maxBackoffMs: 600_000, jitter: 0 })
 const config = join(root, 'app-update.yml')
@@ -97,10 +97,10 @@ async function documentReady(window, expression) {
   })`))
 }
 async function windowAt(url) {
-  if (process.platform === 'win32' && url === 'dsh-app://shell/mandatory-update.html') {
-    return mandatoryFrameDriver(await windowAt('dsh-app://app/'))
+  if (process.platform === 'win32' && url === 'tomato-app://shell/mandatory-update.html') {
+    return mandatoryFrameDriver(await windowAt('tomato-app://app/'))
   }
-  if (process.platform !== 'win32' && url === 'dsh-app://shell/mandatory-update.html') {
+  if (process.platform !== 'win32' && url === 'tomato-app://shell/mandatory-update.html') {
     let contents
     await waitFor(() => { contents = webContents.getAllWebContents().find(candidate => candidate.getURL() === url); return contents !== undefined }, 'mandatory view document')
     return { webContents: contents, isDestroyed: () => contents.isDestroyed() }
@@ -171,7 +171,7 @@ async function dialogWith(message) {
   let found
   await waitFor(async () => {
     for (const contents of webContents.getAllWebContents()) {
-      if (contents.getURL() !== 'dsh-app://shell/update-dialog.html') continue
+      if (contents.getURL() !== 'tomato-app://shell/update-dialog.html') continue
       let window = dialogDrivers.get(contents)
       if (!window) {
         const owner = BrowserWindow.fromWebContents(contents)
@@ -195,7 +195,7 @@ async function qualify() {
     console.log('workspace qualification: compiled main module loaded')
     await fixture.ready.promise
     console.log('workspace qualification: Host process ready')
-    mainWindow = await windowAt('dsh-app://app/')
+    mainWindow = await windowAt('tomato-app://app/')
     await documentReady(mainWindow, `document.querySelector('[class*="frame"]') && window.tomatoDesktop?.updates`)
     assert.equal(mainWindow.isVisible(), true, 'Workspace qualification requires a visible application window')
     console.log('workspace qualification: workspace document ready')
@@ -262,7 +262,7 @@ async function qualify() {
     await press(mainWindow, `document.querySelector('button[data-error="true"]')`)
     await server.arrived()
     await documentReady(mainWindow, `document.querySelector('button[aria-disabled="true"]')`)
-    assert.equal(webContents.getAllWebContents().some(contents => contents.getURL() === 'dsh-app://shell/update-dialog.html'), false)
+    assert.equal(webContents.getAllWebContents().some(contents => contents.getURL() === 'tomato-app://shell/update-dialog.html'), false)
     await screenshot(mainWindow, 'downloading.png')
     server.release()
     const confirmation = desktopUpdateReadyConfirmation(messages, '0.1.6-nightly.1', process.platform)
@@ -295,7 +295,7 @@ async function qualify() {
     server.policy('force')
     checkMenu.click()
     console.log('workspace qualification: mandatory check dispatched')
-    const mandatory = await windowAt('dsh-app://shell/mandatory-update.html')
+    const mandatory = await windowAt('tomato-app://shell/mandatory-update.html')
     console.log('workspace qualification: mandatory window loaded')
     await documentReady(mandatory, `document.getElementById('title')?.textContent === '需要更新'`)
     console.log('workspace qualification: mandatory title rendered')
@@ -362,11 +362,11 @@ async function qualify() {
 
     server.policy('force')
     checkMenu.click()
-    let forcedRecovery = await windowAt('dsh-app://shell/mandatory-update.html')
+    let forcedRecovery = await windowAt('tomato-app://shell/mandatory-update.html')
     await waitFor(() => mainWindow.isEnabled(), 'ordinary modal releases the main window for recovery')
     await press(forcedRecovery, `document.getElementById('update')`)
     await documentReady(forcedRecovery, `document.getElementById('update')?.textContent === ${JSON.stringify(messages.installAndRestart)}`)
-    assert.equal(webContents.getAllWebContents().some(contents => contents.getURL() === 'dsh-app://shell/update-dialog.html'), false)
+    assert.equal(webContents.getAllWebContents().some(contents => contents.getURL() === 'tomato-app://shell/update-dialog.html'), false)
     const forcedHost = fixture.host
     await control('hold-shutdown')
     await press(forcedRecovery, `document.getElementById('update')`)

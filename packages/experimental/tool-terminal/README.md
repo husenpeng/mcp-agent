@@ -3,13 +3,13 @@ description: "Six model-facing persistent terminal tools with owner isolation, b
 kind: "package-reference"
 ---
 
-# @deepseek-ai/dsh-tool-terminal
+# @tomato/tool-terminal
 
 English | [中文](README.zh.md)
 
 ## Summary
 
-Use `dsh-tool-terminal` when an agent needs persistent terminal state or interactive input across calls. It can open, send to, read, signal, close, and list terminal sessions while preventing one agent from operating another agent's sessions. Sends may wait for bounded foreground output or return a background job id for later collection or interruption. `maxResultBytes` caps each result, which remains in session history until compaction. The model is guided to prefer one-shot tools for bounded work.
+Use `@tomato/tool-terminal` when an agent needs persistent terminal state or interactive input across calls. It can open, send to, read, signal, close, and list terminal sessions while preventing one agent from operating another agent's sessions. Sends may wait for bounded foreground output or return a background job id for later collection or interruption. `maxResultBytes` caps each result, which remains in session history until compaction. The model is guided to prefer one-shot tools for bounded work.
 
 ## Table of Contents
 
@@ -43,12 +43,12 @@ Enable these tools when the composition mounts a terminal backend and the model 
 ### Composition
 
 ```yaml
-- name: '@deepseek-ai/dsh-terminal'
-- name: '@deepseek-ai/dsh-terminal-bash'
-- name: '@deepseek-ai/dsh-tool-terminal'
+- name: '@tomato/terminal'
+- name: '@tomato/terminal-bash'
+- name: '@tomato/tool-terminal'
 ```
 
-The tools need `ctx.terminals` — a backend must be mounted — and the system-prompt service for the guidance section. Background sends additionally require the jobs service and its model-facing controller (`@deepseek-ai/dsh-tool-jobs`).
+The tools need `ctx.terminals` — a backend must be mounted — and the system-prompt service for the guidance section. Background sends additionally require the jobs service and its model-facing controller (`@tomato/tool-jobs`).
 
 ### Configuration
 
@@ -141,7 +141,7 @@ Prefix-stable while the registration scope and guidance text are unchanged.
 
 #### What the model sees
 
-The six generated schemas are listed in the [`dsh-tool-terminal` catalog section](../../../docs/tool-catalog.md#deepseek-aidsh-tool-terminal). Their fixed schema tokens are present whenever this plugin is active; agent-scoped tool filtering may hide them.
+The six generated schemas are listed in the [`@tomato/tool-terminal` catalog section](../../../docs/tool-catalog.md#deepseek-aidsh-tool-terminal). Their fixed schema tokens are present whenever this plugin is active; agent-scoped tool filtering may hide them.
 
 #### Token effect
 
@@ -173,7 +173,7 @@ Append-only; new results follow the reusable request prefix.
 These limits define the model-facing surface that is absent. They are current package constraints, not a task backlog.
 
 - **No TUI or key-sequence surface** — named key sequences, full-screen TUI interaction, BEL, resize, and auto-start are not exposed in any schema.
-- **Background mode requires the jobs surface** — `run_in_background` needs both `@deepseek-ai/dsh-jobs` and its model-facing controller (`@deepseek-ai/dsh-tool-jobs`); without them the argument is rejected.
+- **Background mode requires the jobs surface** — `run_in_background` needs both `@tomato/jobs` and its model-facing controller (`@tomato/tool-jobs`); without them the argument is rejected.
 
 <a id="dev-note"></a>
 ### Dev Note

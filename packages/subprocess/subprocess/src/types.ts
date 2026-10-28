@@ -4,18 +4,18 @@
  * recovery, raw piped streams, and managed-range termination. Command
  * defaulting, shell semantics, protocol framing, and presentation belong to
  * consumers such as the bash executor seam.
- * @module dsh-subprocess/types
+ * @module @tomato/subprocess/types
  */
 
 import type { Duplex, Readable, Writable } from 'node:stream'
 
-/** Namespace prefix reserved for DeepSeek Harness-managed child environment facts. */
+/** Namespace prefix reserved for Tomato Harness-managed child environment facts. */
 export const TOMATO_ENV_PREFIX = 'TOMATO_' as const
 
 /** One environment key inside the managed {@link TOMATO_ENV_PREFIX} namespace. */
 export type TomatoEnvironmentKey = `${typeof TOMATO_ENV_PREFIX}${string}`
 
-/** Trusted DeepSeek Harness variables for one child-process execution. */
+/** Trusted Tomato Harness variables for one child-process execution. */
 export type TomatoEnvironment = Readonly<Record<TomatoEnvironmentKey, string>>
 
 /** One captured stream: the (possibly truncated) text plus recovery info. */
@@ -71,7 +71,7 @@ export interface SubprocessStdio {
 /**
  * A fully-specified spawn request. This seam applies no defaults: every
  * disposition, limit, and directory is explicit, so the caller's own config —
- * not a hidden subprocess-service default — decides them (the `dsh-shell`
+ * not a hidden subprocess-service default — decides them (the `@tomato/shell`
  * request/spec split is the owning template).
  */
 export interface SubprocessSpawnSpec {
@@ -197,7 +197,7 @@ export interface SubprocessHandle {
 
 /**
  * Signals supported by the terminal-process primitive. Kept member-identical
- * to `TerminalSignal` in `@deepseek-ai/dsh-terminal` without a cross-seam dependency;
+ * to `TerminalSignal` in `@tomato/terminal` without a cross-seam dependency;
  * change both together.
  */
 export type SubprocessTerminalSignal = 'SIGINT' | 'SIGTERM' | 'SIGKILL' | 'SIGTSTP' | 'SIGHUP'

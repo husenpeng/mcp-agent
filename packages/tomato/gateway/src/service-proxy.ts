@@ -2,7 +2,7 @@
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { Readable } from 'node:stream'
-import type { Context } from '@deepseek-ai/cordis'
+import type { Context } from '@tomato/cordis'
 import { AuthService } from './auth-service.ts'
 import type { Config, ServiceEntry, UserIdInjection } from './config.ts'
 import { requestSessionId } from './cookies.ts'
@@ -154,7 +154,7 @@ export class ServiceProxy {
       response.end(admission.rejection === 401 ? 'unauthorized' : 'forbidden')
       return
     }
-    const url = new URL(request.url ?? '/', 'http://dsh.internal')
+    const url = new URL(request.url ?? '/', 'http://tomato.internal')
     const rest = url.pathname.slice(this.prefix.length).replace(/^\//u, '')
     const separator = rest.indexOf('/')
     const id = separator < 0 ? rest : rest.slice(0, separator)

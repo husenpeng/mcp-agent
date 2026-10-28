@@ -1,4 +1,4 @@
-"""Drive the repo-source dsh SDK profile through the SDK and a keyless mock SSE server.
+"""Drive the repo-source tomato SDK profile through the SDK and a keyless mock SSE server.
 
 Requires ``pnpm install`` but no build. This manual test is not collected by
 pytest; run ``python tests/manual_sdk_agent_smoke.py``.
@@ -48,7 +48,7 @@ class MockCompletionHandler(BaseHTTPRequestHandler):
 
 
 def run_smoke(repo_root: Path, keep_sessions: bool) -> None:
-    dsh_home = Path(tempfile.mkdtemp(prefix="dsh-sdk-smoke-home-"))
+    dsh_home = Path(tempfile.mkdtemp(prefix="tomato-sdk-smoke-home-"))
     session_root = dsh_home / "sessions"
     runtime_entry = repo_root / "apps/cli/src/bin.ts"
     server = ThreadingHTTPServer(("127.0.0.1", 0), MockCompletionHandler)
@@ -110,7 +110,7 @@ def run_smoke(repo_root: Path, keep_sessions: bool) -> None:
         print(f"kept_dsh_home={dsh_home}")
     else:
         shutil.rmtree(dsh_home)
-        print("removed temporary dsh home")
+        print("removed temporary tomato home")
 
 
 def main() -> None:

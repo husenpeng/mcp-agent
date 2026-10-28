@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
-import { ToolCallId } from '@deepseek-ai/dsh-llm/brand'
-import { SessionId } from '@deepseek-ai/dsh-session/types'
-import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
-import { FoldedText } from '@deepseek-ai/dsh-client-ui-action-cards/src/client/Card.tsx'
-import type { ActionCardFields, ActionCardResult } from '@deepseek-ai/dsh-action-cards/types'
+import { ToolCallId } from '@tomato/llm/brand'
+import { SessionId } from '@tomato/session/types'
+import { createSnapshotStore } from '@tomato/client-store'
+import { FoldedText } from '@tomato/client-ui-action-cards/src/client/Card.tsx'
+import type { ActionCardFields, ActionCardResult } from '@tomato/action-cards/types'
 import { PageCardBody, type PageCardProps } from '../src/client/Card.tsx'
-import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
+import { makeTranslate } from '@tomato/client-test-runtime'
 import { en, zh } from '../src/client/locales.ts'
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
@@ -152,7 +152,7 @@ it.each([true, false])('explains cost and background creation without starting w
 })
 
 it('offers cancellation during generation, then waits for cleanup before retrying', async () => {
-  const value = props({ phase: 'creating', data: { slot: 'page', bundleName: '@dsh-local/view-fixture' } })
+  const value = props({ phase: 'creating', data: { slot: 'page', bundleName: '@tomato-local/view-fixture' } })
   const pending = Promise.withResolvers<ActionCardResult | undefined>()
   value.act.mockImplementation(() => pending.promise)
   const { rerender } = render(<PageCardBody {...value} />)
@@ -194,7 +194,7 @@ it('retains installed and kept plugins with an Undo action and the actual applic
 })
 
 it('offers only Restore on a removed card, labels it while pending and explains missing page files', async () => {
-  const value = props({ phase: 'removed', data: { slot: 'page', bundleName: '@dsh-local/view-fixture', application: 'applied' } })
+  const value = props({ phase: 'removed', data: { slot: 'page', bundleName: '@tomato-local/view-fixture', application: 'applied' } })
   const pending = Promise.withResolvers<ActionCardResult | undefined>()
   value.act.mockImplementation(() => pending.promise)
   render(<PageCardBody {...value} />)

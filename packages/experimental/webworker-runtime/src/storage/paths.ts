@@ -5,7 +5,7 @@
  */
 
 /** Virtual filesystem root; `process.cwd()` and every absolute path start here. */
-export const TOMATO_ROOT = '/dsh'
+export const TOMATO_ROOT = '/tomato'
 
 /** `$TOMATO_HOME`: durable-state directory inside the image. */
 export const TOMATO_HOME = `${TOMATO_ROOT}/home`

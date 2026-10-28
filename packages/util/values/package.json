@@ -1,6 +1,6 @@
 {
-  "name": "@deepseek-ai/dsh-util-values",
-  "description": "Duplicate-install-safe value primitives for the DeepSeek Harness",
+  "name": "@tomato/util-values",
+  "description": "Duplicate-install-safe value primitives for the Tomato Harness",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -27,9 +27,9 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/cordis": "workspace:~"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/cordis": "workspace:~"
   }
 }

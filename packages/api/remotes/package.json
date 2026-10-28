@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-api-remotes",
+  "name": "@tomato/api-remotes",
   "description": "Remote BFF assembly for application-selected Host capabilities",
   "version": "0.2.1-rc.3",
   "publishConfig": {
@@ -30,10 +30,10 @@
     "./package.json": "./package.json",
     "./locale/*.json": "./locale/*.json"
   },
-  "dsh": {
+  "tomato": {
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-api-gateway"
+        "@tomato/api-gateway"
       ],
       "platform": "web",
       "immediately": true
@@ -52,52 +52,52 @@
     "lib/types/**/*.d.ts"
   ],
   "dependencies": {
-    "@deepseek-ai/dsh-deque": "workspace:*",
-    "@deepseek-ai/dsh-util-values": "workspace:*"
+    "@tomato/deque": "workspace:*",
+    "@tomato/util-values": "workspace:*"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-scope": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/scope": "workspace:*"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:*",
-    "@deepseek-ai/dsh-agent-preset-registry": "workspace:*",
-    "@deepseek-ai/dsh-api-gateway": "workspace:*",
-    "@deepseek-ai/dsh-api-job-controller": "workspace:*",
-    "@deepseek-ai/dsh-api-session-controller": "workspace:*",
-    "@deepseek-ai/dsh-api-settings-controller": "workspace:*",
-    "@deepseek-ai/dsh-api-workspace-controller": "workspace:*",
-    "@deepseek-ai/dsh-api-workspace-files": "workspace:*",
-    "@deepseek-ai/dsh-client-connection": "workspace:*",
-    "@deepseek-ai/dsh-client-file-upload": "workspace:*",
-    "@deepseek-ai/dsh-commands": "workspace:*",
-    "@deepseek-ai/dsh-cordis-host-runner": "workspace:*",
-    "@deepseek-ai/dsh-credentials": "workspace:*",
-    "@deepseek-ai/dsh-file-reference": "workspace:*",
-    "@deepseek-ai/dsh-goal": "workspace:*",
-    "@deepseek-ai/dsh-host-plugin-inventory": "workspace:*",
-    "@deepseek-ai/dsh-llm": "workspace:*",
-    "@deepseek-ai/dsh-message-feedback": "workspace:*",
-    "@deepseek-ai/dsh-permission-presets": "workspace:*",
-    "@deepseek-ai/dsh-schedule": "workspace:*",
-    "@deepseek-ai/dsh-scope": "workspace:*",
-    "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-session-reference": "workspace:*",
-    "@deepseek-ai/dsh-settings": "workspace:*",
-    "@deepseek-ai/dsh-subagent": "workspace:*",
-    "@deepseek-ai/dsh-typert-protocol": "workspace:*",
-    "@deepseek-ai/dsh-user-approval": "workspace:*",
-    "@deepseek-ai/dsh-user-questions": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~",
+    "@tomato/agent": "workspace:*",
+    "@tomato/agent-preset-registry": "workspace:*",
+    "@tomato/api-gateway": "workspace:*",
+    "@tomato/api-job-controller": "workspace:*",
+    "@tomato/api-session-controller": "workspace:*",
+    "@tomato/api-settings-controller": "workspace:*",
+    "@tomato/api-workspace-controller": "workspace:*",
+    "@tomato/api-workspace-files": "workspace:*",
+    "@tomato/client-connection": "workspace:*",
+    "@tomato/client-file-upload": "workspace:*",
+    "@tomato/commands": "workspace:*",
+    "@tomato/cordis-host-runner": "workspace:*",
+    "@tomato/credentials": "workspace:*",
+    "@tomato/file-reference": "workspace:*",
+    "@tomato/goal": "workspace:*",
+    "@tomato/host-plugin-inventory": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/message-feedback": "workspace:*",
+    "@tomato/permission-presets": "workspace:*",
+    "@tomato/schedule": "workspace:*",
+    "@tomato/scope": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-reference": "workspace:*",
+    "@tomato/settings": "workspace:*",
+    "@tomato/subagent": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*",
+    "@tomato/user-approval": "workspace:*",
+    "@tomato/user-questions": "workspace:*",
+    "@tomato/cordis": "workspace:~",
     "zod": "4.4.3",
-    "@deepseek-ai/dsh-command-feedback": "workspace:*",
-    "@deepseek-ai/dsh-api-terminal-controller": "workspace:*",
-    "@deepseek-ai/dsh-plugin-manager": "workspace:*",
-    "@deepseek-ai/dsh-plugin-market": "workspace:*",
-    "@deepseek-ai/dsh-client-ui-plugin-manager": "workspace:*",
-    "@deepseek-ai/dsh-office-to-pdf": "workspace:*",
-    "@deepseek-ai/dsh-api-account-controller": "workspace:*",
-    "@deepseek-ai/dsh-deepseek-account": "workspace:*",
-    "@deepseek-ai/dsh-client-product-analytics": "workspace:*"
+    "@tomato/command-feedback": "workspace:*",
+    "@tomato/api-terminal-controller": "workspace:*",
+    "@tomato/plugin-manager": "workspace:*",
+    "@tomato/plugin-market": "workspace:*",
+    "@tomato/client-ui-plugin-manager": "workspace:*",
+    "@tomato/office-to-pdf": "workspace:*",
+    "@tomato/api-account-controller": "workspace:*",
+    "@tomato/deepseek-account": "workspace:*",
+    "@tomato/client-product-analytics": "workspace:*"
   }
 }

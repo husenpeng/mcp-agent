@@ -1,6 +1,6 @@
 {
-  "name": "@deepseek-ai/dsh-deliverable-file-references",
-  "description": "Shared model guidance for file links and deliverables across DeepSeek Harness hosts",
+  "name": "@tomato/deliverable-file-references",
+  "description": "Shared model guidance for file links and deliverables across Tomato Harness hosts",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -29,11 +29,11 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-system-prompt": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/system-prompt": "workspace:*"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/dsh-system-prompt": "workspace:*"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/system-prompt": "workspace:*"
   }
 }

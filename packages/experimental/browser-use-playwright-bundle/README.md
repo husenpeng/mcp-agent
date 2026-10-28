@@ -3,7 +3,7 @@ description: "Install Playwright MCP browser tools with a Chromium per session."
 kind: "package-bundle"
 ---
 
-# @deepseek-ai/dsh-experimental-browser-use-playwright-bundle
+# @tomato/experimental-browser-use-playwright-bundle
 
 English | [中文](README.zh.md)
 
@@ -25,7 +25,7 @@ Add Playwright MCP browser tools to a profile on demand. Each live session owns 
 <a id="use-this-package"></a>
 ## Use this package
 
-Open **Plugins**, find **Playwright browser** among the Official bundles, and turn it on. The Host installs `@deepseek-ai/dsh-experimental-browser-use-playwright-bundle` at the running installation's version and selects its layer; turning it off deselects the layer and keeps the dependency installed. A source checkout installs a `link:` dependency, and a published installation pins the release version.
+Open **Plugins**, find **Playwright browser** among the Official bundles, and turn it on. The Host installs `@tomato/experimental-browser-use-playwright-bundle` at the running installation's version and selects its layer; turning it off deselects the layer and keeps the dependency installed. A source checkout installs a `link:` dependency, and a published installation pins the release version.
 
 The bundled Playwright version expects a Chromium build. Run `npx playwright install chromium` once on the machine, or replace the provider row through a profile patch and set `executablePath`. Without a browser, each new session fails its MCP startup and reports the provider's launch error.
 

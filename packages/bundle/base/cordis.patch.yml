@@ -1,4 +1,4 @@
-# The dsh-base bundle patch: the shared core of each base-backed profile, applied as
+# The @tomato/base bundle patch: the shared core of each base-backed profile, applied as
 # ONE insert over the empty profile root. Later bundle patches and the user's
 # profile cordis.patch.yml address these rows by id, with the last write
 # winning per row.
@@ -14,64 +14,64 @@
 
 - insert:
     - id: tool-plugin-manager
-      name: '@deepseek-ai/dsh-plugin-manager/tools'
+      name: '@tomato/plugin-manager/tools'
       disabled: true
 
     - id: plugin-manager
-      name: '@deepseek-ai/dsh-plugin-manager'
+      name: '@tomato/plugin-manager'
       disabled: !!js "!ctx.get('profileContext')"
 
     - id: timer
-      name: '@deepseek-ai/cordis-plugin-timer'
+      name: '@tomato/cordis-plugin-timer'
 
     # Profile configuration reloads by default; module roots are opt-in.
     - id: hmr
-      name: '@deepseek-ai/dsh-hmr'
+      name: '@tomato/hmr'
       disabled: !!js "!ctx.get('profileContext')"
       config:
         root: []
 
     - id: llm
-      name: '@deepseek-ai/dsh-llm'
+      name: '@tomato/llm'
 
     # Tomato AI serves only user-configured third-party model routes and
     # sends no official-provider request fields, so the official-API extension,
     # the session-log upload that rides on it, and the package inventory it
     # carries stay off.
     - id: deepseek-llm-api-extensions
-      name: '@deepseek-ai/dsh-deepseek-llm-api-extensions'
+      name: '@tomato/deepseek-llm-api-extensions'
       disabled: true
 
     - id: session
-      name: '@deepseek-ai/dsh-session'
+      name: '@tomato/session'
 
     - id: session-log-deepseek
-      name: '@deepseek-ai/dsh-session-log-deepseek'
+      name: '@tomato/session-log-deepseek'
       disabled: true
 
     - id: typert
-      name: '@deepseek-ai/dsh-typert-registry'
+      name: '@tomato/typert-registry'
 
     - id: typert-loader
-      name: '@deepseek-ai/dsh-typert-loader'
+      name: '@tomato/typert-loader'
 
     - id: typert-gateway
-      name: '@deepseek-ai/dsh-api-gateway'
+      name: '@tomato/api-gateway'
 
     # Method-level access control for non-owner Peers; the Gateway requires it,
     # and its Client half publishes the standard access Hooks.
     - id: remote-access
-      name: '@deepseek-ai/dsh-api-remote-access'
+      name: '@tomato/api-remote-access'
 
     - id: session-title
-      name: '@deepseek-ai/dsh-session-title'
+      name: '@tomato/session-title'
       config:
         fallbackMaxWords: 5
         fallbackMaxBytes: 40
         maxTitleBytes: 80
 
     - id: session-title-llm
-      name: '@deepseek-ai/dsh-session-title-first-prompt-llm'
+      name: '@tomato/session-title-first-prompt-llm'
       config:
         targetWords: 5
         targetCjkCharacters: 10
@@ -83,13 +83,13 @@
         timeoutMs: 60000
 
     - id: user-questions
-      name: '@deepseek-ai/dsh-user-questions'
+      name: '@tomato/user-questions'
 
     - id: agent
-      name: '@deepseek-ai/dsh-agent'
+      name: '@tomato/agent'
 
     - id: plugin-package-inventory-deepseek
-      name: '@deepseek-ai/dsh-plugin-package-inventory-deepseek'
+      name: '@tomato/plugin-package-inventory-deepseek'
       disabled: true
 
     # The transport-independent default for Agents created by entry points.
@@ -98,26 +98,26 @@
     # there is no default until the user selects one; a new Session asks for a
     # model before its first message.
     - id: agent-default-model
-      name: '@deepseek-ai/dsh-agent-default-model'
+      name: '@tomato/agent-default-model'
       config:
         provider: ''
         model: ''
 
     - id: jobs
-      name: '@deepseek-ai/dsh-jobs-local'
+      name: '@tomato/jobs-local'
 
     - id: llm-retry
-      name: '@deepseek-ai/dsh-llm-retry'
+      name: '@tomato/llm-retry'
 
     # Live Config forms persist through the active profile patch.
 
     # Live configuration forms persist through the launcher's profile.
     - id: config-editor
-      name: '@deepseek-ai/dsh-config-editor'
+      name: '@tomato/config-editor'
       disabled: !!js "!ctx.get('profileContext')"
 
     - id: settings
-      name: '@deepseek-ai/dsh-settings'
+      name: '@tomato/settings'
       disabled: !!js "!ctx.get('profileContext')"
 
     # Credential sources: managed `$TOMATO_HOME/.credentials.yaml`, then inherited
@@ -125,26 +125,26 @@
     # Adapters resolve references per request; the Models page writes only the
     # managed document, which is never materialized into the process environment.
     - id: authorization
-      name: '@deepseek-ai/dsh-authorization'
+      name: '@tomato/authorization'
 
     # Tomato AI authenticates through its own desktop token exchange, so
     # the DeepSeek account provider and its Platform sign-in flow stay off.
     - id: deepseek-account
-      name: '@deepseek-ai/dsh-deepseek-account-platform'
+      name: '@tomato/deepseek-account-platform'
       disabled: true
 
     - id: credentials
-      name: '@deepseek-ai/dsh-credentials-local'
+      name: '@tomato/credentials-local'
 
     # The pi-ai multi-provider twin. No route ships: the Models page's custom
     # form declares third-party endpoints and model catalogs, and stores each
     # key through the credential seam. A route can also be adopted from the
     # installed pi-ai catalog.
     - id: llm-pi-ai
-      name: '@deepseek-ai/dsh-llm-pi-ai'
+      name: '@tomato/llm-pi-ai'
 
     - id: session-persistence-jsonl
-      name: '@deepseek-ai/dsh-session-persistence-jsonl'
+      name: '@tomato/session-persistence-jsonl'
       config:
         root: !!js tomatoHomePath('sessions')
 
@@ -152,7 +152,7 @@
     # keep content-addressed references that this shared backend resolves for
     # provider requests and authorized history reads.
     - id: attachment-local
-      name: '@deepseek-ai/dsh-attachment-local'
+      name: '@tomato/attachment-local'
 
     # Full-text session search is opt-in. `openAt: never` keeps
     # ctx.sessionQuery mounted — exact reads, titles, and lineage traces
@@ -163,7 +163,7 @@
     # `first-search` or `startup` in a later patch layer (profile
     # cordis.patch.yml or a --patch overlay), typically with a durable `path`.
     - id: session-query-sqlite
-      name: '@deepseek-ai/dsh-session-query-sqlite'
+      name: '@tomato/session-query-sqlite'
       config:
         path: ':memory:'
         openAt: never
@@ -172,28 +172,28 @@
     # through its registered units, so the `list_agents` surface below fails
     # loud without it; web layers reuse this same mount for list rows.
     - id: working-directory
-      name: '@deepseek-ai/dsh-working-directory'
+      name: '@tomato/working-directory'
 
     - id: tool-working-directory
-      name: '@deepseek-ai/dsh-tool-working-directory'
+      name: '@tomato/tool-working-directory'
 
     - id: session-projection
-      name: '@deepseek-ai/dsh-session-projection'
+      name: '@tomato/session-projection'
 
     # Durable KV storage: the storage hub, the json backend, and the
     # schema-validated domain form over them. Session-layer persistence (the
     # projection cache below; workspace in web layers)
     # routes through this stack, so it belongs to the shared base.
     - id: storage
-      name: '@deepseek-ai/dsh-storage'
+      name: '@tomato/storage'
 
     - id: storage-json
-      name: '@deepseek-ai/dsh-storage-json'
+      name: '@tomato/storage-json'
       config:
         root: !!js tomatoHomePath('storages')
 
     - id: storage-domain
-      name: '@deepseek-ai/dsh-storage-domain'
+      name: '@tomato/storage-domain'
       config:
         backend: json
 
@@ -202,7 +202,7 @@
     # checkpoint document per session), serving the session listing's
     # projection column.
     - id: session-projection-cache
-      name: '@deepseek-ai/dsh-session-projection-cache'
+      name: '@tomato/session-projection-cache'
       config:
         writeEveryEvents: 200
         writeIntervalMs: 5000
@@ -210,14 +210,14 @@
     # Tomato AI reports through its own OTLP relay plugin, so the
     # official session-log channel and its shared OTel service stay off.
     - id: otel
-      name: '@deepseek-ai/dsh-otel'
+      name: '@tomato/otel'
       disabled: true
 
     # Tomato AI reports through its own OTLP relay plugin, so the official
     # session-log channel stays off. The shared `otel` service stays mounted
     # because the relay reuses it; disabling it would take the relay with it.
     - id: session-telemetry-otel
-      name: '@deepseek-ai/dsh-session-telemetry-otel'
+      name: '@tomato/session-telemetry-otel'
       disabled: true
 
     # Tomato AI's own reporter: turn and tool spans to the internal relay.
@@ -231,37 +231,37 @@
         serviceName: tomato-harness
 
     - id: subprocess
-      name: '@deepseek-ai/dsh-subprocess-local'
+      name: '@tomato/subprocess-local'
 
     # Every shipped CLI mode starts with the same file-effect boundary.
     # The environment remains an explicit deployment override; otherwise fresh
     # sessions pin workspace-write + ask through the permission service below.
     - id: sandbox
-      name: '@deepseek-ai/dsh-sandbox-local'
+      name: '@tomato/sandbox-local'
 
     - id: sandbox-policy
-      name: '@deepseek-ai/dsh-sandbox-policy'
+      name: '@tomato/sandbox-policy'
       config:
         mode: !!js process.env.TOMATO_PERMISSION_MODE ?? 'workspace-write'
         workspaceRoot: !!js process.cwd()
 
     - id: bash-sandbox
-      name: '@deepseek-ai/dsh-bash-sandbox'
+      name: '@tomato/bash-sandbox'
       disabled: !!js process.platform === 'win32'
       config:
         timeoutMs: 60000
 
     - id: pwsh-sandbox
-      name: '@deepseek-ai/dsh-pwsh-sandbox'
+      name: '@tomato/pwsh-sandbox'
       disabled: !!js process.platform !== 'win32'
 
     - id: approval
-      name: '@deepseek-ai/dsh-user-approval'
+      name: '@tomato/user-approval'
       config:
         policy: !!js "(process.env.TOMATO_PERMISSION_MODE ?? 'workspace-write') === 'danger-full-access' ? 'never' : 'ask'"
 
     - id: permission
-      name: '@deepseek-ai/dsh-permission-presets'
+      name: '@tomato/permission-presets'
       config:
         presets:
           read-only:
@@ -275,61 +275,61 @@
             approval: never
 
     - id: shell-env
-      name: '@deepseek-ai/dsh-shell-env'
+      name: '@tomato/shell-env'
 
     - id: tool-bash
-      name: '@deepseek-ai/dsh-tool-bash'
+      name: '@tomato/tool-bash'
       disabled: !!js process.platform === 'win32'
 
     - id: tool-pwsh
-      name: '@deepseek-ai/dsh-tool-pwsh'
+      name: '@tomato/tool-pwsh'
       disabled: !!js process.platform !== 'win32'
 
     - id: tool-jobs
-      name: '@deepseek-ai/dsh-tool-jobs'
+      name: '@tomato/tool-jobs'
 
     - id: fs-observation-policy
-      name: '@deepseek-ai/dsh-fs-observation-policy'
+      name: '@tomato/fs-observation-policy'
 
     - id: tool-fs
-      name: '@deepseek-ai/dsh-tool-fs'
+      name: '@tomato/tool-fs'
 
     - id: tool-fs-search
-      name: '@deepseek-ai/dsh-tool-fs-search'
+      name: '@tomato/tool-fs-search'
       config:
         sampleOverCapGlobResults: false
 
     - id: agent-instructions
-      name: '@deepseek-ai/dsh-agent-instructions'
+      name: '@tomato/agent-instructions'
       config:
         maxBytes: 65536
 
     - id: skill
-      name: '@deepseek-ai/dsh-skill'
+      name: '@tomato/skill'
 
     - id: skill-filesystem
-      name: '@deepseek-ai/dsh-skill-filesystem'
+      name: '@tomato/skill-filesystem'
 
     - id: tool-skill
-      name: '@deepseek-ai/dsh-tool-skill'
+      name: '@tomato/tool-skill'
 
     - id: commands
-      name: '@deepseek-ai/dsh-commands'
+      name: '@tomato/commands'
 
     - id: command-feedback
-      name: '@deepseek-ai/dsh-command-feedback'
+      name: '@tomato/command-feedback'
 
     - id: goal
-      name: '@deepseek-ai/dsh-goal'
+      name: '@tomato/goal'
 
     - id: goal-round-driver
-      name: '@deepseek-ai/dsh-goal-round-driver'
+      name: '@tomato/goal-round-driver'
 
     - id: command-goal
-      name: '@deepseek-ai/dsh-command-goal'
+      name: '@tomato/command-goal'
 
     - id: plan-mode
-      name: '@deepseek-ai/dsh-plan-mode'
+      name: '@tomato/plan-mode'
       config:
         section: |
               You are in plan mode. Stay in plan mode until the user approves your plan through exit_plan_mode or switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
@@ -345,36 +345,36 @@
               When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
 
     - id: token-meter
-      name: '@deepseek-ai/dsh-token-meter'
+      name: '@tomato/token-meter'
 
     - id: compaction-basic
-      name: '@deepseek-ai/dsh-compaction-basic'
+      name: '@tomato/compaction-basic'
 
     # Human `/compact`: one useful reduction below the automatic threshold. Backend
     # independent, so it follows whichever compaction service this leaf mounts.
     - id: command-compact
-      name: '@deepseek-ai/dsh-command-compact'
+      name: '@tomato/command-compact'
 
     - id: subagent
-      name: '@deepseek-ai/dsh-subagent'
+      name: '@tomato/subagent'
 
     - id: subagent-spawn-in-process
-      name: '@deepseek-ai/dsh-subagent-spawn-in-process'
+      name: '@tomato/subagent-spawn-in-process'
       config:
         providerName: spawn
 
     - id: subagent-fork-in-process
-      name: '@deepseek-ai/dsh-subagent-fork-in-process'
+      name: '@tomato/subagent-fork-in-process'
       config:
         providerName: fork
 
     # Continuable background children are selected per delegation tool. The
     # separately loaded follow-up tool registers the one global `send_message`.
     - id: tool-subagent-control
-      name: '@deepseek-ai/dsh-tool-subagent-control'
+      name: '@tomato/tool-subagent-control'
 
     - id: tool-subagent
-      name: '@deepseek-ai/dsh-tool-subagent'
+      name: '@tomato/tool-subagent'
       config:
         provider: spawn
         toolName: subagent
@@ -384,41 +384,41 @@
     # See packages/subagent/tool-subagent/README.md
     # and .agents/notes/implemented/architecture/2026-08-10-fork-children-stay-one-shot.md.
     - id: tool-subagent-fork
-      name: '@deepseek-ai/dsh-tool-subagent'
+      name: '@tomato/tool-subagent'
       config:
         provider: fork
         toolName: subagent_fork
 
     - id: ptc-runtime
-      name: '@deepseek-ai/dsh-ptc-runtime-node'
+      name: '@tomato/ptc-runtime-node'
 
     - id: workflow-ptc
-      name: '@deepseek-ai/dsh-workflow-ptc'
+      name: '@tomato/workflow-ptc'
       config:
         provider: spawn
 
     - id: tool-workflow
-      name: '@deepseek-ai/dsh-tool-workflow'
+      name: '@tomato/tool-workflow'
 
     - id: timeout-policy
-      name: '@deepseek-ai/dsh-tool-call-timeout-policy'
+      name: '@tomato/tool-call-timeout-policy'
 
     - id: spill-local
-      name: '@deepseek-ai/dsh-spill-local'
+      name: '@tomato/spill-local'
 
     - id: spill-policy
-      name: '@deepseek-ai/dsh-spill-policy'
+      name: '@tomato/spill-policy'
       config:
         maxInlineTokens: 12500
 
     # Durability checkpoints before each model request and top-level dispatch.
     - id: session-checkpoint-policy
-      name: '@deepseek-ai/dsh-session-checkpoint-policy'
+      name: '@tomato/session-checkpoint-policy'
 
     # Compacts oversized tool results before the broader conversation compactor
     # runs, preserving the model-visible result within the configured budget.
     - id: tool-result-pruner
-      name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+      name: '@tomato/compaction-tool-result-pruner'
       config:
         thresholdChars: 8192
         headChars: 4096
@@ -427,21 +427,21 @@
     # When an image-capable route rejects a request as over its image budget,
     # replace the oldest images with placeholders on the surface and retry.
     - id: image-offload
-      name: '@deepseek-ai/dsh-compaction-image-offload'
+      name: '@tomato/compaction-image-offload'
 
     - id: tool-todo
-      name: '@deepseek-ai/dsh-tool-todo'
+      name: '@tomato/tool-todo'
       config:
         allowParallelInProgress: true
 
     # Persisted same-session goals reach the model and the slash menu here; the
     # domain, driver, and `/goal` command are above.
     - id: tool-goal
-      name: '@deepseek-ai/dsh-tool-goal'
+      name: '@tomato/tool-goal'
 
     # Consecutive-repeat reminders on the tool chain.
     - id: repeat-tool-reminder
-      name: '@deepseek-ai/dsh-repeat-tool-reminder'
+      name: '@tomato/repeat-tool-reminder'
       config:
         thresholds: [3, 5, 8]
         argumentsPreviewChars: 500
@@ -464,69 +464,69 @@
     # search providers stay off and `search()` reports its own unavailable code
     # when called.
     - id: web
-      name: '@deepseek-ai/dsh-web'
+      name: '@tomato/web'
       config:
         fetchProvider: http
 
     - id: web-search-deepseek
-      name: '@deepseek-ai/dsh-web-search-deepseek'
+      name: '@tomato/web-search-deepseek'
       disabled: true
 
     - id: web-deepseek-api
-      name: '@deepseek-ai/dsh-web-deepseek-api'
+      name: '@tomato/web-deepseek-api'
       disabled: true
 
     - id: web-fetch-http
-      name: '@deepseek-ai/dsh-web-fetch-http'
+      name: '@tomato/web-fetch-http'
 
     - id: tool-web
-      name: '@deepseek-ai/dsh-tool-web'
+      name: '@tomato/tool-web'
       config:
         fetch: true
         searchTimeoutMs: 60000
 
     - id: mcp-resources
-      name: '@deepseek-ai/dsh-mcp-resources'
+      name: '@tomato/mcp-resources'
 
     # ── rows every mode mounts, whose values each overlay may state ──────────────
 
     # Shared tool definitions and the deployment’s native executor.
     - id: tools
-      name: '@deepseek-ai/dsh-tools'
+      name: '@tomato/tools'
 
     - id: tool-executor-native
-      name: '@deepseek-ai/dsh-tool-executor-native'
+      name: '@tomato/tool-executor-native'
 
     - id: tool-executor-ptc
-      name: '@deepseek-ai/dsh-tool-executor-ptc'
+      name: '@tomato/tool-executor-ptc'
       disabled: true
 
     # The deployment persona is a deployment choice; plan-mode and tool plugins own
     # their own prompt sections.
     - id: system-prompt
-      name: '@deepseek-ai/dsh-system-prompt'
+      name: '@tomato/system-prompt'
       config:
         personaPrefix: ''
 
     # Agents created at startup. The base stays empty; raw overlays may create
     # agents, while Web creates sessions on client request.
     - id: agent-loop
-      name: '@deepseek-ai/dsh-agent-loop'
+      name: '@tomato/agent-loop'
       config:
         agents: []
 
     # The sandboxed filesystem provider. `cwd` defaults to `process.cwd()`; an
     # overlay can pin another workspace.
     - id: fs-sandbox
-      name: '@deepseek-ai/dsh-fs-sandbox'
+      name: '@tomato/fs-sandbox'
 
     # Tomato AI serves models only through user-configured third-party routes
     # on `llm-pi-ai`; the official DeepSeek adapters and their account sign-in
     # stay off.
     - id: llm-deepseek
-      name: '@deepseek-ai/dsh-llm-deepseek-api-key'
+      name: '@tomato/llm-deepseek-api-key'
       disabled: true
 
     - id: llm-deepseek-account
-      name: '@deepseek-ai/dsh-llm-deepseek-account'
+      name: '@tomato/llm-deepseek-account'
       disabled: true

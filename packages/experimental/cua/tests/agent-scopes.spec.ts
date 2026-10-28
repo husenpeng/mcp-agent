@@ -1,12 +1,12 @@
 /** CUA tool and prompt ownership follows live Agent presets and provider disposal. */
 import { resolve } from 'node:path'
-import { Context } from '@deepseek-ai/cordis'
-import Loader from '@deepseek-ai/cordis-plugin-loader'
-import AgentPresets from '@deepseek-ai/dsh-agent-preset-registry'
-import { mountAgentLoopTestDependencies, mountAgentLoopTestHarness } from '@deepseek-ai/dsh-agent-loop-testkit'
-import ComputerUseRegistry from '@deepseek-ai/dsh-computer-use'
-import Subprocess from '@deepseek-ai/dsh-subprocess'
-import { SessionId } from '@deepseek-ai/dsh-session'
+import { Context } from '@tomato/cordis'
+import Loader from '@tomato/cordis-plugin-loader'
+import AgentPresets from '@tomato/agent-preset-registry'
+import { mountAgentLoopTestDependencies, mountAgentLoopTestHarness } from '@tomato/agent-loop-testkit'
+import ComputerUseRegistry from '@tomato/computer-use'
+import Subprocess from '@tomato/subprocess'
+import { SessionId } from '@tomato/session'
 import { expect, it, onTestFinished, vi } from 'vitest'
 import { CuaConfig, installCua } from '../src/index.ts'
 
@@ -53,7 +53,7 @@ it('adds and removes CUA for existing and new PTC Agents without changing other 
   await expect.poll(() => ctx.tools.get('cua', existing.agent)).toBeDefined()
   expect(ctx.tools.get('cua', standard.agent)).toBeUndefined()
   expect((await ctx.systemPrompt.assemble({ scope: existing.agent })).sections)
-    .toContainEqual(expect.objectContaining({ name: 'computer-use:dsh-cua', text: 'Fixture CUA guidance\n\nMaximum click holdMs: 5000 ms.' }))
+    .toContainEqual(expect.objectContaining({ name: 'computer-use:@tomato/cua', text: 'Fixture CUA guidance\n\nMaximum click holdMs: 5000 ms.' }))
   await ctx.agentPresets.select(existing.agent, 'ptc')
   expect(ctx.tools.schemas(existing.agent).filter(tool => tool.name === 'cua')).toHaveLength(1)
   const fresh = await create('fresh', 'ptc')
@@ -61,7 +61,7 @@ it('adds and removes CUA for existing and new PTC Agents without changing other 
   await ctx.agentPresets.select(existing.agent, 'standard')
   await expect.poll(() => ctx.tools.get('cua', existing.agent)).toBeUndefined()
   expect((await ctx.systemPrompt.assemble({ scope: existing.agent })).sections)
-    .not.toContainEqual(expect.objectContaining({ name: 'computer-use:dsh-cua' }))
+    .not.toContainEqual(expect.objectContaining({ name: 'computer-use:@tomato/cua' }))
   await ctx.agentPresets.select(existing.agent, 'ptc')
   await expect.poll(() => ctx.tools.get('cua', existing.agent)).toBeDefined()
   await fresh.dispose()
@@ -69,7 +69,7 @@ it('adds and removes CUA for existing and new PTC Agents without changing other 
   await mounted.dispose()
   expect(ctx.tools.get('cua', existing.agent)).toBeUndefined()
   expect((await ctx.systemPrompt.assemble({ scope: existing.agent })).sections)
-    .not.toContainEqual(expect.objectContaining({ name: 'computer-use:dsh-cua' }))
+    .not.toContainEqual(expect.objectContaining({ name: 'computer-use:@tomato/cua' }))
   const reloaded = await ctx.plugin(provider, {})
   await expect.poll(() => ctx.tools.get('cua', existing.agent)).toBeDefined()
   expect(ctx.tools.get('cua', standard.agent)).toBeUndefined()

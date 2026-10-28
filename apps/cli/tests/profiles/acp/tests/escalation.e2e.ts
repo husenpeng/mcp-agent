@@ -12,14 +12,14 @@ import {
   launchAcpTestAgent,
   type AgentUnderTest,
   type LaunchedAcpTestAgent,
-} from '@deepseek-ai/dsh-session-snapshot'
-import { bwrapProfileArgs } from '@deepseek-ai/dsh-sandbox-local/src/profiles.ts'
+} from '@tomato/session-snapshot'
+import { bwrapProfileArgs } from '@tomato/sandbox-local/src/profiles.ts'
 import { cleanupAcpExampleTest } from './cleanup.ts'
 
 /**
  * The default ACP composition (`cordis.yml`) end to end.
  *
- * Keyless smoke: boot the real profile patch through `dsh --profile acp` as
+ * Keyless smoke: boot the real profile patch through `tomato --profile acp` as
  * an ACP subprocess and drive initialize + session/new — the real-Loader-path
  * guard (postmortem 0001) for THIS tree's exports, including the
  * sandbox executor AND the approval service. No prompt is sent, so neither the

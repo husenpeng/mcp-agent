@@ -3,13 +3,13 @@ description: "受管 TOMATO_* shell 环境，供选择、配置或扩展每次�
 kind: "package-reference"
 ---
 
-# @deepseek-ai/dsh-shell-env
+# @tomato/shell-env
 
 [English](README.md) | 中文
 
 ## 概述
 
-`dsh-shell-env` 提供每次模型 shell 调用——bash 或 pwsh——所运行的受信 `TOMATO_*` 环境：内置事实如 `TOMATO_HOME`、`TOMATO_SHELL=1`、agent（智能体）的 `TOMATO_SESSION_ID`，以及所启动 profile 的 `TOMATO_PROFILE` 与 `TOMATO_PROFILE_DIR`。插件作者可以注册自己的事实，带声明键、按每次执行收集，并随插件释放；重复所有权或未声明的运行时键会明确报错，而不是静默覆盖。注册表不会改变模型看到的其他任何内容——shell 工具拥有各自的 schema 与提示词。任何挂载了模型 shell 工具的组合都适合选择它；配置只决定 Harness 主目录。
+`@tomato/shell-env` 提供每次模型 shell 调用——bash 或 pwsh——所运行的受信 `TOMATO_*` 环境：内置事实如 `TOMATO_HOME`、`TOMATO_SHELL=1`、agent（智能体）的 `TOMATO_SESSION_ID`，以及所启动 profile 的 `TOMATO_PROFILE` 与 `TOMATO_PROFILE_DIR`。插件作者可以注册自己的事实，带声明键、按每次执行收集，并随插件释放；重复所有权或未声明的运行时键会明确报错，而不是静默覆盖。注册表不会改变模型看到的其他任何内容——shell 工具拥有各自的 schema 与提示词。任何挂载了模型 shell 工具的组合都适合选择它；配置只决定 Harness 主目录。
 
 ## 目录
 
@@ -25,19 +25,19 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
-在任何挂载模型 shell 工具（`dsh-tool-bash` 或 `dsh-tool-pwsh`）的组合中加载本插件：此后每次前台或后台 shell 调用都会运行在新收集的受管环境中，而不是进程继承来的任意 `TOMATO_*` 值。
+在任何挂载模型 shell 工具（`@tomato/tool-bash` 或 `@tomato/tool-pwsh`）的组合中加载本插件：此后每次前台或后台 shell 调用都会运行在新收集的受管环境中，而不是进程继承来的任意 `TOMATO_*` 值。
 
 ### 每次 shell 调用都会收到什么
 
-每次调用都会收到 `TOMATO_HOME`（Harness 主目录的绝对路径）、`TOMATO_SHELL=1`，agent 调用还会收到 `TOMATO_SESSION_ID`（调用方会话的 id）。启动器提供了 profile 上下文时，每次调用还会收到 `TOMATO_PROFILE`（profile 名）与 `TOMATO_PROFILE_DIR`（其绝对目录；其 `node_modules` 只存放 profile 自行安装的包，harness 自带的组合包从 dsh 安装目录解析）；不带 profile 启动的组合则两者都没有。
+每次调用都会收到 `TOMATO_HOME`（Harness 主目录的绝对路径）、`TOMATO_SHELL=1`，agent 调用还会收到 `TOMATO_SESSION_ID`（调用方会话的 id）。启动器提供了 profile 上下文时，每次调用还会收到 `TOMATO_PROFILE`（profile 名）与 `TOMATO_PROFILE_DIR`（其绝对目录；其 `node_modules` 只存放 profile 自行安装的包，harness 自带的组合包从 tomato 安装目录解析）；不带 profile 启动的组合则两者都没有。
 
 ### 添加你自己的环境事实
 
 其他插件通过注册一个 contributor 来贡献事实，需要提供稳定名称、它可能返回的完整 `TOMATO_*` 键集合、每个键的描述，以及为一次执行计算取值的 resolver：
 
 ```ts
-import type { Context } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-shell-env'
+import type { Context } from '@tomato/cordis'
+import type {} from '@tomato/shell-env'
 
 export const inject = ['shellEnv']
 
@@ -54,11 +54,11 @@ contributor 必须声明它返回的每个键；返回未声明或非字符串�
 
 ### 选择 Harness 主目录
 
-唯一配置字段决定暴露为 `TOMATO_HOME` 的主目录；默认解析顺序为 `tomatoHome` 配置、环境变量 `$TOMATO_HOME`，然后是 `~/.dsh`。
+唯一配置字段决定暴露为 `TOMATO_HOME` 的主目录；默认解析顺序为 `tomatoHome` 配置、环境变量 `$TOMATO_HOME`，然后是 `~/.tomato`。
 
 | 字段 | 默认值 | 含义 |
 |---|---|---|
-| `tomatoHome` | `$TOMATO_HOME`，然后 `~/.dsh` | 暴露为 `TOMATO_HOME` 的 Harness 主目录绝对路径 |
+| `tomatoHome` | `$TOMATO_HOME`，然后 `~/.tomato` | 暴露为 `TOMATO_HOME` 的 Harness 主目录绝对路径 |
 
 生成的[配置目录](../../../docs/config-catalog.zh.md#deepseek-aidsh-shell-env)是每个受支持字段及其 JSDoc 的穷尽式真源。
 
@@ -113,7 +113,7 @@ contributor 必须声明它返回的每个键；返回未声明或非字符串�
 <a id="model-experience"></a>
 ## 模型体验
 
-通过 shell 工具（`dsh-tool-bash`、`dsh-tool-pwsh`）间接产生影响；这些工具把本注册表的受管 `TOMATO_*` 事实暴露在每次 shell 工具调用中。
+通过 shell 工具（`@tomato/tool-bash`、`@tomato/tool-pwsh`）间接产生影响；这些工具把本注册表的受管 `TOMATO_*` 事实暴露在每次 shell 工具调用中。
 
 #### KV Cache 影响
 

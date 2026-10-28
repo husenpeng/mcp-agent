@@ -3,56 +3,56 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-skill/README.md
 /:
-  en: 490d60d7bec05d21
-  zh: 72a1300893d68f31
-/deepseek-ai-dsh-client-ui-skill:
-  en: 17b91cfc2300ea2b
-  zh: 1fcd42e48e14c5ec
-/deepseek-ai-dsh-client-ui-skill/summary:
-  en: fad7bff8d3371dfc
-  zh: c546189c87d6fbf2
-/deepseek-ai-dsh-client-ui-skill/table-of-contents:
+  en: ce19c3b64d7ed521
+  zh: eb2dd8425406fd41
+/tomato-client-ui-skill:
+  en: 87f4db144f149508
+  zh: ea70713abdda199f
+/tomato-client-ui-skill/summary:
+  en: 9c2f087574daf714
+  zh: cdda7b85b6871b79
+/tomato-client-ui-skill/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
-/deepseek-ai-dsh-client-ui-skill/use-this-package:
+/tomato-client-ui-skill/use-this-package:
   en: 2f17d0875048ef3c
   zh: 6878ee4c75f2b2cf
-/deepseek-ai-dsh-client-ui-skill/use-this-package/what-the-source-offers:
+/tomato-client-ui-skill/use-this-package/what-the-source-offers:
   en: 2ba1a6158c85b46e
   zh: 9ab58ceef8743849
-/deepseek-ai-dsh-client-ui-skill/use-this-package/the-skill-tool-row:
+/tomato-client-ui-skill/use-this-package/the-skill-tool-row:
   en: 270bc37a226ed247
   zh: 15a1c4c82c3a1f00
-/deepseek-ai-dsh-client-ui-skill/understand-the-implementation:
+/tomato-client-ui-skill/understand-the-implementation:
   en: df2a0ee9d2638f41
   zh: 3b4af7e505e990ca
-/deepseek-ai-dsh-client-ui-skill/understand-the-implementation/candidate-flow:
+/tomato-client-ui-skill/understand-the-implementation/candidate-flow:
   en: e8921ef18728794c
   zh: dabc89ee5186d8c6
-/deepseek-ai-dsh-client-ui-skill/understand-the-implementation/registration:
-  en: 4b06a66c56d19ff9
-  zh: d9c8d118f73d89bb
-/deepseek-ai-dsh-client-ui-skill/further-exploration:
-  en: 54198f095d0cc569
-  zh: 4eba4413e159967b
-/deepseek-ai-dsh-client-ui-skill/model-experience:
+/tomato-client-ui-skill/understand-the-implementation/registration:
+  en: dee1f101936ce637
+  zh: ea3f99e9dd8ddb1d
+/tomato-client-ui-skill/further-exploration:
+  en: 37018195d3a0edbd
+  zh: 865b3e60501c4346
+/tomato-client-ui-skill/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
-/deepseek-ai-dsh-client-ui-skill/model-experience/user-explicit-skill-invocation:
+/tomato-client-ui-skill/model-experience/user-explicit-skill-invocation:
   en: ae1928252b0ea55c
   zh: 6c78cb51c6805a2d
-/deepseek-ai-dsh-client-ui-skill/model-experience/user-explicit-skill-invocation/what-the-model-sees:
-  en: 02313760445799a2
-  zh: 46007ed9e9f35b44
-/deepseek-ai-dsh-client-ui-skill/model-experience/user-explicit-skill-invocation/token-effect:
+/tomato-client-ui-skill/model-experience/user-explicit-skill-invocation/what-the-model-sees:
+  en: ea97cbd45259d6dc
+  zh: 3d55e0a159c0f858
+/tomato-client-ui-skill/model-experience/user-explicit-skill-invocation/token-effect:
   en: cb759321f8c62a96
   zh: 6d479501856d9cd6
-/deepseek-ai-dsh-client-ui-skill/model-experience/user-explicit-skill-invocation/kv-cache-effect:
+/tomato-client-ui-skill/model-experience/user-explicit-skill-invocation/kv-cache-effect:
   en: da53c649077dad7e
   zh: 845f77793f8e10a2
-/deepseek-ai-dsh-client-ui-skill/known-limitations-and-deferred-work:
+/tomato-client-ui-skill/known-limitations-and-deferred-work:
   en: 3c5dd1c12e5a5d61
   zh: 19e27163cb94dbc1
-/deepseek-ai-dsh-client-ui-skill/known-limitations-and-deferred-work/dev-note:
+/tomato-client-ui-skill/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

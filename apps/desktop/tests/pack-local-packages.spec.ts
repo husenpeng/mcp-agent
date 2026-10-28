@@ -26,12 +26,12 @@ function write(root: string, path: string, text: string): void {
 }
 
 function fixture(profile: 'local' | 'official' = 'local'): string {
-  const root = mkdtempSync(join(tmpdir(), 'dsh-local-desktop-pack-'))
+  const root = mkdtempSync(join(tmpdir(), 'tomato-local-desktop-pack-'))
   roots.push(root)
   write(root, 'package.json', JSON.stringify({ name: 'desktop-pack-fixture', version: '1.2.3', private: true }))
   write(root, 'pnpm-workspace.yaml', 'packages:\n  - packages/*/*\n')
   write(root, 'packages/client/probe/package.json', JSON.stringify({
-    name: '@deepseek-ai/dsh-probe', version: '1.2.3', files: ['lib', 'src'],
+    name: '@tomato/probe', version: '1.2.3', files: ['lib', 'src'],
   }))
   write(root, 'packages/client/probe/lib/index.js', 'export const probe = true\n')
   write(root, 'packages/client/probe/lib/client.js', 'export const client = true\n')
@@ -51,7 +51,7 @@ async function pack(root: string, release = false, extra: string[] = []) {
       id: 'desktop-pack-fixture', label: 'Desktop packing', displayCommand: script,
       command: process.execPath,
       args: [pnpmEntry, '--dir', root, 'exec', process.execPath, '--import', tsxHook, script,
-        ...(release ? ['--family', 'dsh'] : []), '--out', 'packed', '--concurrency', '2', ...extra],
+        ...(release ? ['--family', 'tomato'] : []), '--out', 'packed', '--concurrency', '2', ...extra],
       env: { npm_execpath: pnpmEntry, TOMATO_CLIENT_COMMIT_HASH: metadata.TOMATO_CLIENT_COMMIT_HASH },
     }, controller.signal)
     activeRuns.set(controller, pending)
@@ -76,16 +76,16 @@ it('packs local client artifacts without a release publication record', async ()
   const root = fixture()
   const result = await pack(root)
   expect(result.code, result.output).toBe(0)
-  expect(readdirSync(join(root, 'packed'))).toEqual(['deepseek-ai-dsh-probe-1.2.3.tgz'])
-  expect(packedIdentity(join(root, 'packed/deepseek-ai-dsh-probe-1.2.3.tgz')))
-    .toEqual({ name: '@deepseek-ai/dsh-probe', version: '1.2.3' })
+  expect(readdirSync(join(root, 'packed'))).toEqual(['deepseek-ai-tomato-probe-1.2.3.tgz'])
+  expect(packedIdentity(join(root, 'packed/deepseek-ai-tomato-probe-1.2.3.tgz')))
+    .toEqual({ name: '@tomato/probe', version: '1.2.3' })
   expect(existsSync(join(root, 'packed', PUBLISH_ORDER_FILE))).toBe(false)
 }, testTimeout)
 
 it.each(['official', 'stale', 'missing'] as const)('rejects %s client artifacts before replacing local packages', async (kind) => {
   const root = fixture(kind === 'official' ? 'official' : 'local')
   if (kind === 'stale') write(root, 'packages/client/probe/lib/client.js', 'export const changed = true\n')
-  if (kind === 'missing') unlinkSync(join(root, '.dsh-build/client-build-environment.json'))
+  if (kind === 'missing') unlinkSync(join(root, '.tomato-build/client-build-environment.json'))
   write(root, 'packed/retained.txt', 'previous output\n')
   const result = await pack(root)
   expect(result.code).not.toBe(0)

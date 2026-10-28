@@ -64,7 +64,7 @@ const CALLED: [string, Record<string, unknown>, readonly string[]][] = [
     create: piCodingAgent.SessionManager.create, open: piCodingAgent.SessionManager.open,
     inMemory: piCodingAgent.SessionManager.inMemory, list: piCodingAgent.SessionManager.list,
   }, ['create', 'open', 'inMemory', 'list']],
-  ['@deepseek-ai/pi-ai', piAi, [
+  ['@tomato/pi-ai', piAi, [
     'createProvider', 'createModels', 'openAICompletionsApi', 'openAIResponsesApi', 'anthropicMessagesApi',
     'isContextOverflow', 'getSupportedThinkingLevels', 'builtinModels',
   ]],
@@ -167,8 +167,8 @@ describe('replaced external packages', () => {
 
   it('lists the packages the loader serves from the bundle', () => {
     expect(REPLACED_EXTERNAL_PACKAGES).not.toContain('chokidar')
-    expect(REPLACED_EXTERNAL_PACKAGES).not.toContain('@deepseek-ai/node-addon-system')
-    expect(REPLACED_EXTERNAL_PACKAGES).not.toContain('@deepseek-ai/node-addon-system/landlock-run')
+    expect(REPLACED_EXTERNAL_PACKAGES).not.toContain('@tomato/node-addon-system')
+    expect(REPLACED_EXTERNAL_PACKAGES).not.toContain('@tomato/node-addon-system/landlock-run')
     expect(REPLACED_EXTERNAL_PACKAGES).toContain('ws')
   })
 
@@ -199,7 +199,7 @@ describe('node:os', () => {
   it('reports the virtual platform identity and the VFS directories', () => {
     expect([os.EOL, os.tmpdir(), os.homedir()]).toEqual(['\n', TOMATO_TMP, TOMATO_HOME])
     expect([os.platform(), os.type(), os.arch()]).toEqual(['linux', 'Linux', 'x64'])
-    expect([os.release(), os.hostname()]).toEqual(['0.0.0-dsh-worker', 'dsh-worker'])
+    expect([os.release(), os.hostname()]).toEqual(['0.0.0-tomato-worker', 'tomato-worker'])
   })
 
   it('reports no per-core facts and no network interfaces', () => {

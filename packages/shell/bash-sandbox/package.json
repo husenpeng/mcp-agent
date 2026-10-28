@@ -1,6 +1,6 @@
 {
-  "name": "@deepseek-ai/dsh-bash-sandbox",
-  "description": "Sandbox-consuming implementation of the DeepSeek Harness bash executor seam (confines every command via ctx.sandbox, reports denial/enforcement result facts)",
+  "name": "@tomato/bash-sandbox",
+  "description": "Sandbox-consuming implementation of the Tomato Harness bash executor seam (confines every command via ctx.sandbox, reports denial/enforcement result facts)",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -29,21 +29,21 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-shell": "workspace:*",
-    "@deepseek-ai/dsh-bash-local": "workspace:*",
-    "@deepseek-ai/dsh-sandbox": "workspace:*",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~"
+    "@tomato/shell": "workspace:*",
+    "@tomato/bash-local": "workspace:*",
+    "@tomato/sandbox": "workspace:*",
+    "@tomato/sandbox-policy": "workspace:*",
+    "@tomato/cordis": "workspace:~"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-shell": "workspace:*",
-    "@deepseek-ai/dsh-bash-local": "workspace:*",
-    "@deepseek-ai/dsh-subprocess-local": "workspace:*",
-    "@deepseek-ai/dsh-sandbox": "workspace:*",
-    "@deepseek-ai/dsh-sandbox-local": "workspace:*",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~",
-    "@deepseek-ai/node-addon-system": "workspace:~",
-    "@deepseek-ai/dsh-session-projection": "workspace:*"
+    "@tomato/shell": "workspace:*",
+    "@tomato/bash-local": "workspace:*",
+    "@tomato/subprocess-local": "workspace:*",
+    "@tomato/sandbox": "workspace:*",
+    "@tomato/sandbox-local": "workspace:*",
+    "@tomato/sandbox-policy": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/node-addon-system": "workspace:~",
+    "@tomato/session-projection": "workspace:*"
   }
 }

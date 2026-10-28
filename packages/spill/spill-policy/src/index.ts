@@ -3,18 +3,18 @@
  * Post-execute policies settle before retention; canonical program values
  * remain intact. Missing recovery storage or image pricing keeps the original
  * content and reports the reason through the logger.
- * @module @deepseek-ai/dsh-spill-policy
+ * @module @tomato/spill-policy
  */
-import type {} from '@deepseek-ai/dsh-tool-executor-ptc'
-import type { Context } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import { createUserMessage, resolveImageAttachmentAccess } from '@deepseek-ai/dsh-llm'
-import type { ContentBlock, ImageBlock, LlmImageRequestPrice, ToolCallId } from '@deepseek-ai/dsh-llm'
-import { estimateContent } from '@deepseek-ai/dsh-token-meter/estimate'
-import type { SpillRef } from '@deepseek-ai/dsh-spill'
-import type { PostToolDecision, ToolExecution } from '@deepseek-ai/dsh-tools'
-import type {} from '@deepseek-ai/dsh-attachment'
-import type {} from '@deepseek-ai/dsh-fs'
+import type {} from '@tomato/tool-executor-ptc'
+import type { Context } from '@tomato/cordis'
+import z from '@tomato/schemastery'
+import { createUserMessage, resolveImageAttachmentAccess } from '@tomato/llm'
+import type { ContentBlock, ImageBlock, LlmImageRequestPrice, ToolCallId } from '@tomato/llm'
+import { estimateContent } from '@tomato/token-meter/estimate'
+import type { SpillRef } from '@tomato/spill'
+import type { PostToolDecision, ToolExecution } from '@tomato/tools'
+import type {} from '@tomato/attachment'
+import type {} from '@tomato/fs'
 import type { SpillPolicyExec } from './types.ts'
 import { formatSpillNotice } from './notice.ts'
 import { retainContent } from './retention.ts'

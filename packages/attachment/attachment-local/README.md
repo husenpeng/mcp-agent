@@ -3,13 +3,13 @@ description: "Local storage for your attached images below TOMATO_HOME, for user
 kind: "package-reference"
 ---
 
-# @deepseek-ai/dsh-attachment-local
+# @tomato/attachment-local
 
 English | [中文](README.zh.md)
 
 ## Summary
 
-Store images and generic file attachments durably below `TOMATO_HOME` on the machine running TOMATO. Images are validated, normalized for model requests, and cached per route; generic files are preserved byte-for-byte without admission limits. Identical bytes are stored once even when uploads use different display names, reads verify file length and content, and admitted images remain readable if limits later tighten. The shipped `dsh` composition uses this package without configuration. Objects remain local to one machine and are never deleted automatically.
+Store images and generic file attachments durably below `TOMATO_HOME` on the machine running TOMATO. Images are validated, normalized for model requests, and cached per route; generic files are preserved byte-for-byte without admission limits. Identical bytes are stored once even when uploads use different display names, reads verify file length and content, and admitted images remain readable if limits later tighten. The shipped `tomato` composition uses this package without configuration. Objects remain local to one machine and are never deleted automatically.
 
 ## Table of Contents
 
@@ -32,12 +32,12 @@ In the default composition, images and generic files attached to prompts or comm
 Mount the plugin with no required configuration. The defaults below define what you can attach; the generated configuration catalog is the exhaustive source for every field.
 
 ```yaml
-- name: '@deepseek-ai/dsh-attachment-local'
+- name: '@tomato/attachment-local'
 ```
 
 | Field | Default | Meaning |
 |---|---|---|
-| `tomatoHome` | resolved | Explicit harness home; omitted follows `$TOMATO_HOME`, then `~/.dsh` |
+| `tomatoHome` | resolved | Explicit harness home; omitted follows `$TOMATO_HOME`, then `~/.tomato` |
 | `maxImageBytes` | `50 MiB` | Maximum encoded source bytes accepted for one image |
 | `maxImagesPerMessage` | `20` | Maximum image count accepted in one submitted message |
 | `maxMessageImageBytes` | `200 MiB` | Maximum aggregate encoded source bytes in one submitted message |

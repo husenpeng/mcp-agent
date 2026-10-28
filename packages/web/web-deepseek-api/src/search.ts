@@ -1,9 +1,9 @@
 /**
  * DeepSeek Search API provider: one direct request per search, without an
  * auxiliary model request.
- * @module @deepseek-ai/dsh-web-deepseek-api/search
+ * @module @tomato/web-deepseek-api/search
  */
-import type { WebSearchProvider, WebSearchRequest, WebSearchResult } from '@deepseek-ai/dsh-web'
+import type { WebSearchProvider, WebSearchRequest, WebSearchResult } from '@tomato/web'
 import {
   dispatchDeepSeekWeb, hasDeepSeekWebCredential, invalidResponse, isRecord,
   type DeepSeekWebAuth, type DeepSeekWebGuidance,

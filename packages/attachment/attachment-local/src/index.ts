@@ -1,9 +1,9 @@
-/** Local durable attachment backend rooted below `TOMATO_HOME`. @module @deepseek-ai/dsh-attachment-local */
+/** Local durable attachment backend rooted below `TOMATO_HOME`. @module @tomato/attachment-local */
 
 import { join } from 'node:path'
-import { Context } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import { AttachmentStore } from '@deepseek-ai/dsh-attachment'
+import { Context } from '@tomato/cordis'
+import z from '@tomato/schemastery'
+import { AttachmentStore } from '@tomato/attachment'
 import type {
   FileAttachmentRef,
   ImageAttachmentLimits,
@@ -14,8 +14,8 @@ import type {
   SaveFileStreamAttachment,
   SaveImageAttachment,
   StoredImageAttachment,
-} from '@deepseek-ai/dsh-attachment'
-import { tomatoCachePath, resolveDshHome } from '@deepseek-ai/dsh-home-paths'
+} from '@tomato/attachment'
+import { tomatoCachePath, resolveTomatoHome } from '@tomato/home-paths'
 import type { NormalizationPolicy } from './normalization.ts'
 import { CompressionLimiter, compressionFailure } from './compression-limiter.ts'
 import { commitPreparedImageFile, normalizedImagePath, prepareImageFile, readImageFile, validateImageFile } from './store.ts'
@@ -63,7 +63,7 @@ export const MAX_IMAGE_COMPRESSION_CONCURRENCY = 8
 
 /** Local attachment backend configuration. */
 export interface Config {
-  /** Explicit harness home; omitted follows `TOMATO_HOME`, then `~/.dsh`. */
+  /** Explicit harness home; omitted follows `TOMATO_HOME`, then `~/.tomato`. */
   tomatoHome?: string
   /** Maximum encoded bytes accepted for one submitted image. Default: 50 MiB. */
   maxImageBytes?: number
@@ -176,7 +176,7 @@ export class LocalAttachmentStore extends AttachmentStore {
 
   constructor(ctx: Context, config: Config) {
     super(ctx)
-    const tomatoHome = resolveDshHome(config.tomatoHome)
+    const tomatoHome = resolveTomatoHome(config.tomatoHome)
     this.root = join(tomatoHome, 'attachments', 'v1')
     this.cacheRoot = tomatoCachePath({ tomatoHome }, 'attachments')
     this.imageLimits = Object.freeze({

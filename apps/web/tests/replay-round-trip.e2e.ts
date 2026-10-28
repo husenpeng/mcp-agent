@@ -1,7 +1,7 @@
-import { executeToolFixture } from '@deepseek-ai/dsh-tool-testkit'
+import { executeToolFixture } from '@tomato/tool-testkit'
 // Web e2e scenario: fresh round trip. A real chromium types a prompt into the
 // real composer; the wire, Remote gateway, agent loop, and the REAL bash tool (echo
-// in the temp workspace) all run; the model adapter is dsh-llm-replay (keyless)
+// in the temp workspace) all run; the model adapter is @tomato/llm-replay (keyless)
 // or the live adapter (record). Drive steps run in every mode and wait only
 // on generic completion (whenTurnSettled — never model-content selectors, so
 // record cannot hang on a live model answering differently); assertion steps
@@ -19,10 +19,10 @@ import { fileURLToPath } from 'node:url'
 import type { Browser, Page, Route, WebSocketRoute } from 'playwright'
 import { chromium } from 'playwright'
 import { afterAll, beforeAll, describe, expect, it, onTestFailed } from 'vitest'
-import { ToolCallId, expandAssistantStream } from '@deepseek-ai/dsh-llm'
-import { SessionId, type Session, type SessionEvent } from '@deepseek-ai/dsh-session'
-import type { SessionListValue } from '@deepseek-ai/dsh-api-session-controller/types'
-import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol'
+import { ToolCallId, expandAssistantStream } from '@tomato/llm'
+import { SessionId, type Session, type SessionEvent } from '@tomato/session'
+import type { SessionListValue } from '@tomato/api-session-controller/types'
+import type { RemoteResult } from '@tomato/typert-protocol'
 import {
   acknowledgeReloadConnectionLoss, assertFixtureInventory, captureExpandedTurnProcessAria, captureStableAria,
   compareOrRefreshGolden, fixtureUserPrompts,
@@ -98,13 +98,13 @@ describe('web e2e: fresh round trip through the real assembly', () => {
       // Drift guard: the committed fixture must carry exactly the drive prompt.
       expect(fixtureUserPrompts(await readFile(FIXTURE, 'utf8'))).toEqual([PROMPT])
     }
-    const beforeReload = await page.evaluate(() => localStorage.getItem('dsh.sessions.current'))
+    const beforeReload = await page.evaluate(() => localStorage.getItem('tomato.sessions.current'))
     expect(beforeReload).not.toBeNull()
     await page.reload({ waitUntil: 'load' })
     await page.locator('[data-composer-input]').first().waitFor({ timeout: 15_000 })
     await page.getByRole('button', { name: 'Standard mode', exact: true }).waitFor({ timeout: 15_000 })
     await page.getByRole('button', { name: 'Select model, current DeepSeek-V4-Flash' }).waitFor({ timeout: 15_000 })
-    await expect.poll(() => page.evaluate(() => localStorage.getItem('dsh.sessions.current'))).toBe(beforeReload)
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('tomato.sessions.current'))).toBe(beforeReload)
     if (MODE !== 'record') {
       await compareOrRefreshGolden(BLANK_EXPECTED,
         await captureStableAria(page, '[class*="centerCol"]', scaffold.workspaceCwd), MODE)
@@ -112,7 +112,7 @@ describe('web e2e: fresh round trip through the real assembly', () => {
     const input = page.locator('[data-composer-input]').first()
     await input.waitFor({ timeout: 10_000 })
     const sessionId = await page.evaluate(() => {
-      const selected = JSON.parse(localStorage.getItem('dsh.sessions.current')!) as { sessionId: string }
+      const selected = JSON.parse(localStorage.getItem('tomato.sessions.current')!) as { sessionId: string }
       return selected.sessionId
     }) as SessionId
     const agent = scaffold.ctx.agents.get(sessionId)
@@ -222,7 +222,7 @@ describe('web e2e: fresh round trip through the real assembly', () => {
     if (system === undefined) throw new Error('the settled Web request has no system prompt')
     const paragraphs = system.split('\n\n')
     expect(paragraphs.slice(0, 2)).toEqual([
-      'You are an AI agent powered by DeepSeek Harness.',
+      'You are an AI agent powered by Tomato Harness.',
       'You are a coding agent powered by the deepseek-v4-flash model.',
     ])
     const cwd = agent.session.header.cwd
@@ -232,7 +232,7 @@ describe('web e2e: fresh round trip through the real assembly', () => {
       .flatMap(message => message.content.flatMap(block => block.type === 'text' ? [block.text] : []))
     expect(userText.some(text => text.includes(`Current working directory: ${JSON.stringify(cwd)}.`))).toBe(true)
     expect(system).not.toContain(scaffold.baseUrl)
-    expect(userText.some(text => text.includes(`Current DeepSeek Harness Web GUI URL: ${JSON.stringify(scaffold.baseUrl)}.`))).toBe(true)
+    expect(userText.some(text => text.includes(`Current Tomato Harness Web GUI URL: ${JSON.stringify(scaffold.baseUrl)}.`))).toBe(true)
     const suffix = paragraphs.slice(-2).join('\n\n')
       .split(REPO_ROOT).join('{{sourceRoot}}')
       .split(join(scaffold.workspaceCwd, 'workspace')).join('{{cwd}}')

@@ -1,4 +1,4 @@
-# The SDK application over dsh-base. Stdout belongs exclusively to JSON-RPC.
+# The SDK application over @tomato/base. Stdout belongs exclusively to JSON-RPC.
 
 - id: system-prompt
   config:
@@ -10,12 +10,12 @@
 
 - insert:
     - id: sdk-app-startup
-      name: '@deepseek-ai/dsh-sdk-app'
+      name: '@tomato/sdk-app'
       config:
         profile: sdk
 
     - id: sdk-jsonrpc-server
-      name: '@deepseek-ai/dsh-sdk-jsonrpc-server'
+      name: '@tomato/sdk-jsonrpc-server'
       inject: [sdkAppStartup, loader]
       config:
         maxTokensAsSuccess: !!js "process.env.TOMATO_MAX_TOKENS_AS_SUCCESS === undefined ? true : JSON.parse(process.env.TOMATO_MAX_TOKENS_AS_SUCCESS)"
@@ -27,13 +27,13 @@
 # including an empty-string opt-out. Each row can be patched independently.
 - insert:
     - id: workspace-dependencies
-      name: '@deepseek-ai/dsh-tool-workspace-dependencies'
+      name: '@tomato/tool-workspace-dependencies'
       disabled: !!js "!(process.env.TOMATO_PRIMARY_RUNTIME ?? process.env.TOMATO_BUNDLED_PRIMARY_RUNTIME)"
       config:
         source: !!js "process.getBuiltinModule('node:path').resolve(process.env.TOMATO_PRIMARY_RUNTIME ?? process.env.TOMATO_BUNDLED_PRIMARY_RUNTIME ?? '')"
 
     - id: skill-office
-      name: '@deepseek-ai/dsh-skill-office'
+      name: '@tomato/skill-office'
       disabled: !!js "!(process.env.TOMATO_PRIMARY_RUNTIME ?? process.env.TOMATO_BUNDLED_PRIMARY_RUNTIME) && !process.env.TOMATO_BUNDLED_OFFICE_CLI"
       config:
         assetRoot: !!js "process.env.TOMATO_BUNDLED_OFFICE_SKILLS ?? process.getBuiltinModule('node:path').resolve(process.env.TOMATO_PRIMARY_RUNTIME ?? process.env.TOMATO_BUNDLED_PRIMARY_RUNTIME ?? '', '..', 'office-skills')"
@@ -43,32 +43,32 @@
 # Share native desktop tools and model context without starting a Web server.
 - insert:
     - id: connection
-      name: '@deepseek-ai/dsh-client-connection'
+      name: '@tomato/client-connection'
 
     - id: file-upload
-      name: '@deepseek-ai/dsh-client-file-upload'
+      name: '@tomato/client-file-upload'
 
     - id: workspace
-      name: '@deepseek-ai/dsh-workspace'
+      name: '@tomato/workspace'
 
     - id: schedule
-      name: '@deepseek-ai/dsh-schedule'
+      name: '@tomato/schedule'
       inject: [sdkSessionActivation]
 
     - id: time-context
-      name: '@deepseek-ai/dsh-time-context'
+      name: '@tomato/time-context'
 
     - id: tool-schedule
-      name: '@deepseek-ai/dsh-tool-schedule'
+      name: '@tomato/tool-schedule'
 
     - id: tool-ask-user
-      name: '@deepseek-ai/dsh-tool-ask-user'
+      name: '@tomato/tool-ask-user'
 
     - id: present
-      name: '@deepseek-ai/dsh-tool-present'
+      name: '@tomato/tool-present'
 
     - id: file-reference-local
-      name: '@deepseek-ai/dsh-file-reference-local'
+      name: '@tomato/file-reference-local'
 
     - id: deliverable-file-references
-      name: '@deepseek-ai/dsh-deliverable-file-references'
+      name: '@tomato/deliverable-file-references'
