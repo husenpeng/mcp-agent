@@ -43,7 +43,7 @@ it('finds the package by manifest name rather than assuming its workspace direct
 
 it('follows the CLI directory link used by an unpackaged Desktop application', () => {
   const { root, anchor, directory } = fixture()
-  const link = join(root, 'desktop-runtime', 'node_modules', '@tomato', 'tomato')
+  const link = join(root, 'desktop-runtime', 'node_modules', '@tomato', 'cli')
   mkdirSync(dirname(link), { recursive: true })
   symlinkSync(dirname(anchor), link, process.platform === 'win32' ? 'junction' : 'dir')
   expect(officialBundleInstallTarget(name, join(link, 'package.json'), version)).toEqual({ spec: `link:${directory}`, version })

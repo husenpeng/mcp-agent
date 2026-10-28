@@ -152,10 +152,10 @@ export function prepareDevelopmentProject(options: DevelopmentProjectOptions): s
     ...mirrorDependencyLinks(options.dependencyDir, destinationModules),
     ...mirrorWorkspaceDependencies([options.cliDir, options.hostDir], destinationModules),
   ]
-  const tomatoLink = join(destinationModules, '@tomato', 'tomato')
+  const tomatoLink = join(destinationModules, '@tomato', 'cli')
   removeOwnedPath(tomatoLink)
   linkDirectory(options.cliDir, tomatoLink)
-  const hostLink = join(destinationModules, '@tomato', '@tomato/desktop-host')
+  const hostLink = join(destinationModules, '@tomato', 'desktop-host')
   removeOwnedPath(hostLink)
   linkDirectory(options.hostDir, hostLink)
   const sharedPackages = [...new Set([...names, '@tomato/cli', '@tomato/desktop-host'])].flatMap((name) => {

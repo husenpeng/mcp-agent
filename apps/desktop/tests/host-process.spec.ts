@@ -67,7 +67,7 @@ process.on('message', message => {
 function projectWithHost(source = HTTP_HOST): string {
   const project = mkdtempSync(join(tmpdir(), 'tomato-desktop-host-test-'))
   roots.push(project)
-  const packageRoot = join(project, 'node_modules', '@tomato', '@tomato/desktop-host')
+  const packageRoot = join(project, 'node_modules', '@tomato', 'desktop-host')
   mkdirSync(join(packageRoot, 'lib'), { recursive: true })
   writeFileSync(join(packageRoot, 'package.json'), '{"name":"@tomato/desktop-host","type":"module"}\n')
   writeFileSync(join(packageRoot, 'lib', 'index.js'), source)

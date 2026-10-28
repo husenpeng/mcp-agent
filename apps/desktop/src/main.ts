@@ -744,7 +744,7 @@ async function main(): Promise<void> {
     if (url.hostname === 'app') {
       if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname.startsWith('/assets/')
         || ['/favicon.svg', '/favicon-dark.svg', '/manifest.webmanifest'].includes(url.pathname)) {
-        return serveWebDocument(request, join(resources.tomato, 'node_modules', '@tomato', '@tomato/web-frontend', 'dist'))
+        return serveWebDocument(request, join(resources.tomato, 'node_modules', '@tomato', 'web-frontend', 'dist'))
       }
       if (backend.host === undefined || hostUrl === undefined || hostCookie === undefined) {
         return Promise.resolve(new Response(null, { status: 503 }))

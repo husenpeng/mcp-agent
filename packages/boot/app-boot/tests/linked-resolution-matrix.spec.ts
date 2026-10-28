@@ -300,7 +300,7 @@ class MatrixFixture {
   readonly packageDir: string
   readonly sources = new Map<string, Source>()
   readonly importerDir: string
-  readonly installDir = join(this.root, 'installation', 'node_modules', '@tomato', 'tomato')
+  readonly installDir = join(this.root, 'installation', 'node_modules', '@tomato', 'cli')
   readonly runtimeDir: string
   readonly peerProjection: PeerProjection[] = []
 

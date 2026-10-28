@@ -20,7 +20,7 @@ async function main(): Promise<void> {
   const runtimeDir = process.argv[2] as string
   const projectDir = process.argv[3] as string
   installOfficeEngineResolution(runtimeDir)
-  const installAnchor = join(runtimeDir, 'node_modules', '@tomato', 'tomato', 'package.json')
+  const installAnchor = join(runtimeDir, 'node_modules', '@tomato', 'cli', 'package.json')
   const profile = loadProfileDirectory('tomato', projectDir, installAnchor)
   reportSkippedBundles('tomato', profile)
   const application = runProfile({

@@ -146,7 +146,7 @@ function fixture(name = '@tomato/core'): {
   // and the long directory name for a Windows tmpdir spelled with an 8.3 short name.
   const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'tomato-profile-resolution-')))
   roots.push(root)
-  const installDir = join(root, 'global', 'node_modules', '@tomato', 'tomato')
+  const installDir = join(root, 'global', 'node_modules', '@tomato', 'cli')
   const installed = join(installDir, 'node_modules', name)
   const installAnchor = pkg(installDir, '@tomato/cli', 0, { [name]: '*' })
   pkg(installed, name, 1)
@@ -1117,7 +1117,7 @@ describe('runtime resolution', { concurrent: false }, () => {
     file(join(f.profile.dir, 'package.json'), JSON.stringify({
       name: 'tomato-profile-web', private: true, dependencies: { '@tomato/core': '*' },
     }))
-    const target = join(f.root, 'old-tomato', 'node_modules', '@tomato', 'tomato-core')
+    const target = join(f.root, 'old-tomato', 'node_modules', '@tomato', 'core')
     pkg(target, '@tomato/core', 9)
     const owned = join(f.profile.dir, '.tomato-module-fallback', 'node_modules', '@tomato/core')
     const projected = join(f.profile.dir, 'node_modules', '@tomato/core')
@@ -2093,7 +2093,7 @@ describe('runtime resolution', { concurrent: false }, () => {
     const f = fixture()
     const installDir = dirname(f.installAnchor)
     pkg(installDir, '@tomato/cli', 0, { '@tomato/core': '*', '@tomato/util': '*' })
-    pkg(join(installDir, 'node_modules', '@tomato', 'tomato-util'), '@tomato/util', 2)
+    pkg(join(installDir, 'node_modules', '@tomato', 'util'), '@tomato/util', 2)
     const linkedRoot = join(f.root, 'work', 'my-plugin')
     const writeManifest = (peers: Record<string, string> | undefined): void => {
       file(join(linkedRoot, 'package.json'), JSON.stringify({
@@ -2112,9 +2112,9 @@ describe('runtime resolution', { concurrent: false }, () => {
     file(join(linkedRoot, 'index.cjs'), 'module.exports = { marker: 30 }\n')
     // The devDependency copy a type checker needs, the plugin's own third-party version, and a tomato package
     // declared as a plain dependency.
-    pkg(join(linkedRoot, 'node_modules', '@tomato', 'tomato-core'), '@tomato/core', 21)
+    pkg(join(linkedRoot, 'node_modules', '@tomato', 'core'), '@tomato/core', 21)
     pkg(join(linkedRoot, 'node_modules', 'zod'), 'zod', 22)
-    pkg(join(linkedRoot, 'node_modules', '@tomato', 'tomato-util'), '@tomato/util', 23)
+    pkg(join(linkedRoot, 'node_modules', '@tomato', 'util'), '@tomato/util', 23)
     pkg(join(f.root, 'work', 'node_modules', 'left-pad'), 'left-pad', 24)
     // A transitive dependency in pnpm's isolated layout, with a sibling of its own.
     const helper = join(linkedRoot, 'node_modules', '.pnpm', 'helper@1.0.0', 'node_modules', 'helper')
@@ -2574,7 +2574,7 @@ describe('runtime resolution', { concurrent: false }, () => {
     expect(resolveFrom('zod', `${parent}?t=1`)).toBe(pathToFileURL(join(linkedRoot, 'node_modules', 'zod', 'index.js')).href)
     // Plain dependencies keep the plugin's own copies, including a tomato package declared as one.
     await expectResolution('zod', join(linkedRoot, 'node_modules', 'zod'), 22)
-    await expectResolution('@tomato/util', join(linkedRoot, 'node_modules', '@tomato', 'tomato-util'), 23)
+    await expectResolution('@tomato/util', join(linkedRoot, 'node_modules', '@tomato', 'util'), 23)
     // An undeclared name without an entry follows the real ancestor chain.
     await expectResolution('left-pad', join(f.root, 'work', 'node_modules', 'left-pad'), 24)
     // Package imports and self-references keep their Node semantics inside the linked package.
@@ -2596,10 +2596,10 @@ describe('runtime resolution', { concurrent: false }, () => {
   it('continues above a linked plugin after a CommonJS subpath miss in an occupied peer', async () => {
     const { f, linkedRoot } = linkedPluginFixture()
     file(join(f.installed, 'package.json'), JSON.stringify({ name: '@tomato/core', version: '1.0.0', main: './index.cjs' }))
-    const above = join(f.root, 'work', 'node_modules', '@tomato', 'tomato-core')
+    const above = join(f.root, 'work', 'node_modules', '@tomato', 'core')
     file(join(above, 'package.json'), JSON.stringify({ name: '@tomato/core', version: '3.0.0' }))
     file(join(above, 'sub.cjs'), 'module.exports = { marker: 3 }\n')
-    file(join(linkedRoot, 'node_modules', '@tomato', 'tomato-core', 'sub.cjs'), 'module.exports = { marker: 21 }\n')
+    file(join(linkedRoot, 'node_modules', '@tomato', 'core', 'sub.cjs'), 'module.exports = { marker: 21 }\n')
     const registration = installRuntimeInterception(await resolutionOf(f))
     registrations.push(registration)
     const require = createRequire(join(linkedRoot, 'entry.cjs'))
@@ -2640,7 +2640,7 @@ describe('runtime resolution', { concurrent: false }, () => {
     const { f, linkedRoot, writeManifest } = linkedPluginFixture({})
     const registration = installRuntimeInterception(await resolutionOf(f))
     registrations.push(registration)
-    const devCopy = join(linkedRoot, 'node_modules', '@tomato', 'tomato-core')
+    const devCopy = join(linkedRoot, 'node_modules', '@tomato', 'core')
     const require = createRequire(join(linkedRoot, 'entry.cjs'))
     const parent = pathToFileURL(join(linkedRoot, 'entry.mjs')).href
     expect(require.resolve('@tomato/core')).toBe(join(devCopy, 'index.cjs'))
