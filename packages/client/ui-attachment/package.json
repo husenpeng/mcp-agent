@@ -55,7 +55,7 @@
     "@tomato/client-ui-primitives": "workspace:*",
     "@tomato/client-ui-slots": "workspace:*",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react-dom": "^19.3.0",
     "@tomato/attachment": "workspace:*",
     "@tomato/client-ui-tool": "workspace:*",
     "clsx": "^2.0.0",

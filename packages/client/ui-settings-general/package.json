@@ -76,7 +76,7 @@
     "clsx": "^2.0.0",
     "react": "^18.2.0",
     "@tomato/settings": "workspace:*",
-    "react-dom": "^18.2.0",
+    "react-dom": "^19.3.0",
     "@tomato/client-shortcuts": "workspace:*"
   },
   "files": [
