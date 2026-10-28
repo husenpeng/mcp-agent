@@ -12,6 +12,7 @@ import { prepareDevelopmentProject } from './development-project.ts'
 import { prepareDevelopmentApp } from './development-app.ts'
 import { preparePrimaryRuntime } from './prepare-primary-runtime.ts'
 import { developmentLoginEnvironment } from './development-login.ts'
+import { withoutReleaseSettings } from './development-environment.ts'
 
 const APP_ROOT = resolve(import.meta.dirname, '..')
 const REPOSITORY_ROOT = resolve(APP_ROOT, '..', '..')
@@ -86,7 +87,7 @@ async function launchElectron(): Promise<void> {
     process.env,
   )
   const environment: NodeJS.ProcessEnv = {
-    ...process.env,
+    ...withoutReleaseSettings(process.env),
     ...login,
     TOMATO_HOME: home,
     TOMATO_DESKTOP_PRIMARY_RUNTIME_DIR: process.env.TOMATO_DESKTOP_PRIMARY_RUNTIME_DIR ?? developmentRuntimeDirectory(),
