@@ -71,6 +71,7 @@ export const ja: Record<AccountKey, string> = {
   dismiss: 'Dismiss',
 }
 
+/** Spanish dictionary. */
 export const es: Record<AccountKey, string> = {
   nav: 'Account',
   menu: 'Account menu',
@@ -93,6 +94,7 @@ export const es: Record<AccountKey, string> = {
   dismiss: 'Dismiss',
 }
 
+/** French dictionary. */
 export const fr: Record<AccountKey, string> = {
   nav: 'Account',
   menu: 'Account menu',
@@ -115,6 +117,7 @@ export const fr: Record<AccountKey, string> = {
   dismiss: 'Dismiss',
 }
 
+/** German dictionary. */
 export const de: Record<AccountKey, string> = {
   nav: 'Account',
   menu: 'Account menu',
@@ -137,6 +140,7 @@ export const de: Record<AccountKey, string> = {
   dismiss: 'Dismiss',
 }
 
+/** Russian dictionary. */
 export const ru: Record<AccountKey, string> = {
   nav: 'Account',
   menu: 'Account menu',
@@ -159,6 +163,7 @@ export const ru: Record<AccountKey, string> = {
   dismiss: 'Dismiss',
 }
 
+/** Portuguese dictionary. */
 export const pt: Record<AccountKey, string> = {
   nav: 'Account',
   menu: 'Account menu',

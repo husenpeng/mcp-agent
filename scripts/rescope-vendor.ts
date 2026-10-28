@@ -185,14 +185,14 @@ interface PostCondition {
 const POSTCONDITIONS: readonly PostCondition[] = [
   { file: 'vendor/cordis/package.json', text: '"name": "@tomato/cordis"', count: 1 },
   { file: 'vendor/hmr/package.json', text: '"name": "@tomato/cordis-plugin-hmr"', count: 1 },
-  { file: 'scripts/cordis-walk.ts', text: '@deepseek-ai\\/cordis', count: 1 },
+  { file: 'scripts/cordis-walk.ts', text: '@tomato\\/cordis', count: 1 },
   { file: 'scripts/cordis-walk.ts', text: '!== \'@tomato/cordis\'', count: 1 },
   { file: 'packages/typert/generator/src/analyzer.ts', text: '!== \'@tomato/cordis\'', count: 2 },
   { file: 'scripts/check-workspace-constraints.ts', text: '?.[\'@tomato/cordis\']', count: 2 },
   { file: 'packages/boot/app-boot/tsdown.config.ts', text: '[\'@tomato/cordis-plugin-include\']', count: 1 },
   { file: 'tsconfig.base.json', text: '"@tomato/cordis-plugin-loader": ["./vendor/loader/src"]', count: 1 },
   // The vendored README owns this required entry; reject its deletion or duplication.
-  { file: 'vendor/README.md', text: '17. **`@deepseek-ai` rescope**', count: 1 },
+  { file: 'vendor/README.md', text: '17. **`@tomato` rescope**', count: 1 },
   { file: 'pnpm-workspace.yaml', text: 'cordis@4.0.0-rc.7', count: 0 },
   // The preset ids in this table are product data, not package names.
   { file: 'packages/client/ui-agent-preset/tests/locales.client.spec.ts', text: '[\'cordis\', \'presetCordisName\'', count: 1 },
@@ -216,7 +216,7 @@ const EXACT_EDITS: readonly ExactEdit[] = [
     id: 'cordis-walk-merge-head',
     file: 'scripts/cordis-walk.ts',
     find: 'const MERGE_HEAD = /declare module [\'"](?:cordis|\\.\\/context\\.ts)[\'"]/',
-    replace: 'const MERGE_HEAD = /declare module [\'"](?:@deepseek-ai\\/cordis|\\.\\/context\\.ts)[\'"]/',
+    replace: 'const MERGE_HEAD = /declare module [\'"](?:@tomato\\/cordis|\\.\\/context\\.ts)[\'"]/',
     expect: 1,
   },
   {
@@ -264,7 +264,7 @@ const EXACT_EDITS: readonly ExactEdit[] = [
     id: 'vendor-readme-preamble',
     file: 'vendor/README.md',
     find: 'All vendored packages keep their **original npm names** (they are resolved through pnpm workspaces) and are marked `private: true` — they are never published from this repo.',
-    replace: 'All vendored packages use the **`@deepseek-ai` scope** (`cordis` → `@tomato/cordis`, `@cordisjs/plugin-<x>` → `@tomato/cordis-plugin-<x>`). The manifest table records upstream versions and source commits; each package manifest carries its Harness release version and publication metadata. References to vendored packages use `workspace:~`, so local builds resolve the workspace packages and published ranges permit patch updates within the same minor version.',
+    replace: 'All vendored packages use the **`@tomato` scope** (`cordis` → `@tomato/cordis`, `@cordisjs/plugin-<x>` → `@tomato/cordis-plugin-<x>`). The manifest table records upstream versions and source commits; each package manifest carries its Harness release version and publication metadata. References to vendored packages use `workspace:~`, so local builds resolve the workspace packages and published ranges permit patch updates within the same minor version. Upstream MIT `LICENSE` files are preserved in each package directory.',
     expect: 1,
   },
   {
@@ -291,12 +291,12 @@ const EXACT_EDITS: readonly ExactEdit[] = [
     file: 'packages/client/tsdown.client.ts',
     find: '/** Generated descriptor/codec contribution with no shared runtime identity. */',
     replace: `/**
- * Vendored framework libraries: rescoped into @deepseek-ai, so the gate below
+ * Vendored framework libraries: rescoped into @tomato, so the gate below
  * would read them as plugin packages. They carry no cross-plugin runtime
  * identity to share — the framework itself is a requested module-table row
  * (external), while these are ordinary libraries a browser bundle inlines.
  */
-const VENDORED_LIBRARY = /^@deepseek-ai\\/(?:(?:cosmokit|schemastery)(?:\\/|$)|cordis-plugin-timer$)/
+const VENDORED_LIBRARY = /^@tomato\\/(?:(?:cosmokit|schemastery)(?:\\/|$)|cordis-plugin-timer$)/
 
 /** Generated descriptor/codec contribution with no shared runtime identity. */`,
     expect: 1,
@@ -390,7 +390,7 @@ const VENDORED_LIBRARY = /^@deepseek-ai\\/(?:(?:cosmokit|schemastery)(?:\\/|$)|c
     id: 'notices-vendored-section',
     file: 'scripts/gen-third-party-notices.ts',
     find: 'The Cordis framework and its foundation libraries are source-vendored into this repository rather than consumed from npm. All are MIT-licensed',
-    replace: 'The Cordis framework and its foundation libraries are source-vendored into this repository rather than consumed from npm, and republished under the \\`@deepseek-ai\\` scope. All are MIT-licensed',
+    replace: 'The Cordis framework and its foundation libraries are source-vendored into this repository rather than consumed from npm, and republished under the \\`@tomato\\` scope. All are MIT-licensed',
     expect: 1,
   },
   {
@@ -431,7 +431,7 @@ const VENDORED_LIBRARY = /^@deepseek-ai\\/(?:(?:cosmokit|schemastery)(?:\\/|$)|c
     const install = spawnSync('npm', ['install', '--no-audit', '--no-fund', ...tarballs, 'cordis@4.0.0-rc.7'], {`,
     replace: `    // Peer ranges resolve to the tarballs, the framework peer included. Do not omit optional
     // dependencies because the launcher selects its OS/CPU package through one.
-    writeFileSync(join(consumerDir, 'package.json'), JSON.stringify({ name: 'dsh-packed-consumer', private: true, type: 'module' }))
+    writeFileSync(join(consumerDir, 'package.json'), JSON.stringify({ name: 'tomato-packed-consumer', private: true, type: 'module' }))
     const install = spawnSync('npm', ['install', '--no-audit', '--no-fund', ...tarballs], {`,
     expect: 1,
   },

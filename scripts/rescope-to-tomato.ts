@@ -47,6 +47,12 @@ const EXCLUDED_PREFIXES = [
   'docs/persistence-changes/', // published release records
   'docs/tomato/adr/', // decision records
   'scripts/snapshots/', // recorded model payloads
+  // Released-format migrations read old logs: their string literals are the
+  // values older builds wrote, not current names.
+  'packages/session/session-format-v0-to-v1/',
+  'packages/session/session-format-v1-to-v2/',
+  'packages/session/session-format-v2-to-v3/',
+  'packages/session/session-format-v3-to-v4/',
 ] as const
 
 const EXCLUDED_FILES = new Set([
@@ -62,6 +68,15 @@ const EXCLUDED_FILES = new Set([
   'docs/rescope.md', // documents the vendor mapping, rewritten by hand
   'docs/rescope.zh.md',
   'docs/tomato/decisions.md', // live decision log, rewritten by hand
+  // Persistence protocol constants: recorded digests and historical release
+  // tags embed these exact seeds and prefixes.
+  'scripts/persistence-schema-model.ts',
+  'scripts/persistence-finalization.ts',
+  'scripts/persistence-formats.ts',
+  'scripts/persistence-releases.ts',
+  'scripts/gen-dependency-catalog.ts', // recorded npm evidence names the published package
+  'scripts/verify-concrete-terms.ts', // excludes historical release snapshots by their dsh tag
+  'scripts/doc-standard.spec.ts', // matches historical and current release document names
 ])
 
 /** Real third-party packages under the old scope; the guard below never renames them. */
@@ -96,6 +111,10 @@ export function isTomatoExcluded(file: string): boolean {
   if (EXCLUDED_FILES.has(file)) return true
   if (EXCLUDED_PREFIXES.some(prefix => file.startsWith(prefix))) return true
   if (file.endsWith('.i18n.yaml')) return true // blob-hash records
+  // Released-format session logs are historical inputs: their source kinds and
+  // plugin ids are what older builds wrote. V4 logs are current replay outputs
+  // and follow the rename.
+  if (/^snapshots\/.+\/session(?:\.\d+)?\.v[0-3]\.jsonl$/.test(file)) return true
   if (/^vendor\/[^/]+\/README\.md$/.test(file)) return true // upstream files kept verbatim
   if (/^vendor\/[^/]+\/LICENSE$/.test(file)) return true
   // Extensionless sources (Makefile, Dockerfile, launchers) are text.
@@ -139,6 +158,16 @@ export type RescopeLayer = 'env' | 'ident' | 'pkg' | 'cli' | 'prose'
 
 export const RESCOPE_LAYERS: readonly RescopeLayer[] = ['env', 'ident', 'pkg', 'cli', 'prose']
 
+/** Skill directory names stay as written: archived Agent Notes link to them. */
+const SKILL_NAMES = [
+  'archive-agent-notes', 'ci-test-reliability', 'client-ui-ux', 'code-review',
+  'create-upgrade-guide', 'doc', 'error-handling', 'find-simplifications',
+  'merging-stacked-prs', 'official-plugin-artwork', 'pr-description',
+  'pre-push-checks', 'prose-standard', 'responsive-ui', 'session-projection',
+  'speed-up-perf', 'translate-docs', 'trim-cot-leakage',
+] as const
+const SKILL_NAME_PATTERN = new RegExp(`\\bdsh-(?:${SKILL_NAMES.join('|')})\\b`, 'g')
+
 /**
  * Rewrite one line of repository text.
  * @param line - One physical line without its newline.
@@ -151,6 +180,22 @@ export function rescopeLine(line: string, only: ReadonlySet<RescopeLayer> = new 
   // Protect real third-party packages under the old scope before the blanket rules.
   const guards: string[] = []
   let out = line.replace(EXTERNAL_SCOPE_PATTERN, (match) => {
+    guards.push(match)
+    return `@@TOMATO_EXTERNAL_${guards.length - 1}@@`
+  })
+  out = out.replace(SKILL_NAME_PATTERN, (match) => {
+    guards.push(match)
+    return `@@TOMATO_EXTERNAL_${guards.length - 1}@@`
+  })
+  // A released session source kind: older logs carry this literal, so the
+  // current reader must keep accepting it under its original spelling.
+  out = out.replace(/dsh-session-title-llm/g, (match) => {
+    guards.push(match)
+    return `@@TOMATO_EXTERNAL_${guards.length - 1}@@`
+  })
+  // Frozen Agent Notes keep their historical file names; links into them must
+  // keep resolving.
+  out = out.replace(/2026-07-29-dsh-source-launch-tsx-esm/g, (match) => {
     guards.push(match)
     return `@@TOMATO_EXTERNAL_${guards.length - 1}@@`
   })

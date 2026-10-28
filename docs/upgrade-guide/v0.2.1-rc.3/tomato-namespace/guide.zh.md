@@ -35,8 +35,4 @@ DeepSeek 自身的身份不变：`DEEPSEEK_API_KEY`、`DEEPSEEK_BASE_URL`、`api
 5. 改名后重新安装 profile 包；旧 lockfile 与包链接引用的是已不存在的名字。
 6. 使用新 app ID 的桌面安装是一个独立应用：它不会原地替换旧构建，旧构建的更新通道也不再适用。
 
-## 验证
-
-- `tomato --version` 能通过新启动器解析。
-- `TOMATO_HOME` 指向重命名后的 home，会话出现在侧栏。
-- 在 `tomato.profile.bundles` 中配置的模型路由在 profile 重载后生效。
+验证：`tomato --version` 能通过新启动器解析；`TOMATO_HOME` 指向重命名后的 home，会话出现在侧栏；在 `tomato.profile.bundles` 中配置的模型路由在 profile 重载后生效。

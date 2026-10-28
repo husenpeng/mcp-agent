@@ -18,7 +18,7 @@
       "path": "../../../native/system/packages/entry"
     },
     {
-      "path": "../../util/brand"
+      "path": "../../util/branded"
     },
     {
       "path": "../../llm/llm"

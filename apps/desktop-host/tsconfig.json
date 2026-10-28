@@ -47,7 +47,7 @@
       "path": "../../packages/util/workspace-path"
     },
     {
-      "path": "../../packages/util/brand"
+      "path": "../../packages/util/branded"
     }
   ]
 }

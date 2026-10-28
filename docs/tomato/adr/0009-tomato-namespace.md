@@ -15,6 +15,7 @@
 - **桌面身份**：`com.deepseek.dsh` → `vip.tomatoai.desktop`；本地无签名构建 `com.deepseek.harness` → `vip.tomatoai.harness`。
 - **保留的外部身份**：`DEEPSEEK_API_KEY`、`DEEPSEEK_BASE_URL`、`api.deepseek.com`、`deepseek-*` 模型 id、`deepseek-official` / `deepseek-account` / `deepseek-api-key` provider id、适配器包名中的 `deepseek` leaf（如 `@tomato/llm-deepseek`）、上游仓库 slug `deepseek-harness`，以及真实第三方包 `@deepseek-ai/libreoffice-kit*`。
 - **冻结的历史记录**：`.agents/notes/`、`docs/upgrade-guide/`、`docs/persistence-changes/`、`docs/tomato/adr/`、`scripts/snapshots/` 不重写。
+- **技能目录名保留**：`.agents/skills/dsh-*` 不改名。归档 Agent Note 的封印禁止修改内容，而这些笔记链接到技能目录；技能名属于工具标识，不是 harness 运行时命名。
 - **不做兼容**：不双读旧环境变量、不自动迁移旧 home、不保留 `dsh` 命令别名。旧数据留在 `~/.dsh`，需要时手动 `mv`。
 - **工具**：`scripts/rescope-to-tomato.ts` 按 `env`、`ident`、`pkg`、`cli`、`prose` 五层执行，支持 `--apply`、`--check`、`--only=`；`--check` 断言无残留且第二次 apply 为空操作。
 

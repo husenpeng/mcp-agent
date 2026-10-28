@@ -13,7 +13,7 @@ import { remapV3References } from './references.ts'
 
 /** Header-only migration declaration; body restoration requires explicit child evidence. */
 export const sessionFormatV3ToV4 = defineSessionFormatMigration({
-  name: '@tomato/session-format-v3-to-v4',
+  name: '@deepseek-ai/dsh-session-format-v3-to-v4',
   fromVersion: 3,
   toVersion: 4,
   migrateHeader(header) {

@@ -26,18 +26,6 @@
     "lib/types/**/*.d.ts"
   ],
   "license": "MIT",
-  "tomato": {
-    "sessionFormatMigration": {
-      "from": 0,
-      "to": 1,
-      "export": ".",
-      "migration": "sessionFormatV0ToV1",
-      "sourceCodec": "releasedV0SessionFormatCodec",
-      "targetCodec": "releasedV1SessionFormatCodec",
-      "targetHeaderValidator": "assertReleasedV1Header",
-      "targetRestorer": "restoreReleasedV1Artifact"
-    }
-  },
   "dependencies": {
     "@tomato/session-format": "workspace:*",
     "@tomato/util-time": "workspace:*",
@@ -49,5 +37,17 @@
   "devDependencies": {
     "@tomato/cordis": "workspace:~",
     "@tomato/session": "workspace:*"
+  },
+  "tomato": {
+    "sessionFormatMigration": {
+      "from": 0,
+      "to": 1,
+      "export": ".",
+      "migration": "sessionFormatV0ToV1",
+      "sourceCodec": "releasedV0SessionFormatCodec",
+      "targetCodec": "releasedV1SessionFormatCodec",
+      "targetHeaderValidator": "assertReleasedV1Header",
+      "targetRestorer": "restoreReleasedV1Artifact"
+    }
   }
 }

@@ -145,7 +145,13 @@ export const DOT_FIELD_PARAMS: DotFieldParams = {
   maxDpr: 2,
 }
 
-/** Resting grid centers for a box, or an empty grid when it cannot hold one dot. */
+/**
+ * Resting grid centers for a box, or an empty grid when it cannot hold one dot.
+ * @param width - field width in CSS pixels.
+ * @param height - field height in CSS pixels.
+ * @param params - dot-field geometry and interaction parameters.
+ * @returns resting dot states in row-major order.
+ */
 export function createDotGrid(
   width: number,
   height: number,
@@ -301,7 +307,10 @@ export function stepDots(
   return dots.some(dot => dot.phase !== 'idle')
 }
 
-/** Restore every dot to its resting grid center and idle phase. */
+/**
+ * Restore every dot to its resting grid center and idle phase.
+ * @param dots - dot states to reset in place.
+ */
 export function resetDots(dots: DotState[]): void {
   for (const dot of dots) resetDot(dot)
 }
@@ -336,7 +345,11 @@ export function proximityColor(distance: number, proximity: number, base: Rgba, 
   return blendRgba(base, active, 1 - distance / proximity)
 }
 
-/** Format a resolved color for a canvas fill style. */
+/**
+ * Format a resolved color for a canvas fill style.
+ * @param color - resolved color channels.
+ * @returns CSS `rgba()` string.
+ */
 export function cssRgba(color: Rgba): string {
   const alpha = Math.round(color.a * 1000) / 1000
   return `rgba(${Math.round(color.r)}, ${Math.round(color.g)}, ${Math.round(color.b)}, ${alpha})`

@@ -82,7 +82,7 @@ function styleInjectionModule(
  * Everything else under @tomato/* is either a module-table entry
  * (external) or a leak the purity gate rejects.
  */
-export const INLINE_SAFE = /^(?:@tomato\/(?:file-reference|session|llm|tools|brand|official-bundles|deque|output-retention|typert-protocol|util-crypto|util-values|util-workspace-path)(?:\/|$)|@tomato\/util-file-drag$|@tomato\/token-meter\/client$|@tomato\/native-command\/types$|@tomato\/host-open-in-app\/shared$|@tomato\/plugin-manager\/registry$|@tomato\/agent-preset-registry\/display$|@tomato\/api-workspace-controller\/default-workspace$|@tomato\/spill-policy\/notice$)/
+export const INLINE_SAFE = /^(?:@tomato\/(?:file-reference|session|llm|tools|branded|official-bundles|deque|output-retention|typert-protocol|util-crypto|util-values|util-workspace-path)(?:\/|$)|@tomato\/util-file-drag$|@tomato\/token-meter\/client$|@tomato\/native-command\/types$|@tomato\/host-open-in-app\/shared$|@tomato\/plugin-manager\/registry$|@tomato\/agent-preset-registry\/display$|@tomato\/api-workspace-controller\/default-workspace$|@tomato\/spill-policy\/notice$)/
 
 /**
  * Vendored framework libraries: rescoped into @tomato, so the gate below

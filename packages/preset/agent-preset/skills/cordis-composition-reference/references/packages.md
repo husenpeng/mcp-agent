@@ -461,8 +461,8 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@tomato/subagent-acp` | yes | Out-of-process ACP subagent backend: drives a child agent in a spawned subprocess over the Agent Client Protocol |
 | `@tomato/subagent-claude-code` | yes | One-shot Claude Code subagent provider over the official Agent SDK |
 | `@tomato/subagent-codex` | yes | One-shot Codex subagent provider over the official app-server protocol |
-| `@tomato/subagent-sdk` | yes | Out-of-process SDK subagent backend: drives a child Tomato Harness runtime subprocess over stdio JSON-RPC through the TypeScript SDK client |
 | `@tomato/subagent-fork-in-process` | yes | In-process fork subagent backend: runs a child agent seeded with a prefix of the parent's log |
+| `@tomato/subagent-sdk` | yes | Out-of-process SDK subagent backend: drives a child Tomato Harness runtime subprocess over stdio JSON-RPC through the TypeScript SDK client |
 | `@tomato/subagent-spawn-in-process` | yes | In-process spawn subagent backend: runs a fresh child agent on ctx.agents |
 | `@tomato/tool-subagent` | yes | Model-facing subagent delegation tool over the ctx.subagents seam |
 | `@tomato/tool-subagent-control` | no | Shared messaging, interruption, and child discovery tools for subagents |

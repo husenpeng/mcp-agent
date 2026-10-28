@@ -8,202 +8,202 @@ The @tomato/base bundle patch shared by the web, headless, sdk, and acp profiles
 ```mermaid
 flowchart LR
   cfg["packages/bundle/base/cordis.patch.yml<br/>cordis.yml"]
-  plugin_dsh_base_tool_plugin_manager["tool-plugin-manager<br/>@tomato/plugin-manager/tools"]
-  cfg --> plugin_dsh_base_tool_plugin_manager
-  plugin_dsh_base_plugin_manager["plugin-manager<br/>@tomato/plugin-manager"]
-  cfg --> plugin_dsh_base_plugin_manager
-  plugin_dsh_base_timer["timer<br/>@tomato/cordis-plugin-timer"]
-  cfg --> plugin_dsh_base_timer
-  plugin_dsh_base_hmr["hmr<br/>@tomato/hmr"]
-  cfg --> plugin_dsh_base_hmr
-  plugin_dsh_base_llm["llm<br/>@tomato/llm"]
-  cfg --> plugin_dsh_base_llm
-  plugin_dsh_base_deepseek_llm_api_extensions["deepseek-llm-api-extensions<br/>@tomato/deepseek-llm-api-extensions"]
-  cfg --> plugin_dsh_base_deepseek_llm_api_extensions
-  plugin_dsh_base_session["session<br/>@tomato/session"]
-  cfg --> plugin_dsh_base_session
-  plugin_dsh_base_session_log_deepseek["session-log-deepseek<br/>@tomato/session-log-deepseek"]
-  cfg --> plugin_dsh_base_session_log_deepseek
-  plugin_dsh_base_typert["typert<br/>@tomato/typert-registry"]
-  cfg --> plugin_dsh_base_typert
-  plugin_dsh_base_typert_loader["typert-loader<br/>@tomato/typert-loader"]
-  cfg --> plugin_dsh_base_typert_loader
-  plugin_dsh_base_typert_gateway["typert-gateway<br/>@tomato/api-gateway"]
-  cfg --> plugin_dsh_base_typert_gateway
-  plugin_dsh_base_remote_access["remote-access<br/>@tomato/api-remote-access"]
-  cfg --> plugin_dsh_base_remote_access
-  plugin_dsh_base_session_title["session-title<br/>@tomato/session-title"]
-  cfg --> plugin_dsh_base_session_title
-  plugin_dsh_base_session_title_llm["session-title-llm<br/>@tomato/session-title-first-prompt-llm"]
-  cfg --> plugin_dsh_base_session_title_llm
-  plugin_dsh_base_user_questions["user-questions<br/>@tomato/user-questions"]
-  cfg --> plugin_dsh_base_user_questions
-  plugin_dsh_base_agent["agent<br/>@tomato/agent"]
-  cfg --> plugin_dsh_base_agent
-  plugin_dsh_base_plugin_package_inventory_deepseek["plugin-package-inventory-deepseek<br/>@tomato/plugin-package-inventory-deepseek"]
-  cfg --> plugin_dsh_base_plugin_package_inventory_deepseek
-  plugin_dsh_base_agent_default_model["agent-default-model<br/>@tomato/agent-default-model"]
-  cfg --> plugin_dsh_base_agent_default_model
-  plugin_dsh_base_jobs["jobs<br/>@tomato/jobs-local"]
-  cfg --> plugin_dsh_base_jobs
-  plugin_dsh_base_llm_retry["llm-retry<br/>@tomato/llm-retry"]
-  cfg --> plugin_dsh_base_llm_retry
-  plugin_dsh_base_config_editor["config-editor<br/>@tomato/config-editor"]
-  cfg --> plugin_dsh_base_config_editor
-  plugin_dsh_base_settings["settings<br/>@tomato/settings"]
-  cfg --> plugin_dsh_base_settings
-  plugin_dsh_base_authorization["authorization<br/>@tomato/authorization"]
-  cfg --> plugin_dsh_base_authorization
-  plugin_dsh_base_deepseek_account["deepseek-account<br/>@tomato/deepseek-account-platform"]
-  cfg --> plugin_dsh_base_deepseek_account
-  plugin_dsh_base_credentials["credentials<br/>@tomato/credentials-local"]
-  cfg --> plugin_dsh_base_credentials
-  plugin_dsh_base_llm_pi_ai["llm-pi-ai<br/>@tomato/llm-pi-ai"]
-  cfg --> plugin_dsh_base_llm_pi_ai
-  plugin_dsh_base_session_persistence_jsonl["session-persistence-jsonl<br/>@tomato/session-persistence-jsonl"]
-  cfg --> plugin_dsh_base_session_persistence_jsonl
-  plugin_dsh_base_attachment_local["attachment-local<br/>@tomato/attachment-local"]
-  cfg --> plugin_dsh_base_attachment_local
-  plugin_dsh_base_session_query_sqlite["session-query-sqlite<br/>@tomato/session-query-sqlite"]
-  cfg --> plugin_dsh_base_session_query_sqlite
-  plugin_dsh_base_working_directory["working-directory<br/>@tomato/working-directory"]
-  cfg --> plugin_dsh_base_working_directory
-  plugin_dsh_base_tool_working_directory["tool-working-directory<br/>@tomato/tool-working-directory"]
-  cfg --> plugin_dsh_base_tool_working_directory
-  plugin_dsh_base_session_projection["session-projection<br/>@tomato/session-projection"]
-  cfg --> plugin_dsh_base_session_projection
-  plugin_dsh_base_storage["storage<br/>@tomato/storage"]
-  cfg --> plugin_dsh_base_storage
-  plugin_dsh_base_storage_json["storage-json<br/>@tomato/storage-json"]
-  cfg --> plugin_dsh_base_storage_json
-  plugin_dsh_base_storage_domain["storage-domain<br/>@tomato/storage-domain"]
-  cfg --> plugin_dsh_base_storage_domain
-  plugin_dsh_base_session_projection_cache["session-projection-cache<br/>@tomato/session-projection-cache"]
-  cfg --> plugin_dsh_base_session_projection_cache
-  plugin_dsh_base_otel["otel<br/>@tomato/otel"]
-  cfg --> plugin_dsh_base_otel
-  plugin_dsh_base_session_telemetry_otel["session-telemetry-otel<br/>@tomato/session-telemetry-otel"]
-  cfg --> plugin_dsh_base_session_telemetry_otel
-  plugin_dsh_base_tomato_telemetry["tomato-telemetry<br/>@tomato/telemetry"]
-  cfg --> plugin_dsh_base_tomato_telemetry
-  plugin_dsh_base_subprocess["subprocess<br/>@tomato/subprocess-local"]
-  cfg --> plugin_dsh_base_subprocess
-  plugin_dsh_base_sandbox["sandbox<br/>@tomato/sandbox-local"]
-  cfg --> plugin_dsh_base_sandbox
-  plugin_dsh_base_sandbox_policy["sandbox-policy<br/>@tomato/sandbox-policy"]
-  cfg --> plugin_dsh_base_sandbox_policy
-  plugin_dsh_base_bash_sandbox["bash-sandbox<br/>@tomato/bash-sandbox"]
-  cfg --> plugin_dsh_base_bash_sandbox
-  plugin_dsh_base_pwsh_sandbox["pwsh-sandbox<br/>@tomato/pwsh-sandbox"]
-  cfg --> plugin_dsh_base_pwsh_sandbox
-  plugin_dsh_base_approval["approval<br/>@tomato/user-approval"]
-  cfg --> plugin_dsh_base_approval
-  plugin_dsh_base_permission["permission<br/>@tomato/permission-presets"]
-  cfg --> plugin_dsh_base_permission
-  plugin_dsh_base_shell_env["shell-env<br/>@tomato/shell-env"]
-  cfg --> plugin_dsh_base_shell_env
-  plugin_dsh_base_tool_bash["tool-bash<br/>@tomato/tool-bash"]
-  cfg --> plugin_dsh_base_tool_bash
-  plugin_dsh_base_tool_pwsh["tool-pwsh<br/>@tomato/tool-pwsh"]
-  cfg --> plugin_dsh_base_tool_pwsh
-  plugin_dsh_base_tool_jobs["tool-jobs<br/>@tomato/tool-jobs"]
-  cfg --> plugin_dsh_base_tool_jobs
-  plugin_dsh_base_fs_observation_policy["fs-observation-policy<br/>@tomato/fs-observation-policy"]
-  cfg --> plugin_dsh_base_fs_observation_policy
-  plugin_dsh_base_tool_fs["tool-fs<br/>@tomato/tool-fs"]
-  cfg --> plugin_dsh_base_tool_fs
-  plugin_dsh_base_tool_fs_search["tool-fs-search<br/>@tomato/tool-fs-search"]
-  cfg --> plugin_dsh_base_tool_fs_search
-  plugin_dsh_base_agent_instructions["agent-instructions<br/>@tomato/agent-instructions"]
-  cfg --> plugin_dsh_base_agent_instructions
-  plugin_dsh_base_skill["skill<br/>@tomato/skill"]
-  cfg --> plugin_dsh_base_skill
-  plugin_dsh_base_skill_filesystem["skill-filesystem<br/>@tomato/skill-filesystem"]
-  cfg --> plugin_dsh_base_skill_filesystem
-  plugin_dsh_base_tool_skill["tool-skill<br/>@tomato/tool-skill"]
-  cfg --> plugin_dsh_base_tool_skill
-  plugin_dsh_base_commands["commands<br/>@tomato/commands"]
-  cfg --> plugin_dsh_base_commands
-  plugin_dsh_base_command_feedback["command-feedback<br/>@tomato/command-feedback"]
-  cfg --> plugin_dsh_base_command_feedback
-  plugin_dsh_base_goal["goal<br/>@tomato/goal"]
-  cfg --> plugin_dsh_base_goal
-  plugin_dsh_base_goal_round_driver["goal-round-driver<br/>@tomato/goal-round-driver"]
-  cfg --> plugin_dsh_base_goal_round_driver
-  plugin_dsh_base_command_goal["command-goal<br/>@tomato/command-goal"]
-  cfg --> plugin_dsh_base_command_goal
-  plugin_dsh_base_plan_mode["plan-mode<br/>@tomato/plan-mode"]
-  cfg --> plugin_dsh_base_plan_mode
-  plugin_dsh_base_token_meter["token-meter<br/>@tomato/token-meter"]
-  cfg --> plugin_dsh_base_token_meter
-  plugin_dsh_base_compaction_basic["compaction-basic<br/>@tomato/compaction-basic"]
-  cfg --> plugin_dsh_base_compaction_basic
-  plugin_dsh_base_command_compact["command-compact<br/>@tomato/command-compact"]
-  cfg --> plugin_dsh_base_command_compact
-  plugin_dsh_base_subagent["subagent<br/>@tomato/subagent"]
-  cfg --> plugin_dsh_base_subagent
-  plugin_dsh_base_subagent_spawn_in_process["subagent-spawn-in-process<br/>@tomato/subagent-spawn-in-process"]
-  cfg --> plugin_dsh_base_subagent_spawn_in_process
-  plugin_dsh_base_subagent_fork_in_process["subagent-fork-in-process<br/>@tomato/subagent-fork-in-process"]
-  cfg --> plugin_dsh_base_subagent_fork_in_process
-  plugin_dsh_base_tool_subagent_control["tool-subagent-control<br/>@tomato/tool-subagent-control"]
-  cfg --> plugin_dsh_base_tool_subagent_control
-  plugin_dsh_base_tool_subagent["tool-subagent<br/>@tomato/tool-subagent"]
-  cfg --> plugin_dsh_base_tool_subagent
-  plugin_dsh_base_tool_subagent_fork["tool-subagent-fork<br/>@tomato/tool-subagent"]
-  cfg --> plugin_dsh_base_tool_subagent_fork
-  plugin_dsh_base_ptc_runtime["ptc-runtime<br/>@tomato/ptc-runtime-node"]
-  cfg --> plugin_dsh_base_ptc_runtime
-  plugin_dsh_base_workflow_ptc["workflow-ptc<br/>@tomato/workflow-ptc"]
-  cfg --> plugin_dsh_base_workflow_ptc
-  plugin_dsh_base_tool_workflow["tool-workflow<br/>@tomato/tool-workflow"]
-  cfg --> plugin_dsh_base_tool_workflow
-  plugin_dsh_base_timeout_policy["timeout-policy<br/>@tomato/tool-call-timeout-policy"]
-  cfg --> plugin_dsh_base_timeout_policy
-  plugin_dsh_base_spill_local["spill-local<br/>@tomato/spill-local"]
-  cfg --> plugin_dsh_base_spill_local
-  plugin_dsh_base_spill_policy["spill-policy<br/>@tomato/spill-policy"]
-  cfg --> plugin_dsh_base_spill_policy
-  plugin_dsh_base_session_checkpoint_policy["session-checkpoint-policy<br/>@tomato/session-checkpoint-policy"]
-  cfg --> plugin_dsh_base_session_checkpoint_policy
-  plugin_dsh_base_tool_result_pruner["tool-result-pruner<br/>@tomato/compaction-tool-result-pruner"]
-  cfg --> plugin_dsh_base_tool_result_pruner
-  plugin_dsh_base_image_offload["image-offload<br/>@tomato/compaction-image-offload"]
-  cfg --> plugin_dsh_base_image_offload
-  plugin_dsh_base_tool_todo["tool-todo<br/>@tomato/tool-todo"]
-  cfg --> plugin_dsh_base_tool_todo
-  plugin_dsh_base_tool_goal["tool-goal<br/>@tomato/tool-goal"]
-  cfg --> plugin_dsh_base_tool_goal
-  plugin_dsh_base_repeat_tool_reminder["repeat-tool-reminder<br/>@tomato/repeat-tool-reminder"]
-  cfg --> plugin_dsh_base_repeat_tool_reminder
-  plugin_dsh_base_web["web<br/>@tomato/web"]
-  cfg --> plugin_dsh_base_web
-  plugin_dsh_base_web_search_deepseek["web-search-deepseek<br/>@tomato/web-search-deepseek"]
-  cfg --> plugin_dsh_base_web_search_deepseek
-  plugin_dsh_base_web_deepseek_api["web-deepseek-api<br/>@tomato/web-deepseek-api"]
-  cfg --> plugin_dsh_base_web_deepseek_api
-  plugin_dsh_base_web_fetch_http["web-fetch-http<br/>@tomato/web-fetch-http"]
-  cfg --> plugin_dsh_base_web_fetch_http
-  plugin_dsh_base_tool_web["tool-web<br/>@tomato/tool-web"]
-  cfg --> plugin_dsh_base_tool_web
-  plugin_dsh_base_mcp_resources["mcp-resources<br/>@tomato/mcp-resources"]
-  cfg --> plugin_dsh_base_mcp_resources
-  plugin_dsh_base_tools["tools<br/>@tomato/tools"]
-  cfg --> plugin_dsh_base_tools
-  plugin_dsh_base_tool_executor_native["tool-executor-native<br/>@tomato/tool-executor-native"]
-  cfg --> plugin_dsh_base_tool_executor_native
-  plugin_dsh_base_tool_executor_ptc["tool-executor-ptc<br/>@tomato/tool-executor-ptc"]
-  cfg --> plugin_dsh_base_tool_executor_ptc
-  plugin_dsh_base_system_prompt["system-prompt<br/>@tomato/system-prompt"]
-  cfg --> plugin_dsh_base_system_prompt
-  plugin_dsh_base_agent_loop["agent-loop<br/>@tomato/agent-loop"]
-  cfg --> plugin_dsh_base_agent_loop
-  plugin_dsh_base_fs_sandbox["fs-sandbox<br/>@tomato/fs-sandbox"]
-  cfg --> plugin_dsh_base_fs_sandbox
-  plugin_dsh_base_llm_deepseek["llm-deepseek<br/>@tomato/llm-deepseek-api-key"]
-  cfg --> plugin_dsh_base_llm_deepseek
-  plugin_dsh_base_llm_deepseek_account["llm-deepseek-account<br/>@tomato/llm-deepseek-account"]
-  cfg --> plugin_dsh_base_llm_deepseek_account
+  plugin_tomato_base_tool_plugin_manager["tool-plugin-manager<br/>@tomato/plugin-manager/tools"]
+  cfg --> plugin_tomato_base_tool_plugin_manager
+  plugin_tomato_base_plugin_manager["plugin-manager<br/>@tomato/plugin-manager"]
+  cfg --> plugin_tomato_base_plugin_manager
+  plugin_tomato_base_timer["timer<br/>@tomato/cordis-plugin-timer"]
+  cfg --> plugin_tomato_base_timer
+  plugin_tomato_base_hmr["hmr<br/>@tomato/hmr"]
+  cfg --> plugin_tomato_base_hmr
+  plugin_tomato_base_llm["llm<br/>@tomato/llm"]
+  cfg --> plugin_tomato_base_llm
+  plugin_tomato_base_deepseek_llm_api_extensions["deepseek-llm-api-extensions<br/>@tomato/deepseek-llm-api-extensions"]
+  cfg --> plugin_tomato_base_deepseek_llm_api_extensions
+  plugin_tomato_base_session["session<br/>@tomato/session"]
+  cfg --> plugin_tomato_base_session
+  plugin_tomato_base_session_log_deepseek["session-log-deepseek<br/>@tomato/session-log-deepseek"]
+  cfg --> plugin_tomato_base_session_log_deepseek
+  plugin_tomato_base_typert["typert<br/>@tomato/typert-registry"]
+  cfg --> plugin_tomato_base_typert
+  plugin_tomato_base_typert_loader["typert-loader<br/>@tomato/typert-loader"]
+  cfg --> plugin_tomato_base_typert_loader
+  plugin_tomato_base_typert_gateway["typert-gateway<br/>@tomato/api-gateway"]
+  cfg --> plugin_tomato_base_typert_gateway
+  plugin_tomato_base_remote_access["remote-access<br/>@tomato/api-remote-access"]
+  cfg --> plugin_tomato_base_remote_access
+  plugin_tomato_base_session_title["session-title<br/>@tomato/session-title"]
+  cfg --> plugin_tomato_base_session_title
+  plugin_tomato_base_session_title_llm["session-title-llm<br/>@tomato/session-title-first-prompt-llm"]
+  cfg --> plugin_tomato_base_session_title_llm
+  plugin_tomato_base_user_questions["user-questions<br/>@tomato/user-questions"]
+  cfg --> plugin_tomato_base_user_questions
+  plugin_tomato_base_agent["agent<br/>@tomato/agent"]
+  cfg --> plugin_tomato_base_agent
+  plugin_tomato_base_plugin_package_inventory_deepseek["plugin-package-inventory-deepseek<br/>@tomato/plugin-package-inventory-deepseek"]
+  cfg --> plugin_tomato_base_plugin_package_inventory_deepseek
+  plugin_tomato_base_agent_default_model["agent-default-model<br/>@tomato/agent-default-model"]
+  cfg --> plugin_tomato_base_agent_default_model
+  plugin_tomato_base_jobs["jobs<br/>@tomato/jobs-local"]
+  cfg --> plugin_tomato_base_jobs
+  plugin_tomato_base_llm_retry["llm-retry<br/>@tomato/llm-retry"]
+  cfg --> plugin_tomato_base_llm_retry
+  plugin_tomato_base_config_editor["config-editor<br/>@tomato/config-editor"]
+  cfg --> plugin_tomato_base_config_editor
+  plugin_tomato_base_settings["settings<br/>@tomato/settings"]
+  cfg --> plugin_tomato_base_settings
+  plugin_tomato_base_authorization["authorization<br/>@tomato/authorization"]
+  cfg --> plugin_tomato_base_authorization
+  plugin_tomato_base_deepseek_account["deepseek-account<br/>@tomato/deepseek-account-platform"]
+  cfg --> plugin_tomato_base_deepseek_account
+  plugin_tomato_base_credentials["credentials<br/>@tomato/credentials-local"]
+  cfg --> plugin_tomato_base_credentials
+  plugin_tomato_base_llm_pi_ai["llm-pi-ai<br/>@tomato/llm-pi-ai"]
+  cfg --> plugin_tomato_base_llm_pi_ai
+  plugin_tomato_base_session_persistence_jsonl["session-persistence-jsonl<br/>@tomato/session-persistence-jsonl"]
+  cfg --> plugin_tomato_base_session_persistence_jsonl
+  plugin_tomato_base_attachment_local["attachment-local<br/>@tomato/attachment-local"]
+  cfg --> plugin_tomato_base_attachment_local
+  plugin_tomato_base_session_query_sqlite["session-query-sqlite<br/>@tomato/session-query-sqlite"]
+  cfg --> plugin_tomato_base_session_query_sqlite
+  plugin_tomato_base_working_directory["working-directory<br/>@tomato/working-directory"]
+  cfg --> plugin_tomato_base_working_directory
+  plugin_tomato_base_tool_working_directory["tool-working-directory<br/>@tomato/tool-working-directory"]
+  cfg --> plugin_tomato_base_tool_working_directory
+  plugin_tomato_base_session_projection["session-projection<br/>@tomato/session-projection"]
+  cfg --> plugin_tomato_base_session_projection
+  plugin_tomato_base_storage["storage<br/>@tomato/storage"]
+  cfg --> plugin_tomato_base_storage
+  plugin_tomato_base_storage_json["storage-json<br/>@tomato/storage-json"]
+  cfg --> plugin_tomato_base_storage_json
+  plugin_tomato_base_storage_domain["storage-domain<br/>@tomato/storage-domain"]
+  cfg --> plugin_tomato_base_storage_domain
+  plugin_tomato_base_session_projection_cache["session-projection-cache<br/>@tomato/session-projection-cache"]
+  cfg --> plugin_tomato_base_session_projection_cache
+  plugin_tomato_base_otel["otel<br/>@tomato/otel"]
+  cfg --> plugin_tomato_base_otel
+  plugin_tomato_base_session_telemetry_otel["session-telemetry-otel<br/>@tomato/session-telemetry-otel"]
+  cfg --> plugin_tomato_base_session_telemetry_otel
+  plugin_tomato_base_tomato_telemetry["tomato-telemetry<br/>@tomato/telemetry"]
+  cfg --> plugin_tomato_base_tomato_telemetry
+  plugin_tomato_base_subprocess["subprocess<br/>@tomato/subprocess-local"]
+  cfg --> plugin_tomato_base_subprocess
+  plugin_tomato_base_sandbox["sandbox<br/>@tomato/sandbox-local"]
+  cfg --> plugin_tomato_base_sandbox
+  plugin_tomato_base_sandbox_policy["sandbox-policy<br/>@tomato/sandbox-policy"]
+  cfg --> plugin_tomato_base_sandbox_policy
+  plugin_tomato_base_bash_sandbox["bash-sandbox<br/>@tomato/bash-sandbox"]
+  cfg --> plugin_tomato_base_bash_sandbox
+  plugin_tomato_base_pwsh_sandbox["pwsh-sandbox<br/>@tomato/pwsh-sandbox"]
+  cfg --> plugin_tomato_base_pwsh_sandbox
+  plugin_tomato_base_approval["approval<br/>@tomato/user-approval"]
+  cfg --> plugin_tomato_base_approval
+  plugin_tomato_base_permission["permission<br/>@tomato/permission-presets"]
+  cfg --> plugin_tomato_base_permission
+  plugin_tomato_base_shell_env["shell-env<br/>@tomato/shell-env"]
+  cfg --> plugin_tomato_base_shell_env
+  plugin_tomato_base_tool_bash["tool-bash<br/>@tomato/tool-bash"]
+  cfg --> plugin_tomato_base_tool_bash
+  plugin_tomato_base_tool_pwsh["tool-pwsh<br/>@tomato/tool-pwsh"]
+  cfg --> plugin_tomato_base_tool_pwsh
+  plugin_tomato_base_tool_jobs["tool-jobs<br/>@tomato/tool-jobs"]
+  cfg --> plugin_tomato_base_tool_jobs
+  plugin_tomato_base_fs_observation_policy["fs-observation-policy<br/>@tomato/fs-observation-policy"]
+  cfg --> plugin_tomato_base_fs_observation_policy
+  plugin_tomato_base_tool_fs["tool-fs<br/>@tomato/tool-fs"]
+  cfg --> plugin_tomato_base_tool_fs
+  plugin_tomato_base_tool_fs_search["tool-fs-search<br/>@tomato/tool-fs-search"]
+  cfg --> plugin_tomato_base_tool_fs_search
+  plugin_tomato_base_agent_instructions["agent-instructions<br/>@tomato/agent-instructions"]
+  cfg --> plugin_tomato_base_agent_instructions
+  plugin_tomato_base_skill["skill<br/>@tomato/skill"]
+  cfg --> plugin_tomato_base_skill
+  plugin_tomato_base_skill_filesystem["skill-filesystem<br/>@tomato/skill-filesystem"]
+  cfg --> plugin_tomato_base_skill_filesystem
+  plugin_tomato_base_tool_skill["tool-skill<br/>@tomato/tool-skill"]
+  cfg --> plugin_tomato_base_tool_skill
+  plugin_tomato_base_commands["commands<br/>@tomato/commands"]
+  cfg --> plugin_tomato_base_commands
+  plugin_tomato_base_command_feedback["command-feedback<br/>@tomato/command-feedback"]
+  cfg --> plugin_tomato_base_command_feedback
+  plugin_tomato_base_goal["goal<br/>@tomato/goal"]
+  cfg --> plugin_tomato_base_goal
+  plugin_tomato_base_goal_round_driver["goal-round-driver<br/>@tomato/goal-round-driver"]
+  cfg --> plugin_tomato_base_goal_round_driver
+  plugin_tomato_base_command_goal["command-goal<br/>@tomato/command-goal"]
+  cfg --> plugin_tomato_base_command_goal
+  plugin_tomato_base_plan_mode["plan-mode<br/>@tomato/plan-mode"]
+  cfg --> plugin_tomato_base_plan_mode
+  plugin_tomato_base_token_meter["token-meter<br/>@tomato/token-meter"]
+  cfg --> plugin_tomato_base_token_meter
+  plugin_tomato_base_compaction_basic["compaction-basic<br/>@tomato/compaction-basic"]
+  cfg --> plugin_tomato_base_compaction_basic
+  plugin_tomato_base_command_compact["command-compact<br/>@tomato/command-compact"]
+  cfg --> plugin_tomato_base_command_compact
+  plugin_tomato_base_subagent["subagent<br/>@tomato/subagent"]
+  cfg --> plugin_tomato_base_subagent
+  plugin_tomato_base_subagent_spawn_in_process["subagent-spawn-in-process<br/>@tomato/subagent-spawn-in-process"]
+  cfg --> plugin_tomato_base_subagent_spawn_in_process
+  plugin_tomato_base_subagent_fork_in_process["subagent-fork-in-process<br/>@tomato/subagent-fork-in-process"]
+  cfg --> plugin_tomato_base_subagent_fork_in_process
+  plugin_tomato_base_tool_subagent_control["tool-subagent-control<br/>@tomato/tool-subagent-control"]
+  cfg --> plugin_tomato_base_tool_subagent_control
+  plugin_tomato_base_tool_subagent["tool-subagent<br/>@tomato/tool-subagent"]
+  cfg --> plugin_tomato_base_tool_subagent
+  plugin_tomato_base_tool_subagent_fork["tool-subagent-fork<br/>@tomato/tool-subagent"]
+  cfg --> plugin_tomato_base_tool_subagent_fork
+  plugin_tomato_base_ptc_runtime["ptc-runtime<br/>@tomato/ptc-runtime-node"]
+  cfg --> plugin_tomato_base_ptc_runtime
+  plugin_tomato_base_workflow_ptc["workflow-ptc<br/>@tomato/workflow-ptc"]
+  cfg --> plugin_tomato_base_workflow_ptc
+  plugin_tomato_base_tool_workflow["tool-workflow<br/>@tomato/tool-workflow"]
+  cfg --> plugin_tomato_base_tool_workflow
+  plugin_tomato_base_timeout_policy["timeout-policy<br/>@tomato/tool-call-timeout-policy"]
+  cfg --> plugin_tomato_base_timeout_policy
+  plugin_tomato_base_spill_local["spill-local<br/>@tomato/spill-local"]
+  cfg --> plugin_tomato_base_spill_local
+  plugin_tomato_base_spill_policy["spill-policy<br/>@tomato/spill-policy"]
+  cfg --> plugin_tomato_base_spill_policy
+  plugin_tomato_base_session_checkpoint_policy["session-checkpoint-policy<br/>@tomato/session-checkpoint-policy"]
+  cfg --> plugin_tomato_base_session_checkpoint_policy
+  plugin_tomato_base_tool_result_pruner["tool-result-pruner<br/>@tomato/compaction-tool-result-pruner"]
+  cfg --> plugin_tomato_base_tool_result_pruner
+  plugin_tomato_base_image_offload["image-offload<br/>@tomato/compaction-image-offload"]
+  cfg --> plugin_tomato_base_image_offload
+  plugin_tomato_base_tool_todo["tool-todo<br/>@tomato/tool-todo"]
+  cfg --> plugin_tomato_base_tool_todo
+  plugin_tomato_base_tool_goal["tool-goal<br/>@tomato/tool-goal"]
+  cfg --> plugin_tomato_base_tool_goal
+  plugin_tomato_base_repeat_tool_reminder["repeat-tool-reminder<br/>@tomato/repeat-tool-reminder"]
+  cfg --> plugin_tomato_base_repeat_tool_reminder
+  plugin_tomato_base_web["web<br/>@tomato/web"]
+  cfg --> plugin_tomato_base_web
+  plugin_tomato_base_web_search_deepseek["web-search-deepseek<br/>@tomato/web-search-deepseek"]
+  cfg --> plugin_tomato_base_web_search_deepseek
+  plugin_tomato_base_web_deepseek_api["web-deepseek-api<br/>@tomato/web-deepseek-api"]
+  cfg --> plugin_tomato_base_web_deepseek_api
+  plugin_tomato_base_web_fetch_http["web-fetch-http<br/>@tomato/web-fetch-http"]
+  cfg --> plugin_tomato_base_web_fetch_http
+  plugin_tomato_base_tool_web["tool-web<br/>@tomato/tool-web"]
+  cfg --> plugin_tomato_base_tool_web
+  plugin_tomato_base_mcp_resources["mcp-resources<br/>@tomato/mcp-resources"]
+  cfg --> plugin_tomato_base_mcp_resources
+  plugin_tomato_base_tools["tools<br/>@tomato/tools"]
+  cfg --> plugin_tomato_base_tools
+  plugin_tomato_base_tool_executor_native["tool-executor-native<br/>@tomato/tool-executor-native"]
+  cfg --> plugin_tomato_base_tool_executor_native
+  plugin_tomato_base_tool_executor_ptc["tool-executor-ptc<br/>@tomato/tool-executor-ptc"]
+  cfg --> plugin_tomato_base_tool_executor_ptc
+  plugin_tomato_base_system_prompt["system-prompt<br/>@tomato/system-prompt"]
+  cfg --> plugin_tomato_base_system_prompt
+  plugin_tomato_base_agent_loop["agent-loop<br/>@tomato/agent-loop"]
+  cfg --> plugin_tomato_base_agent_loop
+  plugin_tomato_base_fs_sandbox["fs-sandbox<br/>@tomato/fs-sandbox"]
+  cfg --> plugin_tomato_base_fs_sandbox
+  plugin_tomato_base_llm_deepseek["llm-deepseek<br/>@tomato/llm-deepseek-api-key"]
+  cfg --> plugin_tomato_base_llm_deepseek
+  plugin_tomato_base_llm_deepseek_account["llm-deepseek-account<br/>@tomato/llm-deepseek-account"]
+  cfg --> plugin_tomato_base_llm_deepseek_account
 ```
 
 | Plugin id | Package / module |

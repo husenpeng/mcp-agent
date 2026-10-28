@@ -10,7 +10,7 @@ Both language versions of this file are GENERATED from source (`scripts/gen-conf
 Each package entry labels its data with three identifiers: `inject` lists the service keys the plugin injects, so its `cordis.yml` tree must also load providers for those services; `refs` lists the referenced types that are not pasted here; `source` links the file that declares the config. Scope is the harness tier (`packages/`); the vendored cordis plugins a config tree may also load (the console logger, …) are pinned upstream source ([vendoring policy](../vendor/README.md)) and not catalogued here.
 
 <!-- BEGIN GENERATED config-catalog:@tomato/acp -->
-<a id="deepseek-aidsh-acp"></a>
+<a id="tomatoacp"></a>
 
 ## `@tomato/acp`
 
@@ -34,7 +34,7 @@ export interface AcpConfig {
 <!-- END GENERATED config-catalog:@tomato/acp -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/action-cards -->
-<a id="deepseek-aidsh-action-cards"></a>
+<a id="tomatoaction-cards"></a>
 
 ## `@tomato/action-cards`
 
@@ -49,7 +49,7 @@ export type Config = z.infer<typeof Config>
 <!-- END GENERATED config-catalog:@tomato/action-cards -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/agent-default-model -->
-<a id="deepseek-aidsh-agent-default-model"></a>
+<a id="tomatoagent-default-model"></a>
 
 ## `@tomato/agent-default-model`
 
@@ -70,7 +70,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/agent-default-model -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/agent-instructions -->
-<a id="deepseek-aidsh-agent-instructions"></a>
+<a id="tomatoagent-instructions"></a>
 
 ## `@tomato/agent-instructions`
 
@@ -105,7 +105,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/agent-instructions -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/agent-loop -->
-<a id="deepseek-aidsh-agent-loop"></a>
+<a id="tomatoagent-loop"></a>
 
 ## `@tomato/agent-loop`
 
@@ -137,7 +137,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/agent-loop -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/agent-preset -->
-<a id="deepseek-aidsh-agent-preset"></a>
+<a id="tomatoagent-preset"></a>
 
 ## `@tomato/agent-preset`
 
@@ -152,7 +152,7 @@ export type Config = PresetDefinition
 <!-- END GENERATED config-catalog:@tomato/agent-preset -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/agent-preset-registry -->
-<a id="deepseek-aidsh-agent-preset-registry"></a>
+<a id="tomatoagent-preset-registry"></a>
 
 ## `@tomato/agent-preset-registry`
 
@@ -172,7 +172,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/agent-preset-registry -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/agent-tool-presentation -->
-<a id="deepseek-aidsh-agent-tool-presentation"></a>
+<a id="tomatoagent-tool-presentation"></a>
 
 ## `@tomato/agent-tool-presentation`
 
@@ -198,7 +198,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/agent-tool-presentation -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/api-gateway -->
-<a id="deepseek-aidsh-api-gateway"></a>
+<a id="tomatoapi-gateway"></a>
 
 ## `@tomato/api-gateway`
 
@@ -219,7 +219,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/api-gateway -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/api-job-controller -->
-<a id="deepseek-aidsh-api-job-controller"></a>
+<a id="tomatoapi-job-controller"></a>
 
 ## `@tomato/api-job-controller`
 
@@ -238,7 +238,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/api-job-controller -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/api-session-controller -->
-<a id="deepseek-aidsh-api-session-controller"></a>
+<a id="tomatoapi-session-controller"></a>
 
 ## `@tomato/api-session-controller`
 
@@ -257,7 +257,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/api-session-controller -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/api-settings-controller -->
-<a id="deepseek-aidsh-api-settings-controller"></a>
+<a id="tomatoapi-settings-controller"></a>
 
 ## `@tomato/api-settings-controller`
 
@@ -273,7 +273,7 @@ export interface SettingsControllerInternals {
 <!-- END GENERATED config-catalog:@tomato/api-settings-controller -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/api-terminal-controller -->
-<a id="deepseek-aidsh-api-terminal-controller"></a>
+<a id="tomatoapi-terminal-controller"></a>
 
 ## `@tomato/api-terminal-controller`
 
@@ -319,7 +319,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/api-terminal-controller -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/api-workspace-controller -->
-<a id="deepseek-aidsh-api-workspace-controller"></a>
+<a id="tomatoapi-workspace-controller"></a>
 
 ## `@tomato/api-workspace-controller`
 
@@ -338,7 +338,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/api-workspace-controller -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/api-workspace-files -->
-<a id="deepseek-aidsh-api-workspace-files"></a>
+<a id="tomatoapi-workspace-files"></a>
 
 ## `@tomato/api-workspace-files`
 
@@ -367,7 +367,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/api-workspace-files -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/attachment-local -->
-<a id="deepseek-aidsh-attachment-local"></a>
+<a id="tomatoattachment-local"></a>
 
 ## `@tomato/attachment-local`
 
@@ -404,7 +404,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/attachment-local -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/bash-local -->
-<a id="deepseek-aidsh-bash-local"></a>
+<a id="tomatobash-local"></a>
 
 ## `@tomato/bash-local`
 
@@ -432,12 +432,12 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/bash-local -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/bash-sandbox -->
-<a id="deepseek-aidsh-bash-sandbox"></a>
+<a id="tomatobash-sandbox"></a>
 
 ## `@tomato/bash-sandbox`
 
 - `inject`: `subprocess` · `sandbox` · `sandboxPolicy`
-- `refs`: [`LocalConfig`](#deepseek-aidsh-bash-local)
+- `refs`: [`LocalConfig`](#tomatobash-local)
 - `source`: [`packages/shell/bash-sandbox/src/index.ts:36`](../packages/shell/bash-sandbox/src/index.ts)
 
 ```ts config-catalog
@@ -453,7 +453,7 @@ export type Config = LocalConfig
 <!-- END GENERATED config-catalog:@tomato/bash-sandbox -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/client-connection -->
-<a id="deepseek-aidsh-client-connection"></a>
+<a id="tomatoclient-connection"></a>
 
 ## `@tomato/client-connection`
 
@@ -498,7 +498,7 @@ export interface ConnectionRecoveryConfig {
 <!-- END GENERATED config-catalog:@tomato/client-connection -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/client-hmr -->
-<a id="deepseek-aidsh-client-hmr"></a>
+<a id="tomatoclient-hmr"></a>
 
 ## `@tomato/client-hmr`
 
@@ -515,7 +515,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/client-hmr -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/client-product-analytics -->
-<a id="deepseek-aidsh-client-product-analytics"></a>
+<a id="tomatoclient-product-analytics"></a>
 
 ## `@tomato/client-product-analytics`
 
@@ -539,7 +539,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/client-product-analytics -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/client-shortcuts -->
-<a id="deepseek-aidsh-client-shortcuts"></a>
+<a id="tomatoclient-shortcuts"></a>
 
 ## `@tomato/client-shortcuts`
 
@@ -555,7 +555,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/client-shortcuts -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/client-ui-plugin-manager -->
-<a id="deepseek-aidsh-client-ui-plugin-manager"></a>
+<a id="tomatoclient-ui-plugin-manager"></a>
 
 ## `@tomato/client-ui-plugin-manager`
 
@@ -575,7 +575,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/client-ui-plugin-manager -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/client-ui-settings-account -->
-<a id="deepseek-aidsh-client-ui-settings-account"></a>
+<a id="tomatoclient-ui-settings-account"></a>
 
 ## `@tomato/client-ui-settings-account`
 
@@ -625,7 +625,7 @@ export type OnboardingProcess = 'compact' | 'standard' | 'detailed'
 <!-- END GENERATED config-catalog:@tomato/client-ui-settings-account -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/client-ui-settings-models -->
-<a id="deepseek-aidsh-client-ui-settings-models"></a>
+<a id="tomatoclient-ui-settings-models"></a>
 
 ## `@tomato/client-ui-settings-models`
 
@@ -641,7 +641,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/client-ui-settings-models -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/client-ui-sidebar-documentpreview -->
-<a id="deepseek-aidsh-client-ui-sidebar-documentpreview"></a>
+<a id="tomatoclient-ui-sidebar-documentpreview"></a>
 
 ## `@tomato/client-ui-sidebar-documentpreview`
 
@@ -675,7 +675,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/client-ui-sidebar-documentpreview -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/client-ui-theme -->
-<a id="deepseek-aidsh-client-ui-theme"></a>
+<a id="tomatoclient-ui-theme"></a>
 
 ## `@tomato/client-ui-theme`
 
@@ -707,7 +707,7 @@ export type ThemePreference = typeof THEME_PREFERENCES[number]
 <!-- END GENERATED config-catalog:@tomato/client-ui-theme -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/compaction-basic -->
-<a id="deepseek-aidsh-compaction-basic"></a>
+<a id="tomatocompaction-basic"></a>
 
 ## `@tomato/compaction-basic`
 
@@ -756,7 +756,7 @@ export interface ModelCompactPolicyConfig extends CompactionPolicyConfig {
 <!-- END GENERATED config-catalog:@tomato/compaction-basic -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/compaction-tool-result-pruner -->
-<a id="deepseek-aidsh-compaction-tool-result-pruner"></a>
+<a id="tomatocompaction-tool-result-pruner"></a>
 
 ## `@tomato/compaction-tool-result-pruner`
 
@@ -777,7 +777,7 @@ export interface ToolResultPruneConfig {
 <!-- END GENERATED config-catalog:@tomato/compaction-tool-result-pruner -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/cordis-host-runner -->
-<a id="deepseek-aidsh-cordis-host-runner"></a>
+<a id="tomatocordis-host-runner"></a>
 
 ## `@tomato/cordis-host-runner`
 
@@ -796,7 +796,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/cordis-host-runner -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/credentials-local -->
-<a id="deepseek-aidsh-credentials-local"></a>
+<a id="tomatocredentials-local"></a>
 
 ## `@tomato/credentials-local`
 
@@ -818,7 +818,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/credentials-local -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/deepseek-account-platform -->
-<a id="deepseek-aidsh-deepseek-account-platform"></a>
+<a id="tomatodeepseek-account-platform"></a>
 
 ## `@tomato/deepseek-account-platform`
 
@@ -859,7 +859,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/deepseek-account-platform -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-agent-team -->
-<a id="deepseek-aidsh-experimental-agent-team"></a>
+<a id="tomatoexperimental-agent-team"></a>
 
 ## `@tomato/experimental-agent-team`
 
@@ -882,7 +882,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/experimental-agent-team -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-api-speech-to-text -->
-<a id="deepseek-aidsh-experimental-api-speech-to-text"></a>
+<a id="tomatoexperimental-api-speech-to-text"></a>
 
 ## `@tomato/experimental-api-speech-to-text`
 
@@ -901,7 +901,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/experimental-api-speech-to-text -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-browser-use-chrome-devtools-mcp -->
-<a id="deepseek-aidsh-experimental-browser-use-chrome-devtools-mcp"></a>
+<a id="tomatoexperimental-browser-use-chrome-devtools-mcp"></a>
 
 ## `@tomato/experimental-browser-use-chrome-devtools-mcp`
 
@@ -916,7 +916,7 @@ export type Config = BrowserMcpConfig
 <!-- END GENERATED config-catalog:@tomato/experimental-browser-use-chrome-devtools-mcp -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-browser-use-playwright-mcp -->
-<a id="deepseek-aidsh-experimental-browser-use-playwright-mcp"></a>
+<a id="tomatoexperimental-browser-use-playwright-mcp"></a>
 
 ## `@tomato/experimental-browser-use-playwright-mcp`
 
@@ -931,7 +931,7 @@ export type Config = BrowserMcpConfig
 <!-- END GENERATED config-catalog:@tomato/experimental-browser-use-playwright-mcp -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-browser-use-stagehand-native -->
-<a id="deepseek-aidsh-experimental-browser-use-stagehand-native"></a>
+<a id="tomatoexperimental-browser-use-stagehand-native"></a>
 
 ## `@tomato/experimental-browser-use-stagehand-native`
 
@@ -973,7 +973,7 @@ export interface StagehandModelConfig {
 <!-- END GENERATED config-catalog:@tomato/experimental-browser-use-stagehand-native -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-claude-code-mods -->
-<a id="deepseek-aidsh-experimental-claude-code-mods"></a>
+<a id="tomatoexperimental-claude-code-mods"></a>
 
 ## `@tomato/experimental-claude-code-mods`
 
@@ -1000,7 +1000,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/experimental-claude-code-mods -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-client-ui-cot-translation -->
-<a id="deepseek-aidsh-experimental-client-ui-cot-translation"></a>
+<a id="tomatoexperimental-client-ui-cot-translation"></a>
 
 ## `@tomato/experimental-client-ui-cot-translation`
 
@@ -1028,7 +1028,7 @@ export interface CotTranslationPreferences {
 <!-- END GENERATED config-catalog:@tomato/experimental-client-ui-cot-translation -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-computer-use-cua-driver-mcp -->
-<a id="deepseek-aidsh-experimental-computer-use-cua-driver-mcp"></a>
+<a id="tomatoexperimental-computer-use-cua-driver-mcp"></a>
 
 ## `@tomato/experimental-computer-use-cua-driver-mcp`
 
@@ -1052,7 +1052,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/experimental-computer-use-cua-driver-mcp -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-cua-macos -->
-<a id="deepseek-aidsh-experimental-cua-macos"></a>
+<a id="tomatoexperimental-cua-macos"></a>
 
 ## `@tomato/experimental-cua-macos`
 
@@ -1067,7 +1067,7 @@ export type Config = CuaConfig
 <!-- END GENERATED config-catalog:@tomato/experimental-cua-macos -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-inspector -->
-<a id="deepseek-aidsh-experimental-inspector"></a>
+<a id="tomatoexperimental-inspector"></a>
 
 ## `@tomato/experimental-inspector`
 
@@ -1136,7 +1136,7 @@ export interface InspectorOptions {
 <!-- END GENERATED config-catalog:@tomato/experimental-inspector -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-ptc-runtime-python -->
-<a id="deepseek-aidsh-experimental-ptc-runtime-python"></a>
+<a id="tomatoexperimental-ptc-runtime-python"></a>
 
 ## `@tomato/experimental-ptc-runtime-python`
 
@@ -1205,7 +1205,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/experimental-ptc-runtime-python -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-speech-to-text -->
-<a id="deepseek-aidsh-experimental-speech-to-text"></a>
+<a id="tomatoexperimental-speech-to-text"></a>
 
 ## `@tomato/experimental-speech-to-text`
 
@@ -1224,7 +1224,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/experimental-speech-to-text -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-speech-to-text-sensevoice -->
-<a id="deepseek-aidsh-experimental-speech-to-text-sensevoice"></a>
+<a id="tomatoexperimental-speech-to-text-sensevoice"></a>
 
 ## `@tomato/experimental-speech-to-text-sensevoice`
 
@@ -1285,7 +1285,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/experimental-speech-to-text-sensevoice -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-subagent-oar -->
-<a id="deepseek-aidsh-experimental-subagent-oar"></a>
+<a id="tomatoexperimental-subagent-oar"></a>
 
 ## `@tomato/experimental-subagent-oar`
 
@@ -1314,7 +1314,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/experimental-subagent-oar -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-tool-agent-team -->
-<a id="deepseek-aidsh-experimental-tool-agent-team"></a>
+<a id="tomatoexperimental-tool-agent-team"></a>
 
 ## `@tomato/experimental-tool-agent-team`
 
@@ -1335,7 +1335,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/experimental-tool-agent-team -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-tool-subagent-oar -->
-<a id="deepseek-aidsh-experimental-tool-subagent-oar"></a>
+<a id="tomatoexperimental-tool-subagent-oar"></a>
 
 ## `@tomato/experimental-tool-subagent-oar`
 
@@ -1354,7 +1354,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/experimental-tool-subagent-oar -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-translator -->
-<a id="deepseek-aidsh-experimental-translator"></a>
+<a id="tomatoexperimental-translator"></a>
 
 ## `@tomato/experimental-translator`
 
@@ -1393,7 +1393,7 @@ export type PaidTranslationProvider = 'deepseek-account' | 'deepseek-official'
 <!-- END GENERATED config-catalog:@tomato/experimental-translator -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-worktree -->
-<a id="deepseek-aidsh-experimental-worktree"></a>
+<a id="tomatoexperimental-worktree"></a>
 
 ## `@tomato/experimental-worktree`
 
@@ -1422,7 +1422,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/experimental-worktree -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/file-reference-local -->
-<a id="deepseek-aidsh-file-reference-local"></a>
+<a id="tomatofile-reference-local"></a>
 
 ## `@tomato/file-reference-local`
 
@@ -1443,7 +1443,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/file-reference-local -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/fs-local -->
-<a id="deepseek-aidsh-fs-local"></a>
+<a id="tomatofs-local"></a>
 
 ## `@tomato/fs-local`
 
@@ -1464,12 +1464,12 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/fs-local -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/fs-sandbox -->
-<a id="deepseek-aidsh-fs-sandbox"></a>
+<a id="tomatofs-sandbox"></a>
 
 ## `@tomato/fs-sandbox`
 
 - `inject`: `sandboxPolicy`
-- `refs`: [`LocalConfig`](#deepseek-aidsh-fs-local)
+- `refs`: [`LocalConfig`](#tomatofs-local)
 - `source`: [`packages/fs/fs-sandbox/src/index.ts:45`](../packages/fs/fs-sandbox/src/index.ts)
 
 ```ts config-catalog
@@ -1483,8 +1483,57 @@ export type Config = LocalConfig
 ```
 <!-- END GENERATED config-catalog:@tomato/fs-sandbox -->
 
+<!-- BEGIN GENERATED config-catalog:@tomato/gateway -->
+<a id="tomatogateway"></a>
+
+## `@tomato/gateway`
+
+- `inject`: `webServer` · `connection`
+- `source`: [`packages/tomato/gateway/src/config.ts:24`](../packages/tomato/gateway/src/config.ts)
+
+```ts config-catalog
+/** Validated gateway configuration. */
+export interface Config {
+  /** auth_service base URL; empty keeps login unavailable. */
+  authServiceUrl: string
+  /** Company Web BFF base URL; empty keeps login unavailable. */
+  companyWebUrl: string
+  /** Browser-facing service table, keyed by the `service` path segment. */
+  services: Record<string, ServiceEntry>
+  /** Session-verification timeout, in milliseconds. */
+  verifyTimeoutMs: number
+  /** Generic upstream request timeout, in milliseconds. */
+  requestTimeoutMs: number
+  /** Buffered-body cap for services that inject a user id into JSON. */
+  maxRequestBodyBytes: number
+  /** Lifetime of one login attempt, in milliseconds. */
+  stateTtlMs: number
+}
+
+/** One browser-facing service the gateway may forward to. */
+export interface ServiceEntry {
+  /** Absolute HTTP(S) base URL; the browser never supplies a host. */
+  baseURL: string
+  /** Optional verified-user injection; the internal header is always set. */
+  userIdInjection?: UserIdInjection
+  /** Per-request timeout; omitted uses the gateway timeout. */
+  timeoutMs?: number
+  /** Buffered-body cap for body injection; omitted uses the gateway cap. */
+  maxRequestBodyBytes?: number
+}
+
+/** Where the gateway adds the verified user id to an upstream request. */
+export type UserIdInjection = 'query' | 'body' | {
+  /** Request field carrying the id. */
+  readonly in: 'query' | 'body'
+  /** Parameter name the upstream reads. */
+  readonly name: string
+}
+```
+<!-- END GENERATED config-catalog:@tomato/gateway -->
+
 <!-- BEGIN GENERATED config-catalog:@tomato/goal -->
-<a id="deepseek-aidsh-goal"></a>
+<a id="tomatogoal"></a>
 
 ## `@tomato/goal`
 
@@ -1501,7 +1550,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/goal -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/headless -->
-<a id="deepseek-aidsh-headless"></a>
+<a id="tomatoheadless"></a>
 
 ## `@tomato/headless`
 
@@ -1527,7 +1576,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/headless -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/hmr -->
-<a id="deepseek-aidsh-hmr"></a>
+<a id="tomatohmr"></a>
 
 ## `@tomato/hmr`
 
@@ -1550,7 +1599,7 @@ export interface HmrConfig extends ChokidarOptions {
 <!-- END GENERATED config-catalog:@tomato/hmr -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/hooks-claude-code -->
-<a id="deepseek-aidsh-hooks-claude-code"></a>
+<a id="tomatohooks-claude-code"></a>
 
 ## `@tomato/hooks-claude-code`
 
@@ -1589,7 +1638,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/hooks-claude-code -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/hooks-codex -->
-<a id="deepseek-aidsh-hooks-codex"></a>
+<a id="tomatohooks-codex"></a>
 
 ## `@tomato/hooks-codex`
 
@@ -1617,7 +1666,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/hooks-codex -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/host-directory-picker-browse -->
-<a id="deepseek-aidsh-host-directory-picker-browse"></a>
+<a id="tomatohost-directory-picker-browse"></a>
 
 ## `@tomato/host-directory-picker-browse`
 
@@ -1633,7 +1682,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/host-directory-picker-browse -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/host-frontend-static -->
-<a id="deepseek-aidsh-host-frontend-static"></a>
+<a id="tomatohost-frontend-static"></a>
 
 ## `@tomato/host-frontend-static`
 
@@ -1650,7 +1699,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/host-frontend-static -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/host-open-in-app -->
-<a id="deepseek-aidsh-host-open-in-app"></a>
+<a id="tomatohost-open-in-app"></a>
 
 ## `@tomato/host-open-in-app`
 
@@ -1682,7 +1731,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/host-open-in-app -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/host-product-telemetry-otel -->
-<a id="deepseek-aidsh-host-product-telemetry-otel"></a>
+<a id="tomatohost-product-telemetry-otel"></a>
 
 ## `@tomato/host-product-telemetry-otel`
 
@@ -1719,7 +1768,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/host-product-telemetry-otel -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/host-webserver -->
-<a id="deepseek-aidsh-host-webserver"></a>
+<a id="tomatohost-webserver"></a>
 
 ## `@tomato/host-webserver`
 
@@ -1772,7 +1821,7 @@ export interface TlsConfig {
 <!-- END GENERATED config-catalog:@tomato/host-webserver -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/jobs-local -->
-<a id="deepseek-aidsh-jobs-local"></a>
+<a id="tomatojobs-local"></a>
 
 ## `@tomato/jobs-local`
 
@@ -1801,7 +1850,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/jobs-local -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/llm-deepseek-account -->
-<a id="deepseek-aidsh-llm-deepseek-account"></a>
+<a id="tomatollm-deepseek-account"></a>
 
 ## `@tomato/llm-deepseek-account`
 
@@ -1819,7 +1868,7 @@ export interface Config extends Omit<ProtocolConfig, 'models'>, ModelListingConf
 <!-- END GENERATED config-catalog:@tomato/llm-deepseek-account -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/llm-deepseek-api-key -->
-<a id="deepseek-aidsh-llm-deepseek-api-key"></a>
+<a id="tomatollm-deepseek-api-key"></a>
 
 ## `@tomato/llm-deepseek-api-key`
 
@@ -1837,7 +1886,7 @@ export interface Config extends ProtocolConfig, ModelListingConfig {
 <!-- END GENERATED config-catalog:@tomato/llm-deepseek-api-key -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/llm-pi-ai -->
-<a id="deepseek-aidsh-llm-pi-ai"></a>
+<a id="tomatollm-pi-ai"></a>
 
 ## `@tomato/llm-pi-ai`
 
@@ -2112,7 +2161,7 @@ export type PiAiThinkingTokenBudgetField = NonNullable<OpenAICompletionsCompat['
 <!-- END GENERATED config-catalog:@tomato/llm-pi-ai -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/llm-replay -->
-<a id="deepseek-aidsh-llm-replay"></a>
+<a id="tomatollm-replay"></a>
 
 ## `@tomato/llm-replay`
 
@@ -2193,7 +2242,7 @@ export interface ReplayModelConfig {
 <!-- END GENERATED config-catalog:@tomato/llm-replay -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/llm-retry -->
-<a id="deepseek-aidsh-llm-retry"></a>
+<a id="tomatollm-retry"></a>
 
 ## `@tomato/llm-retry`
 
@@ -2207,7 +2256,7 @@ export type Config = Readonly<Record<string, never>>
 <!-- END GENERATED config-catalog:@tomato/llm-retry -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/lsp-stdio -->
-<a id="deepseek-aidsh-lsp-stdio"></a>
+<a id="tomatolsp-stdio"></a>
 
 ## `@tomato/lsp-stdio`
 
@@ -2250,7 +2299,7 @@ export interface LspLocalServerConfig {
 <!-- END GENERATED config-catalog:@tomato/lsp-stdio -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/mcp-client -->
-<a id="deepseek-aidsh-mcp-client"></a>
+<a id="tomatomcp-client"></a>
 
 ## `@tomato/mcp-client`
 
@@ -2328,7 +2377,7 @@ export interface ReconnectConfig {
 <!-- END GENERATED config-catalog:@tomato/mcp-client -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/message-feedback -->
-<a id="deepseek-aidsh-message-feedback"></a>
+<a id="tomatomessage-feedback"></a>
 
 ## `@tomato/message-feedback`
 
@@ -2345,7 +2394,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/message-feedback -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/office-to-pdf -->
-<a id="deepseek-aidsh-office-to-pdf"></a>
+<a id="tomatooffice-to-pdf"></a>
 
 ## `@tomato/office-to-pdf`
 
@@ -2397,7 +2446,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/office-to-pdf -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/permission-presets -->
-<a id="deepseek-aidsh-permission-presets"></a>
+<a id="tomatopermission-presets"></a>
 
 ## `@tomato/permission-presets`
 
@@ -2437,7 +2486,7 @@ export interface PresetSpec {
 <!-- END GENERATED config-catalog:@tomato/permission-presets -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/persona -->
-<a id="deepseek-aidsh-persona"></a>
+<a id="tomatopersona"></a>
 
 ## `@tomato/persona`
 
@@ -2467,7 +2516,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/persona -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/plan-mode -->
-<a id="deepseek-aidsh-plan-mode"></a>
+<a id="tomatoplan-mode"></a>
 
 ## `@tomato/plan-mode`
 
@@ -2484,7 +2533,7 @@ export interface PlanModeConfig {
 <!-- END GENERATED config-catalog:@tomato/plan-mode -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/plugin-manager -->
-<a id="deepseek-aidsh-plugin-manager"></a>
+<a id="tomatoplugin-manager"></a>
 
 ## `@tomato/plugin-manager`
 
@@ -2534,7 +2583,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/plugin-manager -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/plugin-market -->
-<a id="deepseek-aidsh-plugin-market"></a>
+<a id="tomatoplugin-market"></a>
 
 ## `@tomato/plugin-market`
 
@@ -2574,7 +2623,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/plugin-market -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/plugin-package-inventory-deepseek -->
-<a id="deepseek-aidsh-plugin-package-inventory-deepseek"></a>
+<a id="tomatoplugin-package-inventory-deepseek"></a>
 
 ## `@tomato/plugin-package-inventory-deepseek`
 
@@ -2591,7 +2640,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/plugin-package-inventory-deepseek -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/ptc-runtime-node -->
-<a id="deepseek-aidsh-ptc-runtime-node"></a>
+<a id="tomatoptc-runtime-node"></a>
 
 ## `@tomato/ptc-runtime-node`
 
@@ -2639,7 +2688,7 @@ export type LaunchConfig = {
 <!-- END GENERATED config-catalog:@tomato/ptc-runtime-node -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/pwsh-local -->
-<a id="deepseek-aidsh-pwsh-local"></a>
+<a id="tomatopwsh-local"></a>
 
 ## `@tomato/pwsh-local`
 
@@ -2674,12 +2723,12 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/pwsh-local -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/pwsh-sandbox -->
-<a id="deepseek-aidsh-pwsh-sandbox"></a>
+<a id="tomatopwsh-sandbox"></a>
 
 ## `@tomato/pwsh-sandbox`
 
 - `inject`: `subprocess` · `sandbox` · `sandboxPolicy`
-- `refs`: [`LocalConfig`](#deepseek-aidsh-pwsh-local)
+- `refs`: [`LocalConfig`](#tomatopwsh-local)
 - `source`: [`packages/shell/pwsh-sandbox/src/index.ts:40`](../packages/shell/pwsh-sandbox/src/index.ts)
 
 ```ts config-catalog
@@ -2696,7 +2745,7 @@ export type Config = LocalConfig
 <!-- END GENERATED config-catalog:@tomato/pwsh-sandbox -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/repeat-tool-reminder -->
-<a id="deepseek-aidsh-repeat-tool-reminder"></a>
+<a id="tomatorepeat-tool-reminder"></a>
 
 ## `@tomato/repeat-tool-reminder`
 
@@ -2732,7 +2781,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/repeat-tool-reminder -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/sandbox-local -->
-<a id="deepseek-aidsh-sandbox-local"></a>
+<a id="tomatosandbox-local"></a>
 
 ## `@tomato/sandbox-local`
 
@@ -2766,7 +2815,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/sandbox-local -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/sandbox-policy -->
-<a id="deepseek-aidsh-sandbox-policy"></a>
+<a id="tomatosandbox-policy"></a>
 
 ## `@tomato/sandbox-policy`
 
@@ -2804,7 +2853,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/sandbox-policy -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/schedule -->
-<a id="deepseek-aidsh-schedule"></a>
+<a id="tomatoschedule"></a>
 
 ## `@tomato/schedule`
 
@@ -2829,7 +2878,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/schedule -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/sdk-app -->
-<a id="deepseek-aidsh-sdk-app"></a>
+<a id="tomatosdk-app"></a>
 
 ## `@tomato/sdk-app`
 
@@ -2846,7 +2895,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/sdk-app -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/sdk-jsonrpc-server -->
-<a id="deepseek-aidsh-sdk-jsonrpc-server"></a>
+<a id="tomatosdk-jsonrpc-server"></a>
 
 ## `@tomato/sdk-jsonrpc-server`
 
@@ -2870,7 +2919,7 @@ export interface JsonRpcConfig {
 <!-- END GENERATED config-catalog:@tomato/sdk-jsonrpc-server -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/session-log-deepseek -->
-<a id="deepseek-aidsh-session-log-deepseek"></a>
+<a id="tomatosession-log-deepseek"></a>
 
 ## `@tomato/session-log-deepseek`
 
@@ -2894,7 +2943,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/session-log-deepseek -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/session-log-export -->
-<a id="deepseek-aidsh-session-log-export"></a>
+<a id="tomatosession-log-export"></a>
 
 ## `@tomato/session-log-export`
 
@@ -2914,7 +2963,7 @@ export type SessionLogCompressionLevel = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 <!-- END GENERATED config-catalog:@tomato/session-log-export -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/session-persistence-jsonl -->
-<a id="deepseek-aidsh-session-persistence-jsonl"></a>
+<a id="tomatosession-persistence-jsonl"></a>
 
 ## `@tomato/session-persistence-jsonl`
 
@@ -2947,7 +2996,7 @@ export type JsonlCompression = 'zstd' | 'none'
 <!-- END GENERATED config-catalog:@tomato/session-persistence-jsonl -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/session-projection-cache -->
-<a id="deepseek-aidsh-session-projection-cache"></a>
+<a id="tomatosession-projection-cache"></a>
 
 ## `@tomato/session-projection-cache`
 
@@ -2972,7 +3021,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/session-projection-cache -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/session-query-sqlite -->
-<a id="deepseek-aidsh-session-query-sqlite"></a>
+<a id="tomatosession-query-sqlite"></a>
 
 ## `@tomato/session-query-sqlite`
 
@@ -3020,7 +3069,7 @@ export type JournalMode = 'wal' | 'delete' | 'truncate' | 'persist'
 <!-- END GENERATED config-catalog:@tomato/session-query-sqlite -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/session-reference -->
-<a id="deepseek-aidsh-session-reference"></a>
+<a id="tomatosession-reference"></a>
 
 ## `@tomato/session-reference`
 
@@ -3043,7 +3092,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/session-reference -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/session-telemetry-otel -->
-<a id="deepseek-aidsh-session-telemetry-otel"></a>
+<a id="tomatosession-telemetry-otel"></a>
 
 ## `@tomato/session-telemetry-otel`
 
@@ -3090,7 +3139,7 @@ export enum SessionTelemetryMode {
 <!-- END GENERATED config-catalog:@tomato/session-telemetry-otel -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/session-title -->
-<a id="deepseek-aidsh-session-title"></a>
+<a id="tomatosession-title"></a>
 
 ## `@tomato/session-title`
 
@@ -3111,7 +3160,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/session-title -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/session-title-all-prompts-llm -->
-<a id="deepseek-aidsh-session-title-all-prompts-llm"></a>
+<a id="tomatosession-title-all-prompts-llm"></a>
 
 ## `@tomato/session-title-all-prompts-llm`
 
@@ -3131,7 +3180,7 @@ export interface Config extends SessionTitleLlmConfig {
 <!-- END GENERATED config-catalog:@tomato/session-title-all-prompts-llm -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/session-title-first-prompt-llm -->
-<a id="deepseek-aidsh-session-title-first-prompt-llm"></a>
+<a id="tomatosession-title-first-prompt-llm"></a>
 
 ## `@tomato/session-title-first-prompt-llm`
 
@@ -3151,7 +3200,7 @@ export interface Config extends SessionTitleLlmConfig {
 <!-- END GENERATED config-catalog:@tomato/session-title-first-prompt-llm -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/shell-env -->
-<a id="deepseek-aidsh-shell-env"></a>
+<a id="tomatoshell-env"></a>
 
 ## `@tomato/shell-env`
 
@@ -3167,11 +3216,11 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/shell-env -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/skill -->
-<a id="deepseek-aidsh-skill"></a>
+<a id="tomatoskill"></a>
 
 ## `@tomato/skill`
 
-- `source`: [`packages/skill/skill/src/index.ts:308`](../packages/skill/skill/src/index.ts)
+- `source`: [`packages/skill/skill/src/index.ts:312`](../packages/skill/skill/src/index.ts)
 
 ```ts config-catalog
 /** Skill registry configuration. */
@@ -3183,7 +3232,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/skill -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/skill-filesystem -->
-<a id="deepseek-aidsh-skill-filesystem"></a>
+<a id="tomatoskill-filesystem"></a>
 
 ## `@tomato/skill-filesystem`
 
@@ -3222,7 +3271,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/skill-filesystem -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/skill-office -->
-<a id="deepseek-aidsh-skill-office"></a>
+<a id="tomatoskill-office"></a>
 
 ## `@tomato/skill-office`
 
@@ -3243,7 +3292,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/skill-office -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/spill-local -->
-<a id="deepseek-aidsh-spill-local"></a>
+<a id="tomatospill-local"></a>
 
 ## `@tomato/spill-local`
 
@@ -3274,7 +3323,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/spill-local -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/spill-policy -->
-<a id="deepseek-aidsh-spill-policy"></a>
+<a id="tomatospill-policy"></a>
 
 ## `@tomato/spill-policy`
 
@@ -3291,7 +3340,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/spill-policy -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/ssh -->
-<a id="deepseek-aidsh-ssh"></a>
+<a id="tomatossh"></a>
 
 ## `@tomato/ssh`
 
@@ -3338,7 +3387,7 @@ export type HelperLaunch = {
 <!-- END GENERATED config-catalog:@tomato/ssh -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/storage-domain -->
-<a id="deepseek-aidsh-storage-domain"></a>
+<a id="tomatostorage-domain"></a>
 
 ## `@tomato/storage-domain`
 
@@ -3362,7 +3411,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/storage-domain -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/storage-json -->
-<a id="deepseek-aidsh-storage-json"></a>
+<a id="tomatostorage-json"></a>
 
 ## `@tomato/storage-json`
 
@@ -3384,7 +3433,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/storage-json -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/storage-sqlite -->
-<a id="deepseek-aidsh-storage-sqlite"></a>
+<a id="tomatostorage-sqlite"></a>
 
 ## `@tomato/storage-sqlite`
 
@@ -3425,7 +3474,7 @@ export type JournalMode = 'wal' | 'delete' | 'truncate' | 'persist'
 <!-- END GENERATED config-catalog:@tomato/storage-sqlite -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/subagent -->
-<a id="deepseek-aidsh-subagent"></a>
+<a id="tomatosubagent"></a>
 
 ## `@tomato/subagent`
 
@@ -3445,7 +3494,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/subagent -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/subagent-acp -->
-<a id="deepseek-aidsh-subagent-acp"></a>
+<a id="tomatosubagent-acp"></a>
 
 ## `@tomato/subagent-acp`
 
@@ -3491,7 +3540,7 @@ export type PermissionPolicy = 'allow' | 'reject'
 <!-- END GENERATED config-catalog:@tomato/subagent-acp -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/subagent-claude-code -->
-<a id="deepseek-aidsh-subagent-claude-code"></a>
+<a id="tomatosubagent-claude-code"></a>
 
 ## `@tomato/subagent-claude-code`
 
@@ -3527,7 +3576,7 @@ export type ClaudeCodePermissionMode = typeof CLAUDE_CODE_PERMISSION_MODES[numbe
 <!-- END GENERATED config-catalog:@tomato/subagent-claude-code -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/subagent-codex -->
-<a id="deepseek-aidsh-subagent-codex"></a>
+<a id="tomatosubagent-codex"></a>
 
 ## `@tomato/subagent-codex`
 
@@ -3560,8 +3609,25 @@ export type CodexPermissionMode =
 ```
 <!-- END GENERATED config-catalog:@tomato/subagent-codex -->
 
+<!-- BEGIN GENERATED config-catalog:@tomato/subagent-fork-in-process -->
+<a id="tomatosubagent-fork-in-process"></a>
+
+## `@tomato/subagent-fork-in-process`
+
+- `inject`: `subagents`
+- `source`: [`packages/subagent/subagent-fork-in-process/src/index.ts:29`](../packages/subagent/subagent-fork-in-process/src/index.ts)
+
+```ts config-catalog
+/** Config: the registry name to register the provider under. */
+export interface Config {
+  /** Provider name on `ctx.subagents` (default `fork`). */
+  providerName: string
+}
+```
+<!-- END GENERATED config-catalog:@tomato/subagent-fork-in-process -->
+
 <!-- BEGIN GENERATED config-catalog:@tomato/subagent-sdk -->
-<a id="deepseek-aidsh-subagent-sdk"></a>
+<a id="tomatosubagent-sdk"></a>
 
 ## `@tomato/subagent-sdk`
 
@@ -3608,25 +3674,8 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@tomato/subagent-sdk -->
 
-<!-- BEGIN GENERATED config-catalog:@tomato/subagent-fork-in-process -->
-<a id="deepseek-aidsh-subagent-fork-in-process"></a>
-
-## `@tomato/subagent-fork-in-process`
-
-- `inject`: `subagents`
-- `source`: [`packages/subagent/subagent-fork-in-process/src/index.ts:29`](../packages/subagent/subagent-fork-in-process/src/index.ts)
-
-```ts config-catalog
-/** Config: the registry name to register the provider under. */
-export interface Config {
-  /** Provider name on `ctx.subagents` (default `fork`). */
-  providerName: string
-}
-```
-<!-- END GENERATED config-catalog:@tomato/subagent-fork-in-process -->
-
 <!-- BEGIN GENERATED config-catalog:@tomato/subagent-spawn-in-process -->
-<a id="deepseek-aidsh-subagent-spawn-in-process"></a>
+<a id="tomatosubagent-spawn-in-process"></a>
 
 ## `@tomato/subagent-spawn-in-process`
 
@@ -3643,7 +3692,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/subagent-spawn-in-process -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/system-prompt -->
-<a id="deepseek-aidsh-system-prompt"></a>
+<a id="tomatosystem-prompt"></a>
 
 ## `@tomato/system-prompt`
 
@@ -3676,8 +3725,37 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@tomato/system-prompt -->
 
+<!-- BEGIN GENERATED config-catalog:@tomato/telemetry -->
+<a id="tomatotelemetry"></a>
+
+## `@tomato/telemetry`
+
+- `source`: [`packages/tomato/telemetry/src/config.ts:4`](../packages/tomato/telemetry/src/config.ts)
+
+```ts config-catalog
+/** Plugin configuration for the OTLP relay reporter. */
+export interface Config {
+  /**
+   * Full OTLP/HTTP traces endpoint on the internal relay. An empty value keeps
+   * the listener unmounted, which is the local posture.
+   */
+  endpoint: string
+  /** Bearer token for the relay; empty sends no authorization header. */
+  token?: string
+  /** `service.name` resource attribute recorded on every batch. */
+  serviceName: string
+  /** Flush delay after the first span of a batch, in milliseconds. */
+  flushIntervalMs: number
+  /** Maximum spans per request; a full batch flushes immediately. */
+  maxBatchSpans: number
+  /** Per-request transport timeout, in milliseconds. */
+  timeoutMs: number
+}
+```
+<!-- END GENERATED config-catalog:@tomato/telemetry -->
+
 <!-- BEGIN GENERATED config-catalog:@tomato/terminal-bash -->
-<a id="deepseek-aidsh-terminal-bash"></a>
+<a id="tomatoterminal-bash"></a>
 
 ## `@tomato/terminal-bash`
 
@@ -3737,7 +3815,7 @@ export type ShellDialect = 'bash' | 'pwsh'
 <!-- END GENERATED config-catalog:@tomato/terminal-bash -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/time-context -->
-<a id="deepseek-aidsh-time-context"></a>
+<a id="tomatotime-context"></a>
 
 ## `@tomato/time-context`
 
@@ -3756,7 +3834,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/time-context -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tmux-context -->
-<a id="deepseek-aidsh-tmux-context"></a>
+<a id="tomatotmux-context"></a>
 
 ## `@tomato/tmux-context`
 
@@ -3773,7 +3851,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/tmux-context -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/token-meter -->
-<a id="deepseek-aidsh-token-meter"></a>
+<a id="tomatotoken-meter"></a>
 
 ## `@tomato/token-meter`
 
@@ -3787,7 +3865,7 @@ export type TokenMeterConfig = Record<string, never>
 <!-- END GENERATED config-catalog:@tomato/token-meter -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-ask-user -->
-<a id="deepseek-aidsh-tool-ask-user"></a>
+<a id="tomatotool-ask-user"></a>
 
 ## `@tomato/tool-ask-user`
 
@@ -3806,7 +3884,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/tool-ask-user -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-bash -->
-<a id="deepseek-aidsh-tool-bash"></a>
+<a id="tomatotool-bash"></a>
 
 ## `@tomato/tool-bash`
 
@@ -3836,7 +3914,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/tool-bash -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-bash-persistent -->
-<a id="deepseek-aidsh-tool-bash-persistent"></a>
+<a id="tomatotool-bash-persistent"></a>
 
 ## `@tomato/tool-bash-persistent`
 
@@ -3859,7 +3937,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/tool-bash-persistent -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-executor-ptc -->
-<a id="deepseek-aidsh-tool-executor-ptc"></a>
+<a id="tomatotool-executor-ptc"></a>
 
 ## `@tomato/tool-executor-ptc`
 
@@ -3876,7 +3954,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/tool-executor-ptc -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-fs -->
-<a id="deepseek-aidsh-tool-fs"></a>
+<a id="tomatotool-fs"></a>
 
 ## `@tomato/tool-fs`
 
@@ -3907,7 +3985,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/tool-fs -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-fs-search -->
-<a id="deepseek-aidsh-tool-fs-search"></a>
+<a id="tomatotool-fs-search"></a>
 
 ## `@tomato/tool-fs-search`
 
@@ -3943,7 +4021,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/tool-fs-search -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-goal -->
-<a id="deepseek-aidsh-tool-goal"></a>
+<a id="tomatotool-goal"></a>
 
 ## `@tomato/tool-goal`
 
@@ -3960,7 +4038,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/tool-goal -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-jobs -->
-<a id="deepseek-aidsh-tool-jobs"></a>
+<a id="tomatotool-jobs"></a>
 
 ## `@tomato/tool-jobs`
 
@@ -4004,7 +4082,7 @@ export type CompletionDelivery = 'quiet' | 'wakeup'
 <!-- END GENERATED config-catalog:@tomato/tool-jobs -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-lsp -->
-<a id="deepseek-aidsh-tool-lsp"></a>
+<a id="tomatotool-lsp"></a>
 
 ## `@tomato/tool-lsp`
 
@@ -4025,7 +4103,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/tool-lsp -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-present -->
-<a id="deepseek-aidsh-tool-present"></a>
+<a id="tomatotool-present"></a>
 
 ## `@tomato/tool-present`
 
@@ -4042,7 +4120,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/tool-present -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-pwsh -->
-<a id="deepseek-aidsh-tool-pwsh"></a>
+<a id="tomatotool-pwsh"></a>
 
 ## `@tomato/tool-pwsh`
 
@@ -4072,7 +4150,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/tool-pwsh -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-pwsh-persistent -->
-<a id="deepseek-aidsh-tool-pwsh-persistent"></a>
+<a id="tomatotool-pwsh-persistent"></a>
 
 ## `@tomato/tool-pwsh-persistent`
 
@@ -4095,7 +4173,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/tool-pwsh-persistent -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-ralph -->
-<a id="deepseek-aidsh-tool-ralph"></a>
+<a id="tomatotool-ralph"></a>
 
 ## `@tomato/tool-ralph`
 
@@ -4118,7 +4196,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/tool-ralph -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-session-query -->
-<a id="deepseek-aidsh-tool-session-query"></a>
+<a id="tomatotool-session-query"></a>
 
 ## `@tomato/tool-session-query`
 
@@ -4137,7 +4215,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/tool-session-query -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-skill -->
-<a id="deepseek-aidsh-tool-skill"></a>
+<a id="tomatotool-skill"></a>
 
 ## `@tomato/tool-skill`
 
@@ -4154,7 +4232,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/tool-skill -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-str-replace-editor -->
-<a id="deepseek-aidsh-tool-str-replace-editor"></a>
+<a id="tomatotool-str-replace-editor"></a>
 
 ## `@tomato/tool-str-replace-editor`
 
@@ -4173,7 +4251,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/tool-str-replace-editor -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-subagent -->
-<a id="deepseek-aidsh-tool-subagent"></a>
+<a id="tomatotool-subagent"></a>
 
 ## `@tomato/tool-subagent`
 
@@ -4231,7 +4309,7 @@ export interface PresetSelectionConfig {
 <!-- END GENERATED config-catalog:@tomato/tool-subagent -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-terminal -->
-<a id="deepseek-aidsh-tool-terminal"></a>
+<a id="tomatotool-terminal"></a>
 
 ## `@tomato/tool-terminal`
 
@@ -4250,7 +4328,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/tool-terminal -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-todo -->
-<a id="deepseek-aidsh-tool-todo"></a>
+<a id="tomatotool-todo"></a>
 
 ## `@tomato/tool-todo`
 
@@ -4273,7 +4351,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/tool-todo -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-web -->
-<a id="deepseek-aidsh-tool-web"></a>
+<a id="tomatotool-web"></a>
 
 ## `@tomato/tool-web`
 
@@ -4304,7 +4382,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/tool-web -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-workflow -->
-<a id="deepseek-aidsh-tool-workflow"></a>
+<a id="tomatotool-workflow"></a>
 
 ## `@tomato/tool-workflow`
 
@@ -4331,7 +4409,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/tool-workflow -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-workspace-dependencies -->
-<a id="deepseek-aidsh-tool-workspace-dependencies"></a>
+<a id="tomatotool-workspace-dependencies"></a>
 
 ## `@tomato/tool-workspace-dependencies`
 
@@ -4354,7 +4432,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/tool-workspace-dependencies -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/typert-loader -->
-<a id="deepseek-aidsh-typert-loader"></a>
+<a id="tomatotypert-loader"></a>
 
 ## `@tomato/typert-loader`
 
@@ -4371,7 +4449,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/typert-loader -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/user-approval -->
-<a id="deepseek-aidsh-user-approval"></a>
+<a id="tomatouser-approval"></a>
 
 ## `@tomato/user-approval`
 
@@ -4405,7 +4483,7 @@ export type ApprovalPolicy = 'ask' | 'never'
 <!-- END GENERATED config-catalog:@tomato/user-approval -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/web -->
-<a id="deepseek-aidsh-web"></a>
+<a id="tomatoweb"></a>
 
 ## `@tomato/web`
 
@@ -4431,7 +4509,7 @@ export interface WebRuntimeConfig {
 <!-- END GENERATED config-catalog:@tomato/web -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/web-app -->
-<a id="deepseek-aidsh-web-app"></a>
+<a id="tomatoweb-app"></a>
 
 ## `@tomato/web-app`
 
@@ -4463,7 +4541,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/web-app -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/web-deepseek-api -->
-<a id="deepseek-aidsh-web-deepseek-api"></a>
+<a id="tomatoweb-deepseek-api"></a>
 
 ## `@tomato/web-deepseek-api`
 
@@ -4489,7 +4567,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/web-deepseek-api -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/web-fetch-http -->
-<a id="deepseek-aidsh-web-fetch-http"></a>
+<a id="tomatoweb-fetch-http"></a>
 
 ## `@tomato/web-fetch-http`
 
@@ -4514,7 +4592,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/web-fetch-http -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/web-search-deepseek -->
-<a id="deepseek-aidsh-web-search-deepseek"></a>
+<a id="tomatoweb-search-deepseek"></a>
 
 ## `@tomato/web-search-deepseek`
 
@@ -4544,7 +4622,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/web-search-deepseek -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/web-search-exa -->
-<a id="deepseek-aidsh-web-search-exa"></a>
+<a id="tomatoweb-search-exa"></a>
 
 ## `@tomato/web-search-exa`
 
@@ -4569,7 +4647,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/web-search-exa -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/web-search-perplexity -->
-<a id="deepseek-aidsh-web-search-perplexity"></a>
+<a id="tomatoweb-search-perplexity"></a>
 
 ## `@tomato/web-search-perplexity`
 
@@ -4594,7 +4672,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/web-search-perplexity -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/webhook-github -->
-<a id="deepseek-aidsh-webhook-github"></a>
+<a id="tomatowebhook-github"></a>
 
 ## `@tomato/webhook-github`
 
@@ -4617,7 +4695,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/webhook-github -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/workflow-ptc -->
-<a id="deepseek-aidsh-workflow-ptc"></a>
+<a id="tomatoworkflow-ptc"></a>
 
 ## `@tomato/workflow-ptc`
 
@@ -4642,7 +4720,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/workflow-ptc -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/working-directory -->
-<a id="deepseek-aidsh-working-directory"></a>
+<a id="tomatoworking-directory"></a>
 
 ## `@tomato/working-directory`
 
@@ -4659,7 +4737,7 @@ export interface Config {
 <!-- END GENERATED config-catalog:@tomato/working-directory -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/workspace-changes -->
-<a id="deepseek-aidsh-workspace-changes"></a>
+<a id="tomatoworkspace-changes"></a>
 
 ## `@tomato/workspace-changes`
 
@@ -4686,84 +4764,6 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@tomato/workspace-changes -->
 
-<!-- BEGIN GENERATED config-catalog:@tomato/gateway -->
-<a id="tomatogateway"></a>
-
-## `@tomato/gateway`
-
-- `inject`: `webServer` · `connection`
-- `source`: [`packages/tomato/gateway/src/config.ts:24`](../packages/tomato/gateway/src/config.ts)
-
-```ts config-catalog
-/** Validated gateway configuration. */
-export interface Config {
-  /** auth_service base URL; empty keeps login unavailable. */
-  authServiceUrl: string
-  /** Company Web BFF base URL; empty keeps login unavailable. */
-  companyWebUrl: string
-  /** Browser-facing service table, keyed by the `service` path segment. */
-  services: Record<string, ServiceEntry>
-  /** Session-verification timeout, in milliseconds. */
-  verifyTimeoutMs: number
-  /** Generic upstream request timeout, in milliseconds. */
-  requestTimeoutMs: number
-  /** Buffered-body cap for services that inject a user id into JSON. */
-  maxRequestBodyBytes: number
-  /** Lifetime of one login attempt, in milliseconds. */
-  stateTtlMs: number
-}
-
-/** One browser-facing service the gateway may forward to. */
-export interface ServiceEntry {
-  /** Absolute HTTP(S) base URL; the browser never supplies a host. */
-  baseURL: string
-  /** Optional verified-user injection; the internal header is always set. */
-  userIdInjection?: UserIdInjection
-  /** Per-request timeout; omitted uses the gateway timeout. */
-  timeoutMs?: number
-  /** Buffered-body cap for body injection; omitted uses the gateway cap. */
-  maxRequestBodyBytes?: number
-}
-
-/** Where the gateway adds the verified user id to an upstream request. */
-export type UserIdInjection = 'query' | 'body' | {
-  /** Request field carrying the id. */
-  readonly in: 'query' | 'body'
-  /** Parameter name the upstream reads. */
-  readonly name: string
-}
-```
-<!-- END GENERATED config-catalog:@tomato/gateway -->
-
-<!-- BEGIN GENERATED config-catalog:@tomato/telemetry -->
-<a id="tomatotelemetry"></a>
-
-## `@tomato/telemetry`
-
-- `source`: [`packages/tomato/telemetry/src/config.ts:4`](../packages/tomato/telemetry/src/config.ts)
-
-```ts config-catalog
-/** Plugin configuration for the OTLP relay reporter. */
-export interface Config {
-  /**
-   * Full OTLP/HTTP traces endpoint on the internal relay. An empty value keeps
-   * the listener unmounted, which is the local posture.
-   */
-  endpoint: string
-  /** Bearer token for the relay; empty sends no authorization header. */
-  token?: string
-  /** `service.name` resource attribute recorded on every batch. */
-  serviceName: string
-  /** Flush delay after the first span of a batch, in milliseconds. */
-  flushIntervalMs: number
-  /** Maximum spans per request; a full batch flushes immediately. */
-  maxBatchSpans: number
-  /** Per-request transport timeout, in milliseconds. */
-  timeoutMs: number
-}
-```
-<!-- END GENERATED config-catalog:@tomato/telemetry -->
-
 ## Loadable plugins with no config
 
 These load from a `cordis.yml` entry with no `config:` block; they declare no configuration API.
@@ -4771,12 +4771,14 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 <!-- BEGIN GENERATED config-catalog:no-config -->
 | `package` | `inject` | `source` |
 | --- | --- | --- |
+| `@tomato/account` | — | [`packages/tomato/account/src/index.ts`](../packages/tomato/account/src/index.ts) |
 | `@tomato/acp-app` | `cmdlineArgs` | [`packages/bundle/acp-app/src/index.ts`](../packages/bundle/acp-app/src/index.ts) |
 | `@tomato/agent` | `sessionProjections` | [`packages/core/agent/src/index.ts`](../packages/core/agent/src/index.ts) |
 | `@tomato/api-account-controller` | `deepseekAccount` · `agents` | [`packages/api/account-controller/src/index.ts`](../packages/api/account-controller/src/index.ts) |
 | `@tomato/api-remote-access` | — | [`packages/api/remote-access/src/index.ts`](../packages/api/remote-access/src/index.ts) |
 | `@tomato/api-remotes` | `typertGateway` | [`packages/api/remotes/src/index.ts`](../packages/api/remotes/src/index.ts) |
 | `@tomato/authorization` | `credentials` | [`packages/credentials/authorization/src/index.ts`](../packages/credentials/authorization/src/index.ts) |
+| `@tomato/brand` | — | [`packages/tomato/brand/src/index.ts`](../packages/tomato/brand/src/index.ts) |
 | `@tomato/browser-use` | — | [`packages/browser-use/browser-use/src/index.ts`](../packages/browser-use/browser-use/src/index.ts) |
 | `@tomato/client-file-upload` | `agents` · `attachments` · `commands` · `connection` | [`packages/client/file-upload/src/index.ts`](../packages/client/file-upload/src/index.ts) |
 | `@tomato/client-locale` | — | [`packages/client/locale/src/index.ts`](../packages/client/locale/src/index.ts) |
@@ -4891,8 +4893,6 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@tomato/user-questions` | — | [`packages/interaction/user-questions/src/index.ts`](../packages/interaction/user-questions/src/index.ts) |
 | `@tomato/webhook` | `agents` · `agentDefaultModel` · `agentPresets` · `permissionPresets` · `sessionTitle` · `workspaceRegistry` | [`packages/experimental/webhook/src/index.ts`](../packages/experimental/webhook/src/index.ts) |
 | `@tomato/workspace` | `storageDomain` · `sessionPersistence` | [`packages/workspace/workspace/src/index.ts`](../packages/workspace/workspace/src/index.ts) |
-| `@tomato/account` | — | [`packages/tomato/account/src/index.ts`](../packages/tomato/account/src/index.ts) |
-| `@tomato/brand` | — | [`packages/tomato/brand/src/index.ts`](../packages/tomato/brand/src/index.ts) |
 <!-- END GENERATED config-catalog:no-config -->
 
 ## Seam packages (not directly loadable)
@@ -4932,7 +4932,7 @@ Imported as libraries by other packages; a `cordis.yml` cannot load them.
 | `@tomato/app-boot` | — | [`packages/boot/app-boot/src/index.ts`](../packages/boot/app-boot/src/index.ts) |
 | `@tomato/atomic-write` | — | [`packages/util/atomic-write/src/index.ts`](../packages/util/atomic-write/src/index.ts) |
 | `@tomato/base` | — | [`packages/bundle/base/src/index.ts`](../packages/bundle/base/src/index.ts) |
-| `@tomato/branded` | — | [`packages/util/brand/src/index.ts`](../packages/util/brand/src/index.ts) |
+| `@tomato/branded` | — | [`packages/util/branded/src/index.ts`](../packages/util/branded/src/index.ts) |
 | `@tomato/chunked-list` | — | [`packages/util/chunked-list/src/index.ts`](../packages/util/chunked-list/src/index.ts) |
 | `@tomato/client-store` | — | [`packages/client/store/src/index.ts`](../packages/client/store/src/index.ts) |
 | `@tomato/client-test-runtime` | — | [`packages/test-support/client-runtime/src/index.ts`](../packages/test-support/client-runtime/src/index.ts) |

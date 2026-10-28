@@ -21,7 +21,7 @@
       "path": "../../../vendor/schemastery"
     },
     {
-      "path": "../../util/brand"
+      "path": "../../util/branded"
     },
     {
       "path": "../../core/agent"

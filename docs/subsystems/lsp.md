@@ -162,7 +162,7 @@ interface LspService {
 }
 ```
 
-`LspProviderId` is the seam's branded id (`Branded<'LspProviderId'>` from [@tomato/branded](../../packages/util/brand)); `LspError` extends `HarnessError` with stable codes such as `LSP_INVALID_PROVIDER`, `LSP_CONFLICT`, `LSP_UNAVAILABLE`, `LSP_DISPOSED`, `LSP_UNSUPPORTED_OPERATION`, and `LSP_MALFORMED_RESPONSE`, which callers route on instead of parsing `message`.
+`LspProviderId` is the seam's branded id (`Branded<'LspProviderId'>` from [@tomato/branded](../../packages/util/branded)); `LspError` extends `HarnessError` with stable codes such as `LSP_INVALID_PROVIDER`, `LSP_CONFLICT`, `LSP_UNAVAILABLE`, `LSP_DISPOSED`, `LSP_UNSUPPORTED_OPERATION`, and `LSP_MALFORMED_RESPONSE`, which callers route on instead of parsing `message`.
 
 <!-- BEGIN GENERATED cordis-surface (gen-cordis-catalog.ts) — do not edit between markers -->
 

@@ -2269,11 +2269,11 @@
       ]
     },
     {
-      "name": "@tomato/session-projection",
+      "name": "@tomato/dsh-session-projection",
       "version": "0.1.5-rc.2",
       "installations": [
         {
-          "location": "node_modules/@tomato/session-projection",
+          "location": "node_modules/@tomato/dsh-session-projection",
           "direct": true,
           "optional": false,
           "peer": false
@@ -2281,11 +2281,11 @@
       ]
     },
     {
-      "name": "@tomato/session-projection-cache",
+      "name": "@tomato/dsh-session-projection-cache",
       "version": "0.1.5-rc.2",
       "installations": [
         {
-          "location": "node_modules/@tomato/session-projection-cache",
+          "location": "node_modules/@tomato/dsh-session-projection-cache",
           "direct": false,
           "optional": false,
           "peer": false
@@ -2389,11 +2389,11 @@
       ]
     },
     {
-      "name": "@tomato/session-title-llm",
+      "name": "@tomato/dsh-session-title-llm",
       "version": "0.1.5-rc.2",
       "installations": [
         {
-          "location": "node_modules/@tomato/session-title-llm",
+          "location": "node_modules/@tomato/dsh-session-title-llm",
           "direct": false,
           "optional": false,
           "peer": true

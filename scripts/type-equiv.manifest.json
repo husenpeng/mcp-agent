@@ -9,7 +9,7 @@
     {
       "doc": "docs/subsystems/core.md",
       "symbol": "Branded",
-      "source": "packages/util/brand/src/index.ts"
+      "source": "packages/util/branded/src/index.ts"
     },
     {
       "doc": "docs/subsystems/llm-streaming.md",

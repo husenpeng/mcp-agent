@@ -61,6 +61,24 @@ const configHost: ts.ParseConfigFileHost = {
 }
 
 /**
+ * Frozen upgrade guides and Agent Notes import package names that existed when
+ * they were written. Resolve those names against the packages that own the
+ * API today so the historical blocks still compile.
+ */
+const HISTORICAL_PACKAGE_PATHS: Readonly<Record<string, readonly string[]>> = {
+  '@tomato/cordis': ['./vendor/cordis/src'],
+  '@tomato/agent': ['./packages/core/agent/src'],
+  '@tomato/branded': ['./packages/util/branded/src'],
+  '@tomato/plugin-manager': ['./packages/boot/plugin-manager/src'],
+  '@tomato/plugin-manager/operations': ['./packages/boot/plugin-manager/src/operations.ts'],
+  '@tomato/session': ['./packages/core/session/src'],
+  '@tomato/dsh-session-projection': ['./packages/session/session-projection/src'],
+  '@tomato/subagent': ['./packages/subagent/subagent/src'],
+  '@tomato/user-approval': ['./packages/interaction/user-approval/src'],
+  '@tomato/web': ['./packages/web/web/src'],
+}
+
+/**
  * Load host-aggregate settings and redirect workspace aliases to declarations
  * from the coordinated build. Doc fragments speak the host vocabulary; the host
  * aggregate (never the root solution — it has no compilerOptions) carries the
@@ -74,10 +92,10 @@ function builtTypeCompilerOptions(): ts.CompilerOptions {
     throw new Error(parsed.errors.map(error => ts.flattenDiagnosticMessageText(error.messageText, '\n')).join('\n'))
   }
   if (parsed.options.paths === undefined) throw new Error('doc-typecheck: host tsconfig has no workspace paths')
-  const paths = Object.fromEntries(Object.entries(parsed.options.paths).map(([specifier, candidates]) => [
-    specifier,
-    candidates.map(builtDeclarationPath),
-  ]))
+  const paths = Object.fromEntries(
+    Object.entries({ ...HISTORICAL_PACKAGE_PATHS, ...parsed.options.paths })
+      .map(([specifier, candidates]) => [specifier, candidates.map(builtDeclarationPath)]),
+  )
   const options: ts.CompilerOptions = {
     ...parsed.options,
     paths,
@@ -157,9 +175,17 @@ function workspaceReferences(): { path: string }[] {
 
 /** The standalone temp project used when no coordinated build owns declaration freshness. */
 function tempTsconfig(): string {
+  // The temp project lives one directory below root, so every inherited source
+  // candidate and the historical aliases rebase onto the repository root.
+  const parsed = ts.getParsedCommandLineOfConfigFile(join(root, 'tsconfig.host.json'), {}, configHost)
+  const inherited = parsed?.options.paths ?? {}
+  const rebase = (candidate: string): string => candidate.startsWith('./') ? `../${candidate.slice(2)}` : candidate
+  const paths = Object.fromEntries(Object.entries({ ...HISTORICAL_PACKAGE_PATHS, ...inherited })
+    .map(([specifier, candidates]) => [specifier, candidates.map(rebase)]))
   return JSON.stringify({
     extends: '../tsconfig.host.json',
     compilerOptions: {
+      paths,
       noUnusedLocals: false,
       noUnusedParameters: false,
       tsBuildInfoFile: './tsconfig.tsbuildinfo',

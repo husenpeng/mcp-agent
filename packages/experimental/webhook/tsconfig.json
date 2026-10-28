@@ -18,7 +18,7 @@
       "path": "../../../vendor/include"
     },
     {
-      "path": "../../util/brand"
+      "path": "../../util/branded"
     },
     {
       "path": "../../llm/llm"

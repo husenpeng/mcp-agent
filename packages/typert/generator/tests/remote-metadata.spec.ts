@@ -883,20 +883,20 @@ void ready
 
   it('projects real nominal primitive brands without treating the marker as an object', async () => {
     const root = fixture()
-    const real = resolve(import.meta.dirname, '../../../util/brand')
-    const destination = join(root, 'packages/util/brand')
+    const real = resolve(import.meta.dirname, '../../../util/branded')
+    const destination = join(root, 'packages/util/branded')
     mkdirSync(join(destination, 'src'), { recursive: true })
     for (const file of ['package.json', 'tsconfig.json', 'src/index.ts']) {
       writeFileSync(join(destination, file), readFileSync(join(real, file)))
     }
     editFile(root, 'tsconfig.host.json', (source) => {
       const config = JSON.parse(source) as { references: { path: string }[] }
-      config.references.push({ path: './packages/util/brand' })
+      config.references.push({ path: './packages/util/branded' })
       return JSON.stringify(config)
     })
     editFile(root, 'tsconfig.base.json', (source) => {
       const config = JSON.parse(source) as { compilerOptions: { paths: Record<string, string[]> } }
-      config.compilerOptions.paths['@tomato/branded'] = ['./packages/util/brand/src/index.ts']
+      config.compilerOptions.paths['@tomato/branded'] = ['./packages/util/branded/src/index.ts']
       return JSON.stringify(config)
     })
     editFile(root, 'packages/domain/src/types.ts', () => `import type { Branded } from '@tomato/branded'

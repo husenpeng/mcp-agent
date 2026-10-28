@@ -478,9 +478,9 @@ declare module '@tomato/llm' {
 
 在包之间传递的 ID 都经过**品牌化**——结构上是字符串，但在类型层面不可互换（不能把 `SessionId` 传给需要 `ToolCallId` 的位置）。构造使用共享 `brandString<T>()` helper 或所属方自定义的校验工厂；比较、日志记录和 JSON 行为与普通字符串相同。
 
-`Branded<B>` 原语与无状态构造函数位于 [@tomato/branded](../../packages/util/brand)，该包不依赖 harness 能力。`brandString<T>()` 应用仅编译期存在的字符串品牌。
+`Branded<B>` 原语与无状态构造函数位于 [@tomato/branded](../../packages/util/branded)，该包不依赖 harness 能力。`brandString<T>()` 应用仅编译期存在的字符串品牌。
 
-源码：[`packages/util/brand/src/index.ts`](../../packages/util/brand/src/index.ts)
+源码：[`packages/util/branded/src/index.ts`](../../packages/util/branded/src/index.ts)
 
 ```ts type-equiv
 /** A string carrying a compile-time-only brand `B`. */

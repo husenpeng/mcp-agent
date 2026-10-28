@@ -24,7 +24,7 @@
       "path": "../../preset/agent-preset-registry"
     },
     {
-      "path": "../../util/brand"
+      "path": "../../util/branded"
     },
     {
       "path": "../../typert/protocol"

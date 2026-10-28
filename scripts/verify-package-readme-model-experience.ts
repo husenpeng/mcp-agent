@@ -33,7 +33,7 @@ const NO_MODEL_EXPERIENCE_SECTION: Readonly<Record<string, string>> = {
   'packages/util/file-drag': 'The package resolves export names and declares native file operations; it does not construct model input.',
   'packages/core/scope': 'The package is a model-agnostic registration and lifecycle primitive; model-facing consumers own any context selection.',
   'packages/experimental/liveshare-protocol': 'The package only defines wire frames and identity values that its consumers exchange; it registers nothing model-facing.',
-  'packages/util/brand': 'The package only constructs plain string values and registers nothing model-facing.',
+  'packages/util/branded': 'The package only constructs plain string values and registers nothing model-facing.',
   'packages/util/home-paths': 'The package only resolves harness-owned host paths; model-facing consumers own any rendered use.',
   'packages/util/launch-environment': 'The package only resolves host environment values; model-facing consumers own any rendered use.',
   'packages/util/workspace-path': 'The package only formats Workspace paths for browser UI; it never constructs model input.',

@@ -2,21 +2,21 @@
 # section, a hash of its English and Chinese blocks outside code blocks and generated regions.
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/cookbook/maintaining-tomato-code-review.md
-/maintaining-the-tomato-code-review-skill:
-  en: 1d794acd43fc0870
-  zh: a08e00ad66826441
-/maintaining-the-tomato-code-review-skill/what-the-maintainer-receives:
-  en: e547c7704485c559
-  zh: 1039af472b7c6692
-/maintaining-the-tomato-code-review-skill/what-the-operator-does-with-a-candidate-diff:
-  en: 0fc6c9a411667325
-  zh: 6144b97c82f2f355
-/maintaining-the-tomato-code-review-skill/when-a-run-produces-no-candidate:
+/maintaining-the-dsh-code-review-skill:
+  en: c560ec4cbf71841e
+  zh: cf018c1104c59109
+/maintaining-the-dsh-code-review-skill/what-the-maintainer-receives:
+  en: 1c4d0f340591ca39
+  zh: 81bd728a7c2296cb
+/maintaining-the-dsh-code-review-skill/what-the-operator-does-with-a-candidate-diff:
+  en: 1423d67e7c440cc6
+  zh: bc6d30d6615377f5
+/maintaining-the-dsh-code-review-skill/when-a-run-produces-no-candidate:
   en: feb6d261939d6c19
   zh: 044d8238cd6537d3
-/maintaining-the-tomato-code-review-skill/interruptions-and-handoff:
+/maintaining-the-dsh-code-review-skill/interruptions-and-handoff:
   en: 0913c7c7e7b5fc1e
   zh: 7912387bc782f5ea
-/maintaining-the-tomato-code-review-skill/where-the-operator-s-private-setup-lives:
+/maintaining-the-dsh-code-review-skill/where-the-operator-s-private-setup-lives:
   en: ae06145764738c16
   zh: d527b944db8c52be

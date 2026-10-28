@@ -57,7 +57,7 @@
       "path": "../../../vendor/timer"
     },
     {
-      "path": "../../util/brand"
+      "path": "../../util/branded"
     },
     {
       "path": "../../sandbox/sandbox-policy"

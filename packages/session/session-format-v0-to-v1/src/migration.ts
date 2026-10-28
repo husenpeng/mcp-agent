@@ -25,7 +25,7 @@ const LEGACY_ASSISTANT_SOURCE_KEY = ['pro', 'venance'].join('')
 
 /** Identity format edge that promotes released v0 into released v1. */
 export const sessionFormatV0ToV1 = defineSessionFormatMigration({
-  name: '@tomato/session-format-v0-to-v1',
+  name: '@deepseek-ai/dsh-session-format-v0-to-v1',
   fromVersion: 0,
   toVersion: 1,
   migrateHeader(header) {

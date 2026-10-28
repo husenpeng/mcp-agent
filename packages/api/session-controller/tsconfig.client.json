@@ -24,7 +24,7 @@
     { "path": "../../session/session-projection" },
     { "path": "../../session/session-title" },
     { "path": "../../subagent/subagent" },
-    { "path": "../../util/brand" },
+    { "path": "../../util/branded" },
     { "path": "../../util/crypto" },
     { "path": "../../util/workspace-path" },
     { "path": "../../workspace/workspace" },

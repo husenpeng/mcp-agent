@@ -130,7 +130,15 @@ describe('file selection', () => {
     'vendor/README.md',
     '.github/workflows/ci.yml',
     'snapshots/session/text-turn/cordis.yml',
+    'snapshots/session/text-turn/session.v4.jsonl',
   ])('includes %s', (file) => {
     expect(isTomatoExcluded(file)).toBe(false)
+  })
+
+  it.each([
+    'snapshots/session/text-turn/session.v3.jsonl',
+    'snapshots/sdk/subagent-sdk-dynamic-route/session.1.v2.jsonl',
+  ])('excludes released-format log %s', (file) => {
+    expect(isTomatoExcluded(file)).toBe(true)
   })
 })

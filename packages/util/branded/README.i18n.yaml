@@ -1,0 +1,46 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/util/branded/README.md
+/:
+  en: 9c53a07c1a04a19a
+  zh: 1fd4666fbc6c39a8
+/tomato-branded:
+  en: e5347a9b68c8dd26
+  zh: ca47ad6bc026e5a9
+/tomato-branded/summary:
+  en: d2dc3d4bcc1e744a
+  zh: 46a0dcb01fada5f7
+/tomato-branded/table-of-contents:
+  en: c992e0cd2e7042d6
+  zh: 2e8cd826664632d1
+/tomato-branded/use-this-package:
+  en: abdf7a28d3af06f0
+  zh: 8d68807326b03898
+/tomato-branded/use-this-package/branding-a-string:
+  en: 49b137dc146f5c0a
+  zh: 7fe82acb5ba633e8
+/tomato-branded/use-this-package/branding-a-number:
+  en: fd9617ca2804f47b
+  zh: cd3c0e6bda613509
+/tomato-branded/use-this-package/when-to-brand:
+  en: 49588bebfea58ce7
+  zh: 876e0ab9afd61415
+/tomato-branded/understand-the-implementation:
+  en: 98a62299f46d5050
+  zh: 042d3c626e1fbe34
+/tomato-branded/understand-the-implementation/source-map:
+  en: 5032eec37cf68046
+  zh: 971402fa5c6c0e63
+/tomato-branded/understand-the-implementation/how-values-stay-portable:
+  en: 6a126aa2e31591c0
+  zh: c85e395cdb0bbb0e
+/tomato-branded/understand-the-implementation/why-it-stays-dependency-free:
+  en: 8353fb9147119be2
+  zh: 92d34cda60c51d3b
+/tomato-branded/further-exploration:
+  en: fbfc1687610a3944
+  zh: 28976f4c48a7ff3d
+/tomato-branded/dev-note:
+  en: 5de1d6304e00c58f
+  zh: 8d8225361cfa29e5

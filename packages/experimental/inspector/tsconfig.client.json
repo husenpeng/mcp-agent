@@ -102,7 +102,7 @@
     { "path": "../../client/locale/tsconfig.client.json" },
     { "path": "../../client/connection/tsconfig.client.json" },
     {
-      "path": "../../util/brand"
+      "path": "../../util/branded"
     },
     {
       "path": "../../../vendor/cordis"

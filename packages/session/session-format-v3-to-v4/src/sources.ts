@@ -40,8 +40,9 @@ const RENAMED_PRODUCERS: Readonly<Record<string, string>> = Object.freeze({
   'compact': 'compact-checkpoint',
   'tools-code-mode': 'ptc-mode',
   'tools-ptc': 'ptc-mode',
-  '@tomato/compaction-basic': 'compact-basic',
-  '@tomato/system-prompt': 'runtime-context',
+  'dsh-compaction-basic': 'compact-basic',
+  '@deepseek-ai/dsh-system-prompt': 'runtime-context',
+  'dsh-session-title-llm': '@tomato/session-title-llm',
 })
 
 /** First-party V3 plugin identities that intentionally keep their current kind. */
@@ -52,12 +53,11 @@ const RELEASED_SAME_NAME_PRODUCERS: ReadonlySet<string> = new Set([
   'plan-mode', 'time-context', 'tmux-context', 'user-approval',
   'repeat-tool-reminder', 'tool-cordis', 'cordis-host-runner', 'tool-goal',
   'tool-jobs', 'hooks-codex', 'hooks-claude-code', 'schedule',
-  '@tomato/session-title-llm',
 ])
 
 /** Resolve the current producer kind for one released V3 plugin string. */
 function producerKind(plugin: string, role: SessionFormatJsonValue | undefined): string {
-  if (plugin === '@tomato/system-prompt' && role === 'system') return 'system-prompt'
+  if (plugin === '@deepseek-ai/dsh-system-prompt' && role === 'system') return 'system-prompt'
   const renamed = Object.hasOwn(RENAMED_PRODUCERS, plugin) ? RENAMED_PRODUCERS[plugin] : undefined
   if (renamed !== undefined) return renamed
   if (RELEASED_SAME_NAME_PRODUCERS.has(plugin)) return plugin
@@ -89,6 +89,10 @@ export function rewritePluginSource(
     .map(([key, item]) => [key, key === 'kind' ? kind : item]))
 }
 
+const RENAMED_DIRECT_KINDS: Readonly<Record<string, string>> = Object.freeze({
+  'dsh-session-title-llm': '@tomato/session-title-llm',
+})
+
 /**
  * Convert released plugin wrappers while retaining every direct source kind and its metadata.
  * @param source - decoded V3 message source.
@@ -102,5 +106,6 @@ export function rewriteV3MessageSource(
   const kind = source['kind']
   if (typeof kind !== 'string' || kind.length === 0) throw new SessionFormatError(`message source at seq ${seq} requires a nonempty kind`)
   if (kind === 'plugin') return rewritePluginSource(source, seq, role)
-  return source
+  const renamed = Object.hasOwn(RENAMED_DIRECT_KINDS, kind) ? RENAMED_DIRECT_KINDS[kind] : undefined
+  return renamed === undefined ? source : { ...source, kind: renamed }
 }

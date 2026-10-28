@@ -5741,14 +5741,6 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface DomainTableSpec<K extends string = string, V = unknown> {\n    readonly valueSchema: ZodType<V>;\n    readonly __key?: K;\n}',
   },
   {
-    name: 'TomatoEnvironment',
-    declaration: 'export type TomatoEnvironment = Readonly<Record<TomatoEnvironmentKey, string>>;',
-  },
-  {
-    name: 'TomatoEnvironmentKey',
-    declaration: 'export type TomatoEnvironmentKey = `${typeof TOMATO_ENV_PREFIX}${string}`;',
-  },
-  {
     name: 'DynamicCordisPackage',
     declaration: 'export interface DynamicCordisPackage {\n    pluginId: CordisDynamicPluginId;\n    packageId: CordisDynamicPackageId;\n    pluginRunId: CordisDynamicPluginRunId;\n    name: string;\n}',
   },
@@ -8098,7 +8090,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'SkillRegistration',
-    declaration: 'export type SkillRegistration = Omit<SkillDefinition, \'invocation\' | \'provider\'> & {\n    readonly invocation?: SkillInvocationPolicy;\n    readonly provider?: string;\n};',
+    declaration: 'export type SkillRegistration = Omit<SkillDefinition, \'invocation\' | \'provider\' | \'updatable\'> & {\n    readonly invocation?: SkillInvocationPolicy;\n    readonly provider?: string;\n};',
   },
   {
     name: 'SkillResourceBase',
@@ -8619,6 +8611,14 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'TokenUsage',
     declaration: 'export interface TokenUsage {\n    inputTokens: number;\n    outputTokens: number;\n    totalTokens?: number;\n    cacheReadTokens?: number;\n    cacheWriteTokens?: number;\n    reasoningTokens?: number;\n}',
+  },
+  {
+    name: 'TomatoEnvironment',
+    declaration: 'export type TomatoEnvironment = Readonly<Record<TomatoEnvironmentKey, string>>;',
+  },
+  {
+    name: 'TomatoEnvironmentKey',
+    declaration: 'export type TomatoEnvironmentKey = `${typeof TOMATO_ENV_PREFIX}${string}`;',
   },
   {
     name: 'ToolActivationContext',

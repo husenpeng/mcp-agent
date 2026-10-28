@@ -141,7 +141,7 @@
       "path": "../../boot/cmdline"
     },
     {
-      "path": "../../util/brand"
+      "path": "../../util/branded"
     },
     {
       "path": "../../../vendor/cordis"

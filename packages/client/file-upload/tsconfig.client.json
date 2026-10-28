@@ -14,7 +14,7 @@
   ],
   "references": [
     { "path": "../../../vendor/cordis" },
-    { "path": "../../util/brand" },
+    { "path": "../../util/branded" },
     { "path": "../../util/crypto" },
     { "path": "../../attachment/attachment" },
     { "path": "../../core/session" },

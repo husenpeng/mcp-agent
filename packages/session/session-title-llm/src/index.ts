@@ -13,6 +13,8 @@ import type { ContextFormed } from '@tomato/llm'
 declare module '@tomato/llm' {
   interface MessageSourceMap {
     '@tomato/session-title-llm': { kind: '@tomato/session-title-llm' } & ContextFormed
+    /** Persisted kind in sessions written before the harness rename. */
+    'dsh-session-title-llm': { kind: 'dsh-session-title-llm' } & ContextFormed
   }
 }
 

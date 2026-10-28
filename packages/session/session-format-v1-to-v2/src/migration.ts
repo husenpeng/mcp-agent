@@ -41,7 +41,7 @@ interface AttemptGroup {
 
 /** Adjacent migration that embeds released-v1 top-level Assistant chunks into v2 attempt events. */
 export const sessionFormatV1ToV2 = defineSessionFormatMigration({
-  name: '@tomato/session-format-v1-to-v2',
+  name: '@deepseek-ai/dsh-session-format-v1-to-v2',
   fromVersion: 1,
   toVersion: 2,
   migrateHeader(header) {

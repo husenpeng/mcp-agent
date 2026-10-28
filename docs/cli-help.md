@@ -11,11 +11,11 @@ Run `pnpm run gen-cli-help` to regenerate; run `pnpm run verify-cli-help` to che
 
 - [`tomato`](#tomato)
 - [`tomato plugin`](#tomato-plugin)
-- [`tomato acp`](#@tomato/acp)
-- [`tomato headless`](#@tomato/headless)
+- [`tomato acp`](#tomato-acp)
+- [`tomato headless`](#tomato-headless)
 - [`tomato sdk`](#tomato-sdk)
-- [`tomato sdk-minimal`](#@tomato/sdk-minimal)
-- [`tomato web`](#@tomato/web)
+- [`tomato sdk-minimal`](#tomato-sdk-minimal)
+- [`tomato web`](#tomato-web)
 
 <a id="tomato"></a>
 ## `tomato`
@@ -79,7 +79,7 @@ Options:
   -h, --help        show this help
 ```
 
-<a id="@tomato/acp"></a>
+<a id="tomato-acp"></a>
 ## `tomato acp`
 
 Invocations: `tomato acp --help`, `tomato --profile acp --help`
@@ -97,7 +97,7 @@ Example:
 
 ```
 
-<a id="@tomato/headless"></a>
+<a id="tomato-headless"></a>
 ## `tomato headless`
 
 Invocations: `tomato headless --help`, `tomato --profile headless --help`
@@ -152,7 +152,7 @@ Example:
 
 ```
 
-<a id="@tomato/sdk-minimal"></a>
+<a id="tomato-sdk-minimal"></a>
 ## `tomato sdk-minimal`
 
 Invocations: `tomato sdk-minimal --help`, `tomato --profile sdk-minimal --help`
@@ -170,7 +170,7 @@ Example:
 
 ```
 
-<a id="@tomato/web"></a>
+<a id="tomato-web"></a>
 ## `tomato web`
 
 Invocations: `tomato web --help`, `tomato --profile web --help`
@@ -188,8 +188,8 @@ Options:
   --port <port>                  listen port; pass 0 to let the OS pick a free
                                  one
   --public-url <url>             advertise this HTTP(S) root in the printed,
-                                 opened, runtime-context, and TOMATO_WEB_URL forms;
-                                 grants no trust
+                                 opened, runtime-context, and TOMATO_WEB_URL
+                                 forms; grants no trust
   --trusted-host <authority...>  extra authority the /api browser-trust fence
                                  accepts (host or host:port; repeatable)
   --tls-cert <file>              PEM server certificate chain; requires

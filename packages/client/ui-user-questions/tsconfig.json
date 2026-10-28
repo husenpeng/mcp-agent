@@ -57,7 +57,7 @@
       "path": "../../llm/llm"
     },
     {
-      "path": "../../util/brand"
+      "path": "../../util/branded"
     },
     {
       "path": "../../core/tool-executor-ptc"

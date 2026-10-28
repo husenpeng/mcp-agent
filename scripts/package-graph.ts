@@ -34,6 +34,13 @@ export interface PackageGraphNode {
  */
 export function collectPackageGraph(root: string, groupOrder: readonly string[], gate: string): PackageGraphNode[] {
   const packages: PackageGraphNode[] = []
+  // Vendored and native packages share the scope but are not diagram nodes;
+  // their peer edges must not be mistaken for missing harness packages.
+  const outsideGroups = new Set(
+    [...globSync('vendor/*/package.json', { cwd: root }), ...globSync('native/system/packages/*/package.json', { cwd: root })]
+      .map(path => (JSON.parse(readFileSync(resolve(root, path), 'utf8')) as { name?: string }).name)
+      .filter((name): name is string => name !== undefined),
+  )
   for (const rel of globSync('packages/*/*/package.json', { cwd: root }).map(path => path.split(sep).join('/')).sort()) {
     const json = JSON.parse(readFileSync(resolve(root, rel), 'utf8')) as {
       name: string
@@ -43,7 +50,7 @@ export function collectPackageGraph(root: string, groupOrder: readonly string[],
     const [, group, leaf] = rel.split('/')
     if (group === undefined || leaf === undefined) throw new Error(`${gate}: unexpected package path ${rel}`)
     const deps = Object.keys(json.peerDependencies ?? {})
-      .filter(dep => dep.startsWith(SCOPE))
+      .filter(dep => dep.startsWith(SCOPE) && !outsideGroups.has(dep))
       .map(dep => dep.slice(SCOPE.length))
       .sort()
     packages.push({

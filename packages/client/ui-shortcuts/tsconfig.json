@@ -12,7 +12,7 @@
       "path": "../../../vendor/cordis"
     },
     {
-      "path": "../../util/brand"
+      "path": "../../util/branded"
     },
     {
       "path": "../shortcuts/tsconfig.client.json"

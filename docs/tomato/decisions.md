@@ -18,7 +18,7 @@
 - **导入**：`git archive` 导出全部 19188 个跟踪文件，新建 git 仓库，首个提交即基线，不带上游历史。
 - **同步**：一次性导入，不合并上游；上游更新只作参考阅读。
 - **一方代码**：自有包位于 `packages/tomato/<name>/`；仓库内全部包使用 `@tomato/*`，命名规则见 [ADR 0009](adr/0009-tomato-namespace.md)；规范沿用仓库的 [packages/AGENTS.md](../../packages/AGENTS.md)。
-- **命名**：仓库内 `DSH` / `dsh` / `@deepseek-ai` 命名统一为 `TOMATO` / `tomato` / `@tomato`；DeepSeek 供应商身份、上游仓库链接与历史记录保留（[ADR 0009](adr/0009-tomato-namespace.md)）。
+- **命名**：仓库内 `DSH` / `dsh` / `@deepseek-ai` 命名统一为 `TOMATO` / `tomato` / `@tomato`；DeepSeek 供应商身份、上游仓库链接与历史记录保留；技能目录名 `.agents/skills/dsh-*` 保留（归档笔记链接到它们，且归档内容不可改）（[ADR 0009](adr/0009-tomato-namespace.md)）。
 - **改动落点**：直接编辑 `packages/bundle/base/cordis.patch.yml` 与 `packages/bundle/web-app/cordis.patch.yml`，不为改造另加 bundle 层。
 
 ## 架构与集成

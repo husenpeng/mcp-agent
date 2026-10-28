@@ -30,7 +30,7 @@
       "path": "../../util/atomic-write"
     },
     {
-      "path": "../../util/brand"
+      "path": "../../util/branded"
     },
     {
       "path": "../../util/home-paths"

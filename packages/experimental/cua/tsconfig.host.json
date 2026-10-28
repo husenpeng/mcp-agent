@@ -34,7 +34,7 @@
       "path": "../../util/values"
     },
     {
-      "path": "../../util/brand"
+      "path": "../../util/branded"
     },
     {
       "path": "../../util/atomic-write"

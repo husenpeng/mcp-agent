@@ -9,20 +9,20 @@
   en: 8ee041b7af9505f3
   zh: 02a768b7dbbc6425
 /tool-schema-catalog/tool-package-map:
-  en: e0119c54ee988d9b
-  zh: effa04635d349c46
+  en: b1c925bc4c96cf76
+  zh: ef92317af772da8e
 /tool-schema-catalog/tomato-plugin-manager:
   en: c8e088f02e59c8b3
   zh: c8e088f02e59c8b3
 /tool-schema-catalog/tomato-plugin-manager/plugin-manager:
-  en: 4a9b2476618ab370
-  zh: d66e575cde9d8538
+  en: 79aa291e15d8402d
+  zh: ed254bcb07e8fdb4
 /tool-schema-catalog/tomato-plugin-market:
   en: d526077e47186e3f
   zh: d526077e47186e3f
 /tool-schema-catalog/tomato-plugin-market/plugin-market:
-  en: ecb8ee73c7bc68b8
-  zh: 59af75c81d7d529d
+  en: afe8481e1139a166
+  zh: 0d09e1e1e537a9a8
 /tool-schema-catalog/tomato-mcp-resources:
   en: 1d9f1e0d021ec6a5
   zh: 1d9f1e0d021ec6a5
@@ -33,8 +33,8 @@
   en: bf4236607199d61e
   zh: 82f4f749dcabc89f
 /tool-schema-catalog/tomato-mcp-resources/read-mcp-resource:
-  en: 5d92c07fa062734f
-  zh: 2d6f0cb8116cf567
+  en: ad4bb9cf469a5fcd
+  zh: 3b98c247f5a2e438
 /tool-schema-catalog/tomato-experimental-browser-use-stagehand-native:
   en: 93570cb183f3d92f
   zh: 93570cb183f3d92f
@@ -54,50 +54,50 @@
   en: 4910ab327694ee97
   zh: 17e79e4366cb636d
 /tool-schema-catalog/tomato-experimental-browser-use-stagehand-native/stagehand-tabs:
-  en: a0d5b9b891358120
-  zh: 25793a62709770b5
+  en: 12a05426f7fd2a1e
+  zh: ff40bc6e537b7b3a
 /tool-schema-catalog/tomato-action-cards:
   en: e3c9339128a9e44f
   zh: e3c9339128a9e44f
 /tool-schema-catalog/tomato-action-cards/propose-action:
-  en: 633c32b6df889830
-  zh: b88ea00b2033c11b
+  en: 48a5669a76a9276f
+  zh: 9c7090dab6d069f9
 /tool-schema-catalog/tomato-tool-ask-user:
   en: 602ea94a886bce9f
   zh: 602ea94a886bce9f
 /tool-schema-catalog/tomato-tool-ask-user/ask-user-question:
-  en: 2f86adf8ae823afb
-  zh: a5dad3d821e75e55
+  en: 65a5cc4b10bade0c
+  zh: 4168dee04eb96ae4
 /tool-schema-catalog/tomato-tool-executor-ptc:
   en: 4a469638e154b80a
   zh: 4a469638e154b80a
 /tool-schema-catalog/tomato-tool-executor-ptc/run-code:
-  en: a5d49232a604a2fb
-  zh: 720040d11a3e31c2
+  en: f649e37567b1963f
+  zh: cb09fa7aeff1e6ba
 /tool-schema-catalog/tomato-plan-mode:
   en: ac3742972babc7f1
   zh: ac3742972babc7f1
 /tool-schema-catalog/tomato-plan-mode/exit-plan-mode:
-  en: b410483c2bd0c1a1
-  zh: a07ceea6abf1dda3
+  en: d1203874d7e2a73a
+  zh: f861fc5c5d7f1ef6
 /tool-schema-catalog/tomato-tool-bash:
   en: 2a01a513e277a64c
   zh: 2a01a513e277a64c
 /tool-schema-catalog/tomato-tool-bash/bash:
-  en: a8b82dcf8eda0725
-  zh: d9a3884b6f5af48a
+  en: 50c5c8770ccce1e3
+  zh: fecd332684b0ac06
 /tool-schema-catalog/tomato-tool-present:
   en: 8aa6f7f4681731db
   zh: 8aa6f7f4681731db
 /tool-schema-catalog/tomato-tool-present/present:
-  en: c3ab3e71f3c5fd20
-  zh: d6afeb62bac77a24
+  en: 30b0c863cdd89920
+  zh: 0f223ee31a614e7b
 /tool-schema-catalog/tomato-tool-pwsh:
   en: 3ebdc626206e1b60
   zh: 3ebdc626206e1b60
 /tool-schema-catalog/tomato-tool-pwsh/pwsh:
-  en: ddb3108549d5ea30
-  zh: d879fdf3a0930ab0
+  en: a66d14e9c8ca1d4a
+  zh: 816b69a6862d7aff
 /tool-schema-catalog/tomato-tool-cordis:
   en: f647f7669e0db149
   zh: f647f7669e0db149
@@ -105,26 +105,26 @@
   en: 594e5b42047969cc
   zh: 72189ca21345c210
 /tool-schema-catalog/tomato-tool-cordis/cordis-inspect-query:
-  en: 42a647ba98527f9e
-  zh: c53ade6a47ea523f
+  en: 9573a0743e84d03d
+  zh: a1073dfad25125ba
 /tool-schema-catalog/tomato-tool-bash-persistent:
   en: bad4bb3730ad10dc
   zh: bad4bb3730ad10dc
 /tool-schema-catalog/tomato-tool-bash-persistent/bash:
-  en: 86421501a9d65ccc
-  zh: d1dc400507952331
+  en: ddad91333d54caa1
+  zh: c7f6658e97c86198
 /tool-schema-catalog/tomato-tool-pwsh-persistent:
   en: 449d248a04590fa4
   zh: 449d248a04590fa4
 /tool-schema-catalog/tomato-tool-pwsh-persistent/pwsh:
-  en: 214866b3419c8e12
-  zh: c23368fc61772d52
+  en: 6b7a4844ad1800c1
+  zh: ffe8364e47f37bf2
 /tool-schema-catalog/tomato-tool-str-replace-editor:
   en: 344b4f9f80fcb3b1
   zh: 344b4f9f80fcb3b1
 /tool-schema-catalog/tomato-tool-str-replace-editor/str-replace-editor:
-  en: 3d11196a13e69228
-  zh: 56019c74cf0633cd
+  en: bce576a36eaad236
+  zh: 0b127bb695a99275
 /tool-schema-catalog/tomato-tool-fs:
   en: 6a5b8a09695ebe66
   zh: 6a5b8a09695ebe66
@@ -138,8 +138,8 @@
   en: f6f7a1140066ce04
   zh: d528e01a0939795a
 /tool-schema-catalog/tomato-tool-fs/write:
-  en: eb0ad1ac299ce752
-  zh: 3cb8408a9824651a
+  en: 7ed1fae2f0de7fd7
+  zh: c537b954ad0fbe1e
 /tool-schema-catalog/tomato-tool-fs-search:
   en: 9b46c7914608c1d8
   zh: 9b46c7914608c1d8
@@ -147,8 +147,8 @@
   en: 3ba734ba7852cdd5
   zh: c6ce31ff2c195520
 /tool-schema-catalog/tomato-tool-fs-search/grep:
-  en: 6e1f7da62cc9a35b
-  zh: 594817b0befeea86
+  en: e8da6ccad6d77d24
+  zh: 9c522c594f3162ca
 /tool-schema-catalog/tomato-tool-terminal:
   en: efb61191dc7b96b8
   zh: efb61191dc7b96b8
@@ -168,8 +168,8 @@
   en: 60a8805611533884
   zh: 50e4ac6e7f7b9b0a
 /tool-schema-catalog/tomato-tool-terminal/terminal-signal:
-  en: 0191964f5be70426
-  zh: 501c2769633a2a0b
+  en: ae86f90f86f80bd6
+  zh: 522fd3bb548bef49
 /tool-schema-catalog/tomato-tool-goal:
   en: a73bc55fc5568d29
   zh: a73bc55fc5568d29
@@ -180,8 +180,8 @@
   en: 0b517f13dfde11fe
   zh: b7ee7482e8ecde56
 /tool-schema-catalog/tomato-tool-goal/update-goal:
-  en: 5f8a1d6e44e57d09
-  zh: d757489fdacde22d
+  en: 2fa08ba5c0dc716b
+  zh: fe072679da3e5010
 /tool-schema-catalog/tomato-tool-schedule:
   en: 53f5d578c5f4de22
   zh: 53f5d578c5f4de22
@@ -195,26 +195,26 @@
   en: 5bcfc051e364df29
   zh: b77e60c123800eb1
 /tool-schema-catalog/tomato-tool-schedule/schedule-update:
-  en: b9f4691532157a1d
-  zh: 8a0597790dc5f999
+  en: 260ae05c7afd44ec
+  zh: a7021b250fe0a43a
 /tool-schema-catalog/tomato-tool-lsp:
   en: 61e246fdd2b69de9
   zh: 61e246fdd2b69de9
 /tool-schema-catalog/tomato-tool-lsp/lsp:
-  en: c56fb8dd4df567e7
-  zh: 97a99c17c9408ebc
+  en: 80c348635bbf6103
+  zh: cb1f1b4bcf206227
 /tool-schema-catalog/tomato-tool-ralph:
   en: d251036d5f6c46a1
   zh: d251036d5f6c46a1
 /tool-schema-catalog/tomato-tool-ralph/ralph:
-  en: e97552156225cf10
-  zh: 9ea32b8485e950ec
+  en: ce1064972f2c5569
+  zh: 500aef91a545706d
 /tool-schema-catalog/tomato-tool-skill:
   en: 964bd5e68f7aafa9
   zh: 964bd5e68f7aafa9
 /tool-schema-catalog/tomato-tool-skill/skill:
-  en: 9b159d5831855afb
-  zh: 275ee82af0e0f59a
+  en: 85952c71285cf92e
+  zh: e85a6d3a36570e24
 /tool-schema-catalog/tomato-tool-session-query:
   en: 2b4d8f8b659ccce2
   zh: 2b4d8f8b659ccce2
@@ -231,14 +231,14 @@
   en: c7bc2ee2892bf0e9
   zh: 1cd6a5d6f7494ca1
 /tool-schema-catalog/tomato-tool-session-query/session-trace:
-  en: 73d2146c02eaa16a
-  zh: 34caad3065de7148
+  en: 8266137b561d91a3
+  zh: 466f7af7534a5b12
 /tool-schema-catalog/tomato-experimental-tool-subagent-oar:
   en: af512ef50d34e11f
   zh: af512ef50d34e11f
 /tool-schema-catalog/tomato-experimental-tool-subagent-oar/subagent-oar:
-  en: 6283c3023d6ea436
-  zh: 9c018b8c12a3f1e7
+  en: 953a6eac80f9c163
+  zh: 78526176b307d2af
 /tool-schema-catalog/tomato-tool-subagent:
   en: 7362e9177621421f
   zh: 7362e9177621421f
@@ -246,8 +246,8 @@
   en: 207228068bc61885
   zh: 36e9344ee1af8869
 /tool-schema-catalog/tomato-tool-subagent/subagent:
-  en: 140c965c2b04d02f
-  zh: 95495dad5c77046d
+  en: eb759760715e496d
+  zh: fe10d2f24efe765f
 /tool-schema-catalog/tomato-tool-subagent-control:
   en: de80bf666096b269
   zh: de80bf666096b269
@@ -258,8 +258,8 @@
   en: ae22e8543d123c39
   zh: 0991a73ef49bcdea
 /tool-schema-catalog/tomato-tool-subagent-control/send-message:
-  en: 9d180d8811903366
-  zh: d63f94cffcb952d1
+  en: f90a34531c344262
+  zh: 1f19e9b601eddbc9
 /tool-schema-catalog/tomato-tool-jobs:
   en: 7a3ed9413dd583eb
   zh: 7a3ed9413dd583eb
@@ -270,8 +270,8 @@
   en: 0c37fb1fed979d72
   zh: 5ea9d07f5a4a8a6c
 /tool-schema-catalog/tomato-tool-jobs/job-output:
-  en: 1e084359a8cd42b3
-  zh: 3f6c245dbbb2b920
+  en: 28a904d957a75da2
+  zh: 722f06ba48e08012
 /tool-schema-catalog/tomato-experimental-tool-agent-team:
   en: 5733a0160456b5d9
   zh: 5733a0160456b5d9
@@ -300,38 +300,38 @@
   en: 2eac7360ba68b1bd
   zh: b5d676bf288c245e
 /tool-schema-catalog/tomato-experimental-tool-agent-team/wait-agent:
-  en: 55cd0bdb3871abab
-  zh: f4d47a03ab126684
+  en: 6ea0a496241d402b
+  zh: 4d5dac854700790f
 /tool-schema-catalog/tomato-tool-todo:
   en: c0720925ace2e0fb
   zh: c0720925ace2e0fb
 /tool-schema-catalog/tomato-tool-todo/todo-write:
-  en: f252137b940b38d1
-  zh: 25bd9c6b1ce783d8
+  en: 7a70b8a3fef81b23
+  zh: bffea4a3a796229c
 /tool-schema-catalog/tomato-tool-working-directory:
   en: 90607a012fc44223
   zh: 90607a012fc44223
 /tool-schema-catalog/tomato-tool-working-directory/working-directory:
-  en: ac1944f6035b8b50
-  zh: f5fc005c13185211
+  en: 4697b24810fbcff3
+  zh: e7e9e40464249fe9
 /tool-schema-catalog/tomato-experimental-tool-worktree:
   en: 6b7522b292cf0d48
   zh: 6b7522b292cf0d48
 /tool-schema-catalog/tomato-experimental-tool-worktree/create-worktree:
-  en: 3cf89e31f011ae9b
-  zh: 28e78b4fae2d075b
+  en: 12c1c85ff36a1f50
+  zh: 9062de9d24cffbee
 /tool-schema-catalog/tomato-tool-workflow:
   en: a91fcb1e5a8b2650
   zh: a91fcb1e5a8b2650
 /tool-schema-catalog/tomato-tool-workflow/workflow:
-  en: fdd667cfe21481e8
-  zh: 88864d3b958398a4
+  en: 7e813960ed573e9c
+  zh: 86948fa739c23ecf
 /tool-schema-catalog/tomato-tool-workspace-dependencies:
   en: e56ca62c4b47f4ac
   zh: e56ca62c4b47f4ac
 /tool-schema-catalog/tomato-tool-workspace-dependencies/load-workspace-dependencies:
-  en: 77b88764ff3464e9
-  zh: a9ca7eeb15ada747
+  en: 13fe3ca22f97f79e
+  zh: 41480bdba8613d5b
 /tool-schema-catalog/tomato-tool-web:
   en: 74155a1772e4bd67
   zh: 74155a1772e4bd67

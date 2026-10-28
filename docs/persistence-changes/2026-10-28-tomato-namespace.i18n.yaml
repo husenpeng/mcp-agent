@@ -1,0 +1,28 @@
+# Bilingual-pair consistency record for 2026-10-28-tomato-namespace.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/persistence-changes/2026-10-28-tomato-namespace.md
+/:
+  en: 3d5a424ae7d7e46b
+  zh: c22a8e4a62d8cc1a
+/2026-10-28-tomato-namespace:
+  en: c1eddaa35f46de16
+  zh: fe9553cbee694dde
+/2026-10-28-tomato-namespace/summary:
+  en: ee84462e23ae8088
+  zh: 4c6227263de62958
+/2026-10-28-tomato-namespace/table-of-contents:
+  en: 6cf314a069ceb451
+  zh: 9adff678e9ecab3b
+/2026-10-28-tomato-namespace/declaration:
+  en: 6907136f28e48c90
+  zh: 02f8298485f3d8e7
+/2026-10-28-tomato-namespace/compatibility:
+  en: cf51d9136c087d34
+  zh: d1f4fd65bd8aaecf
+/2026-10-28-tomato-namespace/verification:
+  en: 0373a3c02eaa6bdb
+  zh: c4420786826a6e3c
+/2026-10-28-tomato-namespace/dev-note:
+  en: b75c8458928b72b9
+  zh: 003ba4e17b4b5269

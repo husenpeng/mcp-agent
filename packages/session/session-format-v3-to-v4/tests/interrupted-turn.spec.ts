@@ -13,7 +13,8 @@ const row = (type: string, data: SessionFormatJsonObject) => ({ type, data })
 const splice = () => row('agent/inbox/spliced', { target: 'next-turn', inserted: [user('next')] })
 const start = (turn: number) => row('turn/start', { turn })
 const end = (turn: number) => row('turn/end', { turn, reason: { kind: 'completed' } })
-const titleMessage = { ...user('captured seq 4'), source: { kind: '@tomato/session-title-llm' } }
+const titleMessage = { ...user('captured seq 4'), source: { kind: 'dsh-session-title-llm' } }
+const migratedTitleMessage = { ...titleMessage, source: { kind: '@tomato/session-title-llm' } }
 const prefix = () => [start(1), row('step/start', { turn: 1, step: 1 }), row('step/end', { turn: 1, step: 1 }), splice()]
 function events(rows: readonly object[]): SessionFormatEvent[] {
   return rows.map((event, seq) => ({ ...event, seq, time: seq + 10 }) as SessionFormatEvent)
@@ -89,7 +90,7 @@ describe('V3 interrupted-turn migration', () => {
     expect(artifact.events[8]).toMatchObject({ sourceEventSeqs: [1, 5, 6, 7], surfaceOp: { op: 'replace', startSeq: 1, endSeq: 5 } })
     expect(artifact.events[11]).toMatchObject({ data: { sourceEventSeq: 8 } })
     expect(artifact.events[12]).toMatchObject({ data: { messageSeqs: [1, 5] } })
-    expect(artifact.events[13]).toMatchObject({ data: { messageSeqs: [1, 5], messages: [titleMessage] } })
+    expect(artifact.events[13]).toMatchObject({ data: { messageSeqs: [1, 5], messages: [migratedTitleMessage] } })
     expect(artifact.events[14]?.data).toEqual(source[13]?.data)
     expect(artifact.events[15]).toMatchObject({ data: { source: { kind: 'session-reference', sessionId: 'other', seq: 4, sessionFormatVersion: 3 } } })
     expect(artifact.events[16]).toEqual({ ...source[15], type: 'plugin:external/opaque', seq: 16 })

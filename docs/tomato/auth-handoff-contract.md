@@ -1,7 +1,6 @@
 # auth_service handoff 契约
 
-本文件定义本地网关与公司 BFF、auth_service 之间的一次性 handoff 契约。状态：auth_service
-侧已实现（mint/redeem）；BFF 接入后登录即可用。
+本文件定义本地网关与公司 BFF、auth_service 之间的一次性 handoff 契约。状态：auth_service 侧已实现（mint/redeem）；BFF 接入后登录即可用。
 
 ## 拓扑
 
@@ -82,8 +81,7 @@ BFF 把 `clientState` 与 `returnTo` 绑定进自己的 state cookie，回调时
 - code 一次性、TTL 60 秒；存储绑定 `sessionId`、`challenge`、`returnTo`。
 - 同一 session 的并发 mint 允许，但每个 code 只能兑换一次。
 - `mint` 只允许 BFF 调用：生产环境走内网或 `X-Internal-Token`，不接受浏览器 CORS。
-- `redeem` 只允许本地网关（服务端）调用，**不要求内部 token**——`code` + `verifier` +
-  `returnTo` 本身就是能力凭证；浏览器不能直接调用 auth_service。
+- `redeem` 只允许本地网关（服务端）调用，**不要求内部 token**——`code` + `verifier` + `returnTo` 本身就是能力凭证；浏览器不能直接调用 auth_service。
 
 ## auth_service redeem
 
@@ -159,8 +157,7 @@ auth_service 不可达、超时或 5xx 时返回 HTTP 503 与 `{ "status": "unav
 - verifier 只存在本地网关；code 被同机其他进程截获也无法兑换。
 - sessionId 不进 URL、不进浏览器历史、不进 localStorage、不进日志。
 - BFF 不为本地网关设置 session cookie；cookie 只由本地网关在自身 origin 写入。
-- 生产环境 `mint` 需要服务端鉴权（内网或内部 token）；`redeem` 由本地网关调用，不绑定内部
-  token；二者浏览器均不能直接调用 auth_service。
+- 生产环境 `mint` 需要服务端鉴权（内网或内部 token）；`redeem` 由本地网关调用，不绑定内部 token；二者浏览器均不能直接调用 auth_service。
 
 ## 本地开发
 

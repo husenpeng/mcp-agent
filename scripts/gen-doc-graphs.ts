@@ -1071,7 +1071,7 @@ function stripYamlScalar(value: string): string {
 
 const APP_EXAMPLES = [
   {
-    id: 'dsh_base',
+    id: 'tomato_base',
     rel: 'apps/cli/composition.md',
     title: 'TOMATO Base Composition',
     label: 'packages/bundle/base/cordis.patch.yml',

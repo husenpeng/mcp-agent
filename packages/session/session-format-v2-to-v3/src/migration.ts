@@ -10,7 +10,7 @@ import { assertReleasedV3Header } from './validation.ts'
 
 /** Promote system prompts, remap audited references, and canonicalize envelopes and PTC vocabulary. */
 export const sessionFormatV2ToV3 = defineSessionFormatMigration({
-  name: '@tomato/session-format-v2-to-v3',
+  name: '@deepseek-ai/dsh-session-format-v2-to-v3',
   fromVersion: 2,
   toVersion: 3,
   migrateHeader(header) {
@@ -123,7 +123,7 @@ class ReleasedV2ToV3Stage implements SessionFormatMigrationStage {
         ...this.step,
         message: {
           id,
-          role: 'system', source: { kind: 'plugin', plugin: '@tomato/system-prompt' },
+          role: 'system', source: { kind: 'plugin', plugin: '@deepseek-ai/dsh-system-prompt' },
           content: prompt === '' ? [] : [{ type: 'text', text: prompt }],
         },
       },

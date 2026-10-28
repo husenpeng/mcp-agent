@@ -35,8 +35,4 @@ DeepSeek's own identity did not change: `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`,
 5. Reinstall profile packages after the rename; the old lockfiles and package links reference names that no longer exist.
 6. A desktop installation using the new app ID is a separate application. The previous build is not replaced in place, and its update feed no longer applies.
 
-## Verification
-
-- `tomato --version` resolves through the new launcher.
-- `TOMATO_HOME` points at the renamed home and sessions appear in the sidebar.
-- A model route configured under `tomato.profile.bundles` loads after the profile reload.
+Verify `tomato --version` resolves through the new launcher, `TOMATO_HOME` points at the renamed home with sessions visible in the sidebar, and a model route configured under `tomato.profile.bundles` loads after the profile reload.

@@ -10,7 +10,7 @@
   ],
   "references": [
     {
-      "path": "../../util/brand"
+      "path": "../../util/branded"
     },
     {
       "path": "../../util/values"
