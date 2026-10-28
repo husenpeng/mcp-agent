@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import { credentialRef } from '@deepseek-ai/dsh-credentials'
 import LocalCredentialProvider from '@deepseek-ai/dsh-credentials-local'
-import { DSH_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot } from '@deepseek-ai/dsh-launch-environment'
+import { TOMATO_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot } from '@deepseek-ai/dsh-launch-environment'
 import WebRuntime from '@deepseek-ai/dsh-web'
 import * as webApiPlugin from '@deepseek-ai/dsh-web-deepseek-api'
 
@@ -28,7 +28,7 @@ function captureAuthorization(): () => (string | null)[] {
  * @param environment - launch-environment variables.
  */
 async function mount(ctx: Context, config: Record<string, unknown>, environment: Record<string, string>): Promise<void> {
-  ctx.provide(DSH_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([{ source: 'process', values: environment }]))
+  ctx.provide(TOMATO_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([{ source: 'process', values: environment }]))
   await ctx.plugin(WebRuntime, { searchProvider: 'deepseek-search-api' })
   await ctx.plugin(webApiPlugin, { baseURL: BASE, ...config })
 }

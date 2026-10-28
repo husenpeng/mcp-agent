@@ -1866,7 +1866,7 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
       {
         signature: '@Remote setVersionExemption(packageVersion: string, runtimeVersion: string, enabled: boolean, acceptRisk?: boolean): Promise<ChangeResult>',
         description: 'Grant or revoke one exact plugin/runtime exemption and reevaluate live plugins.',
-        parameters: [{ name: 'packageVersion', description: 'Exact manifest package name followed by @ and its version; never an installation spec or alias.' }, { name: 'runtimeVersion', description: 'Exact current DSH version for grants; revocation may name a previous runtime.' }, { name: 'enabled', description: 'Whether to grant rather than revoke the exemption.' }, { name: 'acceptRisk', description: 'Required true for grants after the user accepts possible crashes and data loss.' }],
+        parameters: [{ name: 'packageVersion', description: 'Exact manifest package name followed by @ and its version; never an installation spec or alias.' }, { name: 'runtimeVersion', description: 'Exact current TOMATO version for grants; revocation may name a previous runtime.' }, { name: 'enabled', description: 'Whether to grant rather than revoke the exemption.' }, { name: 'acceptRisk', description: 'Required true for grants after the user accepts possible crashes and data loss.' }],
         returns: 'Saved and runtime outcomes. Startup-only profiles require restart.',
       },
       {
@@ -1895,13 +1895,13 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
       },
       {
         signature: '@Remote async listVersions(name: string, options?: ListVersionsOptions, signal?: AbortSignal): Promise<PluginVersionList>',
-        description: 'Read the published versions newer than an installed registry package\'s version, from the first registry that answers. Official bundles follow the DSH version and are not listed.',
+        description: 'Read the published versions newer than an installed registry package\'s version, from the first registry that answers. Official bundles follow the TOMATO version and are not listed.',
         parameters: [{ name: 'name', description: 'Installed profile dependency name.' }, { name: 'options', description: 'The registry asked first; absent, the one the package was installed from in this process, else the configured one.' }, { name: 'signal', description: 'Ends the lookups early.' }],
-        returns: 'At most `versionListLimit` newer versions, newest first, with their tags, deprecation, bundle declaration, and DSH compatibility, and the registry that answered; or why no list could be read, with every registry asked.',
+        returns: 'At most `versionListLimit` newer versions, newest first, with their tags, deprecation, bundle declaration, and TOMATO compatibility, and the registry that answered; or why no list could be read, with every registry asked.',
       },
       {
         signature: '@Remote async updateBundle(name: string, version: string, options?: UpdateBundleOptions): Promise<PluginUpdateResult>',
-        description: 'Replace an installed registry bundle with a newer published version. The target is checked on the registry first: it must exist, declare a bundle, and accept the running DSH version, or nothing changes. With HMR the installed version is removed, so its plugins stop, and the target is installed with the same selection; when that installation fails or is cancelled, the removed version is installed again from the registry it came from. Without HMR the target is installed over the running version and the result reports the restart.',
+        description: 'Replace an installed registry bundle with a newer published version. The target is checked on the registry first: it must exist, declare a bundle, and accept the running TOMATO version, or nothing changes. With HMR the installed version is removed, so its plugins stop, and the target is installed with the same selection; when that installation fails or is cancelled, the removed version is installed again from the registry it came from. Without HMR the target is installed over the running version and the result reports the restart.',
         parameters: [{ name: 'name', description: 'Installed profile dependency name.' }, { name: 'version', description: 'Exact published version newer than the installed one.' }, { name: 'options', description: 'The registry asked first, as for `listVersions`, and the request id naming the progress and the target installation\'s logs and cancellation.' }],
         returns: 'The versions, the last step that ran with its result, and the reinstallation when one ran.',
       },
@@ -2069,7 +2069,7 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
       },
       {
         signature: 'readonly telemetryDisabledEnv: string | undefined',
-        description: 'Launch-time DSH_TELEMETRY_DISABLED value; any non-empty value opts out.',
+        description: 'Launch-time TOMATO_TELEMETRY_DISABLED value; any non-empty value opts out.',
         parameters: [],
       },
     ],
@@ -2952,8 +2952,8 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
   },
   {
     key: 'shellEnv',
-    summary: 'Registry (`ctx.shellEnv`) for trusted, per-execution `DSH_*` variables.',
-    description: 'Registry (`ctx.shellEnv`) for trusted, per-execution `DSH_*` variables. The namespace is rebuilt for every model shell call: ambient `DSH_*` values are discarded by the executor, then the registry\'s current snapshot is injected. Built-in shell facts remain owned by the registry itself while plugins can register additional, enumerable facts with effect-scoped disposal.',
+    summary: 'Registry (`ctx.shellEnv`) for trusted, per-execution `TOMATO_*` variables.',
+    description: 'Registry (`ctx.shellEnv`) for trusted, per-execution `TOMATO_*` variables. The namespace is rebuilt for every model shell call: ambient `TOMATO_*` values are discarded by the executor, then the registry\'s current snapshot is injected. Built-in shell facts remain owned by the registry itself while plugins can register additional, enumerable facts with effect-scoped disposal.',
     methods: [
       {
         signature: 'register(contributor: BashEnvContributor): () => void',
@@ -2962,8 +2962,8 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         returns: 'the disposer that unregisters the contribution.',
       },
       {
-        signature: 'collect(execution: ToolExecution): DshEnvironment',
-        description: 'Build the trusted `DSH_*` snapshot for one shell tool execution.',
+        signature: 'collect(execution: ToolExecution): TomatoEnvironment',
+        description: 'Build the trusted `TOMATO_*` snapshot for one shell tool execution.',
         parameters: [{ name: 'execution', description: 'the current tool execution.' }],
         returns: 'an immutable environment overlay containing built-ins and current contributions.',
       },
@@ -3891,7 +3891,7 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     methods: [
       {
         signature: 'getAdvertisedUrl(): string',
-        description: 'The URL this GUI advertises, also used for `DSH_WEB_URL` and the startup URL line.',
+        description: 'The URL this GUI advertises, also used for `TOMATO_WEB_URL` and the startup URL line.',
         parameters: [],
         returns: 'the configured `publicUrl`, otherwise the listener origin.',
       },
@@ -5242,7 +5242,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'BashEnvContributor',
-    declaration: 'export interface BashEnvContributor {\n    name: string;\n    variables: Readonly<Record<DshEnvironmentKey, BashEnvVariable>>;\n    resolve(execution: ToolExecution): Readonly<Partial<Record<DshEnvironmentKey, string>>>;\n}',
+    declaration: 'export interface BashEnvContributor {\n    name: string;\n    variables: Readonly<Record<TomatoEnvironmentKey, BashEnvVariable>>;\n    resolve(execution: ToolExecution): Readonly<Partial<Record<TomatoEnvironmentKey, string>>>;\n}',
   },
   {
     name: 'BashEnvVariable',
@@ -5250,7 +5250,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'BashEnvVariableInfo',
-    declaration: 'export interface BashEnvVariableInfo extends BashEnvVariable {\n    contributor: string;\n    key: DshEnvironmentKey;\n}',
+    declaration: 'export interface BashEnvVariableInfo extends BashEnvVariable {\n    contributor: string;\n    key: TomatoEnvironmentKey;\n}',
   },
   {
     name: 'BoxProps',
@@ -5741,12 +5741,12 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface DomainTableSpec<K extends string = string, V = unknown> {\n    readonly valueSchema: ZodType<V>;\n    readonly __key?: K;\n}',
   },
   {
-    name: 'DshEnvironment',
-    declaration: 'export type DshEnvironment = Readonly<Record<DshEnvironmentKey, string>>;',
+    name: 'TomatoEnvironment',
+    declaration: 'export type TomatoEnvironment = Readonly<Record<TomatoEnvironmentKey, string>>;',
   },
   {
-    name: 'DshEnvironmentKey',
-    declaration: 'export type DshEnvironmentKey = `${typeof DSH_ENV_PREFIX}${string}`;',
+    name: 'TomatoEnvironmentKey',
+    declaration: 'export type TomatoEnvironmentKey = `${typeof TOMATO_ENV_PREFIX}${string}`;',
   },
   {
     name: 'DynamicCordisPackage',
@@ -7994,11 +7994,11 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'ShellExecRequest',
-    declaration: 'export interface ShellExecRequest {\n    command: string;\n    workdir?: string | undefined;\n    timeoutMs?: number | undefined;\n    onExpiry?: ShellExpiryPolicy | undefined;\n    stdoutMaxBytes?: number | undefined;\n    signal?: AbortSignal | undefined;\n    stdin?: string | undefined;\n    env?: Record<string, string> | undefined;\n    dshEnv?: DshEnvironment | undefined;\n    sandboxPolicy?: SandboxExecutionPolicy | undefined;\n}',
+    declaration: 'export interface ShellExecRequest {\n    command: string;\n    workdir?: string | undefined;\n    timeoutMs?: number | undefined;\n    onExpiry?: ShellExpiryPolicy | undefined;\n    stdoutMaxBytes?: number | undefined;\n    signal?: AbortSignal | undefined;\n    stdin?: string | undefined;\n    env?: Record<string, string> | undefined;\n    tomatoEnv?: TomatoEnvironment | undefined;\n    sandboxPolicy?: SandboxExecutionPolicy | undefined;\n}',
   },
   {
     name: 'ShellExecSpec',
-    declaration: 'export interface ShellExecSpec {\n    command: string;\n    workdir: string;\n    timeoutMs: number;\n    onExpiry: ShellExpiryPolicy;\n    stdoutMaxBytes: number;\n    signal?: AbortSignal | undefined;\n    stdin?: string | undefined;\n    env?: Record<string, string> | undefined;\n    dshEnv?: DshEnvironment | undefined;\n    sandboxPolicy: SandboxExecutionPolicy | undefined;\n}',
+    declaration: 'export interface ShellExecSpec {\n    command: string;\n    workdir: string;\n    timeoutMs: number;\n    onExpiry: ShellExpiryPolicy;\n    stdoutMaxBytes: number;\n    signal?: AbortSignal | undefined;\n    stdin?: string | undefined;\n    env?: Record<string, string> | undefined;\n    tomatoEnv?: TomatoEnvironment | undefined;\n    sandboxPolicy: SandboxExecutionPolicy | undefined;\n}',
   },
   {
     name: 'ShellExecution',

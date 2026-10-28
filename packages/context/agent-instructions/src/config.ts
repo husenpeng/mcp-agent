@@ -48,7 +48,7 @@ export const Config: z<Config> = z.object({
 
 /** Normalized instruction discovery configuration. */
 export interface ResolvedDiscoveryConfig {
-  dshHome: string
+  tomatoHome: string
   agentsHome: string
   projectRootMarkers: string[]
   instructionFileCandidates: string[]
@@ -109,17 +109,17 @@ export function resolveConfig(config: Config): ResolvedConfig {
  * The harness home comes from the process environment through
  * {@link resolveDshHome}; the row cannot point instruction loading at a second
  * root that other harness consumers would not share. An owner that already
- * resolved the homes passes them as `dshHome` and `agentsHome`, which are
+ * resolved the homes passes them as `tomatoHome` and `agentsHome`, which are
  * normalized here so discovery and reconciliation use the same values.
  * @param config - optional discovery controls plus the already-resolved homes.
  * @returns normalized home, root markers, and instruction candidates.
  */
 export function resolveDiscoveryConfig(
   config: Pick<Config, 'projectRootMarkers' | 'instructionFileCandidates' | 'localInstructionFileCandidates'>
-    & { dshHome?: string; agentsHome?: string },
+    & { tomatoHome?: string; agentsHome?: string },
 ): ResolvedDiscoveryConfig {
   return {
-    dshHome: resolveDshHome(config.dshHome),
+    tomatoHome: resolveDshHome(config.tomatoHome),
     agentsHome: resolveAgentsHome(config.agentsHome),
     projectRootMarkers: config.projectRootMarkers ?? [...DEFAULT_PROJECT_ROOT_MARKERS],
     instructionFileCandidates: resolveInstructionFileCandidates(

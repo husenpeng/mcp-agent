@@ -89,7 +89,7 @@ describe('verifyRuntimeClosure', () => {
       'preset:standard': `
 - id: conditional
   name: '@scope/conditional'
-  disabled: !!js process.env.DSH_DISABLE_CONDITIONAL === '1'
+  disabled: !!js process.env.TOMATO_DISABLE_CONDITIONAL === '1'
 `,
     })
 

@@ -4,12 +4,12 @@
  */
 
 export type {
-  DshBundleManifest,
-  DshClientManifest,
-  DshEnginesManifest,
-  DshManifest,
-  DshPackageManifest,
-  DshProfileManifest,
+  TomatoBundleManifest,
+  TomatoClientManifest,
+  TomatoEnginesManifest,
+  TomatoManifest,
+  TomatoPackageManifest,
+  TomatoProfileManifest,
   LocalizedText,
   PluginLocalizedMeta,
 } from './types.ts'

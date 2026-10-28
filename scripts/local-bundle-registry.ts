@@ -2,7 +2,7 @@
  * Pack the local dependency closure of the Official on-demand bundles and serve
  * it as a loopback npm registry.
  *
- * A packaged application installs an Official bundle as `name@<running DSH
+ * A packaged application installs an Official bundle as `name@<running TOMATO
  * version>`, and the plugin manager asks a custom registry *alone*
  * ([registry plan](../packages/boot/plugin-manager/src/registry.ts)). Every
  * transitive dependency of the packed bundles must therefore be answerable by
@@ -113,8 +113,8 @@ export interface RegistryManifest {
     readonly commit: string
     /** Whether the checkout had uncommitted changes, so the commit alone is not the snapshot. */
     readonly dirty: boolean
-    /** Running DSH version the catalog installation target names. */
-    readonly dshVersion: string
+    /** Running TOMATO version the catalog installation target names. */
+    readonly tomatoVersion: string
   }
   /** Catalog roots in admission order. */
   readonly entries: readonly string[]
@@ -489,14 +489,14 @@ export async function writeRegistryManifest(path: string, manifest: RegistryMani
 /**
  * Record which checkout produced a run.
  * @param root - repository root.
- * @param dshVersion - running DSH version the catalog installation target names.
+ * @param tomatoVersion - running TOMATO version the catalog installation target names.
  * @returns The commit, whether the tree was dirty, and the version served.
  */
-export function sourceEvidence(root: string, dshVersion: string): RegistryManifest['source'] {
+export function sourceEvidence(root: string, tomatoVersion: string): RegistryManifest['source'] {
   return {
     commit: capture('git', ['rev-parse', 'HEAD'], { cwd: root }),
     dirty: capture('git', ['status', '--porcelain'], { cwd: root }) !== '',
-    dshVersion,
+    tomatoVersion,
   }
 }
 

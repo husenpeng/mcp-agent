@@ -52,7 +52,7 @@ job 排队时，先对照 job 页面请求的标签与 **Settings → Actions �
 
 ## 机器配置
 
-保持 `DSH_PACKAGING_CONFIG_DIR` 指向现有机器打包目录。完成的构建复制到其同级 `releases/<run-id>/<attempt>/`；`DSH_DESKTOP_RELEASES_DIR` 可用绝对路径覆盖该根目录。文件清单包含安装包、更新归档、blockmap、完成记录和不含凭据的 manifest。调试包会留存，但不能发布。复制内容通过校验后才开放 attempt 目录，已有 attempt 不能被替换。GitHub 保留相同文件清单 14 天。本地文件保留到操作员删除；校验或发布期间不要删除对应 attempt。
+保持 `TOMATO_PACKAGING_CONFIG_DIR` 指向现有机器打包目录。完成的构建复制到其同级 `releases/<run-id>/<attempt>/`；`TOMATO_DESKTOP_RELEASES_DIR` 可用绝对路径覆盖该根目录。文件清单包含安装包、更新归档、blockmap、完成记录和不含凭据的 manifest。调试包会留存，但不能发布。复制内容通过校验后才开放 attempt 目录，已有 attempt 不能被替换。GitHub 保留相同文件清单 14 天。本地文件保留到操作员删除；校验或发布期间不要删除对应 attempt。
 
 在配置目录下创建 `publishing/test.json`，获得授权后再创建 `publishing/production.json`。每份配置声明 `bucket`、不带路径的 HTTPS `origin` 和绝对路径 `credentialsFile`。凭据文件只包含 `secretId` 和 `secretKey`。macOS 还需 `macOS.signingIdentity` 和 `macOS.teamId`；Windows 需要 `windows.certificateThumbprint`。production 必须使用 origin `https://download.deepseek.com`，并提供 `githubApp.clientId` 和绝对路径 `githubApp.privateKeyFile`。这些文件不进入 Git。上传器支持长期 COS 凭据，不支持 STS 会话凭据。管理员必须维持 test 和 production bucket 未启用版本控制（不能是已启用或已暂停状态）。发布流程以此为部署前提，不调用 `GetBucketVersioning`，也不要求该权限。二进制 PUT 仍携带 `x-cos-forbid-overwrite`；防覆盖保证依赖管理员维持桶配置。
 
@@ -90,7 +90,7 @@ Environment 审批限制此工作流，不限制同一机器账户运行的任�
 
 ## 恢复频道
 
-在发布机器上通过 `node --import tsx` 运行仓库脚本 `apps/desktop/scripts/rollback-desktop-channel.ts`。保持 `GITHUB_REPOSITORY`、`RUNNER_NAME`、`DSH_PACKAGING_CONFIG_DIR` 和 `DESKTOP_PUBLISH_ROUTE` 对应原打包上下文。route JSON 包含 `runId`、`attempt`、`commit`、`runnerName`、`target`、`preset`、`sourceRef` 和 `channel`，可从留存 manifest 的 source 字段取得。`--record` 指定该次成功发布的审计目录，`--expected-version` 指定当前线上版本，`--reason` 填写操作原因。
+在发布机器上通过 `node --import tsx` 运行仓库脚本 `apps/desktop/scripts/rollback-desktop-channel.ts`。保持 `GITHUB_REPOSITORY`、`RUNNER_NAME`、`TOMATO_PACKAGING_CONFIG_DIR` 和 `DESKTOP_PUBLISH_ROUTE` 对应原打包上下文。route JSON 包含 `runId`、`attempt`、`commit`、`runnerName`、`target`、`preset`、`sourceRef` 和 `channel`，可从留存 manifest 的 source 字段取得。`--record` 指定该次成功发布的审计目录，`--expected-version` 指定当前线上版本，`--reason` 填写操作原因。
 
 不带 `--execute` 时，脚本读取远端对象并打印确切 YAML 变更，不执行写入。预览需要 COS 读取凭据。带 `--execute` 时，脚本校验历史文件，将前后 YAML 保存在新的审计记录中，再次检查当前频道，然后仅恢复 YAML。它不上传二进制文件，也不改变 tag。已经与目标字节完全相同的频道会跳过，其余频道必须匹配预期当前版本，因此可以恢复写完一个 feed 后中断的操作。其他当前版本会中止操作。恢复不是多对象事务；部分失败后需先检查审计记录再继续。
 

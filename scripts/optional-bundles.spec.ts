@@ -10,14 +10,14 @@ import { loadOverlayPatches } from '../packages/boot/app-boot/src/index.ts'
 import { readPluginMeta } from '../packages/boot/app-boot/src/package-meta.ts'
 import { bundlePatchPaths, composeEntries, initProfile, readProfileManifest } from '../packages/boot/app-boot/src/profile.ts'
 import { OPTIONAL_BUNDLES, PROFILE_TEMPLATES } from '../packages/util/official-bundles/src/bundles.ts'
-import type { DshBundleManifest } from '../packages/util/package-manifest/src/types.ts'
+import type { TomatoBundleManifest } from '../packages/util/package-manifest/src/types.ts'
 import { createPluginProfile } from '../apps/desktop/src/project-manager.ts'
 
 const root = resolve(import.meta.dirname, '..')
 
 interface Manifest {
   name: string
-  dsh?: { bundle?: DshBundleManifest }
+  dsh?: { bundle?: TomatoBundleManifest }
 }
 
 const bundles = new Map(globSync('packages/*/*/package.json', { cwd: root }).map((path) => {

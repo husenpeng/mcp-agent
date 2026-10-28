@@ -52,10 +52,10 @@ skill 可以是被扫描根目录顶层的目录 bundle `<name>/SKILL.md`，也�
 | 100 | `project-dsh` | `<projectRoot>/.dsh/skills` |
 | 200 | `project-agents` | `<projectRoot>/.agents/skills` |
 | 300 | `custom` | `Config.customSkillDirs` |
-| 400 | `user-dsh` | `<dshHome>/skills` |
+| 400 | `user-dsh` | `<tomatoHome>/skills` |
 | 500 | `user-agents` | `<agentsHome>/skills` |
 
-项目根目录是包含 `.git` 的最近祖先目录；如果不存在，则使用当前 cwd。用户 DSH 根目录会跳过其 `.system` 子目录。`includeDefaultRoots: false` 会省略项目根、用户根以及 `$DSH_BUNDLED_SKILL_DIR` 默认值，使隔离提供方只看到自身配置的根；`bundledSkillDir` 会按 rank 600 添加一个随包提供的根目录。
+项目根目录是包含 `.git` 的最近祖先目录；如果不存在，则使用当前 cwd。用户 TOMATO 根目录会跳过其 `.system` 子目录。`includeDefaultRoots: false` 会省略项目根、用户根以及 `$TOMATO_BUNDLED_SKILL_DIR` 默认值，使隔离提供方只看到自身配置的根；`bundledSkillDir` 会按 rank 600 添加一个随包提供的根目录。
 
 ### 挂载与配置
 
@@ -70,8 +70,8 @@ skill 可以是被扫描根目录顶层的目录 bundle `<name>/SKILL.md`，也�
 |---|---|---|
 | `providerName` | `filesystem` | 注册到 `ctx.skills` 的唯一提供方名称 |
 | `includeDefaultRoots` | `true` | 在 `customSkillDirs` 周围包含项目根与用户根 |
-| `dshHome` | `$DSH_HOME` 或 `~/.dsh` | Harness 配置根目录；扫描其 `skills` 子目录 |
-| `agentsHome` | `$DSH_AGENTS_HOME` 或 `~/.agents` | 为兼容 skill 扫描的共享 agent 配置根目录 |
+| `tomatoHome` | `$TOMATO_HOME` 或 `~/.dsh` | Harness 配置根目录；扫描其 `skills` 子目录 |
+| `agentsHome` | `$TOMATO_AGENTS_HOME` 或 `~/.agents` | 为兼容 skill 扫描的共享 agent 配置根目录 |
 | `customSkillDirs` | `[]` | 其他本地 skill 根目录，位于项目根之后、用户根之前 |
 | `watch` | `true` | 监视本地根，并在目录可能变化时使提供方失效 |
 | `bundledSkillDir` | — | 配置后按 rank 600 扫描的随包提供的 skill 根目录 |
@@ -128,7 +128,7 @@ skill 可以是被扫描根目录顶层的目录 bundle `<name>/SKILL.md`，也�
 - [skill 子系统参考](../../../docs/subsystems/skills.zh.md)——注册表约定与本地发现优先级表。
 - [skill 包](../skill/README.zh.md)——该提供方注册到的注册表。
 - [tool-skill 包](../tool-skill/README.zh.md)——已发现 skill 如何到达会话目录与模型。
-- [home-paths 包](../../util/home-paths/README.zh.md)——`dshHome` 与 `agentsHome` 如何解析。
+- [home-paths 包](../../util/home-paths/README.zh.md)——`tomatoHome` 与 `agentsHome` 如何解析。
 
 -----
 

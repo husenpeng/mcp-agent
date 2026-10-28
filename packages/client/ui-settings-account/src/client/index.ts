@@ -45,7 +45,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 export const inject = ['slots', 'locale', 'remote', 'remote.account', 'remote.session', 'theme', 'configForms', 'remoteAccess']
 /** Register account UI in Desktop and plain Web clients. @param ctx - client plugin context. */
 export function apply(ctx: Context): void {
-  const desktop = 'dshDesktop' in globalThis
+  const desktop = 'tomatoDesktop' in globalThis
   ctx.effect(() => ctx.locale.register('settings.account', { en, zh, ja, es, fr, de, ru, pt }), 'account: dictionaries')
   const t = ctx.locale.bind('settings.account')
   const page = globalThis as Partial<Record<typeof CONTACT_CONFIG_GLOBAL, unknown>>
@@ -61,7 +61,7 @@ export function apply(ctx: Context): void {
   const avatar = new AccountAvatarLoader((value) => { publish({ ...snapshot, avatar: value }) })
   ctx.effect(() => () => { avatar.dispose() }, 'account: profile picture lifetime')
   /** @returns the client identity for one account call, read at call time so it carries the language and zone in effect then. */
-  const client = () => accountClientMetadata(ctx.locale.getSnapshot().active, process.env.DSH_CLIENT_VERSION)
+  const client = () => accountClientMetadata(ctx.locale.getSnapshot().active, process.env.TOMATO_CLIENT_VERSION)
   // The browser half of the notice lifecycle: reads when the account becomes
   // active and on an explicit refresh, and acknowledges an order only after its
   // card reports a presented frame. The Host owns which bonus is unnotified and
@@ -169,7 +169,7 @@ export function apply(ctx: Context): void {
       }
     })().catch(() => { if (!grant.ended) publish({ ...snapshot, failed: true }) })
   })
-  const nativePlatform = (globalThis as typeof globalThis & { dshPlatform?: PlatformBridge }).dshPlatform
+  const nativePlatform = (globalThis as typeof globalThis & { tomatoPlatform?: PlatformBridge }).tomatoPlatform
   // One request channel for the single native Platform view. It always exists
   // so every entry can observe whether a page is showing; only a native bridge
   // lets an entry request one.
@@ -206,15 +206,15 @@ export function apply(ctx: Context): void {
       const profile = snapshot.details?.profile
       const context = {
         uid: profile?.status === 'ready' ? profile.value.id : null,
-        version: process.env.DSH_CLIENT_VERSION,
+        version: process.env.TOMATO_CLIENT_VERSION,
         width: window.screen.width, height: window.screen.height, pixelRatio: window.devicePixelRatio,
       }
       const openForm = (deviceInfo: string): void => {
         window.open(contactUrl(config, { ...context, deviceInfo }), '_blank', 'noopener,noreferrer')
       }
       const readDeviceInfo = (globalThis as typeof globalThis & {
-        dshDesktop?: { deviceInfo?: () => Promise<string> }
-      }).dshDesktop?.deviceInfo
+        tomatoDesktop?: { deviceInfo?: () => Promise<string> }
+      }).tomatoDesktop?.deviceInfo
       if (readDeviceInfo === undefined) {
         // A plain browser, or a Desktop bridge without the optional reader, reports the renderer user agent.
         openForm(navigator.userAgent)

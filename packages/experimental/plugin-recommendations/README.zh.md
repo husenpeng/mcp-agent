@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-用户讨论具体需求、或问 DSH 里某件事怎么做时，可以发现相关的内置插件。Agent 先正常回答，再在本轮完成后提供一张卡片；用户可以打开插件详情、点击启用或选择暂不需要。启用会修改整个 profile，并在重启后保留。Agent 在下一次请求时得知结果；点击本身不会开始新的模型轮次。用户之后可在插件详情页关闭或移除该插件。
+用户讨论具体需求、或问 TOMATO 里某件事怎么做时，可以发现相关的内置插件。Agent 先正常回答，再在本轮完成后提供一张卡片；用户可以打开插件详情、点击启用或选择暂不需要。启用会修改整个 profile，并在重启后保留。Agent 在下一次请求时得知结果；点击本身不会开始新的模型轮次。用户之后可在插件详情页关闭或移除该插件。
 
 ## 目录
 
@@ -69,7 +69,7 @@ Host 入口是函数插件。它的 `apply` 通过 `ctx.plugin` 组装内部的 
 
 #### 模型可见内容
 
-用户问 DSH 里某件事怎么做或怎么用、DSH 能不能做某件事，或者说缺少某种能力、希望它换一种工作方式时，例如工具、输入方式、思考内容或标题的显示、搜索会话、终端、工作树、多智能体协作、桌面操作、自动化、访问权限、授权确认、输出徽章或签名、插件及插件源，现有的 `skill` 工具会加载 `official-plugins`。目录条目告诉 Agent 这类问题不是要开发 DSH，并要求在读取文件或源码之前先加载它。加载结果包含匹配规则、提交方式，以及当前目录中的名称、本地化标题、描述和启用状态。已启用的插件只说明用法、不出卡；只覆盖部分需求时说明限制。普通任务、引用中的愿望、只讨论和明确不要推荐的请求不出卡。提案是在加载 skill 的同一轮里调用一次 [`propose_action`](../action-cards/README.zh.md#model-experience)：`action: "enable_official_plugin"`、插件在目录中的 `title`、一句用户语言的 `brief`，以及带目录 `name` 的 `details`；调用本身就是提交，用户点击启用前什么都不会改变。卡片只显示插件在目录中的标题和描述，所以最终回答要用用户的语言、一句话说明这个插件如何满足需求；`brief` 就是这同一句话。只有被接受的调用结果会说明回答怎样结尾：`Card shown below your answer. Do not restate it. End with at most one short invitation in the user’s language to click Enable below; do not say the plugin is already on.`。被拒绝的调用不带邀请说明，所以 Agent 只会邀请用户点击已经出现的卡片。点击后的下一次请求会带共享的状态通知和本种类的说明：它是事实，不是继续工作的要求，启用一个插件也不授权该插件之外的任何事。
+用户问 TOMATO 里某件事怎么做或怎么用、TOMATO 能不能做某件事，或者说缺少某种能力、希望它换一种工作方式时，例如工具、输入方式、思考内容或标题的显示、搜索会话、终端、工作树、多智能体协作、桌面操作、自动化、访问权限、授权确认、输出徽章或签名、插件及插件源，现有的 `skill` 工具会加载 `official-plugins`。目录条目告诉 Agent 这类问题不是要开发 TOMATO，并要求在读取文件或源码之前先加载它。加载结果包含匹配规则、提交方式，以及当前目录中的名称、本地化标题、描述和启用状态。已启用的插件只说明用法、不出卡；只覆盖部分需求时说明限制。普通任务、引用中的愿望、只讨论和明确不要推荐的请求不出卡。提案是在加载 skill 的同一轮里调用一次 [`propose_action`](../action-cards/README.zh.md#model-experience)：`action: "enable_official_plugin"`、插件在目录中的 `title`、一句用户语言的 `brief`，以及带目录 `name` 的 `details`；调用本身就是提交，用户点击启用前什么都不会改变。卡片只显示插件在目录中的标题和描述，所以最终回答要用用户的语言、一句话说明这个插件如何满足需求；`brief` 就是这同一句话。只有被接受的调用结果会说明回答怎样结尾：`Card shown below your answer. Do not restate it. End with at most one short invitation in the user’s language to click Enable below; do not say the plugin is already on.`。被拒绝的调用不带邀请说明，所以 Agent 只会邀请用户点击已经出现的卡片。点击后的下一次请求会带共享的状态通知和本种类的说明：它是事实，不是继续工作的要求，启用一个插件也不授权该插件之外的任何事。
 
 #### Token 影响
 

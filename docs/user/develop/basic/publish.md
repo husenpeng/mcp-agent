@@ -11,7 +11,7 @@ To use a fresh source checkout instead, complete the [run-from-source section](.
 Installation is built on two concepts. Both are described by a `package.json`, but they carry different kinds of manifest under the `dsh` key, and they answer different questions:
 
 - A **bundle** is an npm package that ships a configuration layer. Its manifest declares `dsh.bundle`, answering "what does this package contribute?": a patch file that inserts or overrides plugin rows.
-- A **profile** is a directory under `$DSH_HOME/profiles/<name>` describing one runnable composition. Its manifest declares `dsh.profile`, answering "which bundles compose this setup, in what order?".
+- A **profile** is a directory under `$TOMATO_HOME/profiles/<name>` describing one runnable composition. Its manifest declares `dsh.profile`, answering "which bundles compose this setup, in what order?".
 
 A bundle is what you author and distribute; a profile is what a user boots with `dsh --profile <name>`. Nothing is both.
 
@@ -63,7 +63,7 @@ Create `hello-plugin/cordis.patch.yml`. The patch is a YAML array like the `--pa
 
 `patch` also accepts an ordered list of files, for example `["./base.patch.yml", "./web.patch.yml"]`; the launcher applies them in that order as one layer, and each file's relative plugin paths resolve beside that file. A package without the `dsh.bundle` declaration still installs, but only as a plain dependency: `dsh plugin` prints a warning and activates no layer. Use that package format for a library that plugin packages import rather than a plugin users enable.
 
-Declare the DSH releases the bundle supports with an `engines.dsh` SemVer range, for example `"engines": { "dsh": ">=0.2.0 <0.3.0" }`. Installation and profile startup refuse a bundle whose range the running DSH does not satisfy; without `engines.dsh`, they check its `@deepseek-ai/dsh*` peer dependency ranges instead ([rule](../../../../packages/boot/app-boot/README.md#profiles)).
+Declare the TOMATO releases the bundle supports with an `engines.dsh` SemVer range, for example `"engines": { "dsh": ">=0.2.0 <0.3.0" }`. Installation and profile startup refuse a bundle whose range the running TOMATO does not satisfy; without `engines.dsh`, they check its `@deepseek-ai/dsh*` peer dependency ranges instead ([rule](../../../../packages/boot/app-boot/README.md#profiles)).
 
 ### The profile manifest
 
@@ -123,7 +123,7 @@ The effective configuration composes over an empty root by applying, in order:
 
 1. Each bundle patch named in the profile's `dsh.profile.bundles` list, in list order — `@deepseek-ai/dsh-base` first, then each installed bundle in the order it was added.
 2. The profile's own `cordis.patch.yml`.
-3. The home-level `$DSH_HOME/cordis.patch.yml` — machine-local preferences shared by every profile.
+3. The home-level `$TOMATO_HOME/cordis.patch.yml` — machine-local preferences shared by every profile.
 4. Each `--patch <path>` overlay, in argv order.
 
 App arguments are not another patch layer. A surface bundle can resolve them through an ordinary app-owned service, described below.

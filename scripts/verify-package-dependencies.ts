@@ -445,7 +445,7 @@ export async function readHostBuildEntries(root: string, pkg: WorkspacePackageMa
   const configs: BuildEntryConfig[] = []
   for (const face of BUILD_FACES) {
     const value: unknown = typeof exported === 'function'
-      ? await (exported as (inline: { env: Record<string, string> }) => unknown)({ env: { DSH_BUILD_FACE: face } })
+      ? await (exported as (inline: { env: Record<string, string> }) => unknown)({ env: { TOMATO_BUILD_FACE: face } })
       : exported
     configs.push(...(Array.isArray(value) ? value : [value]) as BuildEntryConfig[])
   }

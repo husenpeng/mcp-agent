@@ -56,9 +56,9 @@ it('retains build inputs outside checkout and run-specific pnpm installations', 
   expect(JSON.stringify(env)).not.toContain('runner.')
   const steps = workflow.jobs.package!.steps
   const cache = steps.find(step => step.name === 'Configure persistent package caches')!
-  expect(cache.env?.DSH_DESKTOP_PACKAGE_CACHE_DIR).toBe('${{ runner.tool_cache }}/dsh-desktop-package-cache')
-  expect(cache.run).toContain('PNPM_CONFIG_STORE_DIR=$DSH_DESKTOP_PACKAGE_CACHE_DIR/workspace-pnpm-store')
-  expect(cache.run).toContain('DSH_DESKTOP_PACKAGE_CACHE_DIR=$DSH_DESKTOP_PACKAGE_CACHE_DIR')
+  expect(cache.env?.TOMATO_DESKTOP_PACKAGE_CACHE_DIR).toBe('${{ runner.tool_cache }}/dsh-desktop-package-cache')
+  expect(cache.run).toContain('PNPM_CONFIG_STORE_DIR=$TOMATO_DESKTOP_PACKAGE_CACHE_DIR/workspace-pnpm-store')
+  expect(cache.run).toContain('TOMATO_DESKTOP_PACKAGE_CACHE_DIR=$TOMATO_DESKTOP_PACKAGE_CACHE_DIR')
   expect(steps.indexOf(cache)).toBeLessThan(steps.findIndex(step => step.name === 'Install locked dependencies'))
 })
 

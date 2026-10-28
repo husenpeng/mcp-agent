@@ -5,7 +5,7 @@ import { Session, SessionId, type SessionEvent } from '@deepseek-ai/dsh-session'
 /** @returns Model provider patches for the configured development or official API. */
 export function officeModelPatches() {
   const model = process.env.MODEL_NAME ?? 'deepseek-flash'
-  const completions = process.env.DSH_OFFICE_TEST_API === 'openai-completions'
+  const completions = process.env.TOMATO_OFFICE_TEST_API === 'openai-completions'
   return [
     ...completions ? [
       { id: 'llm-deepseek', disabled: true },

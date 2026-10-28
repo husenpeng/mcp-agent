@@ -10,9 +10,9 @@ import { execa } from 'execa'
 import { describe, expect, it } from 'vitest'
 
 const repoRoot = fileURLToPath(new URL('../../../../../../', import.meta.url))
-const dshBin = join(repoRoot, 'apps/cli/lib/bin.js')
+const tomatoBin = join(repoRoot, 'apps/cli/lib/bin.js')
 const frontendIndex = join(repoRoot, 'apps/web/dist/index.html')
-const builtArtifactsExist = existsSync(dshBin) && existsSync(frontendIndex)
+const builtArtifactsExist = existsSync(tomatoBin) && existsSync(frontendIndex)
 
 interface Fixture {
   root: string
@@ -135,7 +135,7 @@ describe.skipIf(!builtArtifactsExist)('dsh Web profile best-effort startup', () 
   it('serves the full Web app while unrelated entries fail to start', async () => {
     const fixture = createFixture()
     const child = execa(process.execPath, [
-      dshBin,
+      tomatoBin,
       '--profile', 'web',
       '--patch', fixture.patch,
       '--no-open',
@@ -145,9 +145,9 @@ describe.skipIf(!builtArtifactsExist)('dsh Web profile best-effort startup', () 
       env: {
         ...process.env,
         DEEPSEEK_API_KEY: 'keyless-web-best-effort-no-call',
-        DSH_AGENTS_HOME: join(fixture.root, '.agents'),
-        DSH_HOME: fixture.home,
-        DSH_TELEMETRY_DISABLED: '1',
+        TOMATO_AGENTS_HOME: join(fixture.root, '.agents'),
+        TOMATO_HOME: fixture.home,
+        TOMATO_TELEMETRY_DISABLED: '1',
         NODE_NO_WARNINGS: '1',
       },
       input: '',
@@ -214,7 +214,7 @@ describe.skipIf(!builtArtifactsExist)('dsh Web profile best-effort startup', () 
     writeFileSync(fixture.patch, `${readFileSync(fixture.patch, 'utf8')}- id: ${id}\n  ${patch}\n`)
     try {
       const result = await execa(process.execPath, [
-        dshBin,
+        tomatoBin,
         '--profile', 'web',
         '--patch', fixture.patch,
         '--no-open',
@@ -224,9 +224,9 @@ describe.skipIf(!builtArtifactsExist)('dsh Web profile best-effort startup', () 
         env: {
           ...process.env,
           DEEPSEEK_API_KEY: 'keyless-web-required-no-call',
-          DSH_AGENTS_HOME: join(fixture.root, '.agents'),
-          DSH_HOME: fixture.home,
-          DSH_TELEMETRY_DISABLED: '1',
+          TOMATO_AGENTS_HOME: join(fixture.root, '.agents'),
+          TOMATO_HOME: fixture.home,
+          TOMATO_TELEMETRY_DISABLED: '1',
           NODE_NO_WARNINGS: '1',
         },
         input: '',
@@ -268,7 +268,7 @@ describe.skipIf(!builtArtifactsExist)('dsh Web profile best-effort startup', () 
 
     try {
       const result = await execa(process.execPath, [
-        dshBin,
+        tomatoBin,
         '--profile', 'web',
         '--no-open',
         '--port', String(address.port),
@@ -277,9 +277,9 @@ describe.skipIf(!builtArtifactsExist)('dsh Web profile best-effort startup', () 
         env: {
           ...process.env,
           DEEPSEEK_API_KEY: 'keyless-web-required-bind-no-call',
-          DSH_AGENTS_HOME: join(root, '.agents'),
-          DSH_HOME: home,
-          DSH_TELEMETRY_DISABLED: '1',
+          TOMATO_AGENTS_HOME: join(root, '.agents'),
+          TOMATO_HOME: home,
+          TOMATO_TELEMETRY_DISABLED: '1',
           NODE_NO_WARNINGS: '1',
         },
         input: '',
@@ -315,7 +315,7 @@ describe.skipIf(!builtArtifactsExist)('dsh Web profile best-effort startup', () 
       }
       expect(report).toContain("profile: 'web'")
       expect(report).toContain('nodeVersion:')
-      expect(report).toContain('dshVersion:')
+      expect(report).toContain('tomatoVersion:')
       expect(report).toContain('configurationPath:')
       expect(report).toContain("code: 'EADDRINUSE'")
       expect(report).toContain(`port: ${String(address.port)}`)
@@ -348,7 +348,7 @@ describe.skipIf(!builtArtifactsExist)('dsh Web profile best-effort startup', () 
     ].join('\n'))
     try {
       const result = await execa(process.execPath, [
-        dshBin,
+        tomatoBin,
         '--profile', 'web',
         '--patch', fixture.patch,
         '--no-open',
@@ -358,9 +358,9 @@ describe.skipIf(!builtArtifactsExist)('dsh Web profile best-effort startup', () 
         env: {
           ...process.env,
           DEEPSEEK_API_KEY: 'keyless-web-detached-no-call',
-          DSH_AGENTS_HOME: join(fixture.root, '.agents'),
-          DSH_HOME: fixture.home,
-          DSH_TELEMETRY_DISABLED: '1',
+          TOMATO_AGENTS_HOME: join(fixture.root, '.agents'),
+          TOMATO_HOME: fixture.home,
+          TOMATO_TELEMETRY_DISABLED: '1',
           NODE_NO_WARNINGS: '1',
         },
         input: '',

@@ -57,7 +57,7 @@ import { parseSessionLog, prepareSessionSnapshotFixtureForComparison } from '@de
 
 const repoRoot = fileURLToPath(new URL('../../', import.meta.url))
 const snapshotsRoot = fileURLToPath(new URL('./', import.meta.url))
-const dshBin = join(repoRoot, 'apps/cli/src/bin.ts')
+const tomatoBin = join(repoRoot, 'apps/cli/src/bin.ts')
 const tsconfigPath = join(repoRoot, 'tsconfig.json')
 const editingCordisSkill = join(
   repoRoot,
@@ -73,11 +73,11 @@ function snapshotMode(value: string | undefined): SnapshotMode {
     case 'replay': return 'replay'
     case 'record': return 'record'
     case 'refresh': return 'refresh'
-    default: throw new Error(`unknown DSH_SNAPSHOT mode: ${value}`)
+    default: throw new Error(`unknown TOMATO_SNAPSHOT mode: ${value}`)
   }
 }
 
-const mode = snapshotMode(process.env.DSH_SNAPSHOT)
+const mode = snapshotMode(process.env.TOMATO_SNAPSHOT)
 const RUNTIME_WORKSPACE_ENTRIES = ['.agents', '.dsh', '.snapshot-patches'] as const
 
 interface JsonObject {
@@ -805,7 +805,7 @@ function snapshotGit(cwd: string, args: string[]): string {
     env: {
       ...Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith('GIT_'))),
       GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_SYSTEM: '/dev/null',
-      GIT_AUTHOR_NAME: 'DSH Snapshot', GIT_COMMITTER_NAME: 'DSH Snapshot',
+      GIT_AUTHOR_NAME: 'TOMATO Snapshot', GIT_COMMITTER_NAME: 'TOMATO Snapshot',
       GIT_AUTHOR_EMAIL: 'snapshot@example.invalid', GIT_COMMITTER_EMAIL: 'snapshot@example.invalid',
       GIT_AUTHOR_DATE: '2000-01-01T00:00:00Z', GIT_COMMITTER_DATE: '2000-01-01T00:00:00Z',
     },
@@ -845,7 +845,7 @@ async function verifyProviderCwdResume(
   fixture: string,
   task: string,
 ): Promise<void> {
-  const providerCwd = scenario.manifest.environment?.DSH_SNAPSHOT_PROVIDER_CWD
+  const providerCwd = scenario.manifest.environment?.TOMATO_SNAPSHOT_PROVIDER_CWD
   const primary = initial[0]
   expect(providerCwd).toBeDefined()
   expect(primary?.header.cwd).toBe(providerCwd)
@@ -853,18 +853,18 @@ async function verifyProviderCwdResume(
   const otherHostCwd = await mkdtemp(join(tmpdir(), 'dsh-provider-resume-'))
   const env = {
     ...REPLAY_CREDENTIAL_ENV,
-    DSH_HOME: join(cwd, '.dsh'),
-    DSH_SNAPSHOT: 'replay',
-    DSH_SNAPSHOT_FILE: fixture,
-    DSH_SNAPSHOT_PROVIDER: model.provider,
-    DSH_SNAPSHOT_MODEL: model.model,
-    DSH_PERMISSION_MODE: 'read-only',
-    DSH_TELEMETRY_DISABLED: '1',
+    TOMATO_HOME: join(cwd, '.dsh'),
+    TOMATO_SNAPSHOT: 'replay',
+    TOMATO_SNAPSHOT_FILE: fixture,
+    TOMATO_SNAPSHOT_PROVIDER: model.provider,
+    TOMATO_SNAPSHOT_MODEL: model.model,
+    TOMATO_PERMISSION_MODE: 'read-only',
+    TOMATO_TELEMETRY_DISABLED: '1',
     NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
   }
   const launch = {
     cwd: otherHostCwd,
-    binScript: dshBin,
+    binScript: tomatoBin,
     configPath: patches[0] as string,
     tsconfigPath,
     binArgs: [
@@ -876,7 +876,7 @@ async function verifyProviderCwdResume(
   try {
     const refused = await runLoaderSmoke({
       ...launch, label: 'provider-cwd mismatched resume', expectedExitCode: 1,
-      env: { ...env, DSH_SNAPSHOT_PROVIDER_CWD: `${providerCwd}/other` },
+      env: { ...env, TOMATO_SNAPSHOT_PROVIDER_CWD: `${providerCwd}/other` },
     })
     expect(refused.stdout).toBe('')
     expect(refused.stderr).toContain(`was recorded in "${providerCwd}", not "${providerCwd}/other"`)
@@ -884,7 +884,7 @@ async function verifyProviderCwdResume(
     const resumed = await runLoaderSmoke({
       ...launch, label: 'provider-cwd matching resume',
       binArgs: [...launch.binArgs.slice(0, -1), '--json', task],
-      env: { ...env, DSH_SNAPSHOT_PROVIDER_CWD: providerCwd },
+      env: { ...env, TOMATO_SNAPSHOT_PROVIDER_CWD: providerCwd },
     })
     const output = records(resumed.stdout)
     expect(output[0]).toEqual({ type: 'session', sessionId: primary?.header.id, cwd: providerCwd })
@@ -1281,7 +1281,7 @@ describe('headless recorded-session snapshots', () => {
           tempDirPrefix: 'dsh-log-snap-',
           ...(scenario.name === 'compaction-recovery' ? await compactionWorkspaceOptions() : {}),
           ...(scenario.manifest.workspace?.parent === 'outside-temp' ? { tempDirParent: outsideTempWorkspaceParent() } : {}),
-          binScript: dshBin,
+          binScript: tomatoBin,
           sourceImport: 'tsx/esm',
           configPath: join(baseComposition.dir, 'cordis.yml'),
           binArgs: [
@@ -1296,28 +1296,28 @@ describe('headless recorded-session snapshots', () => {
             : 1,
           env: {
             ...(replaying ? REPLAY_CREDENTIAL_ENV : {}),
-            DSH_SNAPSHOT: replaying ? 'replay' : 'record',
-            DSH_SNAPSHOT_PROVIDER: model.provider,
-            DSH_SNAPSHOT_MODEL: model.model,
-            DSH_SNAPSHOT_SPILL_ROOT: spillRoot,
-            DSH_SNAPSHOT_SPILL_LOCATOR_ROOT: locatorRoot,
-            DSH_SNAPSHOT_FILE: join(scenario.dir, fixtureFiles[0] as string),
+            TOMATO_SNAPSHOT: replaying ? 'replay' : 'record',
+            TOMATO_SNAPSHOT_PROVIDER: model.provider,
+            TOMATO_SNAPSHOT_MODEL: model.model,
+            TOMATO_SNAPSHOT_SPILL_ROOT: spillRoot,
+            TOMATO_SNAPSHOT_SPILL_LOCATOR_ROOT: locatorRoot,
+            TOMATO_SNAPSHOT_FILE: join(scenario.dir, fixtureFiles[0] as string),
             ...(replaying && fixtureFiles.length > 1
-              ? { DSH_SNAPSHOT_CHILD_FILES: fixtureFiles.slice(1).map(file => join(scenario.dir, file)).join(delimiter) }
+              ? { TOMATO_SNAPSHOT_CHILD_FILES: fixtureFiles.slice(1).map(file => join(scenario.dir, file)).join(delimiter) }
               : {}),
             ...(replaying && scenario.manifest.replay?.override === true
-              ? { DSH_SNAPSHOT_OVERRIDE: join(scenario.dir, 'replay.override.json') }
+              ? { TOMATO_SNAPSHOT_OVERRIDE: join(scenario.dir, 'replay.override.json') }
               : {}),
             ...(scenario.manifest.permission === undefined
               ? {}
-              : { DSH_PERMISSION_MODE: scenario.manifest.permission }),
+              : { TOMATO_PERMISSION_MODE: scenario.manifest.permission }),
             ...scenario.manifest.environment,
             ...(scenario.name === 'mcp-resources' || scenario.name === 'mcp-resources-ptc' ? {
-              DSH_MCP_RESOURCES_FIXTURE: join(repoRoot, 'packages/mcp/mcp-client/tests/fixtures/resources-server.ts'),
+              TOMATO_MCP_RESOURCES_FIXTURE: join(repoRoot, 'packages/mcp/mcp-client/tests/fixtures/resources-server.ts'),
             } : {}),
             NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
-            DSH_TELEMETRY_DISABLED: '1',
-            ...(mcpDemo === undefined ? {} : { DSH_MCP_DEMO_URL: mcpDemo.url }),
+            TOMATO_TELEMETRY_DISABLED: '1',
+            ...(mcpDemo === undefined ? {} : { TOMATO_MCP_DEMO_URL: mcpDemo.url }),
           },
           prepare: async (cwd) => {
             if (scenario.manifest.workspace?.parent === 'outside-temp') assertWorkspaceOutsideTemp(cwd)

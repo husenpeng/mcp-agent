@@ -51,9 +51,9 @@ export interface Config {
   providerName?: string
   /** Whether project and user roots are included around custom roots. */
   includeDefaultRoots?: boolean
-  /** DeepSeek Harness config root. Defaults to `$DSH_HOME` or `~/.dsh`. */
-  dshHome?: string
-  /** Shared agent config root. Defaults to `$DSH_AGENTS_HOME` or `~/.agents`. */
+  /** DeepSeek Harness config root. Defaults to `$TOMATO_HOME` or `~/.dsh`. */
+  tomatoHome?: string
+  /** Shared agent config root. Defaults to `$TOMATO_AGENTS_HOME` or `~/.agents`. */
   agentsHome?: string
   /** Additional skill roots scanned after project roots and before user roots. */
   customSkillDirs?: string[]
@@ -69,14 +69,14 @@ export interface Config {
   watchMaxProjects?: number
   /** Whether watched symbolic links follow their target files. */
   watchFollowSymlinks?: boolean
-  /** Bundled skill root; defaults to `$DSH_BUNDLED_SKILL_DIR` when default roots are included, otherwise mounts none. */
+  /** Bundled skill root; defaults to `$TOMATO_BUNDLED_SKILL_DIR` when default roots are included, otherwise mounts none. */
   bundledSkillDir?: string
 }
 
 export const Config: Schema<Config> = z.object({
   providerName: z.string().min(1).default('filesystem'),
   includeDefaultRoots: z.boolean().default(true),
-  dshHome: z.string(),
+  tomatoHome: z.string(),
   agentsHome: z.string(),
   customSkillDirs: z.array(z.string()).default([]),
   watch: z.boolean().default(true),
@@ -150,7 +150,7 @@ export function apply(ctx: Context, config: Config = {}): void {
 export class FileSystemSkillProvider implements SkillProvider {
   readonly name: string
   private readonly includeDefaultRoots: boolean
-  private readonly dshHome: string
+  private readonly tomatoHome: string
   private readonly agentsHome: string
   private readonly customSkillDirs: string[]
   private readonly watchManager: SkillWatchManager
@@ -164,7 +164,7 @@ export class FileSystemSkillProvider implements SkillProvider {
   ) {
     this.name = config.providerName ?? 'filesystem'
     this.includeDefaultRoots = config.includeDefaultRoots ?? true
-    this.dshHome = resolveDshHome(config.dshHome)
+    this.tomatoHome = resolveDshHome(config.tomatoHome)
     this.agentsHome = resolveAgentsHome(config.agentsHome)
     this.customSkillDirs = (config.customSkillDirs ?? []).map(root => resolve(root))
     this.watchManager = new SkillWatchManager(ctx, control.invalidate, resolveWatchConfig(config))
@@ -173,7 +173,7 @@ export class FileSystemSkillProvider implements SkillProvider {
     // must see only its explicit roots, or every such provider would
     // re-discover the app's bundled skills under its own provider name.
     const bundledSkillDir = config.bundledSkillDir
-      ?? (this.includeDefaultRoots ? process.env.DSH_BUNDLED_SKILL_DIR : undefined)
+      ?? (this.includeDefaultRoots ? process.env.TOMATO_BUNDLED_SKILL_DIR : undefined)
     this.bundledSkillDir = bundledSkillDir === undefined ? undefined : resolve(bundledSkillDir)
   }
 
@@ -293,7 +293,7 @@ export class FileSystemSkillProvider implements SkillProvider {
     roots.push(...this.customSkillDirs.map(path => ({ path, source: 'custom' as const, rank: CUSTOM_RANK })))
     if (this.includeDefaultRoots) {
       roots.push(
-        { path: join(this.dshHome, 'skills'), source: 'user-dsh', rank: USER_DSH_RANK, skipSystem: true },
+        { path: join(this.tomatoHome, 'skills'), source: 'user-dsh', rank: USER_DSH_RANK, skipSystem: true },
         { path: join(this.agentsHome, 'skills'), source: 'user-agents', rank: USER_AGENTS_RANK },
       )
     }

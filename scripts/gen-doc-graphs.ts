@@ -719,7 +719,7 @@ const SERVICE_ROLES: ServiceRole[] = [
     title: 'Managed bash environment registry',
     mode: 'core',
     consumers: ['tool-bash', 'tool-pwsh'],
-    note: 'Plugins declare effect-scoped DSH_* facts; each shell tool collects one trusted snapshot per execution and its executor rebuilds the namespace.',
+    note: 'Plugins declare effect-scoped TOMATO_* facts; each shell tool collects one trusted snapshot per execution and its executor rebuilds the namespace.',
   },
   {
     key: 'terminals',
@@ -883,7 +883,7 @@ const SERVICE_ROLES: ServiceRole[] = [
     title: 'Served Web GUI',
     mode: 'core',
     consumers: ['harness-dev-context'],
-    note: 'The web-runtime row advertises one URL for its Web GUI: the configured publicUrl, otherwise the listener origin; DSH_WEB_URL, the startup URL, and harness-dev-context read the same value.',
+    note: 'The web-runtime row advertises one URL for its Web GUI: the configured publicUrl, otherwise the listener origin; TOMATO_WEB_URL, the startup URL, and harness-dev-context read the same value.',
   },
   {
     key: 'clientModules',
@@ -1073,7 +1073,7 @@ const APP_EXAMPLES = [
   {
     id: 'dsh_base',
     rel: 'apps/cli/composition.md',
-    title: 'DSH Base Composition',
+    title: 'TOMATO Base Composition',
     label: 'packages/bundle/base/cordis.patch.yml',
     config: 'packages/bundle/base/cordis.patch.yml',
     summary: 'The dsh-base bundle patch shared by the web, headless, sdk, and acp profiles; their mode bundles and user layers patch over it, while sdk-minimal owns a separate standalone tree.',

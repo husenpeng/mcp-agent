@@ -152,9 +152,9 @@ export function prepareDevelopmentProject(options: DevelopmentProjectOptions): s
     ...mirrorDependencyLinks(options.dependencyDir, destinationModules),
     ...mirrorWorkspaceDependencies([options.cliDir, options.hostDir], destinationModules),
   ]
-  const dshLink = join(destinationModules, '@deepseek-ai', 'dsh')
-  removeOwnedPath(dshLink)
-  linkDirectory(options.cliDir, dshLink)
+  const tomatoLink = join(destinationModules, '@deepseek-ai', 'dsh')
+  removeOwnedPath(tomatoLink)
+  linkDirectory(options.cliDir, tomatoLink)
   const hostLink = join(destinationModules, '@deepseek-ai', 'dsh-desktop-host')
   removeOwnedPath(hostLink)
   linkDirectory(options.hostDir, hostLink)

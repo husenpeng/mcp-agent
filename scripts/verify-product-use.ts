@@ -8,7 +8,7 @@ import ts from 'typescript'
 import { applyEntryPatches, type PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 import type { EntryOptions } from '@deepseek-ai/cordis-plugin-loader'
 import { bundlePatchPaths, composeEntries, loadOverlayPatches } from '../packages/boot/app-boot/src/index.ts'
-import type { DshBundleManifest } from '../packages/util/package-manifest/src/types.ts'
+import type { TomatoBundleManifest } from '../packages/util/package-manifest/src/types.ts'
 import { assertNever } from '../packages/util/values/src/index.ts'
 import { isAgentPresetEntry, isCordisGroupEntry, loadCordisYaml } from './cordis-yaml.ts'
 import { PRODUCT_PACKAGE_POLICY, type ProductPackagePolicy } from './product-package-policy.ts'
@@ -24,7 +24,7 @@ const DYNAMIC_MOUNTS: Readonly<Record<string, readonly string[]>> = {
 interface Package {
   directory: string
   name: string
-  bundle?: DshBundleManifest
+  bundle?: TomatoBundleManifest
   client: boolean
   generatedRemote: boolean
 }
@@ -78,7 +78,7 @@ export function verifyProductUse(
     const manifest = JSON.parse(readFileSync(resolve(root, path), 'utf8')) as {
       name: string
       exports?: Record<string, unknown>
-      dsh?: { bundle?: DshBundleManifest; client?: unknown }
+      dsh?: { bundle?: TomatoBundleManifest; client?: unknown }
     }
     if (typeof manifest.name !== 'string' || manifest.name === '') throw new Error(`${path}: missing package name`)
     if (packages.has(manifest.name)) throw new Error(`${path}: duplicate package name ${manifest.name}`)

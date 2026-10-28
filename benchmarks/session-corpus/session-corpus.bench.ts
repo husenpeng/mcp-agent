@@ -75,7 +75,7 @@ const CASES: Readonly<Record<CorpusName, BenchmarkCase>> = {
   list: {
     id: `session-corpus/list-${String(CORPUS.list)}`,
     measures: `Cold Web Host boot, then first and repeated session.list over ${CORPUS.list.toLocaleString('en-US')} Sessions of realistic length.`,
-    affects: 'Starting DSH and showing the Session list for a heavy user.',
+    affects: 'Starting TOMATO and showing the Session list for a heavy user.',
   },
   search: {
     id: 'session-corpus/search',

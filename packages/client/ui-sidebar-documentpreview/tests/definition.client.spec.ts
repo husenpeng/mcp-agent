@@ -102,7 +102,7 @@ describe('text type in the registry', () => {
     'dsh-resource://file/session/s-1',
     'dsh-resource://file/session/%/../a.md',
     'dsh-resource://file/session/s-1/../%ZZ.md',
-    'DSH-RESOURCE://file/session/s-1/../a.md',
+    'TOMATO-RESOURCE://file/session/s-1/../a.md',
     'dsh-resource://File/session/s-1/../a.md',
   ])('keeps the Session parser veto after matching a file prefix: %s', (address) => {
     const tabs = registry()

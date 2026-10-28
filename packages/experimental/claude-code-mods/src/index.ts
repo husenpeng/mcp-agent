@@ -1,5 +1,5 @@
 /**
- * Experimental bridge for Claude Code mods. A mod is a DSH plugin built with
+ * Experimental bridge for Claude Code mods. A mod is a TOMATO plugin built with
  * {@link defineMod} around the mod's `register(on, options)`; this service
  * keeps the loaded mods and raises their events from harness extension
  * points — `session.start` on `agent/created`, `prompt.submit` and

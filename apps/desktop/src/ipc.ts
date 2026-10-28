@@ -88,7 +88,7 @@ export interface DesktopAccountApi {
 }
 
 /** Product documents cannot supply update versions, package URLs, or installation authorization. */
-export interface DshDesktopProductApi {
+export interface TomatoDesktopProductApi {
   readonly protocolVersion: 1
   readonly account: DesktopAccountApi
   readonly browser: DesktopBrowserBridge

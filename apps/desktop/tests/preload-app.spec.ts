@@ -4,7 +4,7 @@ import { JSDOM } from 'jsdom'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { installMandatoryUpdateOverlay } from '../src/preload-mandatory-overlay.ts'
 import { syncWindowsAppearance } from '../src/preload-windows.ts'
-import { DESKTOP_IPC, type DshDesktopProductApi } from '../src/ipc.ts'
+import { DESKTOP_IPC, type TomatoDesktopProductApi } from '../src/ipc.ts'
 
 const electron = vi.hoisted(() => ({
   contextBridge: { exposeInMainWorld: vi.fn() },
@@ -24,7 +24,7 @@ it('reads only native login API-key presence through the onboarding bridge', asy
   vi.stubGlobal('location', new URL('dsh-app://app/'))
   electron.ipcRenderer.invoke.mockResolvedValueOnce(true)
   await import('../src/preload-app.ts')
-  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'dshOnboarding')?.[1] as { hasApiKey(): Promise<boolean> }
+  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'tomatoOnboarding')?.[1] as { hasApiKey(): Promise<boolean> }
   expect(await api.hasApiKey()).toBe(true)
   expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(DESKTOP_IPC.onboardingApiKey)
 })
@@ -32,7 +32,7 @@ it('reads only native login API-key presence through the onboarding bridge', asy
 it('exposes onboarding size activation to the application document', async () => {
   vi.stubGlobal('location', new URL('dsh-app://app/'))
   await import('../src/preload-app.ts')
-  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'dshOnboarding')?.[1] as { setActive(active: boolean): void }
+  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'tomatoOnboarding')?.[1] as { setActive(active: boolean): void }
   api.setActive(true)
   api.setActive(false)
   expect(electron.ipcRenderer.send.mock.calls).toEqual([[DESKTOP_IPC.onboardingActive, true], [DESKTOP_IPC.onboardingActive, false]])
@@ -41,7 +41,7 @@ it('exposes onboarding size activation to the application document', async () =>
 it('limits product documents to update status and a native confirmation action', async () => {
   vi.stubGlobal('location', new URL('dsh-app://app/index.html'))
   await import('../src/preload-app.ts')
-  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'dshDesktop')?.[1] as DshDesktopProductApi
+  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'tomatoDesktop')?.[1] as TomatoDesktopProductApi
   await api.updates.status()
   await api.updates.open()
   expect(electron.ipcRenderer.invoke.mock.calls).toEqual([[DESKTOP_IPC.updatesStatus], [DESKTOP_IPC.updatesOpen]])
@@ -61,7 +61,7 @@ it('limits product documents to update status and a native confirmation action',
 it('exposes account commands and change notifications to the application document', async () => {
   vi.stubGlobal('location', new URL('dsh-app://app/index.html'))
   await import('../src/preload-app.ts')
-  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'dshDesktop')?.[1] as DshDesktopProductApi
+  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'tomatoDesktop')?.[1] as TomatoDesktopProductApi
   await api.account.openSignIn()
   await api.account.signOut()
   expect(electron.ipcRenderer.invoke.mock.calls).toEqual([[DESKTOP_IPC.accountOpenSignIn], [DESKTOP_IPC.accountSignOut]])
@@ -77,7 +77,7 @@ it('exposes account commands and change notifications to the application documen
 it.each(['dsh-app://shell/plugin-manager.html', 'dsh-app://other/index.html', 'https://shell/startup.html', 'http://example.com/'])('exposes only the carrier marker to %s', async (url) => {
   vi.stubGlobal('location', new URL(url))
   await import('../src/preload-app.ts')
-  expect(electron.contextBridge.exposeInMainWorld).toHaveBeenCalledWith('dshDesktop', { protocolVersion: 1 })
+  expect(electron.contextBridge.exposeInMainWorld).toHaveBeenCalledWith('tomatoDesktop', { protocolVersion: 1 })
   expect(electron.ipcRenderer.on.mock.calls.some(([channel]) => channel === DESKTOP_IPC.browserOpenRequested)).toBe(false)
 })
 
@@ -86,20 +86,20 @@ it('reads the local machine description only from the application main frame', a
   vi.stubGlobal('location', new URL('dsh-app://app/index.html'))
   electron.ipcRenderer.invoke.mockResolvedValue(description)
   await import('../src/preload-app.ts')
-  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'dshDesktop')?.[1] as DshDesktopProductApi
+  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'tomatoDesktop')?.[1] as TomatoDesktopProductApi
   await expect(api.deviceInfo()).resolves.toBe(description)
   expect(electron.ipcRenderer.invoke).toHaveBeenCalledExactlyOnceWith(DESKTOP_IPC.deviceInfo)
   vi.resetModules()
   electron.contextBridge.exposeInMainWorld.mockClear()
   vi.stubGlobal('process', { ...process, isMainFrame: false })
   await import('../src/preload-app.ts')
-  expect(electron.contextBridge.exposeInMainWorld).toHaveBeenCalledWith('dshDesktop', { protocolVersion: 1 })
+  expect(electron.contextBridge.exposeInMainWorld).toHaveBeenCalledWith('tomatoDesktop', { protocolVersion: 1 })
 })
 
 it('exposes asynchronous boot only to the local application document', async () => {
   vi.stubGlobal('location', new URL('dsh-app://app/'))
   await import('../src/preload-app.ts')
-  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'dshDesktopBoot')?.[1] as { ready(): Promise<unknown>; failed(message: string): Promise<void> }
+  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'tomatoDesktopBoot')?.[1] as { ready(): Promise<unknown>; failed(message: string): Promise<void> }
   await api.ready()
   await api.failed('client mount failed')
   expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(DESKTOP_IPC.bootFailed, 'client mount failed')
@@ -108,7 +108,7 @@ it('exposes asynchronous boot only to the local application document', async () 
   electron.contextBridge.exposeInMainWorld.mockClear()
   vi.stubGlobal('location', new URL('https://other.example/'))
   await import('../src/preload-app.ts')
-  expect(electron.contextBridge.exposeInMainWorld.mock.calls.some(([name]) => name === 'dshDesktopBoot')).toBe(false)
+  expect(electron.contextBridge.exposeInMainWorld.mock.calls.some(([name]) => name === 'tomatoDesktopBoot')).toBe(false)
 })
 
 it('exposes a directory picker only to the local application document', async () => {
@@ -186,7 +186,7 @@ it.each(['win32', 'darwin'] as const)('installs the embedded mandatory UI only i
 it('exposes constrained shortcut operations and releases configuration subscriptions', async () => {
   vi.stubGlobal('location', new URL('dsh-app://app/'))
   await import('../src/preload-app.ts')
-  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'dshDesktop')?.[1] as DshDesktopProductApi
+  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'tomatoDesktop')?.[1] as TomatoDesktopProductApi
   await api.shortcuts.get([])
   expect(api.shortcuts).not.toHaveProperty('reload')
   await api.shortcuts.recording(true)
@@ -205,13 +205,13 @@ it('withholds the product API from same-origin child frames', async () => {
   vi.stubGlobal('location', new URL('dsh-app://app/'))
   vi.stubGlobal('process', { ...process, isMainFrame: false })
   await import('../src/preload-app.ts')
-  expect(electron.contextBridge.exposeInMainWorld).toHaveBeenCalledWith('dshDesktop', { protocolVersion: 1 })
+  expect(electron.contextBridge.exposeInMainWorld).toHaveBeenCalledWith('tomatoDesktop', { protocolVersion: 1 })
 })
 
 it('forwards only the focused product iframe and releases native input subscriptions', async () => {
   vi.stubGlobal('location', new URL('dsh-app://app/'))
   await import('../src/preload-app.ts')
-  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'dshDesktop')?.[1] as DshDesktopProductApi
+  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'tomatoDesktop')?.[1] as TomatoDesktopProductApi
   const listener = vi.fn()
   const off = api.keyboard.subscribe(listener)
   const handler = electron.ipcRenderer.on.mock.calls.find(([name]) => name === DESKTOP_IPC.shortcutsInput)![1] as
@@ -243,7 +243,7 @@ it('forwards only the focused product iframe and releases native input subscript
 it('forwards browser guest input only for the focused live webview lease', async () => {
   vi.stubGlobal('location', new URL('dsh-app://app/'))
   await import('../src/preload-app.ts')
-  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'dshDesktop')?.[1] as DshDesktopProductApi
+  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'tomatoDesktop')?.[1] as TomatoDesktopProductApi
   const listener = vi.fn()
   const off = api.keyboard.subscribe(listener)
   const handler = electron.ipcRenderer.on.mock.calls.find(([name]) => name === DESKTOP_IPC.shortcutsInput)![1] as
@@ -275,7 +275,7 @@ it('forwards browser guest input only for the focused live webview lease', async
 it('prepares original image bytes and starts native drags without renderer filesystem paths', async () => {
   vi.stubGlobal('location', new URL('dsh-app://app/'))
   await import('../src/preload-app.ts')
-  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'dshDesktop')?.[1] as DshDesktopProductApi
+  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'tomatoDesktop')?.[1] as TomatoDesktopProductApi
   const bytes = new Uint8Array([137, 80, 78, 71])
   electron.ipcRenderer.invoke.mockResolvedValueOnce('image-handle').mockResolvedValueOnce(true).mockResolvedValueOnce(undefined)
   await expect(api.fileDrag.prepare({ kind: 'bytes', bytes, name: 'original.png', mediaType: 'image/png' }, 'request' as FileDragRequestId)).resolves.toBe('image-handle')
@@ -291,7 +291,7 @@ it('prepares original image bytes and starts native drags without renderer files
 })
 
 // The Host and Client compiler faces share no runtime entry; this assignment checks their image protocol.
-const imageProtocol = (value: import('../src/ipc.ts').DshDesktopProductApi['fileDrag']): DesktopFileDrag => value
-const imageProtocolBack = (value: DesktopFileDrag): import('../src/ipc.ts').DshDesktopProductApi['fileDrag'] => value
+const imageProtocol = (value: import('../src/ipc.ts').TomatoDesktopProductApi['fileDrag']): DesktopFileDrag => value
+const imageProtocolBack = (value: DesktopFileDrag): import('../src/ipc.ts').TomatoDesktopProductApi['fileDrag'] => value
 void imageProtocol
 void imageProtocolBack

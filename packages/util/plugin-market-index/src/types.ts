@@ -59,7 +59,7 @@ export type MarketSource =
 
 /** Runtime requirements of one version. */
 export interface MarketEngines {
-  /** SemVer range of DSH versions the version runs on; absent means any DSH version. */
+  /** SemVer range of TOMATO versions the version runs on; absent means any TOMATO version. */
   readonly dsh?: string
 }
 

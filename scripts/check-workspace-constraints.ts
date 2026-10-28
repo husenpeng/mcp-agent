@@ -18,7 +18,7 @@ import {
   PRIVATE_EXPERIMENTAL_PACKAGE_DIRECTORIES,
 } from './experimental-package-policy.ts'
 import { hasTypertRemoteNavigation, isForbiddenPublicationFile } from './publication-payload.ts'
-import type { DshBundleManifest } from '../packages/util/package-manifest/src/types.ts'
+import type { TomatoBundleManifest } from '../packages/util/package-manifest/src/types.ts'
 import { detailPath } from '../packages/util/plugin-detail/src/document.ts'
 import { bundlePatchFiles } from '../packages/boot/app-boot/src/profile.ts'
 import { OPTIONAL_BUNDLES } from '../packages/util/official-bundles/src/bundles.ts'
@@ -110,7 +110,7 @@ export interface PackageManifest {
   dependencies?: Record<string, string>
   optionalDependencies?: Record<string, string>
   dsh?: {
-    bundle?: DshBundleManifest
+    bundle?: TomatoBundleManifest
   }
 }
 
@@ -672,7 +672,7 @@ export function checkExperimentalDependencyIsolation(
 }
 
 /**
- * Require exact DSH ranges, tilde vendor/native ranges, and the workspace protocol elsewhere.
+ * Require exact TOMATO ranges, tilde vendor/native ranges, and the workspace protocol elsewhere.
  *
  * A hand-written range says nothing about the version the workspace actually
  * carries, and `pnpm pack` leaves it alone: `^0.0.1` published from version

@@ -2,7 +2,7 @@
  * Profile discovery, initialization, and patch-layer composition for the
  * `dsh --profile` launcher family.
  *
- * A profile is a directory under `$DSH_HOME/profiles/<name>` holding a
+ * A profile is a directory under `$TOMATO_HOME/profiles/<name>` holding a
  * `package.json` (out-of-tree plugin dependencies plus the profile manifest
  * `dsh.profile` with its ordered `bundles` list) and a `cordis.patch.yml`
  * (the user's own patch layer, applied after every bundle layer). Bundles are
@@ -27,7 +27,7 @@ import { basename, dirname, join, relative, resolve, sep } from 'node:path'
 import type { EntryOptions } from '@deepseek-ai/cordis-plugin-loader'
 import { applyEntryPatches, type PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
-import type { DshBundleManifest, DshPackageManifest } from '@deepseek-ai/dsh-package-manifest'
+import type { TomatoBundleManifest, TomatoPackageManifest } from '@deepseek-ai/dsh-package-manifest'
 import { INSTALLATION_OWNED_PROFILE_TUPLES, PROFILE_TEMPLATES, RETIRED_BUNDLES } from '@deepseek-ai/dsh-official-bundles'
 import { evaluatePluginCompatibility, pluginCompatibilityWarning } from './plugin-compatibility.ts'
 import { readProfileVersionExemptions } from './profile-compatibility.ts'
@@ -41,7 +41,7 @@ export const PROFILES_DIR = 'profiles'
 export const PROFILE_PATCH_FILENAME = 'cordis.patch.yml'
 
 /** Package metadata accepted by the profile reader; local profiles need no published identity. */
-export type ProfileManifest = Partial<DshPackageManifest>
+export type ProfileManifest = Partial<TomatoPackageManifest>
 
 /**
  * The patch files a bundle declares, as written: one file for a string
@@ -50,7 +50,7 @@ export type ProfileManifest = Partial<DshPackageManifest>
  * @returns the package-relative patch file paths in application order.
  * @throws {Error} when `patch` is neither a string nor a list of strings.
  */
-export function bundlePatchFiles(bundle: DshBundleManifest): string[] {
+export function bundlePatchFiles(bundle: TomatoBundleManifest): string[] {
   const declared = typeof bundle.patch === 'string' ? [bundle.patch] : bundle.patch
   if (!Array.isArray(declared) || !declared.every(file => typeof file === 'string')) {
     throw new Error('dsh.bundle.patch must be a file path or a list of file paths')
@@ -65,7 +65,7 @@ export function bundlePatchFiles(bundle: DshBundleManifest): string[] {
  * @returns the absolute patch file paths in application order.
  * @throws {Error} when `patch` is neither a string nor a list of strings.
  */
-export function bundlePatchPaths(packageDir: string, bundle: DshBundleManifest): string[] {
+export function bundlePatchPaths(packageDir: string, bundle: TomatoBundleManifest): string[] {
   return bundlePatchFiles(bundle).map(file => join(packageDir, file))
 }
 
@@ -97,7 +97,7 @@ export interface Profile {
   skippedBundles: SkippedBundle[]
 }
 
-/** A selected bundle the profile could not load, or whose own DSH requirements the profile does not exempt. */
+/** A selected bundle the profile could not load, or whose own TOMATO requirements the profile does not exempt. */
 export interface SkippedBundle {
   /** The bundle's package name from `dsh.profile.bundles`. */
   packageName: string

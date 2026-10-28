@@ -2,7 +2,7 @@
   "organization": "deepseek-harness",
   "repository": "deepseek-harness",
   "projectNumber": 1,
-  "projectTitle": "DSH Issue Management",
+  "projectTitle": "TOMATO Issue Management",
   "lifecycleActor": "dsh-issue-management",
   "priorityField": "Priority",
   "startDateField": "Start Date",

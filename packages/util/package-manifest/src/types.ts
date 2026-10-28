@@ -5,7 +5,7 @@
  */
 
 /** Package identity and metadata; local profile readers may accept a partial declaration. */
-export interface DshPackageManifest {
+export interface TomatoPackageManifest {
   /** Published npm package name. */
   name: string
   /** Published npm package version. */
@@ -22,22 +22,22 @@ export interface DshPackageManifest {
   optionalDependencies?: Record<string, string>
   /** Compatible versions of packages supplied by the consuming project. */
   peerDependencies?: Record<string, string>
-  /** Runtime requirements; DSH compatibility is declarative until a reader enforces it. */
-  engines?: DshEnginesManifest
-  /** DSH-specific author declarations. */
-  dsh?: DshManifest
+  /** Runtime requirements; TOMATO compatibility is declarative until a reader enforces it. */
+  engines?: TomatoEnginesManifest
+  /** TOMATO-specific author declarations. */
+  dsh?: TomatoManifest
 }
 
 /** Public author fields under `package.json.dsh`; a package may declare several roles. */
-export interface DshManifest {
+export interface TomatoManifest {
   /** Manifest format version, independent of the npm package and Session format versions. */
   manifestVersion?: 1
   /** Bundle metadata consumed by the profile launcher. */
-  bundle?: DshBundleManifest
+  bundle?: TomatoBundleManifest
   /** Profile metadata consumed by the profile launcher. */
-  profile?: DshProfileManifest
+  profile?: TomatoProfileManifest
   /** Client module loading and build metadata. */
-  client?: DshClientManifest
+  client?: TomatoClientManifest
 }
 
 /** Literal text or translations indexed by lowercase language id, with a required English fallback. */
@@ -56,8 +56,8 @@ export interface PluginLocalizedMeta {
 }
 
 /** Runtime version requirements under `package.json.engines`. */
-export interface DshEnginesManifest {
-  /** Compatible DSH versions as a SemVer range, including an exact version. */
+export interface TomatoEnginesManifest {
+  /** Compatible TOMATO versions as a SemVer range, including an exact version. */
   dsh?: string
   /** Compatible Node.js versions. */
   node?: string
@@ -68,7 +68,7 @@ export interface DshEnginesManifest {
 }
 
 /** The configuration layer exported by a bundle package. */
-export interface DshBundleManifest {
+export interface TomatoBundleManifest {
   /** One patch file path, or an ordered list applied in sequence, each relative to the declaring package root. */
   patch: string | string[]
   /** Show the bundle in GUI lists before the profile enables or installs it; omission means true. */
@@ -76,13 +76,13 @@ export interface DshBundleManifest {
 }
 
 /** The bundle composition declared by a profile directory. */
-export interface DshProfileManifest {
+export interface TomatoProfileManifest {
   /** Ordered bundle layer list, using installed package names. */
   bundles?: string[]
 }
 
 /** Client module declaration read by client-modules and the client build. */
-export interface DshClientManifest {
+export interface TomatoClientManifest {
   /** Client platform identifier; the Web consumer selects `web`. */
   platform: string
   /** Informational package-name dependencies, not Cordis service injection. */

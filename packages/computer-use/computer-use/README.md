@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-A deployment can enable one computer-use provider at a time. Loading another provider fails with the registered provider name. Both DSH's native CUA and the Cua Driver adapters use this registry. Each provider supplies its own tools and desktop operations. This package adds no model-visible tools and does not coordinate concurrent Sessions.
+A deployment can enable one computer-use provider at a time. Loading another provider fails with the registered provider name. Both TOMATO's native CUA and the Cua Driver adapters use this registry. Each provider supplies its own tools and desktop operations. This package adds no model-visible tools and does not coordinate concurrent Sessions.
 
 ## Table of Contents
 
@@ -53,9 +53,9 @@ One private name owns the slot. Cordis effects remove contributions when their p
 ## Further Exploration
 
 - [Computer use](../../../docs/subsystems/computer-use.md) — provider selection and shared-desktop limits.
-- [Computer Use bundle](../../experimental/cua-bundle/README.md) — enable DSH's native CUA and permission controls.
+- [Computer Use bundle](../../experimental/cua-bundle/README.md) — enable TOMATO's native CUA and permission controls.
 - [Shared CUA library](../../experimental/cua/README.md) — application/window objects, tool execution, and application consent.
-- [macOS CUA provider](../../experimental/cua-macos/README.md) — DSH's Swift implementation and native helper lifecycle.
+- [macOS CUA provider](../../experimental/cua-macos/README.md) — TOMATO's Swift implementation and native helper lifecycle.
 - [Cua Driver MCP provider](../../experimental/computer-use-cua-driver-mcp/README.md) — use an installed driver.
 - [Cua Driver native provider](../../experimental/computer-use-cua-driver-native/README.md) — use the npm runtime.
 
@@ -76,7 +76,7 @@ Registration does not alter model requests. Provider-owned tools and guidance de
 
 The service limits registrations within its Cordis service instance.
 
-- **Shared desktop** — concurrent Sessions and separate DSH processes can operate the same desktop; callers coordinate whole computer-use workflows.
+- **Shared desktop** — concurrent Sessions and separate TOMATO processes can operate the same desktop; callers coordinate whole computer-use workflows.
 - **Provider selection** — configuration selects the provider; the model cannot switch registered drivers at runtime.
 
 <a id="dev-note"></a>

@@ -95,7 +95,7 @@ async function setup(fakeEnv: Record<string, string> = {}, config: Partial<sdk.C
     providerName: 'dsh-sdk',
     profile: 'sdk',
     patches: [],
-    dshHome: process.cwd(),
+    tomatoHome: process.cwd(),
     provider: 'fake-provider',
     model: 'fake-model',
     env: fakeEnv,
@@ -109,7 +109,7 @@ function text(blocks: readonly { type: string; text?: string }[]): string {
 }
 
 function expectedFailure(fields: string): string {
-  return `Subagent failure (provider: DSH SDK; ${fields})`
+  return `Subagent failure (provider: TOMATO SDK; ${fields})`
 }
 
 /**
@@ -183,13 +183,13 @@ describe('dsh-subagent-dsh-sdk provider', () => {
 
   it('resolves relative launch files at load and forwards absolute paths', async () => {
     const ctx = await setup({ FAKE_TEXT: 'explicit dsh child' }, {
-      dshBin: relative(process.cwd(), fakeRuntime),
+      tomatoBin: relative(process.cwd(), fakeRuntime),
       patches: [relative(process.cwd(), existingPatch)],
     })
     const run = await startExternalActivation(ctx, 'dsh-sdk', request())
     expect(text((await run.result).output)).toBe('explicit dsh child')
     expect(createdHarnessOptions[0]).toMatchObject({
-      dshBin: fakeRuntime,
+      tomatoBin: fakeRuntime,
       patches: [existingPatch],
     })
     await run.dispose()
@@ -290,22 +290,22 @@ describe('dsh-subagent-dsh-sdk provider', () => {
   })
 
   it('scrubs ambient credentials but forwards explicit config env', async () => {
-    process.env.DSH_TEST_AMBIENT_SECRET_KEY = 'leak-me-not'
+    process.env.TOMATO_TEST_AMBIENT_SECRET_KEY = 'leak-me-not'
     try {
       const ctx = await setup({
-        FAKE_ECHO_ENV: 'DSH_TEST_AMBIENT_SECRET_KEY,DEEPSEEK_API_KEY',
+        FAKE_ECHO_ENV: 'TOMATO_TEST_AMBIENT_SECRET_KEY,DEEPSEEK_API_KEY',
         DEEPSEEK_API_KEY: 'explicit-child-key',
         FAKE_TEXT: 'done',
       })
       const run = await startExternalActivation(ctx, 'dsh-sdk', request())
       const result = await run.result
       const answer = text(result.output)
-      expect(answer).toContain('DSH_TEST_AMBIENT_SECRET_KEY=\n')
+      expect(answer).toContain('TOMATO_TEST_AMBIENT_SECRET_KEY=\n')
       expect(answer).toContain('DEEPSEEK_API_KEY=explicit-child-key')
       await run.dispose()
       await ctx.fiber.dispose()
     } finally {
-      delete process.env.DSH_TEST_AMBIENT_SECRET_KEY
+      delete process.env.TOMATO_TEST_AMBIENT_SECRET_KEY
     }
   })
 
@@ -425,7 +425,7 @@ describe('dsh-subagent-dsh-sdk provider', () => {
       const pending = startSdkRun(request('p', controller.signal), {
         profile: 'sdk',
         patches: [],
-        dshHome: process.cwd(),
+        tomatoHome: process.cwd(),
         cwd: process.cwd(),
         provider: 'p',
         model: 'm',
@@ -456,7 +456,7 @@ describe('dsh-subagent-dsh-sdk provider', () => {
       const pending = startSdkRun(request('p', controller.signal), {
         profile: 'sdk',
         patches: [],
-        dshHome: process.cwd(),
+        tomatoHome: process.cwd(),
         cwd: process.cwd(),
         provider: 'p',
         model: 'm',
@@ -541,7 +541,7 @@ describe('dsh-subagent-dsh-sdk provider', () => {
       const spec: SdkRunSpec = {
         profile: 'sdk',
         patches: [],
-        dshHome: process.cwd(),
+        tomatoHome: process.cwd(),
         cwd: process.cwd(),
         provider: 'p',
         model: 'm',
@@ -631,7 +631,7 @@ describe('dsh-subagent-dsh-sdk provider', () => {
     const start = (reason: 'error' | 'unknown-reason') => startSdkRun(request(), {
       profile: 'sdk',
       patches: [],
-      dshHome: process.cwd(),
+      tomatoHome: process.cwd(),
       cwd: process.cwd(),
       provider: 'p',
       model: 'm',
@@ -670,7 +670,7 @@ describe('dsh-subagent-dsh-sdk provider', () => {
         {
           profile: 'sdk',
           patches: [],
-          dshHome: sentinel,
+          tomatoHome: sentinel,
           cwd: tmp,
           provider: 'p',
           model: 'm',
@@ -754,7 +754,7 @@ describe('dsh-subagent-dsh-sdk provider', () => {
     const spec: SdkRunSpec = {
       profile: 'sdk',
       patches: [],
-      dshHome: process.cwd(),
+      tomatoHome: process.cwd(),
       cwd: process.cwd(),
       provider: 'p',
       model: 'm',
@@ -773,7 +773,7 @@ describe('dsh-subagent-dsh-sdk provider', () => {
     const spec: SdkRunSpec = {
       profile: 'sdk',
       patches: [],
-      dshHome: process.cwd(),
+      tomatoHome: process.cwd(),
       cwd: process.cwd(),
       provider: 'p',
       model: 'm',
@@ -844,7 +844,7 @@ describe('dsh-subagent-dsh-sdk provider', () => {
       providerName: 'sdk-hmr',
       profile: 'sdk',
       patches: [],
-      dshHome: process.cwd(),
+      tomatoHome: process.cwd(),
       provider: 'p',
       model: 'm',
       env: {},
@@ -867,7 +867,7 @@ describe('dsh-subagent-dsh-sdk provider', () => {
     await ctx.plugin(SessionProjectionRegistry)
     await mountWorkingDirectoryFixture(ctx)
     await ctx.plugin(SubagentRuntime)
-    const base = { providerName: 'sdk', profile: 'sdk', patches: [], dshHome: process.cwd(), provider: 'p', model: 'm', env: {} }
+    const base = { providerName: 'sdk', profile: 'sdk', patches: [], tomatoHome: process.cwd(), provider: 'p', model: 'm', env: {} }
     await expect(ctx.plugin(sdk, { ...base, shutdownTimeoutMs: 0 })).rejects.toThrow('shutdownTimeoutMs must be a positive finite number')
     await expect(ctx.plugin(sdk, { ...base, disposeEofGraceMs: -1 })).rejects.toThrow('disposeEofGraceMs must be a positive finite number')
     await expect(ctx.plugin(sdk, { ...base, disposeGraceMs: Number.NaN })).rejects.toThrow('disposeGraceMs must be a positive finite number')
@@ -883,17 +883,17 @@ describe('dsh-subagent-dsh-sdk provider', () => {
       providerName: 'sdk',
       profile: 'sdk',
       patches: [],
-      dshHome: './personal-home',
+      tomatoHome: './personal-home',
       provider: 'p',
       model: 'm',
       env: {},
-    })).rejects.toThrow('dshHome must be an absolute path')
+    })).rejects.toThrow('tomatoHome must be an absolute path')
     await ctx.fiber.dispose()
   })
 
   it.each([
-    { field: 'dshBin', override: { dshBin: './missing-dsh-bin' } },
-    { field: 'dshBin', override: { dshBin: '.' } },
+    { field: 'tomatoBin', override: { tomatoBin: './missing-dsh-bin' } },
+    { field: 'tomatoBin', override: { tomatoBin: '.' } },
     { field: 'patches[0]', override: { patches: ['./missing-child-patch.yml'] } },
   ])('rejects an invalid $field at load', async ({ field, override }) => {
     const ctx = new Context()
@@ -904,7 +904,7 @@ describe('dsh-subagent-dsh-sdk provider', () => {
       providerName: 'sdk',
       profile: 'sdk',
       patches: [],
-      dshHome: process.cwd(),
+      tomatoHome: process.cwd(),
       provider: 'p',
       model: 'm',
       env: {},
@@ -924,7 +924,7 @@ describe('dsh-subagent-dsh-sdk provider', () => {
         providerName: 'sdk',
         profile: 'sdk',
         patches: [],
-        dshHome: process.cwd(),
+        tomatoHome: process.cwd(),
         provider: 'p',
         model: 'm',
         maxTokens,
@@ -945,7 +945,7 @@ describe('dsh-subagent-dsh-sdk provider', () => {
         providerName: 'sdk',
         profile: 'sdk',
         patches: [],
-        dshHome: process.cwd(),
+        tomatoHome: process.cwd(),
         provider: 'p',
         model: 'm',
         maxTokens,

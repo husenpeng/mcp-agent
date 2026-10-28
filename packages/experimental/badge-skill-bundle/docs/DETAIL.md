@@ -1,1 +1,1 @@
-![DSH badge skill feature preview](preview.svg)
+![TOMATO badge skill feature preview](preview.svg)

@@ -67,7 +67,7 @@ describe('Official bundle catalog generation', () => {
     if (kind === 'not-bundle') updateManifest(root, name, { dsh: {} })
     if (kind === 'missing') rmSync(join(root, directory(name)), { recursive: true })
     if (kind === 'duplicate') write(root, 'packages/subagent/duplicate/package.json', { name })
-    expect(() => generateOfficialBundleCatalog(root)).toThrow(/public DSH bundle|duplicate workspace/)
+    expect(() => generateOfficialBundleCatalog(root)).toThrow(/public TOMATO bundle|duplicate workspace/)
   })
 
   it.each([false, true])('rejects an on-demand provider in the installed dependency closure (indirect=%s)', (indirect) => {
@@ -75,7 +75,7 @@ describe('Official bundle catalog generation', () => {
     const name = ON_DEMAND_BUNDLES[0]!
     write(root, 'apps/cli/package.json', { name: '@deepseek-ai/dsh', dependencies: { [indirect ? '@deepseek-ai/dsh-layer' : name]: '*' } })
     if (indirect) write(root, 'packages/bundle/layer/package.json', { name: '@deepseek-ai/dsh-layer', dependencies: { [name]: '*' } })
-    expect(() => generateOfficialBundleCatalog(root)).toThrow('must not be installed by the DSH distribution')
+    expect(() => generateOfficialBundleCatalog(root)).toThrow('must not be installed by the TOMATO distribution')
   })
 
   it('requires distinct nonempty catalog admission', () => {

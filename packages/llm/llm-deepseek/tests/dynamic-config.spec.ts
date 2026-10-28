@@ -120,7 +120,7 @@ interface Harness {
  * file watching is the providers' own covered concern.
  */
 async function boot(dir: string, config: object): Promise<Harness> {
-  vi.stubEnv('DSH_HOME', dir)
+  vi.stubEnv('TOMATO_HOME', dir)
   const ctx = new Context()
   cleanups.push(async () => {
     await ctx.fiber.dispose()

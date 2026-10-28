@@ -59,7 +59,7 @@ Catalog availability does not block sending with a saved selection; request exec
 
 ### Selection failures
 
-When another writer owns the Session, model-selection failures tell the user to quit other running DSH instances and retry.
+When another writer owns the Session, model-selection failures tell the user to quit other running TOMATO instances and retry.
 
 -----
 

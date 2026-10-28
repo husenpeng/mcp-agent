@@ -1,4 +1,4 @@
-/** Native startup rejection releases the Codex process before DSH releases its activation slot. */
+/** Native startup rejection releases the Codex process before TOMATO releases its activation slot. */
 
 import { existsSync } from 'node:fs'
 import { chmod, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'

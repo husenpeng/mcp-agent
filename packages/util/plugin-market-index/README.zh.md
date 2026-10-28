@@ -1,5 +1,5 @@
 ---
-description: "供 DSH 读取器和索引生成器使用的插件市场索引格式 1 校验与安装参数。"
+description: "供 TOMATO 读取器和索引生成器使用的插件市场索引格式 1 校验与安装参数。"
 kind: "package-library"
 ---
 
@@ -9,7 +9,7 @@ kind: "package-library"
 
 ## 概述
 
-插件市场索引格式 1 的校验器，没有运行时依赖。插件市场索引是一份 JSON 文件，列出可安装的 DSH 组合包（bundle）及其展示元数据。[格式 Agent Note](../../../.agents/notes/implemented/feature/2026-10-02-plugin-market-index-format.zh.md) 定义该文档；本包是其可执行的规则集。DSH 的 [`dsh-plugin-market`](../../boot/plugin-market/README.zh.md) 用它读取索引，索引生成器在发布前用它校验输出。
+插件市场索引格式 1 的校验器，没有运行时依赖。插件市场索引是一份 JSON 文件，列出可安装的 TOMATO 组合包（bundle）及其展示元数据。[格式 Agent Note](../../../.agents/notes/implemented/feature/2026-10-02-plugin-market-index-format.zh.md) 定义该文档；本包是其可执行的规则集。TOMATO 的 [`dsh-plugin-market`](../../boot/plugin-market/README.zh.md) 用它读取索引，索引生成器在发布前用它校验输出。
 
 ## 目录
 

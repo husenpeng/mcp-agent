@@ -120,7 +120,7 @@ it('lists Git versions from release tags and the default branch by reading objec
     },
     { name: '@s/b', title: '@s/b', metadata: { keywords: ['tagged'] }, versions: [{ version: '2.0.0', publishTimestamp: 1790000100, source: source(second, 'packages/b') }] },
   ])
-  expect([result.failures, warnings]).toEqual([[], [`${REPOSITORY}: @s/d@0.1.0 skipped: DSH range "workspace:>=1" is not a valid SemVer range`]])
+  expect([result.failures, warnings]).toEqual([[], [`${REPOSITORY}: @s/d@0.1.0 skipped: TOMATO range "workspace:>=1" is not a valid SemVer range`]])
   expect([existsSync(marker), readdirSync(temporary)]).toEqual([false, []])
   expect(await generate(options(cacheDir, warnings))).toEqual(result)
 

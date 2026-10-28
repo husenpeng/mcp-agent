@@ -44,7 +44,7 @@ const CASES: Readonly<Record<Scenario, BenchmarkCase>> = {
   'tool-continuation': {
     id: 'agent-continuation/tool-continuation',
     measures: 'Cold resume of the 800-turn Session, then 20 turns with 8 synthetic tool calls each through the real tool pipeline.',
-    affects: 'Continuing a long tool-heavy Session after restarting DSH.',
+    affects: 'Continuing a long tool-heavy Session after restarting TOMATO.',
   },
   'catalog': {
     id: 'agent-continuation/catalog',

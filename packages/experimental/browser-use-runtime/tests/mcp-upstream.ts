@@ -32,13 +32,13 @@ export async function verifyMcpBrowser(
   navigate: { name: string; arguments(url: string): Record<string, unknown> },
   mode: 'launch' | 'attach',
 ): Promise<void> {
-  const executable = process.env.DSH_BROWSER_EXECUTABLE!
+  const executable = process.env.TOMATO_BROWSER_EXECUTABLE!
   const root = await mkdtemp(join(tmpdir(), 'dsh-browser-upstream-'))
   const observed = new Set<string>()
   const server = createServer((request, response) => {
     observed.add(request.url!)
     response.writeHead(200, { 'Content-Type': 'text/html' })
-    response.end('<!doctype html><title>DSH browser fixture</title><h1>Browser integration works</h1>')
+    response.end('<!doctype html><title>TOMATO browser fixture</title><h1>Browser integration works</h1>')
   })
   const ctx = new Context()
   let external: ReturnType<typeof spawn> | undefined

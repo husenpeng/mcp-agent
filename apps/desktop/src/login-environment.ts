@@ -9,10 +9,10 @@ export interface DesktopLoginEnvironment {
 }
 
 /** Manifest key carrying the auth_service origin baked by packaging. */
-const AUTH_MANIFEST_KEY = 'dshAuthServiceUrl'
+const AUTH_MANIFEST_KEY = 'tomatoAuthServiceUrl'
 
 /** Manifest key carrying the company BFF origin baked by packaging. */
-const TOMATO_MANIFEST_KEY = 'dshTomatoWebUrl'
+const TOMATO_MANIFEST_KEY = 'tomatoTomatoWebUrl'
 
 /** Runtime variable that overrides the packaged auth_service origin. */
 export const AUTH_SERVICE_ENV = 'AUTH_SERVICE_URL'

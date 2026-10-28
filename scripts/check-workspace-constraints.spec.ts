@@ -44,7 +44,7 @@ describe('workspace dependency ranges', () => {
     'vendor/loader', 'native/system', 'native/system/packages/entry',
   ])('consumer %s', (dir) => {
     it.each(['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'] as const)(
-      'requires exact DSH and tilde vendor/native %s independently of the consumer name',
+      'requires exact TOMATO and tilde vendor/native %s independently of the consumer name',
       (section) => {
         const consumer = (name: string, range: string): WorkspaceManifest => ({
           dir, manifest: { name: 'consumer', [section]: { [name]: range } },

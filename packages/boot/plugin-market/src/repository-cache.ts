@@ -87,7 +87,7 @@ const STAGING_PREFIX = '.init-'
 
 /**
  * The environment of every Git command: the scrubbed parent environment without Git overrides such as `GIT_DIR`, which a
- * hook that launched DSH can leave, and without prompts or LFS downloads.
+ * hook that launched TOMATO can leave, and without prompts or LFS downloads.
  */
 function gitEnv(): Record<string, string> {
   const env = Object.fromEntries(Object.entries(scrubbedParentEnv())

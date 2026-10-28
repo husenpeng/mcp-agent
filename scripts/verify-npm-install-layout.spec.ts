@@ -39,7 +39,7 @@ function validLayout(): NpmPackageLock {
 }
 
 describe('npm install layout verifier', () => {
-  it('creates two incompatible versions of every DSH package', () => {
+  it('creates two incompatible versions of every TOMATO package', () => {
     const index: RegistryIndex = new Map([
       ['@deepseek-ai/dsh', new Map([['0.1.1-rc.2', {
         name: '@deepseek-ai/dsh',
@@ -72,9 +72,9 @@ describe('npm install layout verifier', () => {
     expect(dual.get('@deepseek-ai/cordis')).toBe(index.get('@deepseek-ai/cordis'))
   })
 
-  it('accepts isolated DSH releases with one shared Cordis installation', () => {
+  it('accepts isolated TOMATO releases with one shared Cordis installation', () => {
     expect(assertDualDshInstallLayout(validLayout())).toEqual({
-      dshPackagesPerVersion: 3,
+      tomatoPackagesPerVersion: 3,
       checkedDshEdges: 4,
     })
   })
@@ -84,7 +84,7 @@ describe('npm install layout verifier', () => {
     ['react-dom', 'node_modules/react-dom'],
     ['react', 'node_modules/dsh-previous/node_modules/react'],
     ['react-dom', 'node_modules/dsh-previous/node_modules/react-dom'],
-  ])('rejects browser runtime %s installed at %s in the DSH-only consumer', (name, path) => {
+  ])('rejects browser runtime %s installed at %s in the TOMATO-only consumer', (name, path) => {
     const layout = validLayout()
     const packages = { ...layout.packages, [path]: { version: '18.3.1' } }
     expect(() => assertDualDshInstallLayout({ ...layout, packages })).toThrow(
@@ -118,7 +118,7 @@ describe('npm install layout verifier', () => {
 
 describe('resolution work budget', () => {
   it('accepts the measured dual-release graph', () => {
-    expect(assertResolutionWorkBudget({ dshPackagesPerVersion: 277, checkedDshEdges: 2524 }))
+    expect(assertResolutionWorkBudget({ tomatoPackagesPerVersion: 277, checkedDshEdges: 2524 }))
       .toBe(699_148)
   })
 
@@ -127,18 +127,18 @@ describe('resolution work budget', () => {
     const edgesAtBudget = Math.floor(MAX_RESOLUTION_WORK_UNITS / packages)
 
     expect(packages * edgesAtBudget).toBe(MAX_RESOLUTION_WORK_UNITS)
-    expect(assertResolutionWorkBudget({ dshPackagesPerVersion: packages, checkedDshEdges: edgesAtBudget }))
+    expect(assertResolutionWorkBudget({ tomatoPackagesPerVersion: packages, checkedDshEdges: edgesAtBudget }))
       .toBe(MAX_RESOLUTION_WORK_UNITS)
     expect(() => assertResolutionWorkBudget({
-      dshPackagesPerVersion: packages,
+      tomatoPackagesPerVersion: packages,
       checkedDshEdges: edgesAtBudget + 1,
     })).toThrow(`= ${String(MAX_RESOLUTION_WORK_UNITS + packages)} unit(s), budget ${String(MAX_RESOLUTION_WORK_UNITS)} unit(s)`)
   })
 
   it('accepts the headroom and rejects a runaway graph with its own measured counts', () => {
-    expect(assertResolutionWorkBudget({ dshPackagesPerVersion: 300, checkedDshEdges: 2800 }))
+    expect(assertResolutionWorkBudget({ tomatoPackagesPerVersion: 300, checkedDshEdges: 2800 }))
       .toBe(840_000)
-    expect(() => assertResolutionWorkBudget({ dshPackagesPerVersion: 400, checkedDshEdges: 3000 }))
+    expect(() => assertResolutionWorkBudget({ tomatoPackagesPerVersion: 400, checkedDshEdges: 3000 }))
       .toThrow('400 package(s) per release x 3000 internal edge(s) = 1200000 unit(s), budget 875000 unit(s)')
   })
 })

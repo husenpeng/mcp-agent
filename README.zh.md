@@ -48,7 +48,7 @@ Host 监听系统分配的环回端口；主进程用一次性 cookie 认证一�
 profile 是一叠 bundle 层，每层都是一个按 id 插入或覆盖的 `cordis.patch.yml`：
 
 ```text
-$DSH_HOME/profiles/desktop/package.json      dsh.profile.bundles = [dsh-base, dsh-web-app]
+$TOMATO_HOME/profiles/desktop/package.json      dsh.profile.bundles = [dsh-base, dsh-web-app]
         │
         ├── @deepseek-ai/dsh-base        shared core: llm, session, tools, shell, fs, permissions, telemetry seams
         ├── @deepseek-ai/dsh-web-app     browser surface: host controllers, web server, the client plugin roster
@@ -56,7 +56,7 @@ $DSH_HOME/profiles/desktop/package.json      dsh.profile.bundles = [dsh-base, ds
         │     ├── presets/ptc.patch.yml
         │     ├── presets/minimal.patch.yml
         │     └── presets/cordis.patch.yml
-        └── $DSH_HOME/profiles/desktop/cordis.patch.yml   user and deployment overrides (last write wins)
+        └── $TOMATO_HOME/profiles/desktop/cordis.patch.yml   user and deployment overrides (last write wins)
 ```
 
 番茄的改动直接写在两个随仓库发布的 bundle 文件里，因此新建 profile 天然继承，不需要额外一层：
@@ -95,7 +95,7 @@ $DSH_HOME/profiles/desktop/package.json      dsh.profile.bundles = [dsh-base, ds
 
 - 每次注册都走 `ctx.effect()` 并返回 disposer，卸载插件只撤下它自己加的东西。
 - 配置随 profile 重载；模块根目录需要显式开启。
-- 会话以 JSONL 存在 `$DSH_HOME/sessions`；桌面端把状态放在开发或打包的 Harness home，绝不写用户日常使用的 `~/.dsh`。
+- 会话以 JSONL 存在 `$TOMATO_HOME/sessions`；桌面端把状态放在开发或打包的 Harness home，绝不写用户日常使用的 `~/.dsh`。
 
 ### 客户端插件组合
 
@@ -184,19 +184,19 @@ pnpm run dev:desktop
 
 外部登录服务未启动时工作区仍可启动；账户入口显示“登录服务不可用”，本地会话、工具与已配置的模型服务商继续工作。
 
-打包产物会把所选打包文件里的 `DSH_DESKTOP_AUTH_SERVICE_URL` 与 `DSH_DESKTOP_TOMATO_WEB_URL` 封进应用 manifest（见[打包文档](apps/desktop/packaging/README.zh.md)）；上面的环境变量只用于源码启动，启动时显式给出的值仍会覆盖封装值。
+打包产物会把所选打包文件里的 `TOMATO_DESKTOP_AUTH_SERVICE_URL` 与 `TOMATO_DESKTOP_TOMATO_WEB_URL` 封进应用 manifest（见[打包文档](apps/desktop/packaging/README.zh.md)）；上面的环境变量只用于源码启动，启动时显式给出的值仍会覆盖封装值。
 
 `dev:desktop` 会跑一次产物构建，在 `apps/desktop/.desktop-build/development` 下生成一次性工程，首次使用时准备 primary runtime（数百 MB 下载），然后启动 Electron，环境变量如下：
 
 | 变量 | 开发默认值 | 用途 |
 |---|---|---|
-| `DSH_HOME` | `apps/desktop/.desktop-build/development/home` | 会话、设置、凭证 |
-| `DSH_DESKTOP_USER_DATA_DIR` | `…/development/electron-user-data` | Chromium 配置与令牌文件 |
-| `DSH_DESKTOP_PRIMARY_RUNTIME_DIR` | `…/targets/mac-arm64/runtime/primary-runtime` | Python、Office 库、pnpm；未打包启动必需 |
-| `DSH_DESKTOP_MAIN_INSPECT_PORT` | `9229` | 主进程调试器 |
-| `DSH_DESKTOP_RENDERER_DEBUG_PORT` | `9222` | 渲染进程调试协议 |
-| `DSH_DESKTOP_HOST_INSPECT_PORT` | `9230` | Host 进程调试器 |
-| `DSH_DESKTOP_OPEN_DEVTOOLS` | `1` | 启动时打开独立 DevTools 窗口 |
+| `TOMATO_HOME` | `apps/desktop/.desktop-build/development/home` | 会话、设置、凭证 |
+| `TOMATO_DESKTOP_USER_DATA_DIR` | `…/development/electron-user-data` | Chromium 配置与令牌文件 |
+| `TOMATO_DESKTOP_PRIMARY_RUNTIME_DIR` | `…/targets/mac-arm64/runtime/primary-runtime` | Python、Office 库、pnpm；未打包启动必需 |
+| `TOMATO_DESKTOP_MAIN_INSPECT_PORT` | `9229` | 主进程调试器 |
+| `TOMATO_DESKTOP_RENDERER_DEBUG_PORT` | `9222` | 渲染进程调试协议 |
+| `TOMATO_DESKTOP_HOST_INSPECT_PORT` | `9230` | Host 进程调试器 |
+| `TOMATO_DESKTOP_OPEN_DEVTOOLS` | `1` | 启动时打开独立 DevTools 窗口 |
 
 后续启动可用 `pnpm run start:desktop` 跳过重新构建。
 
@@ -229,8 +229,8 @@ pnpm run dev:desktop
 
 | 数据 | 存放位置 | 保护方式 |
 |---|---|---|
-| 服务商配置（ID、显示名、协议、base URL、模型） | `$DSH_HOME/profiles/desktop/cordis.patch.yml` | 归属当前 OS 用户的明文 YAML |
-| API Key（`<ROUTE>_API_KEY`） | `$DSH_HOME/.credentials.yaml` | 权限 0600；POSIX 下拒绝其他用户可读；Client 只能看到已配置/缺失状态 |
+| 服务商配置（ID、显示名、协议、base URL、模型） | `$TOMATO_HOME/profiles/desktop/cordis.patch.yml` | 归属当前 OS 用户的明文 YAML |
+| API Key（`<ROUTE>_API_KEY`） | `$TOMATO_HOME/.credentials.yaml` | 权限 0600；POSIX 下拒绝其他用户可读；Client 只能看到已配置/缺失状态 |
 | 桌面登录会话 | `userData/tomato-auth.json` | 可用时由 `safeStorage` 加密；只由主进程以 `X-Tomato-Session` 注入 |
 
 凭证文件是靠 OS 用户权限保护的明文 YAML。agent 的工具进程以同一 OS 用户运行，因此文件权限防不了 agent 自己读取。自定义服务商的 `headers` 仍属于 `cordis.patch.yml` 的部署配置，页面不提供编辑。
@@ -288,7 +288,7 @@ auth_service、公司 BFF 与后续服务都是外部进程。分别启动它们
 1. **日志里**：`http://dsh-app:…/plugins/@tomato/brand/client.js:42` 给出插件与 bundle 行号。打开 `packages/tomato/brand/src/client/…`，DevTools → Sources 里的映射会落到准确的 TSX 行。
 2. **DevTools 里**：应用文档打开时，Sources 会直接列出 `packages/…` 文件（映射内嵌了源码），断点与抛错都落在作者写的那一行，而不是打包结果。
 
-Host 侧可用 `DSH_DESKTOP_HOST_INSPECT_PORT` 挂上 Node 调试器，Host 堆栈指向 `packages/…/lib/*.js`，同样有对应映射。
+Host 侧可用 `TOMATO_DESKTOP_HOST_INSPECT_PORT` 挂上 Node 调试器，Host 堆栈指向 `packages/…/lib/*.js`，同样有对应映射。
 
 <a id="production-readiness"></a>
 
@@ -299,7 +299,7 @@ M1 是内部使用、未签名、未发布的构建。以下缺口按对推广�
 ### 阻塞项
 
 1. **服务端端点** —— auth_service 与公司 BFF 尚未实现 handoff mint/redeem 契约，业务 MCP 网关也未实现。落地前登录不可用；不保留 mock 兜底。
-2. **签名与公证** —— 未签名包会在每台机器上被 Gatekeeper 拦住，非技术用户无法安装。签名需要 Developer ID 证书、`notarize` 与稳定的 bundle id（`DSH_DESKTOP_APP_ID`）。
+2. **签名与公证** —— 未签名包会在每台机器上被 Gatekeeper 拦住，非技术用户无法安装。签名需要 Developer ID 证书、`notarize` 与稳定的 bundle id（`TOMATO_DESKTOP_APP_ID`）。
 3. **更新通道** —— 没有 feed、没有更新策略、没有回滚。发布意味着选定 feed 主机、通道名，以及更新是否强制。
 4. **静态凭证保护** —— `safeStorage` 不可用时（Linux 无 keyring，或钥匙串被锁）会话文件退化为明文。打包的 macOS 版有钥匙串访问权，但该退化路径应改为拒绝启动而非静默降级。
 5. **权限姿态** —— `danger-full-access` 允许模型输出直接驱动本机命令。生产构建应隐藏该档位，或要求逐机显式解锁。
@@ -327,7 +327,7 @@ M1 是内部使用、未签名、未发布的构建。以下缺口按对推广�
 | 现象 | 原因 | 处理 |
 |---|---|---|
 | `Downloading Electron binary...` 长时间不结束 | 发布主机慢或被阻断 | 按上文用 `ELECTRON_MIRROR` 重装 |
-| `dev:desktop` 报 `The operation was aborted due to timeout` | primary runtime 下载超时 | 先跑 `pnpm --filter @deepseek-ai/dsh-desktop run prepare:primary-runtime`，或调大 `DSH_RESOURCE_DOWNLOAD_TIMEOUT_MS` |
+| `dev:desktop` 报 `The operation was aborted due to timeout` | primary runtime 下载超时 | 先跑 `pnpm --filter @deepseek-ai/dsh-desktop run prepare:primary-runtime`，或调大 `TOMATO_RESOURCE_DOWNLOAD_TIMEOUT_MS` |
 | 登录显示服务不可用 | `AUTH_SERVICE_URL` 或 `TOMATO_WEB_URL` 为空/不可达，或 BFF 没有 handoff 端点 | 填入两个地址并核对 `docs/tomato/auth-handoff-contract.md` |
 | 对话回复报缺少凭证 | 该路由的 API Key 没有存进凭证库 | 在「设置 → 模型」重新输入密钥；密钥写入凭证库，不写进 profile |
 | 模型列表为空 | 尚未配置服务商，或其列表请求失败 | 在「设置 → 模型」添加或编辑服务商，再用 **Fetch available models** 探测 |

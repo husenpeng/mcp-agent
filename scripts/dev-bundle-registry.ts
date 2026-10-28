@@ -79,7 +79,7 @@ function printSummary(options: {
   readonly source: ReturnType<typeof sourceEvidence>
 }): void {
   const roots = options.entries.flatMap(name => options.artifacts.filter(artifact => artifact.name === name))
-  process.stdout.write(`Source: ${options.source.commit}${options.source.dirty ? ' (dirty worktree)' : ''}, DSH ${options.source.dshVersion}\n`)
+  process.stdout.write(`Source: ${options.source.commit}${options.source.dirty ? ' (dirty worktree)' : ''}, TOMATO ${options.source.tomatoVersion}\n`)
   process.stdout.write(`Artifacts: ${options.directory}\n`)
   process.stdout.write(`Registry: ${options.url}\n`)
   process.stdout.write(`Packages (${String(options.artifacts.length)} archives served):\n`)

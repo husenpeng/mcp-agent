@@ -29,13 +29,13 @@ import { scrubbedParentEnv } from '@deepseek-ai/dsh-subprocess'
 /** Resolved spawn spec for an SDK runtime child process (no defaults — see Config). */
 export interface SdkRunSpec {
   /** Explicit dsh CLI module; omission resolves the SDK client's same-version dependency. */
-  dshBin?: string
+  tomatoBin?: string
   /** Named child profile. */
   profile: string
   /** Ordered per-launch profile patch files. */
   patches: string[]
   /** Absolute isolated Harness home for the nested runtime. */
-  dshHome: string
+  tomatoHome: string
   /** Absolute initial working directory selected by the delegating runtime. */
   cwd: string
   /** Parent origin directory recorded independently of the child's effective directory. */
@@ -52,7 +52,7 @@ export interface SdkRunSpec {
    * Extra environment variables to ADD for the child (e.g. the child
    * runtime's own `DEEPSEEK_API_KEY`). Merged after
    * the seam's `scrubbedParentEnv()` base, so an explicit credential or
-   * current `DSH_*` fact survives while ambient namesakes never leak.
+   * current `TOMATO_*` fact survives while ambient namesakes never leak.
    */
   env: Record<string, string>
   /** Bound (ms) on the protocol `shutdown` exchange during dispose. */
@@ -98,7 +98,7 @@ interface SdkFailureFacts {
 /** Fixed safe failure text derived only from provider-owned structured facts. */
 function failureDiagnostic(facts: SdkFailureFacts): string {
   const fields = [
-    'provider: DSH SDK',
+    'provider: TOMATO SDK',
     `stage: ${facts.stage}`,
     `category: ${facts.category}`,
   ]
@@ -120,7 +120,7 @@ export const internals: { createHarness(options: DeepSeekHarnessOptions): DeepSe
 /**
  * Hide a pre-spawn workspace/configuration failure behind fixed safe facts.
  * @param cause - original Host failure retained on the Error cause chain.
- * @returns an Error whose message contains only the fixed DSH SDK failure line.
+ * @returns an Error whose message contains only the fixed TOMATO SDK failure line.
  */
 export function sdkConfigurationFailure(cause: unknown): Error {
   return new SdkRunFailure({ stage: 'initialize', category: 'configuration' }, cause)
@@ -235,10 +235,10 @@ export async function startSdkRun(request: SubagentStartRequest, spec: SdkRunSpe
   const id = brandString<SessionId>(randomUUID())
 
   const harness = internals.createHarness({
-    ...spec.dshBin === undefined ? {} : { dshBin: spec.dshBin },
+    ...spec.tomatoBin === undefined ? {} : { tomatoBin: spec.tomatoBin },
     profile: spec.profile,
     patches: spec.patches,
-    dshHome: spec.dshHome,
+    tomatoHome: spec.tomatoHome,
     processCwd: spec.cwd,
     env: { ...scrubbedParentEnv(), ...spec.env },
     shutdownTimeoutMs: spec.shutdownTimeoutMs,

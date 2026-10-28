@@ -31,8 +31,8 @@ export interface DesktopAccountBridge {
 /** Read the optional Desktop bridge without assuming a Desktop runtime. */
 function desktopBridge(): DesktopAccountBridge | undefined {
   if (typeof globalThis === 'undefined') return undefined
-  const page = globalThis as { dshDesktop?: { account?: DesktopAccountBridge } }
-  const account = page.dshDesktop?.account
+  const page = globalThis as { tomatoDesktop?: { account?: DesktopAccountBridge } }
+  const account = page.tomatoDesktop?.account
   if (account === undefined) return undefined
   if (typeof account.openSignIn !== 'function' || typeof account.signOut !== 'function'
     || typeof account.subscribe !== 'function') return undefined

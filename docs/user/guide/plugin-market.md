@@ -4,7 +4,7 @@ English | [中文](plugin-market.zh.md)
 
 ## Summary
 
-A plugin index is one JSON file that lists installable DSH bundles with their titles, icons, authors, and versions. Turn on the experimental **Custom plugin indexes** bundle to browse indexes in a **Discover** tab on the Plugins page and install a listed version after a confirmation. To publish an index, write or generate an index file and serve it, together with its icon files, from any static host.
+A plugin index is one JSON file that lists installable TOMATO bundles with their titles, icons, authors, and versions. Turn on the experimental **Custom plugin indexes** bundle to browse indexes in a **Discover** tab on the Plugins page and install a listed version after a confirmation. To publish an index, write or generate an index file and serve it, together with its icon files, from any static host.
 
 ## Table of Contents
 
@@ -20,18 +20,18 @@ A plugin index is one JSON file that lists installable DSH bundles with their ti
 
 Open **Plugins**, find **Custom plugin indexes** under **Experimental plugins**, and switch it on. A **Discover** tab appears next to **Installed**, and Creator mode gains the read-only `plugin_market` tool. Switching the bundle off removes both again.
 
-DSH ships no index source. Select **Discover**, choose **Add index source**, and enter the URL of an index file. A URL must use `http:` or `https:` and must not contain a user name, password, or `#` fragment. Anyone on the network path can change an `http:` index, including the install specs it lists, so use `https:` for an index reached over a network you do not control. Each source belongs to the current profile.
+TOMATO ships no index source. Select **Discover**, choose **Add index source**, and enter the URL of an index file. A URL must use `http:` or `https:` and must not contain a user name, password, or `#` fragment. Anyone on the network path can change an `http:` index, including the install specs it lists, so use `https:` for an index reached over a network you do not control. Each source belongs to the current profile.
 
 <a id="browse-and-install"></a>
 ## Browse and install
 
 The index menu at the left of the toolbar switches between sources and opens **Manage index sources…**, where each source shows its last error. Search matches names, authors, keywords, and titles, descriptions, categories, and labels in every language, and tolerates typos; results come in best-match order until you choose another. The **Labels** menu, category pills, and **Sort** menu use the categories, labels, and sort keys that the index declares, and **Publish date** sorts by each plugin's latest version.
 
-Each card shows the plugin's recommended version: the highest version compatible with the running DSH that is not a prerelease, or the highest compatible prerelease when the plugin lists no version without a prerelease tag. **Install** opens a confirmation with that version's source: the npm package and registry, or the Git repository, commit, and directory. Confirming starts the normal plugin installation, including its compatibility and registry checks; nothing is installed without that confirmation.
+Each card shows the plugin's recommended version: the highest version compatible with the running TOMATO that is not a prerelease, or the highest compatible prerelease when the plugin lists no version without a prerelease tag. **Install** opens a confirmation with that version's source: the npm package and registry, or the Git repository, commit, and directory. Confirming starts the normal plugin installation, including its compatibility and registry checks; nothing is installed without that confirmation.
 
-Select a card to open its page. The **Versions** list shows every listed version with its compatibility and offers **Install** for any version DSH accepts, including older releases and prereleases. A card that shows **Installed**, **Update available**, or **Provided by DSH** opens the installed bundle instead.
+Select a card to open its page. The **Versions** list shows every listed version with its compatibility and offers **Install** for any version TOMATO accepts, including older releases and prereleases. A card that shows **Installed**, **Update available**, or **Provided by TOMATO** opens the installed bundle instead.
 
-Indexes are third-party content. An index chooses each plugin's title, description, icon, author, and source; DSH checks the file format but not those claims. Add only sources you trust, and check the source in the confirmation before installing.
+Indexes are third-party content. An index chooses each plugin's title, description, icon, author, and source; TOMATO checks the file format but not those claims. Add only sources you trust, and check the source in the confirmation before installing.
 
 <a id="publish-an-index"></a>
 ## Publish an index
@@ -79,7 +79,7 @@ This is a minimal index with one npm plugin and one plugin from a Git monorepo:
 }
 ```
 
-DSH rejects the whole index when any rule below is violated and shows the reason, with the JSON path of the offending value, under the source in **Manage index sources…**.
+TOMATO rejects the whole index when any rule below is violated and shows the reason, with the JSON path of the offending value, under the source in **Manage index sources…**.
 
 <a id="generate-an-index"></a>
 ## Generate an index with the reference generator
@@ -91,7 +91,7 @@ The repository includes a [reference generator](../../../apps/plugin-market-gene
 https://gitlab.example.com/team/dsh-plugins
 ```
 
-Run it from a DSH checkout:
+Run it from a TOMATO checkout:
 
 ```sh
 pnpm --filter @deepseek-ai/dsh-plugin-market-generator start --input plugins.txt --output site/index.json --title "Team plugins"
@@ -104,7 +104,7 @@ The generator only downloads and reads files; it never installs packages or runs
 <a id="index-format"></a>
 ## Index format reference
 
-Text fields marked `LocalizedText` are a string or an object of strings keyed by lowercase language ids, such as `{ "en": "Foo", "zh": "甲" }`; an object must contain `en`. Members DSH does not know are ignored.
+Text fields marked `LocalizedText` are a string or an object of strings keyed by lowercase language ids, such as `{ "en": "Foo", "zh": "甲" }`; an object must contain `en`. Members TOMATO does not know are ignored.
 
 | Index field | Required | Meaning |
 |---|---|---|
@@ -132,9 +132,9 @@ Text fields marked `LocalizedText` are a string or an object of strings keyed by
 | `version` | yes | Exact SemVer version, unique within the plugin. |
 | `publishTimestamp` | yes | Publish time in Unix seconds. |
 | `source` | yes | `{ "type": "npm", "registry"?: url }`, or `{ "type": "git", "url": https-url, "commit": 40-hex-sha, "path"?: directory }`. |
-| `engines.dsh` | no | SemVer range of DSH versions this version runs on; absent means any. |
+| `engines.dsh` | no | SemVer range of TOMATO versions this version runs on; absent means any. |
 
-DSH installs an npm version as `name@version`, asking `registry` first when present, and a Git version as `git+<url>.git#<commit>` with `&path:/<path>` for a package in a subdirectory. `engines.dsh` should match the package's own `engines.dsh`, which DSH checks again at installation; a package without one is checked against its `@deepseek-ai/dsh*` peer dependencies instead. The [format note](../../../.agents/notes/implemented/feature/2026-10-02-plugin-market-index-format.md) defines every rule.
+TOMATO installs an npm version as `name@version`, asking `registry` first when present, and a Git version as `git+<url>.git#<commit>` with `&path:/<path>` for a package in a subdirectory. `engines.dsh` should match the package's own `engines.dsh`, which TOMATO checks again at installation; a package without one is checked against its `@deepseek-ai/dsh*` peer dependencies instead. The [format note](../../../.agents/notes/implemented/feature/2026-10-02-plugin-market-index-format.md) defines every rule.
 
 <a id="further-exploration"></a>
 ## Further Exploration

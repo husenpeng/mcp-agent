@@ -32,7 +32,7 @@ import * as ws from '../../src/node/external_packages/ws.ts'
 import { REPLACED_EXTERNAL_PACKAGES } from '../../src/node/external_packages/replaced-externals.ts'
 import * as os from '../../src/node/builtin_modules/implemented/os.ts'
 import * as perfHooks from '../../src/node/builtin_modules/implemented/perf_hooks.ts'
-import { DSH_HOME, DSH_TMP } from '../../src/storage/paths.ts'
+import { TOMATO_HOME, TOMATO_TMP } from '../../src/storage/paths.ts'
 
 /** Node's standard code for a feature the running platform cannot provide. */
 const PLATFORM_UNAVAILABLE = 'ERR_FEATURE_UNAVAILABLE_ON_PLATFORM'
@@ -197,7 +197,7 @@ describe('node:net address predicates', () => {
 
 describe('node:os', () => {
   it('reports the virtual platform identity and the VFS directories', () => {
-    expect([os.EOL, os.tmpdir(), os.homedir()]).toEqual(['\n', DSH_TMP, DSH_HOME])
+    expect([os.EOL, os.tmpdir(), os.homedir()]).toEqual(['\n', TOMATO_TMP, TOMATO_HOME])
     expect([os.platform(), os.type(), os.arch()]).toEqual(['linux', 'Linux', 'x64'])
     expect([os.release(), os.hostname()]).toEqual(['0.0.0-dsh-worker', 'dsh-worker'])
   })

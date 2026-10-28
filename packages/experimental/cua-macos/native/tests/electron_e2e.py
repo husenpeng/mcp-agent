@@ -57,7 +57,7 @@ def main():
                 deadline = time.monotonic() + 15
                 while True:
                     windows = call('listWindows', owner)
-                    selected = [window for window in windows if window['title'] == 'DSH CUA Electron fixture' and window['isOnScreen']
+                    selected = [window for window in windows if window['title'] == 'TOMATO CUA Electron fixture' and window['isOnScreen']
                                 and window['bounds']['width'] > 0 and window['bounds']['height'] > 0]
                     if len(selected) == 1:
                         break

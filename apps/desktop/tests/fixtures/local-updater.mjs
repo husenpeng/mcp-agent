@@ -20,7 +20,7 @@ import { DesktopUpdateHttpExecutor } from '../../lib/types/update-http-executor.
 import { DesktopUpdateOverlays } from '../../lib/types/update-overlay.js'
 import { qualifyUpdateDialogs } from './update-dialogs.mjs'
 
-const root = process.env.DSH_LOCAL_UPDATE_TEST_ROOT
+const root = process.env.TOMATO_LOCAL_UPDATE_TEST_ROOT
 assert.ok(root, 'The launcher must allocate a private test root')
 app.setPath('userData', join(root, 'electron'))
 // Sequential window scenarios share one Electron process; main() owns its final exit.
@@ -283,7 +283,7 @@ async function main() {
             function check() { if (${expression}) { observer.disconnect(); clearTimeout(deadline); resolve(true); } }
             observer.observe(document, { subtree: true, childList: true, attributes: true, characterData: true }); check();
           })`) } catch (error) {
-            console.error('Modal condition:', expression, await contents.executeJavaScript('({ url: location.href, text: document.body?.innerText, bridge: typeof window.dshMandatoryUpdate })'))
+            console.error('Modal condition:', expression, await contents.executeJavaScript('({ url: location.href, text: document.body?.innerText, bridge: typeof window.tomatoMandatoryUpdate })'))
             throw error
           }
         }

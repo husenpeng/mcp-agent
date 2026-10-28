@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`@tomato/account` is the browser-side account surface. It keeps one React-free snapshot over the local gateway's `/api/auth/session` route and registers a sidebar launcher plus an Account settings section. The page shows signed-in, signed-out, and sign-in-service-unavailable states; it offers sign-in, sign-out, retry, and no profile editing. Web opens the gateway login in a popup; Desktop calls the `dshDesktop.account` preload bridge so the main process owns the isolated window and the stored session.
+`@tomato/account` is the browser-side account surface. It keeps one React-free snapshot over the local gateway's `/api/auth/session` route and registers a sidebar launcher plus an Account settings section. The page shows signed-in, signed-out, and sign-in-service-unavailable states; it offers sign-in, sign-out, retry, and no profile editing. Web opens the gateway login in a popup; Desktop calls the `tomatoDesktop.account` preload bridge so the main process owns the isolated window and the stored session.
 
 ## Table of Contents
 
@@ -57,6 +57,6 @@ None; this package neither assembles nor sends a provider request.
 <details>
 <summary>Working context for maintainers — click to expand</summary>
 
-The Desktop bridge is optional: a page without `dshDesktop.account` uses the same-origin popup path. The two paths share the controller and slot components, so only the sign-in and sign-out commands branch.
+The Desktop bridge is optional: a page without `tomatoDesktop.account` uses the same-origin popup path. The two paths share the controller and slot components, so only the sign-in and sign-out commands branch.
 
 </details>

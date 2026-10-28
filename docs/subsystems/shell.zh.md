@@ -8,7 +8,7 @@ shell 执行 seam 由 [dsh-shell](../../packages/shell/shell) 在 `ctx.shell` �
 
 ## 受管 shell 环境命名空间
 
-`DSH_*` 变量是归 Harness 所有的子进程事实。面向模型的 bash 工具通过 `ctx.shellEnv` 收集它们，再经由 `ShellExecRequest.dshEnv` 传递；子进程服务在合并当前快照之前会移除继承而来的 `DSH_*` 名称。`DshEnvironmentKey`／`DshEnvironment` 词汇归[子进程 seam](subprocess.zh.md)所有，由 `dsh-shell` 重导出。
+`TOMATO_*` 变量是归 Harness 所有的子进程事实。面向模型的 bash 工具通过 `ctx.shellEnv` 收集它们，再经由 `ShellExecRequest.tomatoEnv` 传递；子进程服务在合并当前快照之前会移除继承而来的 `TOMATO_*` 名称。`TomatoEnvironmentKey`／`TomatoEnvironment` 词汇归[子进程 seam](subprocess.zh.md)所有，由 `dsh-shell` 重导出。
 
 ## 请求与规格：`resolve()` 拆分
 
@@ -48,20 +48,20 @@ interface ShellExecRequest {
   stdin?: string | undefined
   /**
    * Ordinary environment entries for the command, merged after the credential
-   * scrub. Managed facts belong in {@link dshEnv}, which merges after this
+   * scrub. Managed facts belong in {@link tomatoEnv}, which merges after this
    * map, so an entry here can never displace one. Set by in-process plugins
    * (the hooks bridges set `CLAUDE_PROJECT_DIR`, `CLAUDE_PLUGIN_ROOT`, …); the
    * model-facing bash tool does not expose it as a parameter.
    */
   env?: Record<string, string> | undefined
   /**
-   * Harness-owned `DSH_*` variables for this execution (typed to managed
-   * keys). Executors discard ambient `DSH_*` entries before merging this
+   * Harness-owned `TOMATO_*` variables for this execution (typed to managed
+   * keys). Executors discard ambient `TOMATO_*` entries before merging this
    * snapshot last, so an unavailable current fact cannot inherit a stale
    * value from the harness process and a caller {@link env} entry cannot
    * displace a managed one.
    */
-  dshEnv?: DshEnvironment | undefined
+  tomatoEnv?: TomatoEnvironment | undefined
   /** Fully resolved per-call sandbox policy; sandboxing executors default it. */
   sandboxPolicy?: SandboxExecutionPolicy | undefined
 }
@@ -90,13 +90,13 @@ interface ShellExecSpec {
   stdin?: string | undefined
   /**
    * Ordinary environment entries carried through from
-   * {@link ShellExecRequest.env}; {@link dshEnv} still merges after them.
+   * {@link ShellExecRequest.env}; {@link tomatoEnv} still merges after them.
    * OPTIONAL on the spec for the same reason as `stdin`: absent means no
    * ordinary extra environment.
    */
   env?: Record<string, string> | undefined
-  /** Managed `DSH_*` snapshot (typed to managed keys); merges after {@link env}. */
-  dshEnv?: DshEnvironment | undefined
+  /** Managed `TOMATO_*` snapshot (typed to managed keys); merges after {@link env}. */
+  tomatoEnv?: TomatoEnvironment | undefined
   /** Resolved sandbox policy; ignored by executors that do not confine. */
   sandboxPolicy: SandboxExecutionPolicy | undefined
 }
@@ -283,7 +283,7 @@ Source: [`packages/shell/shell/src/index.ts`](../../packages/shell/shell/src/ind
 
 ### `ctx.shellEnv` — `ShellEnvRegistry`
 
-Registry (`ctx.shellEnv`) for trusted, per-execution `DSH_*` variables. The namespace is rebuilt for every model shell call: ambient `DSH_*` values are discarded by the executor, then the registry's current snapshot is injected. Built-in shell facts remain owned by the registry itself while plugins can register additional, enumerable facts with effect-scoped disposal.
+Registry (`ctx.shellEnv`) for trusted, per-execution `TOMATO_*` variables. The namespace is rebuilt for every model shell call: ambient `TOMATO_*` values are discarded by the executor, then the registry's current snapshot is injected. Built-in shell facts remain owned by the registry itself while plugins can register additional, enumerable facts with effect-scoped disposal.
 
 ```ts cordis-catalog
 /**
@@ -295,11 +295,11 @@ Registry (`ctx.shellEnv`) for trusted, per-execution `DSH_*` variables. The name
 register(contributor: BashEnvContributor): () => void
 
 /**
- * Build the trusted `DSH_*` snapshot for one shell tool execution.
+ * Build the trusted `TOMATO_*` snapshot for one shell tool execution.
  * @param execution - the current tool execution.
  * @returns an immutable environment overlay containing built-ins and current contributions.
  */
-collect(execution: ToolExecution): DshEnvironment
+collect(execution: ToolExecution): TomatoEnvironment
 
 /**
  * Enumerate plugin-contributed variables without executing their resolvers.
@@ -308,7 +308,7 @@ collect(execution: ToolExecution): DshEnvironment
 list(): BashEnvVariableInfo[]
 ```
 
-Types: [DshEnvironment](subprocess.zh.md) · [ToolExecution](tools.zh.md)
+Types: [TomatoEnvironment](subprocess.zh.md) · [ToolExecution](tools.zh.md)
 
 Source: [`packages/shell/shell-env/src/index.ts`](../../packages/shell/shell-env/src/index.ts)
 <!-- END GENERATED cordis-surface -->

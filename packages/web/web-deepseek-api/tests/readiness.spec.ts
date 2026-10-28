@@ -7,7 +7,7 @@ import { Context } from '@deepseek-ai/cordis'
 import AgentRegistry from '@deepseek-ai/dsh-agent'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import type { DeepSeekAccount } from '@deepseek-ai/dsh-deepseek-account'
-import { DSH_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot } from '@deepseek-ai/dsh-launch-environment'
+import { TOMATO_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot } from '@deepseek-ai/dsh-launch-environment'
 import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
 import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
 import WebRuntime from '@deepseek-ai/dsh-web'
@@ -43,7 +43,7 @@ interface Setup {
 async function mount(setup: Setup): Promise<Context> {
   const ctx = new Context()
   mounted.push(ctx)
-  ctx.provide(DSH_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([{ source: 'process', values: setup.environment ?? {} }]))
+  ctx.provide(TOMATO_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot([{ source: 'process', values: setup.environment ?? {} }]))
   if (setup.credentials !== undefined) ctx.provide('credentials', setup.credentials as never)
   if (setup.account !== undefined) ctx.provide('deepseekAccount', setup.account as DeepSeekAccount)
   await ctx.plugin(SessionStore)
@@ -107,7 +107,7 @@ describe.each(OPERATIONS)('%s readiness', (operation) => {
   it.each<[string, Setup, boolean]>([
     ['the DeepSeek key', { environment: { DEEPSEEK_API_KEY: 'chat-key' } }, true],
     ['a literal key', { config: { apiKey: 'own-key' } }, true],
-    ['their own key reference', { config: { apiKeyEnv: 'DSH_WEB_API_KEY' }, environment: { DSH_WEB_API_KEY: 'own-key' } }, true],
+    ['their own key reference', { config: { apiKeyEnv: 'TOMATO_WEB_API_KEY' }, environment: { TOMATO_WEB_API_KEY: 'own-key' } }, true],
     ['no key', {}, false],
   ])('answers on another provider\'s route, as on any route, when the APIs have %s', async (_label, setup, expected) => {
     const ctx = await mount(setup)

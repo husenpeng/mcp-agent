@@ -28,7 +28,7 @@ it('refuses incompatible installation and startup until an exact risk exemption 
   writeFileSync(join(source, 'index.mjs'), 'process.stdout.write("PLUGIN_IMPORTED\\n"); export function apply() { process.stdout.write("PLUGIN_STARTED\\n") }\n')
   const run = async (args: string[]) => {
     const result = await execa(process.execPath, [bin, ...args], {
-      cwd: home, env: { ...process.env, DSH_HOME: home }, extendEnv: false, reject: false, timeout: 60_000,
+      cwd: home, env: { ...process.env, TOMATO_HOME: home }, extendEnv: false, reject: false, timeout: 60_000,
     })
     expect(result.timedOut).toBe(false)
     expect(result.signal).toBeUndefined()
@@ -44,7 +44,7 @@ it('refuses incompatible installation and startup until an exact risk exemption 
   expect(refused.stderr).toContain('nothing was installed')
   expect(existsSync(join(profile, 'node_modules', 'compatibility-fixture'))).toBe(false)
 
-  // A package installed outside DSH still goes through the independent startup check.
+  // A package installed outside TOMATO still goes through the independent startup check.
   cpSync(source, join(profile, 'node_modules', 'compatibility-fixture'), { recursive: true })
   writeFileSync(profileFile, JSON.stringify({ ...initial,
     dependencies: { 'compatibility-fixture': `file:${source}` }, dsh: { profile: { bundles: ['compatibility-fixture'] } },

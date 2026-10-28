@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { PackageFiles } from '../src/files.ts'
 import { readDisplayMetadata } from '../src/metadata.ts'
-import { dshRange, findBundlePackages, isBundle, isPrivate, readManifest, type Manifest } from '../src/packages.ts'
+import { tomatoRange, findBundlePackages, isBundle, isPrivate, readManifest, type Manifest } from '../src/packages.ts'
 import { parseSources } from '../src/sources.ts'
 
 /** An in-memory tree from relative path → file contents. */
@@ -46,7 +46,7 @@ describe('parseSources', () => {
   })
 })
 
-describe('isBundle and dshRange', () => {
+describe('isBundle and tomatoRange', () => {
   it('accepts only a bundle whose patch is a string or a list of strings', () => {
     expect([
       { patch: 'a.yml' }, { patch: ['a.yml', 'b.yml'] }, { patch: [] }, { patch: [1] }, {}, [], null, 'a.yml',
@@ -59,35 +59,35 @@ describe('isBundle and dshRange', () => {
     expect(isPrivate(undefined)).toBe(false)
   })
 
-  it('copies engines.dsh, else joins DSH peer ranges, and refuses ranges installation rejects', () => {
-    expect(dshRange({ engines: { dsh: '>=0.2.0' }, peerDependencies: { '@deepseek-ai/dsh': '1' } })).toBe('>=0.2.0')
-    expect(dshRange({ peerDependencies: { react: '18', '@deepseek-ai/dsh-agent': 'workspace:*', '@deepseek-ai/dsh': '*' } })).toBeUndefined()
-    // Installation refuses an empty range, any `workspace:` engines.dsh, and a padded workspace peer on every DSH version.
+  it('copies engines.dsh, else joins TOMATO peer ranges, and refuses ranges installation rejects', () => {
+    expect(tomatoRange({ engines: { dsh: '>=0.2.0' }, peerDependencies: { '@deepseek-ai/dsh': '1' } })).toBe('>=0.2.0')
+    expect(tomatoRange({ peerDependencies: { react: '18', '@deepseek-ai/dsh-agent': 'workspace:*', '@deepseek-ai/dsh': '*' } })).toBeUndefined()
+    // Installation refuses an empty range, any `workspace:` engines.dsh, and a padded workspace peer on every TOMATO version.
     for (const manifest of [
       { peerDependencies: { '@deepseek-ai/dsh': ' ' } }, { engines: { dsh: '' } }, { engines: { dsh: 'workspace:*' } },
       { peerDependencies: { '@deepseek-ai/dsh': ' workspace:*' } },
-    ]) expect(dshRange(manifest)).toBeInstanceOf(Error)
-    expect(dshRange({ engines: { dsh: '>1 <1' } })).toEqual(new Error('no DSH version satisfies the DSH range: >1 <1'))
-    expect(dshRange({ engines: { dsh: ' * ' } })).toBeUndefined()
-    expect(dshRange({ engines: { node: '22' }, peerDependencies: [] })).toBeUndefined()
-    expect(dshRange({
+    ]) expect(tomatoRange(manifest)).toBeInstanceOf(Error)
+    expect(tomatoRange({ engines: { dsh: '>1 <1' } })).toEqual(new Error('no TOMATO version satisfies the TOMATO range: >1 <1'))
+    expect(tomatoRange({ engines: { dsh: ' * ' } })).toBeUndefined()
+    expect(tomatoRange({ engines: { node: '22' }, peerDependencies: [] })).toBeUndefined()
+    expect(tomatoRange({
       peerDependencies: { '@deepseek-ai/dsh-a': '^0.2.0 || ^0.3.0', '@deepseek-ai/dsh-b': '>=0.2.1', '@deepseek-ai/dsh-c': '>=0.2.1', '@deepseek-ai/dsh-d': '<1 ||' },
     })).toBe('>=0.2.0 <0.3.0-0 >=0.2.1 || >=0.3.0 <0.4.0-0 >=0.2.1')
     // A hyphen range is expanded before combining, and combinations no version satisfies are dropped.
-    expect(dshRange({ peerDependencies: { '@deepseek-ai/dsh': '1.0.0 - 2.0.0', '@deepseek-ai/dsh-x': '>=1.5.0 || <0.5.0' } })).toBe('>=1.0.0-0 <2.0.1-0 >=1.5.0')
-    expect(dshRange({ peerDependencies: { '@deepseek-ai/dsh': '^0.1.0', '@deepseek-ai/dsh-x': '^0.2.0' } }))
-      .toEqual(new Error('no DSH version satisfies every DSH peer range: ^0.1.0, ^0.2.0'))
-    expect(dshRange({ peerDependencies: { '@deepseek-ai/dsh': '^0.2.0-rc.1' } })).toBe('^0.2.0-rc.1')
-    expect(dshRange({ peerDependencies: { '@deepseek-ai/dsh': '>=0.1.0 || *', '@deepseek-ai/dsh-x': '^0.2.0 || *' } })).toBeUndefined()
-    expect(dshRange({ peerDependencies: { '@deepseek-ai/dsh': '<0.1.0', '@deepseek-ai/dsh-x': '>=0.2.0' } }))
-      .toEqual(new Error('no DSH version satisfies every DSH peer range: <0.1.0, >=0.2.0'))
-    expect(dshRange({ peerDependencies: { '@deepseek-ai/dsh': '*', '@deepseek-ai/dsh-x': '>=0' } })).toBeUndefined()
-    expect(dshRange({ peerDependencies: { '@deepseek-ai/dsh-llm': '*', '@deepseek-ai/dsh-x': '*' } })).toBeUndefined()
+    expect(tomatoRange({ peerDependencies: { '@deepseek-ai/dsh': '1.0.0 - 2.0.0', '@deepseek-ai/dsh-x': '>=1.5.0 || <0.5.0' } })).toBe('>=1.0.0-0 <2.0.1-0 >=1.5.0')
+    expect(tomatoRange({ peerDependencies: { '@deepseek-ai/dsh': '^0.1.0', '@deepseek-ai/dsh-x': '^0.2.0' } }))
+      .toEqual(new Error('no TOMATO version satisfies every TOMATO peer range: ^0.1.0, ^0.2.0'))
+    expect(tomatoRange({ peerDependencies: { '@deepseek-ai/dsh': '^0.2.0-rc.1' } })).toBe('^0.2.0-rc.1')
+    expect(tomatoRange({ peerDependencies: { '@deepseek-ai/dsh': '>=0.1.0 || *', '@deepseek-ai/dsh-x': '^0.2.0 || *' } })).toBeUndefined()
+    expect(tomatoRange({ peerDependencies: { '@deepseek-ai/dsh': '<0.1.0', '@deepseek-ai/dsh-x': '>=0.2.0' } }))
+      .toEqual(new Error('no TOMATO version satisfies every TOMATO peer range: <0.1.0, >=0.2.0'))
+    expect(tomatoRange({ peerDependencies: { '@deepseek-ai/dsh': '*', '@deepseek-ai/dsh-x': '>=0' } })).toBeUndefined()
+    expect(tomatoRange({ peerDependencies: { '@deepseek-ai/dsh-llm': '*', '@deepseek-ai/dsh-x': '*' } })).toBeUndefined()
     const wide = Object.fromEntries(Array.from({ length: 3 }, (_, peer) => [`@deepseek-ai/dsh-${peer}`, Array.from({ length: 10 }, (_, minor) => `>=0.${minor}.${peer}`).join(' || ')]))
-    expect(dshRange({ peerDependencies: wide })).toEqual(new Error('DSH peer ranges combine into more than 256 alternatives'))
-    expect(dshRange({ peerDependencies: { '@deepseek-ai/dsh-a': 'workspace:>=1' } })).toEqual(new Error('DSH range "workspace:>=1" is not a valid SemVer range'))
-    expect(dshRange({ engines: { dsh: 'not a range' } })).toBeInstanceOf(Error)
-    expect(dshRange({ peerDependencies: { '@deepseek-ai/dsh': '>=0.2.0', '@deepseek-ai/dsh-x': 'not a range' } })).toEqual(new Error('DSH range "not a range" is not a valid SemVer range'))
+    expect(tomatoRange({ peerDependencies: wide })).toEqual(new Error('TOMATO peer ranges combine into more than 256 alternatives'))
+    expect(tomatoRange({ peerDependencies: { '@deepseek-ai/dsh-a': 'workspace:>=1' } })).toEqual(new Error('TOMATO range "workspace:>=1" is not a valid SemVer range'))
+    expect(tomatoRange({ engines: { dsh: 'not a range' } })).toBeInstanceOf(Error)
+    expect(tomatoRange({ peerDependencies: { '@deepseek-ai/dsh': '>=0.2.0', '@deepseek-ai/dsh-x': 'not a range' } })).toEqual(new Error('TOMATO range "not a range" is not a valid SemVer range'))
   })
 })
 

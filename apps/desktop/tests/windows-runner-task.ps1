@@ -43,7 +43,7 @@ function Wait-Condition([scriptblock]$Condition, [string]$Description, [int]$Sec
 $installed = $false
 $primaryFailure = $null
 $digest = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($runner.ToUpperInvariant())))
-$taskName = 'DSH-Packaging-' + $digest.Substring(0,16)
+$taskName = 'TOMATO-Packaging-' + $digest.Substring(0,16)
 try {
     Invoke-Manager install
     $installed = $true

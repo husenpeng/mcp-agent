@@ -29,7 +29,7 @@ Enable **Codex subagent** in the Web or Desktop Plugins page when a task needs a
 
 ### Installing the Bundle
 
-The Official entry is visible offline. Enabling it installs the [target for the running DSH installation](../../boot/plugin-manager/README.md#use-this-package) through the ordinary bundle installer and selects its profile layer. The layer registers the provider and adds `subagent_codex` to every Agent as a global tool; it starts no native process until delegation. Restart when the installer reports that one is required.
+The Official entry is visible offline. Enabling it installs the [target for the running TOMATO installation](../../boot/plugin-manager/README.md#use-this-package) through the ordinary bundle installer and selects its profile layer. The layer registers the provider and adds `subagent_codex` to every Agent as a global tool; it starts no native process until delegation. Restart when the installer reports that one is required.
 
 Switching Off deselects the layer and leaves the package installed. Remove is a separate package operation. Enabling or switching Off registers or removes the global tool in the running Host, so live Agents see the change on their next request.
 
@@ -169,7 +169,7 @@ These limits define when this provider is a poor fit or needs special operationa
 - **Authentication and account state remain native** — the Bundle supplies the CLI but does not create an account, log in, trust a project, or rewrite Codex settings; configuration and authentication failures surface with their lifecycle stage and the safe `unknown` fallback rather than a separate public taxonomy.
 - **The native platform payload is required at delegation time** — installs that omit optional dependencies, unsupported platforms, and missing or damaged payloads fail at the first run; there is no host-CLI fallback.
 - **Compatibility is pinned by development evidence** — upgrading from the verified 0.153.4 protocol baseline requires regenerating upstream schema evidence and rerunning handshake, answer-selection, approval, cancellation, keyless real-product, and credentialed DeepSeek nonce tests.
-- **No human approval path** — known unattended approval requests are denied and unknown server requests fail closed; the three Profile modes never create a DSH interaction channel or per-call allow policy.
+- **No human approval path** — known unattended approval requests are denied and unknown server requests fail closed; the three Profile modes never create a TOMATO interaction channel or per-call allow policy.
 - **Assistant payload is the selected answer text only** — failed runs can also expose a separate safe diagnostic; reasoning, intermediate messages, tool traffic, usage, stderr, and workspace diffs remain outside the parent Session. Task identity and terminal results are retained in the parent log.
 - **No optional shared capabilities** — `agentPreset`, `agentOptions`, output schemas, and harness depth enforcement are rejected by the shared service for this provider.
 - **No wall-clock timeout or side-effect rollback** — the caller cancels long work, and files or external systems changed before cancellation are not restored.

@@ -165,7 +165,7 @@ async function setupLocal(home: string, config: Partial<SkillFileSystem.Config> 
   const ctx = new Context()
   await ctx.plugin(SkillRegistry)
   await ctx.plugin(SkillFileSystem, {
-    dshHome: join(home, '.dsh'),
+    tomatoHome: join(home, '.dsh'),
     agentsHome: join(home, '.agents'),
     watch: false,
     ...config,
@@ -449,7 +449,7 @@ describe('FileSystemSkillProvider', () => {
         }
       })
     }
-    const fiber = ctx.plugin(SkillFileSystem, { dshHome: join(home, '.dsh'), agentsHome: join(home, '.agents'), watch: false })
+    const fiber = ctx.plugin(SkillFileSystem, { tomatoHome: join(home, '.dsh'), agentsHome: join(home, '.agents'), watch: false })
     await fiber
 
     try {
@@ -503,7 +503,7 @@ describe('FileSystemSkillProvider', () => {
       size: 0,
     })
     await ctx.plugin(SkillRegistry)
-    await ctx.plugin(SkillFileSystem, { dshHome: join(home, '.dsh'), agentsHome: join(home, '.agents'), watch: false })
+    await ctx.plugin(SkillFileSystem, { tomatoHome: join(home, '.dsh'), agentsHome: join(home, '.agents'), watch: false })
 
     expect((await ctx.skills.list({ cwd: nestedCwd })).map(skill => [skill.name, skill.source])).toEqual([
       ['backend-root', 'project-agents'],
@@ -520,7 +520,7 @@ describe('FileSystemSkillProvider', () => {
     bundledFs.failResolvePaths.add(bundled)
     await bundledCtx.plugin(SkillRegistry)
     await bundledCtx.plugin(SkillFileSystem, {
-      dshHome: join(home, '.dsh'),
+      tomatoHome: join(home, '.dsh'),
       agentsHome: join(home, '.agents'),
       bundledSkillDir: bundled,
     })
@@ -536,7 +536,7 @@ describe('FileSystemSkillProvider', () => {
     const fs = ctx.fs as TestFileSystem
     await ctx.plugin(SkillRegistry)
     await ctx.plugin(SkillFileSystem, {
-      dshHome: join(home, '.dsh'),
+      tomatoHome: join(home, '.dsh'),
       agentsHome: join(home, '.agents'),
       watch: false,
     })
@@ -572,7 +572,7 @@ describe('FileSystemSkillProvider', () => {
     const fs = ctx.fs as TestFileSystem
     await ctx.plugin(SkillRegistry)
     await ctx.plugin(SkillFileSystem, {
-      dshHome: join(home, '.dsh'),
+      tomatoHome: join(home, '.dsh'),
       agentsHome: join(home, '.agents'),
       watch: false,
     })
@@ -621,7 +621,7 @@ describe('FileSystemSkillProvider', () => {
     await ctx.plugin(TestFileSystem)
     const fs = ctx.fs as TestFileSystem
     await ctx.plugin(SkillRegistry)
-    await ctx.plugin(SkillFileSystem, { dshHome: join(home, '.dsh'), agentsHome: join(home, '.agents'), watch: false })
+    await ctx.plugin(SkillFileSystem, { tomatoHome: join(home, '.dsh'), agentsHome: join(home, '.agents'), watch: false })
     expect((await ctx.skills.list()).map(skill => skill.name)).toEqual(['abortable-skill'])
 
     fs.statSignals = []
@@ -724,7 +724,7 @@ describe('FileSystemSkillProvider', () => {
     await ctx.plugin(TestFileSystem)
     const fs = ctx.fs as TestFileSystem
     await ctx.plugin(SkillRegistry)
-    await ctx.plugin(SkillFileSystem, { dshHome: join(home, '.dsh'), agentsHome: join(home, '.agents'), watch: false })
+    await ctx.plugin(SkillFileSystem, { tomatoHome: join(home, '.dsh'), agentsHome: join(home, '.agents'), watch: false })
 
     const updated = await ctx.skills.update('empty-body', { content: '' })
 
@@ -742,7 +742,7 @@ describe('FileSystemSkillProvider', () => {
     await ctx.plugin(TestFileSystem)
     const fs = ctx.fs as TestFileSystem
     await ctx.plugin(SkillRegistry)
-    await ctx.plugin(SkillFileSystem, { dshHome: join(home, '.dsh'), agentsHome: join(home, '.agents'), watch: false })
+    await ctx.plugin(SkillFileSystem, { tomatoHome: join(home, '.dsh'), agentsHome: join(home, '.agents'), watch: false })
     fs.writeText = async (target, _content, _expected, _signal, _policy) => {
       await writeFile(target.displayPath, 'no frontmatter here\n')
       return { operation: 'update', version: FsVersion('test'), before: null, after: 'no frontmatter here\n' }
@@ -771,7 +771,7 @@ describe('FileSystemSkillProvider', () => {
     await ctx.plugin(TestFileSystem)
     const fs = ctx.fs as TestFileSystem
     await ctx.plugin(SkillRegistry)
-    await ctx.plugin(SkillFileSystem, { dshHome: join(home, '.dsh'), agentsHome: join(home, '.agents'), watch: false })
+    await ctx.plugin(SkillFileSystem, { tomatoHome: join(home, '.dsh'), agentsHome: join(home, '.agents'), watch: false })
     const controller = new AbortController()
 
     const updated = await ctx.skills.update('fs-editable', {
@@ -796,7 +796,7 @@ describe('FileSystemSkillProvider', () => {
     const ctx = new Context()
     await ctx.plugin(SkillRegistry)
     const fiber = await ctx.plugin(SkillFileSystem, {
-      dshHome: join(home, '.dsh'),
+      tomatoHome: join(home, '.dsh'),
       agentsHome: join(home, '.agents'),
       watch: true,
       watchStabilityThresholdMs: 20,
@@ -904,7 +904,7 @@ describe('FileSystemSkillProvider', () => {
     const ctx = new Context()
     await ctx.plugin(SkillRegistry)
     const fiber = await ctx.plugin(SkillFileSystem, {
-      dshHome: join(home, '.dsh'),
+      tomatoHome: join(home, '.dsh'),
       agentsHome: join(home, '.agents'),
       customSkillDirs: [join(first, '.agents/skills')],
       watch: true,
@@ -926,7 +926,7 @@ describe('FileSystemSkillProvider', () => {
     const noWatch = new Context()
     await noWatch.plugin(SkillRegistry)
     await noWatch.plugin(SkillFileSystem, {
-      dshHome: join(home, '.dsh'),
+      tomatoHome: join(home, '.dsh'),
       agentsHome: join(home, '.agents'),
       watch: false,
       watchMaxProjects: 1,
@@ -945,7 +945,7 @@ describe('FileSystemSkillProvider', () => {
     let provider!: SkillFileSystem.FileSystemSkillProvider
     const disposeProvider = ctx.skills.registerProvider((control) => {
       provider = new SkillFileSystem.FileSystemSkillProvider(ctx, control, {
-        dshHome: join(home, '.dsh'),
+        tomatoHome: join(home, '.dsh'),
         agentsHome: join(home, '.agents'),
         customSkillDirs: [nonDirectoryRoot],
         watch: true,
@@ -978,7 +978,7 @@ describe('FileSystemSkillProvider', () => {
     const ctx = new Context()
     await ctx.plugin(SkillRegistry)
     const fiber = await ctx.plugin(SkillFileSystem, {
-      dshHome: join(home, '.dsh'),
+      tomatoHome: join(home, '.dsh'),
       agentsHome: join(home, '.agents'),
       watch: true,
       watchFollowSymlinks: true,
@@ -1008,15 +1008,15 @@ describe('FileSystemSkillProvider', () => {
   })
 
   it('uses default home root resolution without exposing builtin skills', async () => {
-    const previousDshHome = process.env.DSH_HOME
-    const previousAgentsHome = process.env.DSH_AGENTS_HOME
-    const previousBundledSkillDir = process.env.DSH_BUNDLED_SKILL_DIR
+    const previousDshHome = process.env.TOMATO_HOME
+    const previousAgentsHome = process.env.TOMATO_AGENTS_HOME
+    const previousBundledSkillDir = process.env.TOMATO_BUNDLED_SKILL_DIR
     const envHome = await tempDir('skill-env-home')
     try {
-      process.env.DSH_HOME = join(envHome, '.dsh')
-      process.env.DSH_AGENTS_HOME = join(envHome, '.agents')
+      process.env.TOMATO_HOME = join(envHome, '.dsh')
+      process.env.TOMATO_AGENTS_HOME = join(envHome, '.agents')
       const bundled = join(envHome, 'bundled-skills')
-      process.env.DSH_BUNDLED_SKILL_DIR = bundled
+      process.env.TOMATO_BUNDLED_SKILL_DIR = bundled
       await writeSkill(join(envHome, '.dsh/skills'), 'env-skill', 'Env skill')
       await writeSkill(bundled, 'env-bundled-skill', 'Env bundled skill')
       const ctx = new Context()
@@ -1040,34 +1040,34 @@ describe('FileSystemSkillProvider', () => {
       expect((await isolated.skills.list()).map(skill => skill.name)).toEqual(['custom-isolated-skill'])
       await isolated.fiber.dispose()
 
-      process.env.DSH_HOME = join(envHome, 'empty-dsh')
-      delete process.env.DSH_BUNDLED_SKILL_DIR
-      process.env.DSH_AGENTS_HOME = join(envHome, 'empty-agents')
+      process.env.TOMATO_HOME = join(envHome, 'empty-dsh')
+      delete process.env.TOMATO_BUNDLED_SKILL_DIR
+      process.env.TOMATO_AGENTS_HOME = join(envHome, 'empty-agents')
       const empty = new Context()
       await empty.plugin(SkillRegistry)
       SkillFileSystem.apply(empty, { watch: false })
       expect(await empty.skills.list()).toEqual([])
 
-      delete process.env.DSH_AGENTS_HOME
+      delete process.env.TOMATO_AGENTS_HOME
       expect(new SkillFileSystem.FileSystemSkillProvider(empty, {
         signal: new AbortController().signal,
         invalidate() {},
-      }, { dshHome: join(envHome, 'empty-dsh') }).name).toBe('filesystem')
+      }, { tomatoHome: join(envHome, 'empty-dsh') }).name).toBe('filesystem')
     } finally {
       if (previousDshHome === undefined) {
-        delete process.env.DSH_HOME
+        delete process.env.TOMATO_HOME
       } else {
-        process.env.DSH_HOME = previousDshHome
+        process.env.TOMATO_HOME = previousDshHome
       }
       if (previousAgentsHome === undefined) {
-        delete process.env.DSH_AGENTS_HOME
+        delete process.env.TOMATO_AGENTS_HOME
       } else {
-        process.env.DSH_AGENTS_HOME = previousAgentsHome
+        process.env.TOMATO_AGENTS_HOME = previousAgentsHome
       }
       if (previousBundledSkillDir === undefined) {
-        delete process.env.DSH_BUNDLED_SKILL_DIR
+        delete process.env.TOMATO_BUNDLED_SKILL_DIR
       } else {
-        process.env.DSH_BUNDLED_SKILL_DIR = previousBundledSkillDir
+        process.env.TOMATO_BUNDLED_SKILL_DIR = previousBundledSkillDir
       }
     }
   })

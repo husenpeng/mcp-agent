@@ -35,11 +35,11 @@ async function run(root: string): Promise<ProfileReport> {
   ].join('\n'))
   const env: NodeJS.ProcessEnv = {
     PATH: process.env.PATH, HOME: home, USERPROFILE: home,
-    DSH_AGENTS_HOME: join(home, 'agents'),
+    TOMATO_AGENTS_HOME: join(home, 'agents'),
   }
   const harness = new DeepSeekHarness({
-    dshBin: join(import.meta.dirname, '..', '..', '..', 'apps', 'cli', 'lib', 'bin.js'),
-    profile: 'sdk-minimal', dshHome: home, processCwd: cwd, cwd,
+    tomatoBin: join(import.meta.dirname, '..', '..', '..', 'apps', 'cli', 'lib', 'bin.js'),
+    profile: 'sdk-minimal', tomatoHome: home, processCwd: cwd, cwd,
     provider: 'bench', model: 'bench', patches: [patch], env,
     initializeTimeoutMs: 15_000, requestTimeoutMs: 15_000,
   })

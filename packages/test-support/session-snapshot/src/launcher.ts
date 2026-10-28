@@ -124,13 +124,13 @@ export function launchAcpTestAgent(options: AcpTestLaunchOptions): LaunchedAcpTe
     libBin: agent.libBinScript,
     configArgs: agent.profile === undefined
       ? ['--config', selectedConfig]
-      : profileArgs(agent.profile, agent.configPath, selectedConfig, options.env?.DSH_SNAPSHOT, cwd),
+      : profileArgs(agent.profile, agent.configPath, selectedConfig, options.env?.TOMATO_SNAPSHOT, cwd),
     tsconfigPath: agent.tsconfigPath,
     ...agent.profile === undefined ? {} : { sourceImport: 'tsx/esm' },
     env: {
       ...options.env,
-      DSH_HOME: join(cwd, '.dsh'),
-      DSH_AGENTS_HOME: join(cwd, '.agents'),
+      TOMATO_HOME: join(cwd, '.dsh'),
+      TOMATO_AGENTS_HOME: join(cwd, '.agents'),
     },
   })
   const child = spawn(

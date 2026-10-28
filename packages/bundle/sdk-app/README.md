@@ -23,7 +23,7 @@ The SDK stdio application as a `dsh` profile bundle over [`dsh-base`](../base/RE
 <a id="use-this-package"></a>
 ## Use this package
 
-The `sdk` profile includes native desktop tools and model context. Native tool execution is the default. For PTC, pass the [executor overlay](../../../apps/cli/config/examples/ptc.yml) through `--patch` or the `patches` option in the TypeScript or Python SDK. `DSH_TOOLS_MODE` is ignored.
+The `sdk` profile includes native desktop tools and model context. Native tool execution is the default. For PTC, pass the [executor overlay](../../../apps/cli/config/examples/ptc.yml) through `--patch` or the `patches` option in the TypeScript or Python SDK. `TOMATO_TOOLS_MODE` is ignored.
 
 The startup provider binds stdin EOF to the launcher's bounded successful shutdown. SDK protocol `shutdown`, SIGINT, and SIGTERM retain their owning server or launcher paths; disposal drains the root profile tree and persistence. Stdout is reserved for newline-delimited JSON-RPC frames. The bundle disables model-generated session titles because the SDK exposes no title surface; deterministic fallback titles remain durable without an auxiliary model request. The inherited projection cache checkpoints SDK-created sessions for later consumers; its durability barrier flushes each covered log prefix before publishing the cache row and may split otherwise coalesced JSONL runs. A deployment selects a different complete composition through profile bundles and patch files, not another app bin.
 
@@ -31,11 +31,11 @@ The startup provider binds stdin EOF to the launcher's bounded successful shutdo
 |---|---|---|
 | `profile` | `sdk` | Profile name rendered in command help; a bundle mounting this provider sets its own shipped profile name. |
 
-`DSH_MAX_TOKENS_AS_SUCCESS` retains the SDK deployment mapping: unset or JSON `true` reports token-limited subagent completion as accepted, while JSON `false` reports it as an error. Provider/model and workspace cwd arrive through the SDK initialization request; the base profile owns adapters, tools, persistence, policy, settings, and credentials.
+`TOMATO_MAX_TOKENS_AS_SUCCESS` retains the SDK deployment mapping: unset or JSON `true` reports token-limited subagent completion as accepted, while JSON `false` reports it as an error. Provider/model and workspace cwd arrive through the SDK initialization request; the base profile owns adapters, tools, persistence, policy, settings, and credentials.
 
 The SDK uses the base `read`, `write`, and `edit` defaults. To add `str_replace_editor`, use the explicit insertion patch in the [base configuration guide](../base/README.md#use-this-package). The standalone `sdk-minimal` profile owns its separate tool selection.
 
-The Python runtime exposes explicitly downloaded authoring resources and Office sidecars to this profile. `DSH_PRIMARY_RUNTIME` overrides the authoring payload; an empty value disables its query. Office skills can use either resource independently. Profile patches can disable `skill-office` or replace its `assetRoot` independently of `workspace-dependencies`; filesystem skills with the same name take precedence. See the [runtime package](../../../python/sdk-runtime/README.md) for downloads and configuration.
+The Python runtime exposes explicitly downloaded authoring resources and Office sidecars to this profile. `TOMATO_PRIMARY_RUNTIME` overrides the authoring payload; an empty value disables its query. Office skills can use either resource independently. Profile patches can disable `skill-office` or replace its `assetRoot` independently of `workspace-dependencies`; filesystem skills with the same name take precedence. See the [runtime package](../../../python/sdk-runtime/README.md) for downloads and configuration.
 
 -----
 

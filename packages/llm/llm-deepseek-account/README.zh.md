@@ -35,7 +35,7 @@ kind: "package-reference"
 
 提供的模型以列表中的名称、`context_window`、输入模态，以及 Messages 的 system prompt 模式和工具更新模式（`api_capabilities.anthropic_messages.system_prompt_update` 与 `tool_update`）覆盖同 id 的内置条目，内置条目保留图片预算和描述。列表没有给出或设为 `null` 的模式沿用内置值；本版本能读的模式之外的任何值（system prompt 能读 `in-history`，工具能读 `in-history` 或 `addition-only`）都按 `leading-only` 处理，即去掉内置的模式。`max_output_tokens` 限制请求默认值：请求没有指定上限时，发送 `maxTokens` 与该能力上限中较小的一个。列表中的推理档位不被读取；每个模型都提供 `off`、`low`、`high`、`max`。
 
-`modelOverrides` 调整单个模型而不替换整个目录。键是模型 id；值的字段与 [Messages `models` 条目](../llm-deepseek/README.zh.md#minimal-configuration)相同，未设置的字段沿用下层的值。覆盖作用在列表和内置目录之上；不能新增模型，也不能让被拒绝的模型变得可用。列表声明的能力不约束覆盖：覆盖的 `maxTokens` 高于列表的 `max_output_tokens` 时按覆盖值发送，超出服务端限制的请求由服务端拒绝。覆盖指向的模型既不在列表里、内置目录也不认识，或者被列出的模型拒绝时，会成为模型页上该提供方的诊断信息；模型页不为此路由提供编辑器。被拒绝且内置目录不认识的模型，其覆盖要等当前版本能用该模型时才校验。此路由没有 `models` 字段；配置里仍写了它时，加载即失败并提示改用 `modelOverrides`。修改 `$DSH_HOME/profiles/<profile>/cordis.patch.yml`，下一次请求即生效。
+`modelOverrides` 调整单个模型而不替换整个目录。键是模型 id；值的字段与 [Messages `models` 条目](../llm-deepseek/README.zh.md#minimal-configuration)相同，未设置的字段沿用下层的值。覆盖作用在列表和内置目录之上；不能新增模型，也不能让被拒绝的模型变得可用。列表声明的能力不约束覆盖：覆盖的 `maxTokens` 高于列表的 `max_output_tokens` 时按覆盖值发送，超出服务端限制的请求由服务端拒绝。覆盖指向的模型既不在列表里、内置目录也不认识，或者被列出的模型拒绝时，会成为模型页上该提供方的诊断信息；模型页不为此路由提供编辑器。被拒绝且内置目录不认识的模型，其覆盖要等当前版本能用该模型时才校验。此路由没有 `models` 字段；配置里仍写了它时，加载即失败并提示改用 `modelOverrides`。修改 `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml`，下一次请求即生效。
 
 ```yaml
 - id: llm-deepseek-account

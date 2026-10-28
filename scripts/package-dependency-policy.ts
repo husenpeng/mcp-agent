@@ -105,6 +105,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /** Whether a package manifest declares a dynamically loaded Client entry. */
-export function hasClientDeclaration(dshField: unknown): boolean {
-  return isRecord(dshField) && Object.hasOwn(dshField, 'client')
+export function hasClientDeclaration(tomatoField: unknown): boolean {
+  return isRecord(tomatoField) && Object.hasOwn(tomatoField, 'client')
 }

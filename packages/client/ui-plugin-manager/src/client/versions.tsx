@@ -42,7 +42,7 @@ function registryName(registry: Registry, t: Translate): string {
   return registryText(registry, t, null).name
 }
 
-/** The DSH requirements an incompatible version states, as one phrase: `engines.dsh` or DSH peer ranges. */
+/** The TOMATO requirements an incompatible version states, as one phrase: `engines.dsh` or TOMATO peer ranges. */
 function peersText(incompatible: IncompatiblePlugin): string {
   return Object.entries(incompatible.requirements).map(([name, range]) => `${name} ${range}`).join(', ')
 }

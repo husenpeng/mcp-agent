@@ -141,7 +141,7 @@ function fixture(name = '@deepseek-ai/dsh-core'): {
   installed: string
   profile: Profile
 } {
-  // root plays $DSH_HOME; the running dsh lives in a global install outside the profiles tree.
+  // root plays $TOMATO_HOME; the running dsh lives in a global install outside the profiles tree.
   // Node reports resolved module paths through the native realpath: /private/var for a macOS tmpdir under /var,
   // and the long directory name for a Windows tmpdir spelled with an 8.3 short name.
   const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'dsh-profile-resolution-')))
@@ -1076,7 +1076,7 @@ describe('runtime resolution', { concurrent: false }, () => {
     expect(await importFrom('left-pad', parent)).toMatchObject({ marker: 9 })
   })
 
-  it.each(['profile', 'plugin'] as const)('uses the installation DSH package from a %s while a stale shared link remains', async (importer) => {
+  it.each(['profile', 'plugin'] as const)('uses the installation TOMATO package from a %s while a stale shared link remains', async (importer) => {
     const name = '@deepseek-ai/dsh-core'
     const f = fixture(name)
     file(join(f.profile.dir, 'package.json'), JSON.stringify({

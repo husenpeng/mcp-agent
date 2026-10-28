@@ -29,7 +29,7 @@ Enable **Claude Code subagent** in the Web or Desktop Plugins page when a task n
 
 ### Installing the Bundle
 
-The Official entry is visible offline. Enabling it installs the [target for the running DSH installation](../../boot/plugin-manager/README.md#use-this-package) through the ordinary bundle installer and selects its profile layer. The layer registers the provider and adds `subagent_claude_code` to every Agent as a global tool; it starts no native process until delegation. Restart when the installer reports that one is required.
+The Official entry is visible offline. Enabling it installs the [target for the running TOMATO installation](../../boot/plugin-manager/README.md#use-this-package) through the ordinary bundle installer and selects its profile layer. The layer registers the provider and adds `subagent_claude_code` to every Agent as a global tool; it starts no native process until delegation. Restart when the installer reports that one is required.
 
 Switching Off deselects the layer and leaves the package installed. Remove is a separate package operation. Enabling or switching Off registers or removes the global tool in the running Host, so live Agents see the change on their next request.
 

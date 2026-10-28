@@ -96,13 +96,13 @@ describe('Python SDK dsh profile keyless smoke', () => {
       cwd: repoRoot,
       env: {
         ...launch.env,
-        DSH_HOME: join(root, '.dsh'),
-        DSH_PERMISSION_MODE: 'danger-full-access',
-        DSH_TELEMETRY_DISABLED: '1',
-        DSH_TOOLS_MODE: ptc ? 'native' : 'ptc',
+        TOMATO_HOME: join(root, '.dsh'),
+        TOMATO_PERMISSION_MODE: 'danger-full-access',
+        TOMATO_TELEMETRY_DISABLED: '1',
+        TOMATO_TOOLS_MODE: ptc ? 'native' : 'ptc',
         DEEPSEEK_API_KEY: 'keyless-smoke-no-call',
         DEEPSEEK_BASE_URL: `http://127.0.0.1:${address.port}`,
-        ...(envValue === undefined ? {} : { DSH_MAX_TOKENS_AS_SUCCESS: envValue }),
+        ...(envValue === undefined ? {} : { TOMATO_MAX_TOKENS_AS_SUCCESS: envValue }),
       },
       timeout: 35_000,
       killSignal: 'SIGKILL',
@@ -312,8 +312,8 @@ describe('Python SDK dsh profile keyless smoke', () => {
       cwd: repoRoot,
       env: {
         ...launch.env,
-        DSH_HOME: join(root, '.dsh'),
-        DSH_SYSTEM_PROMPT: 'Minimal allowlist prompt.',
+        TOMATO_HOME: join(root, '.dsh'),
+        TOMATO_SYSTEM_PROMPT: 'Minimal allowlist prompt.',
         DEEPSEEK_API_KEY: 'keyless-smoke-no-call',
         DEEPSEEK_BASE_URL: `http://127.0.0.1:${address.port}`,
       },
@@ -434,7 +434,7 @@ describe('Python SDK dsh profile keyless smoke', () => {
       ...launch.args, '--profile', 'sdk', '--patch', patch,
     ], {
       cwd: repoRoot,
-      env: { ...launch.env, DSH_HOME: home, DSH_TELEMETRY_DISABLED: '1', DEEPSEEK_API_KEY: 'keyless-no-call' },
+      env: { ...launch.env, TOMATO_HOME: home, TOMATO_TELEMETRY_DISABLED: '1', DEEPSEEK_API_KEY: 'keyless-no-call' },
       stdin: 'pipe',
       stripFinalNewline: false,
       timeout: 25_000,
@@ -475,9 +475,9 @@ describe('Python SDK dsh profile keyless smoke', () => {
         cwd: repoRoot,
         env: {
           ...launch.env,
-          DSH_HOME: join(root, '.dsh'),
+          TOMATO_HOME: join(root, '.dsh'),
           DEEPSEEK_API_KEY: 'keyless-smoke-no-call',
-          DSH_MAX_TOKENS_AS_SUCCESS: 'sometimes',
+          TOMATO_MAX_TOKENS_AS_SUCCESS: 'sometimes',
         },
         stdin: 'ignore',
         timeout: 25_000,
@@ -551,9 +551,9 @@ it.each(['unset', 'empty', 'bundled', 'full', 'python-only', 'python-only-no-cli
   const officeLaunch = resolveExampleLaunch({
     srcBin: fileURLToPath(new URL('../../../src/bin.ts', import.meta.url)), mode: 'lib',
     configArgs: ['--profile', 'sdk', '--patch', cliPatch],
-    env: { DSH_HOME: home, DSH_PRIMARY_RUNTIME: mode === 'unset' || mode === 'bundled' ? undefined : mode === 'empty' ? '' : source + '/',
-      DSH_BUNDLED_PRIMARY_RUNTIME: mode === 'unset' ? undefined : mode === 'bundled' || mode === 'empty' ? source : join(root, 'unused-default'),
-      DSH_PERMISSION_MODE: 'danger-full-access', DSH_TELEMETRY_DISABLED: '1',
+    env: { TOMATO_HOME: home, TOMATO_PRIMARY_RUNTIME: mode === 'unset' || mode === 'bundled' ? undefined : mode === 'empty' ? '' : source + '/',
+      TOMATO_BUNDLED_PRIMARY_RUNTIME: mode === 'unset' ? undefined : mode === 'bundled' || mode === 'empty' ? source : join(root, 'unused-default'),
+      TOMATO_PERMISSION_MODE: 'danger-full-access', TOMATO_TELEMETRY_DISABLED: '1',
       DEEPSEEK_API_KEY: 'local-fixture', DEEPSEEK_BASE_URL: `http://127.0.0.1:${address.port}` },
   })
   const child = execa(officeLaunch.command, officeLaunch.args, { cwd: repoRoot, env: officeLaunch.env, timeout: 60_000, reject: false })

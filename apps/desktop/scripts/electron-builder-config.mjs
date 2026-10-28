@@ -53,19 +53,19 @@ export function createElectronBuilderConfig(
   preparedRuntimeVersion = undefined,
 ) {
   const appId = resolveDesktopAppId(env)
-  const targetPlatform = env.DSH_DESKTOP_TARGET_PLATFORM
+  const targetPlatform = env.TOMATO_DESKTOP_TARGET_PLATFORM
   const resolvedPlatform = targetPlatform ?? hostPlatform
-  const resolvedArch = env.DSH_DESKTOP_TARGET_ARCH ?? hostArch
-  if (env.DSH_DESKTOP_UNSIGNED !== undefined && !['0', '1'].includes(env.DSH_DESKTOP_UNSIGNED)) {
-    throw new Error('desktop package: DSH_DESKTOP_UNSIGNED must be 0 or 1')
+  const resolvedArch = env.TOMATO_DESKTOP_TARGET_ARCH ?? hostArch
+  if (env.TOMATO_DESKTOP_UNSIGNED !== undefined && !['0', '1'].includes(env.TOMATO_DESKTOP_UNSIGNED)) {
+    throw new Error('desktop package: TOMATO_DESKTOP_UNSIGNED must be 0 or 1')
   }
-  const unsigned = env.DSH_DESKTOP_UNSIGNED === '1'
+  const unsigned = env.TOMATO_DESKTOP_UNSIGNED === '1'
   // Login origins are baked into the installed manifest so each packaging preset
   // carries its own environment without relying on the user's launch shell.
   const login = resolveDesktopLoginEnvironment(env)
-  const skipNotarization = env.DSH_DESKTOP_MACOS_SKIP_NOTARIZATION === '1'
-  if (env.DSH_DESKTOP_MACOS_SKIP_NOTARIZATION !== undefined && !['0', '1'].includes(env.DSH_DESKTOP_MACOS_SKIP_NOTARIZATION)) {
-    throw new Error('desktop package: DSH_DESKTOP_MACOS_SKIP_NOTARIZATION must be 0 or 1')
+  const skipNotarization = env.TOMATO_DESKTOP_MACOS_SKIP_NOTARIZATION === '1'
+  if (env.TOMATO_DESKTOP_MACOS_SKIP_NOTARIZATION !== undefined && !['0', '1'].includes(env.TOMATO_DESKTOP_MACOS_SKIP_NOTARIZATION)) {
+    throw new Error('desktop package: TOMATO_DESKTOP_MACOS_SKIP_NOTARIZATION must be 0 or 1')
   }
   if (skipNotarization && (unsigned || resolvedPlatform !== 'darwin')) throw new Error('Skipping notarization requires a signed macOS build')
   const packagesMacOS = targetPlatform === 'darwin' || (targetPlatform === undefined && hostPlatform === 'darwin')
@@ -77,20 +77,20 @@ export function createElectronBuilderConfig(
   const buildPaths = desktopTargetBuildPaths(resolveDesktopBuildTarget(env, hostPlatform, hostArch), env)
   const output = desktopArtifactOutput(buildPaths, { unsigned, skipNotarization })
   let primaryRuntimeDestination
-  let dshDestination
+  let tomatoDestination
   let windowsCode = []
   const unpack = ['**/*.{node,dylib,dll,so,exe}', '**/*.so.*', '**/spawn-helper', '**/@vscode/ripgrep-*/bin/rg',
     `**/node_modules/@deepseek-ai/libreoffice-kit-${resolvedPlatform}-${resolvedArch}/**/*`]
   const windowsSigner = packagesWindows && !unsigned
     ? createWindowsTokenSigner({
-        certificateFile: env.DSH_DESKTOP_WINDOWS_CER_FILE,
-        signTool: env.DSH_DESKTOP_WINDOWS_SIGNTOOL,
-        tokenPin: env.DSH_DESKTOP_WINDOWS_TOKEN_PIN,
-        keyContainer: env.DSH_DESKTOP_WINDOWS_KEY_CONTAINER,
+        certificateFile: env.TOMATO_DESKTOP_WINDOWS_CER_FILE,
+        signTool: env.TOMATO_DESKTOP_WINDOWS_SIGNTOOL,
+        tokenPin: env.TOMATO_DESKTOP_WINDOWS_TOKEN_PIN,
+        keyContainer: env.TOMATO_DESKTOP_WINDOWS_KEY_CONTAINER,
         preserveSignature: async path => {
-          for (const [sourceRoot, destinationRoot] of [[join(buildPaths.runtime, 'primary-runtime'), primaryRuntimeDestination], [buildPaths.dsh, dshDestination]]) {
+          for (const [sourceRoot, destinationRoot] of [[join(buildPaths.runtime, 'primary-runtime'), primaryRuntimeDestination], [buildPaths.dsh, tomatoDestination]]) {
             if (destinationRoot !== undefined && await preserveWindowsRuntimeSignature(path, {
-              sourceRoot, destinationRoot, runDirectory: env.DSH_DESKTOP_PACKAGING_RUN_DIR,
+              sourceRoot, destinationRoot, runDirectory: env.TOMATO_DESKTOP_PACKAGING_RUN_DIR,
             })) return true
           }
           return false
@@ -112,12 +112,12 @@ export function createElectronBuilderConfig(
     appId,
     protocols: [{ name: 'Tomato AI', schemes: ['dsh'] }],
     extraMetadata: {
-      dshDesktopAppId: appId,
-      dshDesktopUpdateChannel: update?.channel ?? 'nightly',
-      ...login.authServiceUrl === '' ? {} : { dshAuthServiceUrl: login.authServiceUrl, dshTomatoWebUrl: login.tomatoWebUrl },
-      ...(policy === undefined ? {} : { dshMandatoryUpdatePolicy: policy }),
+      tomatoDesktopAppId: appId,
+      tomatoDesktopUpdateChannel: update?.channel ?? 'nightly',
+      ...login.authServiceUrl === '' ? {} : { tomatoAuthServiceUrl: login.authServiceUrl, tomatoTomatoWebUrl: login.tomatoWebUrl },
+      ...(policy === undefined ? {} : { tomatoMandatoryUpdatePolicy: policy }),
       ...buildVersion === productVersion ? {} : { version: buildVersion },
-      ...packaged === undefined ? {} : { dshBuildCommit: packaged.commit, dshBuildDirty: packaged.dirty },
+      ...packaged === undefined ? {} : { tomatoBuildCommit: packaged.commit, tomatoBuildDirty: packaged.dirty },
     },
     productName: 'Tomato AI',
     // The default copyright uses author.name; this line names the product instead.
@@ -197,7 +197,7 @@ export function createElectronBuilderConfig(
       if (packagesWindows) windowsCode = await prepareWindowsAsarUnpack(context, buildPaths.dsh)
       if (windowsSigner !== undefined) {
         primaryRuntimeDestination = join(context.appOutDir, 'resources', 'runtime', 'primary-runtime')
-        dshDestination = join(context.appOutDir, 'resources', 'app.asar.unpacked', 'dsh')
+        tomatoDestination = join(context.appOutDir, 'resources', 'app.asar.unpacked', 'dsh')
       }
       if (policy === undefined) return
       const { resolveDesktopPolicyConfig } = await import('../lib/types/mandatory-update-policy.js')
@@ -220,9 +220,9 @@ export function createElectronBuilderConfig(
     afterSign: async context => {
       if (windowsSigner !== undefined) {
         await signWindowsCode(context.appOutDir, {
-          thumbprint: new X509Certificate(await readFile(env.DSH_DESKTOP_WINDOWS_CER_FILE)).fingerprint.replaceAll(':', ''),
+          thumbprint: new X509Certificate(await readFile(env.TOMATO_DESKTOP_WINDOWS_CER_FILE)).fingerprint.replaceAll(':', ''),
           sign: windowsSigner,
-          record: event => recordPackagingEvent(env.DSH_DESKTOP_PACKAGING_RUN_DIR, event),
+          record: event => recordPackagingEvent(env.TOMATO_DESKTOP_PACKAGING_RUN_DIR, event),
         })
         await verifyWindowsAsarUnpack(buildPaths.dsh, context.packager.getResourcesDir(context.appOutDir), windowsCode)
       }
@@ -251,7 +251,7 @@ export function createElectronBuilderConfig(
       forceCodeSigning: !unsigned,
       signtoolOptions: {
         sign: windowsSigner,
-        publisherName: windowsSigner === undefined ? undefined : resolveWindowsUpdatePublisher(env.DSH_DESKTOP_WINDOWS_CER_FILE),
+        publisherName: windowsSigner === undefined ? undefined : resolveWindowsUpdatePublisher(env.TOMATO_DESKTOP_WINDOWS_CER_FILE),
         signingHashAlgorithms: ['sha256'],
       },
       target: ['nsis'],

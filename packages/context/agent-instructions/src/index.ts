@@ -140,7 +140,7 @@ export function apply(ctx: Context, config: Config): void {
       const replacePreviousBaseline = baselinePresent && !keepVisibleBaseline
       const instructions = await loadBaselineInstructionSet({
         cwd,
-        dshHome: resolved.dshHome,
+        tomatoHome: resolved.tomatoHome,
         agentsHome: resolved.agentsHome,
         projectRootMarkers: resolved.projectRootMarkers,
         maxBytes: resolved.maxBytes,

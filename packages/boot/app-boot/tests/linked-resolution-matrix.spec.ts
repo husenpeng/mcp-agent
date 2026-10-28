@@ -567,7 +567,7 @@ function writeNodeComparison(output: string, selected: readonly MatrixRow[]): vo
   const markdown = [
     '# Node baseline and peer-position reference', '',
     'Native, current, and reference runs use independent fixture paths. Only the reference fixture materializes peer mappings before Node resolves them. Explicit paths and importers outside recorded linked directories use the unmodified native behavior. Assertions compare selected packages, existing file paths, failure codes, and runtime module identity.', '',
-    '| ID | Layout | Package | Runtime | Request | Importer | Explicit paths start | JSON here | node_modules here | Parent JSON | Parent node_modules | Method | Native Node | Current DSH | Peer reference | Matches reference |',
+    '| ID | Layout | Package | Runtime | Request | Importer | Explicit paths start | JSON here | node_modules here | Parent JSON | Parent node_modules | Method | Native Node | Current TOMATO | Peer reference | Matches reference |',
     '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|',
     ...records.map(record => `| ${[record.id, record.layout, record.name, record.inRuntime, record.request, record.importer,
       record.explicitStart, record.startManifest, record.startModules, record.parentManifest, record.parentModules,
@@ -577,7 +577,7 @@ function writeNodeComparison(output: string, selected: readonly MatrixRow[]): vo
 }
 
 afterAll(() => {
-  const parent = process.env.DSH_RESOLUTION_MATRIX_REPORT_DIR
+  const parent = process.env.TOMATO_RESOLUTION_MATRIX_REPORT_DIR
   if (parent === undefined) return
   mkdirSync(parent, { recursive: true })
   const output = mkdtempSync(join(resolve(parent), 'run-'))

@@ -33,7 +33,7 @@ kind: "package-reference"
     root: ["."]
 ```
 
-已有配置将模块名 `@deepseek-ai/cordis-plugin-hmr` 替换为 `@deepseek-ai/dsh-hmr`。继续提供 `hmr` 服务键、`baseDir`、`config`、`getLinked()`、`getOuterStack()`、`hmr/change` 和 `hmr/reload`。工作区保留 vendored 包；DSH profile 使用本包。
+已有配置将模块名 `@deepseek-ai/cordis-plugin-hmr` 替换为 `@deepseek-ai/dsh-hmr`。继续提供 `hmr` 服务键、`baseDir`、`config`、`getLinked()`、`getOuterStack()`、`hmr/change` 和 `hmr/reload`。工作区保留 vendored 包；TOMATO profile 使用本包。
 
 ### 配置
 
@@ -111,7 +111,7 @@ Loader entry 保留原始导入结果。HMR 为每个 entry 名称与配置树 b
 - profile 的 `node_modules` 之下的每个符号链接都会扩大比较范围。链接进程入口（通过 bin 链接的真实路径定位）静态导入的包（例如来自 dsh checkout 的 `dsh-app-boot`、Cordis 或 Loader）会把宿主模块纳入范围；这些模块的变化保持待处理，Plugin Manager 对后续操作报告 `restart-required`，直到进程重启。Loader entry 导入的已链接 dsh 包与其他插件一样被替换。
 - 比较记录属于单个 HMR 实例。重启 `hmr` 条目本身的重新组合会重新记录当前文件，因此此时待处理的变化不再被报告或重试。
 - 导入或启动失败的替换版本保持未激活，直到其文件或依赖被修正；旧版本不会被恢复。
-- 兼容性检查只在 DSH 组合行时运行：启动、profile 重新组合和 preset 挂载；Loader 导入模块时不做任何检查。被替换的 profile 行会通过重新组合的预检，但 profile 组合之外的行（例如 preset 行，或通过 `ctx.loader.create()` 添加的条目）以替换后的代码重启，不经检查。Plugin Manager 拒绝不兼容的版本，因此这只影响在它之外变化的包，例如在 profile 目录中手动执行 `pnpm add`，或重新构建的 `link:` 包。
+- 兼容性检查只在 TOMATO 组合行时运行：启动、profile 重新组合和 preset 挂载；Loader 导入模块时不做任何检查。被替换的 profile 行会通过重新组合的预检，但 profile 组合之外的行（例如 preset 行，或通过 `ctx.loader.create()` 添加的条目）以替换后的代码重启，不经检查。Plugin Manager 拒绝不兼容的版本，因此这只影响在它之外变化的包，例如在 profile 目录中手动执行 `pnpm add`，或重新构建的 `link:` 包。
 - [打包 worker loader](../../experimental/webworker-runtime/src/module-system/module-loader.ts) 不暴露 Node 的 `loadCache` 或 `require.cache`；配置重新组合仍可执行，但代码替换需要重启。原生 Node 即使使用异步模块 hook 也保留这些缓存。[打包 worker 浏览器测试](../../../apps/web/tests/preview-boot.e2e.ts) 覆盖此部署。
 - 新加载文件首次在重新组合结算后记录，其修改时间晚于比较时间时计为已变化。比较时间是 HMR 在临时目录中写入的标记文件的修改时间，因此在同一台机器上，两者都来自为本地文件写入记时的时钟；在比较之后、处于 profile 所在文件系统时间戳精度之内的修改被视为更早，可能被漏检；网络文件系统使用服务器的时钟为写入记时。
 - 若文件被替换为指向较旧 store 文件的硬链接，它保留较旧的修改时间；当其模块在上次记录之后才首次加载时，该变化不会被检测到。

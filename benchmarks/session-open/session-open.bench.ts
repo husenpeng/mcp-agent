@@ -85,8 +85,8 @@ const WORKER = join(import.meta.dirname, '..', '.dsh-build', 'session-open', 'se
 const PHASE_IO_SHARE = { file: 0.1, memory: 0 } as const
 /** User scenario of each access kind. */
 const ACCESS_AFFECTS: Readonly<Record<SessionAccessKind, string>> = {
-  'first-open': 'Opening a large Session for the first time after upgrading DSH.',
-  'post-upgrade-reopen': 'Opening a large Session again in a new DSH process.',
+  'first-open': 'Opening a large Session for the first time after upgrading TOMATO.',
+  'post-upgrade-reopen': 'Opening a large Session again in a new TOMATO process.',
 }
 
 /**

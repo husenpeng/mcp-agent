@@ -35,13 +35,13 @@ export interface Config {
   /** Provider name on `ctx.subagents` (default `dsh-sdk`). */
   providerName: string
   /** Explicit dsh CLI module, resolved and checked at plugin load; omission uses the SDK dependency. */
-  dshBin?: string
+  tomatoBin?: string
   /** Named child profile (default `sdk`). */
   profile: string
   /** Ordered per-launch profile patch files, resolved and checked at plugin load. */
   patches: string[]
   /** Absolute isolated Harness home for every nested child process. */
-  dshHome: string
+  tomatoHome: string
   /** Provider route the child runtime initializes with (default `deepseek-official`). */
   provider: string
   /** Model the child runtime initializes with (default `deepseek-v4-flash`). */
@@ -69,10 +69,10 @@ export interface Config {
 
 export const Config: z<Config> = z.object({
   providerName: z.string().default('dsh-sdk'),
-  dshBin: z.string(),
+  tomatoBin: z.string(),
   profile: z.string().default('sdk'),
   patches: z.array(z.string()).default([]),
-  dshHome: z.string().required(),
+  tomatoHome: z.string().required(),
   provider: z.string().default('deepseek-official'),
   model: z.string().default('deepseek-v4-flash'),
   maxTokens: z.number().step(1).min(1).max(Number.MAX_SAFE_INTEGER),
@@ -82,8 +82,8 @@ export const Config: z<Config> = z.object({
   disposeGraceMs: z.number().default(DEFAULT_DISPOSE_GRACE_MS),
 })
 
-/** The shape after schemastery applied the defaults (`dshBin` and `maxTokens` have none). */
-type ResolvedConfig = Required<Omit<Config, 'maxTokens' | 'dshBin'>> & Pick<Config, 'maxTokens' | 'dshBin'>
+/** The shape after schemastery applied the defaults (`tomatoBin` and `maxTokens` have none). */
+type ResolvedConfig = Required<Omit<Config, 'maxTokens' | 'tomatoBin'>> & Pick<Config, 'maxTokens' | 'tomatoBin'>
 
 /** Resolve one configured runtime file against the harness launch directory and require a regular file. */
 function resolveConfiguredFile(field: string, value: string): string {
@@ -96,7 +96,7 @@ function resolveConfiguredFile(field: string, value: string): string {
   throw new TypeError(`subagent-dsh-sdk ${field} must name an existing file: ${path}`)
 }
 
-/** DSH SDK can apply Agent route options while the other start features remain child-owned. */
+/** TOMATO SDK can apply Agent route options while the other start features remain child-owned. */
 const SDK_START_CAPABILITIES: SubagentCapabilities = Object.freeze({
   ...NO_START_CAPABILITIES,
   agentOptions: true,
@@ -145,10 +145,10 @@ class SdkSubagentProvider implements SubagentProvider {
     }
     const route = resolveSdkRoute(this.config, request.agentOptions)
     const spec: SdkRunSpec = {
-      ...this.config.dshBin === undefined ? {} : { dshBin: this.config.dshBin },
+      ...this.config.tomatoBin === undefined ? {} : { tomatoBin: this.config.tomatoBin },
       profile: this.config.profile,
       patches: this.config.patches,
-      dshHome: this.config.dshHome,
+      tomatoHome: this.config.tomatoHome,
       cwd,
       originCwd: request.parent.session.header.cwd,
       ...route,
@@ -175,11 +175,11 @@ export function apply(ctx: Context, config: Config): void {
   if (resolved.maxTokens !== undefined && (!Number.isSafeInteger(resolved.maxTokens) || resolved.maxTokens <= 0)) {
     throw new TypeError('subagent-dsh-sdk maxTokens must be a positive safe integer')
   }
-  if (!isAbsolute(resolved.dshHome)) throw new TypeError('subagent-dsh-sdk dshHome must be an absolute path')
+  if (!isAbsolute(resolved.tomatoHome)) throw new TypeError('subagent-dsh-sdk tomatoHome must be an absolute path')
   const launchPaths: ResolvedConfig = {
     ...resolved,
     patches: resolved.patches.map((path, index) => resolveConfiguredFile(`patches[${String(index)}]`, path)),
-    ...resolved.dshBin === undefined ? {} : { dshBin: resolveConfiguredFile('dshBin', resolved.dshBin) },
+    ...resolved.tomatoBin === undefined ? {} : { tomatoBin: resolveConfiguredFile('tomatoBin', resolved.tomatoBin) },
   }
   ctx.subagents.registerProvider(new SdkSubagentProvider(launchPaths.providerName, ctx, launchPaths))
 }

@@ -112,8 +112,8 @@ it('pins Messages Files offload and inline fallback in assembled requests', asyn
       fixtureFile: join(SNAPSHOTS_DIR, 'image-offload-request', 'session.jsonl'),
       workspaceDir: READ_IMAGE_WORKSPACE,
       env: {
-        DSH_SNAPSHOT_API_KEY: 'snapshot-key',
-        DSH_SNAPSHOT_BASE_URL: `http://127.0.0.1:${address.port}`,
+        TOMATO_SNAPSHOT_API_KEY: 'snapshot-key',
+        TOMATO_SNAPSHOT_BASE_URL: `http://127.0.0.1:${address.port}`,
       },
     })
     expect(result.stderr).toBe('')
@@ -141,7 +141,7 @@ it('pins Messages Files offload and inline fallback in assembled requests', asyn
     const imageHandle = `Image ${attachmentId}; request preview 1x1px.${normalizedAccess}`
     const runtimeContext = (cwd: string): string => 'Current runtime context. This snapshot supersedes earlier runtime-context snapshots.\n\n'
       + `Current working directory: ${JSON.stringify(cwd)}.\n\n`
-      + 'Current DSH file policy: danger-full-access. The DSH file sandbox does not restrict file modifications by available operations.\n\n'
+      + 'Current TOMATO file policy: danger-full-access. The TOMATO file sandbox does not restrict file modifications by available operations.\n\n'
       + 'Approval prompts are disabled in this session: actions that require approval are rejected automatically — do not request sandbox escalation (do not set `sandbox_permissions`).'
     const messages = requests[0]?.messages as { content?: unknown }[] | undefined
     const offloaded = messages?.find(message => JSON.stringify(message.content).includes('[image omitted'))
@@ -183,8 +183,8 @@ it('pins Messages Files offload and inline fallback in assembled requests', asyn
       fixtureFile: join(SNAPSHOTS_DIR, 'image-offload-request', 'session.jsonl'),
       workspaceDir: READ_IMAGE_WORKSPACE,
       env: {
-        DSH_SNAPSHOT_API_KEY: 'snapshot-fallback-key',
-        DSH_SNAPSHOT_BASE_URL: `http://127.0.0.1:${address.port}`,
+        TOMATO_SNAPSHOT_API_KEY: 'snapshot-fallback-key',
+        TOMATO_SNAPSHOT_BASE_URL: `http://127.0.0.1:${address.port}`,
       },
     })
     expect(fallback.stderr).toBe('')

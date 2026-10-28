@@ -117,23 +117,23 @@ it('samples one local environment at startup without validating watcher outputs'
     await writeFile(join(root, 'apps/web/dist/index.html'), '<main></main>')
     await writeFile(join(root, 'packages/client/example/lib/client.js'), 'module.exports = {}\n')
     writeClientBuildRecord(root, {
-      DSH_CLIENT_BUILD_PROFILE: 'official',
-      DSH_CLIENT_COMMIT_HASH: 'fffffff',
-      DSH_CLIENT_TITLE: 'DeepSeek Harness',
-      DSH_CLIENT_VERSION: '1.2.2',
+      TOMATO_CLIENT_BUILD_PROFILE: 'official',
+      TOMATO_CLIENT_COMMIT_HASH: 'fffffff',
+      TOMATO_CLIENT_TITLE: 'DeepSeek Harness',
+      TOMATO_CLIENT_VERSION: '1.2.2',
     })
     await writeFile(join(root, 'packages/client/example/lib/client.js'), 'module.exports = { changed: true }\n')
 
     expect(devWebBuildEnvironment(root, {
       PATH: '/bin',
-      DSH_BUILD_CLIENT_PROFILE: 'official',
-      DSH_CLIENT_COMMIT_HASH: 'abc1234',
-      DSH_CLIENT_EXTRA: 'launch-value',
+      TOMATO_BUILD_CLIENT_PROFILE: 'official',
+      TOMATO_CLIENT_COMMIT_HASH: 'abc1234',
+      TOMATO_CLIENT_EXTRA: 'launch-value',
     })).toEqual({
       PATH: '/bin',
-      DSH_CLIENT_COMMIT_HASH: 'abc1234',
-      DSH_CLIENT_EXTRA: 'launch-value',
-      DSH_CLIENT_VERSION: '1.2.3',
+      TOMATO_CLIENT_COMMIT_HASH: 'abc1234',
+      TOMATO_CLIENT_EXTRA: 'launch-value',
+      TOMATO_CLIENT_VERSION: '1.2.3',
     })
   } finally {
     await rm(root, { recursive: true, force: true })

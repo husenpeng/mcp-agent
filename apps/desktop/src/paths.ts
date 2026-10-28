@@ -11,12 +11,12 @@ export interface DesktopPaths {
 
 /**
  * Resolve every Electron-owned path without changing the shared data roots.
- * @param dshHome - Harness home shared with npm-installed dsh.
+ * @param tomatoHome - Harness home shared with npm-installed dsh.
  * @returns immutable desktop path set.
  */
-export function resolveDesktopPaths(dshHome: string = resolveDshHome()): DesktopPaths {
+export function resolveDesktopPaths(tomatoHome: string = resolveDshHome()): DesktopPaths {
   return {
-    profile: join(dshHome, 'profiles', 'desktop'),
-    lock: join(dshHome, 'profiles', 'desktop', 'lock'),
+    profile: join(tomatoHome, 'profiles', 'desktop'),
+    lock: join(tomatoHome, 'profiles', 'desktop', 'lock'),
   }
 }

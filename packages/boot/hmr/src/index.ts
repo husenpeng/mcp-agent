@@ -883,7 +883,7 @@ class Hmr extends Service {
   /**
    * Evict the loaded modules below the directories of mappings a recomposition dropped and expire their package
    * configuration, so a disabled or removed package that is installed or enabled again is imported afresh. Modules of
-   * DSH's own static graph, and those below a directory that is still mapped, stay loaded.
+   * TOMATO's own static graph, and those below a directory that is still mapped, stay loaded.
    * @param dropped Real directories, with a trailing separator, of the dropped mappings.
    * @param kept Real directories, with a trailing separator, of the mappings that stay.
    */

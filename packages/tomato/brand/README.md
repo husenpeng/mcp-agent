@@ -50,7 +50,7 @@ None; this package neither assembles nor sends a provider request.
 
 - **Mark is a two-stop gradient** — the glyph follows the brand-mark variables, not the surrounding text color. A mark with more than two stops, or per-surface colors, needs the theme's icon-replacement surface, not this package.
 - **The hero wordmark is not registered** — the shell's own hero fallback stays; only the square mark is replaced.
-- **The browser tab title is a build value** — `DSH_CLIENT_TITLE` selects it at build time and is outside the slot system.
+- **The browser tab title is a build value** — `TOMATO_CLIENT_TITLE` selects it at build time and is outside the slot system.
 
 <a id="dev-note"></a>
 

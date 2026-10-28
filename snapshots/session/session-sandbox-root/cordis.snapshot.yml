@@ -13,7 +13,7 @@
 - id: session-persistence-jsonl
   name: '@deepseek-ai/dsh-session-persistence-jsonl'
   config:
-    root: !!js dshHomePath('sessions')
+    root: !!js tomatoHomePath('sessions')
     compression: none
 
 - id: agent-instructions
@@ -43,7 +43,7 @@
 - id: sandbox-policy
   name: '@deepseek-ai/dsh-sandbox-policy'
   config:
-    mode: !!js process.env.DSH_PERMISSION_MODE ?? 'workspace-write'
+    mode: !!js process.env.TOMATO_PERMISSION_MODE ?? 'workspace-write'
     workspaceRoot: /tmp
     additionalWritableRoots: !!js "[process.cwd() + '/extra']"
 

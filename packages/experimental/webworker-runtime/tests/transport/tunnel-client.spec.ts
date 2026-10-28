@@ -228,14 +228,14 @@ function stubWorker(): {
   })
   const failure = await pending.then(() => undefined, (error: unknown) => error as {
     message: string
-    dshRemoteStreamFailure: unknown
+    tomatoRemoteStreamFailure: unknown
   })
   check('a logical Host failure retains its structural marker', {
     message: failure?.message,
-    dshRemoteStreamFailure: failure?.dshRemoteStreamFailure,
+    tomatoRemoteStreamFailure: failure?.tomatoRemoteStreamFailure,
   }, {
     message: 'fixture Session is absent',
-    dshRemoteStreamFailure: {
+    tomatoRemoteStreamFailure: {
       kind: 'remote', code: 'session/not-found', details: { sessionId: 'session-1' },
     },
   })
@@ -266,14 +266,14 @@ function stubWorker(): {
   fail('worker crashed')
   const failure = await pending.then(() => undefined, (error: unknown) => error as {
     message: string
-    dshRemoteStreamFailure: unknown
+    tomatoRemoteStreamFailure: unknown
   })
   check('worker failure carries the carrier marker', {
     message: failure?.message,
-    dshRemoteStreamFailure: failure?.dshRemoteStreamFailure,
+    tomatoRemoteStreamFailure: failure?.tomatoRemoteStreamFailure,
   }, {
     message: 'web-preview tunnel: worker failed: worker crashed',
-    dshRemoteStreamFailure: { kind: 'carrier' },
+    tomatoRemoteStreamFailure: { kind: 'carrier' },
   })
 }
 

@@ -9,7 +9,7 @@ import { Context, Service } from '@deepseek-ai/cordis'
 import type { SandboxMode } from '@deepseek-ai/dsh-sandbox'
 import type { ShellExecRequest, ShellExecSpec, ShellExecution } from './types.ts'
 
-export { DSH_ENV_PREFIX } from './types.ts'
+export { TOMATO_ENV_PREFIX } from './types.ts'
 export type {
   ShellExecRequest,
   ShellExecSpec,
@@ -21,8 +21,8 @@ export type {
   ShellRunResult,
   ShellSandboxInfo,
   CollectedOutput,
-  DshEnvironment,
-  DshEnvironmentKey,
+  TomatoEnvironment,
+  TomatoEnvironmentKey,
 } from './types.ts'
 export { parseExitStatus } from './render.ts'
 export type { ParsedExitStatus } from './render.ts'

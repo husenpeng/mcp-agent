@@ -49,20 +49,20 @@ it('delivers an overdue reminder with the SDK route and lets the client resume t
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
   const address = server.address()
   if (address === null || typeof address === 'string') throw new Error('model fixture has no port')
-  const env = { ...process.env, DSH_PERMISSION_MODE: 'danger-full-access', DSH_TELEMETRY_DISABLED: '1',
+  const env = { ...process.env, TOMATO_PERMISSION_MODE: 'danger-full-access', TOMATO_TELEMETRY_DISABLED: '1',
     DEEPSEEK_API_KEY: 'keyless-schedule-fixture', DEEPSEEK_BASE_URL: `http://127.0.0.1:${String(address.port)}` }
   clearAmbientProxyEnv(env)
-  const first = new DeepSeekHarness({ cwd: root, dshHome: join(root, '.dsh'), patches: [patch],
+  const first = new DeepSeekHarness({ cwd: root, tomatoHome: join(root, '.dsh'), patches: [patch],
     model: 'deepseek-v4-pro', maxTokens: 5678, initializeTimeoutMs: 30_000,
-    env: { ...env, DSH_TEST_SCHEDULE_NOW: String(Date.parse('2030-01-01T00:00:00Z')) } })
+    env: { ...env, TOMATO_TEST_SCHEDULE_NOW: String(Date.parse('2030-01-01T00:00:00Z')) } })
   clients.push(first)
   expect((await first.session('saved').run('Set a reminder')).finalResponse).toBe('ready')
   expect(requests).toHaveLength(2)
   await first.close()
   restarting = true
-  const second = new DeepSeekHarness({ cwd: root, dshHome: join(root, '.dsh'), patches: [patch],
+  const second = new DeepSeekHarness({ cwd: root, tomatoHome: join(root, '.dsh'), patches: [patch],
     model: 'deepseek-v4-flash', maxTokens: 1234, initializeTimeoutMs: 30_000,
-    env: { ...env, DSH_TEST_SCHEDULE_NOW: String(Date.parse('2030-01-03T00:00:00Z')) } })
+    env: { ...env, TOMATO_TEST_SCHEDULE_NOW: String(Date.parse('2030-01-03T00:00:00Z')) } })
   clients.push(second)
   await second.start()
   await vi.waitFor(() => { expect(restored).toHaveLength(1) }, { timeout: 30_000 })

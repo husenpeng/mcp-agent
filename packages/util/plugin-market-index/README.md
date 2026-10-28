@@ -1,5 +1,5 @@
 ---
-description: "Plugin market index format 1 validation and install arguments for DSH readers and index generators."
+description: "Plugin market index format 1 validation and install arguments for TOMATO readers and index generators."
 kind: "package-library"
 ---
 
@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-Validator without runtime dependencies for format 1 of the plugin market index, the single JSON file that lists installable DSH bundles with their display metadata. [The format Agent Note](../../../.agents/notes/implemented/feature/2026-10-02-plugin-market-index-format.md) defines the document; this package is its executable rule set. DSH's [`dsh-plugin-market`](../../boot/plugin-market/README.md) reads indexes with it, and index generators validate their output with it before publishing.
+Validator without runtime dependencies for format 1 of the plugin market index, the single JSON file that lists installable TOMATO bundles with their display metadata. [The format Agent Note](../../../.agents/notes/implemented/feature/2026-10-02-plugin-market-index-format.md) defines the document; this package is its executable rule set. TOMATO's [`dsh-plugin-market`](../../boot/plugin-market/README.md) reads indexes with it, and index generators validate their output with it before publishing.
 
 ## Table of Contents
 

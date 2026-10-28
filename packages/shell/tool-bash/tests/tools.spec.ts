@@ -1330,7 +1330,7 @@ describe('the model-facing bash tool builds its request from named args only (no
         ...request.signal ? { signal: request.signal } : {},
         ...request.stdin !== undefined ? { stdin: request.stdin } : {},
         ...request.env !== undefined ? { env: request.env } : {},
-        ...request.dshEnv !== undefined ? { dshEnv: request.dshEnv } : {},
+        ...request.tomatoEnv !== undefined ? { tomatoEnv: request.tomatoEnv } : {},
         sandboxPolicy: request.sandboxPolicy,
       }
     }
@@ -1360,7 +1360,7 @@ describe('the model-facing bash tool builds its request from named args only (no
     await ctx.plugin(AgentRegistry)
     await ctx.plugin(LocalJobRegistry)
     await ctx.plugin(ToolJobs)
-    await ctx.plugin(BashEnvPlugin, { dshHome: recordingDshHome })
+    await ctx.plugin(BashEnvPlugin, { tomatoHome: recordingDshHome })
     await ctx.plugin(RecordingBashExecutor)
     await ctx.plugin(ToolBash)
     return { ctx, bash: ctx.shell as RecordingBashExecutor }
@@ -1369,13 +1369,13 @@ describe('the model-facing bash tool builds its request from named args only (no
   it('describes the managed harness environment namespace to the model', async () => {
     const { ctx } = await setupRecording()
     const description = ctx.tools.get('bash')?.description ?? ''
-    expect(description).toContain('$DSH_*')
+    expect(description).toContain('$TOMATO_*')
   })
 
   it('injects built-ins and the stable session id into a foreground request', async () => {
     const { ctx, bash } = await setupRecording()
     const agent = await registerFakeAgent(ctx, 'request-fg', () => undefined)
-    const ambient = process.env.DSH_SESSION_ID
+    const ambient = process.env.TOMATO_SESSION_ID
 
     await executeToolFixture(ctx, {
       signal: testToolSignal,
@@ -1385,12 +1385,12 @@ describe('the model-facing bash tool builds its request from named args only (no
       agent,
     })
 
-    expect(bash.requests[0]?.dshEnv).toEqual({
-      DSH_HOME: recordingDshHome,
-      DSH_SESSION_ID: 'request-fg',
-      DSH_SHELL: '1',
+    expect(bash.requests[0]?.tomatoEnv).toEqual({
+      TOMATO_HOME: recordingDshHome,
+      TOMATO_SESSION_ID: 'request-fg',
+      TOMATO_SHELL: '1',
     })
-    expect(process.env.DSH_SESSION_ID).toBe(ambient)
+    expect(process.env.TOMATO_SESSION_ID).toBe(ambient)
   })
 
   it('injects the same trusted variables into a background request without forwarding model env', async () => {
@@ -1405,16 +1405,16 @@ describe('the model-facing bash tool builds its request from named args only (no
         command: 'sleep 1',
         description: 'run command',
         run_in_background: true,
-        env: { DSH_SESSION_ID: 'spoofed' },
+        env: { TOMATO_SESSION_ID: 'spoofed' },
       },
       agent,
     })
 
     expect(bash.requests[0]?.env).toBeUndefined()
-    expect(bash.requests[0]?.dshEnv).toEqual({
-      DSH_HOME: recordingDshHome,
-      DSH_SESSION_ID: 'request-bg',
-      DSH_SHELL: '1',
+    expect(bash.requests[0]?.tomatoEnv).toEqual({
+      TOMATO_HOME: recordingDshHome,
+      TOMATO_SESSION_ID: 'request-bg',
+      TOMATO_SHELL: '1',
     })
   })
 
@@ -1433,16 +1433,16 @@ describe('the model-facing bash tool builds its request from named args only (no
       })
     }
 
-    expect(bash.requests.map(request => request.dshEnv)).toEqual([
+    expect(bash.requests.map(request => request.tomatoEnv)).toEqual([
       {
-        DSH_HOME: recordingDshHome,
-        DSH_SESSION_ID: 'request-parent',
-        DSH_SHELL: '1',
+        TOMATO_HOME: recordingDshHome,
+        TOMATO_SESSION_ID: 'request-parent',
+        TOMATO_SHELL: '1',
       },
       {
-        DSH_HOME: recordingDshHome,
-        DSH_SESSION_ID: 'request-child',
-        DSH_SHELL: '1',
+        TOMATO_HOME: recordingDshHome,
+        TOMATO_SESSION_ID: 'request-child',
+        TOMATO_SHELL: '1',
       },
     ])
   })

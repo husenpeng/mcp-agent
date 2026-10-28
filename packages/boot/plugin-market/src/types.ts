@@ -43,7 +43,7 @@ export interface MarketIndexSummary {
 
 /**
  * How a plugin relates to the profile's bundles, matched by package name and measured against its default version, or
- * its highest version when it has no default: `provided` when the DSH installation ships the package,
+ * its highest version when it has no default: `provided` when the TOMATO installation ships the package,
  * `update-available` when that version is greater than the installed one, `different-version` when the installed
  * version is unknown, not valid SemVer, or greater.
  */
@@ -55,7 +55,7 @@ export interface MarketInstallation {
   readonly installedVersion?: string
 }
 
-/** Whether the running DSH version satisfies a version's `engines.dsh`, as DSH's installation check evaluates it. */
+/** Whether the running TOMATO version satisfies a version's `engines.dsh`, as TOMATO's installation check evaluates it. */
 export type MarketCompatibility =
   | { readonly compatible: true }
   | {

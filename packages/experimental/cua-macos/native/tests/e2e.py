@@ -138,8 +138,8 @@ def main():
             deadline = time.monotonic() + 5
             while True:
                 windows = call("listWindows", owner)
-                primary = next(window for window in windows if window["title"] == "DSH CUA primary fixture")
-                secondary = next(window for window in windows if window["title"] == "DSH CUA secondary fixture")
+                primary = next(window for window in windows if window["title"] == "TOMATO CUA primary fixture")
+                secondary = next(window for window in windows if window["title"] == "TOMATO CUA secondary fixture")
                 actual = json.loads(state_path.read_text())
                 sizes = [[window["bounds"]["width"], window["bounds"]["height"]] for window in [primary, secondary]]
                 if sizes == [actual["primaryWindowSize"], actual["secondaryWindowSize"]]:

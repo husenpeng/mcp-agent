@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest'
 import { developmentLoginEnvironment } from '../scripts/development-login.ts'
 
 const FILE = {
-  DSH_DESKTOP_AUTH_SERVICE_URL: 'http://localhost:8020',
-  DSH_DESKTOP_TOMATO_WEB_URL: 'http://localhost:3000',
+  TOMATO_DESKTOP_AUTH_SERVICE_URL: 'http://localhost:8020',
+  TOMATO_DESKTOP_TOMATO_WEB_URL: 'http://localhost:3000',
 }
 
 describe('developmentLoginEnvironment', () => {
@@ -23,7 +23,7 @@ describe('developmentLoginEnvironment', () => {
       AUTH_SERVICE_URL: 'http://127.0.0.1:9000',
       TOMATO_WEB_URL: 'http://127.0.0.1:4000',
     })
-    expect(developmentLoginEnvironment(FILE, { DSH_DESKTOP_AUTH_SERVICE_URL: 'http://127.0.0.1:9000' }))
+    expect(developmentLoginEnvironment(FILE, { TOMATO_DESKTOP_AUTH_SERVICE_URL: 'http://127.0.0.1:9000' }))
       .toMatchObject({ AUTH_SERVICE_URL: 'http://127.0.0.1:9000' })
   })
 
@@ -31,7 +31,7 @@ describe('developmentLoginEnvironment', () => {
     expect(developmentLoginEnvironment({}, {})).toEqual({})
     expect(() => developmentLoginEnvironment({}, { AUTH_SERVICE_URL: 'not a url' }))
       .toThrow(/AUTH_SERVICE_URL/)
-    expect(() => developmentLoginEnvironment({ DSH_DESKTOP_TOMATO_WEB_URL: 'http://localhost:3000/ui' }, {}))
+    expect(() => developmentLoginEnvironment({ TOMATO_DESKTOP_TOMATO_WEB_URL: 'http://localhost:3000/ui' }, {}))
       .toThrow(/TOMATO_WEB_URL/)
   })
 })

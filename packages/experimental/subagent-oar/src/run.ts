@@ -1,6 +1,6 @@
 /**
  * One-shot OAR execution, root-answer selection, and owned session disposal.
- * Native records remain in OAR; DSH receives assistant text and fixed failure facts.
+ * Native records remain in OAR; TOMATO receives assistant text and fixed failure facts.
  *
  * @module @deepseek-ai/dsh-experimental-subagent-oar/run
  */
@@ -234,7 +234,7 @@ function publishRun(
 }
 
 /**
- * Open one OAR session and return a one-shot DSH run. OAR cannot interrupt session
+ * Open one OAR session and return a one-shot TOMATO run. OAR cannot interrupt session
  * startup; cancellation during that await disposes the returned session before rejection.
  * @param request - text task, resolved child directory, parent, and cancellation signal.
  * @param spec - selected runtime, native settings, deadline, and safe diagnostic observer.

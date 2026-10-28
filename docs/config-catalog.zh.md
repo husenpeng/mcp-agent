@@ -378,8 +378,8 @@ export interface Config {
 ```ts config-catalog
 /** Local attachment backend configuration. */
 export interface Config {
-  /** Explicit harness home; omitted follows `DSH_HOME`, then `~/.dsh`. */
-  dshHome?: string
+  /** Explicit harness home; omitted follows `TOMATO_HOME`, then `~/.dsh`. */
+  tomatoHome?: string
   /** Maximum encoded bytes accepted for one submitted image. Default: 50 MiB. */
   maxImageBytes?: number
   /** Maximum image count accepted in one submitted message. Default: 20. */
@@ -809,8 +809,8 @@ export interface Config {
 export interface Config {
   /** Credentials document path; defaults to `.credentials.yaml` under the harness home. */
   path?: string
-  /** Harness home used when `path` is omitted; defaults to `$DSH_HOME` or `~/.dsh`. */
-  dshHome?: string
+  /** Harness home used when `path` is omitted; defaults to `$TOMATO_HOME` or `~/.dsh`. */
+  tomatoHome?: string
   /** Watch the document and hot-publish external edits; defaults to true. */
   watch?: boolean
   /** Watcher write-settle window in milliseconds; defaults to 100. */
@@ -2123,14 +2123,14 @@ export type PiAiThinkingTokenBudgetField = NonNullable<OpenAICompletionsCompat['
 - `source`: [`packages/test-support/llm-replay/src/index.ts:1129`](../packages/test-support/llm-replay/src/index.ts)
 
 ```ts config-catalog
-/** Plugin config: the {@link ReplayConfig} inputs, each defaulting to its `DSH_SNAPSHOT_*` env var in `apply`. */
+/** Plugin config: the {@link ReplayConfig} inputs, each defaulting to its `TOMATO_SNAPSHOT_*` env var in `apply`. */
 export interface Config {
-  /** Override the fixture path; defaults to `$DSH_SNAPSHOT_FILE`. */
+  /** Override the fixture path; defaults to `$TOMATO_SNAPSHOT_FILE`. */
   file?: string
-  /** Override the sidecar path; defaults to `$DSH_SNAPSHOT_OVERRIDE`. */
+  /** Override the sidecar path; defaults to `$TOMATO_SNAPSHOT_OVERRIDE`. */
   overrideFile?: string
   /**
-   * Override the child-log paths; defaults to `$DSH_SNAPSHOT_CHILD_FILES` (a
+   * Override the child-log paths; defaults to `$TOMATO_SNAPSHOT_CHILD_FILES` (a
    * path-separator-delimited list). Each is a recorded subagent session log for
    * a nested-agent scenario; absent/empty for a single-session scenario.
    */
@@ -2372,7 +2372,7 @@ export interface Config {
   maxCachedBytes: number
   /** Maximum retained source-version aliases to cached content. */
   maxSourceEntries: number
-  /** Conversion deadline in milliseconds; excludes the DSH queue. */
+  /** Conversion deadline in milliseconds; excludes the TOMATO queue. */
   timeoutMs: number
   /** Maximum authorized source bytes. */
   maxInputBytes: number
@@ -3162,8 +3162,8 @@ export interface Config extends SessionTitleLlmConfig {
 ```ts config-catalog
 /** Plugin config (all optional — the built-in facts resolve without defaults). */
 export interface Config {
-  /** DeepSeek Harness home directory exposed as `DSH_HOME`; defaults to `$DSH_HOME` or `~/.dsh`. */
-  dshHome?: string
+  /** DeepSeek Harness home directory exposed as `TOMATO_HOME`; defaults to `$TOMATO_HOME` or `~/.dsh`. */
+  tomatoHome?: string
 }
 ```
 <!-- END GENERATED config-catalog:@deepseek-ai/dsh-shell-env -->
@@ -3199,9 +3199,9 @@ export interface Config {
   providerName?: string
   /** Whether project and user roots are included around custom roots. */
   includeDefaultRoots?: boolean
-  /** DeepSeek Harness config root. Defaults to `$DSH_HOME` or `~/.dsh`. */
-  dshHome?: string
-  /** Shared agent config root. Defaults to `$DSH_AGENTS_HOME` or `~/.agents`. */
+  /** DeepSeek Harness config root. Defaults to `$TOMATO_HOME` or `~/.dsh`. */
+  tomatoHome?: string
+  /** Shared agent config root. Defaults to `$TOMATO_AGENTS_HOME` or `~/.agents`. */
   agentsHome?: string
   /** Additional skill roots scanned after project roots and before user roots. */
   customSkillDirs?: string[]
@@ -3217,7 +3217,7 @@ export interface Config {
   watchMaxProjects?: number
   /** Whether watched symbolic links follow their target files. */
   watchFollowSymlinks?: boolean
-  /** Bundled skill root; defaults to `$DSH_BUNDLED_SKILL_DIR` when default roots are included, otherwise mounts none. */
+  /** Bundled skill root; defaults to `$TOMATO_BUNDLED_SKILL_DIR` when default roots are included, otherwise mounts none. */
   bundledSkillDir?: string
 }
 ```
@@ -3576,13 +3576,13 @@ export interface Config {
   /** Provider name on `ctx.subagents` (default `dsh-sdk`). */
   providerName: string
   /** Explicit dsh CLI module, resolved and checked at plugin load; omission uses the SDK dependency. */
-  dshBin?: string
+  tomatoBin?: string
   /** Named child profile (default `sdk`). */
   profile: string
   /** Ordered per-launch profile patch files, resolved and checked at plugin load. */
   patches: string[]
   /** Absolute isolated Harness home for every nested child process. */
-  dshHome: string
+  tomatoHome: string
   /** Provider route the child runtime initializes with (default `deepseek-official`). */
   provider: string
   /** Model the child runtime initializes with (default `deepseek-v4-flash`). */
@@ -4448,13 +4448,13 @@ export interface Config {
   /** Print the URL line on activation; a non-interactive layer can turn it off. */
   printUrl: boolean
   /**
-   * Register the `DSH_WEB_URL` bash variable naming this GUI. A one-shot
+   * Register the `TOMATO_WEB_URL` bash variable naming this GUI. A one-shot
    * non-interactive layer can turn it off when its user is not in the GUI.
    */
   surfaceContext: boolean
   /**
    * Canonical HTTP(S) root to advertise in the printed and opened URL,
-   * `DSH_WEB_URL`, and `webApp.getAdvertisedUrl()`, which supplies the Web GUI
+   * `TOMATO_WEB_URL`, and `webApp.getAdvertisedUrl()`, which supplies the Web GUI
    * URL in agent runtime context, e.g. `https://app.example/ui/`, normalized to end in `/`. Configures no routing
    * or authentication; see [public deployments](../README.md#public-deployments).
    * Absent or YAML `null` advertises the bind-address URL.

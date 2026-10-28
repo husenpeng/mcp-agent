@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-浏览当前 Session 组合能看到的全部 skill，查看单个 skill 的元数据与指令正文，并编辑存放在个人目录 `$DSH_HOME/skills` 或 `$DSH_AGENTS_HOME/skills` 中的 skill。该页面从右侧栏的指南页进入，不声明任何资源地址。
+浏览当前 Session 组合能看到的全部 skill，查看单个 skill 的元数据与指令正文，并编辑存放在个人目录 `$TOMATO_HOME/skills` 或 `$TOMATO_AGENTS_HOME/skills` 中的 skill。该页面从右侧栏的指南页进入，不声明任何资源地址。
 
 ## 目录
 

@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   apply, createClientModuleSystem, parseBootManifest,
   type BootModuleRow, type ClientBundleRegistration, type ClientModuleCreateOptions,
-  type ClientModuleLoader, type ClientModuleLoaderTarget, type DshWindow,
+  type ClientModuleLoader, type ClientModuleLoaderTarget, type TomatoWindow,
 } from '../src/client/index.ts'
 
 const MODULES_ID = '@deepseek-ai/dsh-client-modules'
@@ -19,7 +19,7 @@ const chunkReference = (id: string, fileName: string, rev = '0'): string =>
   `plugins/${id}/${fileName}?rev=${rev}`
 const BOOTSTRAP_URL = comboReference([MODULES_ID], 'bootstrap')
 const APPLICATION_URL = comboReference(['a', 'b'], 'application')
-const win = globalThis as DshWindow
+const win = globalThis as TomatoWindow
 const bootstrapExports = { apply, createClientModuleSystem }
 
 type Factory = ClientBundleRegistration['factory']

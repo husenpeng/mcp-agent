@@ -432,7 +432,7 @@ describe('experimental packages and Host build entries', () => {
     const root = writeWorkspace({
       'packages/g/faces/package.json': { name: '@deepseek-ai/dsh-faces-probe' },
       'packages/g/faces/tsdown.config.ts': [
-        'export default ({ env }: { env: { DSH_BUILD_FACE?: string } }) => env.DSH_BUILD_FACE === \'host\'',
+        'export default ({ env }: { env: { TOMATO_BUILD_FACE?: string } }) => env.TOMATO_BUILD_FACE === \'host\'',
         "  ? [{ entry: '' }, { entry: { runner: './lib/types/runner.js' }, platform: 'neutral' }]",
         "  : [{ entry: ['lib/types/index.js', 'src/helper.ts', 'lib/types/optional/*.js'] },",
         "    { entry: { 'client.node': 'lib/types/client/index.js' }, platform: 'node' },",

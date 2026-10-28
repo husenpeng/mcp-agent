@@ -12,7 +12,7 @@ import { renderCliFixture } from './fixtures/render-cli.ts'
 
 const repo = fileURLToPath(new URL('../../../../', import.meta.url))
 const assetRoot = fileURLToPath(new URL('../assets/', import.meta.url))
-const runtime = process.env.DSH_PRIMARY_RUNTIME
+const runtime = process.env.TOMATO_PRIMARY_RUNTIME
 const python = runtime && join(runtime, 'dependencies/python', process.platform === 'win32' ? 'python.exe' : 'bin/python3')
 
 const formats = [
@@ -74,15 +74,15 @@ it.skipIf(!process.env.DEEPSEEK_API_KEY || !runtime).each(cases)('$format $kind 
       binArgs: ['--profile', 'headless', '--patch', configPath,
         `In input.${format}, ${task}; save result.${format}. ${suffix} Respond briefly in English.`],
       // The CLI fixture and its log live outside the workspace; bwrap's private /tmp hides both.
-      env: { DSH_PRIMARY_RUNTIME: runtime, DSH_PERMISSION_MODE: 'danger-full-access',
-        DSH_HOME: join(controlRoot, 'home'), DSH_AGENTS_HOME: join(controlRoot, 'agents'),
-        DSH_TELEMETRY_DISABLED: '1',
+      env: { TOMATO_PRIMARY_RUNTIME: runtime, TOMATO_PERMISSION_MODE: 'danger-full-access',
+        TOMATO_HOME: join(controlRoot, 'home'), TOMATO_AGENTS_HOME: join(controlRoot, 'agents'),
+        TOMATO_TELEMETRY_DISABLED: '1',
         TMPDIR: previewRoot, TMP: previewRoot, TEMP: previewRoot,
-        HTTP_PROXY: process.env.DSH_OFFICE_TEST_PROXY, HTTPS_PROXY: process.env.DSH_OFFICE_TEST_PROXY },
+        HTTP_PROXY: process.env.TOMATO_OFFICE_TEST_PROXY, HTTPS_PROXY: process.env.TOMATO_OFFICE_TEST_PROXY },
       async prepare(cwd) {
         await execa(python!, ['-c', seed], { cwd })
         const fixture = await renderCliFixture(controlRoot, python!, intent === 'blank', callLogPath)
-        const testAssetRoot = process.env.DSH_OFFICE_TEST_ASSET_ROOT ?? assetRoot
+        const testAssetRoot = process.env.TOMATO_OFFICE_TEST_ASSET_ROOT ?? assetRoot
         await writeFile(configPath, JSON.stringify([
           { insert: [{ id: 'skill-office', name: '@deepseek-ai/dsh-skill-office', config: { assetRoot: testAssetRoot, node: process.execPath, cli: fixture.cli } }] },
           { insert: [{ id: 'workspace-dependencies', name: '@deepseek-ai/dsh-tool-workspace-dependencies', config: { source: runtime! } }] },
@@ -95,7 +95,7 @@ it.skipIf(!process.env.DEEPSEEK_API_KEY || !runtime).each(cases)('$format $kind 
         const log = logs.find(path => path.endsWith('session.v4.jsonl'))
         expect(log, `No recorded session for ${format} ${intent} in ${sessionRoot}`).toBeDefined()
         const bytes = await readFile(join(sessionRoot, log!))
-        const traceDir = process.env.DSH_OFFICE_TRACE_DIR
+        const traceDir = process.env.TOMATO_OFFICE_TRACE_DIR
         if (traceDir !== undefined) {
           await mkdir(traceDir, { recursive: true })
           await writeFile(join(traceDir, `${format}-${kind}-${intent}.jsonl`), bytes)

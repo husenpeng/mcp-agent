@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { resolveLoginEnvironment, withLoginEnvironment } from '../src/login-environment.ts'
 
-const MANIFEST = { dshAuthServiceUrl: 'https://auth.example.com', dshTomatoWebUrl: 'https://app.example.com' }
+const MANIFEST = { tomatoAuthServiceUrl: 'https://auth.example.com', tomatoTomatoWebUrl: 'https://app.example.com' }
 
 describe('resolveLoginEnvironment', () => {
   it('reads the origins sealed into the packaged manifest', () => {
@@ -31,10 +31,10 @@ describe('resolveLoginEnvironment', () => {
   })
 
   it('rejects malformed origins and manifests', () => {
-    expect(() => resolveLoginEnvironment({ dshAuthServiceUrl: 'ftp://auth.example.com' }, {}))
-      .toThrow(/dshAuthServiceUrl/)
-    expect(() => resolveLoginEnvironment({ dshTomatoWebUrl: 'https://app.example.com/ui' }, {}))
-      .toThrow(/dshTomatoWebUrl/)
+    expect(() => resolveLoginEnvironment({ tomatoAuthServiceUrl: 'ftp://auth.example.com' }, {}))
+      .toThrow(/tomatoAuthServiceUrl/)
+    expect(() => resolveLoginEnvironment({ tomatoTomatoWebUrl: 'https://app.example.com/ui' }, {}))
+      .toThrow(/tomatoTomatoWebUrl/)
     expect(() => resolveLoginEnvironment({}, { AUTH_SERVICE_URL: 'not a url' })).toThrow(/AUTH_SERVICE_URL/)
     expect(() => resolveLoginEnvironment({}, { TOMATO_WEB_URL: 'https://user:secret@app.example.com' }))
       .toThrow(/TOMATO_WEB_URL/)

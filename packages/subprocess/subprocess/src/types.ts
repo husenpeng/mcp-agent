@@ -10,13 +10,13 @@
 import type { Duplex, Readable, Writable } from 'node:stream'
 
 /** Namespace prefix reserved for DeepSeek Harness-managed child environment facts. */
-export const DSH_ENV_PREFIX = 'DSH_' as const
+export const TOMATO_ENV_PREFIX = 'TOMATO_' as const
 
-/** One environment key inside the managed {@link DSH_ENV_PREFIX} namespace. */
-export type DshEnvironmentKey = `${typeof DSH_ENV_PREFIX}${string}`
+/** One environment key inside the managed {@link TOMATO_ENV_PREFIX} namespace. */
+export type TomatoEnvironmentKey = `${typeof TOMATO_ENV_PREFIX}${string}`
 
 /** Trusted DeepSeek Harness variables for one child-process execution. */
-export type DshEnvironment = Readonly<Record<DshEnvironmentKey, string>>
+export type TomatoEnvironment = Readonly<Record<TomatoEnvironmentKey, string>>
 
 /** One captured stream: the (possibly truncated) text plus recovery info. */
 export interface CollectedOutput {
@@ -100,7 +100,7 @@ export interface SubprocessSpawnSpec {
    * Explicit environment entries merged onto the implementation's scrubbed
    * parent base (see `scrubbedParentEnv`), with no namespace validation. A
    * string is a deliberate caller opt-in, so a forwarded credential-shaped
-   * entry or current `DSH_*` fact survives the scrub; `undefined` is a
+   * entry or current `TOMATO_*` fact survives the scrub; `undefined` is a
    * tombstone that removes an ordinary ambient entry from the child.
    */
   env?: NodeJS.ProcessEnv | undefined

@@ -2,7 +2,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import * as modulesClient from '@deepseek-ai/dsh-client-modules/client'
 import type {
-  ClientBundleRegistration, ClientModuleCreateOptions, ClientModuleLoaderTarget, DshWindow,
+  ClientBundleRegistration, ClientModuleCreateOptions, ClientModuleLoaderTarget, TomatoWindow,
   WebBootEntry,
 } from '@deepseek-ai/dsh-client-modules/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -11,7 +11,7 @@ import { AppWebEntry } from '../src/boot.ts'
 const MODULES_ID = '@deepseek-ai/dsh-client-modules'
 const PROVIDER_CLIENT_ID = 'provider/client'
 const RUNTIME_CLIENT_ID = 'runtime/client'
-const win = globalThis as DshWindow
+const win = globalThis as TomatoWindow
 const transportGlobal = globalThis as {
   __DSH_TRANSPORT__?: { loadBundle(url: string): Promise<void>; resolveAsset?(reference: string): string }
 }

@@ -9,13 +9,13 @@ import { homedir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 
 /** Directory name for the default DeepSeek Harness home under the OS home. */
-export const DSH_HOME_DIR_NAME = '.dsh'
+export const TOMATO_HOME_DIR_NAME = '.dsh'
 
 /** Stable user-facing display form for the default DeepSeek Harness home. */
-export const DEFAULT_DSH_HOME_DISPLAY = `~/${DSH_HOME_DIR_NAME}`
+export const DEFAULT_DSH_HOME_DISPLAY = `~/${TOMATO_HOME_DIR_NAME}`
 
 /** Environment variable that overrides the default DeepSeek Harness home. */
-export const DSH_HOME_ENV = 'DSH_HOME'
+export const TOMATO_HOME_ENV = 'TOMATO_HOME'
 
 /** Directory name for the default shared agent configuration root under the OS home. */
 export const AGENTS_HOME_DIR_NAME = '.agents'
@@ -24,7 +24,7 @@ export const AGENTS_HOME_DIR_NAME = '.agents'
 export const DEFAULT_AGENTS_HOME_DISPLAY = `~/${AGENTS_HOME_DIR_NAME}`
 
 /** Environment variable that overrides the default shared agent configuration root. */
-export const AGENTS_HOME_ENV = 'DSH_AGENTS_HOME'
+export const AGENTS_HOME_ENV = 'TOMATO_AGENTS_HOME'
 
 /**
  * Give a native filesystem watcher one canonical spelling of a path, even
@@ -68,7 +68,7 @@ export async function canonicalizeWatchPath(path: string): Promise<string> {
  * @returns the absolute default harness home path.
  */
 export function defaultDshHome(): string {
-  return join(homedir(), DSH_HOME_DIR_NAME)
+  return join(homedir(), TOMATO_HOME_DIR_NAME)
 }
 
 /**
@@ -124,28 +124,28 @@ function rootDisplay(resolvedRoot: string, defaultRoot: string, defaultLabel: st
 /**
  * Resolve the single-root DeepSeek Harness home.
  *
- * Precedence, highest first: an explicit configured path, `$DSH_HOME`, then
+ * Precedence, highest first: an explicit configured path, `$TOMATO_HOME`, then
  * `~/.dsh`. The harness keeps all user data under one root. An empty or
- * whitespace-only `$DSH_HOME` is treated as unset, so a blank override never
+ * whitespace-only `$TOMATO_HOME` is treated as unset, so a blank override never
  * resolves the home to the current working directory.
  * @param configured - explicit harness-home override, which has highest precedence.
- * @param env - environment mapping used to read `DSH_HOME`.
+ * @param env - environment mapping used to read `TOMATO_HOME`.
  * @returns the normalized absolute harness home path.
  */
 export function resolveDshHome(configured?: string, env: Record<string, string | undefined> = process.env): string {
-  return resolveRoot(configured, env, DSH_HOME_ENV, defaultDshHome)
+  return resolveRoot(configured, env, TOMATO_HOME_ENV, defaultDshHome)
 }
 
 /**
  * Resolve the shared agent configuration root.
  *
- * Precedence, highest first: an explicit configured path, `$DSH_AGENTS_HOME`,
+ * Precedence, highest first: an explicit configured path, `$TOMATO_AGENTS_HOME`,
  * then `~/.agents`. The root holds configuration shared with other agent tools,
  * so it stays independent of the DeepSeek Harness home. An empty or
- * whitespace-only `$DSH_AGENTS_HOME` is treated as unset, so a blank override
+ * whitespace-only `$TOMATO_AGENTS_HOME` is treated as unset, so a blank override
  * never resolves the root to the current working directory.
  * @param configured - explicit shared-root override, which has highest precedence.
- * @param env - environment mapping used to read `DSH_AGENTS_HOME`.
+ * @param env - environment mapping used to read `TOMATO_AGENTS_HOME`.
  * @returns the normalized absolute shared agent configuration root.
  */
 export function resolveAgentsHome(configured?: string, env: Record<string, string | undefined> = process.env): string {
@@ -157,7 +157,7 @@ export function resolveAgentsHome(configured?: string, env: Record<string, strin
  * @param segments - path segments appended to the Harness home; an empty list returns the home itself.
  * @returns the normalized absolute joined path.
  */
-export function dshHomePath(...segments: string[]): string {
+export function tomatoHomePath(...segments: string[]): string {
   return join(resolveDshHome(), ...segments)
 }
 
@@ -167,30 +167,30 @@ export function dshHomePath(...segments: string[]): string {
  * @param segments - additional path segments after the first child, if any.
  * @returns the normalized absolute cache path.
  */
-export function dshCachePath(optionsOrSegment: { dshHome?: string } | string = {}, ...segments: string[]): string {
-  if (typeof optionsOrSegment === 'string') return dshHomePath('cache', optionsOrSegment, ...segments)
-  return join(resolveDshHome(optionsOrSegment.dshHome), 'cache', ...segments)
+export function tomatoCachePath(optionsOrSegment: { tomatoHome?: string } | string = {}, ...segments: string[]): string {
+  if (typeof optionsOrSegment === 'string') return tomatoHomePath('cache', optionsOrSegment, ...segments)
+  return join(resolveDshHome(optionsOrSegment.tomatoHome), 'cache', ...segments)
 }
 
 /**
  * Describe a resolved harness home symbolically for user-facing display.
  *
  * It never returns an absolute machine path: the default home is labelled
- * `~/.dsh`, and any configured home is labelled `$DSH_HOME`.
+ * `~/.dsh`, and any configured home is labelled `$TOMATO_HOME`.
  * @param resolvedHome - the absolute path returned by {@link resolveDshHome}.
- * @returns `~/.dsh` for the default home, otherwise `$DSH_HOME`.
+ * @returns `~/.dsh` for the default home, otherwise `$TOMATO_HOME`.
  */
-export function dshHomeDisplay(resolvedHome: string): string {
-  return rootDisplay(resolvedHome, defaultDshHome(), DEFAULT_DSH_HOME_DISPLAY, DSH_HOME_ENV)
+export function tomatoHomeDisplay(resolvedHome: string): string {
+  return rootDisplay(resolvedHome, defaultDshHome(), DEFAULT_DSH_HOME_DISPLAY, TOMATO_HOME_ENV)
 }
 
 /**
  * Describe a resolved shared agent configuration root symbolically for user-facing display.
  *
  * It never returns an absolute machine path: the default root is labelled
- * `~/.agents`, and any configured root is labelled `$DSH_AGENTS_HOME`.
+ * `~/.agents`, and any configured root is labelled `$TOMATO_AGENTS_HOME`.
  * @param resolvedHome - the absolute path returned by {@link resolveAgentsHome}.
- * @returns `~/.agents` for the default root, otherwise `$DSH_AGENTS_HOME`.
+ * @returns `~/.agents` for the default root, otherwise `$TOMATO_AGENTS_HOME`.
  */
 export function agentsHomeDisplay(resolvedHome: string): string {
   return rootDisplay(resolvedHome, defaultAgentsHome(), DEFAULT_AGENTS_HOME_DISPLAY, AGENTS_HOME_ENV)

@@ -48,7 +48,7 @@ The Host listens on an OS-assigned loopback port; the main process authenticates
 A profile is a stack of bundle layers, each a `cordis.patch.yml` that inserts or overrides rows by id:
 
 ```text
-$DSH_HOME/profiles/desktop/package.json      dsh.profile.bundles = [dsh-base, dsh-web-app]
+$TOMATO_HOME/profiles/desktop/package.json      dsh.profile.bundles = [dsh-base, dsh-web-app]
         │
         ├── @deepseek-ai/dsh-base        shared core: llm, session, tools, shell, fs, permissions, telemetry seams
         ├── @deepseek-ai/dsh-web-app     browser surface: host controllers, web server, the client plugin roster
@@ -56,7 +56,7 @@ $DSH_HOME/profiles/desktop/package.json      dsh.profile.bundles = [dsh-base, ds
         │     ├── presets/ptc.patch.yml
         │     ├── presets/minimal.patch.yml
         │     └── presets/cordis.patch.yml
-        └── $DSH_HOME/profiles/desktop/cordis.patch.yml   user and deployment overrides (last write wins)
+        └── $TOMATO_HOME/profiles/desktop/cordis.patch.yml   user and deployment overrides (last write wins)
 ```
 
 Tomato's changes live in the two shipped bundle files, so a fresh profile inherits them without a second layer:
@@ -95,7 +95,7 @@ The session log is an append-only event stream. Any content that reaches a model
 
 - Every registration runs through `ctx.effect()` and returns a disposer, so unloading a plugin removes exactly what it added.
 - Configuration reloads per profile; module roots are opt-in.
-- Sessions survive restarts as JSONL under `$DSH_HOME/sessions`; the desktop keeps its state under a development or packaged Harness home, never the user's everyday `~/.dsh`.
+- Sessions survive restarts as JSONL under `$TOMATO_HOME/sessions`; the desktop keeps its state under a development or packaged Harness home, never the user's everyday `~/.dsh`.
 
 ### Client plugin composition
 
@@ -184,19 +184,19 @@ pnpm run dev:desktop
 
 Without the external login services the workspace still starts; the account surface reports “sign-in service unavailable” and local sessions, tools, and the configured model provider keep working.
 
-Packaged builds seal `DSH_DESKTOP_AUTH_SERVICE_URL` and `DSH_DESKTOP_TOMATO_WEB_URL` from the selected packaging file into the application manifest (see [packaging](apps/desktop/packaging/README.md)); the variables above are only for source launches, and an explicit launch value still overrides a sealed one.
+Packaged builds seal `TOMATO_DESKTOP_AUTH_SERVICE_URL` and `TOMATO_DESKTOP_TOMATO_WEB_URL` from the selected packaging file into the application manifest (see [packaging](apps/desktop/packaging/README.md)); the variables above are only for source launches, and an explicit launch value still overrides a sealed one.
 
 `dev:desktop` runs the artifact build, materializes a disposable project under `apps/desktop/.desktop-build/development`, prepares the primary runtime on first use (a several-hundred-megabyte download), and launches Electron with:
 
 | Variable | Development default | Purpose |
 |---|---|---|
-| `DSH_HOME` | `apps/desktop/.desktop-build/development/home` | Sessions, settings, credentials |
-| `DSH_DESKTOP_USER_DATA_DIR` | `…/development/electron-user-data` | Chromium profile and the token file |
-| `DSH_DESKTOP_PRIMARY_RUNTIME_DIR` | `…/targets/mac-arm64/runtime/primary-runtime` | Python, Office libraries, pnpm; required by an unpackaged launch |
-| `DSH_DESKTOP_MAIN_INSPECT_PORT` | `9229` | Main-process inspector |
-| `DSH_DESKTOP_RENDERER_DEBUG_PORT` | `9222` | Renderer debugging protocol |
-| `DSH_DESKTOP_HOST_INSPECT_PORT` | `9230` | Host-process inspector |
-| `DSH_DESKTOP_OPEN_DEVTOOLS` | `1` | Open a detached DevTools window on launch |
+| `TOMATO_HOME` | `apps/desktop/.desktop-build/development/home` | Sessions, settings, credentials |
+| `TOMATO_DESKTOP_USER_DATA_DIR` | `…/development/electron-user-data` | Chromium profile and the token file |
+| `TOMATO_DESKTOP_PRIMARY_RUNTIME_DIR` | `…/targets/mac-arm64/runtime/primary-runtime` | Python, Office libraries, pnpm; required by an unpackaged launch |
+| `TOMATO_DESKTOP_MAIN_INSPECT_PORT` | `9229` | Main-process inspector |
+| `TOMATO_DESKTOP_RENDERER_DEBUG_PORT` | `9222` | Renderer debugging protocol |
+| `TOMATO_DESKTOP_HOST_INSPECT_PORT` | `9230` | Host-process inspector |
+| `TOMATO_DESKTOP_OPEN_DEVTOOLS` | `1` | Open a detached DevTools window on launch |
 
 Skip the rebuild on a later launch with `pnpm run start:desktop`.
 
@@ -229,8 +229,8 @@ No model route ships in the base composition. Open **Settings → Models**, choo
 
 | Data | Stored in | Protection |
 |---|---|---|
-| Provider profile (ID, display name, protocol, base URL, models) | `$DSH_HOME/profiles/desktop/cordis.patch.yml` | Plain YAML owned by the OS user |
-| API key (`<ROUTE>_API_KEY`) | `$DSH_HOME/.credentials.yaml` | Mode 0600; POSIX refuses a file other users can read; the Client receives only configured/missing state |
+| Provider profile (ID, display name, protocol, base URL, models) | `$TOMATO_HOME/profiles/desktop/cordis.patch.yml` | Plain YAML owned by the OS user |
+| API key (`<ROUTE>_API_KEY`) | `$TOMATO_HOME/.credentials.yaml` | Mode 0600; POSIX refuses a file other users can read; the Client receives only configured/missing state |
 | Desktop sign-in session | `userData/tomato-auth.json` | `safeStorage` encryption when available; injected only as `X-Tomato-Session` by the main process |
 
 The credential file is plaintext YAML guarded by OS user permissions. The agent runs tools as the same OS user, so file permissions do not isolate a key from the agent itself. Custom provider `headers` remain deployment configuration in `cordis.patch.yml`; the page does not edit them.
@@ -288,7 +288,7 @@ Client bundles are built with sourcemaps whose sources are rewritten to `../../.
 1. **In the log**: `http://dsh-app:…/plugins/@tomato/brand/client.js:42` names the plugin and bundle line. Open `packages/tomato/brand/src/client/…` — the map in DevTools → Sources shows the exact TSX line.
 2. **In DevTools**: with the application document open, Sources lists `packages/…` files because the map carries their text; a breakpoint or a thrown error lands on the authored line, not the bundled one.
 
-For the Host side, `DSH_DESKTOP_HOST_INSPECT_PORT` attaches a Node inspector to the Host process, and Host stack traces address `packages/…/lib/*.js` with matching maps.
+For the Host side, `TOMATO_DESKTOP_HOST_INSPECT_PORT` attaches a Node inspector to the Host process, and Host stack traces address `packages/…/lib/*.js` with matching maps.
 
 <a id="production-readiness"></a>
 
@@ -299,7 +299,7 @@ M1 is an internal, unsigned, unreleased build. The gaps below are ordered by wha
 ### Blocking
 
 1. **Server endpoints** — auth_service and the company BFF do not implement the handoff mint/redeem contract yet, and the business MCP gateway is not implemented. Until they do, sign-in is unavailable; no mock fallback ships.
-2. **Code signing and notarization** — an unsigned build stops at Gatekeeper on every machine and cannot be installed by a non-technical user. Signing needs a Developer ID certificate, `notarize`, and a stable bundle id (`DSH_DESKTOP_APP_ID`).
+2. **Code signing and notarization** — an unsigned build stops at Gatekeeper on every machine and cannot be installed by a non-technical user. Signing needs a Developer ID certificate, `notarize`, and a stable bundle id (`TOMATO_DESKTOP_APP_ID`).
 3. **Update channel** — there is no feed, no update policy, and no rollback. Shipping means choosing a feed host, a channel name, and whether updates are mandatory.
 4. **Secret hygiene at rest** — the session file falls back to plaintext when `safeStorage` is unavailable (Linux without a keyring, or a locked keychain). A packaged macOS build has Keychain access, but the fallback should refuse to start rather than silently downgrade.
 5. **Permission posture** — `danger-full-access` lets model output drive arbitrary local commands. A production build should either hide that preset or require an explicit, per-machine unlock.
@@ -327,7 +327,7 @@ M1 is an internal, unsigned, unreleased build. The gaps below are ordered by wha
 | Symptom | Cause | Fix |
 |---|---|---|
 | `Downloading Electron binary...` never finishes | The release host is slow or blocked | Reinstall with `ELECTRON_MIRROR` as shown above |
-| `The operation was aborted due to timeout` from `dev:desktop` | The primary runtime download exceeded its timeout | Pre-run `pnpm --filter @deepseek-ai/dsh-desktop run prepare:primary-runtime`, or raise `DSH_RESOURCE_DOWNLOAD_TIMEOUT_MS` |
+| `The operation was aborted due to timeout` from `dev:desktop` | The primary runtime download exceeded its timeout | Pre-run `pnpm --filter @deepseek-ai/dsh-desktop run prepare:primary-runtime`, or raise `TOMATO_RESOURCE_DOWNLOAD_TIMEOUT_MS` |
 | Sign-in says the service is unavailable | `AUTH_SERVICE_URL` or `TOMATO_WEB_URL` is empty/unreachable, or the BFF lacks the handoff endpoints | Fill both values and verify the contract in `docs/tomato/auth-handoff-contract.md` |
 | Conversation replies fail with a missing credential | The route's API key was never stored | Re-enter the key on Settings → Models; it is written to the credential store, not the profile |
 | Model list is empty | No provider is configured, or its listing failed | Add or edit a provider on Settings → Models, then use **Fetch available models** |

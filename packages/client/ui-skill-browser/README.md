@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-Browse every skill the current Session composition can see, open one skill's metadata and instruction body, and edit skills stored in personal `$DSH_HOME/skills` or `$DSH_AGENTS_HOME/skills` directories. The tab is reached from the guide and claims no resource address.
+Browse every skill the current Session composition can see, open one skill's metadata and instruction body, and edit skills stored in personal `$TOMATO_HOME/skills` or `$TOMATO_AGENTS_HOME/skills` directories. The tab is reached from the guide and claims no resource address.
 
 ## Table of Contents
 

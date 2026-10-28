@@ -68,10 +68,10 @@ export interface TunnelShareSpec extends SharePermissions {
   readonly ownerProviderId?: string
   readonly ownerTenantId?: string
   readonly ownerDisplayName: string
-  /** Display-only: the owner's DSH version shown on the Relay share picker. */
-  readonly dshVersion?: string
+  /** Display-only: the owner's TOMATO version shown on the Relay share picker. */
+  readonly tomatoVersion?: string
   /**
-   * Stable id of the owner DSH instance that published this share. Not display-only: the Relay groups
+   * Stable id of the owner TOMATO instance that published this share. Not display-only: the Relay groups
    * shares of the same owner instance by it.
    */
   readonly ownerInstanceId?: string
@@ -536,7 +536,7 @@ function isTunnelShareSpec(value: unknown): value is TunnelShareSpec {
     && typeof value.ownerDisplayName === 'string'
     && (value.ownerProviderId === undefined || typeof value.ownerProviderId === 'string')
     && (value.ownerTenantId === undefined || typeof value.ownerTenantId === 'string')
-    && (value.dshVersion === undefined || typeof value.dshVersion === 'string')
+    && (value.tomatoVersion === undefined || typeof value.tomatoVersion === 'string')
     && (value.ownerInstanceId === undefined || typeof value.ownerInstanceId === 'string')
     && (value.allowsFork === undefined || typeof value.allowsFork === 'boolean')
     && (mode === undefined || mode === 'view' || mode === 'write')

@@ -63,9 +63,9 @@ async function childLaunch(failure = false): Promise<{
   return {
     childHome,
     env: {
-      DSH_TEST_CHILD_PATCHES: JSON.stringify([childPatch]),
-      DSH_TEST_CHILD_HOME: childHome,
-      ...(failure ? { DSH_TEST_CHILD_FAILURE: '1' } : {}),
+      TOMATO_TEST_CHILD_PATCHES: JSON.stringify([childPatch]),
+      TOMATO_TEST_CHILD_HOME: childHome,
+      ...(failure ? { TOMATO_TEST_CHILD_FAILURE: '1' } : {}),
     },
   }
 }
@@ -91,8 +91,8 @@ describe('SDK subagent routing and diagnostics through the production profile', 
         processTimeoutMs: 120_000,
         env: {
           ...child.env,
-          DSH_TEST_CHILD_DEFAULT_ROUTE: '1',
-          DSH_TEST_PARENT_MODEL_RECORD: '.parent-model-routes',
+          TOMATO_TEST_CHILD_DEFAULT_ROUTE: '1',
+          TOMATO_TEST_PARENT_MODEL_RECORD: '.parent-model-routes',
         },
         inspect: async (cwd) => {
           // The child reports realpaths; canonicalize the temp workspace to match.
@@ -160,7 +160,7 @@ describe('SDK subagent routing and diagnostics through the production profile', 
       expect(settlementText(events)).toEqual([
         'Its closing message:',
         'partial child loader answer',
-        'Subagent failure (provider: DSH SDK; stage: session-run; category: child-error)',
+        'Subagent failure (provider: TOMATO SDK; stage: session-run; category: child-error)',
       ])
     } finally {
       await rm(child.childHome, { recursive: true, force: true })

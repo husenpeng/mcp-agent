@@ -2,7 +2,7 @@
 
 import type { DesktopShortcutInput, ShortcutConfigSnapshot, ShortcutSaveResult } from '@deepseek-ai/dsh-client-shortcuts/protocol'
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
-import { DESKTOP_IPC, SCHEME, type DshDesktopProductApi, type DesktopUpdatePresentation } from './ipc.ts'
+import { DESKTOP_IPC, SCHEME, type TomatoDesktopProductApi, type DesktopUpdatePresentation } from './ipc.ts'
 import { PLATFORM_IPC } from './platform-ipc.ts'
 import { markDocumentPlatform, syncWindowFullscreen } from './preload-platform.ts'
 import { syncNativeTheme } from './preload-theme.ts'
@@ -11,7 +11,7 @@ import { installMandatoryUpdateOverlay } from './preload-mandatory-overlay.ts'
 import { createDesktopBrowserBridge } from './preload-browser.ts'
 import type { FileDragHandle } from '@deepseek-ai/dsh-util-file-drag'
 
-function createProductApi(): DshDesktopProductApi {
+function createProductApi(): TomatoDesktopProductApi {
   return {
     protocolVersion: 1,
     account: {
@@ -80,7 +80,7 @@ function createProductApi(): DshDesktopProductApi {
 }
 
 if (location.protocol === `${SCHEME}:` && location.hostname === 'app') {
-  contextBridge.exposeInMainWorld('dshOnboarding', {
+  contextBridge.exposeInMainWorld('tomatoOnboarding', {
     hasApiKey: () => ipcRenderer.invoke(DESKTOP_IPC.onboardingApiKey) as Promise<boolean>,
     setActive: (active: boolean) => { ipcRenderer.send(DESKTOP_IPC.onboardingActive, active) },
   })
@@ -103,11 +103,11 @@ if (location.protocol === `${SCHEME}:` && location.hostname === 'app') {
   contextBridge.exposeInMainWorld('__DSH_HOST_PATHS__', {
     pathFor: (file: File) => webUtils.getPathForFile(file),
   })
-  contextBridge.exposeInMainWorld('dshDesktopBoot', {
+  contextBridge.exposeInMainWorld('tomatoDesktopBoot', {
     ready: () => ipcRenderer.invoke(DESKTOP_IPC.boot) as Promise<unknown>,
     failed: (message: string) => ipcRenderer.invoke(DESKTOP_IPC.bootFailed, message) as Promise<void>,
   })
-  contextBridge.exposeInMainWorld('dshPlatform', {
+  contextBridge.exposeInMainWorld('tomatoPlatform', {
     open: (page: 'usage' | 'top-up', bounds: { x: number; y: number; width: number; height: number }) => ipcRenderer.invoke(PLATFORM_IPC.open, page, bounds),
     setBounds: (bounds: { x: number; y: number; width: number; height: number }) => ipcRenderer.invoke(PLATFORM_IPC.bounds, bounds),
     close: () => ipcRenderer.invoke(PLATFORM_IPC.close),
@@ -118,7 +118,7 @@ markDocumentPlatform()
 syncWindowFullscreen()
 syncNativeTheme()
 // Main-process IPC also verifies the owning window and top frame.
-contextBridge.exposeInMainWorld('dshDesktop', location.protocol === `${SCHEME}:` && location.hostname === 'app' && process.isMainFrame ? createProductApi() : { protocolVersion: 1 })
+contextBridge.exposeInMainWorld('tomatoDesktop', location.protocol === `${SCHEME}:` && location.hostname === 'app' && process.isMainFrame ? createProductApi() : { protocolVersion: 1 })
 
 if (location.protocol === `${SCHEME}:` && location.hostname === 'app') {
   contextBridge.exposeInMainWorld('__DSH_LOCALE__', {

@@ -38,7 +38,7 @@ const projectGraphqlData = ({
   organization: {
     projectV2: {
       id: 'project-id',
-      title: 'DSH Issue Management',
+      title: 'TOMATO Issue Management',
       fields: {
         nodes: [
           {

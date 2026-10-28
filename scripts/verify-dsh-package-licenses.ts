@@ -1,5 +1,5 @@
 /**
- * Enforce the MIT license declaration for repository-owned DSH npm packages.
+ * Enforce the MIT license declaration for repository-owned TOMATO npm packages.
  * @module scripts/verify-dsh-package-licenses
  */
 
@@ -7,11 +7,11 @@ import { globSync, readFileSync } from 'node:fs'
 import { resolve, sep } from 'node:path'
 
 const ROOT = resolve(import.meta.dirname, '..')
-const DSH_PACKAGE_NAME = /^@deepseek-ai\/dsh(?:-|$)/
+const TOMATO_PACKAGE_NAME = /^@deepseek-ai\/dsh(?:-|$)/
 
-/** Result of checking every DSH package reachable through the root workspace list. */
-export interface DshPackageLicenseReport {
-  /** Number of DSH package manifests checked. */
+/** Result of checking every TOMATO package reachable through the root workspace list. */
+export interface TomatoPackageLicenseReport {
+  /** Number of TOMATO package manifests checked. */
   packageCount: number
   /** Repository-relative diagnostics for non-MIT declarations. */
   failures: string[]
@@ -50,18 +50,18 @@ function printable(value: unknown): string {
 }
 
 /**
- * Check every DSH npm package declared by the repository workspace.
+ * Check every TOMATO npm package declared by the repository workspace.
  * @param root - absolute repository root containing the workspace package.json.
  * @returns the checked package count and every non-MIT declaration.
  */
-export function inspectDshPackageLicenses(root: string): DshPackageLicenseReport {
+export function inspectDshPackageLicenses(root: string): TomatoPackageLicenseReport {
   let packageCount = 0
   const failures: string[] = []
 
   for (const file of workspaceManifestPaths(root)) {
     const manifest = readManifest(root, file)
     const name = manifest.name
-    if (typeof name !== 'string' || !DSH_PACKAGE_NAME.test(name)) continue
+    if (typeof name !== 'string' || !TOMATO_PACKAGE_NAME.test(name)) continue
 
     packageCount++
     if (manifest.license !== 'MIT') {
@@ -78,12 +78,12 @@ export function inspectDshPackageLicenses(root: string): DshPackageLicenseReport
 if (process.argv[1] && import.meta.filename === resolve(process.argv[1])) {
   const report = inspectDshPackageLicenses(ROOT)
   if (report.failures.length > 0) {
-    process.stderr.write('verify-dsh-package-licenses: non-MIT DSH package declarations found:\n')
+    process.stderr.write('verify-dsh-package-licenses: non-MIT TOMATO package declarations found:\n')
     for (const failure of report.failures) process.stderr.write(`  ${failure}\n`)
     process.exitCode = 1
   } else {
     process.stdout.write(
-      `verify-dsh-package-licenses: ${String(report.packageCount)} DSH package(s) checked; all declare MIT.\n`,
+      `verify-dsh-package-licenses: ${String(report.packageCount)} TOMATO package(s) checked; all declare MIT.\n`,
     )
   }
 }

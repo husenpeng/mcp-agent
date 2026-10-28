@@ -16,24 +16,24 @@
 - id: session-persistence-jsonl
   name: '@deepseek-ai/dsh-session-persistence-jsonl'
   config:
-    root: !!js dshHomePath('sessions')
+    root: !!js tomatoHomePath('sessions')
     compression: none
 
 - insert:
     - id: mock-llm
       name: '../../../packages/subagent/subagent-dsh-sdk/tests/fixtures/loader/mock-delegating-llm.ts'
-      disabled: !!js process.env.DSH_SNAPSHOT !== 'record'
+      disabled: !!js process.env.TOMATO_SNAPSHOT !== 'record'
 
     - id: subagent-dsh-sdk
       name: '@deepseek-ai/dsh-subagent-dsh-sdk'
       config:
         profile: sdk
-        patches: !!js JSON.parse(process.env.DSH_TEST_CHILD_PATCHES ?? '[]')
-        dshHome: !!js process.env.DSH_TEST_CHILD_HOME
+        patches: !!js JSON.parse(process.env.TOMATO_TEST_CHILD_PATCHES ?? '[]')
+        tomatoHome: !!js process.env.TOMATO_TEST_CHILD_HOME
         provider: mock
         model: mock-routed
         env:
-          DSH_TELEMETRY_DISABLED: '1'
+          TOMATO_TELEMETRY_DISABLED: '1'
 
     - id: subagent-model-selection-settings
       name: '@deepseek-ai/dsh-tool-subagent/model-selection-settings'
@@ -55,7 +55,7 @@
     - id: sdk-jsonrpc-server-dynamic-live
       name: '@deepseek-ai/dsh-sdk-jsonrpc-server'
       inject: [sdkAppStartup, loader]
-      disabled: !!js process.env.DSH_SNAPSHOT !== 'record'
+      disabled: !!js process.env.TOMATO_SNAPSHOT !== 'record'
       config:
         maxTokensAsSuccess: true
 

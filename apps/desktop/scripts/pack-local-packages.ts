@@ -1,4 +1,4 @@
-/** Stage local-branded DSH packages for unsigned Desktop builds without a publication record. */
+/** Stage local-branded TOMATO packages for unsigned Desktop builds without a publication record. */
 
 import { resolve } from 'node:path'
 import { parseArgs } from 'node:util'

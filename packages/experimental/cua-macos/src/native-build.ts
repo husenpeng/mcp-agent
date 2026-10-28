@@ -44,7 +44,7 @@ export function nativeExecutablePath(packageRoot: string, architecture: NativeAr
 /**
  * Recognize the repository-owned package location before allowing local compilation.
  * @param packageRoot - Real directory containing this package.
- * @returns True only for a CUA package in a DSH source checkout.
+ * @returns True only for a CUA package in a TOMATO source checkout.
  */
 export async function isSourcePackage(packageRoot: string): Promise<boolean> {
   const root = resolve(packageRoot, '../../..')

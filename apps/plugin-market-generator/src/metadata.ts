@@ -1,5 +1,5 @@
 /**
- * Read a package's display metadata from its files the way DSH reads installed plugin metadata: locale files and the
+ * Read a package's display metadata from its files the way TOMATO reads installed plugin metadata: locale files and the
  * icon are resolved through the package `exports` map, and nothing is evaluated.
  */
 import { createHash } from 'node:crypto'

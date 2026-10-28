@@ -54,7 +54,7 @@ The `minimal` agent preset uses a persistent shell, the `read_image` tool, and a
 |---|---|---|
 | `openBrowser` | `true` | Open the default browser after startup; SSH launches suppress it |
 | `printUrl` | `true` | Print the `dsh web:` URL line at startup |
-| `surfaceContext` | `true` | Expose `DSH_WEB_URL` to the agent's shell commands |
+| `surfaceContext` | `true` | Expose `TOMATO_WEB_URL` to the agent's shell commands |
 | `publicUrl` | Unset | Advertised HTTP(S) application root; otherwise announce the bind-address URL |
 
 The generated [configuration catalog](../../../docs/config-catalog.md#deepseek-aidsh-web-app) lists this runtime plugin's accepted fields and their JSDoc. The shipped composition inserts the `schedule` service row and the `ui-schedule` task page row, while the clock reading and the four reminder tools belong to the `standard`, `cordis`, and `ptc` presets. The `tool-subagent` and `tool-subagent-fork` rows in those presets deny the four tools, so a delegated child's scope never lists them.
@@ -64,7 +64,7 @@ The generated [configuration catalog](../../../docs/config-catalog.md#deepseek-a
 
 By default the GUI listens on loopback and accepts connections from this machine only. Only `--host` changes the listener: it accepts one concrete local IPv4 or IPv6 address, never a wildcard. A non-loopback listener without TLS serves plain HTTP and warns at startup, even when an HTTPS `--public-url` fronts it. The Host/Origin fence accepts the bind IP itself; other non-loopback authorities require `--trusted-host`, so a remote browser reaches the GUI behind a prefix-stripping proxy or through a port-forwarding client that presents a trusted hostname. The launch-token exchange and signed session cookie authenticate every API method and WebSocket stream.
 
-Pass `--tls-cert` and `--tls-key` together to serve HTTPS from the listener instead of plain HTTP. Each names a file resolved against the process working directory: the certificate file holds the full chain and the key file an unencrypted PEM private key. The flags are one setting — supplying only one is a usage error, and supplying neither keeps the plain-HTTP default. Startup fails when a file is missing, unreadable, empty, or not a valid certificate-and-key pair; it never falls back to HTTP. Nothing re-reads the material while the listener runs, so serving a different certificate needs a listener reload or a process restart. DSH issues, renews, and watches nothing: there is no ACME client, no self-signed fallback, and no redirect listener. The browser applies its own trust store and host-name matching, so a certificate the browser does not trust, or one whose subject alternative names miss the authority you open, fails before the page loads. The default port stays 3080, and `--tls-cert`/`--tls-key` do not follow `--public-url`: the listener's certificate covers the authority browsers dial. TLS changes nothing about authority: Connection still authenticates every request and still checks Host/Origin, and the session cookie it mints is `Secure` whenever the receiving listener serves HTTPS.
+Pass `--tls-cert` and `--tls-key` together to serve HTTPS from the listener instead of plain HTTP. Each names a file resolved against the process working directory: the certificate file holds the full chain and the key file an unencrypted PEM private key. The flags are one setting — supplying only one is a usage error, and supplying neither keeps the plain-HTTP default. Startup fails when a file is missing, unreadable, empty, or not a valid certificate-and-key pair; it never falls back to HTTP. Nothing re-reads the material while the listener runs, so serving a different certificate needs a listener reload or a process restart. TOMATO issues, renews, and watches nothing: there is no ACME client, no self-signed fallback, and no redirect listener. The browser applies its own trust store and host-name matching, so a certificate the browser does not trust, or one whose subject alternative names miss the authority you open, fails before the page loads. The default port stays 3080, and `--tls-cert`/`--tls-key` do not follow `--public-url`: the listener's certificate covers the authority browsers dial. TLS changes nothing about authority: Connection still authenticates every request and still checks Host/Origin, and the session cookie it mints is `Secure` whenever the receiving listener serves HTTPS.
 
 A container can bind its Pod address and advertise the ingress that fronts it:
 
@@ -76,11 +76,11 @@ dsh --profile web --no-open --host "$(hostname -i | awk '{print $1}')" --public-
 
 Without `--public-url`, mapped IPv6 loopback binds such as `::ffff:127.0.0.1` advertise their IPv4 form, `127.0.0.1`, so the browser recognizes a local, trustworthy origin. The listener keeps the configured bind address. A dotted-quad IPv6 tail names the address's own low 32 bits, exactly as `listen` reads it, so `::0.0.0.1` is IPv6 loopback and advertises `[::1]`, while `::127.0.0.1` is a non-loopback address, not IPv4 loopback.
 
-`--public-url` advertises the HTTP(S) root browsers use — the printed and opened startup URL, `DSH_WEB_URL`, and the Web GUI URL in the agent's runtime context. Advertisement grants no trust: the browser-visible authority must also be named with `--trusted-host`. The flag configures no listener, routing, or cookie scope, because the proxy owns the external leg: [Publish the Web UI behind a reverse proxy](../../../docs/user/guide/public-deployments.md) lists what such a deployment must provide.
+`--public-url` advertises the HTTP(S) root browsers use — the printed and opened startup URL, `TOMATO_WEB_URL`, and the Web GUI URL in the agent's runtime context. Advertisement grants no trust: the browser-visible authority must also be named with `--trusted-host`. The flag configures no listener, routing, or cookie scope, because the proxy owns the external leg: [Publish the Web UI behind a reverse proxy](../../../docs/user/guide/public-deployments.md) lists what such a deployment must provide.
 
 Neither the advertised URL nor the browser-trust fence protects the port itself, so restrict the port to the trusted proxy or network.
 
-The printed URL contains a process credential; share it only with intended users. `printUrl: false` suppresses the line with or without `--public-url`, and the credential never appears in the model context or in `DSH_WEB_URL`.
+The printed URL contains a process credential; share it only with intended users. `printUrl: false` suppresses the line with or without `--public-url`, and the credential never appears in the model context or in `TOMATO_WEB_URL`.
 
 ### Running over SSH
 
@@ -88,7 +88,7 @@ When you launch `dsh --profile web` over SSH, the URL line still prints but the 
 
 ### Per-session agent setup
 
-Each browser session selects a shipped preset (`standard` by default). The Agent presets settings page changes the default and edits preset child plugins; saves persist in `$DSH_HOME/profiles/web/cordis.patch.yml`. Standard and Creator enable the plugin-management tool only when the Host provides an editable profile.
+Each browser session selects a shipped preset (`standard` by default). The Agent presets settings page changes the default and edits preset child plugins; saves persist in `$TOMATO_HOME/profiles/web/cordis.patch.yml`. Standard and Creator enable the plugin-management tool only when the Host provides an editable profile.
 
 -----
 
@@ -106,7 +106,7 @@ A patch replaces the targeted row's whole `config`, so each web row restates eve
 
 ### Advertised application URL
 
-Startup display and browser handoff receive the advertised root with its launch token; the agent's runtime context and `DSH_WEB_URL` receive it clean. The root itself is defined under [Listening, trust, and public deployments](#public-deployments).
+Startup display and browser handoff receive the advertised root with its launch token; the agent's runtime context and `TOMATO_WEB_URL` receive it clean. The root itself is defined under [Listening, trust, and public deployments](#public-deployments).
 
 ### Readiness
 
@@ -150,7 +150,7 @@ Read these pages when you want to go deeper into the shared core, the browser re
 
 #### What the model sees
 
-When `surfaceContext` is true, `DSH_WEB_URL` appears in the managed bash environment with its description, resolved per invocation as the advertised application URL defined under Listening, trust, and public deployments above. When it is false, the variable is not registered. The GUI orientation, the implementation checkout, and the current GUI URL come from the [`dsh-harness-dev-context`](../../context/harness-dev-context/README.md) row this bundle mounts.
+When `surfaceContext` is true, `TOMATO_WEB_URL` appears in the managed bash environment with its description, resolved per invocation as the advertised application URL defined under Listening, trust, and public deployments above. When it is false, the variable is not registered. The GUI orientation, the implementation checkout, and the current GUI URL come from the [`dsh-harness-dev-context`](../../context/harness-dev-context/README.md) row this bundle mounts.
 
 #### Token effect
 
@@ -168,7 +168,7 @@ None; the plugin contributes no system-prompt text.
 These limits tell you what to expect in unusual setups — a source checkout, SSH sessions, or strict networks. They are current package constraints, not a general browser comparison or a task backlog.
 
 - **The frontend must be built** — a source checkout needs `pnpm run build` first; startup stops with a build hint when the dist is missing, and there is no source-serving fallback.
-- **TLS is opt-in and unmanaged** — the listener serves HTTPS only when `--tls-cert` and `--tls-key` name a full chain and its unencrypted key; DSH never obtains, renews, or watches certificates, and a changed file needs a listener reload or a process restart. The browser must trust that certificate, its names must cover the authority you open, and the certificate is independent of `--public-url`.
+- **TLS is opt-in and unmanaged** — the listener serves HTTPS only when `--tls-cert` and `--tls-key` name a full chain and its unencrypted key; TOMATO never obtains, renews, or watches certificates, and a changed file needs a listener reload or a process restart. The browser must trust that certificate, its names must cover the authority you open, and the certificate is independent of `--public-url`.
 - **Without TLS the external leg is plain HTTP** — protect it with a TLS-terminating proxy, and do not send the launch URL over a network you do not trust.
 - **Only the handoff start is observable** — the GUI reports that the browser was asked to open, not that it actually opened; a later browser exit is never reported, and the printed URL is your manual fallback.
 - **SSH sessions keep the URL but skip the browser handoff** — without an advertised root the printed URL names the remote host's bind-address endpoint (loopback for a loopback bind); the SSH client or editor must expose and open the local forwarded address.

@@ -682,7 +682,7 @@ describe('PluginManagerController', () => {
     face.runInstall()
     expect(plugins.inspect).not.toHaveBeenCalled()
     expect(state().install).toMatchObject({ phase: 'idle', inputError: { problem: 'already-installed', reason: BUNDLE.name } })
-    // A bundle the installation supplies upgrades with DSH instead.
+    // A bundle the installation supplies upgrades with TOMATO instead.
     face.editInstallSpec(shipped.name)
     face.runInstall()
     expect(state().install).toMatchObject({ phase: 'idle', inputError: { problem: 'shipped', reason: shipped.name } })
@@ -2139,7 +2139,7 @@ describe('version checks and updates', () => {
   }
   const UPDATED = { from: '0.16.0', to: '0.17.0', step: 'install' as const, result: { ...APPLIED, version: '0.17.0' } }
 
-  it('offers the newest version that declares a bundle, accepts this DSH, and is neither deprecated nor a prerelease', () => {
+  it('offers the newest version that declares a bundle, accepts this TOMATO, and is neither deprecated nor a prerelease', () => {
     expect(updateCandidate(LISTED)?.version).toBe('0.17.0')
     expect(updateCandidate({ ...LISTED, versions: LISTED.versions.slice(0, 3) })).toBeUndefined()
     expect(updateCandidate({ status: 'refused', problem: 'network', reason: 'down', attempts: [] })).toBeUndefined()

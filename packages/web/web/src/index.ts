@@ -76,7 +76,7 @@ export interface WebRuntimeConfig {
 export class WebRuntime extends Service {
   /**
    * Provider selection config. Operational env overrides feed the SAME fields:
-   * `$DSH_WEB_SEARCH_PROVIDER` / `$DSH_WEB_FETCH_PROVIDER` are equivalent to
+   * `$TOMATO_WEB_SEARCH_PROVIDER` / `$TOMATO_WEB_FETCH_PROVIDER` are equivalent to
    * `searchProvider` / `fetchProvider` and are NOT a hidden priority chain.
    */
   static Config = z.object({
@@ -91,8 +91,8 @@ export class WebRuntime extends Service {
 
   constructor(ctx: Context, private readonly config: WebRuntimeConfig) {
     super(ctx, 'web')
-    this.searchProviderEnv = process.env.DSH_WEB_SEARCH_PROVIDER
-    this.fetchProviderEnv = process.env.DSH_WEB_FETCH_PROVIDER
+    this.searchProviderEnv = process.env.TOMATO_WEB_SEARCH_PROVIDER
+    this.fetchProviderEnv = process.env.TOMATO_WEB_FETCH_PROVIDER
   }
 
   /**

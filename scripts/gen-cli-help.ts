@@ -185,9 +185,9 @@ async function collectHelp(): Promise<HelpPage[]> {
     const home = mkdtempSync(join(directory, 'invocation-'))
     const environment = {
       ...process.env,
-      DSH_HOME: join(home, 'harness'),
-      DSH_AGENTS_HOME: join(home, 'agents'),
-      DSH_TELEMETRY_DISABLED: '1',
+      TOMATO_HOME: join(home, 'harness'),
+      TOMATO_AGENTS_HOME: join(home, 'agents'),
+      TOMATO_TELEMETRY_DISABLED: '1',
       NO_COLOR: '1',
     }
     for (const name of ['NODE_OPTIONS', 'FORCE_COLOR']) Reflect.deleteProperty(environment, name)

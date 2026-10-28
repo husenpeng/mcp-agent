@@ -134,9 +134,9 @@ describe.skipIf(!seatbeltUsable)('sandbox-local: real Seatbelt confinement throu
       : join(await tempDir(homedir()), 'linked')
     const gitEnv = {
       ...process.env,
-      GIT_AUTHOR_NAME: 'DSH Test',
+      GIT_AUTHOR_NAME: 'TOMATO Test',
       GIT_AUTHOR_EMAIL: 'dsh-test@example.invalid',
-      GIT_COMMITTER_NAME: 'DSH Test',
+      GIT_COMMITTER_NAME: 'TOMATO Test',
       GIT_COMMITTER_EMAIL: 'dsh-test@example.invalid',
       GIT_CONFIG_GLOBAL: '/dev/null',
       GIT_CONFIG_SYSTEM: '/dev/null',

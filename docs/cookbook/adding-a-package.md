@@ -151,7 +151,7 @@ A bundle can also set `meta.detail` to a Markdown file path relative to the pack
 
 Installed bundle cards and details, component lists and configuration details, and Settings' plugin inventory display this metadata, including disabled and preset plugins. Reads do not activate plugins.
 
-Only Settings shortens literal package-name and module-name fallbacks by removing npm scope and Cordis/DSH prefixes; Plugin Manager keeps complete names. Locale titles and descriptions remain unchanged. A row configuration page can use its registered summary when the plugin has no display description.
+Only Settings shortens literal package-name and module-name fallbacks by removing npm scope and Cordis/TOMATO prefixes; Plugin Manager keeps complete names. Locale titles and descriptions remain unchanged. A row configuration page can use its registered summary when the plugin has no display description.
 
 The Install view still uses npm registry information from `pnpm view`, not locale metadata.
 

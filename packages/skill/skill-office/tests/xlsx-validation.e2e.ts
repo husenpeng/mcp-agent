@@ -14,8 +14,8 @@ import { renderCliFixture } from './fixtures/render-cli.ts'
 
 const repo = fileURLToPath(new URL('../../../../', import.meta.url))
 const assetRoot = fileURLToPath(new URL('../assets/', import.meta.url))
-// DSH_PRIMARY_RUNTIME names the same runtime.json + dependencies/ payload used by shipped deployments.
-const runtime = process.env.DSH_PRIMARY_RUNTIME
+// TOMATO_PRIMARY_RUNTIME names the same runtime.json + dependencies/ payload used by shipped deployments.
+const runtime = process.env.TOMATO_PRIMARY_RUNTIME
 const python = runtime && join(runtime, 'dependencies/python', process.platform === 'win32' ? 'python.exe' : 'bin/python3')
 const seed = `
 import sys
@@ -85,13 +85,13 @@ describe.skipIf(!process.env.DEEPSEEK_API_KEY || !runtime).each(['native', 'ptc'
       ],
       processTimeoutMs: 110_000,
       env: {
-        DSH_PRIMARY_RUNTIME: runtime,
-        DSH_PERMISSION_MODE: 'danger-full-access',
-        DSH_HOME: join(controlRoot, 'home'),
-        DSH_AGENTS_HOME: join(controlRoot, 'agents'),
-        DSH_TELEMETRY_DISABLED: '1',
-        HTTP_PROXY: process.env.DSH_OFFICE_TEST_PROXY,
-        HTTPS_PROXY: process.env.DSH_OFFICE_TEST_PROXY,
+        TOMATO_PRIMARY_RUNTIME: runtime,
+        TOMATO_PERMISSION_MODE: 'danger-full-access',
+        TOMATO_HOME: join(controlRoot, 'home'),
+        TOMATO_AGENTS_HOME: join(controlRoot, 'agents'),
+        TOMATO_TELEMETRY_DISABLED: '1',
+        HTTP_PROXY: process.env.TOMATO_OFFICE_TEST_PROXY,
+        HTTPS_PROXY: process.env.TOMATO_OFFICE_TEST_PROXY,
       },
       async prepare(cwd) {
         await execa(python!, ['-c', seed, kind], { cwd })
@@ -102,7 +102,7 @@ describe.skipIf(!process.env.DEEPSEEK_API_KEY || !runtime).each(['native', 'ptc'
           { insert: [{ id: 'skill-office', name: '@deepseek-ai/dsh-skill-office', config: { assetRoot, node: process.execPath, ...fixture ? { cli: fixture.cli } : {} } }] },
           { insert: [{ id: 'workspace-dependencies', name: '@deepseek-ai/dsh-tool-workspace-dependencies', config: { source: runtime! } }] },
           ...officeModelPatches(),
-          { id: 'attachment-local', config: { dshHome: imageRoot } },
+          { id: 'attachment-local', config: { tomatoHome: imageRoot } },
           { id: 'session-persistence-jsonl', config: { root: sessionRoot, compression: 'none' } },
         ]))
       },
@@ -111,7 +111,7 @@ describe.skipIf(!process.env.DEEPSEEK_API_KEY || !runtime).each(['native', 'ptc'
         const logs = paths.filter(path => /session\.v\d+\.jsonl$/u.test(path))
         expect(logs).toHaveLength(1)
         const bytes = await readFile(join(sessionRoot, logs[0]!))
-        const traceDir = process.env.DSH_OFFICE_TRACE_DIR
+        const traceDir = process.env.TOMATO_OFFICE_TRACE_DIR
         if (traceDir !== undefined) {
           await mkdir(traceDir, { recursive: true })
           await writeFile(join(traceDir, `xlsx-${kind}-${mode}.jsonl`), bytes)

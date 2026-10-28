@@ -83,8 +83,8 @@ async function mockPlatform() {
   const grant = (orderId: string, amount: string, extraCopy = ''): void => {
     unnotified.unshift({
       orderId, amount,
-      zh_CN: `已赠送您 ${amount} 元 DSH 体验赠金。${extraCopy}`,
-      en_US: `You received a CNY ${amount} DSH trial credit.${extraCopy}`,
+      zh_CN: `已赠送您 ${amount} 元 TOMATO 体验赠金。${extraCopy}`,
+      en_US: `You received a CNY ${amount} TOMATO trial credit.${extraCopy}`,
     })
   }
   /** @param value - granted bonus. @param locale - request language. @returns its wire fields. */
@@ -227,13 +227,13 @@ describe.skipIf(MODE === 'record')('web e2e: bonus notice', () => {
     const opened = await context.newPage()
     tripwires.push(watchConsole(opened))
     await opened.addInitScript(() => {
-      Object.defineProperty(globalThis, 'dshDesktop', { value: { protocolVersion: 1 } })
+      Object.defineProperty(globalThis, 'tomatoDesktop', { value: { protocolVersion: 1 } })
       // The embedded Platform view is a native child window owned by the Desktop shell.
       // The double answers immediately and records the calls, so the scenario observes
       // which page was opened and that returning destroyed the view.
       const calls: string[] = []
       Object.defineProperty(globalThis, '__bonusPlatformCalls', { value: calls })
-      Object.defineProperty(globalThis, 'dshPlatform', {
+      Object.defineProperty(globalThis, 'tomatoPlatform', {
         value: {
           open: (page: string) => { calls.push(`open:${page}`); return Promise.resolve() },
           setBounds: () => Promise.resolve(),
@@ -274,9 +274,9 @@ describe.skipIf(MODE === 'record')('web e2e: bonus notice', () => {
   })
 
   it('acknowledges a notice shown under settings, refreshes once per entry, and localizes the request', async () => {
-    const zhFirst = '已赠送您 5.00 元 DSH 体验赠金。'
-    const zhLater = '已赠送您 8.00 元 DSH 体验赠金。'
-    const enBonus = 'You received a CNY 9.00 DSH trial credit.'
+    const zhFirst = '已赠送您 5.00 元 TOMATO 体验赠金。'
+    const zhLater = '已赠送您 8.00 元 TOMATO 体验赠金。'
+    const enBonus = 'You received a CNY 9.00 TOMATO trial credit.'
     const observations: string[] = []
     const page = await openDesktopPage('zh-CN')
     onTestFailed(() => saveFailureShot(page, 'web-e2e-bonus-notice'))
@@ -414,7 +414,7 @@ describe.skipIf(MODE === 'record')('web e2e: bonus notice', () => {
 
     // Returning from the native top-up view refreshes balance and notice once each, without
     // holding the panel open.
-    const zhTopUp = '已赠送您 11.00 元 DSH 体验赠金。'
+    const zhTopUp = '已赠送您 11.00 元 TOMATO 体验赠金。'
     const topUpGetsBefore = platform.gets.length
     const topUpSummariesBefore = platform.summaries.length
     await openSettings(page, 'zh')
@@ -465,7 +465,7 @@ describe.skipIf(MODE === 'record')('web e2e: bonus notice', () => {
 
     // A transient acknowledgement failure keeps the card and retries the same order after
     // the backoff; the pending retry is page state, not browser storage.
-    const zhRetry = '已赠送您 6.00 元 DSH 体验赠金。'
+    const zhRetry = '已赠送您 6.00 元 TOMATO 体验赠金。'
     platform.grant(ORDER_RETRY, '6.00')
     platform.failNextAcks(ORDER_RETRY, 1)
     await openSettings(page, 'zh')
@@ -493,7 +493,7 @@ describe.skipIf(MODE === 'record')('web e2e: bonus notice', () => {
 
     // Display follows each response: the double keeps serving an acknowledged order, which
     // is what makes a second display of the same order observable.
-    const zhRepeat = '已赠送您 7.00 元 DSH 体验赠金。'
+    const zhRepeat = '已赠送您 7.00 元 TOMATO 体验赠金。'
     const storedBeforeShown = await storageKeys()
     platform.setKeepUnnotified(true)
     platform.grant(ORDER_REPEAT, '7.00')
@@ -575,7 +575,7 @@ describe.skipIf(MODE === 'record')('web e2e: bonus notice', () => {
     const webPage = await browser.newPage({ viewport: { width: 1440, height: 960 }, locale: 'zh-CN' })
     tripwires.push(watchConsole(webPage))
     await webPage.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
-    const webNotice = await shownNotice(webPage, '已赠送您 4.00 元 DSH 体验赠金。')
+    const webNotice = await shownNotice(webPage, '已赠送您 4.00 元 TOMATO 体验赠金。')
     await expect.poll(() => platform.acks.filter(item => item.orderId === ORDER_WEB).length).toBe(1)
     observations.push(`web.notice=${webNotice} acks=1`)
     await webPage.close()

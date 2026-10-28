@@ -128,7 +128,7 @@ def initialize():
     TARGET_WINDOW = bpy.context.window_manager.windows[0]
     TARGET_AREA = max(TARGET_WINDOW.screen.areas, key=lambda area: area.width * area.height)
     TARGET_AREA.type = "TEXT_EDITOR"
-    TARGET_TEXT = bpy.data.texts.new("DSH CUA keyboard " + ARGS.token)
+    TARGET_TEXT = bpy.data.texts.new("TOMATO CUA keyboard " + ARGS.token)
     TARGET_TEXT.write(ARGS.seed)
     TARGET_TEXT.cursor_set(0, character=0, select=False)
     TARGET_TEXT.use_module = False

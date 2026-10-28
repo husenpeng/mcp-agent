@@ -29,7 +29,7 @@ kind: "package-library"
 
 ### 启动应用 fixture
 
-`runLoaderSmoke` 接受可执行文件与配置路径、可选的完整可执行文件参数、环境覆盖、标准输入、运行前准备与清理前检查。它负责隔离工作目录、DSH 主目录、诊断、截止时间、终止、EOF 与清理（只清理自己创建的 cwd，调用方自带的 cwd 原样保留）；进程以零状态退出后返回两个流，失败时则拒绝并附带两个流：
+`runLoaderSmoke` 接受可执行文件与配置路径、可选的完整可执行文件参数、环境覆盖、标准输入、运行前准备与清理前检查。它负责隔离工作目录、TOMATO 主目录、诊断、截止时间、终止、EOF 与清理（只清理自己创建的 cwd，调用方自带的 cwd 原样保留）；进程以零状态退出后返回两个流，失败时则拒绝并附带两个流：
 
 ```text
 const result = await runLoaderSmoke({
@@ -53,12 +53,12 @@ Profile 集成 driver 使用仅限仓库内部的 `tests/fixtures/production-pro
 
 ### 源模式或构建模式
 
-`resolveExampleLaunch` 选择示例可执行文件从哪个产物启动。`src` 模式在 tsx 下运行可执行文件并设置 `TSX_TSCONFIG_PATH`，使工作区导入通过 tsconfig `paths` 映射解析——这是零构建开发路径。`lib` 模式在普通 Node 下运行构建后的 `lib/` 可执行文件，使裸包插件通过真实包 `exports` 解析，与已安装消费方的解析方式完全一致。模式来自显式值或 `DSH_EXAMPLE_MODE`（CI 设置 `lib`，开发时保持未设置）；其他任何值都会明确报错。
+`resolveExampleLaunch` 选择示例可执行文件从哪个产物启动。`src` 模式在 tsx 下运行可执行文件并设置 `TSX_TSCONFIG_PATH`，使工作区导入通过 tsconfig `paths` 映射解析——这是零构建开发路径。`lib` 模式在普通 Node 下运行构建后的 `lib/` 可执行文件，使裸包插件通过真实包 `exports` 解析，与已安装消费方的解析方式完全一致。模式来自显式值或 `TOMATO_EXAMPLE_MODE`（CI 设置 `lib`，开发时保持未设置）；其他任何值都会明确报错。
 
 ### 可能出什么问题
 
 - **进程永不退出**——冒烟测试强制执行截止时间，并在失败信息中报告捕获的流；会 spawn 自身进程树的故障 fixture 可能比冒烟测试存活更久，需要外部清理。
-- **构建模式需要事先构建**——选择 `DSH_EXAMPLE_MODE=lib` 前先运行 `pnpm run build`；拥有该配置的包 manifest（元数据清单）还必须声明配置中点名的每个包。
+- **构建模式需要事先构建**——选择 `TOMATO_EXAMPLE_MODE=lib` 前先运行 `pnpm run build`；拥有该配置的包 manifest（元数据清单）还必须声明配置中点名的每个包。
 - **捕获输出受 execa 默认 100 MB `maxBuffer` 约束**——失控子进程在该上限处被终止，而不是在冒烟测试自选的预算处。
 
 -----
@@ -73,7 +73,7 @@ Profile 集成 driver 使用仅限仓库内部的 `tests/fixtures/production-pro
 
 ### 设计
 
-harness 建立在一个分离之上：冒烟测试在隔离世界中的子进程里运行，测试进程只观察与断言。`runLoaderSmoke` 创建临时 cwd（或复用调用方提供的 cwd）、在那里准备世界状态、以隔离的 DSH 主目录（该 cwd 下的 `DSH_HOME`、`DSH_AGENTS_HOME`）spawn 解析出的可执行文件、立即关闭 stdin，并在截止时间内等待干净退出，然后在每种结果下都执行检查，且只删除自己创建的 cwd。`runFixtureTurn` 留在进程内运行：它查找组合中的唯一根 agent，从持久收件箱收到任务起持续跟踪，直至整个 agent 完全停稳；随后汇总每步用量，并在返回前刷写会话。
+harness 建立在一个分离之上：冒烟测试在隔离世界中的子进程里运行，测试进程只观察与断言。`runLoaderSmoke` 创建临时 cwd（或复用调用方提供的 cwd）、在那里准备世界状态、以隔离的 TOMATO 主目录（该 cwd 下的 `TOMATO_HOME`、`TOMATO_AGENTS_HOME`）spawn 解析出的可执行文件、立即关闭 stdin，并在截止时间内等待干净退出，然后在每种结果下都执行检查，且只删除自己创建的 cwd。`runFixtureTurn` 留在进程内运行：它查找组合中的唯一根 agent，从持久收件箱收到任务起持续跟踪，直至整个 agent 完全停稳；随后汇总每步用量，并在返回前刷写会话。
 
 ### 源码地图
 

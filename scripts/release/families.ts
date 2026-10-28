@@ -345,7 +345,7 @@ export abstract class ReleaseFamily {
 }
 
 /** Release packages and apps: one shared version across the whole family. */
-class DshFamily extends ReleaseFamily {
+class TomatoFamily extends ReleaseFamily {
   readonly id = 'dsh'
   readonly patterns = [
     'packages/*/*/package.json',
@@ -400,7 +400,7 @@ class DshFamily extends ReleaseFamily {
     return member.name === '@deepseek-ai/dsh' ? ON_DEMAND_BUNDLES : []
   }
 
-  /** Require the packed DSH runtime graph to stay on the shared exact release version. */
+  /** Require the packed TOMATO runtime graph to stay on the shared exact release version. */
   override validatePackedManifest(member: ReleaseMember, manifest: Readonly<Record<string, unknown>>): void {
     super.validatePackedManifest(member, manifest)
     for (const section of ['dependencies', 'optionalDependencies', 'peerDependencies']) {
@@ -467,7 +467,7 @@ class VendorFamily extends ReleaseFamily {
 
 /** Every release family this module owns, in workflow order. */
 function releaseFamilies(): readonly ReleaseFamily[] {
-  return [new DshFamily(), new VendorFamily()]
+  return [new TomatoFamily(), new VendorFamily()]
 }
 
 /**

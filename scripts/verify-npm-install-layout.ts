@@ -1,4 +1,4 @@
-/** Verify npm's physical package placement for two incompatible DSH releases. */
+/** Verify npm's physical package placement for two incompatible TOMATO releases. */
 
 import { readFileSync } from 'node:fs'
 import { posix, resolve } from 'node:path'
@@ -10,7 +10,7 @@ import {
   type RegistryIndex,
 } from './benchmark-npm-resolution.ts'
 
-const DSH_PACKAGE = '@deepseek-ai/dsh'
+const TOMATO_PACKAGE = '@deepseek-ai/dsh'
 const CORDIS_PACKAGE = '@deepseek-ai/cordis'
 const NESTED_DSH_ALIAS = 'dsh-previous'
 const NESTED_DSH_PATH = `node_modules/${NESTED_DSH_ALIAS}`
@@ -18,7 +18,7 @@ const DEPENDENCY_FIELDS = ['dependencies', 'optionalDependencies', 'peerDependen
 
 /**
  * Resolution work accepted from the dual-release graph, in
- * `dshPackagesPerVersion * checkedDshEdges` units.
+ * `tomatoPackagesPerVersion * checkedDshEdges` units.
  *
  * npm's hoisted placement re-checks every internal edge against the incoming
  * edges of its peer target (`canPlacePeers` calls `checkCanPlaceNoCurrent`,
@@ -62,13 +62,13 @@ interface MutableRegistryManifest {
 }
 
 /** Summary of a verified two-release npm layout. */
-export interface DshInstallLayoutSummary {
-  readonly dshPackagesPerVersion: number
+export interface TomatoInstallLayoutSummary {
+  readonly tomatoPackagesPerVersion: number
   readonly checkedDshEdges: number
 }
 
 function isDshPackage(name: string): boolean {
-  return name === DSH_PACKAGE || name.startsWith(`${DSH_PACKAGE}-`)
+  return name === TOMATO_PACKAGE || name.startsWith(`${TOMATO_PACKAGE}-`)
 }
 
 function cloneForVersion(manifest: object, version: string): MutableRegistryManifest {
@@ -85,14 +85,14 @@ function cloneForVersion(manifest: object, version: string): MutableRegistryMani
 }
 
 /**
- * Replace the working release with two incompatible, internally consistent DSH releases.
+ * Replace the working release with two incompatible, internally consistent TOMATO releases.
  * @param index - Registry metadata containing the working release.
  * @param sourceVersion - Workspace version copied into each synthetic release.
- * @returns Registry metadata containing both synthetic DSH releases and unchanged external packages.
+ * @returns Registry metadata containing both synthetic TOMATO releases and unchanged external packages.
  */
 export function buildDualDshRegistry(index: RegistryIndex, sourceVersion: string): RegistryIndex {
   const output = new Map(index)
-  let dshPackages = 0
+  let tomatoPackages = 0
   for (const [name, versions] of index) {
     if (!isDshPackage(name)) {
       output.set(name, versions)
@@ -100,13 +100,13 @@ export function buildDualDshRegistry(index: RegistryIndex, sourceVersion: string
     }
     const source = versions.get(sourceVersion)
     if (source === undefined) throw new Error(`${name} has no workspace version ${sourceVersion}`)
-    dshPackages++
+    tomatoPackages++
     output.set(name, new Map(SYNTHETIC_DSH_VERSIONS.map(version => [
       version,
       cloneForVersion(source, version),
     ])))
   }
-  if (dshPackages === 0) throw new Error('registry contains no DSH packages')
+  if (tomatoPackages === 0) throw new Error('registry contains no TOMATO packages')
   return output
 }
 
@@ -142,11 +142,11 @@ function setDifference(left: ReadonlySet<string>, right: ReadonlySet<string>): s
 }
 
 /**
- * Assert that npm isolates both DSH releases while sharing the Cordis runtime.
+ * Assert that npm isolates both TOMATO releases while sharing the Cordis runtime.
  * @param packageLock - Metadata-only package lock produced by npm.
- * @returns Counts for the verified DSH packages and dependency edges.
+ * @returns Counts for the verified TOMATO packages and dependency edges.
  */
-export function assertDualDshInstallLayout(packageLock: NpmPackageLock): DshInstallLayoutSummary {
+export function assertDualDshInstallLayout(packageLock: NpmPackageLock): TomatoInstallLayoutSummary {
   const [nestedVersion, rootVersion] = SYNTHETIC_DSH_VERSIONS
   const errors: string[] = []
   const namesByVersion = new Map<string, Set<string>>([
@@ -159,18 +159,18 @@ export function assertDualDshInstallLayout(packageLock: NpmPackageLock): DshInst
   for (const [path, manifest] of installed) {
     const name = packageNameAtPath(path, manifest)
     if (name === 'react' || name === 'react-dom') {
-      errors.push(`${path}: ${name} is a browser build input, not a dependency of the synthetic DSH-only consumer`)
+      errors.push(`${path}: ${name} is a browser build input, not a dependency of the synthetic TOMATO-only consumer`)
     }
     if (name === undefined || !isDshPackage(name)) continue
     const version = manifest.version
     if (version !== nestedVersion && version !== rootVersion) {
-      errors.push(`${path}: expected DSH version ${nestedVersion} or ${rootVersion}, got ${String(version)}`)
+      errors.push(`${path}: expected TOMATO version ${nestedVersion} or ${rootVersion}, got ${String(version)}`)
       continue
     }
     namesByVersion.get(version)?.add(name)
     const expectedPath = version === rootVersion
       ? `node_modules/${name}`
-      : name === DSH_PACKAGE
+      : name === TOMATO_PACKAGE
         ? NESTED_DSH_PATH
         : `${NESTED_DSH_PATH}/node_modules/${name}`
     if (path !== expectedPath) {
@@ -201,8 +201,8 @@ export function assertDualDshInstallLayout(packageLock: NpmPackageLock): DshInst
 
   const nestedNames = namesByVersion.get(nestedVersion) ?? new Set<string>()
   const rootNames = namesByVersion.get(rootVersion) ?? new Set<string>()
-  if (!nestedNames.has(DSH_PACKAGE)) errors.push(`${NESTED_DSH_PATH}: missing ${DSH_PACKAGE}@${nestedVersion}`)
-  if (!rootNames.has(DSH_PACKAGE)) errors.push(`node_modules/${DSH_PACKAGE}: missing ${DSH_PACKAGE}@${rootVersion}`)
+  if (!nestedNames.has(TOMATO_PACKAGE)) errors.push(`${NESTED_DSH_PATH}: missing ${TOMATO_PACKAGE}@${nestedVersion}`)
+  if (!rootNames.has(TOMATO_PACKAGE)) errors.push(`node_modules/${TOMATO_PACKAGE}: missing ${TOMATO_PACKAGE}@${rootVersion}`)
   const onlyNested = setDifference(nestedNames, rootNames)
   const onlyRoot = setDifference(rootNames, nestedNames)
   if (onlyNested.length > 0) errors.push(`only ${nestedVersion} contains: ${onlyNested.join(', ')}`)
@@ -215,7 +215,7 @@ export function assertDualDshInstallLayout(packageLock: NpmPackageLock): DshInst
   }
 
   if (errors.length > 0) throw new Error(`invalid npm install layout:\n${errors.map(error => `  - ${error}`).join('\n')}`)
-  return { dshPackagesPerVersion: rootNames.size, checkedDshEdges }
+  return { tomatoPackagesPerVersion: rootNames.size, checkedDshEdges }
 }
 
 /**
@@ -223,12 +223,12 @@ export function assertDualDshInstallLayout(packageLock: NpmPackageLock): DshInst
  * @param summary - Counts returned by {@link assertDualDshInstallLayout}.
  * @returns The verified resolution work units.
  */
-export function assertResolutionWorkBudget(summary: DshInstallLayoutSummary): number {
-  const units = summary.dshPackagesPerVersion * summary.checkedDshEdges
+export function assertResolutionWorkBudget(summary: TomatoInstallLayoutSummary): number {
+  const units = summary.tomatoPackagesPerVersion * summary.checkedDshEdges
   if (units > MAX_RESOLUTION_WORK_UNITS) {
     throw new Error(
       'dual-release graph exceeds the resolution work budget: '
-      + `${String(summary.dshPackagesPerVersion)} package(s) per release x `
+      + `${String(summary.tomatoPackagesPerVersion)} package(s) per release x `
       + `${String(summary.checkedDshEdges)} internal edge(s) = ${String(units)} unit(s), `
       + `budget ${String(MAX_RESOLUTION_WORK_UNITS)} unit(s)\n`
       + '  npm re-checks every internal edge against the incoming edges of its peer target, so the resolution\n'
@@ -250,14 +250,14 @@ async function main(): Promise<void> {
   const index = buildDualDshRegistry(buildRegistryIndex(root), workspaceVersion(root))
   const [nestedVersion, rootVersion] = SYNTHETIC_DSH_VERSIONS
   const result = await resolveNpmPackageLock(index, {
-    [DSH_PACKAGE]: rootVersion,
-    [NESTED_DSH_ALIAS]: `npm:${DSH_PACKAGE}@${nestedVersion}`,
+    [TOMATO_PACKAGE]: rootVersion,
+    [NESTED_DSH_ALIAS]: `npm:${TOMATO_PACKAGE}@${nestedVersion}`,
   }, NPM_HANG_GUARD_MS, 'npm resolution hang guard')
   if (result.archiveRequests !== 0) throw new Error(`npm requested ${String(result.archiveRequests)} package archive(s)`)
   const summary = assertDualDshInstallLayout(result.packageLock)
   const units = assertResolutionWorkBudget(summary)
   console.log(
-    `verify-npm-install-layout: ${String(summary.dshPackagesPerVersion)} DSH package(s) per release and `
+    `verify-npm-install-layout: ${String(summary.tomatoPackagesPerVersion)} TOMATO package(s) per release and `
     + `${String(summary.checkedDshEdges)} internal edge(s) verified in ${(result.durationMs / 1000).toFixed(2)} s; `
     + `${String(units)} of ${String(MAX_RESOLUTION_WORK_UNITS)} budgeted resolution work unit(s); `
     + `both releases share one Cordis installation; ${String(result.unknownPackages.length)} unavailable optional `

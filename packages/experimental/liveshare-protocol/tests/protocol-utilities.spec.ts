@@ -196,7 +196,7 @@ describe('tunnel worker commands', () => {
       { ...spec(), ownerDisplayName: 4 },
       { ...spec(), ownerProviderId: 4 },
       { ...spec(), ownerTenantId: 4 },
-      { ...spec(), dshVersion: 4 },
+      { ...spec(), tomatoVersion: 4 },
       { ...spec(), ownerInstanceId: 4 },
       { ...spec(), ownerCredential: 4 },
       { ...spec(), expiresAt: 4 },
@@ -215,7 +215,7 @@ describe('tunnel worker commands', () => {
 
     const allOptional = {
       ...spec(),
-      ownerProviderId: 'p', ownerTenantId: 't', dshVersion: '1.0.0', ownerInstanceId: 'i',
+      ownerProviderId: 'p', ownerTenantId: 't', tomatoVersion: '1.0.0', ownerInstanceId: 'i',
       ownerCredential: 'credential', expiresAt: '2026-10-03T00:00:00.000Z',
       allowsFork: true, sessionMode: 'write', allowsFileUpload: false,
     }

@@ -34,9 +34,9 @@ it.each([
       tsconfigPath: fileURLToPath(new URL('../../../tsconfig.json', import.meta.url)),
       configArgs: ['--profile', 'web', '--patch', patch, '--no-open', '--port', '0'],
       env: {
-        DSH_HOME: join(root, '.dsh'),
-        DSH_AGENTS_HOME: join(root, '.agents'),
-        DSH_TELEMETRY_DISABLED: '1',
+        TOMATO_HOME: join(root, '.dsh'),
+        TOMATO_AGENTS_HOME: join(root, '.agents'),
+        TOMATO_TELEMETRY_DISABLED: '1',
       },
     })
     const child = execa(launch.command, launch.args, {

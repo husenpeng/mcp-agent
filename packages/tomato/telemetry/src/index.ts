@@ -43,7 +43,7 @@ async function send(config: Config, spans: readonly SpanDraft[], log: (message: 
       },
       body: JSON.stringify(otlpDocument(
         spans,
-        { 'service.name': config.serviceName, 'service.version': process.env.DSH_CLIENT_VERSION ?? 'development' },
+        { 'service.name': config.serviceName, 'service.version': process.env.TOMATO_CLIENT_VERSION ?? 'development' },
         SCOPE_NAME,
       )),
       signal: AbortSignal.timeout(config.timeoutMs),

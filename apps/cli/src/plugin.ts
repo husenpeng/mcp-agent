@@ -14,7 +14,7 @@ function requireDesktopProfile(dir: string): void {
   }
 }
 
-/** Parse only DSH-owned commands; all other arguments remain pnpm's responsibility. */
+/** Parse only TOMATO-owned commands; all other arguments remain pnpm's responsibility. */
 async function versionCommand(profile: string, args: readonly string[]): Promise<number | undefined> {
   const [command, ...rest] = args
   if (command !== 'allow-version' && command !== 'revoke-version' && command !== 'version-exemptions') return undefined
@@ -39,7 +39,7 @@ async function versionCommand(profile: string, args: readonly string[]): Promise
       request = { packageVersion, runtimeVersion }
     }
     if (command === 'allow-version') {
-      process.stderr.write('dsh: warning: allowing incompatible plugin versions can break the application or corrupt data. Approval applies only to the exact package and DSH versions.\n')
+      process.stderr.write('dsh: warning: allowing incompatible plugin versions can break the application or corrupt data. Approval applies only to the exact package and TOMATO versions.\n')
     }
     const dir = resolveProfileDir(profile)
     if (profile !== 'desktop') await mkdir(dir, { recursive: true })
@@ -52,7 +52,7 @@ async function versionCommand(profile: string, args: readonly string[]): Promise
         process.stdout.write(JSON.stringify(exemptions, undefined, 2) + '\n')
       } else {
         await setProfileVersionExemption(dir, request.packageVersion, request.runtimeVersion, command === 'allow-version', acceptRisk)
-        process.stdout.write(`dsh: ${command === 'allow-version' ? 'allowed' : 'revoked'} ${request.packageVersion} for DSH ${request.runtimeVersion}\n`)
+        process.stdout.write(`dsh: ${command === 'allow-version' ? 'allowed' : 'revoked'} ${request.packageVersion} for TOMATO ${request.runtimeVersion}\n`)
       }
     }, { waitMs: 120000 })
     return 0
@@ -64,7 +64,7 @@ async function versionCommand(profile: string, args: readonly string[]): Promise
 
 /** Run package management for a profile.
  * @param profile Profile name; Desktop's reserved profile must already be initialized by the application.
- * @param args DSH exemption command or pnpm arguments relative to the invoking directory.
+ * @param args TOMATO exemption command or pnpm arguments relative to the invoking directory.
  * @param packageManager Installation-owned executable and environment for pnpm operations.
  * @returns Zero on success; nonzero on invalid approval or package-manager failure.
  */

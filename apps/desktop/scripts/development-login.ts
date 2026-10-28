@@ -1,10 +1,10 @@
 /** Development login endpoints projected from the checked-in development config. */
 
 /** Packaging-style key carrying the auth_service origin in the development file. */
-const AUTH_SERVICE_FILE_KEY = 'DSH_DESKTOP_AUTH_SERVICE_URL'
+const AUTH_SERVICE_FILE_KEY = 'TOMATO_DESKTOP_AUTH_SERVICE_URL'
 
 /** Packaging-style key carrying the company BFF origin in the development file. */
-const TOMATO_WEB_FILE_KEY = 'DSH_DESKTOP_TOMATO_WEB_URL'
+const TOMATO_WEB_FILE_KEY = 'TOMATO_DESKTOP_TOMATO_WEB_URL'
 
 /** Host runtime variable consumed by the local gateway. */
 const AUTH_SERVICE_ENV = 'AUTH_SERVICE_URL'

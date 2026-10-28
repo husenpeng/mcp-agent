@@ -17,7 +17,7 @@ vi.mock('@deepseek-ai/dsh-plugin-manager/operations', async importOriginal => ({
 
 function fixture() {
   const home = mkdtempSync(join(tmpdir(), 'cli-version-exemptions-'))
-  vi.stubEnv('DSH_HOME', home)
+  vi.stubEnv('TOMATO_HOME', home)
   const stdout = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
   const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
   onTestFinished(() => {
@@ -35,7 +35,7 @@ it('requires explicit acknowledgement, grants only the exact pair, lists and rev
   const runtime = getDshRuntimeVersion()
   expect(await runPlugin('test', ['allow-version', '@example/plugin@1.2.3', '--dsh-version', runtime, '--accept-risk'])).toBe(0)
   expect(stderr.mock.calls.map(call => call[0]).join('')).toMatchInlineSnapshot(`
-    "dsh: warning: allowing incompatible plugin versions can break the application or corrupt data. Approval applies only to the exact package and DSH versions.
+    "dsh: warning: allowing incompatible plugin versions can break the application or corrupt data. Approval applies only to the exact package and TOMATO versions.
     "
   `)
   expect(stderr.mock.invocationCallOrder[0]).toBeLessThan(stdout.mock.invocationCallOrder[0]!)

@@ -18,15 +18,15 @@ afterEach(() => {
   for (const path of cleanups.splice(0)) rmSync(path, { recursive: true, force: true })
 })
 
-function manifestPair(dsh: object, client: object): { dshUrl: string; clientUrl: string; root: string } {
+function manifestPair(dsh: object, client: object): { tomatoUrl: string; clientUrl: string; root: string } {
   const root = mkdtempSync(join(tmpdir(), 'dsh-sdk-manifests-'))
   cleanups.push(root)
-  const dshPath = join(root, 'dsh-package.json')
+  const tomatoPath = join(root, 'dsh-package.json')
   const clientPath = join(root, 'client-package.json')
-  writeFileSync(dshPath, JSON.stringify(dsh))
+  writeFileSync(tomatoPath, JSON.stringify(dsh))
   writeFileSync(clientPath, JSON.stringify(client))
   return {
-    dshUrl: pathToFileURL(dshPath).href,
+    tomatoUrl: pathToFileURL(tomatoPath).href,
     clientUrl: pathToFileURL(clientPath).href,
     root,
   }
@@ -52,12 +52,12 @@ describe('SDK dsh launch resolution', () => {
   it('makes every filesystem input absolute before spawn and preserves patch order', () => {
     const caller = resolve('/tmp', 'sdk-launch-caller')
     const launch = resolveDshLaunch({
-      dshBin: './bin/dsh',
+      tomatoBin: './bin/dsh',
       profile: 'custom-sdk',
       patches: ['./first.yml', '../second.yml'],
-      dshHome: './home',
+      tomatoHome: './home',
       processCwd: './worker',
-      env: { PATH: '/bin', DSH_HOME: '/stale' },
+      env: { PATH: '/bin', TOMATO_HOME: '/stale' },
       initializeTimeoutMs: 123,
       requestTimeoutMs: 456,
       shutdownTimeoutMs: 789,
@@ -80,7 +80,7 @@ describe('SDK dsh launch resolution', () => {
       disposeEofGraceMs: 12,
       disposeGraceMs: 34,
     })
-    expect(launch.environment()).toEqual({ PATH: '/bin', DSH_HOME: join(caller, 'home') })
+    expect(launch.environment()).toEqual({ PATH: '/bin', TOMATO_HOME: join(caller, 'home') })
   })
 
   it('falls back to the same package source entry through an absolute tsx loader', () => {
@@ -93,13 +93,13 @@ describe('SDK dsh launch resolution', () => {
     writeFileSync(sourcePatch, '[]\n')
     writeFileSync(sourceTsconfig, '{}\n')
 
-    expect(resolveDshNodeLaunchFromManifests(pair.dshUrl, pair.clientUrl, 'file:///tsx-loader.mjs'))
+    expect(resolveDshNodeLaunchFromManifests(pair.tomatoUrl, pair.clientUrl, 'file:///tsx-loader.mjs'))
       .toEqual({
         nodeArgs: ['--import', 'file:///tsx-loader.mjs', sourceBin],
         patches: [sourcePatch],
         environment: { TSX_TSCONFIG_PATH: sourceTsconfig },
       })
-    expect(resolveDshNodeLaunchFromManifests(pair.dshUrl, pair.clientUrl))
+    expect(resolveDshNodeLaunchFromManifests(pair.tomatoUrl, pair.clientUrl))
       .toEqual({
         nodeArgs: ['--import', import.meta.resolve('tsx/esm'), sourceBin],
         patches: [sourcePatch],
@@ -113,7 +113,7 @@ describe('SDK dsh launch resolution', () => {
     mkdirSync(join(pair.root, 'lib'))
     writeFileSync(bin, '')
 
-    expect(resolveDshNodeLaunchFromManifests(pair.dshUrl, pair.clientUrl)).toEqual({
+    expect(resolveDshNodeLaunchFromManifests(pair.tomatoUrl, pair.clientUrl)).toEqual({
       nodeArgs: [bin],
       patches: [],
       environment: {},
@@ -125,22 +125,22 @@ describe('SDK dsh launch resolution', () => {
     mkdirSync(join(pair.root, 'src'))
     const sourceFiles = ['src/bin.ts', 'src/sdk-source.cordis.patch.yml', 'tsconfig.json']
     for (const source of sourceFiles.slice(0, presentCount)) writeFileSync(join(pair.root, source), '')
-    expect(() => resolveDshNodeLaunchFromManifests(pair.dshUrl, pair.clientUrl, 'file:///tsx-loader.mjs'))
+    expect(() => resolveDshNodeLaunchFromManifests(pair.tomatoUrl, pair.clientUrl, 'file:///tsx-loader.mjs'))
       .toThrow('is missing its built executable')
   })
 
   it('reads explicit and inherited environments when the child starts', () => {
     const explicit: NodeJS.ProcessEnv = { MARKER: 'before' }
-    const explicitLaunch = resolveDshLaunch({ dshBin: '/bin/dsh', env: explicit })
+    const explicitLaunch = resolveDshLaunch({ tomatoBin: '/bin/dsh', env: explicit })
     explicit.MARKER = 'after'
     expect(explicitLaunch.environment().MARKER).toBe('after')
 
-    const inheritedLaunch = resolveDshLaunch({ dshBin: '/bin/dsh' })
-    process.env.DSH_SDK_LATE_ENV_TEST = 'late'
+    const inheritedLaunch = resolveDshLaunch({ tomatoBin: '/bin/dsh' })
+    process.env.TOMATO_SDK_LATE_ENV_TEST = 'late'
     try {
-      expect(inheritedLaunch.environment().DSH_SDK_LATE_ENV_TEST).toBe('late')
+      expect(inheritedLaunch.environment().TOMATO_SDK_LATE_ENV_TEST).toBe('late')
     } finally {
-      delete process.env.DSH_SDK_LATE_ENV_TEST
+      delete process.env.TOMATO_SDK_LATE_ENV_TEST
     }
   })
 
@@ -148,21 +148,21 @@ describe('SDK dsh launch resolution', () => {
     'rejects a dsh version that differs from the client (%j)',
     (version) => {
       const pair = manifestPair({ version, bin: 'bin.js' }, { version: '1.0.0' })
-      expect(() => resolveDshBinFromManifests(pair.dshUrl, pair.clientUrl))
+      expect(() => resolveDshBinFromManifests(pair.tomatoUrl, pair.clientUrl))
         .toThrow(`requires the same dsh version, got ${String(version)}`)
     },
   )
 
   it('accepts the string npm bin form', () => {
     const pair = manifestPair({ version: '1.0.0', bin: './bin.js' }, { version: '1.0.0' })
-    expect(resolveDshBinFromManifests(pair.dshUrl, pair.clientUrl)).toBe(join(pair.root, 'bin.js'))
+    expect(resolveDshBinFromManifests(pair.tomatoUrl, pair.clientUrl)).toBe(join(pair.root, 'bin.js'))
   })
 
   it.each([null, {}, ''])(
     'rejects a manifest without a usable dsh executable (%j)',
     (bin) => {
       const pair = manifestPair({ version: '1.0.0', bin }, { version: '1.0.0' })
-      expect(() => resolveDshBinFromManifests(pair.dshUrl, pair.clientUrl))
+      expect(() => resolveDshBinFromManifests(pair.tomatoUrl, pair.clientUrl))
         .toThrow('declares no dsh executable')
     },
   )

@@ -6,7 +6,7 @@ import { execa } from 'execa'
 import { describe, expect, it } from 'vitest'
 import { LOADER_SMOKE_TEST_TIMEOUT_MS, resolveExampleLaunch } from '@deepseek-ai/dsh-loader-smoke'
 
-const dshBinScript = fileURLToPath(new URL('../src/bin.ts', import.meta.url))
+const tomatoBinScript = fileURLToPath(new URL('../src/bin.ts', import.meta.url))
 const tsconfigPath = fileURLToPath(new URL('../../../tsconfig.json', import.meta.url))
 const neverDisposePlugin = pathToFileURL(
   fileURLToPath(new URL('./fixtures/never-dispose.mjs', import.meta.url)),
@@ -82,15 +82,15 @@ async function runHeadlessPtySmoke(): Promise<string> {
       '',
     ].join('\n'))
     const launch = resolveExampleLaunch({
-      srcBin: dshBinScript,
+      srcBin: tomatoBinScript,
       configArgs: ['--profile', 'headless', 'never complete'],
       tsconfigPath,
       env: {
-        DSH_HOME: home,
-        DSH_AGENTS_HOME: join(cwd, '.agents'),
+        TOMATO_HOME: home,
+        TOMATO_AGENTS_HOME: join(cwd, '.agents'),
         DEEPSEEK_API_KEY: 'keyless-shutdown-no-call',
-        DSH_TELEMETRY_DISABLED: '1',
-        DSH_TEST_SHUTDOWN_ARM_FILE: join(cwd, 'shutdown-armed'),
+        TOMATO_TELEMETRY_DISABLED: '1',
+        TOMATO_TEST_SHUTDOWN_ARM_FILE: join(cwd, 'shutdown-armed'),
       },
     })
     const timeoutMs = 15_000

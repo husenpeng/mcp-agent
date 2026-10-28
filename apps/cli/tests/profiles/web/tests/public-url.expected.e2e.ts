@@ -16,8 +16,8 @@ import { PROCESS_SHUTDOWN_TIMEOUT_MS } from '../../../../src/process-shutdown.ts
 import { materializeTlsFixture } from '../../../../../../packages/host/webserver/tests/tls-fixture.ts'
 
 const repoRoot = fileURLToPath(new URL('../../../../../../', import.meta.url))
-const dshBin = join(repoRoot, 'apps/cli/lib/bin.js')
-const builtArtifactsExist = existsSync(dshBin)
+const tomatoBin = join(repoRoot, 'apps/cli/lib/bin.js')
+const builtArtifactsExist = existsSync(tomatoBin)
 
 /** Browser-facing mount the reference proxy serves and strips. */
 const MOUNT = '/tools/dsh/'
@@ -43,7 +43,7 @@ type StoppedWeb = Awaited<WebChild>
 /** Start one keyless Web process with an outer lifetime deadline. */
 function spawnWeb(root: string, patch: string, interrupt: string, flags: string[]) {
   return execa(process.execPath, [
-    dshBin,
+    tomatoBin,
     '--profile', 'web',
     '--patch', patch,
     '--no-open',
@@ -54,9 +54,9 @@ function spawnWeb(root: string, patch: string, interrupt: string, flags: string[
     env: {
       ...process.env,
       DEEPSEEK_API_KEY: 'keyless-web-public-url-no-call',
-      DSH_AGENTS_HOME: join(root, '.agents'),
-      DSH_HOME: join(root, 'home'),
-      DSH_TELEMETRY_DISABLED: '1',
+      TOMATO_AGENTS_HOME: join(root, '.agents'),
+      TOMATO_HOME: join(root, 'home'),
+      TOMATO_TELEMETRY_DISABLED: '1',
       NODE_NO_WARNINGS: '1',
       WEB_INTERRUPT_FILE: interrupt,
     },

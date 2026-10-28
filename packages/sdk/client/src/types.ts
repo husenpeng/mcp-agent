@@ -25,13 +25,13 @@ export interface HarnessClientOptions {
   /** Answer runtime questions without prescribing a UI; observe the signal to release host work on cancellation. */
   onUserQuestion?: (request: SdkUserQuestionRequest, context: { signal: AbortSignal }) => Promise<SdkUserQuestionAnswer>
   /** Absolute or caller-relative dsh CLI module; omitted resolves this package's same-version dependency. */
-  dshBin?: string
+  tomatoBin?: string
   /** Named profile serving the SDK protocol (default `sdk`). */
   profile?: string
   /** Ordered per-launch profile patches; relative paths resolve before spawn. */
   patches?: string[]
   /** Explicit Harness home for this child; relative paths resolve before spawn. */
-  dshHome?: string
+  tomatoHome?: string
   /** Working directory for the dsh process itself. */
   processCwd?: string
   /**

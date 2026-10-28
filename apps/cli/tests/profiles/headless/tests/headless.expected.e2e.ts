@@ -37,7 +37,7 @@ const startupFailureConfigPath = fileURLToPath(new URL('./fixtures/startup-activ
 const startupFailurePluginUrl = new URL('./fixtures/startup-activation-error/activation-error.mjs', import.meta.url).href
 const startupFailureExpected = join(goldensDir, 'startup-activation-error', 'stderr.expected.txt')
 const binScript = fileURLToPath(new URL('../../../../../../packages/test-support/loader-smoke/tests/fixtures/headless-driver.ts', import.meta.url))
-const dshBinScript = fileURLToPath(new URL('../../../../src/bin.ts', import.meta.url))
+const tomatoBinScript = fileURLToPath(new URL('../../../../src/bin.ts', import.meta.url))
 const tsconfigPath = fileURLToPath(new URL('../../../../../../tsconfig.json', import.meta.url))
 const reasoningConfigPath = fileURLToPath(new URL('./fixtures/cli.patch.yml', import.meta.url))
 const deepseekDefaultsConfigPath = fileURLToPath(new URL('./fixtures/deepseek-defaults.patch.yml', import.meta.url))
@@ -50,7 +50,7 @@ const autoIntegrationPath = fileURLToPath(new URL('../../../../../../packages/ex
 const headlessSessionExpected = join(goldensDir, 'headless-profile', 'session.expected.jsonl')
 const headlessReasoningExpected = join(goldensDir, 'headless-profile', 'reasoning.stderr.expected.txt')
 const headlessFailureExpected = join(goldensDir, 'headless-profile', 'stderr.expected.txt')
-const refreshing = process.env.DSH_SNAPSHOT === 'refresh'
+const refreshing = process.env.TOMATO_SNAPSHOT === 'refresh'
 /** The shipped base bundle's title output cap, which marks a title request's `max_tokens`. */
 const TITLE_MAX_TOKENS = 4096
 
@@ -306,10 +306,10 @@ describe('headless stream-json snapshots', () => {
     const cwd = await mkdtemp(join(tmpdir(), 'headless-auto-shutdown-'))
     const options = {
       cwd,
-      binScript: dshBinScript,
+      binScript: tomatoBinScript,
       configPath: autoShutdownOverlayPath,
       tsconfigPath,
-      env: { DSH_TELEMETRY_DISABLED: '1' },
+      env: { TOMATO_TELEMETRY_DISABLED: '1' },
     }
     const args = ['headless', '--patch', autoShutdownOverlayPath]
     let sessionId = ''
@@ -389,13 +389,13 @@ describe('headless stream-json snapshots', () => {
       mode,
       sourceImport: 'tsx/esm',
       tempDirPrefix: 'headless-snapshot-profile-',
-      binScript: dshBinScript,
+      binScript: tomatoBinScript,
       configPath: headlessOverlayPath,
       binArgs: ['headless', '--patch', headlessOverlayPath, task],
       tsconfigPath,
       env: {
-        DSH_PERMISSION_MODE: 'danger-full-access',
-        DSH_TELEMETRY_DISABLED: '1',
+        TOMATO_PERMISSION_MODE: 'danger-full-access',
+        TOMATO_TELEMETRY_DISABLED: '1',
         NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
       },
       inspect: async (cwd) => {
@@ -424,7 +424,7 @@ describe('headless stream-json snapshots', () => {
     const result = await runLoaderSmoke({
       label: 'product headless profile json snapshot',
       tempDirPrefix: 'headless-snapshot-profile-json-',
-      binScript: dshBinScript,
+      binScript: tomatoBinScript,
       configPath: headlessOverlayPath,
       binArgs: [
         '--profile', 'headless', '--patch', headlessOverlayPath,
@@ -434,8 +434,8 @@ describe('headless stream-json snapshots', () => {
       ],
       tsconfigPath,
       env: {
-        DSH_PERMISSION_MODE: 'danger-full-access',
-        DSH_TELEMETRY_DISABLED: '1',
+        TOMATO_PERMISSION_MODE: 'danger-full-access',
+        TOMATO_TELEMETRY_DISABLED: '1',
         NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
       },
       inspect: async (cwd) => {
@@ -464,7 +464,7 @@ describe('headless stream-json snapshots', () => {
     const result = await runLoaderSmoke({
       label: 'product headless profile unknown session',
       tempDirPrefix: 'headless-snapshot-profile-unknown-session-',
-      binScript: dshBinScript,
+      binScript: tomatoBinScript,
       configPath: headlessOverlayPath,
       binArgs: [
         '--profile', 'headless', '--patch', headlessOverlayPath,
@@ -473,7 +473,7 @@ describe('headless stream-json snapshots', () => {
       tsconfigPath,
       expectedExitCode: 1,
       env: {
-        DSH_TELEMETRY_DISABLED: '1',
+        TOMATO_TELEMETRY_DISABLED: '1',
         NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
       },
     })
@@ -490,8 +490,8 @@ describe('headless stream-json snapshots', () => {
     const firstTask = 'Record the first wake of the resume proof.'
     const secondTask = 'Continue from the first wake of the resume proof.'
     const env = {
-      DSH_PERMISSION_MODE: 'danger-full-access',
-      DSH_TELEMETRY_DISABLED: '1',
+      TOMATO_PERMISSION_MODE: 'danger-full-access',
+      TOMATO_TELEMETRY_DISABLED: '1',
       NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
     }
     const cwd = await mkdtemp(join(tmpdir(), 'headless-session-resume-'))
@@ -499,7 +499,7 @@ describe('headless stream-json snapshots', () => {
       const first = await runLoaderSmoke({
         label: 'product headless profile resume first wake',
         cwd,
-        binScript: dshBinScript,
+        binScript: tomatoBinScript,
         configPath: headlessOverlayPath,
         binArgs: ['--profile', 'headless', '--patch', headlessOverlayPath, '--json', firstTask],
         tsconfigPath,
@@ -513,7 +513,7 @@ describe('headless stream-json snapshots', () => {
       const second = await runLoaderSmoke({
         label: 'product headless profile resume second wake',
         cwd,
-        binScript: dshBinScript,
+        binScript: tomatoBinScript,
         configPath: headlessOverlayPath,
         binArgs: [
           '--profile', 'headless', '--patch', headlessOverlayPath,
@@ -548,14 +548,14 @@ describe('headless stream-json snapshots', () => {
     const result = await runLoaderSmoke({
       label: `headless Auto review ${mode}`,
       tempDirPrefix: 'headless-auto-',
-      binScript: dshBinScript,
+      binScript: tomatoBinScript,
       configPath: autoReviewOverlayPath,
       binArgs: [
         '--profile', 'headless', '--patch', headlessOverlayPath, '--patch', autoReviewOverlayPath,
         '--permission-mode', 'auto', '--approval-policy', 'never', '--json', 'Run the CLI probe.',
       ],
       tsconfigPath,
-      env: { DSH_AUTO_REVIEW_TEST_MODE: mode, DSH_TELEMETRY_DISABLED: '1' },
+      env: { TOMATO_AUTO_REVIEW_TEST_MODE: mode, TOMATO_TELEMETRY_DISABLED: '1' },
       inspect: async (cwd) => {
         const logs = await persistedLogs(cwd, join(cwd, '.dsh', 'sessions'))
         expect(logs).toHaveLength(1)
@@ -588,9 +588,9 @@ describe('headless stream-json snapshots', () => {
   it('rejects Auto selection without the experimental integration', async () => {
     const result = await runLoaderSmoke({
       label: 'headless absent Auto integration', tempDirPrefix: 'headless-auto-absent-',
-      binScript: dshBinScript, configPath: headlessOverlayPath,
+      binScript: tomatoBinScript, configPath: headlessOverlayPath,
       binArgs: ['--profile', 'headless', '--patch', headlessOverlayPath, '--permission-mode', 'auto', '--json', 'Do it.'],
-      tsconfigPath, expectedExitCode: 1, env: { DSH_TELEMETRY_DISABLED: '1' },
+      tsconfigPath, expectedExitCode: 1, env: { TOMATO_TELEMETRY_DISABLED: '1' },
     })
     const events = parseJsonl(result.stdout)
     expect(events).toHaveLength(1)
@@ -603,9 +603,9 @@ describe('headless stream-json snapshots', () => {
     const args = ['--profile', 'headless', '--patch', headlessOverlayPath, '--patch', autoReviewOverlayPath, '--json']
     try {
       const first = await runLoaderSmoke({
-        label: 'headless Auto denied wake', cwd, binScript: dshBinScript, configPath: autoReviewOverlayPath,
+        label: 'headless Auto denied wake', cwd, binScript: tomatoBinScript, configPath: autoReviewOverlayPath,
         binArgs: [...args, '--permission-mode', 'auto', '--approval-policy', 'never', 'Run the CLI probe.'], tsconfigPath,
-        env: { DSH_AUTO_REVIEW_TEST_MODE: 'deny', DSH_TELEMETRY_DISABLED: '1' },
+        env: { TOMATO_AUTO_REVIEW_TEST_MODE: 'deny', TOMATO_TELEMETRY_DISABLED: '1' },
       })
       const sessionId = parseJsonl(first.stdout)[0]?.sessionId
       if (typeof sessionId !== 'string') throw new Error('missing Auto Session identity')
@@ -613,9 +613,9 @@ describe('headless stream-json snapshots', () => {
         error: { code: 'AUTO_REVIEW_DENIED' },
       })
       const second = await runLoaderSmoke({
-        label: 'headless Auto authorized wake', cwd, binScript: dshBinScript, configPath: autoReviewOverlayPath,
+        label: 'headless Auto authorized wake', cwd, binScript: tomatoBinScript, configPath: autoReviewOverlayPath,
         binArgs: [...args, '--session-id', sessionId, 'I authorize the exact CLI probe. Retry it.'], tsconfigPath,
-        env: { DSH_AUTO_REVIEW_TEST_MODE: 'allow', DSH_TELEMETRY_DISABLED: '1' },
+        env: { TOMATO_AUTO_REVIEW_TEST_MODE: 'allow', TOMATO_TELEMETRY_DISABLED: '1' },
         inspect: async (directory) => {
           const logs = await persistedLogs(directory, join(directory, '.dsh', 'sessions'))
           expect(logs).toHaveLength(1)
@@ -639,14 +639,14 @@ describe('headless stream-json snapshots', () => {
     const result = await runLoaderSmoke({
       label: 'product headless profile model failure snapshot',
       tempDirPrefix: 'headless-snapshot-profile-failure-',
-      binScript: dshBinScript,
+      binScript: tomatoBinScript,
       configPath: headlessOverlayPath,
       binArgs: ['--profile', 'headless', '--patch', headlessOverlayPath, 'Trigger the keyless model failure.'],
       tsconfigPath,
       expectedExitCode: 1,
       env: {
-        DSH_CLI_MOCK_FAILURE: '1',
-        DSH_TELEMETRY_DISABLED: '1',
+        TOMATO_CLI_MOCK_FAILURE: '1',
+        TOMATO_TELEMETRY_DISABLED: '1',
         NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
       },
     })
@@ -659,7 +659,7 @@ describe('headless stream-json snapshots', () => {
     const result = await runLoaderSmoke({
       label: 'headless best-effort startup snapshot',
       tempDirPrefix: 'headless-snapshot-startup-error-',
-      binScript: dshBinScript,
+      binScript: tomatoBinScript,
       configPath: startupFailureConfigPath,
       binArgs: [
         '--profile', 'headless',
@@ -669,8 +669,8 @@ describe('headless stream-json snapshots', () => {
       ],
       tsconfigPath,
       env: {
-        DSH_PERMISSION_MODE: 'danger-full-access',
-        DSH_TELEMETRY_DISABLED: '1',
+        TOMATO_PERMISSION_MODE: 'danger-full-access',
+        TOMATO_TELEMETRY_DISABLED: '1',
         NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
       },
     })
@@ -692,7 +692,7 @@ describe('headless stream-json snapshots', () => {
       binArgs: [retryConfigPath, prompt],
       tsconfigPath,
       env: {
-        DSH_SNAPSHOT: 'replay',
+        TOMATO_SNAPSHOT: 'replay',
         NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
       },
       prepare: (cwd) => { runCwd = cwd },
@@ -854,7 +854,7 @@ describe('headless stream-json snapshots', () => {
           // Configuration carries only the reference; the key rides the
           // launching environment, which is the whole credential plane here.
           DEEPSEEK_API_KEY: 'snapshot-key',
-          DSH_SNAPSHOT_BASE_URL: server.url,
+          TOMATO_SNAPSHOT_BASE_URL: server.url,
           NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
         },
       })
@@ -949,7 +949,7 @@ describe('headless stream-json snapshots', () => {
         tsconfigPath,
         env: {
           DEEPSEEK_API_KEY: 'snapshot-key',
-          DSH_SNAPSHOT_BASE_URL: server.url,
+          TOMATO_SNAPSHOT_BASE_URL: server.url,
           NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
         },
       })
@@ -1003,7 +1003,7 @@ describe('headless stream-json snapshots', () => {
         prepare: cwd => writeFile(join(cwd, 'task.txt'), 'Call snapshot_ping once.\n'),
         env: {
           MOONSHOT_API_KEY: 'snapshot-key',
-          DSH_SNAPSHOT_BASE_URL: server.url,
+          TOMATO_SNAPSHOT_BASE_URL: server.url,
           NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
         },
       })
@@ -1108,7 +1108,7 @@ describe('headless stream-json snapshots', () => {
       tsconfigPath,
       processTimeoutMs: 60_000,
       env: {
-        DSH_SNAPSHOT: 'team',
+        TOMATO_SNAPSHOT: 'team',
         NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
       },
       inspect: async (cwd) => {
@@ -1279,9 +1279,9 @@ describe('headless stream-json snapshots', () => {
       binArgs: [goalConfigPath, prompt],
       tsconfigPath,
       env: {
-        DSH_SNAPSHOT: 'replay',
-        DSH_SNAPSHOT_FILE: join(goalScenarioDir, 'session.jsonl'),
-        DSH_SNAPSHOT_OVERRIDE: join(goalScenarioDir, 'replay.override.json'),
+        TOMATO_SNAPSHOT: 'replay',
+        TOMATO_SNAPSHOT_FILE: join(goalScenarioDir, 'session.jsonl'),
+        TOMATO_SNAPSHOT_OVERRIDE: join(goalScenarioDir, 'replay.override.json'),
         NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
       },
       prepare: (cwd) => { runCwd = cwd },
@@ -1341,9 +1341,9 @@ describe('headless stream-json snapshots', () => {
       env: {
         // The override fully supplies the parent script; the child fixture
         // remains separate so replay binds it to the fresh child Session.
-        DSH_SNAPSHOT_FILE: parentReplay,
-        DSH_SNAPSHOT_OVERRIDE: parentOverride,
-        DSH_SNAPSHOT_CHILD_FILES: childReplay,
+        TOMATO_SNAPSHOT_FILE: parentReplay,
+        TOMATO_SNAPSHOT_OVERRIDE: parentOverride,
+        TOMATO_SNAPSHOT_CHILD_FILES: childReplay,
         NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
       },
       prepare: (cwd) => { runCwd = cwd },

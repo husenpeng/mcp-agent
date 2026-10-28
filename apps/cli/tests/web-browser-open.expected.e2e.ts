@@ -15,7 +15,7 @@ const openingMessage = 'dsh web: opening the default browser; pass --no-open to 
 const tempRoots: string[] = []
 const builtArtifactsExist = existsSync(builtBin) && existsSync(frontendIndex)
 
-if (process.env.DSH_EXAMPLE_MODE === 'lib' && !builtArtifactsExist) {
+if (process.env.TOMATO_EXAMPLE_MODE === 'lib' && !builtArtifactsExist) {
   throw new Error('dsh web browser-open snapshot requires built CLI and Web artifacts in lib mode')
 }
 
@@ -28,7 +28,7 @@ interface BrowserOpenRecord {
   status: number
   bootManifest: boolean
   apiKeyPresent: boolean
-  dshHomePresent: boolean
+  tomatoHomePresent: boolean
 }
 
 function normalizeLocalUrl(url: string): string {
@@ -51,9 +51,9 @@ describe.skipIf(!builtArtifactsExist)('dsh web browser-open assembled snapshot',
       env: {
         ...process.env,
         DEEPSEEK_API_KEY: 'keyless-browser-open-no-call',
-        DSH_AGENTS_HOME: join(root, '.agents'),
-        DSH_HOME: join(root, '.dsh'),
-        DSH_TELEMETRY_DISABLED: '1',
+        TOMATO_AGENTS_HOME: join(root, '.agents'),
+        TOMATO_HOME: join(root, '.dsh'),
+        TOMATO_TELEMETRY_DISABLED: '1',
         NODE_NO_WARNINGS: '1',
         SSH_CONNECTION: '',
         SSH_TTY: '',
@@ -79,13 +79,13 @@ describe.skipIf(!builtArtifactsExist)('dsh web browser-open assembled snapshot',
       status: opened.status,
       bootManifest: opened.bootManifest,
       apiKeyPresent: opened.apiKeyPresent,
-      dshHomePresent: opened.dshHomePresent,
+      tomatoHomePresent: opened.tomatoHomePresent,
       stderr: result.stderr,
     }).toMatchInlineSnapshot(`
       {
         "apiKeyPresent": false,
         "bootManifest": true,
-        "dshHomePresent": false,
+        "tomatoHomePresent": false,
         "exitCode": 0,
         "openedUrl": "http://127.0.0.1:{{port}}/?token={{token}}",
         "opening": true,
@@ -110,10 +110,10 @@ describe.skipIf(!builtArtifactsExist)('dsh web browser-open assembled snapshot',
         ...process.env,
         BROWSER_OPEN_TEST_FAILURE: 'fixture desktop unavailable',
         DEEPSEEK_API_KEY: 'keyless-browser-open-no-call',
-        DSH_AGENTS_HOME: join(root, '.agents'),
-        DSH_BROWSER_OPEN_TEST_EXIT_ON_FAILURE: '1',
-        DSH_HOME: join(root, '.dsh'),
-        DSH_TELEMETRY_DISABLED: '1',
+        TOMATO_AGENTS_HOME: join(root, '.agents'),
+        TOMATO_BROWSER_OPEN_TEST_EXIT_ON_FAILURE: '1',
+        TOMATO_HOME: join(root, '.dsh'),
+        TOMATO_TELEMETRY_DISABLED: '1',
         NODE_NO_WARNINGS: '1',
         SSH_CONNECTION: '',
         SSH_TTY: '',
@@ -157,10 +157,10 @@ describe.skipIf(!builtArtifactsExist)('dsh web browser-open assembled snapshot',
       env: {
         ...process.env,
         DEEPSEEK_API_KEY: 'keyless-browser-open-no-call',
-        DSH_AGENTS_HOME: join(root, '.agents'),
-        DSH_BROWSER_OPEN_TEST_EXIT_ON_READY: '1',
-        DSH_HOME: join(root, '.dsh'),
-        DSH_TELEMETRY_DISABLED: '1',
+        TOMATO_AGENTS_HOME: join(root, '.agents'),
+        TOMATO_BROWSER_OPEN_TEST_EXIT_ON_READY: '1',
+        TOMATO_HOME: join(root, '.dsh'),
+        TOMATO_TELEMETRY_DISABLED: '1',
         NODE_NO_WARNINGS: '1',
         SSH_CONNECTION: '10.0.0.2 55000 10.0.0.9 22',
         SSH_TTY: '',
@@ -204,9 +204,9 @@ describe.skipIf(!builtArtifactsExist)('dsh web browser-open assembled snapshot',
       env: {
         ...process.env,
         DEEPSEEK_API_KEY: 'keyless-browser-open-no-call',
-        DSH_AGENTS_HOME: join(root, '.agents'),
-        DSH_HOME: join(root, '.dsh'),
-        DSH_TELEMETRY_DISABLED: '1',
+        TOMATO_AGENTS_HOME: join(root, '.agents'),
+        TOMATO_HOME: join(root, '.dsh'),
+        TOMATO_TELEMETRY_DISABLED: '1',
         NODE_NO_WARNINGS: '1',
         SSH_CONNECTION: '',
         SSH_TTY: '',

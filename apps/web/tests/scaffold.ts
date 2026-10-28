@@ -4,7 +4,7 @@
 // patches over the empty profile root through the vendored Loader (the same
 // layer stack the profile boot composes), patched the
 // snapshot way — so a real chromium exercises the real HTTP uplink/WebSocket
-// downlink, api-gateway, agent loop, tools, and persistence. Modes ride $DSH_SNAPSHOT:
+// downlink, api-gateway, agent loop, tools, and persistence. Modes ride $TOMATO_SNAPSHOT:
 // replay (default, keyless: normally disables the direct DeepSeek rows and
 // inserts dsh-llm-replay in providers mode), record (real adapter + key,
 // harvests fixtures from live session memory), refresh (keyless replay that
@@ -31,7 +31,7 @@ import { pathToFileURL } from 'node:url'
 import type { Page } from 'playwright'
 import { expect } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import { DSH_LAUNCH_ENVIRONMENT_KEY, type LaunchEnvironmentSnapshot } from '@deepseek-ai/dsh-launch-environment'
+import { TOMATO_LAUNCH_ENVIRONMENT_KEY, type LaunchEnvironmentSnapshot } from '@deepseek-ai/dsh-launch-environment'
 import Loader from '@deepseek-ai/cordis-plugin-loader'
 import { entryListSchema, type PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 import yaml from 'js-yaml'
@@ -59,7 +59,7 @@ import {
   type NormalizeContext,
 } from '@deepseek-ai/dsh-session-snapshot'
 import type { Profile, ProfileContext } from '@deepseek-ai/dsh-app-boot'
-import { dshHomePath } from '@deepseek-ai/dsh-home-paths'
+import { tomatoHomePath } from '@deepseek-ai/dsh-home-paths'
 import { LlmAdapter } from '@deepseek-ai/dsh-llm'
 import type {
   LlmModelInfo, LlmProviderInfo, LlmResolvedModelInfo, RetryPolicyConfig, StreamChunk,
@@ -123,7 +123,7 @@ export const WELCOME_NOTICE_COPY = {
   },
 } as const
 
-/** Snapshot mode for the lane, from $DSH_SNAPSHOT (same vocabulary as the other snapshot suites). */
+/** Snapshot mode for the lane, from $TOMATO_SNAPSHOT (same vocabulary as the other snapshot suites). */
 export type WebSnapshotMode = 'replay' | 'record' | 'refresh'
 
 /**
@@ -131,10 +131,10 @@ export type WebSnapshotMode = 'replay' | 'record' | 'refresh'
  * @returns the active mode; unset/empty selects replay.
  */
 export function webSnapshotMode(): WebSnapshotMode {
-  const value = process.env.DSH_SNAPSHOT
+  const value = process.env.TOMATO_SNAPSHOT
   if (value === undefined || value === '' || value === 'replay') return 'replay'
   if (value === 'record' || value === 'refresh') return value
-  throw new Error(`DSH_SNAPSHOT must be replay, record, or refresh; got ${JSON.stringify(value)}`)
+  throw new Error(`TOMATO_SNAPSHOT must be replay, record, or refresh; got ${JSON.stringify(value)}`)
 }
 
 /**
@@ -289,7 +289,7 @@ export interface WebScaffold {
   workspaceCwd: string
   /** Temp persistence root (seeded sessions land here through the real API). */
   persistenceRoot: string
-  /** Isolated harness home the settings/credentials rows write ($DSH_HOME double). */
+  /** Isolated harness home the settings/credentials rows write ($TOMATO_HOME double). */
   harnessHome: string
   /** Send a browser-equivalent Host request with this scaffold's authenticated cookie. */
   hostFetch(path: string, init?: RequestInit): Promise<Response>
@@ -525,7 +525,7 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
     workspacePrefix += '-'.repeat(paddingLength)
   }
   const workspaceCwd = await realpath(await mkdtemp(join(workspaceParent, workspacePrefix)))
-  // Isolated harness home: the settings/credentials rows resolve $DSH_HOME
+  // Isolated harness home: the settings/credentials rows resolve $TOMATO_HOME
   // paths at load, and an in-process boot must NEVER touch the developer's
   // real ~/.dsh document or credential file.
   const harnessHome = options.harnessHome ?? join(workspaceCwd, '.dsh-home')
@@ -535,14 +535,14 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
   // tree. The row's documented fallback is the environment, so pin that: the
   // whole scaffold lifetime, not just the boot, since presets mount when a
   // session is created. Without this a developer's real ~/.dsh/skills silently
-  // enters replay requests and goldens while CI sees none. `DSH_HOME` follows
+  // enters replay requests and goldens while CI sees none. `TOMATO_HOME` follows
   // the resolved harness home so a scaffold sharing another's home — the
   // cross-port persistence scenario — pins the same roots the settings and
   // credentials rows were configured with.
   const skillRootEnvironment = {
-    DSH_HOME: harnessHome,
-    DSH_AGENTS_HOME: join(workspaceCwd, '.agents-home'),
-    DSH_BUNDLED_SKILL_DIR: join(workspaceCwd, '.bundled-skills'),
+    TOMATO_HOME: harnessHome,
+    TOMATO_AGENTS_HOME: join(workspaceCwd, '.agents-home'),
+    TOMATO_BUNDLED_SKILL_DIR: join(workspaceCwd, '.bundled-skills'),
   }
   const originalSkillRootEnvironment = Object.fromEntries(
     Object.keys(skillRootEnvironment).map(key => [key, process.env[key]]),
@@ -602,7 +602,7 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
     // the seeded-session scenarios navigate by content search, and these e2e
     // runs are the assembled coverage for the opt-in search path.
     { id: 'session-query-sqlite', config: { path: ':memory:', openAt: 'first-search' } },
-    // storage-json's yml root is anchored to the real $DSH_HOME; pin the row
+    // storage-json's yml root is anchored to the real $TOMATO_HOME; pin the row
     // to an absolute temp root (removed with the workspace at close) so tests
     // never write the user's harness home.
     { id: 'storage-json', config: { root: join(workspaceCwd, '.dsh-storages') } },
@@ -615,7 +615,7 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
     {
       id: 'skill-filesystem',
       config: {
-        dshHome: join(workspaceCwd, '.dsh-home'),
+        tomatoHome: join(workspaceCwd, '.dsh-home'),
         agentsHome: join(workspaceCwd, '.agents-home'),
         bundledSkillDir: join(workspaceCwd, '.bundled-skills'),
         watch: false,
@@ -627,7 +627,7 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
     { id: 'agent-instructions', disabled: true },
     { id: 'session-title-llm', disabled: true },
     // Fixture sessions must never leave the process: the shipped row defaults
-    // to the production OTLP endpoint (or whatever DSH_TELEMETRY_OTLP_URL
+    // to the production OTLP endpoint (or whatever TOMATO_TELEMETRY_OTLP_URL
     // names in the ambient environment). A scenario with a local collector
     // preserves the shipped disabled setting instead of overriding it.
     options.telemetryUrl === undefined
@@ -669,7 +669,7 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
           ],
         },
       }],
-    { id: 'credentials', config: { dshHome: harnessHome } },
+    { id: 'credentials', config: { tomatoHome: harnessHome } },
     // The shipped directory-picker row is the -auto chooser, which resolves
     // the interaction from the RUNNING host (display, SSH launch, bind). The
     // lane's goldens are interaction-specific (workspace-management drives
@@ -725,7 +725,7 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
   // the temp workspace so tool cwd, session cwd, and fixtures agree.
   const originalCwd = process.cwd()
   const ctx = new Context()
-  if (options.openInAppEnvironment !== undefined) ctx.provide(DSH_LAUNCH_ENVIRONMENT_KEY, options.openInAppEnvironment)
+  if (options.openInAppEnvironment !== undefined) ctx.provide(TOMATO_LAUNCH_ENVIRONMENT_KEY, options.openInAppEnvironment)
   const observedSessions = new Map<SessionId, Session>()
   const stopObservingSessions = ctx.on('session/created', (session) => {
     observedSessions.set(session.id, session)
@@ -812,7 +812,7 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
       ctx.provide('profileContext', profileContext)
     }
     // This direct Loader harness supplies the same root-path capability as app-boot.
-    ctx.provide('dshHomePath', dshHomePath)
+    ctx.provide('tomatoHomePath', tomatoHomePath)
     // A host with no command line still provides one: the web bundle's startup
     // row releases the rows waiting on it, and with no arguments each starts on
     // the values this scaffold composed above. An exit request can only come
@@ -1713,7 +1713,7 @@ export async function compareOrRefreshGolden(goldenPath: string, actual: string,
     return
   }
   if (!existsSync(goldenPath)) {
-    throw new Error(`missing golden ${goldenPath} — run DSH_SNAPSHOT=refresh pnpm run test:web to generate it`)
+    throw new Error(`missing golden ${goldenPath} — run TOMATO_SNAPSHOT=refresh pnpm run test:web to generate it`)
   }
   expect(payload).toBe(await readFile(goldenPath, 'utf8'))
 }
