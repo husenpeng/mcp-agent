@@ -34,4 +34,5 @@
 ## 验证
 
 - `pnpm exec tsx scripts/rescope-to-tomato.ts --check`：无残留、幂等。
-- `pnpm run typecheck`、`pnpm run build`、`pnpm run test:snapshot`、`pnpm run doc-sync`、`pnpm run hygiene` 通过。
+- `pnpm run typecheck`、`pnpm run build`、`pnpm run doc-sync`、`pnpm run hygiene` 通过。
+- `pnpm run test:snapshot`：失败集合与分叉基线完全相同（13 个场景，均为基线已有的 provider/环境问题：`deepseek-account` 被 Tomato bundle 停用、python sandbox 与 web-search provider 未配置）；本次改名没有新增失败。已刷新因改名产生字节统计漂移的 authored 场景。

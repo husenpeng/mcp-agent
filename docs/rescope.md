@@ -2,7 +2,7 @@
 
 English | [中文](rescope.zh.md)
 
-The Cordis framework and its foundation libraries are vendored under [`vendor/`](../vendor/README.md) and published under the `@deepseek-ai` scope, because every harness package declares the framework as a peer dependency: publishing the harness publishes this layer with it, and under the upstream names that publication would squat them on the registry. This page is the name mapping; the decision and its consequences live in the [rescope Agent Note](../.agents/notes/archived/process/2026-08-10-vendor-package-rescope.md), and the upstream commits in [`vendor/README.md`](../vendor/README.md).
+The Cordis framework and its foundation libraries are vendored under [`vendor/`](../vendor/README.md) and rescoped into this repository's `@tomato` scope. Every harness package declares the framework as a peer dependency, so the scope keeps the framework layer indistinguishable from the rest of the workspace and avoids reintroducing upstream package names. This repository publishes no packages ([ADR 0009](tomato/adr/0009-tomato-namespace.md)). This page is the name mapping; the decision and its consequences live in the [rescope Agent Note](../.agents/notes/archived/process/2026-08-10-vendor-package-rescope.md), and the upstream commits in [`vendor/README.md`](../vendor/README.md).
 
 ## Name mapping
 

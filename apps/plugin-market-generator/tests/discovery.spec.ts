@@ -22,7 +22,7 @@ async function readDisplay(files: PackageFiles, manifest: Manifest, inlineBytes 
 
 describe('parseSources', () => {
   it('reads package names and repository URLs, ignoring comments, blanks, and repeats', () => {
-    expect(parseSources('# market\n\n@scope/tomato-a\ndsh-b\nhttps://github.com/o/r.git\nhttps://github.com/o/r/\ndsh-b\nhttps://gitlab.example.com/g/sub/r\n')).toEqual([
+    expect(parseSources('# market\n\n@scope/tomato-a\ntomato-b\nhttps://github.com/o/r.git\nhttps://github.com/o/r/\ntomato-b\nhttps://gitlab.example.com/g/sub/r\n')).toEqual([
       { kind: 'npm', line: '@scope/tomato-a', name: '@scope/tomato-a' },
       { kind: 'npm', line: 'tomato-b', name: 'tomato-b' },
       { kind: 'git', line: 'https://github.com/o/r.git', url: 'https://github.com/o/r' },

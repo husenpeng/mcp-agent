@@ -10,7 +10,7 @@ const bundle = clientBundle(import.meta.dirname, ['lib/types/index.js'], {
 })
 const require = createRequire(import.meta.url)
 const workerSpecifier = 'pdfjs-dist/build/pdf.worker.min.mjs?raw'
-const workerModule = '\0dsh-pdf-worker.mjs'
+const workerModule = '\0tomato-pdf-worker.mjs'
 
 /** FortuneSheet omits its repository license from the npm payload. */
 function excelLicenseBanner(): string {
@@ -70,9 +70,9 @@ const pdfWorker: NonNullable<UserConfig['plugins']> = [{
 /** Embed a self-contained browser parser without giving it a loader-module dependency. */
 const excelWorker: NonNullable<UserConfig['plugins']> = [{
   name: 'tomato-excel-worker-source',
-  resolveId(source) { return source === './worker.ts?raw' ? '\0dsh-excel-worker-source' : null },
+  resolveId(source) { return source === './worker.ts?raw' ? '\0tomato-excel-worker-source' : null },
   async load(id) {
-    if (id !== '\0dsh-excel-worker-source') return null
+    if (id !== '\0tomato-excel-worker-source') return null
     const parent = this
     const worker = await Rolldown.rolldown({
       input: join(import.meta.dirname, 'src/client/excel/worker.ts'), platform: 'browser',

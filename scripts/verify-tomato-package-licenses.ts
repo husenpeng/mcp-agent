@@ -8,6 +8,8 @@ import { resolve, sep } from 'node:path'
 
 const ROOT = resolve(import.meta.dirname, '..')
 const TOMATO_PACKAGE_NAME = /^@tomato\//
+/** Published native packages retain their upstream BSD-3-Clause license. */
+const UPSTREAM_LICENSED = /^@tomato\/node-addon-system(?:-|$)/
 
 /** Result of checking every TOMATO package reachable through the root workspace list. */
 export interface TomatoPackageLicenseReport {
@@ -61,7 +63,7 @@ export function inspectTomatoPackageLicenses(root: string): TomatoPackageLicense
   for (const file of workspaceManifestPaths(root)) {
     const manifest = readManifest(root, file)
     const name = manifest.name
-    if (typeof name !== 'string' || !TOMATO_PACKAGE_NAME.test(name)) continue
+    if (typeof name !== 'string' || !TOMATO_PACKAGE_NAME.test(name) || UPSTREAM_LICENSED.test(name)) continue
 
     packageCount++
     if (manifest.license !== 'MIT') {

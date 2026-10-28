@@ -1109,7 +1109,7 @@ describe('headless recorded-session snapshots', () => {
       { type: 'turn/end', data: { turn: 1, reason: { kind: 'completed' } } },
     ].map(record => JSON.stringify(record)).join('\n')
 
-    expect(stderrFromSession(log)).toBe('tomato: reasoning:\nfirst thought\ndsh: reasoning:\nsecond\n')
+    expect(stderrFromSession(log)).toBe('tomato: reasoning:\nfirst thought\ntomato: reasoning:\nsecond\n')
   })
 
   it.each([10, 20])('assigns sibling roles by catalog order when the first child timestamp is %i', async (firstCreatedAt) => {

@@ -727,7 +727,7 @@ describe('headless runner', () => {
     expect(await test.run()).toMatchObject({
       code: 1,
       out: '\n',
-      err: 'tomato: reasoning:\ntrying recovery\ndsh: SERVER: provider unavailable\n',
+      err: 'tomato: reasoning:\ntrying recovery\ntomato: SERVER: provider unavailable\n',
     })
     await test.ctx.fiber.dispose()
   })

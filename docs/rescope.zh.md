@@ -2,7 +2,7 @@
 
 [English](rescope.md) | 中文
 
-Cordis 框架及其基础库以源码形式 vendored 在 [`vendor/`](../vendor/README.md) 下，并以 `@deepseek-ai` scope 发布：每个 harness 包都把框架声明为 peer dependency，发布 harness 就会连带发布这一层，用上游名发布等于在 registry 上占用别人的名字。本页是名字映射表；决策与影响见 [改名 Agent Note](../.agents/notes/archived/process/2026-08-10-vendor-package-rescope.md)，上游 commit 见 [`vendor/README.md`](../vendor/README.md)。
+Cordis 框架及其基础库以源码形式 vendored 在 [`vendor/`](../vendor/README.md) 下，并改名到本仓库的 `@tomato` scope。每个 harness 包都把框架声明为 peer dependency，因此统一 scope 让框架层与工作区其他包一致，也不会重新引入上游包名。本仓库不发布任何包（[ADR 0009](tomato/adr/0009-tomato-namespace.md)）。本页是名字映射表；决策与影响见 [改名 Agent Note](../.agents/notes/archived/process/2026-08-10-vendor-package-rescope.md)，上游 commit 见 [`vendor/README.md`](../vendor/README.md)。
 
 ## 名字映射
 

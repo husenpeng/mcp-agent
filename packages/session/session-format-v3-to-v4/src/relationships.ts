@@ -368,7 +368,7 @@ function titleSources(
   const content = array(message['content'], 'title content')
   const block = content[0]
   if (references.length === 0 || messages.length !== 1 || message['role'] !== 'user'
-    || record(message['source'], 'title source')['kind'] !== '@tomato/session-title-llm'
+    || !['@tomato/session-title-llm', 'dsh-session-title-llm'].includes(String(record(message['source'], 'title source')['kind']))
     || content.length !== 1 || !isSessionFormatJsonObject(block) || block['type'] !== 'text') {
     throw new SessionFormatError('session/title-llm-request messages do not represent messageSeqs')
   }

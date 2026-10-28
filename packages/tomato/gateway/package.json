@@ -31,5 +31,6 @@
   },
   "dependencies": {
     "@tomato/schemastery": "workspace:~"
-  }
+  },
+  "license": "MIT"
 }

@@ -324,7 +324,7 @@ export async function runProfilePnpm(
   /** Packages a compatibility check refused; callers render them for their own surface. */
   const incompatible: IncompatiblePlugin[] = []
   const rejected = async (warnings: readonly string[], restoration: string): Promise<PackageResult> => {
-    const diagnostic = `\ndsh: installation rejected: ${warnings.join('\n')}\ndsh: ${restoration}.\n`
+    const diagnostic = `\ntomato: installation rejected: ${warnings.join('\n')}\ntomato: ${restoration}.\n`
     await log.write(diagnostic)
     options.onOutput?.(diagnostic, 'stderr')
     append(Buffer.from(diagnostic))
@@ -493,7 +493,7 @@ export async function runProfilePnpm(
           incompatible.push(...issues)
         }
         else {
-          const notice = `\ndsh: warning: ${found.join('\n')}\ndsh: it stays installed but profile startup denies it until you grant an exemption for those exact versions.\n`
+          const notice = `\ntomato: warning: ${found.join('\n')}\ntomato: it stays installed but profile startup denies it until you grant an exemption for those exact versions.\n`
           await log.write(notice)
           options.onOutput?.(notice, 'stderr')
         }
@@ -516,7 +516,7 @@ export async function runProfilePnpm(
         const restoration = repaired.exitCode === 0
           ? 'restored package.json, pnpm-lock.yaml, and node_modules'
           : "restored package.json and pnpm-lock.yaml, but node_modules could not be reinstalled; run 'tomato plugin install'"
-        const diagnostic = `\ndsh: installation rejected: ${warnings.join('\n')}\ndsh: ${restoration}.\n`
+        const diagnostic = `\ntomato: installation rejected: ${warnings.join('\n')}\ntomato: ${restoration}.\n`
         await log.write(diagnostic)
         options.onOutput?.(diagnostic, 'stderr')
         append(Buffer.from(diagnostic))

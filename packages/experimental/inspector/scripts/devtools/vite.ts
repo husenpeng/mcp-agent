@@ -8,7 +8,7 @@ import { configureCodeMirrorBrowser, configureHostPerformanceSource, cssTextModu
 
 const assets = fileURLToPath(new URL('../../assets/devtools/', import.meta.url))
 const CONNECT = join(assets, 'connect.js')
-const VIRTUAL = '\0dsh-devtools:'
+const VIRTUAL = '\0tomato-devtools:'
 const EMPTY = `${VIRTUAL}empty`
 const ENTRIES = ['devtools_app', 'device_mode_emulation_frame', 'formatter_worker', 'heap_snapshot_worker', 'wasmparser_worker', 'lighthouse_worker'] as const
 

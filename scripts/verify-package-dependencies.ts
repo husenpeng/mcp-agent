@@ -30,8 +30,12 @@ const CORDIS = '@tomato/cordis'
  * location that TypeScript scans when it computes module specifiers for every JSX file.
  */
 const ROOT_TYPE_PACKAGES: ReadonlySet<string> = new Set(['@types/react', '@types/react-dom'])
+/** Vendored framework and native packages keep their own release line, so dependents use `workspace:~`. */
+const VENDOR_PACKAGE = new RegExp('^@tomato/(?:cordis$|cordis-plugin-'
+  + '(?:group|hmr|include|loader|logger-console|timer)$|cosmokit$|schemastery$|node-addon-system(?:-|$))')
 function workspaceRange(name: string): 'workspace:*' | 'workspace:~' {
-  return name === '@tomato/cli' || name.startsWith('@tomato/') ? 'workspace:*' : 'workspace:~'
+  const tomato = name === '@tomato/cli' || (name.startsWith('@tomato/') && !VENDOR_PACKAGE.test(name))
+  return tomato ? 'workspace:*' : 'workspace:~'
 }
 const RELEASE_MANIFEST_GLOB = 'packages/!(experimental)/*/package.json'
 /** Every package group, experimental included, follows the same published dependency policy. */

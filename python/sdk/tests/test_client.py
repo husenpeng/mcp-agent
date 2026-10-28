@@ -1074,7 +1074,7 @@ with open(os.environ["SEEN"], "w") as seen:
         json.loads(line)
 
 
-def _install_fake_bundled_dsh(
+def _install_fake_bundled_tomato(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Install a fake runtime package that records tomato argv and serves lifecycle calls."""
@@ -1120,7 +1120,7 @@ def test_client_default_launch_uses_bundled_dsh_sdk_profile_and_explicit_home(
     home = tmp_path / "home"
     patch = tmp_path / "sdk.patch.yml"
     patch.write_text("[]\n")
-    _install_fake_bundled_dsh(tmp_path, monkeypatch)
+    _install_fake_bundled_tomato(tmp_path, monkeypatch)
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("TOMATO_HOME", str(tmp_path / "ambient-home"))
     monkeypatch.delenv("TOMATO_CORDIS_CONFIG", raising=False)
@@ -1146,7 +1146,7 @@ def test_client_accepts_explicit_environment_dsh_home(
 ) -> None:
     env_dump = tmp_path / "env.json"
     home = tmp_path / "environment-home"
-    _install_fake_bundled_dsh(tmp_path, monkeypatch)
+    _install_fake_bundled_tomato(tmp_path, monkeypatch)
 
     with HarnessClient(
         HarnessConfig(profile="custom", env={"ENV_DUMP": str(env_dump), "TOMATO_HOME": str(home)})
@@ -1163,7 +1163,7 @@ def test_client_accepts_explicit_environment_dsh_home(
 def test_client_rejects_an_implicit_default_dsh_home(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _install_fake_bundled_dsh(tmp_path, monkeypatch)
+    _install_fake_bundled_tomato(tmp_path, monkeypatch)
     monkeypatch.delenv("TOMATO_HOME", raising=False)
 
     with pytest.raises(ValueError, match="explicit dsh_home or non-empty TOMATO_HOME"):

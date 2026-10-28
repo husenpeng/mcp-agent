@@ -487,7 +487,11 @@ export function checkTomatoFamilyVersion(manifest: PackageManifest, expected: st
 export function checkWorkspaceManifest({ dir, manifest }: WorkspaceManifest): string[] {
   const errors = checkExperimentalManifest({ dir, manifest })
   const label = manifest.name ?? dir
-  const familyVersionError = checkTomatoFamilyVersion(manifest, repositoryVersion)
+  // Vendored and native packages share the scope but keep their own release
+  // sequences and versions ([package groups](../packages/README.md)).
+  const familyVersionError = dir.startsWith('vendor/') || dir === 'native/system' || dir.startsWith('native/system/packages/')
+    ? undefined
+    : checkTomatoFamilyVersion(manifest, repositoryVersion)
   if (familyVersionError !== undefined) errors.push(familyVersionError)
   const isNativePackageDir = dir.startsWith('native/system/packages/')
   const isPublicNativePackage = isNativePackageDir
@@ -691,9 +695,9 @@ export function checkWorkspaceProtocol(manifests: readonly WorkspaceManifest[]):
     for (const section of dependencySections) {
       for (const [name, range] of Object.entries(manifest[section] ?? {})) {
         if (!members.has(name)) continue
-        const expected = name === '@tomato/cli' || name.startsWith('@tomato/')
-          ? 'workspace:*'
-          : vendors.has(name) ? 'workspace:~' : undefined
+        const expected = vendors.has(name)
+          ? 'workspace:~'
+          : name === '@tomato/cli' || name.startsWith('@tomato/') ? 'workspace:*' : undefined
         if (expected !== undefined ? range === expected : range.startsWith('workspace:')) continue
         errors.push(`${manifest.name ?? dir}: ${section}.${name} must use ${expected ?? 'the workspace: protocol'}, got ${range}`)
       }

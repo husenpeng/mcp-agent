@@ -112,7 +112,7 @@ it('resolves an old locally retained package with publishRequested=false without
     tagged.source.sourceRef = 'tomato-v1.0.0'
     await writeFile(manifestPath, JSON.stringify(tagged))
     expect(await resolveRetainedDesktopPublication(env, api)).toMatchObject({ sourceRef: 'tomato-v1.0.0' })
-    await expect(resolveRetainedDesktopPublication(env, path => path.endsWith('/commits/refs%2Ftags%2Fdsh-v1.0.0') ? { sha: 'c'.repeat(40) } : api(path)))
+    await expect(resolveRetainedDesktopPublication(env, path => path.endsWith('/commits/refs%2Ftags%2Ftomato-v1.0.0') ? { sha: 'c'.repeat(40) } : api(path)))
       .rejects.toThrow(/source tag changed/u)
     await writeFile(manifestPath, original)
     await writeFile(join(root, 'releases/42/2/installer.dmg'), 'changed')

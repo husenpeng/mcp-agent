@@ -66,16 +66,16 @@ const configHost: ts.ParseConfigFileHost = {
  * API today so the historical blocks still compile.
  */
 const HISTORICAL_PACKAGE_PATHS: Readonly<Record<string, readonly string[]>> = {
-  '@tomato/cordis': ['./vendor/cordis/src'],
-  '@tomato/agent': ['./packages/core/agent/src'],
-  '@tomato/branded': ['./packages/util/branded/src'],
-  '@tomato/plugin-manager': ['./packages/boot/plugin-manager/src'],
-  '@tomato/plugin-manager/operations': ['./packages/boot/plugin-manager/src/operations.ts'],
-  '@tomato/session': ['./packages/core/session/src'],
-  '@tomato/dsh-session-projection': ['./packages/session/session-projection/src'],
-  '@tomato/subagent': ['./packages/subagent/subagent/src'],
-  '@tomato/user-approval': ['./packages/interaction/user-approval/src'],
-  '@tomato/web': ['./packages/web/web/src'],
+  '@deepseek-ai/cordis': ['./vendor/cordis/src'],
+  '@deepseek-ai/dsh-agent': ['./packages/core/agent/src'],
+  '@deepseek-ai/dsh-brand': ['./packages/util/branded/src'],
+  '@deepseek-ai/dsh-plugin-manager': ['./packages/boot/plugin-manager/src'],
+  '@deepseek-ai/dsh-plugin-manager/operations': ['./packages/boot/plugin-manager/src/operations.ts'],
+  '@deepseek-ai/dsh-session': ['./packages/core/session/src'],
+  '@deepseek-ai/dsh-session-projection': ['./packages/session/session-projection/src'],
+  '@deepseek-ai/dsh-subagent': ['./packages/subagent/subagent/src'],
+  '@deepseek-ai/dsh-user-approval': ['./packages/interaction/user-approval/src'],
+  '@deepseek-ai/dsh-web': ['./packages/web/web/src'],
 }
 
 /**

@@ -198,7 +198,7 @@ class StubTerminalSession implements TerminalBackendSession {
       return this.operation(Promise.resolve(this.result(this.motd, 'stdin_read')), incremental)
     }
     if (this.mode === 'status-tail' || this.mode === 'continue-status-tail') {
-      const prefix = this.mode === 'status-tail' ? `${start ?? ''}\nkept  \ndsh> \n${end ?? ''}` : ''
+      const prefix = this.mode === 'status-tail' ? `${start ?? ''}\nkept  \ntomato> \n${end ?? ''}` : ''
       const fragment = this.statusChunks.shift()
       if (fragment === undefined) throw new Error('missing scripted completion fragment')
       const output = prefix + fragment
@@ -399,7 +399,7 @@ describe('tool-pwsh-persistent', () => {
 
     const result = await call(ctx, owner, 'padded completion')
     expect(result.isError).not.toBe(true)
-    expect(text(result)).toBe('kept  \ndsh> ' + (exitCode === 0 ? '' : `\n[exit code: ${exitCode}]`))
+    expect(text(result)).toBe('kept  \ntomato> ' + (exitCode === 0 ? '' : `\n[exit code: ${exitCode}]`))
     expect(session.sends).toBe(2)
   })
 
@@ -412,7 +412,7 @@ describe('tool-pwsh-persistent', () => {
     session.statusChunks = [tail.slice(0, split), tail.slice(split)]
     const send = vi.spyOn(session, 'startSend')
 
-    expect(text(await call(ctx, owner, 'split completion'))).toBe('kept  \ndsh> \n[exit code: 7]')
+    expect(text(await call(ctx, owner, 'split completion'))).toBe('kept  \ntomato> \n[exit code: 7]')
     expect(send).toHaveBeenCalledTimes(2)
     expect(send.mock.calls[1]?.[0]).toMatchObject({ text: '', submit: false })
   })
