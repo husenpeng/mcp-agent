@@ -58,7 +58,7 @@
     "@tomato/compaction": "workspace:*",
     "@tomato/cordis": "workspace:~",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react-dom": "^19.3.0",
     "@tomato/client-store": "workspace:*",
     "@tomato/client-ui-chat": "workspace:*",
     "@tomato/session": "workspace:*",

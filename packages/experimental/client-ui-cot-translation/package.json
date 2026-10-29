@@ -78,7 +78,7 @@
     "@tomato/client-ui-settings": "workspace:*",
     "@tomato/client-ui-slots": "workspace:*",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react-dom": "^19.3.0",
     "@testing-library/react": "^16.3.3",
     "@tomato/session": "workspace:*",
     "@tomato/api-remote-access": "workspace:*",
