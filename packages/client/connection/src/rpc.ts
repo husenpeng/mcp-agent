@@ -326,3 +326,31 @@ export interface ClientConnectionRpc {
     uplink?: AsyncIterable<unknown>,
   ) => AsyncIterable<unknown>
 }
+
+/** One completed unary RPC exchange, carrying the complete payloads for development inspection. */
+export interface ConnectionRpcObservation {
+  readonly kind: 'rpc'
+  readonly channel: string
+  readonly endpoint: string
+  readonly startedAt: number
+  readonly durationMs: number
+  readonly request: unknown
+  readonly response?: ConnectionRpcResult<unknown>
+  readonly httpStatus?: number
+  readonly outcome: 'ok' | 'error' | 'cancelled'
+}
+
+/** One WebSocket frame carried by a connection socket. */
+export interface ConnectionStreamObservation {
+  readonly kind: 'stream'
+  readonly path: string
+  readonly direction: 'in' | 'out'
+  readonly at: number
+  readonly frame: unknown
+}
+
+/** One exchange or frame observed on this page's connection. */
+export type ConnectionObservation = ConnectionRpcObservation | ConnectionStreamObservation
+
+/** @param observation - one completed exchange or frame. */
+export type ConnectionObserver = (observation: ConnectionObservation) => void

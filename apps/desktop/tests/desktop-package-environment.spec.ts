@@ -146,23 +146,58 @@ describe('Desktop local packaging configuration', () => {
         .toEqual({ TOMATO_DESKTOP_PACKAGE_CACHE_DIR: directory })
     })
   })
-  it('selects macOS local defaults while excluding inherited release settings and retaining build networking', () => {
-    const parent = {
-      PATH: 'build-tools', HTTPS_PROXY: 'http://proxy.example:8080', TOMATO_DESKTOP_NPM_REGISTRY: 'https://registry.npmmirror.com',
-      TOMATO_DESKTOP_APP_ID: 'com.example.release', TOMATO_DESKTOP_UNSIGNED: '0',
-      TOMATO_DESKTOP_AUTO_UPDATE_ENV: 'production', TOMATO_DESKTOP_MANDATORY_UPDATE_CONFIG: 'invalid-json',
-      TOMATO_DESKTOP_MANDATORY_UPDATE_PROD_ORIGIN: 'https://policy.example.com',
-      TOMATO_DESKTOP_MACOS_SIGNING_IDENTITY: 'Release identity', CSC_LINK: 'missing.p12',
-      APPLE_API_KEY: 'missing.p8', DOWNLOAD_PROD_UNKNOWN: 'unused-secret',
-    }
-    const local = localMacOSPackageEnvironment(parent)
-    expect(local).toEqual({
-      PATH: parent.PATH, HTTPS_PROXY: parent.HTTPS_PROXY, TOMATO_DESKTOP_NPM_REGISTRY: parent.TOMATO_DESKTOP_NPM_REGISTRY,
-      TOMATO_DESKTOP_APP_ID: 'vip.tomatoai.harness', TOMATO_DESKTOP_UNSIGNED: '1',
+  it('selects macOS local defaults while excluding inherited release settings and retaining build networking', async () => {
+    await withDirectory(async (directory) => {
+      const parent = {
+        PATH: 'build-tools', HTTPS_PROXY: 'http://proxy.example:8080', TOMATO_DESKTOP_NPM_REGISTRY: 'https://registry.npmmirror.com',
+        TOMATO_DESKTOP_APP_ID: 'com.example.release', TOMATO_DESKTOP_UNSIGNED: '0',
+        TOMATO_DESKTOP_AUTO_UPDATE_ENV: 'production', TOMATO_DESKTOP_MANDATORY_UPDATE_CONFIG: 'invalid-json',
+        TOMATO_DESKTOP_MANDATORY_UPDATE_PROD_ORIGIN: 'https://policy.example.com',
+        TOMATO_DESKTOP_MACOS_SIGNING_IDENTITY: 'Release identity', CSC_LINK: 'missing.p12',
+        APPLE_API_KEY: 'missing.p8', DOWNLOAD_PROD_UNKNOWN: 'unused-secret',
+      }
+      const local = localMacOSPackageEnvironment(parent, directory)
+      expect(local).toEqual({
+        PATH: parent.PATH, HTTPS_PROXY: parent.HTTPS_PROXY, TOMATO_DESKTOP_NPM_REGISTRY: parent.TOMATO_DESKTOP_NPM_REGISTRY,
+        TOMATO_DESKTOP_APP_ID: 'vip.tomatoai.harness', TOMATO_DESKTOP_UNSIGNED: '1',
+      })
+      expect(() => { validateDesktopPackageEnvironment(local, MACOS, { unsigned: true }) }).not.toThrow()
+      expect(parent.TOMATO_DESKTOP_UNSIGNED).toBe('0')
+      expect(parent.TOMATO_DESKTOP_APP_ID).toBe('com.example.release')
     })
-    expect(() => { validateDesktopPackageEnvironment(local, MACOS, { unsigned: true }) }).not.toThrow()
-    expect(parent.TOMATO_DESKTOP_UNSIGNED).toBe('0')
-    expect(parent.TOMATO_DESKTOP_APP_ID).toBe('com.example.release')
+  })
+
+  it('seals the development login origins into an unsigned build and lets an explicit pair win', async () => {
+    await withDirectory(async (directory) => {
+      await mkdir(join(directory, 'config'), { recursive: true })
+      await writeFile(join(directory, 'config', 'development.env'),
+        'TOMATO_DESKTOP_AUTH_SERVICE_URL=http://auth.example:8003/\nTOMATO_DESKTOP_TOMATO_WEB_URL=https://web.example/\n')
+      expect(localMacOSPackageEnvironment({}, directory)).toMatchObject({
+        TOMATO_DESKTOP_AUTH_SERVICE_URL: 'http://auth.example:8003',
+        TOMATO_DESKTOP_TOMATO_WEB_URL: 'https://web.example',
+      })
+      expect(localMacOSPackageEnvironment({
+        TOMATO_DESKTOP_AUTH_SERVICE_URL: 'https://auth.shell',
+        TOMATO_DESKTOP_TOMATO_WEB_URL: 'https://web.shell',
+      }, directory)).toMatchObject({
+        TOMATO_DESKTOP_AUTH_SERVICE_URL: 'https://auth.shell',
+        TOMATO_DESKTOP_TOMATO_WEB_URL: 'https://web.shell',
+      })
+    })
+  })
+
+  it('rejects an unpaired or malformed local login origin', async () => {
+    await withDirectory(async (directory) => {
+      await mkdir(join(directory, 'config'), { recursive: true })
+      await writeFile(join(directory, 'config', 'development.env'),
+        'TOMATO_DESKTOP_AUTH_SERVICE_URL=http://auth.example:8003\n')
+      expect(() => localMacOSPackageEnvironment({}, directory)).toThrow('must be set together')
+      await writeFile(join(directory, 'config', 'development.env'),
+        'TOMATO_DESKTOP_AUTH_SERVICE_URL=http://auth.example:8003/path\nTOMATO_DESKTOP_TOMATO_WEB_URL=https://web.example\n')
+      expect(() => localMacOSPackageEnvironment({}, directory)).toThrow('without credentials, path, query, or fragment')
+    })
+    expect(() => localMacOSPackageEnvironment({ TOMATO_DESKTOP_AUTH_SERVICE_URL: 'http://auth.example' }, '/definitely-missing'))
+      .toThrow('must be set together')
   })
 
   it('takes cache concurrency from the Windows file and lets a personal value win', async () => {

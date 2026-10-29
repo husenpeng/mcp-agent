@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`ctx.translator` translates one bounded text request through Bing or Google, with optional paid native DeepSeek Flash routes. Bing remains the default; anonymous endpoints need no login or API key. Paid translation is explicitly selected and requires an existing durable Session. This experimental package is opt-in.
+`ctx.translator` translates one bounded text request through Bing or Google, with optional paid native Flash routes. Bing remains the default; anonymous endpoints need no login or API key. Paid translation is explicitly selected and requires an existing durable Session. This experimental package is opt-in.
 
 ## Table of Contents
 

@@ -1,0 +1,424 @@
+/* Tomato Pulse: a bright brand-red reveal on a quiet, dark stage. */
+
+:root {
+  color-scheme: dark;
+  --splash-canvas: #10070a;
+  --splash-ink: #fff7f4;
+  --splash-mark-start: #ff2828;
+  --splash-mark-end: #fe5042;
+  --splash-star-rgb: 255 180 166;
+  --splash-star-red-rgb: 255 40 40;
+  --splash-wait-track: rgb(255 247 244 / 18%);
+  --splash-wordmark-glow: rgb(255 40 40 / 24%);
+  --glow-primary: #ff2828;
+  --glow-hot: #fe5042;
+  --glow-deep: #b71616;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --splash-canvas: #10070a;
+    --splash-ink: #fff7f4;
+    --splash-mark-start: #ff2828;
+    --splash-mark-end: #fe5042;
+    --splash-star-rgb: 255 180 166;
+    --splash-star-red-rgb: 255 40 40;
+    --splash-wait-track: rgb(255 247 244 / 18%);
+  }
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--splash-canvas);
+}
+
+body {
+  position: relative;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+  color: var(--splash-ink);
+  background: radial-gradient(ellipse at 50% 38%, #3b1018 0%, #210b12 42%, #10070a 100%);
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+  user-select: none;
+  cursor: default;
+  -webkit-font-smoothing: antialiased;
+}
+
+#stars {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.16;
+}
+
+.glow-scene,
+.spark-field {
+  position: fixed;
+  z-index: 1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.glow-scene {
+  opacity: 0;
+  animation: glow-scene-in 500ms ease-out both;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(76px);
+  will-change: transform;
+}
+
+.blob-primary {
+  top: -25%;
+  left: -18%;
+  width: 64vw;
+  height: 56vw;
+  opacity: 0.32;
+  background: radial-gradient(circle, var(--glow-primary), transparent 68%);
+  animation: blob-drift-one 11s ease-in-out infinite alternate;
+}
+
+.blob-hot {
+  right: -20%;
+  bottom: -32%;
+  width: 70vw;
+  height: 62vw;
+  opacity: 0.28;
+  background: radial-gradient(circle, var(--glow-hot), transparent 68%);
+  animation: blob-drift-two 13s ease-in-out infinite alternate;
+}
+
+.blob-deep {
+  top: 6%;
+  right: -24%;
+  width: 52vw;
+  height: 48vw;
+  opacity: 0.24;
+  background: radial-gradient(circle, var(--glow-deep), transparent 68%);
+  animation: blob-drift-one 14s ease-in-out infinite alternate-reverse;
+}
+
+.light-sweep {
+  position: absolute;
+  top: -40%;
+  left: -45%;
+  width: 32%;
+  height: 180%;
+  opacity: 0;
+  background: linear-gradient(90deg, transparent, rgb(255 190 180 / 7%), rgb(255 255 255 / 15%), rgb(255 190 180 / 6%), transparent);
+  filter: blur(20px);
+  transform: rotate(18deg);
+  animation: light-sweep 800ms ease-out 300ms both;
+}
+
+.lockup {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateY(-2vh);
+}
+
+.encounter {
+  position: relative;
+  display: grid;
+  width: 300px;
+  height: 278px;
+  place-items: center;
+  opacity: 0;
+  isolation: isolate;
+  animation: logo-pop 760ms cubic-bezier(0.22, 1.28, 0.36, 1) 140ms both;
+}
+
+.encounter::before {
+  position: absolute;
+  z-index: -1;
+  width: 224px;
+  height: 224px;
+  content: '';
+  opacity: 0;
+  border: 1px solid rgb(255 235 230 / 18%);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 24%, rgb(255 255 255 / 12%), transparent 46%),
+    rgb(255 80 66 / 5%);
+  box-shadow:
+    0 24px 80px rgb(255 40 40 / 18%),
+    inset 0 1px 0 rgb(255 255 255 / 16%);
+  backdrop-filter: blur(18px);
+  animation: halo-in 800ms cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
+}
+
+.mark {
+  position: relative;
+  z-index: 2;
+  width: 196px;
+  height: 196px;
+  overflow: visible;
+  filter: drop-shadow(0 14px 28px rgb(105 13 33 / 28%));
+}
+
+.mark-start {
+  stop-color: var(--splash-mark-start);
+}
+
+.mark-end {
+  stop-color: var(--splash-mark-end);
+}
+
+.ink-base {
+  opacity: 0.18;
+}
+
+.trace {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: splash-trace 700ms cubic-bezier(0.65, 0.05, 0.36, 1) both;
+}
+
+.ignite {
+  transform: scale(0);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: splash-ignite 450ms cubic-bezier(0.42, 0, 0.58, 1) 700ms both;
+}
+
+.planet-surface {
+  opacity: 1;
+  animation: planet-surface-reveal 600ms ease-out 700ms both;
+}
+
+.wordmark {
+  display: flex;
+  align-items: baseline;
+  gap: 0.28em;
+  margin-top: 8px;
+  color: var(--splash-ink);
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 42px;
+  font-weight: 500;
+  letter-spacing: -1.2px;
+  line-height: 1.1;
+  opacity: 0;
+  transform: translateY(12px);
+  filter: drop-shadow(0 0 18px var(--splash-wordmark-glow));
+  animation: wordmark-in 750ms cubic-bezier(0.22, 1, 0.36, 1) 450ms both;
+}
+
+.wordmark-ai {
+  color: var(--splash-mark-end);
+}
+
+.spark {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  opacity: 0;
+  fill: #fff7f4;
+  filter: drop-shadow(0 0 10px rgb(255 80 66 / 48%));
+  animation: spark-in 420ms cubic-bezier(0.22, 1.28, 0.36, 1) both;
+}
+
+.spark-one {
+  top: 24%;
+  left: 24%;
+  animation-delay: 700ms;
+}
+
+.spark-two {
+  top: 29%;
+  right: 23%;
+  width: 18px;
+  height: 18px;
+  animation-delay: 850ms;
+}
+
+.waiting {
+  position: relative;
+  overflow: hidden;
+  width: 120px;
+  height: 1px;
+  margin-top: 32px;
+  background: linear-gradient(90deg, transparent, var(--splash-wait-track), transparent);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 240ms ease;
+}
+
+.waiting.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.waiting i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 42px;
+  background: linear-gradient(90deg, transparent, var(--splash-mark-start), var(--splash-mark-end), transparent);
+  animation: splash-wait 1500ms linear infinite;
+}
+
+@keyframes glow-scene-in {
+  to { opacity: 1; }
+}
+
+@keyframes halo-in {
+  from { opacity: 0; transform: scale(0.78); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes logo-pop {
+  0% { opacity: 0; transform: translateY(18px) scale(0.72) rotate(-7deg); }
+  65% { opacity: 1; transform: translateY(-2px) scale(1.035) rotate(1deg); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}
+
+@keyframes splash-trace {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes splash-ignite {
+  from { transform: scale(0); }
+  to { transform: scale(2.05); }
+}
+
+@keyframes planet-surface-reveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes wordmark-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spark-in {
+  0% { opacity: 0; transform: scale(0.25) rotate(-24deg); }
+  70% { opacity: 1; transform: scale(1.18) rotate(8deg); }
+  100% { opacity: 0.82; transform: scale(1) rotate(0); }
+}
+
+@keyframes light-sweep {
+  0% { opacity: 0; transform: translateX(0) rotate(18deg); }
+  24% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(520%) rotate(18deg); }
+}
+
+@keyframes blob-drift-one {
+  to { transform: translate3d(7vw, 5vh, 0) scale(1.08); }
+}
+
+@keyframes blob-drift-two {
+  to { transform: translate3d(-6vw, -4vh, 0) scale(1.06); }
+}
+
+@keyframes splash-wait {
+  from { transform: translateX(-42px); }
+  to { transform: translateX(120px); }
+}
+
+/* Skip input resolves the entrance without disturbing the departure handshake. */
+html[data-splash='done'] .trace,
+html[data-splash='done'] .ignite,
+html[data-splash='done'] .wordmark,
+html[data-splash='done'] .planet-surface,
+html[data-splash='done'] .encounter,
+html[data-splash='done'] .spark,
+html[data-splash='done'] .encounter::before {
+  animation: none;
+}
+
+html[data-splash='done'] .trace {
+  stroke-dashoffset: 0;
+}
+
+html[data-splash='done'] .ignite {
+  transform: scale(2.05);
+}
+
+html[data-splash='done'] .planet-surface,
+html[data-splash='done'] .encounter,
+html[data-splash='done'] .encounter::before,
+html[data-splash='done'] .wordmark {
+  opacity: 1;
+  transform: none;
+}
+
+html[data-splash='done'] .spark {
+  opacity: 0.82;
+  transform: none;
+}
+
+html[data-splash='done'] .light-sweep {
+  animation: none;
+}
+
+@media (max-height: 680px) {
+  .lockup {
+    transform: translateY(-1vh) scale(0.86);
+  }
+}
+
+@media (forced-colors: active) {
+  .wordmark {
+    filter: none;
+  }
+
+  .wordmark-name,
+  .wordmark-ai {
+    color: CanvasText;
+  }
+
+  .spark-field {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .trace {
+    stroke-dashoffset: 0;
+  }
+
+  .ignite {
+    transform: scale(2.05);
+  }
+
+  .glow-scene,
+  .encounter,
+  .encounter::before,
+  .wordmark {
+    opacity: 1;
+    transform: none;
+  }
+
+  .spark {
+    opacity: 0.82;
+  }
+
+  .light-sweep {
+    display: none;
+  }
+
+  .waiting i {
+    transform: translateX(39px);
+  }
+}

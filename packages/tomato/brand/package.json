@@ -2,7 +2,6 @@
   "name": "@tomato/brand",
   "description": "Tomato brand occupants for the sidebar and conversation-hero slots",
   "version": "0.2.1-rc.3",
-  "private": true,
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",

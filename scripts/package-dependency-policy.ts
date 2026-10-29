@@ -1,5 +1,9 @@
 /** Explicit exceptions and Host packages for the published dependency policy. */
 
+/** Vendored framework and native packages that publish on their own version line, so dependents use `workspace:~`. */
+export const INDEPENDENT_RELEASE_PACKAGE = new RegExp('^@tomato/(?:cordis$|cordis-plugin-'
+  + '(?:group|hmr|include|loader|logger-console|timer)$|cosmokit$|schemastery$|node-addon-system(?:-|$))')
+
 /** Packages treated as Client/Host packages without declaring `tomato.client`. */
 const CLIENT_FACE_INCLUDE: readonly string[] = []
 

@@ -1,13 +1,13 @@
-import { BrandWordmark, FishLogo } from '@tomato/client-ui-primitives'
+import { BrandWordmark, TomatoMark } from '@tomato/client-ui-primitives'
 import type { SidebarBrandMarkOwnerProps } from '@tomato/client-ui-sidebar/client'
 
 /**
  * Render the official mark with the presentation requested by its host surface.
  * @param props - Host-supplied mark presentation.
- * @returns the official whale mark.
+ * @returns the official Tomato mark.
  */
 export function OfficialBrandMark({ size }: SidebarBrandMarkOwnerProps) {
-  return <FishLogo size={size} />
+  return <TomatoMark size={size} />
 }
 
 /**

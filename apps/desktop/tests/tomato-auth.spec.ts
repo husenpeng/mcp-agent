@@ -18,12 +18,19 @@ const windows: FakeWindow[] = []
 
 type Listener = (event: unknown, url: string) => void
 
+/** One `did-fail-load` emission, whose payload the auth module narrows to the main frame. */
+type LoadFailureListener = (event: unknown, code: number, description: string, url: string, isMainFrame: boolean) => void
+
+type AnyListener = Listener | LoadFailureListener
+
 class FakeWindow {
   readonly listeners = new Map<string, Listener[]>()
+  readonly loadFailureListeners: LoadFailureListener[] = []
   readonly webContents = {
     setWindowOpenHandler: vi.fn(),
-    on: (name: string, listener: Listener) => {
-      this.listeners.set(name, [...(this.listeners.get(name) ?? []), listener])
+    on: (name: string, listener: AnyListener) => {
+      if (name === 'did-fail-load') this.loadFailureListeners.push(listener as LoadFailureListener)
+      else this.listeners.set(name, [...(this.listeners.get(name) ?? []), listener as Listener])
     },
   }
   destroyed = false
@@ -54,6 +61,13 @@ class FakeWindow {
   /** Fire one server-side redirect target before the navigation commits. */
   redirect(url: string): void {
     for (const listener of this.listeners.get('will-redirect') ?? []) listener({}, url)
+  }
+
+  /** Fire one failed load, naming whether the main document or a sub-frame failed. */
+  failLoad(code: number, isMainFrame: boolean): void {
+    for (const listener of this.loadFailureListeners) {
+      listener({}, code, 'ERR_FAILED', this.currentUrl, isMainFrame)
+    }
   }
 }
 
@@ -149,6 +163,24 @@ describe('desktop gateway authentication', () => {
     windows[0]?.navigate('http://host.test/api/auth/callback?state=s&code=c')
     await vi.waitFor(async () => { expect((await auth.state()).attempt?.phase).toBe('succeeded') }, { timeout: 2000 })
     expect(auth.sessionId()).toBe('session-late')
+  })
+
+  it('ignores sub-frame load failures from the third-party sign-in page', async () => {
+    const auth = await authOf()
+    await auth.start()
+    windows[0]?.failLoad(-2, false)
+    await new Promise(resolve => setTimeout(resolve, 20))
+    expect((await auth.state()).attempt?.phase).toBe('waiting-browser')
+    expect(windows[0]?.destroyed).toBe(false)
+    await auth.cancel((await auth.state()).attempt!.id)
+  })
+
+  it('fails the attempt when the sign-in document itself cannot load', async () => {
+    const auth = await authOf()
+    await auth.start()
+    windows[0]?.failLoad(-2, true)
+    await vi.waitFor(async () => { expect((await auth.state()).attempt?.phase).toBe('failed') }, { timeout: 2000 })
+    expect((await auth.state()).attempt?.feishuFailure).toBeUndefined()
   })
 
   it('maps a denied callback and stores nothing', async () => {

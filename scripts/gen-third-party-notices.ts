@@ -92,6 +92,8 @@ const OVERRIDES: Record<string, { license?: string; repo?: string }> = {
   // relicensing, so the effective terms are per-contribution.
   '@modelcontextprotocol/server-everything': { license: 'MIT / Apache-2.0', repo: 'https://github.com/modelcontextprotocol/servers' },
   '@modelcontextprotocol/server-filesystem': { license: 'MIT / Apache-2.0', repo: 'https://github.com/modelcontextprotocol/servers' },
+  // The published kit manifest still names its pre-rename repository.
+  '@deepseek-ai/libreoffice-kit': { repo: 'https://github.com/deepseek-ai/tomato-libreoffice-kit' },
   // No repository field in the published manifest.
   'node-addon-require-builtin': { repo: 'https://www.npmjs.com/package/node-addon-require-builtin' },
   // No `license` field in the published manifest; the tarball's LICENSE.txt is the MIT text.

@@ -18,11 +18,11 @@
   en: 10be7f75a1576575
   zh: abf2905d89b0da48
 /tomato-client-ui-primitives/use-this-package/component-catalog:
-  en: 22731781426f9fc3
-  zh: 5ff76b23ed697e37
+  en: 5b19794d59e652d6
+  zh: 8bcc8978e31c0c47
 /tomato-client-ui-primitives/use-this-package/controls-and-icons:
-  en: 3c60d04a51d903e7
-  zh: 6246dffbdb6e645b
+  en: f72aff382e2a6915
+  zh: a2bba927d9872f5e
 /tomato-client-ui-primitives/use-this-package/rendering-agent-output:
   en: 7c363db913bcca86
   zh: 3d2b03d03aab36a8
@@ -54,8 +54,8 @@
   en: ca75c51c89c2c9b0
   zh: de54f3467ef3b9be
 /tomato-client-ui-primitives/known-limitations-and-deferred-work:
-  en: 72ccc8d2acc3b5dd
-  zh: cc1ede6809e199ce
+  en: a7380c1425e418b6
+  zh: 3341e71a3c6bbe17
 /tomato-client-ui-primitives/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

@@ -1,10 +1,18 @@
 /** Select local test defaults or platform release settings without changing the caller's environment. */
 
-import { accessSync, constants, readFileSync, statSync } from 'node:fs'
+import { accessSync, constants, existsSync, readFileSync, statSync } from 'node:fs'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseEnv } from 'node:util'
-import { resolveDesktopAppId, resolveMacOSNotarizationEnvironment, resolveMacOSSigningEnvironment, resolveNpmRegistry } from './desktop-release-environment.mjs'
+import {
+  AUTH_SERVICE_URL_ENV,
+  TOMATO_WEB_URL_ENV,
+  resolveDesktopAppId,
+  resolveDesktopLoginEnvironment,
+  resolveMacOSNotarizationEnvironment,
+  resolveMacOSSigningEnvironment,
+  resolveNpmRegistry,
+} from './desktop-release-environment.mjs'
 import { resolveDesktopAutoUpdateConfig } from './desktop-auto-update-environment.mjs'
 import { createWindowsTokenSigner } from './windows-sign.mjs'
 import { resolveDesktopPolicyEnvironment } from './desktop-policy-environment.mjs'
@@ -22,13 +30,36 @@ const AMBIENT_RELEASE_SETTING = /^(?:TOMATO_DESKTOP_(?:APP_ID|AUTO_UPDATE_ENV|AU
 const FILE_SETTINGS = ['TOMATO_DESKTOP_WINDOWS_CER_FILE', 'TOMATO_DESKTOP_WINDOWS_SIGNTOOL', 'APPLE_API_KEY', 'APPLE_KEYCHAIN', 'CSC_LINK']
 
 /**
- * Select local macOS test defaults without reading dotenv files or inheriting release settings.
+ * Read the login origins an unsigned build seals into its app bundle. The local
+ * development file supplies the defaults, so the test services a development
+ * launch uses are the ones an unsigned dmg carries to another machine.
+ * @param {NodeJS.ProcessEnv} environment - Launcher environment; exported values win over the file.
+ * @param {string} appRoot - Desktop application directory.
+ * @returns {NodeJS.ProcessEnv} The paired login variables, or none when neither source configures them.
+ */
+function localLoginEnvironment(environment, appRoot) {
+  const file = join(appRoot, 'config', 'development.env')
+  const settings = existsSync(file) ? parseEnv(readFileSync(file, 'utf8')) : {}
+  const selected = {
+    [AUTH_SERVICE_URL_ENV]: environment[AUTH_SERVICE_URL_ENV] ?? settings[AUTH_SERVICE_URL_ENV],
+    [TOMATO_WEB_URL_ENV]: environment[TOMATO_WEB_URL_ENV] ?? settings[TOMATO_WEB_URL_ENV],
+  }
+  const { authServiceUrl, tomatoWebUrl } = resolveDesktopLoginEnvironment(selected)
+  return authServiceUrl === '' ? {} : { [AUTH_SERVICE_URL_ENV]: authServiceUrl, [TOMATO_WEB_URL_ENV]: tomatoWebUrl }
+}
+
+/**
+ * Select local macOS test defaults without reading release presets or inheriting release settings.
+ * Login origins come from the development file (or an explicit environment pair) so an unsigned
+ * build can sign in against the test services; every other release setting is dropped.
  * @param {NodeJS.ProcessEnv} environment Parent environment, retained for build tools and networking.
+ * @param {string} appRoot Desktop application directory holding the development file.
  * @returns {NodeJS.ProcessEnv} Unsigned build environment with the standard application identifier and no update policy.
  */
-export function localMacOSPackageEnvironment(environment = process.env) {
+export function localMacOSPackageEnvironment(environment = process.env, appRoot = APP_ROOT) {
   return {
     ...Object.fromEntries(Object.entries(environment).filter(([name]) => !AMBIENT_RELEASE_SETTING.test(name))),
+    ...localLoginEnvironment(environment, appRoot),
     TOMATO_DESKTOP_APP_ID: 'vip.tomatoai.harness',
     TOMATO_DESKTOP_UNSIGNED: '1',
   }

@@ -5,6 +5,7 @@ import { once } from 'node:events'
 import { existsSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join, resolve } from 'node:path'
+import { pnpmInvocation } from '../../../scripts/pnpm-invocation.ts'
 
 type FlockEntry = typeof import('@tomato/node-addon-system/flock')
 
@@ -72,12 +73,12 @@ function hostAddonBuilt(): boolean {
 }
 
 async function buildNativeSystem(): Promise<void> {
-  const pnpmEntry = process.env.npm_execpath
-  if (pnpmEntry === undefined || pnpmEntry === '') {
+  if (process.env.npm_execpath === undefined || process.env.npm_execpath === '') {
     throw new Error(`desktop package: flock addon is not built; run ${BUILD_COMMAND_TEXT} or invoke this script through a pnpm package command`)
   }
   for (const args of BUILD_COMMANDS) {
-    const child = spawn(process.execPath, [pnpmEntry, ...args], { cwd: REPOSITORY_ROOT, stdio: 'inherit' })
+    const { command, args: commandArgs } = pnpmInvocation(args)
+    const child = spawn(command, commandArgs, { cwd: REPOSITORY_ROOT, stdio: 'inherit' })
     const [code, signal] = await once(child, 'close') as [number | null, NodeJS.Signals | null]
     if (code !== 0) throw new Error(`desktop package: pnpm ${args.join(' ')} exited with ${String(code ?? signal)}`)
   }

@@ -339,6 +339,11 @@
     - id: ui-settings-plugin-inventory
       name: '@tomato/client-ui-settings-plugin-inventory'
 
+    # Development-only diagnostics page; the browser half registers it only in
+    # the unpackaged desktop launcher, so shipped builds show nothing.
+    - id: ui-settings-developer
+      name: '@tomato/client-ui-settings-developer'
+
     - id: ui-conversation
       name: '@tomato/client-ui-conversation'
 

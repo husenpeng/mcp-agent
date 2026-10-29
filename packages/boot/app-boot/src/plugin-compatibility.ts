@@ -52,6 +52,9 @@ function satisfies(runtimeVersion: string, range: string): boolean {
   return range.trim() !== '' && semver.satisfies(runtimeVersion, range, { includePrerelease: true })
 }
 
+/** Vendored packages versioned by their pinned source, not by the tomato runtime release. */
+const VENDORED_PACKAGE = /^@tomato\/(?:cordis(?:-plugin-[a-z0-9-]+)?|cosmokit|schemastery)$/u
+
 function unmetRequirements(fields: Record<string, unknown>, runtimeVersion: string): Record<string, string> {
   const engines = Object.hasOwn(fields, 'engines') ? objectOf(fields.engines, 'Plugin manifest engines') : {}
   if (Object.hasOwn(engines, 'tomato')) {
@@ -67,6 +70,9 @@ function unmetRequirements(fields: Record<string, unknown>, runtimeVersion: stri
       throw new Error(`Plugin manifest peerDependencies[${JSON.stringify(name)}] must be a string`)
     }
     if (name !== '@tomato/cli' && !name.startsWith('@tomato/')) continue
+    // A vendored peer names a package the runtime always supplies at its own pinned version,
+    // so its range says nothing about the running tomato release ([mapping](../../../../docs/rescope.md)).
+    if (VENDORED_PACKAGE.test(name)) continue
     const requirement = ['workspace:^', 'workspace:~', 'workspace:*'].includes(range) ? runtimeVersion : range
     if (!satisfies(runtimeVersion, requirement)) unmet[name] = range
   }
@@ -75,7 +81,8 @@ function unmetRequirements(fields: Record<string, unknown>, runtimeVersion: stri
 
 /**
  * Check the plugin's tomato requirements against the runtime. An own `engines.tomato` range decides alone and
- * peerDependencies are ignored; otherwise every @tomato/cli or @tomato/* peer must match.
+ * peerDependencies are ignored; otherwise every @tomato/cli or @tomato/* peer must match. Vendored
+ * packages carry their pinned upstream versions instead of the runtime's, so their peers are ignored.
  * Prereleases participate in ranges. For peers only, workspace:^, workspace:~, and workspace:* refer to
  * the current runtime; other empty or invalid ranges, including any workspace: `engines.tomato`, are unmet.
  * @param manifest - parsed plugin package.json; inherited fields are ignored.

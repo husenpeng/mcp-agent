@@ -9,8 +9,9 @@ import {
   type ConnectionState,
 } from './connection.ts'
 import { createWebConnectionRpc, type RpcFetch, type RpcStreamOpen } from './rpc.ts'
+import { observeConnectionWebSocket } from './observed.ts'
 import { isLoopbackHostname } from '../loopback-hostname.ts'
-import type { ClientConnectionRpc } from '../rpc.ts'
+import type { ClientConnectionRpc, ConnectionObservation, ConnectionObserver } from '../rpc.ts'
 import { resolveConnectionConfig } from '../recovery-config.ts'
 import type { ConnectionInteractions } from '../connect-protocol.ts'
 import { openConnectionWebSocket, type ConnectionWebSocket, type ConnectionWebSocketFactory } from './socket.ts'
@@ -19,6 +20,10 @@ export type { ConnectionInteractions } from '../connect-protocol.ts'
 export type { ConnectionWebSocket, ConnectionWebSocketFactory } from './socket.ts'
 
 declare module '@tomato/cordis' {
+  interface Context {
+    /** Page-owned logical connection transport installed by {@link installConnection}. */
+    connection: ConnectionHandle
+  }
   interface Events {
     /**
      * A connection generation was established. Wire-derived caches must
@@ -53,6 +58,7 @@ export type {
 } from './connection.ts'
 export type {
   ClientConnectionRpc, ConnectionRpcFailure, ConnectionRpcResult,
+  ConnectionObservation, ConnectionObserver, ConnectionRpcObservation, ConnectionStreamObservation,
 } from '../rpc.ts'
 export type { RpcFetch } from './rpc.ts'
 
@@ -170,6 +176,12 @@ export interface ConnectionHandle {
   /** Reset retry progression and replace the current attempt immediately. */
   reconnect(): void
   /**
+   * Observe completed gateway exchanges and connection socket frames on this page.
+   * @param observer - receives one observation per completed call or frame.
+   * @returns disposer removing the observer.
+   */
+  observe(observer: ConnectionObserver): () => void
+  /**
    * Register the sole source defining Host generations. The source reports
    * ready only after its incremental listeners are attached.
    * @param source - long-lived generation source owned by the push carrier.
@@ -230,7 +242,18 @@ export function installConnection(ctx: Context, options: ConnectionInstallOption
   const transport = options.transport
   const recovery = options.recovery ?? {}
   const interactions = options.interactions ?? (pageLocation === undefined ? 'none' : 'answer')
-  const rpc = transport?.rpc ?? createWebConnectionRpc(transport?.fetch, transport?.openStream)
+  const observers = new Set<ConnectionObserver>()
+  const emit = (observation: ConnectionObservation): void => {
+    if (observers.size === 0) return
+    for (const observer of [...observers]) {
+      try {
+        observer(observation)
+      } catch (error) {
+        console.error('[connection] observer threw:', error)
+      }
+    }
+  }
+  const rpc = transport?.rpc ?? createWebConnectionRpc(transport?.fetch, transport?.openStream, emit)
   let generationSource: ConnectionGenerationSource | undefined
   let owner: ConnectionOwner | undefined
   let generationId = 0
@@ -270,7 +293,8 @@ export function installConnection(ctx: Context, options: ConnectionInstallOption
   }
   const handle: ConnectionHandle = {
     interactions,
-    openWebSocket: path => openConnectionWebSocket(path, transport?.createWebSocket, transport?.streamBaseUrl),
+    openWebSocket: path => observeConnectionWebSocket(
+      openConnectionWebSocket(path, transport?.createWebSocket, transport?.streamBaseUrl), path, emit),
     isLoopback: transport?.ownsHost === true || pageLocation === undefined || isLoopbackHostname(pageLocation.hostname),
     generation: {
       getSnapshot: () => generation,
@@ -287,6 +311,10 @@ export function installConnection(ctx: Context, options: ConnectionInstallOption
       },
     },
     rpc,
+    observe(observer) {
+      observers.add(observer)
+      return () => { observers.delete(observer) }
+    },
     reconnect() {
       owner?.controller.reconnect()
     },

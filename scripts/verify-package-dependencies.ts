@@ -14,6 +14,7 @@ import { PACKAGE_ASSET_EXPORT } from '../packages/client/modules/src/assets.ts'
 import { writeModuleGraph } from './gen-module-graph.ts'
 import {
   hasClientDeclaration,
+  INDEPENDENT_RELEASE_PACKAGE,
   PACKAGE_DEPENDENCY_POLICY,
   type PackageDependencyPolicy,
 } from './package-dependency-policy.ts'
@@ -30,11 +31,9 @@ const CORDIS = '@tomato/cordis'
  * location that TypeScript scans when it computes module specifiers for every JSX file.
  */
 const ROOT_TYPE_PACKAGES: ReadonlySet<string> = new Set(['@types/react', '@types/react-dom'])
-/** Vendored framework and native packages keep their own release line, so dependents use `workspace:~`. */
-const VENDOR_PACKAGE = new RegExp('^@tomato/(?:cordis$|cordis-plugin-'
-  + '(?:group|hmr|include|loader|logger-console|timer)$|cosmokit$|schemastery$|node-addon-system(?:-|$))')
+
 function workspaceRange(name: string): 'workspace:*' | 'workspace:~' {
-  const tomato = name === '@tomato/cli' || (name.startsWith('@tomato/') && !VENDOR_PACKAGE.test(name))
+  const tomato = name === '@tomato/cli' || (name.startsWith('@tomato/') && !INDEPENDENT_RELEASE_PACKAGE.test(name))
   return tomato ? 'workspace:*' : 'workspace:~'
 }
 const RELEASE_MANIFEST_GLOB = 'packages/!(experimental)/*/package.json'

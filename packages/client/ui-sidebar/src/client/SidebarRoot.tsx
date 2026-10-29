@@ -19,7 +19,7 @@
 import { useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
 import {
-  FishLogo, IconAppsAddOutlineRegular, IconNewChatOutlineMedium, IconNewChatOutlineRegular, IconPanelLeftOutlineRegular,
+  TomatoMark, IconAppsAddOutlineRegular, IconNewChatOutlineMedium, IconNewChatOutlineRegular, IconPanelLeftOutlineRegular,
   isDarwinDesktop, Menu, ShortcutKeys, Toast, Tooltip, writeClipboard,
 } from '@tomato/client-ui-primitives'
 import type { InjectFace, PropsRenderSlots, PropsRuntime } from '@tomato/client-ui-slots'
@@ -239,7 +239,7 @@ export function SidebarRoot({
   }
 
   const darwinDesktop = isDarwinDesktop()
-  // Rail resting state is the whale mark; hovering swaps in the panel icon
+  // Rail resting state is the Tomato mark; hovering swaps in the panel icon
   // (the expand affordance, figma sidebar-hover flow). Expanded it is a plain
   // panel icon.
   const toggle = (
@@ -253,7 +253,7 @@ export function SidebarRoot({
       >
         {!wide && !windowsTitlebar && (
           <span className={css.railMark} aria-hidden="true">
-            {renderSlot('sidebar.brand.mark', { size: 24 }, { fallback: <FishLogo size={24} /> })}
+            {renderSlot('sidebar.brand.mark', { size: 24 }, { fallback: <TomatoMark size={24} /> })}
           </span>
         )}
         {/* Rail icons render at 18 (figma rail spec); expanded keeps the glyph-native sizes. */}
@@ -271,8 +271,8 @@ export function SidebarRoot({
       <span className={css.brandMark}>
         {renderSlot('sidebar.brand.mark', { size: 24 }, {
           fallback: buildVersion === undefined
-            ? <FishLogo size={24} />
-            : <span className={css.copyVersion} data-copy-version onClick={copyVersion(buildVersion)}><FishLogo size={24} /></span>,
+            ? <TomatoMark size={24} />
+            : <span className={css.copyVersion} data-copy-version onClick={copyVersion(buildVersion)}><TomatoMark size={24} /></span>,
         })}
       </span>
       <span className={css.brandName}>

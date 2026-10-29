@@ -14,6 +14,7 @@ import type { FileDragHandle } from '@tomato/util-file-drag'
 function createProductApi(): TomatoDesktopProductApi {
   return {
     protocolVersion: 1,
+    development: process.env.TOMATO_DESKTOP_DEV_APP === '1',
     account: {
       openSignIn: () => ipcRenderer.invoke(DESKTOP_IPC.accountOpenSignIn) as Promise<void>,
       signOut: () => ipcRenderer.invoke(DESKTOP_IPC.accountSignOut) as Promise<void>,

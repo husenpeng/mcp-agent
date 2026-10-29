@@ -226,6 +226,7 @@
     "apps/cli/tests/**/*.ts",
     "apps/plugin-market-generator/tests/**/*.ts",
     "apps/desktop/scripts/**/*.ts",
+    "apps/desktop/src/client/splash-timeline.ts",
     "apps/desktop/tests/**/*.ts",
     "apps/desktop-host/tests/**/*.ts",
     "benchmarks/**/*.ts",
@@ -283,6 +284,7 @@
     { "path": "./packages/client/ui-chat/tsconfig.host.json" },
     { "path": "./packages/client/ui-conversation/tsconfig.host.json" },
     { "path": "./packages/client/ui-settings/tsconfig.host.json" },
+    { "path": "./packages/client/ui-settings-developer/tsconfig.host.json" },
     { "path": "./packages/client/ui-settings-general/tsconfig.host.json" },
 
     { "path": "./packages/host/product-telemetry-otel" },

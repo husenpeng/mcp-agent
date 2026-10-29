@@ -1,0 +1,37 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/client/ui-settings-developer/README.md
+/:
+  en: c1cdf2f68da77550
+  zh: ca215fd676f8e0a1
+/tomato-client-ui-settings-developer:
+  en: ed843a530e4b2e5d
+  zh: 8f7aac475ea6c0b0
+/tomato-client-ui-settings-developer/summary:
+  en: a04ddc2dee91e28f
+  zh: 8a6cb6939a57d17b
+/tomato-client-ui-settings-developer/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 09388d293f9be9cb
+/tomato-client-ui-settings-developer/use-this-package:
+  en: 11522b636cc5edfc
+  zh: 96296425391160ab
+/tomato-client-ui-settings-developer/understand-the-implementation:
+  en: 1b6623fcdb2e8bd2
+  zh: 271fc301ebfb57bc
+/tomato-client-ui-settings-developer/further-exploration:
+  en: 3fa26c61a22ab505
+  zh: 79930fe45cc67eee
+/tomato-client-ui-settings-developer/model-experience:
+  en: 2f5ed894f0a51330
+  zh: 08218e4ab2dd9881
+/tomato-client-ui-settings-developer/model-experience/kv-cache-effect:
+  en: ca75c51c89c2c9b0
+  zh: 2064958b0754647e
+/tomato-client-ui-settings-developer/known-limitations-and-deferred-work:
+  en: 498444f4f37496c8
+  zh: e0a66d5af3b5e1d6
+/tomato-client-ui-settings-developer/known-limitations-and-deferred-work/dev-note:
+  en: eb46d0e9b6dfe079
+  zh: 91b99bd3f3318917

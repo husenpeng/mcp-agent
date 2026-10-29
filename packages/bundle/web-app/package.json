@@ -106,6 +106,7 @@
     "@tomato/client-ui-session": "workspace:*",
     "@tomato/client-ui-settings": "workspace:*",
     "@tomato/client-ui-settings-account": "workspace:*",
+    "@tomato/client-ui-settings-developer": "workspace:*",
     "@tomato/client-ui-settings-agent-loop": "workspace:*",
     "@tomato/client-ui-settings-general": "workspace:*",
     "@tomato/client-ui-settings-models": "workspace:*",

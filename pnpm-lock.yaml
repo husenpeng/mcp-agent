@@ -3054,6 +3054,9 @@ importers:
       '@tomato/client-ui-settings-agent-loop':
         specifier: workspace:*
         version: link:../../client/ui-settings-agent-loop
+      '@tomato/client-ui-settings-developer':
+        specifier: workspace:*
+        version: link:../../client/ui-settings-developer
       '@tomato/client-ui-settings-general':
         specifier: workspace:*
         version: link:../../client/ui-settings-general
@@ -5542,6 +5545,58 @@ importers:
       '@tomato/cordis':
         specifier: workspace:~
         version: link:../../../vendor/cordis
+      react:
+        specifier: ^18.2.0
+        version: 18.3.1
+
+  packages/client/ui-settings-developer:
+    dependencies:
+      '@tomato/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
+    devDependencies:
+      '@tomato/api-remotes':
+        specifier: workspace:*
+        version: link:../../api/remotes
+      '@tomato/api-session-controller':
+        specifier: workspace:*
+        version: link:../../api/session-controller
+      '@tomato/client-connection':
+        specifier: workspace:*
+        version: link:../connection
+      '@tomato/client-locale':
+        specifier: workspace:*
+        version: link:../locale
+      '@tomato/client-modules':
+        specifier: workspace:*
+        version: link:../modules
+      '@tomato/client-store':
+        specifier: workspace:*
+        version: link:../store
+      '@tomato/client-test-runtime':
+        specifier: workspace:*
+        version: link:../../test-support/client-runtime
+      '@tomato/client-ui-layout':
+        specifier: workspace:*
+        version: link:../ui-layout
+      '@tomato/client-ui-primitives':
+        specifier: workspace:*
+        version: link:../ui-primitives
+      '@tomato/client-ui-renderer':
+        specifier: workspace:*
+        version: link:../ui-renderer
+      '@tomato/client-ui-settings':
+        specifier: workspace:*
+        version: link:../ui-settings
+      '@tomato/client-ui-slots':
+        specifier: workspace:*
+        version: link:../ui-slots
+      '@tomato/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@tomato/settings':
+        specifier: workspace:*
+        version: link:../../settings/settings
       react:
         specifier: ^18.2.0
         version: 18.3.1

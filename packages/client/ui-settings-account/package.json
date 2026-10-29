@@ -1,6 +1,6 @@
 {
   "name": "@tomato/client-ui-settings-account",
-  "description": "Manage DeepSeek login and open Platform billing pages",
+  "description": "Manage account sign-in and open Platform billing pages",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"

@@ -80,6 +80,22 @@ export default defineConfig([
           },
         },
       })
+      // The splash shares the welcome entry's emitted Montserrat faces.
+      await build({
+        configFile: false,
+        root: fileURLToPath(new URL('.', import.meta.url)),
+        define: { 'process.env.NODE_ENV': JSON.stringify('production') },
+        build: {
+          outDir: 'lib/splash',
+          emptyOutDir: true,
+          lib: {
+            entry: 'src/client/splash.ts',
+            formats: ['iife'],
+            name: 'DesktopSplash',
+            fileName: () => 'splash.js',
+          },
+        },
+      })
     },
     outDir: 'lib',
     format: ['esm'],
@@ -90,7 +106,7 @@ export default defineConfig([
     clean: false,
     deps: { neverBundle: ['electron'] },
   },
-  ...(['preload-app', 'preload-welcome', 'preload-platform-account', 'preload-mandatory', 'preload-update-dialog'] as const).map(name => ({
+  ...(['preload-app', 'preload-welcome', 'preload-splash', 'preload-platform-account', 'preload-mandatory', 'preload-update-dialog'] as const).map(name => ({
     // Sandboxed Electron preloads run as CommonJS even though the application package is ESM.
     entry: { [name]: `lib/types/${name}.js` },
     plugins: [packagedImportsPlugin(preloadImports)],

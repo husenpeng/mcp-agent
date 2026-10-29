@@ -5,7 +5,12 @@ import {
   type ClientRequest,
   type RpcId as RpcIdType,
 } from '../rpc.ts'
-import type { ClientConnectionRpc, ConnectionRpcResult } from '../rpc.ts'
+import type {
+  ClientConnectionRpc,
+  ConnectionObservation,
+  ConnectionObserver,
+  ConnectionRpcResult,
+} from '../rpc.ts'
 import { randomUuid } from './random-uuid.ts'
 
 const CHANNEL_PATTERN = /^\/[A-Za-z0-9._~-]+$/
@@ -29,10 +34,19 @@ export type RpcStreamOpen = (
  * Create the browser-backed generic RPC caller.
  * @param doFetch - transport override; defaults to the page's global fetch.
  * @param openStream - optional worker-local Gateway stream carrier.
+ * @param observe - optional development observer for completed exchanges.
  * @returns caller that owns request correlation and response-envelope validation.
  */
-export function createWebConnectionRpc(doFetch?: RpcFetch, openStream?: RpcStreamOpen): ClientConnectionRpc {
+export function createWebConnectionRpc(
+  doFetch?: RpcFetch,
+  openStream?: RpcStreamOpen,
+  observe?: ConnectionObserver,
+): ClientConnectionRpc {
   const send: RpcFetch = doFetch ?? ((input, init) => globalThis.fetch(input, init))
+  const publish = (observation: ConnectionObservation): void => {
+    // Observation is diagnostic only; a failing observer never changes the call outcome.
+    try { observe?.(observation) } catch { /* the observer owns its own reporting */ }
+  }
   return {
     async call(channel, endpoint, payload, signal) {
       assertTarget(channel, endpoint)
@@ -46,27 +60,40 @@ export function createWebConnectionRpc(doFetch?: RpcFetch, openStream?: RpcStrea
       // The channel key is absolute; a page posts the document-relative form, and
       // a carrier that resolves against the Host root accepts the same form.
       const route = `${channel}/${endpoint}`.slice(1)
-      const response = await send(
-        route,
-        {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(message),
-          ...signal === undefined ? {} : { signal },
-        },
-      )
-      if (!response.ok) {
-        throw new Error(`transport failure for ${channel}/${endpoint}: HTTP ${response.status}`)
+      const startedAt = Date.now()
+      const startedHr = performance.now()
+      let httpStatus: number | undefined
+      try {
+        const response = await send(
+          route,
+          {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(message),
+            ...signal === undefined ? {} : { signal },
+          },
+        )
+        httpStatus = response.status
+        if (!response.ok) {
+          throw new Error(`transport failure for ${channel}/${endpoint}: HTTP ${response.status}`)
+        }
+        const mediaType = response.headers.get('content-type')?.split(';', 1)[0]?.trim().toLowerCase()
+        const full = mediaType === 'multipart/form-data'
+          ? await parseBinaryResponse(response)
+          : parseConnectionResponse(await response.json())
+        signal?.throwIfAborted()
+        if (full.rpcId !== rpcId) {
+          throw new Error(`rpcId mismatch for ${endpoint}: sent ${rpcId}, got ${full.rpcId}`)
+        }
+        publish({ kind: 'rpc', channel, endpoint, startedAt, durationMs: performance.now() - startedHr,
+          request: message, response: full.result, httpStatus, outcome: full.result.ok ? 'ok' : 'error' })
+        return full.result
+      } catch (error) {
+        publish({ kind: 'rpc', channel, endpoint, startedAt, durationMs: performance.now() - startedHr,
+          request: message, outcome: signal?.aborted === true ? 'cancelled' : 'error',
+          ...(httpStatus === undefined ? {} : { httpStatus }) })
+        throw error
       }
-      const mediaType = response.headers.get('content-type')?.split(';', 1)[0]?.trim().toLowerCase()
-      const full = mediaType === 'multipart/form-data'
-        ? await parseBinaryResponse(response)
-        : parseConnectionResponse(await response.json())
-      signal?.throwIfAborted()
-      if (full.rpcId !== rpcId) {
-        throw new Error(`rpcId mismatch for ${endpoint}: sent ${rpcId}, got ${full.rpcId}`)
-      }
-      return full.result
     },
     ...openStream === undefined ? {} : {
       open(channel, endpoint, payload, signal, uplink) {

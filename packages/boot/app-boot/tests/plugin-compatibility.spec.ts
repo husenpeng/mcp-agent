@@ -82,10 +82,18 @@ describe('plugin compatibility', () => {
     },
   )
 
+  it('ignores vendored peers versioned by their pinned source', () => {
+    expect(check({
+      '@tomato/cordis': '~4.0.5', '@tomato/cordis-plugin-loader': '~1.0.6',
+      '@tomato/cordis-plugin-include': '~0.1.0', '@tomato/cosmokit': '^1.8.6',
+      '@tomato/schemastery': '^3.18.0',
+    })).toBeUndefined()
+  })
+
   it('ignores unrelated names and dependency fields', () => {
     expect(check({
       '@tomato/cordis': 'broken', '@tomato/cordis-plugin-loader': '^99',
-      '@other/tomato': '^99', '@tomato/x': '^99', tomato: '^99',
+      '@other/tomato': '^99', '@tomato-x/y': '^99', tomato: '^99',
       constructor: '^99', hasOwnProperty: '^99', ['__proto__']: '^99',
     })).toBeUndefined()
     expect(evaluatePluginCompatibility({ dependencies: { '@tomato/cli': '^99' } }, {}, runtime)).toBeUndefined()

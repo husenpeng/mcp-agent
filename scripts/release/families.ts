@@ -15,6 +15,7 @@ import {
   officialClientBuildEnvironment,
   readClientBuildRecord,
 } from '../client-build-environment.ts'
+import { INDEPENDENT_RELEASE_PACKAGE } from '../package-dependency-policy.ts'
 import { validateTarballPayload } from '../publication-payload.ts'
 import { ON_DEMAND_BUNDLES } from '../../packages/util/official-bundles/src/bundles.ts'
 
@@ -408,6 +409,9 @@ class TomatoFamily extends ReleaseFamily {
       if (dependencies === null || typeof dependencies !== 'object' || Array.isArray(dependencies)) continue
       for (const [name, range] of Object.entries(dependencies)) {
         if (name !== '@tomato/cli' && !name.startsWith('@tomato/')) continue
+        // Vendored framework and native packages keep their own version line, so dependents carry
+        // `~<vendor version>` instead of the shared TOMATO version.
+        if (INDEPENDENT_RELEASE_PACKAGE.test(name)) continue
         if (range !== member.version) {
           throw new Error(`${member.name}: packed ${section}.${name} must equal ${member.version}, got ${String(range)}`)
         }

@@ -42,6 +42,7 @@ import { serveWebDocument, authenticateWebHost, forwardWebRequest } from './web-
 import { DesktopFatalRecovery } from './fatal-recovery.ts'
 import { pruneCrashReports, RendererConsoleTail, writeCrashReport, type CrashReportSource } from './crash-report.ts'
 import { openWelcomeWindow } from './welcome-window.ts'
+import { openSplashWindow, type DesktopSplash } from './splash-window.ts'
 import { WELCOME_IPC, needsWelcome, type WelcomeNotice } from './welcome-api.ts'
 import { connectDesktopWelcome, type DesktopWelcomeBackend } from './welcome-backend.ts'
 import { webBaseUrl } from './tomato-auth.ts'
@@ -71,6 +72,8 @@ import { developerMenuItems, developerModeEnabled } from './developer-mode.ts'
 let focusPrimaryWindow = (): void => {}
 let stopForRecovery = async (): Promise<void> => {}
 let shuttingDown = false
+/** Startup splash; exits on the first visible application window, on failure, and on quit. */
+let startupSplash: DesktopSplash | undefined
 /**
  * Set by quit entries that must not ask: crash recovery exit and restart, and the
  * development restart command. The installer handoff has its own before-quit branch.
@@ -135,6 +138,8 @@ function persistCrashReport(error: unknown, source: CrashReportSource): Promise<
 function reportFatal(error: unknown, source: CrashReportSource): void {
   console.error(error)
   diagnostics.write('error', `fatal (${source})`, error)
+  // Recovery and mandatory windows must reach the user ahead of any brand animation.
+  startupSplash?.dispose()
   if (shuttingDown) {
     // No dialog during shutdown, but the report still records what failed on the way out.
     void persistCrashReport(error, source)
@@ -339,6 +344,10 @@ async function main(): Promise<void> {
   diagnostics.write('info', `shell started (version ${app.getVersion()}, developer=${String(developerMode)})`, {
     electron: process.versions.electron, node: process.versions.node, platform: process.platform,
   })
+  if (process.env.TOMATO_DESKTOP_SKIP_SPLASH !== '1') {
+    try { startupSplash = openSplashWindow(fileURLToPath(new URL('./preload-splash.cjs', import.meta.url))) }
+    catch (error) { console.error('desktop splash: setup failed', error) }
+  }
   const primaryRuntime = development
     ? developmentPrimaryRuntime()
     : join(process.resourcesPath, 'runtime', 'primary-runtime')
@@ -1002,8 +1011,11 @@ async function main(): Promise<void> {
     updates.dispose()
   })
 
-  const applicationIconPath = development ? join(app.getAppPath(), 'resources', 'icon-windows.png')
+  const applicationIconPath = development
+    ? join(app.getAppPath(), 'resources', process.platform === 'darwin' ? 'icon-macos.png' : 'icon-windows.png')
     : join(process.resourcesPath, 'icon.png')
+  // The development bundle is a copy of Electron.app, so its Dock tile keeps Electron's icon.
+  if (development && process.platform === 'darwin') app.dock?.setIcon(applicationIconPath)
   app.setAboutPanelOptions({
     applicationName: currentDesktopLocale().messages.aboutProduct,
     applicationVersion: app.getVersion(),
@@ -1212,6 +1224,7 @@ async function main(): Promise<void> {
     if (isQuitting() || recovery.active || window.isDestroyed()) return
     if (activate) window.show()
     else window.showInactive()
+    startupSplash?.release()
     enteredWorkspace = true
     if (welcomeWindow !== undefined) {
       welcomeWindow.close()
@@ -1245,6 +1258,7 @@ async function main(): Promise<void> {
       if (!welcomeWindow.isVisible()) void track('auth_page_view', {})
       welcomeWindow.show()
       welcomeWindow.focus()
+      startupSplash?.release()
       return Promise.resolve()
     }
     welcomeFromWorkspace = fromWorkspace
@@ -1301,6 +1315,7 @@ async function main(): Promise<void> {
           await enterWorkspace()
         },
       })
+      startupSplash?.release()
       const window = welcomeWindow
       window.once('closed', () => {
         void welcomeBackend?.account.state().then((state) => {
@@ -1380,6 +1395,7 @@ async function main(): Promise<void> {
   const finishQuit = (): void => {
     quitting = true
     shuttingDown = true
+    startupSplash?.dispose()
     updateJournal?.action('quit-requested')
     quitConfirmation.dispose()
     backgroundNotice?.dispose()
@@ -1399,6 +1415,7 @@ async function main(): Promise<void> {
   app.on('before-quit', (event) => {
     if (shellInstallerOwnsQuit) {
       shuttingDown = true
+      startupSplash?.dispose()
       quitConfirmation.dispose()
       backgroundNotice?.dispose()
       updateJournal?.action('quit-requested')
@@ -1442,6 +1459,7 @@ async function main(): Promise<void> {
     }, (state) => {
       if (state.error !== 'authentication-required') policyAuthenticationQueued = false
       if (state.blocking) {
+        startupSplash?.dispose()
         for (const controller of ordinaryDialogs) controller.abort()
         if (!wasBlocking) updateDialog.cancel()
       }

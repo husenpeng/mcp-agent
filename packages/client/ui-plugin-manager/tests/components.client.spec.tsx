@@ -1424,17 +1424,17 @@ describe('PluginManagerPage', () => {
   })
 
   it.each([
-    { locale: en, placeholder: 'for example tomato-plugin-whale-pet' },
-    { locale: zh, placeholder: '例如 tomato-plugin-whale-pet' },
+    { locale: en, placeholder: 'for example tomato-plugin-demo' },
+    { locale: zh, placeholder: '例如 tomato-plugin-demo' },
   ])('uses the package example in $placeholder and the install guide', ({ locale, placeholder }) => {
     const { actions, setLanguage } = renderTab({ install: { ...IDLE_INSTALL, open: true } })
     setLanguage(locale)
     expect(screen.getByPlaceholderText(placeholder)).toBeTruthy()
     expect(screen.getByText(locale.installUpgradeNotice)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: locale.installGuideToggle }))
-    expect(screen.getByText('tomato-plugin-whale-pet')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: locale.installGuideFillAria.replace('{example}', 'tomato-plugin-whale-pet') }))
-    expect(actions.editInstallSpec).toHaveBeenCalledExactlyOnceWith('tomato-plugin-whale-pet')
+    expect(screen.getByText('tomato-plugin-demo')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: locale.installGuideFillAria.replace('{example}', 'tomato-plugin-demo') }))
+    expect(actions.editInstallSpec).toHaveBeenCalledExactlyOnceWith('tomato-plugin-demo')
   })
 
   it.each([

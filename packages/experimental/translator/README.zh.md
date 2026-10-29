@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-`ctx.translator` 通过 Bing 或 Google 翻译一次有大小限制的文本请求，也可选用付费的原生 DeepSeek Flash 路由。默认仍为 Bing；匿名端点无需登录或 API 密钥。付费翻译需要显式选择，并要求现有的持久 Session。此实验包需要显式启用。
+`ctx.translator` 通过 Bing 或 Google 翻译一次有大小限制的文本请求，也可选用付费的原生 Flash 路由。默认仍为 Bing；匿名端点无需登录或 API 密钥。付费翻译需要显式选择，并要求现有的持久 Session。此实验包需要显式启用。
 
 ## 目录
 

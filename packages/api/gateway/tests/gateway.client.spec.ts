@@ -356,6 +356,7 @@ async function benchFiber(
     generation: { getSnapshot: () => undefined, subscribe: () => () => {} },
     state: { getSnapshot: () => undefined, subscribe: () => () => {} },
     reconnect: () => {},
+    observe: () => () => {},
     rpc,
     registerGenerationSource: generation.register,
     start,
@@ -465,6 +466,7 @@ async function loaderReadinessBench(
     generation: { getSnapshot: () => undefined, subscribe: () => () => {} },
     state: { getSnapshot: () => undefined, subscribe: () => () => {} },
     reconnect: () => {},
+    observe: () => () => {},
     rpc: carrier === 'web' ? { call } : { call, open: () => unexpectedInProcessStream() },
     registerGenerationSource: generation.register,
     start,
@@ -608,6 +610,7 @@ describe('Client Remote transport readiness', () => {
       generation: { getSnapshot: () => live.snapshot, subscribe: () => () => {} },
       state: { getSnapshot: () => undefined, subscribe: () => () => {} },
       reconnect: () => {},
+      observe: () => () => {},
       rpc: {
         call: vi.fn<ConnectionHandle['rpc']['call']>(),
         open: () => unexpectedInProcessStream(),
@@ -2118,7 +2121,7 @@ describe('Client Typert API', () => {
       await ctx.plugin(TypertRegistry)
       await ctx.plugin({ inject: [], apply: applyConnection })
       await ctx.plugin({ inject, apply })
-      const connection = ctx.get('connection') as ConnectionHandle | undefined
+      const connection = ctx.get('connection')
       if (connection === undefined) throw new Error('injected Connection service is unavailable')
 
       await vi.waitFor(() => {

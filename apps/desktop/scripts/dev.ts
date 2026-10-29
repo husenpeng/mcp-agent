@@ -10,6 +10,7 @@ import type { DesktopRelease } from '../src/release.ts'
 import { developmentRuntimeDirectory, resolveDesktopBuildTarget } from './desktop-build-paths.mjs'
 import { prepareDevelopmentProject } from './development-project.ts'
 import { prepareDevelopmentApp } from './development-app.ts'
+import { pnpmInvocation } from '../../../scripts/pnpm-invocation.ts'
 import { preparePrimaryRuntime } from './prepare-primary-runtime.ts'
 import { developmentLoginEnvironment } from './development-login.ts'
 import { withoutReleaseSettings } from './development-environment.ts'
@@ -65,11 +66,11 @@ async function run(command: string, args: readonly string[], cwd: string, enviro
 }
 
 async function runPackageScript(script: string, cwd: string): Promise<void> {
-  const packageManager = process.env.npm_execpath
-  if (packageManager === undefined || packageManager === '') {
+  if (process.env.npm_execpath === undefined || process.env.npm_execpath === '') {
     throw new Error('desktop development: invoke this launcher through pnpm run dev:desktop or start:desktop')
   }
-  await run(process.execPath, [packageManager, 'run', script], cwd)
+  const { command, args } = pnpmInvocation(['run', script])
+  await run(command, args, cwd)
 }
 
 async function launchElectron(): Promise<void> {
@@ -89,6 +90,7 @@ async function launchElectron(): Promise<void> {
   const environment: NodeJS.ProcessEnv = {
     ...withoutReleaseSettings(process.env),
     ...login,
+    TOMATO_DESKTOP_DEV_APP: '1',
     TOMATO_HOME: home,
     TOMATO_DESKTOP_PRIMARY_RUNTIME_DIR: process.env.TOMATO_DESKTOP_PRIMARY_RUNTIME_DIR ?? developmentRuntimeDirectory(),
     TOMATO_DESKTOP_HOST_INSPECT_PORT: String(hostPort),

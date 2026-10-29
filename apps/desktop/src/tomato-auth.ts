@@ -261,9 +261,9 @@ export function desktopTomatoAuth(options: DesktopTomatoAuthOptions): DesktopTom
       trackAuthorize(url)
       complete(url)
     })
-    target.window.webContents.on('did-fail-load', (_event, code) => {
-      if (code === -3) return
-      finish(target, null, 'network')
+    target.window.webContents.on('did-fail-load', (_event, code, _description, _url, isMainFrame) => {
+      // The Feishu page loads third-party frames; only losing the sign-in document itself fails the attempt.
+      if (isMainFrame && code !== -3) finish(target, null, 'network')
     })
     target.window.once('closed', () => {
       if (!target.settled) void completeFromCallback(target, new URL(`${options.origin}/api/auth/callback`))

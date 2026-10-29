@@ -38,6 +38,24 @@ it('exposes onboarding size activation to the application document', async () =>
   expect(electron.ipcRenderer.send.mock.calls).toEqual([[DESKTOP_IPC.onboardingActive, true], [DESKTOP_IPC.onboardingActive, false]])
 })
 
+it('reports the unpackaged development launcher from the bridge', async () => {
+  const base = { ...process, isMainFrame: true, env: { ...process.env } }
+  delete base.env.TOMATO_DESKTOP_DEV_APP
+  vi.stubGlobal('process', base)
+  vi.stubGlobal('location', new URL('tomato-app://app/index.html'))
+  await import('../src/preload-app.ts')
+  const packaged = electron.contextBridge.exposeInMainWorld.mock.calls
+    .find(([name]) => name === 'tomatoDesktop')?.[1] as TomatoDesktopProductApi
+  expect(packaged.development).toBe(false)
+  electron.contextBridge.exposeInMainWorld.mockClear()
+  vi.resetModules()
+  vi.stubGlobal('process', { ...base, env: { ...process.env, TOMATO_DESKTOP_DEV_APP: '1' } })
+  await import('../src/preload-app.ts')
+  const development = electron.contextBridge.exposeInMainWorld.mock.calls
+    .find(([name]) => name === 'tomatoDesktop')?.[1] as TomatoDesktopProductApi
+  expect(development.development).toBe(true)
+})
+
 it('limits product documents to update status and a native confirmation action', async () => {
   vi.stubGlobal('location', new URL('tomato-app://app/index.html'))
   await import('../src/preload-app.ts')

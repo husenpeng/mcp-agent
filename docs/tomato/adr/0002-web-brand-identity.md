@@ -11,7 +11,7 @@ Web 入口 `apps/web/index.html` 按明暗配色分别引用 `favicon.svg` 与 `
 ## 决策
 
 - **标签页**：`apps/web/public/favicon.svg` 与 `favicon-dark.svg` 改用与 `@tomato/brand` 相同的番茄路径，固定纯色填充：浅色 `#b71616`，深色 `#de3730`。两份文件除填充色外逐字节一致，供 `index.html` 的 `prefers-color-scheme` 媒体查询选择。`viewBox` 取图形包围盒并留 2 单位留白，方形裁切为 `3.9 4.4 56.2 56.2`（原路径画布 64×64），标记在 16px 标签页中占满宽度且垂直居中。
-- **安装图标**：新增 `apps/web/assets/app-icon.svg`，沿用 1104×1104 画布、1024 单位 tile 与 40/32 内缩；tile 内放置同一番茄路径，深红 `#93000a` 到 `#fe5042` 的渐变。`render-app-icons.ts` 的 `TILE_SOURCE` 指向该文件，分组标记改为 `tile-shadow` 与 `mark-shadow`。四个安装 PNG 由脚本重新生成并提交。
+- **安装图标**：新增 `apps/web/assets/app-icon.svg`，沿用 1104×1104 画布、1024 单位 tile 与 40/32 内缩；tile 内放置同一番茄路径，深红 `#93000a` 到 `#fe5042` 的渐变（渐变坐标按 tile 坐标书写，却在路径自身的缩放坐标系中解释，实际渲染为 `#93000a` 纯色，见 [0010](0010-desktop-app-icon.md) 未决）。`render-app-icons.ts` 的 `TILE_SOURCE` 指向该文件，分组标记改为 `tile-shadow` 与 `mark-shadow`。四个安装 PNG 由脚本重新生成并提交。
 - **安装身份**：`manifest.webmanifest` 的 `name` 与 `short_name` 改为 `Tomato AI`；`index.html` 的 `apple-mobile-web-app-title` 同为 `Tomato AI`。
 - **Desktop**：`app://` 协议白名单补上 `/favicon-dark.svg`，否则深色系统下该请求 404，窗口内页面回退到浅色图标。
 
@@ -24,7 +24,7 @@ Web 入口 `apps/web/index.html` 按明暗配色分别引用 `favicon.svg` 与 `
 
 ## 后果
 
-浏览器可见的标签页、安装图标、安装名称与页面内品牌一致。安装图标仍保持浅色 tile 加红色标记，curves 抗锯齿校验与 maskable 安全区校验继续成立；`app-icons.spec.ts` 与 `pwa-manifest.e2e.ts` 的期望值随资源与名称同步更新。桌面应用的 Dock/任务栏图标与托盘图标仍来自 `apps/desktop/resources/` 下的 dsh 资源，本次未改动。
+浏览器可见的标签页、安装图标、安装名称与页面内品牌一致。安装图标仍保持浅色 tile 加红色标记，curves 抗锯齿校验与 maskable 安全区校验继续成立；`app-icons.spec.ts` 与 `pwa-manifest.e2e.ts` 的期望值随资源与名称同步更新。桌面应用的 Dock/任务栏图标与托盘图标仍来自 `apps/desktop/resources/` 下的 dsh 资源，本次未改动（后由 [0010](0010-desktop-app-icon.md) 改为番茄资源）。
 
 ## 验证
 
@@ -35,4 +35,4 @@ Web 入口 `apps/web/index.html` 按明暗配色分别引用 `favicon.svg` 与 `
 
 ## 未决
 
-桌面应用的 Dock/任务栏图标与 Windows 托盘图标是否同步改为番茄资源，待产品确认。
+无。桌面应用的 Dock/任务栏图标与 Windows 托盘图标已由 [0010](0010-desktop-app-icon.md) 改为番茄资源。
