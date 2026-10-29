@@ -1,0 +1,85 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/tool-memory/README.md
+/:
+  en: 7753864b1106adb5
+  zh: 74d54f1069993f09
+/tomato-experimental-tool-memory:
+  en: 011f01e11b026458
+  zh: adb5eb9e1b922c09
+/tomato-experimental-tool-memory/summary:
+  en: 0ff1fb682c9b132b
+  zh: 8b5c7083ed5d9fb3
+/tomato-experimental-tool-memory/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 988e839059414d27
+/tomato-experimental-tool-memory/use-this-package:
+  en: abad37da41a27535
+  zh: 44a089a0f7d026c7
+/tomato-experimental-tool-memory/use-this-package/when-to-choose-it:
+  en: a8ba41a42da997cc
+  zh: 8eb51f2b2e5f3554
+/tomato-experimental-tool-memory/use-this-package/configuration:
+  en: 29f18b0810353748
+  zh: 743db31aaf3e45a4
+/tomato-experimental-tool-memory/use-this-package/what-the-model-can-do:
+  en: c8881c8d7cce9b7f
+  zh: 35556acd428e3ca1
+/tomato-experimental-tool-memory/use-this-package/the-memory-command:
+  en: 92d35ed996020bca
+  zh: 42fa8b506caa66ae
+/tomato-experimental-tool-memory/understand-the-implementation:
+  en: 6e32ce80af56df67
+  zh: 3c03a5e0b6f00672
+/tomato-experimental-tool-memory/further-exploration:
+  en: 20beb898b8c49c4f
+  zh: 33d7ba3e119b1957
+/tomato-experimental-tool-memory/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/tomato-experimental-tool-memory/model-experience/tool-schemas:
+  en: 3039bc5e7a796b21
+  zh: 6b7a9eaf69c9ea53
+/tomato-experimental-tool-memory/model-experience/tool-schemas/what-the-model-sees:
+  en: a695171fec57d14b
+  zh: b671bf80815cf2a1
+/tomato-experimental-tool-memory/model-experience/tool-schemas/token-effect:
+  en: 73847e487b8304d3
+  zh: 7109e38db7840d46
+/tomato-experimental-tool-memory/model-experience/tool-schemas/kv-cache-effect:
+  en: 70e99d9897d0ef55
+  zh: 1810cce5aa401380
+/tomato-experimental-tool-memory/model-experience/tool-results:
+  en: beaabb79f229692a
+  zh: 8573891441963be4
+/tomato-experimental-tool-memory/model-experience/tool-results/what-the-model-sees:
+  en: 715de57df7b614df
+  zh: c55dbf6e17782577
+/tomato-experimental-tool-memory/model-experience/tool-results/token-effect:
+  en: 9a10162cc6f2a929
+  zh: dde79d8d2c22f0cf
+/tomato-experimental-tool-memory/model-experience/tool-results/kv-cache-effect:
+  en: 853d87e815c2d862
+  zh: 2c08fd4e25ff32b6
+/tomato-experimental-tool-memory/model-experience/pinned-memory-snapshot:
+  en: 0cc7bc6cf897c504
+  zh: 6818e1196c1dc55c
+/tomato-experimental-tool-memory/model-experience/pinned-memory-snapshot/what-the-model-sees:
+  en: ac66a8af5e61557b
+  zh: 7c1e8a40e4bdb69a
+/tomato-experimental-tool-memory/model-experience/pinned-memory-snapshot/what-the-model-sees/snapshot-heading:
+  en: 130d583c5dc12785
+  zh: ecc383256af5355b
+/tomato-experimental-tool-memory/model-experience/pinned-memory-snapshot/token-effect:
+  en: 9d748c70e886b867
+  zh: 955a091257c6b272
+/tomato-experimental-tool-memory/model-experience/pinned-memory-snapshot/kv-cache-effect:
+  en: cc4f7cacbbf60941
+  zh: 016afad98bc77a84
+/tomato-experimental-tool-memory/known-limitations-and-deferred-work:
+  en: 9eb24860f6451182
+  zh: c7ae765c9ab5c60f
+/tomato-experimental-tool-memory/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 8ec3e73528ddb1a6

@@ -1708,6 +1708,67 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'memory',
+    summary: 'Host-wide memory service.',
+    description: 'Host-wide memory service. Every operation names the canonical workspace it acts on, and records of other workspaces are invisible to it. Writes are serialized by the storage domain and durable before they resolve.',
+    methods: [
+      {
+        signature: 'readonly limits: MemoryLimits',
+        description: 'Resolved deployment limits.',
+        parameters: [],
+      },
+      {
+        signature: 'workspaceOf(session: Session): Promise<string | undefined>',
+        description: 'Resolve the canonical workspace of a Session from its immutable header directory, once per Session.',
+        parameters: [{ name: 'session', description: 'Session whose original project scopes memory.' }],
+        returns: 'the realpath of the header directory, or `undefined` when the Session has none or it no longer exists.',
+      },
+      {
+        signature: 'async remember(request: RememberRequest): Promise<MemoryRecord>',
+        description: 'Store one record, replacing the workspace\'s record with the same entity and key.',
+        parameters: [{ name: 'request', description: 'statement, lifecycle state, and the write that justified it.' }],
+        returns: 'the stored record; a replacement keeps the earlier id and creation time.',
+        throws: ['{@link MemoryError} `value-too-large` or `workspace-full`.'],
+      },
+      {
+        signature: 'recall(request: RecallRequest): readonly MemoryRecord[]',
+        description: 'Rank the workspace\'s active records against free text.',
+        parameters: [{ name: 'request', description: 'workspace, query text, and optional kind filter.' }],
+        returns: 'at most `maxRecallResults` records, best match first.',
+      },
+      {
+        signature: 'async forget(workspace: string, id: MemoryIdType): Promise<boolean>',
+        description: 'Delete one record durably.',
+        parameters: [{ name: 'workspace', description: 'canonical workspace that must own the record.' }, { name: 'id', description: 'record to delete.' }],
+        returns: 'whether the workspace owned the record.',
+      },
+      {
+        signature: 'async setPinned(workspace: string, id: MemoryIdType, pinned: boolean): Promise<MemoryRecord | undefined>',
+        description: 'Change whether an active record is pinned.',
+        parameters: [{ name: 'workspace', description: 'canonical workspace that must own the record.' }, { name: 'id', description: 'record to change.' }, { name: 'pinned', description: 'new pin state.' }],
+        returns: 'the updated record, or `undefined` when the workspace owns no active record with that id.',
+      },
+      {
+        signature: 'async confirm(workspace: string, id: MemoryIdType): Promise<MemoryRecord | undefined>',
+        description: 'Activate a candidate.',
+        parameters: [{ name: 'workspace', description: 'canonical workspace that must own the record.' }, { name: 'id', description: 'candidate to confirm.' }],
+        returns: 'the active record, or `undefined` when the workspace owns no candidate with that id.',
+      },
+      {
+        signature: 'list(workspace: string): readonly MemoryRecord[]',
+        description: 'Enumerate every record of one workspace for human management.',
+        parameters: [{ name: 'workspace', description: 'canonical workspace path.' }],
+        returns: 'the workspace\'s records, newest first.',
+      },
+      {
+        signature: 'pinned(workspace: string): readonly MemoryRecord[]',
+        description: 'Select the pinned active records a Session receives without searching.',
+        parameters: [{ name: 'workspace', description: 'canonical workspace path.' }],
+        returns: 'at most `maxPinnedRecords` records, ordered by entity, then key.',
+      },
+    ],
+  },
+  {
     key: 'messageFeedback',
     summary: 'Session-log service; cold operations never construct a Session or Agent.',
     description: 'Session-log service; cold operations never construct a Session or Agent.',
@@ -6445,6 +6506,26 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type McpResourceRequest = {\n    method: \'resources/list\' | \'resources/templates/list\';\n    cursor?: string;\n} | {\n    method: \'resources/read\';\n    uri: string;\n};',
   },
   {
+    name: 'MemoryKind',
+    declaration: 'export type MemoryKind = \'preference\' | \'constraint\' | \'decision\' | \'fact\';',
+  },
+  {
+    name: 'MemoryLimits',
+    declaration: 'export interface MemoryLimits {\n    readonly maxRecallResults: number;\n    readonly maxPinnedRecords: number;\n    readonly maxValueBytes: number;\n    readonly maxRecordsPerWorkspace: number;\n}',
+  },
+  {
+    name: 'MemoryRecord',
+    declaration: 'export type MemoryRecord = z.infer<typeof memoryRecordSchema>;',
+  },
+  {
+    name: 'MemorySource',
+    declaration: 'export interface MemorySource {\n    readonly sessionId: SessionId;\n    readonly userMessageSeq?: SessionSeq;\n}',
+  },
+  {
+    name: 'MemoryStatus',
+    declaration: 'export type MemoryStatus = \'candidate\' | \'active\';',
+  },
+  {
     name: 'Message',
     declaration: 'export type Message = MessageRoleMap[keyof MessageRoleMap];',
   },
@@ -7029,6 +7110,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type ReasoningEffortId = Branded<\'ReasoningEffortId\'>;',
   },
   {
+    name: 'RecallRequest',
+    declaration: 'export interface RecallRequest {\n    readonly workspace: string;\n    readonly text: string;\n    readonly kind?: MemoryKind;\n}',
+  },
+  {
     name: 'RecommendationDetails',
     declaration: 'export type RecommendationDetails = {\n    readonly status: \'available\';\n    readonly title: LocalizedText;\n    readonly description: LocalizedText;\n    readonly enabled: boolean;\n} | {\n    readonly status: \'refused\';\n    readonly reason: \'unknown\' | \'unavailable\' | \'not-live-root\' | \'closing\';\n};',
   },
@@ -7051,6 +7136,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'Reload',
     declaration: 'export interface Reload {\n    filename: string;\n    modules: ReloadModules;\n    runtime?: Plugin.Runtime | undefined;\n}',
+  },
+  {
+    name: 'RememberRequest',
+    declaration: 'export interface RememberRequest {\n    readonly workspace: string;\n    readonly kind: MemoryKind;\n    readonly entity: string;\n    readonly key: string;\n    readonly value: string;\n    readonly status: MemoryStatus;\n    readonly pinned: boolean;\n    readonly source: MemorySource;\n}',
   },
   {
     name: 'RemoteAccessAction',

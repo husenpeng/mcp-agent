@@ -11,6 +11,9 @@ flowchart LR
   svc_actionCards["ctx.actionCards<br/>Optional action cards"]
   pkg_creation_recommendations["creation-recommendations"]
   pkg_client_ui_action_cards["client-ui-action-cards"]
+  pkg_experimental_memory["experimental-memory"]
+  svc_memory["ctx.memory<br/>Workspace memory records"]
+  pkg_experimental_tool_memory["experimental-tool-memory"]
   pkg_plugin_recommendations["plugin-recommendations"]
   svc_pluginRecommendations["ctx.pluginRecommendations<br/>Explicit-need plugin recommendations"]
   pkg_client_ui_plugin_recommendations["client-ui-plugin-recommendations"]
@@ -358,6 +361,7 @@ flowchart LR
   pkg_experimental_client_ui_cot_translation --> svc_cotTranslation
   pkg_experimental_computer_use_cua_driver_mcp --> svc_computerUse
   pkg_experimental_computer_use_cua_driver_native --> svc_computerUse
+  pkg_experimental_memory --> svc_memory
   pkg_experimental_ptc_runtime_python --> svc_ptcRuntime
   pkg_experimental_speech_to_text --> svc_speechToText
   pkg_experimental_speech_to_text_sensevoice --> svc_speechToText
@@ -519,6 +523,7 @@ flowchart LR
   svc_llm --> pkg_compaction_basic
   svc_lsp --> pkg_tool_lsp
   svc_mcpResources --> pkg_mcp_resources
+  svc_memory --> pkg_experimental_tool_memory
   svc_officeToPdf --> pkg_client_ui_sidebar_documentpreview
   svc_otel --> pkg_host_product_telemetry_otel
   svc_otel --> pkg_session_telemetry_otel
@@ -632,6 +637,7 @@ flowchart LR
 | ctx key | Role | Owner | Implementations | Direct consumers | Companion plugins | Note |
 | --- | --- | --- | --- | --- | --- | --- |
 | `ctx.actionCards` | `service` | [`action-cards`](../packages/experimental/action-cards) | - | [`creation-recommendations`](../packages/experimental/creation-recommendations), [`client-ui-action-cards`](../packages/experimental/client-ui-action-cards) | - | Owns the card tool, card state, user actions and status notices; card kinds register their actions and handlers. |
+| `ctx.memory` | `service` | [`experimental-memory`](../packages/experimental/memory) | - | [`experimental-tool-memory`](../packages/experimental/tool-memory) | - | Stores records in the tomato_memory storage domain scoped by canonical project directory; the memory tools own every model-facing tool, command, and snapshot. |
 | `ctx.pluginRecommendations` | `service` | [`plugin-recommendations`](../packages/experimental/plugin-recommendations) | - | [`client-ui-plugin-recommendations`](../packages/experimental/client-ui-plugin-recommendations) | - | Reads the current catalog text of an official plugin card and enables the plugin through the profile plugin manager after a click. |
 | `ctx.headlessStartup` | `core` | [`headless`](../packages/bundle/headless) | - | [`headless`](../packages/bundle/headless) | - | Supplies parsed task and run options to the headless runner and its sandbox-policy configuration. |
 | `ctx.cotTranslation` | `service` | [`experimental-client-ui-cot-translation`](../packages/experimental/client-ui-cot-translation) | - | - | - | Serves reasoning translations, reuses saved results, and joins ordinary Session activation for uncached inactive Sessions. |

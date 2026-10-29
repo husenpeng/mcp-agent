@@ -45,6 +45,10 @@ kind: "package-group"
 | [`personalized-recommendations`](personalized-recommendations/README.zh.md) | 默认禁用的个性化页面、插件推荐及其操作卡片组合 | — |
 | [`tool-session-query`](tool-session-query/README.zh.md) | 按工作区授权的模型会话搜索、追踪与事件读取 | — |
 | [`session-search`](session-search/README.zh.md) | 可选实验性全局会话搜索工具 | — |
+| [`memory`](memory/README.zh.md) | 按工作区隔离、保存在会话日志之外的跨会话记忆记录 | `ctx.memory` |
+| [`tool-memory`](tool-memory/README.zh.md) | 记忆模型工具、`/memory` 与置顶记忆注入 | — |
+| [`focus`](focus/README.zh.md) | 目标轮次的失败记录、重复失败提醒与按工具审批 | — |
+| [`muse-bundle`](muse-bundle/README.zh.md) | 默认关闭的工作区记忆与目标专注组合包 | — |
 | [`ralph-bundle`](ralph-bundle/README.zh.md) | 带隔离 workflow 引擎的可选重复委派 | — |
 | [`terminal-bundle`](terminal-bundle/README.zh.md) | 可选全局持久终端工具 | — |
 | [`badge-skill-bundle`](badge-skill-bundle/README.zh.md) | 可选 powered-by-tomato 徽章技能 | — |

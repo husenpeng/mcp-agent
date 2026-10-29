@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Outils de mémoire de l’espace de travail",
+    "description": "Permet à l’IA de rechercher, enregistrer et supprimer les mémoires de l’espace de travail, et de les gérer avec /memory."
+  }
+}

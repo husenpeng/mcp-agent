@@ -1068,6 +1068,29 @@ export type Config = CuaConfig
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-cua-macos -->
 
+<!-- BEGIN GENERATED config-catalog:@tomato/experimental-focus -->
+<a id="tomatoexperimental-focus"></a>
+
+## `@tomato/experimental-focus`
+
+- `inject`: `tools` · `agents` · `sessionProjections`
+- `source`: [`packages/experimental/focus/src/index.ts:36`](../packages/experimental/focus/src/index.ts)
+
+```ts config-catalog
+/** Focus policy for goal rounds. */
+export interface Config {
+  /** Consecutive identical failures of one call that trigger a reminder, at least 2. */
+  repeatedFailureThreshold?: number
+  /** Maximum distinct failures listed in the ledger. */
+  maxLedgerEntries?: number
+  /** Maximum characters of one failure message quoted in the ledger. */
+  maxMessageChars?: number
+  /** `*`-wildcard tool-name patterns that require approval before each call. */
+  approvalTools?: string[]
+}
+```
+<!-- END GENERATED config-catalog:@tomato/experimental-focus -->
+
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-inspector -->
 <a id="tomatoexperimental-inspector"></a>
 
@@ -1136,6 +1159,29 @@ export interface InspectorOptions {
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-inspector -->
+
+<!-- BEGIN GENERATED config-catalog:@tomato/experimental-memory -->
+<a id="tomatoexperimental-memory"></a>
+
+## `@tomato/experimental-memory`
+
+- `inject`: `storageDomain`
+- `source`: [`packages/experimental/memory/src/index.ts:35`](../packages/experimental/memory/src/index.ts)
+
+```ts config-catalog
+/** Deployment limits for stored and recalled memory. */
+export interface Config {
+  /** Maximum records one recall returns. */
+  maxRecallResults?: number
+  /** Maximum pinned records one workspace exposes. */
+  maxPinnedRecords?: number
+  /** Maximum UTF-8 bytes of one record value. */
+  maxValueBytes?: number
+  /** Maximum stored records, including candidates, per workspace. */
+  maxRecordsPerWorkspace?: number
+}
+```
+<!-- END GENERATED config-catalog:@tomato/experimental-memory -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-ptc-runtime-python -->
 <a id="tomatoexperimental-ptc-runtime-python"></a>
@@ -1335,6 +1381,25 @@ export interface Config {
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-tool-agent-team -->
+
+<!-- BEGIN GENERATED config-catalog:@tomato/experimental-tool-memory -->
+<a id="tomatoexperimental-tool-memory"></a>
+
+## `@tomato/experimental-tool-memory`
+
+- `inject`: `memory` · `tools` · `agents` · `commands` · `sessionProjections`
+- `source`: [`packages/experimental/tool-memory/src/index.ts:28`](../packages/experimental/tool-memory/src/index.ts)
+
+```ts config-catalog
+/** Snapshot and write-justification limits. */
+export interface Config {
+  /** Maximum UTF-8 bytes of one rendered pinned-memory snapshot. */
+  maxPinnedBytes?: number
+  /** Minimum user-perceived characters of a `user_quote` that can activate a write. */
+  minQuoteChars?: number
+}
+```
+<!-- END GENERATED config-catalog:@tomato/experimental-tool-memory -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-tool-subagent-oar -->
 <a id="tomatoexperimental-tool-subagent-oar"></a>
@@ -4952,6 +5017,7 @@ export interface Config {
 | `@tomato/experimental-cot-translation-bundle` | — | [`packages/experimental/cot-translation-bundle/src/index.ts`](../packages/experimental/cot-translation-bundle/src/index.ts) |
 | `@tomato/experimental-inspector-profile` | — | [`packages/experimental/inspector-profile/src/index.ts`](../packages/experimental/inspector-profile/src/index.ts) |
 | `@tomato/experimental-liveshare-protocol` | — | [`packages/experimental/liveshare-protocol/src/index.ts`](../packages/experimental/liveshare-protocol/src/index.ts) |
+| `@tomato/experimental-muse-bundle` | — | [`packages/experimental/muse-bundle/src/index.ts`](../packages/experimental/muse-bundle/src/index.ts) |
 | `@tomato/experimental-plugin-market-bundle` | — | [`packages/experimental/plugin-market-bundle/src/index.ts`](../packages/experimental/plugin-market-bundle/src/index.ts) |
 | `@tomato/experimental-ralph-bundle` | — | [`packages/experimental/ralph-bundle/src/index.ts`](../packages/experimental/ralph-bundle/src/index.ts) |
 | `@tomato/experimental-session-search` | — | [`packages/experimental/session-search/src/index.ts`](../packages/experimental/session-search/src/index.ts) |

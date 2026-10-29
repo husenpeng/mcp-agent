@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Foco no objetivo",
+    "description": "Durante as rodadas automáticas de objetivo, registra falhas repetidas de ferramentas, lembra a IA de mudar de abordagem e pergunta antes de chamar as ferramentas configuradas."
+  }
+}

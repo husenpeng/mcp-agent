@@ -1,0 +1,9 @@
+- insert:
+    - id: optional-memory
+      name: '@tomato/experimental-memory'
+
+    - id: optional-tool-memory
+      name: '@tomato/experimental-tool-memory'
+
+    - id: optional-focus
+      name: '@tomato/experimental-focus'

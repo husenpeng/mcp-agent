@@ -198,6 +198,8 @@ const SENTENCE_MODEL_EXPERIENCE: Readonly<Record<string, SentenceContract>> = {
   'packages/client/ui-open-in-app': { kind: 'none', reason: 'Browser-side split button opening the workspace directory for a human; registers nothing model-facing.' },
   'packages/client/ui-secret-mask': { kind: 'none', reason: 'Browser-side display masking of sent user text; registers nothing model-facing.' },
   'packages/experimental/session-search': { kind: 'indirect', reason: 'The profile layer delegates model-visible behavior to its selected capability.' },
+  'packages/experimental/memory': { kind: 'indirect', reason: 'The record service adds no request content; the memory tools package owns every tool, result, and snapshot.' },
+  'packages/experimental/muse-bundle': { kind: 'indirect', reason: 'The profile layer delegates model-visible behavior to its selected capability.' },
   'packages/experimental/ralph-bundle': { kind: 'indirect', reason: 'The profile layer delegates model-visible behavior to its selected capability.' },
   'packages/experimental/terminal-bundle': { kind: 'indirect', reason: 'The profile layer delegates model-visible behavior to its selected capability.' },
   'packages/experimental/badge-skill-bundle': { kind: 'indirect', reason: 'The profile layer delegates model-visible behavior to its selected capability.' },

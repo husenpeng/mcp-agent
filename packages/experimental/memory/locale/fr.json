@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Mémoire de l’espace de travail",
+    "description": "Enregistre les préférences, contraintes, décisions et faits que les sessions suivantes du même espace de travail peuvent utiliser."
+  }
+}

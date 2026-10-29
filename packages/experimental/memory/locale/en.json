@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Workspace memory",
+    "description": "Store preferences, constraints, decisions, and facts that later sessions in the same workspace can use."
+  }
+}

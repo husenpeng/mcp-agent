@@ -1,0 +1,55 @@
+{
+  "name": "@tomato/experimental-memory",
+  "description": "Workspace-scoped cross-session memory records stored outside Session logs",
+  "version": "0.2.1-rc.3",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/experimental/memory"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@tomato/branded": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/storage-domain": "workspace:*",
+    "@tomato/cordis": "workspace:~"
+  },
+  "dependencies": {
+    "@tomato/schemastery": "workspace:~",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@tomato/branded": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/llm": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/storage": "workspace:*",
+    "@tomato/storage-domain": "workspace:*"
+  }
+}

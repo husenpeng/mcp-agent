@@ -1,0 +1,43 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/muse-bundle/README.md
+/:
+  en: 020de14fc5a73357
+  zh: d88b97ed5a2ae37f
+/tomato-experimental-muse-bundle:
+  en: 3479cb6f7b8a2017
+  zh: 4d9aff01eba12035
+/tomato-experimental-muse-bundle/summary:
+  en: 205ec4a057c28074
+  zh: 67d5a69c8816d374
+/tomato-experimental-muse-bundle/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 988e839059414d27
+/tomato-experimental-muse-bundle/use-this-package:
+  en: bbff250eba0f1b89
+  zh: b20a47f82d8ab6e0
+/tomato-experimental-muse-bundle/use-this-package/install-into-a-profile:
+  en: 26f09825748ac9a3
+  zh: b987d4ab1022794c
+/tomato-experimental-muse-bundle/use-this-package/what-you-get:
+  en: 4f26af63a4cbe692
+  zh: a2003a36d12ee31b
+/tomato-experimental-muse-bundle/understand-the-implementation:
+  en: 6bf5f3f17e03b362
+  zh: 8831e3cc38f6a315
+/tomato-experimental-muse-bundle/further-exploration:
+  en: 9c3c918fa27b094a
+  zh: 082913b58272f179
+/tomato-experimental-muse-bundle/model-experience:
+  en: da177b4cc223b60b
+  zh: c1b841e156d99eef
+/tomato-experimental-muse-bundle/model-experience/kv-cache-effect:
+  en: 51b03a22f8fd26b1
+  zh: 14f98d84b2daa1fb
+/tomato-experimental-muse-bundle/known-limitations-and-deferred-work:
+  en: 6e23595493f816f2
+  zh: 29a28f47e6621b83
+/tomato-experimental-muse-bundle/known-limitations-and-deferred-work/dev-note:
+  en: 279d01435256cd2a
+  zh: 83780964e5de2f54

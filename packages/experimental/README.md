@@ -45,6 +45,10 @@ Promotion requires a named product role, documented public behavior and limitati
 | [`personalized-recommendations`](personalized-recommendations/README.md) | Default-disabled bundle of personalized pages, plugin recommendations and their action cards | — |
 | [`tool-session-query`](tool-session-query/README.md) | Workspace-authorized model session search, trace, and event reads | — |
 | [`session-search`](session-search/README.md) | Optional experimental global session search tools | — |
+| [`memory`](memory/README.md) | Workspace-scoped cross-session memory records stored outside Session logs | `ctx.memory` |
+| [`tool-memory`](tool-memory/README.md) | Memory model tools, `/memory`, and pinned-memory injection | — |
+| [`focus`](focus/README.md) | Goal-round failure ledger, repeated-failure reminders, and per-tool approval | — |
+| [`muse-bundle`](muse-bundle/README.md) | Default-disabled bundle of workspace memory and goal focus | — |
 | [`ralph-bundle`](ralph-bundle/README.md) | Optional repeated delegation with an isolated workflow engine | — |
 | [`terminal-bundle`](terminal-bundle/README.md) | Optional global persistent terminal tools | — |
 | [`badge-skill-bundle`](badge-skill-bundle/README.md) | Optional powered-by-tomato badge skill | — |

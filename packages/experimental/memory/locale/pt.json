@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Memória do espaço de trabalho",
+    "description": "Armazena preferências, restrições, decisões e fatos que sessões posteriores do mesmo espaço de trabalho podem usar."
+  }
+}

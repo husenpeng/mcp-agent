@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Goal focus",
+    "description": "During automatic goal rounds, track repeated tool failures, remind the AI to change approach, and ask before calling configured tools."
+  }
+}

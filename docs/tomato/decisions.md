@@ -32,6 +32,7 @@
 - **登录**：新增 Host 内同源网关 `@tomato/gateway`，浏览器只访问 `/api/auth/*` 与 `/api/services/*`。飞书 OAuth 仍由公司 BFF 承接；公司 BFF 通过 auth_service 的一次性 handoff code 把会话交给本地网关，本地网关用 `state + verifier` 兑换。Web 写 httpOnly `tomato_session` cookie；Desktop 主进程把 sessionId 存 `safeStorage` 并注入 `X-Tomato-Session`，不再写 Host 凭证库。新增 `@tomato/account` 提供侧栏入口与设置账户页，三态展示并在服务不可用时提示重试。上游的 `deepseek-account`、`deepseek-account-platform`、`llm-deepseek-account`、`llm-deepseek` 与欢迎页的 API key 流程全部停用。
 - **遥测**：关闭上游全部外发（`session-log-deepseek`、`session-telemetry-otel`、`product-analytics`、`host-product-telemetry-otel`）。新增 `@tomato/telemetry` 把 `turn/*`、`tool/*` 折叠成 OTLP traces，发到内部 relay 端点，由服务端转发 Langfuse；Langfuse 密钥只在服务端。`endpoint` 为空时不注册监听。
 - **权限**：开放 `read-only` / `workspace-write` / `danger-full-access` 三档切换，默认 `workspace-write` + `ask`。
+- **记忆与目标专注（实验）**：可选组合包 `@tomato/experimental-muse-bundle` 默认关闭，开启后按项目目录保存用户明确陈述的偏好、约束、决定和事实，写入需引用当前轮次的用户原话，置顶记录在每轮首步注入；目标轮次会带上已失败调用的记录与重复失败提醒，`approvalTools` 可让指定工具每次调用前征求审批。不自动重试、不新增续跑（[ADR 0010](adr/0010-memory-and-focus.md)）。
 
 ## UI 与资源
 

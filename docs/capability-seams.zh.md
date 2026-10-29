@@ -13,6 +13,9 @@ flowchart LR
   svc_actionCards["ctx.actionCards<br/>Optional action cards"]
   pkg_creation_recommendations["creation-recommendations"]
   pkg_client_ui_action_cards["client-ui-action-cards"]
+  pkg_experimental_memory["experimental-memory"]
+  svc_memory["ctx.memory<br/>Workspace memory records"]
+  pkg_experimental_tool_memory["experimental-tool-memory"]
   pkg_plugin_recommendations["plugin-recommendations"]
   svc_pluginRecommendations["ctx.pluginRecommendations<br/>Explicit-need plugin recommendations"]
   pkg_client_ui_plugin_recommendations["client-ui-plugin-recommendations"]
@@ -360,6 +363,7 @@ flowchart LR
   pkg_experimental_client_ui_cot_translation --> svc_cotTranslation
   pkg_experimental_computer_use_cua_driver_mcp --> svc_computerUse
   pkg_experimental_computer_use_cua_driver_native --> svc_computerUse
+  pkg_experimental_memory --> svc_memory
   pkg_experimental_ptc_runtime_python --> svc_ptcRuntime
   pkg_experimental_speech_to_text --> svc_speechToText
   pkg_experimental_speech_to_text_sensevoice --> svc_speechToText
@@ -521,6 +525,7 @@ flowchart LR
   svc_llm --> pkg_compaction_basic
   svc_lsp --> pkg_tool_lsp
   svc_mcpResources --> pkg_mcp_resources
+  svc_memory --> pkg_experimental_tool_memory
   svc_officeToPdf --> pkg_client_ui_sidebar_documentpreview
   svc_otel --> pkg_host_product_telemetry_otel
   svc_otel --> pkg_session_telemetry_otel
@@ -634,6 +639,7 @@ flowchart LR
 | ctx 键 | 角色 | 所属包 | 实现 | 直接消费方 | 配套插件 | 说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `ctx.actionCards` | `service` | [`action-cards`](../packages/experimental/action-cards) | - | [`creation-recommendations`](../packages/experimental/creation-recommendations), [`client-ui-action-cards`](../packages/experimental/client-ui-action-cards) | - | 负责卡片工具、卡片状态、用户操作和状态通知；各卡片种类注册自己的动作和处理器。 |
+| `ctx.memory` | `service` | [`experimental-memory`](../packages/experimental/memory) | - | [`experimental-tool-memory`](../packages/experimental/tool-memory) | - | 在 tomato_memory 存储域中按规范化项目目录保存记录；所有面向模型的工具、命令和快照都由记忆工具负责。 |
 | `ctx.pluginRecommendations` | `service` | [`plugin-recommendations`](../packages/experimental/plugin-recommendations) | - | [`client-ui-plugin-recommendations`](../packages/experimental/client-ui-plugin-recommendations) | - | 读取官方插件卡片的当前目录文本，并在用户点击后通过配置插件管理器启用该插件。 |
 | `ctx.headlessStartup` | `core` | [`headless`](../packages/bundle/headless) | - | [`headless`](../packages/bundle/headless) | - | 将解析后的任务和运行选项提供给无界面运行器及其 sandbox-policy 配置。 |
 | `ctx.cotTranslation` | `service` | [`experimental-client-ui-cot-translation`](../packages/experimental/client-ui-cot-translation) | - | - | - | 为展开的思考内容提供有界的 Session 翻译请求，不改变模型可见历史。 |

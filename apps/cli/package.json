@@ -108,7 +108,8 @@
     "@tomato/experimental-tool-worktree": "workspace:*",
     "@tomato/cua-bundle": "workspace:*",
     "@tomato/experimental-plugin-market-bundle": "workspace:*",
-    "@tomato/personalized-recommendations": "workspace:*"
+    "@tomato/personalized-recommendations": "workspace:*",
+    "@tomato/experimental-muse-bundle": "workspace:*"
   },
   "devDependencies": {
     "@tomato/skill-badge": "workspace:*",

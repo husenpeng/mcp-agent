@@ -9,8 +9,8 @@
   en: 8ee041b7af9505f3
   zh: 02a768b7dbbc6425
 /tool-schema-catalog/tool-package-map:
-  en: b1c925bc4c96cf76
-  zh: ef92317af772da8e
+  en: 0c948832a45ca2d7
+  zh: a187adba7923be71
 /tool-schema-catalog/tomato-plugin-manager:
   en: c8e088f02e59c8b3
   zh: c8e088f02e59c8b3
@@ -231,8 +231,20 @@
   en: c7bc2ee2892bf0e9
   zh: 1cd6a5d6f7494ca1
 /tool-schema-catalog/tomato-tool-session-query/session-trace:
-  en: 8266137b561d91a3
-  zh: 466f7af7534a5b12
+  en: 9ca9581da3b49858
+  zh: 05fc98c7f100013a
+/tool-schema-catalog/tomato-experimental-tool-memory:
+  en: cf1f2ab6f0b5080c
+  zh: cf1f2ab6f0b5080c
+/tool-schema-catalog/tomato-experimental-tool-memory/memory-forget:
+  en: 1a0a8b038e518991
+  zh: 3eae60d97312c005
+/tool-schema-catalog/tomato-experimental-tool-memory/memory-search:
+  en: b1084ccebe17dd53
+  zh: a7af03d990dd635e
+/tool-schema-catalog/tomato-experimental-tool-memory/memory-write:
+  en: c3a06fcd3aa8a7a5
+  zh: 1c292229eb1da612
 /tool-schema-catalog/tomato-experimental-tool-subagent-oar:
   en: af512ef50d34e11f
   zh: af512ef50d34e11f
