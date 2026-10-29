@@ -1,0 +1,88 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/focus/README.md
+/:
+  en: 04ca19374cf7553a
+  zh: b70f7e35a5c3684e
+/tomato-experimental-focus:
+  en: 6093f0bb93f57abe
+  zh: 7399e483a5a49fad
+/tomato-experimental-focus/summary:
+  en: 08e7a536d92dc5e1
+  zh: b336e1851c5250ee
+/tomato-experimental-focus/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 988e839059414d27
+/tomato-experimental-focus/use-this-package:
+  en: 1ccc550df1d93853
+  zh: 78cc36826afb4900
+/tomato-experimental-focus/use-this-package/when-to-choose-it:
+  en: 05d60137d5dc374f
+  zh: 488fb5b840a0dcce
+/tomato-experimental-focus/use-this-package/configuration:
+  en: 48ef94e3b4b1f984
+  zh: 4c50c33897cfcd90
+/tomato-experimental-focus/use-this-package/failure-identity:
+  en: 5a1a1786da132feb
+  zh: 4a86e0be8d54d98b
+/tomato-experimental-focus/use-this-package/approval:
+  en: f7532c77409620b7
+  zh: db1ba7347b275657
+/tomato-experimental-focus/understand-the-implementation:
+  en: 159e2b77ae3df39b
+  zh: 93b54ccc74f5bd53
+/tomato-experimental-focus/further-exploration:
+  en: 8968c40d3e4714e1
+  zh: 06181a078f900255
+/tomato-experimental-focus/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/tomato-experimental-focus/model-experience/goal-round-ledger:
+  en: 80b33e9c482ae7e6
+  zh: 9d9b40a5f0afaa0d
+/tomato-experimental-focus/model-experience/goal-round-ledger/what-the-model-sees:
+  en: 7118cc42e398b4fd
+  zh: 144ba5c4a300e6a3
+/tomato-experimental-focus/model-experience/goal-round-ledger/what-the-model-sees/ledger-heading:
+  en: f92194470104d08f
+  zh: 15b6d1d10f2b7df6
+/tomato-experimental-focus/model-experience/goal-round-ledger/token-effect:
+  en: 7abc680dadda18cf
+  zh: e22022674df81876
+/tomato-experimental-focus/model-experience/goal-round-ledger/kv-cache-effect:
+  en: ed4d408bdcb0b85c
+  zh: ece4a333011fa76b
+/tomato-experimental-focus/model-experience/repeated-failure-reminder:
+  en: 819abc7748342e50
+  zh: 6603d182fce29acd
+/tomato-experimental-focus/model-experience/repeated-failure-reminder/what-the-model-sees:
+  en: b11ae2c7afc95047
+  zh: 9be30ada8ccb7625
+/tomato-experimental-focus/model-experience/repeated-failure-reminder/what-the-model-sees/reminder-text:
+  en: 66e25d9891568e89
+  zh: babacf0b1f7fa484
+/tomato-experimental-focus/model-experience/repeated-failure-reminder/token-effect:
+  en: 0d09fc37c7c368b9
+  zh: c38414b206ad6808
+/tomato-experimental-focus/model-experience/repeated-failure-reminder/kv-cache-effect:
+  en: 29242198a7e10d07
+  zh: 12bd15a379c25367
+/tomato-experimental-focus/model-experience/approval-denial:
+  en: b0f4746cca9f6685
+  zh: 9e65985ae984aaf1
+/tomato-experimental-focus/model-experience/approval-denial/what-the-model-sees:
+  en: 21f90cd7d619cafe
+  zh: 17615481daeedc37
+/tomato-experimental-focus/model-experience/approval-denial/token-effect:
+  en: 39aa841676c398b6
+  zh: b383de74c9df1f7b
+/tomato-experimental-focus/model-experience/approval-denial/kv-cache-effect:
+  en: 8bc303432215a7b7
+  zh: 9e0df26b9a14df8c
+/tomato-experimental-focus/known-limitations-and-deferred-work:
+  en: 4bba7012caee421a
+  zh: 3b3745e998127b68
+/tomato-experimental-focus/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 8ec3e73528ddb1a6

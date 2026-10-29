@@ -1,0 +1,100 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/tool-memory/README.md
+/:
+  en: 8ef42a7dae55c0a8
+  zh: 8d6c4d83a5bb9892
+/tomato-experimental-tool-memory:
+  en: 011f01e11b026458
+  zh: adb5eb9e1b922c09
+/tomato-experimental-tool-memory/summary:
+  en: 56b2735304da8f9a
+  zh: 541e2c1217a4b400
+/tomato-experimental-tool-memory/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 988e839059414d27
+/tomato-experimental-tool-memory/use-this-package:
+  en: abad37da41a27535
+  zh: 44a089a0f7d026c7
+/tomato-experimental-tool-memory/use-this-package/when-to-choose-it:
+  en: a8ba41a42da997cc
+  zh: 8eb51f2b2e5f3554
+/tomato-experimental-tool-memory/use-this-package/configuration:
+  en: d99a8ed4aa94613e
+  zh: 96663e10da3c60ee
+/tomato-experimental-tool-memory/use-this-package/what-the-model-can-do:
+  en: d38d3748b53cccd8
+  zh: 8b358a3a4f0720bb
+/tomato-experimental-tool-memory/use-this-package/the-memory-command:
+  en: efa08555a730f84c
+  zh: fd5dae69cb612068
+/tomato-experimental-tool-memory/understand-the-implementation:
+  en: 1dfdc83c61994c23
+  zh: 133a1c1667dcf06a
+/tomato-experimental-tool-memory/further-exploration:
+  en: bae1a4f9fcf7d44d
+  zh: ce4a36158e406424
+/tomato-experimental-tool-memory/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/tomato-experimental-tool-memory/model-experience/tool-schemas:
+  en: 3039bc5e7a796b21
+  zh: 6b7a9eaf69c9ea53
+/tomato-experimental-tool-memory/model-experience/tool-schemas/what-the-model-sees:
+  en: a695171fec57d14b
+  zh: b671bf80815cf2a1
+/tomato-experimental-tool-memory/model-experience/tool-schemas/token-effect:
+  en: 73847e487b8304d3
+  zh: 7109e38db7840d46
+/tomato-experimental-tool-memory/model-experience/tool-schemas/kv-cache-effect:
+  en: 70e99d9897d0ef55
+  zh: 1810cce5aa401380
+/tomato-experimental-tool-memory/model-experience/tool-results:
+  en: beaabb79f229692a
+  zh: 8573891441963be4
+/tomato-experimental-tool-memory/model-experience/tool-results/what-the-model-sees:
+  en: 17f4803fe3741590
+  zh: 95cbe3387f4ff7dc
+/tomato-experimental-tool-memory/model-experience/tool-results/token-effect:
+  en: 9a10162cc6f2a929
+  zh: dde79d8d2c22f0cf
+/tomato-experimental-tool-memory/model-experience/tool-results/kv-cache-effect:
+  en: 853d87e815c2d862
+  zh: 2c08fd4e25ff32b6
+/tomato-experimental-tool-memory/model-experience/memory-snapshot:
+  en: 6c52d79601a000ee
+  zh: 7d61cee1caa2e769
+/tomato-experimental-tool-memory/model-experience/memory-snapshot/what-the-model-sees:
+  en: feadebb6341f041a
+  zh: 5ec7bccfc47726b9
+/tomato-experimental-tool-memory/model-experience/memory-snapshot/what-the-model-sees/snapshot-heading:
+  en: 130d583c5dc12785
+  zh: ecc383256af5355b
+/tomato-experimental-tool-memory/model-experience/memory-snapshot/token-effect:
+  en: 99bc9ca46418e191
+  zh: 541925400bc3335f
+/tomato-experimental-tool-memory/model-experience/memory-snapshot/kv-cache-effect:
+  en: cc4f7cacbbf60941
+  zh: 016afad98bc77a84
+/tomato-experimental-tool-memory/model-experience/query-expansion-request:
+  en: 1fae2e43b88fe028
+  zh: 3f61a8ab2ef9d9ea
+/tomato-experimental-tool-memory/model-experience/query-expansion-request/what-the-model-sees:
+  en: 449a49e1f61b5136
+  zh: d1d9083a81575638
+/tomato-experimental-tool-memory/model-experience/query-expansion-request/what-the-model-sees/expansion-system-text:
+  en: 5ae802b8a6be0543
+  zh: 6c30c572621138e5
+/tomato-experimental-tool-memory/model-experience/query-expansion-request/token-effect:
+  en: 24fde78c686d7337
+  zh: 824be0cbddf32f84
+/tomato-experimental-tool-memory/model-experience/query-expansion-request/kv-cache-effect:
+  en: c6b4702375aa7fb6
+  zh: cd1c6e01ed6d83e1
+/tomato-experimental-tool-memory/known-limitations-and-deferred-work:
+  en: 54e8ba102aa04c60
+  zh: f90f6fd4d4202764
+/tomato-experimental-tool-memory/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 8ec3e73528ddb1a6

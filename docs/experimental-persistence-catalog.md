@@ -14,5 +14,6 @@ Shared Session event declarations and resolved schemas appear in the [Session pe
 | Record | Owner | Purpose | Payload and source |
 |---|---|---|---|
 | `plugin:action-cards/decision` | `@tomato/action-cards` | Dismissals and kind-defined progress of action cards. | <code>ActionCardDecision</code> · [`packages/experimental/action-cards/src/types.ts`](../packages/experimental/action-cards/src/types.ts) |
+| `plugin:tool-memory/query-expansion` | `@tomato/experimental-tool-memory` | Query-expansion request and result for one memory search. | <code>QueryExpansionRecord</code> · [`packages/experimental/tool-memory/src/expansion.ts`](../packages/experimental/tool-memory/src/expansion.ts) |
 | `plugin:translator/request` | `@tomato/experimental-translator` | Provider-independent translation input, retained before dispatch. | <code>TranslationRequestRecord</code> · [`packages/experimental/translator/src/types.ts`](../packages/experimental/translator/src/types.ts) |
 | `plugin:translator/result` | `@tomato/experimental-translator` | Successful translation, retained before it is returned to the consumer. | <code>TranslationResultRecord</code> · [`packages/experimental/translator/src/types.ts`](../packages/experimental/translator/src/types.ts) |

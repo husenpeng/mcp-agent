@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Outils de mémoire",
+    "description": "Permet à l’IA de rechercher, enregistrer et supprimer vos mémoires du profil et de l’espace de travail, et de les gérer avec /memory."
+  }
+}

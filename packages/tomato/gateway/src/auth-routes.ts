@@ -63,12 +63,15 @@ export class AuthRoutes {
    * @param auth - auth_service client.
    * @param origin - this gateway's absolute origin.
    * @param secure - whether the listener serves TLS.
+   * @param onSignedOut - called when the browser has no session: on a logout before the remote revoke, and on a
+   *   session request without a session id.
    */
   constructor(
     private readonly config: Config,
     private readonly auth: AuthService,
     private readonly origin: string,
     secure: boolean,
+    private readonly onSignedOut: () => void = () => {},
   ) {
     this.secure = secure
   }
@@ -192,6 +195,7 @@ export class AuthRoutes {
     }
     const sessionId = requestSessionId(request)
     if (sessionId === undefined) {
+      this.onSignedOut()
       sendJson(response, 200, { status: 'signed-out' })
       return
     }
@@ -214,6 +218,8 @@ export class AuthRoutes {
    */
   async logout(request: IncomingMessage, response: ServerResponse): Promise<void> {
     const sessionId = requestSessionId(request)
+    // Host-side state stops naming the account before the remote revoke settles.
+    this.onSignedOut()
     const remoteRevoked = sessionId === undefined ? false : await this.auth.revoke(sessionId)
     sendJson(response, 200, { remoteRevoked }, { 'set-cookie': clearSessionCookie(this.secure) })
   }

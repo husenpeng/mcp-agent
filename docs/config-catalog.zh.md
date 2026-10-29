@@ -1068,6 +1068,29 @@ export type Config = CuaConfig
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-cua-macos -->
 
+<!-- BEGIN GENERATED config-catalog:@tomato/experimental-focus -->
+<a id="tomatoexperimental-focus"></a>
+
+## `@tomato/experimental-focus`
+
+- `inject`: `tools` · `agents` · `sessionProjections`
+- `source`: [`packages/experimental/focus/src/index.ts:36`](../packages/experimental/focus/src/index.ts)
+
+```ts config-catalog
+/** Focus policy for goal rounds. */
+export interface Config {
+  /** Consecutive identical failures of one call that trigger a reminder, at least 2. */
+  repeatedFailureThreshold?: number
+  /** Maximum distinct failures listed in the ledger. */
+  maxLedgerEntries?: number
+  /** Maximum characters of one failure message quoted in the ledger. */
+  maxMessageChars?: number
+  /** `*`-wildcard tool-name patterns that require approval before each call. */
+  approvalTools?: string[]
+}
+```
+<!-- END GENERATED config-catalog:@tomato/experimental-focus -->
+
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-inspector -->
 <a id="tomatoexperimental-inspector"></a>
 
@@ -1136,6 +1159,31 @@ export interface InspectorOptions {
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-inspector -->
+
+<!-- BEGIN GENERATED config-catalog:@tomato/experimental-memory -->
+<a id="tomatoexperimental-memory"></a>
+
+## `@tomato/experimental-memory`
+
+- `inject`: `storageDomain`
+- `source`: [`packages/experimental/memory/src/index.ts:56`](../packages/experimental/memory/src/index.ts)
+
+```ts config-catalog
+/** Deployment limits for stored and recalled memory. */
+export interface Config {
+  /** Maximum records one recall returns. */
+  maxRecallResults?: number
+  /** Maximum pinned records one workspace exposes. */
+  maxPinnedRecords?: number
+  /** Maximum UTF-8 bytes of one record value. */
+  maxValueBytes?: number
+  /** Maximum stored records, including candidates, per owner and workspace. */
+  maxRecordsPerWorkspace?: number
+  /** Maximum stored profile records, including candidates, per owner. */
+  maxProfileRecords?: number
+}
+```
+<!-- END GENERATED config-catalog:@tomato/experimental-memory -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-ptc-runtime-python -->
 <a id="tomatoexperimental-ptc-runtime-python"></a>
@@ -1335,6 +1383,37 @@ export interface Config {
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-tool-agent-team -->
+
+<!-- BEGIN GENERATED config-catalog:@tomato/experimental-tool-memory -->
+<a id="tomatoexperimental-tool-memory"></a>
+
+## `@tomato/experimental-tool-memory`
+
+- `inject`: `memory` · `tools` · `agents` · `commands` · `sessionProjections` · `llm`
+- `source`: [`packages/experimental/tool-memory/src/index.ts:36`](../packages/experimental/tool-memory/src/index.ts)
+
+```ts config-catalog
+/** Snapshot, write-justification, and query-expansion policy. */
+export interface Config {
+  /** Maximum UTF-8 bytes of one rendered memory snapshot. */
+  maxSnapshotBytes?: number
+  /** Minimum user-perceived characters of a `user_quote` that can activate a write. */
+  minQuoteChars?: number
+  /** Whether `memory_search` asks a model for alternative wordings when the literal query matches too few records. */
+  queryExpansion?: boolean
+  /** Explicit expansion provider; omitted with `expansionModel` uses the calling agent's current model. */
+  expansionProvider?: string
+  /** Explicit expansion model; must be paired with `expansionProvider`. */
+  expansionModel?: string
+  /** End-to-end deadline of one expansion request in milliseconds. */
+  expansionTimeoutMs?: number
+  /** Output-token cap of one expansion request. */
+  expansionMaxTokens?: number
+  /** Maximum alternative wordings kept from one expansion. */
+  maxAlternatives?: number
+}
+```
+<!-- END GENERATED config-catalog:@tomato/experimental-tool-memory -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-tool-subagent-oar -->
 <a id="tomatoexperimental-tool-subagent-oar"></a>
@@ -4952,6 +5031,7 @@ export interface Config {
 | `@tomato/experimental-cot-translation-bundle` | — | [`packages/experimental/cot-translation-bundle/src/index.ts`](../packages/experimental/cot-translation-bundle/src/index.ts) |
 | `@tomato/experimental-inspector-profile` | — | [`packages/experimental/inspector-profile/src/index.ts`](../packages/experimental/inspector-profile/src/index.ts) |
 | `@tomato/experimental-liveshare-protocol` | — | [`packages/experimental/liveshare-protocol/src/index.ts`](../packages/experimental/liveshare-protocol/src/index.ts) |
+| `@tomato/experimental-muse-bundle` | — | [`packages/experimental/muse-bundle/src/index.ts`](../packages/experimental/muse-bundle/src/index.ts) |
 | `@tomato/experimental-plugin-market-bundle` | — | [`packages/experimental/plugin-market-bundle/src/index.ts`](../packages/experimental/plugin-market-bundle/src/index.ts) |
 | `@tomato/experimental-ralph-bundle` | — | [`packages/experimental/ralph-bundle/src/index.ts`](../packages/experimental/ralph-bundle/src/index.ts) |
 | `@tomato/experimental-session-search` | — | [`packages/experimental/session-search/src/index.ts`](../packages/experimental/session-search/src/index.ts) |

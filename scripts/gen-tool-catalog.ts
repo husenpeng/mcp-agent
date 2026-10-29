@@ -67,6 +67,9 @@ import Lsp from '@tomato/lsp'
 import * as ToolLsp from '@tomato/tool-lsp'
 import * as ToolSkill from '@tomato/tool-skill'
 import * as ToolSessionQuery from '@tomato/tool-session-query'
+import * as ToolMemory from '@tomato/experimental-tool-memory'
+import type MemoryService from '@tomato/experimental-memory'
+import CommandRuntime from '@tomato/commands'
 import * as ToolJobs from '@tomato/tool-jobs'
 import BrowserUseRegistry from '@tomato/browser-use'
 import * as StagehandBrowserTools from '@tomato/experimental-browser-use-stagehand-native'
@@ -535,6 +538,29 @@ const TOOL_PACKAGES: ToolPackage[] = [
     },
     note:
       'The five read-only tools hide provider cursors and authorize every result from the immutable calling agent session. The package is opt-in; compositions that need enforced deadlines or bounded inline output also mount the generic timeout or spill policies.',
+  },
+  {
+    pkg: '@tomato/experimental-tool-memory',
+    dir: 'tool-memory',
+    source: 'packages/experimental/tool-memory/src/index.ts',
+    requires: [
+      'ctx.tools', 'ctx.memory', 'ctx.agents', 'ctx.commands', 'ctx.sessionProjections', 'ctx.llm',
+      'a calling Agent; workspace memories also need a Session project directory', 'a signed-in account where ctx.tomatoAccount exists',
+    ],
+    writes: [
+      'tool/call', 'tomato_memory storage domain create, update, or delete', 'plugin:tool-memory/query-expansion plugin record',
+      'tool/result', 'user/message memory snapshot',
+    ],
+    async mount(ctx) {
+      await ctx.plugin(AgentRegistry)
+      await ctx.plugin(CommandRuntime)
+      await ctx.plugin(LlmRuntime)
+      // Schema harvest never executes a tool, so the Host service is a declaration-only stub.
+      ctx.provide('memory', {} as MemoryService)
+      await ctx.plugin(ToolMemory)
+    },
+    note:
+      'Explicit experimental composition only, shipped switched off in the Memory and goal focus bundle. memory_write stores an active record only when user_quote is contained in a user message of the current turn; otherwise the record is an unconfirmed candidate. scope profile records reach every workspace of their owner. memory_search may send one auxiliary expansion request when the literal query matches fewer than maxRecallResults records. Delegated agents may search but not write or delete.',
   },
   {
     pkg: '@tomato/experimental-tool-subagent-oar',

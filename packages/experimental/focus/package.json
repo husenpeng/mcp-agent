@@ -1,0 +1,60 @@
+{
+  "name": "@tomato/experimental-focus",
+  "description": "Goal-round failure ledger, repeated-failure reminders, and per-tool approval policy for long-running goals",
+  "version": "0.2.1-rc.3",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/experimental/focus"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@tomato/agent": "workspace:*",
+    "@tomato/goal": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/tools": "workspace:*",
+    "@tomato/cordis": "workspace:~"
+  },
+  "dependencies": {
+    "@tomato/schemastery": "workspace:~",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@tomato/agent": "workspace:*",
+    "@tomato/agent-loop": "workspace:*",
+    "@tomato/agent-loop-testkit": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/cordis-plugin-loader": "workspace:~",
+    "@tomato/goal": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/system-prompt": "workspace:*",
+    "@tomato/tool-executor-native": "workspace:*",
+    "@tomato/tool-testkit": "workspace:*",
+    "@tomato/tools": "workspace:*",
+    "@tomato/user-approval": "workspace:*"
+  }
+}

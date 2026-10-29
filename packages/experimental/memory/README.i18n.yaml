@@ -1,0 +1,52 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/memory/README.md
+/:
+  en: 6ee3cbe6a2bd439a
+  zh: 945d65e38da312fa
+/tomato-experimental-memory:
+  en: cb731fa572370733
+  zh: 5b6d7e82664c45b1
+/tomato-experimental-memory/summary:
+  en: d83ec0ac9344443a
+  zh: 408c47365bcde140
+/tomato-experimental-memory/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 988e839059414d27
+/tomato-experimental-memory/use-this-package:
+  en: cedb176d0cf88893
+  zh: 56c166c8f42a9f49
+/tomato-experimental-memory/use-this-package/when-to-choose-it:
+  en: c8f447fa85693f44
+  zh: 9773790e92cdbcb5
+/tomato-experimental-memory/use-this-package/configuration:
+  en: f586fc1eac994c2e
+  zh: 1e19676e52827418
+/tomato-experimental-memory/use-this-package/owners-and-scopes:
+  en: a3b0f728cf2923ea
+  zh: 1adf3aadbd7ef13c
+/tomato-experimental-memory/use-this-package/records-and-lifecycle:
+  en: 4d87a3fee42806c0
+  zh: 1fee1c99ef34c39f
+/tomato-experimental-memory/use-this-package/failures:
+  en: fa9a3ebbe7f2bb01
+  zh: db34bf0403aa1fb8
+/tomato-experimental-memory/understand-the-implementation:
+  en: c5821bcac0b1adc0
+  zh: ebda1242d4183207
+/tomato-experimental-memory/further-exploration:
+  en: dcc2af602ece9154
+  zh: 3437357284ea6978
+/tomato-experimental-memory/model-experience:
+  en: 379cb600b64f97e8
+  zh: 05fbf2b8a6f4562c
+/tomato-experimental-memory/model-experience/kv-cache-effect:
+  en: 0cd1ebf64d9cae87
+  zh: 1f7f0c4175060d31
+/tomato-experimental-memory/known-limitations-and-deferred-work:
+  en: a778a39fb9e4f968
+  zh: beb8f02c02178be8
+/tomato-experimental-memory/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 8ec3e73528ddb1a6

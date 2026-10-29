@@ -160,6 +160,79 @@ type DomainChanged = DomainChangedPut | DomainChangedDeleted
 
 Generated from source by `scripts/gen-cordis-catalog.ts` (verified fresh by `pnpm run verify-cordis-catalog` in doc-sync; regenerate with `pnpm run gen-cordis-catalog`) — the language sides differ only in locale-specific paired document paths. Signature blocks use a `ts cordis-catalog` fence and keep the original source JSDoc; dispatch modes are defined in the [primer](../cordis-primer.md#dispatch-modes), and the framework-inherited `ctx` API lives in [cordis-api/inherited.md](../cordis-api/inherited.md).
 
+<a id="ctxmemory--memoryservice"></a>
+
+### `ctx.memory` — `MemoryService`
+
+Host-wide memory service. Every operation names the owner or view it acts on, and records of other owners and other workspaces are invisible to it. Writes are serialized by the storage domain and durable before they resolve.
+
+```ts cordis-catalog
+/**
+ * Resolve which records a Session can use now.
+ * @param session - Session whose original project directory scopes workspace records.
+ * @returns the current owner's view, or `sign-in-required` while the Host names accounts and none is signed in.
+ */
+async accessOf(session: Session): Promise<MemoryAccess>
+
+/**
+ * Store one record, replacing the owner's record with the same scope, entity, and key.
+ * @param request - owner, scope, statement, lifecycle state, and the write that justified it.
+ * @returns the stored record; a replacement keeps the earlier id and creation time.
+ * @throws {@link MemoryError} `value-too-large`, `workspace-full`, or `profile-full`.
+ */
+async remember(request: RememberRequest): Promise<MemoryRecord>
+
+/**
+ * Rank the view's active records against free text.
+ * @param request - view, query text, optional alternative wordings, and optional kind filter.
+ * @returns at most `maxRecallResults` records, best match first.
+ */
+recall(request: RecallRequest): readonly MemoryRecord[]
+
+/**
+ * Delete one record durably.
+ * @param view - view that must see the record.
+ * @param id - record to delete.
+ * @returns whether the view saw the record.
+ */
+async forget(view: MemoryView, id: MemoryIdType): Promise<boolean>
+
+/**
+ * Change whether an active workspace record is pinned.
+ * @param view - view that must see the record.
+ * @param id - record to change.
+ * @param pinned - new pin state.
+ * @returns the updated record, or `undefined` when the view sees no active workspace record with that id.
+ */
+async setPinned(view: MemoryView, id: MemoryIdType, pinned: boolean): Promise<MemoryRecord | undefined>
+
+/**
+ * Activate a candidate.
+ * @param view - view that must see the record.
+ * @param id - candidate to confirm.
+ * @returns the active record, or `undefined` when the view sees no candidate with that id.
+ */
+async confirm(view: MemoryView, id: MemoryIdType): Promise<MemoryRecord | undefined>
+
+/**
+ * Enumerate every record a view sees, for human management.
+ * @param view - owner and optional workspace.
+ * @returns profile and workspace records, newest first.
+ */
+list(view: MemoryView): readonly MemoryRecord[]
+
+/**
+ * Select the records a Session receives without searching.
+ * @param view - owner and optional workspace.
+ * @returns every active profile record, then at most `maxPinnedRecords` pinned workspace records; each group ordered by entity, then key.
+ */
+snapshot(view: MemoryView): readonly MemoryRecord[]
+```
+
+Types: [Session](session.md)
+
+Source: [`packages/experimental/memory/src/index.ts`](../../packages/experimental/memory/src/index.ts)
+
 <a id="ctxstorage--storage"></a>
 
 ### `ctx.storage` — `Storage`

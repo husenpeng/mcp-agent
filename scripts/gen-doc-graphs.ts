@@ -116,6 +116,22 @@ const SERVICE_ROLES: ServiceRole[] = [
     note: 'Owns the card tool, card state, user actions and status notices; card kinds register their actions and handlers.',
   },
   {
+    key: 'memory',
+    pkg: 'experimental-memory',
+    title: 'Profile and workspace memory records',
+    mode: 'service',
+    consumers: ['experimental-tool-memory'],
+    note: 'Stores records in the tomato_memory storage domain scoped by owner, then by profile or canonical project directory; the memory tools own every model-facing tool, command, and snapshot.',
+  },
+  {
+    key: 'tomatoAccount',
+    pkg: 'gateway',
+    title: 'Host signed-in account',
+    mode: 'service',
+    consumers: ['experimental-memory'],
+    note: 'The gateway publishes the account its latest auth_service verification names, only when auth_service is configured; consumers read it with ctx.get and treat absence as a Host without accounts.',
+  },
+  {
     key: 'pluginRecommendations',
     pkg: 'plugin-recommendations',
     title: 'Explicit-need plugin recommendations',

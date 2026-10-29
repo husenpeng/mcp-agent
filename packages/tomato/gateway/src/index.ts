@@ -4,8 +4,11 @@
  *
  * It mounts in the Web Host beside Connection's `/api` prefix. `/api/auth/*`
  * answers login and session state; `/api/services/<service>/*` forwards only
- * hosts configured in the service table. Host RPC, model requests, tool egress,
- * and telemetry stay outside this package.
+ * hosts configured in the service table. When auth_service is configured,
+ * `ctx.tomatoAccount` publishes the account the latest browser session names,
+ * for Host plugins that scope data by person.
+ * Host RPC, model requests, tool egress, and telemetry stay outside this
+ * package.
  *
  * @module @tomato/gateway
  */
@@ -14,6 +17,8 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Context } from '@tomato/cordis'
 import type {} from '@tomato/client-connection'
 import type {} from '@tomato/host-webserver'
+import { AccountState } from './account-state.ts'
+import type { TomatoAccount } from './account-state.ts'
 import { AuthRoutes } from './auth-routes.ts'
 import { AuthService } from './auth-service.ts'
 import { Config } from './config.ts'
@@ -21,10 +26,19 @@ import { ServiceProxy } from './service-proxy.ts'
 
 export { Config, type Config as GatewayConfig, type ServiceEntry, type UserIdInjection } from './config.ts'
 export { SESSION_COOKIE } from './cookies.ts'
+export { AccountState } from './account-state.ts'
+export type { AccountListener, CurrentAccount, TomatoAccount } from './account-state.ts'
 export { AuthRoutes } from './auth-routes.ts'
 export { AuthService } from './auth-service.ts'
 export { ServiceProxy } from './service-proxy.ts'
 export type { LoginFailure, LoginAttempt, RedeemOutcome, SessionUser, SessionView, VerifyOutcome } from './types.ts'
+
+declare module '@tomato/cordis' {
+  interface Context {
+    /** The account the latest browser session names; provided only when auth_service is configured. */
+    tomatoAccount: TomatoAccount
+  }
+}
 
 /** Host services the route registration reads at load. */
 export const inject = ['webServer', 'connection']
@@ -49,8 +63,13 @@ function admit(ctx: Context, request: IncomingMessage): string | undefined {
 export function apply(ctx: Context, config: Config): void {
   const origin = new URL(ctx.webServer.getOrigin()).origin
   const secure = ctx.webServer.protocol === 'https:'
-  const auth = new AuthService(config.authServiceUrl, config.verifyTimeoutMs, config.requestTimeoutMs)
-  const routes = new AuthRoutes(config, auth, origin, secure)
+  const account = new AccountState()
+  const auth = new AuthService(config.authServiceUrl, config.verifyTimeoutMs, config.requestTimeoutMs, (outcome) => {
+    account.observe(outcome)
+  })
+  const routes = new AuthRoutes(config, auth, origin, secure, () => { account.signOut() })
+  // Without auth_service no account can ever be verified, so the Host names no signed-in person.
+  if (auth.configured()) ctx.provide('tomatoAccount', account.view())
   const proxy = new ServiceProxy(ctx, config, auth)
   ctx.effect(() => {
     const disposers = [

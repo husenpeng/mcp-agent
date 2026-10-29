@@ -56,11 +56,13 @@ export class AuthService {
    * @param baseURL - auth_service base URL; empty disables every call.
    * @param verifyTimeoutMs - session-verification timeout.
    * @param requestTimeoutMs - handoff and revoke timeout.
+   * @param onVerified - receives every verification outcome, so Host state follows the browser's session.
    */
   constructor(
     readonly baseURL: string,
     private readonly verifyTimeoutMs: number,
     private readonly requestTimeoutMs: number,
+    private readonly onVerified: (outcome: VerifyOutcome) => void = () => {},
   ) {}
 
   /**
@@ -77,6 +79,13 @@ export class AuthService {
    * @returns valid/invalid/unavailable; never throws.
    */
   async verify(sessionId: string): Promise<VerifyOutcome> {
+    const outcome = await this.check(sessionId)
+    this.onVerified(outcome)
+    return outcome
+  }
+
+  /** One auth_service verification without notification. */
+  private async check(sessionId: string): Promise<VerifyOutcome> {
     if (!this.configured()) return { kind: 'unavailable' }
     const response = await postJson(this.baseURL, '/api/v1/auth/session/verify', { sessionId }, this.verifyTimeoutMs)
     if (!response.ok || response.status !== 200) return { kind: 'unavailable' }

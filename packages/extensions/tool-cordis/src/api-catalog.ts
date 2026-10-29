@@ -1708,6 +1708,67 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'memory',
+    summary: 'Host-wide memory service.',
+    description: 'Host-wide memory service. Every operation names the owner or view it acts on, and records of other owners and other workspaces are invisible to it. Writes are serialized by the storage domain and durable before they resolve.',
+    methods: [
+      {
+        signature: 'readonly limits: MemoryLimits',
+        description: 'Resolved deployment limits.',
+        parameters: [],
+      },
+      {
+        signature: 'async accessOf(session: Session): Promise<MemoryAccess>',
+        description: 'Resolve which records a Session can use now.',
+        parameters: [{ name: 'session', description: 'Session whose original project directory scopes workspace records.' }],
+        returns: 'the current owner\'s view, or `sign-in-required` while the Host names accounts and none is signed in.',
+      },
+      {
+        signature: 'async remember(request: RememberRequest): Promise<MemoryRecord>',
+        description: 'Store one record, replacing the owner\'s record with the same scope, entity, and key.',
+        parameters: [{ name: 'request', description: 'owner, scope, statement, lifecycle state, and the write that justified it.' }],
+        returns: 'the stored record; a replacement keeps the earlier id and creation time.',
+        throws: ['{@link MemoryError} `value-too-large`, `workspace-full`, or `profile-full`.'],
+      },
+      {
+        signature: 'recall(request: RecallRequest): readonly MemoryRecord[]',
+        description: 'Rank the view\'s active records against free text.',
+        parameters: [{ name: 'request', description: 'view, query text, optional alternative wordings, and optional kind filter.' }],
+        returns: 'at most `maxRecallResults` records, best match first.',
+      },
+      {
+        signature: 'async forget(view: MemoryView, id: MemoryIdType): Promise<boolean>',
+        description: 'Delete one record durably.',
+        parameters: [{ name: 'view', description: 'view that must see the record.' }, { name: 'id', description: 'record to delete.' }],
+        returns: 'whether the view saw the record.',
+      },
+      {
+        signature: 'async setPinned(view: MemoryView, id: MemoryIdType, pinned: boolean): Promise<MemoryRecord | undefined>',
+        description: 'Change whether an active workspace record is pinned.',
+        parameters: [{ name: 'view', description: 'view that must see the record.' }, { name: 'id', description: 'record to change.' }, { name: 'pinned', description: 'new pin state.' }],
+        returns: 'the updated record, or `undefined` when the view sees no active workspace record with that id.',
+      },
+      {
+        signature: 'async confirm(view: MemoryView, id: MemoryIdType): Promise<MemoryRecord | undefined>',
+        description: 'Activate a candidate.',
+        parameters: [{ name: 'view', description: 'view that must see the record.' }, { name: 'id', description: 'candidate to confirm.' }],
+        returns: 'the active record, or `undefined` when the view sees no candidate with that id.',
+      },
+      {
+        signature: 'list(view: MemoryView): readonly MemoryRecord[]',
+        description: 'Enumerate every record a view sees, for human management.',
+        parameters: [{ name: 'view', description: 'owner and optional workspace.' }],
+        returns: 'profile and workspace records, newest first.',
+      },
+      {
+        signature: 'snapshot(view: MemoryView): readonly MemoryRecord[]',
+        description: 'Select the records a Session receives without searching.',
+        parameters: [{ name: 'view', description: 'owner and optional workspace.' }],
+        returns: 'every active profile record, then at most `maxPinnedRecords` pinned workspace records; each group ordered by entity, then key.',
+      },
+    ],
+  },
+  {
     key: 'messageFeedback',
     summary: 'Session-log service; cold operations never construct a Session or Agent.',
     description: 'Session-log service; cold operations never construct a Session or Agent.',
@@ -3592,6 +3653,25 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'tomatoAccount',
+    summary: '`ctx.tomatoAccount`: the read side of the Host\'s verified account.',
+    description: '`ctx.tomatoAccount`: the read side of the Host\'s verified account. The state changes only when the gateway verifies a browser session or learns that the browser has none (a logout, or a session request without a session); an `unavailable` verification keeps the previous state, because auth_service being unreachable decides nothing about who is signed in.',
+    methods: [
+      {
+        signature: 'current(): CurrentAccount',
+        description: 'Read the current account.',
+        parameters: [],
+        returns: '`signed-in` with the verified user, `signed-out`, or `unknown` before any verification.',
+      },
+      {
+        signature: 'watch(listener: AccountListener): () => void',
+        description: 'Subscribe to account changes.',
+        parameters: [{ name: 'listener', description: 'called with each new account state; listener failures are contained.' }],
+        returns: 'the disposer that removes the listener.',
+      },
+    ],
+  },
+  {
     key: 'toolResultPruner',
     summary: 'Deterministic head/middle/tail pruning for current tool-result surface nodes.',
     description: 'Deterministic head/middle/tail pruning for current tool-result surface nodes.',
@@ -4937,6 +5017,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface AccountLinks {\n    readonly usageUrl: string;\n    readonly topUpUrl: string;\n}',
   },
   {
+    name: 'AccountListener',
+    declaration: 'export type AccountListener = (account: CurrentAccount) => void;',
+  },
+  {
     name: 'AccountProfile',
     declaration: 'export interface AccountProfile {\n    readonly id: AccountUserId | null;\n    readonly name: string | null;\n    readonly contact: string | null;\n    readonly avatarUrl?: string | null;\n}',
   },
@@ -5627,6 +5711,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'CuaSystemPermissionState',
     declaration: 'export interface CuaSystemPermissionState {\n    accessibility: boolean;\n    screenRecording: boolean;\n    helper: CuaPermissionProcess;\n    parent: CuaPermissionProcess;\n    launchApplication?: {\n        name: string;\n        path: string;\n        icon?: string | undefined;\n    } | undefined;\n}',
+  },
+  {
+    name: 'CurrentAccount',
+    declaration: 'export type CurrentAccount = {\n    readonly status: \'signed-in\';\n    readonly user: SessionUser;\n} | {\n    readonly status: \'signed-out\';\n} | {\n    readonly status: \'unknown\';\n};',
   },
   {
     name: 'DailyInput',
@@ -6445,6 +6533,42 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type McpResourceRequest = {\n    method: \'resources/list\' | \'resources/templates/list\';\n    cursor?: string;\n} | {\n    method: \'resources/read\';\n    uri: string;\n};',
   },
   {
+    name: 'MemoryAccess',
+    declaration: 'export type MemoryAccess = {\n    readonly kind: \'available\';\n    readonly view: MemoryView;\n} | {\n    readonly kind: \'sign-in-required\';\n};',
+  },
+  {
+    name: 'MemoryKind',
+    declaration: 'export type MemoryKind = \'preference\' | \'constraint\' | \'decision\' | \'fact\';',
+  },
+  {
+    name: 'MemoryLimits',
+    declaration: 'export interface MemoryLimits {\n    readonly maxRecallResults: number;\n    readonly maxPinnedRecords: number;\n    readonly maxValueBytes: number;\n    readonly maxRecordsPerWorkspace: number;\n    readonly maxProfileRecords: number;\n}',
+  },
+  {
+    name: 'MemoryOwner',
+    declaration: 'export type MemoryOwner = Branded<\'MemoryOwner\'>;',
+  },
+  {
+    name: 'MemoryRecord',
+    declaration: 'export type MemoryRecord = z.infer<typeof memoryRecordSchema>;',
+  },
+  {
+    name: 'MemoryScope',
+    declaration: 'export type MemoryScope = {\n    readonly kind: \'profile\';\n} | {\n    readonly kind: \'workspace\';\n    readonly path: string;\n};',
+  },
+  {
+    name: 'MemorySource',
+    declaration: 'export interface MemorySource {\n    readonly sessionId: SessionId;\n    readonly userMessageSeq?: SessionSeq;\n}',
+  },
+  {
+    name: 'MemoryStatus',
+    declaration: 'export type MemoryStatus = \'candidate\' | \'active\';',
+  },
+  {
+    name: 'MemoryView',
+    declaration: 'export interface MemoryView {\n    readonly owner: MemoryOwner;\n    readonly workspace?: string;\n}',
+  },
+  {
     name: 'Message',
     declaration: 'export type Message = MessageRoleMap[keyof MessageRoleMap];',
   },
@@ -7029,6 +7153,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type ReasoningEffortId = Branded<\'ReasoningEffortId\'>;',
   },
   {
+    name: 'RecallRequest',
+    declaration: 'export interface RecallRequest {\n    readonly view: MemoryView;\n    readonly text: string;\n    readonly alternatives?: readonly string[];\n    readonly kind?: MemoryKind;\n}',
+  },
+  {
     name: 'RecommendationDetails',
     declaration: 'export type RecommendationDetails = {\n    readonly status: \'available\';\n    readonly title: LocalizedText;\n    readonly description: LocalizedText;\n    readonly enabled: boolean;\n} | {\n    readonly status: \'refused\';\n    readonly reason: \'unknown\' | \'unavailable\' | \'not-live-root\' | \'closing\';\n};',
   },
@@ -7051,6 +7179,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'Reload',
     declaration: 'export interface Reload {\n    filename: string;\n    modules: ReloadModules;\n    runtime?: Plugin.Runtime | undefined;\n}',
+  },
+  {
+    name: 'RememberRequest',
+    declaration: 'export interface RememberRequest {\n    readonly owner: MemoryOwner;\n    readonly scope: MemoryScope;\n    readonly kind: MemoryKind;\n    readonly entity: string;\n    readonly key: string;\n    readonly value: string;\n    readonly status: MemoryStatus;\n    readonly pinned: boolean;\n    readonly source: MemorySource;\n}',
   },
   {
     name: 'RemoteAccessAction',
@@ -7935,6 +8067,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'SessionUpdateQueueValue',
     declaration: 'export interface SessionUpdateQueueValue {\n    readonly accepted: true;\n}',
+  },
+  {
+    name: 'SessionUser',
+    declaration: 'export interface SessionUser {\n    readonly id: string;\n    readonly email: string;\n    readonly name: string | null;\n    readonly avatarUrl: string | null;\n    readonly language: string | null;\n}',
   },
   {
     name: 'SessionWireEvent',

@@ -367,6 +367,29 @@ abstract getDeviceIdentity(): Promise<{ deviceId?: string; userId?: AccountUserI
 
 Source: [`packages/credentials/deepseek-account/src/index.ts`](../../packages/credentials/deepseek-account/src/index.ts)
 
+<a id="ctxtomatoaccount--tomatoaccount"></a>
+
+### `ctx.tomatoAccount` — `TomatoAccount`
+
+`ctx.tomatoAccount`: the read side of the Host's verified account. The state changes only when the gateway verifies a browser session or learns that the browser has none (a logout, or a session request without a session); an `unavailable` verification keeps the previous state, because auth_service being unreachable decides nothing about who is signed in.
+
+```ts cordis-catalog
+/**
+ * Read the current account.
+ * @returns `signed-in` with the verified user, `signed-out`, or `unknown` before any verification.
+ */
+current(): CurrentAccount
+
+/**
+ * Subscribe to account changes.
+ * @param listener - called with each new account state; listener failures are contained.
+ * @returns the disposer that removes the listener.
+ */
+watch(listener: AccountListener): () => void
+```
+
+Source: [`packages/tomato/gateway/src/account-state.ts`](../../packages/tomato/gateway/src/account-state.ts)
+
 <a id="authorization-events"></a>
 
 ### `authorization/*` events

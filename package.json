@@ -304,6 +304,9 @@
     "@tomato/experimental-subagent-oar": "workspace:*",
     "@tomato/experimental-tool-subagent-oar": "workspace:*",
     "@tomato/experimental-cua-macos": "workspace:*",
-    "@tomato/action-cards": "workspace:*"
+    "@tomato/action-cards": "workspace:*",
+    "@tomato/experimental-memory": "workspace:*",
+    "@tomato/experimental-tool-memory": "workspace:*",
+    "@tomato/commands": "workspace:*"
   }
 }

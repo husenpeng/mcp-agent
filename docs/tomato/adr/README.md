@@ -28,3 +28,6 @@
 | [0009](0009-tomato-namespace.md) | 仓库自有的 DSH/dsh/`@deepseek-ai` 命名统一为 TOMATO/tomato/`@tomato`，不做兼容 | Accepted |
 | [0010](0010-desktop-app-icon.md) | 桌面应用、安装程序与 Windows 托盘图标改用 Web 安装底板的番茄标志 | Accepted |
 | [0011](0011-desktop-startup-splash.md) | 桌面冷启动播放 2.2s 品牌开屏，Host 就绪后淡出交给主窗或欢迎窗 | Accepted |
+| [0012](0012-memory-and-focus.md) | 跨会话工作区记忆与目标轮次专注以默认关闭的实验组合包交付，写入需引用用户原话，不新增续跑 driver（检索与范围分别由 0013、0014 修订） | Accepted |
+| [0013](0013-memory-query-expansion.md) | 记忆搜索命中过少时用一次辅助模型请求扩展查询，再按词法排序，失败回退字面结果 | Accepted |
+| [0014](0014-account-scoped-memory-and-profile.md) | 记忆按网关已验证的登录账号隔离，未登录时拒绝读写；新增跨工作区的用户画像范围 | Accepted |
