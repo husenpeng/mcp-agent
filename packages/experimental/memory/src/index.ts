@@ -1,9 +1,11 @@
 /**
  * Experimental cross-session memory. `ctx.memory` stores records in the
- * `tomato_memory` storage domain, scoped by the canonical original project
- * directory of a Session; records never enter a Session log. The
- * `@tomato/experimental-tool-memory` plugin is the model-facing and command
- * consumer.
+ * `tomato_memory` storage domain. Each record belongs to one owner — the
+ * account `ctx.tomatoAccount` names, or one local owner on a Host without
+ * accounts — and applies either to the owner's profile in every workspace or
+ * to one canonical original project directory. Records never enter a Session
+ * log. The `@tomato/experimental-tool-memory` plugin is the model-facing and
+ * command consumer.
  * @module @tomato/experimental-memory
  */
 
@@ -12,21 +14,40 @@ import { realpath } from 'node:fs/promises'
 import z from '@tomato/schemastery'
 import { Service } from '@tomato/cordis'
 import type { Context } from '@tomato/cordis'
+import type {} from '@tomato/gateway'
 import type { Session } from '@tomato/session'
 import type { Domain } from '@tomato/storage-domain'
 import { rankMemories } from './retrieval.ts'
-import { MemoryId, memoryDomain } from './storage.ts'
+import { LOCAL_MEMORY_OWNER, MemoryId, accountMemoryOwner, memoryDomain } from './storage.ts'
 import type { MemoryRecord } from './storage.ts'
-import type { MemoryId as MemoryIdType, RecallRequest, RememberRequest } from './types.ts'
+import type {
+  MemoryAccess,
+  MemoryId as MemoryIdType,
+  MemoryOwner,
+  MemoryScope,
+  MemoryView,
+  RecallRequest,
+  RememberRequest,
+} from './types.ts'
 
 export type * from './types.ts'
-export { MEMORY_KINDS, MEMORY_STATUSES, MemoryId, isMemoryIdentifier, memoryDomain, memoryRecordSchema } from './storage.ts'
+export {
+  LOCAL_MEMORY_OWNER,
+  MEMORY_KINDS,
+  MEMORY_STATUSES,
+  MemoryId,
+  MemoryOwner,
+  accountMemoryOwner,
+  isMemoryIdentifier,
+  memoryDomain,
+  memoryRecordSchema,
+} from './storage.ts'
 export type { MemoryRecord } from './storage.ts'
-export { memoryTokens, rankMemories } from './retrieval.ts'
+export { ALTERNATIVE_WEIGHT, memoryTokens, rankMemories } from './retrieval.ts'
 
 declare module '@tomato/cordis' {
   interface Context {
-    /** Host-wide cross-session memory records scoped by canonical workspace. */
+    /** Host-wide cross-session memory records scoped by owner, then by profile or canonical workspace. */
     memory: MemoryService
   }
 }
@@ -39,8 +60,10 @@ export interface Config {
   maxPinnedRecords?: number
   /** Maximum UTF-8 bytes of one record value. */
   maxValueBytes?: number
-  /** Maximum stored records, including candidates, per workspace. */
+  /** Maximum stored records, including candidates, per owner and workspace. */
   maxRecordsPerWorkspace?: number
+  /** Maximum stored profile records, including candidates, per owner. */
+  maxProfileRecords?: number
 }
 
 /** Fully resolved deployment limits. */
@@ -51,12 +74,14 @@ export interface MemoryLimits {
   readonly maxPinnedRecords: number
   /** Maximum UTF-8 bytes of one record value. */
   readonly maxValueBytes: number
-  /** Maximum stored records, including candidates, per workspace. */
+  /** Maximum stored records, including candidates, per owner and workspace. */
   readonly maxRecordsPerWorkspace: number
+  /** Maximum stored profile records, including candidates, per owner. */
+  readonly maxProfileRecords: number
 }
 
 /** Stable failure classes of {@link MemoryError}. */
-export type MemoryErrorCode = 'value-too-large' | 'workspace-full'
+export type MemoryErrorCode = 'value-too-large' | 'workspace-full' | 'profile-full'
 
 /** Expected rejection of a memory write; `code` is stable for callers. */
 export class MemoryError extends Error {
@@ -75,6 +100,21 @@ function newestFirst(left: MemoryRecord, right: MemoryRecord): number {
   return right.updatedAt - left.updatedAt || left.id.localeCompare(right.id)
 }
 
+/** By entity, then by key. */
+function byEntityAndKey(left: MemoryRecord, right: MemoryRecord): number {
+  return left.entity.localeCompare(right.entity) || left.key.localeCompare(right.key)
+}
+
+/** Whether two scopes name the same profile or the same workspace. */
+function sameScope(left: MemoryScope, right: MemoryScope): boolean {
+  return left.kind === 'profile' ? right.kind === 'profile' : right.kind === 'workspace' && left.path === right.path
+}
+
+/** Whether a view sees a record. */
+function visibleIn(view: MemoryView, record: MemoryRecord): boolean {
+  return record.owner === view.owner && (record.scope.kind === 'profile' || record.scope.path === view.workspace)
+}
+
 /**
  * Resolve deployment limits; direct construction outside Loader normalization is validated here.
  * @param config - partially specified limits.
@@ -86,6 +126,7 @@ export function resolveMemoryLimits(config: Config): MemoryLimits {
     maxPinnedRecords: config.maxPinnedRecords ?? 20,
     maxValueBytes: config.maxValueBytes ?? 1024,
     maxRecordsPerWorkspace: config.maxRecordsPerWorkspace ?? 1000,
+    maxProfileRecords: config.maxProfileRecords ?? 100,
   }
   for (const [field, value] of Object.entries(limits)) {
     if (!Number.isSafeInteger(value) || value < 1) {
@@ -96,9 +137,9 @@ export function resolveMemoryLimits(config: Config): MemoryLimits {
 }
 
 /**
- * Host-wide memory service. Every operation names the canonical workspace it
- * acts on, and records of other workspaces are invisible to it. Writes are
- * serialized by the storage domain and durable before they resolve.
+ * Host-wide memory service. Every operation names the owner or view it acts
+ * on, and records of other owners and other workspaces are invisible to it.
+ * Writes are serialized by the storage domain and durable before they resolve.
  */
 export class MemoryService extends Service {
   static inject = ['storageDomain']
@@ -108,6 +149,7 @@ export class MemoryService extends Service {
     maxPinnedRecords: z.number().step(1).min(1).max(100).default(20),
     maxValueBytes: z.number().step(1).min(16).max(16_384).default(1024),
     maxRecordsPerWorkspace: z.number().step(1).min(1).max(100_000).default(1000),
+    maxProfileRecords: z.number().step(1).min(1).max(10_000).default(100),
   })
 
   /** Resolved deployment limits. */
@@ -147,20 +189,23 @@ export class MemoryService extends Service {
     return this.domain.table('records')
   }
 
+  /** Every stored record, in storage order. */
+  private all(): MemoryRecord[] {
+    return [...this.records.entries()].map(([, record]) => record)
+  }
+
   /**
    * Resolve the canonical workspace of a Session from its immutable header
    * directory, once per Session.
-   * @param session - Session whose original project scopes memory.
-   * @returns the realpath of the header directory, or `undefined` when the Session has none or it no longer exists.
    */
-  workspaceOf(session: Session): Promise<string | undefined> {
+  private workspaceOf(session: Session): Promise<string | undefined> {
     let workspace = this.workspaces.get(session)
     if (workspace === undefined) {
       const cwd = session.header.cwd
       workspace = cwd === undefined ? Promise.resolve(undefined) : realpath(cwd).then(
         path => path,
         (error: unknown) => {
-          // A missing project directory leaves the Session without memory instead of failing its turn.
+          // A missing project directory leaves the Session with profile records only instead of failing its turn.
           this.ctx.logger.warn(`experimental-memory: directory of Session "${session.id}" is unavailable: ${String(error)}`)
           return undefined
         },
@@ -170,45 +215,71 @@ export class MemoryService extends Service {
     return workspace
   }
 
-  /** Records of one workspace, in storage order. */
-  private recordsOf(workspace: string): MemoryRecord[] {
-    return [...this.records.entries()].map(([, record]) => record).filter(record => record.workspace === workspace)
-  }
-
-  /** The workspace's record with this id. */
-  private owned(workspace: string, id: MemoryIdType): MemoryRecord | undefined {
-    const record = this.records.get(id)
-    return record?.workspace === workspace ? record : undefined
+  /**
+   * The owner this Host serves now, read at each call because sign-in can
+   * change between turns: the signed-in account where the gateway names
+   * accounts, the local owner where it does not, and none while a Host that
+   * names accounts has nobody signed in.
+   */
+  private owner(): MemoryOwner | undefined {
+    const account = this.ctx.get('tomatoAccount')
+    if (account === undefined) return LOCAL_MEMORY_OWNER
+    const current = account.current()
+    return current.status === 'signed-in' ? accountMemoryOwner(current.user.id) : undefined
   }
 
   /**
-   * Store one record, replacing the workspace's record with the same entity and key.
-   * @param request - statement, lifecycle state, and the write that justified it.
+   * Resolve which records a Session can use now.
+   * @param session - Session whose original project directory scopes workspace records.
+   * @returns the current owner's view, or `sign-in-required` while the Host names accounts and none is signed in.
+   */
+  async accessOf(session: Session): Promise<MemoryAccess> {
+    const workspace = await this.workspaceOf(session)
+    const owner = this.owner()
+    if (owner === undefined) return { kind: 'sign-in-required' }
+    return { kind: 'available', view: workspace === undefined ? { owner } : { owner, workspace } }
+  }
+
+  /** The view's record with this id. */
+  private visible(view: MemoryView, id: MemoryIdType): MemoryRecord | undefined {
+    const record = this.records.get(id)
+    return record !== undefined && visibleIn(view, record) ? record : undefined
+  }
+
+  /**
+   * Store one record, replacing the owner's record with the same scope, entity, and key.
+   * @param request - owner, scope, statement, lifecycle state, and the write that justified it.
    * @returns the stored record; a replacement keeps the earlier id and creation time.
-   * @throws {@link MemoryError} `value-too-large` or `workspace-full`.
+   * @throws {@link MemoryError} `value-too-large`, `workspace-full`, or `profile-full`.
    */
   async remember(request: RememberRequest): Promise<MemoryRecord> {
     if (Buffer.byteLength(request.value, 'utf8') > this.limits.maxValueBytes) {
       throw new MemoryError(`a memory value is limited to ${this.limits.maxValueBytes} UTF-8 bytes`, 'value-too-large')
     }
-    const records = this.recordsOf(request.workspace)
+    const records = this.all().filter(record => record.owner === request.owner && sameScope(record.scope, request.scope))
     const previous = records.find(record => record.entity === request.entity && record.key === request.key)
-    if (previous === undefined && records.length >= this.limits.maxRecordsPerWorkspace) {
-      throw new MemoryError(
-        `this workspace already stores ${this.limits.maxRecordsPerWorkspace} memories; delete unused ones first`,
-        'workspace-full',
-      )
+    if (previous === undefined) {
+      if (request.scope.kind === 'profile' && records.length >= this.limits.maxProfileRecords) {
+        throw new MemoryError(`the profile already stores ${this.limits.maxProfileRecords} memories; delete unused ones first`, 'profile-full')
+      }
+      if (request.scope.kind === 'workspace' && records.length >= this.limits.maxRecordsPerWorkspace) {
+        throw new MemoryError(
+          `this workspace already stores ${this.limits.maxRecordsPerWorkspace} memories; delete unused ones first`,
+          'workspace-full',
+        )
+      }
     }
     const now = Date.now()
     const record: MemoryRecord = {
       id: previous?.id ?? MemoryId(`memory-${randomUUID()}`),
-      workspace: request.workspace,
+      owner: request.owner,
+      scope: request.scope,
       kind: request.kind,
       entity: request.entity,
       key: request.key,
       value: request.value,
       status: request.status,
-      pinned: request.status === 'active' && request.pinned,
+      pinned: request.status === 'active' && request.scope.kind === 'workspace' && request.pinned,
       createdAt: previous?.createdAt ?? now,
       updatedAt: now,
       source: request.source,
@@ -218,71 +289,72 @@ export class MemoryService extends Service {
   }
 
   /**
-   * Rank the workspace's active records against free text.
-   * @param request - workspace, query text, and optional kind filter.
+   * Rank the view's active records against free text.
+   * @param request - view, query text, optional alternative wordings, and optional kind filter.
    * @returns at most `maxRecallResults` records, best match first.
    */
   recall(request: RecallRequest): readonly MemoryRecord[] {
-    const candidates = this.recordsOf(request.workspace)
-      .filter(record => record.status === 'active' && (request.kind === undefined || record.kind === request.kind))
-    return rankMemories(candidates, request.text, this.limits.maxRecallResults)
+    const candidates = this.all().filter(record => visibleIn(request.view, record)
+      && record.status === 'active' && (request.kind === undefined || record.kind === request.kind))
+    return rankMemories(candidates, request.text, this.limits.maxRecallResults, request.alternatives)
   }
 
   /**
    * Delete one record durably.
-   * @param workspace - canonical workspace that must own the record.
+   * @param view - view that must see the record.
    * @param id - record to delete.
-   * @returns whether the workspace owned the record.
+   * @returns whether the view saw the record.
    */
-  async forget(workspace: string, id: MemoryIdType): Promise<boolean> {
-    if (this.owned(workspace, id) === undefined) return false
+  async forget(view: MemoryView, id: MemoryIdType): Promise<boolean> {
+    if (this.visible(view, id) === undefined) return false
     return await this.records.delete(id)
   }
 
   /**
-   * Change whether an active record is pinned.
-   * @param workspace - canonical workspace that must own the record.
+   * Change whether an active workspace record is pinned.
+   * @param view - view that must see the record.
    * @param id - record to change.
    * @param pinned - new pin state.
-   * @returns the updated record, or `undefined` when the workspace owns no active record with that id.
+   * @returns the updated record, or `undefined` when the view sees no active workspace record with that id.
    */
-  async setPinned(workspace: string, id: MemoryIdType, pinned: boolean): Promise<MemoryRecord | undefined> {
-    const record = this.owned(workspace, id)
-    if (record?.status !== 'active') return undefined
+  async setPinned(view: MemoryView, id: MemoryIdType, pinned: boolean): Promise<MemoryRecord | undefined> {
+    const record = this.visible(view, id)
+    if (record?.status !== 'active' || record.scope.kind !== 'workspace') return undefined
     if (record.pinned === pinned) return record
     return await this.records.update(id, current => ({ ...current, pinned, updatedAt: Date.now() }))
   }
 
   /**
    * Activate a candidate.
-   * @param workspace - canonical workspace that must own the record.
+   * @param view - view that must see the record.
    * @param id - candidate to confirm.
-   * @returns the active record, or `undefined` when the workspace owns no candidate with that id.
+   * @returns the active record, or `undefined` when the view sees no candidate with that id.
    */
-  async confirm(workspace: string, id: MemoryIdType): Promise<MemoryRecord | undefined> {
-    if (this.owned(workspace, id)?.status !== 'candidate') return undefined
+  async confirm(view: MemoryView, id: MemoryIdType): Promise<MemoryRecord | undefined> {
+    if (this.visible(view, id)?.status !== 'candidate') return undefined
     return await this.records.update(id, current => ({ ...current, status: 'active', updatedAt: Date.now() }))
   }
 
   /**
-   * Enumerate every record of one workspace for human management.
-   * @param workspace - canonical workspace path.
-   * @returns the workspace's records, newest first.
+   * Enumerate every record a view sees, for human management.
+   * @param view - owner and optional workspace.
+   * @returns profile and workspace records, newest first.
    */
-  list(workspace: string): readonly MemoryRecord[] {
-    return this.recordsOf(workspace).sort(newestFirst)
+  list(view: MemoryView): readonly MemoryRecord[] {
+    return this.all().filter(record => visibleIn(view, record)).sort(newestFirst)
   }
 
   /**
-   * Select the pinned active records a Session receives without searching.
-   * @param workspace - canonical workspace path.
-   * @returns at most `maxPinnedRecords` records, ordered by entity, then key.
+   * Select the records a Session receives without searching.
+   * @param view - owner and optional workspace.
+   * @returns every active profile record, then at most `maxPinnedRecords` pinned workspace records; each group ordered by entity, then key.
    */
-  pinned(workspace: string): readonly MemoryRecord[] {
-    return this.recordsOf(workspace)
-      .filter(record => record.status === 'active' && record.pinned)
-      .sort((left, right) => left.entity.localeCompare(right.entity) || left.key.localeCompare(right.key))
-      .slice(0, this.limits.maxPinnedRecords)
+  snapshot(view: MemoryView): readonly MemoryRecord[] {
+    const active = this.all().filter(record => visibleIn(view, record) && record.status === 'active')
+    return [
+      ...active.filter(record => record.scope.kind === 'profile').sort(byEntityAndKey),
+      ...active.filter(record => record.pinned).sort(byEntityAndKey).slice(0, this.limits.maxPinnedRecords),
+    ]
   }
 }
 

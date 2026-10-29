@@ -212,14 +212,14 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@tomato/experimental-cua-macos` | yes | macOS native provider for shared Computer Use application and window objects |
 | `@tomato/experimental-focus` | yes | Goal-round failure ledger, repeated-failure reminders, and per-tool approval policy for long-running goals |
 | `@tomato/experimental-inspector` | yes | Experimental cross-realm CDP hub for Host debugging and Client Runtime inspection |
-| `@tomato/experimental-memory` | yes | Workspace-scoped cross-session memory records stored outside Session logs |
+| `@tomato/experimental-memory` | yes | Account-scoped cross-session memory: profile and workspace records stored outside Session logs |
 | `@tomato/experimental-ptc-runtime-python` | yes | CPython subprocess implementation of the Tomato Harness PTC execution seam |
 | `@tomato/experimental-session-inspector` | no | Experimental virtualized Session log and live Chat group/node inspectors |
 | `@tomato/experimental-speech-to-text` | yes | Experimental speech recognition with independently selectable providers |
 | `@tomato/experimental-speech-to-text-sensevoice` | yes | Local SenseVoice ONNX transcription with a managed sherpa-onnx process |
 | `@tomato/experimental-subagent-oar` | yes | Experimental one-shot subagents through OAR runtimes |
 | `@tomato/experimental-tool-agent-team` | yes | Scoped model-facing Agent Teams tools over ctx.agentTeams |
-| `@tomato/experimental-tool-memory` | yes | Model-facing workspace memory tools, the /memory command, and pinned-memory injection over ctx.memory |
+| `@tomato/experimental-tool-memory` | yes | Model-facing memory tools, the /memory command, and profile and pinned-memory injection over ctx.memory |
 | `@tomato/experimental-tool-subagent-oar` | yes | Delegate standalone tasks to configured external subagent providers |
 | `@tomato/experimental-tool-worktree` | no | Model tool that creates and enters a new Git worktree |
 | `@tomato/experimental-translator` | yes | Machine translation with reusable Session results |

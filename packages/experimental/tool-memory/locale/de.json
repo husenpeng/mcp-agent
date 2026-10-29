@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "Werkzeuge für das Arbeitsbereichsgedächtnis",
-    "description": "Lässt die KI Erinnerungen des Arbeitsbereichs suchen, speichern und löschen; verwalte sie mit /memory."
+    "title": "Gedächtniswerkzeuge",
+    "description": "Lässt die KI deine Profil- und Arbeitsbereichserinnerungen suchen, speichern und löschen; verwalte sie mit /memory."
   }
 }

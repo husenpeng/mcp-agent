@@ -26,4 +26,6 @@
 | [0008](0008-desktop-sign-in-account-refresh.md) | 初始欢迎窗登录成功后主动通知工作区刷新账户，避免停留在启动时的未登录投影 | Accepted |
 | [0008](0008-desktop-shell-brand-and-height.md) | macOS 桌面壳子：欢迎/主窗口标题栏露出 Tomato AI，欢迎 1000×640、主窗口默认 1280×760 | Accepted |
 | [0009](0009-tomato-namespace.md) | 仓库自有的 DSH/dsh/`@deepseek-ai` 命名统一为 TOMATO/tomato/`@tomato`，不做兼容 | Accepted |
-| [0010](0010-memory-and-focus.md) | 跨会话工作区记忆与目标轮次专注以默认关闭的实验组合包交付，写入需引用用户原话，不新增续跑 driver | Accepted |
+| [0010](0010-memory-and-focus.md) | 跨会话工作区记忆与目标轮次专注以默认关闭的实验组合包交付，写入需引用用户原话，不新增续跑 driver（检索与范围分别由 0011、0012 修订） | Accepted |
+| [0011](0011-memory-query-expansion.md) | 记忆搜索命中过少时用一次辅助模型请求扩展查询，再按词法排序，失败回退字面结果 | Accepted |
+| [0012](0012-account-scoped-memory-and-profile.md) | 记忆按网关已验证的登录账号隔离，未登录时拒绝读写；新增跨工作区的用户画像范围 | Accepted |

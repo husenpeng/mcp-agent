@@ -1166,7 +1166,7 @@ export interface InspectorOptions {
 ## `@tomato/experimental-memory`
 
 - `inject`: `storageDomain`
-- `source`: [`packages/experimental/memory/src/index.ts:35`](../packages/experimental/memory/src/index.ts)
+- `source`: [`packages/experimental/memory/src/index.ts:56`](../packages/experimental/memory/src/index.ts)
 
 ```ts config-catalog
 /** Deployment limits for stored and recalled memory. */
@@ -1177,8 +1177,10 @@ export interface Config {
   maxPinnedRecords?: number
   /** Maximum UTF-8 bytes of one record value. */
   maxValueBytes?: number
-  /** Maximum stored records, including candidates, per workspace. */
+  /** Maximum stored records, including candidates, per owner and workspace. */
   maxRecordsPerWorkspace?: number
+  /** Maximum stored profile records, including candidates, per owner. */
+  maxProfileRecords?: number
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-memory -->
@@ -1387,16 +1389,28 @@ export interface Config {
 
 ## `@tomato/experimental-tool-memory`
 
-- `inject`: `memory` · `tools` · `agents` · `commands` · `sessionProjections`
-- `source`: [`packages/experimental/tool-memory/src/index.ts:28`](../packages/experimental/tool-memory/src/index.ts)
+- `inject`: `memory` · `tools` · `agents` · `commands` · `sessionProjections` · `llm`
+- `source`: [`packages/experimental/tool-memory/src/index.ts:36`](../packages/experimental/tool-memory/src/index.ts)
 
 ```ts config-catalog
-/** Snapshot and write-justification limits. */
+/** Snapshot, write-justification, and query-expansion policy. */
 export interface Config {
-  /** Maximum UTF-8 bytes of one rendered pinned-memory snapshot. */
-  maxPinnedBytes?: number
+  /** Maximum UTF-8 bytes of one rendered memory snapshot. */
+  maxSnapshotBytes?: number
   /** Minimum user-perceived characters of a `user_quote` that can activate a write. */
   minQuoteChars?: number
+  /** Whether `memory_search` asks a model for alternative wordings when the literal query matches too few records. */
+  queryExpansion?: boolean
+  /** Explicit expansion provider; omitted with `expansionModel` uses the calling agent's current model. */
+  expansionProvider?: string
+  /** Explicit expansion model; must be paired with `expansionProvider`. */
+  expansionModel?: string
+  /** End-to-end deadline of one expansion request in milliseconds. */
+  expansionTimeoutMs?: number
+  /** Output-token cap of one expansion request. */
+  expansionMaxTokens?: number
+  /** Maximum alternative wordings kept from one expansion. */
+  maxAlternatives?: number
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-tool-memory -->

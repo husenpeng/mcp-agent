@@ -9,7 +9,7 @@ English | [中文](2026-10-29-memory-focus-attribution.zh.md)
 
 ## Summary
 
-Adds the experimental-memory and experimental-focus attribution kinds to logged model context.
+Adds the experimental-memory, experimental-focus, and experimental-tool-memory attribution kinds to logged model context.
 
 ## Table of Contents
 
@@ -28,31 +28,31 @@ baseline: false
 changes:
   - root: "event:agent/inbox/spliced"
     previous: "2026-10-28-tomato-namespace"
-    after: "edd257f0e29e7f57c5f5d131e95dd8ef0c69aa73a86753971005b471f850c3db"
+    after: "b51e45845d3f93a468e074920e35b10bc0eccff54996e5b58a58d1fa04d79c7e"
     decision: same-version
   - root: "event:developer/message"
     previous: "2026-10-28-tomato-namespace"
-    after: "86877e6a31f0e29ec48c4e75929297b0e69523b684bb8cdc2a776b8e8ed01f5a"
+    after: "ff42e532e68e4974890e489a57673e7245d18b1ad5d065d16616141b3e3f579d"
     decision: same-version
   - root: "event:session/title-llm-request"
     previous: "2026-10-28-tomato-namespace"
-    after: "62e6e682a6ab93b4b25a1b604fd700abe031f792c18de76841556962696c94d7"
+    after: "86642fe542042af40c12990a7389131d6254093e19af555d83b67042b01d64e8"
     decision: same-version
   - root: "event:user/message"
     previous: "2026-10-28-tomato-namespace"
-    after: "c349e1235c48af8b64f1e5c36955488940daf633fd9d703b7a9e2714073cd551"
+    after: "5e9e1a01674a4a8c7b534c5a34ecc3cb08fb17efb83ff2383b36edc727b43c82"
     decision: same-version
 ```
 
 <a id="compatibility"></a>
 ## Compatibility
 
-Existing messages and records are unchanged. Readers without the memory or focus plugins preserve both source kinds and their JSON metadata and derive the recorded text as ordinary context. Each producer reads only its own kind: the memory tools to suppress an unchanged pinned snapshot, and focus to label its ledger and reminders. Neither kind grants authority or changes replay interpretation.
+Existing messages and records are unchanged. Readers without the memory or focus plugins preserve the experimental-memory and experimental-focus source kinds and their JSON metadata and derive the recorded text as ordinary context. Each producer reads only its own kind: the memory tools to suppress an unchanged snapshot, and focus to label its ledger and reminders. The experimental-tool-memory kind marks only the input of the auxiliary query-expansion request and never appears on a conversation surface; its request and outcome are logged as the ignorable plugin record plugin:tool-memory/query-expansion. No kind grants authority or changes replay interpretation.
 
 <a id="verification"></a>
 ## Verification
 
-pnpm exec vitest run packages/experimental/memory packages/experimental/tool-memory packages/experimental/focus packages/experimental/muse-bundle: 51 tests passed with 100% coverage of their sources. The bundle test boots the shipped rows through the real profile Loader and asserts the logged pinned snapshot and goal-round ledger in the model requests.
+pnpm exec vitest run packages/experimental/memory packages/experimental/tool-memory packages/experimental/focus packages/experimental/muse-bundle packages/tomato/gateway: every test passed with 100% coverage of the memory, tool-memory, and focus sources and of the gateway account state. The bundle test boots the shipped rows through the real profile Loader and asserts the logged profile and pinned snapshot and the goal-round ledger in the model requests.
 
 <a id="dev-note"></a>
 ## Dev Note

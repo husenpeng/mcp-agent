@@ -1,5 +1,5 @@
 ---
-description: "在 Web 或 Desktop profile 中一并开启跨会话的工作区记忆与目标轮次专注。"
+description: "在 Web 或 Desktop profile 中一并开启按账号隔离、跨会话的画像与工作区记忆，以及目标轮次专注。"
 kind: "package-bundle"
 ---
 
@@ -9,7 +9,7 @@ kind: "package-bundle"
 
 ## 概述
 
-让智能体在同一项目目录的多个会话之间记住已陈述的偏好和决定，并防止长目标反复执行失败的调用。该配置层插入三个 Host 行：记忆服务、其工具和 `/memory` 命令，以及目标专注。Web 和 Desktop 随附此配置包，默认关闭，且不在默认插件列表中展示。它为每次请求增加三个工具 schema；在 profile 配置 `approvalTools` 之前不会征求任何审批。
+让智能体在多个会话之间记住已陈述的偏好、决定和关于这个人的事实：画像记忆适用于每个工作区，工作区记忆只属于一个项目目录；Host 提供账号时，记忆归已登录账号所有。并防止长目标反复执行失败的调用。该配置层插入三个 Host 行：记忆服务、其工具和 `/memory` 命令，以及目标专注。Web 和 Desktop 随附此配置包，默认关闭，且不在默认插件列表中展示。它为每次请求增加三个工具 schema；在 profile 配置 `approvalTools` 之前不会征求任何审批。
 
 ## 目录
 
@@ -35,8 +35,8 @@ kind: "package-bundle"
 
 | 行 id | 包 | 新增 |
 |---|---|---|
-| `optional-memory` | [`@tomato/experimental-memory`](../memory/README.zh.md) | 基于 `tomato_memory` 存储域的 `ctx.memory` |
-| `optional-tool-memory` | [`@tomato/experimental-tool-memory`](../tool-memory/README.zh.md) | `memory_search`、`memory_write`、`memory_forget`、`/memory` 与置顶记忆注入 |
+| `optional-memory` | [`@tomato/experimental-memory`](../memory/README.zh.md) | 基于 `tomato_memory` 存储域的 `ctx.memory`，先按所有者、再按画像或工作区隔离 |
+| `optional-tool-memory` | [`@tomato/experimental-tool-memory`](../tool-memory/README.zh.md) | 带查询扩展的 `memory_search`、`memory_write`、`memory_forget`、`/memory` 与画像和置顶记忆注入 |
 | `optional-focus` | [`@tomato/experimental-focus`](../focus/README.zh.md) | 目标轮次失败记录、重复失败提醒与可选的按工具审批 |
 
 如需在调用高成本工具前征求确认，可在 profile 的 `cordis.patch.yml` 中覆盖专注行：

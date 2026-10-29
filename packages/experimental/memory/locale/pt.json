@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "Memória do espaço de trabalho",
-    "description": "Armazena preferências, restrições, decisões e fatos que sessões posteriores do mesmo espaço de trabalho podem usar."
+    "title": "Memória de perfil e do espaço de trabalho",
+    "description": "Armazena preferências, restrições, decisões e fatos para sessões posteriores: memórias de perfil em todos os espaços de trabalho e memórias do espaço de trabalho em um projeto."
   }
 }

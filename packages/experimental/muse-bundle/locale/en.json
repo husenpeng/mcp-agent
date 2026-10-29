@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Memory and goal focus",
-    "description": "Remember stated preferences and decisions across sessions in a workspace, and keep long goals from repeating failed calls.",
+    "description": "Remember stated preferences, decisions, and facts about you across sessions and workspaces, and keep long goals from repeating failed calls.",
     "detail": "docs/DETAIL.md"
   }
 }

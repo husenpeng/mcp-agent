@@ -14,8 +14,10 @@ flowchart LR
   pkg_creation_recommendations["creation-recommendations"]
   pkg_client_ui_action_cards["client-ui-action-cards"]
   pkg_experimental_memory["experimental-memory"]
-  svc_memory["ctx.memory<br/>Workspace memory records"]
+  svc_memory["ctx.memory<br/>Profile and workspace memory records"]
   pkg_experimental_tool_memory["experimental-tool-memory"]
+  pkg_gateway["gateway"]
+  svc_tomatoAccount["ctx.tomatoAccount<br/>Host signed-in account"]
   pkg_plugin_recommendations["plugin-recommendations"]
   svc_pluginRecommendations["ctx.pluginRecommendations<br/>Explicit-need plugin recommendations"]
   pkg_client_ui_plugin_recommendations["client-ui-plugin-recommendations"]
@@ -375,6 +377,7 @@ flowchart LR
   pkg_fs_local --> svc_fs
   pkg_fs_sandbox --> svc_fs
   pkg_fs_ssh --> svc_fs
+  pkg_gateway --> svc_tomatoAccount
   pkg_goal --> svc_goals
   pkg_headless --> svc_headlessStartup
   pkg_hmr --> svc_hmr
@@ -601,6 +604,7 @@ flowchart LR
   svc_systemPrompt --> pkg_tools
   svc_terminals --> pkg_tool_terminal
   svc_tokenMeter --> pkg_compaction_basic
+  svc_tomatoAccount --> pkg_experimental_memory
   svc_toolResultPruner --> pkg_compaction_basic
   svc_tools --> pkg_agent_loop
   svc_tools --> pkg_tool_ask_user
@@ -639,7 +643,8 @@ flowchart LR
 | ctx 键 | 角色 | 所属包 | 实现 | 直接消费方 | 配套插件 | 说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `ctx.actionCards` | `service` | [`action-cards`](../packages/experimental/action-cards) | - | [`creation-recommendations`](../packages/experimental/creation-recommendations), [`client-ui-action-cards`](../packages/experimental/client-ui-action-cards) | - | 负责卡片工具、卡片状态、用户操作和状态通知；各卡片种类注册自己的动作和处理器。 |
-| `ctx.memory` | `service` | [`experimental-memory`](../packages/experimental/memory) | - | [`experimental-tool-memory`](../packages/experimental/tool-memory) | - | 在 tomato_memory 存储域中按规范化项目目录保存记录；所有面向模型的工具、命令和快照都由记忆工具负责。 |
+| `ctx.memory` | `service` | [`experimental-memory`](../packages/experimental/memory) | - | [`experimental-tool-memory`](../packages/experimental/tool-memory) | - | 在 tomato_memory 存储域中先按所有者、再按画像或规范化项目目录保存记录；所有面向模型的工具、命令和快照都由记忆工具负责。 |
+| `ctx.tomatoAccount` | `service` | [`gateway`](../packages/tomato/gateway) | - | [`experimental-memory`](../packages/experimental/memory) | - | 仅在配置了 auth_service 时，网关发布其最近一次 auth_service 校验所对应的账号；消费方用 ctx.get 读取，并把缺失视为不提供账号的 Host。 |
 | `ctx.pluginRecommendations` | `service` | [`plugin-recommendations`](../packages/experimental/plugin-recommendations) | - | [`client-ui-plugin-recommendations`](../packages/experimental/client-ui-plugin-recommendations) | - | 读取官方插件卡片的当前目录文本，并在用户点击后通过配置插件管理器启用该插件。 |
 | `ctx.headlessStartup` | `core` | [`headless`](../packages/bundle/headless) | - | [`headless`](../packages/bundle/headless) | - | 将解析后的任务和运行选项提供给无界面运行器及其 sandbox-policy 配置。 |
 | `ctx.cotTranslation` | `service` | [`experimental-client-ui-cot-translation`](../packages/experimental/client-ui-cot-translation) | - | - | - | 为展开的思考内容提供有界的 Session 翻译请求，不改变模型可见历史。 |

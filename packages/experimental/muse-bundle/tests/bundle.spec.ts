@@ -100,7 +100,7 @@ it('publishes one default-off layer whose rows are its only runtime dependencies
     .toEqual(['@tomato/experimental-focus', '@tomato/experimental-memory', '@tomato/experimental-tool-memory'])
 })
 
-it('remembers a quoted preference across sessions and keeps a goal round from repeating a failed call', async () => {
+it('remembers a quoted preference in its workspace and a profile fact everywhere, and keeps a goal round from repeating a failed call', async () => {
   const home = await mkdtemp(join(tmpdir(), 'tomato-muse-bundle-'))
   let owner: Context | undefined
   onTestFinished(async () => { await owner?.fiber.dispose(); await rm(home, { recursive: true, force: true }) })
@@ -154,38 +154,49 @@ it('remembers a quoted preference across sessions and keeps a goal round from re
     expect([...ctx.loader.entries()].filter(entry => entry.options.id === row.id && entry.fiber !== undefined)).toHaveLength(1)
   }
 
-  // Session 1: the person states a preference; the model saves it with their words.
+  // Session 1: the person states a workspace preference and a fact about themselves; the model saves both with their words.
   const quote = '以后给达人写邮件都用简短直接的语气，不要用 emoji'
+  const aboutMe = '我是品牌经理，回复都用中文'
   const first = new Model([
-    call('write-1', 'memory_write', { kind: 'preference', entity: 'user', key: 'email-tone', value: '邮件简短直接，不用 emoji', user_quote: quote, pinned: true }),
+    call('write-1', 'memory_write', {
+      scope: 'workspace', kind: 'preference', entity: 'user', key: 'email-tone', value: '邮件简短直接，不用 emoji', user_quote: quote, pinned: true,
+    }),
+    call('write-2', 'memory_write', { scope: 'profile', kind: 'fact', entity: 'user', key: 'role', value: '品牌经理，回复用中文', user_quote: aboutMe }),
     text('记住了。'),
   ])
   ctx.llm.registerAdapter(['first'], first)
   const one = await ctx.agentLoop.create(SessionId('muse-one'), { provider: 'first', model: 'm' }, { cwd: workspace })
-  one.followup(createUserMessage({ content: [{ type: 'text', text: `你好。${quote}。` }], source: { kind: 'user' } }))
+  one.followup(createUserMessage({ content: [{ type: 'text', text: `你好。${quote}。${aboutMe}。` }], source: { kind: 'user' } }))
   await one.whenIdle()
   expect(requestText(first.requests[1])).toMatch(/Saved memory-[0-9a-f-]+\./u)
-  const [saved] = ctx.memory.list(workspace)
+  expect(requestText(first.requests[2])).toMatch(/Saved memory-[0-9a-f-]+\./u)
+  const view = { owner: Memory.LOCAL_MEMORY_OWNER, workspace }
+  const saved = ctx.memory.list(view).find(record => record.key === 'email-tone')
+  const aboutRecord = ctx.memory.list(view).find(record => record.key === 'role')
   expect(saved).toMatchObject({ status: 'active', pinned: true, value: '邮件简短直接，不用 emoji', source: { sessionId: one.session.id } })
+  expect(aboutRecord).toMatchObject({ scope: { kind: 'profile' }, status: 'active', pinned: false, value: '品牌经理，回复用中文' })
 
-  // Session 2 in the same workspace: the first request carries the pinned snapshot as logged context.
+  // Session 2 in the same workspace: the first request carries the profile and the pinned memory as logged context.
   const second = new Model([text('好的，按简短直接的语气写。')])
   ctx.llm.registerAdapter(['second'], second)
   const two = await ctx.agentLoop.create(SessionId('muse-two'), { provider: 'second', model: 'm' }, { cwd: workspace })
   two.followup(createUserMessage({ content: [{ type: 'text', text: '帮我给 @creator 写一封合作邮件' }], source: { kind: 'user' } }))
   await two.whenIdle()
   const [snapshot] = sourceTexts(two.session, 'experimental-memory')
+  expect(snapshot).toContain(`- ${aboutRecord?.id} [fact, profile] user / role: 品牌经理，回复用中文`)
   expect(snapshot).toContain(`- ${saved?.id} [preference, pinned] user / email-tone: 邮件简短直接，不用 emoji`)
   expect(requestText(second.requests[0])).toContain('邮件简短直接，不用 emoji')
 
-  // Another workspace sees nothing.
+  // Another workspace sees the profile but not the first workspace's memory.
   const elsewhere = await realpath(await mkdtemp(join(home, 'elsewhere-')))
   const third = new Model([text('ok')])
   ctx.llm.registerAdapter(['third'], third)
   const three = await ctx.agentLoop.create(SessionId('muse-three'), { provider: 'third', model: 'm' }, { cwd: elsewhere })
   three.followup(createUserMessage({ content: [{ type: 'text', text: 'hello there' }], source: { kind: 'user' } }))
   await three.whenIdle()
-  expect(sourceTexts(three.session, 'experimental-memory')).toEqual([])
+  const [elsewhereSnapshot] = sourceTexts(three.session, 'experimental-memory')
+  expect(elsewhereSnapshot).toContain('品牌经理，回复用中文')
+  expect(requestText(third.requests[0])).toContain('品牌经理，回复用中文')
   expect(requestText(third.requests[0])).not.toContain('邮件简短直接')
 
   // A goal round: the same failing call twice draws a reminder, the next round carries the ledger, and send_* asks first.

@@ -1,5 +1,5 @@
 ---
-description: "Tomato's same-origin local gateway: auth_service session routes, a fixed service forwarding table, and verified-user injection."
+description: "Tomato's same-origin local gateway: auth_service session routes, a fixed service forwarding table, verified-user injection, and the Host's signed-in account."
 kind: "package-reference"
 ---
 
@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`@tomato/gateway` mounts in the tomato Web Host beside Connection's `/api` prefix. It gives the browser a same-origin `/api/auth/*` surface for Feishu login, session projection, and logout, and a fixed-table `/api/services/<service>/*` forwarder for company services. Every protected request is verified with auth_service and carries the verified user id; the browser never supplies a target host. Host RPC, model requests, tool egress, and OTLP telemetry stay outside this package.
+`@tomato/gateway` mounts in the tomato Web Host beside Connection's `/api` prefix. It gives the browser a same-origin `/api/auth/*` surface for Feishu login, session projection, and logout, and a fixed-table `/api/services/<service>/*` forwarder for company services. Every protected request is verified with auth_service and carries the verified user id; the browser never supplies a target host. Host plugins read the signed-in account from `ctx.tomatoAccount`. Host RPC, model requests, tool egress, and OTLP telemetry stay outside this package.
 
 ## Table of Contents
 
@@ -50,6 +50,10 @@ The browser routes are `/api/auth/start`, `/api/auth/callback`, `/api/auth/sessi
 
 Forwarding preserves methods, query, JSON, SSE, multipart, and binary bodies; it refuses upstream redirects and strips browser cookies, authorization, forwarded-address headers, and identity headers before adding `X-Tomato-User-Id`. When an entry declares `userIdInjection`, the gateway overwrites that query or JSON-body field with the verified user id.
 
+### Signed-in account on the Host
+
+When `authServiceUrl` is set, the gateway provides `ctx.tomatoAccount`, a read-only view of the account the latest browser session names. `current()` returns `signed-in` with the verified user, `signed-out`, or `unknown` before the first verification; `watch(listener)` reports each change and returns its disposer, and a failing listener does not affect the others. A valid `/api/auth/session` verification records its user; an invalid session, a logout, or a session request without a session records `signed-out`; an unreachable auth_service changes nothing. Without `authServiceUrl` the service is absent, so consumers read it with `ctx.get('tomatoAccount')` and treat absence as a Host without accounts. [`@tomato/experimental-memory`](../../experimental/memory/README.md) scopes memory records by this account.
+
 ## Model Experience
 
 None, as the package only carries browser authentication and service forwarding; model requests remain between the Host and the configured provider.
@@ -67,6 +71,7 @@ None; this package neither assembles nor sends a provider request.
 - **No response-size cap on streaming** — buffered body injection is bounded, but streamed responses rely on upstream and client backpressure.
 - **Identity injection buffers JSON** — body injection reads the whole request up to the cap; multipart identity injection is unsupported.
 - **Auth routes bypass the Connection request waterfall** — exact Web routes are registered on the Host webserver, so the Desktop install lock does not cover them.
+- **One account per Host** — `ctx.tomatoAccount` follows the latest verification, not each browser; Desktop runs one Host per installation, but a Host shared by browsers signed in to different accounts names whichever verified last.
 
 <a id="dev-note"></a>
 

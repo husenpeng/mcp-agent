@@ -3,20 +3,23 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/tomato/gateway/README.md
 /:
-  en: 70305340bae3e160
-  zh: 2872fa4497dc15f1
+  en: c98434ee49cf4b32
+  zh: 46e1dc4c149d4cc7
 /tomato-gateway:
   en: 6a6f269eb07d31fc
   zh: d211d55b3f0e19c2
 /tomato-gateway/summary:
-  en: cdb5bf911189ae48
-  zh: 2161d2c0ef2f426d
+  en: 5153e61bc7478d76
+  zh: 38a39434e57e1335
 /tomato-gateway/table-of-contents:
   en: 2e89ddb1e73218cb
   zh: 0cd809ced2654bc9
 /tomato-gateway/use-this-package:
   en: 92169bc09a00712f
   zh: 7bd5efcc49060916
+/tomato-gateway/use-this-package/signed-in-account-on-the-host:
+  en: aae30e7478c1565b
+  zh: e9fc86b841638680
 /tomato-gateway/model-experience:
   en: 153d2a9a19272718
   zh: 3d1e74ffbdd07260
@@ -24,8 +27,8 @@
   en: ca75c51c89c2c9b0
   zh: bacec35330ccc487
 /tomato-gateway/known-limitations-and-deferred-work:
-  en: 262bcc865f243768
-  zh: 5a341c76cbb8f3a3
+  en: d9a8426fd7035a65
+  zh: d3573dad1f707612
 /tomato-gateway/known-limitations-and-deferred-work/dev-note:
   en: 1e5a2823b7a6c425
   zh: 39048a483213d292

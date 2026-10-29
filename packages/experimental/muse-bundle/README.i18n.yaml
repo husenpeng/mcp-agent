@@ -3,14 +3,14 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/experimental/muse-bundle/README.md
 /:
-  en: 020de14fc5a73357
-  zh: d88b97ed5a2ae37f
+  en: 4c194c5f0d8cffa1
+  zh: 2ba2de0b1ca50465
 /tomato-experimental-muse-bundle:
   en: 3479cb6f7b8a2017
   zh: 4d9aff01eba12035
 /tomato-experimental-muse-bundle/summary:
-  en: 205ec4a057c28074
-  zh: 67d5a69c8816d374
+  en: 466d4494defac43b
+  zh: 8ea6289bf5629471
 /tomato-experimental-muse-bundle/table-of-contents:
   en: d152484eb41ac6b4
   zh: 988e839059414d27
@@ -21,8 +21,8 @@
   en: 26f09825748ac9a3
   zh: b987d4ab1022794c
 /tomato-experimental-muse-bundle/use-this-package/what-you-get:
-  en: 4f26af63a4cbe692
-  zh: a2003a36d12ee31b
+  en: ac0a0194c6188c8f
+  zh: 65454a5c4741e145
 /tomato-experimental-muse-bundle/understand-the-implementation:
   en: 6bf5f3f17e03b362
   zh: 8831e3cc38f6a315

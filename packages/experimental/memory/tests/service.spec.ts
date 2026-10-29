@@ -1,5 +1,5 @@
 /** Memory service storage, scoping, replacement, limits, and restart durability. */
-import { mkdtemp, rm, symlink } from 'node:fs/promises'
+import { mkdtemp, realpath, rm, symlink } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -7,15 +7,18 @@ import { Context, Service } from '@tomato/cordis'
 import SessionStore, { SessionId, SessionSeq } from '@tomato/session'
 import Storage from '@tomato/storage'
 import { DomainFacility } from '@tomato/storage-domain'
+import { AccountState } from '@tomato/gateway'
 import MemoryService, {
+  LOCAL_MEMORY_OWNER,
   MemoryError,
   MemoryId,
+  accountMemoryOwner,
   isMemoryIdentifier,
   memoryTokens,
   rankMemories,
   resolveMemoryLimits,
 } from '@tomato/experimental-memory'
-import type { Config, MemoryRecord, RememberRequest } from '@tomato/experimental-memory'
+import type { Config, MemoryRecord, MemoryScope, MemoryView, RememberRequest } from '@tomato/experimental-memory'
 import { MemoryMediaPool, MemoryStorageBackend } from '../../../storage/storage-domain/tests/helpers/memory-backend.ts'
 
 const contexts: Context[] = []
@@ -46,9 +49,16 @@ async function harness(options: { pool?: MemoryMediaPool; config?: Config } = {}
   return { ctx, pool, fiber, memory: ctx.memory }
 }
 
+const OWNER = LOCAL_MEMORY_OWNER
+const WORKSPACE_A: MemoryScope = { kind: 'workspace', path: '/work/a' }
+const PROFILE: MemoryScope = { kind: 'profile' }
+const VIEW_A: MemoryView = { owner: OWNER, workspace: '/work/a' }
+const VIEW_B: MemoryView = { owner: OWNER, workspace: '/work/b' }
+
 function request(overrides: Partial<RememberRequest> = {}): RememberRequest {
   return {
-    workspace: '/work/a',
+    owner: OWNER,
+    scope: WORKSPACE_A,
     kind: 'preference',
     entity: 'user',
     key: 'email-tone',
@@ -83,7 +93,7 @@ describe('identifiers and tokens', () => {
 
 describe('ranking', () => {
   const at = (id: string, value: string, updatedAt: number): MemoryRecord => ({
-    id: MemoryId(id), workspace: '/w', kind: 'fact', entity: 'client:brand-x', key: 'budget', value,
+    id: MemoryId(id), owner: OWNER, scope: WORKSPACE_A, kind: 'fact', entity: 'client:brand-x', key: 'budget', value,
     status: 'active', pinned: false, createdAt: 0, updatedAt, source: { sessionId: SessionId('s') },
   })
 
@@ -98,19 +108,27 @@ describe('ranking', () => {
     expect(rankMemories(records, 'brand budget', 10).map(record => record.id)).toEqual(['new', 'old'])
     expect(rankMemories(records, '', 10).map(record => record.id)).toEqual(['new', 'old'])
   })
+
+  it('scores an alternative wording below the literal query and ignores an empty one', () => {
+    const records = [at('literal', '邮件 语气', 1), at('synonym', 'email tone', 2)]
+    expect(rankMemories(records, '邮件', 10, ['email', '  ']).map(record => record.id)).toEqual(['literal', 'synonym'])
+    expect(rankMemories(records, '无关', 10, ['tone']).map(record => record.id)).toEqual(['synonym'])
+  })
 })
 
 describe('limits', () => {
   it('defaults every limit and rejects a non-positive or fractional value', () => {
-    expect(resolveMemoryLimits({}))
-      .toEqual({ maxRecallResults: 10, maxPinnedRecords: 20, maxValueBytes: 1024, maxRecordsPerWorkspace: 1000 })
+    expect(resolveMemoryLimits({})).toEqual({
+      maxRecallResults: 10, maxPinnedRecords: 20, maxValueBytes: 1024, maxRecordsPerWorkspace: 1000, maxProfileRecords: 100,
+    })
     expect(() => resolveMemoryLimits({ maxRecallResults: 0 })).toThrow('maxRecallResults must be a positive safe integer')
     expect(() => resolveMemoryLimits({ maxValueBytes: 1.5 })).toThrow('maxValueBytes must be a positive safe integer')
+    expect(() => resolveMemoryLimits({ maxProfileRecords: -1 })).toThrow('maxProfileRecords must be a positive safe integer')
   })
 })
 
 describe('MemoryService', () => {
-  it('stores, replaces by entity and key, and keeps the earlier id and creation time', async () => {
+  it('stores, replaces by scope, entity, and key, and keeps the earlier id and creation time', async () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(1_000)
     const { memory } = await harness()
@@ -118,70 +136,106 @@ describe('MemoryService', () => {
     vi.setSystemTime(2_000)
     const second = await memory.remember(request({ value: 'Warm and brief', pinned: true }))
     expect(second).toMatchObject({ id: first.id, createdAt: 1_000, updatedAt: 2_000, value: 'Warm and brief', pinned: true })
-    expect(memory.list('/work/a')).toEqual([second])
+    vi.setSystemTime(3_000)
+    const profile = await memory.remember(request({ scope: PROFILE, value: 'Everywhere' }))
+    expect(profile.id).not.toBe(first.id)
+    expect(memory.list(VIEW_A)).toEqual([profile, second])
   })
 
-  it('isolates workspaces for recall, listing, pinning, confirming, and deletion', async () => {
+  it('isolates workspaces for recall, listing, the snapshot, pinning, confirming, and deletion', async () => {
     const { memory } = await harness()
     const own = await memory.remember(request({ pinned: true }))
-    await memory.remember(request({ workspace: '/work/b', value: 'Other workspace' }))
-    expect(memory.recall({ workspace: '/work/a', text: '' }).map(record => record.id)).toEqual([own.id])
-    expect(memory.list('/work/b').map(record => record.value)).toEqual(['Other workspace'])
-    expect(memory.pinned('/work/b')).toEqual([])
-    expect(await memory.forget('/work/b', own.id)).toBe(false)
-    expect(await memory.setPinned('/work/b', own.id, false)).toBeUndefined()
-    expect(await memory.confirm('/work/b', own.id)).toBeUndefined()
-    expect(memory.list('/work/a')).toHaveLength(1)
+    await memory.remember(request({ scope: { kind: 'workspace', path: '/work/b' }, value: 'Other workspace' }))
+    expect(memory.recall({ view: VIEW_A, text: '' }).map(record => record.id)).toEqual([own.id])
+    expect(memory.list(VIEW_B).map(record => record.value)).toEqual(['Other workspace'])
+    expect(memory.snapshot(VIEW_B)).toEqual([])
+    expect(await memory.forget(VIEW_B, own.id)).toBe(false)
+    expect(await memory.setPinned(VIEW_B, own.id, false)).toBeUndefined()
+    expect(await memory.confirm(VIEW_B, own.id)).toBeUndefined()
+    expect(await memory.forget(VIEW_A, MemoryId('memory-missing'))).toBe(false)
+    expect(memory.list(VIEW_A)).toHaveLength(1)
   })
 
-  it('keeps candidates out of recall and pinning until confirmed', async () => {
+  it('shows profile records in every workspace of their owner and to no other owner', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(1_000)
+    const { memory } = await harness()
+    const profile = await memory.remember(request({ scope: PROFILE, key: 'language', value: 'Reply in Chinese' }))
+    const bob: MemoryView = { owner: accountMemoryOwner('u-bob'), workspace: '/work/a' }
+    expect(memory.recall({ view: VIEW_B, text: 'chinese' }).map(record => record.id)).toEqual([profile.id])
+    expect(memory.recall({ view: { owner: OWNER }, text: '' }).map(record => record.id)).toEqual([profile.id])
+    expect(memory.list(bob)).toEqual([])
+    expect(memory.snapshot(bob)).toEqual([])
+    expect(await memory.forget(bob, profile.id)).toBe(false)
+    expect(await memory.confirm(bob, profile.id)).toBeUndefined()
+    vi.setSystemTime(2_000)
+    const workspace = await memory.remember(request({ value: 'Workspace only' }))
+    expect(memory.list({ owner: OWNER }).map(record => record.id)).toEqual([profile.id])
+    expect(memory.list(VIEW_A).map(record => record.id)).toEqual([workspace.id, profile.id])
+  })
+
+  it('keeps candidates out of recall and the snapshot until confirmed', async () => {
     const { memory } = await harness()
     const candidate = await memory.remember(request({ status: 'candidate', pinned: true, source: { sessionId: SessionId('s') } }))
+    const profileCandidate = await memory.remember(request({ scope: PROFILE, status: 'candidate', source: { sessionId: SessionId('s') } }))
     expect(candidate.pinned).toBe(false)
-    expect(memory.recall({ workspace: '/work/a', text: 'emoji' })).toEqual([])
-    expect(await memory.setPinned('/work/a', candidate.id, true)).toBeUndefined()
-    const confirmed = await memory.confirm('/work/a', candidate.id)
+    expect(memory.recall({ view: VIEW_A, text: 'emoji' })).toEqual([])
+    expect(memory.snapshot(VIEW_A)).toEqual([])
+    expect(await memory.setPinned(VIEW_A, candidate.id, true)).toBeUndefined()
+    const confirmed = await memory.confirm(VIEW_A, candidate.id)
     expect(confirmed?.status).toBe('active')
-    expect(await memory.confirm('/work/a', candidate.id)).toBeUndefined()
-    expect(memory.recall({ workspace: '/work/a', text: 'emoji' }).map(record => record.id)).toEqual([candidate.id])
+    expect(await memory.confirm(VIEW_A, candidate.id)).toBeUndefined()
+    expect(memory.recall({ view: VIEW_A, text: 'emoji' }).map(record => record.id)).toEqual([candidate.id])
+    await memory.confirm(VIEW_A, profileCandidate.id)
+    expect(memory.snapshot(VIEW_A).map(record => record.id)).toEqual([profileCandidate.id])
   })
 
   it('filters recall by kind and bounds it by maxRecallResults', async () => {
     const { memory } = await harness({ config: { maxRecallResults: 1 } })
     await memory.remember(request({ key: 'a', kind: 'fact', value: 'shared word' }))
     await memory.remember(request({ key: 'b', kind: 'decision', value: 'shared word' }))
-    expect(memory.recall({ workspace: '/work/a', text: 'shared', kind: 'decision' }).map(record => record.key)).toEqual(['b'])
-    expect(memory.recall({ workspace: '/work/a', text: 'shared' })).toHaveLength(1)
+    expect(memory.recall({ view: VIEW_A, text: 'shared', kind: 'decision' }).map(record => record.key)).toEqual(['b'])
+    expect(memory.recall({ view: VIEW_A, text: 'shared' })).toHaveLength(1)
   })
 
-  it('pins and unpins active records and orders pinned records by entity then key within the cap', async () => {
+  it('pins only active workspace records and puts every active profile record before the capped pinned ones', async () => {
     const { memory } = await harness({ config: { maxPinnedRecords: 2 } })
     const b = await memory.remember(request({ entity: 'b', key: 'x', pinned: true }))
     const a2 = await memory.remember(request({ entity: 'a', key: 'y', pinned: true }))
     const a1 = await memory.remember(request({ entity: 'a', key: 'x' }))
-    expect(await memory.setPinned('/work/a', a1.id, true)).toMatchObject({ pinned: true })
-    expect(memory.pinned('/work/a').map(record => record.id)).toEqual([a1.id, a2.id])
-    const unchanged = await memory.setPinned('/work/a', b.id, true)
-    expect(unchanged).toEqual(memory.list('/work/a').find(record => record.id === b.id))
-    expect(await memory.setPinned('/work/a', a2.id, false)).toMatchObject({ pinned: false })
-    expect(memory.pinned('/work/a').map(record => record.id)).toEqual([a1.id, b.id])
+    const profileZ = await memory.remember(request({ scope: PROFILE, entity: 'z', key: 'x', pinned: true }))
+    const profileY = await memory.remember(request({ scope: PROFILE, entity: 'y', key: 'x' }))
+    expect(profileZ.pinned).toBe(false)
+    expect(await memory.setPinned(VIEW_A, profileY.id, true)).toBeUndefined()
+    expect(await memory.setPinned(VIEW_A, a1.id, true)).toMatchObject({ pinned: true })
+    expect(memory.snapshot(VIEW_A).map(record => record.id)).toEqual([profileY.id, profileZ.id, a1.id, a2.id])
+    const unchanged = await memory.setPinned(VIEW_A, b.id, true)
+    expect(unchanged).toEqual(memory.list(VIEW_A).find(record => record.id === b.id))
+    expect(await memory.setPinned(VIEW_A, a2.id, false)).toMatchObject({ pinned: false })
+    expect(memory.snapshot(VIEW_A).map(record => record.id)).toEqual([profileY.id, profileZ.id, a1.id, b.id])
+    expect(memory.snapshot({ owner: OWNER }).map(record => record.id)).toEqual([profileY.id, profileZ.id])
   })
 
   it('deletes durably and reports whether the record existed', async () => {
     const { memory } = await harness()
     const record = await memory.remember(request())
-    expect(await memory.forget('/work/a', record.id)).toBe(true)
-    expect(await memory.forget('/work/a', record.id)).toBe(false)
-    expect(memory.list('/work/a')).toEqual([])
+    expect(await memory.forget(VIEW_A, record.id)).toBe(true)
+    expect(await memory.forget(VIEW_A, record.id)).toBe(false)
+    expect(memory.list(VIEW_A)).toEqual([])
   })
 
-  it('rejects an oversized value and a new record in a full workspace, but allows replacement there', async () => {
-    const { memory } = await harness({ config: { maxValueBytes: 16, maxRecordsPerWorkspace: 1 } })
+  it('rejects an oversized value and a new record in a full workspace or profile, but allows replacement there', async () => {
+    const { memory } = await harness({ config: { maxValueBytes: 16, maxRecordsPerWorkspace: 1, maxProfileRecords: 1 } })
     await expect(memory.remember(request({ value: '超过十六个字节的值' }))).rejects.toMatchObject({ code: 'value-too-large' })
     await memory.remember(request({ value: 'fits' }))
     await expect(memory.remember(request({ key: 'other', value: 'new' }))).rejects.toBeInstanceOf(MemoryError)
     await expect(memory.remember(request({ key: 'other', value: 'new' }))).rejects.toMatchObject({ code: 'workspace-full' })
     expect((await memory.remember(request({ value: 'replaced' }))).value).toBe('replaced')
+    await memory.remember(request({ scope: PROFILE, value: 'fits' }))
+    await expect(memory.remember(request({ scope: PROFILE, key: 'other', value: 'new' }))).rejects.toMatchObject({ code: 'profile-full' })
+    expect((await memory.remember(request({ scope: PROFILE, value: 'replaced' }))).value).toBe('replaced')
+    expect((await memory.remember(request({ owner: accountMemoryOwner('u-bob'), scope: PROFILE, key: 'other', value: 'new' }))).value)
+      .toBe('new')
   })
 
   it('survives a restart through the storage medium', async () => {
@@ -190,9 +244,8 @@ describe('MemoryService', () => {
     await first.ctx.fiber.dispose()
     contexts.splice(contexts.indexOf(first.ctx), 1)
     const second = await harness({ pool: first.pool })
-    expect(second.memory.list('/work/a')).toEqual([stored])
+    expect(second.memory.list(VIEW_A)).toEqual([stored])
   })
-
   /** Seed one record, then rename its storage key so it no longer matches the record id. */
   async function mismatchedPool(): Promise<MemoryMediaPool> {
     const pool = new MemoryMediaPool()
@@ -245,29 +298,48 @@ describe('MemoryService', () => {
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('closing the domain after a key mismatch failed: Error: close failed'))
   })
 
-  it('rejects a stored pinned candidate when the domain opens', async () => {
+  it.each([
+    ['a pinned candidate', { status: 'candidate' as const }],
+    ['a pinned profile record', { scope: PROFILE }],
+  ])('rejects %s when the domain opens', async (_label, overrides) => {
     const pool = new MemoryMediaPool()
     const seed = await harness({ pool })
-    const record = await seed.memory.remember(request({ status: 'candidate' }))
+    const record = await seed.memory.remember(request(overrides))
     await seed.ctx.fiber.dispose()
     contexts.splice(contexts.indexOf(seed.ctx), 1)
     pool.media.get('tomato_memory')?.tables.get('records')?.set(record.id, { ...record, pinned: true })
     await expect(harness({ pool })).rejects.toThrow()
   })
 
-  it('resolves a Session workspace once through realpath and tolerates a missing or absent directory', async () => {
+  it('resolves a Session workspace through realpath and keeps profile access without a directory', async () => {
     const { ctx, memory } = await harness()
     const directory = await tempDirectory()
     const link = join(await tempDirectory(), 'link')
     await symlink(directory, link)
     const linked = ctx.sessions.create(SessionId('linked'), { meta: { cwd: link } })
-    const first = memory.workspaceOf(linked)
-    expect(memory.workspaceOf(linked)).toBe(first)
-    expect(await first).toBe(await memory.workspaceOf(ctx.sessions.create(SessionId('direct'), { meta: { cwd: directory } })))
-    expect(await memory.workspaceOf(ctx.sessions.create(SessionId('none')))).toBeUndefined()
+    const first = await memory.accessOf(linked)
+    expect(await memory.accessOf(linked)).toEqual(first)
+    expect(first).toEqual(await memory.accessOf(ctx.sessions.create(SessionId('direct'), { meta: { cwd: directory } })))
+    expect(first).toEqual({ kind: 'available', view: { owner: OWNER, workspace: await realpath(directory) } })
+    expect(await memory.accessOf(ctx.sessions.create(SessionId('none')))).toEqual({ kind: 'available', view: { owner: OWNER } })
     const warn = vi.spyOn(ctx.logger, 'warn')
     const missing = ctx.sessions.create(SessionId('missing'), { meta: { cwd: join(directory, 'gone') } })
-    expect(await memory.workspaceOf(missing)).toBeUndefined()
+    expect(await memory.accessOf(missing)).toEqual({ kind: 'available', view: { owner: OWNER } })
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('directory of Session "missing" is unavailable'))
+  })
+
+  it('serves the signed-in account where the Host names accounts and refuses while nobody is signed in', async () => {
+    const { ctx, memory } = await harness()
+    const account = new AccountState()
+    ctx.provide('tomatoAccount', account.view())
+    const session = ctx.sessions.create(SessionId('account'))
+    expect(await memory.accessOf(session)).toEqual({ kind: 'sign-in-required' })
+    const alice = { id: 'u-alice', email: 'alice@example.com', name: null, avatarUrl: null, language: null }
+    account.observe({ kind: 'valid', user: alice })
+    expect(await memory.accessOf(session)).toEqual({ kind: 'available', view: { owner: accountMemoryOwner('u-alice') } })
+    account.observe({ kind: 'valid', user: { ...alice, id: 'u-bob' } })
+    expect(await memory.accessOf(session)).toEqual({ kind: 'available', view: { owner: accountMemoryOwner('u-bob') } })
+    account.signOut()
+    expect(await memory.accessOf(session)).toEqual({ kind: 'sign-in-required' })
   })
 })

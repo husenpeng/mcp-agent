@@ -1,5 +1,5 @@
 ---
-description: "Switch on workspace memory across sessions and goal-round focus together in a Web or Desktop profile."
+description: "Switch on account-scoped profile and workspace memory across sessions and goal-round focus together in a Web or Desktop profile."
 kind: "package-bundle"
 ---
 
@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-Give agents memory of stated preferences and decisions across sessions in one project directory, and keep long goals from repeating failed calls. The layer inserts three Host rows: the memory service, its tools and `/memory` command, and goal focus. Web and Desktop ship it switched off and leave it out of the default plugin list. It adds three tool schemas to every request and asks for no approval until a profile configures `approvalTools`.
+Give agents memory of stated preferences, decisions, and facts about the person across sessions: profile memories in every workspace and workspace memories in one project directory, owned by the signed-in account where the Host names accounts. Keep long goals from repeating failed calls. The layer inserts three Host rows: the memory service, its tools and `/memory` command, and goal focus. Web and Desktop ship it switched off and leave it out of the default plugin list. It adds three tool schemas to every request and asks for no approval until a profile configures `approvalTools`.
 
 ## Table of Contents
 
@@ -35,8 +35,8 @@ The rows need the base composition's storage, goal, approval, and command servic
 
 | Row id | Package | Adds |
 |---|---|---|
-| `optional-memory` | [`@tomato/experimental-memory`](../memory/README.md) | `ctx.memory` over the `tomato_memory` storage domain |
-| `optional-tool-memory` | [`@tomato/experimental-tool-memory`](../tool-memory/README.md) | `memory_search`, `memory_write`, `memory_forget`, `/memory`, pinned-memory injection |
+| `optional-memory` | [`@tomato/experimental-memory`](../memory/README.md) | `ctx.memory` over the `tomato_memory` storage domain, scoped by owner, then by profile or workspace |
+| `optional-tool-memory` | [`@tomato/experimental-tool-memory`](../tool-memory/README.md) | `memory_search` with query expansion, `memory_write`, `memory_forget`, `/memory`, profile and pinned-memory injection |
 | `optional-focus` | [`@tomato/experimental-focus`](../focus/README.md) | Goal-round failure ledger, repeated-failure reminders, optional per-tool approval |
 
 To ask before costly tools, override the focus row in the profile's `cordis.patch.yml`:

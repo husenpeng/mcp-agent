@@ -1,6 +1,6 @@
 {
   "name": "@tomato/experimental-memory",
-  "description": "Workspace-scoped cross-session memory records stored outside Session logs",
+  "description": "Account-scoped cross-session memory: profile and workspace records stored outside Session logs",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -35,10 +35,16 @@
   "license": "MIT",
   "peerDependencies": {
     "@tomato/branded": "workspace:*",
+    "@tomato/gateway": "workspace:*",
     "@tomato/llm": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/storage-domain": "workspace:*",
     "@tomato/cordis": "workspace:~"
+  },
+  "peerDependenciesMeta": {
+    "@tomato/gateway": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@tomato/schemastery": "workspace:~",
@@ -47,6 +53,7 @@
   "devDependencies": {
     "@tomato/branded": "workspace:*",
     "@tomato/cordis": "workspace:~",
+    "@tomato/gateway": "workspace:*",
     "@tomato/llm": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/storage": "workspace:*",

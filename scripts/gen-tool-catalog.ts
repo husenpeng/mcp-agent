@@ -543,17 +543,24 @@ const TOOL_PACKAGES: ToolPackage[] = [
     pkg: '@tomato/experimental-tool-memory',
     dir: 'tool-memory',
     source: 'packages/experimental/tool-memory/src/index.ts',
-    requires: ['ctx.tools', 'ctx.memory', 'ctx.agents', 'ctx.commands', 'ctx.sessionProjections', 'a calling Agent whose Session has a project directory'],
-    writes: ['tool/call', 'tomato_memory storage domain create, update, or delete', 'tool/result', 'user/message pinned-memory snapshot'],
+    requires: [
+      'ctx.tools', 'ctx.memory', 'ctx.agents', 'ctx.commands', 'ctx.sessionProjections', 'ctx.llm',
+      'a calling Agent; workspace memories also need a Session project directory', 'a signed-in account where ctx.tomatoAccount exists',
+    ],
+    writes: [
+      'tool/call', 'tomato_memory storage domain create, update, or delete', 'plugin:tool-memory/query-expansion plugin record',
+      'tool/result', 'user/message memory snapshot',
+    ],
     async mount(ctx) {
       await ctx.plugin(AgentRegistry)
       await ctx.plugin(CommandRuntime)
+      await ctx.plugin(LlmRuntime)
       // Schema harvest never executes a tool, so the Host service is a declaration-only stub.
       ctx.provide('memory', {} as MemoryService)
       await ctx.plugin(ToolMemory)
     },
     note:
-      'Explicit experimental composition only, shipped switched off in the Memory and goal focus bundle. memory_write stores an active record only when user_quote is contained in a user message of the current turn; otherwise the record is an unconfirmed candidate. Delegated agents may search but not write or delete.',
+      'Explicit experimental composition only, shipped switched off in the Memory and goal focus bundle. memory_write stores an active record only when user_quote is contained in a user message of the current turn; otherwise the record is an unconfirmed candidate. scope profile records reach every workspace of their owner. memory_search may send one auxiliary expansion request when the literal query matches fewer than maxRecallResults records. Delegated agents may search but not write or delete.',
   },
   {
     pkg: '@tomato/experimental-tool-subagent-oar',

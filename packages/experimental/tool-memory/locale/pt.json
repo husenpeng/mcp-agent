@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "Ferramentas de memória do espaço de trabalho",
-    "description": "Permite que a IA pesquise, salve e exclua memórias do espaço de trabalho e as gerencie com /memory."
+    "title": "Ferramentas de memória",
+    "description": "Permite que a IA pesquise, salve e exclua suas memórias de perfil e do espaço de trabalho e as gerencie com /memory."
   }
 }

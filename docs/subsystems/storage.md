@@ -164,70 +164,69 @@ Generated from source by `scripts/gen-cordis-catalog.ts` (verified fresh by `pnp
 
 ### `ctx.memory` — `MemoryService`
 
-Host-wide memory service. Every operation names the canonical workspace it acts on, and records of other workspaces are invisible to it. Writes are serialized by the storage domain and durable before they resolve.
+Host-wide memory service. Every operation names the owner or view it acts on, and records of other owners and other workspaces are invisible to it. Writes are serialized by the storage domain and durable before they resolve.
 
 ```ts cordis-catalog
 /**
- * Resolve the canonical workspace of a Session from its immutable header
- * directory, once per Session.
- * @param session - Session whose original project scopes memory.
- * @returns the realpath of the header directory, or `undefined` when the Session has none or it no longer exists.
+ * Resolve which records a Session can use now.
+ * @param session - Session whose original project directory scopes workspace records.
+ * @returns the current owner's view, or `sign-in-required` while the Host names accounts and none is signed in.
  */
-workspaceOf(session: Session): Promise<string | undefined>
+async accessOf(session: Session): Promise<MemoryAccess>
 
 /**
- * Store one record, replacing the workspace's record with the same entity and key.
- * @param request - statement, lifecycle state, and the write that justified it.
+ * Store one record, replacing the owner's record with the same scope, entity, and key.
+ * @param request - owner, scope, statement, lifecycle state, and the write that justified it.
  * @returns the stored record; a replacement keeps the earlier id and creation time.
- * @throws {@link MemoryError} `value-too-large` or `workspace-full`.
+ * @throws {@link MemoryError} `value-too-large`, `workspace-full`, or `profile-full`.
  */
 async remember(request: RememberRequest): Promise<MemoryRecord>
 
 /**
- * Rank the workspace's active records against free text.
- * @param request - workspace, query text, and optional kind filter.
+ * Rank the view's active records against free text.
+ * @param request - view, query text, optional alternative wordings, and optional kind filter.
  * @returns at most `maxRecallResults` records, best match first.
  */
 recall(request: RecallRequest): readonly MemoryRecord[]
 
 /**
  * Delete one record durably.
- * @param workspace - canonical workspace that must own the record.
+ * @param view - view that must see the record.
  * @param id - record to delete.
- * @returns whether the workspace owned the record.
+ * @returns whether the view saw the record.
  */
-async forget(workspace: string, id: MemoryIdType): Promise<boolean>
+async forget(view: MemoryView, id: MemoryIdType): Promise<boolean>
 
 /**
- * Change whether an active record is pinned.
- * @param workspace - canonical workspace that must own the record.
+ * Change whether an active workspace record is pinned.
+ * @param view - view that must see the record.
  * @param id - record to change.
  * @param pinned - new pin state.
- * @returns the updated record, or `undefined` when the workspace owns no active record with that id.
+ * @returns the updated record, or `undefined` when the view sees no active workspace record with that id.
  */
-async setPinned(workspace: string, id: MemoryIdType, pinned: boolean): Promise<MemoryRecord | undefined>
+async setPinned(view: MemoryView, id: MemoryIdType, pinned: boolean): Promise<MemoryRecord | undefined>
 
 /**
  * Activate a candidate.
- * @param workspace - canonical workspace that must own the record.
+ * @param view - view that must see the record.
  * @param id - candidate to confirm.
- * @returns the active record, or `undefined` when the workspace owns no candidate with that id.
+ * @returns the active record, or `undefined` when the view sees no candidate with that id.
  */
-async confirm(workspace: string, id: MemoryIdType): Promise<MemoryRecord | undefined>
+async confirm(view: MemoryView, id: MemoryIdType): Promise<MemoryRecord | undefined>
 
 /**
- * Enumerate every record of one workspace for human management.
- * @param workspace - canonical workspace path.
- * @returns the workspace's records, newest first.
+ * Enumerate every record a view sees, for human management.
+ * @param view - owner and optional workspace.
+ * @returns profile and workspace records, newest first.
  */
-list(workspace: string): readonly MemoryRecord[]
+list(view: MemoryView): readonly MemoryRecord[]
 
 /**
- * Select the pinned active records a Session receives without searching.
- * @param workspace - canonical workspace path.
- * @returns at most `maxPinnedRecords` records, ordered by entity, then key.
+ * Select the records a Session receives without searching.
+ * @param view - owner and optional workspace.
+ * @returns every active profile record, then at most `maxPinnedRecords` pinned workspace records; each group ordered by entity, then key.
  */
-pinned(workspace: string): readonly MemoryRecord[]
+snapshot(view: MemoryView): readonly MemoryRecord[]
 ```
 
 Types: [Session](session.md)

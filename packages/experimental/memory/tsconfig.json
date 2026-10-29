@@ -28,6 +28,9 @@
     },
     {
       "path": "../../storage/storage-domain"
+    },
+    {
+      "path": "../../tomato/gateway"
     }
   ]
 }
