@@ -41,7 +41,7 @@
 - **设计系统**：只搬 client-monorepo 的设计 token（暖红 `#c01a12`、圆角、字体栈）作为后续业务卡片的视觉基线，不搬 React 19 + antd v6 组件代码（上游客户端是 React 18 + CSS Modules）。
 - **品牌**：新增 `@tomato/brand` 客户端插件，占用 `sidebar.brand.mark`、`sidebar.brand.name`、`conversation.hero.brand.mark` 三个槽；`ui-brand-official` 从 roster 停用。
 - **品牌资源**：mark 取自 client-monorepo 的 `apps/web/public/img/fav.svg`（单色化以继承 `currentColor`）；欢迎页字标重写为 `apps/desktop/renderer/assets/welcome-brand.svg`；浏览器标签页 `apps/web/public/favicon{,-dark}.svg` 使用同一路径，浅色 `#b71616`、深色 `#de3730`；PWA 安装图标由 `apps/web/assets/app-icon.svg` 生成，manifest 与 iOS 安装名均为 `Tomato AI`（[ADR 0002](adr/0002-web-brand-identity.md)）；桌面应用、安装程序与 Windows 托盘图标以同一底板为原稿（[ADR 0010](adr/0010-desktop-app-icon.md)）。
-- **开屏**：桌面冷启动先显示 1280×760 无边框品牌开屏，2.2s 内完成描线、点亮与字标落定，星尘随描线点亮；Host 就绪后 300ms 淡出交给主窗或欢迎窗。开屏跟随系统深浅色，点击/Esc 跳过，reduced-motion 下只显示静态终态，`TOMATO_DESKTOP_SKIP_SPLASH=1` 关闭（[ADR 0011](adr/0011-desktop-startup-splash.md)）。
+- **开屏**：桌面冷启动先显示 1280×760 无边框 3D 品牌开屏，7.2s 内镜头从雨夜街道滑行升起，掠过飞车、广告飞艇与磁悬浮列车，停在东方明珠式电视塔、门形双塔、扭转超高层与开瓶器塔组成的天际线前；近景立面有窗框分格、空调箱、阳台与消防梯，街面有双向车流、红绿灯、公交站与跨街灯笼，店面门头写着互不相同的店名；招牌与广告屏展示达人营销各业务模块，每种内容只出现一次，文字不被灯光泛白，定格时不压在 HUD 与字标下；汽车有轮拱、车厢立柱与轮毂，飞车有发动机舱与灯带，路灯照亮车身与临街墙面；镜头速度连续变化并缓缓停稳。塔顶投影光束升起，光粒汇入后霓虹标志沿笔画点亮。Host 就绪后 300ms 淡出交给主窗或欢迎窗。点击/Esc 跳过，reduced-motion 直接显示静态终帧，WebGL 不可用时显示静态品牌，`TOMATO_DESKTOP_SKIP_SPLASH=1` 关闭（[ADR 0011](adr/0011-desktop-startup-splash.md)）。
 - **业务 UI（M2）**：`kol_search` / `kol_detail` 各自注册到 `tool.call.toolview`，详情走右侧栏标签页。
 
 ## 交付

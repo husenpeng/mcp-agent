@@ -227,6 +227,9 @@
     "apps/plugin-market-generator/tests/**/*.ts",
     "apps/desktop/scripts/**/*.ts",
     "apps/desktop/src/client/splash-timeline.ts",
+    "apps/desktop/src/client/splash-city.ts",
+    "apps/desktop/src/client/splash-decode.ts",
+    "apps/desktop/src/client/splash-street.ts",
     "apps/desktop/tests/**/*.ts",
     "apps/desktop-host/tests/**/*.ts",
     "benchmarks/**/*.ts",
@@ -245,6 +248,8 @@
   // and the package test glob above needs no per-file entry.
   "exclude": [
     "apps/desktop/tests/keyboard.spec.ts",
+    "apps/desktop/tests/splash-mark.spec.ts",
+    "apps/desktop/tests/splash-signage.spec.ts",
     "packages/client/*/src/**",
     "benchmarks/**/*.client.ts",
     "benchmarks/**/*.client.tsx",

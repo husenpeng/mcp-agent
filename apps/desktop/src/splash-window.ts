@@ -13,8 +13,11 @@ export const SPLASH_HEIGHT = 760
 /** Exit fade duration in milliseconds. */
 export const SPLASH_FADE_MS = 300
 
-/** How long the shell waits for the renderer's completion report once the target window is visible. */
-export const SPLASH_RELEASE_FALLBACK_MS = 6000
+/**
+ * How long the shell waits for the renderer's completion report once the target window is visible; it exceeds the
+ * renderer's animation plus shader warm-up, so a fast Host start never cuts the brand reveal.
+ */
+export const SPLASH_RELEASE_FALLBACK_MS = 12000
 
 /**
  * Resolve the splash window's native options.

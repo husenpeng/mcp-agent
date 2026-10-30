@@ -1,30 +1,13 @@
-/* Tomato Pulse: a bright brand-red reveal on a quiet, dark stage. */
+/* NIGHT CITY: a procedural WebGL launch; the projected Tomato mark lights up after the crane shot. */
 
 :root {
   color-scheme: dark;
-  --splash-canvas: #10070a;
-  --splash-ink: #fff7f4;
-  --splash-mark-start: #ff2828;
-  --splash-mark-end: #fe5042;
-  --splash-star-rgb: 255 180 166;
-  --splash-star-red-rgb: 255 40 40;
-  --splash-wait-track: rgb(255 247 244 / 18%);
-  --splash-wordmark-glow: rgb(255 40 40 / 24%);
-  --glow-primary: #ff2828;
-  --glow-hot: #fe5042;
-  --glow-deep: #b71616;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --splash-canvas: #10070a;
-    --splash-ink: #fff7f4;
-    --splash-mark-start: #ff2828;
-    --splash-mark-end: #fe5042;
-    --splash-star-rgb: 255 180 166;
-    --splash-star-red-rgb: 255 40 40;
-    --splash-wait-track: rgb(255 247 244 / 18%);
-  }
+  --splash-canvas: #030105;
+  --splash-ink: #f4f6f7;
+  --splash-wait-track: rgb(255 40 40 / 18%);
+  --boot-red: #ff2828;
+  --boot-red-hot: #fe5042;
+  --boot-cyan: #55e6ff;
 }
 
 html,
@@ -37,353 +20,234 @@ body {
 
 body {
   position: relative;
-  display: grid;
-  place-items: center;
-  isolation: isolate;
   color: var(--splash-ink);
-  background: radial-gradient(ellipse at 50% 38%, #3b1018 0%, #210b12 42%, #10070a 100%);
   font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
   user-select: none;
   cursor: default;
   -webkit-font-smoothing: antialiased;
 }
 
-#stars {
+#city-3d {
   position: fixed;
-  z-index: 0;
   inset: 0;
   width: 100%;
   height: 100%;
-  opacity: 0.16;
 }
 
-.glow-scene,
-.spark-field {
+.cinematic-vignette {
   position: fixed;
   z-index: 1;
   inset: 0;
-  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgb(3 1 5 / 34%), transparent 22%, transparent 58%, rgb(3 1 5 / 50%)),
+    radial-gradient(ellipse 36% 18% at 50% 71%, rgb(3 1 5 / 52%), transparent 100%);
   pointer-events: none;
 }
 
-.glow-scene {
+/* The DOM timeline starts with the first 3D frame; shader warm-up must not advance it. */
+html:not([data-clock='running']) .hud,
+html:not([data-clock='running']) .wordmark,
+html:not([data-clock='running']) .wordmark-ai,
+html:not([data-clock='running']) .boot-readout {
+  animation-play-state: paused;
+}
+
+.fallback-brand {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  display: none;
+  width: min(420px, 70vw);
+  transform: translate(-50%, -50%);
+}
+
+html[data-scene='fallback'] #city-3d,
+html[data-scene='fallback'] .lockup {
+  display: none;
+}
+
+html[data-scene='fallback'] .fallback-brand {
+  display: block;
+}
+
+.hud {
+  position: fixed;
+  z-index: 3;
+  inset: 26px;
+  overflow: hidden;
   opacity: 0;
-  animation: glow-scene-in 500ms ease-out both;
+  pointer-events: none;
+  animation: hud-in 900ms ease-out 250ms both;
 }
 
-.blob {
+.hud-corner {
   position: absolute;
-  border-radius: 50%;
-  filter: blur(76px);
-  will-change: transform;
+  width: 34px;
+  height: 34px;
+  border-color: rgb(255 40 40 / 70%);
+  border-style: solid;
+  filter: drop-shadow(0 0 6px rgb(255 40 40 / 45%));
 }
 
-.blob-primary {
-  top: -25%;
-  left: -18%;
-  width: 64vw;
-  height: 56vw;
-  opacity: 0.32;
-  background: radial-gradient(circle, var(--glow-primary), transparent 68%);
-  animation: blob-drift-one 11s ease-in-out infinite alternate;
-}
+.hud-corner-tl { top: 0; left: 0; border-width: 1px 0 0 1px; }
+.hud-corner-tr { top: 0; right: 0; border-width: 1px 1px 0 0; }
+.hud-corner-bl { bottom: 0; left: 0; border-width: 0 0 1px 1px; }
+.hud-corner-br { right: 0; bottom: 0; border-width: 0 1px 1px 0; }
 
-.blob-hot {
-  right: -20%;
-  bottom: -32%;
-  width: 70vw;
-  height: 62vw;
-  opacity: 0.28;
-  background: radial-gradient(circle, var(--glow-hot), transparent 68%);
-  animation: blob-drift-two 13s ease-in-out infinite alternate;
-}
-
-.blob-deep {
-  top: 6%;
-  right: -24%;
-  width: 52vw;
-  height: 48vw;
-  opacity: 0.24;
-  background: radial-gradient(circle, var(--glow-deep), transparent 68%);
-  animation: blob-drift-one 14s ease-in-out infinite alternate-reverse;
-}
-
-.light-sweep {
+.hud-meta,
+.city-coordinate {
   position: absolute;
-  top: -40%;
-  left: -45%;
-  width: 32%;
-  height: 180%;
-  opacity: 0;
-  background: linear-gradient(90deg, transparent, rgb(255 190 180 / 7%), rgb(255 255 255 / 15%), rgb(255 190 180 / 6%), transparent);
-  filter: blur(20px);
-  transform: rotate(18deg);
-  animation: light-sweep 800ms ease-out 300ms both;
+  color: rgb(244 246 247 / 42%);
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  line-height: 1.8;
+}
+
+.hud-meta-left { top: 4px; left: 50px; }
+.hud-meta-right { top: 4px; right: 50px; color: rgb(85 230 255 / 44%); text-align: right; }
+
+.city-coordinate {
+  right: 50px;
+  bottom: 5px;
+  color: rgb(255 40 40 / 55%);
 }
 
 .lockup {
-  position: relative;
-  z-index: 3;
+  position: fixed;
+  z-index: 4;
+  top: 69%;
+  left: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  transform: translateY(-2vh);
-}
-
-.encounter {
-  position: relative;
-  display: grid;
-  width: 300px;
-  height: 278px;
-  place-items: center;
-  opacity: 0;
-  isolation: isolate;
-  animation: logo-pop 760ms cubic-bezier(0.22, 1.28, 0.36, 1) 140ms both;
-}
-
-.encounter::before {
-  position: absolute;
-  z-index: -1;
-  width: 224px;
-  height: 224px;
-  content: '';
-  opacity: 0;
-  border: 1px solid rgb(255 235 230 / 18%);
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 34% 24%, rgb(255 255 255 / 12%), transparent 46%),
-    rgb(255 80 66 / 5%);
-  box-shadow:
-    0 24px 80px rgb(255 40 40 / 18%),
-    inset 0 1px 0 rgb(255 255 255 / 16%);
-  backdrop-filter: blur(18px);
-  animation: halo-in 800ms cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
-}
-
-.mark {
-  position: relative;
-  z-index: 2;
-  width: 196px;
-  height: 196px;
-  overflow: visible;
-  filter: drop-shadow(0 14px 28px rgb(105 13 33 / 28%));
-}
-
-.mark-start {
-  stop-color: var(--splash-mark-start);
-}
-
-.mark-end {
-  stop-color: var(--splash-mark-end);
-}
-
-.ink-base {
-  opacity: 0.18;
-}
-
-.trace {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: splash-trace 700ms cubic-bezier(0.65, 0.05, 0.36, 1) both;
-}
-
-.ignite {
-  transform: scale(0);
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: splash-ignite 450ms cubic-bezier(0.42, 0, 0.58, 1) 700ms both;
-}
-
-.planet-surface {
-  opacity: 1;
-  animation: planet-surface-reveal 600ms ease-out 700ms both;
+  transform: translateX(-50%);
+  pointer-events: none;
 }
 
 .wordmark {
   display: flex;
   align-items: baseline;
-  gap: 0.28em;
-  margin-top: 8px;
   color: var(--splash-ink);
-  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 42px;
+  font-size: 38px;
   font-weight: 500;
-  letter-spacing: -1.2px;
-  line-height: 1.1;
+  letter-spacing: 0.24em;
+  line-height: 1;
   opacity: 0;
-  transform: translateY(12px);
-  filter: drop-shadow(0 0 18px var(--splash-wordmark-glow));
-  animation: wordmark-in 750ms cubic-bezier(0.22, 1, 0.36, 1) 450ms both;
+  text-indent: 0.24em;
+  text-shadow: 0 0 24px rgb(255 40 40 / 38%);
+  white-space: nowrap;
+  animation: wordmark-in 700ms ease-out 5650ms both;
 }
 
 .wordmark-ai {
-  color: var(--splash-mark-end);
-}
-
-.spark {
-  position: absolute;
-  width: 24px;
-  height: 24px;
+  margin-left: 0.34em;
+  padding: 0.22em 0.28em 0.22em 0.36em;
+  color: #fff;
+  background: var(--boot-red);
+  box-shadow: 0 0 24px rgb(255 40 40 / 38%);
+  font-size: 0.56em;
+  letter-spacing: 0.08em;
   opacity: 0;
-  fill: #fff7f4;
-  filter: drop-shadow(0 0 10px rgb(255 80 66 / 48%));
-  animation: spark-in 420ms cubic-bezier(0.22, 1.28, 0.36, 1) both;
+  animation: ai-online 450ms ease-out 6350ms both;
 }
 
-.spark-one {
-  top: 24%;
-  left: 24%;
-  animation-delay: 700ms;
+.boot-readout {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  margin-top: 21px;
+  color: rgb(255 110 100 / 72%);
+  font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  font-size: 8px;
+  letter-spacing: 0.24em;
+  opacity: 0;
+  animation: readout-in 500ms ease-out 6450ms both;
 }
 
-.spark-two {
-  top: 29%;
-  right: 23%;
-  width: 18px;
-  height: 18px;
-  animation-delay: 850ms;
+.boot-readout i {
+  width: 26px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--boot-red));
+}
+
+.boot-readout i:last-child {
+  transform: rotate(180deg);
 }
 
 .waiting {
   position: relative;
   overflow: hidden;
-  width: 120px;
+  width: 144px;
   height: 1px;
-  margin-top: 32px;
+  margin-top: 20px;
   background: linear-gradient(90deg, transparent, var(--splash-wait-track), transparent);
   opacity: 0;
   visibility: hidden;
   transition: opacity 240ms ease;
 }
 
-.waiting.visible {
-  opacity: 1;
-  visibility: visible;
-}
+.waiting.visible { opacity: 1; visibility: visible; }
 
 .waiting i {
   position: absolute;
   inset: 0 auto 0 0;
   width: 42px;
-  background: linear-gradient(90deg, transparent, var(--splash-mark-start), var(--splash-mark-end), transparent);
+  background: linear-gradient(90deg, transparent, var(--boot-cyan), var(--boot-red), transparent);
   animation: splash-wait 1500ms linear infinite;
 }
 
-@keyframes glow-scene-in {
-  to { opacity: 1; }
-}
-
-@keyframes halo-in {
-  from { opacity: 0; transform: scale(0.78); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes logo-pop {
-  0% { opacity: 0; transform: translateY(18px) scale(0.72) rotate(-7deg); }
-  65% { opacity: 1; transform: translateY(-2px) scale(1.035) rotate(1deg); }
-  100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
-}
-
-@keyframes splash-trace {
-  from { stroke-dashoffset: 1; }
-  to { stroke-dashoffset: 0; }
-}
-
-@keyframes splash-ignite {
-  from { transform: scale(0); }
-  to { transform: scale(2.05); }
-}
-
-@keyframes planet-surface-reveal {
+@keyframes hud-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
 @keyframes wordmark-in {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; clip-path: inset(0 100% 0 0); transform: translateY(8px); }
+  to { opacity: 1; clip-path: inset(0); transform: translateY(0); }
+}
+
+@keyframes ai-online {
+  from { opacity: 0; transform: translateY(5px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes spark-in {
-  0% { opacity: 0; transform: scale(0.25) rotate(-24deg); }
-  70% { opacity: 1; transform: scale(1.18) rotate(8deg); }
-  100% { opacity: 0.82; transform: scale(1) rotate(0); }
-}
-
-@keyframes light-sweep {
-  0% { opacity: 0; transform: translateX(0) rotate(18deg); }
-  24% { opacity: 1; }
-  100% { opacity: 0; transform: translateX(520%) rotate(18deg); }
-}
-
-@keyframes blob-drift-one {
-  to { transform: translate3d(7vw, 5vh, 0) scale(1.08); }
-}
-
-@keyframes blob-drift-two {
-  to { transform: translate3d(-6vw, -4vh, 0) scale(1.06); }
+@keyframes readout-in {
+  from { opacity: 0; letter-spacing: 0.4em; }
+  to { opacity: 1; letter-spacing: 0.24em; }
 }
 
 @keyframes splash-wait {
   from { transform: translateX(-42px); }
-  to { transform: translateX(120px); }
+  to { transform: translateX(144px); }
 }
 
-/* Skip input resolves the entrance without disturbing the departure handshake. */
-html[data-splash='done'] .trace,
-html[data-splash='done'] .ignite,
+html[data-splash='done'] .hud,
 html[data-splash='done'] .wordmark,
-html[data-splash='done'] .planet-surface,
-html[data-splash='done'] .encounter,
-html[data-splash='done'] .spark,
-html[data-splash='done'] .encounter::before {
-  animation: none;
-}
-
-html[data-splash='done'] .trace {
-  stroke-dashoffset: 0;
-}
-
-html[data-splash='done'] .ignite {
-  transform: scale(2.05);
-}
-
-html[data-splash='done'] .planet-surface,
-html[data-splash='done'] .encounter,
-html[data-splash='done'] .encounter::before,
-html[data-splash='done'] .wordmark {
+html[data-splash='done'] .wordmark-ai,
+html[data-splash='done'] .boot-readout {
   opacity: 1;
+  clip-path: none;
   transform: none;
-}
-
-html[data-splash='done'] .spark {
-  opacity: 0.82;
-  transform: none;
-}
-
-html[data-splash='done'] .light-sweep {
   animation: none;
+}
+
+@media (max-width: 640px) {
+  .hud-meta,
+  .city-coordinate { display: none; }
+  .hud { inset: 16px; }
 }
 
 @media (max-height: 680px) {
-  .lockup {
-    transform: translateY(-1vh) scale(0.86);
-  }
+  .lockup { top: 72%; transform: translateX(-50%) scale(0.86); }
 }
 
 @media (forced-colors: active) {
-  .wordmark {
-    filter: none;
-  }
-
-  .wordmark-name,
-  .wordmark-ai {
-    color: CanvasText;
-  }
-
-  .spark-field {
-    display: none;
-  }
+  #city-3d,
+  .hud,
+  .lockup,
+  .cinematic-vignette { display: none; }
+  .fallback-brand { display: block; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -394,31 +258,14 @@ html[data-splash='done'] .light-sweep {
     transition: none !important;
   }
 
-  .trace {
-    stroke-dashoffset: 0;
-  }
-
-  .ignite {
-    transform: scale(2.05);
-  }
-
-  .glow-scene,
-  .encounter,
-  .encounter::before,
-  .wordmark {
+  .hud,
+  .wordmark,
+  .wordmark-ai,
+  .boot-readout {
     opacity: 1;
+    clip-path: none;
     transform: none;
   }
 
-  .spark {
-    opacity: 0.82;
-  }
-
-  .light-sweep {
-    display: none;
-  }
-
-  .waiting i {
-    transform: translateX(39px);
-  }
+  .waiting i { transform: translateX(51px); }
 }

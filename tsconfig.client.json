@@ -23,6 +23,9 @@
     "apps/desktop/src/update-overlay.ts",
     "apps/desktop/src/windows-layout.ts",
     "apps/desktop/tests/**/*.client.spec.tsx",
+    // The splash mark and signage modules draw through the DOM canvas; their tests type-check with the Desktop client project.
+    "apps/desktop/tests/splash-mark.spec.ts",
+    "apps/desktop/tests/splash-signage.spec.ts",
     // Source-subpath test imports can arrive through workspace links whose
     // realpath semantics vary by host. Load package CSS declarations directly.
     "packages/client/*/src/css-modules.d.ts",
