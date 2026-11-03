@@ -868,6 +868,7 @@ describe('web e2e: plugin manager', () => {
       ['@tomato/cua-bundle', 1],
       ['@tomato/experimental-tool-worktree', 1],
       ['@tomato/experimental-cot-translation-bundle', 1],
+      ['@tomato/experimental-muse-bundle', 1],
       ['@tomato/experimental-session-titles-bundle', 1],
       ['@tomato/experimental-badge-skill-bundle', 1],
       ['@tomato/subagent-codex', 0],

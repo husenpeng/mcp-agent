@@ -31,6 +31,8 @@ import Approval from '@tomato/user-approval'
 import * as Memory from '@tomato/experimental-memory'
 import * as MemoryTools from '@tomato/experimental-tool-memory'
 import * as Focus from '@tomato/experimental-focus'
+import MuseInsights from '@tomato/experimental-muse-insights'
+import SessionQuerySqlite from '@tomato/session-query-sqlite'
 
 interface Row { readonly id: string; readonly name: string }
 
@@ -49,6 +51,7 @@ const MODULES: Readonly<Record<string, object>> = {
   '@tomato/experimental-memory': Memory,
   '@tomato/experimental-tool-memory': MemoryTools,
   '@tomato/experimental-focus': Focus,
+  '@tomato/experimental-muse-insights': MuseInsights,
 }
 
 /** Scripted model: each request consumes the next response. */
@@ -90,14 +93,20 @@ function sourceTexts(session: Session, kind: string): string[] {
 }
 
 it('publishes one default-off layer whose rows are its only runtime dependencies', () => {
-  expect(manifest.tomato.bundle).toEqual({ patch: './cordis.patch.yml', listedByDefault: false })
+  expect(manifest.tomato.bundle).toEqual({ patch: './cordis.patch.yml', listedByDefault: true })
   expect(rows).toEqual([
     { id: 'optional-memory', name: '@tomato/experimental-memory' },
     { id: 'optional-tool-memory', name: '@tomato/experimental-tool-memory' },
     { id: 'optional-focus', name: '@tomato/experimental-focus' },
+    { id: 'optional-muse-insights', name: '@tomato/experimental-muse-insights' },
   ])
   expect(Object.keys(manifest.dependencies).sort())
-    .toEqual(['@tomato/experimental-focus', '@tomato/experimental-memory', '@tomato/experimental-tool-memory'])
+    .toEqual([
+      '@tomato/experimental-focus',
+      '@tomato/experimental-memory',
+      '@tomato/experimental-muse-insights',
+      '@tomato/experimental-tool-memory',
+    ])
 })
 
 it('remembers a quoted preference in its workspace and a profile fact everywhere, and keeps a goal round from repeating a failed call', async () => {
@@ -130,6 +139,7 @@ it('remembers a quoted preference in its workspace and a profile fact everywhere
     { id: 'storage', name: 'cordis:storage' },
     { id: 'storage-json', name: 'cordis:storageJson', config: { root: join(home, 'storages') } },
     { id: 'storage-domain', name: 'cordis:storageDomain', config: { backend: 'json' } },
+    { id: 'session-query', name: 'cordis:sessionQuery', config: { path: ':memory:', openAt: 'never' } },
   ])
   // The shipped rows keep their ids; each name serves that row's package source through a Loader builtin.
   const focusConfig = { approvalTools: ['send_*'] }
@@ -146,7 +156,7 @@ it('remembers a quoted preference in its workspace and a profile fact everywhere
     Object.assign(ctx.loader.builtins, {
       sessions: Sessions, projections: Projections, llm: Llm, prompt: SystemPrompt, tools: Tools, executor: NativeToolExecutor,
       agents: Agents, loop: AgentLoop, commands: Commands, approval: Approval, goals: Goals,
-      storage: Storage, storageJson: StorageJson, storageDomain: StorageDomain,
+      storage: Storage, storageJson: StorageJson, storageDomain: StorageDomain, sessionQuery: SessionQuerySqlite,
       ...Object.fromEntries(rows.map(row => [row.id, MODULES[row.name]])),
     })
   })

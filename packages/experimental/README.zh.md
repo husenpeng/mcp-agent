@@ -47,8 +47,10 @@ kind: "package-group"
 | [`session-search`](session-search/README.zh.md) | 可选实验性全局会话搜索工具 | — |
 | [`memory`](memory/README.zh.md) | 按账号隔离、保存在会话日志之外的画像与工作区记忆记录 | `ctx.memory` |
 | [`tool-memory`](tool-memory/README.zh.md) | 带查询扩展的记忆模型工具、`/memory` 与画像和置顶记忆注入 | — |
+| [`tool-robot`](tool-robot/README.zh.md) | 面向模型的 `robot_create` 工具：用四项基础字段发布并实例化机器人 | — |
 | [`focus`](focus/README.zh.md) | 目标轮次的失败记录、重复失败提醒与按工具审批 | — |
-| [`muse-bundle`](muse-bundle/README.zh.md) | 默认关闭的画像与工作区记忆及目标专注组合包 | — |
+| [`muse-insights`](muse-insights/README.zh.md) | 跨会话生成每日工作回顾，并主动分析未完成任务 | `ctx.museInsights` |
+| [`muse-bundle`](muse-bundle/README.zh.md) | 默认关闭的画像与工作区记忆、目标专注及每日洞察组合包 | — |
 | [`ralph-bundle`](ralph-bundle/README.zh.md) | 带隔离 workflow 引擎的可选重复委派 | — |
 | [`terminal-bundle`](terminal-bundle/README.zh.md) | 可选全局持久终端工具 | — |
 | [`badge-skill-bundle`](badge-skill-bundle/README.zh.md) | 可选 powered-by-tomato 徽章技能 | — |
@@ -87,13 +89,17 @@ kind: "package-group"
 | [`computer-use-cua-driver-mcp`](computer-use-cua-driver-mcp/README.zh.md) | 通过 MCP 使用已安装的 Cua Driver | `ctx.computerUse` |
 | [`computer-use-cua-driver-native`](computer-use-cua-driver-native/README.zh.md) | 嵌入 Cua Driver 原生 npm 运行时 | `ctx.computerUse` |
 | [`browser-use-playwright-mcp`](browser-use-playwright-mcp/README.zh.md) | 通过 MCP 提供 Playwright 浏览器工具 | `ctx.browserUse` |
-| [`browser-use-playwright-bundle`](browser-use-playwright-bundle/README.zh.md) | 插件页按需安装的 Playwright 浏览器组合 | — |
+| [`browser-use-playwright-bundle`](browser-use-playwright-bundle/README.zh.md) | 随安装分发、Web 与桌面默认开启的 Playwright 浏览器组合 | — |
 | [`browser-use-chrome-devtools-mcp`](browser-use-chrome-devtools-mcp/README.zh.md) | 通过 MCP 提供 Chrome DevTools 检查与浏览器控制 | `ctx.browserUse` |
 | [`browser-use-stagehand-native`](browser-use-stagehand-native/README.zh.md) | Stagehand 浏览器操作与显式配置的原生模型 | `ctx.browserUse` |
 | [`browser-use-runtime`](browser-use-runtime/README.zh.md) | 实验性提供方共享的 Session 浏览器资源 | — |
 | [`inspector`](inspector/README.zh.md) | 用于 Host 调试、Client Runtime 检查、网络采集与 Cordis 树的跨 realm CDP hub | `ctx.inspector` |
 | [`session-inspector`](session-inspector/README.zh.md) | 展示原始 Session 日志与 Chat 节点的 Sidebar 表格 | — |
 | [`inspector-profile`](inspector-profile/README.zh.md) | 用于 Session 日志与 Chat 节点检查的可选 Web 组合包 | — |
+| [`robot`](robot/README.zh.md) | 有版本机器人、run 与 agent-to-agent 契约的服务定义 | `ctx.robots` |
+| [`robot-local`](robot-local/README.zh.md) | 存储支持的机器人规格注册、实例化与 run 控制 | `ctx.robots` |
+| [`robot-runtime`](robot-runtime/README.zh.md) | 通过组合的 Agent 执行排队的机器人 run 并记录结果 | — |
+| [`robot-triggers`](robot-triggers/README.zh.md) | 从 cron 调度与机器人事件主题启动机器人 run | — |
 | [`tool-agent-team`](tool-agent-team/README.zh.md) | 让模型创建、发消息与协调 teammate 的九个工具 | 按作用域注册工具到 `ctx.tools` |
 | [`tool-worktree`](tool-worktree/README.zh.md) | 创建并进入工作树的可选 bundle 与模型工具 | `ctx.tools` |
 | [`webworker-packer`](webworker-packer/README.zh.md) | 构建浏览器 worker 预览所消费的 gzip 压缩虚拟文件系统（VFS）镜像 | 库与 CLI（命令行界面），不使用 ctx key |

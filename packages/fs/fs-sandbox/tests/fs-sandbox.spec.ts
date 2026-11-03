@@ -29,10 +29,13 @@ let ctx: Context
 let fs: SandboxedFileSystem
 let fiber: Awaited<ReturnType<Context['plugin']>>
 
-async function boot(mode: SandboxMode): Promise<void> {
+async function boot(mode: SandboxMode, protectedReadRoots?: string[]): Promise<void> {
   ctx = new Context()
   await ctx.plugin(SessionProjectionRegistry)
-  await ctx.plugin(SandboxPolicyService, { mode, workspaceRoot: workspace })
+  await ctx.plugin(SandboxPolicyService, {
+    mode, workspaceRoot: workspace,
+    ...protectedReadRoots === undefined ? {} : { protectedReadRoots },
+  })
   fiber = await ctx.plugin(SandboxedFileSystem, { cwd: workspace })
   fs = ctx.fs as SandboxedFileSystem
 }
@@ -242,6 +245,70 @@ describe('registration and HMR safety', () => {
     // Re-mount below the disposed one to prove no lingering registration.
     fiber = await ctx.plugin(SandboxedFileSystem, { cwd: workspace })
     expect(ctx.fs).toBeInstanceOf(SandboxedFileSystem)
+  })
+})
+
+describe('protected installation roots', () => {
+  let installation: string
+
+  beforeEach(async () => {
+    installation = join(base, 'install')
+    await mkdir(installation)
+    await writeFile(join(installation, 'secret.txt'), 'shipped source')
+  })
+
+  it('refuses every observation under the root, in every mode including danger-full-access', async () => {
+    for (const mode of ['read-only', 'workspace-write', 'danger-full-access'] as const) {
+      await boot(mode, [installation])
+      const secret = await target(join(installation, 'secret.txt'))
+      const directory = await target(installation)
+      const abort = new AbortController()
+      abort.abort()
+      const observations: (() => Promise<unknown>)[] = [
+        () => fs.stat(secret),
+        () => fs.lstat(join(installation, 'secret.txt')),
+        () => fs.readText(secret),
+        () => fs.streamText(secret),
+        () => fs.readBytes(secret, undefined, 1024),
+        () => fs.readByteRange(secret, { offset: 0, length: 1 }),
+        () => fs.listDir(directory),
+        () => fs.watch(secret, () => undefined, abort.signal),
+      ]
+      for (const observe of observations) {
+        const error = await observe().catch((thrown: unknown) => thrown)
+        expect(error).toBeInstanceOf(FsError)
+        expect((error as FsError).code).toBe('FS_PROTECTED_PATH')
+        expect((error as FsError).message).toContain('belongs to the TOMATO installation')
+      }
+    }
+  })
+
+  it('keeps every observation working outside the root', async () => {
+    await boot('workspace-write', [installation])
+    const note = join(workspace, 'note.txt')
+    await writeFile(note, 'workspace note')
+    const noteTarget = await target(note)
+    expect((await fs.stat(noteTarget))?.type).toBe('file')
+    expect((await fs.lstat(note))?.type).toBe('file')
+    expect(await fs.readText(noteTarget)).toBe('workspace note')
+    let streamed = ''
+    for await (const chunk of await fs.streamText(noteTarget)) streamed += chunk
+    expect(streamed).toBe('workspace note')
+    expect(Buffer.from(await fs.readBytes(noteTarget, undefined, 1024)).toString()).toBe('workspace note')
+    expect(Buffer.from(await fs.readByteRange(noteTarget, { offset: 0, length: 9 })).toString()).toBe('workspace')
+    expect((await fs.listDir(await target(workspace))).map(entry => entry.name)).toContain('note.txt')
+    const abort = new AbortController()
+    const dispose = await fs.watch(noteTarget, () => undefined, abort.signal)
+    await dispose()
+    abort.abort()
+  })
+
+  it('recognizes the root through an alias the canonical spelling does not share', async () => {
+    const alias = join(base, 'install-alias')
+    await symlink(installation, alias)
+    await boot('workspace-write', [alias])
+    const error = await fs.readText(await target(join(installation, 'secret.txt'))).catch((thrown: unknown) => thrown)
+    expect((error as FsError).code).toBe('FS_PROTECTED_PATH')
   })
 })
 

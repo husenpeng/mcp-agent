@@ -1,0 +1,44 @@
+{
+  "name": "@tomato/web-search-company",
+  "description": "Company-gateway search provider for the Tomato Harness web capability seam (ctx.web)",
+  "version": "0.2.1-rc.3",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/web/web-search-company"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@tomato/launch-environment": "workspace:*",
+    "@tomato/web": "workspace:*",
+    "@tomato/cordis": "workspace:~"
+  },
+  "dependencies": {
+    "@tomato/schemastery": "workspace:~"
+  },
+  "devDependencies": {
+    "@tomato/launch-environment": "workspace:*",
+    "@tomato/web": "workspace:*",
+    "@tomato/cordis": "workspace:~"
+  }
+}

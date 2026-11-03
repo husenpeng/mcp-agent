@@ -61,6 +61,15 @@ interface SandboxExecutionPolicy {
    */
   additionalWritableRoots?: readonly string[]
   /**
+   * Physical absolute directories (or archive files) a confined operation may
+   * not observe. Absence means none. Unlike the writable roots, these stay
+   * closed under `danger-full-access`: they name the installation the process
+   * itself runs from, not a task's workspace. Local filesystem backends refuse
+   * reads inside them; a shell backend masks them where its kernel profile can
+   * express a read denial.
+   */
+  protectedReadRoots?: readonly string[]
+  /**
    * Opaque identity of the calling session (the branded `@tomato/session`
    * SessionId). Backends key per-session state off it (e.g. windows-acl gives
    * each live session/workspace pair a random private temp directory and SID,

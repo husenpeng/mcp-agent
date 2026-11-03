@@ -1,0 +1,29 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "splash-harness",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "/Users/underdog/engineering/tomatoHarness/node_modules/vite/bin/vite.js",
+        "--config",
+        "/tmp/claude-501/splash-dev/vite.config.mjs",
+        "--port",
+        "5196"
+      ],
+      "port": 5196
+    },
+    {
+      "name": "splash-capture",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["/tmp/claude-501/splash-dev/capture-server.mjs"],
+      "port": 5198
+    },
+    {
+      "name": "splash-versions",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "5301", "--directory", "/tmp/claude-501/versions/site"],
+      "port": 5301
+    }
+  ]
+}

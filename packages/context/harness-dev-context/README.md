@@ -25,7 +25,7 @@ English | [中文](README.zh.md)
 <a id="use-this-package"></a>
 ## Use this package
 
-The shipped Web bundle mounts this plugin as its `harness-dev-context` row. Disable that row in a profile patch when the agent should not learn the harness checkout or GUI URL. The plugin takes no configuration and activates only where every injected service exists: `systemPrompt`, `sessionProjections`, and the `webApp` service of the Web runtime, so `--help` and non-Web compositions never mount it.
+The shipped Web bundle mounts this plugin as its `harness-dev-context` row. Disable that row in a profile patch when the agent should not learn either value, or set `sourceContext: false` to keep the Web GUI orientation (including the URL) while dropping the checkout section and value. A packaged Desktop release sets `sourceContext: false`: its runtime ships no documentation or source, and the file tools refuse the installation tree, so naming the checkout would invite inspection the release denies. The plugin activates only where every injected service exists: `systemPrompt`, `sessionProjections`, and the `webApp` service of the Web runtime, so `--help` and non-Web compositions never mount it.
 
 ### What the model gets
 

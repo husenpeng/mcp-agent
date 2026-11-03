@@ -1,0 +1,61 @@
+model	probe	http	completion_tok	reasoning_tok	rc_len	content	error
+glm-5.2	none	200	4	0	0	4183	
+glm-5.2	bogus	400	0	0	0		parameter check failed, reasoning_effort must be none or low or medium or high or xhigh or max
+glm-5.3	none	200	4	0	0	4183	
+glm-5.3	bogus	400	0	0	0		parameter check failed, reasoning_effort must be none or low or medium or high or xhigh or max
+glm-5.3-flash	none	200	28	24	34	4183	
+glm-5.3-flash	bogus	400	0	0	0		parameter check failed, reasoning_effort must be none or low or medium or high or xhigh or max
+glm-5.3-flashx	none	200	27	22	33	4183	
+glm-5.3-flashx	bogus	400	0	0	0		parameter check failed, reasoning_effort must be none or low or medium or high or xhigh or max
+claude-opus-5	none	200	4	0	0	4183	
+claude-opus-5	bogus	400	0	0	0		failed to convert openai request to claude request: unsupported reasoning effort: "bogus" (request id: 2874b589532167c8b4c25d3293b27a3b)
+claude-opus-5-5	none	400	0	0	0		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: 157d5b66-3880-4f80-94e5-f28e7b575e8e, ValidationException: "***.***.disabled" is not supported for this model. U
+claude-opus-5-5	bogus	400	0	0	0		failed to convert openai request to claude request: unsupported reasoning effort: "bogus" (request id: 22c1f81a74d7a268d075c4677888c961)
+claude-sonnet-5	none	200	4	0	0	4183	
+claude-sonnet-5	bogus	400	0	0	0		failed to convert openai request to claude request: unsupported reasoning effort: "bogus" (request id: d47b99caf265ee2eb1c12a4b8e67570d)
+claude-sonnet-5-5	none	400	0	0	0		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: a3c7697b-1315-43f3-8b65-4b1b253bc06d, ValidationException: To turn thinking off on this model, send "thinking": 
+claude-sonnet-5-5	bogus	400	0	0	0		failed to convert openai request to claude request: unsupported reasoning effort: "bogus" (request id: 54c95c27e0153817ccc5ad3d2f23b40e)
+claude-haiku-5-5	none	200	4	0	0	4183	
+claude-haiku-5-5	bogus	400	0	0	0		failed to convert openai request to claude request: unsupported reasoning effort: "bogus" (request id: e6412a37e2fea2f881a2a9ce6d4a2c87)
+gpt-5.6-luna	none	200	5	0	0	4183	
+gpt-5.6-luna	bogus	400	0	0	0		Unsupported value: 'reasoning_effort' does not support 'bogus' with this model. Supported values are: 'none', 'low', 'medium', 'high', and 'xhigh'.
+gpt-5.6-sol	none	200	5	0	0	4183	
+gpt-5.6-sol	bogus	400	0	0	0		Unsupported value: 'reasoning_effort' does not support 'bogus' with this model. Supported values are: 'none', 'low', 'medium', 'high', and 'xhigh'.
+gpt-5.6-terra	none	200	5	0	0	4183	
+gpt-5.6-terra	bogus	400	0	0	0		Unsupported value: 'reasoning_effort' does not support 'bogus' with this model. Supported values are: 'none', 'low', 'medium', 'high', and 'xhigh'.
+gpt-6-luna	none	200	5	0	0	4183	
+gpt-6-luna	bogus	400	0	0	0		Unsupported value: 'reasoning_effort' does not support 'bogus' with this model. Supported values are: 'none', 'low', 'medium', 'high', and 'xhigh'.
+gpt-6-sol	none	200	5	0	0	4183	
+gpt-6-sol	bogus	400	0	0	0		Unsupported value: 'reasoning_effort' does not support 'bogus' with this model. Supported values are: 'none', 'low', 'medium', 'high', and 'xhigh'.
+gpt-6.1-sol	none	400	0	0	0		Unsupported value: 'reasoning_effort' does not support 'none' with this model. Supported values are: 'low', 'medium', 'high', and 'xhigh'.
+gpt-6.1-sol	bogus	400	0	0	0		Unsupported value: 'reasoning_effort' does not support 'bogus' with this model. Supported values are: 'low', 'medium', 'high', and 'xhigh'.
+gemini-3.7-flash	none	400	0	0	0		thinking cannot be disabled for model "gemini-3.7-flash" (request id: a5819d6a7f3a1b9aff9a6b77f5108d15)
+gemini-3.7-flash	bogus	400	0	0	0		unsupported reasoning effort: "bogus" (request id: 27429b3accee1d27c437fb58623a5730)
+gemini-3.8-flash	none	400	0	0	0		thinking cannot be disabled for model "gemini-3.8-flash" (request id: 41b321f8ea7a6ea6beae4b54374d142d)
+gemini-3.8-flash	bogus	400	0	0	0		unsupported reasoning effort: "bogus" (request id: b7529024729879873099c19d4a2c6180)
+gemini-4-argon	none	400	0	0	0		model "gemini-4-argon" does not have a known Gemini thinking configuration (request id: f294b25d525ad2263bc6d6b9b35cac72)
+gemini-4-argon	bogus	400	0	0	0		unsupported reasoning effort: "bogus" (request id: fdfadadaaad476edd1c12987dd2503ff)
+qwen3.6-plus	none	200	4	0	0	4183	
+qwen3.6-plus	bogus	400	0	0	0		'reasoning_effort' must be one of: 'none', 'minimal', 'low', 'medium', 'high', 'xhigh'
+qwen3.7-flash	none	200	4	0	0	4183	
+qwen3.7-flash	bogus	400	0	0	0		'reasoning_effort' must be one of: 'none', 'minimal', 'low', 'medium', 'high', 'xhigh'
+qwen3.7-max	none	200	4	0	0	4183	
+qwen3.7-max	bogus	400	0	0	0		'reasoning_effort' must be one of: 'none', 'minimal', 'low', 'medium', 'high', 'xhigh'
+qwen3.8-max	none	200	4	0	0	4183	
+qwen3.8-max	bogus	400	0	0	0		'reasoning_effort' must be one of: 'none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'
+kimi-k3	none	200	33	30	85	4183	
+kimi-k3	bogus	400	0	0	0		parameter check failed, reasoning_effort must be none or low or medium or high or xhigh or max
+kimi-k3.1-pro	none	200	51	34	88	4183	
+kimi-k3.1-pro	bogus	400	0	0	0		parameter check failed, reasoning_effort must be none or low or medium or high or xhigh or max
+MiniMax-M2.5	none	200	104	0	330	 4183	
+MiniMax-M2.5	bogus	200	0	0	0		
+MiniMax-M2.7	none	200	132	0	353	 4183	
+MiniMax-M2.7	bogus	200	0	0	0		
+MiniMax-M3	none	200	30	28	59	4183	
+MiniMax-M3	bogus	200	0	0	0		
+Doubao-Seed-2.1-pro	none	200	4	0	0	4183	
+Doubao-Seed-2.1-pro	bogus	400	0	0	0		The parameter `reasoning_effort` specified in the request are not valid: value `bogus` is invalid. Request id: 0217936049465323a41b788dd1ea248c54437243b4fd45b45fd69
+Doubao-Seed-2.1-turbo	none	200	4	0	0	4183	
+Doubao-Seed-2.1-turbo	bogus	400	0	0	0		The parameter `reasoning_effort` specified in the request are not valid: value `bogus` is invalid. Request id: 021793604949779a5f7f353bde1da5db62ca0b3bf37282eaf5d39
+Doubao-Seed-2.1-lite	none	200	4	0	0	4183	
+Doubao-Seed-2.1-lite	bogus	400	0	0	0		The parameter `reasoning_effort` specified in the request are not valid: value `bogus` is invalid. Request id: 0217936049524203a41b788dd1ea248c54437243b4fd45b6e9f0d

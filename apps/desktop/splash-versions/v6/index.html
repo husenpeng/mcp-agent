@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'">
+    <title>Tomato AI</title>
+    <link rel="stylesheet" href="../shared/brand-font.css">
+    <link rel="stylesheet" href="splash.css">
+    <script src="splash.js" defer></script>
+  </head>
+  <body>
+    <canvas id="city-3d" aria-hidden="true"></canvas>
+    <div class="cinematic-vignette" aria-hidden="true"></div>
+    <img class="fallback-brand" src="../shared/welcome-brand.svg" alt="Tomato AI">
+    <div class="hud" aria-hidden="true">
+      <i class="hud-corner hud-corner-tl"></i>
+      <i class="hud-corner hud-corner-tr"></i>
+      <i class="hud-corner hud-corner-bl"></i>
+      <i class="hud-corner hud-corner-br"></i>
+      <div class="hud-meta hud-meta-left">TOMATO SYSTEM<br>CONSTRUCT // 001</div>
+      <div class="hud-meta hud-meta-right">NEURAL CITY<br>LINK ASCENDING</div>
+      <div class="city-coordinate">30.2741 N&nbsp;&nbsp; // &nbsp;&nbsp;SECTOR T-06</div>
+    </div>
+    <main class="lockup" aria-label="Tomato AI">
+      <div class="wordmark" role="img" aria-label="Tomato AI" translate="no">
+        <span class="wordmark-name" data-text="TOMATO">TOMATO</span><span class="wordmark-ai">AI</span>
+      </div>
+      <div class="boot-readout" aria-hidden="true">
+        <i></i><span>CITY LINK ESTABLISHED</span><i></i>
+      </div>
+      <div class="waiting" id="waiting" aria-hidden="true"><i></i></div>
+    </main>
+  </body>
+</html>

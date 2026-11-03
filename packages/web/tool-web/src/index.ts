@@ -11,10 +11,17 @@
 import type { Context } from '@tomato/cordis'
 import z from '@tomato/schemastery'
 import type {} from '@tomato/web'
-import { applyWebSearchTool, WEB_SEARCH_MAX_QUERIES, WEB_SEARCH_MAX_RESULTS, WEB_SEARCH_SUMMARY_MAX_CHARS } from './search.ts'
+import {
+  applyWebSearchTool, WEB_SEARCH_ANSWER_MAX_CHARS, WEB_SEARCH_MAX_OUTPUT_CHARS, WEB_SEARCH_MAX_QUERIES,
+  WEB_SEARCH_MAX_RESULTS, WEB_SEARCH_MAX_SOURCES_PER_HOST, WEB_SEARCH_SUMMARY_MAX_CHARS,
+} from './search.ts'
 import { applyWebFetchTool } from './fetch.ts'
 
-export { WEB_SEARCH_MAX_QUERIES, WEB_SEARCH_MAX_RESULTS, applyWebSearchTool, formatSearchOutput, presentSearchCall, presentSearchResult, searchMetaFromValue, searchMetaFromResult } from './search.ts'
+export {
+  WEB_SEARCH_ANSWER_MAX_CHARS, WEB_SEARCH_MAX_OUTPUT_CHARS, WEB_SEARCH_MAX_QUERIES, WEB_SEARCH_MAX_RESULTS,
+  WEB_SEARCH_MAX_SOURCES_PER_HOST, applyWebSearchTool, formatSearchOutput, presentSearchCall, presentSearchResult,
+  searchMetaFromValue, searchMetaFromResult,
+} from './search.ts'
 export type { WebSearchMeta } from './search.ts'
 export { applyWebFetchTool, formatFetchOutput, parseFetchArgs, presentFetchCall, presentFetchResult, fetchMetaFromValue, fetchMetaFromResult } from './fetch.ts'
 export type { WebFetchMeta } from './fetch.ts'
@@ -45,8 +52,14 @@ export interface Config {
   searchMaxResults?: number
   /** Upper bound on queries accepted by one `web_search` call. */
   searchMaxQueries?: number
-  /** Cap on each source summary in `web_search` output, in characters. Defaults to 800. */
+  /** Cap on each source summary or snippet in `web_search` output, in characters. Defaults to 800. */
   searchSummaryMaxChars?: number
+  /** Cap on the complete `web_search` text, in characters. Defaults to 4000. */
+  searchMaxOutputChars?: number
+  /** Cap on a provider answer within that text, in characters. Defaults to 800. */
+  searchAnswerMaxChars?: number
+  /** Most sources one host may contribute. Defaults to 2. */
+  searchMaxSourcesPerHost?: number
   /** Cooperative timeout budget (ms) for `web_fetch`. Defaults to 30000. */
   fetchTimeoutMs?: number
   /** Cooperative timeout budget (ms) for `web_search`. Defaults to 30000. */
@@ -61,6 +74,9 @@ export const Config: z<Config> = z.object({
   searchMaxResults: z.number().default(WEB_SEARCH_MAX_RESULTS),
   searchMaxQueries: z.number().default(WEB_SEARCH_MAX_QUERIES),
   searchSummaryMaxChars: z.number().default(WEB_SEARCH_SUMMARY_MAX_CHARS),
+  searchMaxOutputChars: z.number().default(WEB_SEARCH_MAX_OUTPUT_CHARS),
+  searchAnswerMaxChars: z.number().default(WEB_SEARCH_ANSWER_MAX_CHARS),
+  searchMaxSourcesPerHost: z.number().default(WEB_SEARCH_MAX_SOURCES_PER_HOST),
   fetchTimeoutMs: z.number().default(DEFAULT_WEB_TOOL_TIMEOUT_MS),
   searchTimeoutMs: z.number().default(DEFAULT_WEB_TOOL_TIMEOUT_MS),
   fetchMaxOutputChars: z.number().default(DEFAULT_FETCH_MAX_OUTPUT_CHARS),
@@ -91,13 +107,26 @@ export function apply(ctx: Context, config: Config): void {
   assertPositiveInteger('searchMaxResults', resolved.searchMaxResults)
   assertPositiveInteger('searchMaxQueries', resolved.searchMaxQueries)
   assertPositiveInteger('searchSummaryMaxChars', resolved.searchSummaryMaxChars)
+  assertPositiveInteger('searchMaxOutputChars', resolved.searchMaxOutputChars)
+  assertPositiveInteger('searchAnswerMaxChars', resolved.searchAnswerMaxChars)
+  assertPositiveInteger('searchMaxSourcesPerHost', resolved.searchMaxSourcesPerHost)
+  if (resolved.searchAnswerMaxChars >= resolved.searchMaxOutputChars) {
+    throw new Error('tool-web: searchAnswerMaxChars must be smaller than searchMaxOutputChars')
+  }
   assertPositiveInteger('fetchTimeoutMs', resolved.fetchTimeoutMs)
   assertPositiveInteger('searchTimeoutMs', resolved.searchTimeoutMs)
   assertPositiveInteger('fetchMaxOutputChars', resolved.fetchMaxOutputChars)
   if (resolved.search) {
-    applyWebSearchTool(
-      ctx, resolved.searchMaxResults, resolved.searchMaxQueries, resolved.searchSummaryMaxChars, resolved.searchTimeoutMs, resolved.fetch,
-    )
+    applyWebSearchTool(ctx, {
+      maxResults: resolved.searchMaxResults,
+      maxQueries: resolved.searchMaxQueries,
+      summaryMaxChars: resolved.searchSummaryMaxChars,
+      maxOutputChars: resolved.searchMaxOutputChars,
+      answerMaxChars: resolved.searchAnswerMaxChars,
+      maxSourcesPerHost: resolved.searchMaxSourcesPerHost,
+      timeoutMs: resolved.searchTimeoutMs,
+      fetchEnabled: resolved.fetch,
+    })
   }
   if (resolved.fetch) applyWebFetchTool(ctx, resolved.fetchTimeoutMs, resolved.fetchMaxOutputChars)
 }

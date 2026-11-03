@@ -1,0 +1,12 @@
+# Release-owned overlay for the Desktop profile, applied after the profile's own
+# patch layer by the packaged application only.
+#
+#
+# A release runtime carries no harness documentation or authored source (see
+# scripts/runtime-file-policy.ts) and the file tools refuse the installation
+# tree. Naming the implementation checkout would invite the model to inspect a
+# tree it cannot show, so a packaged application keeps the GUI orientation and
+# drops the checkout context. Unpackaged development keeps the default.
+- id: harness-dev-context
+  config:
+    sourceContext: false

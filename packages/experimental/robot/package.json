@@ -1,0 +1,47 @@
+{
+  "name": "@tomato/experimental-robot",
+  "description": "Service definition for versioned robots, runs, and agent-to-agent contracts",
+  "version": "0.2.1-rc.3",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/experimental/robot"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts"
+    },
+    "./session": {
+      "types": "./lib/types/session.d.ts"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@tomato/branded": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-projection": "workspace:*"
+  },
+  "devDependencies": {
+    "@tomato/branded": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-projection": "workspace:*"
+  }
+}

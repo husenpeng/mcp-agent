@@ -80,6 +80,40 @@ html[data-scene='fallback'] .fallback-brand {
   animation: hud-in 900ms ease-out 250ms both;
 }
 
+/* Boot chrome from the first paint until the city's first frame. The shader warm-up blocks the main thread for about a
+   second, so everything here animates only compositor properties (opacity, transform) and keeps moving while it does.
+   The corners and the left meta reuse the HUD's, which fades in over the same geometry once the clock starts. */
+.boot {
+  position: fixed;
+  z-index: 2;
+  inset: 26px;
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 450ms ease-out;
+}
+
+.boot-link {
+  position: absolute;
+  right: 50px;
+  bottom: 5px;
+  overflow: hidden;
+  width: 84px;
+  height: 1px;
+  background: rgb(255 40 40 / 16%);
+}
+
+.boot-link i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 28px;
+  background: linear-gradient(90deg, transparent, var(--boot-cyan), var(--boot-red), transparent);
+  animation: boot-link 1800ms linear infinite;
+}
+
+html[data-clock='running'] .boot { opacity: 0; }
+
+html[data-scene='fallback'] .boot { display: none; }
+
 .hud-corner {
   position: absolute;
   width: 34px;
@@ -222,6 +256,11 @@ html[data-scene='fallback'] .fallback-brand {
   to { transform: translateX(144px); }
 }
 
+@keyframes boot-link {
+  from { transform: translateX(-28px); }
+  to { transform: translateX(84px); }
+}
+
 html[data-splash='done'] .hud,
 html[data-splash='done'] .wordmark,
 html[data-splash='done'] .wordmark-ai,
@@ -235,7 +274,9 @@ html[data-splash='done'] .boot-readout {
 @media (max-width: 640px) {
   .hud-meta,
   .city-coordinate { display: none; }
-  .hud { inset: 16px; }
+  .hud,
+  .boot { inset: 16px; }
+  .boot-link { right: 34px; }
 }
 
 @media (max-height: 680px) {
@@ -244,6 +285,7 @@ html[data-splash='done'] .boot-readout {
 
 @media (forced-colors: active) {
   #city-3d,
+  .boot,
   .hud,
   .lockup,
   .cinematic-vignette { display: none; }

@@ -1,0 +1,114 @@
+{
+  "name": "@tomato/experimental-muse-insights",
+  "description": "Daily work recaps and proactive unfinished-task nudges over the Muse memory bundle",
+  "version": "0.2.1-rc.3",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/experimental/muse-insights"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./remote": {
+      "types": "./lib/typert.remote-client.d.ts",
+      "default": "./lib/typert.remote-client.js"
+    },
+    "./typert": {
+      "types": "./lib/typert.host.d.ts",
+      "default": "./lib/typert.host.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "tomato": {
+    "client": {
+      "inject": [
+        "@tomato/api-remotes",
+        "@tomato/client-locale",
+        "@tomato/client-ui-layout",
+        "@tomato/client-ui-renderer",
+        "@tomato/client-ui-sidebar-right",
+        "@tomato/client-ui-workspace"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/typert.host.js",
+    "lib/typert.host.d.ts",
+    "lib/typert.remote-client.js",
+    "lib/typert.remote-client.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@tomato/cordis": "workspace:~",
+    "@tomato/gateway": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-query": "workspace:*",
+    "@tomato/storage-domain": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@tomato/gateway": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "@tomato/schemastery": "workspace:~",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.3",
+    "@tomato/api-remotes": "workspace:*",
+    "@tomato/client-locale": "workspace:*",
+    "@tomato/client-store": "workspace:*",
+    "@tomato/client-test-runtime": "workspace:*",
+    "@tomato/client-ui-layout": "workspace:*",
+    "@tomato/client-ui-primitives": "workspace:*",
+    "@tomato/client-ui-renderer": "workspace:*",
+    "@tomato/client-ui-sidebar-right": "workspace:*",
+    "@tomato/client-ui-slots": "workspace:*",
+    "@tomato/client-ui-workspace": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/cordis-plugin-timer": "workspace:~",
+    "@tomato/gateway": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-query": "workspace:*",
+    "@tomato/storage": "workspace:*",
+    "@tomato/storage-domain": "workspace:*",
+    "@tomato/storage-json": "workspace:*",
+    "@tomato/tool-todo": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*",
+    "@tomato/util-values": "workspace:*",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}

@@ -23,15 +23,45 @@ export const WEB_SEARCH_MAX_RESULTS = 8
 export const WEB_SEARCH_MAX_QUERIES = 4
 
 /**
- * Default cap on one source summary, in characters: the upper end of the
- * 600–800 character range the DeepSeek Search guide gives for summaries meant
- * for model reading. One call's summaries total at most this cap times the
- * source cap.
+ * Default cap on one source summary or snippet, in characters: the upper end of
+ * the 600–800 character range the DeepSeek Search guide gives for summaries meant
+ * for model reading, and a ceiling for vendor excerpts that arrive as page
+ * content. One call's excerpts total at most this cap times the source cap.
  */
 export const WEB_SEARCH_SUMMARY_MAX_CHARS = 800
 
-/** Marker appended to a summary the cap shortened. */
-const SUMMARY_ELLIPSIS = '…'
+/**
+ * Default cap on the complete model-facing text of one call, in characters,
+ * including the answer, source lines (URL, title, date), and standing notices.
+ * Per-source caps alone leave the total unbounded across sources and queries.
+ */
+export const WEB_SEARCH_MAX_OUTPUT_CHARS = 4_000
+
+/** Default cap on a provider answer, in characters, within the complete-output cap. */
+export const WEB_SEARCH_ANSWER_MAX_CHARS = 800
+
+/**
+ * Default number of sources one host may contribute. Search engines often
+ * return several pages of the same site; past a couple they crowd out other
+ * domains without adding information.
+ */
+export const WEB_SEARCH_MAX_SOURCES_PER_HOST = 2
+
+/** Marker appended to an excerpt the cap shortened. */
+const EXCERPT_ELLIPSIS = '…'
+
+/**
+ * Characters that end a sentence or block in the languages vendors return.
+ * Whitespace-collapsed excerpts only carry the punctuation members.
+ */
+const SENTENCE_ENDS: ReadonlySet<string> = new Set(['.', '!', '?', '。', '！', '？', '\n'])
+
+/**
+ * Fixed text one rendered result adds outside its sources and answer: the
+ * untrusted-content notice, the citation reminder, and the joining newlines.
+ * The complete-output cap reserves it before allocating excerpt budgets.
+ */
+const FORMAT_RESERVE_CHARS = 300
 
 /** Model-facing `web_search` arguments. */
 interface WebSearchArgs {
@@ -159,21 +189,170 @@ function projectSource(source: WebSearchSource): {
 
 /**
  * Project one seam source into the `web_search` output value: its display fields
- * plus the summary with whitespace collapsed to single spaces, so it stays on its
- * source line, and capped at `summaryMaxChars` characters including the ellipsis
- * that marks a cut.
+ * plus the summary and snippet with whitespace collapsed to single spaces, so
+ * each stays on its source line, and capped at `summaryMaxChars` characters
+ * including the ellipsis that marks a cut. The cap applies to a snippet too
+ * because a vendor excerpt (Tavily page content, for example) is not short by
+ * contract and would otherwise reach the model unbounded.
  *
  * @param source - one source from the `ctx.web` search outcome.
- * @param summaryMaxChars - the deployment's per-source summary cap.
- * @returns the display fields plus the bounded summary when the provider returned one.
+ * @param summaryMaxChars - the deployment's per-source summary and snippet cap.
+ * @returns the display fields plus the bounded summary and snippet when the provider returned them.
  */
 function modelSource(source: WebSearchSource, summaryMaxChars: number): ReturnType<typeof projectSource> & { summary?: string } {
-  const summary = source.summary?.replace(/\s+/gu, ' ').trim() ?? ''
-  if (summary.length === 0) return projectSource(source)
-  const bounded = summary.length <= summaryMaxChars
-    ? summary
-    : `${truncateWithoutSplittingSurrogatePair(summary, summaryMaxChars - SUMMARY_ELLIPSIS.length)}${SUMMARY_ELLIPSIS}`
-  return { ...projectSource(source), summary: bounded }
+  const summary = boundedExcerpt(source.summary, summaryMaxChars)
+  const snippet = boundedExcerpt(source.snippet, summaryMaxChars)
+  return {
+    ...projectSource(source),
+    ...snippet !== undefined ? { snippet } : {},
+    ...summary !== undefined ? { summary } : {},
+  }
+}
+
+/**
+ * Collapse one excerpt's whitespace and cap it, marking a cut with an ellipsis.
+ *
+ * @param text - the provider's summary or snippet; absent when it returned none.
+ * @param maxChars - the cap including the ellipsis.
+ * @returns the bounded excerpt, or undefined for absent or blank text.
+ */
+function boundedExcerpt(text: string | undefined, maxChars: number): string | undefined {
+  const normalized = text?.replace(/\s+/gu, ' ').trim() ?? ''
+  if (normalized.length === 0) return undefined
+  return truncateAtSentence(normalized, maxChars)
+}
+
+/**
+ * Cap a provider answer without collapsing its layout.
+ *
+ * @param text - the provider-generated answer; absent when it returned none.
+ * @param maxChars - the cap including the ellipsis.
+ * @returns the bounded answer, or undefined for absent or blank text.
+ */
+function boundedAnswer(text: string | undefined, maxChars: number): string | undefined {
+  const trimmed = text?.trim() ?? ''
+  if (trimmed.length === 0) return undefined
+  return truncateAtSentence(trimmed, maxChars)
+}
+
+/**
+ * Cap text at a sentence boundary, falling back to a hard cut for a run-on
+ * without punctuation. A boundary in the first half of the budget is ignored:
+ * keeping only a fragment wastes the budget the model was given.
+ *
+ * @param text - the text to cap.
+ * @param maxChars - the cap including the ellipsis.
+ * @returns the text unchanged when it fits, otherwise a capped prefix with an ellipsis.
+ */
+function truncateAtSentence(text: string, maxChars: number): string {
+  if (text.length <= maxChars) return text
+  const limit = maxChars - EXCERPT_ELLIPSIS.length
+  if (limit < 1) return EXCERPT_ELLIPSIS
+  const window = text.slice(0, limit)
+  let boundary = -1
+  for (let index = window.length - 1; index >= 0; index -= 1) {
+    const char = window[index]
+    if (char !== undefined && SENTENCE_ENDS.has(char)) {
+      boundary = index
+      break
+    }
+  }
+  const end = boundary >= Math.floor(limit * 0.5) ? boundary + 1 : limit
+  return `${truncateWithoutSplittingSurrogatePair(text, end)}${EXCERPT_ELLIPSIS}`
+}
+
+/**
+ * Read a source's host for the per-host cap.
+ *
+ * @param url - the source URL.
+ * @returns the lowercase hostname, or undefined for a malformed URL (kept, since
+ *   formatting later falls back to the raw string).
+ */
+function hostOf(url: string): string | undefined {
+  try {
+    return new URL(url).hostname.toLowerCase()
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * Keep at most `perHost` sources per host, preserving order.
+ *
+ * @param sources - the merged sources.
+ * @param perHost - the host limit, at least 1.
+ * @returns the kept sources and whether any were dropped.
+ */
+function capSourcesPerHost(
+  sources: readonly WebSearchSource[],
+  perHost: number,
+): { sources: WebSearchSource[]; truncated: boolean } {
+  const counts = new Map<string, number>()
+  const kept: WebSearchSource[] = []
+  let dropped = false
+  for (const source of sources) {
+    const host = hostOf(source.url)
+    if (host === undefined) {
+      kept.push(source)
+      continue
+    }
+    const seen = counts.get(host) ?? 0
+    if (seen >= perHost) {
+      dropped = true
+      continue
+    }
+    counts.set(host, seen + 1)
+    kept.push(source)
+  }
+  return { sources: kept, truncated: dropped }
+}
+
+/** One model-facing source: display fields plus the bounded summary when the provider returned one. */
+type ModelSource = ReturnType<typeof modelSource>
+
+/** The model-facing `web_search` output value. */
+interface WebSearchValue {
+  /** Provider answer, bounded before it reaches the model. */
+  content?: string
+  /** Bounded sources in result order. */
+  sources: ModelSource[]
+  /** True when any stage dropped sources. */
+  truncated: boolean
+}
+
+/**
+ * Project one seam result into the model-facing output value: per-host selection,
+ * a bounded answer, per-source excerpt shares of the remaining budget, then a
+ * final pass that drops tail sources until the rendered text fits the complete
+ * output cap.
+ *
+ * @param result - the seam's search outcome.
+ * @param options - the deployment's excerpt, answer, and output caps.
+ * @returns the output value; `truncated` covers a source-count cut at any stage.
+ */
+function buildModelValue(
+  result: WebSearchResult,
+  options: Pick<WebSearchToolOptions, 'summaryMaxChars' | 'answerMaxChars' | 'maxOutputChars' | 'maxSourcesPerHost'>,
+): WebSearchValue {
+  const hostCapped = capSourcesPerHost(result.sources, options.maxSourcesPerHost)
+  const answerBudget = Math.max(1, Math.min(options.answerMaxChars, options.maxOutputChars - FORMAT_RESERVE_CHARS))
+  const content = boundedAnswer(result.content, answerBudget)
+  const available = Math.max(1, options.maxOutputChars - (content?.length ?? 0) - FORMAT_RESERVE_CHARS)
+  const share = hostCapped.sources.length === 0
+    ? 0
+    : Math.max(1, Math.min(options.summaryMaxChars, Math.floor(available / hostCapped.sources.length)))
+  const sources = hostCapped.sources.map(source => modelSource(source, share))
+  let value: WebSearchValue = {
+    ...content === undefined ? {} : { content },
+    sources,
+    truncated: result.truncated || hostCapped.truncated,
+  }
+  // Each source's URL, title, and date sit outside the excerpt share, so the
+  // exact rendered length is the only honest check of the complete-output cap.
+  while (value.sources.length > 0 && formatSearchOutput(value).length > options.maxOutputChars) {
+    value = { ...value, sources: value.sources.slice(0, -1), truncated: true }
+  }
+  return value
 }
 
 /**
@@ -325,6 +504,26 @@ function mergeSearchResults(
   }
 }
 
+/** Deployment controls for the `web_search` tool. */
+export interface WebSearchToolOptions {
+  /** Upper bound on sources returned by one call, sent as every seam request's `maxResults`. */
+  readonly maxResults: number
+  /** Upper bound on queries accepted by one call, enforced before any provider call. */
+  readonly maxQueries: number
+  /** Cap on each source summary or snippet, in characters. */
+  readonly summaryMaxChars: number
+  /** Cap on the complete model-facing text of one call, in characters. */
+  readonly maxOutputChars: number
+  /** Cap on a provider answer within the complete-output cap, in characters. */
+  readonly answerMaxChars: number
+  /** Most sources one host may contribute. */
+  readonly maxSourcesPerHost: number
+  /** Cooperative tool-call budget (ms) attached as `ToolDefinition.timeoutMs`. */
+  readonly timeoutMs: number
+  /** Whether the same composition exposes `web_fetch`, which permits recommending it. */
+  readonly fetchEnabled: boolean
+}
+
 /**
  * Register the `web_search` tool and its system-prompt guidance. A model step admits the tool,
  * and so declares, dispatches, and describes it, only while `ctx.web.searchReady()` answers true
@@ -332,23 +531,11 @@ function mergeSearchResults(
  *
  * @param ctx - context whose `tools` and `systemPrompt` registries receive the
  *   registrations; both are effect-scoped and unregister on plugin dispose.
- * @param maxResults - the deployment's source cap, sent as every seam
- *   request's `maxResults`.
- * @param maxQueries - the deployment's query cap enforced before provider calls.
- * @param summaryMaxChars - the deployment's per-source summary cap in the output value.
- * @param timeoutMs - the cooperative tool-call budget (ms) attached as the tool's
- *   `ToolDefinition.timeoutMs` for `@tomato/tool-call-timeout-policy` to enforce.
- * @param fetchEnabled - whether the same composition exposes `web_fetch`, which
- *   permits recommending that follow-up tool when it is also visible at assembly.
+ * @param options - source, query, excerpt, answer, and complete-output caps, the
+ *   tool-call budget, and whether `web_fetch` is exposed.
  */
-export function applyWebSearchTool(
-  ctx: Context,
-  maxResults: number,
-  maxQueries: number,
-  summaryMaxChars: number,
-  timeoutMs: number,
-  fetchEnabled: boolean,
-): void {
+export function applyWebSearchTool(ctx: Context, options: WebSearchToolOptions): void {
+  const { maxQueries, timeoutMs, fetchEnabled } = options
   ctx.systemPrompt.section({
     name: 'tool:web_search',
     order: ctx.systemPrompt.getSectionOrder('TOOL_WEB_SEARCH'),
@@ -402,12 +589,8 @@ export function applyWebSearchTool(
     isConcurrencySafe: () => true,
     async execute(args, exec) {
       const queries = parseSearchArgs(args, maxQueries)
-      const result = await runSearchQueries(ctx, queries, maxResults, exec.signal)
-      return {
-        ...result.content !== undefined ? { content: result.content } : {},
-        sources: result.sources.map(source => modelSource(source, summaryMaxChars)),
-        truncated: result.truncated,
-      }
+      const result = await runSearchQueries(ctx, queries, options.maxResults, exec.signal)
+      return buildModelValue(result, options)
     },
     presentCall: presentSearchCall,
     presentResult: (args, result) => presentSearchResult(args, result),

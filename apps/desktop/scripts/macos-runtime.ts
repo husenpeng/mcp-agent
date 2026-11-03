@@ -2,7 +2,7 @@
 
 import { createHash } from 'node:crypto'
 import { closeSync, openSync, readdirSync, readSync } from 'node:fs'
-import { join, relative, sep } from 'node:path'
+import { basename, join, relative, sep } from 'node:path'
 import { primaryRuntimePythonAliases, readPrimaryRuntime } from '../../../packages/skill/tool-workspace-dependencies/src/index.ts'
 import { inventoryDesktopRuntime } from '../src/runtime-tree.ts'
 import type { MacOSSigningEnvironment } from './desktop-release-environment.mjs'
@@ -80,6 +80,33 @@ export async function signMacOSRuntime(
   if (cacheDirectory !== undefined) {
     pruneMacOSSignatureCache(cacheDirectory)
     console.info(`desktop macOS signing cache: ${hits} hits, ${misses} misses, ${files.length - hits - misses} uncached`)
+  }
+  return files.length
+}
+
+/**
+ * Sign the shipped Playwright browser binaries before the enclosing application is signed. The headless shell needs
+ * the JIT entitlement Chromium's JavaScript engine requires; its supporting libraries use the ordinary hardened runtime.
+ * @param root - Browser registry directory copied beside the runtime.
+ * @param appId - Release application identifier.
+ * @param expected - Required signing identity.
+ * @returns Number of signed native files.
+ */
+export async function signMacOSPlaywrightBrowsers(
+  root: string, appId: string, expected: MacOSSigningEnvironment,
+): Promise<number> {
+  const files: string[] = []
+  for (const entry of readdirSync(root, { recursive: true, withFileTypes: true })) {
+    if (!entry.isFile()) continue
+    const path = join(entry.parentPath, entry.name)
+    if (MACH_O_MAGICS.has(magic(path))) files.push(path)
+  }
+  for (const file of files) {
+    const identifier = `${appId}.runtime.playwright.${createHash('sha256').update(relative(root, file)).digest('hex')}`
+    const entitlements = basename(file) === 'chrome-headless-shell'
+      ? join(import.meta.dirname, 'jit-entitlements.plist') : undefined
+    await signMacOSRuntimeCode(file, identifier, expected, entitlements)
+    verifyMacOSRuntimeCode(file, expected)
   }
   return files.length
 }

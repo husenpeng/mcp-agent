@@ -40,14 +40,14 @@ function packageSetProject(): {
   const baseBody = Buffer.from('base')
   const hostBody = Buffer.from('host')
   const tomato = record('@tomato/cli', 'tomato.tgz', tomatoBody)
-  const base = record('@tomato/base', '@tomato/base.tgz', baseBody)
-  const host = record('@tomato/desktop-host', '@tomato/desktop-host.tgz', hostBody)
+  const base = record('@tomato/base', 'base.tgz', baseBody)
+  const host = record('@tomato/desktop-host', 'desktop-host.tgz', hostBody)
   writeFileSync(join(packageDir, tomato.file), tomatoBody)
   writeFileSync(join(packageDir, base.file), baseBody)
   writeFileSync(join(packageDir, host.file), hostBody)
   writeFileSync(join(root, DESKTOP_PACKAGE_SET_FILE), `${JSON.stringify({
     schemaVersion: 1,
-    packages: [tomato, base, host],
+    packages: [base, tomato, host],
   })}\n`)
   return { root, tomato, base, host }
 }
@@ -63,8 +63,8 @@ describe('desktop core package set', () => {
     expect(desktopTomatoPackageSpec(packageSet)).toBe('file:./desktop-packages/tomato.tgz')
     expect(desktopCorePackageOverrides(packageSet)).toEqual({
       '@tomato/cli': 'file:./desktop-packages/tomato.tgz',
-      '@tomato/base': 'file:./desktop-packages/@tomato/base.tgz',
-      '@tomato/desktop-host': 'file:./desktop-packages/@tomato/desktop-host.tgz',
+      '@tomato/base': 'file:./desktop-packages/base.tgz',
+      '@tomato/desktop-host': 'file:./desktop-packages/desktop-host.tgz',
     })
   })
 
@@ -73,9 +73,9 @@ describe('desktop core package set', () => {
     expect(() => verifyDesktopCorePackageSet(root, '2.0.0')).toThrow(/does not match Desktop/u)
     expect(() => parseDesktopCorePackageSet({
       schemaVersion: 1,
-      packages: [tomato, base, { ...host, version: '2.0.0' }],
+      packages: [base, tomato, { ...host, version: '2.0.0' }],
     }, '1.2.3')).toThrow(/@tomato\/desktop-host@2\.0\.0 does not match Desktop 1\.2\.3/u)
-    expect(() => parseDesktopCorePackageSet({ schemaVersion: 1, packages: [base, tomato, host] }))
+    expect(() => parseDesktopCorePackageSet({ schemaVersion: 1, packages: [tomato, base, host] }))
       .toThrow(/sorted by name/u)
     writeFileSync(join(root, DESKTOP_PACKAGES_DIR, tomato.file), 'changed')
     expect(() => verifyDesktopCorePackageSet(root, '1.2.3')).toThrow(/integrity check failed/u)

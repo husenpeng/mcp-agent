@@ -15,7 +15,7 @@ import SandboxPolicyService, { SANDBOX_MODES, setSandboxMode } from '@tomato/san
 import SessionProjectionRegistry from '@tomato/session-projection'
 import SystemPrompt, { renderContextSnapshot, renderPrompt } from '@tomato/system-prompt'
 
-async function mounted(config: { mode?: 'read-only' | 'workspace-write' | 'danger-full-access'; workspaceRoot?: string; additionalWritableRoots?: string[] } = {}) {
+async function mounted(config: { mode?: 'read-only' | 'workspace-write' | 'danger-full-access'; workspaceRoot?: string; additionalWritableRoots?: string[]; protectedReadRoots?: string[] } = {}) {
   const ctx = new Context()
   await ctx.plugin(SessionProjectionRegistry)
   await ctx.plugin(SandboxPolicyService, config)
@@ -91,6 +91,31 @@ describe('SandboxPolicyService', () => {
       await ctx.plugin(SessionProjectionRegistry)
       await expect(ctx.plugin(SandboxPolicyService, { additionalWritableRoots: ['relative/extra'] }))
         .rejects.toThrow('sandbox-policy: additionalWritableRoots entries must be absolute execution-world paths')
+      expect(ctx.get('sandboxPolicy')).toBeUndefined()
+    } finally {
+      await ctx.fiber.dispose()
+    }
+  })
+
+  it('carries a frozen detached copy of the protected installation roots into every mode', async () => {
+    const configured = ['/Applications/Tomato AI.app/Contents/Resources/app.asar']
+    const ctx = await mounted({ mode: 'workspace-write', workspaceRoot: '/fallback', protectedReadRoots: configured })
+    configured.push('/late/mutation')
+    const full = session('sess-full', '/projects/full')
+    setSandboxMode(full, 'danger-full-access')
+    const policy = ctx.sandboxPolicy.resolve({ session: full })
+    expect(policy.protectedReadRoots).toEqual(['/Applications/Tomato AI.app/Contents/Resources/app.asar'])
+    expect(policy.mode).toBe('danger-full-access')
+    expect(Object.isFrozen(policy.protectedReadRoots)).toBe(true)
+    expect(Object.isFrozen(ctx.sandboxPolicy.protectedReadRoots)).toBe(true)
+  })
+
+  it('rejects a relative protected read root at load', async () => {
+    const ctx = new Context()
+    try {
+      await ctx.plugin(SessionProjectionRegistry)
+      await expect(ctx.plugin(SandboxPolicyService, { protectedReadRoots: ['relative/installation'] }))
+        .rejects.toThrow('sandbox-policy: protectedReadRoots entries must be absolute execution-world paths')
       expect(ctx.get('sandboxPolicy')).toBeUndefined()
     } finally {
       await ctx.fiber.dispose()
@@ -183,7 +208,7 @@ describe('SandboxPolicyService', () => {
 })
 
 describe('sandbox:policy request context', () => {
-  async function promptMounted(config: { mode?: 'read-only' | 'workspace-write' | 'danger-full-access'; workspaceRoot?: string; additionalWritableRoots?: string[] } = {}): Promise<Context> {
+  async function promptMounted(config: { mode?: 'read-only' | 'workspace-write' | 'danger-full-access'; workspaceRoot?: string; additionalWritableRoots?: string[]; protectedReadRoots?: string[] } = {}): Promise<Context> {
     const ctx = new Context()
     await ctx.plugin(SystemPrompt)
     await ctx.plugin(SessionProjectionRegistry)
@@ -212,6 +237,20 @@ describe('sandbox:policy request context', () => {
     expect(await policyContext(ctx, session('sess-extra', '/projects/current'))).toBe(
       `Current TOMATO file policy: workspace-write. Any available operation enforced by the TOMATO file sandbox may modify files under the session workspace: ${JSON.stringify('/projects/current')}. Additional writable directories: ["/projects/shared/.git","/projects/shared/worktrees"]. Some platform temporary areas may also be writable.`,
     )
+  })
+
+  it('names the protected installation root in every mode, including danger-full-access', async () => {
+    const root = '/Applications/Tomato AI.app/Contents/Resources/app.asar'
+    const suffix = ` The harness installation is not readable by confined operations: ${JSON.stringify([root])}.`
+    for (const mode of SANDBOX_MODES) {
+      const ctx = await promptMounted({ mode, workspaceRoot: '/fallback', protectedReadRoots: [root] })
+      expect(await policyContext(ctx, session(`sess-protected-${mode}`, '/projects/current')))
+        .toBe(`${[
+          'Current TOMATO file policy: read-only. Any available operation enforced by the TOMATO file sandbox cannot modify files in the standing mode. Do not refuse a required modification from this policy alone: try an available tool normally and follow any denial and escalation guidance it returns.',
+          `Current TOMATO file policy: workspace-write. Any available operation enforced by the TOMATO file sandbox may modify files under the session workspace: ${JSON.stringify('/projects/current')}. Some platform temporary areas may also be writable.`,
+          'Current TOMATO file policy: danger-full-access. The TOMATO file sandbox does not restrict file modifications by available operations.',
+        ][SANDBOX_MODES.indexOf(mode)]}${suffix}`)
+    }
   })
 
   it('does not advertise extra directories under read-only, which grants nothing', async () => {

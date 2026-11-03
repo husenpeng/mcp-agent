@@ -4,6 +4,8 @@ Status: implemented
 
 English | [中文](2026-10-27-official-on-demand-playwright-bundle.zh.md)
 
+The [follow-up decision](2026-11-03-default-playwright-bundle.md) changes the delivery form: the bundle ships with the installation, is on by default for new Web and Desktop profiles, and Desktop carries a Chromium headless shell.
+
 ## Problem
 
 The Playwright MCP provider works but is unreachable from the product: a profile must name the service and the provider by hand, so the Plugins page neither lists nor installs it. Shipping it with every installation is also unsuitable, because the provider pulls a Playwright runtime and expects a Chromium build that most installations never use.

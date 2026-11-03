@@ -322,6 +322,17 @@ export class DesktopHostProcess {
   }
 
   /**
+   * Publish the current auth session to the Host so plugins can call company
+   * services with the signed-in identity.
+   * @param sessionId - auth_service session id, or undefined after sign-out.
+   */
+  publishSession(sessionId: string | undefined): void {
+    const child = this.child
+    if (child === undefined || !child.connected) return
+    child.send({ type: 'desktop-session', sessionId: sessionId ?? null }, (error) => { if (error !== null) this.fail(error) })
+  }
+
+  /**
    * Request teardown and await child exit, escalating termination when needed.
    * @param requireGraceful - Reject update handoff after forced termination or unsuccessful child exit.
    * @returns Completion of owned process teardown. DesktopHostUncleanExitError confirms exit but refuses installation;

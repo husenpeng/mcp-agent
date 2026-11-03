@@ -87,6 +87,7 @@
     "@tomato/tool-web": "workspace:*",
     "@tomato/tool-workflow": "workspace:*",
     "@tomato/web-app": "workspace:*",
+    "@tomato/experimental-robot-app": "workspace:*",
     "@tomato/workflow-ptc": "workspace:*",
     "@tomato/schemastery": "workspace:~",
     "commander": "^15.0.0",
@@ -109,7 +110,8 @@
     "@tomato/cua-bundle": "workspace:*",
     "@tomato/experimental-plugin-market-bundle": "workspace:*",
     "@tomato/personalized-recommendations": "workspace:*",
-    "@tomato/experimental-muse-bundle": "workspace:*"
+    "@tomato/experimental-muse-bundle": "workspace:*",
+    "@tomato/experimental-browser-use-playwright-bundle": "workspace:*"
   },
   "devDependencies": {
     "@tomato/skill-badge": "workspace:*",

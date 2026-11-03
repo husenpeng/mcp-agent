@@ -20,7 +20,9 @@ const repoRoot = fileURLToPath(new URL('../../../../', import.meta.url))
 describe('profile roster', () => {
   it('lists the template bundles, every optional bundle, and the packages their patch rows name', () => {
     const { bundles, roster } = profileRoster(repoRoot, 'web')
-    expect(bundles).toEqual([...PROFILE_TEMPLATES.web!.bundles, ...OPTIONAL_BUNDLES])
+    // A default-enabled optional bundle is a template layer too, so the roster lists it once.
+    expect(bundles).toEqual([...new Set([...PROFILE_TEMPLATES.web!.bundles, ...OPTIONAL_BUNDLES])])
+    expect(bundles.filter(name => name === '@tomato/experimental-browser-use-playwright-bundle')).toHaveLength(1)
     expect(roster).toEqual(expect.arrayContaining([
       ...bundles,
       // Rows inserted by the base and Web bundles.

@@ -1,0 +1,49 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/robot-triggers/README.md
+/:
+  en: d948b256cfccae69
+  zh: fc6ed263c2d60f98
+/tomato-experimental-robot-triggers:
+  en: a78f1d9369a46001
+  zh: b176054f97b879a9
+/tomato-experimental-robot-triggers/summary:
+  en: bcfe87c208e44acb
+  zh: 4f8ca0bafe6e89cc
+/tomato-experimental-robot-triggers/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: f14f34fce35a8d90
+/tomato-experimental-robot-triggers/use-this-package:
+  en: 06947a362d08978d
+  zh: 23cc18caf9a18c66
+/tomato-experimental-robot-triggers/understand-the-implementation:
+  en: fc6db9a7d149d3ef
+  zh: 412551c945b0b187
+/tomato-experimental-robot-triggers/further-exploration:
+  en: 17db69cbdbd339f1
+  zh: 1cd49fca2451ff3e
+/tomato-experimental-robot-triggers/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/tomato-experimental-robot-triggers/model-experience/trigger-run-input:
+  en: 581eb258c3670661
+  zh: 98faf16e9c8dc06d
+/tomato-experimental-robot-triggers/model-experience/trigger-run-input/what-the-model-sees:
+  en: 7a885cd511cfd35b
+  zh: b66c04c73d21b6a9
+/tomato-experimental-robot-triggers/model-experience/trigger-run-input/what-the-model-sees/trigger-messages:
+  en: 17edd0bb8d467ae8
+  zh: c2557199dbd9e7ca
+/tomato-experimental-robot-triggers/model-experience/trigger-run-input/token-effect:
+  en: db6f75d29999c456
+  zh: 947fb68efc5b54ce
+/tomato-experimental-robot-triggers/model-experience/trigger-run-input/kv-cache-effect:
+  en: 39ea2d01d5f09a5a
+  zh: 1ae6a253027abcdb
+/tomato-experimental-robot-triggers/known-limitations-and-deferred-work:
+  en: 10788f461fd72eef
+  zh: d083933fec3810ea
+/tomato-experimental-robot-triggers/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 8ec3e73528ddb1a6

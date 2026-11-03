@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-Use Playwright MCP to inspect pages and operate Chromium through its upstream tools. The provider initializes a Session's MCP connection before creation or resume completes and retains it across turns. Launch a separate browser or attach one Session to an existing browser with its current tabs and login state. This published experimental package activates only when explicitly mounted.
+Use Playwright MCP to inspect pages and operate Chromium through its upstream tools. The provider initializes a Session's MCP connection before creation or resume completes and retains it across turns. Launch a separate browser or attach one Session to an existing browser with its current tabs and login state. This published experimental package activates when a profile mounts it; the [browser bundle](../browser-use-playwright-bundle/README.md) mounts it for new Web and Desktop profiles, and a deployment can mount it in its own composition.
 
 ## Table of Contents
 
@@ -25,7 +25,7 @@ Use Playwright MCP to inspect pages and operate Chromium through its upstream to
 <a id="use-this-package"></a>
 ## Use this package
 
-Mount both entries before creating or resuming a Session, in a profile composition that supplies Agents, tools, system prompts, and the working-directory service. Loading or reloading this provider does not adopt Sessions that are already active. Browser installation follows the upstream runtime; select an existing Chromium installation with `executablePath`.
+Mount both entries before creating or resuming a Session, in a profile composition that supplies Agents, tools, system prompts, and the working-directory service. Loading or reloading this provider does not adopt Sessions that are already active. Desktop installers place the Playwright headless shell in `runtime/playwright-browsers` and set `PLAYWRIGHT_BROWSERS_PATH`; elsewhere browser installation follows the upstream runtime, and `executablePath` selects an existing Chromium installation.
 
 ```yaml
 - name: '@tomato/browser-use'

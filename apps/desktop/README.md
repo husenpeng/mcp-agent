@@ -162,6 +162,8 @@ On macOS the custom menu retains Electron's standard Window menu and application
 
 ### Runtime and plugin activation
 
+The sealed runtime carries only what executes. [`runtime-file-policy.ts`](scripts/runtime-file-policy.ts) omits declarations, source maps, build caches, package dependencies for other platforms, and every harness package's README/CHANGELOG, translation metadata, `src/`, and `native/tests/`; [`verify-runtime-archive.ts`](scripts/verify-runtime-archive.ts) rejects any omitted category that reaches the ASAR. A packaged application passes its own archive path as `TOMATO_PROTECTED_READ_ROOTS`, so `@tomato/fs-sandbox` refuses observation under it in every mode and macOS Seatbelt or Linux `bwrap` masks it for shell commands, and [`release-profile.patch.yml`](resources/release-profile.patch.yml) is applied after the profile layer so `harness-dev-context` keeps the Web GUI orientation without naming the implementation checkout. An unpackaged launch ships none of it.
+
 The signed `resources/app.asar/tomato/desktop-runtime.json` binds the shell version, Electron's Node version, platform, architecture, shared package versions, and final file inventory. Startup reads the metadata and checks shared package records. Release schema, shell version, target compatibility, and file integrity are verified during packaging. Reintroducing startup release comparisons requires a concrete installation failure that packaging validation and actual Host diagnostics cannot adequately explain. Core packages are never copied into profile storage or installed by pnpm at first launch.
 
 1. The main window loads the shared Web loading page offscreen from packaged static assets before profile preparation or backend startup. Shared profile initialization creates missing manifest, empty user patch, and pnpm workspace files without overwriting existing files.
@@ -204,6 +206,8 @@ After an explicit build, `start:desktop` reconstructs the disposable project and
 pnpm run start:desktop
 ```
 
+Both launchers mark their Electron command line with a development relaunch request. While a development shell is running, a later launch makes it acknowledge the request and restart into the newly built artifacts, so rerunning a launcher always exercises the latest build. A shell from a build that cannot acknowledge the request keeps the previous code; the later launch then reports the unconfirmed restart and exits non-zero instead of succeeding silently.
+
 Desktop package preparation filters optional native packages by the installer target’s OS and architecture. Windows package sets omit the macOS Computer Use tarball, including when their inputs were packed on macOS.
 
 The Web counterparts are `pnpm run dev:web` and `pnpm run start:web`, documented in the [development guide](../../docs/development.md). Workspace development runs the current CLI and private Desktop Host packages under Electron RunAsNode. Plugin management and recovery use `$TOMATO_HOME/profiles/desktop`, separate from the disposable workspace runtime. The Host uses runtime module resolution in both development and packaged builds without creating official-package fallback links; developer-installed packages, including links, retain native priority. Use an unpacked application to exercise Electron RunAsNode, bundled pnpm, bundled tomato resources, plugin installation and repair paths.
@@ -214,7 +218,7 @@ Dependency installation does not run the locked Electron package's separate bina
 
 ### Startup onboarding
 
-Every cold launch opens a frameless 1280 × 760 splash first: the tomato outline draws from the stem, gains its full brand gradient, and the handwritten, star-accented `Tomato AI` signature settles while a depth star field drifts and ignites. The animation always runs for 2.2 s regardless of Host readiness; its final frame then holds until the Host is ready and fades into the main or welcome window. Clicking the window or pressing Esc jumps to the final frame, Reduce Motion shows a static frame, and `TOMATO_DESKTOP_SKIP_SPLASH=1` skips the window.
+Every cold launch opens a frameless 1280 × 760 splash first: a generated 3D rainy-night city plays for 7.2 s, with the camera gliding down a street past traffic, flying cars, and an advertising airship before rising to a skyline of four landmark towers, where a projected beam lights the neon tomato mark and the `TOMATO AI` wordmark decodes beneath it. The animation always runs in full regardless of Host readiness; its final frame then holds until the Host is ready and fades into the main or welcome window. Clicking the window or pressing Esc jumps to the final frame, Reduce Motion shows a static final frame, a failed WebGL start shows the static brand mark, and `TOMATO_DESKTOP_SKIP_SPLASH=1` skips the window.
 
 The API-key input starts empty and uses `autocomplete="new-password"` to ask Chromium not to autofill saved login passwords.
 

@@ -352,5 +352,8 @@ export interface ConnectionStreamObservation {
 /** One exchange or frame observed on this page's connection. */
 export type ConnectionObservation = ConnectionRpcObservation | ConnectionStreamObservation
 
-/** @param observation - one completed exchange or frame. */
+/**
+ * Receives each completed exchange or frame observed on this page's connection.
+ * @param observation - one completed exchange or frame.
+ */
 export type ConnectionObserver = (observation: ConnectionObservation) => void

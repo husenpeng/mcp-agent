@@ -1,0 +1,40 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/tool-robot/README.md
+/:
+  en: 41dae10d2430ff4a
+  zh: 40f637f44581b2d7
+/tomato-experimental-tool-robot:
+  en: 5939898eefcf73b6
+  zh: 5b46a37397f6077a
+/tomato-experimental-tool-robot/summary:
+  en: 5f84f5f513f70a07
+  zh: 6f991658ebab6a8e
+/tomato-experimental-tool-robot/table-of-contents:
+  en: d7fbbba70852c433
+  zh: b1d8d953f9d82d8a
+/tomato-experimental-tool-robot/use-this-package:
+  en: 5af564ccfd22eaa0
+  zh: dfe0486b868d4e84
+/tomato-experimental-tool-robot/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/tomato-experimental-tool-robot/model-experience/robot-create:
+  en: f52958575f0481a1
+  zh: f52958575f0481a1
+/tomato-experimental-tool-robot/model-experience/robot-create/what-the-model-sees:
+  en: 3bbc81354583bde0
+  zh: 4b3a5900ebf4a29d
+/tomato-experimental-tool-robot/model-experience/robot-create/token-effect:
+  en: cd867fd949f0d77d
+  zh: ff3c7d5c6936868d
+/tomato-experimental-tool-robot/model-experience/robot-create/kv-cache-effect:
+  en: f1552c6be334ac62
+  zh: f3e188523a93caaa
+/tomato-experimental-tool-robot/known-limitations-and-deferred-work:
+  en: 5464f817bb30b9f8
+  zh: 51a0f387cac6e46a
+/tomato-experimental-tool-robot/known-limitations-and-deferred-work/dev-note:
+  en: 20a7b3ddc0169eeb
+  zh: 965be2362469dd09

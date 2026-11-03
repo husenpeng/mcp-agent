@@ -4,25 +4,25 @@
 #   pnpm run verify-translation-pairing --write packages/experimental/browser-use-playwright-bundle/README.md
 /:
   en: 165af0f901820c3e
-  zh: 0705f6ee08025411
+  zh: 618df07779a418dd
 /tomato-experimental-browser-use-playwright-bundle:
   en: ad765a9e6dfa1461
   zh: b1b733799896782b
 /tomato-experimental-browser-use-playwright-bundle/summary:
-  en: 8598e1a0f9248245
-  zh: d1bb1442f20696b1
+  en: 7eaca6a3dba3cfdc
+  zh: 8797392398f5abd6
 /tomato-experimental-browser-use-playwright-bundle/table-of-contents:
   en: d152484eb41ac6b4
   zh: 725b47765ee8f30b
 /tomato-experimental-browser-use-playwright-bundle/use-this-package:
-  en: 1e1f4f3d2bd8b4b6
+  en: 62354076d4648dcf
   zh: 24b23fc0e8435493
 /tomato-experimental-browser-use-playwright-bundle/understand-the-implementation:
   en: aaa1a00e7f4e4754
   zh: 496d26465271b160
 /tomato-experimental-browser-use-playwright-bundle/further-exploration:
-  en: 3d43d391f7ea74a3
-  zh: cdbf743e84c28e61
+  en: bb7e7893285c6ef5
+  zh: f027b0314084d94f
 /tomato-experimental-browser-use-playwright-bundle/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
@@ -39,7 +39,7 @@
   en: a418dd237c2d9c2b
   zh: 75a0fc6068120f25
 /tomato-experimental-browser-use-playwright-bundle/known-limitations-and-deferred-work:
-  en: bd0f3c6aaf6fa58d
+  en: 161e1c036549a7cc
   zh: e19075f26d614972
 /tomato-experimental-browser-use-playwright-bundle/known-limitations-and-deferred-work/dev-note:
   en: 0a1253c6f7b5e8b9

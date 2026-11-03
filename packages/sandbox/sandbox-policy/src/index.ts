@@ -2,7 +2,7 @@
  * The sandbox POLICY home (`ctx.sandboxPolicy`): the single owner of the
  * deployment's sandbox fallbacks plus per-session resolution: the file-effect
  * {@link SandboxMode}, the `workspace-write` root, the explicit extra writable
- * directories, and the override kit (the `sandbox/mode` event, its fold, and
+ * directories, the protected installation roots, and the override kit (the `sandbox/mode` event, its fold, and
  * its write path; the fold is the `sandboxMode` session-projection unit
  * registered here, while the event and write path come from
  * `./session-mode.ts`).
@@ -40,36 +40,45 @@ function resolveWorkspaceRoot(path: string): string {
 }
 
 /**
- * Validate and detach the configured extra writable directories. They stay in
- * their execution-world spelling here: a local host must not canonicalize a
- * remote path. The enforcing host validates each physical directory before granting.
- * @param roots - the configured extra roots, or the empty schema default.
- * @returns a frozen copy, or `undefined` when no extra grant exists.
+ * Validate and detach one configured absolute root list. Roots stay in their
+ * execution-world spelling here: a local host must not canonicalize a remote
+ * path. The enforcing host validates each physical directory before using it.
+ * @param roots - the configured roots, or the empty schema default.
+ * @param subject - config field name used in the validation message.
+ * @returns a frozen deduplicated copy, or `undefined` when the list is empty.
  */
-function resolveAdditionalWritableRoots(roots: readonly string[] | undefined): readonly string[] | undefined {
+function resolveAbsoluteRoots(roots: readonly string[] | undefined, subject: string): readonly string[] | undefined {
   if (roots === undefined || roots.length === 0) return undefined
   for (const root of roots) {
     if (!isAbsolute(root) || root.includes('\0')) {
-      throw new Error('sandbox-policy: additionalWritableRoots entries must be absolute execution-world paths')
+      throw new Error(`sandbox-policy: ${subject} entries must be absolute execution-world paths`)
     }
   }
   return Object.freeze([...new Set(roots)])
 }
 
+/** Render the protected installation roots every confined operation refuses to observe. */
+function renderProtectedReadRoots(roots: readonly string[] | undefined): string {
+  return roots === undefined
+    ? ''
+    : ` The harness installation is not readable by confined operations: ${JSON.stringify(roots)}.`
+}
+
 /** Render the policy without claiming which capabilities are mounted. */
 function renderPolicyContext(policy: SandboxExecutionPolicy): string {
+  const protectedRoots = renderProtectedReadRoots(policy.protectedReadRoots)
   switch (policy.mode) {
     case 'read-only':
-      return 'Current TOMATO file policy: read-only. Any available operation enforced by the TOMATO file sandbox cannot modify files in the standing mode. Do not refuse a required modification from this policy alone: try an available tool normally and follow any denial and escalation guidance it returns.'
+      return `Current TOMATO file policy: read-only. Any available operation enforced by the TOMATO file sandbox cannot modify files in the standing mode. Do not refuse a required modification from this policy alone: try an available tool normally and follow any denial and escalation guidance it returns.${protectedRoots}`
     case 'workspace-write': {
       const additional = policy.additionalWritableRoots
       const extra = additional === undefined
         ? ''
         : ` Additional writable directories: ${JSON.stringify(additional)}.`
-      return `Current TOMATO file policy: workspace-write. Any available operation enforced by the TOMATO file sandbox may modify files under the session workspace: ${JSON.stringify(policy.workspaceRoot)}.${extra} Some platform temporary areas may also be writable.`
+      return `Current TOMATO file policy: workspace-write. Any available operation enforced by the TOMATO file sandbox may modify files under the session workspace: ${JSON.stringify(policy.workspaceRoot)}.${extra} Some platform temporary areas may also be writable.${protectedRoots}`
     }
     case 'danger-full-access':
-      return 'Current TOMATO file policy: danger-full-access. The TOMATO file sandbox does not restrict file modifications by available operations.'
+      return `Current TOMATO file policy: danger-full-access. The TOMATO file sandbox does not restrict file modifications by available operations.${protectedRoots}`
     /* v8 ignore next 4 -- SandboxMode is a typed same-process closed union; this branch is only the static exhaustiveness guard. */
     default: {
       const mode: never = policy.mode
@@ -108,6 +117,17 @@ export interface Config {
    * `read-only`.
    */
   additionalWritableRoots?: string[]
+  /**
+   * Physical absolute directories or archive files confined operations may not
+   * observe (default: none). A packaged application names the installation tree
+   * it runs from, so the model cannot read the shipped implementation back out
+   * of its own runtime. Unlike {@link additionalWritableRoots}, this stays
+   * closed under `danger-full-access`; filesystem backends refuse the read and
+   * kernel backends mask the root where their profile language can express it.
+   * Entries are execution-world paths validated here for absoluteness; the
+   * enforcing host resolves filesystem identity.
+   */
+  protectedReadRoots?: string[]
 }
 
 /** Inputs that select the sandbox policy for one capability call. */
@@ -139,6 +159,7 @@ export class SandboxPolicyService extends Service {
     // stored root is always absolute regardless of how it was supplied.
     workspaceRoot: z.string(),
     additionalWritableRoots: z.array(z.string()).default([]),
+    protectedReadRoots: z.array(z.string()).default([]),
   })
 
   static inject = ['sessionProjections']
@@ -149,6 +170,8 @@ export class SandboxPolicyService extends Service {
   readonly workspaceRoot: string
   /** The frozen extra writable directories shared by every resolved policy, or `undefined` for none. */
   readonly additionalWritableRoots: readonly string[] | undefined
+  /** The frozen installation roots every confined operation refuses to observe, or `undefined` for none. */
+  readonly protectedReadRoots: readonly string[] | undefined
   private sandboxModeProjectionHandle!: ProjectionHandle<SandboxMode | null>
 
   constructor(ctx: Context, config: Config) {
@@ -158,7 +181,8 @@ export class SandboxPolicyService extends Service {
     // the process cwd is real branching, resolved absolute either way.
     this.defaultMode = config.mode as SandboxMode
     this.workspaceRoot = resolveWorkspaceRoot(config.workspaceRoot ?? process.cwd())
-    this.additionalWritableRoots = resolveAdditionalWritableRoots(config.additionalWritableRoots)
+    this.additionalWritableRoots = resolveAbsoluteRoots(config.additionalWritableRoots, 'additionalWritableRoots')
+    this.protectedReadRoots = resolveAbsoluteRoots(config.protectedReadRoots, 'protectedReadRoots')
   }
 
   protected async [Service.init](): Promise<void> {
@@ -200,6 +224,7 @@ export class SandboxPolicyService extends Service {
       mode: request.mode ?? (session === undefined ? undefined : this.overrideOf(session)) ?? this.defaultMode,
       workspaceRoot: resolveWorkspaceRoot(session?.header.cwd ?? this.workspaceRoot),
       ...this.additionalWritableRoots === undefined ? {} : { additionalWritableRoots: this.additionalWritableRoots },
+      ...this.protectedReadRoots === undefined ? {} : { protectedReadRoots: this.protectedReadRoots },
       ...session === undefined ? {} : { sessionId: session.id },
     }
   }

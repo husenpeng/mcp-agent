@@ -1,0 +1,61 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/robot-runtime/README.md
+/:
+  en: 0531e9362eff5170
+  zh: 64d401d59785e9f6
+/tomato-experimental-robot-runtime:
+  en: 5dd9d1c8fc867599
+  zh: 4f30e7c632aa0604
+/tomato-experimental-robot-runtime/summary:
+  en: b41106e54c8a24ed
+  zh: f2a3b9834c1dad8e
+/tomato-experimental-robot-runtime/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: f14f34fce35a8d90
+/tomato-experimental-robot-runtime/use-this-package:
+  en: b5043171477c03eb
+  zh: f1f6e1709bbbe8b6
+/tomato-experimental-robot-runtime/understand-the-implementation:
+  en: fafe5a0b253a8dcd
+  zh: 3baf06ced4095410
+/tomato-experimental-robot-runtime/further-exploration:
+  en: 2e5dcd91bdd18b69
+  zh: 0d741535e6625519
+/tomato-experimental-robot-runtime/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/tomato-experimental-robot-runtime/model-experience/robot-mission-prompt-section:
+  en: 978a67b63d04c9a7
+  zh: df5d412fbd93b8ba
+/tomato-experimental-robot-runtime/model-experience/robot-mission-prompt-section/what-the-model-sees:
+  en: f77620d54a0bbf1c
+  zh: 44ff4078f8ed2e04
+/tomato-experimental-robot-runtime/model-experience/robot-mission-prompt-section/what-the-model-sees/robot-mission-section:
+  en: 902f25500428fb26
+  zh: 97e8f12a35781e11
+/tomato-experimental-robot-runtime/model-experience/robot-mission-prompt-section/token-effect:
+  en: 2402bbe4a1facbd9
+  zh: 2a8a512c3bcc2cfd
+/tomato-experimental-robot-runtime/model-experience/robot-mission-prompt-section/kv-cache-effect:
+  en: 527e9eb852956acc
+  zh: f88b193591a8207c
+/tomato-experimental-robot-runtime/model-experience/tool-admission:
+  en: a6454bc43260379a
+  zh: 8187a0d9f205765a
+/tomato-experimental-robot-runtime/model-experience/tool-admission/what-the-model-sees:
+  en: 4697ff7118e66e4f
+  zh: 15cc03c7c07bad40
+/tomato-experimental-robot-runtime/model-experience/tool-admission/token-effect:
+  en: e022fe123d92d7cb
+  zh: c3eaee2fce49a218
+/tomato-experimental-robot-runtime/model-experience/tool-admission/kv-cache-effect:
+  en: 10a93b183d540d43
+  zh: f8f6d8c80e7dda11
+/tomato-experimental-robot-runtime/known-limitations-and-deferred-work:
+  en: e83e61d6984c94d3
+  zh: f7fe30662b97fbdf
+/tomato-experimental-robot-runtime/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 8ec3e73528ddb1a6

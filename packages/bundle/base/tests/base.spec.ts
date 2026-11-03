@@ -47,6 +47,28 @@ describe('@tomato/base bundle', () => {
     expect(manifest.dependencies).toHaveProperty('@tomato/web-fetch-http')
   })
 
+  it('resolves the packaged protected-read roots from the shell environment', () => {
+    const root = fileURLToPath(new URL('..', import.meta.url))
+    const parsed = yaml.load(
+      readFileSync(resolve(root, 'cordis.patch.yml'), 'utf8'),
+      { schema: entryListSchema },
+    )
+    if (!Array.isArray(parsed)) throw new TypeError('base patch must parse to a patch list')
+    const rows = parsed.flatMap((patch): Record<string, unknown>[] =>
+      typeof patch === 'object' && patch !== null
+        ? (patch as { insert?: Record<string, unknown>[] }).insert ?? []
+        : [],
+    )
+    const config = rows.find(row => row.id === 'sandbox-policy')?.config as
+      { protectedReadRoots?: { __jsExpr?: string } } | undefined
+    const expression = config?.protectedReadRoots?.__jsExpr
+    if (expression === undefined) throw new Error('sandbox-policy protectedReadRoots must be a !!js expression')
+    // An unpackaged launch leaves the variable unset, keeping the schema default.
+    expect(evaluate({ process: { env: {} } }, expression)).toBeUndefined()
+    expect(evaluate({ process: { env: { TOMATO_PROTECTED_READ_ROOTS: '["/install/app.asar"]' } } }, expression))
+      .toEqual(['/install/app.asar'])
+  })
+
   it('gates each shell stack by platform with a symmetric disabled expression', () => {
     const root = fileURLToPath(new URL('..', import.meta.url))
     const parsed = yaml.load(

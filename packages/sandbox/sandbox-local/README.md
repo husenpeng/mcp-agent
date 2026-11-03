@@ -58,6 +58,8 @@ An unsupported platform or an unusable runner fails closed: `confine()` rejects 
 
 Seatbelt, bwrap, and Landlock include the policy's explicit `additionalWritableRoots` under `workspace-write`. Read-only ignores those grants. Invalid extra directories raise `SANDBOX_INVALID_ROOT` before the command starts.
 
+`protectedReadRoots` deny reads where the profile language can express it: Seatbelt adds `(deny file-read* (subpath …))` after its allow-default, and bwrap masks an existing root with an empty tmpfs (directory) or the null device (archive file). Landlock carries allow-lists only and the Windows ACL runner confines writes, so neither can deny a read; their consumers rely on the filesystem fence instead and must not treat the shell as a read boundary on those hosts.
+
 -----
 
 <a id="understand-the-implementation"></a>

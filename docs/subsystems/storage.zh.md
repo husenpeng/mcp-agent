@@ -233,6 +233,32 @@ Types: [Session](session.zh.md)
 
 Source: [`packages/experimental/memory/src/index.ts`](../../packages/experimental/memory/src/index.ts)
 
+<a id="ctxmuseinsights--museinsights"></a>
+
+### `ctx.museInsights` — `MuseInsights`
+
+Host service behind `ctx.remote.museInsights`.
+
+`snapshot()` is a pure read of retained state; `refresh()` runs both operations now and waits for their accepted work. Both return the complete Client-facing value, so no separate change feed is needed.
+
+```ts cordis-catalog
+/**
+ * Read the retained recap and latest task analysis for the current owner.
+ * @param signal - caller cancellation, checked before the read.
+ * @returns the complete Client-facing snapshot.
+ */
+@Remote snapshot(signal: AbortSignal): Promise<MuseInsightsSnapshot>
+
+/**
+ * Run the day's recap and the unfinished-task analysis now.
+ * @param signal - caller cancellation, checked before and after the runs.
+ * @returns the snapshot after the accepted runs.
+ */
+@Remote async refresh(signal: AbortSignal): Promise<MuseInsightsSnapshot>
+```
+
+Source: [`packages/experimental/muse-insights/src/index.ts`](../../packages/experimental/muse-insights/src/index.ts)
+
 <a id="ctxstorage--storage"></a>
 
 ### `ctx.storage` — `Storage`

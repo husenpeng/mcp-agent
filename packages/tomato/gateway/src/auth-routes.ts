@@ -53,6 +53,26 @@ function failureOf(value: string | null): LoginFailure {
   }
 }
 
+/** Loopback hostnames the handoff contract admits as callback origins. */
+const LOOPBACK_HOSTNAMES: ReadonlySet<string> = new Set(['127.0.0.1', 'localhost', '[::1]', '::1'])
+
+/**
+ * Resolve the callback origin from the request's own Host header when it names
+ * a loopback host. The advertised origin and the browser's origin can differ
+ * (`localhost` vs `127.0.0.1`); the callback must land on the origin the
+ * browser actually uses or its session cookie is written to the other host.
+ * @param host - incoming Host header, including the port.
+ * @param secure - whether the listener serves TLS.
+ * @returns the request origin, or undefined for an absent or non-loopback host.
+ */
+function loopbackRequestOrigin(host: string | undefined, secure: boolean): string | undefined {
+  if (host === undefined || host.trim() === '') return undefined
+  let url: URL
+  try { url = new URL(`${secure ? 'https' : 'http'}://${host}`) }
+  catch { return undefined }
+  return LOOPBACK_HOSTNAMES.has(url.hostname) ? url.origin : undefined
+}
+
 /** Owns the login attempt map and the auth routes' shared dependencies. */
 export class AuthRoutes {
   private readonly attempts = new Map<string, Attempt>()
@@ -117,7 +137,8 @@ export class AuthRoutes {
     const verifier = randomBytes(32).toString('base64url')
     const challenge = createHash('sha256').update(verifier).digest('base64url')
     const desktop = new URL(request.url ?? '/', this.origin).searchParams.get('desktop') === '1'
-    const returnTo = `${this.origin}/api/auth/callback?state=${encodeURIComponent(state)}${desktop ? '&desktop=1' : ''}`
+    const origin = loopbackRequestOrigin(request.headers.host, this.secure) ?? this.origin
+    const returnTo = `${origin}/api/auth/callback?state=${encodeURIComponent(state)}${desktop ? '&desktop=1' : ''}`
     this.attempts.set(state, {
       state,
       verifier,

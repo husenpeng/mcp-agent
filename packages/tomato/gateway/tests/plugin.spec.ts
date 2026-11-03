@@ -35,7 +35,7 @@ async function authService(): Promise<string> {
 }
 
 /** Mount the plugin over a Web server and Connection that admit every request and record routes. */
-async function mount(authServiceUrl: string) {
+async function mount(authServiceUrl: string, companyWebUrl = '') {
   const ctx = new Context()
   contexts.push(ctx)
   const routes = new Map<string, WebRoute['handler']>()
@@ -53,7 +53,7 @@ async function mount(authServiceUrl: string) {
   ctx.provide('webServer', webServer)
   ctx.provide('connection', connection)
   // The Loader passes partial YAML config through the same schema, which fills every default.
-  const fiber = await ctx.plugin(Gateway, Gateway.Config({ authServiceUrl } as Gateway.GatewayConfig))
+  const fiber = await ctx.plugin(Gateway, Gateway.Config({ authServiceUrl, companyWebUrl } as Gateway.GatewayConfig))
   return { ctx, fiber, routes }
 }
 
@@ -76,6 +76,27 @@ describe('gateway account service', () => {
     await fiber.dispose()
     expect(ctx.get('tomatoAccount')).toBeUndefined()
     expect(routes.size).toBe(0)
+  })
+
+  it('sends the handoff callback to the loopback origin the browser used', async () => {
+    const { routes } = await mount(await authService(), 'https://company.example')
+    const request = new IncomingMessage(new Socket())
+    request.method = 'GET'
+    request.url = '/api/auth/start'
+    request.headers = { host: 'localhost:4100' }
+    const response = new ServerResponse(new IncomingMessage(new Socket()))
+    const captured: { status?: number; headers?: Record<string, unknown> } = {}
+    response.writeHead = ((status: number, headers: Record<string, unknown>) => {
+      captured.status = status
+      captured.headers = headers
+      return response
+    }) as typeof response.writeHead
+    response.end = (() => response) as typeof response.end
+    await routes.get('/api/auth/start')?.(request, response)
+    expect(captured.status).toBe(302)
+    const location = new URL(String(captured.headers?.location))
+    expect(location.origin).toBe('https://company.example')
+    expect(location.searchParams.get('returnTo')).toMatch(/^http:\/\/localhost:4100\/api\/auth\/callback\?state=/)
   })
 
   it('names no account when auth_service is not configured', async () => {

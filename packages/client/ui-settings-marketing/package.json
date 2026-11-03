@@ -1,0 +1,63 @@
+{
+  "name": "@tomato/client-ui-settings-marketing",
+  "description": "The Marketing settings page on the tomato web client's Plugins page: one switch per advertising or marketing provider and its credential references",
+  "version": "0.2.1-rc.3",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/client/ui-settings-marketing"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "tomato": {
+    "client": {
+      "inject": [
+        "@tomato/client-locale",
+        "@tomato/client-ui-settings",
+        "@tomato/client-ui-plugin-manager",
+        "@tomato/api-remotes"
+      ],
+      "platform": "web"
+    }
+  },
+  "peerDependencies": {
+    "@tomato/cordis": "workspace:~"
+  },
+  "devDependencies": {
+    "@tomato/api-remotes": "workspace:*",
+    "@tomato/client-locale": "workspace:*",
+    "@tomato/client-store": "workspace:*",
+    "@tomato/client-test-runtime": "workspace:*",
+    "@tomato/client-ui-plugin-manager": "workspace:*",
+    "@tomato/client-ui-primitives": "workspace:*",
+    "@tomato/client-ui-renderer": "workspace:*",
+    "@tomato/client-ui-settings": "workspace:*",
+    "@tomato/client-ui-slots": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "react": "^18.2.0"
+  }
+}

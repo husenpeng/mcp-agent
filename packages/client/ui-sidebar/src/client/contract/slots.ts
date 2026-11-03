@@ -37,6 +37,12 @@ declare module '@tomato/client-ui-slots' {
     /** Rows of the panel list's More menu; the sidebar shows More only while this list has registrations. */
     'sidebar.panellist.actions': { kind: 'list'; scope: 'root'; owner: SidebarPanelActionsOwnerProps }
     /**
+     * The robot roster seat above the workspace/session browser. Declared by
+     * this package's 'sidebar' entry; a robot product registers its roster here
+     * and owns the section chrome. Absent contribution renders nothing.
+     */
+    'sidebar.robots': { kind: 'single'; scope: 'root'; owner: SidebarSectionOwnerProps }
+    /**
      * The workspace/session browsing region: section header, search, the
      * grouped/flat session list, and every workspace dialog. Declared by this
      * package's 'sidebar' entry (declaring is claiming); ui-workspace
@@ -191,6 +197,7 @@ export type SidebarRootComponentProps =
     | 'sidebar.toggle.badge'
     | 'sidebar.panellist'
     | 'sidebar.panellist.actions'
+    | 'sidebar.robots'
     | 'sidebar.workspaces'
     | 'sidebar.settings'
     | 'sidebar.footer.action'

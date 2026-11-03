@@ -1794,6 +1794,25 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'museInsights',
+    summary: 'Host service behind `ctx.remote.museInsights`.',
+    description: 'Host service behind `ctx.remote.museInsights`.\n\n`snapshot()` is a pure read of retained state; `refresh()` runs both operations now and waits for their accepted work. Both return the complete Client-facing value, so no separate change feed is needed.',
+    methods: [
+      {
+        signature: '@Remote snapshot(signal: AbortSignal): Promise<MuseInsightsSnapshot>',
+        description: 'Read the retained recap and latest task analysis for the current owner.',
+        parameters: [{ name: 'signal', description: 'caller cancellation, checked before the read.' }],
+        returns: 'the complete Client-facing snapshot.',
+      },
+      {
+        signature: '@Remote async refresh(signal: AbortSignal): Promise<MuseInsightsSnapshot>',
+        description: 'Run the day\'s recap and the unfinished-task analysis now.',
+        parameters: [{ name: 'signal', description: 'caller cancellation, checked before and after the runs.' }],
+        returns: 'the snapshot after the accepted runs.',
+      },
+    ],
+  },
+  {
     key: 'officeToPdf',
     summary: 'A provider lifetime owns all converters, queued calls, and temporary files.',
     description: 'A provider lifetime owns all converters, queued calls, and temporary files.',
@@ -2216,6 +2235,172 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'robotController',
+    summary: 'Host service backing the generated `ctx.remote.robot` namespace.',
+    description: 'Host service backing the generated `ctx.remote.robot` namespace.',
+    methods: [
+      {
+        signature: '@Remote(\'specs\') specs(): Promise<readonly RobotSpecRevision[]>',
+        description: 'List the latest published revision of every specification.',
+        parameters: [],
+        returns: 'latest revisions in publication order.',
+      },
+      {
+        signature: '@Remote(\'revision\') async revision(request: RobotRevisionRequest): Promise<RobotSpecRevision>',
+        description: 'Read one published revision.',
+        parameters: [{ name: 'request', description: 'exact specification revision.' }],
+        returns: 'the revision.',
+        throws: ['RemoteError `robot/not-found` when the revision was never published.'],
+      },
+      {
+        signature: '@Remote(\'robots\') robots(): Promise<readonly Robot[]>',
+        description: 'List every robot.',
+        parameters: [],
+        returns: 'robots in creation order.',
+      },
+      {
+        signature: '@Remote(\'runs\') async runs(request: RobotRunsRequest): Promise<readonly Run[]>',
+        description: 'List the runs of one robot.',
+        parameters: [{ name: 'request', description: 'robot whose runs to read.' }],
+        returns: 'runs in acceptance order.',
+        throws: ['RemoteError `robot/not-found` for an unknown robot.'],
+      },
+      {
+        signature: '@Remote(\'publish\') async publish(request: RobotPublishRequest): Promise<RobotSpecRevision>',
+        description: 'Validate and publish one specification revision.',
+        parameters: [{ name: 'request', description: 'complete specification and the revision it supersedes.' }],
+        returns: 'the immutable published revision.',
+        throws: ['RemoteError `robot/spec-invalid` with every field issue, or `robot/conflict` when the publication conflicts with existing records.'],
+      },
+      {
+        signature: '@Remote(\'instantiate\') async instantiate(request: RobotInstantiateRequest): Promise<Robot>',
+        description: 'Instantiate a robot bound to one published revision.',
+        parameters: [{ name: 'request', description: 'exact specification revision.' }],
+        returns: 'the new idle robot.',
+        throws: ['RemoteError `robot/not-found` when the revision does not exist.'],
+      },
+      {
+        signature: '@Remote(\'rebind\') async rebind(request: RobotRebindRequest): Promise<Robot>',
+        description: 'Bind one robot to a newer published revision without moving runs in flight.',
+        parameters: [{ name: 'request', description: 'robot and the revision later runs should use.' }],
+        returns: 'the rebound robot.',
+        throws: ['RemoteError `robot/not-found` for an unknown robot or revision.'],
+      },
+      {
+        signature: '@Remote(\'start\') async start(request: RobotStartRequest): Promise<Run>',
+        description: 'Accept one run for a robot.',
+        parameters: [{ name: 'request', description: 'robot and the input message.' }],
+        returns: 'the accepted run.',
+        throws: ['RemoteError `robot/not-found` for an unknown robot, or `robot/conflict` while the robot cannot accept a run.'],
+      },
+      {
+        signature: '@Remote(\'cancel\') async cancel(request: RobotCancelRequest): Promise<void>',
+        description: 'Cancel a run cooperatively.',
+        parameters: [{ name: 'request', description: 'run to cancel.' }],
+        returns: 'nothing after the cancellation is recorded.',
+        throws: ['RemoteError `robot/not-found` for an unknown run.'],
+      },
+      {
+        signature: '@Remote({ mode: \'stream\' }) watch(signal: AbortSignal): AsyncIterable<RobotSnapshotFrame>',
+        description: 'Stream whole registry frames: one on open, then one after each registry change. The stream has no natural end; the carrier closes it.',
+        parameters: [{ name: 'signal', description: 'cancellation owned by the Remote stream carrier.' }],
+        returns: 'the snapshot frames.',
+      },
+    ],
+  },
+  {
+    key: 'robots',
+    summary: 'Abstract robot domain service.',
+    description: 'Abstract robot domain service. Subclass it, implement every operation, and load the subclass as the provider; it registers as `ctx.robots`.\n\nImplementations must honor these semantics:\n\n- publish validates the specification and returns an immutable revision; a failed validation rejects without allocating an identity.\n- Revisions are append-only: revision `n + 1` supersedes `n`, and a published revision never changes.\n- instantiate binds one robot to one exact revision; later revisions do not move an existing robot unless rebind names the new revision explicitly.\n- rebind changes the revision later runs use; a run keeps the revision it was accepted with.\n- attachSession records the Session an executor drives for one run; the link is write-once and a later different Session is refused.\n- start accepts a run only from `idle` and rejects while the robot is `provisioning`, `paused`, `failed`, or `stopped`.\n- cancel is cooperative and settles the run as `cancelled` unless it already reached a terminal state.\n- finish records the executor\'s terminal state; a terminal run keeps its existing state.',
+    methods: [
+      {
+        signature: 'abstract publish(spec: RobotSpec, previous?: RobotSpecRef): Promise<RobotSpecRevision>',
+        description: 'Validate and publish one specification revision.',
+        parameters: [{ name: 'spec', description: 'complete specification to publish.' }, { name: 'previous', description: 'revision this publication supersedes; omitted for a new specification.' }],
+        returns: 'the immutable published revision.',
+        throws: ['when validation fails or `previous` does not exist.'],
+      },
+      {
+        signature: 'abstract revision(ref: RobotSpecRef): Promise<RobotSpecRevision | undefined>',
+        description: 'Read one published revision.',
+        parameters: [{ name: 'ref', description: 'exact specification revision.' }],
+        returns: 'the revision, or `undefined` when it was never published.',
+      },
+      {
+        signature: 'abstract specs(): Promise<readonly RobotSpecRevision[]>',
+        description: 'List the latest published revision of every specification.',
+        parameters: [],
+        returns: 'latest revisions in publication order.',
+      },
+      {
+        signature: 'abstract instantiate(ref: RobotSpecRef): Promise<Robot>',
+        description: 'Instantiate a robot bound to one published revision.',
+        parameters: [{ name: 'ref', description: 'exact specification revision.' }],
+        returns: 'the new provisioned robot in `idle` state.',
+        throws: ['when the revision does not exist or a dependency is unavailable.'],
+      },
+      {
+        signature: 'abstract rebind(robot: RobotId, ref: RobotSpecRef): Promise<Robot>',
+        description: 'Bind one robot to a newer published revision. Runs already accepted keep the revision they started with; later runs use `ref`.',
+        parameters: [{ name: 'robot', description: 'robot identity.' }, { name: 'ref', description: 'revision to bind.' }],
+        returns: 'the rebound robot.',
+        throws: ['when the robot or the revision does not exist.'],
+      },
+      {
+        signature: 'abstract robot(id: RobotId): Promise<Robot | undefined>',
+        description: 'Read one robot.',
+        parameters: [{ name: 'id', description: 'robot identity.' }],
+        returns: 'the robot, or `undefined` when it does not exist.',
+      },
+      {
+        signature: 'abstract robots(): Promise<readonly Robot[]>',
+        description: 'List every robot.',
+        parameters: [],
+        returns: 'robots in creation order.',
+      },
+      {
+        signature: 'abstract start(robot: RobotId, input: RunInput): Promise<Run>',
+        description: 'Accept one run for a robot.',
+        parameters: [{ name: 'robot', description: 'robot identity.' }, { name: 'input', description: 'run input.' }],
+        returns: 'the accepted run.',
+        throws: ['when the robot does not exist or cannot accept a run in its current state.'],
+      },
+      {
+        signature: 'abstract cancel(run: RunId): Promise<void>',
+        description: 'Cancel a run cooperatively.',
+        parameters: [{ name: 'run', description: 'run identity.' }],
+        returns: 'nothing after the cancellation is recorded.',
+        throws: ['when the run does not exist.'],
+      },
+      {
+        signature: 'abstract finish(run: RunId, outcome: RunOutcome): Promise<void>',
+        description: 'Settle one run with its executor\'s outcome.',
+        parameters: [{ name: 'run', description: 'run identity.' }, { name: 'outcome', description: 'terminal state and any output or failure detail.' }],
+        returns: 'nothing after the outcome is recorded.',
+        throws: ['when the run does not exist.'],
+      },
+      {
+        signature: 'abstract attachSession(run: RunId, session: SessionId): Promise<void>',
+        description: 'Record the Session one run\'s execution logs to.',
+        parameters: [{ name: 'run', description: 'run identity.' }, { name: 'session', description: 'Session the executor drives for this run.' }],
+        returns: 'nothing after the link is recorded.',
+        throws: ['when the run does not exist or already names a different Session.'],
+      },
+      {
+        signature: 'abstract run(id: RunId): Promise<Run | undefined>',
+        description: 'Read one run.',
+        parameters: [{ name: 'id', description: 'run identity.' }],
+        returns: 'the run, or `undefined` when it does not exist.',
+      },
+      {
+        signature: 'abstract runs(robot: RobotId): Promise<readonly Run[]>',
+        description: 'List runs owned by one robot.',
+        parameters: [{ name: 'robot', description: 'robot identity.' }],
+        returns: 'runs in acceptance order.',
+      },
+    ],
+  },
+  {
     key: 'sandbox',
     summary: 'Abstract process-sandbox service.',
     description: 'Abstract process-sandbox service. confine must return enforcing argv or fail closed at wrap or runner-execution time; silent unconfined passthrough is forbidden. Functional probes arbitrate multi-runner chains and may be skipped for a sole candidate, whose own refusal remains the fail-closed end.',
@@ -2246,6 +2431,11 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
       {
         signature: 'readonly additionalWritableRoots: readonly string[] | undefined',
         description: 'The frozen extra writable directories shared by every resolved policy, or `undefined` for none.',
+        parameters: [],
+      },
+      {
+        signature: 'readonly protectedReadRoots: readonly string[] | undefined',
+        description: 'The frozen installation roots every confined operation refuses to observe, or `undefined` for none.',
         parameters: [],
       },
       {
@@ -4741,6 +4931,22 @@ export const EVENT_API: readonly EventApiEntry[] = [
     parameters: [],
   },
   {
+    name: 'robot/changed',
+    mode: 'emit',
+    signature: '\'robot/changed\'(kind: \'specs\' | \'robots\' | \'runs\'): void',
+    summary: 'A robot registry mutation observers re-read.',
+    description: 'A robot registry mutation observers re-read.',
+    parameters: [{ name: 'kind', description: 'record family that changed: specifications, robots, or runs.' }],
+  },
+  {
+    name: 'robot/event',
+    mode: 'emit',
+    signature: '\'robot/event\'(topic: string, payload: unknown): void',
+    summary: 'One robot event topic declared by an event trigger.',
+    description: 'One robot event topic declared by an event trigger.',
+    parameters: [{ name: 'topic', description: 'topic matched against event triggers.' }, { name: 'payload', description: 'JSON-compatible payload handed to the run.' }],
+  },
+  {
     name: 'schedule/changed',
     mode: 'emit',
     signature: '\'schedule/changed\'(): void',
@@ -4992,6 +5198,18 @@ export const EVENT_API: readonly EventApiEntry[] = [
 
 /** Shapes of every exported type the Service and Event signatures reference (transitively), sorted by name. */
 export const TYPE_API: readonly TypeApiEntry[] = [
+  {
+    name: 'A2aIntent',
+    declaration: 'export type A2aIntent = \'request\' | \'delegate\' | \'event\';',
+  },
+  {
+    name: 'A2aPeer',
+    declaration: 'export interface A2aPeer {\n    readonly peer: string;\n    readonly budget: Budget;\n    readonly requiresApproval: boolean;\n}',
+  },
+  {
+    name: 'A2aSpec',
+    declaration: 'export interface A2aSpec {\n    readonly intents: readonly A2aIntent[];\n    readonly peers: readonly A2aPeer[];\n}',
+  },
   {
     name: 'AccountBonusBatch',
     declaration: 'export interface AccountBonusBatch {\n    readonly accountId: AccountUserId;\n    readonly bonuses: readonly AccountBonusNotification[];\n}',
@@ -5353,6 +5571,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type BrowserUseProviderName = Branded<\'BrowserUseProviderName\'>;',
   },
   {
+    name: 'Budget',
+    declaration: 'export interface Budget {\n    readonly tokens: number;\n    readonly millis: number;\n    readonly cost: number;\n    readonly toolCalls: number;\n}',
+  },
+  {
     name: 'BundleDetail',
     declaration: 'export type BundleDetail = {\n    readonly status: \'found\';\n    readonly origin: \'locale\' | \'readme\';\n    readonly path: string;\n    readonly markdown: string;\n} | {\n    readonly status: \'none\';\n};',
   },
@@ -5367,6 +5589,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'ButtonProps',
     declaration: 'export interface ButtonProps {\n    readonly label: string;\n    readonly hotkey?: string | undefined;\n    readonly disabled?: boolean | undefined;\n    readonly onPress?: (() => unknown) | undefined;\n}',
+  },
+  {
+    name: 'CapabilitySpec',
+    declaration: 'export interface CapabilitySpec {\n    readonly tools: {\n        readonly allow: readonly string[];\n        readonly deny: readonly string[];\n    };\n    readonly mcpServers: readonly string[];\n    readonly skills: readonly string[];\n    readonly workspaceRoots: readonly string[];\n    readonly dataClasses: readonly DataClass[];\n    readonly credentials: readonly string[];\n    readonly sandbox: SandboxLevel;\n    readonly permissionPreset: string;\n    readonly network: NetworkPolicy;\n}',
   },
   {
     name: 'ChangeResult',
@@ -5721,8 +5947,16 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface DailyInput {\n    readonly time: string;\n    readonly time_zone: string;\n}',
   },
   {
+    name: 'DailyRecap',
+    declaration: 'export interface DailyRecap {\n    readonly day: string;\n    readonly generatedAt: number;\n    readonly source: \'model\' | \'local\';\n    readonly headline: string;\n    readonly summary: string;\n    readonly workItems: readonly RecapWorkItem[];\n    readonly openTasks: readonly string[];\n    readonly sessions: readonly RecapSessionHighlight[];\n    readonly messageCount: number;\n}',
+  },
+  {
     name: 'DailyScheduleRecord',
     declaration: 'export interface DailyScheduleRecord {\n    readonly id: ScheduleId;\n    readonly kind: \'daily\';\n    readonly title: string;\n    readonly prompt: string;\n    readonly time: string;\n    readonly timeZone: string;\n    readonly scheduledAt: string;\n}',
+  },
+  {
+    name: 'DataClass',
+    declaration: 'export type DataClass = \'public\' | \'internal\' | \'confidential\';',
   },
   {
     name: 'DeepSeekLlmApiExtensionMap',
@@ -6017,6 +6251,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface GoalSnapshot extends GoalRef {\n    readonly objective: string;\n    readonly phase: GoalPhase;\n    readonly blockedReason?: GoalBlockReason;\n    readonly maxGoalRounds: number;\n}',
   },
   {
+    name: 'GoalSpec',
+    declaration: 'export interface GoalSpec {\n    readonly mission: string;\n    readonly successCriteria: readonly string[];\n    readonly triggers: readonly Trigger[];\n    readonly strategy: \'plan\' | \'loop\' | {\n        readonly workflow: string;\n    };\n    readonly stopConditions: readonly string[];\n    readonly failurePolicy: \'retry\' | \'pause\' | \'fail\' | \'escalate\';\n    readonly budget: Budget;\n    readonly maxConcurrentRuns: number;\n}',
+  },
+  {
     name: 'GoalView',
     declaration: 'export interface GoalView extends GoalSnapshot {\n    readonly roundsStarted: number;\n    readonly createdAt: number;\n    readonly updatedAt: number;\n    readonly activation: GoalActivation;\n}',
   },
@@ -6097,6 +6335,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type IndexInjectionPlacement = \'head\' | \'body\';',
   },
   {
+    name: 'InputContract',
+    declaration: 'export interface InputContract {\n    readonly schema: string;\n    readonly version: number;\n}',
+  },
+  {
     name: 'InspectOptions',
     declaration: 'export interface InspectOptions {\n    readonly registry?: Registry;\n}',
   },
@@ -6159,6 +6401,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'InvokeRemoteRequest',
     declaration: 'export interface InvokeRemoteRequest {\n    readonly namespace: string;\n    readonly method: string;\n    readonly args: Readonly<Record<string, unknown>>;\n    readonly uplink?: AsyncIterable<unknown>;\n    readonly uplinkWindow?: RemoteUplinkWindow | undefined;\n    readonly peer: PeerScope;\n    readonly signal?: AbortSignal;\n}',
+  },
+  {
+    name: 'IoSpec',
+    declaration: 'export interface IoSpec {\n    readonly input: InputContract;\n    readonly output: OutputContract;\n    readonly acceptance: readonly string[];\n}',
   },
   {
     name: 'JobAppendOptions',
@@ -6561,6 +6807,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface MemorySource {\n    readonly sessionId: SessionId;\n    readonly userMessageSeq?: SessionSeq;\n}',
   },
   {
+    name: 'MemorySpec',
+    declaration: 'export interface MemorySpec {\n    readonly read: readonly string[];\n    readonly write: readonly string[];\n    readonly retentionDays?: number;\n    readonly recall: \'none\' | \'keyword\' | \'hybrid\';\n}',
+  },
+  {
     name: 'MemoryStatus',
     declaration: 'export type MemoryStatus = \'candidate\' | \'active\';',
   },
@@ -6725,8 +6975,16 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type ModTier = \'prepend\' | \'user\' | \'append\' | \'builtin\' | \'core\';',
   },
   {
+    name: 'MuseInsightsSnapshot',
+    declaration: 'export interface MuseInsightsSnapshot {\n    readonly available: boolean;\n    readonly day: string;\n    readonly recap: DailyRecap | null;\n    readonly unfinished: UnfinishedAnalysis;\n    readonly analyzing: boolean;\n}',
+  },
+  {
     name: 'NativeFileApplication',
     declaration: 'export interface NativeFileApplication {\n    readonly id: string;\n    readonly name: string;\n    readonly default: boolean;\n    readonly icon: string | null;\n}',
+  },
+  {
+    name: 'NetworkPolicy',
+    declaration: 'export type NetworkPolicy = \'none\' | \'allowlist\' | \'any\';',
   },
   {
     name: 'NotFutureError',
@@ -6787,6 +7045,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'OTelEventScalar',
     declaration: 'export type OTelEventScalar = string | number | boolean;',
+  },
+  {
+    name: 'OutputContract',
+    declaration: 'export interface OutputContract {\n    readonly schema: string;\n    readonly format: \'text\' | \'markdown\' | \'json\' | \'file\';\n    readonly delivery: \'chat\' | \'task\' | \'artifact\' | \'webhook\';\n}',
   },
   {
     name: 'PackageResult',
@@ -6927,6 +7189,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'PluginVersionList',
     declaration: 'export type PluginVersionList = {\n    readonly status: \'listed\';\n    readonly installed: string;\n    readonly registry: Registry;\n    readonly attempts: readonly RegistryAttempt[];\n    readonly versions: readonly PluginVersion[];\n    readonly omitted: number;\n} | {\n    readonly status: \'refused\';\n    readonly problem: \'not-updatable\' | \'not-found\' | \'network\' | \'unknown\';\n    readonly reason: string;\n    readonly attempts: readonly RegistryAttempt[];\n};',
+  },
+  {
+    name: 'PositionSpec',
+    declaration: 'export interface PositionSpec {\n    readonly owner: string;\n    readonly reportsTo?: string;\n    readonly callers: readonly string[];\n    readonly callees: readonly string[];\n    readonly escalation: readonly string[];\n    readonly visibility: \'private\' | \'team\' | \'organization\';\n}',
   },
   {
     name: 'PostToolDecision',
@@ -7157,6 +7423,18 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface RecallRequest {\n    readonly view: MemoryView;\n    readonly text: string;\n    readonly alternatives?: readonly string[];\n    readonly kind?: MemoryKind;\n}',
   },
   {
+    name: 'RecapSessionHighlight',
+    declaration: 'export interface RecapSessionHighlight {\n    readonly sessionId: string;\n    readonly title: string;\n    readonly summary: string;\n    readonly messageCount: number;\n}',
+  },
+  {
+    name: 'RecapWorkItem',
+    declaration: 'export interface RecapWorkItem {\n    readonly title: string;\n    readonly detail: string;\n    readonly status: RecapWorkStatus;\n}',
+  },
+  {
+    name: 'RecapWorkStatus',
+    declaration: 'export type RecapWorkStatus = \'done\' | \'ongoing\' | \'blocked\' | \'unknown\';',
+  },
+  {
     name: 'RecommendationDetails',
     declaration: 'export type RecommendationDetails = {\n    readonly status: \'available\';\n    readonly title: LocalizedText;\n    readonly description: LocalizedText;\n    readonly enabled: boolean;\n} | {\n    readonly status: \'refused\';\n    readonly reason: \'unknown\' | \'unavailable\' | \'not-live-root\' | \'closing\';\n};',
   },
@@ -7341,12 +7619,92 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface ResumeAgentOptions {\n    readonly resumeSessionId: SessionId;\n    readonly parentAgent?: Agent;\n    readonly agentOptions?: AgentOptions;\n    readonly signal?: AbortSignal;\n    readonly setup?: AgentSetup;\n}',
   },
   {
+    name: 'Robot',
+    declaration: 'export interface Robot {\n    readonly id: RobotId;\n    readonly name: string;\n    readonly spec: RobotSpecRef;\n    readonly state: RobotState;\n    readonly createdAt: number;\n}',
+  },
+  {
+    name: 'RobotCancelRequest',
+    declaration: 'export interface RobotCancelRequest {\n    readonly runId: RunId;\n}',
+  },
+  {
+    name: 'RobotId',
+    declaration: 'export type RobotId = Branded<\'RobotId\'>;',
+  },
+  {
+    name: 'RobotInstantiateRequest',
+    declaration: 'export interface RobotInstantiateRequest {\n    readonly ref: RobotSpecRef;\n}',
+  },
+  {
+    name: 'RobotPublishRequest',
+    declaration: 'export interface RobotPublishRequest {\n    readonly spec: RobotSpec;\n    readonly previous?: RobotSpecRef;\n}',
+  },
+  {
+    name: 'RobotRebindRequest',
+    declaration: 'export interface RobotRebindRequest {\n    readonly robotId: RobotId;\n    readonly ref: RobotSpecRef;\n}',
+  },
+  {
+    name: 'RobotRevisionRequest',
+    declaration: 'export interface RobotRevisionRequest {\n    readonly ref: RobotSpecRef;\n}',
+  },
+  {
+    name: 'RobotRunsRequest',
+    declaration: 'export interface RobotRunsRequest {\n    readonly robotId: RobotId;\n}',
+  },
+  {
+    name: 'RobotSnapshotFrame',
+    declaration: 'export interface RobotSnapshotFrame {\n    readonly specs: readonly RobotSpecRevision[];\n    readonly robots: readonly Robot[];\n    readonly runs: readonly Run[];\n}',
+  },
+  {
+    name: 'RobotSpec',
+    declaration: 'export interface RobotSpec {\n    readonly name: string;\n    readonly description?: string;\n    readonly position: PositionSpec;\n    readonly goal: GoalSpec;\n    readonly capability: CapabilitySpec;\n    readonly io: IoSpec;\n    readonly memory: MemorySpec;\n    readonly a2a: A2aSpec;\n}',
+  },
+  {
+    name: 'RobotSpecId',
+    declaration: 'export type RobotSpecId = Branded<\'RobotSpecId\'>;',
+  },
+  {
+    name: 'RobotSpecRef',
+    declaration: 'export interface RobotSpecRef {\n    readonly spec: RobotSpecId;\n    readonly revision: number;\n}',
+  },
+  {
+    name: 'RobotSpecRevision',
+    declaration: 'export interface RobotSpecRevision {\n    readonly ref: RobotSpecRef;\n    readonly spec: RobotSpec;\n    readonly publishedAt: number;\n    readonly supersedes?: number;\n}',
+  },
+  {
+    name: 'RobotStartRequest',
+    declaration: 'export interface RobotStartRequest {\n    readonly robotId: RobotId;\n    readonly message: string;\n}',
+  },
+  {
+    name: 'RobotState',
+    declaration: 'export type RobotState = \'provisioning\' | \'idle\' | \'running\' | \'paused\' | \'failed\' | \'stopped\';',
+  },
+  {
     name: 'RpcId',
     declaration: 'export type RpcId = Branded<\'rpc-id\'>;',
   },
   {
+    name: 'Run',
+    declaration: 'export interface Run {\n    readonly id: RunId;\n    readonly robot: RobotId;\n    readonly spec: RobotSpecRef;\n    readonly state: RunState;\n    readonly input: RunInput;\n    readonly startedAt: number;\n    readonly sessionId?: SessionId;\n    readonly endedAt?: number;\n    readonly output?: string;\n    readonly error?: string;\n}',
+  },
+  {
+    name: 'RunId',
+    declaration: 'export type RunId = Branded<\'RunId\'>;',
+  },
+  {
+    name: 'RunInput',
+    declaration: 'export interface RunInput {\n    readonly message: string;\n    readonly task?: string;\n}',
+  },
+  {
     name: 'RunnerFailureRule',
     declaration: 'export interface RunnerFailureRule {\n    allowedExitCodes?: readonly number[];\n    fatalSignatures: readonly string[];\n    informationalLines?: readonly string[];\n}',
+  },
+  {
+    name: 'RunOutcome',
+    declaration: 'export interface RunOutcome {\n    readonly state: Extract<RunState, \'succeeded\' | \'failed\' | \'cancelled\' | \'timed_out\'>;\n    readonly output?: string;\n    readonly error?: string;\n}',
+  },
+  {
+    name: 'RunState',
+    declaration: 'export type RunState = \'queued\' | \'leased\' | \'running\' | \'waiting\' | \'finalizing\' | \'succeeded\' | \'failed\' | \'cancelled\' | \'timed_out\';',
   },
   {
     name: 'SandboxEnforcement',
@@ -7354,7 +7712,11 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'SandboxExecutionPolicy',
-    declaration: 'export interface SandboxExecutionPolicy {\n    mode: SandboxMode;\n    workspaceRoot: string;\n    additionalWritableRoots?: readonly string[];\n    sessionId?: SessionId;\n}',
+    declaration: 'export interface SandboxExecutionPolicy {\n    mode: SandboxMode;\n    workspaceRoot: string;\n    additionalWritableRoots?: readonly string[];\n    protectedReadRoots?: readonly string[];\n    sessionId?: SessionId;\n}',
+  },
+  {
+    name: 'SandboxLevel',
+    declaration: 'export type SandboxLevel = \'none\' | \'workspace\' | \'full\';',
   },
   {
     name: 'SandboxMode',
@@ -8937,6 +9299,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type TranslationSpec = AnonymousTranslationSpec | PaidTranslationSpec;',
   },
   {
+    name: 'Trigger',
+    declaration: 'export type Trigger = {\n    readonly kind: \'manual\';\n} | {\n    readonly kind: \'cron\';\n    readonly expression: string;\n    readonly timeZone: string;\n} | {\n    readonly kind: \'event\';\n    readonly topic: string;\n} | {\n    readonly kind: \'webhook\';\n    readonly name: string;\n} | {\n    readonly kind: \'dependency\';\n    readonly task: string;\n} | {\n    readonly kind: \'threshold\';\n    readonly metric: string;\n    readonly above: number;\n};',
+  },
+  {
     name: 'TurnBoundaryProjection',
     declaration: 'export interface TurnBoundaryProjection {\n    readonly openTurnStartSeq: OptionalSessionSeq;\n    readonly lastStepStartSeq: OptionalSessionSeq;\n    readonly lastStepBoundary: {\n        readonly kind: \'start\' | \'end\';\n        readonly seq: SessionSeq;\n    } | null;\n    readonly lastTurn: number;\n}',
   },
@@ -9123,6 +9489,22 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'UiRenderResult',
     declaration: 'export type UiRenderResult = UiNode;',
+  },
+  {
+    name: 'UnfinishedAnalysis',
+    declaration: 'export interface UnfinishedAnalysis {\n    readonly analyzedAt: number;\n    readonly tasks: readonly UnfinishedTask[];\n}',
+  },
+  {
+    name: 'UnfinishedTask',
+    declaration: 'export interface UnfinishedTask {\n    readonly id: string;\n    readonly title: string;\n    readonly detail: string;\n    readonly status: UnfinishedTaskStatus;\n    readonly source: UnfinishedTaskSource;\n    readonly sessionId: string | null;\n    readonly sessionTitle: string | null;\n}',
+  },
+  {
+    name: 'UnfinishedTaskSource',
+    declaration: 'export type UnfinishedTaskSource = \'todo\' | \'recap\';',
+  },
+  {
+    name: 'UnfinishedTaskStatus',
+    declaration: 'export type UnfinishedTaskStatus = \'pending\' | \'in_progress\';',
   },
   {
     name: 'UpdateBundleOptions',

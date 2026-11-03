@@ -36,12 +36,13 @@
   "tomato": {
     "bundle": {
       "patch": "./cordis.patch.yml",
-      "listedByDefault": false
+      "listedByDefault": true
     }
   },
   "dependencies": {
     "@tomato/experimental-focus": "workspace:*",
     "@tomato/experimental-memory": "workspace:*",
+    "@tomato/experimental-muse-insights": "workspace:*",
     "@tomato/experimental-tool-memory": "workspace:*"
   },
   "peerDependencies": {
@@ -58,6 +59,7 @@
     "@tomato/llm": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/session-projection": "workspace:*",
+    "@tomato/session-query-sqlite": "workspace:*",
     "@tomato/storage": "workspace:*",
     "@tomato/storage-domain": "workspace:*",
     "@tomato/storage-json": "workspace:*",

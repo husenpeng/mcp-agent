@@ -179,7 +179,7 @@ const harness = await vi.hoisted(async () => {
     setAppLogsPath: vi.fn(),
     getPath: vi.fn<(name: string) => string>(),
     setAboutPanelOptions: vi.fn<(options: Electron.AboutPanelOptionsOptions) => void>(),
-    requestSingleInstanceLock: () => true,
+    requestSingleInstanceLock: (): boolean => true,
     setAsDefaultProtocolClient: vi.fn(),
     exit: vi.fn(),
     relaunch: vi.fn(),
@@ -1468,6 +1468,32 @@ describe('desktop main startup', () => {
     await host.stopping.promise
     host.exited.resolve()
     await harness.quitCompleted.promise
+  })
+
+  it('restarts an unpackaged shell when a later development launch rebuilt the workspace', async () => {
+    harness.app.isPackaged = false
+    const host = await readyWorkspace()
+    harness.app.emit('second-instance', {}, ['--tomato-dev-relaunch=request-a'])
+    // The relaunched process can receive the same request again and must not restart twice.
+    harness.app.emit('second-instance', {}, ['--tomato-dev-relaunch=request-a'])
+    await vi.advanceTimersByTimeAsync(0)
+    expect(harness.app.relaunch).toHaveBeenCalledOnce()
+    expect(harness.dialog.showMessageBox).not.toHaveBeenCalled()
+    await host.stopping.promise
+    host.exited.resolve()
+    await harness.quitCompleted.promise
+  })
+
+  it('fails a later development launch that the running shell never acknowledges', async () => {
+    harness.app.isPackaged = false
+    harness.app.requestSingleInstanceLock = () => false
+    onTestFinished(() => { harness.app.requestSingleInstanceLock = () => true })
+    stubProcess({ platform: 'darwin', arch: 'arm64', resourcesPath: 'desktop-test-resources',
+      argv: ['electron', 'desktop-test-app', '--tomato-dev-relaunch=request-lost'] })
+    await import('../src/main.ts')
+    await vi.advanceTimersByTimeAsync(6_000)
+    expect(harness.app.exit).toHaveBeenCalledExactlyOnceWith(1)
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining('did not restart'))
   })
 
   it('does not block a Windows session end on the quit confirmation', async () => {

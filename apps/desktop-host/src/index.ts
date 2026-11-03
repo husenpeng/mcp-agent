@@ -10,6 +10,7 @@ import type {} from '@tomato/deepseek-account'
 import { resolveTomatoHome } from '@tomato/home-paths'
 import * as desktopOffice from './office.ts'
 import { localDragResource } from './file-drag.ts'
+import { releasePatchFiles } from './release-overlay.ts'
 
 import { installDesktopUpdateTaskControl } from './update-tasks.ts'
 import { installDesktopQuitInspection } from './quit-inspection.ts'
@@ -27,7 +28,7 @@ async function main(): Promise<void> {
     environment: loadLayeredEnv('tomato'),
     profile: 'desktop',
     resolvedProfile: { profile, installAnchor },
-    patchFiles: [],
+    patchFiles: releasePatchFiles(process.env),
     args: ['--no-open', '--host', '127.0.0.1', '--port', '0'],
     ...(process.argv[5] === undefined ? {} : {
       packageManager: {
@@ -42,6 +43,11 @@ async function main(): Promise<void> {
     }),
   })
   let stopping: Promise<void> | undefined
+  // Published by the shell after sign-in: plugins call company services with it.
+  let sessionId: string | undefined
+  void application.then(({ ctx }) => {
+    ctx.provide('desktopSession', { sessionId: () => sessionId })
+  }).catch(() => undefined)
   const dragReads = new Map<number, AbortController>()
   const dragTasks = new Set<Promise<void>>()
   const control: {
@@ -67,6 +73,12 @@ async function main(): Promise<void> {
   process.on('message', (message: unknown) => {
     if (typeof message !== 'object' || message === null || !('type' in message)) return
     if (message.type === 'shutdown') { void stop(); return }
+    if (message.type === 'desktop-session') {
+      sessionId = 'sessionId' in message && typeof message.sessionId === 'string' && message.sessionId !== ''
+        ? message.sessionId
+        : undefined
+      return
+    }
     if (message.type === 'file-drag-cancel') {
       if ('requestId' in message && typeof message.requestId === 'number') dragReads.get(message.requestId)?.abort()
       return

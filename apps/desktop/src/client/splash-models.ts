@@ -2,6 +2,7 @@
 
 import * as THREE from 'three'
 import { mergeGeometries, mergeVertices, toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js'
+import type { LandmarkKind } from './splash-glsl-landmark.ts'
 import { SPLASH_LANDMARKS, SPLASH_MAGLEV } from './splash-city.ts'
 
 /** A light carried by a model, in the model's local frame (craft: +X right, +Y up, +Z forward). */
@@ -26,8 +27,13 @@ export interface ModelOutline {
 
 /** A landmark's surfaces and the steady lights mounted on it, in its local frame with the base at y = 0. */
 export interface LandmarkModel {
-  /** Meshes grouped by the `LANDMARK_FRAGMENT_GLSL` defines that draw them. */
-  readonly surfaces: readonly { readonly defines: readonly string[]; readonly geometry: THREE.BufferGeometry }[]
+  /** Meshes grouped by the `LANDMARK_FRAGMENT_GLSL` surface each draws. */
+  readonly surfaces: readonly {
+    readonly kind: LandmarkKind
+    /** Adds the gate's diamond lattice to a planar facade. */
+    readonly diagrid?: boolean
+    readonly geometry: THREE.BufferGeometry
+  }[]
   readonly outlines: readonly ModelOutline[]
   /** Aviation and accent lights. */
   readonly lights: readonly ModelLight[]
@@ -138,8 +144,8 @@ export function createPearlTower(): LandmarkModel {
   }
   return {
     surfaces: [
-      { defines: ['PEARL_SPHERE'], geometry: merge(spheres) },
-      { defines: ['PEARL_COLUMN'], geometry: merge(shafts) },
+      { kind: 'pearlSphere', geometry: merge(spheres) },
+      { kind: 'pearlColumn', geometry: merge(shafts) },
     ],
     outlines: [],
     lights,
@@ -181,7 +187,7 @@ export function createGateTower(): LandmarkModel {
     ...quadratic(new THREE.Vector2(40, height), new THREE.Vector2(47, 150), new THREE.Vector2(48, 0), 40),
   ]
   return {
-    surfaces: [{ defines: ['PLANAR', 'DIAGRID'], geometry: body }],
+    surfaces: [{ kind: 'planar', diagrid: true, geometry: body }],
     outlines: [
       { color: [2.2, 0.1, 0.07], radius: 0.55, points: lift(arch, front) },
       { color: [0.2, 1.0, 1.5], radius: 0.32, points: lift(silhouette, front) },
@@ -237,8 +243,8 @@ export function createTwistTower(): LandmarkModel {
   })
   return {
     surfaces: [
-      { defines: ['TWIST'], geometry: body },
-      { defines: ['PEARL_COLUMN'], geometry: new THREE.CylinderGeometry(0.25, 1.1, 26, 12).translate(0, height + 13, 0) },
+      { kind: 'twist', geometry: body },
+      { kind: 'pearlColumn', geometry: new THREE.CylinderGeometry(0.25, 1.1, 26, 12).translate(0, height + 13, 0) },
     ],
     outlines: [{ color: [2.0, 0.1, 0.07], radius: 0.5, points: crown }],
     lights: [{ offset: [0, height + 26.4, 0], color: AVIATION_RED, radius: 0.9, kind: 0, trail: 0 }],
@@ -281,7 +287,7 @@ export function createOpenerTower(): LandmarkModel {
     ...line(new THREE.Vector2(-12, 302), new THREE.Vector2(-15, 268), 16),
   ]
   return {
-    surfaces: [{ defines: ['PLANAR'], geometry: body }],
+    surfaces: [{ kind: 'planar', geometry: body }],
     outlines: [
       { color: [2.1, 0.32, 0.08], radius: 0.45, points: lift(opening, front) },
       { color: [0.2, 1.0, 1.5], radius: 0.3, points: lift(line(new THREE.Vector2(-19, height), new THREE.Vector2(19, height), 30), front) },

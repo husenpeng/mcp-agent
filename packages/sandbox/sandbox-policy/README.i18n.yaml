@@ -21,8 +21,8 @@
   en: 6704447e52ec295b
   zh: 9ed812d9e29d5533
 /tomato-sandbox-policy/use-this-package/minimal-configuration:
-  en: 5e879be4a8af0260
-  zh: f25f6db191d91bed
+  en: a9ba5210ef25ffe2
+  zh: a7469cc8545e63e3
 /tomato-sandbox-policy/use-this-package/switching-a-session-s-mode:
   en: 957d72691e470e5c
   zh: c22a3a750af0e4a3
@@ -68,9 +68,12 @@
 /tomato-sandbox-policy/model-experience/current-file-sandbox-policy/what-the-model-sees/danger-full-access:
   en: 4e28324a011422a1
   zh: bf31ffce30f06a09
+/tomato-sandbox-policy/model-experience/current-file-sandbox-policy/what-the-model-sees/protected-installation-roots:
+  en: af84e0f06f736b7e
+  zh: 3498399605a45de4
 /tomato-sandbox-policy/model-experience/current-file-sandbox-policy/token-effect:
-  en: fe4724cbdaa928b4
-  zh: 5c2d6d3d42e863a1
+  en: 429e9db06849a173
+  zh: fdebaa0b49bbe6e8
 /tomato-sandbox-policy/model-experience/current-file-sandbox-policy/kv-cache-effect:
   en: a16a657e0e5145fb
   zh: 4b19263a728990dc

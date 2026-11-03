@@ -349,6 +349,9 @@ importers:
       '@tomato/experimental-badge-skill-bundle':
         specifier: workspace:*
         version: link:../../packages/experimental/badge-skill-bundle
+      '@tomato/experimental-browser-use-playwright-bundle':
+        specifier: workspace:*
+        version: link:../../packages/experimental/browser-use-playwright-bundle
       '@tomato/experimental-cot-translation-bundle':
         specifier: workspace:*
         version: link:../../packages/experimental/cot-translation-bundle
@@ -364,6 +367,9 @@ importers:
       '@tomato/experimental-ralph-bundle':
         specifier: workspace:*
         version: link:../../packages/experimental/ralph-bundle
+      '@tomato/experimental-robot-app':
+        specifier: workspace:*
+        version: link:../../packages/experimental/robot-app
       '@tomato/experimental-session-search':
         specifier: workspace:*
         version: link:../../packages/experimental/session-search
@@ -1590,6 +1596,46 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
 
+  packages/api/robot-controller:
+    dependencies:
+      '@tomato/typert-protocol':
+        specifier: workspace:*
+        version: link:../../typert/protocol
+    devDependencies:
+      '@tomato/api-gateway':
+        specifier: workspace:*
+        version: link:../gateway
+      '@tomato/branded':
+        specifier: workspace:*
+        version: link:../../util/branded
+      '@tomato/client-connection':
+        specifier: workspace:*
+        version: link:../../client/connection
+      '@tomato/client-store':
+        specifier: workspace:*
+        version: link:../../client/store
+      '@tomato/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@tomato/experimental-robot':
+        specifier: workspace:*
+        version: link:../../experimental/robot
+      '@tomato/experimental-robot-local':
+        specifier: workspace:*
+        version: link:../../experimental/robot-local
+      '@tomato/session':
+        specifier: workspace:*
+        version: link:../../core/session
+      '@tomato/storage':
+        specifier: workspace:*
+        version: link:../../storage/storage
+      '@tomato/storage-domain':
+        specifier: workspace:*
+        version: link:../../storage/storage-domain
+      '@tomato/typert-registry':
+        specifier: workspace:*
+        version: link:../../typert/registry
+
   packages/api/session-controller:
     dependencies:
       '@tomato/branded':
@@ -2663,6 +2709,9 @@ importers:
       '@tomato/web-fetch-http':
         specifier: workspace:*
         version: link:../../web/web-fetch-http
+      '@tomato/web-search-company':
+        specifier: workspace:*
+        version: link:../../web/web-search-company
       '@tomato/web-search-deepseek':
         specifier: workspace:*
         version: link:../../web/web-search-deepseek
@@ -2737,6 +2786,19 @@ importers:
       '@tomato/user-approval':
         specifier: workspace:*
         version: link:../../interaction/user-approval
+
+  packages/bundle/marketing-app:
+    dependencies:
+      '@tomato/client-ui-settings-marketing':
+        specifier: workspace:*
+        version: link:../../client/ui-settings-marketing
+      '@tomato/marketing':
+        specifier: workspace:*
+        version: link:../../marketing/marketing
+    devDependencies:
+      '@tomato/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
 
   packages/bundle/sdk-app:
     dependencies:
@@ -5286,6 +5348,72 @@ importers:
         specifier: 1.6.0
         version: 1.6.0(react@18.3.1)
 
+  packages/client/ui-robot:
+    devDependencies:
+      '@testing-library/react':
+        specifier: ^16.3.3
+        version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@tomato/api-remote-access':
+        specifier: workspace:*
+        version: link:../../api/remote-access
+      '@tomato/api-remotes':
+        specifier: workspace:*
+        version: link:../../api/remotes
+      '@tomato/api-robot-controller':
+        specifier: workspace:*
+        version: link:../../api/robot-controller
+      '@tomato/api-session-controller':
+        specifier: workspace:*
+        version: link:../../api/session-controller
+      '@tomato/client-locale':
+        specifier: workspace:*
+        version: link:../locale
+      '@tomato/client-store':
+        specifier: workspace:*
+        version: link:../store
+      '@tomato/client-test-runtime':
+        specifier: workspace:*
+        version: link:../../test-support/client-runtime
+      '@tomato/client-ui-conversation':
+        specifier: workspace:*
+        version: link:../ui-conversation
+      '@tomato/client-ui-layout':
+        specifier: workspace:*
+        version: link:../ui-layout
+      '@tomato/client-ui-primitives':
+        specifier: workspace:*
+        version: link:../ui-primitives
+      '@tomato/client-ui-renderer':
+        specifier: workspace:*
+        version: link:../ui-renderer
+      '@tomato/client-ui-session':
+        specifier: workspace:*
+        version: link:../ui-session
+      '@tomato/client-ui-sidebar':
+        specifier: workspace:*
+        version: link:../ui-sidebar
+      '@tomato/client-ui-slots':
+        specifier: workspace:*
+        version: link:../ui-slots
+      '@tomato/client-ui-workspace':
+        specifier: workspace:*
+        version: link:../ui-workspace
+      '@tomato/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@tomato/experimental-robot':
+        specifier: workspace:*
+        version: link:../../experimental/robot
+      '@tomato/session':
+        specifier: workspace:*
+        version: link:../../core/session
+      react:
+        specifier: ^18.2.0
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.3.1(react@18.3.1)
+
   packages/client/ui-schedule:
     devDependencies:
       '@testing-library/react':
@@ -5694,6 +5822,42 @@ importers:
       react-dom:
         specifier: ^18.2.0
         version: 18.3.1(react@18.3.1)
+
+  packages/client/ui-settings-marketing:
+    devDependencies:
+      '@tomato/api-remotes':
+        specifier: workspace:*
+        version: link:../../api/remotes
+      '@tomato/client-locale':
+        specifier: workspace:*
+        version: link:../locale
+      '@tomato/client-store':
+        specifier: workspace:*
+        version: link:../store
+      '@tomato/client-test-runtime':
+        specifier: workspace:*
+        version: link:../../test-support/client-runtime
+      '@tomato/client-ui-plugin-manager':
+        specifier: workspace:*
+        version: link:../ui-plugin-manager
+      '@tomato/client-ui-primitives':
+        specifier: workspace:*
+        version: link:../ui-primitives
+      '@tomato/client-ui-renderer':
+        specifier: workspace:*
+        version: link:../ui-renderer
+      '@tomato/client-ui-settings':
+        specifier: workspace:*
+        version: link:../ui-settings
+      '@tomato/client-ui-slots':
+        specifier: workspace:*
+        version: link:../ui-slots
+      '@tomato/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      react:
+        specifier: ^18.2.0
+        version: 18.3.1
 
   packages/client/ui-settings-models:
     dependencies:
@@ -6999,6 +7163,9 @@ importers:
       '@tomato/api-remotes':
         specifier: workspace:*
         version: link:../../api/remotes
+      '@tomato/api-robot-controller':
+        specifier: workspace:*
+        version: link:../../api/robot-controller
       '@tomato/api-session-controller':
         specifier: workspace:*
         version: link:../../api/session-controller
@@ -10080,6 +10247,9 @@ importers:
       '@tomato/experimental-memory':
         specifier: workspace:*
         version: link:../memory
+      '@tomato/experimental-muse-insights':
+        specifier: workspace:*
+        version: link:../muse-insights
       '@tomato/experimental-tool-memory':
         specifier: workspace:*
         version: link:../tool-memory
@@ -10114,6 +10284,9 @@ importers:
       '@tomato/session-projection':
         specifier: workspace:*
         version: link:../../session/session-projection
+      '@tomato/session-query-sqlite':
+        specifier: workspace:*
+        version: link:../../session-query/session-query-sqlite
       '@tomato/storage':
         specifier: workspace:*
         version: link:../../storage/storage
@@ -10138,6 +10311,91 @@ importers:
       js-yaml:
         specifier: ^4.3.2
         version: 4.3.2
+
+  packages/experimental/muse-insights:
+    dependencies:
+      '@tomato/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@testing-library/react':
+        specifier: ^16.3.3
+        version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@tomato/api-remotes':
+        specifier: workspace:*
+        version: link:../../api/remotes
+      '@tomato/client-locale':
+        specifier: workspace:*
+        version: link:../../client/locale
+      '@tomato/client-store':
+        specifier: workspace:*
+        version: link:../../client/store
+      '@tomato/client-test-runtime':
+        specifier: workspace:*
+        version: link:../../test-support/client-runtime
+      '@tomato/client-ui-layout':
+        specifier: workspace:*
+        version: link:../../client/ui-layout
+      '@tomato/client-ui-primitives':
+        specifier: workspace:*
+        version: link:../../client/ui-primitives
+      '@tomato/client-ui-renderer':
+        specifier: workspace:*
+        version: link:../../client/ui-renderer
+      '@tomato/client-ui-sidebar-right':
+        specifier: workspace:*
+        version: link:../../client/ui-sidebar-right
+      '@tomato/client-ui-slots':
+        specifier: workspace:*
+        version: link:../../client/ui-slots
+      '@tomato/client-ui-workspace':
+        specifier: workspace:*
+        version: link:../../client/ui-workspace
+      '@tomato/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@tomato/cordis-plugin-timer':
+        specifier: workspace:~
+        version: link:../../../vendor/timer
+      '@tomato/gateway':
+        specifier: workspace:*
+        version: link:../../tomato/gateway
+      '@tomato/llm':
+        specifier: workspace:*
+        version: link:../../llm/llm
+      '@tomato/session':
+        specifier: workspace:*
+        version: link:../../core/session
+      '@tomato/session-query':
+        specifier: workspace:*
+        version: link:../../session-query/session-query
+      '@tomato/storage':
+        specifier: workspace:*
+        version: link:../../storage/storage
+      '@tomato/storage-domain':
+        specifier: workspace:*
+        version: link:../../storage/storage-domain
+      '@tomato/storage-json':
+        specifier: workspace:*
+        version: link:../../storage/storage-json
+      '@tomato/tool-todo':
+        specifier: workspace:*
+        version: link:../../todo/tool-todo
+      '@tomato/typert-protocol':
+        specifier: workspace:*
+        version: link:../../typert/protocol
+      '@tomato/util-values':
+        specifier: workspace:*
+        version: link:../../util/values
+      react:
+        specifier: ^18.2.0
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.3.1(react@18.3.1)
 
   packages/experimental/personalized-recommendations:
     dependencies:
@@ -10311,6 +10569,171 @@ importers:
       '@tomato/cordis':
         specifier: workspace:~
         version: link:../../../vendor/cordis
+
+  packages/experimental/robot:
+    devDependencies:
+      '@tomato/branded':
+        specifier: workspace:*
+        version: link:../../util/branded
+      '@tomato/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@tomato/session':
+        specifier: workspace:*
+        version: link:../../core/session
+      '@tomato/session-projection':
+        specifier: workspace:*
+        version: link:../../session/session-projection
+
+  packages/experimental/robot-app:
+    dependencies:
+      '@tomato/api-robot-controller':
+        specifier: workspace:*
+        version: link:../../api/robot-controller
+      '@tomato/client-ui-robot':
+        specifier: workspace:*
+        version: link:../../client/ui-robot
+      '@tomato/experimental-robot-local':
+        specifier: workspace:*
+        version: link:../robot-local
+      '@tomato/experimental-robot-remote':
+        specifier: workspace:*
+        version: link:../robot-remote
+      '@tomato/experimental-robot-runtime':
+        specifier: workspace:*
+        version: link:../robot-runtime
+      '@tomato/experimental-robot-triggers':
+        specifier: workspace:*
+        version: link:../robot-triggers
+      '@tomato/experimental-tool-robot':
+        specifier: workspace:*
+        version: link:../tool-robot
+    devDependencies:
+      '@tomato/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@tomato/skill':
+        specifier: workspace:*
+        version: link:../../skill/skill
+
+  packages/experimental/robot-local:
+    dependencies:
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@tomato/branded':
+        specifier: workspace:*
+        version: link:../../util/branded
+      '@tomato/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@tomato/experimental-robot':
+        specifier: workspace:*
+        version: link:../robot
+      '@tomato/session':
+        specifier: workspace:*
+        version: link:../../core/session
+      '@tomato/storage':
+        specifier: workspace:*
+        version: link:../../storage/storage
+      '@tomato/storage-domain':
+        specifier: workspace:*
+        version: link:../../storage/storage-domain
+      '@tomato/util-values':
+        specifier: workspace:*
+        version: link:../../util/values
+
+  packages/experimental/robot-remote:
+    devDependencies:
+      '@tomato/api-gateway':
+        specifier: workspace:*
+        version: link:../../api/gateway
+      '@tomato/api-robot-controller':
+        specifier: workspace:*
+        version: link:../../api/robot-controller
+      '@tomato/client-connection':
+        specifier: workspace:*
+        version: link:../../client/connection
+      '@tomato/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+
+  packages/experimental/robot-runtime:
+    dependencies:
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@tomato/agent':
+        specifier: workspace:*
+        version: link:../../core/agent
+      '@tomato/agent-default-model':
+        specifier: workspace:*
+        version: link:../../core/agent-default-model
+      '@tomato/agent-loop-testkit':
+        specifier: workspace:*
+        version: link:../../test-support/agent-loop-testkit
+      '@tomato/branded':
+        specifier: workspace:*
+        version: link:../../util/branded
+      '@tomato/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@tomato/experimental-robot':
+        specifier: workspace:*
+        version: link:../robot
+      '@tomato/experimental-robot-local':
+        specifier: workspace:*
+        version: link:../robot-local
+      '@tomato/experimental-robot-triggers':
+        specifier: workspace:*
+        version: link:../robot-triggers
+      '@tomato/llm':
+        specifier: workspace:*
+        version: link:../../llm/llm
+      '@tomato/permission-presets':
+        specifier: workspace:*
+        version: link:../../interaction/permission-presets
+      '@tomato/session':
+        specifier: workspace:*
+        version: link:../../core/session
+      '@tomato/session-projection':
+        specifier: workspace:*
+        version: link:../../session/session-projection
+      '@tomato/storage':
+        specifier: workspace:*
+        version: link:../../storage/storage
+      '@tomato/storage-domain':
+        specifier: workspace:*
+        version: link:../../storage/storage-domain
+      '@tomato/system-prompt':
+        specifier: workspace:*
+        version: link:../../core/system-prompt
+      '@tomato/tools':
+        specifier: workspace:*
+        version: link:../../core/tools
+
+  packages/experimental/robot-triggers:
+    devDependencies:
+      '@tomato/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@tomato/experimental-robot':
+        specifier: workspace:*
+        version: link:../robot
+      '@tomato/schedule':
+        specifier: workspace:*
+        version: link:../../schedule/schedule
+      '@tomato/session':
+        specifier: workspace:*
+        version: link:../../core/session
+      '@tomato/storage':
+        specifier: workspace:*
+        version: link:../../storage/storage
+      '@tomato/storage-domain':
+        specifier: workspace:*
+        version: link:../../storage/storage-domain
 
   packages/experimental/session-inspector:
     devDependencies:
@@ -10771,6 +11194,45 @@ importers:
       '@tomato/workflow-ptc':
         specifier: workspace:*
         version: link:../../workflow/workflow-ptc
+
+  packages/experimental/tool-robot:
+    devDependencies:
+      '@tomato/agent':
+        specifier: workspace:*
+        version: link:../../core/agent
+      '@tomato/agent-loop-testkit':
+        specifier: workspace:*
+        version: link:../../test-support/agent-loop-testkit
+      '@tomato/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@tomato/cordis-plugin-loader':
+        specifier: workspace:~
+        version: link:../../../vendor/loader
+      '@tomato/experimental-robot':
+        specifier: workspace:*
+        version: link:../robot
+      '@tomato/llm':
+        specifier: workspace:*
+        version: link:../../llm/llm
+      '@tomato/session':
+        specifier: workspace:*
+        version: link:../../core/session
+      '@tomato/session-projection':
+        specifier: workspace:*
+        version: link:../../session/session-projection
+      '@tomato/system-prompt':
+        specifier: workspace:*
+        version: link:../../core/system-prompt
+      '@tomato/tool-executor-native':
+        specifier: workspace:*
+        version: link:../../core/tool-executor-native
+      '@tomato/tool-testkit':
+        specifier: workspace:*
+        version: link:../../test-support/tool-testkit
+      '@tomato/tools':
+        specifier: workspace:*
+        version: link:../../core/tools
 
   packages/experimental/tool-session-query:
     dependencies:
@@ -13115,6 +13577,28 @@ importers:
       '@tomato/working-directory':
         specifier: workspace:*
         version: link:../../session/working-directory
+
+  packages/marketing/marketing:
+    dependencies:
+      '@tomato/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
+    devDependencies:
+      '@tomato/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@tomato/credentials':
+        specifier: workspace:*
+        version: link:../../credentials/credentials
+      '@tomato/launch-environment':
+        specifier: workspace:*
+        version: link:../../util/launch-environment
+      '@tomato/loader-smoke':
+        specifier: workspace:*
+        version: link:../../test-support/loader-smoke
+      '@tomato/mcp-client':
+        specifier: workspace:*
+        version: link:../../mcp/mcp-client
 
   packages/mcp/mcp-client:
     dependencies:
@@ -17232,6 +17716,22 @@ importers:
       '@tomato/timeout':
         specifier: workspace:*
         version: link:../../util/timeout
+      '@tomato/web':
+        specifier: workspace:*
+        version: link:../web
+
+  packages/web/web-search-company:
+    dependencies:
+      '@tomato/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
+    devDependencies:
+      '@tomato/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@tomato/launch-environment':
+        specifier: workspace:*
+        version: link:../../util/launch-environment
       '@tomato/web':
         specifier: workspace:*
         version: link:../web

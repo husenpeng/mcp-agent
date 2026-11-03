@@ -1,0 +1,22 @@
+# Bilingual-pair consistency record for robot.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/subsystems/robot.md
+/robot-platform:
+  en: 54adb08ecef7921a
+  zh: 108ea5498fcfd6ba
+/robot-platform/specifications-and-revisions:
+  en: f1a0df34a20623ef
+  zh: 208046b3a9706708
+/robot-platform/creating-robots:
+  en: a3604541b7f1e752
+  zh: c869dfdcba1d8a52
+/robot-platform/robot-and-run-lifecycle:
+  en: bd8c9db222839250
+  zh: 05f7a76214979572
+/robot-platform/authority-and-agent-to-agent-fields:
+  en: 25ce3d49077499f4
+  zh: fd5126bec0bfa311
+/robot-platform/provider-responsibilities:
+  en: 259075e63ffe86f7
+  zh: 6d26de561f786f30

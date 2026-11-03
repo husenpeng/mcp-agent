@@ -1,0 +1,57 @@
+{
+  "name": "@tomato/experimental-robot-app",
+  "description": "The Tomato Rbot bundle: the robot registry, run executor, triggers, Remote controller, and the robot page with its sidebar roster and separate conversation surface",
+  "version": "0.2.1-rc.3",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/experimental/robot-app"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./locale/*.json": "./locale/*.json",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "icon.svg",
+    "locale/*.json",
+    "lib/index.js",
+    "skills/**/*",
+    "cordis.patch.yml",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "icon": "./icon.svg",
+  "tomato": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "@tomato/api-robot-controller": "workspace:*",
+    "@tomato/client-ui-robot": "workspace:*",
+    "@tomato/experimental-robot-local": "workspace:*",
+    "@tomato/experimental-robot-remote": "workspace:*",
+    "@tomato/experimental-robot-runtime": "workspace:*",
+    "@tomato/experimental-robot-triggers": "workspace:*",
+    "@tomato/experimental-tool-robot": "workspace:*"
+  },
+  "devDependencies": {
+    "@tomato/cordis": "workspace:~",
+    "@tomato/skill": "workspace:*"
+  },
+  "peerDependencies": {
+    "@tomato/cordis": "workspace:~"
+  }
+}

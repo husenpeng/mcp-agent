@@ -1,0 +1,25 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/marketing/README.md
+/:
+  en: 83d7e1b788f8e949
+  zh: 5fe76f287f2b1649
+/marketing-advertising-and-marketing-integrations:
+  en: 424af747e1b9c378
+  zh: 725deef522da6f6d
+/marketing-advertising-and-marketing-integrations/summary:
+  en: 92946265ac4a8fe1
+  zh: 544f84c9da86bc71
+/marketing-advertising-and-marketing-integrations/table-of-contents:
+  en: 1eb35b015a6c423f
+  zh: a8a3dceee2c9e943
+/marketing-advertising-and-marketing-integrations/packages:
+  en: bdc0fe2d024729f4
+  zh: c7f3cfd1424969e4
+/marketing-advertising-and-marketing-integrations/related-documentation:
+  en: ba5673be77828446
+  zh: 4da149eb9066f915
+/marketing-advertising-and-marketing-integrations/dev-note:
+  en: d9a0da6ad99f8fd3
+  zh: 74d85d190d755195

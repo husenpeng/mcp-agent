@@ -1,7 +1,7 @@
 /** Build one release target with matching Electron and tomato architecture. */
 
 import { spawn } from 'node:child_process'
-import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { parseArgs } from 'node:util'
 import { join, resolve } from 'node:path'
 import {
@@ -522,6 +522,20 @@ export async function packageTarget(
       '--pack-destination',
       buildPaths.packedLandlock,
     ], buildEnv, REPOSITORY_ROOT)
+    // The flock platform package is a local workspace package the registry never
+    // publishes; the runtime closure installs it from this tarball instead.
+    const nodeAddonDirectory = `native/system/packages/${target.platform}-${target.arch}`
+    rmSync(buildPaths.packedNodeAddons, { recursive: true, force: true })
+    if (existsSync(join(REPOSITORY_ROOT, nodeAddonDirectory, 'package.json'))) {
+      mkdirSync(buildPaths.packedNodeAddons, { recursive: true })
+      await executePreparation([
+        '--dir',
+        nodeAddonDirectory,
+        'pack',
+        '--pack-destination',
+        buildPaths.packedNodeAddons,
+      ], buildEnv, REPOSITORY_ROOT)
+    }
   }
   const prepareRuntime = () => executePreparation(
     ['run', 'prepare:runtime', ...(signPrimaryRuntime ? ['--defer-primary-runtime-smoke'] : [])], downloadEnv)

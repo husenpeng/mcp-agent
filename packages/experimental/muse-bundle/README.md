@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-Give agents memory of stated preferences, decisions, and facts about the person across sessions: profile memories in every workspace and workspace memories in one project directory, owned by the signed-in account where the Host names accounts. Keep long goals from repeating failed calls. The layer inserts three Host rows: the memory service, its tools and `/memory` command, and goal focus. Web and Desktop ship it switched off and leave it out of the default plugin list. It adds three tool schemas to every request and asks for no approval until a profile configures `approvalTools`.
+Give agents memory of the person across sessions: profile memories in every workspace and workspace memories in one project directory, owned by the signed-in account where the Host names accounts. Keep long goals from repeating failed calls, and show a daily recap with unfinished-task reminders. The layer inserts four Host rows: memory and its tools, goal focus, and daily insights with a notice and right-Sidebar page. Web and Desktop ship it off and omit it from the default list. It adds three tool schemas per request and asks before tools when a profile sets `approvalTools`; insights adds no model tool.
 
 ## Table of Contents
 
@@ -27,9 +27,9 @@ Give agents memory of stated preferences, decisions, and facts about the person 
 
 ### Install into a profile
 
-In **Plugins → Add plugin**, enter `@tomato/experimental-muse-bundle`, choose **Install**, then **Enable now**. TOMATO uses the shipped copy without downloading another one. Alternatively, add the name to `tomato.profile.bundles` in the target [profile](../../boot/app-boot/README.md#profiles)'s `package.json`. With HMR enabled the selection applies live; otherwise restart the application. Switching it off removes its layer; saved memories stay in storage.
+In **Plugins**, open the experimental-bundle list and switch on **Memory and goal focus**. TOMATO uses the shipped copy without downloading another one. Alternatively, add the name to `tomato.profile.bundles` in the target [profile](../../boot/app-boot/README.md#profiles)'s `package.json`. With HMR enabled the selection applies live; otherwise restart the application. Switching it off removes its layer; saved memories stay in storage.
 
-The rows need the base composition's storage, goal, approval, and command services, which every shipped Web and Desktop profile mounts.
+The rows need the base composition's storage, goal, approval, command, session-query, and LLM services, which every shipped Web and Desktop profile mounts. The optional timer service drives the insights background runs.
 
 ### What you get
 
@@ -38,6 +38,7 @@ The rows need the base composition's storage, goal, approval, and command servic
 | `optional-memory` | [`@tomato/experimental-memory`](../memory/README.md) | `ctx.memory` over the `tomato_memory` storage domain, scoped by owner, then by profile or workspace |
 | `optional-tool-memory` | [`@tomato/experimental-tool-memory`](../tool-memory/README.md) | `memory_search` with query expansion, `memory_write`, `memory_forget`, `/memory`, profile and pinned-memory injection |
 | `optional-focus` | [`@tomato/experimental-focus`](../focus/README.md) | Goal-round failure ledger, repeated-failure reminders, optional per-tool approval |
+| `optional-muse-insights` | [`@tomato/experimental-muse-insights`](../muse-insights/README.md) | Daily recap service, unfinished-task analysis, one frame-wide notice, and one right-Sidebar page |
 
 To ask before costly tools, override the focus row in the profile's `cordis.patch.yml`:
 
@@ -47,6 +48,8 @@ To ask before costly tools, override the focus row in the profile's `cordis.patc
     approvalTools: ['mcp__hicreator__*']
 ```
 
+The insights row accepts its own bounds and an optional explicit recap route; the defaults in [`@tomato/experimental-muse-insights`](../muse-insights/README.md#configuration) need no override.
+
 -----
 
 <a id="understand-the-implementation"></a>
@@ -55,7 +58,7 @@ To ask before costly tools, override the focus row in the profile's `cordis.patc
 <details>
 <summary>Implementation details — click to expand</summary>
 
-[`cordis.patch.yml`](cordis.patch.yml) inserts the three rows at the Host level, so their tools register in the global tool layer and every preset, including minimal, receives them. Later profile patches override the rows by id. The [profile composer](../../boot/app-boot/README.md) owns patch ordering and errors.
+[`cordis.patch.yml`](cordis.patch.yml) inserts the four rows at the Host level, so their tools register in the global tool layer and every preset, including minimal, receives them. The insights row loads its browser half through the same package. Later profile patches override the rows by id. The [profile composer](../../boot/app-boot/README.md) owns patch ordering and errors.
 
 </details>
 
@@ -64,24 +67,25 @@ To ask before costly tools, override the focus row in the profile's `cordis.patc
 <a id="further-exploration"></a>
 ## Further Exploration
 
-[Memory service](../memory/README.md) · [Memory tools](../tool-memory/README.md) · [Goal focus](../focus/README.md)
+[Memory service](../memory/README.md) · [Memory tools](../tool-memory/README.md) · [Goal focus](../focus/README.md) · [Muse insights](../muse-insights/README.md)
 
 -----
 
 <a id="model-experience"></a>
 ## Model Experience
 
-Indirectly, through the [memory tools](../tool-memory/README.md) and [goal focus](../focus/README.md), which own every tool, result, and injected context.
+Indirectly, through the memory tools, goal focus, and the insights daily-recap request, which own every tool, result, injected context, and auxiliary request.
 
 #### KV Cache effect
 
-The layer adds no request content directly. Switching it on or off changes the tool list of live Sessions, which invalidates their cached request prefix once.
+The layer adds no content to conversation requests. The insights row dispatches one auxiliary daily-recap request outside every conversation, documented by [its package](../muse-insights/README.md#model-experience). Switching the layer on or off changes the tool list of live Sessions, which invalidates their cached request prefix once.
 
 ## Known Limitations and Deferred Work
 
 <a id="known-limitations-and-deferred-work"></a>
 
 - Memory is scoped to one project directory on one Host; it does not follow a signed-in account or another device.
+- A daily recap reads only Sessions created inside its lookback window, and its notices are browser-local.
 
 -----
 

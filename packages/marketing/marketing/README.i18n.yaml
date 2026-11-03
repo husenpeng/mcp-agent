@@ -1,0 +1,52 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/marketing/marketing/README.md
+/:
+  en: b3ac0ecd2f417fe5
+  zh: b54bc26c989b33ff
+/tomato-marketing:
+  en: 7df863d8c84c0675
+  zh: 2ed4c9ca4b96dad7
+/tomato-marketing/summary:
+  en: 5f724b4b479610e1
+  zh: 87b5d4375ae104ff
+/tomato-marketing/table-of-contents:
+  en: 4d5ec89f7a524c33
+  zh: d191645acbe3fb63
+/tomato-marketing/use-this-package:
+  en: 31062b9002069dd7
+  zh: f022962a7bf42698
+/tomato-marketing/use-this-package/credentials:
+  en: 9878a2a42b5b1a86
+  zh: 2338d0dfeb037e6f
+/tomato-marketing/use-this-package/failure-behavior:
+  en: ad6db8395d9a5057
+  zh: 919ca9b0c0d5629c
+/tomato-marketing/understand-the-implementation:
+  en: ad04a056d857dd95
+  zh: d0b5ecd37e923858
+/tomato-marketing/further-exploration:
+  en: 6a451ef564fd49e8
+  zh: 84517e1a4e9a3526
+/tomato-marketing/model-experience:
+  en: 215e7ba838619b7b
+  zh: e61c78b7d37628ed
+/tomato-marketing/model-experience/provider-tools:
+  en: c11749cc7bf1452b
+  zh: f9b203ce6ab3abdd
+/tomato-marketing/model-experience/provider-tools/what-the-model-sees:
+  en: 36c76e91a4ea5f1b
+  zh: 74ffd9e44bb8fb6c
+/tomato-marketing/model-experience/provider-tools/token-effect:
+  en: 64bb73ba241722e9
+  zh: bba5756add253d6b
+/tomato-marketing/model-experience/provider-tools/kv-cache-effect:
+  en: 38f3a3c5547870be
+  zh: 28ca5a10578c592d
+/tomato-marketing/known-limitations-and-deferred-work:
+  en: d14f5b5cf06594e4
+  zh: 33ded6f88cf389a9
+/tomato-marketing/known-limitations-and-deferred-work/dev-note:
+  en: 05c1ddd47efd2c44
+  zh: f32a97c6dd9603d2

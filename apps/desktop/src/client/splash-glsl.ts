@@ -797,17 +797,41 @@ void main() {
 `
 
 /**
+ * Surfaces `SOLID_FRAGMENT_GLSL` draws, selected by the `uSurface` uniform. `plain` keeps the material's albedo and
+ * emission; the others add their surface detail. One program draws every surface, so the splash compiles one variant
+ * instead of eight.
+ */
+export const SOLID_SURFACE = {
+  plain: 0,
+  masonry: 1,
+  steel: 2,
+  fabric: 3,
+  painted: 4,
+  vending: 5,
+  lantern: 6,
+} as const
+
+/** A surface kind from `SOLID_SURFACE`. */
+export type SolidSurface = keyof typeof SOLID_SURFACE
+
+const SOLID_SURFACE_GLSL = Object.entries(SOLID_SURFACE)
+  .map(([name, value]) => `const int SURFACE_${name.toUpperCase()} = ${value};`)
+  .join('\n')
+
+/**
  * Props lit by city glow, the avenue lamps, and the mark, with a sky and lamp sheen and a uniform emissive term.
- * `BEVEL` rounds box edges within 3 cm; one surface define adds its texture: `MASONRY` mottled concrete with rain
- * streaks and wet tops, `STEEL` painted steel with rust blooms and worn edges, `FABRIC` striped awning canvas,
- * `PAINTED` glossy enamel. `VENDING` replaces the emission with a vending machine's lit front, and `LANTERN` with a
- * ribbed paper lantern between dark caps.
+ * `BEVEL` rounds box edges within 3 cm; `uSurface` then adds its texture: `SURFACE_MASONRY` mottled concrete with rain
+ * streaks and wet tops, `SURFACE_STEEL` painted steel with rust blooms and worn edges, `SURFACE_FABRIC` striped awning
+ * canvas, `SURFACE_PAINTED` glossy enamel. `SURFACE_VENDING` replaces the emission with a vending machine's lit front,
+ * and `SURFACE_LANTERN` with a ribbed paper lantern between dark caps.
  */
 export const SOLID_FRAGMENT_GLSL = /* glsl */ `
 ${CITY_COMMON_GLSL}
 uniform vec3 uAlbedo;
 uniform vec3 uEmissive;
 uniform float uSheen;
+uniform int uSurface;
+${SOLID_SURFACE_GLSL}
 varying vec3 vWorld;
 varying vec3 vNormal;
 varying vec3 vTint;
@@ -864,30 +888,32 @@ void main() {
   vec3 albedo = uAlbedo * vTint;
   float sheen = uSheen;
   vec3 emissive = uEmissive;
-  #if defined(MASONRY)
-  float mottle = fbm(coord * 2.3, 3);
-  float streaks = facing.y < 0.5 ? smoothstep(0.45, 0.8, valueNoise(vec2(coord.x * 5.0, coord.y * 0.35))) : 0.0;
-  albedo *= (0.72 + 0.56 * mottle) * (1.12 - 0.45 * streaks) * (1.0 + 0.6 * edge);
-  sheen += 0.25 * step(0.7, normal.y);
-  #elif defined(STEEL)
-  float rust = smoothstep(0.72, 0.9, valueNoise(coord * 3.1 + 7.0)) * (1.0 - 0.5 * smoothstep(0.0, 3.0, vWorld.y));
-  albedo = mix(albedo * (0.85 + 0.3 * valueNoise(coord * 7.0)), vec3(0.11, 0.045, 0.02), 0.7 * rust) * (1.0 + 1.2 * edge);
-  #elif defined(FABRIC)
-  float stripe = step(0.5, fract(metric.z / 0.36 + 0.25));
-  albedo = mix(albedo, vec3(0.42, 0.4, 0.36), 0.85 * stripe) * (0.9 + 0.2 * valueNoise(coord * 9.0));
-  #elif defined(PAINTED)
-  albedo *= 0.85 + 0.3 * valueNoise(coord * 11.0);
+  if (uSurface == SURFACE_MASONRY) {
+    float mottle = fbm(coord * 2.3, 3);
+    float streaks = facing.y < 0.5 ? smoothstep(0.45, 0.8, valueNoise(vec2(coord.x * 5.0, coord.y * 0.35))) : 0.0;
+    albedo *= (0.72 + 0.56 * mottle) * (1.12 - 0.45 * streaks) * (1.0 + 0.6 * edge);
+    sheen += 0.25 * step(0.7, normal.y);
+  } else if (uSurface == SURFACE_STEEL) {
+    float rust = smoothstep(0.72, 0.9, valueNoise(coord * 3.1 + 7.0)) * (1.0 - 0.5 * smoothstep(0.0, 3.0, vWorld.y));
+    albedo = mix(albedo * (0.85 + 0.3 * valueNoise(coord * 7.0)), vec3(0.11, 0.045, 0.02), 0.7 * rust) * (1.0 + 1.2 * edge);
+  } else if (uSurface == SURFACE_FABRIC) {
+    float stripe = step(0.5, fract(metric.z / 0.36 + 0.25));
+    albedo = mix(albedo, vec3(0.42, 0.4, 0.36), 0.85 * stripe) * (0.9 + 0.2 * valueNoise(coord * 9.0));
+  } else if (uSurface == SURFACE_PAINTED) {
+    albedo *= 0.85 + 0.3 * valueNoise(coord * 11.0);
+  }
+  #ifdef BEVEL
+  if (uSurface == SURFACE_VENDING) {
+    emissive = facing.y < 0.5 && abs(vFace.x) > 0.5 ? vendingFront(metric.zy * vec2(-sign(vFace.x), 1.0), vCentre.z) : vec3(0.014);
+  }
   #endif
-  #if defined(VENDING) && defined(BEVEL)
-  emissive = facing.y < 0.5 && abs(vFace.x) > 0.5 ? vendingFront(metric.zy * vec2(-sign(vFace.x), 1.0), vCentre.z) : vec3(0.014);
-  #endif
-  #ifdef LANTERN
-  float around = atan(vLocal.z, vLocal.x + 1e-6) * 5.0 / 3.14159265;
-  float ribs = gridLine(around, 1.0, 0.06, max(fwidth(around), 1e-4));
-  float caps = smoothstep(0.15, 0.165, abs(vLocal.y));
-  emissive = uEmissive * (0.75 + 0.25 * (1.0 - abs(vLocal.y) / 0.2)) * (1.0 - 0.6 * ribs) * (1.0 - caps);
-  albedo = mix(albedo, vec3(0.3, 0.16, 0.03), caps);
-  #endif
+  if (uSurface == SURFACE_LANTERN) {
+    float around = atan(vLocal.z, vLocal.x + 1e-6) * 5.0 / 3.14159265;
+    float ribs = gridLine(around, 1.0, 0.06, max(fwidth(around), 1e-4));
+    float caps = smoothstep(0.15, 0.165, abs(vLocal.y));
+    emissive = uEmissive * (0.75 + 0.25 * (1.0 - abs(vLocal.y) / 0.2)) * (1.0 - 0.6 * ribs) * (1.0 - caps);
+    albedo = mix(albedo, vec3(0.3, 0.16, 0.03), caps);
+  }
   vec3 view = normalize(vWorld - cameraPosition);
   float cosine = clamp(abs(dot(view, normal)), 0.0, 1.0);
   float fresnel = 0.04 + 0.96 * pow(1.0 - cosine, 5.0);

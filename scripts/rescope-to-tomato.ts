@@ -100,7 +100,7 @@ const FULL_NAME_SPECIAL: ReadonlyArray<readonly [string, string]> = [
 
 const EXTENSIONS = [
   '.ts', '.tsx', '.mts', '.cts', '.js', '.mjs', '.cjs', '.json', '.jsonl', '.yml', '.yaml',
-  '.md', '.tpl', '.ps1', '.sh', '.py', '.cmd', '.bat', '.html', '.css',
+  '.md', '.tpl', '.ps1', '.sh', '.py', '.cmd', '.bat', '.nsh', '.nsi', '.html', '.css',
   '.txt', '.toml', '.env', '.example', '.c', '.h', '.snap', '.patch',
 ] as const
 

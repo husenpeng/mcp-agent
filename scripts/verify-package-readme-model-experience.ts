@@ -52,6 +52,8 @@ const SENTENCE_MODEL_EXPERIENCE: Readonly<Record<string, SentenceContract>> = {
   'packages/experimental/client-ui-cot-translation': { kind: 'indirect', reason: 'The translator owns optional paid queries; normal Session activation delegates startup context to the preset.' },
   'packages/experimental/cot-translation-bundle': { kind: 'indirect', reason: 'The GUI consumer delegates paid query prompts to the translator and normal activation context to the Session preset.' },
   'packages/client/product-analytics': { kind: 'none', reason: 'Desktop analytics observes selected interactions without contributing model context or Session events.' },
+  'packages/api/robot-controller': { kind: 'none', reason: 'Transports registry snapshots and browser control calls; the runtime package assembles the model context of a robot run.' },
+  'packages/experimental/robot-remote': { kind: 'none', reason: 'Mounts browser Remote descriptors for the optional robot bundle; it registers nothing model-facing.' },
   'packages/tomato/brand': { kind: 'none', reason: 'The package fills sidebar and hero brand slots with presentation-only occupants and registers nothing model-facing.' },
   'packages/tomato/account': { kind: 'none', reason: 'The account surface presents auth_service state and issues browser login commands without registering model context.' },
   'packages/tomato/gateway': { kind: 'none', reason: 'The gateway carries browser authentication and service forwarding; model requests stay between the Host and provider.' },
@@ -79,6 +81,8 @@ const SENTENCE_MODEL_EXPERIENCE: Readonly<Record<string, SentenceContract>> = {
   'packages/browser-use/browser-use': { kind: 'none', reason: 'The registry only reserves a provider name; providers own browser tools and Session resources.' },
   'packages/experimental/browser-use-runtime': { kind: 'indirect', reason: 'Browser providers call the library to own resources and expose upstream MCP tools.' },
   'packages/computer-use/computer-use': { kind: 'none', reason: 'The registry only reserves provider names; providers own all model-facing tools and guidance.' },
+  'packages/experimental/robot': { kind: 'none', reason: 'The service definition declares types and an abstract interface; installed providers own every model request.' },
+  'packages/experimental/robot-local': { kind: 'none', reason: 'The storage-backed provider registers no prompt, tool, or model context; consumers own every model request.' },
   'packages/document/office-to-pdf': { kind: 'none', reason: 'The provider returns PDF bytes without constructing model input.' },
 
   'packages/credentials/deepseek-account': { kind: 'none', reason: 'Account authorization registers no model context or tools; credentials affect HTTP authentication only.' },
@@ -163,6 +167,7 @@ const SENTENCE_MODEL_EXPERIENCE: Readonly<Record<string, SentenceContract>> = {
   'packages/client/ui-settings-agent-loop': { kind: 'none', reason: 'Browser-side settings surface; registers no model surface.' },
   'packages/client/ui-settings-subagent': { kind: 'none', reason: 'Browser-side settings surface; registers no model surface.' },
   'packages/client/ui-settings-web-search': { kind: 'none', reason: 'Browser-side settings surface; registers no model surface.' },
+  'packages/client/ui-settings-marketing': { kind: 'none', reason: 'Browser-side settings surface; registers no model surface.' },
   'packages/client/ui-plan': { kind: 'indirect', reason: 'The chip dispatches /plan off; @tomato/plan-mode owns the model-visible policy, exit tool, and logged state.' },
   'packages/client/ui-user-questions': { kind: 'indirect', reason: 'The package mounts @tomato/tool-ask-user; that tool owns the model-visible schema and answer rendering.' },
   'packages/client/ui-trajectory': { kind: 'none', reason: 'Browser-side UI plugin layer; registers nothing model-facing.' },
@@ -265,6 +270,7 @@ const SENTENCE_MODEL_EXPERIENCE: Readonly<Record<string, SentenceContract>> = {
   'packages/web/web': { kind: 'indirect', reason: 'The provider registry delegates model rendering to @tomato/tool-web.' },
   'packages/web/web-fetch-http': { kind: 'indirect', reason: 'The provider backend delegates model rendering to @tomato/tool-web.' },
   'packages/web/web-search-exa': { kind: 'indirect', reason: 'The provider backend delegates model rendering to @tomato/tool-web.' },
+  'packages/web/web-search-company': { kind: 'indirect', reason: 'The provider returns seam sources and Web error codes; @tomato/tool-web owns every model-visible line and prompt text.' },
   'packages/workflow/workflow': { kind: 'indirect', reason: 'The service delegates parent and child model rendering to its consumer and engine.' },
 }
 

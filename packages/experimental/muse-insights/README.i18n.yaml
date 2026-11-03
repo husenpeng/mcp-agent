@@ -1,0 +1,58 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/muse-insights/README.md
+/:
+  en: d3aab7ab06b5bcf9
+  zh: 53d115b1ca3f86fc
+/tomato-experimental-muse-insights:
+  en: 532fbfde65e08597
+  zh: 8c8034e69874403c
+/tomato-experimental-muse-insights/summary:
+  en: d2d68fbbcf4d5884
+  zh: 5612c833a8e9371e
+/tomato-experimental-muse-insights/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 2253022f777422f6
+/tomato-experimental-muse-insights/use-this-package:
+  en: 373b2ce622f48b93
+  zh: 1a4450fe9229ba21
+/tomato-experimental-muse-insights/use-this-package/configuration:
+  en: 3ada1c39b7455d3c
+  zh: c4a88b1157f61d5a
+/tomato-experimental-muse-insights/use-this-package/what-it-reads:
+  en: 7f62fa3991b396a0
+  zh: 4e6832a3432f1da2
+/tomato-experimental-muse-insights/use-this-package/owners-and-retention:
+  en: 5fb048faf7207ce9
+  zh: 147b1bb3d3a8be04
+/tomato-experimental-muse-insights/use-this-package/failures:
+  en: 2342035727900cd0
+  zh: 5c6660e0dde65e20
+/tomato-experimental-muse-insights/understand-the-implementation:
+  en: bcba84480cc56b33
+  zh: 87ac9d41ecaf9690
+/tomato-experimental-muse-insights/further-exploration:
+  en: d650a9957ed44b69
+  zh: 603f5dd39188a95d
+/tomato-experimental-muse-insights/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/tomato-experimental-muse-insights/model-experience/auxiliary-daily-recap-request:
+  en: 636d595416f5a60f
+  zh: 0ec8b989e921ba24
+/tomato-experimental-muse-insights/model-experience/auxiliary-daily-recap-request/what-the-model-sees:
+  en: 0f8e955f20ccaed0
+  zh: f60822535769cc91
+/tomato-experimental-muse-insights/model-experience/auxiliary-daily-recap-request/token-effect:
+  en: 659e4b125f136e74
+  zh: 583072f56db07aa6
+/tomato-experimental-muse-insights/model-experience/auxiliary-daily-recap-request/kv-cache-effect:
+  en: 06af9ca1a60e0002
+  zh: 854b38e108eb387b
+/tomato-experimental-muse-insights/known-limitations-and-deferred-work:
+  en: bb11436e588ac6b4
+  zh: dc64c7822d814d17
+/tomato-experimental-muse-insights/known-limitations-and-deferred-work/dev-note:
+  en: 279d01435256cd2a
+  zh: 6df6019931844fb2

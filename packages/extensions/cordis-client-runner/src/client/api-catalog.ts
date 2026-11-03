@@ -545,7 +545,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'ConnectionHandle',
-    declaration: 'export interface ConnectionHandle {\n    readonly interactions: ConnectionInteractions;\n    readonly isLoopback: boolean;\n    readonly generation: ConnectionGenerationState;\n    readonly state: ConnectionStateSource;\n    readonly rpc: ClientConnectionRpc;\n    openWebSocket(path: string): ConnectionWebSocket;\n    reconnect(): void;\n    registerGenerationSource(source: ConnectionGenerationSource): () => void;\n    start(sinks: ConnectionSinks, config?: ConnectionRecoveryConfig): ConnectionLoop;\n}',
+    declaration: 'export interface ConnectionHandle {\n    readonly interactions: ConnectionInteractions;\n    readonly isLoopback: boolean;\n    readonly generation: ConnectionGenerationState;\n    readonly state: ConnectionStateSource;\n    readonly rpc: ClientConnectionRpc;\n    openWebSocket(path: string): ConnectionWebSocket;\n    reconnect(): void;\n    observe(observer: ConnectionObserver): () => void;\n    registerGenerationSource(source: ConnectionGenerationSource): () => void;\n    start(sinks: ConnectionSinks, config?: ConnectionRecoveryConfig): ConnectionLoop;\n}',
   },
   {
     name: 'ConnectionHostInfo',
@@ -560,12 +560,24 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface ConnectionLoop {\n    stop(): void;\n}',
   },
   {
+    name: 'ConnectionObservation',
+    declaration: 'export type ConnectionObservation = ConnectionRpcObservation | ConnectionStreamObservation;',
+  },
+  {
+    name: 'ConnectionObserver',
+    declaration: 'export type ConnectionObserver = (observation: ConnectionObservation) => void;',
+  },
+  {
     name: 'ConnectionRecoveryConfig',
     declaration: 'export interface ConnectionRecoveryConfig {\n    backoffBaseMs?: number;\n    backoffFactor?: number;\n    backoffMaxMs?: number;\n    generationReadyWarnMs?: number;\n    generationReadyTimeoutMs?: number;\n}',
   },
   {
     name: 'ConnectionRpcFailure',
     declaration: 'export interface ConnectionRpcFailure {\n    readonly code: string;\n    readonly message: string;\n    readonly details: object;\n}',
+  },
+  {
+    name: 'ConnectionRpcObservation',
+    declaration: 'export interface ConnectionRpcObservation {\n    readonly kind: \'rpc\';\n    readonly channel: string;\n    readonly endpoint: string;\n    readonly startedAt: number;\n    readonly durationMs: number;\n    readonly request: unknown;\n    readonly response?: ConnectionRpcResult<unknown>;\n    readonly httpStatus?: number;\n    readonly outcome: \'ok\' | \'error\' | \'cancelled\';\n}',
   },
   {
     name: 'ConnectionRpcResult',
@@ -582,6 +594,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'ConnectionStateSource',
     declaration: 'export interface ConnectionStateSource {\n    getSnapshot(): ConnectionState | undefined;\n    subscribe(listener: () => void): () => void;\n}',
+  },
+  {
+    name: 'ConnectionStreamObservation',
+    declaration: 'export interface ConnectionStreamObservation {\n    readonly kind: \'stream\';\n    readonly path: string;\n    readonly direction: \'in\' | \'out\';\n    readonly at: number;\n    readonly frame: unknown;\n}',
   },
   {
     name: 'ConnectionWebSocket',

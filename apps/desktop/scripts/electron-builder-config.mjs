@@ -145,13 +145,16 @@ export function createElectronBuilderConfig(
     },
     files: [
       'lib/main.js',
+      'lib/splash/**/*',
       'lib/welcome/**/*',
       'lib/preload-app.cjs',
       'lib/preload-mandatory.cjs',
       'lib/preload-platform-account.cjs',
+      'lib/preload-splash.cjs',
       'lib/preload-update-dialog.cjs',
       'lib/preload-welcome.cjs',
       'renderer/**/*',
+      '!renderer/.claude/**',
       'package.json',
       '!node_modules/**/*.{js,cjs,mjs,ts,cts,mts,css}.map',
       '!node_modules/**/*.tsbuildinfo',
@@ -162,6 +165,9 @@ export function createElectronBuilderConfig(
     asarUnpack: unpack,
     extraResources: [
       { from: buildPaths.runtime, to: 'runtime' },
+      // Release-owned profile overlay: packaged applications keep the GUI orientation and drop the
+      // implementation-checkout context, whose runtime ships no documentation or source.
+      { from: fileURLToPath(new URL('../resources/release-profile.patch.yml', import.meta.url)), to: 'release-profile.patch.yml' },
       { from: fileURLToPath(new URL('../resources/icon-windows.png', import.meta.url)), to: 'icon.png' },
       // Windows tray bitmaps; macOS keeps the Dock and ships no menu bar icon.
       ...(packagesWindows ? [{ from: fileURLToPath(new URL('../resources/tray-windows.ico', import.meta.url)), to: 'tray.ico' }] : []),
@@ -181,7 +187,7 @@ export function createElectronBuilderConfig(
       entitlements: fileURLToPath(new URL('./macos-entitlements.plist', import.meta.url)),
       entitlementsInherit: fileURLToPath(new URL('./macos-entitlements.plist', import.meta.url)),
       // Prepared runtime files retain their signatures; PAK resources are sealed by their enclosing bundle.
-      signIgnore: ['/Contents/Resources/app\\.asar\\.unpacked/tomato(?:/|$)', '/Contents/Resources/runtime/primary-runtime(?:/|$)', '\\.pak$'],
+      signIgnore: ['/Contents/Resources/app\\.asar\\.unpacked/tomato(?:/|$)', '/Contents/Resources/runtime/primary-runtime(?:/|$)', '/Contents/Resources/runtime/playwright-browsers(?:/|$)', '\\.pak$'],
       notarize: !unsigned && !skipNotarization,
       target: unsigned ? ['dmg'] : ['dmg', 'zip'],
     },

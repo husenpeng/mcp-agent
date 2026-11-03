@@ -25,7 +25,7 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
-随附的 Web bundle 以 `harness-dev-context` 行挂载此插件。不希望 agent 得知 harness checkout 或 GUI URL 时，在 profile patch 中禁用该行。插件不接受配置，只在每个注入服务都存在时激活：`systemPrompt`、`sessionProjections`，以及 Web 运行时的 `webApp` 服务，因此 `--help` 与非 Web 组合永远不会挂载它。
+随附的 Web bundle 以 `harness-dev-context` 行挂载此插件。不希望 agent 得知这两个值时，在 profile patch 中禁用该行；设置 `sourceContext: false` 则保留 Web GUI 定位（含 URL），仅去掉 checkout 段落与取值。打包的 Desktop 发行版会设置 `sourceContext: false`：其运行时不携带文档或源码，文件工具也拒绝安装树，因此指名 checkout 只会诱导发行版本身拒绝的检查。插件只在每个注入服务都存在时激活：`systemPrompt`、`sessionProjections`，以及 Web 运行时的 `webApp` 服务，因此 `--help` 与非 Web 组合永远不会挂载它。
 
 ### 模型得到什么
 

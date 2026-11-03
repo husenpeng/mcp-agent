@@ -8,6 +8,12 @@
 
 *.pdf binary
 
+# Recorded probe tables and the vendored splash bundles keep their authored bytes:
+# empty trailing TSV fields and upstream shader indentation are content, not
+# formatting, so `git diff --check` must not demand they be stripped.
+.relay-thinking-test/**/*.tsv -whitespace
+apps/desktop/splash-versions/** -whitespace
+
 # The persistence catalog is the readable projection of these generated schemas.
 docs/persistence-schema.json linguist-generated=true
 docs/persistence-changes/*.schema.json linguist-generated=true

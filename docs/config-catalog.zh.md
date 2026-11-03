@@ -1185,6 +1185,49 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-memory -->
 
+<!-- BEGIN GENERATED config-catalog:@tomato/experimental-muse-insights -->
+<a id="tomatoexperimental-muse-insights"></a>
+
+## `@tomato/experimental-muse-insights`
+
+- `inject`: `sessionQuery` · `storageDomain` · `llm`
+- `source`: [`packages/experimental/muse-insights/src/index.ts:45`](../packages/experimental/muse-insights/src/index.ts)
+
+```ts config-catalog
+/** Generation and retention policy for the capability. */
+export interface Config {
+  /** Minutes between daily-recap attempts; omission defaults to 30. */
+  recapIntervalMinutes?: number
+  /** Minutes between unfinished-task analyses; omission defaults to 15. */
+  taskIntervalMinutes?: number
+  /** Seconds after activation before the first background attempt; omission defaults to 5. */
+  initialDelaySeconds?: number
+  /** Local days of Session creation retained as recap and task evidence; omission defaults to 7. */
+  lookbackDays?: number
+  /** Sessions read per recap or analysis, newest first; omission defaults to 20. */
+  maxSessions?: number
+  /** UTF-16 characters kept from one message; omission defaults to 700. */
+  maxMessageChars?: number
+  /** Messages retained per Session; omission defaults to 24. */
+  maxMessagesPerSession?: number
+  /** Maximum UTF-8 bytes of the prepared recap input; omission defaults to 48 000. */
+  maxInputBytes?: number
+  /** Output-token cap for one recap request; omission defaults to 800. */
+  maxOutputTokens?: number
+  /** End-to-end recap request deadline in milliseconds; omission defaults to 60 000. */
+  timeoutMs?: number
+  /** Retained unfinished tasks; omission defaults to 30. */
+  maxTasks?: number
+  /** Retained local days of recaps per owner; omission defaults to 30. */
+  maxRecapDays?: number
+  /** Explicit recap provider route; omission follows the latest Session request route. */
+  provider?: string
+  /** Explicit recap model id; always paired with `provider`. */
+  model?: string
+}
+```
+<!-- END GENERATED config-catalog:@tomato/experimental-muse-insights -->
+
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-ptc-runtime-python -->
 <a id="tomatoexperimental-ptc-runtime-python"></a>
 
@@ -1551,7 +1594,7 @@ export interface Config {
 
 - `inject`: `sandboxPolicy`
 - `refs`: [`LocalConfig`](#tomatofs-local)
-- `source`: [`packages/fs/fs-sandbox/src/index.ts:45`](../packages/fs/fs-sandbox/src/index.ts)
+- `source`: [`packages/fs/fs-sandbox/src/index.ts:50`](../packages/fs/fs-sandbox/src/index.ts)
 
 ```ts config-catalog
 /**
@@ -1629,6 +1672,32 @@ export interface Config {
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/goal -->
+
+<!-- BEGIN GENERATED config-catalog:@tomato/harness-dev-context -->
+<a id="tomatoharness-dev-context"></a>
+
+## `@tomato/harness-dev-context`
+
+- `inject`: `systemPrompt` · `sessionProjections` · `webApp`
+- `source`: [`packages/context/harness-dev-context/src/index.ts:37`](../packages/context/harness-dev-context/src/index.ts)
+
+```ts config-catalog
+/**
+ * Plugin config: whether the model learns where the harness implementation lives.
+ *
+ * A packaged release sets this `false`: its runtime ships no documentation or authored source, and the file
+ * tools refuse the installation tree, so naming the checkout would only invite inspection the release denies.
+ * The Web GUI orientation stays in both cases.
+ */
+export interface Config {
+  /**
+   * Include the checkout path and the guidance about inspecting it. Defaults to `true`; `false` leaves the
+   * Web GUI section and URL untouched.
+   */
+  sourceContext?: boolean
+}
+```
+<!-- END GENERATED config-catalog:@tomato/harness-dev-context -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/headless -->
 <a id="tomatoheadless"></a>
@@ -2379,6 +2448,52 @@ export interface LspLocalServerConfig {
 ```
 <!-- END GENERATED config-catalog:@tomato/lsp-stdio -->
 
+<!-- BEGIN GENERATED config-catalog:@tomato/marketing -->
+<a id="tomatomarketing"></a>
+
+## `@tomato/marketing`
+
+- `refs`: `Volatile` (`@tomato/cordis`)
+- `source`: [`packages/marketing/marketing/src/index.ts:32`](../packages/marketing/marketing/src/index.ts)
+
+```ts config-catalog
+/**
+ * Plugin config: the switches and credential references the Plugins page edits.
+ * Fields are flat because the settings form model addresses top-level names.
+ */
+export interface Config {
+  /** Mount the Google Ads server. */
+  googleAdsEnabled: Volatile<boolean>
+  /** Credential reference holding the Google Ads developer token. */
+  googleAdsDeveloperTokenEnv: Volatile<string>
+  /** Credential reference holding the service-account file path. */
+  googleAdsCredentialsFileEnv: Volatile<string>
+  /** Credential reference holding the login customer id, when one is used. */
+  googleAdsLoginCustomerIdEnv: Volatile<string>
+  /** Mount the Analytics server. */
+  googleAnalyticsEnabled: Volatile<boolean>
+  /** Credential reference holding the Analytics service-account file path. */
+  googleAnalyticsCredentialsFileEnv: Volatile<string>
+  /** Mount the Mosaic server serving Meta, Instagram, TikTok, YouTube, and X. */
+  mosaicEnabled: Volatile<boolean>
+  /** Credential reference holding the Meta access token. */
+  mosaicMetaTokenEnv: Volatile<string>
+  /** Credential reference holding the TikTok access token. */
+  mosaicTiktokTokenEnv: Volatile<string>
+  /** Credential reference holding the YouTube access token. */
+  mosaicYoutubeTokenEnv: Volatile<string>
+  /** Credential reference holding the X access token. */
+  mosaicXTokenEnv: Volatile<string>
+  /** Mount the Mailchimp server. */
+  mailchimpEnabled: Volatile<boolean>
+  /** Credential reference holding the Mailchimp API key. */
+  mailchimpApiKeyEnv: Volatile<string>
+  /** Credential reference holding the Mailchimp data-center prefix. */
+  mailchimpServerPrefixEnv: Volatile<string>
+}
+```
+<!-- END GENERATED config-catalog:@tomato/marketing -->
+
 <!-- BEGIN GENERATED config-catalog:@tomato/mcp-client -->
 <a id="tomatomcp-client"></a>
 
@@ -2902,7 +3017,7 @@ export interface Config {
 
 - `inject`: `sessionProjections`
 - `refs`: [`SandboxMode`](subsystems/sandbox.zh.md)
-- `source`: [`packages/sandbox/sandbox-policy/src/index.ts:94`](../packages/sandbox/sandbox-policy/src/index.ts)
+- `source`: [`packages/sandbox/sandbox-policy/src/index.ts:103`](../packages/sandbox/sandbox-policy/src/index.ts)
 
 ```ts config-catalog
 /**
@@ -2929,6 +3044,17 @@ export interface Config {
    * `read-only`.
    */
   additionalWritableRoots?: string[]
+  /**
+   * Physical absolute directories or archive files confined operations may not
+   * observe (default: none). A packaged application names the installation tree
+   * it runs from, so the model cannot read the shipped implementation back out
+   * of its own runtime. Unlike {@link additionalWritableRoots}, this stays
+   * closed under `danger-full-access`; filesystem backends refuse the read and
+   * kernel backends mask the root where their profile language can express it.
+   * Entries are execution-world paths validated here for absoluteness; the
+   * enforcing host resolves filesystem identity.
+   */
+  protectedReadRoots?: string[]
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/sandbox-policy -->
@@ -4437,7 +4563,7 @@ export interface Config {
 ## `@tomato/tool-web`
 
 - `inject`: `tools` · `web` · `systemPrompt`
-- `source`: [`packages/web/tool-web/src/index.ts:39`](../packages/web/tool-web/src/index.ts)
+- `source`: [`packages/web/tool-web/src/index.ts:46`](../packages/web/tool-web/src/index.ts)
 
 ```ts config-catalog
 /** Plugin config: which web tools to register, search bounds, per-tool budgets, and the fetch output cap. */
@@ -4450,8 +4576,14 @@ export interface Config {
   searchMaxResults?: number
   /** Upper bound on queries accepted by one `web_search` call. */
   searchMaxQueries?: number
-  /** Cap on each source summary in `web_search` output, in characters. Defaults to 800. */
+  /** Cap on each source summary or snippet in `web_search` output, in characters. Defaults to 800. */
   searchSummaryMaxChars?: number
+  /** Cap on the complete `web_search` text, in characters. Defaults to 4000. */
+  searchMaxOutputChars?: number
+  /** Cap on a provider answer within that text, in characters. Defaults to 800. */
+  searchAnswerMaxChars?: number
+  /** Most sources one host may contribute. Defaults to 2. */
+  searchMaxSourcesPerHost?: number
   /** Cooperative timeout budget (ms) for `web_fetch`. Defaults to 30000. */
   fetchTimeoutMs?: number
   /** Cooperative timeout budget (ms) for `web_search`. Defaults to 30000. */
@@ -4672,6 +4804,31 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@tomato/web-fetch-http -->
 
+<!-- BEGIN GENERATED config-catalog:@tomato/web-search-company -->
+<a id="tomatoweb-search-company"></a>
+
+## `@tomato/web-search-company`
+
+- `inject`: `web`
+- `source`: [`packages/web/web-search-company/src/index.ts:74`](../packages/web/web-search-company/src/index.ts)
+
+```ts config-catalog
+/** Plugin config (all optional — `apply` fills env-var and constant defaults). */
+export interface Config {
+  /** Gateway origin, such as `https://test.tomatoai.vip`. Falls back to `$TOMATO_SEARCH_GATEWAY_URL`. */
+  baseURL?: string
+  /** End-to-end budget for one request, in milliseconds. Defaults to 45 seconds. */
+  timeoutMs?: number
+  /** Default result bound when a request carries no `maxResults`. Omitted = gateway default. */
+  maxResults?: number
+  /** Per-result excerpt budget forwarded to the gateway, in characters. Defaults to 500. */
+  maxCharsPerResult?: number
+  /** Total excerpt budget forwarded to the gateway, in characters. Defaults to 3000. */
+  maxChars?: number
+}
+```
+<!-- END GENERATED config-catalog:@tomato/web-search-company -->
+
 <!-- BEGIN GENERATED config-catalog:@tomato/web-search-deepseek -->
 <a id="tomatoweb-search-deepseek"></a>
 
@@ -4858,6 +5015,7 @@ export interface Config {
 | `@tomato/api-account-controller` | `deepseekAccount` · `agents` | [`packages/api/account-controller/src/index.ts`](../packages/api/account-controller/src/index.ts) |
 | `@tomato/api-remote-access` | — | [`packages/api/remote-access/src/index.ts`](../packages/api/remote-access/src/index.ts) |
 | `@tomato/api-remotes` | `typertGateway` | [`packages/api/remotes/src/index.ts`](../packages/api/remotes/src/index.ts) |
+| `@tomato/api-robot-controller` | `robots` · `typert` | [`packages/api/robot-controller/src/index.ts`](../packages/api/robot-controller/src/index.ts) |
 | `@tomato/authorization` | `credentials` | [`packages/credentials/authorization/src/index.ts`](../packages/credentials/authorization/src/index.ts) |
 | `@tomato/brand` | — | [`packages/tomato/brand/src/index.ts`](../packages/tomato/brand/src/index.ts) |
 | `@tomato/browser-use` | — | [`packages/browser-use/browser-use/src/index.ts`](../packages/browser-use/browser-use/src/index.ts) |
@@ -4894,12 +5052,15 @@ export interface Config {
 | `@tomato/client-ui-plugin-recommendations` | — | [`packages/experimental/client-ui-plugin-recommendations/src/index.ts`](../packages/experimental/client-ui-plugin-recommendations/src/index.ts) |
 | `@tomato/client-ui-reference` | — | [`packages/client/ui-reference/src/index.ts`](../packages/client/ui-reference/src/index.ts) |
 | `@tomato/client-ui-renderer` | — | [`packages/client/ui-renderer/src/index.ts`](../packages/client/ui-renderer/src/index.ts) |
+| `@tomato/client-ui-robot` | — | [`packages/client/ui-robot/src/index.ts`](../packages/client/ui-robot/src/index.ts) |
 | `@tomato/client-ui-schedule` | — | [`packages/client/ui-schedule/src/index.ts`](../packages/client/ui-schedule/src/index.ts) |
 | `@tomato/client-ui-secret-mask` | — | [`packages/client/ui-secret-mask/src/index.ts`](../packages/client/ui-secret-mask/src/index.ts) |
 | `@tomato/client-ui-session` | — | [`packages/client/ui-session/src/index.ts`](../packages/client/ui-session/src/index.ts) |
 | `@tomato/client-ui-settings` | — | [`packages/client/ui-settings/src/index.ts`](../packages/client/ui-settings/src/index.ts) |
 | `@tomato/client-ui-settings-agent-loop` | — | [`packages/client/ui-settings-agent-loop/src/index.ts`](../packages/client/ui-settings-agent-loop/src/index.ts) |
+| `@tomato/client-ui-settings-developer` | — | [`packages/client/ui-settings-developer/src/index.ts`](../packages/client/ui-settings-developer/src/index.ts) |
 | `@tomato/client-ui-settings-general` | — | [`packages/client/ui-settings-general/src/index.ts`](../packages/client/ui-settings-general/src/index.ts) |
+| `@tomato/client-ui-settings-marketing` | — | [`packages/client/ui-settings-marketing/src/index.ts`](../packages/client/ui-settings-marketing/src/index.ts) |
 | `@tomato/client-ui-settings-plugin-inventory` | — | [`packages/client/ui-settings-plugin-inventory/src/index.ts`](../packages/client/ui-settings-plugin-inventory/src/index.ts) |
 | `@tomato/client-ui-settings-plugins` | — | [`packages/client/ui-settings-plugins/src/index.ts`](../packages/client/ui-settings-plugins/src/index.ts) |
 | `@tomato/client-ui-settings-session-log` | — | [`packages/client/ui-settings-session-log/src/index.ts`](../packages/client/ui-settings-session-log/src/index.ts) |
@@ -4937,12 +5098,17 @@ export interface Config {
 | `@tomato/experimental-client-ui-claude-code-mods` | — | [`packages/experimental/client-ui-claude-code-mods/src/index.ts`](../packages/experimental/client-ui-claude-code-mods/src/index.ts) |
 | `@tomato/experimental-client-ui-voice-input` | — | [`packages/experimental/client-ui-voice-input/src/index.ts`](../packages/experimental/client-ui-voice-input/src/index.ts) |
 | `@tomato/experimental-computer-use-cua-driver-native` | `computerUse` · `tools` · `systemPrompt` | [`packages/experimental/computer-use-cua-driver-native/src/index.ts`](../packages/experimental/computer-use-cua-driver-native/src/index.ts) |
+| `@tomato/experimental-robot-app` | `skills` | [`packages/experimental/robot-app/src/index.ts`](../packages/experimental/robot-app/src/index.ts) |
+| `@tomato/experimental-robot-local` | `storageDomain` | [`packages/experimental/robot-local/src/index.ts`](../packages/experimental/robot-local/src/index.ts) |
+| `@tomato/experimental-robot-remote` | — | [`packages/experimental/robot-remote/src/index.ts`](../packages/experimental/robot-remote/src/index.ts) |
+| `@tomato/experimental-robot-runtime` | `agentDefaultModel` · `agents` · `robots` · `sessionProjections` · `sessions` | [`packages/experimental/robot-runtime/src/index.ts`](../packages/experimental/robot-runtime/src/index.ts) |
+| `@tomato/experimental-robot-triggers` | `robots` | [`packages/experimental/robot-triggers/src/index.ts`](../packages/experimental/robot-triggers/src/index.ts) |
 | `@tomato/experimental-session-inspector` | — | [`packages/experimental/session-inspector/src/index.ts`](../packages/experimental/session-inspector/src/index.ts) |
+| `@tomato/experimental-tool-robot` | `agents` · `robots` · `tools` | [`packages/experimental/tool-robot/src/index.ts`](../packages/experimental/tool-robot/src/index.ts) |
 | `@tomato/experimental-tool-worktree` | `tools` · `worktrees` | [`packages/experimental/tool-worktree/src/index.ts`](../packages/experimental/tool-worktree/src/index.ts) |
 | `@tomato/fs-observation-policy` | — | [`packages/fs/fs-observation-policy/src/index.ts`](../packages/fs/fs-observation-policy/src/index.ts) |
 | `@tomato/fs-ssh` | `ssh` · `sandboxPolicy` | [`packages/ssh/fs-ssh/src/index.ts`](../packages/ssh/fs-ssh/src/index.ts) |
 | `@tomato/goal-round-driver` | `agents` · `goals` · `sessions` | [`packages/goal/goal-round-driver/src/index.ts`](../packages/goal/goal-round-driver/src/index.ts) |
-| `@tomato/harness-dev-context` | `systemPrompt` · `sessionProjections` · `webApp` | [`packages/context/harness-dev-context/src/index.ts`](../packages/context/harness-dev-context/src/index.ts) |
 | `@tomato/host-directory-picker-auto` | `webServer` · `connection` · `loader` | [`packages/host/directory-picker-auto/src/index.ts`](../packages/host/directory-picker-auto/src/index.ts) |
 | `@tomato/host-directory-picker-native` | — | [`packages/host/directory-picker-native/src/index.ts`](../packages/host/directory-picker-native/src/index.ts) |
 | `@tomato/host-plugin-inventory` | `loader` | [`packages/host/plugin-inventory/src/index.ts`](../packages/host/plugin-inventory/src/index.ts) |
@@ -4987,6 +5153,7 @@ export interface Config {
 | `@tomato/compaction` | `CompactionEngine` | — | [`packages/compaction/compaction/src/index.ts`](../packages/compaction/compaction/src/index.ts) |
 | `@tomato/credentials` | `CredentialProvider` | — | [`packages/credentials/credentials/src/index.ts`](../packages/credentials/credentials/src/index.ts) |
 | `@tomato/deepseek-account` | `DeepSeekAccount` | — | [`packages/credentials/deepseek-account/src/index.ts`](../packages/credentials/deepseek-account/src/index.ts) |
+| `@tomato/experimental-robot` | `Robots` | — | [`packages/experimental/robot/src/index.ts`](../packages/experimental/robot/src/index.ts) |
 | `@tomato/file-reference` | `FileReferenceService` | — | [`packages/context/file-reference/src/index.ts`](../packages/context/file-reference/src/index.ts) |
 | `@tomato/fs` | `FileSystem` | — | [`packages/fs/fs/src/index.ts`](../packages/fs/fs/src/index.ts) |
 | `@tomato/host-directory-picker` | `DirectoryPicker` | — | [`packages/host/directory-picker/src/index.ts`](../packages/host/directory-picker/src/index.ts) |
@@ -5048,6 +5215,7 @@ export interface Config {
 | `@tomato/llm-deepseek` | — | [`packages/llm/llm-deepseek/src/index.ts`](../packages/llm/llm-deepseek/src/index.ts) |
 | `@tomato/llm-mock-server` | — | [`packages/test-support/llm-mock-server/src/index.ts`](../packages/test-support/llm-mock-server/src/index.ts) |
 | `@tomato/loader-smoke` | — | [`packages/test-support/loader-smoke/src/index.ts`](../packages/test-support/loader-smoke/src/index.ts) |
+| `@tomato/marketing-app` | — | [`packages/bundle/marketing-app/src/index.ts`](../packages/bundle/marketing-app/src/index.ts) |
 | `@tomato/native-command` | — | [`packages/util/native-command/src/index.ts`](../packages/util/native-command/src/index.ts) |
 | `@tomato/official-bundles` | — | [`packages/util/official-bundles/src/index.ts`](../packages/util/official-bundles/src/index.ts) |
 | `@tomato/output-retention` | — | [`packages/util/output-retention/src/index.ts`](../packages/util/output-retention/src/index.ts) |

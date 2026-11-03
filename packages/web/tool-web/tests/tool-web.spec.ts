@@ -560,6 +560,99 @@ describe('tool-web execution through the real registry', () => {
     await fiber.dispose()
   })
 
+  it('caps a long vendor excerpt to the configured summary cap', async () => {
+    const longSnippet = `${'word '.repeat(400)}tail`
+    const { fiber, call } = await mountTools({
+      config: { search: true, fetch: false, searchSummaryMaxChars: 40 },
+      webConfig: { searchProvider: 'stub-search' },
+      search: searchProvider({ truncated: false, sources: [{ url: 'https://a.test', snippet: longSnippet }] }),
+    })
+    const out = await call('web_search', { queries: ['q'] })
+    expect(out.isError).toBe(false)
+    const source = (out.value as { sources: { snippet?: string }[] }).sources[0]
+    expect(source?.snippet).toHaveLength(40)
+    expect(source?.snippet?.endsWith('…')).toBe(true)
+    await fiber.dispose()
+  })
+
+  it('keeps at most the configured number of sources per host', async () => {
+    const result: WebSearchResult = {
+      truncated: false,
+      sources: [
+        { url: 'https://a.test/1' },
+        { url: 'https://a.test/2' },
+        { url: 'https://a.test/3' },
+        { url: 'https://b.test/1' },
+      ],
+    }
+    const { fiber, call } = await mountTools({
+      config: { search: true, fetch: false, searchMaxSourcesPerHost: 2 },
+      webConfig: { searchProvider: 'stub-search' },
+      search: searchProvider(result),
+    })
+    const out = await call('web_search', { queries: ['q'] })
+    expect(out.isError).toBe(false)
+    expect((out.value as { sources: { url: string }[] }).sources.map(source => source.url))
+      .toEqual(['https://a.test/1', 'https://a.test/2', 'https://b.test/1'])
+    expect((out.value as { truncated: boolean }).truncated).toBe(true)
+    await fiber.dispose()
+  })
+
+  it('keeps a source whose URL cannot be parsed instead of dropping it', async () => {
+    const { fiber, call } = await mountTools({
+      config: { search: true, fetch: false },
+      webConfig: { searchProvider: 'stub-search' },
+      search: searchProvider({ truncated: false, sources: [{ url: 'not-a-url' }, { url: 'https://a.test' }] }),
+    })
+    const out = await call('web_search', { queries: ['q'] })
+    expect((out.value as { sources: { url: string }[] }).sources.map(source => source.url))
+      .toEqual(['not-a-url', 'https://a.test'])
+    await fiber.dispose()
+  })
+
+  it('drops tail sources until the complete rendered text fits the output cap', async () => {
+    const sources = Array.from({ length: 5 }, (_, index) => ({
+      url: `https://site-${index}.test/page`,
+      snippet: `${'word '.repeat(60)}excerpt ${index}`,
+    }))
+    const { fiber, call } = await mountTools({
+      config: { search: true, fetch: false, searchSummaryMaxChars: 400, searchMaxOutputChars: 900 },
+      webConfig: { searchProvider: 'stub-search' },
+      search: searchProvider({ truncated: false, sources }),
+    })
+    const out = await call('web_search', { queries: ['q'] })
+    expect(out.isError).toBe(false)
+    const body = out.content.map(block => block.type === 'text' ? block.text : '').join('')
+    expect(body.length).toBeLessThanOrEqual(900)
+    expect((out.value as { truncated: boolean }).truncated).toBe(true)
+    await fiber.dispose()
+  })
+
+  it('caps a provider answer inside the complete-output cap', async () => {
+    const { fiber, call } = await mountTools({
+      config: { search: true, fetch: false, searchAnswerMaxChars: 100, searchMaxOutputChars: 4000 },
+      webConfig: { searchProvider: 'stub-search' },
+      search: searchProvider({ content: 'x'.repeat(1000), truncated: false, sources: [] }),
+    })
+    const out = await call('web_search', { queries: ['q'] })
+    expect(out.isError).toBe(false)
+    expect((out.value as { content?: string }).content).toHaveLength(100)
+    await fiber.dispose()
+  })
+
+  it('cuts an excerpt at a sentence boundary instead of mid-sentence', async () => {
+    const snippet = `${'a'.repeat(100)}. ${'b'.repeat(100)}`
+    const { fiber, call } = await mountTools({
+      config: { search: true, fetch: false, searchSummaryMaxChars: 120 },
+      webConfig: { searchProvider: 'stub-search' },
+      search: searchProvider({ truncated: false, sources: [{ url: 'https://a.test', snippet }] }),
+    })
+    const out = await call('web_search', { queries: ['q'] })
+    const source = (out.value as { sources: { snippet?: string }[] }).sources[0]
+    expect(source?.snippet?.endsWith('.…')).toBe(true)
+    await fiber.dispose()
+  })
+
   it('executes web_search with multiple queries concurrently and merges results', async () => {
     const seen: string[] = []
     let releaseFirst: (() => void) | undefined
@@ -1018,6 +1111,32 @@ describe('tool-call timeout budget is plugin config', () => {
     await ctx.plugin(WebRuntime, {})
     await expect(ctx.plugin(ToolWeb, config))
       .rejects.toThrow(new RegExp(`tool-web: ${key} must be a positive integer`))
+  })
+})
+
+describe('search budget config', () => {
+  it.each([
+    ['searchMaxOutputChars', { searchMaxOutputChars: 0 }],
+    ['searchAnswerMaxChars', { searchAnswerMaxChars: -5 }],
+    ['searchMaxSourcesPerHost', { searchMaxSourcesPerHost: 1.5 }],
+  ])('rejects an invalid %s at load', async (key, config) => {
+    const ctx = new Context()
+    await ctx.plugin(SystemPrompt)
+    await ctx.plugin(ToolRuntime)
+    await ctx.plugin(NativeToolExecutor)
+    await ctx.plugin(WebRuntime, {})
+    await expect(ctx.plugin(ToolWeb, config))
+      .rejects.toThrow(new RegExp(`tool-web: ${key} must be a positive integer`))
+  })
+
+  it('rejects an answer cap that does not fit the complete-output cap', async () => {
+    const ctx = new Context()
+    await ctx.plugin(SystemPrompt)
+    await ctx.plugin(ToolRuntime)
+    await ctx.plugin(NativeToolExecutor)
+    await ctx.plugin(WebRuntime, {})
+    await expect(ctx.plugin(ToolWeb, { searchAnswerMaxChars: 4_000, searchMaxOutputChars: 4_000 }))
+      .rejects.toThrow(/tool-web: searchAnswerMaxChars must be smaller than searchMaxOutputChars/)
   })
 })
 

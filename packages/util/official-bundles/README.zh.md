@@ -32,7 +32,7 @@ kind: "package-library"
 
 ### 可选与已退役组合包
 
-`OPTIONAL_BUNDLES` 列出安装随附、供用户开启的组合包。每一项都必须是 `tomato` 应用的运行时依赖，并声明 `tomato.bundle.patch`、图标和 `./locale/*.json` 显示元信息，且不能被任何模板选中；[`verify-default-product-isolation`](../../../scripts/verify-default-product-isolation.ts) 检查这些规则。[插件管理器](../../boot/plugin-manager/README.zh.md#use-this-package)把这些组合包报告为 `optional`。`RETIRED_BUNDLES` 列出安装不再携带的组合包；app-boot 在加载 profile 时将它们从该 profile 的组合包列表中移除。
+`OPTIONAL_BUNDLES` 列出安装随附、供用户开启的组合包。每一项都必须是 `tomato` 应用的运行时依赖，并声明 `tomato.bundle.patch`、图标和 `./locale/*.json` 显示元信息；除非 `DEFAULT_ENABLED_OPTIONAL_BUNDLES` 点名，否则不能被任何模板选中。[`verify-default-product-isolation`](../../../scripts/verify-default-product-isolation.ts) 检查这些规则。`DEFAULT_ENABLED_OPTIONAL_BUNDLES` 列出被模板选中的随附可选组合包，让新建 profile 默认带上该能力，用户仍可关闭；该名单也是默认产品允许的唯一实验组合，范围限于每个组合包声明的运行时依赖。[插件管理器](../../boot/plugin-manager/README.zh.md#use-this-package)把名单内所有组合包（包括默认开启的）报告为 `optional`。`RETIRED_BUNDLES` 列出安装不再携带的组合包；app-boot 在加载 profile 时将它们从该 profile 的组合包列表中移除。
 
 <a id="plugin-manager-lists"></a>
 ### 插件管理器列表

@@ -7,3 +7,6 @@
 
     - id: optional-focus
       name: '@tomato/experimental-focus'
+
+    - id: optional-muse-insights
+      name: '@tomato/experimental-muse-insights'

@@ -1,0 +1,40 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/client/ui-robot/README.md
+/:
+  en: b155d89da4bb5f03
+  zh: 6d30b2ee7341d7cd
+/robot-ui:
+  en: 80f8edd09a932929
+  zh: e70a66f9bf8ac89a
+/robot-ui/summary:
+  en: 79618b2367e246f2
+  zh: 6382566e78885a03
+/robot-ui/table-of-contents:
+  en: 134c9b5c374e0e8e
+  zh: f79065d96be7863e
+/robot-ui/use-this-package:
+  en: 794bf481f06b0514
+  zh: 564f37a728e36acb
+/robot-ui/dev-note:
+  en: 70fe8a5caff85c47
+  zh: 2d2416d4eb78c382
+/robot-ui/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/robot-ui/model-experience/run-mission:
+  en: c5a870bb2fbdc782
+  zh: 27302e3a021b156f
+/robot-ui/model-experience/run-mission/what-the-model-sees:
+  en: e8ab7f48303a3df6
+  zh: 3429043f38021a76
+/robot-ui/model-experience/run-mission/token-effect:
+  en: 33d1d4bd70c06177
+  zh: 67e95eb46ab0b680
+/robot-ui/model-experience/run-mission/kv-cache-effect:
+  en: 08672aaed2728c7f
+  zh: bf88365de5710b28
+/robot-ui/known-limitations-and-deferred-work:
+  en: 31352f813effb17f
+  zh: f8869ca41ca30a4e

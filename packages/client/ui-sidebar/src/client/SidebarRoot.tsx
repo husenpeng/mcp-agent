@@ -397,6 +397,12 @@ export function SidebarRoot({
         </nav>
       )}
 
+      {/* The robot roster sits above the browsing region and owns its own chrome. */}
+      {renderSlot('sidebar.robots', {
+        wide,
+        expandSidebar: () => { if (collapsed) toggleSidebar() },
+      })}
+
       {/* The browsing region fills the column between the controls and the
           foot in both states; its rail icon column rides the same slot. */}
       <div className={css.regionArea}>

@@ -155,6 +155,31 @@ describe('profile dialects', () => {
     expect(profile).toContain(grant)
     expect(profile.split(grant)).toHaveLength(2)
   })
+
+  it('seatbelt denies reading every protected installation root in every mode', () => {
+    for (const mode of ['read-only', 'workspace-write'] as const) {
+      const profile = seatbeltProfileArgs({
+        mode, workspaceRoot: '/ws', protectedReadRoots: ['/install/app.asar', '/install/"quoted"'],
+      })[1] as string
+      expect(profile).toContain('(deny file-read* (subpath "/install/app.asar")) (deny file-read* (subpath "/install/\\"quoted\\""))')
+    }
+    expect(seatbeltProfileArgs(RO)[1]).not.toContain('file-read')
+  })
+
+  it('bwrap masks a protected archive file with the null device and a protected directory with a tmpfs', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'tomato-protected-'))
+    const archive = join(directory, 'app.asar')
+    writeFileSync(archive, 'archive')
+    tempDirs.push(directory)
+    expect(bwrapProfileArgs({ mode: 'read-only', workspaceRoot: '/ws', protectedReadRoots: [archive, directory, '/missing/root'] }))
+      .toEqual(['--ro-bind', '/', '/', '--dev', '/dev', '--unshare-pid', '--proc', '/proc', '--die-with-parent',
+        '--ro-bind', '/dev/null', archive, '--tmpfs', directory])
+  })
+
+  it('landlock cannot deny a protected root and leaves its grants unchanged', () => {
+    expect(landlockProfileArgs({ mode: 'read-only', workspaceRoot: '/ws', protectedReadRoots: ['/install/app.asar'] }))
+      .toEqual(['--ro', '/', '--rw', '/dev/null'])
+  })
 })
 
 describe('runnerCommand config', () => {

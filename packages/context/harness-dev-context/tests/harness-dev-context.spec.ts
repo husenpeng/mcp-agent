@@ -152,6 +152,21 @@ describe('harness-dev-context', () => {
     expect(disposed.contexts).toEqual([])
   })
 
+  it('omits the checkout section and value under sourceContext: false while keeping the Web GUI orientation', async () => {
+    const ctx = new Context()
+    onTestFinished(() => ctx.fiber.dispose())
+    provideWebServices(ctx)
+    await mountAgentLoopTestDependencies(ctx)
+    await ctx.plugin(HarnessDevContext, { sourceContext: false })
+    const assembly = await ctx.systemPrompt.assemble()
+    expect(assembly.sections.filter(entry => entry.name === 'harness:source' || entry.name === 'app:web-surface')
+      .map(entry => entry.text)).toEqual([WEB_PROMPT])
+    expect(renderContextSnapshot(assembly).split('\n\n').slice(1)).toEqual([
+      'Current Tomato Harness Web GUI URL: "http://127.0.0.1:4567".',
+    ])
+    expect(renderPrompt(assembly)).not.toContain('implementation checkout')
+  })
+
   it.each([
     { route: 'replace-only', systemPromptUpdate: undefined },
     { route: 'in-history', systemPromptUpdate: 'in-history' as const },

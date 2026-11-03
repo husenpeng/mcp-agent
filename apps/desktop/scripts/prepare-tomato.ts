@@ -10,6 +10,7 @@ import { delimiter, join, relative, resolve } from 'node:path'
 import { desktopNodeEnvironment } from '../src/node-environment.ts'
 import { createRuntimeProjectMetadata } from '../src/project-manager.ts'
 import { DESKTOP_HOST_PROTOCOL_VERSION } from '../src/host-protocol.ts'
+import { PLAYWRIGHT_BROWSERS_DIRECTORY } from '../src/playwright-browsers.ts'
 import { parseDesktopRelease, type DesktopRelease } from '../src/release.ts'
 import {
   DESKTOP_HOST_PACKAGE,
@@ -30,6 +31,7 @@ import {
   resolveNpmRegistry,
 } from './desktop-release-environment.mjs'
 import {
+  signMacOSPlaywrightBrowsers,
   signMacOSRuntime,
 } from './macos-runtime.ts'
 import { desktopTargetPlatform, resolveDesktopBuildTarget, resolveDesktopTargetBuildPaths } from './desktop-build-paths.mjs'
@@ -167,6 +169,7 @@ async function main(): Promise<void> {
       const cacheDirectory = resolveMacOSSignatureCacheDirectory(process.env, BUILD_PATHS.root)
       await packagingStep(process.env.TOMATO_DESKTOP_PACKAGING_RUN_DIR, 'sign:tomato-native', () => signMacOSRuntime(TOMATO_OUTPUT_ROOT, resolveDesktopAppId(process.env), resolveMacOSSigningEnvironment(process.env), target.arch, cacheDirectory))
       await packagingStep(process.env.TOMATO_DESKTOP_PACKAGING_RUN_DIR, 'sign:primary-native', () => signMacOSRuntime(join(RUNTIME_ROOT, 'primary-runtime'), resolveDesktopAppId(process.env), resolveMacOSSigningEnvironment(process.env), target.arch, cacheDirectory, 'primary'))
+      await packagingStep(process.env.TOMATO_DESKTOP_PACKAGING_RUN_DIR, 'sign:playwright-native', () => signMacOSPlaywrightBrowsers(join(RUNTIME_ROOT, PLAYWRIGHT_BROWSERS_DIRECTORY), resolveDesktopAppId(process.env), resolveMacOSSigningEnvironment(process.env)))
     }
     await packagingStep(process.env.TOMATO_DESKTOP_PACKAGING_RUN_DIR, 'runtime:manifests', () => prepareRuntimeManifests(TOMATO_OUTPUT_ROOT))
     await packagingStep(process.env.TOMATO_DESKTOP_PACKAGING_RUN_DIR, 'runtime:primary-smoke', async () => smokePrimaryRuntime(join(RUNTIME_ROOT, 'primary-runtime')))

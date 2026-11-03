@@ -47,8 +47,11 @@ Load the package with a default mode; the fail-safe default is `read-only`, and 
 | `mode` | `read-only` | The deployment default mode a session starts from, validated at load |
 | `workspaceRoot` | `process.cwd()` | Absolute fallback root for agentless calls or sessions without a cwd; relative values fail at load. Normal agent calls use the session's immutable cwd |
 | `additionalWritableRoots` | `[]` | Explicit physical absolute directories also writable under `workspace-write`; other confined modes grant no access to them |
+| `protectedReadRoots` | `[]` | Physical absolute directories or archive files confined operations refuse to observe, in every mode including `danger-full-access` |
 
 For a linked Git worktree, the caller can grant its shared Git directory with `additionalWritableRoots`. The caller selects that directory explicitly; the policy does not inspect Git files or grant a parent checkout. These grants are deployment configuration shared by the composition's sessions, rather than saved Session permissions. Granting the entire Git directory also permits changes to hooks and configuration that a later host Git invocation can execute outside the sandbox; use that grant only for trusted tasks. Use physical absolute directory paths. The enforcing host rejects missing paths, files, and symlinked roots, including a directory replaced by a symlink between calls. Remote grants are validated on the remote host.
+
+Name the installation a release runs from with `protectedReadRoots`. The filesystem backend refuses every read, listing, metadata observation, and watch under those roots with `FS_PROTECTED_PATH`; a shell backend masks them where its kernel profile can express a read denial. Landlock and the Windows ACL runner confine writes only, so a shell read of an archive's bytes stays possible there. Unlike the writable grants, protection does not depend on the session mode, and no escalation opens it: the root names the harness's own shipped implementation, a product boundary rather than a task permission.
 
 The generated [configuration catalog](../../../docs/config-catalog.md#tomatosandbox-policy) is the exhaustive source for every accepted field and its JSDoc.
 
@@ -137,9 +140,15 @@ Current TOMATO file policy: workspace-write. Any available operation enforced by
 Current TOMATO file policy: danger-full-access. The TOMATO file sandbox does not restrict file modifications by available operations.
 ```
 
+##### Protected installation roots
+
+```markdown
+Current TOMATO file policy: workspace-write. Any available operation enforced by the TOMATO file sandbox may modify files under the session workspace: "<workspace root>". Some platform temporary areas may also be writable. The harness installation is not readable by confined operations: ["<installation root>"].
+```
+
 #### Token effect
 
-One concise durable context message on the first request and each effective policy change; unchanged requests add nothing. `workspace-write` carries the recorded session workspace path and any explicit additional directories; platform-specific temporary paths are summarized without adding host-dependent bytes.
+One concise durable context message on the first request and each effective policy change; unchanged requests add nothing. `workspace-write` carries the recorded session workspace path and any explicit additional directories; platform-specific temporary paths are summarized without adding host-dependent bytes. A protected root list adds one sentence naming the installation, so the model learns the refusal before calling a read tool.
 
 #### KV Cache effect
 

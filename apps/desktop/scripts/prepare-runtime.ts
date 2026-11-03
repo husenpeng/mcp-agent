@@ -10,6 +10,7 @@ import extractZip from 'extract-zip'
 import { readPrimaryRuntime } from '../../../packages/skill/tool-workspace-dependencies/src/index.ts'
 import { desktopTargetPlatform, resolveDesktopBuildTarget, resolveDesktopTargetBuildPaths } from './desktop-build-paths.mjs'
 import { packagingStep } from './packaging-step.mjs'
+import { preparePlaywrightBrowsers } from './prepare-playwright-browsers.ts'
 import { preparePrimaryRuntime } from './prepare-primary-runtime.ts'
 import { prepareDesktopCli } from './prepare-cli.ts'
 import { prepareCommandLink } from './prepare-command-link.ts'
@@ -55,15 +56,19 @@ async function main(): Promise<void> {
   mkdirSync(RUNTIME_ROOT, { recursive: true })
   const preparePrimary = () => packagingStep(process.env.TOMATO_DESKTOP_PACKAGING_RUN_DIR, 'prepare:primary-runtime',
     () => preparePrimaryRuntime({ deferSmoke: values['defer-primary-runtime-smoke'] }))
+  const prepareBrowsers = () => packagingStep(process.env.TOMATO_DESKTOP_PACKAGING_RUN_DIR, 'prepare:playwright-browsers',
+    () => preparePlaywrightBrowsers())
   let nodeVersion: string
   if (target.platform === 'win32') {
-    const [electron, primary] = await Promise.allSettled([prepareElectron(target), preparePrimary()])
+    const [electron, primary, browsers] = await Promise.allSettled([prepareElectron(target), preparePrimary(), prepareBrowsers()])
     if (electron.status === 'rejected') throw electron.reason
     if (primary.status === 'rejected') throw primary.reason
+    if (browsers.status === 'rejected') throw browsers.reason
     nodeVersion = electron.value
   } else {
     nodeVersion = await prepareElectron(target)
     await preparePrimary()
+    await prepareBrowsers()
   }
   const { pnpm } = await readPrimaryRuntime(join(RUNTIME_ROOT, 'primary-runtime'))
   if (pnpm === undefined) throw new Error('desktop runtime: primary-runtime manifest has no pnpm version')

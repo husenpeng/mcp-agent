@@ -2,7 +2,7 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, write
 import { tmpdir } from 'node:os'
 import { join, relative } from 'node:path'
 import { expect, it } from 'vitest'
-import { desktopRuntimeFileExclusion } from '../scripts/runtime-file-policy.ts'
+import { desktopRuntimeFileExclusion, harnessReleaseContentViolation } from '../scripts/runtime-file-policy.ts'
 import { verifyDesktopRuntime, writeDesktopRuntime } from '../src/runtime-tree.ts'
 import { runtimeFixture } from './runtime-fixture.ts'
 
@@ -32,6 +32,9 @@ it('omits development artifacts while preserving executable modules, assets and 
     '@deepseek-ai/libreoffice-kit-wasm/assets/soffice.data',
     '@deepseek-ai/libreoffice-kit-darwin-arm64/bin/libreoffice-kit',
     '.modules.yaml', '.pnpm-workspace-state-v1.json', '.bin/tool', '.pnpm/cache',
+    '@tomato/example/README.md', '@tomato/example/readme.zh.md', '@tomato/example/README.i18n.yaml',
+    '@tomato/example/CHANGELOG.md', '@tomato/example/src/entry.ts',
+    '@tomato/example/native/tests/window.swift',
   ]
   const retained = [
     'example/index.js', 'example/index.cjs', 'example/index.mjs', 'example/worker.js',
@@ -53,6 +56,9 @@ it('omits development artifacts while preserving executable modules, assets and 
     '@deepseek-ai/libreoffice-kit-win32-x64/bin/libreoffice-kit.exe',
     '@deepseek-ai/libreoffice-kit-win32-x64/sources/core-source.json',
     '@deepseek-ai/libreoffice-kit-win32-x64/licenses/MPL-2.0.txt',
+    '@tomato/example/lib/index.js', '@tomato/example/locale/en.json', '@tomato/example/cordis.patch.yml',
+    '@tomato/example/assets/office/SKILL.md', '@tomato/example/lib/devtools/notes.md',
+    '@tomato/example/LICENSE',
   ]
   try {
     const runtime = runtimeFixture(source)
@@ -82,6 +88,24 @@ it('applies package-specific rules inside scoped and nested dependency container
   expect(desktopRuntimeFileExclusion('outer\\node_modules\\node-pty\\prebuilds\\win32-arm64\\conpty.node', windows, 'win32-x64')).toBeDefined()
   expect(desktopRuntimeFileExclusion('outer/node_modules/unrelated/test/data.html', windows, 'win32-x64')).toBeUndefined()
   expect(desktopRuntimeFileExclusion('outer/fs-ext/build/Release/fs_ext.lib', windows, 'win32-x64')).toBeUndefined()
+})
+
+it('omits harness documentation, authored source and test material from scoped and nested containers', () => {
+  expect(desktopRuntimeFileExclusion('node_modules/@tomato/example/README.md', windows, 'win32-x64')).toBe('package documentation')
+  expect(desktopRuntimeFileExclusion('outer/node_modules/@tomato/example/README.i18n.yaml', windows, 'win32-x64')).toBe('package documentation')
+  expect(desktopRuntimeFileExclusion('node_modules/@tomato/example/CHANGELOG.md', windows, 'win32-x64')).toBe('package documentation')
+  expect(desktopRuntimeFileExclusion('node_modules/@tomato/example/src/entry.ts', windows, 'win32-x64')).toBe('package source')
+  expect(desktopRuntimeFileExclusion('node_modules/@tomato/example/native/tests/window.swift', windows, 'win32-x64')).toBe('package tests')
+  expect(desktopRuntimeFileExclusion('node_modules/@tomato/example/lib/index.js', windows, 'win32-x64')).toBeUndefined()
+  expect(desktopRuntimeFileExclusion('node_modules/@tomato/example/assets/office/SKILL.md', windows, 'win32-x64')).toBeUndefined()
+  expect(desktopRuntimeFileExclusion('node_modules/zod/src/index.ts', windows, 'win32-x64')).toBeUndefined()
+  expect(harnessReleaseContentViolation('node_modules/@tomato/example/src/entry.ts')).toBe('package source')
+  expect(harnessReleaseContentViolation('node_modules/@tomato/example/README.zh.md')).toBe('package documentation')
+  expect(harnessReleaseContentViolation('node_modules/@tomato/example/native/tests/window.swift')).toBe('package tests')
+  expect(harnessReleaseContentViolation('node_modules/@tomato/example/lib/index.js')).toBeUndefined()
+  expect(harnessReleaseContentViolation('node_modules/@tomato/example/assets/office/SKILL.md')).toBeUndefined()
+  expect(harnessReleaseContentViolation('node_modules/@tomato/example/readme-data.md')).toBeUndefined()
+  expect(harnessReleaseContentViolation('desktop-runtime.json')).toBeUndefined()
 })
 
 it('retains native prebuilds for the selected macOS architecture', () => {

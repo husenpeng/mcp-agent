@@ -142,6 +142,44 @@ describe('desktop splash lifecycle', () => {
     expect(window.close).toHaveBeenCalledOnce()
   })
 
+  it('resolves the handoff wait only when the renderer reports its final frame', async () => {
+    vi.useFakeTimers()
+    const splash = openSplashWindow('/desktop/preload-splash.cjs')
+    let settled = false
+    void splash.waitForAnimation().then(() => { settled = true })
+    await vi.advanceTimersByTimeAsync(SPLASH_RELEASE_FALLBACK_MS - 1)
+    expect(settled).toBe(false)
+
+    electron.listeners.get(SPLASH_IPC.animationDone)?.({
+      sender: window.webContents, senderFrame: window.webContents.mainFrame,
+    })
+    await vi.advanceTimersByTimeAsync(0)
+    expect(settled).toBe(true)
+    // Completing the animation alone does not fade; the caller reveals its window and then releases.
+    await vi.advanceTimersByTimeAsync(SPLASH_FADE_MS + 32)
+    expect(window.setOpacity).not.toHaveBeenCalled()
+    expect(window.close).not.toHaveBeenCalled()
+  })
+
+  it('treats the fallback as completion for a renderer that never reports', async () => {
+    vi.useFakeTimers()
+    const splash = openSplashWindow('/desktop/preload-splash.cjs')
+    let settled = false
+    void splash.waitForAnimation().then(() => { settled = true })
+    await vi.advanceTimersByTimeAsync(SPLASH_RELEASE_FALLBACK_MS)
+    expect(settled).toBe(true)
+    splash.release()
+    await vi.advanceTimersByTimeAsync(SPLASH_FADE_MS + 32)
+    expect(window.close).toHaveBeenCalledOnce()
+  })
+
+  it('resolves a pending handoff wait when the splash closes', async () => {
+    const splash = openSplashWindow('/desktop/preload-splash.cjs')
+    const waiting = splash.waitForAnimation()
+    splash.dispose()
+    await expect(waiting).resolves.toBeUndefined()
+  })
+
   it('ignores completion reports from foreign frames and from the wrong document', () => {
     vi.useFakeTimers()
     const splash = openSplashWindow('/desktop/preload-splash.cjs')

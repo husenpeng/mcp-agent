@@ -1,0 +1,43 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/bundle/marketing-app/README.md
+/:
+  en: f0767b38bf1ef6fa
+  zh: 173816b227e05069
+/tomato-marketing-app:
+  en: 0e6e47e7cffd0dfa
+  zh: fb863385181338a1
+/tomato-marketing-app/summary:
+  en: d25d7b45da27b97b
+  zh: 3f4807624fd5937b
+/tomato-marketing-app/table-of-contents:
+  en: cc45ef6d34c5ce59
+  zh: 2322c560feb85150
+/tomato-marketing-app/use-this-package:
+  en: 4169a71c08989a32
+  zh: 894417608f53a3d9
+/tomato-marketing-app/further-exploration:
+  en: 9789cfecc5d6c0f6
+  zh: d2ea8c3149cc6ff6
+/tomato-marketing-app/model-experience:
+  en: 215e7ba838619b7b
+  zh: e61c78b7d37628ed
+/tomato-marketing-app/model-experience/provider-tools:
+  en: c11749cc7bf1452b
+  zh: f9b203ce6ab3abdd
+/tomato-marketing-app/model-experience/provider-tools/what-the-model-sees:
+  en: bb15044a218501e7
+  zh: d1d5cd037da94749
+/tomato-marketing-app/model-experience/provider-tools/token-effect:
+  en: c03cc3b7689f0362
+  zh: 7e482956083016eb
+/tomato-marketing-app/model-experience/provider-tools/kv-cache-effect:
+  en: 24b831c298d16b28
+  zh: 2ae6ef5118588ca5
+/tomato-marketing-app/known-limitations-and-deferred-work:
+  en: 1dde9d8c3d369c4a
+  zh: b13d0681f0510784
+/tomato-marketing-app/known-limitations-and-deferred-work/dev-note:
+  en: 349168dcd555c9a2
+  zh: 4436fb3efca4c6c3

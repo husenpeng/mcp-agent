@@ -118,6 +118,7 @@ void main() {
 
 /**
  * Build the post chain. The scene renders into a 4× multisampled half-float target; bloom only lifts radiance above 1.
+ * Two samples measured 350 ms of extra program warm-up on the first frame with no frame-rate gain, so it stays at four.
  * @param renderer - renderer that owns every target.
  * @param scene - city scene.
  * @param camera - city camera.

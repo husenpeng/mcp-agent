@@ -1,6 +1,6 @@
 # 0006. Playwright 浏览器按需组合包
 
-- 状态：Accepted
+- 状态：Superseded by [0016](0016-default-playwright-bundle.md)
 - 日期：2026-10-27
 - 影响范围：`packages/experimental/browser-use-playwright-bundle/`、`packages/util/official-bundles/`、插件页与浏览器操作文档
 

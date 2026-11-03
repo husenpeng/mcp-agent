@@ -10,6 +10,7 @@
 - **名称**：产品名 Tomato AI / 番茄 Agent；仓库内全部包使用 `@tomato/*` 命名。
 - **语言**：简体中文默认，保留英文；沿用上游的 locale 机制，按操作系统语言自动选择。
 - **模型人格**：把 `system-prompt` 的 `personaPrefix` 与四个内置预设的人格行从 coding agent 改为达人营销助手。工具集不变，模型仍可读写文件、执行命令。
+- **回答风格**：`standard` / `ptc` / `cordis` 三个预设的 `persona.suffix` 固定回答契约：首句给结论、短答直说、长答三节（结论/依据/下一步）、只保留影响决策的信息；不设行数上限，`minimal` 保持固定极简提示（[ADR 0015](adr/0015-response-contract-in-presets.md)）。
 - **范围**：M1 只验证壳与插件链路，不接业务；M2 接 MCP 网关与达人工具卡。
 
 ## 仓库与工程
@@ -28,7 +29,7 @@
 - **模型**：基础 `llm-pi-ai` 不预置路由。用户在「设置 → 模型」的 **自定义模型 API** 中声明第三方 OpenAI 或 Anthropic 兼容端点与模型清单；路由写入当前 profile 的 `cordis.patch.yml`，API Key 经 `credentials.set` 只写入 `$TOMATO_HOME/.credentials.yaml` 的 `<ROUTE>_API_KEY`。`agent-default-model` 初始为空，用户在模型选择器中选定后写回 profile。基础组合不再包含 mock 模型路由或占位模型。
 - **业务**：MCP 网关，沿用 tomatoAgent 已定的 `kol_capabilities` / `kol_search` / `kol_detail` / `kol_summary` 契约，`streamable-http` 传输，`Authorization: Bearer <每人令牌>`。
 - **hiCreator（可选）**：web 补丁层的 `mcp-hicreator` 行接 hiCreator 远程 MCP，提供达人发现、详情、邮箱与收藏夹工具；未设置 `HICREATOR_API_KEY` 时整行停用，仅作公司网关落地前的验证数据源（[ADR 0007](adr/0007-hicreator-mcp.md)）。
-- **浏览器**：Playwright MCP 以官方按需组合包提供，插件页未安装时即可离线看到；打开开关才安装并挂载 `@tomato/browser-use` 与固定 `launch`/`headless` 提供方，首次使用需本机已有 Chromium 构建。同一 profile 只能有一个 browser-use 提供方（[ADR 0006](adr/0006-playwright-browser-bundle.md)）。
+- **浏览器**：Playwright MCP 随安装分发并在 Web/桌面新建 profile 默认启用：组合包挂载 `@tomato/browser-use` 与固定 `launch`/`headless` 提供方，插件页可随时关闭，桌面安装包自带 Chromium headless shell；`tomato web` 的非桌面部署仍用本机 Playwright 缓存。同一 profile 只能有一个 browser-use 提供方（[ADR 0016](adr/0016-default-playwright-bundle.md)）。
 - **登录**：新增 Host 内同源网关 `@tomato/gateway`，浏览器只访问 `/api/auth/*` 与 `/api/services/*`。飞书 OAuth 仍由公司 BFF 承接；公司 BFF 通过 auth_service 的一次性 handoff code 把会话交给本地网关，本地网关用 `state + verifier` 兑换。Web 写 httpOnly `tomato_session` cookie；Desktop 主进程把 sessionId 存 `safeStorage` 并注入 `X-Tomato-Session`，不再写 Host 凭证库。新增 `@tomato/account` 提供侧栏入口与设置账户页，三态展示并在服务不可用时提示重试。上游的 `deepseek-account`、`deepseek-account-platform`、`llm-deepseek-account`、`llm-deepseek` 与欢迎页的 API key 流程全部停用。
 - **遥测**：关闭上游全部外发（`session-log-deepseek`、`session-telemetry-otel`、`product-analytics`、`host-product-telemetry-otel`）。新增 `@tomato/telemetry` 把 `turn/*`、`tool/*` 折叠成 OTLP traces，发到内部 relay 端点，由服务端转发 Langfuse；Langfuse 密钥只在服务端。`endpoint` 为空时不注册监听。
 - **权限**：开放 `read-only` / `workspace-write` / `danger-full-access` 三档切换，默认 `workspace-write` + `ask`。
@@ -41,7 +42,7 @@
 - **设计系统**：只搬 client-monorepo 的设计 token（暖红 `#c01a12`、圆角、字体栈）作为后续业务卡片的视觉基线，不搬 React 19 + antd v6 组件代码（上游客户端是 React 18 + CSS Modules）。
 - **品牌**：新增 `@tomato/brand` 客户端插件，占用 `sidebar.brand.mark`、`sidebar.brand.name`、`conversation.hero.brand.mark` 三个槽；`ui-brand-official` 从 roster 停用。
 - **品牌资源**：mark 取自 client-monorepo 的 `apps/web/public/img/fav.svg`（单色化以继承 `currentColor`）；欢迎页字标重写为 `apps/desktop/renderer/assets/welcome-brand.svg`；浏览器标签页 `apps/web/public/favicon{,-dark}.svg` 使用同一路径，浅色 `#b71616`、深色 `#de3730`；PWA 安装图标由 `apps/web/assets/app-icon.svg` 生成，manifest 与 iOS 安装名均为 `Tomato AI`（[ADR 0002](adr/0002-web-brand-identity.md)）；桌面应用、安装程序与 Windows 托盘图标以同一底板为原稿（[ADR 0010](adr/0010-desktop-app-icon.md)）。
-- **开屏**：桌面冷启动先显示 1280×760 无边框 3D 品牌开屏，7.2s 内镜头从雨夜街道滑行升起，掠过飞车、广告飞艇与磁悬浮列车，停在东方明珠式电视塔、门形双塔、扭转超高层与开瓶器塔组成的天际线前；近景立面有窗框分格、空调箱、阳台与消防梯，街面有双向车流、红绿灯、公交站与跨街灯笼，店面门头写着互不相同的店名；招牌与广告屏展示达人营销各业务模块，每种内容只出现一次，文字不被灯光泛白，定格时不压在 HUD 与字标下；汽车有轮拱、车厢立柱与轮毂，飞车有发动机舱与灯带，路灯照亮车身与临街墙面；镜头速度连续变化并缓缓停稳。塔顶投影光束升起，光粒汇入后霓虹标志沿笔画点亮。Host 就绪后 300ms 淡出交给主窗或欢迎窗。点击/Esc 跳过，reduced-motion 直接显示静态终帧，WebGL 不可用时显示静态品牌，`TOMATO_DESKTOP_SKIP_SPLASH=1` 关闭（[ADR 0011](adr/0011-desktop-startup-splash.md)）。
+- **开屏**：桌面冷启动先显示 1280×760 无边框 3D 品牌开屏，7.2s 内镜头从雨夜街道滑行升起，掠过飞车、广告飞艇与磁悬浮列车，停在东方明珠式电视塔、门形双塔、扭转超高层与开瓶器塔组成的天际线前；近景立面有窗框分格、空调箱、阳台与消防梯，街面有双向车流、红绿灯、公交站与跨街灯笼，店面门头写着互不相同的店名；招牌与广告屏展示达人营销各业务模块，每种内容只出现一次，文字不被灯光泛白，定格时不压在 HUD 与字标下；汽车有轮拱、车厢立柱与轮毂，飞车有发动机舱与灯带，路灯照亮车身与临街墙面；镜头速度连续变化并缓缓停稳。塔顶投影光束升起，光粒汇入后霓虹标志沿笔画点亮。首帧前的着色器预热期显示 HUD 括角与扫描线引导层（纯合成器动画），Host 就绪后 300ms 淡出交给主窗或欢迎窗。点击/Esc 跳过，reduced-motion 直接显示静态终帧，WebGL 不可用时显示静态品牌，`TOMATO_DESKTOP_SKIP_SPLASH=1` 关闭（[ADR 0011](adr/0011-desktop-startup-splash.md)）。
 - **业务 UI（M2）**：`kol_search` / `kol_detail` 各自注册到 `tool.call.toolview`，详情走右侧栏标签页。
 
 ## 交付

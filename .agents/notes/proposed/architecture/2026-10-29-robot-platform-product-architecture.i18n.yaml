@@ -1,0 +1,49 @@
+# Bilingual-pair consistency record for 2026-10-29-robot-platform-product-architecture.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/proposed/architecture/2026-10-29-robot-platform-product-architecture.md
+/agent-note-robot-platform-product-form-runtime-and-a2a:
+  en: 90e38075a0576eef
+  zh: 516afe12b65da0e0
+/agent-note-robot-platform-product-form-runtime-and-a2a/problem:
+  en: d68451cd729b9583
+  zh: 5e4ab771b41d2151
+/agent-note-robot-platform-product-form-runtime-and-a2a/proposal:
+  en: 986dd8097aac4d3d
+  zh: 2c89af85628555c5
+/agent-note-robot-platform-product-form-runtime-and-a2a/proposal/product-form:
+  en: 1a7c8856cfc8e2a7
+  zh: c4580f7d74807bbd
+/agent-note-robot-platform-product-form-runtime-and-a2a/proposal/domain-model:
+  en: d78409c71e21b345
+  zh: 7eaf2a73285dde06
+/agent-note-robot-platform-product-form-runtime-and-a2a/proposal/spec-as-the-creation-contract:
+  en: c75fb09d667b55ca
+  zh: d7aac7f10bb5a8d9
+/agent-note-robot-platform-product-form-runtime-and-a2a/proposal/runtime-and-run-lifecycle:
+  en: 46a39d687e486878
+  zh: 11a68848230649fe
+/agent-note-robot-platform-product-form-runtime-and-a2a/proposal/a2a-protocol:
+  en: 40531311e65fbeec
+  zh: f2b1a0876ebcb635
+/agent-note-robot-platform-product-form-runtime-and-a2a/proposal/shared-memory-and-recall:
+  en: 4f337a42f3e8bfd6
+  zh: 3bfc942229232ca2
+/agent-note-robot-platform-product-form-runtime-and-a2a/proposal/package-topology-and-control-plane:
+  en: a6189864fde15797
+  zh: 339ba63f4e6139d0
+/agent-note-robot-platform-product-form-runtime-and-a2a/proposal/delivery-slices:
+  en: 7a0813621ded51cb
+  zh: 4d81f20ac01000b0
+/agent-note-robot-platform-product-form-runtime-and-a2a/proposal/decisions:
+  en: 8ba89ab2383fcc39
+  zh: 09afe2b258513ccf
+/agent-note-robot-platform-product-form-runtime-and-a2a/alternatives-considered:
+  en: 451a4648f6a267db
+  zh: 5479a3d27c624873
+/agent-note-robot-platform-product-form-runtime-and-a2a/acceptance-criteria:
+  en: d01385ca76ba04de
+  zh: 4b137926cbd2346b
+/agent-note-robot-platform-product-form-runtime-and-a2a/risks:
+  en: a570a02aa6f08b0b
+  zh: f0a7b59869935454

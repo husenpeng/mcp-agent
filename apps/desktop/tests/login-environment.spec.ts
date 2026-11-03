@@ -50,7 +50,16 @@ describe('resolveLoginEnvironment', () => {
       PATH: '/bin',
       AUTH_SERVICE_URL: 'https://auth.example.com',
       TOMATO_WEB_URL: 'https://app.example.com',
+      TOMATO_SEARCH_GATEWAY_URL: 'https://app.example.com',
     })
+  })
+
+  it('lets an explicit search gateway override the BFF default', () => {
+    const env = withLoginEnvironment({ TOMATO_SEARCH_GATEWAY_URL: 'https://search.example.com' }, {
+      authServiceUrl: '',
+      tomatoWebUrl: 'https://app.example.com',
+    })
+    expect(env.TOMATO_SEARCH_GATEWAY_URL).toBe('https://search.example.com')
   })
 
   it('keeps inherited values when no origin is configured', () => {

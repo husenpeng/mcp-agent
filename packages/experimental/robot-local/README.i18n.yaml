@@ -1,0 +1,37 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/robot-local/README.md
+/:
+  en: a0015e899101e598
+  zh: 92e6ea783760040a
+/tomato-experimental-robot-local:
+  en: cabc6057de76f6b5
+  zh: 630f55326d534b6e
+/tomato-experimental-robot-local/summary:
+  en: a4840df7dc7ffd0d
+  zh: c0939a13f4b3077d
+/tomato-experimental-robot-local/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: f14f34fce35a8d90
+/tomato-experimental-robot-local/use-this-package:
+  en: a029e16af7a3615b
+  zh: 276feae8b2322460
+/tomato-experimental-robot-local/understand-the-implementation:
+  en: 25eb984a9d9bb024
+  zh: d61a1a14c5b337fd
+/tomato-experimental-robot-local/further-exploration:
+  en: 2957122925182761
+  zh: f24ec12883d0a07d
+/tomato-experimental-robot-local/model-experience:
+  en: d7e6fc77e4811b83
+  zh: 6f401f0fc6bb8800
+/tomato-experimental-robot-local/model-experience/kv-cache-effect:
+  en: 911443a26a15d49f
+  zh: 79cc540c05ebbe4b
+/tomato-experimental-robot-local/known-limitations-and-deferred-work:
+  en: afa965746d50cfb3
+  zh: e39a05757afc86bd
+/tomato-experimental-robot-local/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 8ec3e73528ddb1a6

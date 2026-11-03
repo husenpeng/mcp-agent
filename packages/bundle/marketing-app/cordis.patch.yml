@@ -1,0 +1,11 @@
+# The advertising and marketing bundle. One row mounts @tomato/marketing, which
+# keeps every provider off until the Plugins page switches it on and its
+# credential references resolve; an untouched installation gains no MCP server.
+# The page row is inert without a Web host: it renders only while the Host
+# plugin serves the `marketing` settings namespace.
+- insert:
+    - id: marketing
+      name: '@tomato/marketing'
+
+    - id: ui-settings-marketing
+      name: '@tomato/client-ui-settings-marketing'

@@ -4,6 +4,8 @@ Status: implemented
 
 [English](2026-10-27-official-on-demand-playwright-bundle.md) | 中文
 
+[后续决策](2026-11-03-default-playwright-bundle.zh.md)改变了交付形态：组合包随安装分发，新建 Web 与桌面 profile 默认开启，桌面安装包自带 Chromium headless shell。
+
 ## Problem
 
 Playwright MCP 提供方已经可用，但产品层面无法触达：profile 必须手写服务与提供方名称，插件页既不会列出也不能安装。随每次安装分发同样不合适，因为提供方会带入 Playwright 运行时，并要求本机存在大多数安装永远用不到的 Chromium 构建。

@@ -1,5 +1,5 @@
 ---
-description: "按需安装 Playwright MCP 浏览器工具，每个会话独立 Chromium。"
+description: "为每个会话提供独立 Chromium 的 Playwright MCP 浏览器工具。"
 kind: "package-bundle"
 ---
 
@@ -9,7 +9,7 @@ kind: "package-bundle"
 
 ## 概述
 
-按需为 profile 添加 Playwright MCP 浏览器工具。每个活动 Session 拥有由提供方启动的独立 Chromium；本组合包挂载共享的 [browser-use 服务](../../browser-use/browser-use/README.zh.md) 与 [Playwright 提供方](../browser-use-playwright-mcp/README.zh.md)。它是官方按需组合包：安装器只列出、不随包分发，打开开关时才安装本包及其 Playwright 运行时。本包为实验性，并要求本机已有 Chromium 构建。
+为 Web 或桌面 profile 添加 Playwright MCP 浏览器工具。每个活动 Session 拥有由提供方启动的独立 Chromium；本组合包挂载共享的 [browser-use 服务](../../browser-use/browser-use/README.zh.md) 与 [Playwright 提供方](../browser-use-playwright-mcp/README.zh.md)。它是随安装分发的官方组合包，并由 Web 模板默认选中：安装器携带本包及其 Playwright 运行时，新建 Web 与桌面 profile 默认带上该层，关闭开关只取消选中。本包为实验性。桌面安装包自带 Chromium headless shell；其他部署仍要求本机已有 Chromium 构建。
 
 ## 目录
 
@@ -48,7 +48,7 @@ kind: "package-bundle"
 - [浏览器操作](../../../docs/subsystems/browser-use.zh.md)——提供方选择与 Session 所有权。
 - [Playwright MCP 提供方](../browser-use-playwright-mcp/README.zh.md)——launch、attach 与超时配置。
 - [Playwright MCP](https://github.com/microsoft/playwright-mcp)——上游浏览器行为与浏览器安装。
-- [按需发现决策](../../../.agents/notes/implemented/architecture/2026-10-27-official-on-demand-playwright-bundle.zh.md)——本包为何按需安装。
+- [默认开启决策](../../../docs/tomato/adr/0016-default-playwright-bundle.md)——本包为何随安装分发并默认选中。
 
 -----
 

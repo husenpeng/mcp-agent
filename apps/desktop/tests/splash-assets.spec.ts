@@ -74,6 +74,41 @@ describe('splash document assets', () => {
     expect(css).toContain("html[data-splash='done']")
   })
 
+  it('paints boot chrome from the first paint until the city renders', () => {
+    expect(html).toContain('class="boot" aria-hidden="true"')
+    expect(html).toContain('class="boot-link"')
+    // The corner brackets and left meta reuse the HUD's classes, so the handoff has nothing to line up.
+    expect(html).toMatch(/class="boot"[^]*class="hud-corner hud-corner-tl"/u)
+    expect(html).toMatch(/class="boot"[^]*class="hud-meta hud-meta-left"/u)
+    expect(css).toMatch(/html\[data-clock='running'\] \.boot \{ opacity: 0;/u)
+    expect(css).toMatch(/html\[data-scene='fallback'\] \.boot \{ display: none;/u)
+    // Shader warm-up blocks the main thread, so only compositor properties animate.
+    expect(css).toMatch(/\.boot \{[^}]*transition: opacity/u)
+    expect(css).toMatch(/@keyframes boot-link \{\s*from \{ transform: translateX/u)
+    expect(css).toMatch(/\.boot-link i \{[^}]*animation: boot-link/u)
+  })
+
+  it('draws each appearance family with one shader program', () => {
+    const landmark = client('splash-glsl-landmark.ts')
+    // Surface, craft, and landmark kinds ride in uniforms; only the structural BEVEL/RADIAL/LANE variants stay defines.
+    expect(client('splash-glsl.ts')).toContain('uniform int uSurface')
+    expect(scene).toContain('uSurface: { value: SOLID_SURFACE[surface] }')
+    expect(landmark).toContain('uniform int uLandmark')
+    expect(landmark).toContain('uniform float uDiagrid')
+    expect(landmark).toContain('uniform int uCraft')
+    expect(scene).toContain('uCraft: { value: CRAFT_KIND[kind] }')
+    expect(scene).toContain('uLandmark: { value: LANDMARK_KIND[surface.kind] }')
+    expect(scene).not.toMatch(/defines: \{ LANE: '', \[define\]/u)
+    expect(client('splash-models.ts')).not.toMatch(/defines: \['(PEARL|TWIST|PLANAR)/u)
+  })
+
+  it('caps the drawing buffer at one and a half pixels per CSS pixel', () => {
+    expect(scene).toContain('const MAX_PIXEL_RATIO = 1.5')
+    expect(scene).toContain('const MAX_DRAWING_PIXELS = 1920 * 1140')
+    // Four samples measured 350 ms faster than two on the first frame, so the multisampled target keeps four.
+    expect(post).toContain('samples: 4')
+  })
+
   it('reports completion over the one splash channel only', () => {
     const preload = readFileSync(join(root, 'src', 'preload-splash.ts'), 'utf8')
     const renderer = readFileSync(join(root, 'src', 'client', 'splash.ts'), 'utf8')

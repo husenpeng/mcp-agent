@@ -1,0 +1,16 @@
+# Composition overlay: one headless profile carries the marketing row and
+# configures no provider, which is the shipped default for the bundle. The
+# launcher-owned rows are off because this fixture boots through the Loader
+# directly instead of a command line.
+- id: headless-startup
+  disabled: true
+
+- id: headless-runner
+  disabled: true
+
+- insert:
+    - id: marketing
+      name: '@tomato/marketing'
+      config:
+        googleAdsEnabled: false
+        mosaicEnabled: false

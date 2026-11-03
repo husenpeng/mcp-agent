@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for 2026-11-02-muse-daily-insights.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-11-02-muse-daily-insights.md
+/agent-note-muse-daily-insights-without-session-events:
+  en: c3717e07cad19e51
+  zh: e55aceec670b444d
+/agent-note-muse-daily-insights-without-session-events/problem:
+  en: c08418115faab38e
+  zh: d95fb1e148cdff20
+/agent-note-muse-daily-insights-without-session-events/decision:
+  en: 9434a96bd18841c0
+  zh: 05eb5a6f79199328
+/agent-note-muse-daily-insights-without-session-events/alternatives-considered:
+  en: dbe3beb71fac9850
+  zh: b00bd092b1ef0941
+/agent-note-muse-daily-insights-without-session-events/consequences:
+  en: c0d264f5fa6dfc69
+  zh: 8a0652777e1d064a

@@ -124,6 +124,13 @@ const SERVICE_ROLES: ServiceRole[] = [
     note: 'Stores records in the tomato_memory storage domain scoped by owner, then by profile or canonical project directory; the memory tools own every model-facing tool, command, and snapshot.',
   },
   {
+    key: 'museInsights',
+    pkg: 'experimental-muse-insights',
+    title: 'Daily recap and unfinished-task Remote',
+    mode: 'service',
+    note: 'Reads the day’s Session text and the todos projection, retains one recap per owner and local day plus the owner’s latest analysis, and serves both to its browser notice and right-Sidebar page.',
+  },
+  {
     key: 'tomatoAccount',
     pkg: 'gateway',
     title: 'Host signed-in account',
@@ -358,6 +365,13 @@ const SERVICE_ROLES: ServiceRole[] = [
     title: 'Host job Remote controller',
     mode: 'core',
     note: 'Streams one background job\'s observation record over the generated Remote namespace; the roster stays on the session control stream.',
+  },
+  {
+    key: 'robotController',
+    pkg: 'api-robot-controller',
+    title: 'Host robot Remote controller',
+    mode: 'core',
+    note: 'Projects the robot registry onto the generated Remote namespace and streams whole registry frames; specification storage and validation stay on the seam provider.',
   },
   {
     key: 'credentialsController',
@@ -834,6 +848,15 @@ const SERVICE_ROLES: ServiceRole[] = [
     mode: 'core',
     consumers: ['experimental-tool-agent-team'],
     note: 'Owns the implicit-root roster, direct peer inbox delivery, shared task DAG, and continuable-child lifecycle; tool-agent-team contributes model controls.',
+  },
+  {
+    key: 'robots',
+    pkg: 'experimental-robot',
+    title: 'Robot domain service',
+    mode: 'core',
+    implementations: ['experimental-robot-local'],
+    consumers: ['experimental-robot-runtime', 'experimental-robot-triggers'],
+    note: 'Owns versioned robot specifications, instantiation, and run control; the service definition declares the contract and an installed provider owns execution, persistence, and A2A transport.',
   },
   {
     key: 'claudeCodeMods',

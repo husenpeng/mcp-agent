@@ -27,6 +27,21 @@ export const inject = ['systemPrompt', 'sessionProjections', 'webApp']
 /** This installation's root, four directories above this package's source or built entry. */
 const SOURCE_ROOT = fileURLToPath(new URL('../../../..', import.meta.url))
 
+/**
+ * Plugin config: whether the model learns where the harness implementation lives.
+ *
+ * A packaged release sets this `false`: its runtime ships no documentation or authored source, and the file
+ * tools refuse the installation tree, so naming the checkout would only invite inspection the release denies.
+ * The Web GUI orientation stays in both cases.
+ */
+export interface Config {
+  /**
+   * Include the checkout path and the guidance about inspecting it. Defaults to `true`; `false` leaves the
+   * Web GUI section and URL untouched.
+   */
+  sourceContext?: boolean
+}
+
 /** Prompt-section and runtime-context name for the implementation checkout. */
 const HARNESS_SOURCE = 'harness:source'
 
@@ -114,12 +129,14 @@ function foldLegacyPrompt(state: LegacyPrompt, event: SessionEvent): LegacyPromp
 const ADMITS_NOTHING: LegacyPrompt = { source: null, web: null }
 
 /**
- * Register the two sections, their runtime-context values, and the
- * projection that keeps a Session's admitted paragraphs.
+ * Register the sections, their runtime-context values, and the projection
+ * that keeps a Session's admitted paragraphs. A `sourceContext: false`
+ * deployment omits the checkout section and value.
  * @param ctx - plugin context with every {@link inject} service.
+ * @param config - whether to tell the model where the harness checkout lives.
  * @returns after the projection reader and prompt registrations are ready.
  */
-export async function apply(ctx: Context): Promise<void> {
+export async function apply(ctx: Context, config: Config = {}): Promise<void> {
   const legacyPromptProjectionHandle = await ctx.sessionProjections.register({
     key: LEGACY_PROMPT,
     stateVersion: 1,
@@ -131,18 +148,20 @@ export async function apply(ctx: Context): Promise<void> {
     const session = context.agent?.session
     return session === undefined ? ADMITS_NOTHING : legacyPromptProjectionHandle.stateOf(session)
   }
-  ctx.systemPrompt.section({
-    name: HARNESS_SOURCE,
-    order: ctx.systemPrompt.getSectionOrder('HARNESS_SOURCE'),
-    interpolate: false,
-    text: context => admitted(context).source ?? HARNESS_SOURCE_PROMPT,
-  })
-  ctx.systemPrompt.context({
-    name: HARNESS_SOURCE,
-    order: ctx.systemPrompt.getContextOrder('HARNESS_SOURCE'),
-    interpolate: false,
-    text: `Current Tomato Harness implementation checkout: ${JSON.stringify(SOURCE_ROOT)}.`,
-  })
+  if (config.sourceContext ?? true) {
+    ctx.systemPrompt.section({
+      name: HARNESS_SOURCE,
+      order: ctx.systemPrompt.getSectionOrder('HARNESS_SOURCE'),
+      interpolate: false,
+      text: context => admitted(context).source ?? HARNESS_SOURCE_PROMPT,
+    })
+    ctx.systemPrompt.context({
+      name: HARNESS_SOURCE,
+      order: ctx.systemPrompt.getContextOrder('HARNESS_SOURCE'),
+      interpolate: false,
+      text: `Current Tomato Harness implementation checkout: ${JSON.stringify(SOURCE_ROOT)}.`,
+    })
+  }
   ctx.systemPrompt.section({
     name: WEB_SURFACE,
     order: ctx.systemPrompt.getSectionOrder('WEB_SURFACE'),

@@ -12,13 +12,17 @@ import {
 } from './splash-city.ts'
 import {
   FACADE_FRAGMENT_GLSL, FACADE_VERTEX_GLSL, GROUND_FRAGMENT_GLSL, GROUND_VERTEX_GLSL, PANEL_FRAGMENT_GLSL,
-  PANEL_VERTEX_GLSL, SKY_FRAGMENT_GLSL, SKY_VERTEX_GLSL, SOLID_FRAGMENT_GLSL, SOLID_VERTEX_GLSL,
+  PANEL_VERTEX_GLSL, SKY_FRAGMENT_GLSL, SKY_VERTEX_GLSL, SOLID_FRAGMENT_GLSL, SOLID_SURFACE, SOLID_VERTEX_GLSL,
+  type SolidSurface,
 } from './splash-glsl.ts'
 import {
   BEAM_FRAGMENT_GLSL, BEAM_VERTEX_GLSL, CRAFT_LIGHT_VERTEX_GLSL, LIGHT_FRAGMENT_GLSL, MARK_FRAGMENT_GLSL,
   MARK_FRONT_SCALE, MARK_VERTEX_GLSL, POINT_LIGHT_VERTEX_GLSL, RAIN_VERTEX_GLSL, SPARK_VERTEX_GLSL,
 } from './splash-glsl-light.ts'
-import { CRAFT_FRAGMENT_GLSL, CRAFT_VERTEX_GLSL, LANDMARK_FRAGMENT_GLSL, LANDMARK_VERTEX_GLSL } from './splash-glsl-landmark.ts'
+import {
+  CRAFT_FRAGMENT_GLSL, CRAFT_KIND, CRAFT_VERTEX_GLSL, LANDMARK_FRAGMENT_GLSL, LANDMARK_KIND, LANDMARK_VERTEX_GLSL,
+  type CraftKind,
+} from './splash-glsl-landmark.ts'
 import {
   createIgnitionTexture, createMarkGeometry, MARK_FIELD_SIZE, markIgnitionArrival, markIgnitionField,
   markIgnitionSeed, rasterizeMark, sampleMarkPoints,
@@ -90,10 +94,14 @@ const staticScene: SplashScene = { finish: () => {}, stop: () => {} }
 /** Rain stays out of the mirrored ground render. */
 const RAIN_LAYER = 1
 const CLEAR_COLOR = 0x030105
-const MAX_PIXEL_RATIO = 2
+/**
+ * Pixels per CSS pixel at most. The 1280×760 window renders at 1920×1140 on a 2× display, which holds 120 Hz on Apple
+ * silicon; a `2` cap measured 82 fps there with no visible sharpness gain over the bloom and sharpening passes.
+ */
+const MAX_PIXEL_RATIO = 1.5
 const MIN_PIXEL_RATIO = 0.8
-/** Drawing-buffer pixels rendered at most: the 1280×760 window at a pixel ratio of 2; larger windows render softer. */
-const MAX_DRAWING_PIXELS = 2560 * 1520
+/** Drawing-buffer pixels rendered at most: the 1280×760 window at `MAX_PIXEL_RATIO`; larger windows render softer. */
+const MAX_DRAWING_PIXELS = 1920 * 1140
 const SPARK_COUNT = 900
 /** Share of the drawing buffer's resolution used by the mirrored ground render; puddle blur hides the loss. */
 const MIRROR_SCALE = 0.4
@@ -118,17 +126,18 @@ function cityMaterial(
 }
 
 /**
- * A prop material; `surface` lists the `SOLID_FRAGMENT_GLSL` defines it draws with, `BEVEL` only for the centred unit
- * box.
+ * A prop material; `surface` picks the `SOLID_FRAGMENT_GLSL` surface, and `bevel` rounds the centred unit box's edges.
  */
 function solidMaterial(
-  shared: SharedUniforms, albedo: number | THREE.Color, sheen: number, emissive = new THREE.Color(0, 0, 0), surface: readonly string[] = [],
+  shared: SharedUniforms, albedo: number | THREE.Color, sheen: number, emissive = new THREE.Color(0, 0, 0),
+  surface: SolidSurface = 'plain', bevel = false,
 ): THREE.ShaderMaterial {
   return cityMaterial(shared, SOLID_VERTEX_GLSL, SOLID_FRAGMENT_GLSL, {
     uAlbedo: { value: typeof albedo === 'number' ? new THREE.Color(albedo, albedo * 0.96, albedo * 1.04) : albedo },
     uEmissive: { value: emissive },
     uSheen: { value: sheen },
-  }, { defines: Object.fromEntries(surface.map(name => [name, ''])) })
+    uSurface: { value: SOLID_SURFACE[surface] },
+  }, bevel ? { defines: { BEVEL: '' } } : {})
 }
 
 /** Instance a base geometry's vertex attributes once per entry of `attributes`. */
@@ -432,7 +441,7 @@ function createProps(layout: SplashCityLayout, shared: SharedUniforms): THREE.Ob
       scale: new THREE.Vector3(0.78, 0.025, 0.3),
     })),
   )
-  const steel = solidMaterial(shared, 0.05, 0.25, undefined, ['BEVEL', 'STEEL'])
+  const steel = solidMaterial(shared, 0.05, 0.25, undefined, 'steel', true)
   // Sign and screen cabinets behind each panel, and a bezel standing 3 cm proud of the panel around its edges.
   const cabinets = [
     ...layout.signs.map(sign => ({ ...sign, y: sign.y + sign.height / 2, yaw: 0, lip: 0.13 })),
@@ -474,7 +483,7 @@ function createProps(layout: SplashCityLayout, shared: SharedUniforms): THREE.Ob
     scale: new THREE.Vector3(0.3, 0.15, run.from - run.to),
   })))
   const kerbs = placeBoxes(
-    new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), solidMaterial(shared, 0.09, 0.15, undefined, ['BEVEL', 'MASONRY']), course.length),
+    new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), solidMaterial(shared, 0.09, 0.15, undefined, 'masonry', true), course.length),
     course,
   )
   return [...units, masts, posts, lenses, housings, brackets, kerbs]
@@ -522,31 +531,31 @@ function createStreet(
   const relief = splashFacadeRelief(layout)
   const furniture = splashStreetFurniture(layout)
   const { cables, lanterns } = splashCables(layout)
-  const steel = solidMaterial(shared, 0.035, 0.35, undefined, ['BEVEL', 'STEEL'])
+  const steel = solidMaterial(shared, 0.035, 0.35, undefined, 'steel', true)
   const tint = new THREE.Color()
-  const awnings = solidBoxes(relief.awnings, solidMaterial(shared, 1, 0.08, undefined, ['BEVEL', 'FABRIC']))
+  const awnings = solidBoxes(relief.awnings, solidMaterial(shared, 1, 0.08, undefined, 'fabric', true))
   relief.awnings.forEach((awning, index) => { awnings.setColorAt(index, tint.setRGB(...awning.tint)) })
   const tubes = cables.map(cable => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(cablePoints(cable)), 32, 0.035, 5, false))
   const strung = tubes.length === 0 ? new THREE.BufferGeometry() : mergeGeometries(tubes, false)
   for (const tube of tubes) tube.dispose()
   const lanternGlow = new THREE.Color(1.5, 0.11, 0.06)
   const lanternMesh = placeBoxes(
-    new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 18, 12), solidMaterial(shared, 0.02, 0, lanternGlow, ['LANTERN']), lanterns.length),
+    new THREE.InstancedMesh(new THREE.SphereGeometry(0.2, 18, 12), solidMaterial(shared, 0.02, 0, lanternGlow, 'lantern'), lanterns.length),
     lanterns.map(lantern => ({ position: new THREE.Vector3(lantern.x, lantern.y, lantern.z), scale: new THREE.Vector3(1, 1.3, 1) })),
   )
   const cylinder = new THREE.CylinderGeometry(0.5, 0.5, 1, 18)
   const posters = furniture.posters.map(poster => ({ ...poster, yaw: 0 }))
   const objects: THREE.Object3D[] = [
-    solidBoxes(relief.masonry, solidMaterial(shared, 0.075, 0.1, undefined, ['BEVEL', 'MASONRY'])),
+    solidBoxes(relief.masonry, solidMaterial(shared, 0.075, 0.1, undefined, 'masonry', true)),
     solidBoxes(relief.steel, steel),
     awnings,
     solidBoxes(furniture.steel, steel),
-    placeSolids(new THREE.InstancedMesh(cylinder, solidMaterial(shared, 0.035, 0.35, undefined, ['STEEL']), furniture.round.length), furniture.round),
+    placeSolids(new THREE.InstancedMesh(cylinder, solidMaterial(shared, 0.035, 0.35, undefined, 'steel'), furniture.round.length), furniture.round),
     placeSolids(
-      new THREE.InstancedMesh(cylinder, solidMaterial(shared, new THREE.Color(0.34, 0.02, 0.02), 0.3, undefined, ['PAINTED']), furniture.red.length),
+      new THREE.InstancedMesh(cylinder, solidMaterial(shared, new THREE.Color(0.34, 0.02, 0.02), 0.3, undefined, 'painted'), furniture.red.length),
       furniture.red,
     ),
-    solidBoxes(furniture.glow, solidMaterial(shared, 0.02, 0.2, undefined, ['BEVEL', 'VENDING'])),
+    solidBoxes(furniture.glow, solidMaterial(shared, 0.02, 0.2, undefined, 'vending', true)),
     new THREE.Mesh(strung, solidMaterial(shared, 0.02, 0.2)),
     lanternMesh,
     createPanels(shared, posters, atlas, AD_GLOW.posters, true),
@@ -592,7 +601,7 @@ function laneMesh(
   shared: SharedUniforms,
   entries: readonly (SplashLane & { readonly paint: readonly [number, number, number] })[],
   base: THREE.BufferGeometry,
-  define: string,
+  kind: CraftKind,
 ): THREE.Mesh {
   const { lane, motion } = laneAttributes(entries)
   const looks = new Float32Array(entries.length * 4)
@@ -603,7 +612,7 @@ function laneMesh(
       aMotion: new THREE.InstancedBufferAttribute(motion, 4),
       aCraft: new THREE.InstancedBufferAttribute(looks, 4),
     }),
-    cityMaterial(shared, CRAFT_VERTEX_GLSL, CRAFT_FRAGMENT_GLSL, {}, { defines: { LANE: '', [define]: '' } }),
+    cityMaterial(shared, CRAFT_VERTEX_GLSL, CRAFT_FRAGMENT_GLSL, { uCraft: { value: CRAFT_KIND[kind] } }, { defines: { LANE: '' } }),
   )
   mesh.frustumCulled = false
   return mesh
@@ -613,9 +622,9 @@ function createTraffic(shared: SharedUniforms, viewport: { value: THREE.Vector2 
   const flyers = splashFlyers()
   const cars = splashCars()
   const objects: THREE.Object3D[] = [
-    laneMesh(shared, flyers.filter(flyer => flyer.kind === SPLASH_CRAFT.spinner), createSpinnerGeometry(), 'SPINNER'),
-    laneMesh(shared, flyers.filter(flyer => flyer.kind === SPLASH_CRAFT.hauler), createHaulerGeometry(), 'HAULER'),
-    laneMesh(shared, cars, createCarGeometry(), 'CAR'),
+    laneMesh(shared, flyers.filter(flyer => flyer.kind === SPLASH_CRAFT.spinner), createSpinnerGeometry(), 'spinner'),
+    laneMesh(shared, flyers.filter(flyer => flyer.kind === SPLASH_CRAFT.hauler), createHaulerGeometry(), 'hauler'),
+    laneMesh(shared, cars, createCarGeometry(), 'car'),
   ]
   const lights: { lane: SplashLane; light: ModelLight }[] = [
     ...flyers.flatMap((flyer) => {
@@ -717,8 +726,12 @@ function placeLandmark(
   const { x, z } = plot
   const group = new THREE.Group()
   for (const surface of model.surfaces) {
-    const defines = Object.fromEntries(surface.defines.map(name => [name, '']))
-    group.add(new THREE.Mesh(surface.geometry, cityMaterial(shared, LANDMARK_VERTEX_GLSL, LANDMARK_FRAGMENT_GLSL, uniforms, { defines })))
+    const placement = {
+      ...uniforms,
+      uLandmark: { value: LANDMARK_KIND[surface.kind] },
+      uDiagrid: { value: surface.diagrid === true ? 1 : 0 },
+    }
+    group.add(new THREE.Mesh(surface.geometry, cityMaterial(shared, LANDMARK_VERTEX_GLSL, LANDMARK_FRAGMENT_GLSL, placement)))
   }
   for (const outline of model.outlines) {
     const curve = new THREE.CatmullRomCurve3([...outline.points], false, 'centripetal')
@@ -750,8 +763,9 @@ function createLandmarks(shared: SharedUniforms): { objects: THREE.Object3D[]; l
 function createBlimp(shared: SharedUniforms, viewport: { value: THREE.Vector2 }, atlas: SplashAtlas): Animated {
   const hull = new THREE.Mesh(
     createBlimpGeometry(SPLASH_BLIMP.length, SPLASH_BLIMP.radius),
-    cityMaterial(shared, CRAFT_VERTEX_GLSL, CRAFT_FRAGMENT_GLSL, { uPaint: { value: new THREE.Color(0.035, 0.034, 0.04) } }, {
-      defines: { BLIMP: '' },
+    cityMaterial(shared, CRAFT_VERTEX_GLSL, CRAFT_FRAGMENT_GLSL, {
+      uPaint: { value: new THREE.Color(0.035, 0.034, 0.04) },
+      uCraft: { value: CRAFT_KIND.blimp },
     }),
   )
   const offset = { value: new THREE.Vector3(SPLASH_BLIMP.x, SPLASH_BLIMP.y, SPLASH_BLIMP.z) }
@@ -793,7 +807,7 @@ function createMaglev(shared: SharedUniforms, viewport: { value: THREE.Vector2 }
   const paint = { uPaint: { value: new THREE.Color(0.46, 0.47, 0.5) } }
   const train = new THREE.Mesh(
     createTrainGeometry(),
-    cityMaterial(shared, CRAFT_VERTEX_GLSL, CRAFT_FRAGMENT_GLSL, paint, { defines: { TRAIN: '' } }),
+    cityMaterial(shared, CRAFT_VERTEX_GLSL, CRAFT_FRAGMENT_GLSL, { ...paint, uCraft: { value: CRAFT_KIND.train } }),
   )
   const offset = { value: new THREE.Vector3(0, height + 1.95, z) }
   const lights = pointLights(shared, viewport, localLights(trainLights()), offset)

@@ -12,7 +12,7 @@ export const PROFILE_TEMPLATES: Record<string, ProfileTemplate> = {
     bundles: ['@tomato/base', '@tomato/acp-app'],
   },
   web: {
-    bundles: ['@tomato/base', '@tomato/web-app'],
+    bundles: ['@tomato/base', '@tomato/web-app', '@tomato/experimental-browser-use-playwright-bundle'],
   },
   headless: {
     bundles: ['@tomato/base', '@tomato/headless'],
@@ -46,13 +46,14 @@ export const DEFAULT_PROFILE_BUNDLES: readonly string[] = ['@tomato/base']
 /**
  * The bundles the tomato installation ships for a person to switch on: each a
  * runtime dependency of the installation that declares `tomato.bundle.patch`,
- * an `icon`, and `./locale/*.json` display metadata, selected by no shipped
- * template, and offered switched off by the plugin manager except persistent
- * terminals, which have no page switch
+ * an `icon`, and `./locale/*.json` display metadata, offered switched off by the
+ * plugin manager except persistent terminals, which have no page switch
  * ([rationale](../../../../.agents/notes/implemented/process/2026-09-15-shipped-optional-bundles.md),
  * [admission](../../../../.agents/notes/implemented/architecture/2026-09-21-experimental-capabilities-as-optional-bundles.md)).
+ * A shipped template selects one only when {@link DEFAULT_ENABLED_OPTIONAL_BUNDLES} names it.
  */
 export const OPTIONAL_BUNDLES: readonly string[] = [
+  '@tomato/experimental-robot-app',
   '@tomato/personalized-recommendations',
   '@tomato/cua-bundle',
   '@tomato/experimental-session-search',
@@ -68,11 +69,22 @@ export const OPTIONAL_BUNDLES: readonly string[] = [
   '@tomato/experimental-inspector-profile',
   '@tomato/experimental-plugin-market-bundle',
   '@tomato/experimental-tool-worktree',
+  '@tomato/experimental-browser-use-playwright-bundle',
+]
+
+/**
+ * Shipped optional bundles a shipped template selects, so a new profile starts
+ * with the capability on while the person can still switch it off; each must also
+ * appear in {@link OPTIONAL_BUNDLES} and name a template layer. They are the only
+ * experimental packages the default product may compose
+ * ([rationale](../../../../.agents/notes/implemented/architecture/2026-11-03-default-playwright-bundle.md)).
+ */
+export const DEFAULT_ENABLED_OPTIONAL_BUNDLES: readonly string[] = [
+  '@tomato/experimental-browser-use-playwright-bundle',
 ]
 
 /** Public TOMATO release members available through the ordinary on-demand bundle installer. */
 export const ON_DEMAND_BUNDLES: readonly string[] = [
   '@tomato/subagent-claude-code',
   '@tomato/subagent-codex',
-  '@tomato/experimental-browser-use-playwright-bundle',
 ]

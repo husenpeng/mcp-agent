@@ -15,11 +15,22 @@ void main() {
 }
 `
 
+/** Landmark surface kinds the `uLandmark` uniform selects; one program draws every kind. */
+export const LANDMARK_KIND = {
+  pearlSphere: 0,
+  pearlColumn: 1,
+  twist: 2,
+  planar: 3,
+} as const
+
+/** A landmark surface kind from `LANDMARK_KIND`. */
+export type LandmarkKind = keyof typeof LANDMARK_KIND
+
 /**
- * Landmark surfaces, selected by one define: `PEARL_SPHERE` (glass spheres with LED parallels), `PEARL_COLUMN`
- * (shafts with LED strips and rings), `TWIST` (twisting curtain wall with a helix of corner light), or `PLANAR`
- * (gate and opener facades; `DIAGRID` adds the gate's lattice). Angular coordinates put their branch cut on +X, the
- * side facing away from the camera.
+ * Landmark surfaces, selected by the `uLandmark` uniform: `LANDMARK_PEARL_SPHERE` (glass spheres with LED parallels),
+ * `LANDMARK_PEARL_COLUMN` (shafts with LED strips and rings), `LANDMARK_TWIST` (twisting curtain wall with a helix of
+ * corner light), or `LANDMARK_PLANAR` (gate and opener facades; `uDiagrid` adds the gate's lattice). Angular coordinates
+ * put their branch cut on +X, the side facing away from the camera.
  */
 export const LANDMARK_FRAGMENT_GLSL = /* glsl */ `
 ${CITY_COMMON_GLSL}
@@ -27,6 +38,12 @@ uniform float uSeed;
 uniform vec2 uAxis;
 uniform float uRadius;
 uniform float uTwistRate;
+uniform int uLandmark;
+uniform float uDiagrid;
+const int LANDMARK_PEARL_SPHERE = ${LANDMARK_KIND.pearlSphere};
+const int LANDMARK_PEARL_COLUMN = ${LANDMARK_KIND.pearlColumn};
+const int LANDMARK_TWIST = ${LANDMARK_KIND.twist};
+const int LANDMARK_PLANAR = ${LANDMARK_KIND.planar};
 varying vec3 vWorld;
 varying vec3 vNormal;
 
@@ -68,62 +85,62 @@ vec3 metal(vec3 normal, vec3 view, vec3 albedo, float sheen) {
 void main() {
   vec3 normal = normalize(vNormal);
   vec3 view = normalize(vWorld - cameraPosition);
-  vec3 color;
-  #if defined(PEARL_SPHERE)
-  float latitude = asin(clamp(normal.y, -1.0, 1.0));
-  // The epsilon keeps atan defined at the poles, whose normals have no horizontal part.
-  float longitude = atan(-normal.z, -normal.x + 1e-6);
-  vec2 coord = vec2(longitude / (2.0 * PI) * 40.0, latitude / PI * 20.0);
-  vec2 cell = floor(coord);
-  vec2 pixel = max(fwidth(coord), vec2(1e-4));
-  float cosine = clamp(-dot(view, normal), 0.0, 1.0);
-  float fresnel = 0.08 + 0.92 * pow(1.0 - cosine, 5.0);
-  vec3 sky = skyRadiance(vWorld, reflect(view, normal), 0);
-  float glow = step(hash12(cell + uSeed * 17.0), 0.34) * (0.4 + 0.6 * hash12(cell.yx + 3.0));
-  float panelDetail = smoothstep(2.0, 6.0, 1.0 / max(pixel.x, pixel.y));
-  vec3 inner = PEARL_PINK * 0.2 * mix(0.37, glow, panelDetail) * (0.6 + 0.4 * smoothstep(-0.6, 0.6, normal.y));
-  vec3 glass = inner * (1.0 - fresnel) + sky * fresnel;
-  float frame = max(gridLine(coord.x, 1.0, 0.035, pixel.x), gridLine(coord.y, 1.0, 0.035, pixel.y));
-  color = mix(glass, metal(normal, view, vec3(0.05), 0.4), frame);
-  color += PEARL_PINK * 1.35 * gridLine(coord.y, 3.0, 0.06, pixel.y);
-  color += LED_CYAN * 1.1 * lineCoverage(latitude, 0.02, max(fwidth(latitude), 1e-4));
-  #elif defined(PEARL_COLUMN)
-  float angle = atan(-normal.z, -normal.x + 1e-6);
-  float strips = gridLine(angle, 2.0 * PI / 3.0, 0.07, max(fwidth(angle), 1e-4));
-  float rings = gridLine(vWorld.y, 18.0, 0.22, max(fwidth(vWorld.y), 1e-4));
-  color = metal(normal, view, vec3(0.06, 0.058, 0.064), 0.55) + LED_CYAN * 0.85 * strips + PEARL_PINK * 1.0 * rings;
-  #elif defined(TWIST)
-  vec2 offset = vWorld.xz - uAxis;
-  float angle = atan(-offset.y, -offset.x + 1e-6) - uTwistRate * vWorld.y;
-  float u = angle * uRadius;
-  if (normal.y > 0.6) {
-    color = metal(normal, view, vec3(0.04), 0.2);
-  } else {
-    color = curtainWall(u, vWorld.y, 1.8, 4.2, 0.3, false, normal, view);
-    float angularPixel = max(fwidth(angle), 1e-4);
-    color += vec3(0.75, 0.95, 1.0) * 1.25 * gridLine(angle - PI / 3.0, 2.0 * PI / 3.0, 0.011, angularPixel);
-    color += LED_CYAN * 0.8 * gridLine(vWorld.y, 52.0, 0.3, max(fwidth(vWorld.y), 1e-4));
+  vec3 color = vec3(0.0);
+  if (uLandmark == LANDMARK_PEARL_SPHERE) {
+    float latitude = asin(clamp(normal.y, -1.0, 1.0));
+    // The epsilon keeps atan defined at the poles, whose normals have no horizontal part.
+    float longitude = atan(-normal.z, -normal.x + 1e-6);
+    vec2 coord = vec2(longitude / (2.0 * PI) * 40.0, latitude / PI * 20.0);
+    vec2 cell = floor(coord);
+    vec2 pixel = max(fwidth(coord), vec2(1e-4));
+    float cosine = clamp(-dot(view, normal), 0.0, 1.0);
+    float fresnel = 0.08 + 0.92 * pow(1.0 - cosine, 5.0);
+    vec3 sky = skyRadiance(vWorld, reflect(view, normal), 0);
+    float glow = step(hash12(cell + uSeed * 17.0), 0.34) * (0.4 + 0.6 * hash12(cell.yx + 3.0));
+    float panelDetail = smoothstep(2.0, 6.0, 1.0 / max(pixel.x, pixel.y));
+    vec3 inner = PEARL_PINK * 0.2 * mix(0.37, glow, panelDetail) * (0.6 + 0.4 * smoothstep(-0.6, 0.6, normal.y));
+    vec3 glass = inner * (1.0 - fresnel) + sky * fresnel;
+    float frame = max(gridLine(coord.x, 1.0, 0.035, pixel.x), gridLine(coord.y, 1.0, 0.035, pixel.y));
+    color = mix(glass, metal(normal, view, vec3(0.05), 0.4), frame);
+    color += PEARL_PINK * 1.35 * gridLine(coord.y, 3.0, 0.06, pixel.y);
+    color += LED_CYAN * 1.1 * lineCoverage(latitude, 0.02, max(fwidth(latitude), 1e-4));
+  } else if (uLandmark == LANDMARK_PEARL_COLUMN) {
+    float angle = atan(-normal.z, -normal.x + 1e-6);
+    float strips = gridLine(angle, 2.0 * PI / 3.0, 0.07, max(fwidth(angle), 1e-4));
+    float rings = gridLine(vWorld.y, 18.0, 0.22, max(fwidth(vWorld.y), 1e-4));
+    color = metal(normal, view, vec3(0.06, 0.058, 0.064), 0.55) + LED_CYAN * 0.85 * strips + PEARL_PINK * 1.0 * rings;
+  } else if (uLandmark == LANDMARK_TWIST) {
+    vec2 offset = vWorld.xz - uAxis;
+    float angle = atan(-offset.y, -offset.x + 1e-6) - uTwistRate * vWorld.y;
+    float u = angle * uRadius;
+    if (normal.y > 0.6) {
+      color = metal(normal, view, vec3(0.04), 0.2);
+    } else {
+      color = curtainWall(u, vWorld.y, 1.8, 4.2, 0.3, false, normal, view);
+      float angularPixel = max(fwidth(angle), 1e-4);
+      color += vec3(0.75, 0.95, 1.0) * 1.25 * gridLine(angle - PI / 3.0, 2.0 * PI / 3.0, 0.011, angularPixel);
+      color += LED_CYAN * 0.8 * gridLine(vWorld.y, 52.0, 0.3, max(fwidth(vWorld.y), 1e-4));
+    }
+  } else if (uLandmark == LANDMARK_PLANAR) {
+    if (normal.y > 0.7) {
+      color = metal(normal, view, vec3(0.04), 0.2);
+    } else if (normal.y < -0.7) {
+      float pixel = max(fwidth(vWorld.x), 1e-4);
+      color = vec3(0.012) + vec3(0.6, 0.85, 1.0) * 0.7 * gridLine(vWorld.x, 3.0, 0.2, pixel);
+    } else {
+      vec3 tangent = normalize(vec3(normal.z, 0.0, -normal.x));
+      float u = dot(vWorld, tangent);
+      color = curtainWall(u, vWorld.y, 1.7, 4.0, 0.34, hash11(uSeed) < 0.5, normal, view);
+      if (uDiagrid > 0.5) {
+        float rising = u + vWorld.y * 0.9;
+        float falling = u - vWorld.y * 0.9;
+        float lattice = max(gridLine(rising, 16.0, 0.16, max(fwidth(rising), 1e-4)), gridLine(falling, 16.0, 0.16, max(fwidth(falling), 1e-4)));
+        color = mix(color, metal(normal, view, vec3(0.05), 0.4), lattice * 0.8) + LED_CYAN * 0.38 * lattice;
+      } else {
+        color += vec3(0.85, 0.92, 1.0) * 0.32 * gridLine(vWorld.y, 12.0, 0.08, max(fwidth(vWorld.y), 1e-4));
+      }
+    }
   }
-  #elif defined(PLANAR)
-  if (normal.y > 0.7) {
-    color = metal(normal, view, vec3(0.04), 0.2);
-  } else if (normal.y < -0.7) {
-    float pixel = max(fwidth(vWorld.x), 1e-4);
-    color = vec3(0.012) + vec3(0.6, 0.85, 1.0) * 0.7 * gridLine(vWorld.x, 3.0, 0.2, pixel);
-  } else {
-    vec3 tangent = normalize(vec3(normal.z, 0.0, -normal.x));
-    float u = dot(vWorld, tangent);
-    color = curtainWall(u, vWorld.y, 1.7, 4.0, 0.34, hash11(uSeed) < 0.5, normal, view);
-    #ifdef DIAGRID
-    float rising = u + vWorld.y * 0.9;
-    float falling = u - vWorld.y * 0.9;
-    float lattice = max(gridLine(rising, 16.0, 0.16, max(fwidth(rising), 1e-4)), gridLine(falling, 16.0, 0.16, max(fwidth(falling), 1e-4)));
-    color = mix(color, metal(normal, view, vec3(0.05), 0.4), lattice * 0.8) + LED_CYAN * 0.38 * lattice;
-    #else
-    color += vec3(0.85, 0.92, 1.0) * 0.32 * gridLine(vWorld.y, 12.0, 0.08, max(fwidth(vWorld.y), 1e-4));
-    #endif
-  }
-  #endif
   gl_FragColor = vec4(applyHaze(color, vWorld), 1.0);
 }
 `
@@ -172,14 +189,32 @@ void main() {
 }
 `
 
+/** Craft kinds the `uCraft` uniform selects; one program draws every kind. */
+export const CRAFT_KIND = {
+  spinner: 0,
+  hauler: 1,
+  blimp: 2,
+  train: 3,
+  car: 4,
+} as const
+
+/** A craft kind from `CRAFT_KIND`. */
+export type CraftKind = keyof typeof CRAFT_KIND
+
 /**
  * Clear-coated paint, tinted glass, or bright metal reflecting the sky, lit by the city and the avenue lamps, plus
- * per-vertex emission. One define per craft kind (`SPINNER`, `HAULER`, `BLIMP`, `TRAIN`, `CAR`) draws its panel seams
- * in model space; spinners also carry a livery stripe, and cars paint their glass house's roof and shade their rims.
- * Seams resolve to their average once they span a few pixels.
+ * per-vertex emission. The `uCraft` uniform selects the kind, whose panel seams are drawn in model space; spinners also
+ * carry a livery stripe, and cars paint their glass house's roof and shade their rims. Seams resolve to their average
+ * once they span a few pixels.
  */
 export const CRAFT_FRAGMENT_GLSL = /* glsl */ `
 ${CITY_COMMON_GLSL}
+uniform int uCraft;
+const int CRAFT_SPINNER = ${CRAFT_KIND.spinner};
+const int CRAFT_HAULER = ${CRAFT_KIND.hauler};
+const int CRAFT_BLIMP = ${CRAFT_KIND.blimp};
+const int CRAFT_TRAIN = ${CRAFT_KIND.train};
+const int CRAFT_CAR = ${CRAFT_KIND.car};
 varying vec3 vWorld;
 varying vec3 vNormal;
 varying vec4 vGlow;
@@ -192,41 +227,40 @@ vec3 accentColour(vec3 paint) {
   return pick < 0.3 ? vec3(0.12, 0.72, 1.0) : pick < 0.55 ? vec3(1.0, 0.16, 0.5) : pick < 0.8 ? vec3(1.0, 0.07, 0.06) : vec3(1.0, 0.5, 0.12);
 }
 
-// Panel seams of each craft kind in its model frame: 1 on a seam.
+// Panel seams of the selected craft kind in its model frame: 1 on a seam.
 float panelSeams(vec3 p) {
   vec3 pixel = max(fwidth(p), vec3(1e-4));
-  #if defined(SPINNER)
-  // Rings around the hull, the waist seam, and a door outline on each flank.
-  float rings = gridLine(p.z + 0.15, 0.95, 0.008, pixel.z);
-  float waist = lineCoverage(p.y - 0.02, 0.008, pixel.y);
-  vec2 door = vec2(p.z - 0.15, p.y + 0.02);
-  float doorEdge = max(lineCoverage(abs(door.x) - 0.62, 0.008, pixel.z) * step(abs(door.y), 0.24),
-    lineCoverage(abs(door.y) - 0.24, 0.008, pixel.y) * step(abs(door.x), 0.62)) * step(0.6, abs(p.x));
-  return max(max(rings, waist), doorEdge);
-  #elif defined(HAULER)
-  // Corrugated container walls between panel joints, and the cab's panel lines.
-  float corrugation = gridLine(p.z, 0.28, 0.035, pixel.z) * step(p.z, 2.55) * step(1.75, abs(p.x));
-  float joints = max(gridLine(p.y + 0.2, 0.9, 0.01, pixel.y), gridLine(p.z + 0.3, 2.3, 0.012, pixel.z));
-  return max(0.6 * corrugation, joints);
-  #elif defined(BLIMP)
-  // Envelope gores around the hull axis and the frames inside them.
-  float around = atan(p.z, p.y + 1e-6) * 6.0 / 3.14159265;
-  float gores = gridLine(around, 1.0, 0.012, max(fwidth(around), 1e-4));
-  return 0.7 * max(gores, gridLine(p.x, 2.4, 0.02, pixel.x));
-  #elif defined(TRAIN)
-  return gridLine(p.x, 2.2, 0.01, pixel.x) * step(abs(p.y), 1.5);
-  #elif defined(CAR)
-  // Door shut lines on both flanks below the waist, and the bonnet and boot lid outlines on top.
-  float flank = step(0.8, abs(p.x)) * step(0.34, p.y) * step(p.y, 0.92);
-  float doors = max(max(lineCoverage(p.z - 0.98, 0.006, pixel.z), lineCoverage(p.z + 0.27, 0.006, pixel.z)),
-    lineCoverage(p.z + 1.0, 0.006, pixel.z)) * flank;
-  float top = step(0.7, p.y) * step(abs(p.x), 0.8);
-  float lidSides = lineCoverage(abs(p.x) - 0.68, 0.006, pixel.x) * (step(1.05, p.z) + step(p.z, -1.5));
-  float bootFront = lineCoverage(p.z + 1.5, 0.006, pixel.z) * step(abs(p.x), 0.68);
-  return max(doors, max(lidSides, bootFront) * top);
-  #else
+  if (uCraft == CRAFT_SPINNER) {
+    // Rings around the hull, the waist seam, and a door outline on each flank.
+    float rings = gridLine(p.z + 0.15, 0.95, 0.008, pixel.z);
+    float waist = lineCoverage(p.y - 0.02, 0.008, pixel.y);
+    vec2 door = vec2(p.z - 0.15, p.y + 0.02);
+    float doorEdge = max(lineCoverage(abs(door.x) - 0.62, 0.008, pixel.z) * step(abs(door.y), 0.24),
+      lineCoverage(abs(door.y) - 0.24, 0.008, pixel.y) * step(abs(door.x), 0.62)) * step(0.6, abs(p.x));
+    return max(max(rings, waist), doorEdge);
+  } else if (uCraft == CRAFT_HAULER) {
+    // Corrugated container walls between panel joints, and the cab's panel lines.
+    float corrugation = gridLine(p.z, 0.28, 0.035, pixel.z) * step(p.z, 2.55) * step(1.75, abs(p.x));
+    float joints = max(gridLine(p.y + 0.2, 0.9, 0.01, pixel.y), gridLine(p.z + 0.3, 2.3, 0.012, pixel.z));
+    return max(0.6 * corrugation, joints);
+  } else if (uCraft == CRAFT_BLIMP) {
+    // Envelope gores around the hull axis and the frames inside them.
+    float around = atan(p.z, p.y + 1e-6) * 6.0 / 3.14159265;
+    float gores = gridLine(around, 1.0, 0.012, max(fwidth(around), 1e-4));
+    return 0.7 * max(gores, gridLine(p.x, 2.4, 0.02, pixel.x));
+  } else if (uCraft == CRAFT_TRAIN) {
+    return gridLine(p.x, 2.2, 0.01, pixel.x) * step(abs(p.y), 1.5);
+  } else if (uCraft == CRAFT_CAR) {
+    // Door shut lines on both flanks below the waist, and the bonnet and boot lid outlines on top.
+    float flank = step(0.8, abs(p.x)) * step(0.34, p.y) * step(p.y, 0.92);
+    float doors = max(max(lineCoverage(p.z - 0.98, 0.006, pixel.z), lineCoverage(p.z + 0.27, 0.006, pixel.z)),
+      lineCoverage(p.z + 1.0, 0.006, pixel.z)) * flank;
+    float top = step(0.7, p.y) * step(abs(p.x), 0.8);
+    float lidSides = lineCoverage(abs(p.x) - 0.68, 0.006, pixel.x) * (step(1.05, p.z) + step(p.z, -1.5));
+    float bootFront = lineCoverage(p.z + 1.5, 0.006, pixel.z) * step(abs(p.x), 0.68);
+    return max(doors, max(lidSides, bootFront) * top);
+  }
   return 0.0;
-  #endif
 }
 
 void main() {
@@ -237,20 +271,19 @@ void main() {
   float black = step(2.5, vGlow.a) * (1.0 - metal);
   float trim = step(1.5, vGlow.a) * (1.0 - black) * (1.0 - metal);
   float glass = clamp(vGlow.a, 0.0, 1.0) * (1.0 - trim) * (1.0 - black) * (1.0 - metal);
-  #ifdef CAR
-  // The glass house's upward faces are the painted roof.
-  glass *= 1.0 - smoothstep(0.8, 0.9, normal.y);
-  #endif
+  if (uCraft == CRAFT_CAR) {
+    // The glass house's upward faces are the painted roof.
+    glass *= 1.0 - smoothstep(0.8, 0.9, normal.y);
+  }
   float painted = (1.0 - glass) * (1.0 - trim) * (1.0 - black) * (1.0 - metal) * step(dot(vGlow.rgb, vec3(1.0)), 0.0);
   vec3 accent = accentColour(vPaint);
   float seams = panelSeams(vModel) * painted;
-  #ifdef SPINNER
-  // Half the spinners wear a livery stripe along both flanks in their accent colour.
-  float stripe = step(0.5, fract(dot(vPaint, vec3(5.3, 11.7, 3.1)))) * painted * step(0.6, abs(vModel.x))
-    * (1.0 - smoothstep(0.06 - fwidth(vModel.y), 0.06 + fwidth(vModel.y), abs(vModel.y + 0.12)));
-  #else
   float stripe = 0.0;
-  #endif
+  if (uCraft == CRAFT_SPINNER) {
+    // Half the spinners wear a livery stripe along both flanks in their accent colour.
+    stripe = step(0.5, fract(dot(vPaint, vec3(5.3, 11.7, 3.1)))) * painted * step(0.6, abs(vModel.x))
+      * (1.0 - smoothstep(0.06 - fwidth(vModel.y), 0.06 + fwidth(vModel.y), abs(vModel.y + 0.12)));
+  }
   float fresnel = mix(0.06, 0.08, glass) + (1.0 - mix(0.06, 0.08, glass)) * pow(1.0 - cosine, 5.0);
   vec3 reflected = reflect(view, normal);
   vec3 sky = skyRadiance(vWorld, reflected, 0);
@@ -265,20 +298,20 @@ void main() {
   // Bright metal: a dark base under a strong mirror reflection.
   paint = mix(paint, vec3(0.03), metal);
   fresnel = mix(fresnel, 0.55 + 0.45 * pow(1.0 - cosine, 5.0), metal);
-  #ifdef CAR
-  // Wheel rims: a hub and a darker spoke ring blurred by the wheel's spin.
-  vec2 hub = vec2(vModel.z - sign(vModel.z) * 1.38, vModel.y - 0.33);
-  float rimRadius = length(hub);
-  paint *= 1.0 - metal * 0.75 * smoothstep(0.06, 0.08, rimRadius) * (1.0 - smoothstep(0.16, 0.18, rimRadius));
-  #endif
+  if (uCraft == CRAFT_CAR) {
+    // Wheel rims: a hub and a darker spoke ring blurred by the wheel's spin.
+    vec2 hub = vec2(vModel.z - sign(vModel.z) * 1.38, vModel.y - 0.33);
+    float rimRadius = length(hub);
+    paint *= 1.0 - metal * 0.75 * smoothstep(0.06, 0.08, rimRadius) * (1.0 - smoothstep(0.16, 0.18, rimRadius));
+  }
   vec3 emission = mix(vGlow.rgb, accent * vGlow.r, trim);
-  #ifdef BLIMP
-  // LED strips run along the gores above and below the screen, tracing the envelope.
-  float around = atan(vModel.z, vModel.y + 1e-6) * 6.0 / 3.14159265;
-  float aroundPixel = max(fwidth(around), 1e-4);
-  float led = max(lineCoverage(abs(around) - 1.5, 0.03, aroundPixel), lineCoverage(abs(around) - 4.5, 0.03, aroundPixel));
-  emission += vec3(0.12, 0.7, 1.0) * 0.9 * led * painted * step(abs(vModel.x), 10.0);
-  #endif
+  if (uCraft == CRAFT_BLIMP) {
+    // LED strips run along the gores above and below the screen, tracing the envelope.
+    float around = atan(vModel.z, vModel.y + 1e-6) * 6.0 / 3.14159265;
+    float aroundPixel = max(fwidth(around), 1e-4);
+    float led = max(lineCoverage(abs(around) - 1.5, 0.03, aroundPixel), lineCoverage(abs(around) - 4.5, 0.03, aroundPixel));
+    emission += vec3(0.12, 0.7, 1.0) * 0.9 * led * painted * step(abs(vModel.x), 10.0);
+  }
   // The avenue lamps light the hull and leave a sharp highlight on its clear coat, glass, and metal.
   vec3 highlight;
   vec3 lamps = lampLight(vWorld, normal, view, mix(90.0, 240.0, max(glass, metal)), highlight);

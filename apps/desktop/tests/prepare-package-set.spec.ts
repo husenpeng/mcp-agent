@@ -44,12 +44,32 @@ describe('desktop package-set selection', () => {
       ['@tomato/unused', packed('@tomato/unused')],
     ])
     expect(selectDesktopPackageClosure(available, { platform: 'win32', arch: 'x64' }).map(entry => entry.manifest.name)).toEqual([
-      '@tomato/cordis',
-      '@tomato/cli',
       '@tomato/base',
+      '@tomato/cli',
+      '@tomato/cordis',
       '@tomato/desktop-host',
       '@tomato/platform-package',
     ])
+  })
+
+  it('rejects an optional workspace package absent from the packed inputs when the target can use it', () => {
+    const available = new Map<string, PackedDesktopPackage>([
+      ['@tomato/cli', packed('@tomato/cli', { optionalDependencies: { '@tomato/base': '^1.0.0' } })],
+      ['@tomato/desktop-host', packed('@tomato/desktop-host', { dependencies: { '@tomato/cli': '^1.0.0' } })],
+    ])
+    expect(() => selectDesktopPackageClosure(available, { platform: 'darwin', arch: 'arm64' }))
+      .toThrow('optionally requires unpacked workspace package @tomato/base')
+  })
+
+  it('skips an optional workspace package the target platform cannot use', () => {
+    const available = new Map<string, PackedDesktopPackage>([
+      ['@tomato/cli', packed('@tomato/cli', {
+        optionalDependencies: { '@tomato/node-addon-system-darwin-arm64': '^0.1.2' },
+      })],
+      ['@tomato/desktop-host', packed('@tomato/desktop-host', { dependencies: { '@tomato/cli': '^1.0.0' } })],
+    ])
+    const selected = selectDesktopPackageClosure(available, { platform: 'win32', arch: 'x64' })
+    expect(selected.map(entry => entry.manifest.name)).toEqual(['@tomato/cli', '@tomato/desktop-host'])
   })
 
   it.each([
@@ -157,8 +177,8 @@ it('copies no macOS tarball into the Windows package set', () => {
   }
   const output = join(root, 'output')
   prepareDesktopPackageSet([inputs], output, { platform: 'win32', arch: 'x64' })
-  expect(readdirSync(join(output, DESKTOP_PACKAGES_DIR))).not.toContain('@tomato/experimental-cua-macos.tgz')
+  expect(readdirSync(join(output, DESKTOP_PACKAGES_DIR))).not.toContain('experimental-cua-macos.tgz')
   prepareDesktopPackageSet([inputs], output, { platform: 'darwin', arch: 'arm64' })
-  expect(readFileSync(join(output, DESKTOP_PACKAGES_DIR, '@tomato/experimental-cua-macos.tgz')))
-    .toEqual(readFileSync(join(inputs, '@tomato/experimental-cua-macos.tgz')))
+  expect(readFileSync(join(output, DESKTOP_PACKAGES_DIR, 'experimental-cua-macos.tgz')))
+    .toEqual(readFileSync(join(inputs, 'experimental-cua-macos.tgz')))
 })

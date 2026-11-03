@@ -21,6 +21,13 @@ export const AUTH_SERVICE_ENV = 'AUTH_SERVICE_URL'
 export const TOMATO_WEB_ENV = 'TOMATO_WEB_URL'
 
 /**
+ * Runtime variable carrying the company search gateway origin. The Host's
+ * `web-search-company` provider reads it; it defaults to the same BFF origin
+ * because `/api/v1/search/web` is served by that BFF.
+ */
+export const SEARCH_GATEWAY_ENV = 'TOMATO_SEARCH_GATEWAY_URL'
+
+/**
  * Read one optional HTTP(S) origin.
  * @param value - candidate value from the manifest or the environment.
  * @param source - name reported in the failure.
@@ -63,7 +70,9 @@ export function resolveLoginEnvironment(manifest: unknown, env: NodeJS.ProcessEn
 
 /**
  * Project the resolved origins into a Host environment, leaving the inherited
- * values in place when neither source configures one.
+ * values in place when neither source configures one. The search gateway
+ * defaults to the BFF origin because the BFF serves the search endpoint; an
+ * explicit `TOMATO_SEARCH_GATEWAY_URL` wins.
  * @param env - environment inherited by the Desktop shell.
  * @param login - resolved origins.
  * @returns a new environment carrying the effective login variables.
@@ -73,5 +82,7 @@ export function withLoginEnvironment(env: NodeJS.ProcessEnv, login: DesktopLogin
     ...env,
     ...login.authServiceUrl === '' ? {} : { [AUTH_SERVICE_ENV]: login.authServiceUrl },
     ...login.tomatoWebUrl === '' ? {} : { [TOMATO_WEB_ENV]: login.tomatoWebUrl },
+    ...login.tomatoWebUrl === '' || env[SEARCH_GATEWAY_ENV] !== undefined
+      ? {} : { [SEARCH_GATEWAY_ENV]: login.tomatoWebUrl },
   }
 }

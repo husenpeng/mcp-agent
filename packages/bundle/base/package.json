@@ -128,6 +128,7 @@
     "@tomato/web": "workspace:*",
     "@tomato/web-deepseek-api": "workspace:*",
     "@tomato/web-fetch-http": "workspace:*",
+    "@tomato/web-search-company": "workspace:*",
     "@tomato/web-search-deepseek": "workspace:*",
     "@tomato/workflow-ptc": "workspace:*",
     "@tomato/working-directory": "workspace:*",

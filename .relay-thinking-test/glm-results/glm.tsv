@@ -1,0 +1,24 @@
+probe	http	time_s	completion_tok	reasoning_tok	rc_len	finish	content	error
+rep1-off	200	2.336849	35	31	50	stop	4183	
+rep1-low	200	2.297157	4	0	0	stop	4183	
+rep1-medium	200	2.306502	28	24	37	stop	4183	
+rep1-high	200	3.018298	28	24	37	stop	4183	
+rep1-max	200	2.552575	36	32	52	stop	4183	
+rep2-off	200	1.777923	35	31	50	stop	4183	
+rep2-low	200	1.948082	4	0	0	stop	4183	
+rep2-medium	200	2.307550	28	24	37	stop	4183	
+rep2-high	200	2.365011	28	24	36	stop	4183	
+rep2-max	200	5.895558	37	33	53	stop	4183	
+rep3-off	200	2.323659	36	32	52	stop	4183	
+rep3-low	200	2.218848	4	0	0	stop	4183	
+rep3-medium	200	2.150994	28	24	37	stop	4183	
+rep3-high	200	2.548372	28	24	37	stop	4183	
+rep3-max	200	2.378159	37	33	53	stop	4183	
+spell-minimal	200	2.261110	4	0	0	stop	4183	
+spell-none	200	1.989096	4	0	0	stop	4183	
+spell-xhigh	200	2.416568	31	27	42	stop	4183	
+spell-MAX	400	0.345614	0	0	0	-		parameter check failed, reasoning_effort must be none or low or medium or high or xhigh or max
+native-think-off	200	2.053590	36	32	52	stop	4183	
+native-think-on	200	2.181208	35	31	50	stop	4183	
+stream-low	200|ok	2.084776	-	0	0	-	4183	
+stream-high	200|ok	2.670520	-	0	0	-	4183	

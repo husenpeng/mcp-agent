@@ -21,7 +21,7 @@
 | [0003](0003-hero-and-send-align-company-web.md) | 空会话 hero 铺公司 Web 同款点阵；发送键改为品牌渐变圆钮，生成中显示 loading（点阵静态部分由 0004 接替） | Accepted |
 | [0004](0004-hero-dot-field-interaction.md) | hero 点阵用 canvas 自写弹簧实现指针推开、弹性回位与点击冲击波 | Accepted |
 | [0005](0005-packaged-login-endpoints.md) | 登录端点按打包环境封入应用 manifest，启动环境可覆盖 | Accepted |
-| [0006](0006-playwright-browser-bundle.md) | Playwright MCP 以官方按需组合包进入插件页，默认 launch/headless | Accepted |
+| [0006](0006-playwright-browser-bundle.md) | Playwright MCP 以官方按需组合包进入插件页，默认 launch/headless | Superseded by [0016](0016-default-playwright-bundle.md) |
 | [0007](0007-hicreator-mcp.md) | hiCreator 远程 MCP 进入 web 补丁层，未配置 API Key 时整行停用 | Accepted |
 | [0008](0008-desktop-sign-in-account-refresh.md) | 初始欢迎窗登录成功后主动通知工作区刷新账户，避免停留在启动时的未登录投影 | Accepted |
 | [0008](0008-desktop-shell-brand-and-height.md) | macOS 桌面壳子：欢迎/主窗口标题栏露出 Tomato AI，欢迎 1000×640、主窗口默认 1280×760 | Accepted |
@@ -31,3 +31,5 @@
 | [0012](0012-memory-and-focus.md) | 跨会话工作区记忆与目标轮次专注以默认关闭的实验组合包交付，写入需引用用户原话，不新增续跑 driver（检索与范围分别由 0013、0014 修订） | Accepted |
 | [0013](0013-memory-query-expansion.md) | 记忆搜索命中过少时用一次辅助模型请求扩展查询，再按词法排序，失败回退字面结果 | Accepted |
 | [0014](0014-account-scoped-memory-and-profile.md) | 记忆按网关已验证的登录账号隔离，未登录时拒绝读写；新增跨工作区的用户画像范围 | Accepted |
+| [0015](0015-response-contract-in-presets.md) | 三个内置预设的 persona suffix 固定回答契约：结论先行、短答直说、长答三节、只留决策相关信息；minimal 不变 | Accepted |
+| [0016](0016-default-playwright-bundle.md) | Playwright 浏览器随安装分发、Web/桌面新建 profile 默认启用，桌面安装包自带 Chromium headless shell | Accepted |

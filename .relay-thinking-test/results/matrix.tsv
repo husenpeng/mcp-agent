@@ -1,0 +1,521 @@
+model	level	http	time_s	prompt_tok	completion_tok	reasoning_tok	rc_len	finish	content	error
+claude-opus-4-5-20251101	off	400	0.603545	-	-	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: 92900819-32a
+claude-haiku-4-5-20251001	off	400	0.607623	-	-	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: 14c2a67c-f2c
+claude-opus-4-7	off	400	0.619302	-	-	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: 5efa6c9c-e47
+claude-haiku-5-5	off	400	0.689378	-	-	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: a9e02939-0a9
+claude-opus-4-8	off	200	1.153458	28	4	0	0	stop	4183	
+claude-opus-4-5-20251101	low	400	0.723240	-	-	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: 22dce2c4-df2
+claude-haiku-5-5	low	400	0.797642	-	-	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: b67f6e00-a83
+claude-opus-4-6-v1	off	200	1.743933	24	6	0	0	stop	4183	
+claude-opus-4-7	low	200	1.158660	33	7	0	0	stop	4183	
+claude-haiku-4-5-20251001	low	200	1.214939	53	120	0	176	stop	4183	
+claude-opus-4-5-20251101	medium	400	0.745614	-	-	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: db531821-120
+claude-haiku-5-5	medium	400	0.628526	-	-	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: 63fe04b9-342
+claude-opus-4-8	low	200	1.179843	28	4	0	0	stop	4183	
+claude-haiku-5-5	high	400	0.642979	-	-	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: d28ac7ce-433
+claude-opus-4-7	medium	200	1.233499	33	7	0	0	stop	4183	
+claude-opus-4-5-20251101	high	400	1.006600	-	-	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: da8b2a98-770
+claude-haiku-4-5-20251001	medium	200	1.384348	53	132	0	181	stop	4183	
+claude-haiku-5-5	max	400	0.679936	-	-	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: d4a0ad74-abc
+claude-opus-4-7	high	400	0.584428	-	-	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: 918dbfca-1c3
+claude-haiku-4-5-20251001	high	400	0.620417	-	-	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: 60745d17-94c
+claude-opus-4-8	medium	200	1.600284	28	4	0	0	stop	4183	
+claude-opus-4-5-20251101	max	400	0.763272	-	-	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: 038a293c-5cb
+claude-opus-4-6-v1	low	200	2.439215	24	6	0	0	stop	4183	
+claude-opus-5	off	200	1.413292	28	33	0	0	stop	4183	
+claude-haiku-4-5-20251001	max	200	1.257851	53	136	0	193	stop	4183	
+claude-opus-4-8	high	200	1.177617	28	4	0	0	stop	4183	
+claude-opus-4-7	max	200	1.482348	33	61	0	0	stop	4183	
+claude-opus-5-5	off	200	1.625541	30	34	0	0	stop	4183	
+claude-opus-4-6-v1	medium	200	1.542870	24	6	0	0	stop	4183	
+claude-opus-5	low	200	1.511028	28	29	0	0	stop	4183	
+claude-sonnet-4-5-20250929	off	200	1.906941	24	6	0	0	stop	4183	
+claude-opus-5-5	low	200	1.555942	30	4	0	0	stop	4183	
+claude-sonnet-4-6	off	200	2.055286	24	38	0	0	stop	47 × 89 = 47 × 90 - 47 = 4230 - 47 = 4183  4183	
+claude-opus-4-8	max	200	2.207033	28	55	0	0	stop	4183	
+claude-opus-4-6-v1	high	200	1.953325	24	52	0	41	stop	4183	
+claude-opus-5	medium	200	1.406591	28	33	0	0	stop	4183	
+claude-opus-4-6-v1	max	400	0.533679	-	-	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: 4509e9cb-dca
+claude-sonnet-4-6	low	200	1.204750	24	6	0	0	stop	4183	
+claude-opus-5	high	400	0.594464	-	-	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: ddcdd162-8d6
+claude-opus-5-5	medium	200	1.546916	30	10	0	0	stop	47*89 = 4183	
+claude-sonnet-5	off	200	1.831346	28	4	0	0	stop	4183	
+claude-sonnet-5-5	off	200	1.317894	30	32	0	0	stop	47*89 = 47*90 - 47 = 4230 - 47 = 4183  4183	
+claude-sonnet-4-6	medium	200	1.324681	24	51	0	41	stop	4183	
+claude-opus-5	max	200	1.549592	28	33	0	0	stop	4183	
+claude-sonnet-4-5-20250929	low	200	3.286429	53	149	0	259	stop	4183	
+claude-opus-5-5	high	200	1.697429	30	34	0	0	stop	4183	
+claude-sonnet-5-5	low	200	1.167142	30	4	0	0	stop	4183	
+claude-sonnet-5	low	200	1.823965	28	4	0	0	stop	4183	
+claude-sonnet-4-6	high	200	1.381449	24	51	0	41	stop	4183	
+claude-sonnet-5-5	medium	200	1.039051	30	4	0	0	stop	4183	
+claude-opus-5-5	max	200	1.633024	30	34	0	0	stop	4183	
+DeepSeek-R1	off	200	2.046232	47	4	0	0	stop	4183	
+claude-sonnet-5	medium	200	1.626209	28	4	0	0	stop	4183	
+claude-sonnet-4-6	max	200	1.554332	24	69	0	66	stop	4183	
+claude-sonnet-5-5	high	200	1.009754	30	4	0	0	stop	4183	
+claude-sonnet-4-5-20250929	medium	200	3.439086	53	157	0	251	stop	4183	
+DeepSeek-V3	off	200	1.905691	47	4	0	0	stop	4183	
+claude-sonnet-5-5	max	200	1.141616	30	34	0	0	stop	4183	
+claude-sonnet-5	high	200	1.491841	28	4	0	0	stop	4183	
+DeepSeek-V3.1	off	200	1.780671	47	4	0	0	stop	4183	
+claude-sonnet-5	max	200	1.533170	28	4	0	0	stop	4183	
+DeepSeek-R1	low	200	4.021429	50	174	170	98	stop	4183	
+DeepSeek-V3.2	off	200	2.372830	20	2	0	0	stop	4183	
+DeepSeek-V3	low	200	2.495620	50	76	72	62	stop	4183	
+DeepSeek-V4-Flash	off	200	0.710128	20	7	0	0	stop	47*89 = 4183	
+claude-sonnet-4-5-20250929	high	200	3.187473	53	149	0	256	stop	4183	
+DeepSeek-V4-Flash	low	200	0.915823	20	36	33	97	stop	4183	
+DeepSeek-V3.2	low	200	1.831879	20	32	29	72	stop	4183	
+DeepSeek-V4-Flash	medium	200	1.312155	99	49	46	123	stop	4183	
+DeepSeek-V3.1	low	200	4.987440	50	229	225	171	stop	4183	
+DeepSeek-V3.2	medium	200	1.389505	99	35	32	82	stop	4183	
+DeepSeek-V4-Flash	high	200	0.921365	99	42	39	97	stop	4183	
+DeepSeek-R1	medium	200	3.552987	51	152	148	135	stop	4183	
+DeepSeek-V3	medium	200	3.493483	51	148	144	95	stop	4183	
+claude-sonnet-4-5-20250929	max	200	3.387929	53	157	0	317	stop	4183	
+DeepSeek-V4-Flash	max	200	1.082952	112	47	44	137	stop	4183	
+DeepSeek-V3.2	high	200	1.650551	99	36	33	97	stop	4183	
+DeepSeek-V4-Flash-0731	off	200	1.206702	20	3	0	0	stop	4183	
+DeepSeek-V4-Pro	off	200	1.353624	20	2	0	0	stop	4183	
+DeepSeek-V3.2	max	200	0.920501	112	33	30	80	stop	4183	
+DeepSeek-V4-Flash-0731	low	200	1.738769	20	81	75	206	stop	4183	
+DeepSeek-R1	high	200	4.080488	48	189	185	98	stop	4183	
+DeepSeek-V3.1	medium	200	4.403500	51	170	166	144	stop	4183	
+DeepSeek-V3	high	200	4.006238	48	166	162	111	stop	4183	
+DeepSeek-V4-Pro-0813	off	200	2.175432	20	2	0	0	stop	3953	
+DeepSeek-V4-Flash-0731	medium	200	1.469553	99	40	36	96	stop	4183	
+DeepSeek-V4-Pro	low	200	3.680722	20	101	97	255	stop	4183	
+DeepSeek-V4-Flash-0731	high	200	1.174510	99	35	30	97	stop	4183	
+DeepSeek-V4-Pro-0813	low	200	2.029511	20	36	33	93	stop	4183	
+DeepSeek-V3.1	high	200	3.143776	48	165	161	90	stop	4183	
+DeepSeek-R1	max	200	3.418085	48	170	166	128	stop	4183	
+DeepSeek-V3	max	200	3.424532	48	142	138	112	stop	4183	
+DeepSeek-V4-Flash-0731	max	200	1.318941	112	35	31	97	stop	4183	
+DeepSeek-V4-Pro	medium	200	1.881752	20	36	32	98	stop	4183	
+DeepSeek-V4.1-Flash	off	200	0.934054	20	2	0	0	stop	4183	
+DeepSeek-V4.1-Flash-1017	off	200	0.886847	20	3	0	0	stop	4183	
+DeepSeek-V4-Pro-0813	medium	200	2.153092	99	38	35	86	stop	4183	
+Doubao-1.5-pro-32k	off	200	1.519017	47	4	0	0	stop	4183	
+DeepSeek-V4.1-Flash	low	200	0.977808	46	35	32	91	stop	4183	
+DeepSeek-V4-Pro	high	200	1.410141	20	36	32	98	stop	4183	
+DeepSeek-V4.1-Flash-1017	low	200	1.790015	46	35	32	85	stop	4183	
+DeepSeek-V4.1-Flash	medium	200	1.176907	46	38	35	108	stop	4183	
+DeepSeek-V3.1	max	200	3.571479	48	131	127	110	stop	4183	
+DeepSeek-V4-Pro	max	200	1.463868	99	41	37	108	stop	4183	
+DeepSeek-V4-Pro-0813	high	200	2.458714	99	39	36	101	stop	4183	
+DeepSeek-V4.1-Flash	high	200	1.085720	46	31	28	80	stop	4183	
+Doubao-lite-128k	off	200	0.871641	47	4	0	0	stop	4183	
+DeepSeek-V4.1-Flash-1017	medium	200	1.683808	46	37	34	97	stop	4183	
+Doubao-1.5-vision-pro-32k	off	200	1.624105	47	4	0	0	stop	4183	
+Doubao-1.5-pro-32k	low	200	3.507844	50	164	160	66	stop	4183	
+DeepSeek-V4.1-Flash	max	200	1.167081	46	36	34	92	stop	4183	
+Doubao-lite-128k	low	200	1.669362	50	156	152	290	stop	4183	
+DeepSeek-V4-Pro-0813	max	200	2.250433	112	38	35	113	stop	4183	
+DeepSeek-V4.1-Flash-1017	high	200	1.830902	46	37	34	93	stop	4183	
+DeepSeek-V4.1-Flash-1017	max	200	0.824641	46	43	40	117	stop	4183	
+Doubao-lite-32k	off	200	1.914900	50	136	132	279	stop	4183	
+Doubao-lite-4k	off	200	1.160342	26	4	0	0	stop	4183	
+Doubao-lite-4k	low	200	0.658457	26	4	0	0	stop	4183	
+Doubao-lite-4k	medium	200	0.749007	26	4	0	0	stop	4183	
+Doubao-pro-128k	off	200	1.709708	47	4	0	0	stop	4183	
+Doubao-lite-128k	medium	200	2.774712	51	199	195	359	stop	4183	
+Doubao-1.5-vision-pro-32k	low	200	4.045048	50	179	175	118	stop	4183	
+Doubao-lite-32k	low	200	1.555563	50	138	134	241	stop	4183	
+Doubao-lite-4k	high	200	0.564843	26	4	0	0	stop	4183	
+Doubao-1.5-pro-32k	medium	200	4.508911	51	161	157	119	stop	4183	
+Doubao-lite-4k	max	200	0.622687	26	4	0	0	stop	4183	
+Doubao-lite-128k	high	200	1.626788	48	129	125	258	stop	4183	
+Doubao-lite-32k	medium	200	1.770245	51	164	160	345	stop	4183	
+Doubao-pro-128k	low	200	2.871109	50	89	85	109	stop	4183	
+Doubao-pro-32k	off	200	1.744154	47	4	0	0	stop	4183	
+Doubao-lite-32k	high	200	1.258500	48	70	66	120	stop	4183	
+Doubao-lite-128k	max	200	1.817988	48	125	121	230	stop	4183	
+Doubao-1.5-vision-pro-32k	medium	200	3.933432	51	176	172	128	stop	4183	
+Doubao-lite-32k	max	200	1.048532	48	69	65	118	stop	4183	
+Doubao-pro-4k	off	200	1.533911	47	4	0	0	stop	4183	
+Doubao-pro-32k	low	200	2.476117	50	92	88	62	stop	4183	
+Doubao-pro-128k	medium	200	2.767655	51	117	113	95	stop	4183	
+Doubao-1.5-pro-32k	high	200	5.360341	48	295	291	221	stop	4183	
+Doubao-Seed-1.6	off	200	4.015500	51	150	146	105	stop	4183	
+Doubao-1.5-vision-pro-32k	high	200	4.942804	48	214	210	173	stop	4183	
+Doubao-pro-32k	medium	200	3.489119	51	148	144	122	stop	4183	
+Doubao-pro-4k	low	200	4.046480	50	171	167	104	stop	4183	
+Doubao-1.5-pro-32k	max	200	4.190040	48	196	192	111	stop	4183	
+Doubao-pro-128k	high	200	5.100041	48	263	259	128	stop	4183	
+Doubao-Seed-1.6	low	200	2.845798	50	78	74	98	stop	4183	
+Doubao-1.5-vision-pro-32k	max	200	3.210989	48	135	131	103	stop	4183	
+Doubao-pro-32k	high	200	3.278995	48	133	129	85	stop	4183	
+Doubao-Seed-1.6-flash	off	200	2.119518	50	180	176	368	stop	4183	
+Doubao-Seed-1.6-lite	off	200	1.444132	51	133	129	264	stop	4183	
+Doubao-pro-4k	medium	200	4.545350	51	166	162	78	stop	4183	
+Doubao-Seed-1.6-flash	low	200	1.500357	50	149	145	273	stop	4183	
+Doubao-Seed-1.6	medium	200	2.794500	51	90	86	94	stop	4183	
+Doubao-pro-128k	max	200	3.461834	48	138	134	62	stop	4183	
+Doubao-Seed-1.6-lite	low	200	1.113541	50	77	73	149	stop	4183	
+Doubao-Seed-1.6-flash	medium	200	1.574400	51	143	139	289	stop	4183	
+Doubao-pro-32k	max	200	3.380113	48	147	143	62	stop	4183	
+Doubao-Seed-1.6-lite	medium	200	1.944148	51	202	198	418	stop	4183	
+Doubao-Seed-1.6-flash	high	200	1.196718	48	71	67	121	stop	4183	
+Doubao-Seed-1.6-thinking	off	200	3.840607	51	192	188	70	stop	4183	
+Doubao-Seed-1.6	high	200	4.306029	48	175	171	125	stop	4183	
+Doubao-pro-4k	high	200	4.599316	48	173	169	156	stop	4183	
+Doubao-Seed-1.6-lite	high	200	1.563675	48	139	135	258	stop	4183	
+Doubao-Seed-1.6-flash	max	200	1.748971	48	103	99	189	stop	4183	
+Doubao-Seed-1.6-vision	off	200	2.869037	50	76	72	72	stop	4183	
+Doubao-Seed-1.6-lite	max	200	1.363771	48	136	132	257	stop	4183	
+Doubao-Seed-1.6-thinking	low	200	2.808279	50	84	80	90	stop	4183	
+Doubao-Seed-1.6-vision	low	200	2.933842	50	76	72	68	stop	4183	
+Doubao-Seed-1.8	off	200	3.420810	51	140	136	117	stop	4183	
+Doubao-pro-4k	max	200	3.757495	48	166	162	131	stop	4183	
+Doubao-Seed-1.6	max	200	4.166566	48	158	154	96	stop	4183	
+Doubao-Seed-2.0-Code	off	200	3.507836	48	150	146	277	stop	4183	
+Doubao-Seed-2.0-mini	off	200	1.521815	51	123	119	235	stop	4183	
+Doubao-Seed-1.6-thinking	medium	200	3.664617	51	168	164	152	stop	4183	
+Doubao-Seed-1.8	low	200	3.107436	50	77	73	62	stop	4183	
+Doubao-Seed-2.0-mini	low	200	1.612647	50	140	136	248	stop	4183	
+Doubao-Seed-1.6-vision	medium	200	4.605309	51	156	152	123	stop	4183	
+Doubao-Seed-2.0-lite	off	200	4.425732	51	177	173	146	stop	4183	
+Doubao-Seed-2.0-Code	low	200	3.931999	50	133	129	260	stop	4183	
+Doubao-Seed-2.0-mini	medium	200	1.649212	51	171	167	348	stop	4183	
+Doubao-Seed-1.6-thinking	high	200	3.927081	48	173	169	99	stop	4183	
+Doubao-Seed-2.0-mini	high	200	1.228722	48	114	110	213	stop	4183	
+Doubao-Seed-1.8	medium	200	3.774144	51	172	168	145	stop	4183	
+Doubao-Seed-2.0-lite	low	200	2.906851	50	92	88	63	stop	4183	
+Doubao-Seed-1.6-vision	high	200	3.690638	48	144	140	182	stop	4183	
+Doubao-Seed-2.0-mini	max	200	1.849637	48	74	70	133	stop	4183	
+Doubao-Seed-2.0-Code	medium	200	4.069706	51	134	130	266	stop	4183	
+Doubao-Seed-1.6-thinking	max	200	3.678366	48	164	160	142	stop	4183	
+Doubao-Seed-1.8	high	200	4.066347	48	161	157	108	stop	4183	
+Doubao-Seed-2.0-lite	medium	200	3.946874	51	154	150	121	stop	4183	
+Doubao-Seed-1.6-vision	max	200	4.125170	48	189	185	100	stop	4183	
+Doubao-Seed-2.0-pro	off	200	4.707433	67	151	147	267	stop	4183	
+Doubao-Seed-2.0-Code	high	200	5.046645	48	150	146	310	stop	4183	
+Doubao-Seed-1.8	max	200	3.416994	48	162	158	102	stop	4183	
+Doubao-Seed-2.1-lite	off	200	4.349452	64	241	237	236	stop	4183	
+Doubao-Seed-2.0-lite	high	200	5.249968	48	195	191	99	stop	4183	
+Doubao-Seed-2.1-turbo	off	200	2.648538	64	64	60	66	stop	4183	
+Doubao-Seed-2.1-lite	low	200	2.401930	66	49	45	46	stop	4183	
+Doubao-Seed-2.0-pro	low	200	4.382474	66	83	79	135	stop	4183	
+Doubao-Seed-2.0-Code	max	200	3.679574	48	158	154	288	stop	4183	
+Doubao-Seed-Evolving	off	200	2.401230	64	42	38	66	stop	4183	
+Doubao-Seed-2.1-turbo	low	200	3.453481	66	66	62	68	stop	4183	
+Doubao-Seed-2.0-lite	max	200	4.286632	48	166	162	131	stop	4183	
+Doubao-Seed-2.0-pro	medium	200	3.321417	67	113	109	201	stop	4183	
+Doubao-Seed-Evolving	low	200	2.454824	66	42	38	66	stop	4183	
+gemini-2.5-flash	off	200	2.193404	18	295	291	0	stop	4183	
+Doubao-Seed-2.1-pro	off	200	11.814811	64	692	688	276	stop	4183	
+gemini-2.5-flash	low	200	1.976202	18	242	238	0	stop	4183	
+Doubao-Seed-2.1-turbo	medium	200	4.851816	67	111	107	75	stop	4183	
+Doubao-Seed-2.1-lite	medium	200	8.644768	67	450	411	368	stop	47 × 89 = 47 × (90 − 1) = 4230 − 47 = 4183  4183	
+Doubao-Seed-2.0-pro	high	200	5.308127	64	175	171	337	stop	4183	
+Doubao-Seed-Evolving	medium	200	4.564628	67	46	42	55	stop	4183	
+gemini-2.5-flash	medium	200	2.762505	18	317	313	0	stop	4183	
+Doubao-Seed-2.1-pro	low	200	4.273302	66	174	170	63	stop	4183	
+Doubao-Seed-Evolving	high	200	1.893331	64	45	41	38	stop	4183	
+gemini-2.5-flash	high	200	2.278272	18	331	327	0	stop	4183	
+Doubao-Seed-2.1-turbo	high	200	5.350243	64	157	153	47	stop	4183	
+Doubao-Seed-2.0-pro	max	200	4.677951	64	198	194	369	stop	4183	
+Doubao-Seed-Evolving	max	200	1.660859	64	47	43	37	stop	4183	
+Doubao-Seed-2.1-lite	high	200	6.326822	64	379	375	300	stop	4183	
+gemini-2.5-flash	max	200	2.693918	18	323	319	0	stop	4183	
+gemini-3-flash-preview	off	200	2.655025	18	389	385	0	stop	4183	
+Doubao-Seed-2.1-pro	medium	200	5.949380	67	284	280	165	stop	4183	
+Doubao-Seed-2.1-turbo	max	200	5.069444	64	128	124	81	stop	4183	
+gemini-3-flash-preview	low	200	2.528734	18	350	346	0	stop	4183	
+gemini-2.5-pro	off	200	6.433098	18	569	565	0	stop	4183	
+Doubao-Seed-2.1-lite	max	200	6.024737	64	284	280	151	stop	4183	
+gemini-3.5-flash	off	200	2.355607	18	269	265	0	stop	4183	
+gemini-3-flash-preview	medium	200	2.080223	18	236	232	0	stop	4183	
+Doubao-Seed-2.1-pro	high	200	5.049832	64	227	223	194	stop	4183	
+gemini-3.1-pro-preview	off	200	6.893865	18	267	263	0	stop	4183	
+gemini-3.5-flash	low	200	2.051938	18	236	232	0	stop	4183	
+gemini-3.7-flash	off	200	2.271121	18	127	123	0	stop	4183	
+gemini-3-flash-preview	high	200	2.773434	18	425	421	0	stop	4183	
+gemini-3.5-flash	medium	200	1.883822	18	295	291	0	stop	4183	
+gemini-3.7-flash	low	200	2.073253	18	58	54	0	stop	4183	
+gemini-2.5-pro	low	200	6.260996	18	548	544	0	stop	4183	
+gemini-3.5-flash	high	200	2.370944	18	359	355	0	stop	4183	
+Doubao-Seed-2.1-pro	max	200	5.780635	64	299	295	180	stop	4183	
+gemini-3-flash-preview	max	200	3.717232	18	682	678	0	stop	4183	
+gemini-3.7-flash	medium	200	2.839669	18	174	170	0	stop	4183	
+gemini-3.1-pro-preview	low	200	6.472504	18	293	289	0	stop	4183	
+gemini-3.5-flash	max	200	2.383703	18	422	418	0	stop	4183	
+gemini-3.7-flash	high	200	2.641428	18	207	203	0	stop	4183	
+glm-5.1	off	200	1.809297	28	102	96	200	stop	4183	
+gemini-3.8-flash	off	200	4.573201	18	175	171	0	stop	4183	
+gemini-2.5-pro	medium	200	6.357332	18	577	573	0	stop	4183	
+gemini-3.7-flash	max	200	2.213243	18	186	182	0	stop	4183	
+gemini-3.8-flash	low	200	1.715540	18	4	0	0	stop	4183	
+glm-5.1	low	200	2.767063	28	136	131	264	stop	4183	
+gemini-3.1-pro-preview	medium	200	5.595678	18	277	273	0	stop	4183	
+glm-5.1	medium	200	1.678281	28	58	53	124	stop	4183	
+glm-5.2	off	200	3.532376	28	221	216	464	stop	4183	
+gemini-3.8-flash	medium	200	3.910664	18	178	174	0	stop	4183	
+glm-5.2	low	200	1.304077	28	50	45	108	stop	4183	
+glm-5.1	high	200	1.740952	28	94	89	188	stop	4183	
+gemini-2.5-pro	high	200	6.124548	18	616	612	0	stop	4183	
+gemini-3.1-pro-preview	high	200	4.691777	18	291	287	0	stop	4183	
+glm-5.2	medium	200	2.026136	28	104	99	209	stop	4183	
+gemini-4-argon	off	200	13.691268	49	135	127	0	stop	4183	
+gemini-4-argon	low	400	0.225096	-	-	0	0	-		model "gemini-4-argon" does not have a known Gemini thinking configuration (request id: 6fd492af596648dc957c4b2465195640
+glm-5.1	max	200	3.742584	28	295	290	581	stop	4183	
+gemini-4-argon	medium	400	0.208089	-	-	0	0	-		model "gemini-4-argon" does not have a known Gemini thinking configuration (request id: f6d20eb342e10807de5318f9f0f9d9fe
+glm-5.2	high	200	2.202787	28	102	96	232	stop	4183	
+gemini-4-argon	high	400	0.227946	-	-	0	0	-		model "gemini-4-argon" does not have a known Gemini thinking configuration (request id: ea6e941c5e427e403a2dd0356e269b8d
+gemini-4-argon	max	400	0.250313	-	-	0	0	-		model "gemini-4-argon" does not have a known Gemini thinking configuration (request id: 015d6f384081515a56ba3f694c761519
+gemini-3.8-flash	high	200	5.716069	18	343	339	0	stop	4183	
+glm-5.2	max	200	2.026051	28	135	130	351	stop	4183	
+glm-5.3	off	200	2.542098	28	31	27	42	stop	4183	
+glm-5.3-flash	off	200	1.773581	28	39	35	60	stop	4183	
+gemini-2.5-pro	max	200	6.305614	18	584	580	0	stop	4183	
+glm-5.3-flashx	off	200	1.478018	28	36	31	53	stop	4183	
+gemini-3.1-pro-preview	max	200	6.767723	18	420	416	0	stop	4183	
+glm-5.3-flash	low	200	2.137437	28	27	23	33	stop	4183	
+glm-5.3	low	200	2.675781	28	29	25	38	stop	4183	
+glm-5.3-flashx	low	200	1.335325	28	28	23	35	stop	4183	
+gpt-4.1	off	200	2.192111	23	2	0	0	stop	4183	
+gpt-4.1	low	400	0.728093	-	-	0	0	-		Unrecognized request argument supplied: reasoning_effort
+glm-5.3-flash	medium	200	1.877292	28	29	25	37	stop	4183	
+glm-5.3-flashx	medium	200	1.810722	28	28	23	34	stop	4183	
+glm-5.3	medium	200	2.549378	28	28	24	37	stop	4183	
+glm-5.3-flash	high	200	1.638084	28	29	25	37	stop	4183	
+glm-5.3-flashx	high	200	1.434356	28	29	24	37	stop	4183	
+gpt-4.1	medium	400	2.672383	-	-	0	0	-		Unrecognized request argument supplied: reasoning_effort
+glm-5.3	high	200	1.996384	28	28	24	37	stop	4183	
+gpt-4.1-mini	off	200	5.882327	23	2	0	0	stop	4183	
+glm-5.3-flashx	max	200	1.554486	28	36	31	50	stop	4183	
+gpt-4.1	high	400	1.549031	-	-	0	0	-		Unrecognized request argument supplied: reasoning_effort
+gpt-4.1-mini	low	400	0.894104	-	-	0	0	-		Unrecognized request argument supplied: reasoning_effort
+glm-5.3-flash	max	200	2.758477	28	36	32	54	stop	4183	
+gpt-4.1-mini	medium	400	0.606215	-	-	0	0	-		Unrecognized request argument supplied: reasoning_effort
+gpt-4.1-nano	off	200	1.568253	23	2	0	0	stop	4183	
+gpt-4.1	max	400	1.666914	-	-	0	0	-		Unrecognized request argument supplied: reasoning_effort
+gpt-4.1-mini	high	400	0.579079	-	-	0	0	-		Unrecognized request argument supplied: reasoning_effort
+gpt-4.1-nano	low	400	0.619170	-	-	0	0	-		Unrecognized request argument supplied: reasoning_effort
+glm-5.3	max	200	2.779572	28	31	27	42	stop	4183	
+gpt-4.1-nano	medium	400	0.567751	-	-	0	0	-		Unrecognized request argument supplied: reasoning_effort
+gpt-4.1-mini	max	400	0.656286	-	-	0	0	-		Unrecognized request argument supplied: reasoning_effort
+gpt-4o-mini	off	200	1.154439	23	2	0	0	stop	4183	
+gpt-4o	off	200	2.506787	23	2	0	0	stop	4183	
+gpt-4.1-nano	high	400	0.575721	-	-	0	0	-		Unrecognized request argument supplied: reasoning_effort
+gpt-5-codex	off	400	0.560104	-	-	0	0	-		The requested operation is unsupported.
+gpt-4o-mini	low	400	0.604102	-	-	0	0	-		Unrecognized request argument supplied: reasoning_effort
+gpt-4.1-nano	max	400	0.748545	-	-	0	0	-		Unrecognized request argument supplied: reasoning_effort
+gpt-4o-mini	medium	400	0.554836	-	-	0	0	-		Unrecognized request argument supplied: reasoning_effort
+gpt-4o	low	400	1.132855	-	-	0	0	-		Unrecognized request argument supplied: reasoning_effort
+gpt-5-codex	low	400	1.069630	-	-	0	0	-		The requested operation is unsupported.
+gpt-5	off	200	2.338056	22	75	64	0	stop	4183	
+gpt-5-codex	medium	400	0.545921	-	-	0	0	-		The requested operation is unsupported.
+gpt-4o	medium	400	0.549257	-	-	0	0	-		Unrecognized request argument supplied: reasoning_effort
+gpt-5-codex	high	400	0.530149	-	-	0	0	-		The requested operation is unsupported.
+gpt-4o	high	400	0.564686	-	-	0	0	-		Unrecognized request argument supplied: reasoning_effort
+gpt-4o	max	400	0.552734	-	-	0	0	-		Unrecognized request argument supplied: reasoning_effort
+gpt-5	low	200	2.027481	22	11	0	0	stop	4183	
+gpt-5-mini	off	200	2.518360	22	75	64	0	stop	4183	
+gpt-4o-mini	high	400	2.508411	-	-	0	0	-		Unrecognized request argument supplied: reasoning_effort
+gpt-4o-mini	max	400	0.545376	-	-	0	0	-		Unrecognized request argument supplied: reasoning_effort
+gpt-5.1	off	200	1.901964	22	11	0	0	stop	4183	
+gpt-5.1-codex	off	400	0.628809	-	-	0	0	-		The requested operation is unsupported.
+gpt-5-codex	max	400	2.653027	-	-	0	0	-		The requested operation is unsupported.
+gpt-5.1-codex	low	400	0.564558	-	-	0	0	-		The requested operation is unsupported.
+gpt-5-mini	low	200	2.640344	22	11	0	0	stop	4183	
+gpt-5.1-codex	medium	400	0.514088	-	-	0	0	-		The requested operation is unsupported.
+gpt-5	medium	200	2.821742	22	75	64	0	stop	4183	
+gpt-5.1	low	200	1.525688	22	11	0	0	stop	4183	
+gpt-5.1-codex	high	400	0.526691	-	-	0	0	-		The requested operation is unsupported.
+gpt-5.2	off	200	1.678058	22	5	0	0	stop	4183	
+gpt-5.1-codex	max	400	0.558539	-	-	0	0	-		The requested operation is unsupported.
+gpt-5-mini	medium	200	2.018514	22	75	64	0	stop	4183	
+gpt-5.1	medium	200	1.777959	22	37	26	0	stop	4183	
+gemini-3.8-flash	max	200	20.609922	18	356	352	0	stop	4183	
+gpt-5.2	low	200	1.776115	22	5	0	0	stop	4183	
+gpt-5	high	200	2.510025	22	75	64	0	stop	4183	
+gpt-5.2-chat	off	200	1.496117	22	5	0	0	stop	4183	
+gpt-5	max	400	0.690140	-	-	0	0	-		Invalid value: 'max'. Supported values are: 'low', 'medium', 'high', and 'xhigh'.
+gpt-5.2-chat	low	400	0.719835	-	-	0	0	-		Unsupported value: 'reasoning_effort' does not support 'low' with this model. Supported values are: 'medium'.
+gpt-5.2-codex	off	400	1.389381	-	-	0	0	-		The requested operation is unsupported.
+gpt-5.3-codex	off	400	0.586031	-	-	0	0	-		The requested operation is unsupported.
+gpt-5-mini	high	200	2.316620	22	75	64	0	stop	4183	
+gpt-5.1	high	200	2.156830	22	52	41	0	stop	4183	
+gpt-5.2-codex	low	400	0.813831	-	-	0	0	-		The requested operation is unsupported.
+gpt-5.3-codex	low	400	0.533375	-	-	0	0	-		The requested operation is unsupported.
+gpt-5.1	max	400	0.585753	-	-	0	0	-		Invalid value: 'max'. Supported values are: 'low', 'medium', 'high', and 'xhigh'.
+gpt-5-mini	max	400	0.628311	-	-	0	0	-		Invalid value: 'max'. Supported values are: 'low', 'medium', 'high', and 'xhigh'.
+gpt-5.2-codex	medium	400	0.562741	-	-	0	0	-		The requested operation is unsupported.
+gpt-5.2	medium	200	2.827674	22	5	0	0	stop	4183	
+gpt-5.3-codex	medium	400	0.780869	-	-	0	0	-		The requested operation is unsupported.
+gpt-5.2-chat	medium	200	1.971633	22	11	0	0	stop	4183	
+gpt-5.2-codex	high	400	0.525640	-	-	0	0	-		The requested operation is unsupported.
+gpt-5.3-codex	high	400	0.641381	-	-	0	0	-		The requested operation is unsupported.
+gpt-5.2-chat	high	400	0.617670	-	-	0	0	-		Unsupported value: 'reasoning_effort' does not support 'high' with this model. Supported values are: 'medium'.
+gpt-5.3-codex	max	400	0.513977	-	-	0	0	-		The requested operation is unsupported.
+gpt-5.2-chat	max	400	0.573291	-	-	0	0	-		Unsupported value: 'reasoning_effort' does not support 'max' with this model. Supported values are: 'medium'.
+gpt-5.4	off	200	1.748241	22	5	0	0	stop	4183	
+gpt-5.4-mini	off	200	2.863381	22	5	0	0	stop	4183	
+gpt-5.4	low	200	1.129739	22	35	24	0	stop	4183	
+gpt-5.4-nano	off	200	1.762610	22	5	0	0	stop	4183	
+gpt-5.4-mini	low	200	1.140541	22	39	28	0	stop	4183	
+gpt-5.4	medium	200	1.931744	22	33	22	0	stop	4183	
+gpt-5.4-mini	medium	200	1.743198	22	35	24	0	stop	4183	
+gpt-5.4	high	200	1.328486	22	39	28	0	stop	4183	
+gpt-5.4-nano	low	200	2.849447	22	30	19	0	stop	4183	
+gpt-5.4	max	400	0.553898	-	-	0	0	-		Invalid value: 'max'. Supported values are: 'low', 'medium', 'high', and 'xhigh'.
+gpt-5.4-mini	high	200	1.613160	22	42	31	0	stop	4183	
+gpt-5.6-luna	off	200	1.234098	22	37	26	0	stop	4183	
+gpt-5.4-mini	max	400	0.601805	-	-	0	0	-		Invalid value: 'max'. Supported values are: 'low', 'medium', 'high', and 'xhigh'.
+gpt-5.4-nano	medium	200	2.411485	22	31	20	0	stop	4183	
+gpt-5.6-luna	low	200	1.848020	22	36	25	0	stop	4183	
+gpt-5.4-nano	high	200	1.995514	22	29	18	0	stop	4183	
+gpt-5.6-sol	off	200	2.782937	22	5	0	0	stop	4183	
+gpt-5.4-nano	max	400	0.668302	-	-	0	0	-		Invalid value: 'max'. Supported values are: 'low', 'medium', 'high', and 'xhigh'.
+gpt-5.2	high	200	11.530665	22	33	22	0	stop	4183	
+gpt-5.2-codex	max	400	11.023969	-	-	0	0	-		The requested operation is unsupported.
+gpt-5.2	max	400	0.564225	-	-	0	0	-		Invalid value: 'max'. Supported values are: 'low', 'medium', 'high', and 'xhigh'.
+gpt-5.6-sol	low	200	1.540438	22	5	0	0	stop	4183	
+gpt-5.6-terra	off	200	1.265158	22	37	26	0	stop	4183	
+gpt-6-luna	off	200	1.178584	22	34	23	0	stop	4183	
+gpt-6-luna	low	200	1.132599	22	30	19	0	stop	4183	
+gpt-5.6-terra	low	200	1.359849	22	30	19	0	stop	4183	
+gpt-6-luna	medium	200	1.252013	22	32	21	0	stop	4183	
+gpt-5.6-luna	medium	200	5.401839	22	36	25	0	stop	4183	
+gpt-5.6-sol	medium	200	3.859906	22	5	0	0	stop	4183	
+gpt-5.6-terra	medium	200	2.710717	22	36	25	0	stop	4183	
+gpt-6-luna	high	200	2.092094	22	37	26	0	stop	4183	
+gpt-5.6-sol	high	200	1.311336	22	5	0	0	stop	4183	
+gpt-5.6-luna	high	200	2.410997	22	37	26	0	stop	4183	
+gpt-5.6-sol	max	400	0.573690	-	-	0	0	-		Unsupported value: 'reasoning_effort' does not support 'max' with this model. Supported values are: 'none', 'low', 'medi
+gpt-6-luna	max	400	0.885835	-	-	0	0	-		Unsupported value: 'reasoning_effort' does not support 'max' with this model. Supported values are: 'none', 'low', 'medi
+gpt-5.6-luna	max	400	0.608841	-	-	0	0	-		Unsupported value: 'reasoning_effort' does not support 'max' with this model. Supported values are: 'none', 'low', 'medi
+gpt-5.6-terra	high	200	2.128999	22	35	24	0	stop	4183	
+gpt-5.6-terra	max	400	0.582919	-	-	0	0	-		Unsupported value: 'reasoning_effort' does not support 'max' with this model. Supported values are: 'none', 'low', 'medi
+gpt-6.1-sol	off	200	1.781193	22	29	18	0	stop	4183	
+kimi-k2.5	off	200	2.088590	64	45	41	62	stop	4183	
+kimi-k2.5	low	200	1.706842	66	41	37	57	stop	4183	
+kimi-k3	off	200	2.718198	101	37	34	118	stop	4183	
+kimi-k2.6	off	200	4.123631	23	172	168	455	stop	4183	
+gpt-6.1-sol	low	200	2.653554	22	17	6	0	stop	4183	
+gpt-5.5	off	200	21.902725	22	37	26	0	stop	4183	
+kimi-k2.5	medium	200	1.761758	67	42	38	56	stop	4183	
+gpt-6.1-sol	medium	200	1.540027	22	27	16	0	stop	4183	
+kimi-k3	low	200	2.244269	102	39	36	108	stop	4183	
+kimi-k2.6	low	200	2.510947	23	111	107	249	stop	4183	
+gpt-5.5	low	200	1.968613	22	37	26	0	stop	4183	
+kimi-k2.5	high	200	1.698003	64	46	42	42	stop	4183	
+kimi-k3	medium	200	2.194580	102	34	31	86	stop	4183	
+gpt-5.5	medium	200	1.564830	22	37	26	0	stop	4183	
+gpt-6.1-sol	high	200	2.826913	22	32	21	0	stop	4183	
+kimi-k2.5	max	200	1.697917	64	46	42	90	stop	4183	
+gpt-5.5	high	200	1.902075	22	40	29	0	stop	4183	
+kimi-k3	high	200	2.094826	102	35	32	91	stop	4183	
+gpt-6-sol	off	200	17.357058	22	5	0	0	stop	4183	
+gpt-6.1-sol	max	400	2.092893	-	-	0	0	-		Unsupported value: 'reasoning_effort' does not support 'max' with this model. Supported values are: 'low', 'medium', 'hi
+kimi-k2.6	medium	200	4.326889	23	184	180	459	stop	4183	
+gpt-5.5	max	400	0.628476	-	-	0	0	-		Unsupported value: 'reasoning_effort' does not support 'max' with this model. Supported values are: 'none', 'low', 'medi
+kimi-k3	max	200	1.568622	101	6	3	5	stop	4183	
+kimi-k3.1-pro	off	200	4.156682	101	41	24	38	stop	4183	
+kimi-k2.6	high	200	4.311665	23	185	181	417	stop	4183	
+kimi-k3.1-pro	low	200	2.534967	102	46	29	76	stop	4183	
+gpt-6-sol	low	200	6.315049	22	5	0	0	stop	4183	
+gpt-6-sol	medium	200	1.054099	22	5	0	0	stop	4183	
+gpt-6-sol	high	200	1.511534	22	28	17	0	stop	4183	
+kimi-k2.6	max	200	4.679065	23	211	207	512	stop	4183	
+gpt-6-sol	max	400	0.530356	-	-	0	0	-		Unsupported value: 'reasoning_effort' does not support 'max' with this model. Supported values are: 'none', 'low', 'medi
+kimi-k3.1-pro	medium	200	5.555785	101	52	35	95	stop	4183	
+MiniMax-M2.1	off	200	12.485117	54	135	0	321	stop	 4183	
+kimi-k3.1-pro	high	200	2.432138	102	49	32	84	stop	4183	
+MiniMax-M2	off	200	13.403705	57	155	0	549	stop	 4183	
+MiniMax-M2.1-lightning	off	200	12.838852	54	114	0	342	stop	 4183	
+kimi-k3.1-pro	max	200	3.837705	101	41	24	38	stop	4183	
+MiniMax-M3	off	200	0.884079	214	3	0	0	stop	4183	
+MiniMax-M3	low	200	0.899886	214	3	0	0	stop	4183	
+MiniMax-M3	medium	200	0.728070	214	3	0	0	stop	4183	
+MiniMax-M3	high	200	0.805710	214	3	0	0	stop	4183	
+MiniMax-M2.5	off	200	12.113485	59	116	0	277	stop	 4183	
+MiniMax-M3	max	200	0.908288	214	3	0	0	stop	4183	
+MiniMax-M2.7	off	200	11.925441	59	98	0	278	stop	 4183	
+MiniMax-M2.1	low	200	11.699347	54	70	0	195	stop	 4183	
+o3	off	200	3.183682	22	20	0	0	stop	4183	
+MiniMax-M2	low	200	12.789175	57	99	0	308	stop	 4183	
+MiniMax-M2.1-lightning	low	200	15.490509	54	154	0	465	stop	 4183	
+MiniMax-M2.5	low	200	12.565734	59	133	0	361	stop	 4183	
+MiniMax-M2.7	low	200	12.242116	59	127	0	334	stop	 4183	
+MiniMax-M2.1	medium	200	12.827334	54	159	0	502	stop	 4183	
+MiniMax-M2.1-lightning	medium	200	12.674872	54	152	0	432	stop	 4183	
+MiniMax-M2	medium	200	18.629823	57	89	0	248	stop	 4183	
+MiniMax-M2.7	medium	200	12.265797	59	90	0	239	stop	 4183	
+MiniMax-M2.5	medium	200	12.326450	59	114	0	393	stop	 4183	
+MiniMax-M2.1	high	200	11.979452	54	106	0	255	stop	 4183	
+o3	low	200	26.062364	22	20	0	0	stop	4183	
+o3	medium	200	2.316743	22	20	0	0	stop	4183	
+o3	high	200	2.272765	22	20	0	0	stop	4183	
+o3	max	400	0.548041	-	-	0	0	-		Invalid value: 'max'. Supported values are: 'low', 'medium', 'high', and 'xhigh'.
+MiniMax-M2.1-lightning	high	200	13.791860	54	207	0	614	stop	 4183	
+o3-pro	off	400	0.561944	-	-	0	0	-		The requested operation is unsupported.
+o3-pro	low	400	0.553939	-	-	0	0	-		The requested operation is unsupported.
+MiniMax-M2	high	200	12.905323	57	167	0	453	stop	 4183	
+o3-pro	medium	400	0.542190	-	-	0	0	-		The requested operation is unsupported.
+MiniMax-M2.5	high	200	12.424817	59	130	0	364	stop	 4183	
+o3-pro	high	400	1.701778	-	-	0	0	-		The requested operation is unsupported.
+MiniMax-M2.7	high	200	13.626111	59	198	0	654	stop	 4183	
+o3-pro	max	400	0.863298	-	-	0	0	-		The requested operation is unsupported.
+o4-mini	off	200	2.609275	22	84	64	0	stop	4183	
+o4-mini	low	200	1.901884	22	84	64	0	stop	4183	
+MiniMax-M2.1	max	200	16.808752	54	149	0	405	stop	 4183	
+qwen-max	off	200	0.584864	26	4	0	0	stop	4183	
+qwen-max	low	200	0.574199	26	4	0	0	stop	4183	
+o4-mini	medium	200	2.365114	22	84	64	0	stop	4183	
+qwen-max	medium	200	0.631509	26	4	0	0	stop	4183	
+qwen-max	high	200	0.550743	26	4	0	0	stop	4183	
+qwen-max	max	200	0.563268	26	4	0	0	stop	4183	
+qwen-plus	off	200	0.634627	26	4	0	0	stop	4183	
+MiniMax-M2.1-lightning	max	200	14.037870	54	204	0	563	stop	 4183	
+o4-mini	high	200	2.989258	22	84	64	0	stop	4183	
+MiniMax-M2	max	200	12.839156	57	139	0	496	stop	 4183	
+qwen-plus	low	200	0.556020	26	4	0	0	stop	4183	
+qwen-turbo	off	429	0.372441	-	-	0	0	-		You have exceeded your current request limit. For details, see: https://***.com/***/***/***
+qwen-turbo	low	429	0.375931	-	-	0	0	-		You have exceeded your current request limit. For details, see: https://***.com/***/***/***
+o4-mini	max	400	0.537945	-	-	0	0	-		Invalid value: 'max'. Supported values are: 'low', 'medium', 'high', and 'xhigh'.
+qwen3-vl-plus	off	200	0.533501	26	5	0	0	stop	4183	
+qwen-plus	medium	200	0.570273	26	4	0	0	stop	4183	
+MiniMax-M2.5	max	200	12.749225	59	96	0	310	stop	 4183	
+qwen-turbo	medium	429	0.331405	-	-	0	0	-		You have exceeded your current request limit. For details, see: https://***.com/***/***/***
+qwen3.5-omni-flash	off	200	0.462209	30	5	0	0	stop	4183	
+qwen-plus	high	200	0.584402	26	4	0	0	stop	4183	
+qwen-turbo	high	429	0.378538	-	-	0	0	-		You have exceeded your current request limit. For details, see: https://***.com/***/***/***
+qwen3.5-omni-plus	off	200	0.612070	30	5	0	0	stop	4183	
+qwen3.5-omni-flash	low	200	0.450805	30	5	0	0	stop	4183	
+qwen-turbo	max	429	0.327448	-	-	0	0	-		You have exceeded your current request limit. For details, see: https://***.com/***/***/***
+qwen-plus	max	200	0.556385	26	4	0	0	stop	4183	
+qwen3.5-omni-plus	low	200	0.632826	30	5	0	0	stop	4183	
+qwen3.5-omni-flash	medium	200	0.480595	30	5	0	0	stop	4183	
+qwen3.5-omni-flash	high	200	0.411985	30	5	0	0	stop	4183	
+MiniMax-M2.7	max	200	13.640941	59	151	0	527	stop	 4183	
+qwen3.5-omni-plus	medium	200	0.739711	30	5	0	0	stop	4183	
+qwen3.5-omni-flash	max	200	0.462269	30	5	0	0	stop	4183	
+qwen3.5-omni-plus	high	200	0.623450	30	5	0	0	stop	4183	
+qwen3.5-omni-plus	max	200	0.599474	30	5	0	0	stop	4183	
+qwen3.8-max	off	200	1.977822	79	64	57	140	stop	4183	
+qwen3.7-flash	off	200	3.511768	28	316	309	772	stop	4183	
+qwen3.7-max	off	200	3.619626	28	265	258	605	stop	4183	
+qwen3.8-max	low	200	1.645570	67	52	45	55	stop	4183	
+qwen3.7-flash	low	200	2.822852	28	236	229	435	stop	4183	
+qwen3.6-plus	off	200	6.729945	28	364	355	805	stop	4183	
+qwen3-vl-plus	low	200	9.086823	28	693	686	1519	stop	4183	
+qwen3.8-max	medium	200	3.273155	41	127	120	200	stop	4183	
+qwen3.7-max	low	200	4.921377	28	428	421	1008	stop	4183	
+qwen3.8-max	high	200	2.229189	79	64	57	140	stop	4183	
+qwen3.8-max	max	200	2.247395	79	65	58	142	stop	4183	
+qwen3.6-plus	low	200	6.867255	28	341	332	777	stop	4183	
+qwen3.7-flash	medium	200	7.272494	28	796	789	1526	stop	4183	
+qwen3.7-max	medium	200	4.549528	28	311	304	721	stop	4183	
+qwen3-vl-plus	medium	200	7.694559	28	611	604	1373	stop	4183	
+qwen3.7-flash	high	200	3.348775	28	298	291	663	stop	4183	
+qwen3.7-max	high	200	3.577764	28	301	294	633	stop	4183	
+qwen3.7-flash	max	400	1.026135	-	-	0	0	-		'reasoning_effort' must be one of: 'none', 'minimal', 'low', 'medium', 'high', 'xhigh'
+qwen3.7-max	max	400	0.651084	-	-	0	0	-		'reasoning_effort' must be one of: 'none', 'minimal', 'low', 'medium', 'high', 'xhigh'
+qwen3.6-plus	medium	200	5.814391	28	306	297	720	stop	4183	
+qwen3.6-plus	high	200	6.410053	28	342	333	783	stop	4183	
+qwen3-vl-plus	high	200	10.274305	28	756	749	1672	stop	4183	
+qwen3.6-plus	max	400	0.241293	-	-	0	0	-		'reasoning_effort' must be one of: 'none', 'minimal', 'low', 'medium', 'high', 'xhigh'
+qwen3-vl-plus	max	400	0.289370	-	-	0	0	-		'reasoning_effort' must be one of: 'none', 'minimal', 'low', 'medium', 'high', 'xhigh'

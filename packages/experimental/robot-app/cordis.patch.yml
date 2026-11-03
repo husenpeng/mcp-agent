@@ -1,0 +1,34 @@
+# The Tomato Rbot bundle. The registry stores specifications, robots, and runs
+# in the `tomato_robot` storage domain; the runtime executes queued runs through
+# one Agent per run and records the run's Session; triggers start runs for cron
+# and event schedules; the controller exposes the registry over the `robot`
+# Remote namespace; the page renders the roster, the specification editor, and a
+# conversation surface separate from workspace chats. The page row is inert
+# without a Web host and renders only while `ctx.robotRuns` is mounted.
+#
+# No shipped profile template selects this optional bundle, so selecting it is
+# the opt-in that mounts these rows; individual rows stay switchable afterward.
+- insert:
+    - id: robot-local
+      name: '@tomato/experimental-robot-local'
+
+    - id: robot-runtime
+      name: '@tomato/experimental-robot-runtime'
+
+    - id: robot-triggers
+      name: '@tomato/experimental-robot-triggers'
+
+    - id: robot-remote
+      name: '@tomato/experimental-robot-remote'
+
+    - id: api-robot-controller
+      name: '@tomato/api-robot-controller'
+
+    - id: ui-robot
+      name: '@tomato/client-ui-robot'
+
+    - id: robot-skill
+      name: '@tomato/experimental-robot-app'
+
+    - id: robot-tool
+      name: '@tomato/experimental-tool-robot'

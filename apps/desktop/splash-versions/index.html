@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tomato AI 开屏动画 · 版本挑选</title>
+    <style>
+      :root { color-scheme: dark; --ink: #f0f2f4; --muted: rgb(240 242 244 / 62%); --line: rgb(240 242 244 / 10%); --red: #ff2828; --orange: #fd795c; }
+      * { box-sizing: border-box; }
+      body { margin: 0; padding: 40px 48px 64px; background: #191b1c; color: var(--ink); font: 14px/1.6 -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif; }
+      h1 { margin: 0 0 6px; font-size: 22px; font-weight: 600; }
+      .lead { margin: 0 0 32px; color: var(--muted); }
+      .version { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 28px; padding: 28px 0; border-top: 1px solid var(--line); }
+      .version img { width: 100%; border-radius: 8px; display: block; }
+      .tag { display: inline-block; margin-right: 8px; padding: 1px 8px; border-radius: 999px; background: linear-gradient(to right, var(--red), var(--orange)); color: #fff; font-size: 12px; font-weight: 600; }
+      h2 { margin: 0 0 4px; font-size: 18px; font-weight: 600; }
+      .time { margin: 0 0 14px; color: var(--muted); font-size: 12px; }
+      h3 { margin: 16px 0 4px; font-size: 13px; font-weight: 600; color: var(--orange); }
+      p, ul { margin: 0; }
+      ul { padding-left: 18px; }
+      .actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+      .actions a { padding: 7px 14px; border-radius: 8px; color: var(--ink); text-decoration: none; border: 1px solid var(--line); }
+      .actions a.play { border: 0; background: linear-gradient(to right, var(--red), var(--orange)); color: #fff; font-weight: 600; }
+      .note { color: var(--muted); font-size: 12px; margin-top: 10px; }
+      @media (max-width: 1100px) { .version { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <h1>Tomato AI 开屏动画 · 版本挑选</h1>
+    <p class="lead">本会话中的 8 个版本，按时间排列。每张分镜依次是 0.7、1.7、2.9、3.8、4.7、5.3、6.2、7.2 秒（左到右、上到下）。点“播放”会打开一个与桌面窗口同尺寸（1280×760）的窗口；刷新重播，点击画面或按 Esc 跳到定格帧。</p>
+
+    <section class="version">
+      <img src="v7/storyboard.jpg" alt="v7 分镜">
+      <div>
+        <h2><span class="tag">v7</span>地标天际线 · 广告可读与质感打磨</h2>
+        <p class="time">10 月 30 日 18:29 · 已正式引入桌面开屏（tag splash-v7），基于 v6</p>
+        <h3>对应你的要求</h3>
+        <p>广告栏与画面兼容、灯光不再盖住广告文字；广告内容不重复；不加新元素，把已有元素打磨得更具体、更有质感</p>
+        <h3>相对 v6 的改动</h3>
+        <ul>
+          <li>可读性：招牌字芯压到泛光阈值以下，光晕画进贴图随招牌缩放；屏幕、飞艇、灯箱发光降档；公交站灯箱外框不再发光；屏幕按自身比例裁切画面，不再拉伸变形；定格画面右下角原先压在 HUD 坐标文字下的 4 块楼顶屏移除，其余建筑不变</li>
+          <li>不重复：17 块竖招牌各用一个模块（从投流加热、相似达人、粉丝增长、竞品监测等 18 个模块里抽取）；5 块楼面屏、飞艇和两座公交站各用一幅画面（受众洞察、一键建联、全球达人、电子签约、AI 达人搜索、达人营销、直播带货、达人榜单）；招牌上的模块不再出现在屏幕上</li>
+          <li>店招：原来看不清的色块换成真实商号（星河书店、云栖茶饮、拾光面馆……），103 家店各不相同，分霓虹字、灯箱和未亮三种</li>
+          <li>汽车：侧面轮廓挤出的车身，带轮拱、倾斜前风挡、溜背尾窗、A/C 柱、黑色 B 柱、腰线饰条、圆角轮胎与金属轮毂、贯穿式尾灯、门把手与侧裙</li>
+          <li>质感：路灯改为锥形灯杆加发光灯罩，并照亮沿街立面、道具和车漆；道具边缘倒角，混凝土有斑驳和雨痕，钢件有锈斑和磨亮边，雨棚有条纹帆布；垃圾桶、护柱、消防栓改为圆柱；长椅分条，红绿灯有遮光罩和背板，售货机有饮料货架和按键，灯笼有竹骨和灯帽</li>
+        </ul>
+        <div class="actions"><a class="play" href="v7/index.html" onclick="window.open(this.href, 'splash', 'width=1280,height=760'); return false">▶ 播放</a><a href="v7/index.html" target="_blank">在标签页打开</a><a href="v7/source.tar.gz">源码包</a></div>
+      </div>
+    </section>
+
+    <section class="version">
+      <img src="v6/storyboard.jpg" alt="v6 分镜">
+      <div>
+        <h2><span class="tag">v6</span>地标天际线 · GTA 级街景</h2>
+        <p class="time">10 月 30 日 13:55 · 基于 v5</p>
+        <h3>对应你的要求</h3>
+        <p>广告牌改为网红营销业务模块；建筑与元素细节向 GTA6 靠拢；画面过渡更流畅</p>
+        <h3>相对 v5 的改动</h3>
+        <ul>
+          <li>广告牌：达人搜索、达人画像、受众洞察、假粉检测、一键建联、种草投放、爆款追踪、数据复盘；屏幕与飞艇换成搜索、受众、建联、ROI 界面</li>
+          <li>街面：双向 6 车道建模汽车与车灯、红绿灯、护柱、长椅、垃圾桶、消防栓、自动售货机、公交站灯箱、跨街电缆与红灯笼</li>
+          <li>楼体：沿街楼的檐口、女儿墙、楼层挑板、阳台板与栏杆、空调箱、消防梯、店铺雨棚都是真实几何；住宅新增瓷砖与红砖饰面</li>
+          <li>过渡：镜头改为加速度连续的样条与速度曲线，关键帧不再顿挫，结尾缓停；像素比降档提前到开场黑场内</li>
+        </ul>
+        <div class="actions"><a class="play" href="v6/index.html" onclick="window.open(this.href, 'splash', 'width=1280,height=760'); return false">▶ 播放</a><a href="v6/index.html" target="_blank">在标签页打开</a><a href="v6/source.tar.gz">源码包</a></div>
+      </div>
+    </section>
+
+    <section class="version">
+      <img src="v5/storyboard.jpg" alt="v5 分镜">
+      <div>
+        <h2><span class="tag">v5</span>地标天际线 · 细节深化</h2>
+        <p class="time">10 月 30 日 13:05 · 基于 v2</p>
+        <h3>对应你的要求</h3>
+        <p>基于 v2 深度细化建筑、飞行器等元素的颗粒细节</p>
+        <h3>相对 v2 的改动</h3>
+        <ul>
+          <li>立面：凹窗视差（窗洞侧壁、窗台、过梁）、窗扇与横档分格、逐块玻璃反射、预制板缝与雨渍；住宅有空调外机、阳台栏杆、落水管，幕墙有层间亮线与竖向铝肋</li>
+          <li>飞行器：飞车圆肩机身、座舱仪表光、发动机进气口唇环与尾喷、腰线灯带与涂装色带、蒙皮缝和清漆反光；货运飞船瓦楞集装箱；飞艇 LED 灯带</li>
+          <li>街面与道具：斑马线、停止线、井盖、雨滴涟漪、路缘石；招牌支架；屋顶水箱与双风扇空调机；店面门框与雨棚</li>
+          <li>清晰度：像素比上限 1.5 → 2，去掉色差，加锐化</li>
+        </ul>
+        <div class="actions"><a class="play" href="v5/index.html" onclick="window.open(this.href, 'splash', 'width=1280,height=760'); return false">▶ 播放</a><a href="v5/index.html" target="_blank">在标签页打开</a><a href="v5/source.tar.gz">源码包</a></div>
+      </div>
+    </section>
+
+    <section class="version">
+      <img src="v4/storyboard.jpg" alt="v4 分镜">
+      <div>
+        <h2><span class="tag">v4</span>西岸滨江 · 暖色（进行中）</h2>
+        <p class="time">10 月 30 日 12:05 · 基于 v3，未调完</p>
+        <h3>相对 v3 的改动</h3>
+        <ul>
+          <li>天空、雾、环境光与霓虹改用 App 的品牌红到橙，去掉紫色和青色</li>
+          <li>清晰度：像素比上限 2、去掉色差、加锐化、雾变薄</li>
+          <li>细节：梧桐式多簇树冠和枝干，路面轮胎磨痕、补丁、井盖、斑马线和路缘石，8 号楼立面改为带窗间墙的带状窗</li>
+        </ul>
+        <p class="note">调色尚未调完：整体偏褐，暗部发灰。</p>
+        <div class="actions"><a class="play" href="v4/index.html" onclick="window.open(this.href, 'splash', 'width=1280,height=760'); return false">▶ 播放</a><a href="v4/index.html" target="_blank">在标签页打开</a><a href="v4/source.tar.gz">源码包</a></div>
+      </div>
+    </section>
+
+    <section class="version">
+      <img src="v3/storyboard.jpg" alt="v3 分镜">
+      <div>
+        <h2><span class="tag">v3</span>西岸滨江 · 紫红夜</h2>
+        <p class="time">10 月 30 日 11:44 · 你提出“更细腻、更清晰、偏暖色”之前</p>
+        <h3>对应你的要求</h3>
+        <p>按徐汇滨江阿里中心重做场景，团队所在的 8 号楼是主角</p>
+        <h3>画面</h3>
+        <ul>
+          <li>镜头贴黄浦江水面滑行，经过 X 区倾斜楼和 D 区透明盒，沿 8 号楼“云朵魔方”立面升起</li>
+          <li>8 号楼屋顶平台投影光束，光粒汇入后点亮标志</li>
+          <li>远景是卢浦大桥式拱桥和陆家嘴三座地标，江面有游船，天上有飞车和广告飞艇</li>
+        </ul>
+        <div class="actions"><a class="play" href="v3/index.html" onclick="window.open(this.href, 'splash', 'width=1280,height=760'); return false">▶ 播放</a><a href="v3/index.html" target="_blank">在标签页打开</a><a href="v3/source.tar.gz">源码包</a></div>
+      </div>
+    </section>
+
+    <section class="version">
+      <img src="v2/storyboard.jpg" alt="v2 分镜">
+      <div>
+        <h2><span class="tag">v2</span>赛博城市 · 地标天际线</h2>
+        <p class="time">10 月 30 日 10:18 · 你提出“按徐汇滨江阿里中心设计”之前</p>
+        <h3>对应你的要求</h3>
+        <p>高楼更精细、不全是方体，加入东方明珠、大裤衩等特色建筑和飞行器</p>
+        <h3>画面</h3>
+        <ul>
+          <li>四座地标：东方明珠式电视塔、门形双塔（大裤衩）、扭转超高层、开瓶器塔</li>
+          <li>中央渐收圆柱塔顶投影点亮标志</li>
+          <li>建模的飞车和货运飞船、广告飞艇、高架磁悬浮列车</li>
+        </ul>
+        <div class="actions"><a class="play" href="v2/index.html" onclick="window.open(this.href, 'splash', 'width=1280,height=760'); return false">▶ 播放</a><a href="v2/index.html" target="_blank">在标签页打开</a><a href="v2/source.tar.gz">源码包</a></div>
+      </div>
+    </section>
+
+    <section class="version">
+      <img src="v1/storyboard.jpg" alt="v1 分镜">
+      <div>
+        <h2><span class="tag">v1</span>雨夜街道峡谷</h2>
+        <p class="time">10 月 29 日 21:09 · 你提出“加地标和飞行器”之前</p>
+        <h3>对应你的要求</h3>
+        <p>去掉塑料感、灯光不闪、标志引出更自然</p>
+        <h3>画面</h3>
+        <ul>
+          <li>湿路面反射、雨丝、高度雾，立面有室内房间和分区亮灯</li>
+          <li>沿街竖排中文霓虹招牌和广告屏，灯光常亮</li>
+          <li>镜头沿街道低飞后升起，塔顶光束点亮霓虹标志</li>
+        </ul>
+        <div class="actions"><a class="play" href="v1/index.html" onclick="window.open(this.href, 'splash', 'width=1280,height=760'); return false">▶ 播放</a><a href="v1/index.html" target="_blank">在标签页打开</a><a href="v1/source.tar.gz">源码包</a></div>
+      </div>
+    </section>
+
+    <section class="version">
+      <img src="v0/storyboard.jpg" alt="v0 分镜">
+      <div>
+        <h2><span class="tag">v0</span>原始版</h2>
+        <p class="time">10 月 29 日 19:31 · 本会话开始时的版本</p>
+        <h3>当时你指出的问题</h3>
+        <ul>
+          <li>建筑和地面塑料感强、不够精细</li>
+          <li>灯光太闪</li>
+          <li>标志引出不够自然</li>
+        </ul>
+        <div class="actions"><a class="play" href="v0/index.html" onclick="window.open(this.href, 'splash', 'width=1280,height=760'); return false">▶ 播放</a><a href="v0/index.html" target="_blank">在标签页打开</a><a href="v0/source.tar.gz">源码包</a></div>
+      </div>
+    </section>
+    <footer class="note" style="margin-top: 32px">
+      <p>每个版本目录含 <code>index.html</code>、<code>splash.css</code>、<code>splash.js</code>（生产构建）、<code>storyboard.jpg</code> 和 <code>source.tar.gz</code>（该版本完整的开屏文件）。v1 至 v4 是从会话记录回放 246 次编辑重建的，回放结果与当时的工作区逐字节一致；v0 来自会话开始时的备份；v5 至 v7 直接取自当时的工作区，v7 已正式引入桌面开屏（tag <code>splash-v7</code>）。</p>
+      <p>恢复某个版本：告诉 Claude 版本号。手动恢复时，先删除 <code>apps/desktop/src/client/splash*.ts</code> 与 <code>apps/desktop/tests/splash-*.spec.ts</code>，再在仓库根目录执行 <code>tar -xzf apps/desktop/splash-versions/vN/source.tar.gz</code>。本目录不在打包范围内，挑定后可以整个删除。</p>
+    </footer>
+  </body>
+</html>

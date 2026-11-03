@@ -574,6 +574,17 @@ describe('deriveFlat', () => {
     expect(ids).toEqual([parent.id, fork.id])
   })
 
+  it('keeps ordinary rows whose robotRun projection is null and hides a tagged run', () => {
+    const plain = { ...summary('plain', 1), projectionValues: { robotRun: null } as never }
+    const untagged = summary('untagged', 2)
+    const tagged = {
+      ...summary('tagged', 3),
+      projectionValues: { robotRun: { robotId: 'robot-1', runId: 'run-1' } } as never,
+    }
+    const sessions = list(plain, untagged, tagged)
+    expect(visibleSessionIds(sessions, noArchive, 'default')).toEqual([plain.id, untagged.id])
+  })
+
   it('tolerates ids whose summary has not landed yet', () => {
     const partial: SessionListState = { ...list(summary('present', 1)), ids: [sid('ghost'), sid('present')] }
     expect(visibleSessionIds(partial, noArchive, 'default')).toEqual([sid('present')])

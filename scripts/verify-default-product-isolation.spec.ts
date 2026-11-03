@@ -135,7 +135,53 @@ describe('default product isolation', () => {
     write(root, profile, `export const PROFILE_TEMPLATES = { web: { bundles: ['${base}', '${layer}'] } }\n`
       + `export const DEFAULT_PROFILE_BUNDLES = ['${base}']\n`
       + `export const OPTIONAL_BUNDLES = ['${layer}']\n`)
-    expect(verifyDefaultProductIsolation(root).failures.join('\n')).toContain(`optional bundle ${layer} must not be a default bundle`)
+    expect(verifyDefaultProductIsolation(root).failures.join('\n'))
+      .toContain(`optional bundle ${layer} must not be a default bundle unless DEFAULT_ENABLED_OPTIONAL_BUNDLES names it`)
+  })
+
+  it('composes a default-enabled optional bundle layer together with its experimental closure', () => {
+    const root = fixture()
+    const layer = '@tomato/experimental-layer'
+    const provider = '@tomato/experimental-provider'
+    write(root, 'packages/experimental/layer/package.json', {
+      name: layer, icon: './icon.svg', exports: { './locale/*.json': './locale/*.json' },
+      dependencies: { [provider]: 'workspace:*' }, tomato: { bundle: { patch: './cordis.patch.yml' } },
+    })
+    write(root, 'packages/experimental/layer/cordis.patch.yml', [{ insert: [{ name: provider }] }])
+    write(root, 'packages/experimental/provider/package.json', { name: provider })
+    write(root, 'packages/experimental/provider/src/index.ts', 'export {}\n')
+    manifest(root, 'apps/cli/package.json', { dependencies: { [core]: 'workspace:^', [layer]: 'workspace:^' } })
+    const source = (defaults: string): string => `export const PROFILE_TEMPLATES = { web: { bundles: ['${base}', '${layer}'] } }\n`
+      + `export const DEFAULT_PROFILE_BUNDLES = ['${base}']\n`
+      + `export const OPTIONAL_BUNDLES = ['${layer}']\n${defaults}`
+    write(root, profile, source(`export const DEFAULT_ENABLED_OPTIONAL_BUNDLES = ['${layer}']\n`))
+    expect(verifyDefaultProductIsolation(root).failures).toEqual([])
+
+    // An experimental package outside the declared layer's closure stays a product requirement.
+    write(root, 'packages/experimental/layer/cordis.patch.yml', [{ insert: [{ name: provider }, { name: experimental }] }])
+    expect(verifyDefaultProductIsolation(root).failures.join('\n')).toContain(experimental)
+
+    write(root, profile, source(''))
+    expect(verifyDefaultProductIsolation(root).failures.join('\n'))
+      .toContain(`optional bundle ${layer} must not be a default bundle unless DEFAULT_ENABLED_OPTIONAL_BUNDLES names it`)
+  })
+
+  it('requires default-enabled optional bundles to be shipped optional template layers', () => {
+    const root = fixture()
+    const layer = '@tomato/experimental-layer'
+    write(root, profile, `export const PROFILE_TEMPLATES = { web: { bundles: ['${base}'] } }\n`
+      + `export const DEFAULT_PROFILE_BUNDLES = ['${base}']\n`
+      + `export const OPTIONAL_BUNDLES = ['${layer}']\n`
+      + `export const DEFAULT_ENABLED_OPTIONAL_BUNDLES = ['${layer}']\n`)
+    const failures = verifyDefaultProductIsolation(root).failures.join('\n')
+    expect(failures).toContain(`default-enabled bundle ${layer} must be a shipped template layer`)
+    expect(failures).not.toContain(`default-enabled bundle ${layer} must be an optional bundle`)
+
+    write(root, profile, `export const PROFILE_TEMPLATES = { web: { bundles: ['${base}', '${layer}'] } }\n`
+      + `export const DEFAULT_PROFILE_BUNDLES = ['${base}']\n`
+      + `export const DEFAULT_ENABLED_OPTIONAL_BUNDLES = ['${layer}']\n`)
+    expect(verifyDefaultProductIsolation(root).failures.join('\n'))
+      .toContain(`default-enabled bundle ${layer} must be an optional bundle`)
   })
 
   it.each(['dependencies', 'source', 'patch'])(

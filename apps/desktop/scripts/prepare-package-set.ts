@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto'
 import {
   constants,
   copyFileSync,
+  existsSync,
   globSync,
   mkdirSync,
   readFileSync,
@@ -73,8 +74,12 @@ export function selectDesktopPackageClosure(
   target: ReturnType<typeof desktopTargetPlatform>,
 ): PackedDesktopPackage[] {
   const workspace = yaml.load(readFileSync(join(REPOSITORY_ROOT, 'pnpm-workspace.yaml'), 'utf8')) as { packages: string[] }
-  const workspaceNames = new Set(globSync(workspace.packages.map(pattern => `${pattern}/package.json`), { cwd: REPOSITORY_ROOT })
-    .map(path => (JSON.parse(readFileSync(join(REPOSITORY_ROOT, path), 'utf8')) as { name: string }).name))
+  const workspaceManifests = new Map<string, Record<string, unknown>>()
+  for (const path of globSync(workspace.packages.map(pattern => `${pattern}/package.json`), { cwd: REPOSITORY_ROOT })) {
+    const manifest = JSON.parse(readFileSync(join(REPOSITORY_ROOT, path), 'utf8')) as Record<string, unknown>
+    const name = manifest.name
+    if (typeof name === 'string' && name !== '') workspaceManifests.set(name, manifest)
+  }
   const selected = new Map<string, PackedDesktopPackage>()
   const visit = (name: string): void => {
     if (selected.has(name)) return
@@ -84,15 +89,26 @@ export function selectDesktopPackageClosure(
     for (const section of REQUIRED_DEPENDENCY_SECTIONS) {
       for (const dependency of dependencyNames(packed.manifest, section)) {
         if (available.has(dependency)) visit(dependency)
-        else if (workspaceNames.has(dependency)) {
+        else if (workspaceManifests.has(dependency)) {
           throw new Error(`desktop package set: ${name} requires unpacked package ${dependency}`)
         }
       }
     }
     for (const dependency of dependencyNames(packed.manifest, OPTIONAL_DEPENDENCY_SECTION)) {
       const optional = available.get(dependency)
-      if (optional && supportsTarget(optional.manifest, 'os', target.platform)
-        && supportsTarget(optional.manifest, 'cpu', target.arch)) visit(dependency)
+      if (optional !== undefined) {
+        if (supportsTarget(optional.manifest, 'os', target.platform)
+          && supportsTarget(optional.manifest, 'cpu', target.arch)) visit(dependency)
+        continue
+      }
+      // A usable workspace package cannot come from a registry, so leaving it out of
+      // the packed inputs would only surface as a runtime module error.
+      const workspaceManifest = workspaceManifests.get(dependency)
+      if (workspaceManifest !== undefined
+        && supportsTarget(workspaceManifest, 'os', target.platform)
+        && supportsTarget(workspaceManifest, 'cpu', target.arch)) {
+        throw new Error(`desktop package set: ${name} optionally requires unpacked workspace package ${dependency}`)
+      }
     }
   }
   for (const name of ROOT_PACKAGES) {
@@ -186,7 +202,8 @@ function main(): void {
     buildPaths.packedDsh,
     buildPaths.packedVendor,
     buildPaths.packedLandlock,
-  ]
+    buildPaths.packedNodeAddons,
+  ].filter(path => existsSync(path) && readdirSync(path).some(file => file.endsWith('.tgz')))
   const { values } = parseArgs({
     options: { from: { type: 'string', multiple: true }, out: { type: 'string' } },
     allowPositionals: false,

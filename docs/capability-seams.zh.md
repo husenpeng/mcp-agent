@@ -16,6 +16,8 @@ flowchart LR
   pkg_experimental_memory["experimental-memory"]
   svc_memory["ctx.memory<br/>Profile and workspace memory records"]
   pkg_experimental_tool_memory["experimental-tool-memory"]
+  pkg_experimental_muse_insights["experimental-muse-insights"]
+  svc_museInsights["ctx.museInsights<br/>Daily recap and unfinished-task Remote"]
   pkg_gateway["gateway"]
   svc_tomatoAccount["ctx.tomatoAccount<br/>Host signed-in account"]
   pkg_plugin_recommendations["plugin-recommendations"]
@@ -106,6 +108,8 @@ flowchart LR
   svc_sessionSkillCatalog["ctx.sessionSkillCatalog<br/>Session-addressed skill Remote adapter"]
   pkg_api_job_controller["api-job-controller"]
   svc_jobController["ctx.jobController<br/>Host job Remote controller"]
+  pkg_api_robot_controller["api-robot-controller"]
+  svc_robotController["ctx.robotController<br/>Host robot Remote controller"]
   pkg_api_settings_controller["api-settings-controller"]
   svc_credentialsController["ctx.credentialsController<br/>Host credential-surface Remote controller"]
   svc_settingsController["ctx.settingsController<br/>Host settings-surface Remote controller"]
@@ -269,6 +273,11 @@ flowchart LR
   pkg_experimental_agent_team["experimental-agent-team"]
   svc_agentTeams["ctx.agentTeams<br/>Agent Teams coordination domain"]
   pkg_experimental_tool_agent_team["experimental-tool-agent-team"]
+  pkg_experimental_robot["experimental-robot"]
+  svc_robots["ctx.robots<br/>Robot domain service"]
+  pkg_experimental_robot_local["experimental-robot-local"]
+  pkg_experimental_robot_runtime["experimental-robot-runtime"]
+  pkg_experimental_robot_triggers["experimental-robot-triggers"]
   pkg_experimental_claude_code_mods["experimental-claude-code-mods"]
   svc_claudeCodeMods["ctx.claudeCodeMods<br/>Claude Code mods bridge"]
   pkg_inspector["inspector"]
@@ -320,6 +329,7 @@ flowchart LR
   pkg_api_gateway --> svc_typertGateway
   pkg_api_job_controller --> svc_jobController
   pkg_api_remote_access --> svc_remoteAccess
+  pkg_api_robot_controller --> svc_robotController
   pkg_api_session_controller --> svc_sessionController
   pkg_api_session_controller --> svc_sessionFileReferences
   pkg_api_session_controller --> svc_sessionSkillCatalog
@@ -366,7 +376,10 @@ flowchart LR
   pkg_experimental_computer_use_cua_driver_mcp --> svc_computerUse
   pkg_experimental_computer_use_cua_driver_native --> svc_computerUse
   pkg_experimental_memory --> svc_memory
+  pkg_experimental_muse_insights --> svc_museInsights
   pkg_experimental_ptc_runtime_python --> svc_ptcRuntime
+  pkg_experimental_robot --> svc_robots
+  pkg_experimental_robot_local --> svc_robots
   pkg_experimental_speech_to_text --> svc_speechToText
   pkg_experimental_speech_to_text_sensevoice --> svc_speechToText
   pkg_experimental_translator --> svc_translator
@@ -544,6 +557,8 @@ flowchart LR
   svc_remoteAccess --> pkg_api_gateway
   svc_remoteAccess --> pkg_api_session_controller
   svc_remoteAccess --> pkg_api_workspace_controller
+  svc_robots --> pkg_experimental_robot_runtime
+  svc_robots --> pkg_experimental_robot_triggers
   svc_sandbox --> pkg_bash_sandbox
   svc_sandbox --> pkg_terminal_bash
   svc_sandboxPolicy --> pkg_bash_sandbox
@@ -644,6 +659,7 @@ flowchart LR
 | --- | --- | --- | --- | --- | --- | --- |
 | `ctx.actionCards` | `service` | [`action-cards`](../packages/experimental/action-cards) | - | [`creation-recommendations`](../packages/experimental/creation-recommendations), [`client-ui-action-cards`](../packages/experimental/client-ui-action-cards) | - | 负责卡片工具、卡片状态、用户操作和状态通知；各卡片种类注册自己的动作和处理器。 |
 | `ctx.memory` | `service` | [`experimental-memory`](../packages/experimental/memory) | - | [`experimental-tool-memory`](../packages/experimental/tool-memory) | - | 在 tomato_memory 存储域中先按所有者、再按画像或规范化项目目录保存记录；所有面向模型的工具、命令和快照都由记忆工具负责。 |
+| `ctx.museInsights` | `service` | [`experimental-muse-insights`](../packages/experimental/muse-insights) | - | - | - | 读取当天的 Session 文本与 `todos` 投影，按所有者与本地日期各保留一份回顾，并保留该所有者最新的分析，两者同时提供给浏览器提示与右侧栏页面。 |
 | `ctx.tomatoAccount` | `service` | [`gateway`](../packages/tomato/gateway) | - | [`experimental-memory`](../packages/experimental/memory) | - | 仅在配置了 auth_service 时，网关发布其最近一次 auth_service 校验所对应的账号；消费方用 ctx.get 读取，并把缺失视为不提供账号的 Host。 |
 | `ctx.pluginRecommendations` | `service` | [`plugin-recommendations`](../packages/experimental/plugin-recommendations) | - | [`client-ui-plugin-recommendations`](../packages/experimental/client-ui-plugin-recommendations) | - | 读取官方插件卡片的当前目录文本，并在用户点击后通过配置插件管理器启用该插件。 |
 | `ctx.headlessStartup` | `core` | [`headless`](../packages/bundle/headless) | - | [`headless`](../packages/bundle/headless) | - | 将解析后的任务和运行选项提供给无界面运行器及其 sandbox-policy 配置。 |
@@ -674,6 +690,7 @@ flowchart LR
 | `ctx.sessionFileReferences` | `core` | [`api-session-controller`](../packages/api/session-controller) | - | - | - | 通过 Session Controller 的既有 Agent lookup 策略委托文件引用发现。 |
 | `ctx.sessionSkillCatalog` | `core` | [`api-session-controller`](../packages/api/session-controller) | - | - | - | 在不激活冷 Agent 的前提下列出 Session 组合中允许用户调用的 skill。 |
 | `ctx.jobController` | `core` | [`api-job-controller`](../packages/api/job-controller) | - | - | - | 经生成的 Remote namespace 流式发送一个后台任务的观测 record；名册仍在会话控制流上。 |
+| `ctx.robotController` | `core` | [`api-robot-controller`](../packages/api/robot-controller) | - | - | - | 把 robot 注册表投影到生成的 Remote namespace，并推送整份注册表帧；规格存储与校验仍由 seam provider 负责。 |
 | `ctx.credentialsController` | `core` | [`api-settings-controller`](../packages/api/settings-controller) | - | - | - | 把凭据引用 seam 投影到生成的 Remote namespace：批量扇出、视图投影与拒绝映射都在这里，而不在 seam Definition 上。 |
 | `ctx.settingsController` | `core` | [`api-settings-controller`](../packages/api/settings-controller) | - | - | - | 把用户设置 seam 投影到生成的 Remote namespace：读取一律脱敏，所有拒绝在这里分类，而不在 seam Definition 上。 |
 | `ctx.workspaceFiles` | `core` | [`api-workspace-files`](../packages/api/workspace-files) | - | - | - | 为会话工作区根内的文件提供 stat、分页文本、字节窗口、目录列举与变更流，经 lstat、包含关系与 stat 重检限定。 |
@@ -733,6 +750,7 @@ flowchart LR
 | `ctx.subagents` | `seam` | [`subagent`](../packages/subagent/subagent) | [`subagent-spawn-in-process`](../packages/subagent/subagent-spawn-in-process), [`subagent-fork-in-process`](../packages/subagent/subagent-fork-in-process), [`subagent-acp`](../packages/subagent/subagent-acp), [`subagent-codex`](../packages/subagent/subagent-codex), [`subagent-claude-code`](../packages/subagent/subagent-claude-code), [`subagent-sdk`](../packages/subagent/subagent-sdk) | [`tool-subagent`](../packages/subagent/tool-subagent), [`tool-subagent-control`](../packages/subagent/tool-subagent-control), [`tool-ralph`](../packages/experimental/tool-ralph) | - | 提供方准备本地子级或执行外部任务；一个 activation 管理器持有两类生命周期。委派工具选择后端，控制工具投递本地后续消息，工作流等待 activation 结果。 |
 | `ctx.speechToText` | `seam` | [`experimental-speech-to-text`](../packages/experimental/speech-to-text) | [`experimental-speech-to-text-sensevoice`](../packages/experimental/speech-to-text-sensevoice) | [`experimental-api-speech-to-text`](../packages/experimental/api-speech-to-text) | - | 路由显式选择的识别器；浏览器使用带认证的 Remote，并在提交前将转写保留在草稿中。 |
 | `ctx.agentTeams` | `core` | [`experimental-agent-team`](../packages/experimental/agent-team) | - | [`experimental-tool-agent-team`](../packages/experimental/tool-agent-team) | - | 负责隐式 Root roster、直接 peer inbox 投递、共享任务 DAG 与 continuable child 生命周期；tool-agent-team 提供模型控制工具。 |
+| `ctx.robots` | `core` | [`experimental-robot`](../packages/experimental/robot) | [`experimental-robot-local`](../packages/experimental/robot-local) | [`experimental-robot-runtime`](../packages/experimental/robot-runtime), [`experimental-robot-triggers`](../packages/experimental/robot-triggers) | - | 拥有有版本机器人规格、实例化与 run 控制；服务定义声明契约，已安装的提供者拥有执行、持久化与 A2A 传输。 |
 | `ctx.claudeCodeMods` | `core` | [`experimental-claude-code-mods`](../packages/experimental/claude-code-mods) | - | - | - | 加载 defineMod 插件添加的模组，从 harness 扩展点触发其钩子链，并通过其 Remote 绘制提示框上方的横幅。 |
 | `ctx.inspector` | `core` | `inspector` | - | - | - | 负责 Worker 托管的 CDP target，以及独立于传输的 Host 和 Client observation 与 Cordis tree query API。 |
 | `ctx.jobs` | `seam` | [`jobs`](../packages/jobs/jobs) | [`jobs-local`](../packages/jobs/jobs-local) | [`tool-bash`](../packages/shell/tool-bash), [`tool-pwsh`](../packages/shell/tool-pwsh), [`tool-terminal`](../packages/experimental/tool-terminal), [`tool-jobs`](../packages/jobs/tool-jobs), [`api-job-controller`](../packages/api/job-controller) | - | 生产方（后台 bash/pwsh 与 PTY 发送）登记正在运行的工作；声明 record 的 job 还为非消费观察者流式提供原始输出；tool-jobs 是面向模型的控制器，用于读取、列出和终止这些工作；jobs-local 是进程本地注册表。 |

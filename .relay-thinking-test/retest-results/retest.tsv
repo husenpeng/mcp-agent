@@ -1,0 +1,41 @@
+model	level	http	time_s	completion_tok	reasoning_tok	rc_len	finish	content	error
+claude-haiku-4-5-20251001	off	200	1.004719	6	0	0	stop	4183	
+claude-haiku-4-5-20251001	low	200	1.244864	133	0	194	stop	4183	
+claude-haiku-4-5-20251001	medium	200	1.210529	138	0	199	stop	4183	
+claude-haiku-4-5-20251001	high	200	2.429441	128	0	186	stop	4183	
+claude-haiku-4-5-20251001	max	200	1.343950	134	0	187	stop	4183	
+claude-opus-4-5-20251101	off	200	1.885192	6	0	0	stop	4183	
+claude-opus-4-5-20251101	low	400	0.700832	0	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: 82524852-8e9e-4e09-9859-251599a90695, Vali
+claude-opus-4-5-20251101	medium	400	0.775505	0	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: 4bc08a4f-477e-4693-9183-59a4c8a7c633, Vali
+claude-opus-4-5-20251101	high	400	0.695322	0	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: ce3d4a24-4abd-435a-a306-c161bb3f6c41, Vali
+claude-opus-4-5-20251101	max	400	1.373081	0	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: e407676f-8dc8-42d7-8cdf-7581dd25c596, Vali
+claude-opus-4-6-v1	off	200	1.733136	6	0	0	stop	4183	
+claude-opus-4-6-v1	low	200	2.135386	6	0	0	stop	4183	
+claude-opus-4-6-v1	medium	200	1.837227	6	0	0	stop	4183	
+claude-opus-4-6-v1	high	200	2.547789	52	0	41	stop	4183	
+claude-opus-4-6-v1	max	200	1.926094	52	0	42	stop	4183	
+claude-opus-4-7	off	200	1.247743	7	0	0	stop	4183	
+claude-opus-4-7	low	200	1.233692	7	0	0	stop	4183	
+claude-opus-4-7	medium	200	1.186656	7	0	0	stop	4183	
+claude-opus-4-7	high	200	1.133886	7	0	0	stop	4183	
+claude-opus-4-7	max	200	1.428028	56	0	0	stop	4183	
+claude-opus-5	off	200	1.505373	33	0	0	stop	4183	
+claude-opus-5	low	200	1.391116	29	0	0	stop	4183	
+claude-opus-5	medium	200	1.515665	33	0	0	stop	4183	
+claude-opus-5	high	200	1.524161	33	0	0	stop	4183	
+claude-opus-5	max	200	1.620278	33	0	0	stop	4183	
+claude-haiku-5-5	off	200	1.189389	4	0	0	stop	4183	
+claude-haiku-5-5	low	400	0.728259	0	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: 464067c1-0d58-4dc8-8aba-51c65ddfdc43, Vali
+claude-haiku-5-5	medium	400	0.616428	0	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: 5ecd26f2-5452-4ce6-8c4e-7bdfd55b4802, Vali
+claude-haiku-5-5	high	400	0.564520	0	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: f3b1d0bf-c0ab-4e39-8c24-992268e7ab96, Vali
+claude-haiku-5-5	max	400	0.628500	0	0	0	-		InvokeModel: operation error Bedrock Runtime: InvokeModel, https response error StatusCode: 400, RequestID: d377c34b-7dda-46db-9b99-600ecb352c86, Vali
+qwen-turbo	off	429	0.363267	0	0	0	-		You have exceeded your current request limit. For details, see: https://***.com/***/***/***
+qwen-turbo	low	429	0.337247	0	0	0	-		You have exceeded your current request limit. For details, see: https://***.com/***/***/***
+qwen-turbo	medium	429	0.330927	0	0	0	-		You have exceeded your current request limit. For details, see: https://***.com/***/***/***
+qwen-turbo	high	429	0.323588	0	0	0	-		You have exceeded your current request limit. For details, see: https://***.com/***/***/***
+qwen-turbo	max	429	0.387905	0	0	0	-		You have exceeded your current request limit. For details, see: https://***.com/***/***/***
+DeepSeek-V4-Pro-0813	off	200	0.887879	3	0	0	stop	4183	
+DeepSeek-V4-Pro-0813	low	200	1.646038	43	38	109	stop	4183	
+DeepSeek-V4-Pro-0813	medium	200	1.253576	37	33	95	stop	4183	
+DeepSeek-V4-Pro-0813	high	200	1.209952	39	35	86	stop	4183	
+DeepSeek-V4-Pro-0813	max	200	1.344714	35	31	97	stop	4183	

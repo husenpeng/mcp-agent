@@ -1,0 +1,43 @@
+{
+  "name": "@tomato/marketing-app",
+  "description": "The advertising and marketing bundle: mounts the integration plugin whose Google Ads, Analytics, Meta/Instagram, TikTok, YouTube, X, and Mailchimp servers stay off until configured",
+  "version": "0.2.1-rc.3",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/bundle/marketing-app"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "cordis.patch.yml",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "tomato": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "@tomato/marketing": "workspace:*",
+    "@tomato/client-ui-settings-marketing": "workspace:*"
+  },
+  "devDependencies": {
+    "@tomato/cordis": "workspace:~"
+  }
+}

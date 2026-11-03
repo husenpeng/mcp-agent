@@ -14,7 +14,7 @@ export const SPLASH_HEIGHT = 760
 export const SPLASH_FADE_MS = 300
 
 /**
- * How long the shell waits for the renderer's completion report once the target window is visible; it exceeds the
+ * How long the shell waits for the renderer's completion report once it starts the window handoff; it exceeds the
  * renderer's animation plus shader warm-up, so a fast Host start never cuts the brand reveal.
  */
 export const SPLASH_RELEASE_FALLBACK_MS = 12000
@@ -62,8 +62,15 @@ export function splashFadeOpacity(elapsedMs: number): number {
 /** Shell-owned lifecycle handle of the startup splash window. */
 export interface DesktopSplash {
   /**
-   * Reveal the target window, then exit once the renderer reports its animation complete.
-   * Idempotent; a renderer that never reports falls back to exit after `SPLASH_RELEASE_FALLBACK_MS`.
+   * Resolve once the renderer reports its animation complete, or when `SPLASH_RELEASE_FALLBACK_MS`
+   * expires first; reveal the target window only after this resolves. Closings also resolve it, so a
+   * startup handoff never waits on a splash window that no longer exists.
+   * @returns a promise for the first completed animation or lifecycle close.
+   */
+  waitForAnimation(): Promise<void>
+  /**
+   * Fade out and close once the animation is complete.
+   * Idempotent; a renderer that never reports falls back to completion after `SPLASH_RELEASE_FALLBACK_MS`.
    */
   release(): void
   /** Close immediately without fading, for fatal recovery, mandatory updates, and quit. */
@@ -83,6 +90,7 @@ export function openSplashWindow(preload: string): DesktopSplash {
   let fading = false
   let fadeTimer: NodeJS.Timeout | undefined
   let fallbackTimer: NodeJS.Timeout | undefined
+  const animationWaiters = new Set<() => void>()
 
   function clearTimers(): void {
     if (fadeTimer !== undefined) clearInterval(fadeTimer)
@@ -91,10 +99,31 @@ export function openSplashWindow(preload: string): DesktopSplash {
     fallbackTimer = undefined
   }
 
+  function settleAnimationWaiters(): void {
+    for (const resolve of animationWaiters) resolve()
+    animationWaiters.clear()
+  }
+
+  function markAnimationDone(): void {
+    if (animationDone) return
+    animationDone = true
+    settleAnimationWaiters()
+  }
+
+  function startAnimationFallback(): void {
+    if (animationDone || finished || fallbackTimer !== undefined) return
+    fallbackTimer = setTimeout(() => {
+      fallbackTimer = undefined
+      markAnimationDone()
+      if (released) startFade()
+    }, SPLASH_RELEASE_FALLBACK_MS)
+  }
+
   function close(): void {
     if (finished) return
     finished = true
     clearTimers()
+    settleAnimationWaiters()
     ipcMain.removeListener(SPLASH_IPC.animationDone, onAnimationDone)
     if (!window.isDestroyed()) window.close()
   }
@@ -136,7 +165,7 @@ export function openSplashWindow(preload: string): DesktopSplash {
     const frame = event.senderFrame
     if (event.sender !== window.webContents || frame === null || frame !== window.webContents.mainFrame) return
     if (!frame.url.endsWith('/renderer/splash.html')) return
-    animationDone = true
+    markAnimationDone()
     if (released) startFade()
   }
 
@@ -150,6 +179,7 @@ export function openSplashWindow(preload: string): DesktopSplash {
   window.on('closed', () => {
     finished = true
     clearTimers()
+    settleAnimationWaiters()
     ipcMain.removeListener(SPLASH_IPC.animationDone, onAnimationDone)
   })
   window.webContents.on('render-process-gone', () => { close() })
@@ -158,11 +188,16 @@ export function openSplashWindow(preload: string): DesktopSplash {
     close()
   })
   return {
+    waitForAnimation: () => {
+      if (animationDone || finished) return Promise.resolve()
+      startAnimationFallback()
+      return new Promise<void>((resolve) => { animationWaiters.add(resolve) })
+    },
     release: () => {
       if (finished || released) return
       released = true
       if (animationDone) startFade()
-      else fallbackTimer = setTimeout(() => { animationDone = true; startFade() }, SPLASH_RELEASE_FALLBACK_MS)
+      else startAnimationFallback()
     },
     dispose: close,
   }

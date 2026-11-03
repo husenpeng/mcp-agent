@@ -3,10 +3,12 @@ import { createHash } from 'node:crypto'
 import { lstat, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import { readAsar, type Node } from 'app-builder-lib/out/asar/asar.js'
+import { harnessReleaseContentViolation } from './runtime-file-policy.ts'
 import type { DesktopRuntimeDescriptor, DesktopRuntimeFile } from '../src/runtime-tree.ts'
 
 /**
- * Compare the complete archived tomato tree with the sealed preparation inventory.
+ * Compare the complete archived tomato tree with the sealed preparation inventory, and reject harness
+ * documentation and source that the packaging filter must have omitted.
  * @param archivePath - Application ASAR file beside its unpacked directory.
  * @param expected - Verified preparation descriptor, including its complete file inventory.
  * @returns Resolves when bytes, file membership and meaningful executable permissions match.
@@ -30,6 +32,8 @@ export async function verifyRuntimeArchive(archivePath: string, expected: Deskto
     if (physical !== undefined && !physical.isFile()) throw new Error(`desktop runtime: unexpected unpacked entry ${path}`)
     if (node.unpacked === true) unpacked.add(join(`${archivePath}.unpacked`, name))
     if (path === 'desktop-runtime.json') return
+    const violation = harnessReleaseContentViolation(path)
+    if (violation !== undefined) throw new Error(`desktop runtime: ${violation} reached the ASAR: ${path}`)
     const body = await archive.readFile(name)
     // ASAR stores only owner-execute; group/other-only executable files fail the inventory comparison.
     const executable = process.platform !== 'win32' && (physical !== undefined

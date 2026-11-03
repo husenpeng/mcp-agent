@@ -162,6 +162,8 @@ macOS 上自定义菜单保留 Electron 的标准 Window 菜单及应用隐藏�
 
 ### 运行时与插件激活
 
+密封运行时只携带会执行的内容。[`runtime-file-policy.ts`](scripts/runtime-file-policy.ts) 在封存前省略声明文件、source map、构建缓存、其他平台的包依赖，以及每个 harness 包的 README/CHANGELOG、翻译元数据、`src/` 与 `native/tests/`；[`verify-runtime-archive.ts`](scripts/verify-runtime-archive.ts) 拒绝任何被省略类别进入 ASAR。打包应用把自己的归档路径作为 `TOMATO_PROTECTED_READ_ROOTS` 传入，因此 `@tomato/fs-sandbox` 在所有模式下拒绝对其观察，macOS Seatbelt 或 Linux `bwrap` 对 shell 命令遮蔽它；[`release-profile.patch.yml`](resources/release-profile.patch.yml) 在 profile 层之后应用，使 `harness-dev-context` 保留 Web GUI 定位而不指名实现 checkout。未打包启动不带这些内容。
+
 签名资源中的 `resources/app.asar/tomato/desktop-runtime.json` 绑定 shell 版本、Electron 的 Node 版本、平台、架构、共享包版本和最终文件清单。启动读取元数据，并检查共享包记录。发布 schema、shell 版本、目标兼容性和文件完整性在打包时验证。只有出现打包校验与实际 Host 诊断无法充分解释的具体安装故障，才重新引入启动时的发布信息比较。首次启动不会把核心包复制到 profile 存储或通过 pnpm 安装核心包。
 
 1. 主窗口在 profile 准备或后端启动前，从打包静态资源于屏幕外加载共享 Web 加载页。共享 profile 初始化创建缺失的 manifest、空用户 patch 与 pnpm workspace 文件，不覆盖现有文件。
@@ -204,6 +206,8 @@ pnpm run dev:desktop
 pnpm run start:desktop
 ```
 
+两个启动器都会在 Electron 命令行带上开发重启请求。开发壳正在运行时，后一次启动会让它确认该请求并重启到刚构建的产物，因此重复运行启动器总会执行最新构建。来自无法确认该请求的旧构建的壳会继续运行旧代码；此时后一次启动会报告未确认的重启并以非零状态退出，而不是静默地视为成功。
+
 桌面包准备过程按安装包目标的操作系统和架构筛选可选原生包。Windows 的包集合不包含 macOS Computer Use tarball，即使输入包是在 macOS 上打包的。
 
 Web 侧的对应命令是 `pnpm run dev:web` 与 `pnpm run start:web`，见[开发指南](../../docs/development.zh.md)。Workspace 开发使用 Electron RunAsNode 运行当前 CLI 与私有 Desktop Host 包，插件管理和恢复使用 `$TOMATO_HOME/profiles/desktop`，与一次性工作区运行时分离。Host 在开发与打包构建中都使用 runtime 模块解析，不创建官方包的 fallback 链接；开发者安装的包（包括链接）保留原生优先级。需要验证 Electron RunAsNode、内置 pnpm、内置 tomato 资源、插件安装和修复时，应运行未封装安装器的应用目录。
@@ -214,7 +218,7 @@ Web 侧的对应命令是 `pnpm run dev:web` 与 `pnpm run start:web`，见[开�
 
 ### 启动引导
 
-每次冷启动先显示 1280×760 无边框开屏：番茄轮廓从茎部描出、渐变点亮，手写星空签名的 `Tomato AI` 字标在漂移并逐渐点亮的景深星尘上落定。动画固定播放 2.2s，不因 Host 提前就绪而缩短；播完停在终态，Host 就绪后淡出交给主窗口或欢迎窗口。点击窗口或按 Esc 跳到终态，Reduce Motion 下显示静态画面，`TOMATO_DESKTOP_SKIP_SPLASH=1` 跳过创建。
+每次冷启动先显示 1280×760 无边框开屏：程序生成的 3D 雨夜城市播放 7.2s，镜头沿街道滑行，掠过车流、飞车与广告飞艇后升起，停在由四座地标组成的天际线前；投影光束点亮霓虹番茄标志，下方解码出 `TOMATO AI` 字标。动画固定完整播放，不因 Host 提前就绪而缩短；播完停在终态，Host 就绪后淡出交给主窗口或欢迎窗口。点击窗口或按 Esc 跳到终态，Reduce Motion 下显示静态终帧，WebGL 启动失败时显示静态品牌标识，`TOMATO_DESKTOP_SKIP_SPLASH=1` 跳过创建。
 
 API Key 输入框初始为空，并通过 `autocomplete="new-password"` 请求 Chromium 不要自动填入已保存的登录密码。
 

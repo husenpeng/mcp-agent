@@ -244,6 +244,9 @@
       config:
         mode: !!js process.env.TOMATO_PERMISSION_MODE ?? 'workspace-write'
         workspaceRoot: !!js process.cwd()
+        # A packaged application names its own installation here so file tools and
+        # kernel profiles refuse to read the shipped implementation back out.
+        protectedReadRoots: !!js "process.env.TOMATO_PROTECTED_READ_ROOTS === undefined ? undefined : JSON.parse(process.env.TOMATO_PROTECTED_READ_ROOTS)"
 
     - id: bash-sandbox
       name: '@tomato/bash-sandbox'
@@ -448,29 +451,37 @@
 
     # The shared base enables the stable model-facing web_search and web_fetch
     # tools. The Web app disables this host row and composes both tools per agent
-    # preset; products with a stricter network policy override tool-web. DeepSeek
-    # search resolves the same DEEPSEEK_API_KEY
-    # credential the Models page manages for chat, at each search; its Messages
-    # endpoint is configured independently from the model route, so it takes its own
-    # base-URL override. Anonymous fetch accepts only public HTTP(S) destinations,
-    # resolves and validates every destination, and pins every actual connection.
-    # Search is a full auxiliary model request with server-side retrieval, so this
-    # shipped DeepSeek route gets 60s while the provider-neutral tool default
-    # remains 30s. The DeepSeek Search and Fetch APIs register as
-    # deepseek-search-api and deepseek-fetch-api with the same credential; the Web
-    # search settings switch selects both in place of these defaults.
-    # Tomato AI keeps web fetch only: the DeepSeek search backend needs an
-    # official-provider credential this deployment never holds, so both its
-    # search providers stay off and `search()` reports its own unavailable code
-    # when called.
+    # preset; products with a stricter network policy override tool-web.
+    # Search defaults to the company gateway: the shipped chat route is a
+    # third-party API that cannot carry a provider-side search tool, so this tool
+    # is the only search path and its backend lives behind the BFF. The gateway
+    # owns the vendor and its credential; this deployment supplies only its
+    # origin. DeepSeek's own search backends need an official credential this
+    # deployment never holds, so they stay off. A search is one gateway request
+    # with a 40s upstream budget, so this route gets 60s while the
+    # provider-neutral tool default remains 30s. Anonymous fetch accepts only
+    # public HTTP(S) destinations, resolves and validates every destination, and
+    # pins every actual connection.
     - id: web
       name: '@tomato/web'
       config:
+        searchProvider: company
         fetchProvider: http
 
     - id: web-search-deepseek
       name: '@tomato/web-search-deepseek'
       disabled: true
+
+    # The company gateway owns the search vendor and its credential; this
+    # deployment supplies only the gateway origin. The provider reads an
+    # unconfigured origin from the launch environment and stays unavailable
+    # without one; a signed-out Desktop session reports not ready, so a step
+    # neither declares nor dispatches web_search.
+    - id: web-search-company
+      name: '@tomato/web-search-company'
+      config:
+        maxCharsPerResult: 500
+        maxChars: 3000
 
     - id: web-deepseek-api
       name: '@tomato/web-deepseek-api'
@@ -484,6 +495,8 @@
       config:
         fetch: true
         searchTimeoutMs: 60000
+        searchMaxResults: 5
+        searchSummaryMaxChars: 500
 
     - id: mcp-resources
       name: '@tomato/mcp-resources'

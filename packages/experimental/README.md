@@ -47,8 +47,10 @@ Promotion requires a named product role, documented public behavior and limitati
 | [`session-search`](session-search/README.md) | Optional experimental global session search tools | — |
 | [`memory`](memory/README.md) | Account-scoped profile and workspace memory records stored outside Session logs | `ctx.memory` |
 | [`tool-memory`](tool-memory/README.md) | Memory model tools with query expansion, `/memory`, and profile and pinned-memory injection | — |
+| [`tool-robot`](tool-robot/README.md) | Model-facing `robot_create` tool that publishes and instantiates a robot from the four basic fields | — |
 | [`focus`](focus/README.md) | Goal-round failure ledger, repeated-failure reminders, and per-tool approval | — |
-| [`muse-bundle`](muse-bundle/README.md) | Default-disabled bundle of profile and workspace memory and goal focus | — |
+| [`muse-insights`](muse-insights/README.md) | Daily work recaps and proactive unfinished-task analysis across Sessions | `ctx.museInsights` |
+| [`muse-bundle`](muse-bundle/README.md) | Default-disabled bundle of profile and workspace memory, goal focus, and daily insights | — |
 | [`ralph-bundle`](ralph-bundle/README.md) | Optional repeated delegation with an isolated workflow engine | — |
 | [`terminal-bundle`](terminal-bundle/README.md) | Optional global persistent terminal tools | — |
 | [`badge-skill-bundle`](badge-skill-bundle/README.md) | Optional powered-by-tomato badge skill | — |
@@ -87,13 +89,17 @@ Promotion requires a named product role, documented public behavior and limitati
 | [`computer-use-cua-driver-mcp`](computer-use-cua-driver-mcp/README.md) | Use an installed Cua Driver through MCP | `ctx.computerUse` |
 | [`computer-use-cua-driver-native`](computer-use-cua-driver-native/README.md) | Embed the Cua Driver native npm runtime | `ctx.computerUse` |
 | [`browser-use-playwright-mcp`](browser-use-playwright-mcp/README.md) | Playwright browser tools over MCP | `ctx.browserUse` |
-| [`browser-use-playwright-bundle`](browser-use-playwright-bundle/README.md) | On-demand Playwright browser composition for the Plugins page | — |
+| [`browser-use-playwright-bundle`](browser-use-playwright-bundle/README.md) | Playwright browser composition shipped on by default for Web and Desktop | — |
 | [`browser-use-chrome-devtools-mcp`](browser-use-chrome-devtools-mcp/README.md) | Chrome DevTools inspection and browser control over MCP | `ctx.browserUse` |
 | [`browser-use-stagehand-native`](browser-use-stagehand-native/README.md) | Stagehand browser operations with explicitly configured native models | `ctx.browserUse` |
 | [`browser-use-runtime`](browser-use-runtime/README.md) | Session-owned browser resources shared by experimental providers | — |
 | [`inspector`](inspector/README.md) | Cross-realm CDP hub for Host debugging, Client Runtime inspection, network capture, and Cordis trees | `ctx.inspector` |
 | [`session-inspector`](session-inspector/README.md) | Sidebar tables for raw Session logs and Chat nodes | — |
 | [`inspector-profile`](inspector-profile/README.md) | Optional Web bundle for Session log and Chat node inspection | — |
+| [`robot`](robot/README.md) | Service definition for versioned robots, runs, and agent-to-agent contracts | `ctx.robots` |
+| [`robot-local`](robot-local/README.md) | Storage-backed robot specification registry, instantiation, and run control | `ctx.robots` |
+| [`robot-runtime`](robot-runtime/README.md) | Executes queued robot runs through a composed Agent and records outcomes | — |
+| [`robot-triggers`](robot-triggers/README.md) | Starts robot runs from cron schedules and robot event topics | — |
 | [`tool-agent-team`](tool-agent-team/README.md) | Nine tools that let the model create, message, and coordinate teammates | registers scoped tools on `ctx.tools` |
 | [`tool-worktree`](tool-worktree/README.md) | Optional bundle and model tool for creating and entering worktrees | `ctx.tools` |
 | [`webworker-packer`](webworker-packer/README.md) | Builds the gzip-compressed VFS image consumed by the browser worker preview | library and CLI — no ctx key |

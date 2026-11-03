@@ -1,0 +1,109 @@
+.page {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+}
+
+.roster {
+  width: 240px;
+  flex: none;
+  overflow: auto;
+  padding: 12px;
+  border-right: 0.5px solid var(--dsw-alias-border-l4);
+}
+
+.detail {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 22px;
+  color: var(--dsw-alias-label-primary);
+}
+
+.headingActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.robotRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--dsw-radius-sm);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .robotRow:hover {
+    background: var(--dsw-alias-interactive-bg-hover);
+  }
+}
+
+.robotRow[data-active='true'] {
+  background: var(--dsw-alias-bg-layer-2);
+}
+
+.robotName {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--dsw-alias-label-primary);
+}
+
+.robotState {
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.error {
+  margin: 0;
+  color: var(--dsw-alias-state-error-primary);
+  font-size: 13px;
+}
+
+.runRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.runInput {
+  flex: 1;
+  min-width: 240px;
+}
+
+.conversation {
+  flex: 1;
+  min-height: 320px;
+  border-top: 0.5px solid var(--dsw-alias-border-l4);
+  padding-top: 12px;
+}

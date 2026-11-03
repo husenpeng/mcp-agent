@@ -1,0 +1,43 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/robot-app/README.md
+/:
+  en: 1032fe8fd1d4c83e
+  zh: dd9ef5f68c63cd21
+/robot-app:
+  en: b6fcebfc6030cc1b
+  zh: 0e0f414295b182f6
+/robot-app/summary:
+  en: 27e10f4179637603
+  zh: 2030bd5356823b89
+/robot-app/table-of-contents:
+  en: 18675861de54d03d
+  zh: d6c46a84569e6df8
+/robot-app/use-this-package:
+  en: db402f3ab7d1194c
+  zh: f0e33e38ea0af1fe
+/robot-app/create-a-robot:
+  en: 45761d1fbe235869
+  zh: 36152b061a1b38e5
+/robot-app/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/robot-app/model-experience/run-mission:
+  en: c5a870bb2fbdc782
+  zh: 27302e3a021b156f
+/robot-app/model-experience/run-mission/what-the-model-sees:
+  en: fbc7f4efcc6faa4e
+  zh: 9a5e2619eccd78d7
+/robot-app/model-experience/run-mission/token-effect:
+  en: f174ab8efb646291
+  zh: 6b171fda86246e23
+/robot-app/model-experience/run-mission/kv-cache-effect:
+  en: 6ca52c13e0a49fdf
+  zh: 89990d3592e627b1
+/robot-app/known-limitations-and-deferred-work:
+  en: 2b0959c170aaa8a1
+  zh: 7fa16d6846d6bbde
+/robot-app/known-limitations-and-deferred-work/dev-note:
+  en: 3c54258dcfd18d44
+  zh: 3327f21629f51196

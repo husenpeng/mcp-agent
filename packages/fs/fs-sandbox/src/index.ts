@@ -3,9 +3,10 @@
  * `@tomato/fs` Service Definition. It extends `LocalFileSystem` so all
  * text-storage mechanics — resolve, stat, read/stream, list, the atomic
  * write and the read-match-write edit critical section — are the local
- * implementation's, verbatim; this package adds only the per-call POLICY fence
- * on the two mutations. Reads pass through untouched: every mode permits
- * reading.
+ * implementation's, verbatim; this package adds the per-call POLICY fence
+ * on the two mutations and the observation fence over the deployment's
+ * protected installation roots. Apart from those roots, reads pass through
+ * untouched: every mode permits reading.
  *
  * The fence is a policy check in TRUSTED code over a MODEL-CONTROLLED path,
  * NOT a kernel boundary — the operations are the seam's own (open, rename),
@@ -21,7 +22,9 @@
  * a mutation only when the target canonicalizes under the policy's workspace
  * root, an explicit additional writable root, or a platform temp area from the
  * shared `writableRoots` policy; `danger-full-access` delegates unfenced. A
- * denial throws the structured `FS_SANDBOX_DENIED`.
+ * denial throws the structured `FS_SANDBOX_DENIED`. Observation under a
+ * protected root throws `FS_PROTECTED_PATH` in every mode, including
+ * `danger-full-access`, because the root names the installation itself.
  *
  * @module @tomato/fs-sandbox
  */
@@ -30,7 +33,9 @@ import { Context } from '@tomato/cordis'
 import { LocalFileSystem } from '@tomato/fs-local'
 import type { Config as LocalConfig } from '@tomato/fs-local'
 import { FsError } from '@tomato/fs'
-import type { FsEditOutcome, FsEditRequest, FsTarget, FsVersion, FsWriteIntent, FsWriteOutcome } from '@tomato/fs'
+import type {
+  FsDirEntry, FsEditOutcome, FsEditRequest, FsInfo, FsPathInfo, FsTarget, FsVersion, FsWriteIntent, FsWriteOutcome,
+} from '@tomato/fs'
 import { writableRoots } from '@tomato/sandbox'
 import type { SandboxExecutionPolicy, SandboxMode } from '@tomato/sandbox'
 import type {} from '@tomato/sandbox-policy'
@@ -56,14 +61,128 @@ export class SandboxedFileSystem extends LocalFileSystem {
   static inject = ['sandboxPolicy']
 
   private readonly defaultMode: SandboxMode
+  /** The deployment's protected installation roots, which no observation may cross. */
+  private readonly protectedReadRoots: readonly string[]
   constructor(ctx: Context, config: Config) {
     super(ctx, config)
     this.defaultMode = ctx.sandboxPolicy.defaultMode
+    this.protectedReadRoots = ctx.sandboxPolicy.protectedReadRoots ?? []
   }
 
   /** The deployment default mode — the capability fact the tool layer reads to advertise escalation. */
   override get sandboxMode(): SandboxMode {
     return this.defaultMode
+  }
+
+  /**
+   * Refuse metadata observation under a protected installation root, then delegate.
+   * @param target - the resolved target to inspect.
+   * @param signal - aborts the underlying stat.
+   * @returns the inherited target metadata, or `undefined` when absent.
+   */
+  override async stat(target: FsTarget, signal?: AbortSignal): Promise<FsInfo | undefined> {
+    await this.assertReadable(target)
+    return super.stat(target, signal)
+  }
+
+  /**
+   * Refuse path observation under a protected installation root, then delegate.
+   * @param path - the path to inspect.
+   * @param opts - optional resolution base.
+   * @param signal - aborts the underlying stat.
+   * @returns the inherited path metadata, or `undefined` when absent.
+   */
+  override async lstat(path: string, opts?: { cwd?: string }, signal?: AbortSignal): Promise<FsPathInfo | undefined> {
+    await this.assertReadable(await this.resolve(path, opts))
+    return super.lstat(path, opts, signal)
+  }
+
+  /**
+   * Refuse a text read under a protected installation root, then delegate.
+   * @param target - the resolved target to read.
+   * @param signal - aborts the read.
+   * @returns the inherited file text.
+   */
+  override async readText(target: FsTarget, signal?: AbortSignal): Promise<string> {
+    await this.assertReadable(target)
+    return super.readText(target, signal)
+  }
+
+  /**
+   * Refuse a streaming read under a protected installation root, then delegate.
+   * @param target - the resolved target to stream.
+   * @param signal - aborts the stream.
+   * @returns the inherited text stream.
+   */
+  override async streamText(target: FsTarget, signal?: AbortSignal): Promise<AsyncIterable<string>> {
+    await this.assertReadable(target)
+    return super.streamText(target, signal)
+  }
+
+  /**
+   * Refuse a byte read under a protected installation root, then delegate.
+   * @param target - the resolved target to read.
+   * @param signal - aborts the read.
+   * @param maxBytes - largest accepted byte count.
+   * @returns the inherited bytes.
+   */
+  override async readBytes(target: FsTarget, signal: AbortSignal | undefined, maxBytes: number): Promise<Uint8Array> {
+    await this.assertReadable(target)
+    return super.readBytes(target, signal, maxBytes)
+  }
+
+  /**
+   * Refuse a ranged byte read under a protected installation root, then delegate.
+   * @param target - the resolved target to read.
+   * @param range - byte offset and length.
+   * @param signal - aborts the read.
+   * @returns the inherited bytes.
+   */
+  override async readByteRange(target: FsTarget, range: { offset: number; length: number }, signal?: AbortSignal): Promise<Uint8Array> {
+    await this.assertReadable(target)
+    return super.readByteRange(target, range, signal)
+  }
+
+  /**
+   * Refuse a directory listing under a protected installation root, then delegate.
+   * @param target - the resolved directory to list.
+   * @param signal - aborts the listing.
+   * @returns the inherited directory entries.
+   */
+  override async listDir(target: FsTarget, signal?: AbortSignal): Promise<FsDirEntry[]> {
+    await this.assertReadable(target)
+    return super.listDir(target, signal)
+  }
+
+  /**
+   * Refuse observation of a protected installation path, then delegate.
+   * @param target - the resolved target to watch.
+   * @param changed - receives change notifications.
+   * @param signal - aborts the watch.
+   * @returns the inherited disposer.
+   */
+  override async watch(target: FsTarget, changed: (error?: Error) => void, signal: AbortSignal): Promise<() => Promise<void>> {
+    await this.assertReadable(target)
+    return super.watch(target, changed, signal)
+  }
+
+  /**
+   * Refuse observation of a protected installation path. The root list is a deployment fact, so the check
+   * runs under every session mode: `danger-full-access` lifts write confinement, not access to the harness's
+   * own shipped implementation. The denial carries `FS_PROTECTED_PATH`, for which the tool layer offers no
+   * escalation hint because no wider mode opens the path.
+   * @param target - the resolved target being observed.
+   * @throws {FsError} with `FS_PROTECTED_PATH` when the target lies under a protected root.
+   */
+  private async assertReadable(target: FsTarget): Promise<void> {
+    for (const root of this.protectedReadRoots) {
+      if (await isPathUnder(target.targetKey, root)) {
+        throw new FsError(
+          `cannot read "${target.displayPath}": path belongs to the TOMATO installation and is not readable by file operations`,
+          'FS_PROTECTED_PATH',
+        )
+      }
+    }
   }
 
   /**

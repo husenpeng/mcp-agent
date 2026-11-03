@@ -180,6 +180,8 @@ flowchart LR
   cfg --> plugin_tomato_base_web
   plugin_tomato_base_web_search_deepseek["web-search-deepseek<br/>@tomato/web-search-deepseek"]
   cfg --> plugin_tomato_base_web_search_deepseek
+  plugin_tomato_base_web_search_company["web-search-company<br/>@tomato/web-search-company"]
+  cfg --> plugin_tomato_base_web_search_company
   plugin_tomato_base_web_deepseek_api["web-deepseek-api<br/>@tomato/web-deepseek-api"]
   cfg --> plugin_tomato_base_web_deepseek_api
   plugin_tomato_base_web_fetch_http["web-fetch-http<br/>@tomato/web-fetch-http"]
@@ -294,6 +296,7 @@ flowchart LR
 | `repeat-tool-reminder` | `@tomato/repeat-tool-reminder` |
 | `web` | `@tomato/web` |
 | `web-search-deepseek` | `@tomato/web-search-deepseek` |
+| `web-search-company` | `@tomato/web-search-company` |
 | `web-deepseek-api` | `@tomato/web-deepseek-api` |
 | `web-fetch-http` | `@tomato/web-fetch-http` |
 | `tool-web` | `@tomato/tool-web` |

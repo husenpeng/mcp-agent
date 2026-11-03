@@ -14,6 +14,8 @@ flowchart LR
   pkg_experimental_memory["experimental-memory"]
   svc_memory["ctx.memory<br/>Profile and workspace memory records"]
   pkg_experimental_tool_memory["experimental-tool-memory"]
+  pkg_experimental_muse_insights["experimental-muse-insights"]
+  svc_museInsights["ctx.museInsights<br/>Daily recap and unfinished-task Remote"]
   pkg_gateway["gateway"]
   svc_tomatoAccount["ctx.tomatoAccount<br/>Host signed-in account"]
   pkg_plugin_recommendations["plugin-recommendations"]
@@ -104,6 +106,8 @@ flowchart LR
   svc_sessionSkillCatalog["ctx.sessionSkillCatalog<br/>Session-addressed skill Remote adapter"]
   pkg_api_job_controller["api-job-controller"]
   svc_jobController["ctx.jobController<br/>Host job Remote controller"]
+  pkg_api_robot_controller["api-robot-controller"]
+  svc_robotController["ctx.robotController<br/>Host robot Remote controller"]
   pkg_api_settings_controller["api-settings-controller"]
   svc_credentialsController["ctx.credentialsController<br/>Host credential-surface Remote controller"]
   svc_settingsController["ctx.settingsController<br/>Host settings-surface Remote controller"]
@@ -267,6 +271,11 @@ flowchart LR
   pkg_experimental_agent_team["experimental-agent-team"]
   svc_agentTeams["ctx.agentTeams<br/>Agent Teams coordination domain"]
   pkg_experimental_tool_agent_team["experimental-tool-agent-team"]
+  pkg_experimental_robot["experimental-robot"]
+  svc_robots["ctx.robots<br/>Robot domain service"]
+  pkg_experimental_robot_local["experimental-robot-local"]
+  pkg_experimental_robot_runtime["experimental-robot-runtime"]
+  pkg_experimental_robot_triggers["experimental-robot-triggers"]
   pkg_experimental_claude_code_mods["experimental-claude-code-mods"]
   svc_claudeCodeMods["ctx.claudeCodeMods<br/>Claude Code mods bridge"]
   pkg_inspector["inspector"]
@@ -318,6 +327,7 @@ flowchart LR
   pkg_api_gateway --> svc_typertGateway
   pkg_api_job_controller --> svc_jobController
   pkg_api_remote_access --> svc_remoteAccess
+  pkg_api_robot_controller --> svc_robotController
   pkg_api_session_controller --> svc_sessionController
   pkg_api_session_controller --> svc_sessionFileReferences
   pkg_api_session_controller --> svc_sessionSkillCatalog
@@ -364,7 +374,10 @@ flowchart LR
   pkg_experimental_computer_use_cua_driver_mcp --> svc_computerUse
   pkg_experimental_computer_use_cua_driver_native --> svc_computerUse
   pkg_experimental_memory --> svc_memory
+  pkg_experimental_muse_insights --> svc_museInsights
   pkg_experimental_ptc_runtime_python --> svc_ptcRuntime
+  pkg_experimental_robot --> svc_robots
+  pkg_experimental_robot_local --> svc_robots
   pkg_experimental_speech_to_text --> svc_speechToText
   pkg_experimental_speech_to_text_sensevoice --> svc_speechToText
   pkg_experimental_translator --> svc_translator
@@ -542,6 +555,8 @@ flowchart LR
   svc_remoteAccess --> pkg_api_gateway
   svc_remoteAccess --> pkg_api_session_controller
   svc_remoteAccess --> pkg_api_workspace_controller
+  svc_robots --> pkg_experimental_robot_runtime
+  svc_robots --> pkg_experimental_robot_triggers
   svc_sandbox --> pkg_bash_sandbox
   svc_sandbox --> pkg_terminal_bash
   svc_sandboxPolicy --> pkg_bash_sandbox
@@ -642,6 +657,7 @@ flowchart LR
 | --- | --- | --- | --- | --- | --- | --- |
 | `ctx.actionCards` | `service` | [`action-cards`](../packages/experimental/action-cards) | - | [`creation-recommendations`](../packages/experimental/creation-recommendations), [`client-ui-action-cards`](../packages/experimental/client-ui-action-cards) | - | Owns the card tool, card state, user actions and status notices; card kinds register their actions and handlers. |
 | `ctx.memory` | `service` | [`experimental-memory`](../packages/experimental/memory) | - | [`experimental-tool-memory`](../packages/experimental/tool-memory) | - | Stores records in the tomato_memory storage domain scoped by owner, then by profile or canonical project directory; the memory tools own every model-facing tool, command, and snapshot. |
+| `ctx.museInsights` | `service` | [`experimental-muse-insights`](../packages/experimental/muse-insights) | - | - | - | Reads the day’s Session text and the todos projection, retains one recap per owner and local day plus the owner’s latest analysis, and serves both to its browser notice and right-Sidebar page. |
 | `ctx.tomatoAccount` | `service` | [`gateway`](../packages/tomato/gateway) | - | [`experimental-memory`](../packages/experimental/memory) | - | The gateway publishes the account its latest auth_service verification names, only when auth_service is configured; consumers read it with ctx.get and treat absence as a Host without accounts. |
 | `ctx.pluginRecommendations` | `service` | [`plugin-recommendations`](../packages/experimental/plugin-recommendations) | - | [`client-ui-plugin-recommendations`](../packages/experimental/client-ui-plugin-recommendations) | - | Reads the current catalog text of an official plugin card and enables the plugin through the profile plugin manager after a click. |
 | `ctx.headlessStartup` | `core` | [`headless`](../packages/bundle/headless) | - | [`headless`](../packages/bundle/headless) | - | Supplies parsed task and run options to the headless runner and its sandbox-policy configuration. |
@@ -672,6 +688,7 @@ flowchart LR
 | `ctx.sessionFileReferences` | `core` | [`api-session-controller`](../packages/api/session-controller) | - | - | - | Delegates file-reference discovery through the Session Controller's established Agent lookup policy. |
 | `ctx.sessionSkillCatalog` | `core` | [`api-session-controller`](../packages/api/session-controller) | - | - | - | Lists the Session composition's user-invocable skills without activating a cold Agent. |
 | `ctx.jobController` | `core` | [`api-job-controller`](../packages/api/job-controller) | - | - | - | Streams one background job's observation record over the generated Remote namespace; the roster stays on the session control stream. |
+| `ctx.robotController` | `core` | [`api-robot-controller`](../packages/api/robot-controller) | - | - | - | Projects the robot registry onto the generated Remote namespace and streams whole registry frames; specification storage and validation stay on the seam provider. |
 | `ctx.credentialsController` | `core` | [`api-settings-controller`](../packages/api/settings-controller) | - | - | - | Projects the credential-reference seam onto the generated Remote namespace: batch fan-out, view projection, and refusal mapping live here, not on the seam Definition. |
 | `ctx.settingsController` | `core` | [`api-settings-controller`](../packages/api/settings-controller) | - | - | - | Projects the user-settings seam onto the generated Remote namespace: the read is always redacted and every refusal is classified here, not on the seam Definition. |
 | `ctx.workspaceFiles` | `core` | [`api-workspace-files`](../packages/api/workspace-files) | - | - | - | Serves stat, paged text, byte windows, directory listings, and the change feed for files inside a Session's workspace root, confined by lstat, containment, and a stat re-check. |
@@ -731,6 +748,7 @@ flowchart LR
 | `ctx.subagents` | `seam` | [`subagent`](../packages/subagent/subagent) | [`subagent-spawn-in-process`](../packages/subagent/subagent-spawn-in-process), [`subagent-fork-in-process`](../packages/subagent/subagent-fork-in-process), [`subagent-acp`](../packages/subagent/subagent-acp), [`subagent-codex`](../packages/subagent/subagent-codex), [`subagent-claude-code`](../packages/subagent/subagent-claude-code), [`subagent-sdk`](../packages/subagent/subagent-sdk) | [`tool-subagent`](../packages/subagent/tool-subagent), [`tool-subagent-control`](../packages/subagent/tool-subagent-control), [`tool-ralph`](../packages/experimental/tool-ralph) | - | Providers prepare local children or execute external tasks; one activation manager owns both lifecycles. The delegation tool selects a backend, control tools deliver local follow-ups, and workflows await activation results. |
 | `ctx.speechToText` | `seam` | [`experimental-speech-to-text`](../packages/experimental/speech-to-text) | [`experimental-speech-to-text-sensevoice`](../packages/experimental/speech-to-text-sensevoice) | [`experimental-api-speech-to-text`](../packages/experimental/api-speech-to-text) | - | Routes explicit recognizers; the browser uses the authenticated Remote and keeps transcripts in the draft until submission. |
 | `ctx.agentTeams` | `core` | [`experimental-agent-team`](../packages/experimental/agent-team) | - | [`experimental-tool-agent-team`](../packages/experimental/tool-agent-team) | - | Owns the implicit-root roster, direct peer inbox delivery, shared task DAG, and continuable-child lifecycle; tool-agent-team contributes model controls. |
+| `ctx.robots` | `core` | [`experimental-robot`](../packages/experimental/robot) | [`experimental-robot-local`](../packages/experimental/robot-local) | [`experimental-robot-runtime`](../packages/experimental/robot-runtime), [`experimental-robot-triggers`](../packages/experimental/robot-triggers) | - | Owns versioned robot specifications, instantiation, and run control; the service definition declares the contract and an installed provider owns execution, persistence, and A2A transport. |
 | `ctx.claudeCodeMods` | `core` | [`experimental-claude-code-mods`](../packages/experimental/claude-code-mods) | - | - | - | Loads mods that defineMod plugins add, raises their hook chains from harness extension points, and draws the band above the prompt over its Remote. |
 | `ctx.inspector` | `core` | `inspector` | - | - | - | Owns the Worker-hosted CDP target and the transport-independent Host and Client observation and Cordis-tree query API. |
 | `ctx.jobs` | `seam` | [`jobs`](../packages/jobs/jobs) | [`jobs-local`](../packages/jobs/jobs-local) | [`tool-bash`](../packages/shell/tool-bash), [`tool-pwsh`](../packages/shell/tool-pwsh), [`tool-terminal`](../packages/experimental/tool-terminal), [`tool-jobs`](../packages/jobs/tool-jobs), [`api-job-controller`](../packages/api/job-controller) | - | Producers (background bash/pwsh and PTY sends) register running work; record-declaring jobs additionally stream raw output for non-consuming observers; tool-jobs is the model-facing controller that reads, lists, and kills it; jobs-local is the process-local registry. |

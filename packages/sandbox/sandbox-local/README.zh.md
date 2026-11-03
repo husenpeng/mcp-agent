@@ -58,6 +58,8 @@ kind: "package-reference"
 
 Seatbelt、bwrap 和 Landlock 在 `workspace-write` 下包含策略显式指定的 `additionalWritableRoots`。只读模式忽略这些授权。无效的额外目录会在命令启动前触发 `SANDBOX_INVALID_ROOT`。
 
+`protectedReadRoots` 在配置语言能够表达时拒绝读取：Seatbelt 在其 allow-default 之后追加 `(deny file-read* (subpath …))`，bwrap 用空 tmpfs（目录）或 null 设备（归档文件）遮蔽已存在的根。Landlock 只有允许列表，Windows ACL runner 只约束写入，两者都无法拒绝读取；这些主机上的消费方依赖文件系统围栏，不得把 shell 当作读取边界。
+
 -----
 
 <a id="understand-the-implementation"></a>

@@ -6,6 +6,8 @@
 import {
   type SessionListState, type SessionSearchResultItem, type SessionSummary,
 } from '@tomato/api-session-controller/client'
+// Type-only: the `robotRun` summary projection a robot-run Session carries.
+import type {} from '@tomato/api-robot-controller/client'
 import type { WorkspaceId, WorkspaceView } from '@tomato/api-workspace-controller/client'
 import type {
   SessionStatusSnapshot,
@@ -233,6 +235,10 @@ function sessionVisible(
   archivedFilter: ArchivedFilter,
 ): boolean {
   if (session.origin === 'subagent') return false
+  // Robot-run Sessions belong to the robot page's own conversation surface.
+  // Ordinary Sessions still carry the summary projection as null.
+  const robotRun = session.projectionValues?.robotRun
+  if (robotRun !== undefined && robotRun !== null) return false
   if (session.blank && session.id !== current) return false
   switch (archivedFilter) {
     case 'default':

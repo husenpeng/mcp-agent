@@ -81,11 +81,13 @@ export function verifyDefaultProductIsolation(root: string): ProductIsolationRes
   if (cli?.manifest.name !== '@tomato/cli') {
     failures.push('apps/cli/package.json must identify @tomato/cli')
   }
-  // The bundles the launcher ships switched off: each a runtime dependency of the installation that is a bundle
-  // with an icon and locale display metadata for the plugin manager's Official group, none a default.
+  // The bundles the launcher ships: each a runtime dependency of the installation that is a bundle with an icon
+  // and locale display metadata for the plugin manager's Official group. Only DEFAULT_ENABLED_OPTIONAL_BUNDLES may
+  // also be a shipped template layer, and only that bundle's workspace closure is exempt from the experimental rule.
   const profilePath = resolve(root, PROFILE_SOURCE)
   const selection = existsSync(profilePath) ? profilePackages(readFileSync(profilePath, 'utf8')) : undefined
   const optionalBundles = new Set(selection?.optionalBundles ?? [])
+  const defaultEnabledBundles = new Set(selection?.defaultEnabledBundles ?? [])
   for (const name of optionalBundles) {
     if (cli?.manifest.dependencies?.[name] === undefined) {
       failures.push(`${PROFILE_SOURCE}: optional bundle ${name} must be a runtime dependency of apps/cli`)
@@ -102,6 +104,33 @@ export function verifyDefaultProductIsolation(root: string): ProductIsolationRes
     }
   }
 
+  for (const name of defaultEnabledBundles) {
+    if (!optionalBundles.has(name)) {
+      failures.push(`${PROFILE_SOURCE}: default-enabled bundle ${name} must be an optional bundle`)
+    }
+    if (selection?.packages.includes(name) !== true) {
+      failures.push(`${PROFILE_SOURCE}: default-enabled bundle ${name} must be a shipped template layer`)
+    }
+  }
+
+  // The declared default-on experimental capability: every workspace package the bundle declares as a runtime
+  // dependency, transitively. Only these names escape the experimental rule; a row the bundle mounts without declaring
+  // that dependency stays subject to it.
+  const defaultEnabledClosure = new Set<string>()
+  const pending = [...defaultEnabledBundles]
+  while (pending.length > 0) {
+    const name = pending.pop() as string
+    if (defaultEnabledClosure.has(name)) continue
+    defaultEnabledClosure.add(name)
+    const pkg = packages.get(name)
+    if (pkg === undefined) continue
+    for (const section of RUNTIME_SECTIONS) {
+      for (const dependencyName of Object.keys(pkg.manifest[section] ?? {})) {
+        if (packages.has(dependencyName)) pending.push(dependencyName)
+      }
+    }
+  }
+
   const queue: Package[] = []
   const visited = new Set<string>()
   const sources = new Set<string>()
@@ -110,7 +139,7 @@ export function verifyDefaultProductIsolation(root: string): ProductIsolationRes
   const isExperimental = (pkg: Package): boolean => isExperimentalPackageName(pkg.manifest.name)
     || display(pkg.directory).startsWith('packages/experimental/')
   const add = (pkg: Package, origin: string): void => {
-    if (isExperimental(pkg)) {
+    if (isExperimental(pkg) && !defaultEnabledClosure.has(pkg.manifest.name)) {
       failures.push(`${origin} -> ${pkg.manifest.name}: default product must not include experimental packages`)
     } else if (!visited.has(pkg.directory)) {
       visited.add(pkg.directory)
@@ -136,7 +165,7 @@ export function verifyDefaultProductIsolation(root: string): ProductIsolationRes
       return
     }
     const packageName = barePackageName(name)
-    if (isExperimentalPackageName(packageName)) {
+    if (isExperimentalPackageName(packageName) && !defaultEnabledClosure.has(packageName)) {
       failures.push(`${origin} -> ${name}: default product must not include experimental packages`)
       return
     }
@@ -242,11 +271,16 @@ export function verifyDefaultProductIsolation(root: string): ProductIsolationRes
   }
   if (selection !== undefined) {
     for (const name of selection.packages) {
-      reference(name, PROFILE_SOURCE)
       if (packages.get(name)?.manifest.tomato?.bundle?.patch === undefined) {
         failures.push(`${PROFILE_SOURCE}: default bundle ${name} must declare tomato.bundle.patch`)
       }
-      if (optionalBundles.has(name)) failures.push(`${PROFILE_SOURCE}: optional bundle ${name} must not be a default bundle`)
+      if (optionalBundles.has(name)) {
+        if (!defaultEnabledBundles.has(name)) {
+          failures.push(`${PROFILE_SOURCE}: optional bundle ${name} must not be a default bundle unless DEFAULT_ENABLED_OPTIONAL_BUNDLES names it`)
+        }
+        continue
+      }
+      reference(name, PROFILE_SOURCE)
     }
     const webLayers = selection.webBundles.flatMap((name) => {
       const pkg = packages.get(name)
@@ -357,17 +391,24 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-/** Read the literal package lists that define installation-owned profile defaults and the optional bundles it ships. */
-function profilePackages(source: string): { packages: string[]; webBundles: string[]; optionalBundles: string[] } {
+/** Read the literal package lists that define installation-owned profile defaults, the optional bundles, and their default-on layers. */
+function profilePackages(source: string): {
+  packages: string[]
+  webBundles: string[]
+  optionalBundles: string[]
+  defaultEnabledBundles: string[]
+} {
   const file = ts.createSourceFile(PROFILE_SOURCE, source, ts.ScriptTarget.Latest, true)
   const required = new Set(['PROFILE_TEMPLATES', 'DEFAULT_PROFILE_BUNDLES'])
   const found = new Set<string>()
   const packages: string[] = []
   const webBundles: string[] = []
   const optionalBundles: string[] = []
+  const defaultEnabledBundles: string[] = []
   const literals = (node: ts.Node, path: string[]): void => {
     if (ts.isStringLiteralLike(node)) {
       if (path[0] === 'OPTIONAL_BUNDLES') optionalBundles.push(node.text)
+      else if (path[0] === 'DEFAULT_ENABLED_OPTIONAL_BUNDLES') defaultEnabledBundles.push(node.text)
       else if (node.text.startsWith('@')) packages.push(node.text)
       if (path.join('.') === 'PROFILE_TEMPLATES.web.bundles') webBundles.push(node.text)
     } else if (ts.isArrayLiteralExpression(node)) node.elements.forEach((child) => { literals(child, path) })
@@ -382,25 +423,26 @@ function profilePackages(source: string): { packages: string[]; webBundles: stri
       literals(node.expression, path)
     } else throw new Error(`${PROFILE_SOURCE}: default profile packages must use static literal lists`)
   }
+  const shippedLists = new Set(['INSTALLATION_OWNED_PROFILE_TUPLES', 'OPTIONAL_BUNDLES', 'DEFAULT_ENABLED_OPTIONAL_BUNDLES'])
   for (const statement of file.statements) {
     if (!ts.isVariableStatement(statement)) continue
     for (const declaration of statement.declarationList.declarations) {
       if (!ts.isIdentifier(declaration.name)
-        || !required.has(declaration.name.text) && declaration.name.text !== 'INSTALLATION_OWNED_PROFILE_TUPLES'
-        && declaration.name.text !== 'OPTIONAL_BUNDLES') continue
+        || !required.has(declaration.name.text) && !shippedLists.has(declaration.name.text)) continue
       if (declaration.initializer === undefined) continue
       if (required.has(declaration.name.text)) found.add(declaration.name.text)
       const before = packages.length
       literals(declaration.initializer, [declaration.name.text])
-      if (declaration.name.text !== 'OPTIONAL_BUNDLES' && packages.length === before) {
+      if (!shippedLists.has(declaration.name.text) && packages.length === before) {
         throw new Error(`${PROFILE_SOURCE}: ${declaration.name.text} has no default bundles`)
       }
     }
   }
   if (found.size !== required.size) throw new Error(`${PROFILE_SOURCE}: missing default profile declarations`)
   if (webBundles.length === 0) throw new Error(`${PROFILE_SOURCE}: missing default Web bundle list`)
-  return { packages, webBundles, optionalBundles }
+  return { packages, webBundles, optionalBundles, defaultEnabledBundles }
 }
+
 
 if (import.meta.main) {
   const result = verifyDefaultProductIsolation(resolve(import.meta.dirname, '..'))

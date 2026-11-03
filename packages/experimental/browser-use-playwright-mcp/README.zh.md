@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-通过 Playwright MCP 的上游工具检查网页并操作 Chromium。提供方在 Session 创建或恢复完成前初始化其 MCP 连接，并跨轮次保留连接。可以启动独立浏览器，也可以让一个 Session 接入已有浏览器，使用其现有标签页和登录状态。本包以实验状态发布，仅在显式挂载后启用。
+通过 Playwright MCP 的上游工具检查网页并操作 Chromium。提供方在 Session 创建或恢复完成前初始化其 MCP 连接，并跨轮次保留连接。可以启动独立浏览器，也可以让一个 Session 接入已有浏览器，使用其现有标签页和登录状态。本包以实验状态发布，在 profile 挂载后启用：[浏览器组合包](../browser-use-playwright-bundle/README.zh.md)为新建 Web 与桌面 profile 挂载它，部署也可以在自己的组合里挂载。
 
 ## 目录
 
@@ -25,7 +25,7 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用此包
 
-在创建或恢复 Session 前，将以下条目挂载到已提供 Agent、工具、系统提示词和工作目录服务的 profile 组合中。加载或重新加载此提供方不会接管已经活动的 Session。浏览器安装遵循上游运行时；使用 `executablePath` 选择已有 Chromium 安装。
+在创建或恢复 Session 前，将以下条目挂载到已提供 Agent、工具、系统提示词和工作目录服务的 profile 组合中。加载或重新加载此提供方不会接管已经活动的 Session。桌面安装包把 Playwright headless shell 放在 `runtime/playwright-browsers` 并设置 `PLAYWRIGHT_BROWSERS_PATH`；其他部署遵循上游运行时的浏览器安装，使用 `executablePath` 选择已有 Chromium 安装。
 
 ```yaml
 - name: '@tomato/browser-use'

@@ -123,5 +123,10 @@ describe('installer preparation preserves application dependencies', () => {
     }, 'darwin', 'arm64')
     const packaged = new Set(config.files.filter((entry): entry is string => typeof entry === 'string'))
     for (const name of referenced) expect(packaged.has(`lib/${name}`)).toBe(true)
+    // The splash document loads its scene bundle and completion bridge directly; the preload scan above
+    // only finds preload names, so the splash entries need their own assertion.
+    expect(packaged.has('lib/splash/**/*')).toBe(true)
+    // Ignored worktrees under renderer/ would otherwise ship a whole checkout inside the application.
+    expect(packaged.has('!renderer/.claude/**')).toBe(true)
   })
 })

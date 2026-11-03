@@ -47,8 +47,11 @@ kind: "package-reference"
 | `mode` | `read-only` | 会话起始的部署默认模式，加载时验证 |
 | `workspaceRoot` | `process.cwd()` | 无 agent 调用或没有 cwd 的会话所用的绝对回退根目录；相对值在加载时拒绝。普通 agent 调用使用会话的不可变 cwd |
 | `additionalWritableRoots` | `[]` | 在 `workspace-write` 下额外允许写入的显式物理绝对目录；其他受限模式不授予这些目录的写权限 |
+| `protectedReadRoots` | `[]` | 受限操作一律不观察的物理绝对目录或归档文件，在所有模式下生效（包括 `danger-full-access`） |
 
 对于关联的 Git worktree，调用方可通过 `additionalWritableRoots` 授予共享 Git 目录的写权限。调用方必须显式选择该目录；策略不会读取 Git 文件或授权父检出目录。这些授权是组合中所有会话共享的部署配置，而非保存的 Session 权限。授权整个 Git 目录也允许修改钩子和配置，后续主机 Git 调用可能在沙箱之外执行它们；仅对可信任务使用此授权。使用物理绝对目录路径。执行限制的主机拒绝不存在的路径、文件和符号链接根目录，包括两次调用之间被替换为符号链接的目录。远端授权在远端主机上验证。
+
+用 `protectedReadRoots` 命名发行版自身运行所在的安装目录。文件系统后端对其中任何读取、列举、元数据观察与监视都以 `FS_PROTECTED_PATH` 拒绝；shell 后端在其内核配置语言能够表达读取拒绝时遮蔽这些根目录。Landlock 与 Windows ACL runner 只约束写入，因此在那些主机上 shell 仍可能读到归档字节。与写入授权不同，保护不随会话模式变化，也不存在能打开它的升级路径：该根目录指明 harness 自己发行的实现，是产品边界而非任务权限。
 
 生成的[配置目录](../../../docs/config-catalog.zh.md#tomatosandbox-policy)是每个受支持字段及其 JSDoc 的穷尽式真源。
 
@@ -137,9 +140,15 @@ Current TOMATO file policy: workspace-write. Any available operation enforced by
 Current TOMATO file policy: danger-full-access. The TOMATO file sandbox does not restrict file modifications by available operations.
 ```
 
+##### 受保护的安装根
+
+```markdown
+Current TOMATO file policy: workspace-write. Any available operation enforced by the TOMATO file sandbox may modify files under the session workspace: "<workspace root>". Some platform temporary areas may also be writable. The harness installation is not readable by confined operations: ["<installation root>"].
+```
+
 #### Token 影响
 
-首次请求和有效策略每次变化时增加一条简洁的持久上下文消息；未变化的请求不增加内容。`workspace-write` 携带已记录的会话工作区路径以及显式指定的额外目录；平台特定的临时路径会以摘要表述，不会加入依赖主机的字节。
+首次请求和有效策略每次变化时增加一条简洁的持久上下文消息；未变化的请求不增加内容。`workspace-write` 携带已记录的会话工作区路径以及显式指定的额外目录；平台特定的临时路径会以摘要表述，不会加入依赖主机的字节。受保护根列表会额外加入一句指名安装目录的话，使模型在调用读取工具之前就知道会被拒绝。
 
 #### KV Cache 影响
 

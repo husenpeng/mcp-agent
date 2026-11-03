@@ -1,0 +1,173 @@
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 920px;
+  padding-bottom: 96px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 26px;
+  color: var(--dsw-alias-label-primary);
+}
+
+.header p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.notice {
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.scopeTabs {
+  align-self: flex-start;
+  width: 100%;
+  max-width: 320px;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel[hidden] {
+  display: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border: 0.5px solid var(--dsw-alias-border-l4);
+  border-radius: var(--dsw-radius-lg);
+  background: var(--dsw-alias-bg-layer-1);
+}
+
+.card h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 76px;
+  padding: 8px 12px;
+  border: 0.5px solid var(--dsw-alias-border-l4);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-1);
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.field textarea:focus-visible {
+  outline: none;
+  border-color: var(--dsw-alias-state-business-primary);
+}
+
+.issue {
+  font-size: 11px;
+  font-style: normal;
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.triggerList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.triggerRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  padding: 12px;
+  border: 0.5px solid var(--dsw-alias-border-l4);
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-2);
+}
+
+.triggerRow > * {
+  flex: 1 1 160px;
+}
+
+.peerList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.peerRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.peerInput {
+  flex: 1;
+  min-width: 0;
+}
+
+.iconButton {
+  flex: none;
+  width: 28px;
+  padding: 0;
+}
+
+.addButton {
+  align-self: flex-start;
+}
+
+.actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 0 6px;
+  background: linear-gradient(to top, var(--dsw-alias-bg-base) 70%, transparent);
+}

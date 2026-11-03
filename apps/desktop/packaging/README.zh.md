@@ -173,6 +173,8 @@ pnpm run package:desktop:mac:x64:unsigned
 
 添加 `--check` 仅验证本地配置和工具而不构建，或添加 `--dir` 只生成解包应用。DMG 路径为 `apps/desktop/.desktop-build/targets/<target>/unsigned-artifacts/tomato-harness-<version>-mac-<arch>-unsigned.dmg`。所有检查通过后，命令打印 `DMG:` 及其绝对路径。打开后将应用复制到本地测试目录。
 
+同目录的 `install-from-dmg.command` 会挂载 DMG、把应用复制到 `/Applications`、清除下载隔离标记并校验代码签名；可从挂载卷内运行，也可与 DMG 放在同一目录。它只安装接收方已信任的构建，不改变未签名产物不能作为公开发行包使用的定位。
+
 这些命令忽略 `.env.macos` 和继承的发布配置，使用 `vip.tomatoai.harness` 作为应用 ID，并省略自动更新和强制更新配置。构建工具、标准网络代理与 `TOMATO_DESKTOP_NPM_REGISTRY` 仍可从 shell 提供。它们跳过 Developer ID 签名、Apple 公证、临时签名钥匙串和公证代理修改。Electron 使用无需证书的本地 ad-hoc 签名，以便修改后的可执行文件能够运行；DMG 不签名。准备阶段和组装后的应用仍执行运行时完整性与冒烟检查。本地构建不生成更新源、ZIP 或发布完成记录，上传命令无法发布这些产物。macOS 可能要求在“系统设置 → 隐私与安全性”中批准打开未经公证的应用。
 
 <a id="macos-release-signing"></a>
@@ -274,6 +276,8 @@ NSIS 在安装阶段清理临时解压目录，完成后才显示完成页或自
 ## Desktop 运行时准备
 
 Windows 并行准备 Electron 和 primary-runtime；macOS 串行准备二者。只有两份运行时资源均成功，才会准备 CLI 并写入 `versions.json`。任一 Windows 运行时准备失败时，流程会等待另一路结束后再报告失败，且不写入 CLI 资源或版本记录。嵌套准备阶段的计时存在重叠，不能直接相加。
+
+准备阶段还会安装 Playwright 提供方启动的 Chromium headless shell。`prepare:playwright-browsers` 运行由提供方 `@playwright/mcp` 依赖固定的 Playwright CLI，把 `chromium --only-shell` 装进共享的 `downloads/playwright-browsers` 缓存，再把完整安装复制到 `runtime/playwright-browsers`。除非启动环境已设置，Host 会收到指向该 registry 的 `PLAYWRIGHT_BROWSERS_PATH`。macOS 在应用签名前签署 registry 内的 Mach-O，并为 `chrome-headless-shell` 加上 JIT entitlement；electron-builder 忽略该目录，打包 smoke 运行 `chrome-headless-shell --version`。
 
 打包进程环境中的 `TOMATO_DESKTOP_PACKAGE_CACHE_DIR` 为共享的 `downloads` 和 `pnpm-store` 缓存指定非空绝对目录；省略时使用 `.desktop-build`。临时安装项目、lockfile 和配置仍逐次独立创建。运行时安装校验 store 完整性并复制包文件，防止后续签名修改缓存字节；清理时保留这些缓存。两个打包工作流使用 `runner.tool_cache/tomato-desktop-package-cache`；Windows 仓库依赖安装使用工作区盘根目录下独立的 `.pnpm-store`。两次安装日志均标明各自的 store 并报告包复用情况。每次运行仍通过新的运行时 lockfile 解析依赖。可写缓存仅供可信构建任务共享；完整性校验不能隔离不可信的写入者。仅在没有任务使用缓存时清理。缓存磁盘用量由操作者管理，不自动淘汰。
 

@@ -1,0 +1,378 @@
+/* Notice card and the Muse insights Sidebar page. Colours, radii, elevation,
+   and focus styling come from the shared design tokens; the card follows the
+   raised-surface treatment used by other floating panels. */
+
+.notice {
+  position: fixed;
+  top: calc(var(--tomato-frame-top-clearance, 0px) + 16px);
+  right: 16px;
+  z-index: 900;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  width: min(360px, calc(100vw - 32px));
+  padding: 12px;
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-alias-bg-layer-2);
+  box-shadow: var(--dsw-shadow-lv3);
+  color: var(--dsw-alias-label-primary);
+  pointer-events: auto;
+  animation: notice-in 160ms ease-out;
+}
+
+.noticeOpen {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.noticeIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  color: var(--dsw-static-deepseek-400);
+}
+
+.noticeText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.noticeTitle {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+}
+
+.noticeBody {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 20px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.noticeAction {
+  color: var(--dsw-static-deepseek-400);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+@media (hover: hover) {
+  .noticeOpen:hover .noticeAction {
+    text-decoration: underline;
+  }
+}
+
+.noticeClose {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dsw-radius-sm);
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .noticeClose:hover {
+    background: var(--dsw-alias-interactive-bg-hover);
+    color: var(--dsw-alias-label-primary);
+  }
+}
+
+.noticeOpen:focus-visible,
+.noticeClose:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .notice {
+    top: calc(var(--tomato-frame-top-clearance, 0px) + 12px);
+    right: 12px;
+    width: calc(100vw - 24px);
+  }
+}
+
+@keyframes notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--dsw-alias-bg-base);
+  color: var(--dsw-alias-label-primary);
+}
+
+.toolbar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px 8px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l1);
+}
+
+.viewSwitch {
+  flex: 1;
+  min-width: 0;
+}
+
+.refreshButton {
+  flex: none;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  padding: 4px 16px 24px;
+  overflow: auto;
+  scrollbar-gutter: stable;
+  /* The shared theme rail carries the 5px thumb inset 2px from the pane edge. */
+  --tomato-scrollbar-width: 9px;
+  --tomato-scrollbar-thumb-border: 2px;
+}
+
+.loading {
+  display: grid;
+  height: 100%;
+  place-items: center;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+  padding: 32px 16px;
+  text-align: center;
+}
+
+.emptyIcon {
+  display: grid;
+  place-items: center;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.empty h2 {
+  margin: 0;
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 500;
+}
+
+.empty p {
+  max-width: 280px;
+  margin: 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  padding-top: 12px;
+}
+
+.panelHead h2 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 500;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.metaSpinner {
+  display: inline-flex;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.summary {
+  margin: 12px 0 0;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 14px;
+  line-height: 22px;
+  white-space: pre-wrap;
+}
+
+.note {
+  margin: 12px 0 0;
+  padding: 8px 10px;
+  border: 0.5px solid var(--dsw-alias-border-l1);
+  border-radius: var(--dsw-radius-sm);
+  background: var(--dsw-alias-bg-layer-1);
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.section {
+  margin-top: 20px;
+}
+
+.section h3 {
+  margin: 0 0 4px;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
+}
+
+.workList,
+.plainList,
+.sessionList,
+.taskList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.workRow,
+.taskRow,
+.sessionList li {
+  padding: 10px 0;
+  border-top: 0.5px solid var(--dsw-alias-border-l1);
+}
+
+.workRow:first-child,
+.taskRow:first-child,
+.sessionList li:first-child {
+  border-top: 0;
+}
+
+.workHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.workTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.workDetail,
+.taskDetail {
+  margin: 2px 0 0;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 20px;
+  white-space: pre-wrap;
+}
+
+.plainList {
+  padding-inline-start: 18px;
+  list-style: disc;
+}
+
+.plainList li {
+  padding: 4px 0;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.sessionTitle {
+  display: block;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.sessionSummary {
+  margin: 2px 0 0;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 20px;
+  white-space: pre-wrap;
+}
+
+.taskHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.taskTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.taskMeta {
+  margin: 4px 0 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notice {
+    animation: none;
+  }
+
+  .spin {
+    animation: none;
+  }
+}

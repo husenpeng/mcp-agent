@@ -68,6 +68,8 @@ import * as ToolLsp from '@tomato/tool-lsp'
 import * as ToolSkill from '@tomato/tool-skill'
 import * as ToolSessionQuery from '@tomato/tool-session-query'
 import * as ToolMemory from '@tomato/experimental-tool-memory'
+import * as ToolRobot from '@tomato/experimental-tool-robot'
+import type Robots from '@tomato/experimental-robot'
 import type MemoryService from '@tomato/experimental-memory'
 import CommandRuntime from '@tomato/commands'
 import * as ToolJobs from '@tomato/tool-jobs'
@@ -561,6 +563,24 @@ const TOOL_PACKAGES: ToolPackage[] = [
     },
     note:
       'Explicit experimental composition only, shipped switched off in the Memory and goal focus bundle. memory_write stores an active record only when user_quote is contained in a user message of the current turn; otherwise the record is an unconfirmed candidate. scope profile records reach every workspace of their owner. memory_search may send one auxiliary expansion request when the literal query matches fewer than maxRecallResults records. Delegated agents may search but not write or delete.',
+  },
+  {
+    pkg: '@tomato/experimental-tool-robot',
+    dir: 'tool-robot',
+    source: 'packages/experimental/tool-robot/src/index.ts',
+    requires: ['ctx.tools', 'ctx.agents', 'ctx.robots', 'a direct-human top-level Agent in an open turn'],
+    writes: ['tool/call', 'robot specification revision and one instantiated robot', 'tool/result'],
+    async mount(ctx) {
+      await ctx.plugin(AgentRegistry)
+      // Schema harvest never executes a tool, so the Host service is a declaration-only stub.
+      ctx.provide('robots', {} as Robots)
+      await ctx.plugin(ToolRobot)
+    },
+    note:
+      'Shipped by the optional Tomato Rbot bundle beside the robot-creation skill. The tool collects only the '
+      + 'four basic fields and starts every other block from emptyRobotSpec(); publication and instantiation '
+      + 'happen in one call. Direct-human root authority is required, so delegated and unattended turns cannot '
+      + 'create robots.',
   },
   {
     pkg: '@tomato/experimental-tool-subagent-oar',

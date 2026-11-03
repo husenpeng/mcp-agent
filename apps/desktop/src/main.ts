@@ -23,6 +23,7 @@ import {
   type MenuItemConstructorOptions,
 } from 'electron'
 import { resolveDesktopPaths } from './paths.ts'
+import { resolvePlaywrightBrowsers, withPlaywrightBrowsers } from './playwright-browsers.ts'
 import { DesktopProjectManager } from './project-manager.ts'
 import { DesktopHostFatalError, DesktopHostProcess, DesktopHostUncleanExitError } from './host-process.ts'
 import { DesktopPlatformView, PLATFORM_IPC, platformBounds } from './platform-view.ts'
@@ -34,6 +35,7 @@ import { DESKTOP_IPC, SCHEME, assertDesktopSender, type DesktopUpdateState } fro
 import { readDeviceInfo } from './device-info.ts'
 import { desktopUpdateReadyConfirmation, formatDesktopMessage, resolveDesktopLocale, resolveDesktopStartupLocale } from './locale.ts'
 import { claimDesktopSingleInstance } from './single-instance.ts'
+import { acknowledgeDevelopmentRelaunch, developmentRelaunchAcknowledged, developmentRelaunchRequest, waitForDevelopmentRelaunch } from './development-relaunch.ts'
 import { desktopUpdateChannel } from './update-channel.ts'
 import { DesktopUpdateCoordinator } from './update-coordinator.ts'
 import { prepareDesktopUpdateWindow } from './update-window.ts'
@@ -165,6 +167,8 @@ interface RuntimeResources {
   readonly node: string
   readonly pnpm: string
   readonly tomato: string
+  /** Release-owned profile overlay shipped beside the runtime; absent for an unpackaged launch. */
+  readonly releaseOverlay?: string
 }
 
 function runtimeResources(): RuntimeResources {
@@ -176,7 +180,10 @@ function runtimeResources(): RuntimeResources {
       : join(process.resourcesPath, 'runtime', 'primary-runtime', 'dependencies', 'pnpm', 'bin', 'pnpm.mjs'))
   const tomato = (development ? process.env.TOMATO_DESKTOP_BUNDLE_DIR : undefined)
     ?? (development ? join(app.getAppPath(), '.desktop-build', 'development', 'project') : join(app.getAppPath(), 'tomato'))
-  return { node, nodeBin, pnpm, tomato }
+  return {
+    node, nodeBin, pnpm, tomato,
+    ...(development ? {} : { releaseOverlay: join(process.resourcesPath, 'release-profile.patch.yml') }),
+  }
 }
 
 function developmentPrimaryRuntime(): string {
@@ -351,6 +358,9 @@ async function main(): Promise<void> {
   const primaryRuntime = development
     ? developmentPrimaryRuntime()
     : join(process.resourcesPath, 'runtime', 'primary-runtime')
+  // The packaged application ships the Chromium build the Playwright provider launches; an unpackaged launch uses the
+  // target runtime's copy when preparation placed one beside the primary runtime.
+  const playwrightBrowsers = resolvePlaywrightBrowsers(development, primaryRuntime, process.resourcesPath)
   const activeProject = paths.profile
   const manager = new DesktopProjectManager(paths, resources)
   // Dock and Finder launches inherit only launchd's environment; every Host shares one login-shell read.
@@ -502,7 +512,14 @@ async function main(): Promise<void> {
   const backend = new DesktopBackendController((onFailure) => {
     const hostInspectPort = developmentHostInspectPort(development)
     const host = new DesktopHostProcess(resources.node, resources.tomato, activeProject,
-      hostInspectPort, { ...hostEnvironment, TOMATO_CLIENT_VERSION: desktopClientVersion() }, onFailure,
+      hostInspectPort, {
+        ...withPlaywrightBrowsers(hostEnvironment, playwrightBrowsers),
+        TOMATO_CLIENT_VERSION: desktopClientVersion(),
+        ...(resources.releaseOverlay === undefined ? {} : {
+          TOMATO_DESKTOP_RELEASE_OVERLAY: resources.releaseOverlay,
+          TOMATO_PROTECTED_READ_ROOTS: JSON.stringify([app.getAppPath()]),
+        }),
+      }, onFailure,
       primaryRuntime,
       resources, (next) => { platformView.setSession(next) },
       (stream, chunk) => { diagnostics.write('host', `${stream}: ${chunk.trimEnd()}`) })
@@ -519,8 +536,10 @@ async function main(): Promise<void> {
         if (!reportedLaunch) { reportedLaunch = true; void track('desktop_app_launch', {}) }
         stopAccount?.()
         const accountBackend = welcomeBackend.account
+        host.publishSession(accountBackend.sessionId())
         stopAccount = accountBackend.watch((state) => {
           if (quitting) return
+          host.publishSession(accountBackend.sessionId())
           if (welcomeWindow !== undefined && !welcomeWindow.isDestroyed()) welcomeWindow.webContents.send(WELCOME_IPC.state, state)
           const attempt = state.attempt
           // The Feishu sign-in runs in its own Electron window, which the auth backend
@@ -1222,6 +1241,9 @@ async function main(): Promise<void> {
     const window = mainWindow ?? createMainWindow()
     await navigateMain(applicationUrl)
     if (isQuitting() || recovery.active || window.isDestroyed()) return
+    // The client wakes only after the splash reaches its final frame; showing it earlier cuts the reveal.
+    await startupSplash?.waitForAnimation()
+    if (isQuitting() || recovery.active || window.isDestroyed()) return
     if (activate) window.show()
     else window.showInactive()
     startupSplash?.release()
@@ -1263,6 +1285,9 @@ async function main(): Promise<void> {
     }
     welcomeFromWorkspace = fromWorkspace
     openingWelcome ??= (async () => {
+      // The welcome window is the first application window: reveal it only after the brand animation ends.
+      await startupSplash?.waitForAnimation()
+      if (quitting || recovery.active) return
       welcomeWindow = await openWelcomeWindow(locale, {
         analytics: track,
         analyticsEnabled: () => Promise.resolve(analyticsEnabled),
@@ -1491,7 +1516,48 @@ async function main(): Promise<void> {
   publishUpdate(updateState)
 }
 
-const ownsDesktopInstance = claimDesktopSingleInstance(app, () => { focusPrimaryWindow() })
+const developmentShell = !app.isPackaged
+/** How long a later development launch waits for the running shell to accept its restart. */
+const DEVELOPMENT_RELAUNCH_ACKNOWLEDGEMENT_MS = 5_000
+
+const ownsDesktopInstance = claimDesktopSingleInstance(app, (argv) => {
+  // The development launcher rebuilds before it starts, so a later launch must restart
+  // rather than focus a shell that still runs the previous build.
+  const request = developmentRelaunchRequest(argv, developmentShell)
+  if (request !== undefined) {
+    const userData = app.getPath('userData')
+    // Electron can replay the pending later launch to the process it just restarted;
+    // that process must not restart again for the same request.
+    if (developmentRelaunchAcknowledged(userData, request)) return
+    acknowledgeDevelopmentRelaunch(userData, request)
+    diagnostics.write('info', 'development relaunch requested by a later launch')
+    app.relaunch()
+    quitWithoutConfirmation()
+    return
+  }
+  focusPrimaryWindow()
+})
+
+/**
+ * Terminate a launch that does not own the profile. A development launch first waits
+ * for the running shell's acknowledgement so the caller can tell an effective restart
+ * from an instance that kept the previous build.
+ */
+async function settleUnownedLaunch(): Promise<void> {
+  const request = developmentRelaunchRequest(process.argv, developmentShell)
+  if (request === undefined) {
+    app.quit()
+    return
+  }
+  if (await waitForDevelopmentRelaunch(app.getPath('userData'), request, DEVELOPMENT_RELAUNCH_ACKNOWLEDGEMENT_MS)) {
+    app.exit(0)
+    return
+  }
+  console.error('desktop development: Harness Dev is already running and did not restart into this build; quit it, then run again')
+  app.exit(1)
+}
+
+if (!ownsDesktopInstance) void settleUnownedLaunch()
 
 if (ownsDesktopInstance) void app.whenReady().then(main).catch(async (error: unknown) => {
   const message = error instanceof Error ? error.message : String(error)

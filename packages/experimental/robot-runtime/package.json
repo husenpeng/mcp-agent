@@ -1,0 +1,64 @@
+{
+  "name": "@tomato/experimental-robot-runtime",
+  "description": "Executes queued robot runs through a composed Agent and records their outcomes",
+  "version": "0.2.1-rc.3",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/experimental/robot-runtime"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@tomato/agent": "workspace:*",
+    "@tomato/agent-default-model": "workspace:*",
+    "@tomato/branded": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/experimental-robot": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/permission-presets": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/storage-domain": "workspace:*",
+    "@tomato/system-prompt": "workspace:*",
+    "@tomato/tools": "workspace:*"
+  },
+  "dependencies": {
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@tomato/agent": "workspace:*",
+    "@tomato/agent-default-model": "workspace:*",
+    "@tomato/agent-loop-testkit": "workspace:*",
+    "@tomato/branded": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/experimental-robot": "workspace:*",
+    "@tomato/experimental-robot-local": "workspace:*",
+    "@tomato/experimental-robot-triggers": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/permission-presets": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/storage": "workspace:*",
+    "@tomato/storage-domain": "workspace:*",
+    "@tomato/system-prompt": "workspace:*",
+    "@tomato/tools": "workspace:*"
+  }
+}

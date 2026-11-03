@@ -1,11 +1,13 @@
 /** Build and launch the unpackaged Electron shell against the current workspace. */
 
 import { spawn, execFileSync } from 'node:child_process'
+import { randomUUID } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { join, resolve } from 'node:path'
 import { parseArgs, parseEnv } from 'node:util'
 import { DESKTOP_HOST_PROTOCOL_VERSION } from '../src/host-protocol.ts'
+import { DEVELOPMENT_RELAUNCH_ARGUMENT } from '../src/development-relaunch.ts'
 import type { DesktopRelease } from '../src/release.ts'
 import { developmentRuntimeDirectory, resolveDesktopBuildTarget } from './desktop-build-paths.mjs'
 import { prepareDevelopmentProject } from './development-project.ts'
@@ -100,10 +102,13 @@ async function launchElectron(): Promise<void> {
   console.log(`desktop development: TOMATO_HOME=${home}`)
   console.log(`desktop development: userData=${userData}`)
   console.log(`desktop development: inspectors main=${String(mainPort)}, renderer=${String(rendererPort)}, host=${String(hostPort)}`)
+  // A running development shell restarts into these artifacts instead of keeping the
+  // previous build; it acknowledges this request so the launch cannot pass silently.
+  const relaunch = `${DEVELOPMENT_RELAUNCH_ARGUMENT}${randomUUID()}`
   if (process.platform === 'darwin') {
     const executable = prepareDevelopmentApp({ electron, appRoot: APP_ROOT, directory: DEVELOPMENT_ROOT, home, userData,
       mainPort, rendererPort, hostPort, openDevtools: environment.TOMATO_DESKTOP_OPEN_DEVTOOLS! })
-    await run(executable, [], APP_ROOT, environment)
+    await run(executable, [relaunch], APP_ROOT, environment)
     return
   }
   await run(electron, [
@@ -111,6 +116,7 @@ async function launchElectron(): Promise<void> {
     `--remote-debugging-port=${String(rendererPort)}`,
     `--user-data-dir=${userData}`,
     APP_ROOT,
+    relaunch,
   ], APP_ROOT, environment)
 }
 

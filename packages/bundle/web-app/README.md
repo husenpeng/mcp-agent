@@ -88,7 +88,7 @@ When you launch `tomato --profile web` over SSH, the URL line still prints but t
 
 ### Per-session agent setup
 
-Each browser session selects a shipped preset (`standard` by default). The Agent presets settings page changes the default and edits preset child plugins; saves persist in `$TOMATO_HOME/profiles/web/cordis.patch.yml`. Standard and Creator enable the plugin-management tool only when the Host provides an editable profile.
+Each browser session selects a shipped preset (`standard` by default). The Agent presets settings page changes the default and edits preset child plugins; saves persist in `$TOMATO_HOME/profiles/web/cordis.patch.yml`. Standard and Creator enable the plugin-management tool only when the Host provides an editable profile. Every shipped preset except `minimal` appends the same response contract after first-party guidance: the first sentence answers, short replies stay plain, longer replies use at most three sections (conclusion, evidence, next actions), and only decision-changing information belongs in the reply. `minimal` keeps its complete fixed persona.
 
 -----
 

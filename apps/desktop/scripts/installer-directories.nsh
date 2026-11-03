@@ -1,20 +1,20 @@
 !include "LogicLib.nsh"
 
-Var dshFinalDirectory
-Var dshNewDirectory
-Var dshOldDirectory
-Var dshOldMoved
-Var dshNewMoved
-Var dshDirectoryError
-Var dshDirectorySource
-Var dshDirectoryDestination
-Var dshRestoreError
-Var dshDirectoryLogDirectory
-Var dshRecoveryStopped
+Var tomatoFinalDirectory
+Var tomatoNewDirectory
+Var tomatoOldDirectory
+Var tomatoOldMoved
+Var tomatoNewMoved
+Var tomatoDirectoryError
+Var tomatoDirectorySource
+Var tomatoDirectoryDestination
+Var tomatoRestoreError
+Var tomatoDirectoryLogDirectory
+Var tomatoRecoveryStopped
 
 ; MoveFileEx preserves the destination and exposes the Windows error before rollback changes it.
 ; Open files inside a directory can make its rename return access denied (5).
-!macro dshDirectoryOperation SOURCE DESTINATION RESULT PHASE
+!macro tomatoDirectoryOperation SOURCE DESTINATION RESULT PHASE
   Push $0
   Push $1
   Push $2
@@ -60,28 +60,28 @@ Var dshRecoveryStopped
   Pop $0
 !macroend
 
-!macro dshReportDirectoryFailure
-  ${If} $dshRestoreError != 0
-    StrCpy $dshRecoveryStopped "1"
+!macro tomatoReportDirectoryFailure
+  ${If} $tomatoRestoreError != 0
+    StrCpy $tomatoRecoveryStopped "1"
   ${EndIf}
   !ifmacrodef customInstallerDirectoryFailed
     !insertmacro customInstallerDirectoryFailed
   !else
-    DetailPrint "Directory operation failed ($dshDirectoryError): $dshDirectorySource -> $dshDirectoryDestination; restore error: $dshRestoreError"
+    DetailPrint "Directory operation failed ($tomatoDirectoryError): $tomatoDirectorySource -> $tomatoDirectoryDestination; restore error: $tomatoRestoreError"
   !endif
 !macroend
 
-!macro dshExtractPayload FILE
+!macro tomatoExtractPayload FILE
   !ifmacrodef customInstallerExtract
     !insertmacro customInstallerExtract "${FILE}"
   !else
-    nsExec::ExecToStack '"$PLUGINSDIR\dsh-7za.exe" x -y -bd -bb0 "-o$INSTDIR" "${FILE}"'
+    nsExec::ExecToStack '"$PLUGINSDIR\tomato-7za.exe" x -y -bd -bb0 "-o$INSTDIR" "${FILE}"'
     Pop $R0
     Pop $R1
   !endif
   ${If} $R0 != 0
     DetailPrint $R1
-    Call dshRollbackDirectories
+    Call tomatoRollbackDirectories
     !ifmacrodef customInstallerExtractFailed
       !insertmacro customInstallerExtractFailed "${FILE}"
     !else
@@ -92,133 +92,133 @@ Var dshRecoveryStopped
   ${EndIf}
 !macroend
 
-!macro dshStageApplication
-  !ifdef DSH_INSTALLER_LOG_DIR
+!macro tomatoStageApplication
+  !ifdef TOMATO_INSTALLER_LOG_DIR
     ; electron-builder defines the cache name after including our function bodies, before this section expands.
-    StrCpy $dshDirectoryLogDirectory "${DSH_INSTALLER_LOG_DIR}"
+    StrCpy $tomatoDirectoryLogDirectory "${TOMATO_INSTALLER_LOG_DIR}"
   !endif
-  StrCpy $dshFinalDirectory $INSTDIR
+  StrCpy $tomatoFinalDirectory $INSTDIR
   System::Call 'ole32::CoCreateGuid(g .r0) i .r1'
   ${If} $1 != 0
     SetErrorLevel 2
     Quit
   ${EndIf}
-  StrCpy $dshNewDirectory "$INSTDIR.new-$0"
-  StrCpy $dshOldDirectory "$INSTDIR.old-$0"
-  StrCpy $dshOldMoved ""
-  StrCpy $dshNewMoved ""
-  StrCpy $dshDirectoryError 0
-  StrCpy $dshRestoreError 0
-  StrCpy $dshRecoveryStopped ""
+  StrCpy $tomatoNewDirectory "$INSTDIR.new-$0"
+  StrCpy $tomatoOldDirectory "$INSTDIR.old-$0"
+  StrCpy $tomatoOldMoved ""
+  StrCpy $tomatoNewMoved ""
+  StrCpy $tomatoDirectoryError 0
+  StrCpy $tomatoRestoreError 0
+  StrCpy $tomatoRecoveryStopped ""
   ClearErrors
-  CreateDirectory $dshNewDirectory
+  CreateDirectory $tomatoNewDirectory
   ${If} ${Errors}
     SetErrorLevel 2
     Quit
   ${EndIf}
-  File /oname=$PLUGINSDIR\dsh-7za.exe "${DSH_SEVENZIP_PATH}"
-  StrCpy $INSTDIR $dshNewDirectory
+  File /oname=$PLUGINSDIR\tomato-7za.exe "${TOMATO_SEVENZIP_PATH}"
+  StrCpy $INSTDIR $tomatoNewDirectory
   SetOutPath $INSTDIR
   !insertmacro installApplicationFiles
-  !ifdef DSH_SEVENZIP_LICENSE_DIR
-    File /oname=7zip-installer-LICENSE.txt "${DSH_SEVENZIP_LICENSE_DIR}\LICENSE.txt"
-    File /oname=7zip-installer-COPYING.txt "${DSH_SEVENZIP_LICENSE_DIR}\COPYING"
+  !ifdef TOMATO_SEVENZIP_LICENSE_DIR
+    File /oname=7zip-installer-LICENSE.txt "${TOMATO_SEVENZIP_LICENSE_DIR}\LICENSE.txt"
+    File /oname=7zip-installer-COPYING.txt "${TOMATO_SEVENZIP_LICENSE_DIR}\COPYING"
   !endif
   !ifdef UNINSTALLER_ICON
     File /oname=uninstallerIcon.ico "${UNINSTALLER_ICON}"
   !endif
-  StrCpy $INSTDIR $dshFinalDirectory
+  StrCpy $INSTDIR $tomatoFinalDirectory
   SetOutPath $PLUGINSDIR
 !macroend
 
 Function .onGUIEnd
-  Call dshCleanupDirectories
+  Call tomatoCleanupDirectories
 FunctionEnd
 
-Function dshCleanupDirectories
-  ${If} $dshRecoveryStopped == "1"
+Function tomatoCleanupDirectories
+  ${If} $tomatoRecoveryStopped == "1"
     Return
   ${EndIf}
-  ${If} $dshFinalDirectory != ""
-    Call dshRollbackDirectories
+  ${If} $tomatoFinalDirectory != ""
+    Call tomatoRollbackDirectories
   ${EndIf}
 FunctionEnd
 
 ; Only directories created or renamed by this installer are removed during rollback.
-Function dshRollbackDirectories
+Function tomatoRollbackDirectories
   SetOutPath $PLUGINSDIR
-  ${If} $dshNewMoved == "1"
-    RMDir /r "\\?\$dshFinalDirectory"
-    StrCpy $dshNewMoved ""
+  ${If} $tomatoNewMoved == "1"
+    RMDir /r "\\?\$tomatoFinalDirectory"
+    StrCpy $tomatoNewMoved ""
   ${EndIf}
-  ${If} $dshOldMoved == "1"
-    !insertmacro dshDirectoryOperation "$dshOldDirectory" "$dshFinalDirectory" $dshRestoreError "restore"
-    ${If} $dshRestoreError != 0
+  ${If} $tomatoOldMoved == "1"
+    !insertmacro tomatoDirectoryOperation "$tomatoOldDirectory" "$tomatoFinalDirectory" $tomatoRestoreError "restore"
+    ${If} $tomatoRestoreError != 0
       ; Leave the complete backup in place if another process prevents restoration.
-      DetailPrint $dshOldDirectory
-      RMDir /r "\\?\$dshNewDirectory"
+      DetailPrint $tomatoOldDirectory
+      RMDir /r "\\?\$tomatoNewDirectory"
       Return
     ${EndIf}
-    StrCpy $dshOldMoved ""
+    StrCpy $tomatoOldMoved ""
   ${EndIf}
-  ${If} $dshNewDirectory != ""
-    RMDir /r "\\?\$dshNewDirectory"
+  ${If} $tomatoNewDirectory != ""
+    RMDir /r "\\?\$tomatoNewDirectory"
   ${EndIf}
-  StrCpy $INSTDIR $dshFinalDirectory
+  StrCpy $INSTDIR $tomatoFinalDirectory
 FunctionEnd
 
-Function dshPromoteDirectories
+Function tomatoPromoteDirectories
   !ifmacrodef InstallerPublishStage
     !insertmacro InstallerPublishStage 2
   !endif
   ; SetOutPath opens a directory handle; release it before either rename.
   SetOutPath $PLUGINSDIR
   ClearErrors
-  ${If} ${FileExists} "$dshFinalDirectory\*.*"
-    StrCpy $dshDirectorySource $dshFinalDirectory
-    StrCpy $dshDirectoryDestination $dshOldDirectory
-    !insertmacro dshDirectoryOperation "$dshDirectorySource" "$dshDirectoryDestination" $dshDirectoryError "backup"
-    ${If} $dshDirectoryError != 0
-      Call dshRollbackDirectories
-      !insertmacro dshReportDirectoryFailure
+  ${If} ${FileExists} "$tomatoFinalDirectory\*.*"
+    StrCpy $tomatoDirectorySource $tomatoFinalDirectory
+    StrCpy $tomatoDirectoryDestination $tomatoOldDirectory
+    !insertmacro tomatoDirectoryOperation "$tomatoDirectorySource" "$tomatoDirectoryDestination" $tomatoDirectoryError "backup"
+    ${If} $tomatoDirectoryError != 0
+      Call tomatoRollbackDirectories
+      !insertmacro tomatoReportDirectoryFailure
       SetErrors
       Return
     ${EndIf}
-    StrCpy $dshOldMoved "1"
+    StrCpy $tomatoOldMoved "1"
   ${Else}
     ; NSIS can create the destination before the install section starts.
-    StrCpy $dshDirectorySource $dshFinalDirectory
-    StrCpy $dshDirectoryDestination ""
-    !insertmacro dshDirectoryOperation "$dshDirectorySource" "" $dshDirectoryError "remove-empty"
-    ${If} $dshDirectoryError != 0
-      Call dshRollbackDirectories
-      !insertmacro dshReportDirectoryFailure
+    StrCpy $tomatoDirectorySource $tomatoFinalDirectory
+    StrCpy $tomatoDirectoryDestination ""
+    !insertmacro tomatoDirectoryOperation "$tomatoDirectorySource" "" $tomatoDirectoryError "remove-empty"
+    ${If} $tomatoDirectoryError != 0
+      Call tomatoRollbackDirectories
+      !insertmacro tomatoReportDirectoryFailure
       SetErrors
       Return
     ${EndIf}
   ${EndIf}
   ClearErrors
-  StrCpy $dshDirectorySource $dshNewDirectory
-  StrCpy $dshDirectoryDestination $dshFinalDirectory
-  !insertmacro dshDirectoryOperation "$dshDirectorySource" "$dshDirectoryDestination" $dshDirectoryError "promote"
-  ${If} $dshDirectoryError != 0
-    Call dshRollbackDirectories
-    !insertmacro dshReportDirectoryFailure
+  StrCpy $tomatoDirectorySource $tomatoNewDirectory
+  StrCpy $tomatoDirectoryDestination $tomatoFinalDirectory
+  !insertmacro tomatoDirectoryOperation "$tomatoDirectorySource" "$tomatoDirectoryDestination" $tomatoDirectoryError "promote"
+  ${If} $tomatoDirectoryError != 0
+    Call tomatoRollbackDirectories
+    !insertmacro tomatoReportDirectoryFailure
     SetErrors
     Return
   ${EndIf}
-  StrCpy $dshNewMoved "1"
-  SetOutPath $dshFinalDirectory
+  StrCpy $tomatoNewMoved "1"
+  SetOutPath $tomatoFinalDirectory
   !ifmacrodef InstallerPublishStage
     !insertmacro InstallerPublishStage 3
   !endif
   ClearErrors
 FunctionEnd
 
-!macro dshFinishDirectories
-  StrCpy $dshNewMoved ""
-  ${If} $dshOldMoved == "1"
-    RMDir /r "\\?\$dshOldDirectory"
-    StrCpy $dshOldMoved ""
+!macro tomatoFinishDirectories
+  StrCpy $tomatoNewMoved ""
+  ${If} $tomatoOldMoved == "1"
+    RMDir /r "\\?\$tomatoOldDirectory"
+    StrCpy $tomatoOldMoved ""
   ${EndIf}
 !macroend
