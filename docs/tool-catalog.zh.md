@@ -43,7 +43,7 @@
 | `@tomato/tool-ralph` | `ralph` | `ctx.tools`、`ctx.workflowEngine`、`ctx.subagents`、`ctx.systemPrompt`、`a calling Agent (exec.agent parents every fresh round)` | `tool/call`、`tool/result`、`workflow and child session events during execution` | - | 固定的前台工作流会在每个 Round 启动一个全新的结构化子级；模型只能选择不可变目标和可选的 Round 上限。 |
 | `@tomato/tool-skill` | `skill` | `ctx.workingDirectory`、`ctx.tools`、`ctx.agents`、`ctx.skills` | `tool/call`、`tool/result`、`user/message replacement catalogs via agent.inject()` | - | - |
 | `@tomato/tool-session-query` | `session_event_read`、`session_event_search`、`session_event_trace`、`session_search`、`session_trace` | `ctx.tools`、`ctx.systemPrompt`、`ctx.sessionQuery`、`a calling Agent for workspace authority` | `tool/call`、`tool/result` | - | 这 5 个只读工具会隐藏提供方游标，并根据不可变的调用 agent 会话为每个结果授权。该包需要选择启用；需要强制截止时间或限制行内输出的组合还会挂载通用超时或 spill 策略。 |
-| `@tomato/experimental-tool-memory` | `memory_forget`, `memory_search`, `memory_write` | `ctx.tools`, `ctx.memory`, `ctx.agents`, `ctx.commands`, `ctx.sessionProjections`, `ctx.llm`, `a calling Agent; workspace memories also need a Session project directory`, `a signed-in account where ctx.tomatoAccount exists` | `tool/call`, `tomato_memory storage domain create, update, or delete`, `plugin:tool-memory/query-expansion plugin record`, `tool/result`, `user/message memory snapshot` | - | 仅限显式组合的实验能力，随“记忆与目标专注”组合包发布且默认关闭。只有当 user_quote 包含在当前轮次的用户消息中时，memory_write 才保存生效的记录；否则记录为未确认的候选。scope 为 profile 的记录会进入其所有者的每个工作区。当字面查询命中少于 maxRecallResults 条记录时，memory_search 可能发送一次辅助扩展请求。被委派的智能体可以搜索，但不能写入或删除。 |
+| `@tomato/experimental-tool-memory` | `memory_forget`, `memory_related`, `memory_search`, `memory_write` | `ctx.tools`, `ctx.memory`, `ctx.agents`, `ctx.commands`, `ctx.sessionProjections`, `ctx.llm`, `a calling Agent; workspace memories also need a Session project directory`, `a signed-in account where ctx.tomatoAccount exists` | `tool/call`, `tomato_memory storage domain create, update, or delete`, `plugin:tool-memory/query-expansion plugin record`, `plugin:tool-memory/turn-capture plugin record`, `tool/result`, `user/message memory snapshot` | - | 仅限显式组合的实验能力，随“记忆与目标专注”组合包发布且默认关闭。只有当 user_quote 包含在当前轮次的用户消息中时，memory_write 才保存生效的记录；否则记录为未确认的候选。scope 为 profile 的记录会进入其所有者的每个工作区。当字面查询命中少于 maxRecallResults 条记录时，memory_search 可能发送一次辅助扩展请求。启用 capture 后，每次结束的回合会由一次辅助请求读取，并把持久陈述存为候选。被委派的智能体可以搜索，但不能写入或删除。 |
 | `@tomato/experimental-tool-robot` | `robot_create` | `ctx.tools`, `ctx.agents`, `ctx.robots`, `a direct-human top-level Agent in an open turn` | `tool/call`, `robot specification revision and one instantiated robot`, `tool/result` | - | 与 robot-creation 技能一同由可选 Tomato Rbot 组合包提供。该工具只收集四项基础字段，其余区块从 emptyRobotSpec() 的通用默认值开始；发布与实例化在一次调用中完成。要求直接来自人类的根权限，因此被委托或无人的回合不能创建机器人。 |
 | `@tomato/experimental-tool-subagent-oar` | `subagent_oar` | `ctx.tools`, `ctx.subagents` | `tool/call`, `tool/result`, `parent subagent catalog and completion notices` | - | subagent_oar 工具在为外部提供方配置的别名之间选择。本目录展示 Codex 和 Claude Code 别名；每个部署自行选择提供方。原生模型和权限设置由所选提供方的配置决定。 |
 | `@tomato/tool-subagent` | `list_subagent_models`、`subagent` | `ctx.tools`、`ctx.subagents`、`ctx.systemPrompt`、`ctx.sessionProjections`、`用于模型发现和所选路由校验的 ctx.llm` | `tool/call`、`tool/result`、`child session events through the chosen provider` | `subagent`、`subagent_fork` | 加载时的 `toolName` 选择委派名称（默认为 `subagent`）；`modelSelection` 增加可选路由字段。`modelDiscovery` 默认关闭，每个作用域由一个实例注册共享发现工具。Web 与 Desktop preset 启用 spawn 发现和路由字段，并为 `subagent_fork` 保持路由字段关闭。Host 设置服务为每个新顶层 Session 记录授权；子 Session 继承该授权。没有已记录策略时，发现和显式选择只允许当前父级路由。每次委派都会立即返回子代理 id；本地子代理接受后续消息，外部后端自动汇报单次执行结果。 |
@@ -51,6 +51,7 @@
 | `@tomato/tool-jobs` | `job_kill`、`job_list`、`job_output` | `ctx.tools`、`ctx.jobs`、`ctx.systemPrompt` | `tool/call`、`tool/result`、`user/message via agent.inject() for background completion notices` | - | 与任务种类无关的后台任务控制器：后台 bash 命令与 PTY 发送 都通过相同的 3 个工具读取、列出和终止。加载该插件会挂接控制器，从而启用生产方的 `ctx.jobs.start()`。 |
 | `@tomato/experimental-tool-agent-team` | `interrupt_agent`、`list_agents`、`send_message`、`spawn_teammate`、`team_task_create`、`team_task_get`、`team_task_list`、`team_task_update`、`wait_agent` | `ctx.tools`、`ctx.systemPrompt`、`ctx.agentTeams`、`an exact live Team member Agent` | `tool/call`、`team/member`、`team/task`、`agent/inbox/spliced`、`user/message on inbox claim`、`tool/result` | - | 这 9 个工具限定于隐式 Team Lead 与持久 teammate 作用域。随产品发布的 @tomato/base bundle 默认禁用该包；文档中的 Agent Teams profile patch 会启用它，并禁用旧 continuable child 的同名控制工具。 |
 | `@tomato/tool-todo` | `todo_write` | `ctx.tools`、`owning Agent session` | `tool/call`、`todo/write`、`tool/result` | - | todo_write 是会话所有的状态；UI 将最新的 todo/write 事件渲染为检查清单。`allowParallelInProgress` 是没有默认值的必填项，因此本目录明确选择 `true`，对应描述允许同时存在多个 `in_progress` 项。选择 `false` 的部署会获得同一工具，但描述会要求只能有 1 个活动任务。 |
+| `@tomato/tool-creator-search` | `creator_detail`, `creator_feedback`, `creator_ingest`, `creator_scout`, `creator_search`, `youtube_channel` | `ctx.tools`、`ctx.desktopSession`、`ctx.storageDomain` | `tool/call`、`tool/result` | - | 每个工具把已登录的 Desktop 会话作为 BFF `session_id` cookie 转发；没有该会话的 profile 每次调用都返回重新登录的提示。`creator_search` 与 `creator_detail` 每次调用消耗一次集团接口月度额度，`youtube_channel` 不消耗。 |
 | `@tomato/tool-working-directory` | `working_directory` | `ctx.tools`, `ctx.workingDirectory` | `tool/call`, `working-directory/change`, `user context for directory changes`, `tool/result` | - | 读取或改变调用方 Session 的目录。已有 shell 和进程保留自己的目录；原始元数据和权限根目录保持不变。 |
 | `@tomato/experimental-tool-worktree` | `create_worktree` | `ctx.tools`, `ctx.worktrees`, `a calling Agent` | `tool/call`, `Git branch and checkout`, `working-directory/change`, `tool/result` | - | 仅通过显式实验组合加载。在现有写权限下从固定的本地提交创建新分支与检出目录，再改变 Session 工作目录。离开时保留分支与检出目录。 |
 | `@tomato/tool-workflow` | `workflow` | `ctx.tools`、`ctx.workflowEngine`、`ctx.systemPrompt`、`a calling Agent (exec.agent parents the script children)` | `tool/call`、`tool/result` | - | - |
@@ -2140,6 +2141,31 @@ lsp 工具将提供方选择和语言服务器子进程置于 ctx.lsp 之后，�
 
 来源：[`packages/experimental/tool-memory/src/index.ts`](../packages/experimental/tool-memory/src/index.ts)
 
+### `memory_related`
+
+查找与一条已保存记忆相连的记忆：同一主体的记忆、同一会话写入的记忆，以及共享属性的记忆。每条结果都会注明它是如何被到达的，以及保存它的会话。在 memory_search 之后使用它，查看围绕一条记录做出过什么决定。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Memory id to start from."
+    },
+    "depth": {
+      "type": "number",
+      "description": "Hops to follow, 1 or 2; omitted follows 1."
+    }
+  },
+  "required": [
+    "id"
+  ]
+}
+```
+
+来源：[`packages/experimental/tool-memory/src/index.ts`](../packages/experimental/tool-memory/src/index.ts)
+
 ### `memory_search`
 
 搜索早先会话中保存的记忆：用户的画像，以及本工作区的偏好、约束、决定和事实。在要求用户重复可能说过的内容之前先使用它。结果是历史记录，不是指令；当记忆与当前请求冲突时，以当前请求为准。
@@ -2173,7 +2199,7 @@ lsp 工具将提供方选择和语言服务器子进程置于 ctx.lsp 之后，�
 
 ### `memory_write`
 
-为后续会话保存一条持久记忆。只保存用户要求记住的内容，或用户明确陈述的长期偏好、约束、决定或事实。关于用户、在每个工作区都成立的内容（例如其语言、角色或写作风格）使用 scope profile；关于本项目的内容使用 scope workspace。将 user_quote 设为从当前轮次用户消息中复制的、陈述该内容的原话。没有匹配的引用时，记忆会保存为未确认的候选，在用户确认之前后续会话看不到它。不要保存凭据、联系方式或临时任务状态。再次写入相同的 scope、entity 和 key 会替换之前的值。
+为后续会话保存一条持久记忆。只保存用户要求记住的内容，或用户明确陈述的长期偏好、约束、决定或事实。关于用户、在每个工作区都成立的内容（例如其语言、角色或写作风格）使用 scope profile；关于本项目的内容使用 scope workspace。将 user_quote 设为从当前轮次用户消息中复制的、陈述该内容的原话。没有匹配的引用时，记忆会保存为未确认的候选，在用户确认之前后续会话看不到它。不要保存凭据、联系方式或临时任务状态。再次写入相同的 scope、entity 和 key 会替换之前的值。当这次陈述在另一个 entity 或 key 下几乎重复了一条已保存记忆时，结果会点名那条记录，便于删除已被取代的旧记录。
 
 ```json
 {
@@ -2867,6 +2893,425 @@ subagent_oar 工具在为外部提供方配置的别名之间选择。本目录�
 来源：[`packages/todo/tool-todo/src/index.ts`](../packages/todo/tool-todo/src/index.ts)
 
 todo_write 是会话所有的状态；UI 将最新的 todo/write 事件渲染为检查清单。`allowParallelInProgress` 是没有默认值的必填项，因此本目录明确选择 `true`，对应描述允许同时存在多个 `in_progress` 项。选择 `false` 的部署会获得同一工具，但描述会要求只能有 1 个活动任务。
+
+<a id="tomatotool-creator-search"></a>
+
+## `@tomato/tool-creator-search`
+
+### `creator_detail`
+
+Read one creator's full profile from the group API: account facts, audience demographics, and recent video performance. Locate a YouTube creator by channel id and a TikTok or Instagram creator by handle. Each call spends one unit of the team's monthly search quota.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "platform": {
+      "type": "string",
+      "description": "Platform that owns the identifier.",
+      "enum": [
+        "TIKTOK",
+        "INSTAGRAM",
+        "YOUTUBE"
+      ]
+    },
+    "creatorId": {
+      "type": "string",
+      "description": "YouTube channel id starting with UC, or a TikTok/Instagram handle; 1–200 characters."
+    }
+  },
+  "required": [
+    "platform",
+    "creatorId"
+  ]
+}
+```
+
+来源：[`packages/marketing/tool-creator-search/src/tools.ts`](../packages/marketing/tool-creator-search/src/tools.ts)
+
+### `creator_feedback`
+
+记住关于达人的决定，让后续侦察遵循它：接受的达人排名更高，拒绝的不再被提供，关注的保持标记。用户给出判断与理由后立即记录；记录持久，并限定在指定客户范围内。省略条目时读取该客户已记住的决定。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "entries": {
+      "type": "array",
+      "description": "Decisions to remember; omit to list the decisions already remembered.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "platform": {
+            "type": "string",
+            "description": "Platform that owns the creator id.",
+            "enum": [
+              "TIKTOK",
+              "INSTAGRAM",
+              "YOUTUBE"
+            ]
+          },
+          "creatorId": {
+            "type": "string",
+            "description": "Creator id or handle as the scout reported it."
+          },
+          "handle": {
+            "type": "string",
+            "description": "Handle, when known."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name, when known."
+          },
+          "decision": {
+            "type": "string",
+            "description": "Verdict to remember.",
+            "enum": [
+              "accept",
+              "reject",
+              "watch"
+            ]
+          },
+          "reasons": {
+            "type": "array",
+            "description": "Reasons from the documented set: brand-safety, audience-mismatch, price, content-quality, competitor, already-worked, other.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "note": {
+            "type": "string",
+            "description": "Free-form note from the reviewer."
+          },
+          "client": {
+            "type": "string",
+            "description": "Client the decision applies to; omit to apply it to every client on this host."
+          }
+        },
+        "required": [
+          "platform",
+          "creatorId",
+          "decision"
+        ]
+      }
+    },
+    "client": {
+      "type": "string",
+      "description": "Client whose remembered decisions to list."
+    }
+  }
+}
+```
+
+Source: [`packages/marketing/tool-creator-search/src/tools.ts`](../packages/marketing/tool-creator-search/src/tools.ts)
+
+### `creator_ingest`
+
+逐个为索引之外找到的达人打分：爬取到的资料与本插件自己的搜索遵循同一套 brief、门槛、权重与已记住的决定。传入与侦察时相同的 brief，以及每个真正读过其页面的达人条目；未知字段请留空，不要猜。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "client": {
+      "type": "string",
+      "description": "Client or brand this search is for; remembered feedback is scoped to it."
+    },
+    "product": {
+      "type": "string",
+      "description": "Product being promoted, when the brief names one."
+    },
+    "category": {
+      "type": "string",
+      "description": "Product category or niche the creators should work in."
+    },
+    "platforms": {
+      "type": "array",
+      "description": "Platforms to search: TIKTOK, INSTAGRAM, YOUTUBE.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "TIKTOK",
+          "INSTAGRAM",
+          "YOUTUBE"
+        ]
+      }
+    },
+    "market": {
+      "type": "string",
+      "description": "Audience market as an ISO country code such as US, or GLOBAL."
+    },
+    "targetCount": {
+      "type": "integer",
+      "description": "Creators wanted in the shortlist, 1–50. Defaults to the deployment value."
+    },
+    "keywords": {
+      "type": "array",
+      "description": "Keyword phrases to search; the category, product, and market derive variants when omitted.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "followersMin": {
+      "type": "integer",
+      "description": "Lowest follower count to accept; defaults to the deployment band."
+    },
+    "followersMax": {
+      "type": "integer",
+      "description": "Highest follower count to accept; defaults to the deployment band."
+    },
+    "minEngagementRate": {
+      "type": "number",
+      "description": "Lowest engagement as a ratio, 0–1; defaults to the deployment floor."
+    },
+    "language": {
+      "type": "string",
+      "description": "Preferred content language, when the brief states one."
+    },
+    "mustHaveEmail": {
+      "type": "boolean",
+      "description": "When true, drop creators without a business email on file."
+    },
+    "excludeCreators": {
+      "type": "array",
+      "description": "Handles or creator ids the caller already ruled out.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "entries": {
+      "type": "array",
+      "description": "Creators found outside the index, with the values the page stated.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "platform": {
+            "type": "string",
+            "description": "Platform that owns the identifier.",
+            "enum": [
+              "TIKTOK",
+              "INSTAGRAM",
+              "YOUTUBE"
+            ]
+          },
+          "creatorId": {
+            "type": "string",
+            "description": "Handle or platform id you verified."
+          },
+          "handle": {
+            "type": "string",
+            "description": "Handle, when it differs from the id."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name, when known."
+          },
+          "country": {
+            "type": "string",
+            "description": "Audience or creator country as an ISO code, when known."
+          },
+          "followers": {
+            "type": "integer",
+            "description": "Follower count as reported by the page you read."
+          },
+          "engagementRate": {
+            "type": "number",
+            "description": "Engagement rate as a ratio, 0–1."
+          },
+          "lastPublishedAt": {
+            "type": "string",
+            "description": "Last post time as ISO 8601."
+          },
+          "hasEmail": {
+            "type": "boolean",
+            "description": "Whether a business email is publicly on file."
+          },
+          "url": {
+            "type": "string",
+            "description": "Profile URL you read."
+          }
+        },
+        "required": [
+          "platform",
+          "creatorId"
+        ]
+      }
+    }
+  },
+  "required": [
+    "entries"
+  ]
+}
+```
+
+Source: [`packages/marketing/tool-creator-search/src/tools.ts`](../packages/marketing/tool-creator-search/src/tools.ts)
+
+### `creator_scout`
+
+为一份营销简报寻找达人：按给定的平台与关键词检索公司达人库，合并多种策略的结果，补全最强的候选，并对照简报逐个给出证据排名。当简报缺少品类、平台列表或市场，或部署对它提出更多要求时，本次调用会返回需要追问的问题，而不是消耗搜索额度。每个入围达人都带状态：pass 表示每个门槛都有取值，conditional 表示缺少一个门槛输入，unverified 表示大多数输入缺失。请报告该状态与理由，不要把 conditional 的达人当成已验证。每次接受或拒绝都要用 creator_feedback 记录，以便下一轮遵守。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "client": {
+      "type": "string",
+      "description": "Client or brand this search is for; remembered feedback is scoped to it."
+    },
+    "product": {
+      "type": "string",
+      "description": "Product being promoted, when the brief names one."
+    },
+    "category": {
+      "type": "string",
+      "description": "Product category or niche the creators should work in."
+    },
+    "platforms": {
+      "type": "array",
+      "description": "Platforms to search: TIKTOK, INSTAGRAM, YOUTUBE.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "TIKTOK",
+          "INSTAGRAM",
+          "YOUTUBE"
+        ]
+      }
+    },
+    "market": {
+      "type": "string",
+      "description": "Audience market as an ISO country code such as US, or GLOBAL."
+    },
+    "targetCount": {
+      "type": "integer",
+      "description": "Creators wanted in the shortlist, 1–50. Defaults to the deployment value."
+    },
+    "keywords": {
+      "type": "array",
+      "description": "Keyword phrases to search; the category, product, and market derive variants when omitted.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "followersMin": {
+      "type": "integer",
+      "description": "Lowest follower count to accept; defaults to the deployment band."
+    },
+    "followersMax": {
+      "type": "integer",
+      "description": "Highest follower count to accept; defaults to the deployment band."
+    },
+    "minEngagementRate": {
+      "type": "number",
+      "description": "Lowest engagement as a ratio, 0–1; defaults to the deployment floor."
+    },
+    "language": {
+      "type": "string",
+      "description": "Preferred content language, when the brief states one."
+    },
+    "mustHaveEmail": {
+      "type": "boolean",
+      "description": "When true, drop creators without a business email on file."
+    },
+    "excludeCreators": {
+      "type": "array",
+      "description": "Handles or creator ids the caller already ruled out.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "depth": {
+      "type": "string",
+      "description": "Search budget: fast checks one page, standard and broad widen the plan. Defaults to standard.",
+      "enum": [
+        "fast",
+        "standard",
+        "broad"
+      ]
+    },
+    "queryPolicy": {
+      "type": "string",
+      "description": "How far to go beyond the stated keywords: strict searches only them, balanced adds recombinations of the stated category, product, and market, broad may also append configured suffix phrases. Defaults to the deployment value.",
+      "enum": [
+        "strict",
+        "balanced",
+        "broad"
+      ]
+    }
+  }
+}
+```
+
+Source: [`packages/marketing/tool-creator-search/src/tools.ts`](../packages/marketing/tool-creator-search/src/tools.ts)
+
+### `creator_search`
+
+Search TikTok, Instagram, or YouTube creators by keyword. Returns matching creators with follower count, engagement, recent content, and whether an email is on file, plus a pager. Each call spends one unit of the team's monthly search quota, so search with specific keywords instead of repeating the same query.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "platform": {
+      "type": "string",
+      "description": "Platform whose creator index to search.",
+      "enum": [
+        "TIKTOK",
+        "INSTAGRAM",
+        "YOUTUBE"
+      ]
+    },
+    "query": {
+      "type": "string",
+      "description": "Keywords to match against creator names, handles, and content; 1–200 characters."
+    },
+    "page": {
+      "type": "integer",
+      "description": "Result page to read, 1-based. Defaults to 1."
+    },
+    "pageSize": {
+      "type": "integer",
+      "description": "Results per page, 1–50. Defaults to 20."
+    }
+  },
+  "required": [
+    "platform",
+    "query"
+  ]
+}
+```
+
+来源：[`packages/marketing/tool-creator-search/src/tools.ts`](../packages/marketing/tool-creator-search/src/tools.ts)
+
+### `youtube_channel`
+
+Read a YouTube channel's public BrandConnect data: subscriber count, region, data-sharing and YPP state, and its business email when shared. Locate the channel by id or @handle. This read does not spend the team's monthly search quota.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "channel": {
+      "type": "string",
+      "description": "YouTube channel id starting with UC and 24 characters long, or an @handle."
+    },
+    "languageCode": {
+      "type": "string",
+      "description": "Language for localized fields, such as en or zh; 2–20 characters. Defaults to the BFF choice."
+    }
+  },
+  "required": [
+    "channel"
+  ]
+}
+```
+
+来源：[`packages/marketing/tool-creator-search/src/tools.ts`](../packages/marketing/tool-creator-search/src/tools.ts)
+
+Each tool forwards the signed-in Desktop session as the BFF `session_id` cookie; a profile without that session answers every call with sign-in guidance. `creator_search` and `creator_detail` spend one unit of the monthly group-API quota per call, `youtube_channel` spends none.
 
 <a id="tomatotool-working-directory"></a>
 

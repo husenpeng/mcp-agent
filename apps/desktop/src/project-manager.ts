@@ -29,6 +29,8 @@ const PROJECT_NAME = '@tomato/desktop-runtime'
 const TOMATO_PACKAGE = '@tomato/cli'
 const CORE_BUILD_PACKAGE = '@tomato/subprocess-local'
 const WEB_PROFILE = PROFILE_TEMPLATES.web as ProfileTemplate
+/** Bundles a Desktop profile starts with: the Web composition plus the built-in plugin market. */
+const DESKTOP_PROFILE_BUNDLES = [...WEB_PROFILE.bundles, 'tomato-market'] as const
 const WORKSPACE_SETTINGS = 'nodeLinker: hoisted\nautoInstallPeers: false\n'
 function writeJson(path: string, value: unknown): void {
   writeFileSync(path, `${JSON.stringify(value, undefined, 2)}\n`, { mode: 0o600 })
@@ -73,7 +75,7 @@ export class DesktopProjectManager {
    * @returns Backup path after the locked profile write, or undefined if the patch was absent.
    */
   async disableAllPlugins(): Promise<string | undefined> {
-    return this.withLock(() => sanitizeProfile('tomato', this.paths.profile, WEB_PROFILE.bundles))
+    return this.withLock(() => sanitizeProfile('tomato', this.paths.profile, DESKTOP_PROFILE_BUNDLES))
   }
 
   /**
@@ -138,7 +140,7 @@ export function createRuntimeProjectMetadata(projectDir: string, release: Deskto
     private: true,
     version: '0.0.0',
     dependencies: desktopCorePackageOverrides(packageSet),
-    tomato: { profile: { bundles: [...WEB_PROFILE.bundles] } },
+    tomato: { profile: { bundles: [...DESKTOP_PROFILE_BUNDLES] } },
   }
   writeJson(join(projectDir, 'package.json'), manifest)
   writeFileSync(
@@ -163,7 +165,7 @@ export function createDevelopmentProjectMetadata(projectDir: string, release: De
       [TOMATO_PACKAGE]: release.version,
       [DESKTOP_HOST_PACKAGE]: release.version,
     },
-    tomato: { profile: { bundles: [...WEB_PROFILE.bundles] } },
+    tomato: { profile: { bundles: [...DESKTOP_PROFILE_BUNDLES] } },
   }
   writeJson(join(projectDir, 'package.json'), manifest)
   writeFileSync(join(projectDir, 'pnpm-workspace.yaml'), workspaceFile(), { mode: 0o600 })
@@ -171,5 +173,5 @@ export function createDevelopmentProjectMetadata(projectDir: string, release: De
 
 /** Create the first external plugin profile without running a package manager. */
 export function createPluginProfile(projectDir: string): void {
-  initProfile(projectDir, WEB_PROFILE.bundles)
+  initProfile(projectDir, DESKTOP_PROFILE_BUNDLES)
 }

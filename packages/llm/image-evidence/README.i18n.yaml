@@ -1,0 +1,91 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/llm/image-evidence/README.md
+/:
+  en: 519057c76d8db1fc
+  zh: 0aa0aa1faf8944c4
+/tomato-image-evidence:
+  en: 3fe93eee5d338d32
+  zh: 5245ba7f9293bb69
+/tomato-image-evidence/summary:
+  en: c1f39387a2922a34
+  zh: ab026434f620badf
+/tomato-image-evidence/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 09388d293f9be9cb
+/tomato-image-evidence/use-this-package:
+  en: cbdd2ca529c1be67
+  zh: 9fb2905bda9a962a
+/tomato-image-evidence/use-this-package/when-to-choose-it:
+  en: 25a9c51d10287ab6
+  zh: 3fed05905106ef8a
+/tomato-image-evidence/use-this-package/minimal-configuration:
+  en: 85120568cb06d62b
+  zh: 8eacb892fb4483bf
+/tomato-image-evidence/use-this-package/reading-a-path-or-url:
+  en: 11154a98f8a1a2e2
+  zh: 62270b75cd730f6b
+/tomato-image-evidence/use-this-package/what-you-can-observe:
+  en: 306c06144223d41f
+  zh: 400217fbd1f6717e
+/tomato-image-evidence/understand-the-implementation:
+  en: 600e95c7f2991a9b
+  zh: 056dbf76cab05fb7
+/tomato-image-evidence/understand-the-implementation/generation-before-the-step:
+  en: bc224e053d3f9a9b
+  zh: bfe85a9e2818e696
+/tomato-image-evidence/understand-the-implementation/evidence-storage:
+  en: 976c0427a38735f8
+  zh: 2113abfd7b22876a
+/tomato-image-evidence/understand-the-implementation/synchronous-projection:
+  en: 8fcdb64025ad6d48
+  zh: f1019dfe963cd820
+/tomato-image-evidence/understand-the-implementation/admission:
+  en: 80561ad364dfcfb4
+  zh: 9b38c69a1dc2f279
+/tomato-image-evidence/understand-the-implementation/source-map:
+  en: 605af2bd228a75bc
+  zh: 0c1b5fdae285a2ce
+/tomato-image-evidence/further-exploration:
+  en: 13c3887618596eee
+  zh: 03925edaafe4874b
+/tomato-image-evidence/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/tomato-image-evidence/model-experience/image-evidence-blocks:
+  en: 02e4ac548c9321d8
+  zh: f0a488a3f00c84f6
+/tomato-image-evidence/model-experience/image-evidence-blocks/what-the-model-sees:
+  en: cac418960e09cd93
+  zh: ee529a34af4fd8fa
+/tomato-image-evidence/model-experience/image-evidence-blocks/what-the-model-sees/evidence-block:
+  en: e71f2a3e3a01a91d
+  zh: 8cbde8e6e85959dc
+/tomato-image-evidence/model-experience/image-evidence-blocks/token-effect:
+  en: 3f275ac6a1a7b018
+  zh: ee62db54269884db
+/tomato-image-evidence/model-experience/image-evidence-blocks/kv-cache-effect:
+  en: aa9167526c43abfc
+  zh: 7a171de170d00e42
+/tomato-image-evidence/model-experience/evidence-trust-system-prompt:
+  en: d9ff02b1f7ec6a5e
+  zh: 9947a5a13b6ea26f
+/tomato-image-evidence/model-experience/evidence-trust-system-prompt/what-the-model-sees:
+  en: 9641073e3423b9d5
+  zh: 1c6d216922e9efdd
+/tomato-image-evidence/model-experience/evidence-trust-system-prompt/what-the-model-sees/evidence-trust-section:
+  en: fd377da8c45f2db5
+  zh: e6a43f23305b33fe
+/tomato-image-evidence/model-experience/evidence-trust-system-prompt/token-effect:
+  en: 6366bfaa958284b4
+  zh: af99e7de40c32cbf
+/tomato-image-evidence/model-experience/evidence-trust-system-prompt/kv-cache-effect:
+  en: 83117b6c6557eb53
+  zh: 908bd8c3354908ce
+/tomato-image-evidence/known-limitations-and-deferred-work:
+  en: e2baa339c8a24d6a
+  zh: 42577a624cd32cb9
+/tomato-image-evidence/known-limitations-and-deferred-work/dev-note:
+  en: 013e9585f5068e07
+  zh: 8a7b0a01ad9c9924

@@ -364,6 +364,23 @@ function collectInstallationScopePackages(
       queue.push({ anchor: manifestPath, manifest })
     }
   }
+  // Extra packages the installation ships beside its dependency graph. They have
+  // no declaring edge, so they are resolved directly from the installation and
+  // become visible to bundle rows and profile plugins like any dependency.
+  for (const extra of appManifest.tomato?.runtimePackages ?? []) {
+    if (typeof extra !== 'string' || extra === '' || links.has(extra)) continue
+    const dir = packageDirFromAnchor(canonicalAnchor, extra)
+    if (dir === undefined) continue
+    let version: string | undefined
+    try {
+      version = readPackageManifest(join(realModuleDirectory(dir), 'package.json')).version
+    } catch {
+      continue
+    }
+    links.set(extra, dir)
+    declarers.set(extra, canonicalAnchor)
+    versions.set(extra, version)
+  }
   return { packageNames: new Set(links.keys()), packageDirs: links, declarers, versions }
 }
 

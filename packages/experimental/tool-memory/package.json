@@ -31,13 +31,14 @@
   "peerDependencies": {
     "@tomato/agent": "workspace:*",
     "@tomato/commands": "workspace:*",
+    "@tomato/cordis": "workspace:~",
     "@tomato/experimental-memory": "workspace:*",
     "@tomato/llm": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/session-projection": "workspace:*",
+    "@tomato/session-query": "workspace:*",
     "@tomato/timeout": "workspace:*",
-    "@tomato/tools": "workspace:*",
-    "@tomato/cordis": "workspace:~"
+    "@tomato/tools": "workspace:*"
   },
   "dependencies": {
     "@tomato/schemastery": "workspace:~",
@@ -54,6 +55,7 @@
     "@tomato/llm": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/session-projection": "workspace:*",
+    "@tomato/session-query": "workspace:*",
     "@tomato/storage": "workspace:*",
     "@tomato/storage-domain": "workspace:*",
     "@tomato/system-prompt": "workspace:*",

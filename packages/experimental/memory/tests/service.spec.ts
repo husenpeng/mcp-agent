@@ -17,6 +17,7 @@ import MemoryService, {
   memoryTokens,
   rankMemories,
   resolveMemoryLimits,
+  tokenContainment,
 } from '@tomato/experimental-memory'
 import type { Config, MemoryRecord, MemoryScope, MemoryView, RememberRequest } from '@tomato/experimental-memory'
 import { MemoryMediaPool, MemoryStorageBackend } from '../../../storage/storage-domain/tests/helpers/memory-backend.ts'
@@ -341,5 +342,132 @@ describe('MemoryService', () => {
     expect(await memory.accessOf(session)).toEqual({ kind: 'available', view: { owner: accountMemoryOwner('u-bob') } })
     account.signOut()
     expect(await memory.accessOf(session)).toEqual({ kind: 'sign-in-required' })
+  })
+})
+
+describe('relations and stats', () => {
+  it('reaches neighbors by subject, session, and attribute and follows a second hop only on request', async () => {
+    const test = await harness()
+    const { memory } = test
+    const origin = await memory.remember(request({ entity: 'client:acme', key: 'email-tone', source: { sessionId: SessionId('s-a') } }))
+    const subject = await memory.remember(request({ entity: 'client:acme', key: 'budget', source: { sessionId: SessionId('s-b') } }))
+    const attribute = await memory.remember(request({ entity: 'client:other', key: 'email-tone', source: { sessionId: SessionId('s-c') } }))
+    const sameSession = await memory.remember(request({ entity: 'user', key: 'language', scope: PROFILE, source: { sessionId: SessionId('s-a') } }))
+    const second = await memory.remember(request({ entity: 'client:globex', key: 'budget', source: { sessionId: SessionId('s-d') } }))
+    expect(memory.related(VIEW_A, origin.id).map(entry => [entry.record.id, entry.via, entry.depth])).toEqual([
+      [subject.id, 'same-entity', 1],
+      [sameSession.id, 'same-session', 1],
+      [attribute.id, 'same-key', 1],
+    ])
+    expect(memory.related(VIEW_A, origin.id).map(entry => entry.record.id)).not.toContain(second.id)
+    expect(memory.related(VIEW_A, origin.id, 2).map(entry => [entry.record.id, entry.via, entry.depth])).toEqual([
+      [subject.id, 'same-entity', 1],
+      [sameSession.id, 'same-session', 1],
+      [attribute.id, 'same-key', 1],
+      [second.id, 'same-key', 2],
+    ])
+  })
+
+  it('caps one lookup at maxRecallResults', async () => {
+    const test = await harness({ config: { maxRecallResults: 1 } })
+    const origin = await test.memory.remember(request({ entity: 'client:acme', key: 'a', source: { sessionId: SessionId('s-1') } }))
+    await test.memory.remember(request({ entity: 'client:acme', key: 'b', source: { sessionId: SessionId('s-2') } }))
+    await test.memory.remember(request({ entity: 'client:acme', key: 'c', source: { sessionId: SessionId('s-3') } }))
+    expect(test.memory.related(VIEW_A, origin.id)).toHaveLength(1)
+  })
+
+  it('reaches nothing from a candidate, a foreign owner, or another workspace, and rejects an invalid depth', async () => {
+    const test = await harness()
+    const candidate = await test.memory.remember(request({ status: 'candidate' }))
+    expect(test.memory.related(VIEW_A, candidate.id)).toEqual([])
+    const foreign = await test.memory.remember(request({ owner: accountMemoryOwner('u-other') }))
+    expect(test.memory.related(VIEW_A, foreign.id)).toEqual([])
+    const elsewhere = await test.memory.remember(request({ scope: { kind: 'workspace', path: '/work/b' } }))
+    expect(test.memory.related(VIEW_A, elsewhere.id)).toEqual([])
+    for (const depth of [0, 3, 1.5]) {
+      expect(() => test.memory.related(VIEW_A, candidate.id, depth)).toThrow(TypeError)
+    }
+  })
+
+  it('counts what a view stores and how much of its capacity that is', async () => {
+    const test = await harness({ config: { maxProfileRecords: 2, maxRecordsPerWorkspace: 5 } })
+    expect(test.memory.stats(VIEW_A).oldestActiveUpdate).toBeNull()
+    const first = await test.memory.remember(request({ entity: 'client:acme', key: 'tone' }))
+    await test.memory.remember(request({ entity: 'client:acme', key: 'budget', pinned: true }))
+    const profile = await test.memory.remember(request({ scope: PROFILE, key: 'language', value: 'Chinese' }))
+    await test.memory.remember(request({ entity: 'client:acme', key: 'contact', status: 'candidate' }))
+    expect(test.memory.stats(VIEW_A)).toEqual({
+      total: 4,
+      active: 3,
+      candidates: 1,
+      pinned: 1,
+      profile: { stored: 1, limit: 2 },
+      workspace: { stored: 3, limit: 5 },
+      oldestActiveUpdate: first.updatedAt,
+    })
+    expect(test.memory.stats({ owner: OWNER })).toEqual({
+      total: 1,
+      active: 1,
+      candidates: 0,
+      pinned: 0,
+      profile: { stored: 1, limit: 2 },
+      workspace: null,
+      oldestActiveUpdate: profile.updatedAt,
+    })
+  })
+})
+
+describe('duplicate detection', () => {
+  it('finds an active record of the same scope and kind that states nearly the same thing', async () => {
+    const test = await harness()
+    const stored = await test.memory.remember(request({ entity: 'user', key: 'email-tone', value: 'Reply in Chinese, short and direct' }))
+    expect(test.memory.duplicates({
+      owner: OWNER, scope: WORKSPACE_A, kind: 'preference', entity: 'user', key: 'reply-style', value: 'Short and direct: reply in Chinese.',
+    })).toEqual([{ record: stored, coverage: 1 }])
+  })
+
+  it('measures containment over the larger token set and treats empty sets as no overlap', () => {
+    expect(tokenContainment(new Set(['a', 'b']), new Set(['a', 'b', 'c']))).toBeCloseTo(2 / 3)
+    expect(tokenContainment(new Set(), new Set())).toBe(0)
+  })
+
+  it('orders matches by containment', async () => {
+    const test = await harness()
+    const exact = await test.memory.remember(request({ entity: 'user', key: 'tone-a', value: 'Reply in Chinese, short and direct' }))
+    const partial = await test.memory.remember(request({ entity: 'user', key: 'tone-b', value: 'Short direct: reply in Chinese' }))
+    const twin = await test.memory.remember(request({ entity: 'user', key: 'tone-d', value: 'Reply in Chinese, short and direct' }))
+    const matches = test.memory.duplicates({
+      owner: OWNER, scope: WORKSPACE_A, kind: 'preference', entity: 'user', key: 'tone-c', value: 'reply in chinese short and direct',
+    })
+    expect(matches.filter(match => match.coverage === 1).map(match => match.record.id).sort())
+      .toEqual([exact.id, twin.id].sort())
+    expect(matches.findIndex(match => match.record.id === partial.id)).toBe(2)
+  })
+
+  it('keeps exactly the documented coverage as a match', async () => {
+    const test = await harness()
+    const boundary = await test.memory.remember(request({ entity: 'user', key: 'tone-a', value: 'reply chinese short direct' }))
+    const below = await test.memory.remember(request({ entity: 'user', key: 'tone-b', value: 'reply chinese short' }))
+    const matches = test.memory.duplicates({
+      owner: OWNER, scope: WORKSPACE_A, kind: 'preference', entity: 'user', key: 'tone-c', value: 'reply chinese short direct and',
+    })
+    expect(matches.map(match => [match.record.id, match.coverage])).toEqual([[boundary.id, 0.8]])
+    expect(matches.map(match => match.record.id)).not.toContain(below.id)
+  })
+
+  it('leaves out the replaced record, candidates, other kinds, scopes, owners, and short values', async () => {
+    const test = await harness()
+    await test.memory.remember(request({ entity: 'user', key: 'email-tone', value: 'Reply in Chinese, short and direct' }))
+    const query = { owner: OWNER, scope: WORKSPACE_A, kind: 'preference' as const, entity: 'user', key: 'other-key', value: 'Reply in Chinese, short and direct' }
+    expect(test.memory.duplicates({ ...query, entity: 'user', key: 'email-tone' })).toEqual([])
+    expect(test.memory.duplicates({ ...query, kind: 'fact' })).toEqual([])
+    expect(test.memory.duplicates({ ...query, scope: { kind: 'workspace', path: '/work/b' } })).toEqual([])
+    expect(test.memory.duplicates({ ...query, owner: accountMemoryOwner('u-other') })).toEqual([])
+    await test.memory.remember(request({ entity: 'user', key: 'emoji', value: 'Use emoji sparingly in replies', status: 'candidate' }))
+    expect(test.memory.duplicates({ ...query, entity: 'user', key: 'emoji-2', value: 'Use emoji sparingly in replies' })).toEqual([])
+    const short = await test.memory.remember(request({ entity: 'user', key: 'lang', value: 'Chinese' }))
+    expect(test.memory.duplicates({ ...query, entity: 'user', key: 'lang-2', value: 'Chinese' })).toEqual([])
+    expect(test.memory.duplicates({ ...query, entity: 'user', key: 'lang-3', value: 'Reply in Chinese, short and direct' })
+      .map(match => match.record.id)).not.toContain(short.id)
   })
 })

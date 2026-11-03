@@ -1,0 +1,1078 @@
+// Generated from src/client by `npm run build` (scripts/build-client.mjs). Do not edit by hand.
+window.__ModuleLoader__.load({
+  id: 'tomato-market',
+  factory: (require) => {
+const module = { exports: {} }
+"use strict";
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// src/client/index.jsx
+var index_exports = {};
+__export(index_exports, {
+  apply: () => apply,
+  inject: () => inject
+});
+module.exports = __toCommonJS(index_exports);
+var import_jsx_runtime5 = require("react/jsx-runtime");
+
+// src/client/i18n.js
+var NS = "tomato-market";
+var zh = {
+  tab: "插件市场",
+  lede: "浏览开源 DeepSeek Harness 插件目录，安装能在 Tomato 中运行的插件。",
+  searchPlaceholder: "搜索插件、作者或关键词",
+  all: "全部",
+  sortLabel: "排序",
+  sortStars: "按 GitHub 星标",
+  sortUpdated: "按更新时间",
+  sortName: "按名称",
+  refresh: "刷新目录",
+  plugins: "{count} 个插件",
+  categories: "{count} 个分类",
+  loading: "正在读取插件目录…",
+  loadFailed: "读取插件目录失败",
+  retry: "重试",
+  empty: "没有匹配的插件",
+  clear: "清除搜索",
+  install: "安装",
+  checking: "检查中…",
+  open: "查看 {name} 的详情",
+  stars: "★ {count}",
+  noStars: "暂无星标",
+  viewAll: "查看全部 {count} 个",
+  back: "返回插件市场",
+  more: "加载更多",
+  filtered: "筛选结果",
+  homepage: "主页",
+  repository: "源码仓库",
+  versions: "版本",
+  published: "发布于 {date}",
+  author: "作者 {author}",
+  detailTitle: "插件说明",
+  detailLoading: "正在读取插件说明…",
+  detailNone: "该插件没有提供说明文档。",
+  detailFailed: "读取说明失败",
+  retryDetail: "重试",
+  compatTomato: "兼容 Tomato",
+  compatDsh: "DSH 兼容",
+  compatOther: "不是插件包",
+  compatUnknown: "兼容性未知",
+  dshRequirement: "需要 DeepSeek Harness {range}",
+  tomatoRequirement: "需要 Tomato {range}",
+  compatNoticeTitle: "此插件来自 DeepSeek Harness，将通过兼容层安装",
+  compatNoticeBody: "安装时会下载该版本，把 @deepseek-ai/* 包名、dsh 清单字段与代码导入改写为 @tomato/*，再交给 Tomato 的安装器。兼容层只做命名与清单转换，不保证插件内部 API 完全一致，个别插件仍可能加载失败。",
+  adaptFailedTitle: "兼容转换失败",
+  adaptFailedBody: "转换这个版本时失败：{reason}",
+  installCompat: "安装兼容版",
+  otherNoticeTitle: "此包不是 Tomato 插件",
+  otherNoticeBody: "它没有声明 tomato.bundle，安装后不会出现在插件列表中，也不会被加载。",
+  unknownNoticeTitle: "无法确认此版本的兼容性",
+  unknownNoticeBody: "注册表没有返回有效的清单（{reason}）。仍可继续，Tomato 会在安装时再检查一次。",
+  continueInstall: "仍然安装",
+  close: "关闭",
+  viewRepository: "打开源码仓库",
+  codeCopy: "复制",
+  codeCopied: "已复制",
+  codeBlock: "代码块",
+  codeWrap: "自动换行",
+  codeUnwrap: "取消换行",
+  footnotes: "脚注",
+  fromCatalog: "目录来源：{title}",
+  starNote: "星标来自 GitHub，按仓库匹配",
+  installFailed: "安装检查失败：{reason}",
+  noVersions: "没有可用版本",
+  versionListed: "v{version}",
+  sourcePackage: "npm 包",
+  sourceRegistry: "注册表",
+  sourceGit: "Git 仓库",
+  sourceCommit: "提交",
+  sourceDirectory: "包目录",
+  banner: "目录内容来自社区，Tomato 只校验文件格式，不校验作者声明。安装前请核对来源。"
+};
+var en = {
+  tab: "Plugin market",
+  lede: "Browse the open DeepSeek Harness plugin catalog and install plugins that run in Tomato.",
+  searchPlaceholder: "Search plugins, authors, or keywords",
+  all: "All",
+  sortLabel: "Sort",
+  sortStars: "By GitHub stars",
+  sortUpdated: "By last update",
+  sortName: "By name",
+  refresh: "Refresh catalog",
+  plugins: "{count} plugins",
+  categories: "{count} categories",
+  loading: "Reading the plugin catalog…",
+  loadFailed: "Could not read the plugin catalog",
+  retry: "Retry",
+  empty: "No matching plugins",
+  clear: "Clear search",
+  install: "Install",
+  checking: "Checking…",
+  open: "Open {name}",
+  stars: "★ {count}",
+  noStars: "No stars yet",
+  viewAll: "View all {count}",
+  back: "Back to plugin market",
+  more: "Show more",
+  filtered: "Filtered",
+  homepage: "Homepage",
+  repository: "Source code",
+  versions: "Versions",
+  published: "Published {date}",
+  author: "by {author}",
+  detailTitle: "Plugin description",
+  detailLoading: "Reading the plugin description…",
+  detailNone: "This plugin declares no description document.",
+  detailFailed: "Could not read the description",
+  retryDetail: "Retry",
+  compatTomato: "Tomato compatible",
+  compatDsh: "DSH compatible",
+  compatOther: "Not a plugin package",
+  compatUnknown: "Compatibility unknown",
+  dshRequirement: "Requires DeepSeek Harness {range}",
+  tomatoRequirement: "Requires Tomato {range}",
+  compatNoticeTitle: "This DeepSeek Harness plugin installs through the compatibility layer",
+  compatNoticeBody: "Installation downloads this version, rewrites @deepseek-ai package names, dsh manifest fields, and code imports to @tomato names, then hands it to Tomato's installer. The layer converts names and metadata only; an individual plugin may still fail to load if its internals changed.",
+  adaptFailedTitle: "Compatibility conversion failed",
+  adaptFailedBody: "Converting this version failed: {reason}",
+  installCompat: "Install compatible build",
+  otherNoticeTitle: "This package is not a Tomato plugin",
+  otherNoticeBody: "It declares no tomato.bundle, so installation would not add a loadable plugin layer.",
+  unknownNoticeTitle: "Could not confirm this version",
+  unknownNoticeBody: "No registry returned a usable manifest ({reason}). You can continue; Tomato checks compatibility again when it installs.",
+  continueInstall: "Install anyway",
+  close: "Close",
+  viewRepository: "Open source repository",
+  codeCopy: "Copy",
+  codeCopied: "Copied",
+  codeBlock: "Code block",
+  codeWrap: "Wrap lines",
+  codeUnwrap: "Unwrap lines",
+  footnotes: "Footnotes",
+  fromCatalog: "Catalog: {title}",
+  starNote: "Star counts come from GitHub, matched by repository",
+  installFailed: "Compatibility check failed: {reason}",
+  noVersions: "No installable version",
+  versionListed: "v{version}",
+  sourcePackage: "npm package",
+  sourceRegistry: "Registry",
+  sourceGit: "Git repository",
+  sourceCommit: "Commit",
+  sourceDirectory: "Package directory",
+  banner: "Catalog entries are third-party content. Tomato validates the file format, not the claims. Check the source before installing."
+};
+var DICTIONARIES = { zh, en };
+function installI18n(ctx) {
+  ctx.effect(() => ctx.locale.register(NS, DICTIONARIES), "tomato-market: dictionaries");
+  const t = ctx.locale.bind(NS);
+  return { t, language: () => ctx.locale.getLocale().active };
+}
+
+// src/client/api.js
+var ROUTE = "api/tomato-market";
+async function call(endpoint, payload = {}, signal) {
+  let response;
+  try {
+    response = await fetch(new URL(ROUTE, document.baseURI), {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ endpoint, payload }),
+      signal
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") throw error;
+    throw new Error(`network: ${error?.message ?? error}`);
+  }
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const result = await response.json();
+  if (!result.ok) throw new Error(result.error?.message ?? "request failed");
+  return result.data;
+}
+function readCatalog(refresh = false) {
+  return call("catalog", { refresh });
+}
+function readManifest(plugin, version) {
+  return call("manifest", { name: plugin.name, version: version.version });
+}
+function adaptVersion(plugin, version) {
+  return call("adapt", { name: plugin.name, version: version.version });
+}
+function readDetail(plugin, version) {
+  return call("detail", { name: plugin.name, version: version.version });
+}
+
+// src/client/search.js
+function localized(value, language) {
+  if (value === void 0) return "";
+  if (typeof value === "string") return value;
+  return value[language] ?? value.en ?? Object.values(value)[0] ?? "";
+}
+function latestVersion(plugin) {
+  return plugin.versions[0];
+}
+function starsOf(plugin, stars) {
+  const direct = stars[`npm:${plugin.name}`];
+  if (direct !== void 0) return direct;
+  const slug = /^https?:\/\/(?:www\.)?github\.com\/([^/]+)\/([^/#?]+?)(?:\.git)?(?:[/#?].*)?$/i.exec(plugin.repository?.url ?? "");
+  if (slug === null) return void 0;
+  return stars[`gh:${slug[1].toLowerCase()}/${slug[2].toLowerCase()}`];
+}
+function formatStars(count) {
+  if (count === void 0) return "";
+  if (count < 1e3) return String(count);
+  if (count < 1e6) return `${(count / 1e3).toFixed(count < 1e4 ? 1 : 0).replace(/\.0$/, "")}k`;
+  return `${(count / 1e6).toFixed(1).replace(/\.0$/, "")}m`;
+}
+function formatDate(timestamp, language) {
+  if (typeof timestamp !== "number" || !Number.isFinite(timestamp)) return "";
+  return new Intl.DateTimeFormat(language, { dateStyle: "medium" }).format(new Date(timestamp * 1e3));
+}
+var searchTexts = /* @__PURE__ */ new WeakMap();
+function searchText(plugin, language) {
+  let byLanguage = searchTexts.get(plugin);
+  if (byLanguage === void 0) {
+    byLanguage = /* @__PURE__ */ new Map();
+    searchTexts.set(plugin, byLanguage);
+  }
+  let text = byLanguage.get(language);
+  if (text === void 0) {
+    text = [
+      plugin.name,
+      localized(plugin.title, language),
+      localized(plugin.description, language),
+      plugin.author ?? "",
+      plugin.category ?? "",
+      ...plugin.keywords ?? []
+    ].join("\n").toLowerCase();
+    byLanguage.set(language, text);
+  }
+  return text;
+}
+function filterPlugins(plugins, { query = "", category = null, language }) {
+  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (words.length === 0 && category === null) return plugins;
+  return plugins.filter((plugin) => {
+    if (category !== null && plugin.category !== category) return false;
+    if (words.length === 0) return true;
+    const text = searchText(plugin, language);
+    return words.every((word) => text.includes(word));
+  });
+}
+function sortPlugins(plugins, sort, stars, language) {
+  const collator = new Intl.Collator(language);
+  const byName = (a, b) => collator.compare(localized(a.title, language) || a.name, localized(b.title, language) || b.name);
+  const ordered = [...plugins];
+  switch (sort) {
+    case "stars":
+      return ordered.sort((a, b) => {
+        const left = starsOf(a, stars);
+        const right = starsOf(b, stars);
+        if (left === void 0 || right === void 0) {
+          if (left !== right) return left === void 0 ? 1 : -1;
+        } else if (left !== right) return right - left;
+        return byName(a, b);
+      });
+    case "updated":
+      return ordered.sort((a, b) => (latestVersion(b)?.publishTimestamp ?? 0) - (latestVersion(a)?.publishTimestamp ?? 0) || byName(a, b));
+    case "name":
+      return ordered.sort(byName);
+    default:
+      return ordered;
+  }
+}
+function categoryCounts(plugins) {
+  const counts = /* @__PURE__ */ new Map();
+  for (const plugin of plugins) {
+    if (plugin.category === void 0) continue;
+    counts.set(plugin.category, (counts.get(plugin.category) ?? 0) + 1);
+  }
+  return counts;
+}
+function categorySections(plugins, categories, stars, language, limit, sort = "stars") {
+  const counts = categoryCounts(plugins);
+  const declared = categories.filter((category) => counts.has(category.id));
+  const titleOf = new Map(declared.map((category) => [category.id, localized(category.title, language)]));
+  const extra = [...counts.keys()].filter((id) => !titleOf.has(id));
+  for (const id of extra) titleOf.set(id, id);
+  return [...titleOf.keys()].map((id) => {
+    const members = sortPlugins(plugins.filter((plugin) => plugin.category === id), sort, stars, language);
+    return { id, title: titleOf.get(id) ?? id, count: counts.get(id) ?? 0, total: members.length, plugins: members.slice(0, limit) };
+  }).sort((a, b) => b.total - a.total || new Intl.Collator(language).compare(a.title, b.title));
+}
+function targetsDeepSeek(version) {
+  return typeof version?.dsh === "string";
+}
+function installTarget(plugin, version) {
+  if (version.source.type === "git") {
+    return { spec: `git+${version.source.url}.git#${version.source.commit}${version.source.path === void 0 ? "" : `&path:/${version.source.path}`}` };
+  }
+  return {
+    spec: `${plugin.name}@${version.version}`,
+    ...version.source.registry === void 0 ? {} : { registry: version.source.registry }
+  };
+}
+
+// src/client/store.js
+function createStore(initial) {
+  let state = initial;
+  const listeners = /* @__PURE__ */ new Set();
+  return {
+    get: () => state,
+    set(next) {
+      state = next;
+      for (const listener of [...listeners]) listener();
+    },
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    }
+  };
+}
+function createController(i18n) {
+  const store = createStore({
+    status: "idle",
+    catalog: null,
+    failure: null,
+    language: i18n.language(),
+    query: "",
+    category: null,
+    sort: "stars",
+    limit: 60,
+    selected: null,
+    detail: { status: "idle" },
+    compat: { status: "idle" },
+    checking: null,
+    notice: null
+  });
+  let loadToken = 0;
+  let detailToken = 0;
+  const set = (patch) => {
+    store.set({ ...store.get(), ...patch });
+  };
+  const state = () => store.get();
+  const load = async (refresh = false) => {
+    const token = ++loadToken;
+    set({ status: state().catalog === null ? "loading" : state().status, failure: null });
+    try {
+      const catalog = await readCatalog(refresh);
+      if (token !== loadToken) return;
+      set({ status: "ready", catalog, failure: null });
+    } catch (error) {
+      if (token !== loadToken) return;
+      set({ status: "error", failure: error?.message ?? String(error) });
+    }
+  };
+  const open = async (plugin) => {
+    const token = ++detailToken;
+    const version = latestVersion(plugin);
+    set({
+      selected: plugin,
+      detail: { status: "loading" },
+      compat: { status: "loading" }
+    });
+    if (version !== void 0) {
+      readDetail(plugin, version).then(
+        (detail) => {
+          if (token === detailToken) set({ detail: detail.status === "found" ? { status: "found", markdown: detail.markdown } : { status: "none" } });
+        },
+        (error) => {
+          if (token === detailToken) set({ detail: { status: "error", message: error?.message ?? String(error) } });
+        }
+      );
+      readManifest(plugin, version).then(
+        (compat) => {
+          if (token === detailToken) set({ compat: { status: "ready", data: compat } });
+        },
+        (error) => {
+          if (token === detailToken) set({ compat: { status: "error", reason: error?.message ?? String(error) } });
+        }
+      );
+    }
+  };
+  const retryDetail = () => {
+    const plugin = state().selected;
+    if (plugin === null) return;
+    void open(plugin);
+  };
+  const install = async (plugin, version, installFn) => {
+    if (state().checking !== null) return;
+    set({ checking: plugin.name, notice: null });
+    let compat;
+    try {
+      compat = await readManifest(plugin, version);
+    } catch (error) {
+      set({
+        checking: null,
+        notice: {
+          kind: "unknown",
+          plugin,
+          version,
+          reason: error?.message ?? String(error)
+        }
+      });
+      return;
+    }
+    const title = localized(plugin.title, state().language) || plugin.name;
+    const target = installTarget(plugin, version);
+    if (compat.class === "tomato") {
+      set({ checking: null });
+      installFn({ ...target, title, version: version.version });
+      return;
+    }
+    set({
+      checking: null,
+      notice: {
+        kind: compat.class === "dsh" ? "compat" : "other",
+        plugin,
+        version,
+        compat
+      }
+    });
+  };
+  const adaptAndInstall = async (installFn) => {
+    const notice = state().notice;
+    if (notice === null || notice.kind !== "compat") return;
+    const { plugin, version } = notice;
+    set({ checking: plugin.name, notice: null });
+    try {
+      const adapted = await adaptVersion(plugin, version);
+      set({ checking: null });
+      installFn({
+        spec: adapted.spec,
+        title: localized(plugin.title, state().language) || plugin.name,
+        version: version.version
+      });
+    } catch (error) {
+      set({
+        checking: null,
+        notice: { kind: "adapt-failed", plugin, version, reason: error?.message ?? String(error) }
+      });
+    }
+  };
+  const confirmOverride = (installFn) => {
+    const notice = state().notice;
+    if (notice === null || notice.kind !== "unknown") return;
+    const { plugin, version } = notice;
+    const title = localized(plugin.title, state().language) || plugin.name;
+    set({ notice: null });
+    installFn({ ...installTarget(plugin, version), title, version: version.version });
+  };
+  return {
+    store,
+    getState: state,
+    ensure: () => {
+      if (state().status === "idle") void load();
+    },
+    reload: () => {
+      void load(true);
+    },
+    retry: () => {
+      void load(false);
+    },
+    setLanguage: (language) => {
+      if (language !== state().language) set({ language });
+    },
+    setQuery: (query) => {
+      set({ query, limit: 60 });
+    },
+    setCategory: (category) => {
+      set({ category, query: "", limit: 60 });
+    },
+    setSort: (sort) => {
+      set({ sort });
+    },
+    showMore: () => {
+      set({ limit: state().limit + 60 });
+    },
+    open,
+    back: () => {
+      detailToken += 1;
+      set({ selected: null, detail: { status: "idle" }, compat: { status: "idle" } });
+    },
+    retryDetail,
+    install,
+    adaptAndInstall,
+    confirmOverride,
+    dismissNotice: () => {
+      set({ notice: null });
+    }
+  };
+}
+
+// src/client/market.jsx
+var import_jsx_runtime4 = require("react/jsx-runtime");
+
+// src/client/styles.js
+var MARKET_CSS = `
+.tm-section { display: flex; flex-direction: column; gap: 16px; }
+.tm-lede { margin: 0; font-size: 13px; line-height: 20px; color: var(--dsw-alias-label-tertiary); }
+.tm-banner { display: flex; gap: 8px; align-items: flex-start; margin: 0; padding: 10px 12px; border-radius: var(--dsw-radius-lg); background: var(--dsw-alias-bg-module-platform); font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary); }
+.tm-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.tm-search { flex: 1; min-width: 160px; }
+.tm-source { color: var(--dsw-alias-state-business-primary); text-decoration: none; }
+.tm-source:hover { text-decoration: underline; }
+.tm-count { margin: 0; font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary); white-space: nowrap; }
+.tm-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.tm-group { display: flex; flex-direction: column; gap: 6px; }
+.tm-groupHead { display: flex; align-items: baseline; gap: 8px; }
+.tm-groupTitle { margin: 0; font-size: 13px; line-height: 20px; font-weight: 600; color: var(--dsw-alias-label-secondary); }
+.tm-groupCount { font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary); }
+.tm-groupMore { margin-left: auto; padding: 0; border: 0; background: transparent; color: var(--dsw-alias-state-business-primary); font: inherit; font-size: 12px; cursor: pointer; }
+.tm-groupMore:hover { text-decoration: underline; }
+.tm-cards { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.tm-card { position: relative; display: flex; align-items: center; gap: 14px; margin: 0 -8px; padding: 8px; border-radius: var(--dsw-radius-xl); }
+@media (hover: hover) { .tm-card:hover { background: var(--dsw-alias-interactive-bg-hover); } }
+.tm-icon { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 48px; height: 48px; border: .5px solid var(--dsw-alias-border-l3); border-radius: var(--dsw-radius-lg); color: var(--dsw-alias-label-secondary); overflow: hidden; }
+.tm-image { width: 36px; height: 36px; object-fit: contain; }
+.tm-main { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
+.tm-titleRow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.tm-cardOpen { max-width: 100%; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; font-size: 14px; line-height: 20px; font-weight: 500; text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tm-cardOpen::after { content: ''; position: absolute; inset: 0; border-radius: var(--dsw-radius-xl); }
+.tm-cardOpen:focus-visible { outline: none; }
+.tm-cardOpen:focus-visible::after { outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary)); outline-offset: 2px; }
+.tm-description { display: -webkit-box; overflow: hidden; font-size: 13px; line-height: 18px; color: var(--dsw-alias-label-tertiary); -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.tm-meta { font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary); overflow-wrap: anywhere; }
+.tm-stars { font-variant-numeric: tabular-nums; }
+.tm-end { position: relative; z-index: 1; display: inline-flex; flex: none; align-items: center; gap: 8px; }
+.tm-status { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; padding: 16px 0; }
+.tm-error { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 13px; line-height: 20px; color: var(--dsw-alias-state-error-primary); }
+.tm-skeletons { display: flex; flex-direction: column; gap: 2px; }
+.tm-skeleton { display: flex; align-items: center; gap: 14px; padding: 8px; margin: 0 -8px; }
+.tm-skeletonIcon { width: 48px; height: 48px; border-radius: var(--dsw-radius-lg); background: var(--dsw-alias-bg-module-platform); animation: tm-pulse 1.6s ease-in-out infinite; }
+.tm-skeletonLines { display: flex; flex: 1; flex-direction: column; gap: 6px; }
+.tm-skeletonLine { height: 12px; border-radius: var(--dsw-radius-sm); background: var(--dsw-alias-bg-module-platform); animation: tm-pulse 1.6s ease-in-out infinite; }
+.tm-skeletonLine:nth-child(2) { width: 60%; }
+@keyframes tm-pulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .tm-skeletonIcon, .tm-skeletonLine { animation: none; } }
+.tm-more { display: flex; justify-content: center; padding: 8px 0; }
+.tm-detail { display: flex; flex-direction: column; gap: 16px; }
+.tm-back { display: inline-flex; align-self: flex-start; align-items: center; gap: 6px; padding: 0; border: 0; background: transparent; color: var(--dsw-alias-label-secondary); font: inherit; font-size: 13px; cursor: pointer; }
+.tm-back:hover { color: var(--dsw-alias-label-primary); }
+.tm-head { display: flex; align-items: flex-start; gap: 14px; }
+.tm-headIcon { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 56px; height: 56px; border: .5px solid var(--dsw-alias-border-l3); border-radius: var(--dsw-radius-lg); }
+.tm-headMain { display: flex; flex: 1; flex-direction: column; gap: 4px; min-width: 0; }
+.tm-headTitle { margin: 0; font-size: 18px; line-height: 26px; font-weight: 600; overflow-wrap: anywhere; }
+.tm-headMeta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary); }
+.tm-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.tm-descriptionFull { margin: 0; font-size: 14px; line-height: 22px; color: var(--dsw-alias-label-secondary); white-space: pre-wrap; }
+.tm-sectionTitle { margin: 0; font-size: 13px; line-height: 20px; font-weight: 600; color: var(--dsw-alias-label-secondary); }
+.tm-facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; font-size: 13px; line-height: 20px; }
+.tm-facts dt { color: var(--dsw-alias-label-tertiary); }
+.tm-facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.tm-facts a { color: var(--dsw-alias-state-business-primary); text-decoration: none; }
+.tm-facts a:hover { text-decoration: underline; }
+.tm-versions { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.tm-version { display: flex; align-items: center; gap: 12px; padding: 6px 0; }
+.tm-versionMain { display: flex; flex: 1; flex-direction: column; gap: 1px; min-width: 0; }
+.tm-versionName { font-size: 13px; line-height: 20px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.tm-notice { display: flex; flex-direction: column; gap: 10px; font-size: 13px; line-height: 20px; color: var(--dsw-alias-label-secondary); }
+.tm-notice p { margin: 0; }
+.tm-noticeRange { font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary); }
+.tm-linkButton { align-self: flex-start; }
+
+@media (max-width: 720px) {
+  .tm-card { gap: 10px; }
+  .tm-icon { width: 40px; height: 40px; }
+  .tm-image { width: 30px; height: 30px; }
+  .tm-description { -webkit-line-clamp: 2; }
+}
+`;
+function installStyles() {
+  if (typeof document === "undefined") return;
+  const id = "tomato-market-styles";
+  if (document.getElementById(id) !== null) return;
+  const style = document.createElement("style");
+  style.id = id;
+  style.textContent = MARKET_CSS;
+  document.head.appendChild(style);
+}
+
+// src/client/widgets.jsx
+var import_jsx_runtime = require("react/jsx-runtime");
+var import_react = require("react");
+var import_client_ui_primitives = require("@tomato/client-ui-primitives");
+function MarketIcon({ src, size = 36 }) {
+  const [failed, setFailed] = (0, import_react.useState)();
+  return src === void 0 || src === failed ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_client_ui_primitives.PluginArtworkDefault, { size }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", { className: "tm-image", src, width: size, height: size, alt: "", loading: "lazy", referrerPolicy: "no-referrer", onError: () => {
+    setFailed(src);
+  } });
+}
+function Stars({ plugin, stars, t }) {
+  const count = starsOf(plugin, stars);
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_client_ui_primitives.Tag, { tone: "quiet", className: "tm-stars", children: count === void 0 ? t("noStars") : t("stars", { count: formatStars(count) }) });
+}
+function metaLine(plugin, language, t) {
+  const version = latestVersion(plugin);
+  if (version === void 0) return t("noVersions");
+  const date = formatDate(version.publishTimestamp, language);
+  return [t("versionListed", { version: version.version }), date === "" ? "" : t("published", { date }), plugin.author === void 0 ? "" : t("author", { author: plugin.author })].filter((part) => part !== "").join(" · ");
+}
+function MarketCard({ plugin, t, language, stars, checking, onOpen, onInstall }) {
+  const title = localized(plugin.title, language) || plugin.name;
+  const version = latestVersion(plugin);
+  const description = localized(plugin.description, language);
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { className: "tm-card", "data-market-plugin": plugin.name, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "tm-icon", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MarketIcon, { src: plugin.icon }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "tm-main", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "tm-titleRow", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { type: "button", className: "tm-cardOpen", "aria-label": t("open", { name: title }), onClick: onOpen, children: title }),
+        targetsDeepSeek(version) ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_client_ui_primitives.Tag, { tone: "warning", children: t("compatDsh") }) : null
+      ] }),
+      description === "" ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "tm-description", children: description }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "tm-meta", children: metaLine(plugin, language, t) })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "tm-end", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stars, { plugin, stars, t }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_client_ui_primitives.Button, { variant: "outline", size: "sm", disabled: checking, onClick: () => {
+        onInstall(plugin);
+      }, children: checking ? t("checking") : t("install") })
+    ] })
+  ] });
+}
+function MarketSkeletons({ label }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "tm-skeletons", role: "status", "aria-label": label, children: [0, 1, 2, 3].map((row) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "tm-skeleton", "aria-hidden": "true", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "tm-skeletonIcon" }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "tm-skeletonLines", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "tm-skeletonLine" }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "tm-skeletonLine" })
+    ] })
+  ] }, row)) });
+}
+
+// src/client/detail.jsx
+var import_jsx_runtime2 = require("react/jsx-runtime");
+var import_client_ui_primitives2 = require("@tomato/client-ui-primitives");
+function sourceFacts(plugin, version, t) {
+  const facts = [];
+  if (version.source.type === "git") {
+    facts.push({ label: t("sourceGit"), value: version.source.url });
+    facts.push({ label: t("sourceCommit"), value: version.source.commit });
+    if (version.source.path !== void 0) facts.push({ label: t("sourceDirectory"), value: version.source.path });
+  } else {
+    facts.push({ label: t("sourcePackage"), value: `${plugin.name}@${version.version}` });
+    if (version.source.registry !== void 0) facts.push({ label: t("sourceRegistry"), value: version.source.registry });
+  }
+  return facts;
+}
+function compatKey(compat) {
+  if (compat.status !== "ready") return "compatUnknown";
+  switch (compat.data?.class) {
+    case "tomato":
+      return "compatTomato";
+    case "dsh":
+      return "compatDsh";
+    case "other":
+      return "compatOther";
+    default:
+      return "compatUnknown";
+  }
+}
+function compatTone(compat) {
+  if (compat.status !== "ready") return "quiet";
+  switch (compat.data?.class) {
+    case "tomato":
+      return "success";
+    case "dsh":
+      return "info";
+    case "other":
+      return "neutral";
+    default:
+      return "quiet";
+  }
+}
+function VersionRow({ plugin, version, state, controller, install, t }) {
+  const reg = installTarget(plugin, version);
+  const date = formatDate(version.publishTimestamp, state.language);
+  const requirement = version.dsh !== void 0 ? t("dshRequirement", { range: version.dsh }) : version.tomato !== void 0 ? t("tomatoRequirement", { range: version.tomato }) : "";
+  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("li", { className: "tm-version", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "tm-versionMain", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "tm-versionName", children: version.version }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "tm-meta", children: [date, requirement, reg.spec].filter((part) => part !== "").join(" · ") })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+      import_client_ui_primitives2.Button,
+      {
+        variant: "ghost",
+        size: "sm",
+        disabled: state.checking !== null,
+        onClick: () => {
+          void controller.install(plugin, version, install);
+        },
+        children: t("install")
+      }
+    )
+  ] });
+}
+function PluginPage({ plugin, state, controller, install, t }) {
+  const language = state.language;
+  const title = localized(plugin.title, language) || plugin.name;
+  const version = latestVersion(plugin);
+  const stars = starsOf(plugin, state.catalog?.stars ?? {});
+  const description = localized(plugin.description, language);
+  const facts = version === void 0 ? [] : sourceFacts(plugin, version, t);
+  const labels = (0, import_client_ui_primitives2.useDetailDocumentLabels)({
+    title: t("detailTitle"),
+    loading: t("detailLoading"),
+    retry: t("retryDetail"),
+    copy: t("codeCopy"),
+    copied: t("codeCopied"),
+    codeBlock: t("codeBlock"),
+    wrap: t("codeWrap"),
+    unwrap: t("codeUnwrap"),
+    footnotes: t("footnotes")
+  });
+  const documentState = state.detail.status === "found" ? { status: "found", markdown: state.detail.markdown } : state.detail.status === "none" ? { status: "none" } : state.detail.status === "error" ? { status: "error", message: `${t("detailFailed")}：${state.detail.message}` } : { status: "loading" };
+  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "tm-detail", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("button", { type: "button", className: "tm-back", onClick: controller.back, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_client_ui_primitives2.IconChevronLeftOutlineRegular, { size: 14, "aria-hidden": "true" }),
+      t("back")
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "tm-head", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "tm-headIcon", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(MarketIcon, { src: plugin.icon, size: 40 }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "tm-headMain", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("h2", { className: "tm-headTitle", children: title }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "tm-headMeta", children: [
+          plugin.category === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_client_ui_primitives2.Tag, { tone: "info", children: localized(state.catalog?.categories?.find((entry) => entry.id === plugin.category)?.title, language) || plugin.category }),
+          targetsDeepSeek(version) ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_client_ui_primitives2.Tag, { tone: "warning", children: t("compatDsh") }) : null,
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_client_ui_primitives2.Tooltip, { label: t("starNote"), side: "bottom", portal: true, delayMs: 400, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "tm-stars", children: stars === void 0 ? t("noStars") : t("stars", { count: formatStars(stars) }) }) }),
+          plugin.author === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: t("author", { author: plugin.author }) })
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "tm-end", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_client_ui_primitives2.Tag, { tone: compatTone(state.compat), children: t(compatKey(state.compat)) }),
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+          import_client_ui_primitives2.Button,
+          {
+            variant: "outline",
+            size: "sm",
+            disabled: state.checking !== null || version === void 0,
+            onClick: () => {
+              if (version !== void 0) void controller.install(plugin, version, install);
+            },
+            children: state.checking === plugin.name ? t("checking") : t("install")
+          }
+        )
+      ] })
+    ] }),
+    description === "" ? null : /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("p", { className: "tm-descriptionFull", children: description }),
+    facts.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("dl", { className: "tm-facts", children: [
+      facts.map((fact) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Row, { label: fact.label, value: fact.value }, fact.label)),
+      plugin.homepage === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Row, { label: t("homepage"), link: plugin.homepage }),
+      plugin.repository === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Row, { label: t("repository"), link: plugin.repository.url, directory: plugin.repository.directory })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("section", { className: "tm-group", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("h3", { className: "tm-sectionTitle", children: t("versions") }),
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("ul", { className: "tm-versions", children: plugin.versions.map((entry) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(VersionRow, { plugin, version: entry, state, controller, install, t }, entry.version)) })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("section", { className: "tm-group", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("h3", { className: "tm-sectionTitle", children: t("detailTitle") }),
+      state.detail.status === "none" ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("p", { className: "tm-lede", children: t("detailNone") }) : null,
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_client_ui_primitives2.DetailDocument, { state: documentState, labels, onRetry: controller.retryDetail })
+    ] })
+  ] });
+}
+function Row({ label, value, link, directory }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("dt", { children: label }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("dd", { children: [
+      link === void 0 ? value : /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("a", { href: link, target: "_blank", rel: "noreferrer noopener", children: value ?? link }),
+      directory === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "tm-meta", children: [
+        " · ",
+        directory
+      ] })
+    ] })
+  ] });
+}
+
+// src/client/notice.jsx
+var import_jsx_runtime3 = require("react/jsx-runtime");
+var import_client_ui_primitives3 = require("@tomato/client-ui-primitives");
+function InstallNotice({ notice, t, onClose, onContinue, onAdapt }) {
+  const { kind, plugin, compat } = notice;
+  const title = kind === "compat" ? t("compatNoticeTitle") : kind === "adapt-failed" ? t("adaptFailedTitle") : kind === "other" ? t("otherNoticeTitle") : t("unknownNoticeTitle");
+  const body = kind === "compat" ? t("compatNoticeBody") : kind === "adapt-failed" ? t("adaptFailedBody", { reason: notice.reason ?? "" }) : kind === "other" ? t("otherNoticeBody") : t("unknownNoticeBody", { reason: notice.reason ?? "" });
+  const range = kind === "compat" && typeof compat?.dshRange === "string" ? t("dshRequirement", { range: compat.dshRange }) : "";
+  const repository = plugin.repository?.url;
+  return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+    import_client_ui_primitives3.Modal,
+    {
+      open: true,
+      onClose,
+      title,
+      closeLabel: t("close"),
+      footer: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
+        kind === "unknown" ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_client_ui_primitives3.Button, { variant: "primary", size: "sm", onClick: onContinue, children: t("continueInstall") }) : null,
+        kind === "compat" ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_client_ui_primitives3.Button, { variant: "primary", size: "sm", onClick: onAdapt, children: t("installCompat") }) : null,
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(import_client_ui_primitives3.Button, { variant: "ghost", size: "sm", onClick: onClose, children: t("close") })
+      ] }),
+      children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "tm-notice", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("p", { children: body }),
+        range === "" ? null : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("p", { className: "tm-noticeRange", children: range }),
+        repository === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("a", { className: "tm-linkButton", href: repository, target: "_blank", rel: "noreferrer noopener", children: t("viewRepository") })
+      ] })
+    }
+  );
+}
+
+// src/client/market.jsx
+var import_react2 = require("react");
+var import_client_ui_primitives4 = require("@tomato/client-ui-primitives");
+var SORTS = ["stars", "updated", "name"];
+function sortLabel(state, t) {
+  switch (state.sort) {
+    case "updated":
+      return t("sortUpdated");
+    case "name":
+      return t("sortName");
+    default:
+      return t("sortStars");
+  }
+}
+function Browse({ state, controller, install, t }) {
+  const [sortMenu, setSortMenu] = (0, import_react2.useState)(false);
+  const catalog = state.catalog;
+  const language = state.language;
+  const counts = (0, import_react2.useMemo)(() => catalog === null ? /* @__PURE__ */ new Map() : categoryCounts(catalog.plugins), [catalog]);
+  const pills = (0, import_react2.useMemo)(() => {
+    if (catalog === null) return [];
+    return catalog.categories.filter((category) => counts.has(category.id)).map((category) => ({ id: category.id, title: localized(category.title, language), count: counts.get(category.id) ?? 0 })).sort((a, b) => b.count - a.count);
+  }, [catalog, counts, language]);
+  const matched = (0, import_react2.useMemo)(() => catalog === null ? [] : filterPlugins(catalog.plugins, {
+    query: state.query,
+    category: state.category,
+    language
+  }), [catalog, state.query, state.category, language]);
+  const ordered = (0, import_react2.useMemo)(
+    () => catalog === null ? [] : sortPlugins(matched, state.sort, catalog.stars ?? {}, language),
+    [catalog, matched, state.sort, language]
+  );
+  const grouped = state.query.trim() === "" && state.category === null;
+  const sections = (0, import_react2.useMemo)(
+    () => catalog === null || !grouped ? [] : categorySections(catalog.plugins, catalog.categories, catalog.stars ?? {}, language, 6, state.sort),
+    [catalog, grouped, language, state.sort]
+  );
+  const shown = grouped ? ordered : ordered.slice(0, state.limit);
+  const installVersion = (plugin) => {
+    const version = latestVersion(plugin);
+    if (version !== void 0) void controller.install(plugin, version, install);
+  };
+  const total = catalog?.plugins.length ?? 0;
+  return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "tm-section", children: [
+    catalog === null ? null : /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("p", { className: "tm-lede", children: [
+        t("fromCatalog", { title: localized(catalog.title, language) }),
+        " · ",
+        t("plugins", { count: String(total) }),
+        " · ",
+        t("categories", { count: String(pills.length) }),
+        " · ",
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("a", { className: "tm-source", href: "https://awesome-dsh-plugin.com", target: "_blank", rel: "noreferrer noopener", children: "awesome-dsh-plugin.com" })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { className: "tm-banner", children: t("banner") })
+    ] }),
+    state.status === "loading" ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(MarketSkeletons, { label: t("loading") }) : null,
+    state.status === "error" ? /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "tm-status", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("p", { className: "tm-error", role: "alert", children: [
+        t("loadFailed"),
+        "：",
+        state.failure
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(import_client_ui_primitives4.Button, { variant: "outline", size: "sm", onClick: controller.retry, children: t("retry") })
+    ] }) : null,
+    catalog !== null ? /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "tm-toolbar", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+          import_client_ui_primitives4.Input,
+          {
+            className: "tm-search",
+            type: "search",
+            value: state.query,
+            placeholder: t("searchPlaceholder"),
+            "aria-label": t("searchPlaceholder"),
+            icon: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(import_client_ui_primitives4.IconSearchOutlineRegular, { size: 16 }),
+            onChange: (event) => {
+              controller.setQuery(event.target.value);
+            }
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+          import_client_ui_primitives4.Menu,
+          {
+            open: sortMenu,
+            onClose: () => {
+              setSortMenu(false);
+            },
+            portal: true,
+            autoFocus: true,
+            align: "end",
+            selectedId: state.sort,
+            items: SORTS.map((sort) => ({ id: sort, label: t(sort === "updated" ? "sortUpdated" : sort === "name" ? "sortName" : "sortStars") })),
+            onSelect: (id) => {
+              setSortMenu(false);
+              controller.setSort(id);
+            },
+            anchor: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
+              import_client_ui_primitives4.Button,
+              {
+                variant: "ghost",
+                size: "sm",
+                "aria-haspopup": "menu",
+                "aria-expanded": sortMenu,
+                onClick: () => {
+                  setSortMenu((value) => !value);
+                },
+                children: [
+                  t("sortLabel"),
+                  "：",
+                  sortLabel(state, t),
+                  /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(import_client_ui_primitives4.IconChevronDownOutlineRegular, { size: 12, "aria-hidden": "true" })
+                ]
+              }
+            )
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(import_client_ui_primitives4.Tooltip, { label: t("refresh"), side: "bottom", portal: true, delayMs: 500, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(import_client_ui_primitives4.Button, { variant: "ghost", size: "sm", "aria-label": t("refresh"), onClick: controller.reload, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(import_client_ui_primitives4.IconRefreshOutlineRegular, { size: 14, "aria-hidden": "true" }) }) }),
+        matched.length !== 0 && state.query.trim() !== "" ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(import_client_ui_primitives4.Button, { variant: "ghost", size: "sm", onClick: () => {
+          controller.setQuery("");
+        }, children: t("clear") }) : null,
+        state.query.trim() === "" && state.category === null ? null : /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { className: "tm-count", children: [
+          t("filtered"),
+          " · ",
+          t("plugins", { count: String(matched.length) })
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "tm-pills", role: "group", "aria-label": t("categories", { count: String(pills.length) }), children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_client_ui_primitives4.Pill, { active: state.category === null, onClick: () => {
+          controller.setCategory(null);
+        }, children: [
+          t("all"),
+          " ",
+          total
+        ] }),
+        pills.map((pill) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_client_ui_primitives4.Pill, { active: state.category === pill.id, onClick: () => {
+          controller.setCategory(state.category === pill.id ? null : pill.id);
+        }, children: [
+          pill.title,
+          " ",
+          pill.count
+        ] }, pill.id))
+      ] }),
+      matched.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { className: "tm-lede", children: t("empty") }) : grouped ? sections.map((section) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("section", { className: "tm-group", "aria-label": section.title, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "tm-groupHead", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("h3", { className: "tm-groupTitle", children: section.title }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "tm-groupCount", children: t("plugins", { count: String(section.total) }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("button", { type: "button", className: "tm-groupMore", onClick: () => {
+            controller.setCategory(section.id);
+          }, children: t("viewAll", { count: String(section.total) }) })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("ul", { className: "tm-cards", children: section.plugins.map((plugin) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+          MarketCard,
+          {
+            plugin,
+            t,
+            language,
+            stars: catalog.stars ?? {},
+            checking: state.checking === plugin.name,
+            onOpen: () => {
+              void controller.open(plugin);
+            },
+            onInstall: installVersion
+          },
+          plugin.name
+        )) })
+      ] }, section.id)) : /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("ul", { className: "tm-cards", children: shown.map((plugin) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+          MarketCard,
+          {
+            plugin,
+            t,
+            language,
+            stars: catalog.stars ?? {},
+            checking: state.checking === plugin.name,
+            onOpen: () => {
+              void controller.open(plugin);
+            },
+            onInstall: installVersion
+          },
+          plugin.name
+        )) }),
+        shown.length < ordered.length ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "tm-more", children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(import_client_ui_primitives4.Button, { variant: "outline", size: "sm", onClick: controller.showMore, children: t("more") }) }) : null
+      ] })
+    ] }) : null
+  ] });
+}
+function MarketTab({ controller, t, install }) {
+  const state = (0, import_react2.useSyncExternalStore)(controller.store.subscribe, controller.store.get, controller.store.get);
+  (0, import_react2.useEffect)(() => {
+    installStyles();
+  }, []);
+  (0, import_react2.useEffect)(() => {
+    controller.ensure();
+  }, [controller]);
+  return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
+    state.selected === null ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Browse, { state, controller, install, t }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+      PluginPage,
+      {
+        plugin: state.selected,
+        state,
+        controller,
+        install,
+        t
+      }
+    ),
+    state.notice === null ? null : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+      InstallNotice,
+      {
+        notice: state.notice,
+        t,
+        onClose: controller.dismissNotice,
+        onContinue: () => {
+          controller.confirmOverride(install);
+        },
+        onAdapt: () => {
+          void controller.adaptAndInstall(install);
+        }
+      }
+    )
+  ] });
+}
+
+// src/client/index.jsx
+var inject = ["slots", "locale"];
+function apply(ctx) {
+  const { t, language } = installI18n(ctx);
+  const controller = createController({ t, language });
+  ctx.effect(() => ctx.locale.subscribe(() => {
+    controller.setLanguage(language());
+  }), "tomato-market: active language");
+  const Tab = (props) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(MarketTab, { ...props, controller, t });
+  ctx.effect(() => ctx.slots.inject("plugins.tab", () => ctx.slots.register({
+    name: "plugins.tab",
+    id: "market",
+    order: -1,
+    label: () => t("tab"),
+    locale: NS
+  }, Tab)), "tomato-market: plugin market tab");
+}
+return Object.defineProperty({ ...module.exports }, Symbol.toStringTag, { value: 'Module' })
+  },
+})

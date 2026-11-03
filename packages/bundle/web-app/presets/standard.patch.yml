@@ -127,6 +127,10 @@
               searchTimeoutMs: 60000
               searchMaxResults: 5
               searchSummaryMaxChars: 500
+          - id: tool-creator-search
+            name: '@tomato/tool-creator-search'
+            config:
+              timeoutMs: 60000
           - id: present
             name: '@tomato/tool-present'
           - id: tool-plugin-manager

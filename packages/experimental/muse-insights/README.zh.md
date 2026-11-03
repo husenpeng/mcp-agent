@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-为使用者提供跨会话的私有每日工作回顾，并定期提醒未完成任务。Host 服务读取当日顶层会话和当前 `todos` 投影，在 `tomato_muse_insights` 中按所有者和本地日期保留一份回顾，并保留该所有者最新的任务分析结果，再通过 `ctx.remote.museInsights` 提供给浏览器。Muse 包把它与记忆和目标聚焦一起挂载；浏览器侧增加一个全帧提示窗和一个右侧栏页面，页面包含回顾与未完成任务两个视图。该能力不写入任何 Session 事件，也不向模型暴露工具。
+为使用者提供跨会话的私有每日工作回顾，并定期提醒未完成任务。Host 服务读取当日顶层会话和 `todos` 投影，在 `tomato_muse_insights` 中按所有者和本地日期保留一份回顾，并保留最新的任务分析结果，再通过 `ctx.remote.museInsights` 提供给浏览器。Muse 包把它与记忆和目标聚焦一起挂载。浏览器侧增加一个全帧提示窗、一个包含回顾与未完成任务视图的右侧栏页面，以及工作项详情页。该能力不写入任何 Session 事件，也不向模型暴露工具。
 
 ## 目录
 
@@ -85,8 +85,10 @@ Host 服务在激活时打开一个 `tomato_muse_insights` 存储域（版本 1�
 | [`src/summarize.ts`](src/summarize.ts) | 提示词、输入截断、请求执行、JSON 解析和确定性回退 |
 | [`src/analyze.ts`](src/analyze.ts) | 任务合并、去重、已完成项抑制和排序 |
 | [`src/domain.ts`](src/domain.ts) | 存储域和记录模式 |
-| [`src/client/index.ts`](src/client/index.ts) | Remote 挂载、页面类型和全帧提示窗 |
+| [`src/client/index.ts`](src/client/index.ts) | Remote 挂载、两个页面类型和全帧提示窗 |
 | [`src/client/controller.ts`](src/client/controller.ts) | 快照轮询、提示策略、显式刷新和右侧栏导航 |
+| [`src/client/WorkItemTab.tsx`](src/client/WorkItemTab.tsx) | 单个工作项的详情页，以及让它保持最新的回顾查找 |
+| [`src/client/work-item-bindings.ts`](src/client/work-item-bindings.ts) | 每个详情页显示过的工作项，使重新加载的标签页仍指向同一项 |
 
 </details>
 

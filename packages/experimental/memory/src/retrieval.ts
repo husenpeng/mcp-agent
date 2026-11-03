@@ -35,6 +35,22 @@ function coverage(phrasing: readonly string[], tokens: ReadonlySet<string>): num
 }
 
 /**
+ * Fraction of the larger token set that both sets share, so either value
+ * fitting inside the other scores 1. Empty sets score 0.
+ * @param left - one token set, such as a pending value.
+ * @param right - the other token set, such as a stored value.
+ * @returns shared tokens over `max(left.size, right.size)`.
+ */
+export function tokenContainment(left: ReadonlySet<string>, right: ReadonlySet<string>): number {
+  const larger = Math.max(left.size, right.size)
+  if (larger === 0) return 0
+  const [smaller, other] = left.size <= right.size ? [left, right] : [right, left]
+  let shared = 0
+  for (const token of smaller) if (other.has(token)) shared += 1
+  return shared / larger
+}
+
+/**
  * Rank records by the best phrasing coverage: the literal query counts in
  * full, each alternative wording at {@link ALTERNATIVE_WEIGHT}. Ties break by
  * the most recent update, then by id. An empty query keeps every record and

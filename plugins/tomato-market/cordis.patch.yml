@@ -1,0 +1,6 @@
+# The plugin market's host half: the catalog reader behind `api/tomato-market`.
+# The browser half is discovered through the package's `tomato.client` manifest
+# and `./client` export, and registers the Plugin Market tab on the Plugins page.
+- insert:
+    - id: tomato-market
+      name: tomato-market

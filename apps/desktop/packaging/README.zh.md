@@ -277,7 +277,7 @@ NSIS 在安装阶段清理临时解压目录，完成后才显示完成页或自
 
 Windows 并行准备 Electron 和 primary-runtime；macOS 串行准备二者。只有两份运行时资源均成功，才会准备 CLI 并写入 `versions.json`。任一 Windows 运行时准备失败时，流程会等待另一路结束后再报告失败，且不写入 CLI 资源或版本记录。嵌套准备阶段的计时存在重叠，不能直接相加。
 
-准备阶段还会安装 Playwright 提供方启动的 Chromium headless shell。`prepare:playwright-browsers` 运行由提供方 `@playwright/mcp` 依赖固定的 Playwright CLI，把 `chromium --only-shell` 装进共享的 `downloads/playwright-browsers` 缓存，再把完整安装复制到 `runtime/playwright-browsers`。除非启动环境已设置，Host 会收到指向该 registry 的 `PLAYWRIGHT_BROWSERS_PATH`。macOS 在应用签名前签署 registry 内的 Mach-O，并为 `chrome-headless-shell` 加上 JIT entitlement；electron-builder 忽略该目录，打包 smoke 运行 `chrome-headless-shell --version`。
+准备阶段还会安装 Playwright 提供方启动的 Chromium headless shell。`prepare:playwright-browsers` 运行由提供方 `@playwright/mcp` 依赖固定的 Playwright CLI，把 `chromium --only-shell` 装进共享的 `downloads/playwright-browsers` 缓存，再把完整安装复制到 `runtime/playwright-browsers`。除非启动环境已设置对应变量，Host 会收到指向该 registry 的 `PLAYWRIGHT_BROWSERS_PATH` 与指向其中 shell 的 `PLAYWRIGHT_MCP_EXECUTABLE_PATH`。macOS 在应用签名前签署 registry 内的 Mach-O，并为 `chrome-headless-shell` 加上 JIT entitlement；electron-builder 忽略该目录，打包 smoke 运行 `chrome-headless-shell --version`。
 
 打包进程环境中的 `TOMATO_DESKTOP_PACKAGE_CACHE_DIR` 为共享的 `downloads` 和 `pnpm-store` 缓存指定非空绝对目录；省略时使用 `.desktop-build`。临时安装项目、lockfile 和配置仍逐次独立创建。运行时安装校验 store 完整性并复制包文件，防止后续签名修改缓存字节；清理时保留这些缓存。两个打包工作流使用 `runner.tool_cache/tomato-desktop-package-cache`；Windows 仓库依赖安装使用工作区盘根目录下独立的 `.pnpm-store`。两次安装日志均标明各自的 store 并报告包复用情况。每次运行仍通过新的运行时 lockfile 解析依赖。可写缓存仅供可信构建任务共享；完整性校验不能隔离不可信的写入者。仅在没有任务使用缓存时清理。缓存磁盘用量由操作者管理，不自动淘汰。
 

@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for 2026-11-03-muse-turn-capture.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-11-03-muse-turn-capture.md
+/agent-note-muse-post-turn-capture-as-candidates:
+  en: 054ce00e4b466453
+  zh: 2ea21dfc1f85a40a
+/agent-note-muse-post-turn-capture-as-candidates/problem:
+  en: e4c3afcbf3934843
+  zh: a2151d8027f50622
+/agent-note-muse-post-turn-capture-as-candidates/decision:
+  en: 52580461ebcc2e1d
+  zh: fd0f1c9ace574180
+/agent-note-muse-post-turn-capture-as-candidates/alternatives-considered:
+  en: fe3e74cc74bf48cc
+  zh: eeb457924ceddbdc
+/agent-note-muse-post-turn-capture-as-candidates/consequences:
+  en: 34cb172ad7c5cacc
+  zh: dcd6458cfe67ffb6

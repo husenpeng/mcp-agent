@@ -58,3 +58,15 @@ desktop-test-logs/*
 packages/*/*/src/*.js
 packages/*/*/src/*.js.map
 packages/*/*/src/*.d.ts.map
+# Same emit at any depth; hand-written ambient declarations are force-added or
+# have no sibling source, and verify-commit-hygiene rejects emit beside a source.
+packages/*/*/src/**/*.js
+packages/*/*/src/**/*.js.map
+packages/*/*/src/**/*.d.ts.map
+
+# Local debugging residue (RULE.md).
+*.log
+*.tgz
+scratch/
+*.local.*
+*.scratch.*

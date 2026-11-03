@@ -275,39 +275,90 @@
   list-style: none;
 }
 
-.workRow,
 .taskRow,
 .sessionList li {
   padding: 10px 0;
   border-top: 0.5px solid var(--dsw-alias-border-l1);
 }
 
-.workRow:first-child,
 .taskRow:first-child,
 .sessionList li:first-child {
   border-top: 0;
 }
 
-.workHead {
+/* One recap work item is one task row: the whole row is the control that opens
+   the item's own page, so its hover surface and focus ring cover title and
+   brief together. The row keeps its separator; the button owns the padding. */
+.workRow {
+  border-top: 0.5px solid var(--dsw-alias-border-l1);
+}
+
+.workRow:first-child {
+  border-top: 0;
+}
+
+.workRowButton {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  justify-content: space-between;
+  flex-direction: column;
+  box-sizing: border-box;
+  gap: 2px;
+  width: 100%;
+  padding: 8px 6px;
+  border: 0;
+  border-radius: var(--dsw-radius-md);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
 }
 
-.workTitle {
-  flex: 1;
-  min-width: 0;
-  font-size: 14px;
-  line-height: 22px;
+@media (hover: hover) {
+  .workRowButton:hover {
+    background: var(--dsw-alias-interactive-bg-hover);
+  }
 }
 
-.workDetail,
+.workRowButton:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: -2px;
+}
+
+/* The row's brief: the first prose line of the item's detail, kept to two
+   rendered lines; the item's page shows the text complete. */
+.workBrief {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.workChevron {
+  flex: none;
+  margin-top: 4px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
 .taskDetail {
   margin: 2px 0 0;
   color: var(--dsw-alias-label-secondary);
   font-size: 13px;
   line-height: 20px;
+  white-space: pre-wrap;
+}
+
+/* The item's own page: the detail keeps its paragraph breaks, and a long
+   unbroken line (a path, a command) wraps instead of scrolling the page. */
+.itemDetail {
+  margin: 16px 0 0;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 14px;
+  line-height: 22px;
+  overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
 

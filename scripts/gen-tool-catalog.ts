@@ -78,6 +78,10 @@ import * as StagehandBrowserTools from '@tomato/experimental-browser-use-stageha
 import type TeamService from '@tomato/experimental-agent-team'
 import * as ToolTeam from '@tomato/experimental-tool-agent-team'
 import * as ToolTodo from '@tomato/tool-todo'
+import * as CreatorSearch from '@tomato/tool-creator-search'
+import Storage from '@tomato/storage'
+import { DomainFacility } from '@tomato/storage-domain'
+import { MemoryMediaPool, MemoryStorageBackend } from '../packages/storage/storage-domain/tests/helpers/memory-backend.ts'
 import type PluginManager from '@tomato/plugin-manager'
 import * as PluginManagerTools from '@tomato/plugin-manager/tools'
 import type PluginMarket from '@tomato/plugin-market'
@@ -551,7 +555,7 @@ const TOOL_PACKAGES: ToolPackage[] = [
     ],
     writes: [
       'tool/call', 'tomato_memory storage domain create, update, or delete', 'plugin:tool-memory/query-expansion plugin record',
-      'tool/result', 'user/message memory snapshot',
+      'plugin:tool-memory/turn-capture plugin record', 'tool/result', 'user/message memory snapshot',
     ],
     async mount(ctx) {
       await ctx.plugin(AgentRegistry)
@@ -562,7 +566,7 @@ const TOOL_PACKAGES: ToolPackage[] = [
       await ctx.plugin(ToolMemory)
     },
     note:
-      'Explicit experimental composition only, shipped switched off in the Memory and goal focus bundle. memory_write stores an active record only when user_quote is contained in a user message of the current turn; otherwise the record is an unconfirmed candidate. scope profile records reach every workspace of their owner. memory_search may send one auxiliary expansion request when the literal query matches fewer than maxRecallResults records. Delegated agents may search but not write or delete.',
+      'Explicit experimental composition only, shipped switched off in the Memory and goal focus bundle. memory_write stores an active record only when user_quote is contained in a user message of the current turn; otherwise the record is an unconfirmed candidate. scope profile records reach every workspace of their owner. memory_search may send one auxiliary expansion request when the literal query matches fewer than maxRecallResults records. With capture on, one auxiliary request reads a finished turn and stores durable statements as candidates. Delegated agents may search but not write or delete.',
   },
   {
     pkg: '@tomato/experimental-tool-robot',
@@ -697,6 +701,30 @@ const TOOL_PACKAGES: ToolPackage[] = [
     },
     note:
       'todo_write is session-owned state; UIs render the latest todo/write event as a checklist. `allowParallelInProgress` is required with no default, so the catalog states its choice: `true`, whose description invites several `in_progress` items. A deployment choosing `false` receives the same tool with a description asking for exactly one active task.',
+  },
+  {
+    pkg: '@tomato/tool-creator-search',
+    dir: 'tool-creator-search',
+    source: 'packages/marketing/tool-creator-search/src/tools.ts',
+    requires: ['ctx.tools', 'ctx.desktopSession', 'ctx.storageDomain'],
+    writes: ['tool/call', 'tool/result'],
+    async mount(ctx) {
+      // Schema harvest never contacts the BFF or writes feedback: an in-memory
+      // backend supplies the domain the plugin opens for remembered decisions.
+      await ctx.plugin(Storage)
+      const storage = ctx.get('storage')
+      if (storage === undefined) throw new Error('gen-tool-catalog: the storage hub did not mount')
+      const backend = new MemoryStorageBackend(new MemoryMediaPool())
+      ctx.effect(() => storage.backend.register('fixture', backend))
+      const facility = new DomainFacility(ctx, { backend: 'fixture' })
+      ctx.effect(() => {
+        const unmount = storage.mount('domain', facility)
+        ctx.provide('storageDomain', facility)
+        return async () => { await facility.closeAll(); unmount() }
+      })
+      await ctx.plugin(CreatorSearch, { baseURL: 'https://creator-search.invalid' })
+    },
+    note: 'Each tool forwards the signed-in Desktop session as the BFF `session_id` cookie; a profile without that session answers every call with sign-in guidance. `creator_search` and `creator_detail` spend one unit of the monthly group-API quota per call, `youtube_channel` spends none.',
   },
   {
     pkg: '@tomato/tool-working-directory',

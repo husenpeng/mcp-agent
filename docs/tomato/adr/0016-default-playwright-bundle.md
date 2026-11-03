@@ -16,7 +16,7 @@
 - **默认启用**：新增 `DEFAULT_ENABLED_OPTIONAL_BUNDLES`，只允许名单内的随附可选组合包被随附模板选中；`PROFILE_TEMPLATES.web.bundles` 追加该包。`desktop` profile 由 Web 模板初始化，因此 Desktop 与 `tomato web` 的新 profile 默认启用。用户仍可在插件页关闭：关闭只取消选中，依赖保留，永不可卸载。
 - **隔离例外收窄为声明清单**：`verify-default-product-isolation` 原先只允许“随安装提供、默认关闭、不被模板选中”的实验包；现在名单内的组合包及其声明的运行时依赖闭包可以进入默认产品与 Web 模板，名单外的实验包继续被拒绝。行里挂载但未声明为依赖的实验包不在闭包内，仍报错。
 - **Chromium 随桌面安装包分发**：新增 `prepare:playwright-browsers`，用 provider 固定的 Playwright CLI 执行 `playwright install chromium --only-shell`，把 headless shell 复制到 `runtime/playwright-browsers`；共享构建缓存 `.desktop-build/downloads/playwright-browsers` 复用下载。组合包固定 `headless: true`，因此只分发 headless shell，不分发可显示窗口的完整 Chromium。
-- **运行时接线**：桌面 Host 启动环境注入 `PLAYWRIGHT_BROWSERS_PATH` 指向随包 registry；启动环境已显式设置的该变量优先，便于排障或改用本机浏览器。未打包启动使用目标 runtime 旁的副本，没有副本时回落到 Playwright 的用户缓存。
+- **运行时接线**：桌面 Host 启动环境注入 `PLAYWRIGHT_BROWSERS_PATH` 指向随包 registry，并注入 `PLAYWRIGHT_MCP_EXECUTABLE_PATH` 指向其中的 headless shell；启动环境已显式设置的对应变量优先，便于排障或改用本机浏览器。提供方在上游 `--browser chromium` 选择完整 Chrome for Testing 时改用该 shell，并仅在 headless 启动时采用。未打包启动使用目标 runtime 旁的副本，没有副本时回落到 Playwright 的用户缓存。
 - **签名与验收**：macOS 签名阶段对 registry 内的 Mach-O 逐个签名，`chrome-headless-shell` 带 JIT entitlement，`electron-builder` 忽略该目录以避免二次签名；打包 smoke 运行 `chrome-headless-shell --version`，确认字节、架构与签名可用。
 - **范围**：仅 `web` 模板默认启用。`headless`、`sdk`、`acp` 模板不变；已有 profile 不迁移，默认值只作用于新建 profile，用户可在插件页自行开启。
 

@@ -1,0 +1,71 @@
+/** Reader of the host half's `api/tomato-market` route. */
+
+/** Document-relative so a mounted base path keeps working. */
+const ROUTE = 'api/tomato-market'
+
+/**
+ * Call one market endpoint.
+ * @param {string} endpoint - `catalog`, `manifest`, or `detail`.
+ * @param {object} [payload] - endpoint arguments.
+ * @param {AbortSignal} [signal] - caller cancellation.
+ * @returns {Promise<unknown>} the endpoint's data.
+ * @throws {Error} with a message meant for the reader.
+ */
+export async function call(endpoint, payload = {}, signal) {
+  let response
+  try {
+    response = await fetch(new URL(ROUTE, document.baseURI), {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ endpoint, payload }),
+      signal,
+    })
+  } catch (error) {
+    if (error?.name === 'AbortError') throw error
+    throw new Error(`network: ${error?.message ?? error}`)
+  }
+  if (!response.ok) throw new Error(`HTTP ${response.status}`)
+  const result = await response.json()
+  if (!result.ok) throw new Error(result.error?.message ?? 'request failed')
+  return result.data
+}
+
+/**
+ * Read the catalog, optionally bypassing the host's cache.
+ * @param {boolean} refresh - fetch again.
+ * @returns {Promise<object>} the compact catalog with star counts.
+ */
+export function readCatalog(refresh = false) {
+  return call('catalog', { refresh })
+}
+
+/**
+ * Read one version's compatibility facts.
+ * @param {{ name: string }} plugin - the plugin.
+ * @param {{ version: string, source: { registry?: string } }} version - the listed version.
+ * @returns {Promise<object>} the classified manifest.
+ */
+export function readManifest(plugin, version) {
+  return call('manifest', { name: plugin.name, version: version.version })
+}
+
+/**
+ * Convert one listed DeepSeek Harness version into a Tomato-installable tarball.
+ * @param {{ name: string }} plugin - the plugin.
+ * @param {{ version: string }} version - the listed version.
+ * @returns {Promise<{ adapted: boolean, spec: string, changed?: number, from?: string }>} the install spec.
+ */
+export function adaptVersion(plugin, version) {
+  return call('adapt', { name: plugin.name, version: version.version })
+}
+
+/**
+ * Read one version's README.
+ * @param {{ name: string }} plugin - the plugin.
+ * @param {{ version: string }} version - the listed version.
+ * @returns {Promise<object>} `{ status: 'found', markdown, origin }` or `{ status: 'none' }`.
+ */
+export function readDetail(plugin, version) {
+  return call('detail', { name: plugin.name, version: version.version })
+}

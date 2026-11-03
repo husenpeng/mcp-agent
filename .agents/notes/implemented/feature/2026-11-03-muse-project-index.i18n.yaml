@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for 2026-11-03-muse-project-index.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-11-03-muse-project-index.md
+/agent-note-muse-project-memory-index-at-turn-start:
+  en: d69e281fbbcf0bd0
+  zh: b85822c34e36e217
+/agent-note-muse-project-memory-index-at-turn-start/problem:
+  en: 463dca301760c243
+  zh: 4557e1ef829ede9d
+/agent-note-muse-project-memory-index-at-turn-start/decision:
+  en: a88060fc62603d37
+  zh: 3accbc0cf47b1097
+/agent-note-muse-project-memory-index-at-turn-start/alternatives-considered:
+  en: a529af7d6fbb8a0b
+  zh: c0c98478e78c750d
+/agent-note-muse-project-memory-index-at-turn-start/consequences:
+  en: 197c6efe89bccc7c
+  zh: 7bb9527f1b7a5d06

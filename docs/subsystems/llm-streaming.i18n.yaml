@@ -17,6 +17,9 @@
 /llm-streaming/llmfailure:
   en: 13415501869b4ca9
   zh: 723c7533cce3d1d6
+/llm-streaming/text-only-image-projection:
+  en: abfb79f572949ad0
+  zh: 887e68ceb476c3a1
 /llm-streaming/request-image-pricing:
   en: 10598e1a98262415
   zh: 7fb85b22174a1497

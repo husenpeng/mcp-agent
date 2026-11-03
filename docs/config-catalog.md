@@ -1164,7 +1164,7 @@ export interface InspectorOptions {
 ## `@tomato/experimental-memory`
 
 - `inject`: `storageDomain`
-- `source`: [`packages/experimental/memory/src/index.ts:56`](../packages/experimental/memory/src/index.ts)
+- `source`: [`packages/experimental/memory/src/index.ts:57`](../packages/experimental/memory/src/index.ts)
 
 ```ts config-catalog
 /** Deployment limits for stored and recalled memory. */
@@ -1431,13 +1431,15 @@ export interface Config {
 ## `@tomato/experimental-tool-memory`
 
 - `inject`: `memory` · `tools` · `agents` · `commands` · `sessionProjections` · `llm`
-- `source`: [`packages/experimental/tool-memory/src/index.ts:36`](../packages/experimental/tool-memory/src/index.ts)
+- `source`: [`packages/experimental/tool-memory/src/index.ts:62`](../packages/experimental/tool-memory/src/index.ts)
 
 ```ts config-catalog
 /** Snapshot, write-justification, and query-expansion policy. */
 export interface Config {
   /** Maximum UTF-8 bytes of one rendered memory snapshot. */
   maxSnapshotBytes?: number
+  /** Whether the snapshot adds a subject index of this workspace's memories. */
+  projectIndex?: boolean
   /** Minimum user-perceived characters of a `user_quote` that can activate a write. */
   minQuoteChars?: number
   /** Whether `memory_search` asks a model for alternative wordings when the literal query matches too few records. */
@@ -1452,6 +1454,14 @@ export interface Config {
   expansionMaxTokens?: number
   /** Maximum alternative wordings kept from one expansion. */
   maxAlternatives?: number
+  /** Whether one bounded request captures durable statements from each finished turn as candidates. */
+  capture?: boolean
+  /** Maximum UTF-8 bytes of the person messages sent to one capture request. */
+  captureMaxInputBytes?: number
+  /** Output-token cap of one capture request. */
+  captureMaxTokens?: number
+  /** End-to-end deadline of one capture request in milliseconds. */
+  captureTimeoutMs?: number
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-tool-memory -->
@@ -1967,6 +1977,49 @@ export interface TlsConfig {
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/host-webserver -->
+
+<!-- BEGIN GENERATED config-catalog:@tomato/image-evidence -->
+<a id="tomatoimage-evidence"></a>
+
+## `@tomato/image-evidence`
+
+- `inject`: `attachments` · `llm` · `sessionProjections` · `storageDomain` · `systemPrompt` · `tools`
+- `source`: [`packages/llm/image-evidence/src/config.ts:12`](../packages/llm/image-evidence/src/config.ts)
+
+```ts config-catalog
+/** Plugin configuration as written in the composition. */
+export interface Config {
+  /** Vision engines in priority order; an empty list disables the bridge. */
+  engines?: VisionEngineRef[]
+  /** Character cap applied to one image's evidence text. */
+  maxChars?: number
+  /** Evidence contract version; raising it retires every stored record. */
+  contractVersion?: number
+  /** Deadline for one engine call. */
+  timeoutMs?: number
+  /** How long one attachment stops retrying after every engine failed. */
+  failureCooldownMs?: number
+  /** Unused records older than this are pruned. */
+  retentionDays?: number
+  /** Total stored evidence bytes kept before least-recently-read records go. */
+  maxCachedBytes?: number
+  /** Byte cap for one `read_image` source. */
+  maxImageBytes?: number
+  /** Deadline for one `read_image` fetch or file read. */
+  sourceTimeoutMs?: number
+  /** Whether `read_image` may fetch loopback, private, or link-local URLs. */
+  allowPrivateHosts?: boolean
+}
+
+/** One configured vision route: the provider and the model that reads images. */
+export interface VisionEngineRef {
+  /** Registered LLM provider route name. */
+  readonly provider: string
+  /** Model id within that route; it must accept image input. */
+  readonly model: string
+}
+```
+<!-- END GENERATED config-catalog:@tomato/image-evidence -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/jobs-local -->
 <a id="tomatojobs-local"></a>
@@ -3901,7 +3954,7 @@ export interface Config {
 
 ## `@tomato/system-prompt`
 
-- `source`: [`packages/core/system-prompt/src/index.ts:263`](../packages/core/system-prompt/src/index.ts)
+- `source`: [`packages/core/system-prompt/src/index.ts:264`](../packages/core/system-prompt/src/index.ts)
 
 ```ts config-catalog
 /** Plugin config: the deployment-authored fragment of the system prompt (see {@link Config.personaPrefix} for its contract). */
@@ -4140,6 +4193,101 @@ export interface Config {
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/tool-bash-persistent -->
+
+<!-- BEGIN GENERATED config-catalog:@tomato/tool-creator-search -->
+<a id="tomatotool-creator-search"></a>
+
+## `@tomato/tool-creator-search`
+
+- `inject`: `tools` · `storageDomain` · `systemPrompt`
+- `source`: [`packages/marketing/tool-creator-search/src/index.ts:177`](../packages/marketing/tool-creator-search/src/index.ts)
+
+```ts config-catalog
+/** Plugin config (all optional — `apply` fills environment and constant defaults). */
+export interface Config {
+  /** BFF origin such as `https://test.tomatoai.vip`. Falls back to `$TOMATO_SEARCH_GATEWAY_URL`, then `$TOMATO_WEB_URL`. */
+  baseURL?: string
+  /** End-to-end budget for one BFF request, in milliseconds. Defaults to 60 seconds. */
+  timeoutMs?: number
+  /** Cap on the complete rendered text of one call, in characters. Defaults to 20000. */
+  maxOutputChars?: number
+  /** Budget for one multi-request scout call, in milliseconds. Defaults to 300 seconds. */
+  scoutTimeoutMs?: number
+  /** Register `creator_search`. Defaults to true. */
+  search?: boolean
+  /** Register `creator_detail`. Defaults to true. */
+  detail?: boolean
+  /** Register `youtube_channel`. Defaults to true. */
+  channel?: boolean
+  /** Register `creator_scout`. Defaults to true. */
+  scout?: boolean
+  /** Register `creator_feedback`. Defaults to true. */
+  feedback?: boolean
+  /** Register `creator_ingest` for creators found outside the index. Defaults to true. */
+  ingest?: boolean
+  /** Follower band floor a brief falls back to. Defaults to 10000. */
+  defaultFollowersMin?: number
+  /** Follower band ceiling a brief falls back to. Defaults to 200000. */
+  defaultFollowersMax?: number
+  /** Engagement floor a brief falls back to, as a ratio. Defaults to 0.01. */
+  defaultMinEngagementRate?: number
+  /** Creators a brief asks for when it states none. Defaults to 10. */
+  defaultTargetCount?: number
+  /** Overrides for the `fast` depth budget. */
+  depthFast?: DepthLimitConfig
+  /** Overrides for the `standard` depth budget. */
+  depthStandard?: DepthLimitConfig
+  /** Overrides for the `broad` depth budget. */
+  depthBroad?: DepthLimitConfig
+  /** Query suffixes only the `broad` policy appends, such as `review`. Defaults to no suffixes. */
+  querySuffixes?: string[]
+  /**
+   * Default fidelity policy. `strict` searches only the stated keywords,
+   * `balanced` recombines the stated fields, and `broad` may append the
+   * configured suffix phrases. Defaults to `balanced`.
+   */
+  queryPolicy?: 'strict' | 'balanced' | 'broad'
+  /** Score points one remembered acceptance adds. Defaults to 10. */
+  feedbackBoost?: number
+  /** Weight of follower-band fit in the score. Defaults to 25. */
+  weightFollowers?: number
+  /** Weight of engagement rate in the score. Defaults to 25. */
+  weightEngagement?: number
+  /** Weight of keyword evidence in the score. Defaults to 20. */
+  weightKeywords?: number
+  /** Weight of market match in the score. Defaults to 15. */
+  weightMarket?: number
+  /** Weight of publishing recency in the score. Defaults to 10. */
+  weightRecency?: number
+  /** Weight of contactability in the score. Defaults to 5. */
+  weightContactability?: number
+  /** Crawl missing business emails for shortlisted creators. Defaults to true. */
+  contactEnrichment?: boolean
+  /** Most shortlisted creators one call crawls. Defaults to 5. */
+  contactLimit?: number
+  /** Search requests one creator's crawl may spend. Defaults to 2. */
+  contactQueriesPerCreator?: number
+  /** Page reads one creator's crawl may spend. Defaults to 2. */
+  contactFetchesPerCreator?: number
+  /** Budget for one creator's crawl, in milliseconds. Defaults to 20 seconds. */
+  contactTimeoutMs?: number
+}
+
+/** One depth's search budget; omitted fields take the built-in default for that depth. */
+export interface DepthLimitConfig {
+  /** Most BFF search requests one call may send. */
+  maxSearchCalls?: number
+  /** Pages read per keyword query. */
+  pagesPerQuery?: number
+  /** Results requested per page. */
+  pageSize?: number
+  /** Most candidates enriched through the detail endpoint. */
+  enrichLimit?: number
+  /** Pool size as a multiple of `targetCount` before enrichment stops searching. */
+  poolFactor?: number
+}
+```
+<!-- END GENERATED config-catalog:@tomato/tool-creator-search -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-executor-ptc -->
 <a id="tomatotool-executor-ptc"></a>
@@ -5038,6 +5186,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@tomato/client-ui-entry-customization` | — | [`packages/client/ui-entry-customization/src/index.ts`](../packages/client/ui-entry-customization/src/index.ts) |
 | `@tomato/client-ui-file-drag` | — | [`packages/client/ui-file-drag/src/index.ts`](../packages/client/ui-file-drag/src/index.ts) |
 | `@tomato/client-ui-goal` | — | [`packages/client/ui-goal/src/index.ts`](../packages/client/ui-goal/src/index.ts) |
+| `@tomato/client-ui-image-evidence` | — | [`packages/client/ui-image-evidence/src/index.ts`](../packages/client/ui-image-evidence/src/index.ts) |
 | `@tomato/client-ui-input-trigger` | — | [`packages/client/ui-input-trigger/src/index.ts`](../packages/client/ui-input-trigger/src/index.ts) |
 | `@tomato/client-ui-jobs` | — | [`packages/client/ui-jobs/src/index.ts`](../packages/client/ui-jobs/src/index.ts) |
 | `@tomato/client-ui-layout` | — | [`packages/client/ui-layout/src/index.ts`](../packages/client/ui-layout/src/index.ts) |

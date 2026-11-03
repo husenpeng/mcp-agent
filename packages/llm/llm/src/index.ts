@@ -37,9 +37,23 @@ import { HarnessError, INVALID_CREDENTIAL_CODE } from './error.ts'
 import { normalizeLlmFailure } from './adapter-failure.ts'
 import { normalizeApiKey } from './api-key.ts'
 import {
-  contentHasFile, contentHasImage, fileHandleText, projectFilesToText, projectImagesForTextModel, projectToolUpdates,
+  contentHasFile, contentHasImage, fileHandleText, projectFilesToText, projectImagesForTextModel,
+  projectImagesWithEvidence, projectToolUpdates,
 } from './content.ts'
 import type { FileAttachmentRef, ImageAttachmentRef, ImageRequestTarget } from '@tomato/attachment'
+
+/**
+ * Evidence lookup a vision bridge registers as `ctx.imageEvidence`. Read
+ * structurally so this package never depends on a bridge implementation.
+ */
+interface ImageEvidenceLookup {
+  /**
+   * Model-facing evidence text for one attachment.
+   * @param attachmentId - content-addressed attachment id.
+   * @returns the exact text block content, or undefined when none is stored.
+   */
+  peek(attachmentId: string): string | undefined
+}
 
 export * from './attribution.ts'
 export * from './brand.ts'
@@ -1101,7 +1115,15 @@ export class LlmRuntime extends TypertRemoteService {
       if (modelInfo.inputModalities !== undefined
         && !modelInfo.inputModalities.includes('image')
         && projectedMessages.some(message => contentHasImage(message.content))) {
-        projectedMessages = projectImagesForTextModel(projectedMessages)
+        // A vision bridge may hold evidence text for some of these images; the
+        // rest still fall back to the deterministic placeholder below.
+        const evidence = this.ctx.get('imageEvidence') as ImageEvidenceLookup | undefined
+        if (evidence !== undefined) {
+          projectedMessages = projectImagesWithEvidence(projectedMessages, attachmentId => evidence.peek(attachmentId))
+        }
+        if (projectedMessages.some(message => contentHasImage(message.content))) {
+          projectedMessages = projectImagesForTextModel(projectedMessages)
+        }
       }
       // Tool changes are logged on every route; the route's declared mode selects what it receives.
       const projectedTools = projectToolUpdates(projectedMessages, resolvedOptions.tools, modelInfo.toolUpdate, resolvedOptions.toolHistory)

@@ -43,6 +43,16 @@ import type { SubagentDelivery } from './control-types.ts'
 import { ActivationPool, ChildLock, activationAgent, captureLocalResult, observeLocalFailure, requireLocalActivation } from './activation.ts'
 import type { Activation, ActivationResource, LocalActivation } from './activation.ts'
 
+/** Structural view of the optional image-evidence bridge; the bridge owns the full contract. */
+interface ImageEvidenceGate {
+  /**
+   * Whether a configured engine can read images for this model.
+   * @param model - resolved child model.
+   * @returns true only when the model is positively text-only and an engine exists.
+   */
+  canRead(model: { readonly inputModalities?: readonly string[] }): boolean
+}
+
 /** Inputs shared by model steering and human prompt delivery. */
 type ChildDeliveryOptions =
   | {
@@ -1468,10 +1478,15 @@ export class SubagentManager {
     if (llm === undefined) return
     const info = await llm.resolveModelInfo(provider, model, signal)
     if (info.inputModalities !== undefined && !info.inputModalities.includes('image')) {
-      throw new SubagentError(
-        `Model "${model}" does not support image input.`,
-        'MODEL_DOES_NOT_SUPPORT_IMAGES',
-      )
+      // A vision bridge can stand in for the missing modality; without one,
+      // image delivery stays refused exactly as before.
+      const evidence = this.ctx.get('imageEvidence') as ImageEvidenceGate | undefined
+      if (evidence?.canRead(info) !== true) {
+        throw new SubagentError(
+          `Model "${model}" does not support image input.`,
+          'MODEL_DOES_NOT_SUPPORT_IMAGES',
+        )
+      }
     }
   }
 

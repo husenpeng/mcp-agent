@@ -51,6 +51,7 @@ async function bench() {
   locale.setLocale('en')
   runtime.slots.installLocale(locale)
   const imageCalls: PropsRuntime<'conversation.chat.user.images'>[] = []
+  const metaCalls: PropsRuntime<'conversation.chat.user.image-meta'>[] = []
   const openFile = vi.fn<(path: string) => void>()
   const openSkill = vi.fn<(name: string) => void>()
   await runtime.mount({ inject: ['slots'], apply: (ctx) => {
@@ -86,11 +87,20 @@ async function bench() {
       return <span data-testid="image" data-session={props.sessionId}
         data-current-session={props.useSession(snapshot => snapshot.sessionId)}>{name}</span>
     }))
+    ctx.slots.inject('conversation.chat.user.image-meta', () => ctx.slots.register({
+      name: 'conversation.chat.user.image-meta', id: 'meta-probe',
+    }, function MetaProbe(props) {
+      metaCalls.push(props)
+      return <span data-testid="image-meta" data-name={props.image.name} />
+    }))
   } })
   const mountContent = () => runtime.mount({ inject: ['slots'], apply: (ctx) => {
     ctx.slots.registerFactory({
       name: 'conversation.chat.user.content', scope: 'session', locale: NS,
-      children: { 'conversation.chat.user.images': { kind: 'single', scope: 'session' } },
+      children: {
+        'conversation.chat.user.images': { kind: 'single', scope: 'session' },
+        'conversation.chat.user.image-meta': { kind: 'list', scope: 'session' },
+      },
     }, UserContent)
   } })
   const owner = await mountContent()
@@ -118,7 +128,10 @@ async function bench() {
     return { ...view, rerender: update }
   }
   const loadImage = vi.fn<UserContentInput['loadImage']>(async () => 'blob:loaded')
-  return { runtime, locale, owner, mountContent, factory, render, loadImage, imageCalls, SessionProvider, openFile, openSkill }
+  return {
+    runtime, locale, owner, mountContent, factory, render, loadImage, imageCalls, metaCalls,
+    SessionProvider, openFile, openSkill,
+  }
 }
 
 describe('user Content Factory', () => {
@@ -159,6 +172,15 @@ describe('user Content Factory', () => {
       expect(call).toMatchObject({ align: 'end', compact: true, loadImage: b.loadImage })
     }
     expect(b.loadImage).not.toHaveBeenCalled()
+  })
+
+  it('offers each durable image its own meta entry and none for a local preview', async () => {
+    const b = await bench()
+    const content: UserContentData = { ...empty, attachments: [durable, preview, durable] }
+    const view = b.render(b.factory({ content, facts: {}, loadImage: b.loadImage }))
+    expect(b.metaCalls.map(call => call.image)).toEqual([image, image])
+    expect(view.getAllByTestId('image-meta').map(node => node.getAttribute('data-name')))
+      .toEqual(['history.png', 'history.png'])
   })
 
   it.each([

@@ -1,0 +1,91 @@
+/* Evidence status under one pasted image. Rides the conversation column's
+   font-size axis through inherited 12px tertiary text, matching the file
+   attachment metadata beside it. */
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 15px;
+  cursor: pointer;
+}
+
+.status svg {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+  transition: transform 120ms ease;
+}
+
+.status[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+
+.status[data-state='failed'] {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+@media (hover: hover) {
+  .status:hover {
+    color: var(--dsw-alias-label-secondary);
+  }
+
+  .status[data-state='failed']:hover {
+    color: var(--dsw-alias-state-error-primary);
+  }
+}
+
+.text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.panel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 2px 8px;
+  max-width: 100%;
+  margin-top: 4px;
+  padding: 6px 8px;
+  border: 0.5px solid var(--dsw-alias-border-l2, rgba(0, 0, 0, 0.12));
+  border-radius: var(--dsw-radius-sm);
+  background: var(--dsw-specific-input-major, transparent);
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 16px;
+  text-align: start;
+  box-sizing: border-box;
+}
+
+.label {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.value {
+  color: var(--dsw-alias-label-secondary);
+  overflow-wrap: anywhere;
+}
+
+.note {
+  grid-column: 1 / -1;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.note[data-state='failed'] {
+  color: var(--dsw-alias-state-error-primary);
+}

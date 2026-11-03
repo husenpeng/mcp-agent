@@ -17,12 +17,13 @@ import type { Context } from '@tomato/cordis'
 import type {} from '@tomato/gateway'
 import type { Session } from '@tomato/session'
 import type { Domain } from '@tomato/storage-domain'
-import { rankMemories } from './retrieval.ts'
+import { memoryTokens, rankMemories, tokenContainment } from './retrieval.ts'
 import { LOCAL_MEMORY_OWNER, MemoryId, accountMemoryOwner, memoryDomain } from './storage.ts'
 import type { MemoryRecord } from './storage.ts'
 import type {
   MemoryAccess,
   MemoryId as MemoryIdType,
+  MemoryKind,
   MemoryOwner,
   MemoryScope,
   MemoryView,
@@ -43,7 +44,7 @@ export {
   memoryRecordSchema,
 } from './storage.ts'
 export type { MemoryRecord } from './storage.ts'
-export { ALTERNATIVE_WEIGHT, memoryTokens, rankMemories } from './retrieval.ts'
+export { ALTERNATIVE_WEIGHT, memoryTokens, rankMemories, tokenContainment } from './retrieval.ts'
 
 declare module '@tomato/cordis' {
   interface Context {
@@ -78,6 +79,80 @@ export interface MemoryLimits {
   readonly maxRecordsPerWorkspace: number
   /** Maximum stored profile records, including candidates, per owner. */
   readonly maxProfileRecords: number
+}
+
+/** Deepest relation walk one lookup follows; each hop reads the whole view. */
+export const MAX_RELATION_DEPTH = 2
+
+/** How a related record connects to the record one hop before it. */
+export type MemoryRelation = 'same-entity' | 'same-session' | 'same-key'
+
+/** Every edge a relation walk follows, in traversal order. */
+export const MEMORY_RELATIONS: readonly MemoryRelation[] = ['same-entity', 'same-session', 'same-key']
+
+/** Whether another record of the view connects to the node the walk expands. */
+const RELATION_EDGES: Readonly<Record<MemoryRelation, (node: MemoryRecord, other: MemoryRecord) => boolean>> = {
+  'same-entity': (node, other) => other.entity === node.entity,
+  'same-session': (node, other) => other.source.sessionId === node.source.sessionId,
+  'same-key': (node, other) => other.key === node.key,
+}
+
+/** One record reached by {@link MemoryService.related}. */
+export interface RelatedMemory {
+  /** Reached record. */
+  readonly record: MemoryRecord
+  /** Hops from the starting record; direct neighbors are 1. */
+  readonly depth: number
+  /** Edge followed from the record at `depth - 1`. */
+  readonly via: MemoryRelation
+}
+
+/** Minimum word segments in each value before a duplicate comparison is meaningful. */
+export const MIN_DUPLICATE_TOKENS = 3
+
+/** Containment at or above which two values state the same thing; precision over recall. */
+export const DUPLICATE_COVERAGE = 0.8
+
+/** The fields of a pending write that duplicate detection compares. */
+export interface DuplicateQuery {
+  /** Owner the write belongs to. */
+  readonly owner: MemoryOwner
+  /** Scope the write targets. */
+  readonly scope: MemoryScope
+  /** Statement category the write claims. */
+  readonly kind: MemoryKind
+  /** Normalized subject of the write. */
+  readonly entity: string
+  /** Normalized attribute of the write. */
+  readonly key: string
+  /** Statement the write would store. */
+  readonly value: string
+}
+
+/** A stored record that states what a pending write states. */
+export interface DuplicateMatch {
+  /** The stored record; it keeps its own entity, key, and identity. */
+  readonly record: MemoryRecord
+  /** Shared-word containment of the two values, from {@link DUPLICATE_COVERAGE} to 1. */
+  readonly coverage: number
+}
+
+/** Stored counts and capacity of one view, for human inspection. */
+export interface MemoryStats {
+  /** Every record the view sees, active and candidates. */
+  readonly total: number
+  /** Records whose contents reach search and the snapshot. */
+  readonly active: number
+  /** Records waiting for a person to confirm them. */
+  readonly candidates: number
+  /** Pinned workspace records. */
+  readonly pinned: number
+  /** Profile records of this owner and the owner's profile limit. */
+  readonly profile: { readonly stored: number; readonly limit: number }
+  /** Workspace records of the view's directory and the workspace limit; `null` without a project directory. */
+  readonly workspace: { readonly stored: number; readonly limit: number } | null
+  /** Update time of the least recently updated active record, or `null` when none is active. */
+  readonly oldestActiveUpdate: number | null
 }
 
 /** Stable failure classes of {@link MemoryError}. */
@@ -297,6 +372,99 @@ export class MemoryService extends Service {
     const candidates = this.all().filter(record => visibleIn(request.view, record)
       && record.status === 'active' && (request.kind === undefined || record.kind === request.kind))
     return rankMemories(candidates, request.text, this.limits.maxRecallResults, request.alternatives)
+  }
+
+  /**
+   * Walk the relations of one active record: records about the same subject,
+   * records written in the same Session, and records sharing the attribute.
+   * Every hop reads only the view, so nothing of another owner or workspace is
+   * reached. A candidate, or a record outside the view, reaches nothing.
+   * @param view - owner and optional workspace that bound the walk.
+   * @param id - starting record.
+   * @param depth - hops to follow, from 1 to {@link MAX_RELATION_DEPTH}; defaults to one.
+   * @returns reached records in discovery order, at most `maxRecallResults`.
+   * @throws TypeError when `depth` is not an integer in range.
+   */
+  related(view: MemoryView, id: MemoryIdType, depth: number = 1): readonly RelatedMemory[] {
+    if (!Number.isSafeInteger(depth) || depth < 1 || depth > MAX_RELATION_DEPTH) {
+      throw new TypeError(`experimental-memory: depth must be an integer from 1 to ${MAX_RELATION_DEPTH}`)
+    }
+    const seed = this.visible(view, id)
+    if (seed?.status !== 'active') return []
+    const active = this.all().filter(record => visibleIn(view, record) && record.status === 'active')
+    const visited = new Set<MemoryIdType>([seed.id])
+    const reached: RelatedMemory[] = []
+    let frontier: readonly MemoryRecord[] = [seed]
+    for (let hop = 1; hop <= depth && reached.length < this.limits.maxRecallResults; hop += 1) {
+      const next: MemoryRecord[] = []
+      for (const node of frontier) {
+        for (const via of MEMORY_RELATIONS) {
+          const connects = RELATION_EDGES[via]
+          for (const record of active.filter(other => !visited.has(other.id) && connects(node, other)).sort(newestFirst)) {
+            if (reached.length >= this.limits.maxRecallResults) break
+            visited.add(record.id)
+            reached.push({ record, depth: hop, via })
+            next.push(record)
+          }
+        }
+      }
+      frontier = next
+    }
+    return reached
+  }
+
+  /**
+   * Find active records of the same owner, scope, and kind whose value states
+   * nearly the same thing as a pending write: the two values share at least
+   * {@link DUPLICATE_COVERAGE} of the larger value's word set, and each holds
+   * at least {@link MIN_DUPLICATE_TOKENS}. The record the write would replace
+   * by `(entity, key)` is not a match. Detection is lexical and conservative;
+   * it never rejects or changes a write.
+   * @param query - owner, scope, kind, identifiers, and value of the pending write.
+   * @returns matching records, best match first, at most `maxRecallResults`.
+   */
+  duplicates(query: DuplicateQuery): readonly DuplicateMatch[] {
+    const candidate = new Set(memoryTokens(query.value))
+    if (candidate.size < MIN_DUPLICATE_TOKENS) return []
+    const matches: DuplicateMatch[] = []
+    for (const record of this.all()) {
+      if (record.owner !== query.owner || !sameScope(record.scope, query.scope)) continue
+      if (record.status !== 'active' || record.kind !== query.kind) continue
+      if (record.entity === query.entity && record.key === query.key) continue
+      const tokens = new Set(memoryTokens(record.value))
+      if (tokens.size < MIN_DUPLICATE_TOKENS) continue
+      const coverage = tokenContainment(candidate, tokens)
+      if (coverage < DUPLICATE_COVERAGE) continue
+      matches.push({ record, coverage })
+    }
+    return matches
+      .sort((left, right) => right.coverage - left.coverage || newestFirst(left.record, right.record))
+      .slice(0, this.limits.maxRecallResults)
+  }
+
+  /**
+   * Count what the view stores and how much of its capacity that is.
+   * @param view - owner and optional workspace.
+   * @returns stored counts, both scope limits, and the oldest active update.
+   */
+  stats(view: MemoryView): MemoryStats {
+    const records = this.all().filter(record => visibleIn(view, record))
+    const active = records.filter(record => record.status === 'active')
+    const workspace = records.filter(record => record.scope.kind === 'workspace')
+    return {
+      total: records.length,
+      active: active.length,
+      candidates: records.length - active.length,
+      pinned: records.filter(record => record.pinned).length,
+      profile: {
+        stored: records.length - workspace.length,
+        limit: this.limits.maxProfileRecords,
+      },
+      workspace: view.workspace === undefined
+        ? null
+        : { stored: workspace.length, limit: this.limits.maxRecordsPerWorkspace },
+      oldestActiveUpdate: active.length === 0 ? null : Math.min(...active.map(record => record.updatedAt)),
+    }
   }
 
   /**

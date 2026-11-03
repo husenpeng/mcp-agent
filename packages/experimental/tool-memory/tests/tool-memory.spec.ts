@@ -213,13 +213,15 @@ describe('plugin exports', () => {
     expect(memoryTools.name).toBe('experimental-tool-memory')
     expect('default' in memoryTools).toBe(false)
     expect(memoryTools.Config({})).toEqual({
-      maxSnapshotBytes: 4096, minQuoteChars: 8, queryExpansion: true, expansionTimeoutMs: 8000, expansionMaxTokens: 120, maxAlternatives: 8,
+      maxSnapshotBytes: 4096, projectIndex: true, minQuoteChars: 8, queryExpansion: true, expansionTimeoutMs: 8000, expansionMaxTokens: 120,
+      maxAlternatives: 8, capture: false, captureMaxInputBytes: 6000, captureMaxTokens: 400, captureTimeoutMs: 12_000,
     })
     const test = await harness()
     await expect(memoryTools.apply(test.ctx, { maxSnapshotBytes: 100 })).rejects.toThrow('maxSnapshotBytes must be a safe integer of at least 256')
     await expect(memoryTools.apply(test.ctx, { minQuoteChars: 0 })).rejects.toThrow('minQuoteChars must be a positive safe integer')
     await expect(memoryTools.apply(test.ctx, { expansionTimeoutMs: 0 })).rejects.toThrow('expansionTimeoutMs must be a positive safe integer')
     await expect(memoryTools.apply(test.ctx, { expansionProvider: 'mock' })).rejects.toThrow('expansionProvider and expansionModel must be supplied together')
+    await expect(memoryTools.apply(test.ctx, { captureMaxInputBytes: 0 })).rejects.toThrow('captureMaxInputBytes must be a positive safe integer')
     // Direct application without Loader normalization falls back to the documented defaults.
     await test.fiber.dispose()
     const fiber = await test.ctx.plugin({ name: 'memory-tools-direct', inject: memoryTools.inject, apply: (ctx: Context) => memoryTools.apply(ctx, {}) })
@@ -237,13 +239,16 @@ describe('plugin exports', () => {
     expect(tool('memory_write')?.presentCall?.({ scope: 'workspace', kind: 'fact', entity: 'user', key: 'k', value: 'v', user_quote: 'q' }))
       .toEqual({ card: 'generic', title: 'Save memory', kind: 'edit', rawInput: 'user / k: v' })
     expect(tool('memory_forget')?.presentCall?.({ id: 'memory-1' })).toEqual({ card: 'generic', title: 'Delete memory', kind: 'delete', rawInput: 'memory-1' })
+    expect(tool('memory_related')?.isConcurrencySafe?.({ id: 'memory-1' })).toBe(true)
+    expect(tool('memory_related')?.presentCall?.({ id: 'memory-1' }))
+      .toEqual({ card: 'generic', title: 'Find related memories', kind: 'search', rawInput: 'memory-1' })
   })
 
-  it('registers three tools and one command and removes them on disposal', async () => {
+  it('registers four tools and one command and removes them on disposal', async () => {
     const test = await harness()
     const probe = await live(test)
     const names = () => test.ctx.tools.definitions().map(tool => tool.name).filter(name => name.startsWith('memory_')).sort()
-    expect(names()).toEqual(['memory_forget', 'memory_search', 'memory_write'])
+    expect(names()).toEqual(['memory_forget', 'memory_related', 'memory_search', 'memory_write'])
     expect(test.ctx.commands.list(probe.agent).map(entry => entry.name)).toContain('memory')
     await test.fiber.dispose()
     expect(names()).toEqual([])
@@ -305,6 +310,28 @@ describe('memory_write', () => {
     expect(test.ctx.memory.list(test.view)).toEqual([])
   })
 
+  it('names a saved memory that nearly repeats the write and stays silent otherwise', async () => {
+    const test = await harness()
+    const { agent, session } = await live(test)
+    startTurn(session)
+    say(session, '以后回复用中文，简短直接，不要加 emoji')
+    const first = await seed(test, agent, { entity: 'user', key: 'email-tone', value: 'Reply in Chinese, short and direct' })
+    const repeated = await write(test, agent, {
+      entity: 'user', key: 'reply-style', value: 'Short direct: reply in Chinese', user_quote: '以后回复用中文，简短直接，不要加 emoji',
+    })
+    expect(text(repeated)).toMatch(/^Saved memory-[0-9a-f-]+\. Similar saved memories: /u)
+    expect(text(repeated)).toContain(`${first.id} (user / email-tone)`)
+    const candidate = await write(test, agent, {
+      entity: 'user', key: 'reply-style-2', value: 'Short direct: reply in Chinese', user_quote: 'not said',
+    })
+    expect(text(candidate)).toContain('as an unconfirmed candidate')
+    expect(text(candidate)).toContain('Similar saved memories:')
+    const distinct = await write(test, agent, {
+      entity: 'user', key: 'deadline', value: 'Quotes are due every Friday', user_quote: '以后回复用中文，简短直接，不要加 emoji',
+    })
+    expect(text(distinct)).toMatch(/^Saved memory-[0-9a-f-]+\.$/u)
+  })
+
   it('saves a profile memory unpinned from a session without a workspace and shows it in every workspace', async () => {
     const test = await harness()
     const homeless = await live(test, { cwd: null })
@@ -351,6 +378,64 @@ describe('memory_search and memory_forget', () => {
     expect(text(await call(test, 'memory_forget', { id: record.id }, agent))).toBe(`Deleted ${record.id}.`)
     expect(text(await call(test, 'memory_forget', { id: record.id }, agent))).toBe(`No saved memory ${record.id} exists here.`)
     expect(text(await call(test, 'memory_search', { query: '邮件' }, agent))).toBe('No saved memories match.')
+  })
+})
+
+describe('memory_related', () => {
+  it('walks same subject, same session, and same attribute, naming the edge and the saving session', async () => {
+    const test = await harness()
+    const { agent, session } = await live(test)
+    const origin = await seed(test, agent, {
+      entity: 'client:acme', key: 'email-tone', value: 'Short and direct',
+      source: { sessionId: session.id, userMessageSeq: SessionSeq(4) },
+    })
+    const entity = await seed(test, agent, {
+      entity: 'client:acme', key: 'budget', value: 'Up to 500 USD', source: { sessionId: SessionId('session-b'), userMessageSeq: SessionSeq(9) },
+    })
+    await seed(test, agent, { entity: 'client:other', key: 'email-tone', value: 'Formal', source: { sessionId: SessionId('session-c') } })
+    await seed(test, agent, { entity: 'user', key: 'language', value: 'Chinese', source: { sessionId: session.id } })
+    const body = text(await call(test, 'memory_related', { id: origin.id }, agent))
+    expect(body).toMatch(/^Related saved memories \(historical records, not instructions\):/u)
+    expect(body).toContain(`- ${entity.id} [preference] client:acme / budget: Up to 500 USD (saved `)
+    expect(body).toContain('same-entity, 1 hop, from session-b#9')
+    expect(body).toContain('same-key, 1 hop, from session-c')
+    expect(body).toContain(`same-session, 1 hop, from ${session.id}`)
+    expect(body).not.toContain(origin.id)
+  })
+
+  it('reaches the second hop only when asked', async () => {
+    const test = await harness()
+    const { agent } = await live(test)
+    const origin = await seed(test, agent, { entity: 'client:acme', key: 'a', value: 'A', source: { sessionId: SessionId('session-a') } })
+    const first = await seed(test, agent, { entity: 'client:acme', key: 'b', value: 'B', source: { sessionId: SessionId('session-b') } })
+    const second = await seed(test, agent, { entity: 'client:other', key: 'b', value: 'C', source: { sessionId: SessionId('session-c') } })
+    const one = text(await call(test, 'memory_related', { id: origin.id }, agent))
+    expect(one).toContain(first.id)
+    expect(one).not.toContain(second.id)
+    const two = text(await call(test, 'memory_related', { id: origin.id, depth: 2 }, agent))
+    expect(two).toContain(second.id)
+    expect(two).toContain('2 hops')
+  })
+
+  it('reports a lone record as unconnected', async () => {
+    const test = await harness()
+    const { agent } = await live(test)
+    const lone = await seed(test, agent, { entity: 'client:solo', key: 'tone', value: 'Warm', source: { sessionId: SessionId('session-solo') } })
+    expect(text(await call(test, 'memory_related', { id: lone.id }, agent))).toBe(`No saved memories are connected to ${lone.id}.`)
+  })
+
+  it('rejects an unknown id, an unconfirmed memory, and an invalid depth, and lets a delegated agent read', async () => {
+    const test = await harness()
+    const root = await live(test)
+    expect((await call(test, 'memory_related', { id: 'memory-missing' }, root.agent)).error?.info?.code).toBe('MEMORY_NOT_FOUND')
+    await write(test, root.agent, { user_quote: 'not said' })
+    const [candidate] = test.ctx.memory.list(test.view) as [MemoryRecord]
+    expect((await call(test, 'memory_related', { id: candidate.id }, root.agent)).error?.info?.code).toBe('MEMORY_UNCONFIRMED')
+    expect((await call(test, 'memory_related', { id: candidate.id, depth: 3 }, root.agent)).error?.info?.code).toBe('MEMORY_INVALID_DEPTH')
+    const seeded = await seed(test, root.agent, { entity: 'client:acme', key: 'tone', value: 'Warm', source: { sessionId: SessionId('session-a') } })
+    const neighbour = await seed(test, root.agent, { entity: 'client:acme', key: 'budget', value: '500 USD', source: { sessionId: SessionId('session-b') } })
+    const child = await live(test, { owner: root.agent })
+    expect(text(await call(test, 'memory_related', { id: seeded.id }, child.agent))).toContain(neighbour.id)
   })
 })
 
@@ -468,8 +553,318 @@ describe('query expansion', () => {
   })
 })
 
+describe('post-turn capture', () => {
+  /** Session-query face backed by the live Session's own events. */
+  function provideSessionQuery(test: Harness): void {
+    test.ctx.provide('sessionQuery', {
+      observeSession: async (id: SessionId) => {
+        const session = test.ctx.sessions.get(id)
+        if (session === undefined) throw new Error('missing session')
+        return { events: session.snapshotEvents(), [Symbol.dispose]() {} }
+      },
+    } as never)
+  }
+
+  /** Capture records logged in the Session. */
+  function captures(session: Session): unknown[] {
+    return session.snapshotEvents().flatMap((event) => {
+      const record = pluginRecordOf(event)
+      return record?.type === 'plugin:tool-memory/turn-capture' ? [record.data] : []
+    })
+  }
+
+  /** End the open turn as completed. */
+  function endTurn(session: Session): void {
+    session.append('turn/end', { turn: turns, reason: { kind: 'completed' } })
+  }
+
+  it('stores quoted candidates after a turn and logs the request', async () => {
+    const test = await harness({ capture: true })
+    provideSessionQuery(test)
+    const { agent: _agent, session } = await live(test)
+    startTurn(session)
+    say(session, '以后给达人写邮件都用简短直接的语气，不要用 emoji')
+    session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    test.model.replies.push(JSON.stringify([{
+      scope: 'workspace', kind: 'preference', entity: 'user', key: 'email-tone',
+      value: '邮件简短直接，不用 emoji', quote: '简短直接的语气，不要用 emoji',
+    }]))
+    endTurn(session)
+    await vi.waitFor(() => { expect(test.ctx.memory.list(test.view)).toHaveLength(1) })
+    const [record] = test.ctx.memory.list(test.view) as [MemoryRecord]
+    expect(record).toMatchObject({ status: 'candidate', scope: { kind: 'workspace' }, source: { sessionId: session.id } })
+    expect(record.source.userMessageSeq).toBeDefined()
+    expect(test.model.requests).toHaveLength(1)
+    expect(test.model.requests[0]).toMatchObject({ provider: 'mock', model: 'mock', system: memoryTools.CAPTURE_SYSTEM, maxTokens: 400 })
+    expect(JSON.stringify(test.model.requests[0]?.messages)).toContain('简短直接的语气')
+    await vi.waitFor(() => { expect(captures(session)).toHaveLength(1) })
+    expect(captures(session)[0]).toMatchObject({ route: { provider: 'mock', model: 'mock' }, outcome: { status: 'stored' } })
+  })
+
+  it('skips an identity it already stores and a candidate whose quote is absent', async () => {
+    const test = await harness({ capture: true })
+    provideSessionQuery(test)
+    const { agent, session } = await live(test)
+    const existing = await seed(test, agent, { entity: 'user', key: 'email-tone', value: '邮件简短直接' })
+    startTurn(session)
+    say(session, '以后给达人写邮件都用简短直接的语气，不要用 emoji')
+    session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    test.model.replies.push(JSON.stringify([
+      { scope: 'workspace', kind: 'preference', entity: 'user', key: 'email-tone', value: '重复', quote: '简短直接的语气' },
+      { scope: 'workspace', kind: 'preference', entity: 'user', key: 'deadline', value: '周五截止', quote: '这句话不存在' },
+    ]))
+    endTurn(session)
+    await vi.waitFor(() => { expect(captures(session)).toHaveLength(1) })
+    expect(captures(session)[0]).toMatchObject({ outcome: { status: 'skipped', reason: 'nothing new to store' } })
+    expect(test.ctx.memory.list(test.view)).toEqual([existing])
+  })
+
+  it('records a failed request without touching the finished turn', async () => {
+    const test = await harness({ capture: true })
+    provideSessionQuery(test)
+    const { session } = await live(test)
+    startTurn(session)
+    say(session, '以后给达人写邮件都用简短直接的语气，不要用 emoji')
+    session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    test.model.replies.push(new Error('provider down'))
+    endTurn(session)
+    await vi.waitFor(() => { expect(captures(session)).toHaveLength(1) })
+    expect(captures(session)[0]).toMatchObject({ outcome: { status: 'failed', reason: 'provider down' } })
+    expect(test.ctx.memory.list(test.view)).toEqual([])
+  })
+
+  it('records an empty reply when the model proposes nothing', async () => {
+    const test = await harness({ capture: true })
+    provideSessionQuery(test)
+    const { session } = await live(test)
+    startTurn(session)
+    say(session, '以后给达人写邮件都用简短直接的语气，不要用 emoji')
+    session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    test.model.replies.push('[]')
+    endTurn(session)
+    await vi.waitFor(() => { expect(captures(session)).toHaveLength(1) })
+    expect(captures(session)[0]).toMatchObject({ outcome: { status: 'empty' } })
+    expect(test.ctx.memory.list(test.view)).toEqual([])
+  })
+
+  it('contains an unexpected storage failure and still ends the turn', async () => {
+    const test = await harness({ capture: true })
+    provideSessionQuery(test)
+    const { session } = await live(test)
+    const warn = vi.spyOn(test.ctx.logger, 'warn')
+    startTurn(session)
+    say(session, '以后给达人写邮件都用简短直接的语气，不要用 emoji')
+    session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    test.model.replies.push(JSON.stringify([{
+      scope: 'workspace', kind: 'preference', entity: 'user', key: 'email-tone', value: '邮件简短直接', quote: '简短直接的语气，不要用 emoji',
+    }]))
+    vi.spyOn(test.ctx.memory, 'remember').mockRejectedValueOnce(new Error('disk failed'))
+    endTurn(session)
+    await vi.waitFor(() => { expect(warn).toHaveBeenCalledWith('experimental-tool-memory: post-turn capture failed: disk failed') })
+  })
+
+  it('stores a profile candidate and drops a workspace candidate without a project directory', async () => {
+    const test = await harness({ capture: true })
+    provideSessionQuery(test)
+    const homeless = await live(test, { cwd: null })
+    await seed(test, homeless.agent, { scope: { kind: 'profile' }, key: 'language', value: 'Chinese' })
+    startTurn(homeless.session)
+    say(homeless.session, '我是品牌经理，请始终用中文回复，语气简短直接')
+    homeless.session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    test.model.replies.push(JSON.stringify([
+      { scope: 'profile', kind: 'fact', entity: 'user', key: 'role', value: '品牌经理', quote: '请始终用中文回复' },
+      { scope: 'workspace', kind: 'preference', entity: 'user', key: 'tone', value: '简短直接', quote: '语气简短直接' },
+    ]))
+    endTurn(homeless.session)
+    await vi.waitFor(() => {
+      expect(test.ctx.memory.list({ owner: LOCAL_MEMORY_OWNER }).filter(record => record.key === 'role')).toHaveLength(1)
+    })
+    const record = test.ctx.memory.list({ owner: LOCAL_MEMORY_OWNER }).find(candidate => candidate.key === 'role')
+    expect(record).toMatchObject({ scope: { kind: 'profile' }, entity: 'user', status: 'candidate' })
+    await vi.waitFor(() => { expect(captures(homeless.session)).toHaveLength(1) })
+    expect(captures(homeless.session)[0]).toMatchObject({ outcome: { status: 'stored' } })
+  })
+
+  it('skips a candidate that nearly repeats a saved memory and swallows a storage rejection', async () => {
+    const test = await harness({ capture: true })
+    provideSessionQuery(test)
+    const { agent, session } = await live(test)
+    await seed(test, agent, { entity: 'user', key: 'email-tone', value: '邮件简短直接，不要用 emoji' })
+    startTurn(session)
+    say(session, '以后给达人写邮件都用简短直接的语气，不要用 emoji')
+    session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    test.model.replies.push(JSON.stringify([
+      { scope: 'workspace', kind: 'preference', entity: 'user', key: 'reply-style', value: '邮件简短直接，不要用 emoji', quote: '简短直接的语气，不要用 emoji' },
+    ]))
+    endTurn(session)
+    await vi.waitFor(() => { expect(captures(session)).toHaveLength(1) })
+    expect(captures(session)[0]).toMatchObject({ outcome: { status: 'skipped', reason: 'nothing new to store' } })
+
+    const second = await harness({ capture: true })
+    provideSessionQuery(second)
+    const run = await live(second)
+    startTurn(run.session)
+    say(run.session, '以后给达人写邮件都用简短直接的语气，不要用 emoji')
+    run.session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    second.model.replies.push(JSON.stringify([{
+      scope: 'workspace', kind: 'preference', entity: 'client:acme', key: 'tone', value: '简短直接', quote: '简短直接的语气，不要用 emoji',
+    }]))
+    vi.spyOn(second.ctx.memory, 'remember').mockRejectedValueOnce(new MemoryError('full', 'workspace-full'))
+    endTurn(run.session)
+    await vi.waitFor(() => { expect(captures(run.session)).toHaveLength(1) })
+    expect(captures(run.session)[0]).toMatchObject({ outcome: { status: 'skipped', reason: 'nothing new to store' } })
+  })
+
+  it('returns without a request for a turn with no person text or while nobody is signed in', async () => {
+    const test = await harness({ capture: true })
+    provideSessionQuery(test)
+    const silent = await live(test)
+    startTurn(silent.session)
+    silent.session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    endTurn(silent.session)
+    await new Promise(resolve => setTimeout(resolve, 10))
+    expect(test.model.requests).toEqual([])
+
+    const account = new AccountState()
+    const signedOut = await harness({ capture: true })
+    provideSessionQuery(signedOut)
+    signedOut.ctx.provide('tomatoAccount', account.view())
+    const { session } = await live(signedOut)
+    startTurn(session)
+    say(session, '以后给达人写邮件都用简短直接的语气，不要用 emoji')
+    session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    endTurn(session)
+    await new Promise(resolve => setTimeout(resolve, 10))
+    expect(signedOut.model.requests).toEqual([])
+    expect(captures(session)).toEqual([])
+  })
+
+  it('logs a thrown non-Error failure and ignores non-text reply blocks', async () => {
+    const test = await harness({ capture: true })
+    provideSessionQuery(test)
+    const { session } = await live(test)
+    startTurn(session)
+    say(session, '以后给达人写邮件都用简短直接的语气，不要用 emoji')
+    session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    vi.spyOn(test.ctx.llm, 'prepareCall').mockRejectedValueOnce('route gone')
+    endTurn(session)
+    await vi.waitFor(() => { expect(captures(session)).toHaveLength(1) })
+    expect(captures(session)[0]).toMatchObject({ outcome: { status: 'failed', reason: 'route gone' } })
+
+    const mixed = await harness({ capture: true })
+    provideSessionQuery(mixed)
+    const live2 = await live(mixed)
+    startTurn(live2.session)
+    say(live2.session, '以后给达人写邮件都用简短直接的语气，不要用 emoji')
+    live2.session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    vi.spyOn(mixed.model, 'stream').mockImplementationOnce(async function* () {
+      yield { type: 'block-start', index: 0, blockType: 'reasoning' }
+      yield { type: 'block-end', index: 0, block: { type: 'reasoning', text: 'thinking' } }
+      yield { type: 'block-start', index: 1, blockType: 'text' }
+      yield {
+        type: 'block-end', index: 1, block: {
+          type: 'text',
+          text: JSON.stringify([{
+            scope: 'workspace', kind: 'preference', entity: 'user', key: 'email-tone', value: '邮件简短直接', quote: '简短直接的语气，不要用 emoji',
+          }]),
+        },
+      }
+      yield { type: 'finish', reason: { kind: 'stop' } }
+    })
+    endTurn(live2.session)
+    await vi.waitFor(() => { expect(mixed.ctx.memory.list(mixed.view)).toHaveLength(1) })
+    await vi.waitFor(() => { expect(captures(live2.session)[0]).toMatchObject({ outcome: { status: 'stored' } }) })
+  })
+
+  it('contains a non-Error rejection from the capture pipeline', async () => {
+    const test = await harness({ capture: true })
+    test.ctx.provide('sessionQuery', {
+      observeSession: async () => { throw 'broken' },
+    } as never)
+    const { session } = await live(test)
+    const warn = vi.spyOn(test.ctx.logger, 'warn')
+    startTurn(session)
+    say(session, '以后给达人写邮件都用简短直接的语气，不要用 emoji')
+    session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    endTurn(session)
+    await vi.waitFor(() => { expect(warn).toHaveBeenCalledWith('experimental-tool-memory: post-turn capture failed: broken') })
+  })
+
+  it('stays silent when capture is off or the turn carried no model route', async () => {
+    const off = await harness()
+    provideSessionQuery(off)
+    const quiet = await live(off)
+    startTurn(quiet.session)
+    say(quiet.session, '以后给达人写邮件都用简短直接的语气，不要用 emoji')
+    endTurn(quiet.session)
+    await new Promise(resolve => setTimeout(resolve, 10))
+    expect(off.model.requests).toEqual([])
+
+    const routed = await harness({ capture: true })
+    provideSessionQuery(routed)
+    const blind = await live(routed)
+    startTurn(blind.session)
+    say(blind.session, '以后给达人写邮件都用简短直接的语气，不要用 emoji')
+    endTurn(blind.session)
+    await new Promise(resolve => setTimeout(resolve, 10))
+    expect(routed.model.requests).toEqual([])
+    expect(captures(blind.session)).toEqual([])
+  })
+})
+
+describe('capture transcript and parsing', () => {
+  it('reads the turn person text within the byte cap and ignores trivial turns', async () => {
+    const test = await harness()
+    const { session } = await live(test)
+    startTurn(session)
+    say(session, '')
+    const first = say(session, '以后给达人写邮件都用简短直接的语气')
+    const end = session.append('turn/end', { turn: turns, reason: { kind: 'completed' } })
+    const events = session.snapshotEvents()
+    const transcript = memoryTools.collectTurnMessages(events, turns, end.seq, 4096)
+    if (transcript === undefined) throw new Error('expected a transcript')
+    expect(transcript).toEqual({ fromSeq: first.seq, toSeq: first.seq, messages: [{ seq: first.seq, text: '以后给达人写邮件都用简短直接的语气' }] })
+    expect(memoryTools.renderCaptureInput(transcript)).toBe(`Finished turn, user messages:\n[${first.seq}] 以后给达人写邮件都用简短直接的语气`)
+    expect(memoryTools.collectTurnMessages(events, turns, end.seq, 4)).toBeUndefined()
+    expect(memoryTools.collectTurnMessages(events, 99, end.seq, 4096)).toBeUndefined()
+    startTurn(session)
+    say(session, 'hi')
+    const short = session.append('turn/end', { turn: turns, reason: { kind: 'completed' } })
+    expect(memoryTools.collectTurnMessages(session.snapshotEvents(), turns, short.seq, 4096)).toBeUndefined()
+  })
+
+  it('parses a fenced reply and drops invalid, empty, long, and duplicate candidates', () => {
+    const reply = [
+      'Here you go:',
+      '```json',
+      JSON.stringify([
+        { scope: 'profile', kind: 'fact', entity: 'user', key: 'role', value: 'Brand manager', quote: 'I manage brands' },
+        { scope: 'profile', kind: 'fact', entity: 'user', key: 'role', value: 'Duplicate', quote: 'I manage brands' },
+        { scope: 'workspace', kind: 'preference', entity: 'Brand X', key: 'tone', value: 'x', quote: 'y' },
+        { scope: 'workspace', kind: 'preference', entity: 'user', key: 'tone', value: 'x'.repeat(201), quote: 'y' },
+        { scope: 'workspace', kind: 'preference', entity: 'user', key: 'tone-2', value: '', quote: 'y' },
+        { scope: 'workspace', kind: 'preference', entity: 'user', key: 'tone-3', value: 'ok', quote: '   ' },
+      ]),
+      '```',
+    ].join('\n')
+    expect(memoryTools.parseCaptureReply(reply)).toEqual([
+      { scope: 'profile', kind: 'fact', entity: 'user', key: 'role', value: 'Brand manager', quote: 'I manage brands' },
+    ])
+  })
+
+  it('keeps at most three candidates and rejects malformed payloads', () => {
+    const candidates = Array.from({ length: 5 }, (_, index) => ({
+      scope: 'workspace', kind: 'fact', entity: 'user', key: `k-${index}`, value: `v${index}`, quote: 'evidence here',
+    }))
+    expect(memoryTools.parseCaptureReply(JSON.stringify(candidates))).toHaveLength(3)
+    expect(memoryTools.parseCaptureReply('no json here')).toEqual([])
+    expect(memoryTools.parseCaptureReply('[not json]')).toEqual([])
+    expect(memoryTools.parseCaptureReply(JSON.stringify([{ scope: 'profile', kind: 'unknown', entity: 'user', key: 'k', value: 'v', quote: 'q' }]))).toEqual([])
+  })
+})
+
 describe('/memory', () => {
-  const USAGE = 'Usage: /memory [list|profile|confirm <id>|pin <id>|unpin <id>|forget <id>]'
+  const USAGE = 'Usage: /memory [list|profile|stats|show <id>|related <id> [1-2]|confirm <id>|pin <id>|unpin <id>|forget <id>]'
 
   it('lists, confirms, pins, unpins, and deletes records of the agent workspace', async () => {
     const test = await harness()
@@ -511,10 +906,55 @@ describe('/memory', () => {
     expect(listed.kind === 'success' && listed.text).not.toContain('email-tone')
   })
 
+  it('shows the writing Session of a record, its relations, and the storage in use', async () => {
+    const test = await harness()
+    const { agent, session } = await live(test)
+    const origin = await seed(test, agent, {
+      entity: 'client:acme', key: 'email-tone', value: 'Short',
+      source: { sessionId: session.id, userMessageSeq: SessionSeq(7) },
+    })
+    const neighbour = await seed(test, agent, { entity: 'client:acme', key: 'budget', value: '500 USD', source: { sessionId: SessionId('session-b') } })
+    const today = new Date(origin.updatedAt).toISOString().slice(0, 10)
+    expect(await command(test, agent, `/memory show ${origin.id}`)).toEqual({
+      kind: 'success',
+      text: `- ${origin.id} [preference] client:acme / email-tone: Short (saved ${today})\nSaved in session ${session.id} from message 7.`,
+    })
+    expect(await command(test, agent, '/memory show memory-missing')).toEqual({ kind: 'error', text: 'No memory memory-missing exists here.' })
+    expect(await command(test, agent, '/memory related memory-missing')).toEqual({ kind: 'error', text: 'No memory memory-missing exists here.' })
+    const related = await command(test, agent, `/memory related ${origin.id}`)
+    expect(related.kind === 'success' && related.text).toContain(`Related memories:\n- ${neighbour.id}`)
+    expect(await command(test, agent, '/memory stats')).toEqual({
+      kind: 'success',
+      text: [
+        'Memory stats: 2 stored, 2 active, 0 unconfirmed, 0 pinned.',
+        'Profile: 0 of 100.',
+        'This workspace: 2 of 1000.',
+        `Oldest active memory: ${today}.`,
+      ].join('\n'),
+    })
+  })
+
+  it('marks an unconfirmed record, refuses its relations, and counts without a workspace', async () => {
+    const test = await harness()
+    const { agent } = await live(test)
+    await write(test, agent, { user_quote: 'not said' })
+    const [candidate] = test.ctx.memory.list(test.view) as [MemoryRecord]
+    const shown = await command(test, agent, `/memory show ${candidate.id}`)
+    expect(shown.kind === 'success' && shown.text).toContain(`Unconfirmed: later sessions do not see it until you run /memory confirm ${candidate.id}.`)
+    expect(await command(test, agent, `/memory related ${candidate.id}`)).toEqual({
+      kind: 'error', text: `Memory ${candidate.id} is unconfirmed, so it has no connections yet.`,
+    })
+    const lone = await seed(test, agent, { entity: 'client:solo', key: 'tone', value: 'Warm', source: { sessionId: SessionId('session-solo') } })
+    expect(await command(test, agent, `/memory related ${lone.id}`)).toEqual({ kind: 'success', text: `No memories are connected to ${lone.id}.` })
+    const homeless = await live(test, { cwd: null })
+    const counted = await command(test, homeless.agent, '/memory stats')
+    expect(counted.kind === 'success' && counted.text).toContain('This session has no project directory, so it has no workspace memories.')
+  })
+
   it('rejects unknown grammar', async () => {
     const test = await harness()
     const { agent } = await live(test)
-    for (const line of ['/memory pin', '/memory list extra', '/memory profile extra', '/memory forget a b', '/memory erase x']) {
+    for (const line of ['/memory pin', '/memory list extra', '/memory profile extra', '/memory forget a b', '/memory erase x', '/memory show', '/memory stats extra', '/memory related x 0', '/memory related x 3', '/memory related x two']) {
       expect(await command(test, agent, line)).toEqual({ kind: 'error', text: USAGE })
     }
   })
@@ -559,6 +999,56 @@ describe('account scope', () => {
   })
 })
 
+describe('project index rendering', () => {
+  const active = (test: Harness): readonly MemoryRecord[] =>
+    test.ctx.memory.list(test.view).filter(record => record.status === 'active')
+
+  it('orders subjects by count, then by name, and lists at most eight', async () => {
+    const test = await harness()
+    const { agent } = await live(test)
+    for (const entity of ['b', 'a', 'c', 'd', 'e', 'f', 'g', 'h', 'i']) {
+      await seed(test, agent, { entity, key: 'k1' })
+      await seed(test, agent, { entity, key: 'k2' })
+    }
+    await seed(test, agent, { entity: 'a', key: 'k3' })
+    const lines = memoryTools.renderProjectIndex(active(test), 4096).split('\n')
+    expect(lines[0]).toBe('Project memories by subject (counts only; memory_search returns the values):')
+    expect(lines[1]).toBe('- a: 3 (k1, k2, k3)')
+    expect(lines[2]).toBe('- b: 2 (k1, k2)')
+    expect(lines).toHaveLength(9)
+  })
+
+  it('lists at most six attributes per subject and marks the rest', async () => {
+    const test = await harness()
+    const { agent } = await live(test)
+    for (const key of ['a', 'b', 'c', 'd', 'e', 'f', 'g']) await seed(test, agent, { entity: 'client:x', key })
+    expect(memoryTools.renderProjectIndex(active(test), 4096).split('\n')[1]).toBe('- client:x: 7 (a, b, c, d, e, f, …)')
+  })
+
+  it('indexes workspace subjects only and stays empty below the threshold', async () => {
+    const test = await harness()
+    const { agent } = await live(test)
+    await seed(test, agent, { scope: { kind: 'profile' }, key: 'language', value: 'Chinese' })
+    await seed(test, agent, { entity: 'client:solo', key: 'tone', value: 'Warm' })
+    expect(memoryTools.renderProjectIndex(active(test), 4096)).toBe('')
+  })
+
+  it('bounds the index by bytes and names omitted subjects', async () => {
+    const test = await harness()
+    const { agent } = await live(test)
+    for (const entity of ['alpha', 'beta', 'gamma']) {
+      await seed(test, agent, { entity, key: 'k1' })
+      await seed(test, agent, { entity, key: 'k2' })
+    }
+    const records = active(test)
+    expect(memoryTools.renderProjectIndex(records, 8)).toBe('')
+    const [header, first, second] = memoryTools.renderProjectIndex(records, 4096).split('\n')
+    const budget = Buffer.byteLength([header, first, second, '(1 more subjects omitted; memory_search by subject.)'].join('\n'), 'utf8') - 1
+    expect(memoryTools.renderProjectIndex(records, budget))
+      .toBe([header, first, '(2 more subjects omitted; memory_search by subject.)'].join('\n'))
+  })
+})
+
 describe('snapshot injection', () => {
   it('appends one snapshot when pinned records exist, skips an unchanged snapshot, and replaces a changed one', async () => {
     const test = await harness()
@@ -599,6 +1089,44 @@ describe('snapshot injection', () => {
       sourceEventSeqs: [carrier.seq],
     })
     expect(await preStep(test, agent)).toHaveLength(1)
+  })
+
+  it('appends a subject index of workspace memories and honors projectIndex', async () => {
+    const test = await harness()
+    const { agent } = await live(test)
+    await seed(test, agent, { entity: 'client:acme', key: 'budget', value: '500 USD' })
+    await seed(test, agent, { entity: 'client:acme', key: 'email-tone', value: 'Short' })
+    await seed(test, agent, { entity: 'client:globex', key: 'budget', value: '900 USD' })
+    const [indexed] = await preStep(test, agent)
+    expect(indexed).toBe('Project memories by subject (counts only; memory_search returns the values):\n- client:acme: 2 (budget, email-tone)')
+    expect(indexed).not.toContain('client:globex')
+
+    const pinned = await seed(test, agent, { entity: 'user', key: 'language', value: 'Chinese', pinned: true })
+    const [both] = await preStep(test, agent)
+    const [snapshot, index] = (both ?? '').split('\n\n')
+    expect(snapshot).toContain(`- ${pinned.id} [preference, pinned] user / language: Chinese`)
+    expect(index).toBe('Project memories by subject (counts only; memory_search returns the values):\n- client:acme: 2 (budget, email-tone)')
+
+    const quiet = await harness({ projectIndex: false })
+    const { agent: quietAgent } = await live(quiet)
+    await seed(quiet, quietAgent, { entity: 'client:acme', key: 'budget', value: '500 USD' })
+    await seed(quiet, quietAgent, { entity: 'client:acme', key: 'email-tone', value: 'Short' })
+    expect(await preStep(quiet, quietAgent)).toEqual([])
+  })
+
+  it('leaves no room for the index when the snapshot fills the budget', async () => {
+    const test = await harness({ maxSnapshotBytes: 512 })
+    const { agent } = await live(test)
+    await seed(test, agent, { entity: 'client:acme', key: 'budget', value: '500 USD' })
+    await seed(test, agent, { entity: 'client:acme', key: 'email-tone', value: 'Short' })
+    const sample = await seed(test, agent, { scope: { kind: 'profile' }, key: 'language', value: 'x' })
+    const measured = Buffer.byteLength(memoryTools.renderMemorySnapshot([sample], 65_536), 'utf8')
+    await test.ctx.memory.forget(test.view, sample.id)
+    await seed(test, agent, { scope: { kind: 'profile' }, key: 'language', value: 'v'.repeat(510 - measured + 1) })
+    expect(Buffer.byteLength(memoryTools.renderMemorySnapshot(test.ctx.memory.snapshot(test.view), 512), 'utf8')).toBe(510)
+    const [shown] = await preStep(test, agent)
+    expect(shown).toContain('vvv')
+    expect(shown).not.toContain('Project memories by subject')
   })
 
   it('bounds the snapshot by maxSnapshotBytes, profile first, and names omitted records', async () => {

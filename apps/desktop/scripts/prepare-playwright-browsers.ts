@@ -5,15 +5,13 @@ import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync } from
 import { createRequire } from 'node:module'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { PLAYWRIGHT_BROWSERS_DIRECTORY } from '../src/playwright-browsers.ts'
+import { PLAYWRIGHT_BROWSERS_DIRECTORY, PLAYWRIGHT_SHELL_EXECUTABLE, PLAYWRIGHT_SHELL_PREFIX } from '../src/playwright-browsers.ts'
 import { desktopTargetPlatform, resolveDesktopBuildTarget, resolveDesktopTargetBuildPaths } from './desktop-build-paths.mjs'
 import { packagingStep } from './packaging-step.mjs'
 
 const APP_ROOT = fileURLToPath(new URL('..', import.meta.url))
 const REPOSITORY_ROOT = resolve(APP_ROOT, '..', '..')
 const PROVIDER_MANIFEST = join(REPOSITORY_ROOT, 'packages', 'experimental', 'browser-use-playwright-mcp', 'package.json')
-const SHELL_PREFIX = 'chromium_headless_shell-'
-const SHELL_EXECUTABLE = process.platform === 'win32' ? 'chrome-headless-shell.exe' : 'chrome-headless-shell'
 
 /**
  * Resolve the Playwright CLI that the packaged provider runs, so the downloaded shell matches the bundled server's revision.
@@ -47,9 +45,9 @@ export function downloadPlaywrightShell(cli: string, cache: string): void {
  */
 export function installPlaywrightShell(source: string, destination: string): string {
   const shells = readdirSync(source, { withFileTypes: true })
-    .filter(entry => entry.isDirectory() && entry.name.startsWith(SHELL_PREFIX))
+    .filter(entry => entry.isDirectory() && entry.name.startsWith(PLAYWRIGHT_SHELL_PREFIX))
     .map(entry => entry.name)
-  if (shells.length === 0) throw new Error(`desktop playwright: ${source} has no ${SHELL_PREFIX}<revision> installation`)
+  if (shells.length === 0) throw new Error(`desktop playwright: ${source} has no ${PLAYWRIGHT_SHELL_PREFIX}<revision> installation`)
   rmSync(destination, { recursive: true, force: true })
   mkdirSync(destination, { recursive: true })
   const executables: string[] = []
@@ -68,10 +66,10 @@ export function installPlaywrightShell(source: string, destination: string): str
 function shellExecutable(directory: string): string {
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue
-    const candidate = join(directory, entry.name, SHELL_EXECUTABLE)
+    const candidate = join(directory, entry.name, PLAYWRIGHT_SHELL_EXECUTABLE)
     if (existsSync(candidate)) return candidate
   }
-  throw new Error(`desktop playwright: ${directory} has no ${SHELL_EXECUTABLE}`)
+  throw new Error(`desktop playwright: ${directory} has no ${PLAYWRIGHT_SHELL_EXECUTABLE}`)
 }
 
 /**

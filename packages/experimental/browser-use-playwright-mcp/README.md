@@ -25,7 +25,7 @@ Use Playwright MCP to inspect pages and operate Chromium through its upstream to
 <a id="use-this-package"></a>
 ## Use this package
 
-Mount both entries before creating or resuming a Session, in a profile composition that supplies Agents, tools, system prompts, and the working-directory service. Loading or reloading this provider does not adopt Sessions that are already active. Desktop installers place the Playwright headless shell in `runtime/playwright-browsers` and set `PLAYWRIGHT_BROWSERS_PATH`; elsewhere browser installation follows the upstream runtime, and `executablePath` selects an existing Chromium installation.
+Mount both entries before creating or resuming a Session, in a profile composition that supplies Agents, tools, system prompts, and the working-directory service. Loading or reloading this provider does not adopt Sessions that are already active. Desktop installers place the Playwright headless shell in `runtime/playwright-browsers` and set `PLAYWRIGHT_BROWSERS_PATH` and `PLAYWRIGHT_MCP_EXECUTABLE_PATH` for the Host; elsewhere browser installation follows the upstream runtime, and `executablePath` selects an existing Chromium installation.
 
 ```yaml
 - name: '@tomato/browser-use'
@@ -41,11 +41,11 @@ Use `mode: attach` and set `endpoint` to an HTTP(S) debugging URL or WS(S) brows
 |---|---|---|
 | `mode` | required | `launch` or `attach`, fixed for this provider activation |
 | `headless` | `true` | Launch without a visible window |
-| `executablePath` | upstream discovery | Chromium executable for launch |
+| `executablePath` | `PLAYWRIGHT_MCP_EXECUTABLE_PATH` for headless launch, else upstream discovery | Chromium executable for launch |
 | `endpoint` | required for attach | Existing browser debugging endpoint |
 | `toolCallTimeoutMs` | MCP client default | Per-call timeout in milliseconds |
 
-The [configuration catalog](../../../docs/config-catalog.md#tomatoexperimental-browser-use-playwright-mcp) lists accepted fields. The profile or preset selects the browser mode. The child process clears inherited `PLAYWRIGHT_MCP_*` options so they cannot replace that configuration.
+The [configuration catalog](../../../docs/config-catalog.md#tomatoexperimental-browser-use-playwright-mcp) lists accepted fields. The profile or preset selects the browser mode. The child process clears inherited `PLAYWRIGHT_MCP_*` options so they cannot replace that configuration; `PLAYWRIGHT_MCP_EXECUTABLE_PATH` supplies only the default executable for headless launch, and an explicit `executablePath` wins.
 
 When configuring the system prompt's `toolOrder` for the whole process, leave browser tools under `<unlisted-tools>`. Explicitly listing browser tool names can make prompt assembly fail for Sessions without a browser connection.
 

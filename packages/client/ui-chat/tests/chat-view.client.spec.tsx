@@ -2382,7 +2382,10 @@ describe('ChatView', () => {
     expect(images).toHaveLength(2)
     expect(images.every(image => image.getAttribute('data-count') === '1')).toBe(true)
     expect(images.every(image => image.getAttribute('data-compact') === 'true')).toBe(true)
-    expect(images[0]?.parentElement).toBe(images[1]?.parentElement)
+    // Each image sits in its own attachment cell, and both cells share the row.
+    const row = images[0]?.parentElement?.parentElement
+    expect(row).toBe(images[1]?.parentElement?.parentElement)
+    expect(row?.hasAttribute('data-message-attachments')).toBe(true)
     expect(JSON.parse(images[0]?.getAttribute('data-first') ?? '{}')).toEqual({
       preview: { url: 'blob:echo-a', name: 'a.png', width: 4, height: 3 },
     })
@@ -2424,10 +2427,18 @@ describe('ChatView', () => {
     const last = view.getByTestId('images-last.png')
     expect(first.getAttribute('data-compact')).toBe('true')
     expect(last.getAttribute('data-compact')).toBe('true')
-    expect(first.parentElement).toBe(file.parentElement)
-    expect(file.parentElement).toBe(last.parentElement)
-    expect(first.compareDocumentPosition(file) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
-    expect(file.compareDocumentPosition(last) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    // Each image keeps its own attachment cell; the file card is the row's other child.
+    const cellOf = (image: HTMLElement): HTMLElement => {
+      const cell = image.parentElement
+      if (cell === null) throw new Error('the image slot rendered without an attachment cell')
+      return cell
+    }
+    const firstCell = cellOf(first)
+    const lastCell = cellOf(last)
+    expect(firstCell.parentElement).toBe(file.parentElement)
+    expect(firstCell.parentElement).toBe(lastCell.parentElement)
+    expect(firstCell.compareDocumentPosition(file) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
+    expect(file.compareDocumentPosition(lastCell) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     expect(view.getByText('TXT 23B')).toBeTruthy()
   })
 

@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs'
 import { mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { expect, it, onTestFinished } from 'vitest'
+import { expect, it, onTestFinished, vi } from 'vitest'
 import * as yaml from 'js-yaml'
 import type { Context } from '@tomato/cordis'
 import { entryListSchema } from '@tomato/cordis-plugin-include'
@@ -18,7 +18,7 @@ import Commands from '@tomato/commands'
 import Goals, { GoalId } from '@tomato/goal'
 import Llm, { LlmAdapter, ToolCallId, createUserMessage } from '@tomato/llm'
 import type { GenerateOptions, StreamChunk } from '@tomato/llm'
-import Sessions, { SessionId } from '@tomato/session'
+import Sessions, { SessionId, pluginRecordOf } from '@tomato/session'
 import type { Session, SessionEvent } from '@tomato/session'
 import Projections from '@tomato/session-projection'
 import Storage from '@tomato/storage'
@@ -92,24 +92,8 @@ function sourceTexts(session: Session, kind: string): string[] {
     : [])
 }
 
-it('publishes one default-off layer whose rows are its only runtime dependencies', () => {
-  expect(manifest.tomato.bundle).toEqual({ patch: './cordis.patch.yml', listedByDefault: true })
-  expect(rows).toEqual([
-    { id: 'optional-memory', name: '@tomato/experimental-memory' },
-    { id: 'optional-tool-memory', name: '@tomato/experimental-tool-memory' },
-    { id: 'optional-focus', name: '@tomato/experimental-focus' },
-    { id: 'optional-muse-insights', name: '@tomato/experimental-muse-insights' },
-  ])
-  expect(Object.keys(manifest.dependencies).sort())
-    .toEqual([
-      '@tomato/experimental-focus',
-      '@tomato/experimental-memory',
-      '@tomato/experimental-muse-insights',
-      '@tomato/experimental-tool-memory',
-    ])
-})
-
-it('remembers a quoted preference in its workspace and a profile fact everywhere, and keeps a goal round from repeating a failed call', async () => {
+/** Boot the shipped bundle rows over the fixture base in a temporary profile. */
+async function bootBundle(toolMemoryConfig: Record<string, unknown> = {}): Promise<{ ctx: Context; home: string; workspace: string }> {
   const home = await mkdtemp(join(tmpdir(), 'tomato-muse-bundle-'))
   let owner: Context | undefined
   onTestFinished(async () => { await owner?.fiber.dispose(); await rm(home, { recursive: true, force: true }) })
@@ -143,7 +127,12 @@ it('remembers a quoted preference in its workspace and a profile fact everywhere
   ])
   // The shipped rows keep their ids; each name serves that row's package source through a Loader builtin.
   const focusConfig = { approvalTools: ['send_*'] }
-  await bundle(home, manifest.name, rows.map(row => ({ id: row.id, name: `cordis:${row.id}`, ...row.id === 'optional-focus' ? { config: focusConfig } : {} })))
+  await bundle(home, manifest.name, rows.map(row => ({
+    id: row.id,
+    name: `cordis:${row.id}`,
+    ...row.id === 'optional-focus' ? { config: focusConfig } : {},
+    ...row.id === 'optional-tool-memory' && Object.keys(toolMemoryConfig).length > 0 ? { config: toolMemoryConfig } : {},
+  })))
   await writeFile(join(dir, 'cordis.yml'), '[]\n')
   const profile: ProfileContext = {
     name: 'test', dir, home, cwd: home, patchPath: join(dir, 'cordis.patch.yml'), installAnchor: anchor,
@@ -164,6 +153,28 @@ it('remembers a quoted preference in its workspace and a profile fact everywhere
     expect([...ctx.loader.entries()].filter(entry => entry.options.id === row.id && entry.fiber !== undefined)).toHaveLength(1)
   }
 
+  return { ctx, home, workspace }
+}
+
+it('publishes one default-off layer whose rows are its only runtime dependencies', () => {
+  expect(manifest.tomato.bundle).toEqual({ patch: './cordis.patch.yml', listedByDefault: true })
+  expect(rows).toEqual([
+    { id: 'optional-memory', name: '@tomato/experimental-memory' },
+    { id: 'optional-tool-memory', name: '@tomato/experimental-tool-memory' },
+    { id: 'optional-focus', name: '@tomato/experimental-focus' },
+    { id: 'optional-muse-insights', name: '@tomato/experimental-muse-insights' },
+  ])
+  expect(Object.keys(manifest.dependencies).sort())
+    .toEqual([
+      '@tomato/experimental-focus',
+      '@tomato/experimental-memory',
+      '@tomato/experimental-muse-insights',
+      '@tomato/experimental-tool-memory',
+    ])
+})
+
+it('remembers a quoted preference in its workspace and a profile fact everywhere, and keeps a goal round from repeating a failed call', async () => {
+  const { ctx, home, workspace } = await bootBundle()
   // Session 1: the person states a workspace preference and a fact about themselves; the model saves both with their words.
   const quote = '以后给达人写邮件都用简短直接的语气，不要用 emoji'
   const aboutMe = '我是品牌经理，回复都用中文'
@@ -252,4 +263,39 @@ it('remembers a quoted preference in its workspace and a profile fact everywhere
   const [ledger] = sourceTexts(goalAgent.session, 'experimental-focus').filter(entry => entry.startsWith('Failures so far'))
   expect(ledger).toContain('- search_creators failed 2× (error, latest in round 1): quota exceeded')
   expect(requestText(goalModel.requests[4])).toContain('Failures so far in this goal')
+}, 30_000)
+it('captures a finished turn as a candidate through the shipped rows', async () => {
+  const { ctx, workspace } = await bootBundle({ capture: true })
+  const model = new Model([
+    text('记住了。'),
+    text(JSON.stringify([{
+      scope: 'workspace', kind: 'preference', entity: 'user', key: 'reply-style', value: '简短直接，不用 emoji', quote: '以后回复都简短直接',
+    }])),
+  ])
+  ctx.llm.registerAdapter(['capture'], model)
+  const agent = await ctx.agentLoop.create(SessionId('muse-capture'), { provider: 'capture', model: 'm' }, { cwd: workspace })
+  agent.followup(createUserMessage({ content: [{ type: 'text', text: '以后回复都简短直接，不要用 emoji' }], source: { kind: 'user' } }))
+  await agent.whenIdle()
+  const view = { owner: Memory.LOCAL_MEMORY_OWNER, workspace }
+  await vi.waitFor(() => {
+    expect(ctx.memory.list(view).some(record => record.key === 'reply-style')).toBe(true)
+  }, { timeout: 5000 })
+  const captured = ctx.memory.list(view).find(record => record.key === 'reply-style')
+  expect(captured).toMatchObject({
+    status: 'candidate', entity: 'user', value: '简短直接，不用 emoji', source: { sessionId: agent.session.id },
+  })
+  const records = agent.session.snapshotEvents().flatMap((event) => {
+    const record = pluginRecordOf(event)
+    return record?.type === 'plugin:tool-memory/turn-capture' ? [record.data] : []
+  })
+  expect(records.at(-1)).toMatchObject({ route: { provider: 'capture', model: 'm' }, outcome: { status: 'stored' } })
+
+  // A later Session receives no snapshot for an unconfirmed candidate.
+  const later = new Model([text('ok')])
+  ctx.llm.registerAdapter(['after'], later)
+  const next = await ctx.agentLoop.create(SessionId('muse-after-capture'), { provider: 'after', model: 'm' }, { cwd: workspace })
+  next.followup(createUserMessage({ content: [{ type: 'text', text: 'hello' }], source: { kind: 'user' } }))
+  await next.whenIdle()
+  expect(sourceTexts(next.session, 'experimental-memory')).toEqual([])
+  expect(requestText(later.requests[0])).not.toContain('简短直接，不用 emoji')
 }, 30_000)

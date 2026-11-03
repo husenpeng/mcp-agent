@@ -1,0 +1,58 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/marketing/tool-creator-search/README.md
+/:
+  en: d48bf62ca1229359
+  zh: 0de15fe5b13b1687
+/tomato-tool-creator-search:
+  en: 87071b7d88b70294
+  zh: 4fcbf7c7019ddddd
+/tomato-tool-creator-search/summary:
+  en: db9ed3272a3b800d
+  zh: 00d7bd7e5596d44f
+/tomato-tool-creator-search/table-of-contents:
+  en: 76368b6b1da79c80
+  zh: 52384aee991ac542
+/tomato-tool-creator-search/use-this-package:
+  en: 11a06ceeb7da6542
+  zh: de1d49c733bc5ebb
+/tomato-tool-creator-search/use-this-package/when-to-choose-it:
+  en: 02611fc3e1967b09
+  zh: 53163a839638c8b4
+/tomato-tool-creator-search/use-this-package/minimal-configuration:
+  en: 3204a127894c9881
+  zh: 6347fa5f8edecb22
+/tomato-tool-creator-search/use-this-package/the-three-tools:
+  en: b20dede70ff9a9ba
+  zh: b664ef47c2cc3601
+/tomato-tool-creator-search/understand-the-implementation:
+  en: ee4615a04fa6503d
+  zh: ee2c5fb2204a43cf
+/tomato-tool-creator-search/understand-the-implementation/source-map:
+  en: b368f410b452ca40
+  zh: d25fa62e6b5976c0
+/tomato-tool-creator-search/understand-the-implementation/request-and-failure-behavior:
+  en: 5c4e5040688488da
+  zh: 280e187161216458
+/tomato-tool-creator-search/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/tomato-tool-creator-search/model-experience/tool-schemas:
+  en: 3039bc5e7a796b21
+  zh: 6b7a9eaf69c9ea53
+/tomato-tool-creator-search/model-experience/tool-schemas/what-the-model-sees:
+  en: 4bdef51a2e406240
+  zh: be0e812a4c6d7cd2
+/tomato-tool-creator-search/model-experience/tool-schemas/token-effect:
+  en: 3f21819e8bf97850
+  zh: 40b6fe51fb9bab6c
+/tomato-tool-creator-search/model-experience/tool-schemas/kv-cache-effect:
+  en: b21c7d6a4d1a7345
+  zh: ee831a14756b0e6d
+/tomato-tool-creator-search/known-limitations-and-deferred-work:
+  en: b73068097379e433
+  zh: 2500364b298abbe0
+/tomato-tool-creator-search/known-limitations-and-deferred-work/dev-note:
+  en: 0a1253c6f7b5e8b9
+  zh: 9f56528562c7c914

@@ -11,6 +11,7 @@ import {
   projectFilesToText,
   offloadedImageText,
   projectImagesForTextModel,
+  projectImagesWithEvidence,
   projectOffloadedImages,
   projectToolUpdates,
   requiredImageOffload,
@@ -263,6 +264,30 @@ describe('model-facing image access', () => {
     }
     expect(() => offloadedImageText(ref, { readonlyPath: '/tmp/object' }))
       .toThrow('unreachable variant in image extension: "image/tiff"')
+  })
+})
+
+describe('projectImagesWithEvidence', () => {
+  it('returns messages unchanged when the resolver knows no attachment', () => {
+    const messages = [createUserMessage({ content: [{ type: 'text', text: 'lead' }, image(3)], source })]
+    expect(projectImagesWithEvidence(messages, () => undefined)).toBe(messages)
+  })
+
+  it('substitutes evidence in place and keeps unresolved images', () => {
+    const known = image(3)
+    const unknown = { ...image(4), attachment: { ...image(4).attachment, attachmentId: AttachmentId(`sha256:${'b'.repeat(64)}`) } }
+    const message = createUserMessage({
+      content: [{ type: 'text', text: 'lead' }, known, unknown, { type: 'text', text: 'tail' }],
+      source,
+    })
+    const projected = projectImagesWithEvidence([message], id =>
+      id === String(known.attachment.attachmentId) ? '<image_evidence>read</image_evidence>' : undefined)
+    expect(projected[0]?.content).toEqual([
+      { type: 'text', text: 'lead' },
+      { type: 'text', text: '<image_evidence>read</image_evidence>' },
+      unknown,
+      { type: 'text', text: 'tail' },
+    ])
   })
 })
 

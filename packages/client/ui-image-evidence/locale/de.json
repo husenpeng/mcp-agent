@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Bildbelege",
+    "description": "Liest eingefügte Bilder mit einem Vision-Modell für reine Textmodelle und zeigt das Ergebnis neben jedem Bild an."
+  }
+}

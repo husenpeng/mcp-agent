@@ -14,6 +14,9 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { basename, join, resolve } from 'node:path'
+import { mkdtempSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { execFileSync } from 'node:child_process'
 import { parseArgs } from 'node:util'
 import * as yaml from 'js-yaml'
 import {
@@ -30,6 +33,8 @@ import { desktopTargetPlatform, resolveDesktopBuildTarget, resolveDesktopTargetB
 
 const TOMATO_PACKAGE = '@tomato/cli'
 const ROOT_PACKAGES = [TOMATO_PACKAGE, DESKTOP_HOST_PACKAGE] as const
+/** First-party bundles shipped beside the core graph, such as the built-in plugin market. */
+const EXTRA_PACKAGES = ['tomato-market'] as const
 const APP_ROOT = resolve(import.meta.dirname, '..')
 const REPOSITORY_ROOT = resolve(APP_ROOT, '..', '..')
 
@@ -114,6 +119,10 @@ export function selectDesktopPackageClosure(
   for (const name of ROOT_PACKAGES) {
     if (!available.has(name)) throw new Error(`desktop package set: packed inputs omit ${name}`)
     visit(name)
+  }
+  for (const name of EXTRA_PACKAGES) {
+    if (available.has(name)) visit(name)
+    else console.warn(`desktop package set: extra package ${name} is not in the packed inputs`)
   }
   return [...selected.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([, packed]) => packed)
 }
@@ -209,6 +218,18 @@ function main(): void {
     allowPositionals: false,
   })
   const inputs = (values.from ?? defaultInputs).map(path => resolve(REPOSITORY_ROOT, path))
+  // The built-in plugin market is a repository plugin rather than a workspace
+  // package, so it is packed here and selected as an extra closure root. A
+  // build-local npm cache keeps packaging independent of the caller's npm home.
+  const extraDir = mkdtempSync(join(tmpdir(), 'tomato-desktop-extra-'))
+  const npmCache = join(buildPaths.root, 'npm-cache')
+  mkdirSync(npmCache, { recursive: true })
+  execFileSync('npm', ['pack', '--pack-destination', extraDir], {
+    cwd: join(REPOSITORY_ROOT, 'plugins', 'tomato-market'),
+    env: { ...process.env, npm_config_cache: npmCache },
+    stdio: ['ignore', 'ignore', 'inherit'],
+  })
+  inputs.push(extraDir)
   const output = values.out === undefined ? buildPaths.packageSet : resolve(REPOSITORY_ROOT, values.out)
   prepareDesktopPackageSet(inputs, output, desktopTargetPlatform(resolveDesktopBuildTarget()))
   console.log(`desktop package set: prepared ${output}`)

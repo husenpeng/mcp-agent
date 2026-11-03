@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Preuves d'image",
+    "description": "Lit les images collées avec un modèle de vision pour les modèles de conversation texte seul et affiche le résultat à côté de chaque image."
+  }
+}

@@ -3086,6 +3086,9 @@ importers:
       '@tomato/client-ui-goal':
         specifier: workspace:*
         version: link:../../client/ui-goal
+      '@tomato/client-ui-image-evidence':
+        specifier: workspace:*
+        version: link:../../client/ui-image-evidence
       '@tomato/client-ui-input-trigger':
         specifier: workspace:*
         version: link:../../client/ui-input-trigger
@@ -3272,6 +3275,9 @@ importers:
       '@tomato/host-webserver':
         specifier: workspace:*
         version: link:../../host/webserver
+      '@tomato/image-evidence':
+        specifier: workspace:*
+        version: link:../../llm/image-evidence
       '@tomato/launch-environment':
         specifier: workspace:*
         version: link:../../util/launch-environment
@@ -3344,6 +3350,9 @@ importers:
       '@tomato/tool-cordis':
         specifier: workspace:*
         version: link:../../extensions/tool-cordis
+      '@tomato/tool-creator-search':
+        specifier: workspace:*
+        version: link:../../marketing/tool-creator-search
       '@tomato/tool-executor-ptc':
         specifier: workspace:*
         version: link:../../core/tool-executor-ptc
@@ -4596,6 +4605,48 @@ importers:
       '@tomato/typert-protocol':
         specifier: workspace:*
         version: link:../../typert/protocol
+      react:
+        specifier: ^18.2.0
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.3.1(react@18.3.1)
+
+  packages/client/ui-image-evidence:
+    devDependencies:
+      '@testing-library/react':
+        specifier: ^16.3.3
+        version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@tomato/client-locale':
+        specifier: workspace:*
+        version: link:../locale
+      '@tomato/client-test-runtime':
+        specifier: workspace:*
+        version: link:../../test-support/client-runtime
+      '@tomato/client-ui-chat':
+        specifier: workspace:*
+        version: link:../ui-chat
+      '@tomato/client-ui-primitives':
+        specifier: workspace:*
+        version: link:../ui-primitives
+      '@tomato/client-ui-renderer':
+        specifier: workspace:*
+        version: link:../ui-renderer
+      '@tomato/client-ui-session':
+        specifier: workspace:*
+        version: link:../ui-session
+      '@tomato/client-ui-slots':
+        specifier: workspace:*
+        version: link:../ui-slots
+      '@tomato/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@tomato/image-evidence':
+        specifier: workspace:*
+        version: link:../../llm/image-evidence
+      '@tomato/session':
+        specifier: workspace:*
+        version: link:../../core/session
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -11115,6 +11166,9 @@ importers:
       '@tomato/session-projection':
         specifier: workspace:*
         version: link:../../session/session-projection
+      '@tomato/session-query':
+        specifier: workspace:*
+        version: link:../../session-query/session-query
       '@tomato/storage':
         specifier: workspace:*
         version: link:../../storage/storage
@@ -13052,6 +13106,40 @@ importers:
         specifier: workspace:~
         version: link:../../../vendor/cordis
 
+  packages/llm/image-evidence:
+    dependencies:
+      '@tomato/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@tomato/agent':
+        specifier: workspace:*
+        version: link:../../core/agent
+      '@tomato/attachment':
+        specifier: workspace:*
+        version: link:../../attachment/attachment
+      '@tomato/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@tomato/llm':
+        specifier: workspace:*
+        version: link:../llm
+      '@tomato/session':
+        specifier: workspace:*
+        version: link:../../core/session
+      '@tomato/session-projection':
+        specifier: workspace:*
+        version: link:../../session/session-projection
+      '@tomato/storage-domain':
+        specifier: workspace:*
+        version: link:../../storage/storage-domain
+      '@tomato/tools':
+        specifier: workspace:*
+        version: link:../../core/tools
+
   packages/llm/llm:
     dependencies:
       '@tomato/branded':
@@ -13599,6 +13687,64 @@ importers:
       '@tomato/mcp-client':
         specifier: workspace:*
         version: link:../../mcp/mcp-client
+
+  packages/marketing/tool-creator-search:
+    dependencies:
+      '@tomato/output-retention':
+        specifier: workspace:*
+        version: link:../../util/output-retention
+      '@tomato/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
+      '@tomato/storage-domain':
+        specifier: workspace:*
+        version: link:../../storage/storage-domain
+      '@tomato/util-values':
+        specifier: workspace:*
+        version: link:../../util/values
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@tomato/agent':
+        specifier: workspace:*
+        version: link:../../core/agent
+      '@tomato/agent-loop-testkit':
+        specifier: workspace:*
+        version: link:../../test-support/agent-loop-testkit
+      '@tomato/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@tomato/cordis-plugin-include':
+        specifier: workspace:~
+        version: link:../../../vendor/include
+      '@tomato/cordis-plugin-loader':
+        specifier: workspace:~
+        version: link:../../../vendor/loader
+      '@tomato/launch-environment':
+        specifier: workspace:*
+        version: link:../../util/launch-environment
+      '@tomato/llm':
+        specifier: workspace:*
+        version: link:../../llm/llm
+      '@tomato/session-projection':
+        specifier: workspace:*
+        version: link:../../session/session-projection
+      '@tomato/storage':
+        specifier: workspace:*
+        version: link:../../storage/storage
+      '@tomato/system-prompt':
+        specifier: workspace:*
+        version: link:../../core/system-prompt
+      '@tomato/tool-executor-native':
+        specifier: workspace:*
+        version: link:../../core/tool-executor-native
+      '@tomato/tools':
+        specifier: workspace:*
+        version: link:../../core/tools
+      '@tomato/web':
+        specifier: workspace:*
+        version: link:../../web/web
 
   packages/mcp/mcp-client:
     dependencies:

@@ -27,7 +27,7 @@ kind: "package-bundle"
 
 打开 **插件**，在官方组合包中找到 **Playwright 浏览器** 并打开开关。Host 会按当前安装版本安装 `@tomato/experimental-browser-use-playwright-bundle` 并选中其层；关闭开关只取消选中，依赖仍保留。源码工作区安装 `link:` 依赖，正式安装则固定到发布版本。
 
-本包固定使用的 Playwright 版本需要对应的 Chromium 构建。先在本机运行一次 `npx playwright install chromium`，或用 profile patch 替换提供方行并设置 `executablePath`。缺少浏览器时，每个新 Session 的 MCP 启动都会失败，并报告提供方的启动错误。
+桌面安装包把 Playwright headless shell 放在 `runtime/playwright-browsers`，并为 Host 设置 `PLAYWRIGHT_BROWSERS_PATH` 与 `PLAYWRIGHT_MCP_EXECUTABLE_PATH`；启动环境已设置的值优先。没有该 registry 的部署（例如 `tomato web` 或自定义 profile）回落到 Playwright 自身的缓存：在本机运行一次 `npx playwright install chromium`，或通过 profile patch 替换提供方行并设置 `executablePath`。缺少浏览器时，每个新 Session 的 MCP 启动都会失败，并报告提供方的启动错误。
 
 本包固定 `mode: launch` 与 `headless: true`。需要可见浏览器或连接已有浏览器时，保持本包关闭，改为在 profile patch 中挂载提供方并设置 `mode: attach` 与 `endpoint`，或设置 `headless: false`；参见[提供方配置](../browser-use-playwright-mcp/README.zh.md#use-this-package)。同一时刻只能注册一个 browser-use 提供方：本包与其他提供方同时激活会以已注册提供方的名称失败。
 

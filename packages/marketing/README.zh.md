@@ -9,7 +9,7 @@ kind: "package-group"
 
 ## 概述
 
-以一个可开关的 bundle 把广告与营销平台接入 profile。所有 provider 在有人在 Web 插件页打开它并填写所需凭据之前保持关闭；未改动的安装不会新增 MCP 服务、工具或提示词文本。本组组合 MCP 客户端、设置与凭据三个子系统，而不定义自己的子系统：目录是数据，每条连接的行为属于 `@tomato/mcp-client`。
+以一个可开关的 bundle 把广告与营销平台接入 profile。所有 MCP provider 在有人在 Web 插件页打开它并填写所需凭据之前保持关闭；未改动的安装不会新增 MCP 服务与 provider 提示词文本。本组还承载由 Web preset 直接挂载的原生达人搜索工具：它们调用公司 BFF，因此不由该设置段开关。本组组合 MCP 客户端、设置与凭据三个子系统，而不定义自己的子系统：目录是数据，每条连接的行为属于 `@tomato/mcp-client`。
 
 ## 目录
 
@@ -29,6 +29,7 @@ kind: "package-group"
 | [`marketing/`](marketing/README.zh.md) | 宿主插件：provider 目录、设置段、凭据解析，以及每个已启用 provider 一条子连接 |
 | [`marketing-app`](../bundle/marketing-app/README.zh.md) | 挂载该插件及其插件页的 bundle |
 | [`ui-settings-marketing`](../client/ui-settings-marketing/README.zh.md) | 编辑设置段并写入凭据的插件页 |
+| [`tool-creator-search/`](tool-creator-search/README.zh.md) | 基于公司 BFF 的原生达人搜索工具（`creator_search`、`creator_detail`、`youtube_channel`），由 Web `standard` 与 `cordis` preset 挂载 |
 
 -----
 

@@ -16,9 +16,6 @@ import type { MuseInsightsSnapshot } from '../types.ts'
 import { readNoticeMemory, writeNoticeMemory } from './notice-state.ts'
 import type { InsightsSource, InsightsView } from './source.ts'
 
-/** Page type the notices and the guide open in the right Sidebar. */
-export const INSIGHTS_TAB_KIND = 'muse-insights'
-
 /** Minimum interval between proactive unfinished-task notices while tasks remain. */
 export const REMINDER_COOLDOWN_MS = 30 * 60_000
 

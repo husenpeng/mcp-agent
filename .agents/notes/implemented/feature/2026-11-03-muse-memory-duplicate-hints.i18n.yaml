@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for 2026-11-03-muse-memory-duplicate-hints.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-11-03-muse-memory-duplicate-hints.md
+/agent-note-muse-memory-duplicate-hints:
+  en: a83074c861c0e616
+  zh: 0589faf8fab7467d
+/agent-note-muse-memory-duplicate-hints/problem:
+  en: b3a147e7a7b85c66
+  zh: d2f8b507a8571c31
+/agent-note-muse-memory-duplicate-hints/decision:
+  en: 22ce3c7bf87f45ee
+  zh: b140a1584c994d7c
+/agent-note-muse-memory-duplicate-hints/alternatives-considered:
+  en: 9ba4d67c40dec7cd
+  zh: 41bebc59858e1bc7
+/agent-note-muse-memory-duplicate-hints/consequences:
+  en: 635cc0d0d44e494b
+  zh: bbdb314debb17f82

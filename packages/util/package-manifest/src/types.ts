@@ -38,6 +38,11 @@ export interface TomatoManifest {
   profile?: TomatoProfileManifest
   /** Client module loading and build metadata. */
   client?: TomatoClientManifest
+  /**
+   * Packages the installation ships beside its dependency graph, for bundles that
+   * live outside that graph, such as an externally built market bundle.
+   */
+  runtimePackages?: readonly string[]
 }
 
 /** Literal text or translations indexed by lowercase language id, with a required English fallback. */

@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-Give agents memory of the person across sessions: profile memories in every workspace and workspace memories in one project directory, owned by the signed-in account where the Host names accounts. Keep long goals from repeating failed calls, and show a daily recap with unfinished-task reminders. The layer inserts four Host rows: memory and its tools, goal focus, and daily insights with a notice and right-Sidebar page. Web and Desktop ship it off and omit it from the default list. It adds three tool schemas per request and asks before tools when a profile sets `approvalTools`; insights adds no model tool.
+Give agents memory of the person across sessions: profile memories in every workspace and workspace memories in one project directory, owned by the signed-in account where the Host names accounts. Keep long goals from repeating failed calls, and show a daily recap with unfinished-task reminders. The layer inserts four Host rows: memory and its tools, goal focus, and daily insights with a notice and right-Sidebar pages. Web and Desktop ship it off and omit it from the default list. It adds four tool schemas per request and asks before tools when a profile sets `approvalTools`; insights adds no model tool.
 
 ## Table of Contents
 
@@ -38,7 +38,7 @@ The rows need the base composition's storage, goal, approval, command, session-q
 | `optional-memory` | [`@tomato/experimental-memory`](../memory/README.md) | `ctx.memory` over the `tomato_memory` storage domain, scoped by owner, then by profile or workspace |
 | `optional-tool-memory` | [`@tomato/experimental-tool-memory`](../tool-memory/README.md) | `memory_search` with query expansion, `memory_write`, `memory_forget`, `/memory`, profile and pinned-memory injection |
 | `optional-focus` | [`@tomato/experimental-focus`](../focus/README.md) | Goal-round failure ledger, repeated-failure reminders, optional per-tool approval |
-| `optional-muse-insights` | [`@tomato/experimental-muse-insights`](../muse-insights/README.md) | Daily recap service, unfinished-task analysis, one frame-wide notice, and one right-Sidebar page |
+| `optional-muse-insights` | [`@tomato/experimental-muse-insights`](../muse-insights/README.md) | Daily recap service, unfinished-task analysis, one frame-wide notice, and right-Sidebar pages |
 
 To ask before costly tools, override the focus row in the profile's `cordis.patch.yml`:
 

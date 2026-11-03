@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for 2026-11-03-muse-memory-relations-and-health.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-11-03-muse-memory-relations-and-health.md
+/agent-note-muse-memory-relations-evidence-and-storage-health:
+  en: ee01b5fc631f754a
+  zh: fb4532d7ab61a5cf
+/agent-note-muse-memory-relations-evidence-and-storage-health/problem:
+  en: 6eeb5dde0578169c
+  zh: 5365b04ba965dbd6
+/agent-note-muse-memory-relations-evidence-and-storage-health/decision:
+  en: eea2ecb3c836dee7
+  zh: 338d5090c17679cc
+/agent-note-muse-memory-relations-evidence-and-storage-health/alternatives-considered:
+  en: 7d40f5958e5589d7
+  zh: 570ebdbc2cd41164
+/agent-note-muse-memory-relations-evidence-and-storage-health/consequences:
+  en: 790fdee861be306c
+  zh: 2618440afb469764

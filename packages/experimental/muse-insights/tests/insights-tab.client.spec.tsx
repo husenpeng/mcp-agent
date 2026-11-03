@@ -58,8 +58,14 @@ function snapshot(overrides: Partial<MuseInsightsSnapshot> = {}): MuseInsightsSn
   }
 }
 
-function tabInfo(params: unknown, revision = 1): SidebarRightTabInfo {
-  const actions: SidebarRightTabActions = { bindCommands: vi.fn(() => vi.fn()), openResource: vi.fn(), openTab: vi.fn(), close: vi.fn() }
+/** The tab's own actions, with the open the recap list performs. */
+function tabActions() {
+  const openTab = vi.fn()
+  const actions: SidebarRightTabActions = { bindCommands: vi.fn(() => vi.fn()), openResource: vi.fn(), openTab, close: vi.fn() }
+  return { actions, openTab }
+}
+
+function tabInfo(params: unknown, actions: SidebarRightTabActions, revision = 1): SidebarRightTabInfo {
   return {
     sidebar: { expanded: true, fullscreen: false },
     panel: { id: 'pane-1' },
@@ -74,9 +80,19 @@ function tabInfo(params: unknown, revision = 1): SidebarRightTabInfo {
   } as SidebarRightTabInfo
 }
 
+/** Render the page with navigation parameters a restored record would not carry. */
+function mountRestored(state: InsightsState, chinese = false) {
+  return renderTab(state, undefined, chinese)
+}
+
 function mount(state: InsightsState, params: unknown = { view: 'recap' }, chinese = false) {
+  return renderTab(state, params, chinese)
+}
+
+function renderTab(state: InsightsState, params: unknown, chinese: boolean) {
   const onRefresh = vi.fn<(signal?: AbortSignal) => Promise<void>>(async () => {})
-  const info = tabInfo(params)
+  const { actions, openTab } = tabActions()
+  const info = tabInfo(params, actions)
   const useInsights: SnapshotSelectorHook<InsightsState> = select => select(state)
   const props = {
     ...standard,
@@ -86,7 +102,7 @@ function mount(state: InsightsState, params: unknown = { view: 'recap' }, chines
     t: makeTranslate(chinese ? zh : en),
   } as InsightsTabProps
   const view = render(<InsightsTab {...props} />)
-  return { onRefresh, view, info }
+  return { onRefresh, actions, openTab, view }
 }
 
 describe('InsightsTab', () => {
@@ -162,6 +178,97 @@ describe('InsightsTab', () => {
       refreshing: false,
     }, { view: 'unfinished' })
     expect(screen.getByRole('heading', { name: 'The first analysis is still running.' })).toBeTruthy()
+  })
+
+  it('draws each work item as one row carrying its brief, not its full detail', () => {
+    const detailed = {
+      ...recap,
+      workItems: [{
+        title: 'Draft the plan',
+        detail: '```text\nThe launch plan is ready.\nStill waiting on legal.\n```',
+        status: 'done' as const,
+      }],
+    }
+    mount({ status: 'ready', snapshot: snapshot({ recap: detailed }), notice: null, refreshing: false })
+    expect(screen.getByText('The launch plan is ready.')).toBeTruthy()
+    expect(screen.queryByText(/Still waiting on legal/u)).toBeNull()
+    expect(screen.queryByText(/```/u)).toBeNull()
+  })
+
+  it('counts contributing sessions and marks a recap older than the shown day', () => {
+    const older = {
+      ...recap,
+      day: '2026-11-01',
+      sessions: [
+        { sessionId: 's1', title: 'Launch plan', summary: 'Drafted the plan.', messageCount: 4 },
+        { sessionId: 's2', title: 'Release notes', summary: 'Wrote the notes.', messageCount: 4 },
+      ],
+      workItems: [],
+    }
+    mount({ status: 'ready', snapshot: snapshot({ recap: older }), notice: null, refreshing: false })
+    expect(screen.getByText(/2 sessions · 8 messages/u)).toBeTruthy()
+    expect(screen.getByText('Latest recap; today’s recap has not been generated yet.')).toBeTruthy()
+  })
+
+  it('names one unfinished task while its analysis still runs', () => {
+    const analyzedAt = new Date(2026, 10, 2, 18, 10).getTime()
+    mount({
+      status: 'ready',
+      snapshot: snapshot({ unfinished: { analyzedAt, tasks: [tasks[0]!] }, analyzing: true }),
+      notice: null,
+      refreshing: false,
+    }, { view: 'unfinished' })
+    expect(screen.getByText(/1 unfinished task/u)).toBeTruthy()
+    expect(screen.getByText(/Last analyzed at/u)).toBeTruthy()
+    expect(screen.getByRole('status', { name: 'The first analysis is still running.' })).toBeTruthy()
+  })
+
+  it('lists unfinished tasks without an analysis time before the first analysis settles', () => {
+    mount({
+      status: 'ready',
+      snapshot: snapshot({ unfinished: { analyzedAt: 0, tasks } }),
+      notice: null,
+      refreshing: false,
+    }, { view: 'unfinished' })
+    expect(screen.getByText(/2 unfinished tasks/u)).toBeTruthy()
+    expect(screen.queryByText(/Last analyzed at/u)).toBeNull()
+  })
+
+  it('disables the refresh control while a refresh is in flight', () => {
+    mount({ status: 'ready', snapshot: snapshot(), notice: null, refreshing: true })
+    expect(screen.getByRole('button', { name: 'Refresh insights' }).hasAttribute('disabled')).toBe(true)
+  })
+
+  it('opens the recap view for a restored tab without navigation parameters', () => {
+    mountRestored({ status: 'ready', snapshot: snapshot(), notice: null, refreshing: false })
+    expect(screen.getByRole('tab', { name: 'Daily recap' }).getAttribute('aria-selected')).toBe('true')
+  })
+
+  it('follows a navigation that arrives while the page is open', () => {
+    const { actions } = tabActions()
+    const state: InsightsState = { status: 'ready', snapshot: snapshot(), notice: null, refreshing: false }
+    let info = tabInfo({ view: 'recap' }, actions, 1)
+    const useInsights: SnapshotSelectorHook<InsightsState> = select => select(state)
+    const props = {
+      ...standard,
+      useTabInfo: () => info,
+      useInsights,
+      onRefresh: vi.fn<(signal?: AbortSignal) => Promise<void>>(async () => {}),
+      t: makeTranslate(en),
+    } as InsightsTabProps
+    const view = render(<InsightsTab {...props} />)
+    expect(screen.getByRole('tab', { name: 'Daily recap' }).getAttribute('aria-selected')).toBe('true')
+    info = tabInfo({ view: 'unfinished' }, actions, 2)
+    view.rerender(<InsightsTab {...props} />)
+    expect(screen.getByRole('tab', { name: 'Unfinished tasks' }).getAttribute('aria-selected')).toBe('true')
+  })
+
+  it('opens one work item page from its row', () => {
+    const { openTab } = mount({ status: 'ready', snapshot: snapshot(), notice: null, refreshing: false })
+    fireEvent.click(screen.getByRole('button', { name: /Draft the plan/u }))
+    expect(openTab).toHaveBeenCalledExactlyOnceWith('museInsightsWorkItem', {
+      params: { day: '2026-11-02', title: 'Draft the plan' },
+    })
   })
 
   it('renders the two tabs as one tablist and points the panel at the selected tab', () => {

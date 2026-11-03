@@ -56,7 +56,7 @@ The generated [configuration catalog](../../../docs/config-catalog.md#tomatoexpe
 
 ### Records and lifecycle
 
-A record has an `owner`, a `scope` (`profile`, or `workspace` with its canonical path), a `kind` (`preference`, `constraint`, `decision`, or `fact`), a lower-kebab-case `entity` and `key`, a non-empty `value`, a `status`, and a `pinned` flag. An `active` record reaches search. `snapshot(view)` selects what consumers inject without a search: every active profile record, then up to `maxPinnedRecords` pinned workspace records. A `candidate` waits until a person confirms it; only active workspace records can be pinned. A write with the same owner, scope, entity, and key replaces the earlier record and keeps its id and creation time. `forget()` deletes the record from storage. Each record names the Session that wrote it and, for quoted writes, the `user/message` it quoted.
+A record has an `owner`, a `scope` (`profile`, or `workspace` with its canonical path), a `kind` (`preference`, `constraint`, `decision`, or `fact`), a lower-kebab-case `entity` and `key`, a non-empty `value`, a `status`, and a `pinned` flag. An `active` record reaches search. `snapshot(view)` selects what consumers inject without a search: every active profile record, then up to `maxPinnedRecords` pinned workspace records. A `candidate` waits until a person confirms it; only active workspace records can be pinned. A write with the same owner, scope, entity, and key replaces the earlier record and keeps its id and creation time. `forget()` deletes the record from storage. Each record names the Session that wrote it and, for quoted writes, the `user/message` it quoted. `related(view, id, depth)` walks from one active record to the records of the same `entity`, the records the same Session wrote, and the records sharing the `key`, following at most two hops and returning at most `maxRecallResults` records. `duplicates(query)` names active records of the same owner, scope, and kind whose value shares at least 80% of the larger value's words with a pending write, ignoring the record that write would replace. `stats(view)` counts what the view stores and reports both scope limits.
 
 ### Failures
 
@@ -112,6 +112,8 @@ The service adds no request content; cache effects belong to the consumer.
 - **One Host** — records do not follow an account to another device; a renamed or moved project directory starts without workspace memory.
 - **Last verified account** — the owner is whichever account the gateway verified last; a Host whose browsers are signed in to different accounts switches owner with each verification.
 - **Lexical search** — a query must share words with a record or with a caller-supplied wording; the service itself computes no similarity.
+- **Structural relations** — `related()` connects records by equal entity, key, or writing Session; it neither infers semantic links nor reaches another workspace.
+- **Lexical duplicate hints** — `duplicates()` compares word sets only; a paraphrase with different words is not reported, and a report never blocks or changes a write.
 - **No cross-process write lock** — two Host processes sharing one TOMATO home can overwrite each other's memory writes, as for every JSON storage domain.
 - **Whole-domain scans** — every read filters all records in memory; the per-workspace cap bounds the cost, not the domain size.
 

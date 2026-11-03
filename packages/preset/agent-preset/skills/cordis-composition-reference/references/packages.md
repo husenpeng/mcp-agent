@@ -82,6 +82,7 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@tomato/client-ui-entry-customization` | no | Customize plugin entries in the left sidebar, conversation views, and right sidebar, and quickly create new plugins. |
 | `@tomato/client-ui-file-drag` | no | Application-owned file drag transfers and localized failure feedback |
 | `@tomato/client-ui-goal` | no | Session goal surface: GoalBar docked above the composer, read from the goal session projection |
+| `@tomato/client-ui-image-evidence` | no | Evidence card beside each pasted image: which vision engine read it, how long it took, and whether the read failed or was truncated |
 | `@tomato/client-ui-input-trigger` | no | Input trigger pipeline: '/' and '@' detection, candidate menu, pick routing to registered sources |
 | `@tomato/client-ui-jobs` | no | Session-header background-job list with on-demand streaming record panels |
 | `@tomato/client-ui-layout` | no | Shell plugin: three-column AppFrame with drag handles, ctx.layout viewing-state service (navigation + panels) |
@@ -324,6 +325,7 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | Package | Config | Description |
 |---|---|---|
 | `@tomato/deepseek-llm-api-extensions` | no | Additive request-field registry for the official DeepSeek LLM API adapter |
+| `@tomato/image-evidence` | yes | Image evidence bridge: text-only models read pasted images through a configured vision model |
 | `@tomato/llm` | no | Provider-neutral LLM service interface for the Tomato Harness |
 | `@tomato/llm-deepseek-account` | yes | DeepSeek account provider authentication and discovery |
 | `@tomato/llm-deepseek-api-key` | yes | DeepSeek api-key provider authentication and discovery |
@@ -345,6 +347,7 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | Package | Config | Description |
 |---|---|---|
 | `@tomato/marketing` | yes | Advertising and marketing integrations: mount Google Ads, Analytics, Meta/Instagram, TikTok, YouTube, X, and Mailchimp MCP servers from this plugin's settings, off until configured |
+| `@tomato/tool-creator-search` | yes | Model-facing creator search tools (creator_search, creator_detail, youtube_channel) over the company BFF's /api/v1/creator-search endpoints, authenticated by the Desktop session cookie |
 
 ## mcp
 

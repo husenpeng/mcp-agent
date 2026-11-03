@@ -252,6 +252,10 @@ interface LlmFailure {
 }
 ```
 
+## Text-only image projection
+
+Every request is frozen before dispatch, so the service projects content a route cannot receive instead of rewriting the caller's messages: files become handle text, and a route whose declared `inputModalities` exclude `image` receives placeholder text for each image occurrence. An optional `ctx.imageEvidence` service may supply stored evidence text for an attachment, which replaces that occurrence's placeholder at the same position; images it does not know keep the placeholder, so a partial cache degrades per image. The lookup is synchronous and never throws, and a route that declares `image` is untouched. Producing evidence — including the auxiliary engine call — belongs to the mounted bridge, not to this service.
+
 ## Request-image pricing
 
 An adapter whose provider charges visual tokens for request images declares per-route pricing by overriding `LlmAdapter.imageRequestPricing`, and `ctx.llm.imageRequestPricing(provider, model)` resolves it synchronously for consumers. The token meter resolves the routed model's pricing on every measurement so compaction pressure, retention, and range selection price image history as the routed request actually sends it; the DeepSeek adapter prices each retained occurrence at its per-model request target with the published vision accounting and each occurrence selected by a logged image-offload decision as its placeholder text, while provider usage remains the authoritative anchor for completed requests.

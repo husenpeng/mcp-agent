@@ -190,6 +190,38 @@ async remember(request: RememberRequest): Promise<MemoryRecord>
 recall(request: RecallRequest): readonly MemoryRecord[]
 
 /**
+ * Walk the relations of one active record: records about the same subject,
+ * records written in the same Session, and records sharing the attribute.
+ * Every hop reads only the view, so nothing of another owner or workspace is
+ * reached. A candidate, or a record outside the view, reaches nothing.
+ * @param view - owner and optional workspace that bound the walk.
+ * @param id - starting record.
+ * @param depth - hops to follow, from 1 to {@link MAX_RELATION_DEPTH}; defaults to one.
+ * @returns reached records in discovery order, at most `maxRecallResults`.
+ * @throws TypeError when `depth` is not an integer in range.
+ */
+related(view: MemoryView, id: MemoryIdType, depth: number = 1): readonly RelatedMemory[]
+
+/**
+ * Find active records of the same owner, scope, and kind whose value states
+ * nearly the same thing as a pending write: the two values share at least
+ * {@link DUPLICATE_COVERAGE} of the larger value's word set, and each holds
+ * at least {@link MIN_DUPLICATE_TOKENS}. The record the write would replace
+ * by `(entity, key)` is not a match. Detection is lexical and conservative;
+ * it never rejects or changes a write.
+ * @param query - owner, scope, kind, identifiers, and value of the pending write.
+ * @returns matching records, best match first, at most `maxRecallResults`.
+ */
+duplicates(query: DuplicateQuery): readonly DuplicateMatch[]
+
+/**
+ * Count what the view stores and how much of its capacity that is.
+ * @param view - owner and optional workspace.
+ * @returns stored counts, both scope limits, and the oldest active update.
+ */
+stats(view: MemoryView): MemoryStats
+
+/**
  * Delete one record durably.
  * @param view - view that must see the record.
  * @param id - record to delete.

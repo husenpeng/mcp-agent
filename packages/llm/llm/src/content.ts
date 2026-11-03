@@ -331,6 +331,50 @@ export function requiredImageOffload(
   return offloadedImagePrefixCount(lengths, budget)
 }
 
+/** Model-facing evidence text for one attachment, supplied by an image-evidence provider. */
+export type ImageEvidenceResolver = (attachmentId: string) => string | undefined
+
+/** Replace every image that has evidence text with that text, keeping its position. */
+function replaceImagesWithEvidence(
+  blocks: readonly ContentBlock[],
+  resolve: ImageEvidenceResolver,
+): ContentBlock[] {
+  let next: ContentBlock[] | undefined
+  for (const [index, block] of blocks.entries()) {
+    if (block.type !== 'image') {
+      next?.push(block)
+      continue
+    }
+    const evidence = resolve(String(block.attachment.attachmentId))
+    if (evidence === undefined) {
+      next?.push(block)
+      continue
+    }
+    next ??= blocks.slice(0, index)
+    next.push({ type: 'text', text: evidence })
+  }
+  return next ?? blocks as ContentBlock[]
+}
+
+/**
+ * Substitute evidence text for image content in request messages. An image the
+ * resolver does not know stays in place for the caller's fallback projection,
+ * so a partial cache degrades per image rather than per request.
+ * @param messages - complete request inputs.
+ * @param resolve - evidence text lookup by attachment id.
+ * @returns the original list when nothing matched, otherwise shallow message copies.
+ */
+export function projectImagesWithEvidence(
+  messages: readonly RequestMessage[],
+  resolve: ImageEvidenceResolver,
+): readonly RequestMessage[] {
+  const projected = messages.map((message) => {
+    const content = replaceImagesWithEvidence(message.content, resolve)
+    return content === message.content ? message : { ...message, content }
+  })
+  return projected.every((message, index) => message === messages[index]) ? messages : projected
+}
+
 /** Replace every image occurrence for a text-only model. */
 function replaceImagesForTextModel(blocks: readonly ContentBlock[]): ContentBlock[] {
   let next: ContentBlock[] | undefined

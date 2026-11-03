@@ -1,0 +1,40 @@
+# Bilingual-pair consistency record for 2026-11-03-jev-typed-decision-classifier.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/proposed/architecture/2026-11-03-jev-typed-decision-classifier.md
+/agent-note-jev-style-typed-decision-classifier-seam:
+  en: 077c9b864390175f
+  zh: 4f15648270c712ae
+/agent-note-jev-style-typed-decision-classifier-seam/problem:
+  en: b4361d9e36eb0d70
+  zh: 577e957e3349f36e
+/agent-note-jev-style-typed-decision-classifier-seam/proposal:
+  en: c2acd5010adec9a9
+  zh: cf3c30e05b69893d
+/agent-note-jev-style-typed-decision-classifier-seam/proposal/the-seam:
+  en: 2b8f366fed453972
+  zh: ea2844e28f9ad754
+/agent-note-jev-style-typed-decision-classifier-seam/proposal/zero-configuration:
+  en: 7e03af8272e20c4a
+  zh: 391c04675cd59e2c
+/agent-note-jev-style-typed-decision-classifier-seam/proposal/logging-and-replay:
+  en: f7143e48cdfbd146
+  zh: 16befe789c387718
+/agent-note-jev-style-typed-decision-classifier-seam/proposal/first-consumer-auto-review:
+  en: 818deaf6c517b498
+  zh: bfc9b6caf5d71cdd
+/agent-note-jev-style-typed-decision-classifier-seam/proposal/tool-result-pruning:
+  en: d0829cb234fda1c3
+  zh: d08819911c9d6e63
+/agent-note-jev-style-typed-decision-classifier-seam/self-hosting-on-macos:
+  en: 040d3c6870edabf6
+  zh: 93223ee0bc887413
+/agent-note-jev-style-typed-decision-classifier-seam/alternatives-considered:
+  en: c40e2bd559a66978
+  zh: 56dd6b39d9ed3c47
+/agent-note-jev-style-typed-decision-classifier-seam/acceptance-criteria:
+  en: 865ab1441efd2bfd
+  zh: d55030bf629afc2d
+/agent-note-jev-style-typed-decision-classifier-seam/risks:
+  en: ce200e941a95951c
+  zh: 07d315589f44e1e0

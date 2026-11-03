@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Evidencia de imagen",
+    "description": "Lee las imágenes pegadas con un modelo de visión para modelos de conversación de solo texto y muestra el resultado junto a cada imagen."
+  }
+}

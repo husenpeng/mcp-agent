@@ -1,0 +1,58 @@
+{
+  "name": "@tomato/image-evidence",
+  "description": "Image evidence bridge: text-only models read pasted images through a configured vision model",
+  "version": "0.2.1-rc.3",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/llm/image-evidence"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/projection-types.d.ts",
+      "default": "./lib/types/projection-types.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@tomato/schemastery": "workspace:~",
+    "zod": "4.4.3"
+  },
+  "peerDependencies": {
+    "@tomato/agent": "workspace:*",
+    "@tomato/attachment": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/llm": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/storage-domain": "workspace:*",
+    "@tomato/tools": "workspace:*"
+  },
+  "devDependencies": {
+    "@tomato/agent": "workspace:*",
+    "@tomato/attachment": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/llm": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/storage-domain": "workspace:*",
+    "@tomato/tools": "workspace:*"
+  }
+}

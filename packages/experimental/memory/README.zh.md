@@ -56,7 +56,7 @@ kind: "package-reference"
 
 ### 记录与生命周期
 
-一条记录包含 `owner`、`scope`（`profile`，或带规范化路径的 `workspace`）、`kind`（`preference`、`constraint`、`decision` 或 `fact`）、小写短横线格式的 `entity` 和 `key`、非空的 `value`、`status` 以及 `pinned` 标记。`active` 记录会进入搜索结果。`snapshot(view)` 选出消费方无需搜索即可注入的内容：所有生效的画像记录，再加上至多 `maxPinnedRecords` 条置顶的工作区记录。`candidate` 记录等待人工确认；只有生效的工作区记录可以置顶。owner、scope、entity 和 key 都相同的写入会替换之前的记录，并保留其 id 和创建时间。`forget()` 从存储中删除记录。每条记录都会注明写入它的会话；对于引用写入，还会注明所引用的 `user/message`。
+一条记录包含 `owner`、`scope`（`profile`，或带规范化路径的 `workspace`）、`kind`（`preference`、`constraint`、`decision` 或 `fact`）、小写短横线格式的 `entity` 和 `key`、非空的 `value`、`status` 以及 `pinned` 标记。`active` 记录会进入搜索结果。`snapshot(view)` 选出消费方无需搜索即可注入的内容：所有生效的画像记录，再加上至多 `maxPinnedRecords` 条置顶的工作区记录。`candidate` 记录等待人工确认；只有生效的工作区记录可以置顶。owner、scope、entity 和 key 都相同的写入会替换之前的记录，并保留其 id 和创建时间。`forget()` 从存储中删除记录。每条记录都会注明写入它的会话；对于引用写入，还会注明所引用的 `user/message`。`related(view, id, depth)` 从一条生效记录出发，走到同一 `entity` 的记录、同一会话写入的记录以及共享 `key` 的记录，最多两跳、至多 `maxRecallResults` 条。`duplicates(query)` 找出同一所有者、同一范围和同一 kind 中、与被写入值共享较多词（较多一方的 80% 以上）的生效记录，并排除该写入将要替换的那一条。`stats(view)` 统计视图存储的内容并报告两个范围的上限。
 
 ### 失败
 
@@ -112,6 +112,8 @@ kind: "package-reference"
 - **单个 Host** — 记录不会跟随账号到其他设备；重命名或移动后的项目目录从没有工作区记忆开始。
 - **最近验证的账号** — 所有者是网关最近验证的账号；如果一个 Host 的多个浏览器登录了不同账号，所有者会随每次验证切换。
 - **词法搜索** — 查询必须与记录或调用方提供的说法有相同的词；服务本身不计算相似度。
+- **结构化关系** — `related()` 按相同的 entity、key 或写入会话连接记录；它不推断语义关联，也不跨越工作区边界。
+- **词法重复提示** — `duplicates()` 只比较词集合；换了说法的改写不会被报告，而报告从不阻止或改变写入。
 - **没有跨进程写锁** — 共享同一 TOMATO 主目录的两个 Host 进程可能互相覆盖记忆写入，这与所有 JSON 存储域相同。
 - **全域扫描** — 每次读取都会在内存中过滤全部记录；每个工作区的上限限制了开销，而不是域的大小。
 

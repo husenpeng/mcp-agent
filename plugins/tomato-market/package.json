@@ -1,0 +1,55 @@
+{
+  "name": "tomato-market",
+  "version": "0.2.0",
+  "description": "Plugin market tab for Tomato Harness: browse the open DeepSeek Harness plugin catalog and install Tomato or converted DeepSeek Harness plugins.",
+  "keywords": [
+    "tomato-plugin",
+    "tomato",
+    "deepseek-harness",
+    "plugin",
+    "market",
+    "marketplace"
+  ],
+  "homepage": "https://awesome-dsh-plugin.com",
+  "license": "MIT",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "docs",
+    "cordis.patch.yml",
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
+  "tomato": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "engines": {
+    "tomato": ">=0.2.1-rc.3 <0.3.0"
+  },
+  "peerDependencies": {
+    "@tomato/cordis": "*"
+  },
+  "scripts": {
+    "build": "node scripts/build-client.mjs",
+    "test": "node --test \"test/*.test.js\""
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  },
+  "dependencies": {
+    "tar": "^7.5.22"
+  }
+}

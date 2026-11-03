@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-Connect advertising and marketing platforms to a profile as one switchable bundle. Every provider is off until someone switches it on in the Web Plugins page and fills the credentials it needs; an untouched installation gains no MCP server, no tool, and no prompt text. The group composes the MCP client, settings, and credentials subsystems rather than defining a subsystem of its own: the catalog is data, and each connection's behavior belongs to `@tomato/mcp-client`.
+Connect advertising and marketing platforms to a profile as one switchable bundle. Every MCP provider is off until someone switches it on in the Web Plugins page and fills the credentials it needs; an untouched installation gains no MCP server and no provider prompt text. The group also carries native creator-search tools, which the Web presets mount directly: they call the company BFF, so this settings section does not switch them. The group composes the MCP client, settings, and credentials subsystems rather than defining a subsystem of its own: the catalog is data, and each connection's behavior belongs to `@tomato/mcp-client`.
 
 ## Table of Contents
 
@@ -29,6 +29,7 @@ Choose this group when a profile should reach Google Ads, Analytics, Meta/Instag
 | [`marketing/`](marketing/README.md) | The Host plugin: provider catalog, settings section, credential resolution, and one child connection per enabled provider |
 | [`marketing-app`](../bundle/marketing-app/README.md) | The bundle that mounts the plugin and its Plugins page |
 | [`ui-settings-marketing`](../client/ui-settings-marketing/README.md) | The Plugins page that edits the section and writes its credentials |
+| [`tool-creator-search/`](tool-creator-search/README.md) | The native creator-search tools over the company BFF (`creator_search`, `creator_detail`, `youtube_channel`), mounted by the Web `standard` and `cordis` presets |
 
 -----
 

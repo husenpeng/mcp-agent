@@ -5,26 +5,30 @@
  * The tab's layout record persists only its identity, so a restored body opens
  * the recap view; navigation parameters from a notice select the view it named.
  * All reads come from the shared controller source, so the page and any visible
- * notice always report the same Host generation.
+ * notice always report the same Host generation. A recap work item is one
+ * compact row; picking it opens that item's own page beside this one.
  */
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   Button,
   IconAlarmClockOutlineRegular,
+  IconChevronRightOutlineRegular,
   IconLoadingOutlineRegular,
   IconRefreshOutlineRegular,
   IconSparkleRegular,
   SegmentedControl,
   Tag,
 } from '@tomato/client-ui-primitives'
-import type { TagTone } from '@tomato/client-ui-primitives'
 import type { HostObservable, InjectFace, PropsLocale, PropsRuntime } from '@tomato/client-ui-slots'
 import type {} from '@tomato/client-ui-sidebar-right/client'
-import type { DailyRecap, RecapWorkStatus, UnfinishedTask } from '../types.ts'
+import type { DailyRecap, UnfinishedTask } from '../types.ts'
 import { recordedView } from './contract.ts'
-import { formatDay, formatTime } from './format.ts'
+import { WORK_ITEM_TAB_KIND } from './definition.ts'
+import { EmptyState, InsightFailure, InsightLoading } from './InsightStates.tsx'
+import { formatDay, formatTime, workItemBrief } from './format.ts'
 import type { InsightsState, InsightsView } from './source.ts'
+import { recapStatusTag } from './status.ts'
 import css from './Insights.module.css'
 
 /** Everything the Sidebar page needs injected. */
@@ -40,38 +44,12 @@ export type InsightsTabProps = PropsRuntime<'sidebar.right.pane.tab'>
   & PropsLocale<'museInsights'>
   & InjectFace<InsightsTabInjected>
 
-/** Tone and label key for one recap work status. */
-function statusTag(status: RecapWorkStatus): { readonly tone: TagTone; readonly key: 'recap.status.done' | 'recap.status.ongoing' | 'recap.status.blocked' | 'recap.status.unknown' } {
-  switch (status) {
-    case 'done': return { tone: 'success', key: 'recap.status.done' }
-    case 'ongoing': return { tone: 'info', key: 'recap.status.ongoing' }
-    case 'blocked': return { tone: 'warning', key: 'recap.status.blocked' }
-    case 'unknown': return { tone: 'quiet', key: 'recap.status.unknown' }
-  }
-}
-
-/** Centered empty or failure state. */
-function EmptyState({ icon, title, body, action }: {
-  readonly icon: ReactNode
-  readonly title: string
-  readonly body?: string
-  readonly action?: ReactNode
-}): ReactNode {
-  return (
-    <div className={css.empty}>
-      <span className={css.emptyIcon} aria-hidden>{icon}</span>
-      <h2>{title}</h2>
-      {body !== undefined && <p>{body}</p>}
-      {action}
-    </div>
-  )
-}
-
 /** The daily recap view. */
-function RecapPanel({ recap, day, t }: {
+function RecapPanel({ recap, day, t, onOpenWorkItem }: {
   readonly recap: DailyRecap
   readonly day: string
   readonly t: InsightsTabProps['t']
+  readonly onOpenWorkItem: (day: string, title: string) => void
 }): ReactNode {
   const locale = t('date.locale')
   const meta = recap.sessions.length === 1
@@ -91,14 +69,22 @@ function RecapPanel({ recap, day, t }: {
           <h3>{t('recap.workItems')}</h3>
           <ul className={css.workList}>
             {recap.workItems.map((item) => {
-              const tag = statusTag(item.status)
+              const tag = recapStatusTag(item.status)
+              const brief = workItemBrief(item.detail)
               return (
                 <li key={item.title} className={css.workRow}>
-                  <div className={css.workHead}>
-                    <span className={css.workTitle}>{item.title}</span>
-                    <Tag tone={tag.tone}>{t(tag.key)}</Tag>
-                  </div>
-                  {item.detail !== '' && <p className={css.workDetail}>{item.detail}</p>}
+                  <button
+                    type="button"
+                    className={css.workRowButton}
+                    onClick={() => { onOpenWorkItem(recap.day, item.title) }}
+                  >
+                    <span className={css.taskHead}>
+                      <Tag tone={tag.tone}>{t(tag.key)}</Tag>
+                      <span className={css.taskTitle}>{item.title}</span>
+                      <IconChevronRightOutlineRegular size={14} className={css.workChevron} />
+                    </span>
+                    {brief !== '' && <span className={css.workBrief}>{brief}</span>}
+                  </button>
                 </li>
               )
             })}
@@ -199,6 +185,9 @@ export function InsightsTab({ useTabInfo, useInsights, onRefresh, t }: InsightsT
   const refreshing = useInsights(state => state.refreshing)
   const base = `muse-insights-${tab.id}`
   const refresh = (): void => { void onRefresh(tab.signal) }
+  const openWorkItem = (day: string, title: string): void => {
+    tab.actions.openTab(WORK_ITEM_TAB_KIND, { params: { day, title } })
+  }
   return (
     <div className={css.tab}>
       <div className={css.toolbar}>
@@ -231,19 +220,8 @@ export function InsightsTab({ useTabInfo, useInsights, onRefresh, t }: InsightsT
         role="tabpanel"
         aria-labelledby={`${base}-${view}`}
       >
-        {snapshot === null && status === 'error' && (
-          <EmptyState
-            icon={<IconAlarmClockOutlineRegular size={24} />}
-            title={t('error.title')}
-            body={t('error.body')}
-            action={<Button variant="outline" size="sm" onClick={refresh}>{t('error.retry')}</Button>}
-          />
-        )}
-        {snapshot === null && status !== 'error' && (
-          <div className={css.loading} role="status" aria-label={t('loading')}>
-            <IconLoadingOutlineRegular size={24} className={css.spin} />
-          </div>
-        )}
+        {snapshot === null && status === 'error' && <InsightFailure t={t} onRetry={refresh} />}
+        {snapshot === null && status !== 'error' && <InsightLoading t={t} />}
         {snapshot !== null && !snapshot.available && (
           <EmptyState icon={<IconSparkleRegular size={24} />} title={t('empty.signedOut.title')} body={t('empty.signedOut.body')} />
         )}
@@ -255,7 +233,7 @@ export function InsightsTab({ useTabInfo, useInsights, onRefresh, t }: InsightsT
               body={t('empty.recap.body')}
               action={<Button variant="outline" size="sm" onClick={refresh}>{t('refresh')}</Button>}
             />
-            : <RecapPanel recap={snapshot.recap} day={snapshot.day} t={t} />
+            : <RecapPanel recap={snapshot.recap} day={snapshot.day} t={t} onOpenWorkItem={openWorkItem} />
         )}
         {snapshot !== null && snapshot.available && view === 'unfinished' && (
           <UnfinishedPanel

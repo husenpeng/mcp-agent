@@ -1,0 +1,43 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/client/ui-image-evidence/README.md
+/:
+  en: 9d73413c155d045f
+  zh: 095f5a90c70708b8
+/tomato-client-ui-image-evidence:
+  en: dcdae82ada50802e
+  zh: 1912f2fb2d33ab84
+/tomato-client-ui-image-evidence/summary:
+  en: 728a7154ca80cc94
+  zh: 6797c04c67cd0dfb
+/tomato-client-ui-image-evidence/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 364c80ee00a374ff
+/tomato-client-ui-image-evidence/use-this-package:
+  en: 35edd3f207489b31
+  zh: fecb2f882077aad1
+/tomato-client-ui-image-evidence/use-this-package/when-to-choose-it:
+  en: 1bff572fecf189d8
+  zh: d40409b714e277a9
+/tomato-client-ui-image-evidence/use-this-package/minimal-configuration:
+  en: ddc4f9ea4cd5d3fb
+  zh: 1a469ce428e681d1
+/tomato-client-ui-image-evidence/understand-the-implementation:
+  en: 6951b1b1370eba70
+  zh: e5b83470a09b3f70
+/tomato-client-ui-image-evidence/further-exploration:
+  en: 9942be134ce1524c
+  zh: 276820871cf3dad7
+/tomato-client-ui-image-evidence/model-experience:
+  en: 645a38a0c2413b29
+  zh: 1a7733e1b67b020f
+/tomato-client-ui-image-evidence/model-experience/kv-cache-effect:
+  en: 9b2b3e8e9eec46ab
+  zh: fce64ffb806cff14
+/tomato-client-ui-image-evidence/known-limitations-and-deferred-work:
+  en: 38ded9b279222c55
+  zh: 29a3a2517143d005
+/tomato-client-ui-image-evidence/known-limitations-and-deferred-work/dev-note:
+  en: 3dc7d1678d680fc8
+  zh: 6311c8340cab294c

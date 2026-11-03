@@ -25,7 +25,7 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用此包
 
-在创建或恢复 Session 前，将以下条目挂载到已提供 Agent、工具、系统提示词和工作目录服务的 profile 组合中。加载或重新加载此提供方不会接管已经活动的 Session。桌面安装包把 Playwright headless shell 放在 `runtime/playwright-browsers` 并设置 `PLAYWRIGHT_BROWSERS_PATH`；其他部署遵循上游运行时的浏览器安装，使用 `executablePath` 选择已有 Chromium 安装。
+在创建或恢复 Session 前，将以下条目挂载到已提供 Agent、工具、系统提示词和工作目录服务的 profile 组合中。加载或重新加载此提供方不会接管已经活动的 Session。桌面安装包把 Playwright headless shell 放在 `runtime/playwright-browsers`，并为 Host 设置 `PLAYWRIGHT_BROWSERS_PATH` 与 `PLAYWRIGHT_MCP_EXECUTABLE_PATH`；其他部署遵循上游运行时的浏览器安装，使用 `executablePath` 选择已有 Chromium 安装。
 
 ```yaml
 - name: '@tomato/browser-use'
@@ -41,11 +41,11 @@ kind: "package-reference"
 |---|---|---|
 | `mode` | 必填 | `launch` 或 `attach`，在本次提供方激活期间固定 |
 | `headless` | `true` | 启动时不显示窗口 |
-| `executablePath` | 上游发现 | 启动使用的 Chromium 可执行文件 |
+| `executablePath` | headless 启动时取 `PLAYWRIGHT_MCP_EXECUTABLE_PATH`，否则上游发现 | 启动使用的 Chromium 可执行文件 |
 | `endpoint` | attach 时必填 | 已有浏览器调试端点 |
 | `toolCallTimeoutMs` | MCP 客户端默认值 | 单次调用超时，单位为毫秒 |
 
-[配置目录](../../../docs/config-catalog.zh.md#tomatoexperimental-browser-use-playwright-mcp)列出接受的字段。浏览器模式由 profile 或 preset 选择。子进程会清空继承的 `PLAYWRIGHT_MCP_*` 选项，避免其替换该配置。
+[配置目录](../../../docs/config-catalog.zh.md#tomatoexperimental-browser-use-playwright-mcp)列出接受的字段。浏览器模式由 profile 或 preset 选择。子进程会清空继承的 `PLAYWRIGHT_MCP_*` 选项，避免其替换该配置；`PLAYWRIGHT_MCP_EXECUTABLE_PATH` 只为 headless 启动提供默认可执行文件，显式 `executablePath` 优先。
 
 为整个进程配置系统提示词的 `toolOrder` 时，将浏览器工具留在 `<unlisted-tools>` 中。显式列出浏览器工具名称可能导致未获得浏览器连接的 Session 无法组装提示词。
 

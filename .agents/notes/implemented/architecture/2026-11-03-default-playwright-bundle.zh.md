@@ -14,7 +14,7 @@ Playwright 组合包改为随安装分发，并在 Web 与桌面 profile 默认�
 
 `DEFAULT_ENABLED_OPTIONAL_BUNDLES` 点名允许被随附模板选中的随附可选组合包，也是 `verify-default-product-isolation` 的声明例外：只有名单内的组合包及其声明的运行时依赖闭包可以进入默认产品与 Web 层；行里挂载但未声明为依赖的实验包仍会让检查失败。其余条目继续遵守“可选组合包不做模板层”的规则，因此“随安装分发”与“默认开启”仍是两件事。
 
-桌面打包自行下载 Chromium。`prepare:playwright-browsers` 通过 provider 的 `@playwright/mcp` 依赖解析出 Playwright CLI，执行 `chromium --only-shell` 安装到共享构建缓存，再把完整安装复制到 `runtime/playwright-browsers`。Host 启动环境拿到指向该 registry 的 `PLAYWRIGHT_BROWSERS_PATH`，除非启动环境已显式设置。macOS 在应用签名前签署 registry 内的 Mach-O 文件，`chrome-headless-shell` 带 JIT entitlement；electron-builder 忽略该目录，打包 smoke 运行 `chrome-headless-shell --version`。
+桌面打包自行下载 Chromium。`prepare:playwright-browsers` 通过 provider 的 `@playwright/mcp` 依赖解析出 Playwright CLI，执行 `chromium --only-shell` 安装到共享构建缓存，再把完整安装复制到 `runtime/playwright-browsers`。Host 启动环境拿到指向该 registry 的 `PLAYWRIGHT_BROWSERS_PATH` 与指向其中 shell 的 `PLAYWRIGHT_MCP_EXECUTABLE_PATH`，除非启动环境已显式设置对应变量。后者是因为 `@playwright/mcp --browser chromium` 解析的是完整 Chrome for Testing 构建，而安装包只携带 shell；提供方在 headless 启动时改用该 shell。macOS 在应用签名前签署 registry 内的 Mach-O 文件，`chrome-headless-shell` 带 JIT entitlement；electron-builder 忽略该目录，打包 smoke 运行 `chrome-headless-shell --version`。
 
 只有 Web 模板改变。`headless`、`sdk`、`acp` profile 保持原组合，已有 profile 保留自己的选择，因为模板只在 profile 首次创建时生效。
 

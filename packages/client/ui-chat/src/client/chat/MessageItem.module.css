@@ -313,6 +313,15 @@
   gap: 8px;
 }
 
+/* One user-message image with the entries registered for it stacked underneath. */
+.imageCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 0;
+  gap: 4px;
+}
+
 .fileCard {
   display: inline-flex;
   flex: 0 0 240px;

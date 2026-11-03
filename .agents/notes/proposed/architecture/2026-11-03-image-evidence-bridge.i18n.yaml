@@ -1,0 +1,34 @@
+# Bilingual-pair consistency record for 2026-11-03-image-evidence-bridge.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/proposed/architecture/2026-11-03-image-evidence-bridge.md
+/agent-note-image-evidence-bridge-for-text-only-models:
+  en: f1fb607473723788
+  zh: 9b06be5e5a2e81a8
+/agent-note-image-evidence-bridge-for-text-only-models/problem:
+  en: eae13a7aab48222b
+  zh: d040a69e39c6e951
+/agent-note-image-evidence-bridge-for-text-only-models/proposal:
+  en: 75b8375794a61276
+  zh: d1336bdc8d534f9a
+/agent-note-image-evidence-bridge-for-text-only-models/proposal/the-engine-chain-and-the-evidence-format:
+  en: 6fcad3c7bac278af
+  zh: da3bed6fc3055c59
+/agent-note-image-evidence-bridge-for-text-only-models/proposal/the-model-facing-block:
+  en: 8cb0b6c6d950bac7
+  zh: 25f32cdf38b74050
+/agent-note-image-evidence-bridge-for-text-only-models/proposal/storage-retention-and-replay:
+  en: cdde763e332d2d1f
+  zh: 3261f309c43010a6
+/agent-note-image-evidence-bridge-for-text-only-models/proposal/events-and-delivery:
+  en: 8cfcd700d4740732
+  zh: e928d2b79e7aa07d
+/agent-note-image-evidence-bridge-for-text-only-models/alternatives-considered:
+  en: 06f65f31044b456a
+  zh: d920709fe1047db1
+/agent-note-image-evidence-bridge-for-text-only-models/acceptance-criteria:
+  en: b9aa32a1fc92ba07
+  zh: 8cf6ac9a8c0ba877
+/agent-note-image-evidence-bridge-for-text-only-models/risks:
+  en: 0569cc0127de9c58
+  zh: 4c96ab80944a3edd

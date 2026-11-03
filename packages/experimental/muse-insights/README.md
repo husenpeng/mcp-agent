@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-Give the person a private daily work recap and a periodic reminder of unfinished tasks across Sessions. The Host service reads the day's top-level conversations and the current `todos` projection, stores one retained recap per owner and local day plus the owner's latest analysis in `tomato_muse_insights`, and exposes both through `ctx.remote.museInsights`. The Muse bundle mounts it beside memory and goal focus; the browser half adds a frame-wide notice and one right-Sidebar page with a recap and an unfinished-task view. The capability writes no Session events and exposes no model tool.
+Give the person a private daily work recap and periodic reminders of unfinished tasks across Sessions. The Host service reads the day's top-level conversations and the `todos` projection, stores one retained recap per owner and local day plus the latest analysis in `tomato_muse_insights`, and exposes both through `ctx.remote.museInsights`. The Muse bundle mounts it beside memory and goal focus. The browser half adds a frame-wide notice, a Sidebar page with recap and unfinished-task views, and a work-item detail page. It writes no Session events and exposes no model tool.
 
 ## Table of Contents
 
@@ -85,8 +85,10 @@ The auxiliary request keeps the model-visible input reconstructable even though 
 | [`src/summarize.ts`](src/summarize.ts) | Prompt, input truncation, request execution, JSON parsing, and deterministic fallback |
 | [`src/analyze.ts`](src/analyze.ts) | Task merge, deduplication, completed-item suppression, and ordering |
 | [`src/domain.ts`](src/domain.ts) | Storage domain and record schemas |
-| [`src/client/index.ts`](src/client/index.ts) | Remote mount, page type, and frame-wide notice |
+| [`src/client/index.ts`](src/client/index.ts) | Remote mount, both page types, and frame-wide notice |
 | [`src/client/controller.ts`](src/client/controller.ts) | Snapshot polling, notice policy, explicit refresh, and Sidebar navigation |
+| [`src/client/WorkItemTab.tsx`](src/client/WorkItemTab.tsx) | One work item's detail page and the recap lookup that keeps it current |
+| [`src/client/work-item-bindings.ts`](src/client/work-item-bindings.ts) | The item each detail page showed, so a reloaded tab names the same one |
 
 </details>
 

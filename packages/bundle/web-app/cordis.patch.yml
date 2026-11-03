@@ -375,6 +375,13 @@
     - id: ui-file-drag
       name: '@tomato/client-ui-file-drag'
 
+    # Evidence status beside a pasted image: which vision engine read it and
+    # how long the read took. The card renders nothing until the image-evidence
+    # bridge (below) records a read for that attachment, so this row is safe
+    # while the bridge is disabled.
+    - id: ui-image-evidence
+      name: '@tomato/client-ui-image-evidence'
+
     # Tool call tree, generic fallback, and keyed business Tool views.
     - id: ui-tool
       name: '@tomato/client-ui-tool'
@@ -628,3 +635,12 @@
       name: '@tomato/agent-preset-registry'
       config:
         default: standard
+
+# The image-evidence bridge ships installed but off: reading every pasted image
+# spends a real model call, so the user enables it in the Plugins page and picks
+# the engines there before the first read. While the row is disabled the
+# capability is absent, and a text-only model keeps refusing image prompts.
+- insert:
+    - id: image-evidence
+      name: '@tomato/image-evidence'
+      disabled: true

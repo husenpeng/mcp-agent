@@ -38,7 +38,12 @@ export function apply(ctx: Context, config: Config): void {
   } else {
     args.push('--isolated')
     if (config.headless) args.push('--headless')
-    if (config.executablePath !== undefined) args.push('--executable-path', config.executablePath)
+    // Upstream's `chromium` selection resolves the full Chrome for Testing build, while Desktop ships only the
+    // headless shell. The Host names that shell; an explicit provider path remains authoritative.
+    const inherited = process.env.PLAYWRIGHT_MCP_EXECUTABLE_PATH
+    const executablePath = config.executablePath
+      ?? (config.headless && inherited !== undefined && inherited !== '' ? inherited : undefined)
+    if (executablePath !== undefined) args.push('--executable-path', executablePath)
   }
   mountSessionMcp(ctx, {
     name: 'playwright-mcp',

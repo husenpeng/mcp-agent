@@ -1,7 +1,7 @@
 /**
  * Browser entry for the Muse insights: mounts the Host Remote contribution,
- * then one right-Sidebar page type and one frame-wide notice entry over a
- * single shared read source.
+ * then one right-Sidebar page type, the detail page of one recap work item, and
+ * one frame-wide notice over a single shared read source.
  *
  * The Remote contribution is mounted here rather than in the central
  * `@tomato/api-remotes` assembly because this capability is optional and
@@ -13,7 +13,6 @@
 
 import type { Context as ClientContext } from '@tomato/cordis'
 import remote from '@tomato/experimental-muse-insights/remote'
-import { IconSparkleRegular } from '@tomato/client-ui-primitives'
 import type { TypertRemoteContribution } from '@tomato/typert-protocol'
 import type {} from '@tomato/api-remotes/client'
 import type {} from '@tomato/client-locale/client'
@@ -22,30 +21,36 @@ import type {} from '@tomato/client-ui-renderer/client'
 import type {} from '@tomato/client-ui-sidebar-right/client'
 import type {} from '@tomato/client-ui-workspace/client'
 import type {} from './contract.ts'
-import { createInsightsController, INSIGHTS_TAB_KIND } from './controller.ts'
+import { createInsightsController } from './controller.ts'
+import { INSIGHTS_TAB_ID, INSIGHTS_TAB_KIND, insightsDefinition, WORK_ITEM_TAB_ID, workItemDefinition } from './definition.ts'
 import { InsightNotice, type NoticeInjected } from './InsightNotice.tsx'
 import { InsightsTab, type InsightsTabInjected } from './InsightsTab.tsx'
 import { DICTIONARIES, NS } from './locales.ts'
 import { createInsightsSource } from './source.ts'
+import { WorkItemTabBindings } from './work-item-bindings.ts'
+import { WorkItemTab, type WorkItemTabInjected } from './WorkItemTab.tsx'
+import { WorkItemTabTitle, type WorkItemTabTitleInjected } from './WorkItemTabTitle.tsx'
 
-export type { InsightsTabParams } from './contract.ts'
+export type { InsightsTabParams, WorkItemTabParams } from './contract.ts'
 export type { MuseInsightsKey } from './locales.ts'
 
 /** Services the mounted browser contribution requires. */
 export const inject = ['remote', 'slots', 'locale', 'sidebarRightTabs', 'sidebarRight', 'uiWorkspace']
 
-/** Page type implementation identity; the id is also the body's slot key. */
-const TAB_ID = '@tomato/experimental-muse-insights/recap'
-
 /**
- * Register the locale dictionaries, polling controller, Sidebar page type, and
- * frame-wide notice over one source.
+ * Register the locale dictionaries, polling controller, both Sidebar page types,
+ * and frame-wide notice over one source.
  * @param ctx - browser context that already carries the mounted Remote namespace.
  */
 function registerUi(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, DICTIONARIES), 'muse-insights: dictionaries')
   const t = ctx.locale.bind(NS)
   const source = createInsightsSource()
+  // A detail page the reload restored carries no navigation parameters, so its
+  // kind remembers the item each tab last showed for as long as that layout lives.
+  const workItemBindings = new WorkItemTabBindings(
+    sessionId => ctx.sidebarRight.tabsIn(sessionId).map(tab => tab.id),
+  )
   const controller = createInsightsController({
     snapshot: signal => ctx.remote.museInsights.snapshot(signal),
     refresh: signal => ctx.remote.museInsights.refresh(signal),
@@ -58,27 +63,33 @@ function registerUi(ctx: ClientContext): void {
     },
   }, source)
   ctx.effect(() => () => { controller.dispose() }, 'muse-insights: polling')
-  ctx.effect(() => ctx.sidebarRightTabs.register({
-    id: TAB_ID,
-    kind: INSIGHTS_TAB_KIND,
-    title: () => t('tab.title'),
-    guide: [{
-      id: 'recap',
-      order: 20,
-      title: () => t('guide.title'),
-      description: () => t('guide.description'),
-      icon: IconSparkleRegular,
-    }],
-  }), 'muse-insights: Sidebar page type')
+  ctx.effect(() => ctx.sidebarRightTabs.register(insightsDefinition(t)), 'muse-insights: Sidebar page type')
+  ctx.effect(() => ctx.sidebarRightTabs.register(workItemDefinition(t)), 'muse-insights: work item page type')
   ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({
     name: 'sidebar.right.pane.tab',
-    key: TAB_ID,
+    key: INSIGHTS_TAB_ID,
     locale: NS,
     inject: (): InsightsTabInjected => ({
       hooks: source.hooks,
       onRefresh: signal => controller.refresh(signal),
     }),
   }, InsightsTab))
+  ctx.slots.inject('sidebar.right.pane.tab', () => ctx.slots.register({
+    name: 'sidebar.right.pane.tab',
+    key: WORK_ITEM_TAB_ID,
+    locale: NS,
+    inject: (): WorkItemTabInjected => ({
+      hooks: source.hooks,
+      workItemBindings,
+      onRefresh: signal => controller.refresh(signal),
+    }),
+  }, WorkItemTab))
+  ctx.slots.inject('sidebar.right.pane.tab.title', () => ctx.slots.register({
+    name: 'sidebar.right.pane.tab.title',
+    key: WORK_ITEM_TAB_ID,
+    locale: NS,
+    inject: (): WorkItemTabTitleInjected => ({ workItemBindings }),
+  }, WorkItemTabTitle))
   ctx.slots.inject('shell.overlay', () => ctx.slots.register({
     name: 'shell.overlay',
     id: 'muse-insights.notice',

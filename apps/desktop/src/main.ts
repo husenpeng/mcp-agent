@@ -23,7 +23,7 @@ import {
   type MenuItemConstructorOptions,
 } from 'electron'
 import { resolveDesktopPaths } from './paths.ts'
-import { resolvePlaywrightBrowsers, withPlaywrightBrowsers } from './playwright-browsers.ts'
+import { resolvePlaywrightBrowsers, resolvePlaywrightShell, withPlaywrightBrowsers } from './playwright-browsers.ts'
 import { DesktopProjectManager } from './project-manager.ts'
 import { DesktopHostFatalError, DesktopHostProcess, DesktopHostUncleanExitError } from './host-process.ts'
 import { DesktopPlatformView, PLATFORM_IPC, platformBounds } from './platform-view.ts'
@@ -361,6 +361,7 @@ async function main(): Promise<void> {
   // The packaged application ships the Chromium build the Playwright provider launches; an unpackaged launch uses the
   // target runtime's copy when preparation placed one beside the primary runtime.
   const playwrightBrowsers = resolvePlaywrightBrowsers(development, primaryRuntime, process.resourcesPath)
+  const playwrightShell = playwrightBrowsers === undefined ? undefined : resolvePlaywrightShell(playwrightBrowsers)
   const activeProject = paths.profile
   const manager = new DesktopProjectManager(paths, resources)
   // Dock and Finder launches inherit only launchd's environment; every Host shares one login-shell read.
@@ -513,7 +514,7 @@ async function main(): Promise<void> {
     const hostInspectPort = developmentHostInspectPort(development)
     const host = new DesktopHostProcess(resources.node, resources.tomato, activeProject,
       hostInspectPort, {
-        ...withPlaywrightBrowsers(hostEnvironment, playwrightBrowsers),
+        ...withPlaywrightBrowsers(hostEnvironment, playwrightBrowsers, playwrightShell),
         TOMATO_CLIENT_VERSION: desktopClientVersion(),
         ...(resources.releaseOverlay === undefined ? {} : {
           TOMATO_DESKTOP_RELEASE_OVERLAY: resources.releaseOverlay,

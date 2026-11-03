@@ -53,6 +53,19 @@ import type {
   SessionRequestId,
 } from './types.ts'
 
+/**
+ * Structural view of the optional image-evidence bridge. The bridge owns the
+ * full contract; admission only needs the "can it read for this model" verdict.
+ */
+interface ImageEvidenceGate {
+  /**
+   * Whether a configured engine can read images for this model.
+   * @param model - resolved conversation model.
+   * @returns true only when the model is positively text-only and an engine exists.
+   */
+  canRead(model: { readonly inputModalities?: readonly string[] }): boolean
+}
+
 type PromptContentCandidate =
   | SessionPromptRequest['content'][number]
   | Extract<SessionUpdateQueueRequest['action'], { readonly kind: 'edit' }>['content'][number]
@@ -318,11 +331,16 @@ export class SessionCommandController {
           if (current !== undefined) {
             const model = await this.ctx.llm.resolveModelInfo(current.provider, current.model)
             if (model.inputModalities !== undefined && !model.inputModalities.includes('image')) {
-              throw new RemoteError(
-                'session/attachment-invalid',
-                `Model "${current.model}" does not support image input.`,
-                { reason: 'MODEL_DOES_NOT_SUPPORT_IMAGES' },
-              )
+              // A vision bridge can stand in for the missing modality; without
+              // one, image prompts stay refused exactly as before.
+              const evidence = this.ctx.get('imageEvidence') as ImageEvidenceGate | undefined
+              if (evidence?.canRead(model) !== true) {
+                throw new RemoteError(
+                  'session/attachment-invalid',
+                  `Model "${current.model}" does not support image input.`,
+                  { reason: 'MODEL_DOES_NOT_SUPPORT_IMAGES' },
+                )
+              }
             }
           }
         }
