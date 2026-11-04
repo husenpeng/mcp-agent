@@ -119,6 +119,6 @@
     "@tomato/typert-protocol": "workspace:*",
     "@tomato/util-values": "workspace:*",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^19.3.0"
   }
 }
