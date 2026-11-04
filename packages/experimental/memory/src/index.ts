@@ -5,7 +5,8 @@
  * accounts — and applies either to the owner's profile in every workspace or
  * to one canonical original project directory. Records never enter a Session
  * log. The `@tomato/experimental-tool-memory` plugin is the model-facing and
- * command consumer.
+ * command consumer. Each of the deployment limits admits an automatic page on
+ * the Settings server when that server is composed.
  * @module @tomato/experimental-memory
  */
 
@@ -13,8 +14,9 @@ import { randomUUID } from 'node:crypto'
 import { realpath } from 'node:fs/promises'
 import z from '@tomato/schemastery'
 import { Service } from '@tomato/cordis'
-import type { Context } from '@tomato/cordis'
+import type { Context, Volatile } from '@tomato/cordis'
 import type {} from '@tomato/gateway'
+import type {} from '@tomato/settings'
 import type { Session } from '@tomato/session'
 import type { Domain } from '@tomato/storage-domain'
 import { memoryTokens, rankMemories, tokenContainment } from './retrieval.ts'
@@ -53,18 +55,18 @@ declare module '@tomato/cordis' {
   }
 }
 
-/** Deployment limits for stored and recalled memory. */
+/** Deployment limits for stored and recalled memory; Loader publishes each as a live reference. */
 export interface Config {
   /** Maximum records one recall returns. */
-  maxRecallResults?: number
+  maxRecallResults?: number | Volatile<number>
   /** Maximum pinned records one workspace exposes. */
-  maxPinnedRecords?: number
+  maxPinnedRecords?: number | Volatile<number>
   /** Maximum UTF-8 bytes of one record value. */
-  maxValueBytes?: number
+  maxValueBytes?: number | Volatile<number>
   /** Maximum stored records, including candidates, per owner and workspace. */
-  maxRecordsPerWorkspace?: number
+  maxRecordsPerWorkspace?: number | Volatile<number>
   /** Maximum stored profile records, including candidates, per owner. */
-  maxProfileRecords?: number
+  maxProfileRecords?: number | Volatile<number>
 }
 
 /** Fully resolved deployment limits. */
@@ -196,12 +198,14 @@ function visibleIn(view: MemoryView, record: MemoryRecord): boolean {
  * @returns every limit, defaulted.
  */
 export function resolveMemoryLimits(config: Config): MemoryLimits {
+  const current = (value: number | Volatile<number> | undefined): number | undefined =>
+    value === undefined || typeof value === 'number' ? value : value.get()
   const limits: MemoryLimits = {
-    maxRecallResults: config.maxRecallResults ?? 10,
-    maxPinnedRecords: config.maxPinnedRecords ?? 20,
-    maxValueBytes: config.maxValueBytes ?? 1024,
-    maxRecordsPerWorkspace: config.maxRecordsPerWorkspace ?? 1000,
-    maxProfileRecords: config.maxProfileRecords ?? 100,
+    maxRecallResults: current(config.maxRecallResults) ?? 10,
+    maxPinnedRecords: current(config.maxPinnedRecords) ?? 20,
+    maxValueBytes: current(config.maxValueBytes) ?? 1024,
+    maxRecordsPerWorkspace: current(config.maxRecordsPerWorkspace) ?? 1000,
+    maxProfileRecords: current(config.maxProfileRecords) ?? 100,
   }
   for (const [field, value] of Object.entries(limits)) {
     if (!Number.isSafeInteger(value) || value < 1) {
@@ -219,16 +223,17 @@ export function resolveMemoryLimits(config: Config): MemoryLimits {
 export class MemoryService extends Service {
   static inject = ['storageDomain']
 
-  static Config: z<Config> = z.object({
-    maxRecallResults: z.number().step(1).min(1).max(50).default(10),
-    maxPinnedRecords: z.number().step(1).min(1).max(100).default(20),
-    maxValueBytes: z.number().step(1).min(16).max(16_384).default(1024),
-    maxRecordsPerWorkspace: z.number().step(1).min(1).max(100_000).default(1000),
-    maxProfileRecords: z.number().step(1).min(1).max(10_000).default(100),
+  static Config = z.object({
+    maxRecallResults: z.number().step(1).min(1).max(50).default(10).volatile(),
+    maxPinnedRecords: z.number().step(1).min(1).max(100).default(20).volatile(),
+    maxValueBytes: z.number().step(1).min(16).max(16_384).default(1024).volatile(),
+    maxRecordsPerWorkspace: z.number().step(1).min(1).max(100_000).default(1000).volatile(),
+    maxProfileRecords: z.number().step(1).min(1).max(10_000).default(100).volatile(),
   })
 
-  /** Resolved deployment limits. */
-  readonly limits: MemoryLimits
+  /** Deployment limits read from the live configuration. */
+  get limits(): MemoryLimits { return resolveMemoryLimits(this.config) }
+
   private domain: Domain<typeof memoryDomain> | undefined
   private readonly workspaces = new WeakMap<Session, Promise<string | undefined>>()
 
@@ -236,12 +241,18 @@ export class MemoryService extends Service {
    * @param ctx - Host context owning the storage domain.
    * @param config - validated deployment limits.
    */
-  constructor(ctx: Context, config: Config = {}) {
+  constructor(ctx: Context, private readonly config: Config = {}) {
     super(ctx, 'memory')
-    this.limits = resolveMemoryLimits(config)
+    // Fail loud before the domain opens; every later read resolves the live references again.
+    resolveMemoryLimits(config)
   }
 
   protected async [Service.init](): Promise<void> {
+    // This class is the Loader entry whose id also names the form, so the
+    // page it admits carries the limits resolved above.
+    this.ctx.inject(['settings'], (ctx) => {
+      ctx.settings.configure({}, this.ctx.fiber)
+    })
     const domain = await this.ctx.storageDomain.open(memoryDomain)
     for (const [key, record] of domain.table('records').entries()) {
       if (key === record.id) continue

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Roboterregister",
+    "description": "Speichert Roboterspezifikationen, Roboter und Läufe und steuert Instanziierung und Läufe."
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Robot registry",
+    "description": "Store robot specifications, robots, and runs, and control instantiation and runs."
+  }
+}

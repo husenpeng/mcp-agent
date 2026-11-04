@@ -1,5 +1,6 @@
 {
   "name": "@tomato/gateway",
+  "private": true,
   "description": "Tomato local gateway: same-origin auth routes and a fixed-table HTTP forwarder for company services",
   "version": "0.2.1-rc.3",
   "type": "module",

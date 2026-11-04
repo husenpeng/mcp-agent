@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Image evidence",
+    "description": "Let text-only models read pasted images through a configured vision model."
+  }
+}

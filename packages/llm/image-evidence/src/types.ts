@@ -75,10 +75,7 @@ declare module '@tomato/llm' {
 
 declare module '@tomato/session/types' {
   interface SessionEventMap {
-    /**
-     * One image's evidence was produced or first reused in this session.
-     * @mode durable
-     */
+    /** Durable record that one image's evidence was produced or first reused in this session. */
     'image/evidence': ImageEvidenceEventData
   }
 }

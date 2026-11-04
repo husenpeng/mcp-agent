@@ -17,20 +17,20 @@ export interface InsightsTabParams {
 
 /**
  * What opening one work item's detail page accepts: the recap that listed it
- * and the item's title, which that recap keeps unique.
+ * and the problem statement, which that recap keeps unique.
  */
 export interface WorkItemTabParams {
   /** Local calendar day key of the recap that listed the item. */
   readonly day: string
-  /** The item's title as the recap lists it. */
-  readonly title: string
+  /** The item's problem statement as the recap lists it. */
+  readonly problem: string
 }
 
 declare module '@tomato/client-ui-sidebar-right/client' {
   interface SidebarRightTabParamsMap {
     /** Muse insights detail page; both views share one tab type. */
     'muse-insights': InsightsTabParams
-    /** One recap work item, named by its day and title. */
+    /** One recap work item, named by its day and problem statement. */
     museInsightsWorkItem: WorkItemTabParams
   }
 }
@@ -48,9 +48,9 @@ export function recordedView(params: SidebarRightNavigationParams): InsightsView
 /**
  * Read one work item's identity from unvalidated navigation parameters.
  * @param params - the navigation record's parameters.
- * @returns the day and title the open named, or undefined for a restored tab or another type's parameters.
+ * @returns the day and problem the open named, or undefined for a restored tab or another type's parameters.
  */
 export function workItemParams(params: SidebarRightNavigationParams): SidebarRightTabParamsMap['museInsightsWorkItem'] | undefined {
-  if (params === undefined || !('day' in params) || !('title' in params)) return undefined
-  return { day: params.day, title: params.title }
+  if (params === undefined || !('day' in params) || !('problem' in params)) return undefined
+  return { day: params.day, problem: params.problem }
 }

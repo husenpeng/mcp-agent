@@ -278,6 +278,8 @@ flowchart LR
   pkg_experimental_robot_local["experimental-robot-local"]
   pkg_experimental_robot_runtime["experimental-robot-runtime"]
   pkg_experimental_robot_triggers["experimental-robot-triggers"]
+  svc_robotTemplates["ctx.robotTemplates<br/>Robot template registry"]
+  pkg_experimental_robot_templates_marketing["experimental-robot-templates-marketing"]
   pkg_experimental_claude_code_mods["experimental-claude-code-mods"]
   svc_claudeCodeMods["ctx.claudeCodeMods<br/>Claude Code mods bridge"]
   pkg_inspector["inspector"]
@@ -378,6 +380,7 @@ flowchart LR
   pkg_experimental_memory --> svc_memory
   pkg_experimental_muse_insights --> svc_museInsights
   pkg_experimental_ptc_runtime_python --> svc_ptcRuntime
+  pkg_experimental_robot --> svc_robotTemplates
   pkg_experimental_robot --> svc_robots
   pkg_experimental_robot_local --> svc_robots
   pkg_experimental_speech_to_text --> svc_speechToText
@@ -557,6 +560,8 @@ flowchart LR
   svc_remoteAccess --> pkg_api_gateway
   svc_remoteAccess --> pkg_api_session_controller
   svc_remoteAccess --> pkg_api_workspace_controller
+  svc_robotTemplates --> pkg_api_robot_controller
+  svc_robotTemplates --> pkg_experimental_robot_templates_marketing
   svc_robots --> pkg_experimental_robot_runtime
   svc_robots --> pkg_experimental_robot_triggers
   svc_sandbox --> pkg_bash_sandbox
@@ -751,6 +756,7 @@ flowchart LR
 | `ctx.speechToText` | `seam` | [`experimental-speech-to-text`](../packages/experimental/speech-to-text) | [`experimental-speech-to-text-sensevoice`](../packages/experimental/speech-to-text-sensevoice) | [`experimental-api-speech-to-text`](../packages/experimental/api-speech-to-text) | - | 路由显式选择的识别器；浏览器使用带认证的 Remote，并在提交前将转写保留在草稿中。 |
 | `ctx.agentTeams` | `core` | [`experimental-agent-team`](../packages/experimental/agent-team) | - | [`experimental-tool-agent-team`](../packages/experimental/tool-agent-team) | - | 负责隐式 Root roster、直接 peer inbox 投递、共享任务 DAG 与 continuable child 生命周期；tool-agent-team 提供模型控制工具。 |
 | `ctx.robots` | `core` | [`experimental-robot`](../packages/experimental/robot) | [`experimental-robot-local`](../packages/experimental/robot-local) | [`experimental-robot-runtime`](../packages/experimental/robot-runtime), [`experimental-robot-triggers`](../packages/experimental/robot-triggers) | - | 拥有有版本机器人规格、实例化与 run 控制；服务定义声明契约，已安装的提供者拥有执行、持久化与 A2A 传输。 |
+| `ctx.robotTemplates` | `core` | [`experimental-robot`](../packages/experimental/robot) | - | [`api-robot-controller`](../packages/api/robot-controller), [`experimental-robot-templates-marketing`](../packages/experimental/robot-templates-marketing) | - | 列出插件注册的可聘用机器人模板；聘用时通过机器人领域服务把模板复制为归用户所有的规格。 |
 | `ctx.claudeCodeMods` | `core` | [`experimental-claude-code-mods`](../packages/experimental/claude-code-mods) | - | - | - | 加载 defineMod 插件添加的模组，从 harness 扩展点触发其钩子链，并通过其 Remote 绘制提示框上方的横幅。 |
 | `ctx.inspector` | `core` | `inspector` | - | - | - | 负责 Worker 托管的 CDP target，以及独立于传输的 Host 和 Client observation 与 Cordis tree query API。 |
 | `ctx.jobs` | `seam` | [`jobs`](../packages/jobs/jobs) | [`jobs-local`](../packages/jobs/jobs-local) | [`tool-bash`](../packages/shell/tool-bash), [`tool-pwsh`](../packages/shell/tool-pwsh), [`tool-terminal`](../packages/experimental/tool-terminal), [`tool-jobs`](../packages/jobs/tool-jobs), [`api-job-controller`](../packages/api/job-controller) | - | 生产方（后台 bash/pwsh 与 PTY 发送）登记正在运行的工作；声明 record 的 job 还为非消费观察者流式提供原始输出；tool-jobs 是面向模型的控制器，用于读取、列出和终止这些工作；jobs-local 是进程本地注册表。 |

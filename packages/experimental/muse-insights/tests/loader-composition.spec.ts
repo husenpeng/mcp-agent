@@ -10,6 +10,8 @@ import { join } from 'node:path'
 import { expect, it, onTestFinished } from 'vitest'
 import type { Context } from '@tomato/cordis'
 import { boot, initProfile, loadProfileDirectory, readProfilePatches, type ProfileContext } from '@tomato/app-boot'
+import ConfigEditor from '@tomato/config-editor'
+import Settings from '@tomato/settings'
 import Sessions, { SessionId, SessionSeq } from '@tomato/session'
 import Projections from '@tomato/session-projection'
 import Llm, { LlmAdapter, createAssistantMessage, createUserMessage } from '@tomato/llm'
@@ -46,7 +48,13 @@ function text(value: string): StreamChunk[] {
 
 interface Row { readonly id: string; readonly name: string; readonly config?: Record<string, unknown> }
 
-it('boots the muse insights row and serves a model recap plus the live todo analysis', async () => {
+/**
+ * Boot the fixture profile with the Muse insights row, its base services, and
+ * the config the row's bundle patch declares.
+ * @param rowConfig - config the fixture bundle puts on the Muse insights row.
+ * @returns the temp home, the workspace, and the booted context.
+ */
+async function bootInsights(rowConfig: Record<string, unknown> = {}, seed?: (home: string) => Promise<void>) {
   const home = await mkdtemp(join(tmpdir(), 'tomato-muse-insights-'))
   let owner: Context | undefined
   onTestFinished(async () => { await owner?.fiber.dispose(); await rm(home, { recursive: true, force: true }) })
@@ -74,9 +82,12 @@ it('boots the muse insights row and serves a model recap plus the live todo anal
     { id: 'session-query', name: 'cordis:sessionQuery', config: { path: ':memory:', openAt: 'never' } },
     { id: 'timer', name: 'cordis:timer' },
     { id: 'tool-todo', name: 'cordis:toolTodo', config: { allowParallelInProgress: true } },
+    { id: 'config-editor', name: 'cordis:configEditor' },
+    { id: 'settings', name: 'cordis:settings' },
   ])
-  await bundle(home, 'fixture-muse-insights', [{ id: 'muse-insights', name: 'cordis:muse-insights' }])
+  await bundle(home, 'fixture-muse-insights', [{ id: 'muse-insights', name: 'cordis:muse-insights', config: rowConfig }])
   await writeFile(join(dir, 'cordis.yml'), '[]\n')
+  await seed?.(home)
   const profile: ProfileContext = {
     name: 'test', dir, home, cwd: home, patchPath: join(dir, 'cordis.patch.yml'), installAnchor: anchor,
     startedBundles: loadProfileDirectory('test', dir, anchor).layers.map(layer => layer.packageName),
@@ -89,10 +100,16 @@ it('boots the muse insights row and serves a model recap plus the live todo anal
       sessions: Sessions, projections: Projections, llm: Llm, tools: Tools, prompt: SystemPrompt,
       storage: Storage, storageJson: StorageJson, storageDomain: StorageDomain,
       sessionQuery: SessionQuerySqlite, timer: Timer, toolTodo: ToolTodo,
+      configEditor: ConfigEditor, settings: Settings,
       'muse-insights': MuseInsights,
     })
   })
   expect(ctx.museInsights).toBeDefined()
+  return { home, workspace, ctx }
+}
+
+it('boots the muse insights row and serves a model recap plus the live todo analysis', async () => {
+  const { home, workspace, ctx } = await bootInsights()
 
   const session = ctx.sessions.create(SessionId('muse-work'), { meta: { cwd: workspace } })
   session.append('request/header', { header: { config: { provider: 'test', model: 'm' } }, reason: 'initial' })
@@ -126,8 +143,20 @@ it('boots the muse insights row and serves a model recap plus the live todo anal
     headline: 'Launch brief in progress',
     summary: 'Drafted the launch plan and left the brief to send.',
     workItems: [
-      { title: 'Draft the launch plan', detail: 'Drafted.', status: 'done' },
-      { title: 'Send the brief', detail: 'Still pending.', status: 'ongoing' },
+      {
+        problem: 'The launch plan has no owner',
+        conclusion: 'Drafted the plan.',
+        solution: 'Wrote the plan and named the owner.',
+        status: 'done',
+        sessionIndexes: [0],
+      },
+      {
+        problem: 'The brief has not been sent',
+        conclusion: 'Still pending.',
+        solution: 'Left the send step for tomorrow.',
+        status: 'ongoing',
+        sessionIndexes: [0],
+      },
     ],
     openTasks: ['Send the brief', 'Open the folder'],
   }))])
@@ -142,6 +171,9 @@ it('boots the muse insights row and serves a model recap plus the live todo anal
     openTasks: ['Send the brief', 'Open the folder'],
     sessions: [{ sessionId: 'muse-work', title: 'Launch plan' }],
   })
+  expect(refreshed.recap?.workItems.map(item => item.problem))
+    .toEqual(['The launch plan has no owner', 'The brief has not been sent'])
+  expect(refreshed.recap?.workItems[0]?.sessionIds).toEqual(['muse-work'])
   expect(refreshed.unfinished.tasks.map(task => task.title)).toEqual(['Draft the plan', 'Send the brief'])
   expect(refreshed.unfinished.tasks.find(task => task.title === 'Draft the plan')).toMatchObject({ status: 'in_progress', source: 'todo' })
   expect(refreshed.unfinished.tasks.some(task => task.title === 'Open the folder')).toBe(false)
@@ -156,4 +188,117 @@ it('boots the muse insights row and serves a model recap plus the live todo anal
   expect(record?.recap.day).toMatch(/^\d{4}-\d{2}-\d{2}$/u)
   expect(record?.model?.input).toContain("Summarize today's sessions from this JSON:")
   expect(record?.model?.response).toContain('Launch brief in progress')
+}, 30_000)
+
+it('adopts a committed configuration change without remounting the service', async () => {
+  const { workspace, ctx } = await bootInsights({ maxTasks: 2 })
+  const session = ctx.sessions.create(SessionId('muse-config'), { meta: { cwd: workspace } })
+  session.append('user/message', createUserMessage({
+    content: [{ type: 'text', text: 'Plan the launch and book the room.' }],
+    source: { kind: 'user' },
+  }), { surfaceOp: 'append' })
+  session.append('todo/write', {
+    todos: [
+      { content: 'Draft the plan', status: 'pending' },
+      { content: 'Send the brief', status: 'pending' },
+      { content: 'Book the room', status: 'pending' },
+    ],
+  })
+  const signal = new AbortController().signal
+  const before = await ctx.museInsights.refresh(signal)
+  expect(before.unfinished.tasks).toHaveLength(2)
+
+  const own = ctx.settings.describe().find(descriptor => descriptor.ns === 'muse-insights')
+  if (own === undefined) throw new Error('the Muse insights settings namespace is missing')
+  expect(own.value).toMatchObject({ maxTasks: 2 })
+  const serialized = own.schema as { uid?: unknown; refs?: Record<string, { dict?: Record<string, unknown> }> }
+  const properties = Object.keys(serialized.refs?.[String(serialized.uid)]?.dict ?? {}).sort()
+  expect(properties).toEqual([
+    'initialDelaySeconds', 'lookbackDays', 'maxInputBytes', 'maxMessageChars', 'maxMessagesPerSession',
+    'maxOutputTokens', 'maxRecapDays', 'maxSessions', 'maxTasks', 'model', 'provider', 'recapIntervalMinutes',
+    'taskIntervalMinutes', 'timeoutMs',
+  ])
+
+  const entry = [...ctx.loader.entries()].find(row => row.options.id === 'muse-insights')
+  if (entry === undefined) throw new Error('the Muse insights row is missing')
+  const uid = entry.fiber?.uid
+  await ctx.settings.update('muse-insights', { maxTasks: 5, recapIntervalMinutes: 5 })
+
+  expect(entry.fiber?.uid).toBe(uid)
+  const after = await ctx.museInsights.refresh(signal)
+  expect(after.unfinished.tasks).toHaveLength(3)
+}, 30_000)
+
+it('opens a version-1 store and serves its legacy recap and analysis', async () => {
+  const day = '2026-11-03'
+  const { ctx } = await bootInsights({}, async (home) => {
+    const storages = join(home, 'storages')
+    await mkdir(storages, { recursive: true })
+    await writeFile(join(storages, 'tomato_muse_insights.json'), JSON.stringify({
+      unit: { name: 'tomato_muse_insights', version: 1 },
+      global: null,
+      tables: {
+        recaps: {
+          [`local|${day}`]: {
+            owner: 'local',
+            recap: {
+              day,
+              generatedAt: 1,
+              source: 'local',
+              headline: '',
+              summary: '',
+              workItems: [{
+                title: 'The launch plan has no owner',
+                detail: 'The plan is drafted.',
+                status: 'unknown',
+              }],
+              openTasks: [],
+              sessions: [],
+              messageCount: 2,
+            },
+            latestEventTime: 1,
+          },
+        },
+        analyses: {
+          local: {
+            owner: 'local',
+            analysis: {
+              analyzedAt: 1,
+              tasks: [{
+                id: 'task-1',
+                title: 'The launch plan has no owner',
+                detail: 'The plan is drafted.',
+                status: 'pending',
+                source: 'recap',
+                sessionId: null,
+                sessionTitle: null,
+              }],
+            },
+          },
+        },
+      },
+    }))
+  })
+  const snapshot = await ctx.museInsights.snapshot(new AbortController().signal)
+  expect(snapshot.available).toBe(true)
+  expect(snapshot.recap).toMatchObject({
+    day,
+    source: 'local',
+    workItems: [{
+      problem: 'The launch plan has no owner',
+      conclusion: '',
+      solution: 'The plan is drafted.',
+      status: 'unknown',
+      sessionIds: [],
+    }],
+  })
+  expect(snapshot.unfinished.tasks).toEqual([{
+    id: 'task-1',
+    title: 'The launch plan has no owner',
+    detail: 'The plan is drafted.',
+    status: 'pending',
+    source: 'recap',
+    sessionId: null,
+    sessionTitle: null,
+  }])
 }, 30_000)

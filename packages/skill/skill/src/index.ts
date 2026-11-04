@@ -13,7 +13,7 @@
 import { Context, Service } from '@tomato/cordis'
 import type {} from '@tomato/llm'
 import { assertNever } from '@tomato/util-values'
-import { NamedEntries, ScopedLayers, scopeChainOf, scopeOf } from '@tomato/scope'
+import { AnonymousEntries, NamedEntries, ScopedLayers, scopeChainOf, scopeOf } from '@tomato/scope'
 import type { ScopeKey, ScopeLayer } from '@tomato/scope'
 import z from '@tomato/schemastery'
 import type Schema from '@tomato/schemastery'
@@ -122,6 +122,24 @@ export interface SkillLookupOptions {
 export interface SkillViewOptions extends SkillLookupOptions {
   /** Viewing scope (the calling agent); omitted reads the global layer alone. */
   readonly scope?: ScopeKey | undefined
+}
+
+/**
+ * Name filter a scoped context applies to the skills it can see. A name may be
+ * admitted by several filters only when every one admits it, so nested scopes
+ * narrow each other rather than widening.
+ */
+export interface SkillRestriction {
+  /** Keep only these names; omitted keeps every name the other filters admit. */
+  readonly allow?: readonly string[]
+  /** Remove these names; omitted removes none. */
+  readonly deny?: readonly string[]
+}
+
+/** One restriction compiled at registration for repeated lookup against the merged catalog. */
+interface CompiledSkillRestriction {
+  readonly allow?: ReadonlySet<string>
+  readonly deny?: ReadonlySet<string>
 }
 
 /**
@@ -363,6 +381,7 @@ class SkillLayer implements ScopeLayer {
   readonly providers: NamedEntries<RegisteredProvider>
   /** Runtime skills registered through contexts carrying this scope. */
   readonly runtime = new Map<string, SkillDefinition>()
+  readonly restrictions = new AnonymousEntries<CompiledSkillRestriction>()
 
   constructor(scope: ScopeKey | undefined) {
     this.providers = new NamedEntries(name => new Error(scope === undefined
@@ -372,7 +391,16 @@ class SkillLayer implements ScopeLayer {
 
   /** Whether every contribution table in this aggregate layer is empty. */
   isEmpty(): boolean {
-    return this.providers.isEmpty() && this.runtime.size === 0
+    return this.providers.isEmpty() && this.runtime.size === 0 && this.restrictions.isEmpty()
+  }
+
+  /** Whether every compiled restriction in this layer admits a skill name. */
+  admits(name: string): boolean {
+    for (const filter of this.restrictions.values()) {
+      if ((filter.allow !== undefined && !filter.allow.has(name))
+        || (filter.deny !== undefined && filter.deny.has(name))) return false
+    }
+    return true
   }
 }
 
@@ -490,6 +518,41 @@ export class SkillRegistry extends Service {
         return () => { layer.runtime.delete(definition.name) }
       },
       { label: 'skills.register()' },
+    )
+  }
+
+  /**
+   * Restrict the skills the calling scope can see. The filter intersects with
+   * ancestor scopes' filters and applies to `list`, `snapshot`, `get`, and
+   * `update` alike, so a caller cannot reach a filtered skill by name. Names
+   * are not validated against the current catalog: a skill that appears later
+   * is admitted only when an `allow` list names it.
+   * @param filter - names to keep and/or remove.
+   * @returns the exact disposer that lifts this restriction.
+   * @throws when the calling context has no scope, when the filter is empty,
+   *   or when `allow` and `deny` overlap.
+   */
+  restrict(filter: SkillRestriction): () => void {
+    if (scopeOf(this.ctx) === undefined) {
+      throw new Error('skills.restrict() requires a scoped context (agent.ctx): a context-global restriction would mask every agent — register the restriction in the intended agent instead')
+    }
+    const allow = filter.allow
+    const deny = filter.deny
+    if (allow === undefined && deny === undefined) {
+      throw new Error('skills.restrict({}) is a no-op: pass `allow` and/or `deny` (an empty filter is almost always a materialized-empty-config bug)')
+    }
+    const duplicate = [...allow ?? []].filter(name => deny?.includes(name) === true)
+    if (duplicate.length > 0) {
+      throw new Error(`skills.restrict() lists ${duplicate.map(name => `"${name}"`).join(', ')} in both \`allow\` and \`deny\`; a name cannot be both kept and removed`)
+    }
+    const compiled: CompiledSkillRestriction = {
+      ...allow !== undefined ? { allow: new Set(allow) } : {},
+      ...deny !== undefined ? { deny: new Set(deny) } : {},
+    }
+    return this.layers.effect(
+      this.ctx,
+      layer => layer.restrictions.append(compiled),
+      { label: 'skills.restrict()' },
     )
   }
 
@@ -626,6 +689,11 @@ export class SkillRegistry extends Service {
       const collected = await this.collectLayer(layer, options)
       if (!collected.cacheable) cacheable = false
       for (const entry of collected.entries) merged.set(entry.candidate.name, entry)
+    }
+    // Restrictions narrow the merged catalog rather than registering entries,
+    // so a restricted name leaves both the model catalog and `get()`.
+    for (const name of merged.keys()) {
+      if (!layers.every(layer => layer.admits(name))) merged.delete(name)
     }
     return { entries: merged, cacheable }
   }

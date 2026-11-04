@@ -65,6 +65,8 @@ class FakeRobots extends Robots {
 
   override async cancel(): Promise<void> {}
 
+  override async advance(): Promise<void> {}
+
   override async finish(): Promise<void> {}
 
   override async attachSession(): Promise<void> {}
@@ -81,8 +83,8 @@ interface StubAgent {
 }
 
 /** Build one registry-compatible live agent on the harness Context. */
-async function stubAgent(ctx: Context, rawId: string): Promise<StubAgent> {
-  const session = ctx.sessions.create(SessionId(`session-${rawId}`))
+async function stubAgent(ctx: Context, rawId: string, cwd?: string): Promise<StubAgent> {
+  const session = ctx.sessions.create(SessionId(`session-${rawId}`), cwd === undefined ? {} : { meta: { cwd } })
   const inbox = createInboxStub()
   const agent: Agent = {
     id: session.id,
@@ -130,7 +132,7 @@ function nextTurn(stub: StubAgent): number {
     .reduce((max, event) => Math.max(max, event.data.turn), 0) + 1
 }
 
-async function harness() {
+async function harness(options: { readonly cwd?: string } = {}) {
   const ctx = new Context()
   await ctx.plugin(SessionStore)
   await ctx.plugin(SessionProjectionRegistry)
@@ -140,7 +142,7 @@ async function harness() {
   await ctx.plugin(NativeToolExecutor)
   await ctx.plugin(FakeRobots)
   const fiber = await ctx.plugin(toolRobot)
-  const root = await stubAgent(ctx, `robot-tool-root-${String(Math.random())}`)
+  const root = await stubAgent(ctx, `robot-tool-root-${String(Math.random())}`, options.cwd)
   return { ctx, root, fiber }
 }
 
@@ -197,6 +199,14 @@ describe('robot_create registration and defaults', () => {
         network: 'none',
       },
     })
+  })
+
+  it('works in the creating conversation Workspace', async () => {
+    const { ctx, root } = await harness({ cwd: '/projects/creator' })
+    openHumanTurn(root)
+    const robots = ctx.get('robots') as FakeRobots
+    await execute(ctx, { name: 'Weekly digest', mission: 'Write a weekly summary' }, root.agent)
+    expect(robots.published).toMatchObject({ capability: { workspaceRoots: ['/projects/creator'] } })
   })
 
   it('omits a blank description and an empty success-criteria list', async () => {

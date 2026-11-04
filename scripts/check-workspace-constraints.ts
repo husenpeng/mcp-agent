@@ -239,6 +239,10 @@ const packageFileExtras: Readonly<Record<string, readonly string[]>> = {
   '@tomato/sandbox-windows-acl': ['lib/runner.js', 'lib/types-*.js', 'assets'],
   '@tomato/skill-badge': ['assets'],
   '@tomato/skill-office': ['assets'],
+  // The robot bundle registers its robot-creation skill from the shipped skill file.
+  '@tomato/experimental-robot-app': ['skills'],
+  // Marketing robot skills ship their SKILL.md and Python scripts; the notices cover the projects those scripts install.
+  '@tomato/experimental-robot-templates-marketing': ['skills', 'THIRD_PARTY_NOTICES.md'],
   '@tomato/subprocess': ['lib/control.js'],
   // SSH launches a private helper and shares wire definitions and TLS setup
   // between that helper and the connection owner.

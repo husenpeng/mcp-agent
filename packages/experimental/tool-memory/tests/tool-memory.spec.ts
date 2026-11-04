@@ -1,9 +1,11 @@
 /** Memory tools, `/memory`, quote matching, account scoping, and snapshot injection through real registries. */
+import assert from 'node:assert/strict'
 import { mkdtemp, realpath, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@tomato/cordis'
+import type { Volatile } from '@tomato/cordis'
 import Loader from '@tomato/cordis-plugin-loader'
 import AgentRegistry, { agentEvents } from '@tomato/agent'
 import type { Agent, AgentStatus } from '@tomato/agent'
@@ -28,6 +30,23 @@ import { AccountState } from '@tomato/gateway'
 import type { SessionUser } from '@tomato/gateway'
 import * as memoryTools from '@tomato/experimental-tool-memory'
 import { MemoryMediaPool, MemoryStorageBackend } from '../../../storage/storage-domain/tests/helpers/memory-backend.ts'
+
+
+/** Whether a schema value is a Loader-published live reference. */
+function isVolatile(value: unknown): value is Volatile<unknown> {
+  return typeof value === 'object' && value !== null && 'get' in value
+    && typeof (value as { get?: unknown }).get === 'function'
+}
+
+/** The schema's plain values; Loader wraps each volatile field in a live reference. */
+function plainConfig(config: object): Record<string, unknown> {
+  const plain: Record<string, unknown> = {}
+  for (const [key, raw] of Object.entries(config)) {
+    const value: unknown = raw
+    plain[key] = isVolatile(value) ? value.get() : value
+  }
+  return plain
+}
 
 declare module '@tomato/llm' {
   interface MessageSourceMap {
@@ -71,7 +90,7 @@ interface Harness {
   readonly model: ExpansionModel
 }
 
-async function harness(config: memoryTools.Config = {}, pool = new MemoryMediaPool()): Promise<Harness> {
+async function harness(config: Parameters<typeof memoryTools.Config>[0] = {}, pool = new MemoryMediaPool()): Promise<Harness> {
   const workspace = await mkdtemp(join(tmpdir(), 'tomato-memory-tools-'))
   directories.push(workspace)
   const ctx = new Context()
@@ -212,7 +231,7 @@ describe('plugin exports', () => {
     expect(loader.unwrapExports(memoryTools)).toBe(memoryTools)
     expect(memoryTools.name).toBe('experimental-tool-memory')
     expect('default' in memoryTools).toBe(false)
-    expect(memoryTools.Config({})).toEqual({
+    expect(plainConfig(memoryTools.Config({}))).toEqual({
       maxSnapshotBytes: 4096, projectIndex: true, minQuoteChars: 8, queryExpansion: true, expansionTimeoutMs: 8000, expansionMaxTokens: 120,
       maxAlternatives: 8, capture: false, captureMaxInputBytes: 6000, captureMaxTokens: 400, captureTimeoutMs: 12_000,
     })
@@ -227,6 +246,47 @@ describe('plugin exports', () => {
     const fiber = await test.ctx.plugin({ name: 'memory-tools-direct', inject: memoryTools.inject, apply: (ctx: Context) => memoryTools.apply(ctx, {}) })
     expect(test.ctx.tools.get('memory_write')).toBeDefined()
     await fiber.dispose()
+  })
+
+  it('admits its automatic page on a Settings server composed beside it', async () => {
+    const configure = vi.fn((_presentation: { auto?: boolean }, _owner: Context['fiber']) => () => {})
+    const ctx = new Context()
+    contexts.push(ctx)
+    await ctx.plugin(SessionStore)
+    await ctx.plugin(SessionProjectionRegistry)
+    await ctx.plugin(SystemPrompt)
+    await ctx.plugin(AgentRegistry)
+    await ctx.plugin(ToolRuntime)
+    await ctx.plugin(NativeToolExecutor)
+    await ctx.plugin(CommandRuntime)
+    await ctx.plugin(Storage)
+    const backend = new MemoryStorageBackend(new MemoryMediaPool())
+    ctx.effect(() => ctx.storage.backend.register('fixture', backend))
+    const facility = new DomainFacility(ctx, { backend: 'fixture' })
+    ctx.effect(() => {
+      const unmount = ctx.storage.mount('domain', facility)
+      ctx.provide('storageDomain', facility)
+      return async () => { await facility.closeAll(); unmount() }
+    })
+    await ctx.plugin(LlmRuntime)
+    await ctx.plugin(MemoryService, {})
+    ctx.provide('settings', { configure } as never)
+    const fiber = await ctx.plugin(memoryTools, {})
+    await vi.waitFor(() => { expect(configure).toHaveBeenCalled() })
+    const calls = [...configure.mock.calls]
+    await fiber.dispose()
+    configure.mockClear()
+    await new Promise(resolve => setTimeout(resolve, 10))
+    assert(configure.mock.calls.length === 0)
+    for (const [presentation, owner] of calls) {
+      assert(JSON.stringify(presentation) === '{}')
+      assert(typeof owner.dispose === 'function')
+    }
+  })
+
+  it('mounts without a Settings server', async () => {
+    const test = await harness()
+    expect(test.ctx.get('settings')).toBeUndefined()
   })
 
   it('declares read-only searches parallel-safe and presents every call generically', async () => {

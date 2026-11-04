@@ -55,6 +55,8 @@ Choose it whenever the memory service is mounted: the service alone has no model
 
 The generated [configuration catalog](../../../docs/config-catalog.md#tomatoexperimental-tool-memory) is the exhaustive source for every accepted field.
 
+On the Plugins page, the row's **Configure** page edits every field of this table; the page ships with the Muse bundle's [`Muse insights` client](../muse-insights/README.md#configuration).
+
 ### What the model can do
 
 `memory_search` lists the active profile and workspace records that share words with a query. When the literal words match fewer than `maxRecallResults` records and the view holds an active record, it asks a model for other wordings of the query (synonyms and the same meaning in Chinese and English) and ranks again; a match through another wording scores lower than a literal one. A failed or timed-out expansion falls back to the literal result. `memory_write` saves or replaces one record in `scope` `profile` (about the person, in every workspace) or `workspace` (this project); it is active only when the normalized `user_quote` is contained in a person's message of the current turn, and the record then names that message. Case, whitespace runs, and trailing sentence punctuation do not affect the match. A Session without a project directory can save only profile memories. `memory_forget` deletes a record by id. `memory_related` walks from one memory to the memories about the same subject, the memories written in the same session, and the memories sharing the attribute, and names the edge and the writing session of each result. A write whose statement nearly repeats another saved memory names that record so the agent can delete the superseded one. Writes and deletions require a top-level agent.

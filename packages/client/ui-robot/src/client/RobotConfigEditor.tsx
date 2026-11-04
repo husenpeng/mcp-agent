@@ -1,11 +1,11 @@
 /** The Tomato Rbot specification editor: basic fields first, advanced blocks behind one tab. */
 import type { ReactNode } from 'react'
 import { useEffect, useId, useState } from 'react'
-import { type RobotSpec, type RobotSpecIssue } from '@tomato/api-robot-controller/client'
+import { type RobotCapabilityCatalog, type RobotSpec, type RobotSpecIssue } from '@tomato/api-robot-controller/client'
 import { emptyRobotSpec } from './spec.ts'
 import { Button, Checkbox, Input, SegmentedTabs } from '@tomato/client-ui-primitives'
 import type { PropsLocale } from '@tomato/client-ui-slots'
-import { ChoiceRow, TagField, type Choice } from './SpecFields.tsx'
+import { ChoiceRow, TagField, type Choice, type TagOption } from './SpecFields.tsx'
 import { NS, type RobotKey } from './locales.ts'
 import css from './RobotConfigEditor.module.css'
 
@@ -19,17 +19,16 @@ type Writable<T> = T extends (infer U)[]
 type Trigger = RobotSpec['goal']['triggers'][number]
 type Peer = RobotSpec['a2a']['peers'][number]
 
-/** Tool names this harness ships, offered as allow/deny suggestions. */
-const TOOL_SUGGESTIONS = ['read', 'write', 'edit', 'glob', 'grep', 'bash', 'web_search', 'web_fetch', 'todo_write'] as const
 /** Data classes the specification schema accepts. */
 const DATA_CLASSES = ['public', 'internal', 'confidential'] as const
 /** A2A intents the specification schema accepts. */
 const INTENTS = ['request', 'delegate', 'event'] as const
-/** Memory namespaces the robot documentation uses as examples. */
-const MEMORY_NAMESPACES = ['team:main', 'robot:self'] as const
 
 /** Specification scopes the editor presents: the simple form first, every block behind one tab. */
 type ConfigScope = 'basic' | 'advanced'
+
+/** Project bare values onto options that carry their own label. */
+const asOptions = (values: readonly string[]): TagOption[] => values.map(value => ({ value, label: value }))
 
 /** Issue paths the basic panel renders; any other path needs the advanced panel. */
 const BASIC_ISSUE_PATHS: ReadonlySet<string> = new Set(['name', 'description', 'goal.mission', 'goal.successCriteria'])
@@ -52,15 +51,25 @@ export interface RobotConfigEditorProps extends PropsLocale<typeof NS> {
   readonly presetOptions?: readonly Choice<string>[]
   /** Existing robot names offered for caller, callee, escalation, and peer fields. */
   readonly robotNames?: readonly string[]
-  /** Skill names visible to the current workspace session. */
-  readonly skillSuggestions?: readonly string[]
+  /** Local values the deployment offers for skill, tool, MCP, and Workspace fields. */
+  readonly capabilities?: RobotCapabilityCatalog | undefined
+  /** Workspace directory that fills an empty root list, so a saved robot always records one. */
+  readonly defaultWorkspaceRoot?: string | undefined
 }
 
 /** Render the six-block specification form. */
 export function RobotConfigEditor({
-  initial, busy, issues, onSubmit, onCancel, presetOptions = [], robotNames = [], skillSuggestions = [], t,
+  initial, busy, issues, onSubmit, onCancel, presetOptions = [], robotNames = [], capabilities, defaultWorkspaceRoot, t,
 }: RobotConfigEditorProps): ReactNode {
-  const [spec, setSpec] = useState<Writable<RobotSpec>>(() => structuredClone(initial ?? emptyRobotSpec()) as Writable<RobotSpec>)
+  const [spec, setSpec] = useState<Writable<RobotSpec>>(() => {
+    const draft = structuredClone(initial ?? emptyRobotSpec()) as Writable<RobotSpec>
+    // A robot without a root has no inspectable run directory, so a new or
+    // rootless draft starts in the Workspace the page is viewing.
+    if (draft.capability.workspaceRoots.length === 0 && defaultWorkspaceRoot !== undefined) {
+      draft.capability.workspaceRoots = [defaultWorkspaceRoot]
+    }
+    return draft
+  })
   const [scope, setScope] = useState<ConfigScope>('basic')
   const scopeId = useId()
   // A rejected advanced field must be visible; keep the basic form selected while every issue fits it.
@@ -101,16 +110,16 @@ export function RobotConfigEditor({
   )
   const tags = (
     label: RobotKey, values: readonly string[], change: (next: string[]) => void,
-    suggestions: readonly string[], hint?: RobotKey, path?: string,
+    options: readonly TagOption[], hint?: RobotKey, path?: string,
   ): ReactNode => (
     <TagField
       label={t(label)}
       values={values}
       onChange={change}
-      suggestions={suggestions}
+      options={options}
       addLabel={t('editor.add')}
       removeLabel={t('editor.remove')}
-      suggestionsLabel={t('editor.suggestions')}
+      optionsLabel={t('editor.pickLocal')}
       {...hint === undefined ? {} : { hint: t(hint) }}
       {...path === undefined ? {} : { issue: issueFor(path) }}
     />
@@ -203,9 +212,9 @@ export function RobotConfigEditor({
             })}
           </div>
           <div className={css.row}>
-            {tags('field.callers', spec.position.callers, (value) => { set((draft) => { draft.position.callers = value }) }, robotNames)}
-            {tags('field.callees', spec.position.callees, (value) => { set((draft) => { draft.position.callees = value }) }, robotNames)}
-            {tags('field.escalation', spec.position.escalation, (value) => { set((draft) => { draft.position.escalation = value }) }, robotNames)}
+            {tags('field.callers', spec.position.callers, (value) => { set((draft) => { draft.position.callers = value }) }, asOptions(robotNames))}
+            {tags('field.callees', spec.position.callees, (value) => { set((draft) => { draft.position.callees = value }) }, asOptions(robotNames))}
+            {tags('field.escalation', spec.position.escalation, (value) => { set((draft) => { draft.position.escalation = value }) }, asOptions(robotNames))}
           </div>
           <div className={css.row}>
             <ChoiceRow
@@ -302,21 +311,21 @@ export function RobotConfigEditor({
         <section className={css.card}>
           <h3>{t('config.capability')}</h3>
           <div className={css.row}>
-            {tags('field.toolsAllow', spec.capability.tools.allow, (value) => { set((draft) => { draft.capability.tools.allow = value }) }, TOOL_SUGGESTIONS, undefined, 'capability.tools')}
-            {tags('field.toolsDeny', spec.capability.tools.deny, (value) => { set((draft) => { draft.capability.tools.deny = value }) }, TOOL_SUGGESTIONS)}
+            {tags('field.toolsAllow', spec.capability.tools.allow, (value) => { set((draft) => { draft.capability.tools.allow = value }) }, capabilities?.tools ?? [], undefined, 'capability.tools')}
+            {tags('field.toolsDeny', spec.capability.tools.deny, (value) => { set((draft) => { draft.capability.tools.deny = value }) }, capabilities?.tools ?? [])}
           </div>
           <div className={css.row}>
-            {tags('field.skills', spec.capability.skills, (value) => { set((draft) => { draft.capability.skills = value }) }, skillSuggestions, 'editor.skillsHint')}
-            {tags('field.mcpServers', spec.capability.mcpServers, (value) => { set((draft) => { draft.capability.mcpServers = value }) }, [], 'editor.mcpHint')}
+            {tags('field.skills', spec.capability.skills, (value) => { set((draft) => { draft.capability.skills = value }) }, capabilities?.skills ?? [], 'editor.skillsHint')}
+            {tags('field.mcpServers', spec.capability.mcpServers, (value) => { set((draft) => { draft.capability.mcpServers = value }) }, capabilities?.mcpServers ?? [], 'editor.mcpHint')}
           </div>
           <div className={css.row}>
-            {tags('field.workspaceRoots', spec.capability.workspaceRoots, (value) => { set((draft) => { draft.capability.workspaceRoots = value }) }, [])}
+            {tags('field.workspaceRoots', spec.capability.workspaceRoots, (value) => { set((draft) => { draft.capability.workspaceRoots = value }) }, capabilities?.workspaceRoots ?? [])}
             {tags('field.credentials', spec.capability.credentials, (value) => { set((draft) => { draft.capability.credentials = value }) }, [])}
           </div>
           <div className={css.row}>
             {tags('field.dataClasses', spec.capability.dataClasses, (value) => {
               set((draft) => { draft.capability.dataClasses = value as Writable<RobotSpec['capability']['dataClasses']> })
-            }, DATA_CLASSES)}
+            }, asOptions(DATA_CLASSES))}
             {presetChoices.length === 0
               ? text('field.permissionPreset', spec.capability.permissionPreset, (value) => { set((draft) => { draft.capability.permissionPreset = value }) })
               : (
@@ -390,8 +399,8 @@ export function RobotConfigEditor({
         <section className={css.card}>
           <h3>{t('config.memory')}</h3>
           <div className={css.row}>
-            {tags('field.memoryRead', spec.memory.read, (value) => { set((draft) => { draft.memory.read = value }) }, MEMORY_NAMESPACES, 'editor.memoryHint')}
-            {tags('field.memoryWrite', spec.memory.write, (value) => { set((draft) => { draft.memory.write = value }) }, MEMORY_NAMESPACES)}
+            {tags('field.memoryRead', spec.memory.read, (value) => { set((draft) => { draft.memory.read = value }) }, [], 'editor.memoryHint')}
+            {tags('field.memoryWrite', spec.memory.write, (value) => { set((draft) => { draft.memory.write = value }) }, [])}
           </div>
           <div className={css.row}>
             {number('field.retentionDays', spec.memory.retentionDays ?? 0, (value) => {
@@ -415,7 +424,7 @@ export function RobotConfigEditor({
           <div className={css.row}>
             {tags('field.intents', spec.a2a.intents, (value) => {
               set((draft) => { draft.a2a.intents = value as Writable<RobotSpec['a2a']['intents']> })
-            }, INTENTS, 'editor.intentsHint')}
+            }, asOptions(INTENTS), 'editor.intentsHint')}
           </div>
           <div className={css.peerList}>
             {spec.a2a.peers.map((peer, index) => (

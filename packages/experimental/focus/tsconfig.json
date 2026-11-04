@@ -9,31 +9,34 @@
   ],
   "references": [
     {
-      "path": "../../../vendor/cosmokit"
+      "path": "../../../vendor/cordis"
     },
     {
-      "path": "../../../vendor/cordis"
+      "path": "../../../vendor/cosmokit"
     },
     {
       "path": "../../../vendor/schemastery"
     },
     {
-      "path": "../../llm/llm"
+      "path": "../../core/agent"
     },
     {
       "path": "../../core/session"
     },
     {
-      "path": "../../core/agent"
+      "path": "../../core/tools"
     },
     {
-      "path": "../../core/tools"
+      "path": "../../goal/goal"
+    },
+    {
+      "path": "../../llm/llm"
     },
     {
       "path": "../../session/session-projection"
     },
     {
-      "path": "../../goal/goal"
+      "path": "../../settings/settings"
     }
   ]
 }

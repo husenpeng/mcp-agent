@@ -1700,6 +1700,12 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     description: 'Scoped resource access plus three tools shared by configured MCP servers.',
     methods: [
       {
+        signature: 'list(scope?: ScopeKey): string[]',
+        description: 'List the configured MCP servers whose resources a caller can reach.',
+        parameters: [{ name: 'scope', description: 'viewing scope (the calling agent); omitted lists the global servers alone.' }],
+        returns: 'server names sorted by code point.',
+      },
+      {
         signature: 'register(server: string, provider: McpResourceProvider): () => void',
         description: 'Register one server and expose resource tools while that scope has providers.',
         parameters: [{ name: 'server', description: 'configured server name, unique in this scope.' }, { name: 'provider', description: 'connection-owned resource operations.' }],
@@ -2306,6 +2312,13 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         throws: ['RemoteError `robot/not-found` for an unknown robot or revision.'],
       },
       {
+        signature: '@Remote(\'hire\') async hire(request: RobotHireRequest): Promise<Robot>',
+        description: 'Publish a user-owned copy of one registered template and instantiate it. The copy is an ordinary specification: later template changes never modify it, and editing it never modifies the template.',
+        parameters: [{ name: 'request', description: 'template, locale for its copy, an optional name, and the Workspace directory a rootless template inherits.' }],
+        returns: 'the new idle robot.',
+        throws: ['RemoteError `robot/not-found` for an unknown template or a missing template registry, `robot/spec-invalid` when the template does not validate, or `robot/conflict` when publication conflicts.'],
+      },
+      {
         signature: '@Remote(\'start\') async start(request: RobotStartRequest): Promise<Run>',
         description: 'Accept one run for a robot.',
         parameters: [{ name: 'request', description: 'robot and the input message.' }],
@@ -2320,6 +2333,26 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         throws: ['RemoteError `robot/not-found` for an unknown run.'],
       },
       {
+        signature: '@Remote(\'interrupt\') async interrupt(request: RobotInterruptRequest): Promise<void>',
+        description: 'Pause an executing run: record it as `waiting`, then abort its active turn so the user can correct the robot before it continues. The Session, its history, and the Agent stay alive, so a later `correct` continues the same run instead of starting from an empty Session.',
+        parameters: [{ name: 'request', description: 'run to pause.' }],
+        returns: 'nothing after the run is waiting for input.',
+        throws: ['RemoteError `robot/not-found` for an unknown run, or `robot/conflict` while the run has no live Agent to pause.'],
+      },
+      {
+        signature: '@Remote(\'correct\') async correct(request: RobotCorrectRequest): Promise<void>',
+        description: 'Deliver the user\'s correction to a run. A waiting run receives it as the next turn; a running run receives it as steering for the next step, which leaves the current work in place.',
+        parameters: [{ name: 'request', description: 'run and the correction text.' }],
+        returns: 'nothing after the Agent accepted the message.',
+        throws: ['RemoteError `robot/not-found` for an unknown run, `robot/conflict` while the run is not executing, or `gateway/bad-request` when the correction has no text.'],
+      },
+      {
+        signature: '@Remote(\'capabilities\') async capabilities(request: RobotCapabilitiesRequest): Promise<RobotCapabilityCatalog>',
+        description: 'List the local values the specification editor offers as choices. Each source is optional: a deployment without the skill, tool, MCP, or Workspace service contributes an empty list instead of failing the read.',
+        parameters: [{ name: 'request', description: 'Workspace whose project skills apply.' }],
+        returns: 'skill, tool, MCP-server, and Workspace-directory options.',
+      },
+      {
         signature: '@Remote({ mode: \'stream\' }) watch(signal: AbortSignal): AsyncIterable<RobotSnapshotFrame>',
         description: 'Stream whole registry frames: one on open, then one after each registry change. The stream has no natural end; the carrier closes it.',
         parameters: [{ name: 'signal', description: 'cancellation owned by the Remote stream carrier.' }],
@@ -2330,7 +2363,7 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
   {
     key: 'robots',
     summary: 'Abstract robot domain service.',
-    description: 'Abstract robot domain service. Subclass it, implement every operation, and load the subclass as the provider; it registers as `ctx.robots`.\n\nImplementations must honor these semantics:\n\n- publish validates the specification and returns an immutable revision; a failed validation rejects without allocating an identity.\n- Revisions are append-only: revision `n + 1` supersedes `n`, and a published revision never changes.\n- instantiate binds one robot to one exact revision; later revisions do not move an existing robot unless rebind names the new revision explicitly.\n- rebind changes the revision later runs use; a run keeps the revision it was accepted with.\n- attachSession records the Session an executor drives for one run; the link is write-once and a later different Session is refused.\n- start accepts a run only from `idle` and rejects while the robot is `provisioning`, `paused`, `failed`, or `stopped`.\n- cancel is cooperative and settles the run as `cancelled` unless it already reached a terminal state.\n- finish records the executor\'s terminal state; a terminal run keeps its existing state.',
+    description: 'Abstract robot domain service. Subclass it, implement every operation, and load the subclass as the provider; it registers as `ctx.robots`.\n\nImplementations must honor these semantics:\n\n- publish validates the specification and returns an immutable revision; a failed validation rejects without allocating an identity.\n- Revisions are append-only: revision `n + 1` supersedes `n`, and a published revision never changes.\n- instantiate binds one robot to one exact revision; later revisions do not move an existing robot unless rebind names the new revision explicitly.\n- rebind changes the revision later runs use; a run keeps the revision it was accepted with.\n- attachSession records the Session an executor drives for one run; the link is write-once and a later different Session is refused.\n- start accepts a run only from `idle` and rejects while the robot is `provisioning`, `paused`, `failed`, or `stopped`.\n- cancel is cooperative and settles the run as `cancelled` unless it already reached a terminal state.\n- advance records executor progress in non-terminal states; a terminal run keeps its existing state.\n- finish records the executor\'s terminal state; a terminal run keeps its existing state.',
     methods: [
       {
         signature: 'abstract publish(spec: RobotSpec, previous?: RobotSpecRef): Promise<RobotSpecRevision>',
@@ -2392,6 +2425,13 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         throws: ['when the run does not exist.'],
       },
       {
+        signature: 'abstract advance(run: RunId, state: ActiveRunState): Promise<void>',
+        description: 'Record executor progress for one run in a non-terminal state. `waiting` means the run is paused for human input and the executor keeps its Agent alive; `running` reports it drives work again; `finalizing` reports it is settling. A run that already reached a terminal state keeps that state.',
+        parameters: [{ name: 'run', description: 'run identity.' }, { name: 'state', description: 'executor-owned state to record.' }],
+        returns: 'nothing after the state is recorded.',
+        throws: ['when the run does not exist.'],
+      },
+      {
         signature: 'abstract finish(run: RunId, outcome: RunOutcome): Promise<void>',
         description: 'Settle one run with its executor\'s outcome.',
         parameters: [{ name: 'run', description: 'run identity.' }, { name: 'outcome', description: 'terminal state and any output or failure detail.' }],
@@ -2416,6 +2456,38 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         description: 'List runs owned by one robot.',
         parameters: [{ name: 'robot', description: 'robot identity.' }],
         returns: 'runs in acceptance order.',
+      },
+    ],
+  },
+  {
+    key: 'robotTemplates',
+    summary: 'In-memory registry of robot templates contributed by mounted plugins.',
+    description: 'In-memory registry of robot templates contributed by mounted plugins. Registration order is listing order. Each change emits `robot/changed` with `templates`.',
+    methods: [
+      {
+        signature: 'register(template: RobotTemplate): () => void',
+        description: 'Add one template until the returned disposer runs. Call it inside the contributing plugin\'s `ctx.effect` so unloading removes the template.',
+        parameters: [{ name: 'template', description: 'template whose id is not registered yet.' }],
+        returns: 'the disposer that removes exactly this registration.',
+        throws: ['when a template with the same id is already registered.'],
+      },
+      {
+        signature: 'list(): readonly RobotTemplate[]',
+        description: 'List every registered template.',
+        parameters: [],
+        returns: 'templates in registration order.',
+      },
+      {
+        signature: 'get(id: RobotTemplateId): RobotTemplate | undefined',
+        description: 'Read one template.',
+        parameters: [{ name: 'id', description: 'template identity.' }],
+        returns: 'the template, or `undefined` when none is registered under `id`.',
+      },
+      {
+        signature: 'hireSpec(id: RobotTemplateId, locale: string, name?: string): RobotSpec | undefined',
+        description: 'Build the specification one hire publishes from a registered template.',
+        parameters: [{ name: 'id', description: 'template identity.' }, { name: 'locale', description: 'locale whose copy fills the name, description, mission, and criteria.' }, { name: 'name', description: 'display name to publish; defaults to the localized template name.' }],
+        returns: 'a new specification independent of the template, or `undefined` when none is registered under `id`.',
       },
     ],
   },
@@ -3261,6 +3333,13 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         description: 'Register a borrowed readonly runtime skill into the calling context\'s layer. Project entries outrank runtime entries, which outrank user entries, within one layer. Same-name runtime entries in one layer are first-wins; a duplicate logs a warning and receives a no-op disposer so it cannot remove the winner.',
         parameters: [{ name: 'skill', description: 'the skill definition input; omitted invocation and provider fields receive defaults.' }],
         returns: 'the exact Cordis effect disposer, preserving composite teardown order and invalidating caches.',
+      },
+      {
+        signature: 'restrict(filter: SkillRestriction): () => void',
+        description: 'Restrict the skills the calling scope can see. The filter intersects with ancestor scopes\' filters and applies to `list`, `snapshot`, `get`, and `update` alike, so a caller cannot reach a filtered skill by name. Names are not validated against the current catalog: a skill that appears later is admitted only when an `allow` list names it.',
+        parameters: [{ name: 'filter', description: 'names to keep and/or remove.' }],
+        returns: 'the exact disposer that lifts this restriction.',
+        throws: ['when the calling context has no scope, when the filter is empty, or when `allow` and `deny` overlap.'],
       },
       {
         signature: 'async list(options: SkillViewOptions = {}): Promise<SkillSummary[]>',
@@ -4952,10 +5031,10 @@ export const EVENT_API: readonly EventApiEntry[] = [
   {
     name: 'robot/changed',
     mode: 'emit',
-    signature: '\'robot/changed\'(kind: \'specs\' | \'robots\' | \'runs\'): void',
+    signature: '\'robot/changed\'(kind: \'specs\' | \'robots\' | \'runs\' | \'templates\'): void',
     summary: 'A robot registry mutation observers re-read.',
     description: 'A robot registry mutation observers re-read.',
-    parameters: [{ name: 'kind', description: 'record family that changed: specifications, robots, or runs.' }],
+    parameters: [{ name: 'kind', description: 'record family that changed: specifications, robots, runs, or registered templates.' }],
   },
   {
     name: 'robot/event',
@@ -5304,6 +5383,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'ActionCardView',
     declaration: 'export interface ActionCardView {\n    readonly proposals: Readonly<Record<string, ActionCardProposal>>;\n    readonly decisions: Readonly<Record<string, ActionCardDecision>>;\n}',
+  },
+  {
+    name: 'ActiveRunState',
+    declaration: 'export type ActiveRunState = Extract<RunState, \'running\' | \'waiting\' | \'finalizing\'>;',
   },
   {
     name: 'AdapterRegistrationHandle',
@@ -7463,7 +7546,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'RecapWorkItem',
-    declaration: 'export interface RecapWorkItem {\n    readonly title: string;\n    readonly detail: string;\n    readonly status: RecapWorkStatus;\n}',
+    declaration: 'export interface RecapWorkItem {\n    readonly problem: string;\n    readonly conclusion: string;\n    readonly solution: string;\n    readonly status: RecapWorkStatus;\n    readonly sessionIds: readonly string[];\n}',
   },
   {
     name: 'RecapWorkStatus',
@@ -7666,12 +7749,36 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface RobotCancelRequest {\n    readonly runId: RunId;\n}',
   },
   {
+    name: 'RobotCapabilitiesRequest',
+    declaration: 'export interface RobotCapabilitiesRequest {\n    readonly cwd?: string;\n}',
+  },
+  {
+    name: 'RobotCapabilityCatalog',
+    declaration: 'export interface RobotCapabilityCatalog {\n    readonly skills: readonly RobotCapabilityOption[];\n    readonly tools: readonly RobotCapabilityOption[];\n    readonly mcpServers: readonly RobotCapabilityOption[];\n    readonly workspaceRoots: readonly RobotCapabilityOption[];\n}',
+  },
+  {
+    name: 'RobotCapabilityOption',
+    declaration: 'export interface RobotCapabilityOption {\n    readonly value: string;\n    readonly label: string;\n    readonly description?: string;\n}',
+  },
+  {
+    name: 'RobotCorrectRequest',
+    declaration: 'export interface RobotCorrectRequest {\n    readonly runId: RunId;\n    readonly message: string;\n}',
+  },
+  {
+    name: 'RobotHireRequest',
+    declaration: 'export interface RobotHireRequest {\n    readonly templateId: RobotTemplateId;\n    readonly locale: string;\n    readonly name?: string;\n    readonly workspaceRoot?: string;\n}',
+  },
+  {
     name: 'RobotId',
     declaration: 'export type RobotId = Branded<\'RobotId\'>;',
   },
   {
     name: 'RobotInstantiateRequest',
     declaration: 'export interface RobotInstantiateRequest {\n    readonly ref: RobotSpecRef;\n}',
+  },
+  {
+    name: 'RobotInterruptRequest',
+    declaration: 'export interface RobotInterruptRequest {\n    readonly runId: RunId;\n}',
   },
   {
     name: 'RobotPublishRequest',
@@ -7691,7 +7798,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'RobotSnapshotFrame',
-    declaration: 'export interface RobotSnapshotFrame {\n    readonly specs: readonly RobotSpecRevision[];\n    readonly robots: readonly Robot[];\n    readonly runs: readonly Run[];\n}',
+    declaration: 'export interface RobotSnapshotFrame {\n    readonly specs: readonly RobotSpecRevision[];\n    readonly robots: readonly Robot[];\n    readonly runs: readonly Run[];\n    readonly templates: readonly RobotTemplate[];\n}',
   },
   {
     name: 'RobotSpec',
@@ -7716,6 +7823,22 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'RobotState',
     declaration: 'export type RobotState = \'provisioning\' | \'idle\' | \'running\' | \'paused\' | \'failed\' | \'stopped\';',
+  },
+  {
+    name: 'RobotTemplate',
+    declaration: 'export interface RobotTemplate {\n    readonly id: RobotTemplateId;\n    readonly category: string;\n    readonly text: {\n        readonly en: RobotTemplateText;\n        readonly [locale: string]: RobotTemplateText;\n    };\n    readonly spec: RobotTemplateSpec;\n}',
+  },
+  {
+    name: 'RobotTemplateId',
+    declaration: 'export type RobotTemplateId = Branded<\'RobotTemplateId\'>;',
+  },
+  {
+    name: 'RobotTemplateSpec',
+    declaration: 'export interface RobotTemplateSpec {\n    readonly position: PositionSpec;\n    readonly goal: Omit<GoalSpec, \'mission\' | \'successCriteria\'>;\n    readonly capability: CapabilitySpec;\n    readonly io: Omit<IoSpec, \'acceptance\'>;\n    readonly memory: MemorySpec;\n    readonly a2a: A2aSpec;\n}',
+  },
+  {
+    name: 'RobotTemplateText',
+    declaration: 'export interface RobotTemplateText {\n    readonly category: string;\n    readonly name: string;\n    readonly description: string;\n    readonly mission: string;\n    readonly successCriteria: readonly string[];\n    readonly acceptance: readonly string[];\n}',
   },
   {
     name: 'RpcId',
@@ -8632,6 +8755,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'SkillResourceBase',
     declaration: 'export type SkillResourceBase = {\n    readonly kind: \'directory\';\n    readonly path: string;\n} | {\n    readonly kind: \'url\';\n    readonly url: string;\n} | {\n    readonly kind: \'opaque\';\n    readonly description: string;\n};',
+  },
+  {
+    name: 'SkillRestriction',
+    declaration: 'export interface SkillRestriction {\n    readonly allow?: readonly string[];\n    readonly deny?: readonly string[];\n}',
   },
   {
     name: 'SkillSaveRequest',

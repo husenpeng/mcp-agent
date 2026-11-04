@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Registro de robots",
+    "description": "Almacena especificaciones de robots, robots y ejecuciones, y controla la instanciación y las ejecuciones."
+  }
+}

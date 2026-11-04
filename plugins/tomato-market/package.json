@@ -1,14 +1,16 @@
 {
   "name": "tomato-market",
-  "version": "0.2.0",
-  "description": "Plugin market tab for Tomato Harness: browse the open DeepSeek Harness plugin catalog and install Tomato or converted DeepSeek Harness plugins.",
+  "version": "0.3.0",
+  "description": "Plugin markets for Tomato Harness: a curated marketing catalog of open-source plugins, MCP servers, and Skills, plus the open DeepSeek Harness plugin catalog.",
   "keywords": [
     "tomato-plugin",
     "tomato",
     "deepseek-harness",
     "plugin",
     "market",
-    "marketplace"
+    "marketplace",
+    "marketing",
+    "influencer-marketing"
   ],
   "homepage": "https://awesome-dsh-plugin.com",
   "license": "MIT",
@@ -50,6 +52,7 @@
     "esbuild": "^0.28.2"
   },
   "dependencies": {
+    "js-yaml": "^4.3.2",
     "tar": "^7.5.22"
   }
 }

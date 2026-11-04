@@ -70,6 +70,13 @@ export const MARKET_CSS = `
 .tm-notice p { margin: 0; }
 .tm-noticeRange { font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary); }
 .tm-linkButton { align-self: flex-start; }
+.tm-filters { display: flex; flex-direction: column; gap: 10px; }
+.tm-tags { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.tm-callout { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 10px 12px; border-radius: var(--dsw-radius-lg); background: var(--dsw-alias-bg-module-platform); font-size: 13px; line-height: 20px; color: var(--dsw-alias-label-secondary); }
+.tm-calloutTitle { font-weight: 600; }
+.tm-code { margin: 0; padding: 10px 12px; border-radius: var(--dsw-radius-lg); background: var(--dsw-alias-bg-module-platform); font-family: var(--ds-font-family-code); font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-secondary); white-space: pre-wrap; overflow-wrap: anywhere; }
+.tm-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.tm-markdown { font-size: 13px; line-height: 20px; color: var(--dsw-alias-label-secondary); min-width: 0; }
 
 @media (max-width: 720px) {
   .tm-card { gap: 10px; }

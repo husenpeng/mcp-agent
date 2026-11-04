@@ -10,13 +10,19 @@
 
 ## 创建机器人
 
-[机器人页](../../packages/client/ui-robot/README.zh.md)提供手动创建与会话创建，两者共用四项基础字段：名称、描述、任务目标、成功标准。基础配置页只收集这些字段；其余高级区块都从 [`emptyRobotSpec()`](../../packages/experimental/robot/src/spec.ts) 的通用默认值开始——手动触发器、plan 策略、workspace 沙箱与权限预设、100k token/600 秒/100 次工具调用预算、无网络、无记忆、无 A2A intent——并可在「高级配置」中修改。
+[机器人页](../../packages/client/ui-robot/README.zh.md)提供手动创建与会话创建，两者共用四项基础字段：名称、描述、任务目标、成功标准。基础配置页只收集这些字段；其余高级区块都从 [`emptyRobotSpec()`](../../packages/experimental/robot/src/spec.ts) 的通用默认值开始——手动触发器、plan 策略、workspace 沙箱与权限预设、100k token/600 秒/100 次工具调用预算、无网络、无记忆、无 A2A intent——并可在「高级配置」中修改。技能、工具、MCP 服务器与工作区根字段是选择器，选项来自部署的实时值（`robot.capabilities`）；本地没有来源的值仍可自由输入，来源缺失时只保留输入框并给出说明。
 
 会话创建会在当前工作区新开一个会话，草稿点名随包提供的 `robot-creation` 技能。技能向用户询问同样的四项回答，并调用 [`@tomato/experimental-tool-robot`](../../packages/experimental/tool-robot/README.zh.md) 提供的 `robot_create`。该工具在一次调用中发布规格并实例化修订；只有调用方是存活的顶层 Agent、且当前回合包含人类消息时才执行。未选择 `@tomato/experimental-robot-app` 的 profile 既没有该工具，也没有该技能。
+
+## 模板
+
+`RobotTemplate` 是可聘用的起点：稳定的 `RobotTemplateId`、一个分类、按语言提供的文案（`RobotTemplateText`：分类名、名称、描述、任务目标、成功标准、验收标准），以及所有与语言无关的规格区块。模板包通过 `ctx.robotTemplates` 注册模板，该服务由单独的 `@tomato/experimental-robot/templates` 行提供。聘用时调用 `templateSpec()`，根据模板和页面语言生成规格，作为一份新规格发布并实例化；因此被聘用的机器人是普通的、归用户所有的机器人：编辑它会发布该规格的新修订，模板的变化不会影响它。[`@tomato/experimental-robot-templates-marketing`](../../packages/experimental/robot-templates-marketing/README.zh.md) 提供创作者营销模板。
 
 ## 机器人与 run 生命周期
 
 `RobotState` 覆盖 `provisioning`、`idle`、`running`、`paused`、`failed` 与 `stopped`。`RunState` 覆盖 `queued`、`leased`、`running`、`waiting`、`finalizing`、`succeeded`、`failed`、`cancelled` 与 `timed_out`；`isTerminalRunState` 报告四个已结束状态。run 只能从 `idle` 接受，取消是协作式的，已经结束的 run 保持其状态。
+
+只要 run 未到终态，它就会跨越多个回合。执行者通过 `advance` 报告进展——驱动工作时为 `running`，为等待人工纠正而保留暂停 run 的 Agent 时为 `waiting`，结算时为 `finalizing`；终态 run 保持其状态。Remote 控制器拥有 `interrupt`：先记录 `waiting`，再中止当前回合并保留 inbox；以及 `correct`：把消息投递给 run 自己的存活 Agent——等待中作为下一回合，运行中作为 steer——并重新记录 `running`。没有存活 Agent 的 run 会拒绝两者，而不是恢复出一条无人结算的 Session。
 
 ## 权威与 agent-to-agent 字段
 
@@ -95,6 +101,19 @@ Host service backing the generated `ctx.remote.robot` namespace.
 @Remote('rebind') async rebind(request: RobotRebindRequest): Promise<Robot>
 
 /**
+ * Publish a user-owned copy of one registered template and instantiate it.
+ * The copy is an ordinary specification: later template changes never
+ * modify it, and editing it never modifies the template.
+ * @param request - template, locale for its copy, an optional name, and the
+ *   Workspace directory a rootless template inherits.
+ * @returns the new idle robot.
+ * @throws RemoteError `robot/not-found` for an unknown template or a missing
+ *   template registry, `robot/spec-invalid` when the template does not
+ *   validate, or `robot/conflict` when publication conflicts.
+ */
+@Remote('hire') async hire(request: RobotHireRequest): Promise<Robot>
+
+/**
  * Accept one run for a robot.
  * @param request - robot and the input message.
  * @returns the accepted run.
@@ -110,6 +129,39 @@ Host service backing the generated `ctx.remote.robot` namespace.
  * @throws RemoteError `robot/not-found` for an unknown run.
  */
 @Remote('cancel') async cancel(request: RobotCancelRequest): Promise<void>
+
+/**
+ * Pause an executing run: record it as `waiting`, then abort its active turn
+ * so the user can correct the robot before it continues. The Session, its
+ * history, and the Agent stay alive, so a later `correct` continues the same
+ * run instead of starting from an empty Session.
+ * @param request - run to pause.
+ * @returns nothing after the run is waiting for input.
+ * @throws RemoteError `robot/not-found` for an unknown run, or
+ *   `robot/conflict` while the run has no live Agent to pause.
+ */
+@Remote('interrupt') async interrupt(request: RobotInterruptRequest): Promise<void>
+
+/**
+ * Deliver the user's correction to a run. A waiting run receives it as the
+ * next turn; a running run receives it as steering for the next step, which
+ * leaves the current work in place.
+ * @param request - run and the correction text.
+ * @returns nothing after the Agent accepted the message.
+ * @throws RemoteError `robot/not-found` for an unknown run,
+ *   `robot/conflict` while the run is not executing, or
+ *   `gateway/bad-request` when the correction has no text.
+ */
+@Remote('correct') async correct(request: RobotCorrectRequest): Promise<void>
+
+/**
+ * List the local values the specification editor offers as choices. Each
+ * source is optional: a deployment without the skill, tool, MCP, or Workspace
+ * service contributes an empty list instead of failing the read.
+ * @param request - Workspace whose project skills apply.
+ * @returns skill, tool, MCP-server, and Workspace-directory options.
+ */
+@Remote('capabilities') async capabilities(request: RobotCapabilitiesRequest): Promise<RobotCapabilityCatalog>
 
 /**
  * Stream whole registry frames: one on open, then one after each registry
@@ -137,6 +189,7 @@ Implementations must honor these semantics:
 - attachSession records the Session an executor drives for one run; the link is write-once and a later different Session is refused.
 - start accepts a run only from `idle` and rejects while the robot is `provisioning`, `paused`, `failed`, or `stopped`.
 - cancel is cooperative and settles the run as `cancelled` unless it already reached a terminal state.
+- advance records executor progress in non-terminal states; a terminal run keeps its existing state.
 - finish records the executor's terminal state; a terminal run keeps its existing state.
 
 ```ts cordis-catalog
@@ -211,6 +264,18 @@ abstract start(robot: RobotId, input: RunInput): Promise<Run>
 abstract cancel(run: RunId): Promise<void>
 
 /**
+ * Record executor progress for one run in a non-terminal state. `waiting`
+ * means the run is paused for human input and the executor keeps its Agent
+ * alive; `running` reports it drives work again; `finalizing` reports it is
+ * settling. A run that already reached a terminal state keeps that state.
+ * @param run - run identity.
+ * @param state - executor-owned state to record.
+ * @returns nothing after the state is recorded.
+ * @throws when the run does not exist.
+ */
+abstract advance(run: RunId, state: ActiveRunState): Promise<void>
+
+/**
  * Settle one run with its executor's outcome.
  * @param run - run identity.
  * @param outcome - terminal state and any output or failure detail.
@@ -247,6 +312,47 @@ Types: [SessionId](core.zh.md)
 
 Source: [`packages/experimental/robot/src/index.ts`](../../packages/experimental/robot/src/index.ts)
 
+<a id="ctxrobottemplates--robottemplateregistry"></a>
+
+### `ctx.robotTemplates` — `RobotTemplateRegistry`
+
+In-memory registry of robot templates contributed by mounted plugins. Registration order is listing order. Each change emits `robot/changed` with `templates`.
+
+```ts cordis-catalog
+/**
+ * Add one template until the returned disposer runs. Call it inside the
+ * contributing plugin's `ctx.effect` so unloading removes the template.
+ * @param template - template whose id is not registered yet.
+ * @returns the disposer that removes exactly this registration.
+ * @throws when a template with the same id is already registered.
+ */
+register(template: RobotTemplate): () => void
+
+/**
+ * List every registered template.
+ * @returns templates in registration order.
+ */
+list(): readonly RobotTemplate[]
+
+/**
+ * Read one template.
+ * @param id - template identity.
+ * @returns the template, or `undefined` when none is registered under `id`.
+ */
+get(id: RobotTemplateId): RobotTemplate | undefined
+
+/**
+ * Build the specification one hire publishes from a registered template.
+ * @param id - template identity.
+ * @param locale - locale whose copy fills the name, description, mission, and criteria.
+ * @param name - display name to publish; defaults to the localized template name.
+ * @returns a new specification independent of the template, or `undefined` when none is registered under `id`.
+ */
+hireSpec(id: RobotTemplateId, locale: string, name?: string): RobotSpec | undefined
+```
+
+Source: [`packages/experimental/robot/src/templates.ts`](../../packages/experimental/robot/src/templates.ts)
+
 <a id="robot-events"></a>
 
 ### `robot/*` events
@@ -260,10 +366,10 @@ A robot registry mutation observers re-read.
 ```ts cordis-catalog
 /**
  * A robot registry mutation observers re-read.
- * @param kind - record family that changed: specifications, robots, or runs.
+ * @param kind - record family that changed: specifications, robots, runs, or registered templates.
  * @mode emit
  */
-'robot/changed'(kind: 'specs' | 'robots' | 'runs'): void
+'robot/changed'(kind: 'specs' | 'robots' | 'runs' | 'templates'): void
 ```
 
 Source: [`packages/experimental/robot/src/index.ts`](../../packages/experimental/robot/src/index.ts)

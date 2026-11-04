@@ -37,6 +37,9 @@
     "@tomato/marketing": "workspace:*",
     "@tomato/client-ui-settings-marketing": "workspace:*"
   },
+  "peerDependencies": {
+    "@tomato/cordis": "workspace:~"
+  },
   "devDependencies": {
     "@tomato/cordis": "workspace:~"
   }

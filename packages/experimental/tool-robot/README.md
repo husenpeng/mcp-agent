@@ -68,4 +68,4 @@ The schema is stable across turns and sessions; creation adds no system-prompt s
 <a id="dev-note"></a>
 ### Dev Note
 
-`robot_create` passes the same authority check as any Host-side robot tool call — a live top-level agent with a direct human message in the open turn — before it publishes through `ctx.robots`. The tool maps the four answers onto `emptyRobotSpec()` defaults and owns no advanced field; a field added to the editor does not change this schema.
+`robot_create` passes the same authority check as any Host-side robot tool call — a live top-level agent with a direct human message in the open turn — before it publishes through `ctx.robots`. It records the calling Session's `cwd` as the robot's first Workspace root, so the robot works in the Workspace the conversation is in; a Session without one leaves the specification's roots empty, and the runtime resolves a fallback directory per run. The tool maps the four answers onto `emptyRobotSpec()` defaults and owns no advanced field; a field added to the editor does not change this schema.

@@ -10,7 +10,7 @@ import { brandString } from '@tomato/branded'
 import { Service } from '@tomato/cordis'
 import Robots, { isTerminalRunState } from '@tomato/experimental-robot'
 import type {
-  Robot, RobotId, RobotSpec, RobotSpecId, RobotSpecRef, RobotSpecRevision, Run, RunId, RunInput, RunOutcome,
+  ActiveRunState, Robot, RobotId, RobotSpec, RobotSpecId, RobotSpecRef, RobotSpecRevision, Run, RunId, RunInput, RunOutcome,
 } from '@tomato/experimental-robot'
 import type { SessionId } from '@tomato/session/types'
 import type { Domain } from '@tomato/storage-domain'
@@ -242,6 +242,16 @@ export default class LocalRobots extends Robots {
     this.changed('runs')
   }
 
+  private async advanceRun(run: RunId, state: ActiveRunState): Promise<void> {
+    const row = this.runsTable.get(run)
+    if (row === undefined) throw new Error(`unknown run ${run}`)
+    // A settled run keeps its state; an executor reports progress only while it
+    // still owns the run.
+    if (isTerminalRunState(row.state) || row.state === state) return
+    await this.runsTable.update(run, current => ({ ...current, state }))
+    this.changed('runs')
+  }
+
   override publish(spec: RobotSpec, previous?: RobotSpecRef): Promise<RobotSpecRevision> {
     return this.serialized(() => this.publishRevision(spec, previous))
   }
@@ -282,6 +292,10 @@ export default class LocalRobots extends Robots {
 
   override finish(run: RunId, outcome: RunOutcome): Promise<void> {
     return this.serialized(() => this.finishRun(run, outcome))
+  }
+
+  override advance(run: RunId, state: ActiveRunState): Promise<void> {
+    return this.serialized(() => this.advanceRun(run, state))
   }
 
   override attachSession(run: RunId, session: SessionId): Promise<void> {

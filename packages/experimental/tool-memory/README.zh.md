@@ -55,6 +55,8 @@ kind: "package-reference"
 
 生成的[配置目录](../../../docs/config-catalog.zh.md#tomatoexperimental-tool-memory)是所有可接受字段的完整来源。
 
+在**插件**页中，该行的**配置**页可以修改上表的每个字段；该页面随 Muse 配置包的 [`Muse insights` 客户端](../muse-insights/README.zh.md#configuration)提供。
+
 ### 模型能做什么
 
 `memory_search` 列出与查询有相同词的生效画像记录和工作区记录。当字面词命中少于 `maxRecallResults` 条记录、且视图中有生效记录时，它会请模型给出查询的其他说法（同义词，以及中英文中的同一含义），再重新排序；通过其他说法命中的得分低于字面命中。扩展失败或超时时回退到字面结果。`memory_write` 在 `scope` 为 `profile`（关于这个人，适用于每个工作区）或 `workspace`（本项目）中保存或替换一条记录；只有当规范化后的 `user_quote` 包含在当前轮次人的消息中时，记录才会生效，并注明那条消息。大小写、连续空白和句末标点不影响匹配。没有项目目录的会话只能保存画像记忆。`memory_forget` 按 id 删除记录。`memory_related` 从一条记忆出发，走到同一主体、同一会话写入以及共享属性的记忆，并注明每条结果经由的关系和写入它的会话。当一次写入几乎重复了另一条已保存记忆时，结果会点名那条记录，以便智能体删除被取代的旧记录。写入和删除需要顶层智能体。

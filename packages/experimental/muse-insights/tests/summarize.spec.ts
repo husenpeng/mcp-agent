@@ -59,9 +59,21 @@ describe('parseRecap', () => {
       headline: '  Launch day  ',
       summary: '  Prepared the launch.  ',
       workItems: [
-        { title: 'Draft plan', detail: 'Done', status: 'done' },
-        { title: 'draft plan', detail: 'duplicate', status: 'ongoing' },
-        { title: '   ', status: 'blocked' },
+        {
+          problem: 'The launch plan has no owner',
+          conclusion: 'The plan is drafted.',
+          solution: 'Wrote the plan and named the owner.',
+          status: 'done',
+          sessionIndexes: [0],
+        },
+        {
+          problem: 'the launch plan has no owner',
+          conclusion: 'Duplicate.',
+          solution: 'Duplicate.',
+          status: 'ongoing',
+          sessionIndexes: [0],
+        },
+        { problem: '   ', status: 'blocked' },
       ],
       openTasks: ['Send brief', 'send brief', '  '],
     }) + '\n```', '2026-11-02', 5, collected)
@@ -73,11 +85,33 @@ describe('parseRecap', () => {
       summary: 'Prepared the launch.',
       messageCount: 2,
     })
-    expect(recap.workItems).toEqual([{ title: 'Draft plan', detail: 'Done', status: 'done' }])
+    expect(recap.workItems).toEqual([{
+      problem: 'The launch plan has no owner',
+      conclusion: 'The plan is drafted.',
+      solution: 'Wrote the plan and named the owner.',
+      status: 'done',
+      sessionIds: ['s1'],
+    }])
     expect(recap.openTasks).toEqual(['Send brief'])
     expect(recap.sessions).toEqual([{
       sessionId: 's1', title: 'Launch plan', summary: 'Drafted the plan.', messageCount: 2,
     }])
+  })
+
+  it('drops Session indexes the input does not hold and keeps the item', () => {
+    const recap = parseRecap(JSON.stringify({
+      headline: 'Launch day',
+      summary: 'Prepared the launch.',
+      workItems: [{
+        problem: 'The launch plan has no owner',
+        conclusion: 'The plan is drafted.',
+        solution: 'Wrote the plan.',
+        status: 'done',
+        sessionIndexes: [4, 0, 0],
+      }],
+      openTasks: [],
+    }), '2026-11-02', 5, collected)
+    expect(recap.workItems[0]?.sessionIds).toEqual(['s1'])
   })
 
   it('rejects a response that is not the documented object', () => {
@@ -90,7 +124,13 @@ describe('fallbackRecap', () => {
   it('keeps one neutral work item per Session and no narrative', () => {
     const recap = fallbackRecap('2026-11-02', 5, collected)
     expect(recap).toMatchObject({ source: 'local', headline: '', summary: '', openTasks: [] })
-    expect(recap.workItems).toEqual([{ title: 'Launch plan', detail: 'Drafted the plan.', status: 'unknown' }])
+    expect(recap.workItems).toEqual([{
+      problem: 'Launch plan',
+      conclusion: '',
+      solution: 'Drafted the plan.',
+      status: 'unknown',
+      sessionIds: ['s1'],
+    }])
   })
 
   it('caps deterministic work items at the stored schema limit', () => {
@@ -111,7 +151,7 @@ describe('fallbackRecap', () => {
       latestEventTime: 1,
       messageCount: 1,
     })
-    expect(recap.workItems[0]?.title).toBe('Only output')
+    expect(recap.workItems[0]?.problem).toBe('Only output')
   })
 })
 
@@ -138,7 +178,13 @@ describe('summarizeDay', () => {
     const adapter = new Scripted(text(JSON.stringify({
       headline: 'Launch ready',
       summary: 'Prepared the launch.',
-      workItems: [{ title: 'Draft plan', detail: 'Done', status: 'done' }],
+      workItems: [{
+        problem: 'The launch plan has no owner',
+        conclusion: 'The plan is drafted.',
+        solution: 'Wrote the plan and named the owner.',
+        status: 'done',
+        sessionIndexes: [0],
+      }],
       openTasks: ['Send the brief'],
     })))
     ctx.llm.registerAdapter(['test'], adapter)
@@ -149,6 +195,7 @@ describe('summarizeDay', () => {
     expect(outcome.failure).toBeUndefined()
     expect(outcome.model).toMatchObject({ provider: 'test', model: 'm', maxTokens: 200 })
     expect(outcome.model?.input).toContain("Summarize today's sessions from this JSON:")
+    expect(outcome.model?.input).toContain('"index":0')
     expect(outcome.model?.input).toContain('Draft the launch plan')
     expect(outcome.model?.system).toBe(RECAP_SYSTEM_PROMPT)
     expect(adapter.requests[0]?.system).toBe(RECAP_SYSTEM_PROMPT)

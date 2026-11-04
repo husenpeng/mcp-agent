@@ -36,18 +36,28 @@
   align-items: center;
 }
 
-.suggestions {
+.optionText {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
+  min-width: 0;
+  text-align: start;
 }
 
-.suggestionsLabel {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+.optionDescription {
+  font-size: 11px;
+  line-height: 1.35;
   color: var(--dsw-alias-label-tertiary);
+}
+
+.checkSpacer {
+  display: block;
+  width: 14px;
+  height: 14px;
+}
+
+.pickerAnchor {
+  display: inline-flex;
 }
 
 .hint {

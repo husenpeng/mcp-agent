@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Déclencheurs de robots",
+    "description": "Lance des exécutions de robots à partir de planifications cron et de sujets d'événements de robots."
+  }
+}

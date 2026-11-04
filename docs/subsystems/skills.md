@@ -339,6 +339,19 @@ registerProvider(create: (control: SkillProviderControl) => SkillProvider): () =
 register(skill: SkillRegistration): () => void
 
 /**
+ * Restrict the skills the calling scope can see. The filter intersects with
+ * ancestor scopes' filters and applies to `list`, `snapshot`, `get`, and
+ * `update` alike, so a caller cannot reach a filtered skill by name. Names
+ * are not validated against the current catalog: a skill that appears later
+ * is admitted only when an `allow` list names it.
+ * @param filter - names to keep and/or remove.
+ * @returns the exact disposer that lifts this restriction.
+ * @throws when the calling context has no scope, when the filter is empty,
+ *   or when `allow` and `deny` overlap.
+ */
+restrict(filter: SkillRestriction): () => void
+
+/**
  * List invocation-neutral skill summaries for a workspace. Consumers apply
  * model or user invocation policy at their operational boundary. Lookup
  * options and provider candidates are readonly same-process values borrowed

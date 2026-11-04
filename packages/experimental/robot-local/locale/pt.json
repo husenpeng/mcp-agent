@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Registro de robôs",
+    "description": "Armazena especificações de robôs, robôs e execuções, e controla a instanciação e as execuções."
+  }
+}

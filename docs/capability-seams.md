@@ -276,6 +276,8 @@ flowchart LR
   pkg_experimental_robot_local["experimental-robot-local"]
   pkg_experimental_robot_runtime["experimental-robot-runtime"]
   pkg_experimental_robot_triggers["experimental-robot-triggers"]
+  svc_robotTemplates["ctx.robotTemplates<br/>Robot template registry"]
+  pkg_experimental_robot_templates_marketing["experimental-robot-templates-marketing"]
   pkg_experimental_claude_code_mods["experimental-claude-code-mods"]
   svc_claudeCodeMods["ctx.claudeCodeMods<br/>Claude Code mods bridge"]
   pkg_inspector["inspector"]
@@ -376,6 +378,7 @@ flowchart LR
   pkg_experimental_memory --> svc_memory
   pkg_experimental_muse_insights --> svc_museInsights
   pkg_experimental_ptc_runtime_python --> svc_ptcRuntime
+  pkg_experimental_robot --> svc_robotTemplates
   pkg_experimental_robot --> svc_robots
   pkg_experimental_robot_local --> svc_robots
   pkg_experimental_speech_to_text --> svc_speechToText
@@ -555,6 +558,8 @@ flowchart LR
   svc_remoteAccess --> pkg_api_gateway
   svc_remoteAccess --> pkg_api_session_controller
   svc_remoteAccess --> pkg_api_workspace_controller
+  svc_robotTemplates --> pkg_api_robot_controller
+  svc_robotTemplates --> pkg_experimental_robot_templates_marketing
   svc_robots --> pkg_experimental_robot_runtime
   svc_robots --> pkg_experimental_robot_triggers
   svc_sandbox --> pkg_bash_sandbox
@@ -749,6 +754,7 @@ flowchart LR
 | `ctx.speechToText` | `seam` | [`experimental-speech-to-text`](../packages/experimental/speech-to-text) | [`experimental-speech-to-text-sensevoice`](../packages/experimental/speech-to-text-sensevoice) | [`experimental-api-speech-to-text`](../packages/experimental/api-speech-to-text) | - | Routes explicit recognizers; the browser uses the authenticated Remote and keeps transcripts in the draft until submission. |
 | `ctx.agentTeams` | `core` | [`experimental-agent-team`](../packages/experimental/agent-team) | - | [`experimental-tool-agent-team`](../packages/experimental/tool-agent-team) | - | Owns the implicit-root roster, direct peer inbox delivery, shared task DAG, and continuable-child lifecycle; tool-agent-team contributes model controls. |
 | `ctx.robots` | `core` | [`experimental-robot`](../packages/experimental/robot) | [`experimental-robot-local`](../packages/experimental/robot-local) | [`experimental-robot-runtime`](../packages/experimental/robot-runtime), [`experimental-robot-triggers`](../packages/experimental/robot-triggers) | - | Owns versioned robot specifications, instantiation, and run control; the service definition declares the contract and an installed provider owns execution, persistence, and A2A transport. |
+| `ctx.robotTemplates` | `core` | [`experimental-robot`](../packages/experimental/robot) | - | [`api-robot-controller`](../packages/api/robot-controller), [`experimental-robot-templates-marketing`](../packages/experimental/robot-templates-marketing) | - | Lists hireable robot templates that plugins register; a hire copies one into a user-owned specification through the robot domain service. |
 | `ctx.claudeCodeMods` | `core` | [`experimental-claude-code-mods`](../packages/experimental/claude-code-mods) | - | - | - | Loads mods that defineMod plugins add, raises their hook chains from harness extension points, and draws the band above the prompt over its Remote. |
 | `ctx.inspector` | `core` | `inspector` | - | - | - | Owns the Worker-hosted CDP target and the transport-independent Host and Client observation and Cordis-tree query API. |
 | `ctx.jobs` | `seam` | [`jobs`](../packages/jobs/jobs) | [`jobs-local`](../packages/jobs/jobs-local) | [`tool-bash`](../packages/shell/tool-bash), [`tool-pwsh`](../packages/shell/tool-pwsh), [`tool-terminal`](../packages/experimental/tool-terminal), [`tool-jobs`](../packages/jobs/tool-jobs), [`api-job-controller`](../packages/api/job-controller) | - | Producers (background bash/pwsh and PTY sends) register running work; record-declaring jobs additionally stream raw output for non-consuming observers; tool-jobs is the model-facing controller that reads, lists, and kills it; jobs-local is the process-local registry. |

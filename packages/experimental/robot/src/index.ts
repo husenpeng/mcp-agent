@@ -8,7 +8,7 @@
 import { Context, Service } from '@tomato/cordis'
 import type { SessionId } from '@tomato/session/types'
 import type {
-  Robot, RobotId, RobotSpec, RobotSpecRef, RobotSpecRevision, Run, RunId, RunInput, RunOutcome,
+  ActiveRunState, Robot, RobotId, RobotSpec, RobotSpecRef, RobotSpecRevision, Run, RunId, RunInput, RunOutcome,
 } from './types.ts'
 
 export type * from './types.ts'
@@ -16,6 +16,7 @@ export { RobotSpecValidationError } from './types.ts'
 export { emptyRobotSpec } from './spec.ts'
 export type { RobotRunRecord } from './session.ts'
 export { isTerminalRunState } from './state.ts'
+export { templateSpec, templateText } from './template-spec.ts'
 
 declare module '@tomato/cordis' {
   interface Context {
@@ -25,10 +26,10 @@ declare module '@tomato/cordis' {
   interface Events {
     /**
      * A robot registry mutation observers re-read.
-     * @param kind - record family that changed: specifications, robots, or runs.
+     * @param kind - record family that changed: specifications, robots, runs, or registered templates.
      * @mode emit
      */
-    'robot/changed'(kind: 'specs' | 'robots' | 'runs'): void
+    'robot/changed'(kind: 'specs' | 'robots' | 'runs' | 'templates'): void
   }
 }
 
@@ -51,6 +52,8 @@ declare module '@tomato/cordis' {
  *   `provisioning`, `paused`, `failed`, or `stopped`.
  * - {@link cancel} is cooperative and settles the run as `cancelled` unless it already
  *   reached a terminal state.
+ * - {@link advance} records executor progress in non-terminal states; a terminal run
+ *   keeps its existing state.
  * - {@link finish} records the executor's terminal state; a terminal run keeps its
  *   existing state.
  */
@@ -128,6 +131,18 @@ export abstract class Robots extends Service {
    * @throws when the run does not exist.
    */
   abstract cancel(run: RunId): Promise<void>
+
+  /**
+   * Record executor progress for one run in a non-terminal state. `waiting`
+   * means the run is paused for human input and the executor keeps its Agent
+   * alive; `running` reports it drives work again; `finalizing` reports it is
+   * settling. A run that already reached a terminal state keeps that state.
+   * @param run - run identity.
+   * @param state - executor-owned state to record.
+   * @returns nothing after the state is recorded.
+   * @throws when the run does not exist.
+   */
+  abstract advance(run: RunId, state: ActiveRunState): Promise<void>
 
   /**
    * Settle one run with its executor's outcome.

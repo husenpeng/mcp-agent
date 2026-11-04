@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Evidencia de imágenes",
+    "description": "Permite que los modelos solo de texto lean imágenes pegadas mediante un modelo de visión configurado."
+  }
+}

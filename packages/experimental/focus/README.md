@@ -49,6 +49,8 @@ Choose it when goals run unattended across many rounds and tools can fail repeat
 
 The generated [configuration catalog](../../../docs/config-catalog.md#tomatoexperimental-focus) is the exhaustive source for every accepted field.
 
+On the Plugins page, the row's **Configure** page edits every field of this table, including the pattern list; the page ships with the Muse bundle's [`Muse insights` client](../muse-insights/README.md#configuration).
+
 ### Failure identity
 
 A failure is identified by the tool name, its canonical arguments, and the failure code; cancellations are not failures. Any success of a tool restarts the streaks of that tool. Nested calls inside a script count only through their outer call.

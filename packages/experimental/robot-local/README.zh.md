@@ -47,7 +47,7 @@ kind: "package-reference"
 
 revision 是以规格身份与 revision 号为键的追加行。每次读取时推导每个规格的最新 revision，`specs()` 按首次发布顺序为每个规格返回一项。实例化把一个机器人绑定到精确的已发布 revision，并以 `idle` 返回。
 
-`start` 为每个机器人接受一个 run 并记录为 `queued`；存在未终态 run 期间，`robot()` 与 `robots()` 报告 `running`。`cancel` 把 run 更新为 `cancelled` 并记录 `endedAt`，机器人因此重新报告 `idle`。`finish` 记录执行器的终态及其输出或错误详情；已经处于终态的 run 保持原状态。取消已经处于终态的 run 不写入地返回。重启后的提供者读取同一个域，报告相同的 revision、机器人与 run。
+`start` 为每个机器人接受一个 run 并记录为 `queued`；存在未终态 run 期间，`robot()` 与 `robots()` 报告 `running`。`cancel` 把 run 更新为 `cancelled` 并记录 `endedAt`，机器人因此重新报告 `idle`。`advance` 记录执行器在 `running`、`waiting` 或 `finalizing` 中的进展，客户端因此能区分执行中、暂停与排队中的 run；已处于终态的 run 保持原状态。`finish` 记录执行器的终态及其输出或错误详情；已经处于终态的 run 保持原状态。取消已经处于终态的 run 不写入地返回。重启后的提供者读取同一个域，报告相同的 revision、机器人与 run。
 
 </details>
 

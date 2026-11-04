@@ -52,6 +52,7 @@ kind: "package-reference"
 - **提供方更新。** 提供方可以实现 `update`，改写某个候选项的简介、适用场景或正文。`ctx.skills.update(name, patch, options)` 会委托给胜出提供方，重新验证返回的定义，并使目录失效（包括触发 `skills/change`），因此即使没有文件系统 watcher，下一次读取也能看到修改。摘要中的 `updatable: true` 仅在胜出提供方实现该方法时出现。
 - **嵌入式 skill。** 插件可用 `ctx.skills.register(...)` 注册内存中的 skill；注册表会补入默认调用策略与 `runtime` 提供方标签。同层同名运行时注册采用先到先得，并记录警告。
 - **提供方注册。** 提供方用 `ctx.skills.registerProvider(...)` 贡献目录；注册是同步的，返回的 disposer（资源释放）会移除该提供方。`runtime` 是保留的提供方名称。
+- **作用域限制。** 有作用域的调用方（例如 agent 上下文）可以用 `ctx.skills.restrict({ allow, deny })` 收窄该作用域可见的技能。限制沿作用域链取交集，并作用于 `list`、`snapshot`、`get` 与 `update`，因此被过滤的名字无法再按名取到；返回的 disposer 解除限制。过滤器不校验名字是否已存在：之后出现的技能只有在 `allow` 列出时才会被放行。
 
 每个 skill 上的调用策略决定哪些接口可以展示并加载它：`modelInvocable` 用于面向模型的工具与目录，`userInvocable` 用于面向用户的命令。注册表保留全部四种组合，因此一次发现结果可以同时服务两个接口，而不会混淆各自的目录。
 

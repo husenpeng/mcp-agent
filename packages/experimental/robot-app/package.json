@@ -27,8 +27,8 @@
     "icon.svg",
     "locale/*.json",
     "lib/index.js",
-    "skills/**/*",
     "cordis.patch.yml",
+    "skills",
     "lib/types/**/*.d.ts"
   ],
   "license": "MIT",
@@ -41,9 +41,11 @@
   "dependencies": {
     "@tomato/api-robot-controller": "workspace:*",
     "@tomato/client-ui-robot": "workspace:*",
+    "@tomato/experimental-robot": "workspace:*",
     "@tomato/experimental-robot-local": "workspace:*",
     "@tomato/experimental-robot-remote": "workspace:*",
     "@tomato/experimental-robot-runtime": "workspace:*",
+    "@tomato/experimental-robot-templates-marketing": "workspace:*",
     "@tomato/experimental-robot-triggers": "workspace:*",
     "@tomato/experimental-tool-robot": "workspace:*"
   },

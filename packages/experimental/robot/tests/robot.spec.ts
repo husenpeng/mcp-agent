@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { SessionId } from '@tomato/session'
 import Robots, { isTerminalRunState } from '../src/index.ts'
 import type {
-  Robot, RobotId, RobotSpec, RobotSpecRef, RobotSpecRevision, Run, RunId, RunInput, RunOutcome, RunState,
+  ActiveRunState, Robot, RobotId, RobotSpec, RobotSpecRef, RobotSpecRevision, Run, RunId, RunInput, RunOutcome, RunState,
 } from '../src/index.ts'
 
 const unreachable = (): never => {
@@ -44,6 +44,10 @@ class StubRobots extends Robots {
   }
 
   override cancel(_run: RunId): Promise<void> {
+    return unreachable()
+  }
+
+  override advance(_run: RunId, _state: ActiveRunState): Promise<void> {
     return unreachable()
   }
 

@@ -304,6 +304,7 @@ flowchart TD
     pkg_experimental_robot_local["experimental-robot-local"]
     pkg_experimental_robot_remote["experimental-robot-remote"]
     pkg_experimental_robot_runtime["experimental-robot-runtime"]
+    pkg_experimental_robot_templates_marketing["experimental-robot-templates-marketing"]
     pkg_experimental_robot_triggers["experimental-robot-triggers"]
     pkg_experimental_session_inspector["experimental-session-inspector"]
     pkg_experimental_session_search["experimental-session-search"]
@@ -679,6 +680,9 @@ flowchart TD
   pkg_experimental_robot_local --> pkg_session
   pkg_experimental_robot_local --> pkg_storage_domain
   pkg_experimental_robot_local --> pkg_util_values
+  pkg_experimental_robot_templates_marketing --> pkg_branded
+  pkg_experimental_robot_templates_marketing --> pkg_experimental_robot
+  pkg_experimental_robot_templates_marketing --> pkg_skill
   pkg_experimental_speech_to_text_sensevoice --> pkg_experimental_speech_to_text
   pkg_experimental_speech_to_text_sensevoice --> pkg_subprocess
   pkg_hook_protocol --> pkg_session
@@ -1037,14 +1041,6 @@ flowchart TD
   pkg_experimental_robot_runtime --> pkg_storage_domain
   pkg_experimental_robot_runtime --> pkg_system_prompt
   pkg_experimental_robot_runtime --> pkg_tools
-  pkg_experimental_tool_memory --> pkg_agent
-  pkg_experimental_tool_memory --> pkg_commands
-  pkg_experimental_tool_memory --> pkg_experimental_memory
-  pkg_experimental_tool_memory --> pkg_llm
-  pkg_experimental_tool_memory --> pkg_session
-  pkg_experimental_tool_memory --> pkg_session_projection
-  pkg_experimental_tool_memory --> pkg_timeout
-  pkg_experimental_tool_memory --> pkg_tools
   pkg_experimental_tool_robot --> pkg_agent
   pkg_experimental_tool_robot --> pkg_experimental_robot
   pkg_experimental_tool_robot --> pkg_llm
@@ -1348,6 +1344,15 @@ flowchart TD
   pkg_experimental_muse_insights --> pkg_session_query
   pkg_experimental_muse_insights --> pkg_storage_domain
   pkg_experimental_muse_insights --> pkg_typert_protocol
+  pkg_experimental_tool_memory --> pkg_agent
+  pkg_experimental_tool_memory --> pkg_commands
+  pkg_experimental_tool_memory --> pkg_experimental_memory
+  pkg_experimental_tool_memory --> pkg_llm
+  pkg_experimental_tool_memory --> pkg_session
+  pkg_experimental_tool_memory --> pkg_session_projection
+  pkg_experimental_tool_memory --> pkg_session_query
+  pkg_experimental_tool_memory --> pkg_timeout
+  pkg_experimental_tool_memory --> pkg_tools
   pkg_tool_session_query --> pkg_agent
   pkg_tool_session_query --> pkg_llm
   pkg_tool_session_query --> pkg_session
@@ -1807,6 +1812,7 @@ flowchart TD
 | [`experimental-api-speech-to-text`](../packages/experimental/api-speech-to-text) | `experimental` | [`experimental-speech-to-text`](../packages/experimental/speech-to-text), [`typert-protocol`](../packages/typert/protocol) |
 | [`experimental-client-ui-cot-translation`](../packages/experimental/client-ui-cot-translation) | `experimental` | [`experimental-translator`](../packages/experimental/translator) |
 | [`experimental-robot-local`](../packages/experimental/robot-local) | `experimental` | [`branded`](../packages/util/branded), [`experimental-robot`](../packages/experimental/robot), [`session`](../packages/core/session), [`storage-domain`](../packages/storage/storage-domain), [`util-values`](../packages/util/values) |
+| [`experimental-robot-templates-marketing`](../packages/experimental/robot-templates-marketing) | `experimental` | [`branded`](../packages/util/branded), [`experimental-robot`](../packages/experimental/robot), [`skill`](../packages/skill/skill) |
 | [`experimental-speech-to-text-sensevoice`](../packages/experimental/speech-to-text-sensevoice) | `experimental` | [`experimental-speech-to-text`](../packages/experimental/speech-to-text), [`subprocess`](../packages/subprocess/subprocess) |
 | [`hook-protocol`](../packages/experimental/hook-protocol) | `experimental` | [`session`](../packages/core/session), [`shell`](../packages/shell/shell) |
 | [`lsp-stdio`](../packages/lsp/lsp-stdio) | `lsp` | [`branded`](../packages/util/branded), [`fs`](../packages/fs/fs), [`llm`](../packages/llm/llm), [`lsp`](../packages/lsp/lsp), [`subprocess`](../packages/subprocess/subprocess), [`timeout`](../packages/util/timeout) |
@@ -1881,7 +1887,6 @@ flowchart TD
 | [`experimental-cua-macos`](../packages/experimental/cua-macos) | `experimental` | [`agent`](../packages/core/agent), [`computer-use`](../packages/computer-use/computer-use), [`subprocess`](../packages/subprocess/subprocess), [`system-prompt`](../packages/core/system-prompt), [`tools`](../packages/core/tools), [`user-questions`](../packages/interaction/user-questions) |
 | [`experimental-focus`](../packages/experimental/focus) | `experimental` | [`agent`](../packages/core/agent), [`goal`](../packages/goal/goal), [`llm`](../packages/llm/llm), [`session`](../packages/core/session), [`session-projection`](../packages/session/session-projection), [`tools`](../packages/core/tools) |
 | [`experimental-robot-runtime`](../packages/experimental/robot-runtime) | `experimental` | [`agent`](../packages/core/agent), [`agent-default-model`](../packages/core/agent-default-model), [`branded`](../packages/util/branded), [`experimental-robot`](../packages/experimental/robot), [`llm`](../packages/llm/llm), [`permission-presets`](../packages/interaction/permission-presets), [`session`](../packages/core/session), [`session-projection`](../packages/session/session-projection), [`storage-domain`](../packages/storage/storage-domain), [`system-prompt`](../packages/core/system-prompt), [`tools`](../packages/core/tools) |
-| [`experimental-tool-memory`](../packages/experimental/tool-memory) | `experimental` | [`agent`](../packages/core/agent), [`commands`](../packages/interaction/commands), [`experimental-memory`](../packages/experimental/memory), [`llm`](../packages/llm/llm), [`session`](../packages/core/session), [`session-projection`](../packages/session/session-projection), [`timeout`](../packages/util/timeout), [`tools`](../packages/core/tools) |
 | [`experimental-tool-robot`](../packages/experimental/tool-robot) | `experimental` | [`agent`](../packages/core/agent), [`experimental-robot`](../packages/experimental/robot), [`llm`](../packages/llm/llm), [`session`](../packages/core/session), [`tools`](../packages/core/tools) |
 | [`experimental-tool-worktree`](../packages/experimental/tool-worktree) | `experimental` | [`experimental-worktree`](../packages/experimental/worktree), [`tools`](../packages/core/tools) |
 | [`hooks-codex`](../packages/experimental/hooks-codex) | `experimental` | [`agent`](../packages/core/agent), [`hook-protocol`](../packages/experimental/hook-protocol), [`llm`](../packages/llm/llm), [`session`](../packages/core/session), [`tools`](../packages/core/tools), [`working-directory`](../packages/session/working-directory) |
@@ -1934,6 +1939,7 @@ flowchart TD
 | [`experimental-browser-use-runtime`](../packages/experimental/browser-use-runtime) | `experimental` | [`agent`](../packages/core/agent), [`browser-use`](../packages/browser-use/browser-use), [`mcp-client`](../packages/mcp/mcp-client), [`scope`](../packages/core/scope), [`system-prompt`](../packages/core/system-prompt), [`tools`](../packages/core/tools), [`working-directory`](../packages/session/working-directory) |
 | [`experimental-claude-code-mods`](../packages/experimental/claude-code-mods) | `experimental` | [`agent`](../packages/core/agent), [`commands`](../packages/interaction/commands), [`fs`](../packages/fs/fs), [`llm`](../packages/llm/llm), [`scope`](../packages/core/scope), [`session`](../packages/core/session), [`storage-domain`](../packages/storage/storage-domain), [`subprocess`](../packages/subprocess/subprocess), [`token-meter`](../packages/llm/token-meter), [`tools`](../packages/core/tools), [`typert-protocol`](../packages/typert/protocol), [`user-questions`](../packages/interaction/user-questions), [`working-directory`](../packages/session/working-directory) |
 | [`experimental-muse-insights`](../packages/experimental/muse-insights) | `experimental` | [`gateway`](../packages/tomato/gateway), [`llm`](../packages/llm/llm), [`session`](../packages/core/session), [`session-query`](../packages/session-query/session-query), [`storage-domain`](../packages/storage/storage-domain), [`typert-protocol`](../packages/typert/protocol) |
+| [`experimental-tool-memory`](../packages/experimental/tool-memory) | `experimental` | [`agent`](../packages/core/agent), [`commands`](../packages/interaction/commands), [`experimental-memory`](../packages/experimental/memory), [`llm`](../packages/llm/llm), [`session`](../packages/core/session), [`session-projection`](../packages/session/session-projection), [`session-query`](../packages/session-query/session-query), [`timeout`](../packages/util/timeout), [`tools`](../packages/core/tools) |
 | [`tool-session-query`](../packages/experimental/tool-session-query) | `experimental` | [`agent`](../packages/core/agent), [`llm`](../packages/llm/llm), [`session`](../packages/core/session), [`session-query`](../packages/session-query/session-query), [`system-prompt`](../packages/core/system-prompt), [`timeout`](../packages/util/timeout), [`tools`](../packages/core/tools) |
 | [`webhook-github`](../packages/experimental/webhook-github) | `experimental` | [`credentials`](../packages/credentials/credentials), [`host-webserver`](../packages/host/webserver), [`session`](../packages/core/session), [`webhook`](../packages/experimental/webhook) |
 | [`marketing`](../packages/marketing/marketing) | `marketing` | [`credentials`](../packages/credentials/credentials), [`launch-environment`](../packages/util/launch-environment), [`mcp-client`](../packages/mcp/mcp-client) |

@@ -21,8 +21,8 @@ afterEach(() => {
 
 const sessionId = SessionId('session-1')
 const tabId = 'tab-1' as TabId
-/** The navigation one row's click passes: the recap day and the item's title. */
-const opened = { day: '2026-11-02', title: 'Draft the plan' }
+/** The navigation one row's click passes: the recap day and the item's problem. */
+const opened = { day: '2026-11-02', problem: 'The launch plan has no owner' }
 
 const unused = (): never => { throw new Error('This isolated page does not read that framework hook') }
 const standard: GlobalStandardProps & SessionStandardProps = {
@@ -45,13 +45,40 @@ const recap: DailyRecap = {
   headline: 'Launch ready',
   summary: 'Prepared the launch.',
   workItems: [
-    { title: 'Draft the plan', detail: 'The launch plan is ready.\n\nStill waiting on legal.', status: 'done' },
-    { title: 'Send the brief', detail: 'Drafted the announcement.', status: 'ongoing' },
-    { title: 'Ask legal', detail: '', status: 'blocked' },
-    { title: 'Archive notes', detail: 'Filed the meeting notes.', status: 'unknown' },
+    {
+      problem: 'The launch plan has no owner',
+      conclusion: 'The plan is drafted and the owner named.',
+      solution: 'Wrote the plan down.\nNamed the owner and scheduled the review.',
+      status: 'done',
+      sessionIds: ['s1', 's2'],
+    },
+    {
+      problem: 'The launch brief is still unsent',
+      conclusion: 'Waiting on the legal review.',
+      solution: '',
+      status: 'ongoing',
+      sessionIds: ['s1'],
+    },
+    {
+      problem: 'The legal review blocks the brief',
+      conclusion: '',
+      solution: '',
+      status: 'blocked',
+      sessionIds: [],
+    },
+    {
+      problem: 'Meeting notes were archived',
+      conclusion: 'Filed the notes.',
+      solution: '',
+      status: 'unknown',
+      sessionIds: ['s2'],
+    },
   ],
   openTasks: [],
-  sessions: [],
+  sessions: [
+    { sessionId: 's1', title: 'Launch plan', summary: 'Drafted the plan.', messageCount: 4 },
+    { sessionId: 's2', title: 'Legal review', summary: 'Reviewed the claims.', messageCount: 1 },
+  ],
   messageCount: 8,
 }
 
@@ -115,25 +142,33 @@ function mount(
 }
 
 describe('WorkItemTab', () => {
-  it('draws the named item with its status, day, and complete detail', () => {
+  it('draws the named item with its status, day, and both detail sections', () => {
     mount(ready(), opened)
-    expect(screen.getByRole('heading', { name: 'Draft the plan' })).toBeTruthy()
-    expect(screen.getByText('Done')).toBeTruthy()
-    expect(screen.getByText(formatDay('2026-11-02', 'en-US'))).toBeTruthy()
-    expect(screen.getByText(/The launch plan is ready/u)).toBeTruthy()
-    expect(screen.getByText(/Still waiting on legal/u)).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'The launch plan has no owner' })).toBeTruthy()
+    expect(screen.getByText(/^Done · /u)).toBeTruthy()
+    expect(screen.getByText(formatDay('2026-11-02', 'en-US'), { exact: false })).toBeTruthy()
+    expect(screen.getByText(/2 sessions/u)).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Conclusion' })).toBeTruthy()
+    expect(screen.getByText('The plan is drafted and the owner named.')).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Solution' })).toBeTruthy()
+    expect(screen.getByText(/Named the owner and scheduled the review/u)).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Source sessions' })).toBeTruthy()
+    expect(screen.getByText('Launch plan')).toBeTruthy()
+    expect(screen.getByText('Legal review')).toBeTruthy()
+    expect(screen.getByText('4 messages')).toBeTruthy()
+    expect(screen.getByText('1 message')).toBeTruthy()
   })
 
   const statuses: readonly (readonly [RecapWorkItem['status'], string, string])[] = [
-    ['done', 'Draft the plan', 'Done'],
-    ['ongoing', 'Send the brief', 'Ongoing'],
-    ['blocked', 'Ask legal', 'Blocked'],
-    ['unknown', 'Archive notes', 'Recorded'],
+    ['done', 'The launch plan has no owner', 'Done'],
+    ['ongoing', 'The launch brief is still unsent', 'Ongoing'],
+    ['blocked', 'The legal review blocks the brief', 'Blocked'],
+    ['unknown', 'Meeting notes were archived', 'Recorded'],
   ]
-  it.each(statuses)('names a %s work item with the tone that status owns', (_status, title, label) => {
-    mount(ready(), { day: '2026-11-02', title })
-    expect(screen.getByRole('heading', { name: title })).toBeTruthy()
-    expect(screen.getByText(label)).toBeTruthy()
+  it.each(statuses)('names a %s work item with the word that status owns', (_status, problem, label) => {
+    mount(ready(), { day: '2026-11-02', problem })
+    expect(screen.getByRole('heading', { name: problem })).toBeTruthy()
+    expect(screen.getByText(new RegExp(`^${label} · `, 'u'))).toBeTruthy()
   })
 
   it('marks a recap that is not today’s', () => {
@@ -144,10 +179,10 @@ describe('WorkItemTab', () => {
   it('records the item each open names and recovers it for a restored tab', () => {
     const bindings = new WorkItemTabBindings()
     mount(ready(), opened, bindings)
-    expect(bindings.read(sessionId, tabId)).toEqual({ day: '2026-11-02', title: 'Draft the plan' })
+    expect(bindings.read(sessionId, tabId)).toEqual({ day: '2026-11-02', problem: 'The launch plan has no owner' })
     cleanup()
     mount(ready(), undefined, bindings)
-    expect(screen.getByRole('heading', { name: 'Draft the plan' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'The launch plan has no owner' })).toBeTruthy()
   })
 
   it('follows a navigation that shows another item in the same page', () => {
@@ -165,22 +200,22 @@ describe('WorkItemTab', () => {
       t: makeTranslate(en),
     } as WorkItemTabProps
     const view = render(<WorkItemTab {...props} />)
-    expect(screen.getByRole('heading', { name: 'Draft the plan' })).toBeTruthy()
-    info = tabInfo({ day: '2026-11-02', title: 'Send the brief' }, actions, 2)
+    expect(screen.getByRole('heading', { name: 'The launch plan has no owner' })).toBeTruthy()
+    info = tabInfo({ day: '2026-11-02', problem: 'The launch brief is still unsent' }, actions, 2)
     view.rerender(<WorkItemTab {...props} />)
-    expect(screen.getByRole('heading', { name: 'Send the brief' })).toBeTruthy()
-    expect(bindings.read(sessionId, tabId)).toEqual({ day: '2026-11-02', title: 'Send the brief' })
+    expect(screen.getByRole('heading', { name: 'The launch brief is still unsent' })).toBeTruthy()
+    expect(bindings.read(sessionId, tabId)).toEqual({ day: '2026-11-02', problem: 'The launch brief is still unsent' })
   })
 
   it('reports an item the latest recap no longer lists and opens the recap view', () => {
-    const { openTab } = mount(ready(), { day: '2026-11-02', title: 'Ship the release' })
+    const { openTab } = mount(ready(), { day: '2026-11-02', problem: 'Ship the release' })
     expect(screen.getByRole('heading', { name: 'This work item is no longer listed' })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Open daily recap' }))
     expect(openTab).toHaveBeenCalledExactlyOnceWith('muse-insights', { params: { view: 'recap' } })
   })
 
   it('reports an item named by a day the latest recap no longer holds', () => {
-    mount(ready(), { day: '2026-11-01', title: 'Draft the plan' })
+    mount(ready(), { day: '2026-11-01', problem: 'The launch plan has no owner' })
     expect(screen.getByRole('heading', { name: 'This work item is no longer listed' })).toBeTruthy()
   })
 
@@ -226,11 +261,12 @@ function mountTitle(params: unknown, bindings: WorkItemTabBindings, revision = 1
 
 describe('WorkItemTabTitle', () => {
   it('names the item its tab opened and the one a restored tab recorded', () => {
-    expect(mountTitle({ day: '2026-11-02', title: 'Draft the plan' }, new WorkItemTabBindings())).toBe('Draft the plan')
+    expect(mountTitle({ day: '2026-11-02', problem: 'The launch plan has no owner' }, new WorkItemTabBindings()))
+      .toBe('The launch plan has no owner')
     cleanup()
     const bindings = new WorkItemTabBindings()
-    bindings.write(sessionId, tabId, { day: '2026-11-02', title: 'Send the brief' })
-    expect(mountTitle(undefined, bindings)).toBe('Send the brief')
+    bindings.write(sessionId, tabId, { day: '2026-11-02', problem: 'The launch brief is still unsent' })
+    expect(mountTitle(undefined, bindings)).toBe('The launch brief is still unsent')
   })
 
   it('falls back to the page label without a resolvable item', () => {

@@ -859,6 +859,14 @@ const SERVICE_ROLES: ServiceRole[] = [
     note: 'Owns versioned robot specifications, instantiation, and run control; the service definition declares the contract and an installed provider owns execution, persistence, and A2A transport.',
   },
   {
+    key: 'robotTemplates',
+    pkg: 'experimental-robot',
+    title: 'Robot template registry',
+    mode: 'core',
+    consumers: ['api-robot-controller', 'experimental-robot-templates-marketing'],
+    note: 'Lists hireable robot templates that plugins register; a hire copies one into a user-owned specification through the robot domain service.',
+  },
+  {
     key: 'claudeCodeMods',
     pkg: 'experimental-claude-code-mods',
     title: 'Claude Code mods bridge',

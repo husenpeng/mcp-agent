@@ -8,7 +8,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`@tomato/experimental-robot-app` mounts the Tomato Rbot feature as one optional bundle: `@tomato/experimental-robot-local` stores specifications, robots, and runs; `@tomato/experimental-robot-runtime` executes queued runs through one Agent per run and records the run's Session; `@tomato/experimental-robot-triggers` starts runs for cron and event schedules; `@tomato/api-robot-controller` exposes the registry over the `robot` Remote namespace; `@tomato/client-ui-robot` renders the sidebar roster, the basic and advanced specification editor, and the run conversation; `@tomato/experimental-tool-robot` adds the model-facing `robot_create` tool; and the bundle registers the bundled `robot-creation` skill for creation Sessions. A profile that does not add this bundle is unchanged.
+`@tomato/experimental-robot-app` mounts the Tomato Rbot feature as one optional bundle: `@tomato/experimental-robot-local` stores specifications, robots, and runs; `@tomato/experimental-robot-runtime` executes queued runs through one Agent per run and records the run's Session; `@tomato/experimental-robot-triggers` starts runs for cron and event schedules; `@tomato/experimental-robot-templates-marketing` adds hireable marketing templates; `@tomato/api-robot-controller` exposes the registry over the `robot` Remote namespace; `@tomato/client-ui-robot` renders the card gallery of robots and templates, the sidebar roster, the basic and advanced specification editor, and the run conversation; `@tomato/experimental-tool-robot` adds the model-facing `robot_create` tool; and the bundle registers the bundled `robot-creation` skill for creation Sessions. Profiles without this bundle are unchanged.
 
 ## Table of Contents
 
@@ -30,6 +30,8 @@ Add `@tomato/experimental-robot-app` to a profile's bundle list (or install it f
 Manual creation opens the specification editor on the basic tab: name, description, task goal, and success criteria. Every other block — position and authority, triggers, budgets, tools and limits, input/output, memory, and agent-to-agent settings — stays on the advanced tab at the general default from `emptyRobotSpec()`; the editor states that unchanged fields keep those defaults.
 
 Conversation creation opens a new Session in the current Workspace with a draft that names the `robot-creation` skill. The skill interviews the user for the same four answers, summarizes them, then calls `robot_create`; the tool publishes the specification and instantiates it, so the robot appears in the roster when the Session finishes. The skill ships with this bundle and is registered as a bundled skill, so it is available in any Workspace rather than only in this repository. `robot_create` requires a live top-level agent and a human message in the open turn.
+
+Hiring a template from the gallery publishes a user-owned specification copied from the template in the page language and instantiates it; the robot then edits and runs like any other.
 
 <a id="model-experience"></a>
 ## Model Experience
@@ -53,7 +55,8 @@ The section is stable for one revision; a new revision changes the prefix and st
 <a id="known-limitations-and-deferred-work"></a>
 
 - Run leases, budgets, A2A transport, approvals, tasks, and memory views are not implemented.
-- The runtime consumes the mission, tool restrictions, first workspace root, and permission preset; the remaining specification fields are stored but not enforced.
+- The runtime consumes the mission, tool restrictions, selected skills, selected MCP servers, the first workspace root, and the permission preset; memory, sandbox, network, data-class, credential, and agent-to-agent fields are stored but not enforced.
+- MCP servers are mounted by the deployment as `@tomato/mcp-client` rows; a robot can select only servers the deployment already configured, and the runtime never starts one.
 - Cron and event triggers can start paid model runs; the bundle is opt-in for that reason.
 - `robot_create` collects only the four basic fields; triggers, tools, permissions, budgets, memory, and agent-to-agent settings remain editor-only.
 

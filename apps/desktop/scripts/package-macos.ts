@@ -44,12 +44,20 @@ export interface MacOSArtifactOperations {
 }
 
 const operations: MacOSArtifactOperations = {
-  async copyApp(source, destination) {
-    await execute('/usr/bin/ditto', [source, destination])
-  },
+  copyApp: copyMacOSApplication,
   notarize: notarizeMacOS,
   verifySignature: verifyMacOSSignature,
   verifyNotarization: verifyMacOSNotarizedApplication,
+}
+
+/**
+ * Copy an application bundle, including symbolic links and resource forks.
+ * @param source - Application bundle to copy.
+ * @param destination - New path the bundle is written to.
+ * @returns Resolves after the copy completes.
+ */
+export async function copyMacOSApplication(source: string, destination: string): Promise<void> {
+  await execute('/usr/bin/ditto', [source, destination])
 }
 
 async function timed(label: string, action: () => Promise<void>, secrets: readonly string[]): Promise<void> {
@@ -111,7 +119,7 @@ export async function packageMacOSArtifacts(
     await verifyMacOSAppUpdateConfig(dmgApp, update)
     apple.verifySignature(zipApp, expected)
     apple.verifySignature(dmgApp, expected)
-    const base = `deepseek-harness-${version}-mac-${arch}`
+    const base = `tomato-harness-${version}-mac-${arch}`
     const artifacts = [
       [dmgOutput, `${base}.dmg`],
       [zipOutput, `${base}.zip`],

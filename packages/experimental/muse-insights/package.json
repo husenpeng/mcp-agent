@@ -43,7 +43,9 @@
         "@tomato/api-remotes",
         "@tomato/client-locale",
         "@tomato/client-ui-layout",
+        "@tomato/client-ui-plugin-manager",
         "@tomato/client-ui-renderer",
+        "@tomato/client-ui-settings",
         "@tomato/client-ui-sidebar-right",
         "@tomato/client-ui-workspace"
       ],
@@ -58,7 +60,6 @@
     "locale/*.json",
     "lib/index.js",
     "lib/client.js",
-    "lib/types/**/*.js",
     "lib/types/**/*.d.ts",
     "lib/typert.host.js",
     "lib/typert.host.d.ts",
@@ -68,6 +69,7 @@
   "license": "MIT",
   "peerDependencies": {
     "@tomato/cordis": "workspace:~",
+    "@tomato/cordis-plugin-loader": "workspace:~",
     "@tomato/gateway": "workspace:*",
     "@tomato/llm": "workspace:*",
     "@tomato/session": "workspace:*",
@@ -76,6 +78,9 @@
     "@tomato/typert-protocol": "workspace:*"
   },
   "peerDependenciesMeta": {
+    "@tomato/cordis-plugin-loader": {
+      "optional": true
+    },
     "@tomato/gateway": {
       "optional": true
     }
@@ -91,17 +96,22 @@
     "@tomato/client-store": "workspace:*",
     "@tomato/client-test-runtime": "workspace:*",
     "@tomato/client-ui-layout": "workspace:*",
+    "@tomato/client-ui-plugin-manager": "workspace:*",
     "@tomato/client-ui-primitives": "workspace:*",
     "@tomato/client-ui-renderer": "workspace:*",
+    "@tomato/client-ui-settings": "workspace:*",
     "@tomato/client-ui-sidebar-right": "workspace:*",
     "@tomato/client-ui-slots": "workspace:*",
     "@tomato/client-ui-workspace": "workspace:*",
+    "@tomato/config-editor": "workspace:*",
     "@tomato/cordis": "workspace:~",
+    "@tomato/cordis-plugin-loader": "workspace:~",
     "@tomato/cordis-plugin-timer": "workspace:~",
     "@tomato/gateway": "workspace:*",
     "@tomato/llm": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/session-query": "workspace:*",
+    "@tomato/settings": "workspace:*",
     "@tomato/storage": "workspace:*",
     "@tomato/storage-domain": "workspace:*",
     "@tomato/storage-json": "workspace:*",

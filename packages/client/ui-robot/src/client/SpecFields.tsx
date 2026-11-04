@@ -1,7 +1,9 @@
-/** Reusable specification controls: chip fields with suggestions and choice rows. */
+/** Reusable specification controls: multi-select list fields and choice rows. */
 import type { ReactNode } from 'react'
 import { useState } from 'react'
-import { Button, Input, Pill } from '@tomato/client-ui-primitives'
+import {
+  Button, IconCheckOutlineRegular, Input, Menu, MenuItemButton, Pill,
+} from '@tomato/client-ui-primitives'
 import css from './SpecFields.module.css'
 
 /** One selectable option of a small closed choice. */
@@ -10,7 +12,17 @@ export interface Choice<T extends string> {
   readonly label: string
 }
 
-/** Props of the chip-based value field. */
+/** One local value a list field offers, with the label its source publishes. */
+export interface TagOption {
+  /** Value written into the specification. */
+  readonly value: string
+  /** Label shown in the picker; repeats `value` when the source has no title. */
+  readonly label: string
+  /** Optional one-line detail that helps a person choose. */
+  readonly description?: string
+}
+
+/** Props of the chip-based list field. */
 export interface TagFieldProps {
   /** Localized field label. */
   readonly label: string
@@ -18,8 +30,8 @@ export interface TagFieldProps {
   readonly values: readonly string[]
   /** Receives the next complete selection. */
   readonly onChange: (next: string[]) => void
-  /** Values offered as one-click chips and input suggestions. */
-  readonly suggestions?: readonly string[]
+  /** Local values offered by the picker; empty when the deployment has none. */
+  readonly options?: readonly TagOption[]
   /** Placeholder for an empty field and the custom input. */
   readonly placeholder?: string
   /** Localized helper under the field. */
@@ -30,27 +42,31 @@ export interface TagFieldProps {
   readonly addLabel: string
   /** Localized remove-chip accessible name prefix. */
   readonly removeLabel: string
-  /** Localized suggestion-row heading. */
-  readonly suggestionsLabel: string
+  /** Localized picker button label. */
+  readonly optionsLabel: string
 }
 
 /**
- * Render selected values as removable chips with one-click suggestions and a
- * free-entry input, so a list field is a picker rather than a text box.
- * @param props - label, selection, suggestions, and copy.
+ * Render selected values as removable chips, a picker over the deployment's
+ * local values, and a free-entry input for a value no source publishes.
+ * @param props - label, selection, local options, and copy.
  * @returns the field.
  */
 export function TagField({
-  label, values, onChange, suggestions = [], placeholder, hint, issue, addLabel, removeLabel, suggestionsLabel,
+  label, values, onChange, options = [], placeholder, hint, issue, addLabel, removeLabel, optionsLabel,
 }: TagFieldProps): ReactNode {
   const [draft, setDraft] = useState('')
+  const [open, setOpen] = useState(false)
   const add = (raw: string): void => {
     const value = raw.trim()
     if (value === '' || values.includes(value)) return
     onChange([...values, value])
     setDraft('')
   }
-  const available = suggestions.filter(suggestion => !values.includes(suggestion))
+  const toggle = (value: string): void => {
+    onChange(values.includes(value) ? values.filter(candidate => candidate !== value) : [...values, value])
+  }
+  const labelOf = (value: string): string => options.find(option => option.value === value)?.label ?? value
   return (
     <div className={css.field}>
       <span className={css.label}>{label}</span>
@@ -64,7 +80,7 @@ export function TagField({
               aria-label={`${removeLabel} ${value}`}
               onClick={() => { onChange(values.filter(candidate => candidate !== value)) }}
             >
-              {value}
+              {labelOf(value)}
             </Pill>
           ))}
       </div>
@@ -73,6 +89,7 @@ export function TagField({
           className={css.grow}
           value={draft}
           placeholder={placeholder}
+          aria-label={label}
           onChange={(event) => { setDraft(event.target.value) }}
           onKeyDown={(event) => {
             if (event.key !== 'Enter') return
@@ -81,17 +98,46 @@ export function TagField({
           }}
         />
         <Button size="sm" variant="outline" onClick={() => { add(draft) }}>{addLabel}</Button>
+        {options.length === 0 ? null : (
+          <Menu
+            open={open}
+            align="end"
+            portal
+            className={css.pickerAnchor}
+            anchor={(
+              <Button
+                size="sm"
+                variant="outline"
+                aria-haspopup="menu"
+                aria-expanded={open}
+                aria-label={`${optionsLabel} ${label}`}
+                onClick={() => { setOpen(!open) }}
+              >
+                {optionsLabel}
+              </Button>
+            )}
+            onClose={() => { setOpen(false) }}
+          >
+            {options.map((option) => {
+              const selected = values.includes(option.value)
+              return (
+                <MenuItemButton
+                  key={option.value}
+                  icon={selected ? <IconCheckOutlineRegular /> : <span className={css.checkSpacer} />}
+                  onSelect={() => { toggle(option.value) }}
+                >
+                  <span className={css.optionText}>
+                    <span>{option.label}</span>
+                    {option.description === undefined ? null : (
+                      <span className={css.optionDescription}>{option.description}</span>
+                    )}
+                  </span>
+                </MenuItemButton>
+              )
+            })}
+          </Menu>
+        )}
       </div>
-      {available.length === 0 ? null : (
-        <div className={css.suggestions}>
-          <span className={css.suggestionsLabel}>{suggestionsLabel}</span>
-          <div className={css.chips}>
-            {available.map(suggestion => (
-              <Pill key={suggestion} onClick={() => { add(suggestion) }}>+ {suggestion}</Pill>
-            ))}
-          </div>
-        </div>
-      )}
       {hint === undefined ? null : <span className={css.hint}>{hint}</span>}
       {issue === undefined ? null : <span className={css.issue}>{issue}</span>}
     </div>

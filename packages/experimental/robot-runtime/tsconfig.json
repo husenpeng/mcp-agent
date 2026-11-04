@@ -36,10 +36,19 @@
       "path": "../../llm/llm"
     },
     {
+      "path": "../../mcp/mcp-resources"
+    },
+    {
+      "path": "../../skill/skill"
+    },
+    {
       "path": "../../storage/storage-domain"
     },
     {
       "path": "../robot"
+    },
+    {
+      "path": "../../workspace/workspace"
     },
     {
       "path": "../../session/session-projection"

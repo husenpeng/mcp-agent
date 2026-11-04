@@ -47,7 +47,7 @@ The provider opens the `tomato_robot` domain and keeps no separate mutable state
 
 Revisions are append-only rows keyed by specification identity and revision number. The latest revision per specification is derived on each read, and `specs()` returns one entry per specification in first-publication order. Instantiation binds one robot to the exact published revision and returns it in `idle`.
 
-`start` accepts one run per robot and records it as `queued`; `robot()` and `robots()` report `running` while a non-terminal run exists. `cancel` updates the run to `cancelled`, records `endedAt`, so the robot reports `idle` again. `finish` records the executor's terminal state with its output or error detail; a run that is already terminal keeps its state. Cancelling an already terminal run returns without a write. A restarted provider reads the same domain and reports the same revisions, robots, and runs.
+`start` accepts one run per robot and records it as `queued`; `robot()` and `robots()` report `running` while a non-terminal run exists. `cancel` updates the run to `cancelled`, records `endedAt`, so the robot reports `idle` again. `advance` records executor progress in `running`, `waiting`, or `finalizing`, so a client can distinguish an executing run from a paused one and from a queued run; a run that is already terminal keeps its state. `finish` records the executor's terminal state with its output or error detail; a run that is already terminal keeps its state. Cancelling an already terminal run returns without a write. A restarted provider reads the same domain and reports the same revisions, robots, and runs.
 
 </details>
 

@@ -7,7 +7,7 @@
 
 import { notifySubscribers } from '@tomato/client-store'
 import type {
-  Robot, RobotSpecRevision, Run,
+  Robot, RobotSpecRevision, RobotTemplate, Run,
 } from '../types.ts'
 
 /** Immutable client robot registry state. */
@@ -18,6 +18,8 @@ export interface RobotRunsSnapshot {
   readonly robots: readonly Robot[]
   /** Every run in acceptance order. */
   readonly runs: readonly Run[]
+  /** Every registered template in registration order. */
+  readonly templates: readonly RobotTemplate[]
 }
 
 /** Bare observable source for the client robot snapshot. */
@@ -32,7 +34,7 @@ export interface RobotRunsSource {
   subscribe(listener: () => void): () => void
 }
 
-const EMPTY: RobotRunsSnapshot = { specs: [], robots: [], runs: [] }
+const EMPTY: RobotRunsSnapshot = { specs: [], robots: [], runs: [], templates: [] }
 
 /** Owns the registry snapshot replaced by whole `robot.watch` frames. */
 export class RobotRunsModel implements RobotRunsSource {

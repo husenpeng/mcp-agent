@@ -48,7 +48,7 @@ To ask before costly tools, override the focus row in the profile's `cordis.patc
     approvalTools: ['mcp__hicreator__*']
 ```
 
-The insights row accepts its own bounds and an optional explicit recap route; the defaults in [`@tomato/experimental-muse-insights`](../muse-insights/README.md#configuration) need no override.
+All four rows accept configuration, and each has a **Configure** page on the Plugins page: insights, memory, memory tools, and goal focus. The pages come from the browser half of [`@tomato/experimental-muse-insights`](../muse-insights/README.md#configuration), which this bundle loads, so bounds, switches, and approval patterns change without editing `cordis.patch.yml`; the Host refuses a value outside the plugin's Config range.
 
 -----
 

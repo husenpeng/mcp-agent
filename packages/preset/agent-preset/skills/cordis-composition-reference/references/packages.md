@@ -224,6 +224,7 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@tomato/experimental-robot-local` | no | Storage-backed robot specification registry, instantiation, and run control |
 | `@tomato/experimental-robot-remote` | no | Mounts the generated robot Remote contribution in an optional client assembly |
 | `@tomato/experimental-robot-runtime` | no | Executes queued robot runs through a composed Agent and records their outcomes |
+| `@tomato/experimental-robot-templates-marketing` | no | Eleven creator-marketing robot templates and the skills they run: brand insight, influencer marketing, creative and competitor intelligence, and product selection and data insight for TikTok, Instagram, X, and YouTube |
 | `@tomato/experimental-robot-triggers` | no | Starts robot runs from cron schedules and robot event topics |
 | `@tomato/experimental-session-inspector` | no | Experimental virtualized Session log and live Chat group/node inspectors |
 | `@tomato/experimental-speech-to-text` | yes | Experimental speech recognition with independently selectable providers |

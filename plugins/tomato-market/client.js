@@ -29,12 +29,12 @@ __export(index_exports, {
   inject: () => inject
 });
 module.exports = __toCommonJS(index_exports);
-var import_jsx_runtime5 = require("react/jsx-runtime");
+var import_jsx_runtime6 = require("react/jsx-runtime");
 
 // src/client/i18n.js
 var NS = "tomato-market";
 var zh = {
-  tab: "插件市场",
+  tab: "通用插件市场",
   lede: "浏览开源 DeepSeek Harness 插件目录，安装能在 Tomato 中运行的插件。",
   searchPlaceholder: "搜索插件、作者或关键词",
   all: "全部",
@@ -56,7 +56,7 @@ var zh = {
   stars: "★ {count}",
   noStars: "暂无星标",
   viewAll: "查看全部 {count} 个",
-  back: "返回插件市场",
+  back: "返回通用插件市场",
   more: "加载更多",
   filtered: "筛选结果",
   homepage: "主页",
@@ -103,10 +103,66 @@ var zh = {
   sourceGit: "Git 仓库",
   sourceCommit: "提交",
   sourceDirectory: "包目录",
-  banner: "目录内容来自社区，Tomato 只校验文件格式，不校验作者声明。安装前请核对来源。"
+  banner: "目录内容来自社区，Tomato 只校验文件格式，不校验作者声明。安装前请核对来源。",
+  marketingTab: "营销插件市场",
+  marketingLede: "为海外达人营销精选的开源免费能力：{plugins} 个插件、{mcp} 个 MCP 服务器、{skills} 个 Skill。",
+  marketingBanner: "条目由第三方维护，Tomato 固定了审核时的版本。MCP 服务器和插件会以你的权限在本机运行，安装前请核对来源。",
+  marketingBack: "返回营销插件市场",
+  marketingLoadFailed: "读取营销清单失败",
+  marketingSearch: "搜索名称、平台或用途，例如 TikTok",
+  kindFilter: "按类型筛选",
+  kindAll: "全部类型",
+  kindPlugin: "插件",
+  kindMcp: "MCP",
+  kindSkill: "Skill",
+  accessFreeKey: "需免费 key",
+  accessSelfHosted: "需自部署",
+  accessLogin: "需登录",
+  manualInstall: "手动安装",
+  installed: "已安装",
+  viewSteps: "查看步骤",
+  viewDetails: "查看",
+  uninstall: "卸载",
+  managePlugin: "在已安装中管理",
+  license: "许可证",
+  updated: "最近更新",
+  pinnedVersion: "固定版本",
+  pinnedCommit: "固定提交",
+  packageName: "软件包",
+  setupTitle: "使用前准备",
+  stepsTitle: "安装步骤",
+  skillsTitle: "将安装的技能（{count} 个）",
+  envTitle: "需要设置的环境变量",
+  envHint: "把这些变量写进 `~/.tomato/.env` 后重启应用。Tomato 只把变量名写进配置，不保存 key 的值。",
+  loginRiskTitle: "账号风险",
+  loginRiskBody: "这个工具会用你自己的账号登录态读取平台数据，可能违反平台条款并导致账号受限或被封，平台改版后也可能失效。建议使用小号。",
+  confirmMcpTitle: "安装 MCP 服务器 {name}",
+  confirmSkillTitle: "安装 Skill {name}",
+  confirmUninstallTitle: "卸载 {name}",
+  confirmLoading: "正在检查…",
+  confirmCommand: "将在本机运行的命令",
+  confirmYaml: "将追加到当前 profile 的 cordis.patch.yml",
+  confirmSkills: "将写入 ~/.tomato/skills 的目录",
+  confirmSource: "来源：{repository}",
+  confirmInstall: "确认安装",
+  confirmUninstall: "确认卸载",
+  uninstallMcpBody: "将从当前 profile 的 cordis.patch.yml 删除这一行配置，其他内容不变。",
+  uninstallSkillBody: "将删除本市场安装的这些技能目录：{skills}。你自己写的同名技能不会被删除。",
+  runnerMissing: "本机没有找到 {runner}，这个服务器暂时无法启动。{hint}",
+  runnerHintUvx: "请先安装 uv：https://docs.astral.sh/uv/ ，Tomato 不会自动安装。",
+  runnerHintNpx: "请先安装 Node.js：https://nodejs.org/ ，Tomato 不会自动安装。",
+  skillConflict: "这些技能已经存在，而且不是本市场安装的，为避免覆盖已停止安装：{skills}。请先改名或移走它们。",
+  working: "正在处理…",
+  installDone: "已安装 {name}。",
+  uninstallDone: "已卸载 {name}。",
+  appliedHint: "已在当前 profile 生效，新会话即可使用。",
+  restartHint: "重启应用后生效。",
+  skillAppliedHint: "下一步对话即可使用。",
+  actionFailed: "操作失败：{reason}",
+  warningsTitle: "配置已写入，但有以下提示："
 };
 var en = {
-  tab: "Plugin market",
+  tab: "General plugins",
   lede: "Browse the open DeepSeek Harness plugin catalog and install plugins that run in Tomato.",
   searchPlaceholder: "Search plugins, authors, or keywords",
   all: "All",
@@ -128,7 +184,7 @@ var en = {
   stars: "★ {count}",
   noStars: "No stars yet",
   viewAll: "View all {count}",
-  back: "Back to plugin market",
+  back: "Back to general plugins",
   more: "Show more",
   filtered: "Filtered",
   homepage: "Homepage",
@@ -175,7 +231,63 @@ var en = {
   sourceGit: "Git repository",
   sourceCommit: "Commit",
   sourceDirectory: "Package directory",
-  banner: "Catalog entries are third-party content. Tomato validates the file format, not the claims. Check the source before installing."
+  banner: "Catalog entries are third-party content. Tomato validates the file format, not the claims. Check the source before installing.",
+  marketingTab: "Marketing plugins",
+  marketingLede: "Open-source, free capabilities curated for overseas creator marketing: {plugins} plugins, {mcp} MCP servers, and {skills} Skills.",
+  marketingBanner: "Third parties maintain these entries; Tomato pins the versions it reviewed. MCP servers and plugins run on this machine with your permissions, so check the source before installing.",
+  marketingBack: "Back to marketing plugins",
+  marketingLoadFailed: "Could not read the marketing catalog",
+  marketingSearch: "Search by name, platform, or task, such as TikTok",
+  kindFilter: "Filter by type",
+  kindAll: "All types",
+  kindPlugin: "Plugin",
+  kindMcp: "MCP",
+  kindSkill: "Skill",
+  accessFreeKey: "Free key needed",
+  accessSelfHosted: "Self-hosted",
+  accessLogin: "Login needed",
+  manualInstall: "Manual install",
+  installed: "Installed",
+  viewSteps: "View steps",
+  viewDetails: "View",
+  uninstall: "Uninstall",
+  managePlugin: "Manage in Installed",
+  license: "License",
+  updated: "Last update",
+  pinnedVersion: "Pinned version",
+  pinnedCommit: "Pinned commit",
+  packageName: "Package",
+  setupTitle: "Before you start",
+  stepsTitle: "Install steps",
+  skillsTitle: "Skills this installs ({count})",
+  envTitle: "Environment variables to set",
+  envHint: "Put these variables in `~/.tomato/.env`, then restart the app. Tomato writes only their names to the configuration, never the values.",
+  loginRiskTitle: "Account risk",
+  loginRiskBody: "This tool reads platform data with your own login session. That can break the platform's terms and get the account restricted or banned, and it can stop working when the platform changes. Use a secondary account.",
+  confirmMcpTitle: "Install MCP server {name}",
+  confirmSkillTitle: "Install Skill {name}",
+  confirmUninstallTitle: "Uninstall {name}",
+  confirmLoading: "Checking…",
+  confirmCommand: "Command that runs on this machine",
+  confirmYaml: "Added to this profile's cordis.patch.yml",
+  confirmSkills: "Directories written to ~/.tomato/skills",
+  confirmSource: "Source: {repository}",
+  confirmInstall: "Install",
+  confirmUninstall: "Uninstall",
+  uninstallMcpBody: "This removes the entry's row from this profile's cordis.patch.yml and changes nothing else.",
+  uninstallSkillBody: "This deletes the skill directories this market installed: {skills}. Skills you wrote under the same name stay.",
+  runnerMissing: "{runner} was not found on this machine, so this server cannot start yet. {hint}",
+  runnerHintUvx: "Install uv first: https://docs.astral.sh/uv/. Tomato does not install it for you.",
+  runnerHintNpx: "Install Node.js first: https://nodejs.org/. Tomato does not install it for you.",
+  skillConflict: "Installation stopped so nothing is overwritten. These skills already exist and did not come from this market: {skills}. Rename or move them first.",
+  working: "Working…",
+  installDone: "Installed {name}.",
+  uninstallDone: "Uninstalled {name}.",
+  appliedHint: "Active in this profile; new sessions can use it.",
+  restartHint: "Restart the app to apply it.",
+  skillAppliedHint: "Available from the next step of a conversation.",
+  actionFailed: "That did not work: {reason}",
+  warningsTitle: "The configuration was saved, with these notes:"
 };
 var DICTIONARIES = { zh, en };
 function installI18n(ctx) {
@@ -216,6 +328,21 @@ function adaptVersion(plugin, version) {
 }
 function readDetail(plugin, version) {
   return call("detail", { name: plugin.name, version: version.version });
+}
+function readMarketingCatalog() {
+  return call("marketing-catalog");
+}
+function previewMarketingEntry(id) {
+  return call("marketing-preview", { id });
+}
+function installMarketingEntry(id) {
+  return call("marketing-install", { id });
+}
+function uninstallMarketingEntry(id) {
+  return call("marketing-uninstall", { id });
+}
+function readMarketingDetail(id) {
+  return call("marketing-detail", { id });
 }
 
 // src/client/search.js
@@ -518,6 +645,124 @@ function createController(i18n) {
   };
 }
 
+// src/client/marketing-store.js
+var PAGE = 60;
+function createMarketingController(i18n) {
+  const store = createStore({
+    status: "idle",
+    catalog: null,
+    failure: null,
+    language: i18n.language(),
+    query: "",
+    category: null,
+    kind: "all",
+    sort: "stars",
+    limit: PAGE,
+    selected: null,
+    detail: { status: "idle" },
+    dialog: null
+  });
+  let loadToken = 0;
+  let detailToken = 0;
+  let dialogToken = 0;
+  const state = () => store.get();
+  const set = (patch) => {
+    store.set({ ...state(), ...patch });
+  };
+  const load = async () => {
+    const token = ++loadToken;
+    set({ status: state().catalog === null ? "loading" : state().status, failure: null });
+    try {
+      const catalog = await readMarketingCatalog();
+      if (token === loadToken) set({ status: "ready", catalog });
+    } catch (error) {
+      if (token === loadToken) set({ status: "error", failure: error?.message ?? String(error) });
+    }
+  };
+  const open = (entry) => {
+    const token = ++detailToken;
+    set({ selected: entry.id, detail: { status: "loading" } });
+    readMarketingDetail(entry.id).then(
+      (detail) => {
+        if (token === detailToken) set({ detail: detail.status === "found" ? { status: "found", markdown: detail.markdown } : { status: "none" } });
+      },
+      (error) => {
+        if (token === detailToken) set({ detail: { status: "error", message: error?.message ?? String(error) } });
+      }
+    );
+  };
+  const startInstall = async (entry) => {
+    const token = ++dialogToken;
+    set({ dialog: { mode: "install", entry, phase: "loading" } });
+    try {
+      const preview = await previewMarketingEntry(entry.id);
+      if (token === dialogToken) set({ dialog: { mode: "install", entry, phase: "ready", preview } });
+    } catch (error) {
+      if (token === dialogToken) set({ dialog: { mode: "install", entry, phase: "failed", reason: error?.message ?? String(error) } });
+    }
+  };
+  const confirm = async () => {
+    const dialog = state().dialog;
+    if (dialog === null || dialog.phase !== "ready") return;
+    const token = ++dialogToken;
+    set({ dialog: { ...dialog, phase: "working" } });
+    try {
+      const result = dialog.mode === "install" ? await installMarketingEntry(dialog.entry.id) : await uninstallMarketingEntry(dialog.entry.id);
+      await load();
+      if (token === dialogToken) set({ dialog: { ...dialog, phase: "done", result } });
+    } catch (error) {
+      await load();
+      if (token === dialogToken) set({ dialog: { ...dialog, phase: "failed", reason: error?.message ?? String(error) } });
+    }
+  };
+  return {
+    store,
+    ensure: () => {
+      if (state().status === "idle") void load();
+    },
+    reload: () => {
+      void load();
+    },
+    setLanguage: (language) => {
+      if (language !== state().language) set({ language });
+    },
+    setQuery: (query) => {
+      set({ query, limit: PAGE });
+    },
+    setCategory: (category) => {
+      set({ category, limit: PAGE });
+    },
+    setKind: (kind) => {
+      set({ kind, limit: PAGE });
+    },
+    setSort: (sort) => {
+      set({ sort });
+    },
+    showMore: () => {
+      set({ limit: state().limit + PAGE });
+    },
+    open,
+    retryDetail: () => {
+      const entry = state().catalog?.entries.find((candidate) => candidate.id === state().selected);
+      if (entry !== void 0) open(entry);
+    },
+    back: () => {
+      detailToken += 1;
+      set({ selected: null, detail: { status: "idle" } });
+    },
+    startInstall,
+    startUninstall: (entry) => {
+      dialogToken += 1;
+      set({ dialog: { mode: "uninstall", entry, phase: "ready" } });
+    },
+    confirm,
+    closeDialog: () => {
+      dialogToken += 1;
+      set({ dialog: null });
+    }
+  };
+}
+
 // src/client/market.jsx
 var import_jsx_runtime4 = require("react/jsx-runtime");
 
@@ -588,6 +833,13 @@ var MARKET_CSS = `
 .tm-notice p { margin: 0; }
 .tm-noticeRange { font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary); }
 .tm-linkButton { align-self: flex-start; }
+.tm-filters { display: flex; flex-direction: column; gap: 10px; }
+.tm-tags { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.tm-callout { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 10px 12px; border-radius: var(--dsw-radius-lg); background: var(--dsw-alias-bg-module-platform); font-size: 13px; line-height: 20px; color: var(--dsw-alias-label-secondary); }
+.tm-calloutTitle { font-weight: 600; }
+.tm-code { margin: 0; padding: 10px 12px; border-radius: var(--dsw-radius-lg); background: var(--dsw-alias-bg-module-platform); font-family: var(--ds-font-family-code); font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-secondary); white-space: pre-wrap; overflow-wrap: anywhere; }
+.tm-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.tm-markdown { font-size: 13px; line-height: 20px; color: var(--dsw-alias-label-secondary); min-width: 0; }
 
 @media (max-width: 720px) {
   .tm-card { gap: 10px; }
@@ -1056,22 +1308,507 @@ function MarketTab({ controller, t, install }) {
   ] });
 }
 
+// src/client/marketing.jsx
+var import_jsx_runtime5 = require("react/jsx-runtime");
+
+// src/client/marketing-search.js
+function entryText(entry, categoryTitles, language) {
+  return [
+    entry.id,
+    localized(entry.title, "en"),
+    localized(entry.title, language),
+    localized(entry.description, "en"),
+    localized(entry.description, language),
+    entry.repository,
+    entry.install.package ?? entry.install.name ?? "",
+    ...entry.categories.map((id) => categoryTitles.get(id) ?? id),
+    ...(entry.install.skills ?? []).map((skill) => skill.name)
+  ].join("\n").toLowerCase();
+}
+function filterEntries(entries, { query = "", category = null, kind = "all", categories, language }) {
+  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const titles = new Map(categories.map((entry) => [entry.id, localized(entry.title, language)]));
+  return entries.filter((entry) => {
+    if (kind !== "all" && entry.kind !== kind) return false;
+    if (category !== null && !entry.categories.includes(category)) return false;
+    if (words.length === 0) return true;
+    const text = entryText(entry, titles, language);
+    return words.every((word) => text.includes(word));
+  });
+}
+function sortEntries(entries, sort, language) {
+  const collator = new Intl.Collator(language);
+  const byName = (a, b) => collator.compare(localized(a.title, language), localized(b.title, language));
+  const ordered = [...entries];
+  switch (sort) {
+    case "updated":
+      return ordered.sort((a, b) => b.pushedAt.localeCompare(a.pushedAt) || byName(a, b));
+    case "name":
+      return ordered.sort(byName);
+    default:
+      return ordered.sort((a, b) => b.stars - a.stars || byName(a, b));
+  }
+}
+function entryCounts(entries) {
+  const counts = /* @__PURE__ */ new Map();
+  for (const entry of entries) {
+    for (const id of entry.categories) counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+  return counts;
+}
+function oneClick(entry) {
+  return entry.install.type !== "manual";
+}
+function pluginTarget(entry) {
+  const version = { version: entry.install.version, source: { type: "npm" } };
+  return {
+    plugin: { name: entry.install.name, title: entry.title, repository: { url: entry.repository }, versions: [version] },
+    version
+  };
+}
+function accessTag(access) {
+  switch (access) {
+    case "free-key":
+      return { key: "accessFreeKey", tone: "info" };
+    case "self-hosted":
+      return { key: "accessSelfHosted", tone: "neutral" };
+    case "login":
+      return { key: "accessLogin", tone: "warning" };
+    default:
+      return void 0;
+  }
+}
+function kindKey(kind) {
+  switch (kind) {
+    case "plugin":
+      return "kindPlugin";
+    case "mcp":
+      return "kindMcp";
+    default:
+      return "kindSkill";
+  }
+}
+
+// src/client/marketing.jsx
+var import_react3 = require("react");
+var import_client_ui_primitives5 = require("@tomato/client-ui-primitives");
+var SORTS2 = ["stars", "updated", "name"];
+var KINDS = ["all", "plugin", "mcp", "skill"];
+function sortKey(sort) {
+  switch (sort) {
+    case "updated":
+      return "sortUpdated";
+    case "name":
+      return "sortName";
+    default:
+      return "sortStars";
+  }
+}
+function repositoryLabel(url) {
+  return url.replace(/^https?:\/\/github\.com\//, "");
+}
+function beginInstall(controller, entry, install) {
+  if (entry.install.type === "plugin") {
+    const { plugin, version } = pluginTarget(entry);
+    void controller.plugins.install(plugin, version, install);
+  } else {
+    void controller.startInstall(entry);
+  }
+}
+function useMarkdownLabels(t) {
+  return (0, import_client_ui_primitives5.useDetailDocumentLabels)({
+    title: t("detailTitle"),
+    loading: t("detailLoading"),
+    retry: t("retryDetail"),
+    copy: t("codeCopy"),
+    copied: t("codeCopied"),
+    codeBlock: t("codeBlock"),
+    wrap: t("codeWrap"),
+    unwrap: t("codeUnwrap"),
+    footnotes: t("footnotes")
+  });
+}
+function EntryTags({ entry, installed, t }) {
+  const access = accessTag(entry.access);
+  return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { className: "tm-tags", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_client_ui_primitives5.Tag, { tone: "outline", children: t(kindKey(entry.kind)) }),
+    access === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_client_ui_primitives5.Tag, { tone: access.tone, children: t(access.key) }),
+    oneClick(entry) ? null : /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_client_ui_primitives5.Tag, { tone: "neutral", children: t("manualInstall") }),
+    installed ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_client_ui_primitives5.Tag, { tone: "success", children: t("installed") }) : null
+  ] });
+}
+function EntryCard({ entry, installed, checking, language, t, onOpen, onInstall }) {
+  const title = localized(entry.title, language);
+  return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("li", { className: "tm-card", "data-marketing-entry": entry.id, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "tm-icon", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(MarketIcon, {}) }),
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "tm-main", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "tm-titleRow", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("button", { type: "button", className: "tm-cardOpen", "aria-label": t("open", { name: title }), onClick: onOpen, children: title }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(EntryTags, { entry, installed, t })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "tm-description", children: localized(entry.description, language) }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "tm-meta", children: [entry.license, entry.pushedAt, repositoryLabel(entry.repository)].join(" · ") })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "tm-end", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_client_ui_primitives5.Tag, { tone: "quiet", className: "tm-stars", children: t("stars", { count: formatStars(entry.stars) }) }),
+      installed || !oneClick(entry) ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_client_ui_primitives5.Button, { variant: "outline", size: "sm", onClick: onOpen, children: t(installed ? "viewDetails" : "viewSteps") }) : /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_client_ui_primitives5.Button, { variant: "outline", size: "sm", disabled: checking, onClick: onInstall, children: t(checking ? "checking" : "install") })
+    ] })
+  ] });
+}
+function Browse2({ state, pluginCheck, controller, install, t }) {
+  const [sortMenu, setSortMenu] = (0, import_react3.useState)(false);
+  const { catalog, language } = state;
+  const entries = catalog?.entries ?? [];
+  const categories = catalog?.categories ?? [];
+  const installed = (0, import_react3.useMemo)(() => new Set(catalog?.installed ?? []), [catalog]);
+  const typed = (0, import_react3.useMemo)(() => filterEntries(entries, { kind: state.kind, categories, language }), [entries, state.kind, categories, language]);
+  const counts = (0, import_react3.useMemo)(() => entryCounts(typed), [typed]);
+  const matched = (0, import_react3.useMemo)(() => filterEntries(entries, {
+    query: state.query,
+    category: state.category,
+    kind: state.kind,
+    categories,
+    language
+  }), [entries, state.query, state.category, state.kind, categories, language]);
+  const ordered = (0, import_react3.useMemo)(() => sortEntries(matched, state.sort, language), [matched, state.sort, language]);
+  const shown = ordered.slice(0, state.limit);
+  const totals = (0, import_react3.useMemo)(() => {
+    const count = (kind) => entries.filter((entry) => entry.kind === kind).length;
+    return { plugins: String(count("plugin")), mcp: String(count("mcp")), skills: String(count("skill")) };
+  }, [entries]);
+  return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "tm-section", children: [
+    catalog === null ? null : /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_jsx_runtime5.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { className: "tm-lede", children: t("marketingLede", totals) }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { className: "tm-banner", children: t("marketingBanner") })
+    ] }),
+    state.status === "loading" ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(MarketSkeletons, { label: t("loading") }) : null,
+    state.status === "error" ? /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "tm-status", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("p", { className: "tm-error", role: "alert", children: [
+        t("marketingLoadFailed"),
+        "：",
+        state.failure
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_client_ui_primitives5.Button, { variant: "outline", size: "sm", onClick: controller.reload, children: t("retry") })
+    ] }) : null,
+    catalog === null ? null : /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_jsx_runtime5.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "tm-toolbar", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+          import_client_ui_primitives5.Input,
+          {
+            className: "tm-search",
+            type: "search",
+            value: state.query,
+            placeholder: t("marketingSearch"),
+            "aria-label": t("marketingSearch"),
+            icon: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_client_ui_primitives5.IconSearchOutlineRegular, { size: 16 }),
+            onChange: (event) => {
+              controller.setQuery(event.target.value);
+            }
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+          import_client_ui_primitives5.Menu,
+          {
+            open: sortMenu,
+            onClose: () => {
+              setSortMenu(false);
+            },
+            portal: true,
+            autoFocus: true,
+            align: "end",
+            selectedId: state.sort,
+            items: SORTS2.map((sort) => ({ id: sort, label: t(sortKey(sort)) })),
+            onSelect: (id) => {
+              setSortMenu(false);
+              controller.setSort(id);
+            },
+            anchor: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(
+              import_client_ui_primitives5.Button,
+              {
+                variant: "ghost",
+                size: "sm",
+                "aria-haspopup": "menu",
+                "aria-expanded": sortMenu,
+                onClick: () => {
+                  setSortMenu((value) => !value);
+                },
+                children: [
+                  t("sortLabel"),
+                  "：",
+                  t(sortKey(state.sort)),
+                  /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_client_ui_primitives5.IconChevronDownOutlineRegular, { size: 12, "aria-hidden": "true" })
+                ]
+              }
+            )
+          }
+        )
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "tm-filters", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+          import_client_ui_primitives5.SegmentedControl,
+          {
+            id: "tomato-market-kind",
+            label: t("kindFilter"),
+            value: state.kind,
+            options: KINDS.map((kind) => ({ value: kind, label: t(kind === "all" ? "kindAll" : kindKey(kind)) })),
+            onChange: controller.setKind
+          }
+        ),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "tm-pills", role: "group", "aria-label": t("categories", { count: String(categories.length) }), children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_client_ui_primitives5.Pill, { active: state.category === null, onClick: () => {
+            controller.setCategory(null);
+          }, children: [
+            t("all"),
+            " ",
+            typed.length
+          ] }),
+          categories.filter((category) => counts.has(category.id)).map((category) => /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(
+            import_client_ui_primitives5.Pill,
+            {
+              active: state.category === category.id,
+              onClick: () => {
+                controller.setCategory(state.category === category.id ? null : category.id);
+              },
+              children: [
+                localized(category.title, language),
+                " ",
+                counts.get(category.id)
+              ]
+            },
+            category.id
+          ))
+        ] })
+      ] }),
+      matched.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { className: "tm-lede", children: t("empty") }) : /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_jsx_runtime5.Fragment, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("ul", { className: "tm-cards", children: shown.map((entry) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+          EntryCard,
+          {
+            entry,
+            installed: installed.has(entry.id),
+            language,
+            t,
+            checking: entry.install.type === "plugin" && pluginCheck === entry.install.name,
+            onOpen: () => {
+              controller.open(entry);
+            },
+            onInstall: () => {
+              beginInstall(controller, entry, install);
+            }
+          },
+          entry.id
+        )) }),
+        shown.length < ordered.length ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "tm-more", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_client_ui_primitives5.Button, { variant: "outline", size: "sm", onClick: controller.showMore, children: t("more") }) }) : null
+      ] })
+    ] })
+  ] });
+}
+function CatalogMarkdown({ text, labels }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "tm-markdown", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_client_ui_primitives5.MarkdownText, { text, labels: labels.markdown, omitHtml: true }) });
+}
+function Fact({ label, value, link }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_jsx_runtime5.Fragment, { children: [
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("dt", { children: label }),
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("dd", { children: link === void 0 ? value : /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("a", { href: link, target: "_blank", rel: "noreferrer noopener", children: value }) })
+  ] });
+}
+function EntryPage({ entry, state, pluginCheck, controller, install, openPackage, t }) {
+  const { language } = state;
+  const installed = state.catalog.installed.includes(entry.id);
+  const { install: target } = entry;
+  const labels = useMarkdownLabels(t);
+  const documentState = state.detail.status === "found" ? { status: "found", markdown: state.detail.markdown } : state.detail.status === "none" ? { status: "none" } : state.detail.status === "error" ? { status: "error", message: `${t("detailFailed")}：${state.detail.message}` } : { status: "loading" };
+  const action = () => {
+    if (target.type === "manual") return null;
+    if (!installed) return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_client_ui_primitives5.Button, { variant: "outline", size: "sm", disabled: pluginCheck === target.name, onClick: () => {
+      beginInstall(controller, entry, install);
+    }, children: pluginCheck === target.name ? t("checking") : t("install") });
+    return target.type === "plugin" ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_client_ui_primitives5.Button, { variant: "outline", size: "sm", onClick: () => {
+      openPackage(target.name);
+    }, children: t("managePlugin") }) : /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_client_ui_primitives5.Button, { variant: "outline", size: "sm", onClick: () => {
+      controller.startUninstall(entry);
+    }, children: t("uninstall") });
+  };
+  return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "tm-detail", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("button", { type: "button", className: "tm-back", onClick: controller.back, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_client_ui_primitives5.IconChevronLeftOutlineRegular, { size: 14, "aria-hidden": "true" }),
+      t("marketingBack")
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "tm-head", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "tm-headIcon", "aria-hidden": "true", children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(MarketIcon, { size: 40 }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "tm-headMain", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("h2", { className: "tm-headTitle", children: localized(entry.title, language) }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "tm-headMeta", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(EntryTags, { entry, installed, t }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "tm-stars", children: t("stars", { count: formatStars(entry.stars) }) }),
+          entry.categories.map((id) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { children: localized(state.catalog.categories.find((category) => category.id === id)?.title, language) }, id))
+        ] })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "tm-end", children: action() })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { className: "tm-descriptionFull", children: localized(entry.description, language) }),
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("dl", { className: "tm-facts", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Fact, { label: t("repository"), value: repositoryLabel(entry.repository), link: entry.repository }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Fact, { label: t("license"), value: entry.license }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Fact, { label: t("updated"), value: entry.pushedAt }),
+      target.type === "mcp" || target.type === "plugin" ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Fact, { label: t("packageName"), value: target.package ?? target.name }) : null,
+      target.type === "mcp" || target.type === "plugin" ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Fact, { label: t("pinnedVersion"), value: target.version }) : null,
+      target.type === "skill" ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Fact, { label: t("pinnedCommit"), value: target.commit.slice(0, 12) }) : null
+    ] }),
+    entry.access === "login" ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(LoginRisk, { t }) : null,
+    entry.setup === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("section", { className: "tm-group", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("h3", { className: "tm-sectionTitle", children: t("setupTitle") }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(CatalogMarkdown, { text: localized(entry.setup, language), labels })
+    ] }),
+    entry.env === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(EnvList, { names: entry.env, labels, t }),
+    target.type !== "manual" ? null : /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("section", { className: "tm-group", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("h3", { className: "tm-sectionTitle", children: t("stepsTitle") }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(CatalogMarkdown, { text: localized(target.steps, language), labels })
+    ] }),
+    target.type !== "skill" ? null : /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("section", { className: "tm-group", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("h3", { className: "tm-sectionTitle", children: t("skillsTitle", { count: String(target.skills.length) }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("ul", { className: "tm-chips", children: target.skills.map((skill) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_client_ui_primitives5.Tag, { tone: "outline", children: skill.name }) }, skill.name)) })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("section", { className: "tm-group", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("h3", { className: "tm-sectionTitle", children: t("detailTitle") }),
+      state.detail.status === "none" ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { className: "tm-lede", children: t("detailNone") }) : null,
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_client_ui_primitives5.DetailDocument, { state: documentState, labels, onRetry: controller.retryDetail })
+    ] })
+  ] });
+}
+function LoginRisk({ t }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("p", { className: "tm-callout", role: "note", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "tm-calloutTitle", children: t("loginRiskTitle") }),
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { children: t("loginRiskBody") })
+  ] });
+}
+function EnvList({ names, labels, t }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("section", { className: "tm-group", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("h3", { className: "tm-sectionTitle", children: t("envTitle") }),
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("ul", { className: "tm-chips", children: names.map((name) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_client_ui_primitives5.Tag, { tone: "outline", children: name }) }, name)) }),
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(CatalogMarkdown, { text: t("envHint"), labels })
+  ] });
+}
+function dialogTitle(dialog, title, t) {
+  if (dialog.mode === "uninstall") return t("confirmUninstallTitle", { name: title });
+  return t(dialog.entry.kind === "mcp" ? "confirmMcpTitle" : "confirmSkillTitle", { name: title });
+}
+function InstallPreview({ dialog, language, labels, t }) {
+  const { entry, preview } = dialog;
+  const conflicts = preview.conflicts ?? [];
+  return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_jsx_runtime5.Fragment, { children: [
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { children: t("confirmSource", { repository: repositoryLabel(entry.repository) }) }),
+    entry.access === "login" ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(LoginRisk, { t }) : null,
+    preview.kind === "mcp" ? /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_jsx_runtime5.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { children: t("confirmCommand") }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("pre", { className: "tm-code", children: preview.command }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { children: t("confirmYaml") }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("pre", { className: "tm-code", children: preview.yaml })
+    ] }) : /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_jsx_runtime5.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { children: t("confirmSkills") }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("pre", { className: "tm-code", children: preview.skills.join("\n") })
+    ] }),
+    preview.runnerMissing === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { className: "tm-callout", role: "alert", children: t("runnerMissing", { runner: preview.runnerMissing, hint: t(preview.runnerMissing === "uvx" ? "runnerHintUvx" : "runnerHintNpx") }) }),
+    conflicts.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { className: "tm-callout", role: "alert", children: t("skillConflict", { skills: conflicts.join(", ") }) }),
+    entry.setup === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "tm-group", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "tm-sectionTitle", children: t("setupTitle") }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(CatalogMarkdown, { text: localized(entry.setup, language), labels })
+    ] }),
+    entry.env === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(EnvList, { names: entry.env, labels, t })
+  ] });
+}
+function ActionResult({ dialog, title, t }) {
+  const { mode, entry, result } = dialog;
+  const warnings = result.warnings ?? [];
+  const hint = entry.kind === "skill" ? "skillAppliedHint" : result.application === "applied" ? "appliedHint" : "restartHint";
+  return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_jsx_runtime5.Fragment, { children: [
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { role: "status", children: t(mode === "install" ? "installDone" : "uninstallDone", { name: title }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { children: t(hint) }),
+    warnings.length === 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_jsx_runtime5.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { children: t("warningsTitle") }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("pre", { className: "tm-code", children: warnings.join("\n") })
+    ] })
+  ] });
+}
+function ActionDialog({ dialog, language, controller, t }) {
+  const labels = useMarkdownLabels(t);
+  const { entry, phase, mode } = dialog;
+  const title = localized(entry.title, language);
+  const blocked = mode === "install" && (dialog.preview?.conflicts ?? []).length > 0;
+  const skillNames = entry.install.skills?.map((skill) => skill.name).join(", ") ?? "";
+  return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+    import_client_ui_primitives5.Modal,
+    {
+      open: true,
+      onClose: controller.closeDialog,
+      title: dialogTitle(dialog, title, t),
+      closeLabel: t("close"),
+      footer: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_jsx_runtime5.Fragment, { children: [
+        phase === "ready" && !blocked ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_client_ui_primitives5.Button, { variant: "primary", size: "sm", onClick: () => {
+          void controller.confirm();
+        }, children: t(mode === "install" ? "confirmInstall" : "confirmUninstall") }) : null,
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(import_client_ui_primitives5.Button, { variant: "ghost", size: "sm", onClick: controller.closeDialog, children: t("close") })
+      ] }),
+      children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "tm-notice", children: [
+        phase === "loading" ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { role: "status", children: t("confirmLoading") }) : null,
+        phase === "working" ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { role: "status", children: t("working") }) : null,
+        phase === "failed" ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { className: "tm-error", role: "alert", children: t("actionFailed", { reason: dialog.reason }) }) : null,
+        phase === "ready" && mode === "install" ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(InstallPreview, { dialog, language, labels, t }) : null,
+        phase === "ready" && mode === "uninstall" ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("p", { children: entry.kind === "mcp" ? t("uninstallMcpBody") : t("uninstallSkillBody", { skills: skillNames }) }) : null,
+        phase === "done" ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(ActionResult, { dialog, title, t }) : null
+      ] })
+    }
+  );
+}
+function MarketingTab({ controller, t, install, openPackage }) {
+  const state = (0, import_react3.useSyncExternalStore)(controller.store.subscribe, controller.store.get, controller.store.get);
+  const pluginState = (0, import_react3.useSyncExternalStore)(controller.plugins.store.subscribe, controller.plugins.store.get, controller.plugins.store.get);
+  (0, import_react3.useEffect)(() => {
+    installStyles();
+  }, []);
+  (0, import_react3.useEffect)(() => {
+    controller.ensure();
+  }, [controller]);
+  const entry = state.selected === null ? void 0 : state.catalog?.entries.find((candidate) => candidate.id === state.selected);
+  return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_jsx_runtime5.Fragment, { children: [
+    entry === void 0 ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Browse2, { state, pluginCheck: pluginState.checking, controller, install, t }) : /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(EntryPage, { entry, state, pluginCheck: pluginState.checking, controller, install, openPackage, t }),
+    state.dialog === null ? null : /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(ActionDialog, { dialog: state.dialog, language: state.language, controller, t }),
+    pluginState.notice === null ? null : /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+      InstallNotice,
+      {
+        notice: pluginState.notice,
+        t,
+        onClose: controller.plugins.dismissNotice,
+        onContinue: () => {
+          controller.plugins.confirmOverride(install);
+        },
+        onAdapt: () => {
+          void controller.plugins.adaptAndInstall(install);
+        }
+      }
+    )
+  ] });
+}
+
 // src/client/index.jsx
-var inject = ["slots", "locale"];
+var inject = ["slots", "locale", "remote"];
 function apply(ctx) {
   const { t, language } = installI18n(ctx);
-  const controller = createController({ t, language });
+  const general = createController({ t, language });
+  const marketing = { ...createMarketingController({ language }), plugins: createController({ t, language }) };
   ctx.effect(() => ctx.locale.subscribe(() => {
-    controller.setLanguage(language());
+    general.setLanguage(language());
+    marketing.setLanguage(language());
+    marketing.plugins.setLanguage(language());
   }), "tomato-market: active language");
-  const Tab = (props) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(MarketTab, { ...props, controller, t });
-  ctx.effect(() => ctx.slots.inject("plugins.tab", () => ctx.slots.register({
-    name: "plugins.tab",
-    id: "market",
-    order: -1,
-    label: () => t("tab"),
-    locale: NS
-  }, Tab)), "tomato-market: plugin market tab");
+  ctx.effect(() => ctx.remote.$on("plugin-manager/changed", () => {
+    marketing.reload();
+  }), "tomato-market: installed plugins");
+  const General = (props) => /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(MarketTab, { ...props, controller: general, t });
+  const Marketing = (props) => /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(MarketingTab, { ...props, controller: marketing, t });
+  ctx.effect(() => ctx.slots.inject("plugins.tab", function* () {
+    yield ctx.slots.register({ name: "plugins.tab", id: "marketing", order: -2, label: () => t("marketingTab"), locale: NS }, Marketing);
+    yield ctx.slots.register({ name: "plugins.tab", id: "market", order: -1, label: () => t("tab"), locale: NS }, General);
+  }), "tomato-market: market tabs");
 }
 return Object.defineProperty({ ...module.exports }, Symbol.toStringTag, { value: 'Module' })
   },

@@ -42,6 +42,7 @@
     "@tomato/client-locale": "workspace:*",
     "@tomato/client-store": "workspace:*",
     "@tomato/client-test-runtime": "workspace:*",
+    "@tomato/client-ui-chat": "workspace:*",
     "@tomato/client-ui-conversation": "workspace:*",
     "@tomato/client-ui-layout": "workspace:*",
     "@tomato/client-ui-primitives": "workspace:*",
@@ -53,6 +54,7 @@
     "@tomato/cordis": "workspace:~",
     "@tomato/experimental-robot": "workspace:*",
     "@tomato/session": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

@@ -1,0 +1,46 @@
+{
+  "name": "@tomato/experimental-robot-templates-marketing",
+  "description": "Eleven creator-marketing robot templates and the skills they run: brand insight, influencer marketing, creative and competitor intelligence, and product selection and data insight for TikTok, Instagram, X, and YouTube",
+  "version": "0.2.1-rc.3",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/experimental/robot-templates-marketing"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./locale/*.json": "./locale/*.json",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "skills",
+    "THIRD_PARTY_NOTICES.md",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@tomato/branded": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/experimental-robot": "workspace:*",
+    "@tomato/skill": "workspace:*"
+  },
+  "devDependencies": {
+    "@tomato/branded": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/experimental-robot": "workspace:*",
+    "@tomato/experimental-robot-local": "workspace:*",
+    "@tomato/skill": "workspace:*"
+  }
+}

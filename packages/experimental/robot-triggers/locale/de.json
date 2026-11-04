@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Roboter-Auslöser",
+    "description": "Startet Roboterläufe aus cron-Zeitplänen und Roboter-Ereignisthemen."
+  }
+}

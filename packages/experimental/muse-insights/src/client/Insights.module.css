@@ -266,6 +266,25 @@
   font-weight: 500;
 }
 
+/* The work section counts its items on the same line as the heading. */
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+}
+
+.sectionHead h3 {
+  margin: 0;
+}
+
+.sectionCount {
+  margin-left: auto;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
 .workList,
 .plainList,
 .sessionList,
@@ -286,24 +305,24 @@
   border-top: 0;
 }
 
-/* One recap work item is one task row: the whole row is the control that opens
-   the item's own page, so its hover surface and focus ring cover title and
-   brief together. The row keeps its separator; the button owns the padding. */
-.workRow {
-  border-top: 0.5px solid var(--dsw-alias-border-l1);
+/* One recap work item is one row: the state dot and the problem carry the scan,
+   the conclusion answers what came of it, and the meta line names the status and
+   the Sessions it came from. The whole row is the control that opens the item's
+   own page; rows sit 2px apart, and only the hovered one takes a surface. */
+.workList {
+  margin: 0 -8px;
 }
 
-.workRow:first-child {
-  border-top: 0;
+.workRow + .workRow {
+  margin-top: 2px;
 }
 
 .workRowButton {
   display: flex;
-  flex-direction: column;
   box-sizing: border-box;
-  gap: 2px;
+  gap: 10px;
   width: 100%;
-  padding: 8px 6px;
+  padding: 10px 8px;
   border: 0;
   border-radius: var(--dsw-radius-md);
   background: transparent;
@@ -324,14 +343,43 @@
   outline-offset: -2px;
 }
 
-/* The row's brief: the first prose line of the item's detail, kept to two
-   rendered lines; the item's page shows the text complete. */
-.workBrief {
+/* The dot sits on the problem's first line, whatever the row's height. */
+.workState {
+  display: flex;
+  flex: none;
+  padding-top: 5px;
+}
+
+/* On the item's page the dot rides the meta line's own alignment. */
+.metaDot {
+  display: flex;
+  flex: none;
+}
+
+.workBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.workHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.workProblem {
   display: -webkit-box;
+  flex: 1;
   overflow: hidden;
-  color: var(--dsw-alias-label-secondary);
-  font-size: 13px;
-  line-height: 20px;
+  min-width: 0;
+  margin: 0;
+  color: var(--dsw-alias-label-primary);
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 500;
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -343,6 +391,26 @@
   color: var(--dsw-alias-label-tertiary);
 }
 
+.workConclusion {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.workMeta {
+  overflow: hidden;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .taskDetail {
   margin: 2px 0 0;
   color: var(--dsw-alias-label-secondary);
@@ -351,15 +419,79 @@
   white-space: pre-wrap;
 }
 
-/* The item's own page: the detail keeps its paragraph breaks, and a long
+/* The item's own page: each section is a tertiary label over one bordered
+   container, matching the task detail's rule card. The conclusion reads as the
+   answer in primary ink; the solution keeps its paragraph breaks, and a long
    unbroken line (a path, a command) wraps instead of scrolling the page. */
-.itemDetail {
-  margin: 16px 0 0;
-  color: var(--dsw-alias-label-secondary);
-  font-size: 14px;
-  line-height: 22px;
+.detailSection {
+  margin-top: 20px;
+}
+
+.detailLabel {
+  margin: 0 0 8px 2px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 400;
+}
+
+.conclusionCard,
+.solutionCard {
+  margin: 0;
+  padding: 12px;
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  border-radius: var(--dsw-radius-lg);
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+}
+
+.conclusionCard {
+  color: var(--dsw-alias-label-primary);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.solutionCard {
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.sourceList {
+  margin: 0;
+  padding: 4px 12px;
+  border: 0.5px solid var(--dsw-alias-border-l3);
+  border-radius: var(--dsw-radius-lg);
+  list-style: none;
+}
+
+.sourceRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.sourceRow + .sourceRow {
+  border-top: 0.5px solid var(--dsw-alias-border-l1);
+}
+
+.sourceTitle {
+  flex: 1;
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sourceCount {
+  flex: none;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
 }
 
 .plainList {
@@ -412,6 +544,26 @@
   animation: spin 1s linear infinite;
 }
 
+/* The row's configuration page: one section per policy area, its fields in a
+   responsive grid so a wide page does not stretch each input full width. */
+.configSection {
+  margin: 0 0 20px;
+}
+
+.configHeading {
+  margin: 0 0 8px;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 600;
+}
+
+.configGrid {
+  display: grid;
+  gap: 12px 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -426,4 +578,40 @@
   .spin {
     animation: none;
   }
+}
+
+/* A row configured from its schema: a switch control puts its name, the
+   switch, its staged-reset, and its hint on one row above the shared grid's
+   inputs. */
+.configSwitch {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 12px;
+  align-content: start;
+}
+
+.configSwitchLabel {
+  color: var(--dsw-alias-label-primary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.configReset {
+  grid-column: 1 / -1;
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.configHint {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 1.5;
 }

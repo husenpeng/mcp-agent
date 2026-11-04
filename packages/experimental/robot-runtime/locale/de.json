@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Roboter-Laufzeit",
+    "description": "Führt wartende Roboterläufe über einen Agenten aus und protokolliert ihre Ergebnisse."
+  }
+}

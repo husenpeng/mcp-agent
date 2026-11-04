@@ -1,6 +1,8 @@
 /** Goal-round failure ledger, repeated-failure reminders, and per-tool approval through real registries. */
+import assert from 'node:assert/strict'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@tomato/cordis'
+import type { Volatile } from '@tomato/cordis'
 import Loader from '@tomato/cordis-plugin-loader'
 import AgentRegistry, { agentEvents } from '@tomato/agent'
 import type { Agent, AgentStatus } from '@tomato/agent'
@@ -19,6 +21,23 @@ import { executeToolFixture } from '@tomato/tool-testkit'
 import ApprovalService from '@tomato/user-approval'
 import type { ApprovalOutcome } from '@tomato/user-approval'
 import * as focus from '@tomato/experimental-focus'
+
+
+/** Whether a schema value is a Loader-published live reference. */
+function isVolatile(value: unknown): value is Volatile<unknown> {
+  return typeof value === 'object' && value !== null && 'get' in value
+    && typeof (value as { get?: unknown }).get === 'function'
+}
+
+/** The schema's plain values; Loader wraps each volatile field in a live reference. */
+function plainConfig(config: object): Record<string, unknown> {
+  const plain: Record<string, unknown> = {}
+  for (const [key, raw] of Object.entries(config)) {
+    const value: unknown = raw
+    plain[key] = isVolatile(value) ? value.get() : value
+  }
+  return plain
+}
 
 declare module '@tomato/llm' {
   interface MessageSourceMap {
@@ -41,7 +60,7 @@ interface Harness {
   readonly fiber: Context['fiber']
 }
 
-async function harness(config: focus.Config = {}, options: { approval?: boolean } = {}): Promise<Harness> {
+async function harness(config: Parameters<typeof focus.Config>[0] = {}, options: { approval?: boolean } = {}): Promise<Harness> {
   const ctx = new Context()
   contexts.push(ctx)
   await ctx.plugin(SessionStore)
@@ -153,7 +172,33 @@ describe('plugin exports and configuration', () => {
     expect(loader.unwrapExports(focus)).toBe(focus)
     expect('default' in focus).toBe(false)
     expect(focus.name).toBe('experimental-focus')
-    expect(focus.Config({})).toEqual({ repeatedFailureThreshold: 2, maxLedgerEntries: 5, maxMessageChars: 200, approvalTools: [] })
+    expect(plainConfig(focus.Config({}))).toEqual({
+      repeatedFailureThreshold: 2, maxLedgerEntries: 5, maxMessageChars: 200, approvalTools: [],
+    })
+  })
+
+  it('admits its automatic page on a Settings server composed beside it, and drops the policy with the plugin', async () => {
+    const ctx = new Context()
+    contexts.push(ctx)
+    await ctx.plugin(SessionStore)
+    await ctx.plugin(SessionProjectionRegistry)
+    await ctx.plugin(SystemPrompt)
+    await ctx.plugin(AgentRegistry)
+    await ctx.plugin(ToolRuntime)
+    await ctx.plugin(NativeToolExecutor)
+    const configure = vi.fn((_presentation: { auto?: boolean }, _owner: Context['fiber']) => () => {})
+    ctx.provide('settings', { configure } as never)
+    await ctx.plugin(focus)
+    await vi.waitFor(() => { expect(configure).toHaveBeenCalledTimes(1) })
+    const [call] = configure.mock.calls
+    assert(call !== undefined)
+    assert(JSON.stringify(call[0]) === '{}')
+    assert(typeof call[1].dispose === 'function')
+  })
+
+  it('mounts without a Settings server', async () => {
+    const test = await harness()
+    expect(test.ctx.get('settings')).toBeUndefined()
   })
 
   it('rejects invalid policy when applied directly', async () => {

@@ -127,6 +127,13 @@ Scoped resource access plus three tools shared by configured MCP servers.
 
 ```ts cordis-catalog
 /**
+ * List the configured MCP servers whose resources a caller can reach.
+ * @param scope - viewing scope (the calling agent); omitted lists the global servers alone.
+ * @returns server names sorted by code point.
+ */
+list(scope?: ScopeKey): string[]
+
+/**
  * Register one server and expose resource tools while that scope has providers.
  * @param server - configured server name, unique in this scope.
  * @param provider - connection-owned resource operations.
@@ -134,6 +141,8 @@ Scoped resource access plus three tools shared by configured MCP servers.
  */
 register(server: string, provider: McpResourceProvider): () => void
 ```
+
+Types: [ScopeKey](scope.md)
 
 Source: [`packages/mcp/mcp-resources/src/index.ts`](../../packages/mcp/mcp-resources/src/index.ts)
 <!-- END GENERATED cordis-surface -->

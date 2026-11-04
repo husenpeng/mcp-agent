@@ -1,0 +1,4074 @@
+{
+  "format": 1,
+  "generatedAt": "2026-11-03",
+  "categories": [
+    {
+      "id": "creator-discovery",
+      "title": {
+        "zh": "达人发现与核验",
+        "en": "Creator discovery"
+      }
+    },
+    {
+      "id": "social-data",
+      "title": {
+        "zh": "社媒数据",
+        "en": "Social data"
+      }
+    },
+    {
+      "id": "video",
+      "title": {
+        "zh": "视频与内容分析",
+        "en": "Video and content analysis"
+      }
+    },
+    {
+      "id": "ads-competitors",
+      "title": {
+        "zh": "广告与竞品",
+        "en": "Ads and competitors"
+      }
+    },
+    {
+      "id": "content",
+      "title": {
+        "zh": "内容与素材生成",
+        "en": "Content and assets"
+      }
+    },
+    {
+      "id": "publishing",
+      "title": {
+        "zh": "发布排期",
+        "en": "Publishing and scheduling"
+      }
+    },
+    {
+      "id": "outreach-crm",
+      "title": {
+        "zh": "外联与 CRM",
+        "en": "Outreach and CRM"
+      }
+    },
+    {
+      "id": "seo",
+      "title": {
+        "zh": "SEO/GEO",
+        "en": "SEO and GEO"
+      }
+    },
+    {
+      "id": "ecommerce",
+      "title": {
+        "zh": "电商",
+        "en": "E-commerce"
+      }
+    },
+    {
+      "id": "analytics",
+      "title": {
+        "zh": "数据分析与报告",
+        "en": "Analytics and reporting"
+      }
+    },
+    {
+      "id": "foundation",
+      "title": {
+        "zh": "基础能力",
+        "en": "Foundations"
+      }
+    }
+  ],
+  "entries": [
+    {
+      "id": "dsh-postiz",
+      "kind": "plugin",
+      "title": {
+        "zh": "Postiz 发布排期",
+        "en": "Postiz scheduling"
+      },
+      "description": {
+        "zh": "通过 MCP 接入 Postiz，向 X、LinkedIn、Instagram、TikTok、YouTube 等渠道排期、起草和发布。",
+        "en": "Connects to Postiz over MCP to schedule, draft and publish posts to X, LinkedIn, Instagram, TikTok, YouTube and more."
+      },
+      "repository": "https://github.com/gitroomhq/postiz-agent",
+      "stars": 563,
+      "pushedAt": "2026-10-30",
+      "license": "AGPL-3.0",
+      "categories": [
+        "publishing"
+      ],
+      "access": "self-hosted",
+      "setup": {
+        "zh": "需要自建 Postiz 实例（Docker 部署，见 https://docs.postiz.com ；官方云服务收费）。部署后在 Postiz 设置里生成 API key，再在插件设置中填写实例地址和 key。",
+        "en": "Requires a self-hosted Postiz instance (Docker, see https://docs.postiz.com; the official cloud is paid). Create an API key in Postiz settings, then enter the instance URL and key in the plugin settings."
+      },
+      "install": {
+        "type": "plugin",
+        "name": "dsh-postiz",
+        "version": "0.1.0"
+      }
+    },
+    {
+      "id": "modsearch",
+      "kind": "plugin",
+      "title": {
+        "zh": "ModSearch 搜索",
+        "en": "ModSearch"
+      },
+      "description": {
+        "zh": "网页搜索、X 搜索与网页抓取，默认使用 Firecrawl/Keenable 的免 key 共享额度。",
+        "en": "Web search, X search and page fetching that defaults to the keyless shared Firecrawl/Keenable quota."
+      },
+      "repository": "https://github.com/liustack/modsearch",
+      "stars": 917,
+      "pushedAt": "2026-10-28",
+      "license": "MIT",
+      "categories": [
+        "foundation",
+        "seo"
+      ],
+      "access": "none",
+      "install": {
+        "type": "plugin",
+        "name": "@liustack/modsearch",
+        "version": "5.10.11"
+      }
+    },
+    {
+      "id": "dsh-web-search-pro",
+      "kind": "plugin",
+      "title": {
+        "zh": "多引擎搜索 Pro",
+        "en": "Web search pro"
+      },
+      "description": {
+        "zh": "多引擎搜索与结果缓存，覆盖 YouTube、Reddit、Twitter、RSS 等通道。",
+        "en": "Multi-engine search with caching, covering YouTube, Reddit, Twitter and RSS channels."
+      },
+      "repository": "https://github.com/anweat/dsh-web-search-pro",
+      "stars": 83,
+      "pushedAt": "2026-11-03",
+      "license": "MIT",
+      "categories": [
+        "foundation",
+        "seo"
+      ],
+      "access": "none",
+      "install": {
+        "type": "plugin",
+        "name": "dsh-web-search-pro",
+        "version": "0.2.3"
+      }
+    },
+    {
+      "id": "dsh-harvest",
+      "kind": "plugin",
+      "title": {
+        "zh": "Harvest 多源调研",
+        "en": "Harvest research"
+      },
+      "description": {
+        "zh": "跨 Web、X、Reddit、YouTube 并行调研，并生成带来源核验的长篇研报。",
+        "en": "Runs parallel research across the web, X, Reddit and YouTube and writes long-form reports with source checks."
+      },
+      "repository": "https://github.com/toustifer/dsh-harvest",
+      "stars": 16,
+      "pushedAt": "2026-09-18",
+      "license": "MIT",
+      "categories": [
+        "creator-discovery",
+        "ads-competitors"
+      ],
+      "access": "free-key",
+      "setup": {
+        "zh": "深度研究需要 Tavily API key：到 https://app.tavily.com 注册免费档获取 key，然后在插件设置中填写。",
+        "en": "Deep research needs a Tavily API key: sign up for the free tier at https://app.tavily.com and enter the key in the plugin settings."
+      },
+      "install": {
+        "type": "plugin",
+        "name": "@stifer/dsh-harvest",
+        "version": "0.2.0"
+      }
+    },
+    {
+      "id": "dsh-hacker-news",
+      "kind": "plugin",
+      "title": {
+        "zh": "Hacker News",
+        "en": "Hacker News"
+      },
+      "description": {
+        "zh": "读取 Hacker News 榜单、讨论串、搜索结果与用户资料。",
+        "en": "Reads Hacker News rankings, threads, search results and user profiles."
+      },
+      "repository": "https://github.com/heartleo/hn-cli",
+      "stars": 51,
+      "pushedAt": "2026-08-27",
+      "license": "MIT",
+      "categories": [
+        "social-data"
+      ],
+      "access": "none",
+      "install": {
+        "type": "plugin",
+        "name": "dsh-hacker-news",
+        "version": "0.1.0"
+      }
+    },
+    {
+      "id": "qiaomu-rss",
+      "kind": "plugin",
+      "title": {
+        "zh": "乔木 RSS",
+        "en": "Qiaomu RSS"
+      },
+      "description": {
+        "zh": "RSS 订阅、播客转录与文章改写，用于选题监听。",
+        "en": "RSS subscriptions, podcast transcription and article rewriting for topic monitoring."
+      },
+      "repository": "https://github.com/joeseesun/qiaomu-rss-dsh",
+      "stars": 81,
+      "pushedAt": "2026-10-31",
+      "license": "GPL-3.0",
+      "categories": [
+        "content",
+        "social-data"
+      ],
+      "access": "none",
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 打开 **插件** 页，点 **添加插件**，填入 `github:joeseesun/qiaomu-rss-dsh`（该包不在 DSH 插件目录中，需从 GitHub 直接安装）。\n2. 重启 Tomato 或刷新插件页确认已启用。",
+          "en": "1. Open **Plugins**, choose **Add plugin**, and enter `github:joeseesun/qiaomu-rss-dsh` (the package is not in the DSH plugin index, so it installs straight from GitHub).\n2. Restart Tomato or reload the Plugins page to confirm it is enabled."
+        }
+      }
+    },
+    {
+      "id": "dsh-video-storyboard",
+      "kind": "plugin",
+      "title": {
+        "zh": "视频宫格分镜",
+        "en": "Video storyboard"
+      },
+      "description": {
+        "zh": "把本地视频或 yt-dlp 链接压成带时间码和台词的宫格图，让纯文本模型也能“看”视频。",
+        "en": "Turns a local video or yt-dlp link into timestamped contact sheets with dialogue so text-only models can read it."
+      },
+      "repository": "https://github.com/SAOS-3624/dsh-video-storyboard",
+      "stars": 405,
+      "pushedAt": "2026-11-03",
+      "license": "Apache-2.0",
+      "categories": [
+        "video"
+      ],
+      "access": "none",
+      "setup": {
+        "zh": "需要本机已安装 ffmpeg 和 yt-dlp：macOS 运行 `brew install ffmpeg yt-dlp`，其他系统见 https://ffmpeg.org 与 https://github.com/yt-dlp/yt-dlp#installation 。",
+        "en": "Requires ffmpeg and yt-dlp on the machine: on macOS run `brew install ffmpeg yt-dlp`; other systems see https://ffmpeg.org and https://github.com/yt-dlp/yt-dlp#installation."
+      },
+      "install": {
+        "type": "plugin",
+        "name": "dsh-video-storyboard",
+        "version": "0.6.2"
+      }
+    },
+    {
+      "id": "dsh-video-downloader",
+      "kind": "plugin",
+      "title": {
+        "zh": "视频下载器",
+        "en": "Video downloader"
+      },
+      "description": {
+        "zh": "检测并下载 YouTube 等平台的视频，分析画质和格式。",
+        "en": "Detects and downloads videos from YouTube and other platforms and reports quality and formats."
+      },
+      "repository": "https://github.com/zimai233/dsh-video-downloader",
+      "stars": 5,
+      "pushedAt": "2026-08-14",
+      "license": "MIT",
+      "categories": [
+        "video"
+      ],
+      "access": "none",
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 打开 **插件** 页，点 **添加插件**，填入 `github:zimai233/dsh-video-downloader`（该包不在 DSH 插件目录中，需从 GitHub 直接安装）。\n2. 重启 Tomato 或刷新插件页确认已启用。",
+          "en": "1. Open **Plugins**, choose **Add plugin**, and enter `github:zimai233/dsh-video-downloader` (the package is not in the DSH plugin index, so it installs straight from GitHub).\n2. Restart Tomato or reload the Plugins page to confirm it is enabled."
+        }
+      }
+    },
+    {
+      "id": "dsh-voice",
+      "kind": "plugin",
+      "title": {
+        "zh": "配音与转写",
+        "en": "Voice and transcription"
+      },
+      "description": {
+        "zh": "免费 edge-tts 配音、批量试听与 ASR 转写。",
+        "en": "Free edge-tts voiceover, batch previews and ASR transcription."
+      },
+      "repository": "https://github.com/STARDUSTLC666/dsh-voice",
+      "stars": 5,
+      "pushedAt": "2026-10-30",
+      "license": "MIT AND LGPL-3.0",
+      "categories": [
+        "content",
+        "video"
+      ],
+      "access": "none",
+      "install": {
+        "type": "plugin",
+        "name": "dsh-voice",
+        "version": "0.5.4"
+      }
+    },
+    {
+      "id": "dsh-industry-research",
+      "kind": "plugin",
+      "title": {
+        "zh": "行业研究报告",
+        "en": "Industry research"
+      },
+      "description": {
+        "zh": "只用公开来源生成可溯源的公司与行业研究报告。",
+        "en": "Produces traceable company and industry research reports from public sources only."
+      },
+      "repository": "https://github.com/PerryLink/dsh-industry-research",
+      "stars": 215,
+      "pushedAt": "2026-11-01",
+      "license": "Apache-2.0",
+      "categories": [
+        "ads-competitors",
+        "analytics"
+      ],
+      "access": "none",
+      "install": {
+        "type": "plugin",
+        "name": "dsh-industry-research",
+        "version": "0.3.23"
+      }
+    },
+    {
+      "id": "dsh-data-quality",
+      "kind": "plugin",
+      "title": {
+        "zh": "数据质量",
+        "en": "Data quality"
+      },
+      "description": {
+        "zh": "数据画像、清洗与校验并输出结构化报告，适合清洗达人名单。",
+        "en": "Profiles, cleans and validates data with structured reports, useful for cleaning creator lists."
+      },
+      "repository": "https://github.com/PerryLink/dsh-data-quality",
+      "stars": 53,
+      "pushedAt": "2026-11-01",
+      "license": "Apache-2.0",
+      "categories": [
+        "analytics"
+      ],
+      "access": "none",
+      "install": {
+        "type": "plugin",
+        "name": "dsh-data-quality",
+        "version": "0.3.24"
+      }
+    },
+    {
+      "id": "dsh-univer-office",
+      "kind": "plugin",
+      "title": {
+        "zh": "Univer 办公套件",
+        "en": "Univer office"
+      },
+      "description": {
+        "zh": "内置表格、文档与幻灯片环境，用于达人台账和结案报告。",
+        "en": "Built-in spreadsheet, document and slide workspace for creator trackers and campaign reports."
+      },
+      "repository": "https://github.com/dream-num/dsh-univer-office",
+      "stars": 660,
+      "pushedAt": "2026-11-03",
+      "license": "Apache-2.0",
+      "categories": [
+        "analytics"
+      ],
+      "access": "none",
+      "install": {
+        "type": "plugin",
+        "name": "dsh-univer-office",
+        "version": "0.3.9"
+      }
+    },
+    {
+      "id": "dsh-genui",
+      "kind": "plugin",
+      "title": {
+        "zh": "GenUI 交互组件",
+        "en": "GenUI"
+      },
+      "description": {
+        "zh": "在回复里内联渲染图表、表单等交互组件。",
+        "en": "Renders charts, forms and other interactive components inline in replies."
+      },
+      "repository": "https://github.com/omdsh-dev/dsh-genui",
+      "stars": 850,
+      "pushedAt": "2026-11-03",
+      "license": "MIT",
+      "categories": [
+        "analytics"
+      ],
+      "access": "none",
+      "install": {
+        "type": "plugin",
+        "name": "@changfenhuang/dsh-genui",
+        "version": "0.15.0"
+      }
+    },
+    {
+      "id": "dsh-smart-charts",
+      "kind": "plugin",
+      "title": {
+        "zh": "智能图表",
+        "en": "Smart charts"
+      },
+      "description": {
+        "zh": "把 CSV/XLSX/JSON 转成独立的交互式 ECharts HTML，支持 32 种图表。",
+        "en": "Turns CSV, XLSX or JSON into standalone interactive ECharts HTML with 32 chart types."
+      },
+      "repository": "https://github.com/hherosoul/dsh-smart-charts",
+      "stars": 20,
+      "pushedAt": "2026-09-29",
+      "license": "MIT",
+      "categories": [
+        "analytics"
+      ],
+      "access": "none",
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 打开 **插件** 页，点 **添加插件**，填入 `github:hherosoul/dsh-smart-charts`（该包不在 DSH 插件目录中，需从 GitHub 直接安装）。\n2. 重启 Tomato 或刷新插件页确认已启用。",
+          "en": "1. Open **Plugins**, choose **Add plugin**, and enter `github:hherosoul/dsh-smart-charts` (the package is not in the DSH plugin index, so it installs straight from GitHub).\n2. Restart Tomato or reload the Plugins page to confirm it is enabled."
+        }
+      }
+    },
+    {
+      "id": "dsh-office-tools",
+      "kind": "plugin",
+      "title": {
+        "zh": "Office 工具",
+        "en": "Office tools"
+      },
+      "description": {
+        "zh": "读写 Word、Excel、PowerPoint，可插入图片。",
+        "en": "Reads and writes Word, Excel and PowerPoint files, including images."
+      },
+      "repository": "https://github.com/kw78/dsh-office-tools",
+      "stars": 41,
+      "pushedAt": "2026-10-26",
+      "license": "MIT",
+      "categories": [
+        "analytics"
+      ],
+      "access": "none",
+      "install": {
+        "type": "plugin",
+        "name": "dsh-office-tools",
+        "version": "1.0.8"
+      }
+    },
+    {
+      "id": "dsh-design-studio",
+      "kind": "plugin",
+      "title": {
+        "zh": "设计工作室",
+        "en": "Design studio"
+      },
+      "description": {
+        "zh": "侧栏设计画布，实时预览海报、邮件和落地页的 HTML。",
+        "en": "Sidebar design canvas with live HTML previews of posters, emails and landing pages."
+      },
+      "repository": "https://github.com/OrderG-X/dsh-design-studio",
+      "stars": 17,
+      "pushedAt": "2026-11-03",
+      "license": "MIT",
+      "categories": [
+        "content"
+      ],
+      "access": "none",
+      "install": {
+        "type": "plugin",
+        "name": "dsh-design-studio",
+        "version": "0.6.2"
+      }
+    },
+    {
+      "id": "dsh-guizang-design",
+      "kind": "plugin",
+      "title": {
+        "zh": "归藏设计技能包",
+        "en": "Guizang design"
+      },
+      "description": {
+        "zh": "打包网页 PPT、社媒图文卡片、网页排版等 5 个设计技能。",
+        "en": "Bundles five design skills including web slides, social image cards and web layout."
+      },
+      "repository": "https://github.com/op7418/dsh-guizang-design",
+      "stars": 333,
+      "pushedAt": "2026-10-31",
+      "license": "AGPL-3.0",
+      "categories": [
+        "content"
+      ],
+      "access": "none",
+      "install": {
+        "type": "plugin",
+        "name": "dsh-guizang-design",
+        "version": "0.1.3"
+      }
+    },
+    {
+      "id": "dsh-image-gen",
+      "kind": "plugin",
+      "title": {
+        "zh": "对话生图",
+        "en": "Image generation"
+      },
+      "description": {
+        "zh": "对话式文生图和图生图，支持 ComfyUI 或已有的 ChatGPT/Google 订阅登录。",
+        "en": "Conversational text-to-image and image-to-image via ComfyUI or an existing ChatGPT or Google subscription login."
+      },
+      "repository": "https://github.com/shanliuling/dsh-image-gen",
+      "stars": 1084,
+      "pushedAt": "2026-11-02",
+      "license": "Apache-2.0",
+      "categories": [
+        "content"
+      ],
+      "access": "self-hosted",
+      "setup": {
+        "zh": "免费方案需要自建 ComfyUI（见 https://github.com/comfyanonymous/ComfyUI ），启动后在插件设置里填写 ComfyUI 地址（默认 http://127.0.0.1:8188）；也可以改用自己的 key 或已有订阅登录。",
+        "en": "The free path needs a self-hosted ComfyUI (see https://github.com/comfyanonymous/ComfyUI); after it starts, enter its URL (default http://127.0.0.1:8188) in the plugin settings. You can also use your own key or an existing subscription login."
+      },
+      "install": {
+        "type": "plugin",
+        "name": "dsh-image-gen",
+        "version": "0.10.1"
+      }
+    },
+    {
+      "id": "jacky-creator",
+      "kind": "plugin",
+      "title": {
+        "zh": "DSH Creator 内容工作台",
+        "en": "DSH Creator"
+      },
+      "description": {
+        "zh": "本地内容生产工作台：选题、脚本、素材、排期、发布状态与复盘。",
+        "en": "Local content workbench for ideas, scripts, assets, scheduling, publishing status and retrospectives."
+      },
+      "repository": "https://github.com/Jackywxsz/DSH-Creator",
+      "stars": 126,
+      "pushedAt": "2026-10-09",
+      "license": "MIT",
+      "categories": [
+        "publishing",
+        "content"
+      ],
+      "access": "none",
+      "install": {
+        "type": "plugin",
+        "name": "jacky-creator",
+        "version": "0.1.0-beta.9"
+      }
+    },
+    {
+      "id": "sandbase-skills",
+      "kind": "plugin",
+      "title": {
+        "zh": "SandBase 技能包",
+        "en": "SandBase skills"
+      },
+      "description": {
+        "zh": "通过 Skill provider 挂载 88 个调研、社媒情报与营销技能（如 competitor-monitor）。",
+        "en": "Mounts 88 research, social intelligence and marketing skills such as competitor-monitor through a skill provider."
+      },
+      "repository": "https://github.com/sandbaseai/sandbase-skills",
+      "stars": 206,
+      "pushedAt": "2026-09-26",
+      "license": "Apache-2.0",
+      "categories": [
+        "ads-competitors",
+        "social-data"
+      ],
+      "access": "none",
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 打开 **插件** 页，点 **添加插件**，填入 `github:sandbaseai/sandbase-skills`（该包不在 DSH 插件目录中，需从 GitHub 直接安装）。\n2. 重启 Tomato 或刷新插件页确认已启用。",
+          "en": "1. Open **Plugins**, choose **Add plugin**, and enter `github:sandbaseai/sandbase-skills` (the package is not in the DSH plugin index, so it installs straight from GitHub).\n2. Restart Tomato or reload the Plugins page to confirm it is enabled."
+        }
+      }
+    },
+    {
+      "id": "shopline-ai-toolkit",
+      "kind": "plugin",
+      "title": {
+        "zh": "SHOPLINE AI 工具包",
+        "en": "SHOPLINE AI toolkit"
+      },
+      "description": {
+        "zh": "桥接 SHOPLINE 官方开发者 MCP，附 7 个店铺开发技能。",
+        "en": "Bridges the official SHOPLINE developer MCP and adds seven store development skills."
+      },
+      "repository": "https://github.com/lunw/shopline-ai-toolkit-dsh",
+      "stars": 5,
+      "pushedAt": "2026-10-27",
+      "license": "MIT",
+      "categories": [
+        "ecommerce"
+      ],
+      "access": "none",
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 打开 **插件** 页，点 **添加插件**，填入 `github:lunw/shopline-ai-toolkit-dsh`（该包不在 DSH 插件目录中，需从 GitHub 直接安装）。\n2. 重启 Tomato 或刷新插件页确认已启用。",
+          "en": "1. Open **Plugins**, choose **Add plugin**, and enter `github:lunw/shopline-ai-toolkit-dsh` (the package is not in the DSH plugin index, so it installs straight from GitHub).\n2. Restart Tomato or reload the Plugins page to confirm it is enabled."
+        }
+      }
+    },
+    {
+      "id": "dsh-email",
+      "kind": "plugin",
+      "title": {
+        "zh": "邮件工具",
+        "en": "Email tools"
+      },
+      "description": {
+        "zh": "IMAP/SMTP 邮件工具：列出、搜索、发送、回复、标记与监听新邮件。",
+        "en": "IMAP and SMTP tools to list, search, send, reply to, flag and watch email."
+      },
+      "repository": "https://github.com/STARDUSTLC666/dsh-email",
+      "stars": 31,
+      "pushedAt": "2026-10-30",
+      "license": "MIT",
+      "categories": [
+        "outreach-crm"
+      ],
+      "access": "free-key",
+      "setup": {
+        "zh": "需要自己邮箱的 IMAP/SMTP 授权码（应用专用密码）：Gmail 在 Google 账号 → 安全 → 应用专用密码生成，其他邮箱在网页版设置中开启 IMAP/SMTP 后获取；然后在插件设置页填写。",
+        "en": "Requires an IMAP/SMTP app password for your own mailbox: for Gmail create one under Google Account → Security → App passwords; other providers issue one after you enable IMAP/SMTP in webmail settings. Enter it on the plugin settings page."
+      },
+      "install": {
+        "type": "plugin",
+        "name": "dsh-email",
+        "version": "0.21.2"
+      }
+    },
+    {
+      "id": "eduwork-dsh-mail",
+      "kind": "plugin",
+      "title": {
+        "zh": "EduWork 邮件",
+        "en": "EduWork mail"
+      },
+      "description": {
+        "zh": "只读 IMAP 搜索加 SMTP 发信，读和发分别有开关。",
+        "en": "Read-only IMAP search plus SMTP sending, with separate switches for reading and sending."
+      },
+      "repository": "https://github.com/ECNU/EduWork",
+      "stars": 280,
+      "pushedAt": "2026-11-03",
+      "license": "MulanPSL-2.0",
+      "categories": [
+        "outreach-crm"
+      ],
+      "access": "free-key",
+      "setup": {
+        "zh": "需要邮箱的 IMAP/SMTP 授权码（应用专用密码），在邮箱网页版设置中开启 IMAP/SMTP 后生成，再填到插件设置页的凭据中。",
+        "en": "Requires an IMAP/SMTP app password; generate it after enabling IMAP/SMTP in your webmail settings, then store it in the plugin settings page credentials."
+      },
+      "install": {
+        "type": "plugin",
+        "name": "@eduwork/dsh-mail",
+        "version": "0.2.3"
+      }
+    },
+    {
+      "id": "dsh-ego-browser",
+      "kind": "plugin",
+      "title": {
+        "zh": "Ego 浏览器",
+        "en": "Ego browser"
+      },
+      "description": {
+        "zh": "用 35 个结构化工具驱动真实 Chrome，可导入登录态。",
+        "en": "Drives a real Chrome with 35 structured tools and can import signed-in sessions."
+      },
+      "repository": "https://github.com/Fisfzy/dsh-ego-browser",
+      "stars": 410,
+      "pushedAt": "2026-11-01",
+      "license": "MIT",
+      "categories": [
+        "foundation"
+      ],
+      "access": "none",
+      "install": {
+        "type": "plugin",
+        "name": "dsh-ego-browser",
+        "version": "0.9.8"
+      }
+    },
+    {
+      "id": "bridge-browser",
+      "kind": "plugin",
+      "title": {
+        "zh": "Bridge 浏览器扩展",
+        "en": "Bridge browser"
+      },
+      "description": {
+        "zh": "Chrome 侧栏扩展，让 Agent 直接操作当前标签页，不依赖视觉。",
+        "en": "Chrome side-panel extension that lets the agent operate the current tab without vision."
+      },
+      "repository": "https://github.com/omdsh-dev/dsh-browser",
+      "stars": 972,
+      "pushedAt": "2026-10-01",
+      "license": "MIT",
+      "categories": [
+        "foundation"
+      ],
+      "access": "none",
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 打开 **插件** 页，点 **添加插件**，填入 `github:omdsh-dev/dsh-browser#path:packages/browser/bridge-browser`（该包不在 DSH 插件目录中，需从 GitHub 直接安装）。\n2. 按 https://github.com/omdsh-dev/dsh-browser 的 README 安装配套 Chrome 侧栏扩展，并保持 Chrome 打开。\n3. 重启 Tomato 或刷新插件页确认已启用。",
+          "en": "1. Open **Plugins**, choose **Add plugin**, and enter `github:omdsh-dev/dsh-browser#path:packages/browser/bridge-browser` (the package is not in the DSH plugin index, so it installs straight from GitHub).\n2. Install the companion Chrome side-panel extension as described in the https://github.com/omdsh-dev/dsh-browser README and keep Chrome open.\n3. Restart Tomato or reload the Plugins page to confirm it is enabled."
+        }
+      }
+    },
+    {
+      "id": "dsh-doyourweb",
+      "kind": "plugin",
+      "title": {
+        "zh": "DoYourWeb 标签页操作",
+        "en": "DoYourWeb"
+      },
+      "description": {
+        "zh": "引用已登录的 Chrome/Edge 标签页，读取快照并执行批量操作。",
+        "en": "References signed-in Chrome or Edge tabs, reads snapshots and runs batch actions."
+      },
+      "repository": "https://github.com/SheepofSheep/dsh-doyourweb",
+      "stars": 41,
+      "pushedAt": "2026-11-02",
+      "license": "MIT",
+      "categories": [
+        "foundation"
+      ],
+      "access": "none",
+      "install": {
+        "type": "plugin",
+        "name": "dsh-doyourweb",
+        "version": "0.1.8"
+      }
+    },
+    {
+      "id": "anweat-dsh-browser",
+      "kind": "plugin",
+      "title": {
+        "zh": "浏览器运行时（anweat）",
+        "en": "Browser runtime (anweat)"
+      },
+      "description": {
+        "zh": "自带 Playwright 与 OpenCLI 的浏览器运行时。",
+        "en": "Browser runtime that bundles Playwright and OpenCLI."
+      },
+      "repository": "https://github.com/anweat/dsh-browser",
+      "stars": 31,
+      "pushedAt": "2026-10-29",
+      "license": "MIT",
+      "categories": [
+        "foundation"
+      ],
+      "access": "none",
+      "install": {
+        "type": "plugin",
+        "name": "@anweat/dsh-browser",
+        "version": "0.2.2"
+      }
+    },
+    {
+      "id": "dsh-searxng",
+      "kind": "plugin",
+      "title": {
+        "zh": "SearXNG 搜索",
+        "en": "SearXNG search"
+      },
+      "description": {
+        "zh": "用自建 SearXNG 作为免 key 的元搜索 provider。",
+        "en": "Uses a self-hosted SearXNG instance as a keyless metasearch provider."
+      },
+      "repository": "https://github.com/rogerdigital/dsh-searxng",
+      "stars": 11,
+      "pushedAt": "2026-09-21",
+      "license": "MIT",
+      "categories": [
+        "foundation",
+        "seo"
+      ],
+      "access": "self-hosted",
+      "setup": {
+        "zh": "需要自建 SearXNG：例如 `docker run -d --name searxng -p 127.0.0.1:8080:8080 searxng/searxng`，并在 settings.yml 的 `search.formats` 中启用 `json`（插件仓库附 docker-compose 示例）；然后在插件设置中填写 http://127.0.0.1:8080 。",
+        "en": "Requires a self-hosted SearXNG, for example `docker run -d --name searxng -p 127.0.0.1:8080:8080 searxng/searxng`, with `json` enabled under `search.formats` in settings.yml (the plugin repository ships a docker-compose example). Then enter http://127.0.0.1:8080 in the plugin settings."
+      },
+      "install": {
+        "type": "plugin",
+        "name": "dsh-searxng",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "id": "youtube-transcript",
+      "kind": "mcp",
+      "title": {
+        "zh": "YouTube 字幕",
+        "en": "YouTube transcript"
+      },
+      "description": {
+        "zh": "拉取 YouTube 视频的字幕和转录。",
+        "en": "Fetches captions and transcripts for YouTube videos."
+      },
+      "repository": "https://github.com/kimtaeyoon83/mcp-server-youtube-transcript",
+      "stars": 603,
+      "pushedAt": "2026-07-21",
+      "license": "MIT",
+      "categories": [
+        "video"
+      ],
+      "access": "none",
+      "install": {
+        "type": "mcp",
+        "runner": "npx",
+        "package": "@kimtaeyoon83/mcp-server-youtube-transcript",
+        "version": "0.1.1"
+      }
+    },
+    {
+      "id": "yt-transcript-paged",
+      "kind": "mcp",
+      "title": {
+        "zh": "YouTube 分页转录",
+        "en": "YouTube transcript (paged)"
+      },
+      "description": {
+        "zh": "获取 YouTube 转录，长视频可分页读取。",
+        "en": "Retrieves YouTube transcripts with pagination for long videos."
+      },
+      "repository": "https://github.com/jkawamoto/mcp-youtube-transcript",
+      "stars": 494,
+      "pushedAt": "2026-10-28",
+      "license": "MIT",
+      "categories": [
+        "video"
+      ],
+      "access": "none",
+      "install": {
+        "type": "mcp",
+        "runner": "uvx",
+        "package": "mcp-youtube-transcript",
+        "version": "0.3.5"
+      }
+    },
+    {
+      "id": "mcp-youtube",
+      "kind": "mcp",
+      "title": {
+        "zh": "YouTube 字幕（yt-dlp）",
+        "en": "YouTube subtitles via yt-dlp"
+      },
+      "description": {
+        "zh": "用 yt-dlp 下载字幕，供模型总结视频。",
+        "en": "Downloads subtitles with yt-dlp so the model can summarize videos."
+      },
+      "repository": "https://github.com/anaisbetts/mcp-youtube",
+      "stars": 552,
+      "pushedAt": "2026-08-16",
+      "license": "MIT",
+      "categories": [
+        "video"
+      ],
+      "access": "none",
+      "setup": {
+        "zh": "需要本机已安装 yt-dlp（macOS：`brew install yt-dlp`；其他系统见 https://github.com/yt-dlp/yt-dlp#installation ）。",
+        "en": "Requires yt-dlp on the machine (macOS: `brew install yt-dlp`; other systems see https://github.com/yt-dlp/yt-dlp#installation)."
+      },
+      "install": {
+        "type": "mcp",
+        "runner": "npx",
+        "package": "@anaisbetts/mcp-youtube",
+        "version": "0.8.0"
+      }
+    },
+    {
+      "id": "yt-dlp-mcp",
+      "kind": "mcp",
+      "title": {
+        "zh": "yt-dlp MCP",
+        "en": "yt-dlp MCP"
+      },
+      "description": {
+        "zh": "基于 yt-dlp 读取视频和音频元数据、字幕，并支持下载与搜索。",
+        "en": "Reads video and audio metadata and subtitles and supports downloads and search through yt-dlp."
+      },
+      "repository": "https://github.com/kevinwatt/yt-dlp-mcp",
+      "stars": 299,
+      "pushedAt": "2026-10-29",
+      "license": "MIT",
+      "categories": [
+        "video"
+      ],
+      "access": "none",
+      "setup": {
+        "zh": "需要本机已安装 yt-dlp（macOS：`brew install yt-dlp`；其他系统见 https://github.com/yt-dlp/yt-dlp#installation ）；需要登录才能看的视频可选配浏览器 cookie。",
+        "en": "Requires yt-dlp on the machine (macOS: `brew install yt-dlp`; other systems see https://github.com/yt-dlp/yt-dlp#installation); videos that need sign-in can optionally use browser cookies."
+      },
+      "install": {
+        "type": "mcp",
+        "runner": "npx",
+        "package": "@kevinwatt/yt-dlp-mcp",
+        "version": "0.10.2"
+      }
+    },
+    {
+      "id": "mcp-video-analyzer",
+      "kind": "mcp",
+      "title": {
+        "zh": "单条视频分析",
+        "en": "Video analyzer"
+      },
+      "description": {
+        "zh": "为 YouTube、TikTok、Instagram、X 的单条视频提取转录、元数据、评论与关键帧。",
+        "en": "Extracts transcripts, metadata, comments and key frames from single YouTube, TikTok, Instagram or X videos."
+      },
+      "repository": "https://github.com/guimatheus92/mcp-video-analyzer",
+      "stars": 109,
+      "pushedAt": "2026-11-02",
+      "license": "MIT",
+      "categories": [
+        "video",
+        "social-data"
+      ],
+      "access": "none",
+      "setup": {
+        "zh": "需要本机已安装 yt-dlp（macOS：`brew install yt-dlp`；其他系统见 https://github.com/yt-dlp/yt-dlp#installation ），抽帧需要 ffmpeg（`brew install ffmpeg`）；没有字幕时可装本地 whisper（`pip install openai-whisper`）作为转写兜底。",
+        "en": "Requires yt-dlp on the machine (macOS: `brew install yt-dlp`; other systems see https://github.com/yt-dlp/yt-dlp#installation); frame extraction needs ffmpeg (`brew install ffmpeg`); for videos without captions install local whisper (`pip install openai-whisper`) as the transcription fallback."
+      },
+      "install": {
+        "type": "mcp",
+        "runner": "npx",
+        "package": "mcp-video-analyzer",
+        "version": "0.11.0"
+      }
+    },
+    {
+      "id": "claude-video-vision",
+      "kind": "mcp",
+      "title": {
+        "zh": "视频视觉理解",
+        "en": "Video vision"
+      },
+      "description": {
+        "zh": "抽帧加音频转写，让模型“看懂”视频。",
+        "en": "Extracts frames and transcribes audio so the model can understand videos."
+      },
+      "repository": "https://github.com/jordanrendric/claude-video-vision",
+      "stars": 1453,
+      "pushedAt": "2026-10-14",
+      "license": "MIT",
+      "categories": [
+        "video"
+      ],
+      "access": "none",
+      "setup": {
+        "zh": "需要 ffmpeg（`brew install ffmpeg`）和本地 whisper（如 `brew install whisper-cpp`）；也可改用 Gemini 免费档：到 https://aistudio.google.com/apikey 申请 key 并设置 `GEMINI_API_KEY`。",
+        "en": "Requires ffmpeg (`brew install ffmpeg`) and a local whisper (such as `brew install whisper-cpp`); alternatively use the Gemini free tier by creating a key at https://aistudio.google.com/apikey and setting `GEMINI_API_KEY`."
+      },
+      "install": {
+        "type": "mcp",
+        "runner": "npx",
+        "package": "claude-video-vision",
+        "version": "1.4.0"
+      }
+    },
+    {
+      "id": "yutu",
+      "kind": "mcp",
+      "title": {
+        "zh": "yutu YouTube 工具",
+        "en": "yutu"
+      },
+      "description": {
+        "zh": "YouTube 全流程 CLI 与 MCP：上传、元数据、播放列表、评论与频道数据。",
+        "en": "YouTube CLI and MCP for uploads, metadata, playlists, comments and channel data."
+      },
+      "repository": "https://github.com/eat-pray-ai/yutu",
+      "stars": 712,
+      "pushedAt": "2026-10-31",
+      "license": "Apache-2.0",
+      "categories": [
+        "publishing",
+        "analytics"
+      ],
+      "access": "free-key",
+      "setup": {
+        "zh": "在 Google Cloud Console 创建项目并启用 YouTube Data API v3，创建 OAuth 客户端（桌面应用）并下载 `client_secret.json`；按 yutu README 完成授权生成 `youtube.token.json`，再把两个文件的绝对路径分别设为环境变量 `YUTU_CREDENTIAL` 和 `YUTU_CACHE_TOKEN`。",
+        "en": "Create a Google Cloud project, enable YouTube Data API v3, create a desktop OAuth client and download `client_secret.json`; complete authorization per the yutu README to produce `youtube.token.json`, then set the absolute paths of the two files as `YUTU_CREDENTIAL` and `YUTU_CACHE_TOKEN`."
+      },
+      "env": [
+        "YUTU_CREDENTIAL",
+        "YUTU_CACHE_TOKEN"
+      ],
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 安装 yutu 可执行文件：`brew install yutu`，或 `npm i -g @eat-pray-ai/yutu@0.11.0`（也可用 `docker pull ghcr.io/eat-pray-ai/yutu:latest`）。\n2. 按上面的说明准备 `client_secret.json` 与 `youtube.token.json`，并在启动 Tomato 的环境里设置 `YUTU_CREDENTIAL`、`YUTU_CACHE_TOKEN`。\n3. 在终端运行 `yutu mcp --help` 确认可用。\n4. 把下面这段加到 `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml`（桌面端的 `<profile>` 是 `desktop`，网页端是 `web`），保存后新开会话即可看到 `mcp__mkt-…__*` 工具：\n\n```yaml\n- insert:\n    - id: mkt-yutu\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-yutu\n        transport: stdio\n        command: yutu\n        args: ['mcp']\n        env:\n          YUTU_CREDENTIAL: !!js process.env.YUTU_CREDENTIAL\n          YUTU_CACHE_TOKEN: !!js process.env.YUTU_CACHE_TOKEN\n```",
+          "en": "1. Install the yutu executable: `brew install yutu` or `npm i -g @eat-pray-ai/yutu@0.11.0` (or `docker pull ghcr.io/eat-pray-ai/yutu:latest`).\n2. Prepare `client_secret.json` and `youtube.token.json` as described above and set `YUTU_CREDENTIAL` and `YUTU_CACHE_TOKEN` in the environment that launches Tomato.\n3. Run `yutu mcp --help` in a terminal to confirm it works.\n4. Add this block to `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml` (`<profile>` is `desktop` in the desktop app and `web` in the web app), then start a new session to see the `mcp__mkt-…__*` tools:\n\n```yaml\n- insert:\n    - id: mkt-yutu\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-yutu\n        transport: stdio\n        command: yutu\n        args: ['mcp']\n        env:\n          YUTU_CREDENTIAL: !!js process.env.YUTU_CREDENTIAL\n          YUTU_CACHE_TOKEN: !!js process.env.YUTU_CACHE_TOKEN\n```"
+        }
+      }
+    },
+    {
+      "id": "youtube-data",
+      "kind": "mcp",
+      "title": {
+        "zh": "YouTube 数据 API",
+        "en": "YouTube Data API"
+      },
+      "description": {
+        "zh": "通过 YouTube Data API 读取视频、频道、播放列表与统计数据，适合核验达人频道。",
+        "en": "Reads videos, channels, playlists and statistics through the YouTube Data API, useful for verifying creator channels."
+      },
+      "repository": "https://github.com/ZubeidHendricks/youtube-mcp-server",
+      "stars": 593,
+      "pushedAt": "2026-08-08",
+      "license": "MIT",
+      "categories": [
+        "social-data",
+        "creator-discovery"
+      ],
+      "access": "free-key",
+      "setup": {
+        "zh": "在 Google Cloud Console 启用 YouTube Data API v3 并创建 API key（免费配额每天 10,000 单位），设置环境变量 `YOUTUBE_API_KEY`。",
+        "en": "Enable YouTube Data API v3 in Google Cloud Console and create an API key (the free quota is 10,000 units per day), then set `YOUTUBE_API_KEY`."
+      },
+      "env": [
+        "YOUTUBE_API_KEY"
+      ],
+      "install": {
+        "type": "mcp",
+        "runner": "npx",
+        "package": "zubeid-youtube-mcp-server",
+        "version": "1.0.2"
+      }
+    },
+    {
+      "id": "x-reader",
+      "kind": "mcp",
+      "title": {
+        "zh": "X Reader 通用读取",
+        "en": "X Reader"
+      },
+      "description": {
+        "zh": "通用内容读取，覆盖 X、YouTube、网页等 10 多个平台。",
+        "en": "Reads content from X, YouTube, web pages and more than ten other platforms."
+      },
+      "repository": "https://github.com/runesleo/x-reader",
+      "stars": 988,
+      "pushedAt": "2026-11-03",
+      "license": "MIT",
+      "categories": [
+        "social-data"
+      ],
+      "access": "none",
+      "setup": {
+        "zh": "需要先安装 uv（https://docs.astral.sh/uv/getting-started/installation/ ）。视频转写可选：安装 yt-dlp，并到 https://console.groq.com/keys 申请免费 key 设为 `GROQ_API_KEY`。",
+        "en": "Install uv first (https://docs.astral.sh/uv/getting-started/installation/). Optional video transcription: install yt-dlp and set `GROQ_API_KEY` with a free key from https://console.groq.com/keys."
+      },
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 安装 uv：`curl -LsSf https://astral.sh/uv/install.sh | sh`。\n2. 先在终端试跑一次（该包未发布到 PyPI，只能从 GitHub 源码运行）：`uvx --with \"mcp[cli]>=1.0,<2\" --from git+https://github.com/runesleo/x-reader.git x-reader-mcp`，看到等待 stdio 输入后按 Ctrl+C 退出。\n3. 把下面这段加到 `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml`（桌面端的 `<profile>` 是 `desktop`，网页端是 `web`），保存后新开会话即可看到 `mcp__mkt-…__*` 工具：\n\n```yaml\n- insert:\n    - id: mkt-x-reader\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-x-reader\n        transport: stdio\n        command: uvx\n        args: ['--with', 'mcp[cli]>=1.0,<2', '--from', 'git+https://github.com/runesleo/x-reader.git', 'x-reader-mcp']\n```",
+          "en": "1. Install uv: `curl -LsSf https://astral.sh/uv/install.sh | sh`.\n2. Do a trial run in a terminal (the package is not on PyPI and runs only from GitHub source): `uvx --with \"mcp[cli]>=1.0,<2\" --from git+https://github.com/runesleo/x-reader.git x-reader-mcp`; when it waits on stdio, press Ctrl+C.\n3. Add this block to `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml` (`<profile>` is `desktop` in the desktop app and `web` in the web app), then start a new session to see the `mcp__mkt-…__*` tools:\n\n```yaml\n- insert:\n    - id: mkt-x-reader\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-x-reader\n        transport: stdio\n        command: uvx\n        args: ['--with', 'mcp[cli]>=1.0,<2', '--from', 'git+https://github.com/runesleo/x-reader.git', 'x-reader-mcp']\n```"
+        }
+      }
+    },
+    {
+      "id": "douyin-tiktok-api",
+      "kind": "mcp",
+      "title": {
+        "zh": "TikTok 数据 API（自托管）",
+        "en": "TikTok data API (self-hosted)"
+      },
+      "description": {
+        "zh": "自托管 TikTok 数据 API：帖子、作者、评论、话题、榜单与搜索，并内置 MCP。",
+        "en": "Self-hosted TikTok data API for posts, authors, comments, hashtags, rankings and search, with a built-in MCP endpoint."
+      },
+      "repository": "https://github.com/Evil0ctal/Douyin_TikTok_Download_API",
+      "stars": 21125,
+      "pushedAt": "2026-11-02",
+      "license": "Apache-2.0",
+      "categories": [
+        "social-data",
+        "creator-discovery"
+      ],
+      "access": "self-hosted",
+      "setup": {
+        "zh": "需要 Docker 与 Docker Compose 自建服务（自动维护访客身份池，无需付费 key）。部署后在控制台创建带所需 scope 的 API key（`dtk_` 开头），设置环境变量 `DTK_API_KEY`。",
+        "en": "Requires a Docker Compose deployment (it maintains a visitor identity pool, no paid key). After deployment create an API key with the needed scopes (starting with `dtk_`) in the console and set `DTK_API_KEY`."
+      },
+      "env": [
+        "DTK_API_KEY"
+      ],
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 克隆仓库：`git clone https://github.com/Evil0ctal/Douyin_TikTok_Download_API.git && cd Douyin_TikTok_Download_API`。\n2. 按仓库 `documents/en/02-installation.md` 复制 `.env` 示例并填好 `DTK_SECRET_KEY`、数据库与 Redis 密码，然后运行 `docker compose up -d`。\n3. 打开 http://127.0.0.1:8000 注册管理员，在 API keys 页面创建 key，并在启动 Tomato 的环境里设置 `DTK_API_KEY`。\n4. 把下面这段加到 `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml`（桌面端的 `<profile>` 是 `desktop`，网页端是 `web`），保存后新开会话即可看到 `mcp__mkt-…__*` 工具：\n\n```yaml\n- insert:\n    - id: mkt-douyin-tiktok-api\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-douyin-tiktok-api\n        transport: streamable-http\n        url: http://127.0.0.1:8000/mcp/\n        headers:\n          Authorization: !!js '`Bearer ${process.env.DTK_API_KEY}`'\n```",
+          "en": "1. Clone the repository: `git clone https://github.com/Evil0ctal/Douyin_TikTok_Download_API.git && cd Douyin_TikTok_Download_API`.\n2. Following `documents/en/02-installation.md`, copy the `.env` example, fill in `DTK_SECRET_KEY` and the database and Redis passwords, then run `docker compose up -d`.\n3. Open http://127.0.0.1:8000, register the admin account, create a key on the API keys page and set `DTK_API_KEY` in the environment that launches Tomato.\n4. Add this block to `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml` (`<profile>` is `desktop` in the desktop app and `web` in the web app), then start a new session to see the `mcp__mkt-…__*` tools:\n\n```yaml\n- insert:\n    - id: mkt-douyin-tiktok-api\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-douyin-tiktok-api\n        transport: streamable-http\n        url: http://127.0.0.1:8000/mcp/\n        headers:\n          Authorization: !!js '`Bearer ${process.env.DTK_API_KEY}`'\n```"
+        }
+      }
+    },
+    {
+      "id": "reddit-mcp-buddy",
+      "kind": "mcp",
+      "title": {
+        "zh": "Reddit MCP Buddy",
+        "en": "Reddit MCP Buddy"
+      },
+      "description": {
+        "zh": "浏览 Reddit 帖子、搜索内容并分析用户。",
+        "en": "Browses Reddit posts, searches content and analyzes users."
+      },
+      "repository": "https://github.com/karanb192/reddit-mcp-buddy",
+      "stars": 874,
+      "pushedAt": "2026-11-02",
+      "license": "MIT",
+      "categories": [
+        "social-data"
+      ],
+      "access": "none",
+      "install": {
+        "type": "mcp",
+        "runner": "npx",
+        "package": "reddit-mcp-buddy",
+        "version": "1.2.0",
+        "bin": "reddit-mcp-buddy"
+      }
+    },
+    {
+      "id": "reddit-mcp-archive",
+      "kind": "mcp",
+      "title": {
+        "zh": "Reddit MCP（存档模式）",
+        "en": "Reddit MCP (archive mode)"
+      },
+      "description": {
+        "zh": "Reddit 读写，免 key 模式通过 Arctic Shift 存档读取。",
+        "en": "Reddit reads and writes, with a keyless mode that reads through the Arctic Shift archive."
+      },
+      "repository": "https://github.com/jordanburke/reddit-mcp-server",
+      "stars": 318,
+      "pushedAt": "2026-10-31",
+      "license": "MIT",
+      "categories": [
+        "social-data"
+      ],
+      "access": "none",
+      "install": {
+        "type": "mcp",
+        "runner": "npx",
+        "package": "reddit-mcp-server",
+        "version": "2.0.1"
+      }
+    },
+    {
+      "id": "reddit-no-auth",
+      "kind": "mcp",
+      "title": {
+        "zh": "Reddit 免认证 MCP",
+        "en": "Reddit no-auth MCP"
+      },
+      "description": {
+        "zh": "零配置的 Reddit 搜索、版块浏览与用户活动查询。",
+        "en": "Zero-configuration Reddit search, subreddit browsing and user activity."
+      },
+      "repository": "https://github.com/eliasbiondo/reddit-mcp-server",
+      "stars": 166,
+      "pushedAt": "2026-10-24",
+      "license": "MIT",
+      "categories": [
+        "social-data"
+      ],
+      "access": "none",
+      "install": {
+        "type": "mcp",
+        "runner": "uvx",
+        "package": "reddit-no-auth-mcp-server",
+        "version": "0.2.1"
+      }
+    },
+    {
+      "id": "mcp-server-reddit",
+      "kind": "mcp",
+      "title": {
+        "zh": "Reddit 热帖读取",
+        "en": "Reddit reader"
+      },
+      "description": {
+        "zh": "读取 Reddit 首页、版块热帖与评论。",
+        "en": "Reads the Reddit front page, hot subreddit posts and comments."
+      },
+      "repository": "https://github.com/Hawstein/mcp-server-reddit",
+      "stars": 184,
+      "pushedAt": "2026-06-10",
+      "license": "MIT",
+      "categories": [
+        "social-data"
+      ],
+      "access": "none",
+      "install": {
+        "type": "mcp",
+        "runner": "uvx",
+        "package": "mcp-server-reddit",
+        "version": "0.2.1"
+      }
+    },
+    {
+      "id": "reddit-research",
+      "kind": "mcp",
+      "title": {
+        "zh": "Reddit 市场研究",
+        "en": "Reddit research"
+      },
+      "description": {
+        "zh": "带引用的 Reddit 市场与竞品研究，可按语义发现相关版块。",
+        "en": "Cited Reddit market and competitor research with semantic subreddit discovery."
+      },
+      "repository": "https://github.com/dialog-tools/reddit-research-mcp",
+      "stars": 260,
+      "pushedAt": "2026-10-20",
+      "license": "MIT",
+      "categories": [
+        "ads-competitors",
+        "social-data"
+      ],
+      "access": "none",
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 该服务器默认只提供官方免费托管端点 https://reddit-research-mcp.fastmcp.app/mcp ，需要通过 `mcp-remote` 完成授权，因此不能直接用 npx/uvx 安装。确认已安装 Node.js 18+。\n2. 首次连接时浏览器会弹出授权页，按提示完成；如需自托管，按 https://github.com/dialog-tools/reddit-research-mcp 的 README 部署后把 URL 换成自己的地址。\n3. 把下面这段加到 `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml`（桌面端的 `<profile>` 是 `desktop`，网页端是 `web`），保存后新开会话即可看到 `mcp__mkt-…__*` 工具：\n\n```yaml\n- insert:\n    - id: mkt-reddit-research\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-reddit-research\n        transport: stdio\n        command: npx\n        args: ['-y', 'mcp-remote@0.16.0', 'https://reddit-research-mcp.fastmcp.app/mcp', '--auth-timeout', '120']\n```",
+          "en": "1. This server is served by default only from the free official endpoint https://reddit-research-mcp.fastmcp.app/mcp and authorizes through `mcp-remote`, so it cannot install as a plain npx/uvx package. Make sure Node.js 18+ is installed.\n2. On first connection a browser authorization page opens; complete it. To self-host, deploy per the https://github.com/dialog-tools/reddit-research-mcp README and replace the URL with your own.\n3. Add this block to `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml` (`<profile>` is `desktop` in the desktop app and `web` in the web app), then start a new session to see the `mcp__mkt-…__*` tools:\n\n```yaml\n- insert:\n    - id: mkt-reddit-research\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-reddit-research\n        transport: stdio\n        command: npx\n        args: ['-y', 'mcp-remote@0.16.0', 'https://reddit-research-mcp.fastmcp.app/mcp', '--auth-timeout', '120']\n```"
+        }
+      }
+    },
+    {
+      "id": "xactions",
+      "kind": "mcp",
+      "title": {
+        "zh": "XActions",
+        "en": "XActions"
+      },
+      "description": {
+        "zh": "X/Twitter 抓取工具包和 MCP：资料、推文、搜索与粉丝。",
+        "en": "X/Twitter scraping toolkit and MCP for profiles, posts, search and followers."
+      },
+      "repository": "https://github.com/nirholas/XActions",
+      "stars": 642,
+      "pushedAt": "2026-10-31",
+      "license": "Apache-2.0",
+      "categories": [
+        "social-data",
+        "creator-discovery"
+      ],
+      "access": "login",
+      "setup": {
+        "zh": "资料和推文免登录；搜索、粉丝等需要你自己的 X 登录 cookie：登录 x.com 后在开发者工具 → Application → Cookies 复制 `auth_token`，设为环境变量 `XACTIONS_SESSION_COOKIE`（也可运行 `npx xactions login --from-browser` 从本机浏览器导入）。建议用小号，存在封号风险。",
+        "en": "Profiles and posts work without sign-in; search and followers need your own X session cookie: sign in to x.com, copy `auth_token` from DevTools → Application → Cookies and set it as `XACTIONS_SESSION_COOKIE` (or run `npx xactions login --from-browser` to import it from a local browser). Use a secondary account; accounts can be restricted."
+      },
+      "env": [
+        "XACTIONS_SESSION_COOKIE"
+      ],
+      "install": {
+        "type": "mcp",
+        "runner": "npx",
+        "package": "xactions",
+        "version": "4.0.1",
+        "bin": "xactions-mcp"
+      }
+    },
+    {
+      "id": "x-use",
+      "kind": "mcp",
+      "title": {
+        "zh": "x-use X 浏览器会话",
+        "en": "x-use"
+      },
+      "description": {
+        "zh": "用真实浏览器会话调研 X 资料、收件箱与帖子，发布和私信需草稿审批。",
+        "en": "Researches X profiles, inboxes and posts through a real browser session, with draft approval before posting or messaging."
+      },
+      "repository": "https://github.com/ihuzaifashoukat/x-use",
+      "stars": 180,
+      "pushedAt": "2026-11-02",
+      "license": "MIT",
+      "categories": [
+        "social-data",
+        "outreach-crm"
+      ],
+      "access": "login",
+      "setup": {
+        "zh": "需要你自己的 X 登录 cookie。先选一个私有数据目录并设为环境变量 `X_USE_HOME`（如 `~/.local/share/x-use`），然后运行 `uvx --from x-use-mcp==3.2.0 patchright install chromium` 安装浏览器，再运行 `uvx --from x-use-mcp==3.2.0 x-use init` 导入自己导出的 X cookie JSON，最后 `x-use doctor` 自检。存在封号风险，建议用小号。",
+        "en": "Needs your own X session cookies. Choose a private data directory and set it as `X_USE_HOME` (for example `~/.local/share/x-use`), run `uvx --from x-use-mcp==3.2.0 patchright install chromium` to install the browser, then `uvx --from x-use-mcp==3.2.0 x-use init` to import your exported X cookie JSON, and `x-use doctor` to check. Accounts can be restricted; use a secondary account."
+      },
+      "env": [
+        "X_USE_HOME"
+      ],
+      "install": {
+        "type": "mcp",
+        "runner": "uvx",
+        "package": "x-use-mcp",
+        "version": "3.2.0"
+      }
+    },
+    {
+      "id": "linkedin-stickerdaniel",
+      "kind": "mcp",
+      "title": {
+        "zh": "LinkedIn MCP（stickerdaniel）",
+        "en": "LinkedIn MCP (stickerdaniel)"
+      },
+      "description": {
+        "zh": "读取 LinkedIn 人员、公司、职位与消息。",
+        "en": "Reads LinkedIn people, companies, jobs and messages."
+      },
+      "repository": "https://github.com/stickerdaniel/linkedin-mcp-server",
+      "stars": 4102,
+      "pushedAt": "2026-11-02",
+      "license": "Apache-2.0",
+      "categories": [
+        "creator-discovery",
+        "social-data"
+      ],
+      "access": "login",
+      "setup": {
+        "zh": "需要你自己的 LinkedIn 登录会话。先安装 uv，再运行 `uvx mcp-server-linkedin@4.29.0 --login` 在弹出的浏览器里登录（或 `--import-from-browser` 复用本机浏览器登录态）；会话保存在 `~/.linkedin-mcp/`，过期后重新登录。存在账号限制风险。",
+        "en": "Needs your own LinkedIn session. Install uv, then run `uvx mcp-server-linkedin@4.29.0 --login` and sign in in the browser window (or use `--import-from-browser` to reuse a local browser session); the session lives in `~/.linkedin-mcp/` and must be renewed when it expires. Accounts can be restricted."
+      },
+      "install": {
+        "type": "mcp",
+        "runner": "uvx",
+        "package": "mcp-server-linkedin",
+        "version": "4.29.0"
+      }
+    },
+    {
+      "id": "linkedin-eliasbiondo",
+      "kind": "mcp",
+      "title": {
+        "zh": "LinkedIn MCP（eliasbiondo）",
+        "en": "LinkedIn MCP (eliasbiondo)"
+      },
+      "description": {
+        "zh": "LinkedIn 搜人、搜公司与抓取资料。",
+        "en": "Searches LinkedIn people and companies and scrapes profiles."
+      },
+      "repository": "https://github.com/eliasbiondo/linkedin-mcp-server",
+      "stars": 212,
+      "pushedAt": "2026-10-24",
+      "license": "MIT",
+      "categories": [
+        "creator-discovery",
+        "social-data"
+      ],
+      "access": "login",
+      "setup": {
+        "zh": "需要 Python 3.12+、uv 和你自己的 LinkedIn 账号；首次使用运行 `uv run linkedin-mcp-server --login` 在浏览器中登录保存会话。存在账号限制风险。",
+        "en": "Requires Python 3.12+, uv and your own LinkedIn account; on first use run `uv run linkedin-mcp-server --login` to sign in and save the session. Accounts can be restricted."
+      },
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 该项目未发布到 PyPI（PyPI 上同名的 `linkedin-mcp-server` 是另一个作者的项目），需从源码运行。安装 uv 后执行 `git clone https://github.com/eliasbiondo/linkedin-mcp-server.git ~/linkedin-mcp-server && cd ~/linkedin-mcp-server && uv sync`。\n2. 运行 `uv run linkedin-mcp-server --login` 在弹出的浏览器中登录 LinkedIn。\n3. 把下面这段加到 `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml`（桌面端的 `<profile>` 是 `desktop`，网页端是 `web`），保存后新开会话即可看到 `mcp__mkt-…__*` 工具：\n\n```yaml\n- insert:\n    - id: mkt-linkedin-eliasbiondo\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-linkedin-eliasbiondo\n        transport: stdio\n        command: uv\n        args: ['--directory', '/absolute/path/to/linkedin-mcp-server', 'run', 'linkedin-mcp-server']\n```",
+          "en": "1. This project is not on PyPI (the PyPI package named `linkedin-mcp-server` belongs to another author), so run it from source. After installing uv, run `git clone https://github.com/eliasbiondo/linkedin-mcp-server.git ~/linkedin-mcp-server && cd ~/linkedin-mcp-server && uv sync`.\n2. Run `uv run linkedin-mcp-server --login` and sign in to LinkedIn in the browser window.\n3. Add this block to `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml` (`<profile>` is `desktop` in the desktop app and `web` in the web app), then start a new session to see the `mcp__mkt-…__*` tools:\n\n```yaml\n- insert:\n    - id: mkt-linkedin-eliasbiondo\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-linkedin-eliasbiondo\n        transport: stdio\n        command: uv\n        args: ['--directory', '/absolute/path/to/linkedin-mcp-server', 'run', 'linkedin-mcp-server']\n```"
+        }
+      }
+    },
+    {
+      "id": "ig-mcp",
+      "kind": "mcp",
+      "title": {
+        "zh": "Instagram Graph API",
+        "en": "Instagram Graph API"
+      },
+      "description": {
+        "zh": "用 Instagram Graph API 读写自有商业号的帖子、洞察、评论与私信。",
+        "en": "Reads and manages posts, insights, comments and messages on your own Instagram business account through the Graph API."
+      },
+      "repository": "https://github.com/jlbadano/ig-mcp",
+      "stars": 203,
+      "pushedAt": "2026-02-09",
+      "license": "MIT",
+      "categories": [
+        "social-data",
+        "publishing"
+      ],
+      "access": "free-key",
+      "setup": {
+        "zh": "需要 Instagram 商业号或创作者号并关联 Facebook 主页；到 https://developers.facebook.com 创建 app，生成长期访问令牌，设置 `INSTAGRAM_ACCESS_TOKEN`、`INSTAGRAM_BUSINESS_ACCOUNT_ID`，以及刷新令牌用的 `FACEBOOK_APP_ID`、`FACEBOOK_APP_SECRET`。",
+        "en": "Requires an Instagram business or creator account linked to a Facebook Page; create an app at https://developers.facebook.com, generate a long-lived token and set `INSTAGRAM_ACCESS_TOKEN` and `INSTAGRAM_BUSINESS_ACCOUNT_ID`, plus `FACEBOOK_APP_ID` and `FACEBOOK_APP_SECRET` for token refresh."
+      },
+      "env": [
+        "INSTAGRAM_ACCESS_TOKEN",
+        "INSTAGRAM_BUSINESS_ACCOUNT_ID",
+        "FACEBOOK_APP_ID",
+        "FACEBOOK_APP_SECRET"
+      ],
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 该项目未发布到 PyPI，需要 Python 3.10+ 从源码运行：`git clone https://github.com/jlbadano/ig-mcp.git ~/ig-mcp && cd ~/ig-mcp && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`。\n2. 按上面的说明取得令牌，并在启动 Tomato 的环境里设置这些环境变量。\n3. 把下面这段加到 `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml`（桌面端的 `<profile>` 是 `desktop`，网页端是 `web`），保存后新开会话即可看到 `mcp__mkt-…__*` 工具：\n\n```yaml\n- insert:\n    - id: mkt-ig-mcp\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-ig-mcp\n        transport: stdio\n        command: /absolute/path/to/ig-mcp/.venv/bin/python\n        args: ['/absolute/path/to/ig-mcp/src/instagram_mcp_server.py']\n        env:\n          INSTAGRAM_ACCESS_TOKEN: !!js process.env.INSTAGRAM_ACCESS_TOKEN\n          INSTAGRAM_BUSINESS_ACCOUNT_ID: !!js process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID\n          FACEBOOK_APP_ID: !!js process.env.FACEBOOK_APP_ID\n          FACEBOOK_APP_SECRET: !!js process.env.FACEBOOK_APP_SECRET\n```",
+          "en": "1. This project is not on PyPI and runs from source with Python 3.10+: `git clone https://github.com/jlbadano/ig-mcp.git ~/ig-mcp && cd ~/ig-mcp && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`.\n2. Obtain the tokens as described above and set these environment variables where Tomato is launched.\n3. Add this block to `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml` (`<profile>` is `desktop` in the desktop app and `web` in the web app), then start a new session to see the `mcp__mkt-…__*` tools:\n\n```yaml\n- insert:\n    - id: mkt-ig-mcp\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-ig-mcp\n        transport: stdio\n        command: /absolute/path/to/ig-mcp/.venv/bin/python\n        args: ['/absolute/path/to/ig-mcp/src/instagram_mcp_server.py']\n        env:\n          INSTAGRAM_ACCESS_TOKEN: !!js process.env.INSTAGRAM_ACCESS_TOKEN\n          INSTAGRAM_BUSINESS_ACCOUNT_ID: !!js process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID\n          FACEBOOK_APP_ID: !!js process.env.FACEBOOK_APP_ID\n          FACEBOOK_APP_SECRET: !!js process.env.FACEBOOK_APP_SECRET\n```"
+        }
+      }
+    },
+    {
+      "id": "facebook-ads-library",
+      "kind": "mcp",
+      "title": {
+        "zh": "Meta 广告库",
+        "en": "Meta Ad Library"
+      },
+      "description": {
+        "zh": "免 token 抓取公开的 Meta Ad Library，用于竞品广告调研。",
+        "en": "Scrapes the public Meta Ad Library without a token for competitor ad research."
+      },
+      "repository": "https://github.com/RamsesAguirre777/facebook-ads-library-mcp",
+      "stars": 283,
+      "pushedAt": "2026-08-29",
+      "license": "MIT",
+      "categories": [
+        "ads-competitors"
+      ],
+      "access": "none",
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 该项目只提供 pip 安装：`git clone https://github.com/RamsesAguirre777/facebook-ads-library-mcp.git ~/facebook-ads-library-mcp && cd ~/facebook-ads-library-mcp && python3 -m venv venv && venv/bin/pip install -r requirements.txt`。\n2. 把下面这段加到 `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml`（桌面端的 `<profile>` 是 `desktop`，网页端是 `web`），保存后新开会话即可看到 `mcp__mkt-…__*` 工具：\n\n```yaml\n- insert:\n    - id: mkt-facebook-ads-library\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-facebook-ads-library\n        transport: stdio\n        command: /absolute/path/to/facebook-ads-library-mcp/venv/bin/python\n        args: ['/absolute/path/to/facebook-ads-library-mcp/facebook_ads_mcp_complete.py']\n```",
+          "en": "1. This project installs only with pip: `git clone https://github.com/RamsesAguirre777/facebook-ads-library-mcp.git ~/facebook-ads-library-mcp && cd ~/facebook-ads-library-mcp && python3 -m venv venv && venv/bin/pip install -r requirements.txt`.\n2. Add this block to `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml` (`<profile>` is `desktop` in the desktop app and `web` in the web app), then start a new session to see the `mcp__mkt-…__*` tools:\n\n```yaml\n- insert:\n    - id: mkt-facebook-ads-library\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-facebook-ads-library\n        transport: stdio\n        command: /absolute/path/to/facebook-ads-library-mcp/venv/bin/python\n        args: ['/absolute/path/to/facebook-ads-library-mcp/facebook_ads_mcp_complete.py']\n```"
+        }
+      }
+    },
+    {
+      "id": "google-analytics",
+      "kind": "mcp",
+      "title": {
+        "zh": "Google Analytics（官方）",
+        "en": "Google Analytics"
+      },
+      "description": {
+        "zh": "Google 官方 GA4 数据 MCP。",
+        "en": "Google's official MCP for GA4 data."
+      },
+      "repository": "https://github.com/googleanalytics/google-analytics-mcp",
+      "stars": 3622,
+      "pushedAt": "2026-11-02",
+      "license": "Apache-2.0",
+      "categories": [
+        "analytics"
+      ],
+      "access": "free-key",
+      "setup": {
+        "zh": "在 Google Cloud 项目中启用 Google Analytics Admin API 和 Data API，用 `gcloud auth application-default login --scopes https://www.googleapis.com/auth/analytics.readonly,https://www.googleapis.com/auth/cloud-platform` 生成应用默认凭据，把凭据 JSON 路径设为 `GOOGLE_APPLICATION_CREDENTIALS`，项目 ID 设为 `GOOGLE_PROJECT_ID`。",
+        "en": "Enable the Google Analytics Admin and Data APIs in a Google Cloud project, create application default credentials with `gcloud auth application-default login --scopes https://www.googleapis.com/auth/analytics.readonly,https://www.googleapis.com/auth/cloud-platform`, set the credentials JSON path as `GOOGLE_APPLICATION_CREDENTIALS` and the project ID as `GOOGLE_PROJECT_ID`."
+      },
+      "env": [
+        "GOOGLE_APPLICATION_CREDENTIALS",
+        "GOOGLE_PROJECT_ID"
+      ],
+      "install": {
+        "type": "mcp",
+        "runner": "uvx",
+        "package": "analytics-mcp",
+        "version": "0.8.0"
+      }
+    },
+    {
+      "id": "mcp-gsc",
+      "kind": "mcp",
+      "title": {
+        "zh": "Google Search Console",
+        "en": "Google Search Console"
+      },
+      "description": {
+        "zh": "Google Search Console 查询、URL 检查与站点地图管理。",
+        "en": "Google Search Console queries, URL inspection and sitemap management."
+      },
+      "repository": "https://github.com/AminForou/mcp-gsc",
+      "stars": 2097,
+      "pushedAt": "2026-09-15",
+      "license": "MIT",
+      "categories": [
+        "seo"
+      ],
+      "access": "free-key",
+      "setup": {
+        "zh": "在 Google Cloud Console 启用 Search Console API，创建 OAuth 客户端（桌面应用）并下载 JSON，把绝对路径设为 `GSC_OAUTH_CLIENT_SECRETS_FILE`；首次调用会打开浏览器授权。需要 Python 3.11+（uvx 会自动管理）。",
+        "en": "Enable the Search Console API in Google Cloud Console, create a desktop OAuth client, download its JSON and set the absolute path as `GSC_OAUTH_CLIENT_SECRETS_FILE`; the first call opens a browser for consent. Requires Python 3.11+ (uvx manages it)."
+      },
+      "env": [
+        "GSC_OAUTH_CLIENT_SECRETS_FILE"
+      ],
+      "install": {
+        "type": "mcp",
+        "runner": "uvx",
+        "package": "mcp-search-console",
+        "version": "0.4.1"
+      }
+    },
+    {
+      "id": "search-console-mcp",
+      "kind": "mcp",
+      "title": {
+        "zh": "Search Console 与 Bing 站长",
+        "en": "Search Console and Bing Webmaster"
+      },
+      "description": {
+        "zh": "读取 Google Search Console 与 Bing Webmaster 数据。",
+        "en": "Reads Google Search Console and Bing Webmaster Tools data."
+      },
+      "repository": "https://github.com/saurabhsharma2u/search-console-mcp",
+      "stars": 320,
+      "pushedAt": "2026-10-21",
+      "license": "MIT",
+      "categories": [
+        "seo"
+      ],
+      "access": "free-key",
+      "setup": {
+        "zh": "先运行 `npx search-console-mcp@2.1.4 setup` 完成 Google OAuth 登录；如需 Bing 数据，到 https://www.bing.com/webmasters/settings/api 生成 API key 并设为 `BING_API_KEY`。",
+        "en": "Run `npx search-console-mcp@2.1.4 setup` once to complete Google OAuth; for Bing data create an API key at https://www.bing.com/webmasters/settings/api and set `BING_API_KEY`."
+      },
+      "env": [
+        "BING_API_KEY"
+      ],
+      "install": {
+        "type": "mcp",
+        "runner": "npx",
+        "package": "search-console-mcp",
+        "version": "2.1.4"
+      }
+    },
+    {
+      "id": "seo-monster",
+      "kind": "mcp",
+      "title": {
+        "zh": "SEO Monster",
+        "en": "SEO Monster"
+      },
+      "description": {
+        "zh": "用自己的凭据接入 GSC、GA4、PageSpeed，在本地运行 SEO 工作流。",
+        "en": "Runs local SEO workflows against GSC, GA4 and PageSpeed with your own credentials."
+      },
+      "repository": "https://github.com/avansaber/seo-monster",
+      "stars": 560,
+      "pushedAt": "2026-10-29",
+      "license": "MIT",
+      "categories": [
+        "seo",
+        "analytics"
+      ],
+      "access": "free-key",
+      "setup": {
+        "zh": "先在终端运行一次 `uvx seo-monster@0.9.3 auth` 完成 Google 登录；PageSpeed 数据需在 Google Cloud Console 创建免费 API key 并设为 `PSI_API_KEY`。",
+        "en": "Run `uvx seo-monster@0.9.3 auth` once in a terminal to sign in with Google; PageSpeed data needs a free API key from Google Cloud Console set as `PSI_API_KEY`."
+      },
+      "env": [
+        "PSI_API_KEY"
+      ],
+      "install": {
+        "type": "mcp",
+        "runner": "uvx",
+        "package": "seo-monster",
+        "version": "0.9.3"
+      }
+    },
+    {
+      "id": "openserp",
+      "kind": "mcp",
+      "title": {
+        "zh": "OpenSERP 搜索结果抓取",
+        "en": "OpenSERP"
+      },
+      "description": {
+        "zh": "自托管的 Google、Bing、DuckDuckGo 等 SERP 抓取，返回结构化 JSON。",
+        "en": "Self-hosted SERP scraping for Google, Bing, DuckDuckGo and others, returning structured JSON."
+      },
+      "repository": "https://github.com/karust/openserp",
+      "stars": 1547,
+      "pushedAt": "2026-11-03",
+      "license": "MIT",
+      "categories": [
+        "foundation",
+        "seo"
+      ],
+      "access": "self-hosted",
+      "setup": {
+        "zh": "需要先用 Docker 启动 OpenSERP 服务：`docker run -d --name openserp -p 127.0.0.1:7000:7000 karust/openserp serve -a 0.0.0.0 -p 7000`；服务不在本机默认地址时设置 `OPENSERP_BASE_URL`。",
+        "en": "Start the OpenSERP service with Docker first: `docker run -d --name openserp -p 127.0.0.1:7000:7000 karust/openserp serve -a 0.0.0.0 -p 7000`; set `OPENSERP_BASE_URL` when the service is not at the local default."
+      },
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 启动本地服务：`docker run -d --name openserp -p 127.0.0.1:7000:7000 karust/openserp serve -a 0.0.0.0 -p 7000`。\n2. 验证：`curl \"http://127.0.0.1:7000/google/search?text=test\"` 返回 JSON。\n3. 把下面这段加到 `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml`（桌面端的 `<profile>` 是 `desktop`，网页端是 `web`），保存后新开会话即可看到 `mcp__mkt-…__*` 工具：\n\n```yaml\n- insert:\n    - id: mkt-openserp\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-openserp\n        transport: stdio\n        command: npx\n        args: ['-y', '@openserp/mcp@0.1.12']\n```",
+          "en": "1. Start the local service: `docker run -d --name openserp -p 127.0.0.1:7000:7000 karust/openserp serve -a 0.0.0.0 -p 7000`.\n2. Verify: `curl \"http://127.0.0.1:7000/google/search?text=test\"` returns JSON.\n3. Add this block to `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml` (`<profile>` is `desktop` in the desktop app and `web` in the web app), then start a new session to see the `mcp__mkt-…__*` tools:\n\n```yaml\n- insert:\n    - id: mkt-openserp\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-openserp\n        transport: stdio\n        command: npx\n        args: ['-y', '@openserp/mcp@0.1.12']\n```"
+        }
+      }
+    },
+    {
+      "id": "squirrelscan",
+      "kind": "mcp",
+      "title": {
+        "zh": "squirrelscan 网站审计",
+        "en": "squirrelscan"
+      },
+      "description": {
+        "zh": "用 310 多条规则审计网站的 SEO、性能与可访问性。",
+        "en": "Audits websites for SEO, performance and accessibility with more than 310 rules."
+      },
+      "repository": "https://github.com/squirrelscan/squirrelscan",
+      "stars": 304,
+      "pushedAt": "2026-11-02",
+      "license": "MIT",
+      "categories": [
+        "seo"
+      ],
+      "access": "none",
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 本地审计不需要账号：`npx squirrelscan@0.0.160 audit example.com`，或 `npm i -g squirrelscan@0.0.160` 后使用 `squirrel audit example.com`。\n2. MCP：README 只给出托管端点 https://mcp.squirrelscan.com/mcp （云渲染需登录），本地 stdio 启动命令未在 README 中写明，请运行 `squirrel --help` 查看是否有 `mcp` 子命令，再按下面格式接入：\n\n```yaml\n- insert:\n    - id: mkt-squirrelscan\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-squirrelscan\n        transport: stdio\n        command: squirrel\n        args: ['mcp']\n```\n\n3. 不想用 MCP 时，直接让 Agent 通过 shell 调用 `squirrel audit` 也能完成审计。",
+          "en": "1. Local audits need no account: `npx squirrelscan@0.0.160 audit example.com`, or `npm i -g squirrelscan@0.0.160` and run `squirrel audit example.com`.\n2. MCP: the README documents only the hosted endpoint https://mcp.squirrelscan.com/mcp (cloud rendering needs sign-in) and no local stdio command; run `squirrel --help` to check for an `mcp` subcommand, then connect it in this form:\n\n```yaml\n- insert:\n    - id: mkt-squirrelscan\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-squirrelscan\n        transport: stdio\n        command: squirrel\n        args: ['mcp']\n```\n\n3. Without MCP, the agent can run `squirrel audit` through the shell."
+        }
+      }
+    },
+    {
+      "id": "dembrandt",
+      "kind": "mcp",
+      "title": {
+        "zh": "Dembrandt 品牌提取",
+        "en": "Dembrandt"
+      },
+      "description": {
+        "zh": "从任意网站提取 logo、配色、字体等设计令牌，用于品牌与竞品视觉分析。",
+        "en": "Extracts logos, colors, fonts and other design tokens from any website for brand and competitor visual analysis."
+      },
+      "repository": "https://github.com/dembrandt/dembrandt",
+      "stars": 3922,
+      "pushedAt": "2026-11-01",
+      "license": "MIT",
+      "categories": [
+        "ads-competitors",
+        "content"
+      ],
+      "access": "none",
+      "setup": {
+        "zh": "首次使用前运行 `npx dembrandt@0.39.2 install-browser` 下载无头浏览器。",
+        "en": "Run `npx dembrandt@0.39.2 install-browser` once to download the headless browser."
+      },
+      "install": {
+        "type": "mcp",
+        "runner": "npx",
+        "package": "dembrandt",
+        "version": "0.39.2",
+        "bin": "dembrandt-mcp"
+      }
+    },
+    {
+      "id": "playwright-mcp",
+      "kind": "mcp",
+      "title": {
+        "zh": "Playwright MCP",
+        "en": "Playwright MCP"
+      },
+      "description": {
+        "zh": "微软官方的 Playwright 浏览器自动化。",
+        "en": "Microsoft's official Playwright browser automation server."
+      },
+      "repository": "https://github.com/microsoft/playwright-mcp",
+      "stars": 39117,
+      "pushedAt": "2026-11-01",
+      "license": "Apache-2.0",
+      "categories": [
+        "foundation"
+      ],
+      "access": "none",
+      "install": {
+        "type": "mcp",
+        "runner": "npx",
+        "package": "@playwright/mcp",
+        "version": "0.0.84",
+        "bin": "playwright-mcp"
+      }
+    },
+    {
+      "id": "chrome-devtools-mcp",
+      "kind": "mcp",
+      "title": {
+        "zh": "Chrome DevTools MCP",
+        "en": "Chrome DevTools MCP"
+      },
+      "description": {
+        "zh": "Chrome 官方 DevTools MCP，支持网络、性能分析与页面操作。",
+        "en": "Official Chrome DevTools MCP for network inspection, performance analysis and page actions."
+      },
+      "repository": "https://github.com/ChromeDevTools/chrome-devtools-mcp",
+      "stars": 54713,
+      "pushedAt": "2026-11-03",
+      "license": "Apache-2.0",
+      "categories": [
+        "foundation"
+      ],
+      "access": "none",
+      "install": {
+        "type": "mcp",
+        "runner": "npx",
+        "package": "chrome-devtools-mcp",
+        "version": "1.12.0",
+        "bin": "chrome-devtools-mcp"
+      }
+    },
+    {
+      "id": "browser-mcp",
+      "kind": "mcp",
+      "title": {
+        "zh": "Browser MCP",
+        "en": "Browser MCP"
+      },
+      "description": {
+        "zh": "通过浏览器扩展控制你自己已登录的浏览器。",
+        "en": "Controls your own signed-in browser through an extension."
+      },
+      "repository": "https://github.com/BrowserMCP/mcp",
+      "stars": 7280,
+      "pushedAt": "2026-11-03",
+      "license": "Apache-2.0",
+      "categories": [
+        "foundation"
+      ],
+      "access": "none",
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 在 Chrome 安装 Browser MCP 扩展：https://chromewebstore.google.com/detail/bjfgambnhccakkhmkepdoekmckoijdlc 。\n2. 在要让 Agent 操作的标签页点击扩展图标并选择 Connect。\n3. 把下面这段加到 `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml`（桌面端的 `<profile>` 是 `desktop`，网页端是 `web`），保存后新开会话即可看到 `mcp__mkt-…__*` 工具：\n\n```yaml\n- insert:\n    - id: mkt-browser-mcp\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-browser-mcp\n        transport: stdio\n        command: npx\n        args: ['-y', '@browsermcp/mcp@2.4.0']\n```",
+          "en": "1. Install the Browser MCP extension in Chrome: https://chromewebstore.google.com/detail/bjfgambnhccakkhmkepdoekmckoijdlc.\n2. On the tab the agent should operate, click the extension icon and choose Connect.\n3. Add this block to `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml` (`<profile>` is `desktop` in the desktop app and `web` in the web app), then start a new session to see the `mcp__mkt-…__*` tools:\n\n```yaml\n- insert:\n    - id: mkt-browser-mcp\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-browser-mcp\n        transport: stdio\n        command: npx\n        args: ['-y', '@browsermcp/mcp@2.4.0']\n```"
+        }
+      }
+    },
+    {
+      "id": "mcp-chrome",
+      "kind": "mcp",
+      "title": {
+        "zh": "Chrome MCP Server",
+        "en": "Chrome MCP server"
+      },
+      "description": {
+        "zh": "基于 Chrome 扩展的 MCP，复用日常浏览器的登录态。",
+        "en": "Chrome extension-based MCP that reuses the sign-in state of your everyday browser."
+      },
+      "repository": "https://github.com/hangwin/mcp-chrome",
+      "stars": 12530,
+      "pushedAt": "2026-01-06",
+      "license": "MIT",
+      "categories": [
+        "foundation"
+      ],
+      "access": "none",
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 从 https://github.com/hangwin/mcp-chrome/releases 下载扩展包，解压后在 `chrome://extensions` 打开开发者模式并“加载已解压的扩展程序”。\n2. 全局安装桥接程序：`npm install -g mcp-chrome-bridge@1.0.31`（若未自动注册，运行 `mcp-chrome-bridge register`）。\n3. 点击扩展图标并 Connect，本地服务监听 http://127.0.0.1:12306/mcp 。\n4. 把下面这段加到 `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml`（桌面端的 `<profile>` 是 `desktop`，网页端是 `web`），保存后新开会话即可看到 `mcp__mkt-…__*` 工具：\n\n```yaml\n- insert:\n    - id: mkt-mcp-chrome\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-mcp-chrome\n        transport: streamable-http\n        url: http://127.0.0.1:12306/mcp\n```",
+          "en": "1. Download the extension from https://github.com/hangwin/mcp-chrome/releases, unzip it, enable Developer mode at `chrome://extensions` and choose Load unpacked.\n2. Install the bridge globally: `npm install -g mcp-chrome-bridge@1.0.31` (if it does not register itself, run `mcp-chrome-bridge register`).\n3. Click the extension icon and Connect; the local service listens on http://127.0.0.1:12306/mcp.\n4. Add this block to `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml` (`<profile>` is `desktop` in the desktop app and `web` in the web app), then start a new session to see the `mcp__mkt-…__*` tools:\n\n```yaml\n- insert:\n    - id: mkt-mcp-chrome\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-mcp-chrome\n        transport: streamable-http\n        url: http://127.0.0.1:12306/mcp\n```"
+        }
+      }
+    },
+    {
+      "id": "scrapling",
+      "kind": "mcp",
+      "title": {
+        "zh": "Scrapling 抓取",
+        "en": "Scrapling"
+      },
+      "description": {
+        "zh": "抗反爬抓取框架，自带 MCP 服务器。",
+        "en": "Anti-bot-resistant scraping framework with a built-in MCP server."
+      },
+      "repository": "https://github.com/D4Vinci/Scrapling",
+      "stars": 93713,
+      "pushedAt": "2026-11-02",
+      "license": "BSD-3-Clause",
+      "categories": [
+        "foundation"
+      ],
+      "access": "none",
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. MCP 功能需要 `scrapling[ai]` 额外依赖，普通的 `uvx scrapling` 不包含，因此需手动指定。安装 uv 后先下载浏览器：`uvx --from \"scrapling[ai]==0.5\" scrapling install`。\n2. 把下面这段加到 `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml`（桌面端的 `<profile>` 是 `desktop`，网页端是 `web`），保存后新开会话即可看到 `mcp__mkt-…__*` 工具：\n\n```yaml\n- insert:\n    - id: mkt-scrapling\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-scrapling\n        transport: stdio\n        command: uvx\n        args: ['--from', 'scrapling[ai]==0.5', 'scrapling-mcp']\n```",
+          "en": "1. The MCP feature needs the `scrapling[ai]` extra, which a plain `uvx scrapling` lacks, so it must be specified manually. After installing uv, download the browsers: `uvx --from \"scrapling[ai]==0.5\" scrapling install`.\n2. Add this block to `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml` (`<profile>` is `desktop` in the desktop app and `web` in the web app), then start a new session to see the `mcp__mkt-…__*` tools:\n\n```yaml\n- insert:\n    - id: mkt-scrapling\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-scrapling\n        transport: stdio\n        command: uvx\n        args: ['--from', 'scrapling[ai]==0.5', 'scrapling-mcp']\n```"
+        }
+      }
+    },
+    {
+      "id": "crawl4ai",
+      "kind": "mcp",
+      "title": {
+        "zh": "Crawl4AI",
+        "en": "Crawl4AI"
+      },
+      "description": {
+        "zh": "把网站抓成 LLM 可用的 Markdown，自托管服务带 MCP。",
+        "en": "Crawls websites into LLM-ready Markdown, with MCP in the self-hosted server."
+      },
+      "repository": "https://github.com/unclecode/crawl4ai",
+      "stars": 86821,
+      "pushedAt": "2026-11-03",
+      "license": "Apache-2.0",
+      "categories": [
+        "foundation",
+        "seo"
+      ],
+      "access": "self-hosted",
+      "setup": {
+        "zh": "需要 Docker 自建服务，并生成访问令牌设为 `CRAWL4AI_API_TOKEN`（例如 `export CRAWL4AI_API_TOKEN=\"$(openssl rand -hex 32)\"`）。",
+        "en": "Requires a self-hosted Docker service with an access token set as `CRAWL4AI_API_TOKEN` (for example `export CRAWL4AI_API_TOKEN=\"$(openssl rand -hex 32)\"`)."
+      },
+      "env": [
+        "CRAWL4AI_API_TOKEN"
+      ],
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 启动服务：`docker run -d -p 11235:11235 --name crawl4ai --shm-size=1g -e CRAWL4AI_API_TOKEN=\"$CRAWL4AI_API_TOKEN\" unclecode/crawl4ai:latest`。\n2. 验证：打开 http://localhost:11235/playground 。MCP 端点以 https://docs.crawl4ai.com/core/self-hosting/ 为准（当前为 SSE 端点 `/mcp/sse`），Tomato 只支持 stdio 和 streamable HTTP，因此用 `mcp-remote` 桥接。\n3. 把下面这段加到 `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml`（桌面端的 `<profile>` 是 `desktop`，网页端是 `web`），保存后新开会话即可看到 `mcp__mkt-…__*` 工具：\n\n```yaml\n- insert:\n    - id: mkt-crawl4ai\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-crawl4ai\n        transport: stdio\n        command: npx\n        args: ['-y', 'mcp-remote@0.16.0', 'http://localhost:11235/mcp/sse', '--transport', 'sse-only', '--header', 'Authorization:Bearer ${CRAWL4AI_API_TOKEN}']\n        env:\n          CRAWL4AI_API_TOKEN: !!js process.env.CRAWL4AI_API_TOKEN\n```",
+          "en": "1. Start the service: `docker run -d -p 11235:11235 --name crawl4ai --shm-size=1g -e CRAWL4AI_API_TOKEN=\"$CRAWL4AI_API_TOKEN\" unclecode/crawl4ai:latest`.\n2. Verify by opening http://localhost:11235/playground. Check the MCP endpoint at https://docs.crawl4ai.com/core/self-hosting/ (currently the SSE endpoint `/mcp/sse`); Tomato supports only stdio and streamable HTTP, so bridge it with `mcp-remote`.\n3. Add this block to `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml` (`<profile>` is `desktop` in the desktop app and `web` in the web app), then start a new session to see the `mcp__mkt-…__*` tools:\n\n```yaml\n- insert:\n    - id: mkt-crawl4ai\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-crawl4ai\n        transport: stdio\n        command: npx\n        args: ['-y', 'mcp-remote@0.16.0', 'http://localhost:11235/mcp/sse', '--transport', 'sse-only', '--header', 'Authorization:Bearer ${CRAWL4AI_API_TOKEN}']\n        env:\n          CRAWL4AI_API_TOKEN: !!js process.env.CRAWL4AI_API_TOKEN\n```"
+        }
+      }
+    },
+    {
+      "id": "fetcher-mcp",
+      "kind": "mcp",
+      "title": {
+        "zh": "Fetcher MCP",
+        "en": "Fetcher MCP"
+      },
+      "description": {
+        "zh": "用 Playwright 抓取需要 JS 渲染的页面。",
+        "en": "Fetches JavaScript-rendered pages with Playwright."
+      },
+      "repository": "https://github.com/jae-jae/fetcher-mcp",
+      "stars": 1087,
+      "pushedAt": "2026-11-03",
+      "license": "MIT",
+      "categories": [
+        "foundation"
+      ],
+      "access": "none",
+      "setup": {
+        "zh": "首次使用前运行 `npx playwright install chromium` 下载浏览器。",
+        "en": "Run `npx playwright install chromium` once to download the browser."
+      },
+      "install": {
+        "type": "mcp",
+        "runner": "npx",
+        "package": "fetcher-mcp",
+        "version": "0.3.9"
+      }
+    },
+    {
+      "id": "wigolo",
+      "kind": "mcp",
+      "title": {
+        "zh": "wigolo 本地搜索",
+        "en": "wigolo"
+      },
+      "description": {
+        "zh": "本地优先的搜索、抓取、爬取与研究，无需 key。",
+        "en": "Local-first search, fetching, crawling and research without a key."
+      },
+      "repository": "https://github.com/KnockOutEZ/wigolo",
+      "stars": 5526,
+      "pushedAt": "2026-11-02",
+      "license": "AGPL-3.0",
+      "categories": [
+        "foundation",
+        "seo",
+        "ads-competitors"
+      ],
+      "access": "none",
+      "setup": {
+        "zh": "首次使用前运行 `npx wigolo@0.3.1 init` 初始化本地引擎；research 汇总可选配 Gemini 免费 key（https://aistudio.google.com/apikey ，设为 `GEMINI_API_KEY`）。",
+        "en": "Run `npx wigolo@0.3.1 init` once to set up the local engine; research summaries can optionally use a free Gemini key (https://aistudio.google.com/apikey, set as `GEMINI_API_KEY`)."
+      },
+      "install": {
+        "type": "mcp",
+        "runner": "npx",
+        "package": "wigolo",
+        "version": "0.3.1"
+      }
+    },
+    {
+      "id": "postiz",
+      "kind": "mcp",
+      "title": {
+        "zh": "Postiz 社媒排期",
+        "en": "Postiz"
+      },
+      "description": {
+        "zh": "开源社媒排期平台，覆盖 30 多个渠道，自带 MCP 和 CLI。",
+        "en": "Open-source social media scheduler for more than 30 channels with built-in MCP and CLI."
+      },
+      "repository": "https://github.com/gitroomhq/postiz-app",
+      "stars": 40767,
+      "pushedAt": "2026-11-03",
+      "license": "AGPL-3.0",
+      "categories": [
+        "publishing"
+      ],
+      "access": "self-hosted",
+      "setup": {
+        "zh": "需要 Docker 自建 Postiz（Postgres、Redis、存储），各平台的 OAuth app 需自己免费申请；见 https://docs.postiz.com/installation 。",
+        "en": "Requires a self-hosted Postiz on Docker (Postgres, Redis and storage) plus free OAuth apps you register on each platform; see https://docs.postiz.com/installation."
+      },
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 按 https://docs.postiz.com/installation 用 Docker Compose 部署 Postiz，并在 `.env` 中配置各平台 OAuth app。\n2. 登录 Postiz，在 Settings → Public API 生成 API key，复制设置页给出的 MCP 地址，替换下面的 URL（以设置页显示为准）。\n3. 把下面这段加到 `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml`（桌面端的 `<profile>` 是 `desktop`，网页端是 `web`），保存后新开会话即可看到 `mcp__mkt-…__*` 工具：\n\n```yaml\n- insert:\n    - id: mkt-postiz\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-postiz\n        transport: streamable-http\n        url: http://localhost:5000/api/mcp/<YOUR_POSTIZ_API_KEY>\n```",
+          "en": "1. Deploy Postiz with Docker Compose per https://docs.postiz.com/installation and configure each platform OAuth app in `.env`.\n2. Sign in to Postiz, create an API key under Settings → Public API, copy the MCP URL shown there and replace the URL below (the settings page is authoritative).\n3. Add this block to `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml` (`<profile>` is `desktop` in the desktop app and `web` in the web app), then start a new session to see the `mcp__mkt-…__*` tools:\n\n```yaml\n- insert:\n    - id: mkt-postiz\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-postiz\n        transport: streamable-http\n        url: http://localhost:5000/api/mcp/<YOUR_POSTIZ_API_KEY>\n```"
+        }
+      }
+    },
+    {
+      "id": "trypost",
+      "kind": "mcp",
+      "title": {
+        "zh": "TryPost 社媒排期",
+        "en": "TryPost"
+      },
+      "description": {
+        "zh": "面向 Agent 的开源社媒排期工具，MCP 有 80 多个工具。",
+        "en": "Agent-oriented open-source social scheduler whose MCP server exposes more than 80 tools."
+      },
+      "repository": "https://github.com/trypostit/trypost",
+      "stars": 803,
+      "pushedAt": "2026-11-03",
+      "license": "AGPL-3.0",
+      "categories": [
+        "publishing"
+      ],
+      "access": "self-hosted",
+      "setup": {
+        "zh": "需要自建 TryPost 实例（见 https://docs.trypost.it ），在实例中创建 API token 后设为 `TRYPOST_API_TOKEN`。",
+        "en": "Requires a self-hosted TryPost instance (see https://docs.trypost.it); create an API token in the instance and set it as `TRYPOST_API_TOKEN`."
+      },
+      "env": [
+        "TRYPOST_API_TOKEN"
+      ],
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 按 https://github.com/trypostit/trypost 的 README 与 https://docs.trypost.it 部署实例。\n2. 按 https://docs.trypost.it/ai/introduction 在实例中创建 API token，并把文档给出的 MCP 地址填到下面的 URL。\n3. 把下面这段加到 `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml`（桌面端的 `<profile>` 是 `desktop`，网页端是 `web`），保存后新开会话即可看到 `mcp__mkt-…__*` 工具：\n\n```yaml\n- insert:\n    - id: mkt-trypost\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-trypost\n        transport: streamable-http\n        url: https://<your-trypost-host>/mcp\n        headers:\n          Authorization: !!js '`Bearer ${process.env.TRYPOST_API_TOKEN}`'\n```",
+          "en": "1. Deploy an instance per the https://github.com/trypostit/trypost README and https://docs.trypost.it.\n2. Create an API token per https://docs.trypost.it/ai/introduction and put the MCP URL from that page into the URL below.\n3. Add this block to `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml` (`<profile>` is `desktop` in the desktop app and `web` in the web app), then start a new session to see the `mcp__mkt-…__*` tools:\n\n```yaml\n- insert:\n    - id: mkt-trypost\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-trypost\n        transport: streamable-http\n        url: https://<your-trypost-host>/mcp\n        headers:\n          Authorization: !!js '`Bearer ${process.env.TRYPOST_API_TOKEN}`'\n```"
+        }
+      }
+    },
+    {
+      "id": "brightbean-studio",
+      "kind": "mcp",
+      "title": {
+        "zh": "BrightBean Studio",
+        "en": "BrightBean Studio"
+      },
+      "description": {
+        "zh": "多客户社媒管理：排期、发布、收件箱与分析，带 REST 与 MCP 接口。",
+        "en": "Multi-client social media management for scheduling, publishing, inbox and analytics with REST and MCP APIs."
+      },
+      "repository": "https://github.com/brightbeanxyz/brightbean-studio",
+      "stars": 2611,
+      "pushedAt": "2026-10-25",
+      "license": "AGPL-3.0",
+      "categories": [
+        "publishing",
+        "analytics"
+      ],
+      "access": "self-hosted",
+      "setup": {
+        "zh": "需要 Docker 自建（也有免费托管版 https://brightbean.xyz/studio/ ）；在实例中生成 API token 后设为 `BRIGHTBEAN_API_TOKEN`。",
+        "en": "Requires a Docker self-hosted deployment (a free hosted version is at https://brightbean.xyz/studio/); create an API token in the instance and set it as `BRIGHTBEAN_API_TOKEN`."
+      },
+      "env": [
+        "BRIGHTBEAN_API_TOKEN"
+      ],
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. `git clone https://github.com/brightbeanxyz/brightbean-studio.git && cd brightbean-studio && cp .env.example .env`，把 `DATABASE_URL` 改为 `postgres://postgres:postgres@postgres:5432/brightbean`。\n2. `docker compose up -d --build`，再 `docker compose exec app python manage.py createsuperuser`，打开 http://localhost:8000 登录。\n3. 在设置中生成 API token，按仓库 README 的 MCP 章节确认 MCP 地址并填到下面的 URL。\n4. 把下面这段加到 `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml`（桌面端的 `<profile>` 是 `desktop`，网页端是 `web`），保存后新开会话即可看到 `mcp__mkt-…__*` 工具：\n\n```yaml\n- insert:\n    - id: mkt-brightbean-studio\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-brightbean-studio\n        transport: streamable-http\n        url: http://localhost:8000/mcp\n        headers:\n          Authorization: !!js '`Bearer ${process.env.BRIGHTBEAN_API_TOKEN}`'\n```",
+          "en": "1. `git clone https://github.com/brightbeanxyz/brightbean-studio.git && cd brightbean-studio && cp .env.example .env`, then set `DATABASE_URL` to `postgres://postgres:postgres@postgres:5432/brightbean`.\n2. Run `docker compose up -d --build`, then `docker compose exec app python manage.py createsuperuser`, and sign in at http://localhost:8000.\n3. Create an API token in settings, confirm the MCP URL in the README MCP section and put it into the URL below.\n4. Add this block to `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml` (`<profile>` is `desktop` in the desktop app and `web` in the web app), then start a new session to see the `mcp__mkt-…__*` tools:\n\n```yaml\n- insert:\n    - id: mkt-brightbean-studio\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-brightbean-studio\n        transport: streamable-http\n        url: http://localhost:8000/mcp\n        headers:\n          Authorization: !!js '`Bearer ${process.env.BRIGHTBEAN_API_TOKEN}`'\n```"
+        }
+      }
+    },
+    {
+      "id": "mcp-email-server",
+      "kind": "mcp",
+      "title": {
+        "zh": "多账号邮件 MCP",
+        "en": "Email MCP server"
+      },
+      "description": {
+        "zh": "多账号 IMAP/SMTP 邮件：读取、搜索、整理与发信。",
+        "en": "Multi-account IMAP and SMTP email for reading, searching, organizing and sending."
+      },
+      "repository": "https://github.com/Wh1isper/mcp-email-server",
+      "stars": 376,
+      "pushedAt": "2026-11-03",
+      "license": "BSD-3-Clause",
+      "categories": [
+        "outreach-crm"
+      ],
+      "access": "free-key",
+      "setup": {
+        "zh": "需要邮箱的 IMAP/SMTP 授权码（应用专用密码）。先运行 `uvx mcp-email-server@1.14.0 ui` 在浏览器中添加邮箱账号并保存，再接入。",
+        "en": "Requires an IMAP/SMTP app password for each mailbox. Run `uvx mcp-email-server@1.14.0 ui` first to add and save the accounts in the browser, then connect."
+      },
+      "install": {
+        "type": "mcp",
+        "runner": "uvx",
+        "package": "mcp-email-server",
+        "version": "1.14.0",
+        "args": [
+          "stdio"
+        ]
+      }
+    },
+    {
+      "id": "google-workspace",
+      "kind": "mcp",
+      "title": {
+        "zh": "Google Workspace",
+        "en": "Google Workspace"
+      },
+      "description": {
+        "zh": "Gmail、日历、Docs、Sheets、Drive 一体化 MCP。",
+        "en": "One MCP server for Gmail, Calendar, Docs, Sheets and Drive."
+      },
+      "repository": "https://github.com/taylorwilsdon/google_workspace_mcp",
+      "stars": 3468,
+      "pushedAt": "2026-10-30",
+      "license": "MIT",
+      "categories": [
+        "outreach-crm",
+        "analytics"
+      ],
+      "access": "free-key",
+      "setup": {
+        "zh": "在 Google Cloud Console 启用所需 API（Gmail、Drive、Calendar、Sheets、Docs），创建 OAuth 客户端（桌面应用），把 Client ID 和 Secret 设为 `GOOGLE_OAUTH_CLIENT_ID`、`GOOGLE_OAUTH_CLIENT_SECRET`；首次调用会打开浏览器授权。",
+        "en": "Enable the needed APIs (Gmail, Drive, Calendar, Sheets, Docs) in Google Cloud Console, create a desktop OAuth client and set its ID and secret as `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET`; the first call opens a browser for consent."
+      },
+      "env": [
+        "GOOGLE_OAUTH_CLIENT_ID",
+        "GOOGLE_OAUTH_CLIENT_SECRET"
+      ],
+      "install": {
+        "type": "mcp",
+        "runner": "uvx",
+        "package": "workspace-mcp",
+        "version": "2.3.0",
+        "args": [
+          "--tool-tier",
+          "core"
+        ]
+      }
+    },
+    {
+      "id": "thunderbird-mcp",
+      "kind": "mcp",
+      "title": {
+        "zh": "Thunderbird MCP",
+        "en": "Thunderbird MCP"
+      },
+      "description": {
+        "zh": "通过 Thunderbird 读写邮件、联系人与日历。",
+        "en": "Reads and writes mail, contacts and calendars through Thunderbird."
+      },
+      "repository": "https://github.com/TKasperczyk/thunderbird-mcp",
+      "stars": 421,
+      "pushedAt": "2026-10-23",
+      "license": "MIT",
+      "categories": [
+        "outreach-crm"
+      ],
+      "access": "none",
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 从 https://github.com/TKasperczyk/thunderbird-mcp/releases 下载 `.xpi`，在 Thunderbird 的“附加组件和主题”中“从文件安装附加组件”，并保持 Thunderbird 运行。\n2. 克隆仓库以获得 stdio 桥接脚本：`git clone https://github.com/TKasperczyk/thunderbird-mcp.git ~/thunderbird-mcp`（需要 Node.js）。\n3. 把下面这段加到 `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml`（桌面端的 `<profile>` 是 `desktop`，网页端是 `web`），保存后新开会话即可看到 `mcp__mkt-…__*` 工具：\n\n```yaml\n- insert:\n    - id: mkt-thunderbird-mcp\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-thunderbird-mcp\n        transport: stdio\n        command: node\n        args: ['/absolute/path/to/thunderbird-mcp/mcp-bridge.cjs']\n```",
+          "en": "1. Download the `.xpi` from https://github.com/TKasperczyk/thunderbird-mcp/releases, install it in Thunderbird via Add-ons and Themes → Install Add-on From File, and keep Thunderbird running.\n2. Clone the repository for the stdio bridge script: `git clone https://github.com/TKasperczyk/thunderbird-mcp.git ~/thunderbird-mcp` (requires Node.js).\n3. Add this block to `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml` (`<profile>` is `desktop` in the desktop app and `web` in the web app), then start a new session to see the `mcp__mkt-…__*` tools:\n\n```yaml\n- insert:\n    - id: mkt-thunderbird-mcp\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-thunderbird-mcp\n        transport: stdio\n        command: node\n        args: ['/absolute/path/to/thunderbird-mcp/mcp-bridge.cjs']\n```"
+        }
+      }
+    },
+    {
+      "id": "apple-mail",
+      "kind": "mcp",
+      "title": {
+        "zh": "Apple Mail MCP",
+        "en": "Apple Mail MCP"
+      },
+      "description": {
+        "zh": "访问 macOS Apple Mail：读取、搜索、写信与整理。",
+        "en": "Accesses macOS Apple Mail to read, search, compose and organize mail."
+      },
+      "repository": "https://github.com/patrickfreyer/apple-mail-mcp",
+      "stars": 247,
+      "pushedAt": "2026-11-03",
+      "license": "MIT",
+      "categories": [
+        "outreach-crm"
+      ],
+      "access": "none",
+      "setup": {
+        "zh": "仅支持 macOS，需要 Apple Mail 已配置账号；首次调用时在“系统设置 → 隐私与安全性 → 自动化”中允许终端或 Tomato 控制 Mail。",
+        "en": "macOS only and needs accounts configured in Apple Mail; on first use allow Terminal or Tomato to control Mail under System Settings → Privacy & Security → Automation."
+      },
+      "install": {
+        "type": "mcp",
+        "runner": "uvx",
+        "package": "mcp-apple-mail",
+        "version": "3.3.0"
+      }
+    },
+    {
+      "id": "resend",
+      "kind": "mcp",
+      "title": {
+        "zh": "Resend 发信",
+        "en": "Resend"
+      },
+      "description": {
+        "zh": "Resend 官方发信 MCP，支持批量外联和联系人管理。",
+        "en": "Official Resend MCP for bulk outreach email and contact management."
+      },
+      "repository": "https://github.com/resend/resend-mcp",
+      "stars": 578,
+      "pushedAt": "2026-11-02",
+      "license": "MIT",
+      "categories": [
+        "outreach-crm"
+      ],
+      "access": "free-key",
+      "setup": {
+        "zh": "到 https://resend.com 注册免费档，验证发信域名后在 API Keys 页面创建 key，设为 `RESEND_API_KEY`。",
+        "en": "Sign up for the free tier at https://resend.com, verify a sending domain, create a key on the API Keys page and set it as `RESEND_API_KEY`."
+      },
+      "env": [
+        "RESEND_API_KEY"
+      ],
+      "install": {
+        "type": "mcp",
+        "runner": "npx",
+        "package": "resend-mcp",
+        "version": "2.27.2"
+      }
+    },
+    {
+      "id": "antv-chart",
+      "kind": "mcp",
+      "title": {
+        "zh": "AntV 图表",
+        "en": "AntV chart"
+      },
+      "description": {
+        "zh": "AntV 出品，生成 25 种以上图表。",
+        "en": "Generates more than 25 chart types, from AntV."
+      },
+      "repository": "https://github.com/antvis/mcp-server-chart",
+      "stars": 4412,
+      "pushedAt": "2026-08-27",
+      "license": "MIT",
+      "categories": [
+        "analytics"
+      ],
+      "access": "none",
+      "install": {
+        "type": "mcp",
+        "runner": "npx",
+        "package": "@antv/mcp-server-chart",
+        "version": "0.9.10"
+      }
+    },
+    {
+      "id": "excel-mcp-server",
+      "kind": "mcp",
+      "title": {
+        "zh": "Excel MCP",
+        "en": "Excel MCP"
+      },
+      "description": {
+        "zh": "创建和编辑 Excel，支持图表、透视表与公式。",
+        "en": "Creates and edits Excel workbooks with charts, pivot tables and formulas."
+      },
+      "repository": "https://github.com/haris-musa/excel-mcp-server",
+      "stars": 4272,
+      "pushedAt": "2026-11-02",
+      "license": "MIT",
+      "categories": [
+        "analytics"
+      ],
+      "access": "none",
+      "install": {
+        "type": "mcp",
+        "runner": "uvx",
+        "package": "excel-mcp-server",
+        "version": "2.2.6",
+        "args": [
+          "stdio"
+        ]
+      }
+    },
+    {
+      "id": "google-sheets",
+      "kind": "mcp",
+      "title": {
+        "zh": "Google Sheets",
+        "en": "Google Sheets"
+      },
+      "description": {
+        "zh": "读写 Google Sheets，用于达人台账协作。",
+        "en": "Reads and writes Google Sheets for shared creator trackers."
+      },
+      "repository": "https://github.com/xing5/mcp-google-sheets",
+      "stars": 1016,
+      "pushedAt": "2026-05-14",
+      "license": "MIT",
+      "categories": [
+        "analytics",
+        "outreach-crm"
+      ],
+      "access": "free-key",
+      "setup": {
+        "zh": "推荐服务账号：在 Google Cloud Console 启用 Sheets API 和 Drive API，创建服务账号并下载 JSON key，设 `SERVICE_ACCOUNT_PATH` 为其路径；在 Drive 中建一个文件夹共享给服务账号邮箱，把文件夹 ID 设为 `DRIVE_FOLDER_ID`。",
+        "en": "Service account recommended: enable the Sheets and Drive APIs in Google Cloud Console, create a service account, download its JSON key and set `SERVICE_ACCOUNT_PATH`; share a Drive folder with the service account email and set its ID as `DRIVE_FOLDER_ID`."
+      },
+      "env": [
+        "SERVICE_ACCOUNT_PATH",
+        "DRIVE_FOLDER_ID"
+      ],
+      "install": {
+        "type": "mcp",
+        "runner": "uvx",
+        "package": "mcp-google-sheets",
+        "version": "0.6.3"
+      }
+    },
+    {
+      "id": "notion",
+      "kind": "mcp",
+      "title": {
+        "zh": "Notion（官方）",
+        "en": "Notion"
+      },
+      "description": {
+        "zh": "Notion 官方 MCP，可用作达人 CRM 和内容日历。",
+        "en": "Official Notion MCP for a creator CRM and content calendar."
+      },
+      "repository": "https://github.com/makenotion/notion-mcp-server",
+      "stars": 4693,
+      "pushedAt": "2026-10-29",
+      "license": "MIT",
+      "categories": [
+        "outreach-crm",
+        "analytics"
+      ],
+      "access": "free-key",
+      "setup": {
+        "zh": "到 https://www.notion.so/profile/integrations 创建内部 integration，复制 token 设为 `NOTION_TOKEN`，并在需要的页面里把该 integration 加为连接。",
+        "en": "Create an internal integration at https://www.notion.so/profile/integrations, set its token as `NOTION_TOKEN` and add the integration as a connection on the pages it needs."
+      },
+      "env": [
+        "NOTION_TOKEN"
+      ],
+      "install": {
+        "type": "mcp",
+        "runner": "npx",
+        "package": "@notionhq/notion-mcp-server",
+        "version": "2.6.1"
+      }
+    },
+    {
+      "id": "shopify",
+      "kind": "mcp",
+      "title": {
+        "zh": "Shopify Admin",
+        "en": "Shopify Admin"
+      },
+      "description": {
+        "zh": "通过 Shopify Admin API 管理商品、订单、客户与折扣。",
+        "en": "Manages products, orders, customers and discounts through the Shopify Admin API."
+      },
+      "repository": "https://github.com/GeLi2001/shopify-mcp",
+      "stars": 239,
+      "pushedAt": "2026-04-05",
+      "license": "MIT",
+      "categories": [
+        "ecommerce"
+      ],
+      "access": "free-key",
+      "setup": {
+        "zh": "在 Shopify Dev Dashboard 创建 app 并安装到店铺，取得 Client ID 和 Secret，设置 `SHOPIFY_CLIENT_ID`、`SHOPIFY_CLIENT_SECRET` 和 `MYSHOPIFY_DOMAIN`（如 your-store.myshopify.com）。",
+        "en": "Create an app in the Shopify Dev Dashboard, install it on the store, and set `SHOPIFY_CLIENT_ID`, `SHOPIFY_CLIENT_SECRET` and `MYSHOPIFY_DOMAIN` (such as your-store.myshopify.com)."
+      },
+      "env": [
+        "SHOPIFY_CLIENT_ID",
+        "SHOPIFY_CLIENT_SECRET",
+        "MYSHOPIFY_DOMAIN"
+      ],
+      "install": {
+        "type": "mcp",
+        "runner": "npx",
+        "package": "shopify-mcp",
+        "version": "1.0.8"
+      }
+    },
+    {
+      "id": "wordpress-mcp-adapter",
+      "kind": "mcp",
+      "title": {
+        "zh": "WordPress MCP Adapter",
+        "en": "WordPress MCP Adapter"
+      },
+      "description": {
+        "zh": "WordPress 官方 MCP 适配器，适用于内容站和 WooCommerce。",
+        "en": "Official WordPress MCP adapter for content sites and WooCommerce."
+      },
+      "repository": "https://github.com/WordPress/mcp-adapter",
+      "stars": 1901,
+      "pushedAt": "2026-11-02",
+      "license": "GPL-2.0",
+      "categories": [
+        "content",
+        "seo",
+        "ecommerce"
+      ],
+      "access": "self-hosted",
+      "setup": {
+        "zh": "需要你自己的 WordPress 站点（6.9+，含 Abilities API）和可执行 WP-CLI 的环境；在站点安装 MCP Adapter 插件，并为要暴露的 ability 设置 `meta.public`。",
+        "en": "Requires your own WordPress site (6.9+ with the Abilities API) and a host where WP-CLI runs; install the MCP Adapter plugin on the site and set `meta.public` on the abilities to expose."
+      },
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 在 WordPress 站点目录运行 `composer require wordpress/mcp-adapter`，或从 https://github.com/WordPress/mcp-adapter/releases 下载插件 zip 在后台上传启用。\n2. 按 https://github.com/WordPress/mcp-adapter/tree/trunk/docs 把需要的 ability 标为公开，并确认 `wp mcp-adapter list` 能列出默认服务器。\n3. 本机可直接访问站点目录时用下面的 WP-CLI stdio 方式接入（远程站点改用 `/wp-json/mcp/mcp-adapter-default-server` 的 HTTP 方式并配置应用密码）。\n4. 把下面这段加到 `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml`（桌面端的 `<profile>` 是 `desktop`，网页端是 `web`），保存后新开会话即可看到 `mcp__mkt-…__*` 工具：\n\n```yaml\n- insert:\n    - id: mkt-wordpress-mcp-adapter\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-wordpress-mcp-adapter\n        transport: stdio\n        command: wp\n        args: ['--path=/absolute/path/to/wordpress', 'mcp-adapter', 'serve', '--server=mcp-adapter-default-server', '--user=admin']\n```",
+          "en": "1. In the WordPress directory run `composer require wordpress/mcp-adapter`, or download the plugin zip from https://github.com/WordPress/mcp-adapter/releases and upload and activate it in the admin.\n2. Mark the abilities you need as public per https://github.com/WordPress/mcp-adapter/tree/trunk/docs and confirm `wp mcp-adapter list` lists the default server.\n3. When the site directory is on this machine, connect with the WP-CLI stdio form below (for a remote site use HTTP at `/wp-json/mcp/mcp-adapter-default-server` with an application password).\n4. Add this block to `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml` (`<profile>` is `desktop` in the desktop app and `web` in the web app), then start a new session to see the `mcp__mkt-…__*` tools:\n\n```yaml\n- insert:\n    - id: mkt-wordpress-mcp-adapter\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-wordpress-mcp-adapter\n        transport: stdio\n        command: wp\n        args: ['--path=/absolute/path/to/wordpress', 'mcp-adapter', 'serve', '--server=mcp-adapter-default-server', '--user=admin']\n```"
+        }
+      }
+    },
+    {
+      "id": "ffmpeg-skill",
+      "kind": "mcp",
+      "title": {
+        "zh": "FFmpeg 剪辑工具",
+        "en": "FFmpeg skill"
+      },
+      "description": {
+        "zh": "42 个本地 FFmpeg 剪辑工具（字幕、裁切、竖版等），同时提供 MCP 和 Skill。",
+        "en": "Forty-two local FFmpeg editing tools for captions, trimming, vertical formats and more, available as MCP and a skill."
+      },
+      "repository": "https://github.com/kajisho5/ffmpeg-skill",
+      "stars": 4424,
+      "pushedAt": "2026-10-31",
+      "license": "MIT",
+      "categories": [
+        "content",
+        "video"
+      ],
+      "access": "none",
+      "setup": {
+        "zh": "需要本机安装 ffmpeg/ffprobe（`brew install ffmpeg`）和 Python 3；运行 `npx ffmpeg-skill@3.1.1 doctor` 检查依赖。",
+        "en": "Requires ffmpeg/ffprobe (`brew install ffmpeg`) and Python 3; run `npx ffmpeg-skill@3.1.1 doctor` to check dependencies."
+      },
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. npm 包的可执行文件只是安装器，MCP 服务器是安装后的 Python 脚本。运行 `npx ffmpeg-skill@3.1.1`，它会把技能装到 `~/.claude/skills/ffmpeg-skill`。\n2. 运行 `npx ffmpeg-skill@3.1.1 doctor` 确认 ffmpeg 可用。\n3. 把下面这段加到 `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml`（桌面端的 `<profile>` 是 `desktop`，网页端是 `web`），保存后新开会话即可看到 `mcp__mkt-…__*` 工具：\n\n```yaml\n- insert:\n    - id: mkt-ffmpeg-skill\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-ffmpeg-skill\n        transport: stdio\n        command: python3\n        args: ['/absolute/path/to/home/.claude/skills/ffmpeg-skill/mcp/server.py']\n```",
+          "en": "1. The npm executable is only an installer; the MCP server is the installed Python script. Run `npx ffmpeg-skill@3.1.1`, which installs the skill into `~/.claude/skills/ffmpeg-skill`.\n2. Run `npx ffmpeg-skill@3.1.1 doctor` to confirm ffmpeg is available.\n3. Add this block to `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml` (`<profile>` is `desktop` in the desktop app and `web` in the web app), then start a new session to see the `mcp__mkt-…__*` tools:\n\n```yaml\n- insert:\n    - id: mkt-ffmpeg-skill\n      name: '@tomato/mcp-client'\n      config:\n        serverName: mkt-ffmpeg-skill\n        transport: stdio\n        command: python3\n        args: ['/absolute/path/to/home/.claude/skills/ffmpeg-skill/mcp/server.py']\n```"
+        }
+      }
+    },
+    {
+      "id": "marketingskills",
+      "kind": "skill",
+      "title": {
+        "zh": "营销技能合集（Corey Haines）",
+        "en": "Marketing skills (Corey Haines)"
+      },
+      "description": {
+        "zh": "覆盖达人营销、社媒内容、冷邮件、广告创意、竞品、SEO 与发布的营销技能合集。",
+        "en": "Marketing skill collection covering influencer marketing, social content, cold email, ad creative, competitors, SEO and launches."
+      },
+      "repository": "https://github.com/coreyhaines31/marketingskills",
+      "stars": 58203,
+      "pushedAt": "2026-10-31",
+      "license": "MIT",
+      "categories": [
+        "creator-discovery",
+        "content",
+        "seo"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "coreyhaines31/marketingskills",
+        "commit": "88c79f6528a9347420e57ceb1fff9a60de651768",
+        "skills": [
+          {
+            "name": "influencer-marketing",
+            "path": "skills/influencer-marketing"
+          },
+          {
+            "name": "social",
+            "path": "skills/social"
+          },
+          {
+            "name": "cold-email",
+            "path": "skills/cold-email"
+          },
+          {
+            "name": "emails",
+            "path": "skills/emails"
+          },
+          {
+            "name": "ad-creative",
+            "path": "skills/ad-creative"
+          },
+          {
+            "name": "competitor-profiling",
+            "path": "skills/competitor-profiling"
+          },
+          {
+            "name": "customer-research",
+            "path": "skills/customer-research"
+          },
+          {
+            "name": "content-strategy",
+            "path": "skills/content-strategy"
+          },
+          {
+            "name": "seo-audit",
+            "path": "skills/seo-audit"
+          },
+          {
+            "name": "ai-seo",
+            "path": "skills/ai-seo"
+          },
+          {
+            "name": "programmatic-seo",
+            "path": "skills/programmatic-seo"
+          },
+          {
+            "name": "launch",
+            "path": "skills/launch"
+          },
+          {
+            "name": "ads",
+            "path": "skills/ads"
+          },
+          {
+            "name": "analytics",
+            "path": "skills/analytics"
+          },
+          {
+            "name": "community-marketing",
+            "path": "skills/community-marketing"
+          },
+          {
+            "name": "co-marketing",
+            "path": "skills/co-marketing"
+          }
+        ]
+      }
+    },
+    {
+      "id": "anthropic-skills",
+      "kind": "skill",
+      "title": {
+        "zh": "Anthropic 官方技能（Apache-2.0 部分）",
+        "en": "Anthropic skills (Apache-2.0 subset)"
+      },
+      "description": {
+        "zh": "只收 Apache-2.0 的官方技能：品牌规范、画布设计、主题工厂、前端设计、网页制品与 GIF 制作。",
+        "en": "Only the Apache-2.0 official skills: brand guidelines, canvas design, theme factory, frontend design, web artifacts and GIF creation."
+      },
+      "repository": "https://github.com/anthropics/skills",
+      "stars": 186961,
+      "pushedAt": "2026-10-28",
+      "license": "Apache-2.0",
+      "categories": [
+        "content"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "anthropics/skills",
+        "commit": "ca45fc496a3436251f191354091d557da31c15b5",
+        "skills": [
+          {
+            "name": "brand-guidelines",
+            "path": "skills/brand-guidelines"
+          },
+          {
+            "name": "canvas-design",
+            "path": "skills/canvas-design"
+          },
+          {
+            "name": "theme-factory",
+            "path": "skills/theme-factory"
+          },
+          {
+            "name": "frontend-design",
+            "path": "skills/frontend-design"
+          },
+          {
+            "name": "web-artifacts-builder",
+            "path": "skills/web-artifacts-builder"
+          },
+          {
+            "name": "slack-gif-creator",
+            "path": "skills/slack-gif-creator"
+          }
+        ]
+      }
+    },
+    {
+      "id": "knowledge-work-marketing",
+      "kind": "skill",
+      "title": {
+        "zh": "Knowledge Work 营销插件",
+        "en": "Knowledge work marketing"
+      },
+      "description": {
+        "zh": "Anthropic 知识工作插件的 marketing 部分：品牌审查、活动计划、竞品简报、内容创作与效果报告。",
+        "en": "Marketing part of the Anthropic knowledge work plugins: brand review, campaign plans, competitive briefs, content creation and performance reports."
+      },
+      "repository": "https://github.com/anthropics/knowledge-work-plugins",
+      "stars": 34544,
+      "pushedAt": "2026-11-03",
+      "license": "Apache-2.0",
+      "categories": [
+        "content",
+        "ads-competitors",
+        "analytics"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "anthropics/knowledge-work-plugins",
+        "commit": "2574e29377c7173d0cecffef29a6ecbd7f8ccb5d",
+        "skills": [
+          {
+            "name": "brand-review",
+            "path": "marketing/skills/brand-review"
+          },
+          {
+            "name": "campaign-plan",
+            "path": "marketing/skills/campaign-plan"
+          },
+          {
+            "name": "competitive-brief",
+            "path": "marketing/skills/competitive-brief"
+          },
+          {
+            "name": "content-creation",
+            "path": "marketing/skills/content-creation"
+          },
+          {
+            "name": "draft-content",
+            "path": "marketing/skills/draft-content"
+          },
+          {
+            "name": "email-sequence",
+            "path": "marketing/skills/email-sequence"
+          },
+          {
+            "name": "performance-report",
+            "path": "marketing/skills/performance-report"
+          }
+        ]
+      }
+    },
+    {
+      "id": "alirezarezvani-skills",
+      "kind": "skill",
+      "title": {
+        "zh": "Claude Skills 营销子集（alirezarezvani）",
+        "en": "Claude skills marketing subset (alirezarezvani)"
+      },
+      "description": {
+        "zh": "社媒管理与分析、X 增长、YouTube、视频内容策略、活动分析与本地 SEO 等营销技能。",
+        "en": "Marketing skills for social media management and analysis, X growth, YouTube, video strategy, campaign analytics and local SEO."
+      },
+      "repository": "https://github.com/alirezarezvani/claude-skills",
+      "stars": 29207,
+      "pushedAt": "2026-11-03",
+      "license": "MIT",
+      "categories": [
+        "content",
+        "analytics",
+        "social-data"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "alirezarezvani/claude-skills",
+        "commit": "7f92edacf8510771db03672232ca14471ff69c47",
+        "skills": [
+          {
+            "name": "social-media-manager",
+            "path": "marketing-skill/skills/social-media-manager"
+          },
+          {
+            "name": "social-media-analyzer",
+            "path": "marketing-skill/skills/social-media-analyzer"
+          },
+          {
+            "name": "x-twitter-growth",
+            "path": "marketing-skill/skills/x-twitter-growth"
+          },
+          {
+            "name": "youtube-full",
+            "path": "marketing-skill/skills/youtube-full"
+          },
+          {
+            "name": "content-creator",
+            "path": "marketing-skill/skills/content-creator"
+          },
+          {
+            "name": "campaign-analytics",
+            "path": "marketing-skill/skills/campaign-analytics"
+          },
+          {
+            "name": "local-seo-manager",
+            "path": "marketing-skill/skills/local-seo-manager"
+          },
+          {
+            "name": "video-content-strategist",
+            "path": "marketing-skill/video-content-strategist/skills/video-content-strategist"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kostja94-marketing",
+      "kind": "skill",
+      "title": {
+        "zh": "营销技能库（kostja94）",
+        "en": "Marketing skills (kostja94)"
+      },
+      "description": {
+        "zh": "160 多个营销技能，覆盖 SEO、社媒、达人与创作者计划、付费广告和 GTM。",
+        "en": "More than 160 marketing skills spanning SEO, social, creator programs, paid ads and go-to-market."
+      },
+      "repository": "https://github.com/kostja94/marketing-skills",
+      "stars": 1075,
+      "pushedAt": "2026-10-26",
+      "license": "MIT",
+      "categories": [
+        "seo",
+        "creator-discovery",
+        "ads-competitors"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "kostja94/marketing-skills",
+        "commit": "45143a7d6d8f92fc9048aa4f3074a26272bd0d2a",
+        "skills": [
+          {
+            "name": "creator-program",
+            "path": "skills/channels/partnerships/creator-program"
+          },
+          {
+            "name": "affiliate-marketing",
+            "path": "skills/channels/partnerships/affiliate-marketing"
+          },
+          {
+            "name": "tiktok-ads",
+            "path": "skills/paid-ads/platforms/tiktok-ads"
+          },
+          {
+            "name": "meta-ads",
+            "path": "skills/paid-ads/platforms/meta-ads"
+          },
+          {
+            "name": "youtube-ads",
+            "path": "skills/paid-ads/platforms/youtube-ads"
+          },
+          {
+            "name": "backlink-analysis",
+            "path": "skills/seo/off-page/backlink-analysis"
+          },
+          {
+            "name": "link-building",
+            "path": "skills/seo/off-page/link-building"
+          },
+          {
+            "name": "localization",
+            "path": "skills/strategies/commercial/localization"
+          },
+          {
+            "name": "media-kit",
+            "path": "skills/pages/marketing/media-kit"
+          },
+          {
+            "name": "entity-seo",
+            "path": "skills/seo/entity-seo"
+          }
+        ]
+      }
+    },
+    {
+      "id": "openclaudia-skills",
+      "kind": "skill",
+      "title": {
+        "zh": "OpenClaudia 营销技能",
+        "en": "OpenClaudia skills"
+      },
+      "description": {
+        "zh": "内容日历、LinkedIn 内容、内容改写、Reddit 营销、线程写作、新闻通讯与 ICP 画像（不含需付费 key 的子技能）。",
+        "en": "Content calendars, LinkedIn content, repurposing, Reddit marketing, threads, newsletters and ICP building, excluding sub-skills that need paid keys."
+      },
+      "repository": "https://github.com/OpenClaudia/openclaudia-skills",
+      "stars": 726,
+      "pushedAt": "2026-11-03",
+      "license": "MIT",
+      "categories": [
+        "content",
+        "outreach-crm"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "OpenClaudia/openclaudia-skills",
+        "commit": "b20ed61e1ea71cd4029acdfd4c1ff97902a1a792",
+        "skills": [
+          {
+            "name": "content-calendar",
+            "path": "skills/content-calendar"
+          },
+          {
+            "name": "linkedin-content",
+            "path": "skills/linkedin-content"
+          },
+          {
+            "name": "content-repurposing",
+            "path": "skills/content-repurposing"
+          },
+          {
+            "name": "reddit-marketing",
+            "path": "skills/reddit-marketing"
+          },
+          {
+            "name": "thread-writer",
+            "path": "skills/thread-writer"
+          },
+          {
+            "name": "newsletter",
+            "path": "skills/newsletter"
+          },
+          {
+            "name": "icp-builder",
+            "path": "skills/icp-builder"
+          }
+        ]
+      }
+    },
+    {
+      "id": "social-media-skills",
+      "kind": "skill",
+      "title": {
+        "zh": "社媒技能库（social-media-skills）",
+        "en": "Social media skills"
+      },
+      "description": {
+        "zh": "106 个社媒技能，含 UGC 与达人合作、联名互推、文案、轮播、数据分析和创作者变现。",
+        "en": "106 social media skills including UGC and influencer work, collabs, captions, carousels, analytics and creator monetization."
+      },
+      "repository": "https://github.com/social-media-skills/skills",
+      "stars": 240,
+      "pushedAt": "2026-10-15",
+      "license": "MIT",
+      "categories": [
+        "creator-discovery",
+        "content",
+        "publishing"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "social-media-skills/skills",
+        "commit": "f28cef2b7067ec64e79c9d85421c022c06659e03",
+        "skills": [
+          {
+            "name": "ugc-and-influencer",
+            "path": "skills/ugc-and-influencer"
+          },
+          {
+            "name": "collabs-and-cross-promotion",
+            "path": "skills/collabs-and-cross-promotion"
+          },
+          {
+            "name": "caption-writer",
+            "path": "skills/caption-writer"
+          },
+          {
+            "name": "carousel-writer",
+            "path": "skills/carousel-writer"
+          },
+          {
+            "name": "competitor-analysis",
+            "path": "skills/competitor-analysis"
+          },
+          {
+            "name": "analytics-and-reporting",
+            "path": "skills/analytics-and-reporting"
+          },
+          {
+            "name": "creator-monetization",
+            "path": "skills/creator-monetization"
+          },
+          {
+            "name": "tiktok-growth",
+            "path": "skills/tiktok-growth"
+          },
+          {
+            "name": "instagram-growth",
+            "path": "skills/instagram-growth"
+          },
+          {
+            "name": "youtube-shorts",
+            "path": "skills/youtube-shorts"
+          }
+        ]
+      }
+    },
+    {
+      "id": "blacktwist-social",
+      "kind": "skill",
+      "title": {
+        "zh": "文字社媒技能（BlackTwist）",
+        "en": "Text social skills (BlackTwist)"
+      },
+      "description": {
+        "zh": "面向 X、LinkedIn、Threads 等文字平台的内容策略、钩子与帖子写作。",
+        "en": "Content strategy, hooks and post writing for text platforms such as X, LinkedIn and Threads."
+      },
+      "repository": "https://github.com/blacktwist/social-media-skills",
+      "stars": 619,
+      "pushedAt": "2026-05-01",
+      "license": "MIT",
+      "categories": [
+        "content"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "blacktwist/social-media-skills",
+        "commit": "4f85b07069983b3b0b9bbe6519fed7017edcce81",
+        "skills": [
+          {
+            "name": "hook-writer-sms",
+            "path": "skills/hook-writer-sms"
+          },
+          {
+            "name": "post-writer-sms",
+            "path": "skills/post-writer-sms"
+          },
+          {
+            "name": "thread-writer-sms",
+            "path": "skills/thread-writer-sms"
+          },
+          {
+            "name": "content-strategy-sms",
+            "path": "skills/content-strategy-sms"
+          },
+          {
+            "name": "platform-strategy-sms",
+            "path": "skills/platform-strategy-sms"
+          },
+          {
+            "name": "content-calendar-sms",
+            "path": "skills/content-calendar-sms"
+          },
+          {
+            "name": "content-repurposer-sms",
+            "path": "skills/content-repurposer-sms"
+          },
+          {
+            "name": "carousel-writer-sms",
+            "path": "skills/carousel-writer-sms"
+          },
+          {
+            "name": "caption-writer-sms",
+            "path": "skills/caption-writer-sms"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ai-marketing-claude",
+      "kind": "skill",
+      "title": {
+        "zh": "AI 营销套件",
+        "en": "AI marketing suite"
+      },
+      "description": {
+        "zh": "网站营销审计、文案、邮件、社媒、竞品、广告、SEO 与提案等 15 个技能。",
+        "en": "Fifteen skills for website marketing audits, copy, email, social, competitors, ads, SEO and proposals."
+      },
+      "repository": "https://github.com/zubair-trabzada/ai-marketing-claude",
+      "stars": 2852,
+      "pushedAt": "2026-03-02",
+      "license": "MIT",
+      "categories": [
+        "content",
+        "ads-competitors"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "zubair-trabzada/ai-marketing-claude",
+        "commit": "e5aa0ea4c5f30d8bc08771e8ea932463e76d3356",
+        "skills": [
+          {
+            "name": "market-audit",
+            "path": "skills/market-audit"
+          },
+          {
+            "name": "market-copy",
+            "path": "skills/market-copy"
+          },
+          {
+            "name": "market-emails",
+            "path": "skills/market-emails"
+          },
+          {
+            "name": "market-social",
+            "path": "skills/market-social"
+          },
+          {
+            "name": "market-competitors",
+            "path": "skills/market-competitors"
+          },
+          {
+            "name": "market-ads",
+            "path": "skills/market-ads"
+          },
+          {
+            "name": "market-seo",
+            "path": "skills/market-seo"
+          },
+          {
+            "name": "market-brand",
+            "path": "skills/market-brand"
+          },
+          {
+            "name": "market-proposal",
+            "path": "skills/market-proposal"
+          },
+          {
+            "name": "market-report",
+            "path": "skills/market-report"
+          }
+        ]
+      }
+    },
+    {
+      "id": "affiliate-skills",
+      "kind": "skill",
+      "title": {
+        "zh": "联盟营销技能",
+        "en": "Affiliate skills"
+      },
+      "description": {
+        "zh": "联盟营销技能：找项目、钩子与爆款文案、TikTok 脚本、对比文、落地页与合规检查。",
+        "en": "Affiliate marketing skills for finding programs, viral hooks, TikTok scripts, comparison posts, landing pages and compliance checks."
+      },
+      "repository": "https://github.com/Affitor/affiliate-skills",
+      "stars": 759,
+      "pushedAt": "2026-10-19",
+      "license": "MIT",
+      "categories": [
+        "content",
+        "ecommerce"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "Affitor/affiliate-skills",
+        "commit": "f4cb063a0ee83b1b9e5167e396ab46cc9123dadc",
+        "skills": [
+          {
+            "name": "affiliate-program-search",
+            "path": "skills/research/affiliate-program-search"
+          },
+          {
+            "name": "find-and-verify-affiliate-program",
+            "path": "skills/research/find-and-verify-affiliate-program"
+          },
+          {
+            "name": "niche-opportunity-finder",
+            "path": "skills/research/niche-opportunity-finder"
+          },
+          {
+            "name": "competitor-spy",
+            "path": "skills/research/competitor-spy"
+          },
+          {
+            "name": "viral-post-writer",
+            "path": "skills/content/viral-post-writer"
+          },
+          {
+            "name": "tiktok-script-writer",
+            "path": "skills/content/tiktok-script-writer"
+          },
+          {
+            "name": "comparison-post-writer",
+            "path": "skills/blog/comparison-post-writer"
+          },
+          {
+            "name": "listicle-generator",
+            "path": "skills/blog/listicle-generator"
+          },
+          {
+            "name": "landing-page-creator",
+            "path": "skills/landing/landing-page-creator"
+          },
+          {
+            "name": "compliance-checker",
+            "path": "skills/meta/compliance-checker"
+          }
+        ]
+      }
+    },
+    {
+      "id": "instagram-skills",
+      "kind": "skill",
+      "title": {
+        "zh": "Instagram 内容技能",
+        "en": "Instagram skills"
+      },
+      "description": {
+        "zh": "Instagram 文案、轮播、钩子、话题标签、主页优化与周计划（读取真实数据需第三方 key，未收录）。",
+        "en": "Instagram captions, carousels, hooks, hashtags, profile optimization and weekly plans (real-data skills that need third-party keys are left out)."
+      },
+      "repository": "https://github.com/sergebulaev/instagram-skills",
+      "stars": 720,
+      "pushedAt": "2026-10-28",
+      "license": "MIT",
+      "categories": [
+        "content"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "sergebulaev/instagram-skills",
+        "commit": "550d3cf6cece08de75dae64235bd32136820920f",
+        "skills": [
+          {
+            "name": "ig-caption-writer",
+            "path": "skills/ig-caption-writer"
+          },
+          {
+            "name": "ig-carousel-planner",
+            "path": "skills/ig-carousel-planner"
+          },
+          {
+            "name": "ig-hook-extractor",
+            "path": "skills/ig-hook-extractor"
+          },
+          {
+            "name": "ig-hashtag-strategist",
+            "path": "skills/ig-hashtag-strategist"
+          },
+          {
+            "name": "ig-content-planner",
+            "path": "skills/ig-content-planner"
+          },
+          {
+            "name": "ig-profile-optimizer",
+            "path": "skills/ig-profile-optimizer"
+          },
+          {
+            "name": "ig-repurposer",
+            "path": "skills/ig-repurposer"
+          },
+          {
+            "name": "ig-humanizer",
+            "path": "skills/ig-humanizer"
+          }
+        ]
+      }
+    },
+    {
+      "id": "x-skills",
+      "kind": "skill",
+      "title": {
+        "zh": "X 内容技能",
+        "en": "X skills"
+      },
+      "description": {
+        "zh": "按个人语气写 X 推文、线程和回复，并去除 AI 腔。",
+        "en": "Writes X posts, threads and replies in your own voice without an AI tone."
+      },
+      "repository": "https://github.com/sergebulaev/x-skills",
+      "stars": 168,
+      "pushedAt": "2026-10-28",
+      "license": "MIT",
+      "categories": [
+        "content"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "sergebulaev/x-skills",
+        "commit": "f52d7c64258de02a990eceee4378cef2c87c5600",
+        "skills": [
+          {
+            "name": "x-post-writer",
+            "path": "skills/x-post-writer"
+          },
+          {
+            "name": "x-thread-builder",
+            "path": "skills/x-thread-builder"
+          },
+          {
+            "name": "x-reply-drafter",
+            "path": "skills/x-reply-drafter"
+          },
+          {
+            "name": "x-humanizer",
+            "path": "skills/x-humanizer"
+          },
+          {
+            "name": "x-hook-extractor",
+            "path": "skills/x-hook-extractor"
+          },
+          {
+            "name": "x-content-planner",
+            "path": "skills/x-content-planner"
+          },
+          {
+            "name": "x-profile-optimizer",
+            "path": "skills/x-profile-optimizer"
+          },
+          {
+            "name": "x-repurposer",
+            "path": "skills/x-repurposer"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ecommerce-skills",
+      "kind": "skill",
+      "title": {
+        "zh": "电商技能库（Nexscope）",
+        "en": "E-commerce skills (Nexscope)"
+      },
+      "description": {
+        "zh": "157 个电商技能，覆盖 Shopify、Amazon、TikTok Shop、Etsy，含达人合作与全渠道营销。",
+        "en": "157 e-commerce skills for Shopify, Amazon, TikTok Shop and Etsy, including influencer partnerships and omnichannel marketing."
+      },
+      "repository": "https://github.com/nexscope-ai/eCommerce-Skills",
+      "stars": 1318,
+      "pushedAt": "2026-08-26",
+      "license": "MIT",
+      "categories": [
+        "ecommerce",
+        "creator-discovery"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "nexscope-ai/eCommerce-Skills",
+        "commit": "ee0fb29433d02ccc22e3e6cea9ab4586d49fd42e",
+        "skills": [
+          {
+            "name": "influencer-outreach",
+            "path": "influencer-outreach"
+          },
+          {
+            "name": "tiktok-creator-marketplace",
+            "path": "tiktok-creator-marketplace"
+          },
+          {
+            "name": "ecommerce-social-media-marketing",
+            "path": "ecommerce-social-media-marketing"
+          },
+          {
+            "name": "ecommerce-video-marketing",
+            "path": "ecommerce-video-marketing"
+          },
+          {
+            "name": "shopify-marketing",
+            "path": "shopify-marketing"
+          },
+          {
+            "name": "shopify-seo",
+            "path": "shopify-seo"
+          },
+          {
+            "name": "shopify-email-flows",
+            "path": "shopify-email-flows"
+          },
+          {
+            "name": "product-launch-strategy",
+            "path": "product-launch-strategy"
+          },
+          {
+            "name": "ecommerce-competitor-analysis",
+            "path": "ecommerce-competitor-analysis"
+          },
+          {
+            "name": "omnichannel-ecommerce",
+            "path": "omnichannel-ecommerce"
+          },
+          {
+            "name": "product-description-generator",
+            "path": "product-description-generator"
+          },
+          {
+            "name": "brand-monitoring",
+            "path": "brand-monitoring"
+          }
+        ]
+      }
+    },
+    {
+      "id": "amazon-skills",
+      "kind": "skill",
+      "title": {
+        "zh": "Amazon 卖家技能",
+        "en": "Amazon seller skills"
+      },
+      "description": {
+        "zh": "53 个 Amazon 卖家技能：关键词、Listing、竞品、PPC 与评论分析。",
+        "en": "53 Amazon seller skills for keywords, listings, competitors, PPC and review analysis."
+      },
+      "repository": "https://github.com/nexscope-ai/Amazon-Skills",
+      "stars": 830,
+      "pushedAt": "2026-08-26",
+      "license": "MIT",
+      "categories": [
+        "ecommerce",
+        "seo"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "nexscope-ai/Amazon-Skills",
+        "commit": "0f3b13fa0e5ed0a9f3d600dc18518bc76ddd813b",
+        "skills": [
+          {
+            "name": "amazon-keyword-research",
+            "path": "amazon-keyword-research"
+          },
+          {
+            "name": "amazon-listing-optimization",
+            "path": "amazon-listing-optimization"
+          },
+          {
+            "name": "amazon-competitor-analysis",
+            "path": "amazon-competitor-analysis"
+          },
+          {
+            "name": "amazon-ppc-campaign",
+            "path": "amazon-ppc-campaign"
+          },
+          {
+            "name": "amazon-a-plus-content",
+            "path": "amazon-a-plus-content"
+          },
+          {
+            "name": "amazon-review-analyzer",
+            "path": "amazon-review-analyzer"
+          },
+          {
+            "name": "amazon-vine-program",
+            "path": "amazon-vine-program"
+          },
+          {
+            "name": "amazon-niche-finder",
+            "path": "amazon-niche-finder"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sealeap-ecommerce",
+      "kind": "skill",
+      "title": {
+        "zh": "SeaLeap 跨境电商技能",
+        "en": "SeaLeap e-commerce skills"
+      },
+      "description": {
+        "zh": "195 个跨境电商技能，这里收 TikTok Shop 达人发现、样品与佣金、短视频测试及 Shopify/Etsy SEO。",
+        "en": "195 cross-border e-commerce skills; this entry includes TikTok Shop creator discovery, samples and commissions, short-video tests and Shopify and Etsy SEO."
+      },
+      "repository": "https://github.com/xjli360/sealeap-ecommerce-skills",
+      "stars": 125,
+      "pushedAt": "2026-10-16",
+      "license": "MIT",
+      "categories": [
+        "ecommerce",
+        "creator-discovery"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "xjli360/sealeap-ecommerce-skills",
+        "commit": "914f920b368fd73f867e3d03af7e48b9ab1e18ed",
+        "skills": [
+          {
+            "name": "sealeap-tiktokshop-creator-discovery",
+            "path": "sealeap-amazon-skills/tiktokshop/sealeap-tiktokshop-creator-discovery"
+          },
+          {
+            "name": "sealeap-tiktokshop-creator-brief-rights",
+            "path": "sealeap-amazon-skills/tiktokshop/sealeap-tiktokshop-creator-brief-rights"
+          },
+          {
+            "name": "sealeap-tiktokshop-sample-operations",
+            "path": "sealeap-amazon-skills/tiktokshop/sealeap-tiktokshop-sample-operations"
+          },
+          {
+            "name": "sealeap-tiktokshop-affiliate-commissions",
+            "path": "sealeap-amazon-skills/tiktokshop/sealeap-tiktokshop-affiliate-commissions"
+          },
+          {
+            "name": "sealeap-tiktokshop-short-video-tests",
+            "path": "sealeap-amazon-skills/tiktokshop/sealeap-tiktokshop-short-video-tests"
+          },
+          {
+            "name": "sealeap-tiktokshop-content-calendar",
+            "path": "sealeap-amazon-skills/tiktokshop/sealeap-tiktokshop-content-calendar"
+          },
+          {
+            "name": "sealeap-tiktokshop-trend-validation",
+            "path": "sealeap-amazon-skills/tiktokshop/sealeap-tiktokshop-trend-validation"
+          },
+          {
+            "name": "sealeap-shopify-email-lifecycle",
+            "path": "sealeap-amazon-skills/shopify/sealeap-shopify-email-lifecycle"
+          },
+          {
+            "name": "sealeap-shopify-technical-seo",
+            "path": "sealeap-amazon-skills/shopify/sealeap-shopify-technical-seo"
+          },
+          {
+            "name": "sealeap-etsy-listing-seo",
+            "path": "sealeap-amazon-skills/etsy/sealeap-etsy-listing-seo"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ecommerce-ai-skills",
+      "kind": "skill",
+      "title": {
+        "zh": "跨境电商知识库",
+        "en": "E-commerce AI skills"
+      },
+      "description": {
+        "zh": "跨境电商知识库：69 篇三语指南与 878 条提示词（CC0 公有领域贡献）。",
+        "en": "Cross-border e-commerce knowledge base with 69 trilingual guides and 878 prompts (CC0 public domain dedication)."
+      },
+      "repository": "https://github.com/kangise/ecommerce-ai-skills",
+      "stars": 110,
+      "pushedAt": "2026-11-02",
+      "license": "CC0-1.0",
+      "categories": [
+        "ecommerce"
+      ],
+      "access": "none",
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 该仓库超过 jsDelivr 的 50 MB 列表上限，无法自动锁定子技能目录，需手动安装。\n2. 克隆仓库：`git clone --depth 1 https://github.com/kangise/ecommerce-ai-skills.git /tmp/ecommerce-ai-skills`。\n3. 在仓库里找到含 `SKILL.md` 的目录（`find /tmp/ecommerce-ai-skills -name SKILL.md`），把需要的目录复制到项目的 `.agents/skills/` 下。\n4. 新开会话，确认技能出现在技能列表中。",
+          "en": "1. The repository exceeds the jsDelivr 50 MB listing limit, so sub-skill directories cannot be pinned automatically; install manually.\n2. Clone it: `git clone --depth 1 https://github.com/kangise/ecommerce-ai-skills.git /tmp/ecommerce-ai-skills`.\n3. Find the directories that contain `SKILL.md` (`find /tmp/ecommerce-ai-skills -name SKILL.md`) and copy the ones you need into the project `.agents/skills/` directory.\n4. Start a new session and confirm the skills appear in the skill list."
+        }
+      }
+    },
+    {
+      "id": "email-marketing-bible",
+      "kind": "skill",
+      "title": {
+        "zh": "邮件营销百科",
+        "en": "Email marketing bible"
+      },
+      "description": {
+        "zh": "邮件营销百科式技能：可达性、CAN-SPAM 与 GDPR 合规、邮件序列。",
+        "en": "Encyclopedic email marketing skill covering deliverability, CAN-SPAM and GDPR compliance and sequences."
+      },
+      "repository": "https://github.com/CosmoBlk/email-marketing-bible",
+      "stars": 359,
+      "pushedAt": "2026-10-13",
+      "license": "MIT",
+      "categories": [
+        "outreach-crm"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "CosmoBlk/email-marketing-bible",
+        "commit": "962648c1b147652244c4e4953e96c65421a79e70",
+        "skills": [
+          {
+            "name": "email-marketing-bible",
+            "path": "skills/email-marketing-bible"
+          }
+        ]
+      }
+    },
+    {
+      "id": "claude-blog",
+      "kind": "skill",
+      "title": {
+        "zh": "博客写作与 SEO",
+        "en": "Blog writing and SEO"
+      },
+      "description": {
+        "zh": "博客调研、成稿、审校、多语言与 SEO/GEO 检查；`blog-discourse` 免 key 读取 Reddit 和 YouTube 讨论。",
+        "en": "Blog research, drafting, review, localization and SEO/GEO checks; `blog-discourse` reads Reddit and YouTube discussions without a key."
+      },
+      "repository": "https://github.com/AgriciDaniel/claude-blog",
+      "stars": 2628,
+      "pushedAt": "2026-11-03",
+      "license": "MIT",
+      "categories": [
+        "content",
+        "seo"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "AgriciDaniel/claude-blog",
+        "commit": "4f9c2cb8fd17f594e868d6c2ce0e8fb2c971f987",
+        "skills": [
+          {
+            "name": "blog",
+            "path": "skills/blog"
+          },
+          {
+            "name": "blog-write",
+            "path": "skills/blog-write"
+          },
+          {
+            "name": "blog-brief",
+            "path": "skills/blog-brief"
+          },
+          {
+            "name": "blog-seo-check",
+            "path": "skills/blog-seo-check"
+          },
+          {
+            "name": "blog-geo",
+            "path": "skills/blog-geo"
+          },
+          {
+            "name": "blog-discourse",
+            "path": "skills/blog-discourse"
+          },
+          {
+            "name": "blog-repurpose",
+            "path": "skills/blog-repurpose"
+          },
+          {
+            "name": "blog-calendar",
+            "path": "skills/blog-calendar"
+          },
+          {
+            "name": "blog-localize",
+            "path": "skills/blog-localize"
+          },
+          {
+            "name": "blog-audit",
+            "path": "skills/blog-audit"
+          }
+        ]
+      }
+    },
+    {
+      "id": "aaron-marketing-skills",
+      "kind": "skill",
+      "title": {
+        "zh": "Aaron 营销技能体系",
+        "en": "Aaron marketing skills"
+      },
+      "description": {
+        "zh": "叙事、品牌定位、SEO/GEO 与渠道技能体系，这里收达人发现与外联、关键词研究、GEO 内容与短视频脚本。",
+        "en": "Narrative, positioning, SEO/GEO and channel skill system; this entry includes influencer discovery and outreach, keyword research, GEO content and short-video scripts."
+      },
+      "repository": "https://github.com/aaron-he-zhu/aaron-marketing-skills",
+      "stars": 3058,
+      "pushedAt": "2026-11-03",
+      "license": "Apache-2.0",
+      "categories": [
+        "creator-discovery",
+        "seo",
+        "outreach-crm"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "aaron-he-zhu/aaron-marketing-skills",
+        "commit": "a59327cccb3b0925545bd9a6ab066ca3e9da675c",
+        "skills": [
+          {
+            "name": "influencer-discovery",
+            "path": "influencer/scout/influencer-discovery"
+          },
+          {
+            "name": "fit-scorer",
+            "path": "influencer/scout/fit-scorer"
+          },
+          {
+            "name": "audience-mapper",
+            "path": "influencer/scout/audience-mapper"
+          },
+          {
+            "name": "outreach-manager",
+            "path": "influencer/activate/outreach-manager"
+          },
+          {
+            "name": "contract-helper",
+            "path": "influencer/activate/contract-helper"
+          },
+          {
+            "name": "brief-generator",
+            "path": "influencer/target/brief-generator"
+          },
+          {
+            "name": "roi-calculator",
+            "path": "influencer/report/roi-calculator"
+          },
+          {
+            "name": "keyword-research",
+            "path": "seo-geo/survey/keyword-research"
+          },
+          {
+            "name": "geo-content-optimizer",
+            "path": "seo-geo/implement/geo-content-optimizer"
+          },
+          {
+            "name": "short-video-scripter",
+            "path": "social/craft/short-video-scripter"
+          },
+          {
+            "name": "strategic-narrative-designer",
+            "path": "narrative/architect/strategic-narrative-designer"
+          }
+        ]
+      }
+    },
+    {
+      "id": "superseo-skills",
+      "kind": "skill",
+      "title": {
+        "zh": "SuperSEO 技能",
+        "en": "SuperSEO skills"
+      },
+      "description": {
+        "zh": "11 个无需 API key 的 SEO 技能：页面审计、外链建设、E-E-A-T 与语义差距分析。",
+        "en": "Eleven SEO skills that need no API key: page audits, link building, E-E-A-T and semantic gap analysis."
+      },
+      "repository": "https://github.com/inhouseseo/superseo-skills",
+      "stars": 378,
+      "pushedAt": "2026-09-03",
+      "license": "Apache-2.0",
+      "categories": [
+        "seo"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "inhouseseo/superseo-skills",
+        "commit": "9cf22cc065a294bf0077ea6af6b4ea0eb7f89cdc",
+        "skills": [
+          {
+            "name": "content-brief",
+            "path": "skills/content-brief"
+          },
+          {
+            "name": "eeat-audit",
+            "path": "skills/eeat-audit"
+          },
+          {
+            "name": "expert-interview",
+            "path": "skills/expert-interview"
+          },
+          {
+            "name": "featured-snippet-optimizer",
+            "path": "skills/featured-snippet-optimizer"
+          },
+          {
+            "name": "improve-content",
+            "path": "skills/improve-content"
+          },
+          {
+            "name": "keyword-deep-dive",
+            "path": "skills/keyword-deep-dive"
+          },
+          {
+            "name": "linkbuilding",
+            "path": "skills/linkbuilding"
+          },
+          {
+            "name": "page-audit",
+            "path": "skills/page-audit"
+          },
+          {
+            "name": "semantic-gap-analysis",
+            "path": "skills/semantic-gap-analysis"
+          },
+          {
+            "name": "topic-cluster-planning",
+            "path": "skills/topic-cluster-planning"
+          },
+          {
+            "name": "write-content",
+            "path": "skills/write-content"
+          }
+        ]
+      }
+    },
+    {
+      "id": "geo-optimizer",
+      "kind": "skill",
+      "title": {
+        "zh": "GEO 优化审计",
+        "en": "GEO optimizer"
+      },
+      "description": {
+        "zh": "审计网站在 ChatGPT、Perplexity 等 AI 搜索中的可见度并生成修复建议。",
+        "en": "Audits website visibility in AI search such as ChatGPT and Perplexity and suggests fixes."
+      },
+      "repository": "https://github.com/Auriti-Labs/geo-optimizer-skill",
+      "stars": 1266,
+      "pushedAt": "2026-11-03",
+      "license": "MIT",
+      "categories": [
+        "seo"
+      ],
+      "access": "none",
+      "setup": {
+        "zh": "技能依赖 `geo` 命令行：安装 uv 后可直接 `uvx --from geo-optimizer-skill==4.19.10 geo audit --url https://yoursite.com`，或 `pip install -U geo-optimizer-skill==4.19.10`。`citations` 子命令需要你自己的 LLM key，其余功能无需 key。",
+        "en": "The skill relies on the `geo` CLI: with uv installed run `uvx --from geo-optimizer-skill==4.19.10 geo audit --url https://yoursite.com`, or `pip install -U geo-optimizer-skill==4.19.10`. The `citations` subcommand needs your own LLM key; everything else needs none."
+      },
+      "install": {
+        "type": "skill",
+        "repo": "Auriti-Labs/geo-optimizer-skill",
+        "commit": "3040681c090b17c456faeef9c04db660352f81e9",
+        "skills": [
+          {
+            "name": "geo-optimizer",
+            "path": "plugins/geo-optimizer/skills/geo-optimizer"
+          }
+        ]
+      }
+    },
+    {
+      "id": "wondelai-skills",
+      "kind": "skill",
+      "title": {
+        "zh": "畅销书营销框架",
+        "en": "Book-based marketing frameworks"
+      },
+      "description": {
+        "zh": "来自畅销书的定位、文案与增长框架技能。",
+        "en": "Positioning, copywriting and growth framework skills drawn from bestselling books."
+      },
+      "repository": "https://github.com/wondelai/skills",
+      "stars": 2568,
+      "pushedAt": "2026-11-02",
+      "license": "MIT",
+      "categories": [
+        "content"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "wondelai/skills",
+        "commit": "d8d5d75f83da9f16d8aad5bab5f5b341a4770a30",
+        "skills": [
+          {
+            "name": "obviously-awesome",
+            "path": "obviously-awesome"
+          },
+          {
+            "name": "storybrand-messaging",
+            "path": "storybrand-messaging"
+          },
+          {
+            "name": "made-to-stick",
+            "path": "made-to-stick"
+          },
+          {
+            "name": "contagious",
+            "path": "contagious"
+          },
+          {
+            "name": "influence-psychology",
+            "path": "influence-psychology"
+          },
+          {
+            "name": "one-page-marketing",
+            "path": "one-page-marketing"
+          },
+          {
+            "name": "hundred-million-offers",
+            "path": "hundred-million-offers"
+          },
+          {
+            "name": "scorecard-marketing",
+            "path": "scorecard-marketing"
+          },
+          {
+            "name": "cro-methodology",
+            "path": "cro-methodology"
+          },
+          {
+            "name": "crossing-the-chasm",
+            "path": "crossing-the-chasm"
+          }
+        ]
+      }
+    },
+    {
+      "id": "marketing-os",
+      "kind": "skill",
+      "title": {
+        "zh": "Marketing OS",
+        "en": "Marketing OS"
+      },
+      "description": {
+        "zh": "单技能“营销部”：营销审计打分、18 种钩子引擎与文案评分。",
+        "en": "Single-skill marketing department with audit scoring, 18 hook engines and copy scoring."
+      },
+      "repository": "https://github.com/Yuzzyuk/marketing-os",
+      "stars": 567,
+      "pushedAt": "2026-08-17",
+      "license": "MIT",
+      "categories": [
+        "content",
+        "ads-competitors"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "Yuzzyuk/marketing-os",
+        "commit": "bb67dff5f04b390e861ee11433166e4519e7f4c0",
+        "skills": [
+          {
+            "name": "marketing-os",
+            "path": "skills/marketing-os"
+          }
+        ]
+      }
+    },
+    {
+      "id": "claude-marketing",
+      "kind": "skill",
+      "title": {
+        "zh": "Claude 营销技能（thatrebeccarae）",
+        "en": "Claude marketing (thatrebeccarae)"
+      },
+      "description": {
+        "zh": "56 个技能，覆盖 Klaviyo、Shopify、GA4、付费媒体与内容。",
+        "en": "56 skills covering Klaviyo, Shopify, GA4, paid media and content."
+      },
+      "repository": "https://github.com/thatrebeccarae/claude-marketing",
+      "stars": 189,
+      "pushedAt": "2026-05-14",
+      "license": "MIT",
+      "categories": [
+        "ecommerce",
+        "analytics",
+        "outreach-crm"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "thatrebeccarae/claude-marketing",
+        "commit": "a8a63ec1341f05ec9c1e9cb52b4edeb14e3bdcba",
+        "skills": [
+          {
+            "name": "klaviyo-analyst",
+            "path": "skills/klaviyo-analyst"
+          },
+          {
+            "name": "shopify",
+            "path": "skills/shopify"
+          },
+          {
+            "name": "google-analytics",
+            "path": "skills/google-analytics"
+          },
+          {
+            "name": "facebook-ads",
+            "path": "skills/facebook-ads"
+          },
+          {
+            "name": "competitor-ads-analyst",
+            "path": "skills/competitor-ads-analyst"
+          },
+          {
+            "name": "social-media-strategy",
+            "path": "skills/social-media-strategy"
+          },
+          {
+            "name": "cold-email-outreach",
+            "path": "skills/cold-email-outreach"
+          },
+          {
+            "name": "utm-attribution-strategy",
+            "path": "skills/utm-attribution-strategy"
+          },
+          {
+            "name": "aeo-geo-optimizer",
+            "path": "skills/aeo-geo-optimizer"
+          },
+          {
+            "name": "seo-content-writer",
+            "path": "skills/seo-content-writer"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gtm-agents",
+      "kind": "skill",
+      "title": {
+        "zh": "GTM Agents",
+        "en": "GTM agents"
+      },
+      "description": {
+        "zh": "GTM 多 Agent 与技能：内容、社媒、邮件、付费媒体与效果分析。",
+        "en": "Go-to-market agents and skills for content, social, email, paid media and performance analysis."
+      },
+      "repository": "https://github.com/gtmagents/gtm-agents",
+      "stars": 433,
+      "pushedAt": "2026-04-03",
+      "license": "Apache-2.0",
+      "categories": [
+        "content",
+        "outreach-crm"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "gtmagents/gtm-agents",
+        "commit": "78e0419f4440bcb43bc80127e174ecf5adef1753",
+        "skills": [
+          {
+            "name": "platform-frameworks",
+            "path": "plugins/social-media/skills/platform-frameworks"
+          },
+          {
+            "name": "trend-research",
+            "path": "plugins/social-media/skills/trend-research"
+          },
+          {
+            "name": "social-calendar-system",
+            "path": "plugins/social-media-marketing/skills/social-calendar-system"
+          },
+          {
+            "name": "drip-campaigns",
+            "path": "plugins/email-marketing/skills/drip-campaigns"
+          },
+          {
+            "name": "deliverability-ops",
+            "path": "plugins/email-marketing/skills/deliverability-ops"
+          },
+          {
+            "name": "cold-email-personalization",
+            "path": "plugins/copywriting/skills/cold-email-personalization"
+          },
+          {
+            "name": "creative-variants",
+            "path": "plugins/paid-media/skills/creative-variants"
+          },
+          {
+            "name": "campaign-architecture",
+            "path": "plugins/paid-media/skills/campaign-architecture"
+          },
+          {
+            "name": "editorial-ops",
+            "path": "plugins/content-marketing/skills/editorial-ops"
+          },
+          {
+            "name": "performance-tracking",
+            "path": "plugins/campaign-orchestration/skills/performance-tracking"
+          },
+          {
+            "name": "co-branding",
+            "path": "plugins/partner-co-marketing-orchestration/skills/co-branding"
+          }
+        ]
+      }
+    },
+    {
+      "id": "onewave-skills",
+      "kind": "skill",
+      "title": {
+        "zh": "OneWave 技能库",
+        "en": "OneWave skills"
+      },
+      "description": {
+        "zh": "200 多个技能，这里收品牌语气、竞品内容与情报、冷邮件、社媒改写与 SEO 关键词聚类。",
+        "en": "More than 200 skills; this entry includes brand voice, competitor content and intelligence, cold email, social repurposing and SEO keyword clustering."
+      },
+      "repository": "https://github.com/OneWave-AI/claude-skills",
+      "stars": 410,
+      "pushedAt": "2026-10-20",
+      "license": "MIT",
+      "categories": [
+        "ads-competitors",
+        "content"
+      ],
+      "access": "none",
+      "install": {
+        "type": "skill",
+        "repo": "OneWave-AI/claude-skills",
+        "commit": "b2267d9171af4f56848d82992381b20b89b44056",
+        "skills": [
+          {
+            "name": "competitor-price-tracker",
+            "path": "competitor-price-tracker"
+          },
+          {
+            "name": "brand-voice-analyzer",
+            "path": "brand-voice-analyzer"
+          },
+          {
+            "name": "competitor-content-analyzer",
+            "path": "competitor-content-analyzer"
+          },
+          {
+            "name": "competitor-intel-agent",
+            "path": "competitor-intel-agent"
+          },
+          {
+            "name": "cold-email-sequence-generator",
+            "path": "cold-email-sequence-generator"
+          },
+          {
+            "name": "email-subject-line-optimizer",
+            "path": "email-subject-line-optimizer"
+          },
+          {
+            "name": "social-repurposer",
+            "path": "social-repurposer"
+          },
+          {
+            "name": "seo-keyword-cluster-builder",
+            "path": "seo-keyword-cluster-builder"
+          },
+          {
+            "name": "content-repurposer",
+            "path": "content-repurposer"
+          },
+          {
+            "name": "social-selling-content-generator",
+            "path": "social-selling-content-generator"
+          }
+        ]
+      }
+    },
+    {
+      "id": "agent-reach",
+      "kind": "skill",
+      "title": {
+        "zh": "Agent Reach",
+        "en": "Agent Reach"
+      },
+      "description": {
+        "zh": "让 Agent 读取和搜索 Twitter、Reddit、YouTube、GitHub 等平台（技能加 CLI）。",
+        "en": "Lets the agent read and search Twitter, Reddit, YouTube, GitHub and other platforms (skill plus CLI)."
+      },
+      "repository": "https://github.com/Panniantong/Agent-Reach",
+      "stars": 108258,
+      "pushedAt": "2026-11-01",
+      "license": "MIT",
+      "categories": [
+        "social-data",
+        "creator-discovery"
+      ],
+      "access": "login",
+      "setup": {
+        "zh": "技能依赖 `agent-reach` 命令行，需从 GitHub 安装（PyPI 上同名包不是本项目）：先装 uv，再运行 `uv tool install \"agent-reach @ git+https://github.com/Panniantong/Agent-Reach.git\"`，然后 `agent-reach --help` 查看渠道与登录配置。需要登录的平台会复制你本机浏览器的登录态，建议用小号。",
+        "en": "The skill relies on the `agent-reach` CLI, installed from GitHub (the PyPI package of the same name is a different project): install uv, run `uv tool install \"agent-reach @ git+https://github.com/Panniantong/Agent-Reach.git\"`, then `agent-reach --help` for channels and login setup. Platforms behind sign-in copy your local browser session; use a secondary account."
+      },
+      "install": {
+        "type": "skill",
+        "repo": "Panniantong/Agent-Reach",
+        "commit": "7a38047acf26a729cbb27851e3cb81639da86b29",
+        "skills": [
+          {
+            "name": "skill",
+            "path": "agent_reach/skill"
+          }
+        ]
+      }
+    },
+    {
+      "id": "hyperframes",
+      "kind": "skill",
+      "title": {
+        "zh": "HyperFrames 视频渲染",
+        "en": "HyperFrames"
+      },
+      "description": {
+        "zh": "HeyGen 开源的“写 HTML 渲染视频”技能和 CLI，可做短视频广告和字幕片。",
+        "en": "HeyGen's open-source skill and CLI that renders videos from HTML, for short video ads and captioned clips."
+      },
+      "repository": "https://github.com/heygen-com/hyperframes",
+      "stars": 78046,
+      "pushedAt": "2026-11-03",
+      "license": "Apache-2.0",
+      "categories": [
+        "content",
+        "video"
+      ],
+      "access": "none",
+      "setup": {
+        "zh": "技能依赖 `hyperframes` 命令行与 Node.js：运行 `npm i -g hyperframes@0.9.8`（或每次用 `npx hyperframes@0.9.8`）；渲染需要 ffmpeg（`brew install ffmpeg`）。",
+        "en": "The skill relies on the `hyperframes` CLI and Node.js: run `npm i -g hyperframes@0.9.8` (or use `npx hyperframes@0.9.8` each time); rendering needs ffmpeg (`brew install ffmpeg`)."
+      },
+      "install": {
+        "type": "manual",
+        "steps": {
+          "zh": "1. 该仓库超过 jsDelivr 的 50 MB 列表上限，无法自动锁定子技能目录，需手动安装。\n2. 安装 CLI：`npm i -g hyperframes@0.9.8`，并安装 ffmpeg。\n3. 克隆仓库：`git clone --depth 1 https://github.com/heygen-com/hyperframes.git /tmp/hyperframes`，用 `find /tmp/hyperframes -name SKILL.md -not -path \"*/node_modules/*\"` 找到技能目录，复制到项目的 `.agents/skills/` 下（或在支持的环境运行 `npx skills add heygen-com/hyperframes`）。\n4. 新开会话，确认技能出现在技能列表中。",
+          "en": "1. The repository exceeds the jsDelivr 50 MB listing limit, so sub-skill directories cannot be pinned automatically; install manually.\n2. Install the CLI: `npm i -g hyperframes@0.9.8`, and install ffmpeg.\n3. Clone it: `git clone --depth 1 https://github.com/heygen-com/hyperframes.git /tmp/hyperframes`, find the skill directories with `find /tmp/hyperframes -name SKILL.md -not -path \"*/node_modules/*\"` and copy them into the project `.agents/skills/` directory (or run `npx skills add heygen-com/hyperframes` where supported).\n4. Start a new session and confirm the skills appear in the skill list."
+        }
+      }
+    }
+  ]
+}

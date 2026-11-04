@@ -30,11 +30,25 @@ import {
 import { capture } from '../../../scripts/release/process.ts'
 import { tarballFiles } from '../../../scripts/release/tarball.ts'
 import { desktopTargetPlatform, resolveDesktopBuildTarget, resolveDesktopTargetBuildPaths } from './desktop-build-paths.mjs'
+import { pnpmInvocation } from '../../../scripts/pnpm-invocation.ts'
 
 const TOMATO_PACKAGE = '@tomato/cli'
 const ROOT_PACKAGES = [TOMATO_PACKAGE, DESKTOP_HOST_PACKAGE] as const
-/** First-party bundles shipped beside the core graph, such as the built-in plugin market. */
-const EXTRA_PACKAGES = ['tomato-market'] as const
+/** First-party packages the Desktop runtime needs but the public release family omits. */
+const EXTRA_PACKAGES = [
+  'tomato-market',
+  '@tomato/account',
+  '@tomato/brand',
+  '@tomato/gateway',
+  '@tomato/telemetry',
+] as const
+/** Private workspace packages that supply runtime plugins but are never published. */
+const PRIVATE_RUNTIME_PACKAGES = [
+  'packages/tomato/account',
+  'packages/tomato/brand',
+  'packages/tomato/gateway',
+  'packages/tomato/telemetry',
+] as const
 const APP_ROOT = resolve(import.meta.dirname, '..')
 const REPOSITORY_ROOT = resolve(APP_ROOT, '..', '..')
 
@@ -219,8 +233,9 @@ function main(): void {
   })
   const inputs = (values.from ?? defaultInputs).map(path => resolve(REPOSITORY_ROOT, path))
   // The built-in plugin market is a repository plugin rather than a workspace
-  // package, so it is packed here and selected as an extra closure root. A
-  // build-local npm cache keeps packaging independent of the caller's npm home.
+  // package, and private runtime plugins are excluded from the public release
+  // family. Pack both here and select them as extra closure roots. A build-local
+  // npm cache keeps packaging independent of the caller's npm home.
   const extraDir = mkdtempSync(join(tmpdir(), 'tomato-desktop-extra-'))
   const npmCache = join(buildPaths.root, 'npm-cache')
   mkdirSync(npmCache, { recursive: true })
@@ -229,6 +244,14 @@ function main(): void {
     env: { ...process.env, npm_config_cache: npmCache },
     stdio: ['ignore', 'ignore', 'inherit'],
   })
+  for (const directory of PRIVATE_RUNTIME_PACKAGES) {
+    const invocation = pnpmInvocation(['--dir', join(REPOSITORY_ROOT, directory), 'pack', '--pack-destination', extraDir])
+    execFileSync(invocation.command, invocation.args, {
+      cwd: REPOSITORY_ROOT,
+      env: { ...process.env, npm_config_cache: npmCache },
+      stdio: ['ignore', 'ignore', 'inherit'],
+    })
+  }
   inputs.push(extraDir)
   const output = values.out === undefined ? buildPaths.packageSet : resolve(REPOSITORY_ROOT, values.out)
   prepareDesktopPackageSet(inputs, output, desktopTargetPlatform(resolveDesktopBuildTarget()))

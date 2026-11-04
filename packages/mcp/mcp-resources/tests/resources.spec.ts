@@ -283,6 +283,22 @@ describe('MCP resource tools', () => {
     expect(renderPrompt(await ctx.systemPrompt.assemble())).not.toContain('MCP resource servers')
   })
 
+  it('lists configured servers sorted and withdraws disposed ones', async () => {
+    const ctx = await setup()
+    const provider = { request: async () => ({ resources: [] }) }
+    expect(ctx.mcpResources.list()).toEqual([])
+    const disposeZeta = ctx.mcpResources.register('zeta', provider)
+    const disposeAlpha = ctx.mcpResources.register('alpha', provider)
+
+    expect(ctx.mcpResources.list()).toEqual(['alpha', 'zeta'])
+    expect(ctx.mcpResources.list({} as Agent)).toEqual(['alpha', 'zeta'])
+
+    disposeAlpha()
+    expect(ctx.mcpResources.list()).toEqual(['zeta'])
+    disposeZeta()
+    expect(ctx.mcpResources.list()).toEqual([])
+  })
+
   it('withdraws all shared tools and server-name context when its plugin unloads', async () => {
     const ctx = new Context()
     roots.push(ctx)

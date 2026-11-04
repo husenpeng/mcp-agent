@@ -11,6 +11,7 @@ import {
 import { desktopArtifactOutput, desktopTargetBuildPaths } from './desktop-build-paths.mjs'
 import { DESKTOP_PRODUCT_NAME } from './desktop-product.mjs'
 import { packageMacOSArtifacts, type DesktopPrepackagedArtifact } from './package-macos.ts'
+import { macOSInstallBundleBaseName, packageMacOSInstallBundle } from './package-macos-bundle.ts'
 import { loadDesktopPackageEnvironment, localMacOSPackageEnvironment, validateDesktopPackageEnvironment } from './desktop-package-environment.mjs'
 import { createPackagingRun, recordPackagingEvent } from './packaging-run.mjs'
 import { withWindowsSigningStage } from './windows-signing-stage.mjs'
@@ -198,6 +199,12 @@ export function resolveDesktopPackageTarget(
 interface DesktopPackageInvocation {
   readonly target: DesktopPackageTarget
   readonly directory: boolean
+  /**
+   * Whether to also write a copy-ready zip beside the artifacts: the assembled
+   * application, a double-click installer, and instructions. Requires `directory`,
+   * because the bundle is made from the unpacked application.
+   */
+  readonly bundle: boolean
   readonly prepareOnly: boolean
   readonly unsigned: boolean
   readonly skipNotarization: boolean
@@ -233,6 +240,7 @@ export function parseDesktopPackageInvocation(
     allowPositionals: true,
     options: {
       dir: { type: 'boolean', default: false },
+      bundle: { type: 'boolean', default: false },
       'prepare-only': { type: 'boolean', default: false },
       unsigned: { type: 'boolean', default: false },
       'skip-notarization': { type: 'boolean', default: false },
@@ -244,6 +252,8 @@ export function parseDesktopPackageInvocation(
   if (positionals.length > 1) throw new Error('desktop package: expected at most one target')
   const name = positionals[0] ?? hostTargetName(hostPlatform, hostArch)
   if (values.unsigned && values['prepare-only']) throw new Error('desktop package: --unsigned cannot use --prepare-only')
+  if (values.bundle && !values.dir) throw new Error('desktop package: --bundle requires --dir; the install bundle is built from the unpacked application')
+  if (values.bundle && (name === 'win-x64' || values['prepare-only'])) throw new Error('desktop package: --bundle supports macOS directory builds only')
   if (values['skip-notarization'] && (name === 'win-x64' || values.unsigned || values['prepare-only'])) {
     throw new Error('desktop package: --skip-notarization requires a signed macOS build, without --prepare-only')
   }
@@ -262,6 +272,7 @@ export function parseDesktopPackageInvocation(
   return {
     target,
     directory: values.dir,
+    bundle: values.bundle,
     prepareOnly: values['prepare-only'],
     unsigned: values.unsigned,
     skipNotarization: values['skip-notarization'],
@@ -329,14 +340,14 @@ function runPnpm(
  * @param invocation - Validated packaging request.
  * @param productVersion - Version the manifests declare.
  * @param environment - Release settings, which name the bucket automatic numbering reads.
- * @returns The product version, the requested version, or the next free index for today.
+ * @returns The product version, the requested version, the version a directory build's manifest declares, or the next free index for today.
  */
 async function resolveRequestedBuildVersion(
   invocation: DesktopPackageInvocation,
   productVersion: string,
   environment: NodeJS.ProcessEnv,
 ): Promise<string> {
-  const requested = invocation.requestedBuildVersion
+  const requested = invocation.requestedBuildVersion ?? (invocation.directory ? AUTOMATIC_BUILD_VERSION : undefined)
   if (requested === undefined) return productVersion
   if (requested !== AUTOMATIC_BUILD_VERSION) return validateDesktopBuildVersion(requested, productVersion)
   const paths = desktopTargetBuildPaths(invocation.target.name, environment)
@@ -414,8 +425,14 @@ async function main(): Promise<void> {
   if (success && target.platform === 'darwin' && !invocation.directory && !invocation.prepareOnly) {
     const paths = desktopTargetBuildPaths(target.name, environment)
     const output = desktopArtifactOutput(paths, invocation)
-    const filename = `deepseek-harness-${buildVersion}-mac-${target.arch}${output.suffix}.dmg`
+    const filename = `tomato-harness-${buildVersion}-mac-${target.arch}${output.suffix}.dmg`
     console.log(`DMG: ${join(output.directory, filename)}`)
+  }
+  if (success && target.platform === 'darwin' && invocation.bundle) {
+    const paths = desktopTargetBuildPaths(target.name, environment)
+    const output = desktopArtifactOutput(paths, invocation)
+    const base = macOSInstallBundleBaseName(buildVersion, target.arch)
+    console.log(`ZIP: ${join(output.directory, `${base}.zip`)}`)
   }
 }
 
@@ -586,6 +603,19 @@ export async function packageTarget(
     }
     await execute(['exec', 'tsx', 'scripts/smoke-packaged-runtime.ts',
       ...(invocation.unsigned ? ['--unsigned'] : []), ...(invocation.skipNotarization ? ['--skip-notarization'] : [])], targetEnv)
+  }
+  if (invocation.bundle && target.platform === 'darwin' && invocation.directory) {
+    const appPath = join(artifactsRoot, target.arch === 'arm64' ? 'mac-arm64' : 'mac', `${DESKTOP_PRODUCT_NAME}.app`)
+    // The build version this run publishes is written into the bundle manifest; the bundle
+    // carries that same name so an extracted folder and the archive agree.
+    const version = environment[DESKTOP_BUILD_VERSION_ENV] ?? packageVersion(join(APP_ROOT, 'package.json'), 'desktop package')
+    const bundle = await packageMacOSInstallBundle({
+      arch: target.arch, version, appPath,
+      assetsRoot: join(buildPaths.root, 'bundle-assets'),
+      outputDirectory: artifactsRoot,
+      installerDirectory: join(APP_ROOT, 'packaging'),
+    })
+    if (journal) recordPackagingEvent(journal, { type: 'install-bundle', directory: bundle.directory, archive: bundle.archive })
   }
   if (!invocation.directory && !invocation.unsigned && !invocation.skipNotarization) {
     writeReleaseRecord(target, electronBuilderEnv, buildPaths.artifacts)

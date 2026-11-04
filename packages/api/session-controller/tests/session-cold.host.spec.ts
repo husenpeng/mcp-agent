@@ -334,6 +334,49 @@ describe('cold history recovery view', () => {
     expect(ctx.sessions.get(sessionId)).toBeUndefined()
     await ctx.fiber.dispose()
   })
+
+  it('serves a stored Session recorded without a cwd', async () => {
+    // Robot runs created before the specification carried a Workspace root
+    // persist a header with no cwd; the log itself is complete, so a missing
+    // cwd must not turn a readable Session into session-not-found.
+    const ctx = new Context()
+    await ctx.plugin(SessionStore)
+    const sessionId = sid('session-no-cwd')
+    const meta: SessionHeader = {
+      version: SESSION_FORMAT_VERSION,
+      id: sessionId,
+      createdAt: 1000,
+      isSeeded: false,
+    }
+    providePersistence(ctx, {
+      list: () => Promise.resolve([structuredClone(meta)]),
+      inspect: () => Promise.resolve({
+        meta: structuredClone(meta),
+        events: structuredClone([{ type: 'turn/start', seq: SessionSeq(0), time: 1, data: { turn: 1 } }]),
+      }),
+    })
+    const remote = await createSessionTestRemote(ctx, { defaultModelSelection: () => ({ provider: 'p', model: 'm' }), cwd: '/tmp' })
+
+    const history = await remote.page({
+      address: { kind: 'session', sessionId },
+      throughSeq: 0,
+      maxMessages: 10,
+    })
+    if (!history.ok) throw new Error(`history failed: ${history.error.code}`)
+    expect(history.value.records.map(record => record.event)).toMatchInlineSnapshot(`
+      [
+        {
+          "data": {
+            "turn": 1,
+          },
+          "seq": 0,
+          "time": 1,
+          "type": "turn/start",
+        },
+      ]
+    `)
+    await ctx.fiber.dispose()
+  })
 })
 
 describe('Remote Agent and Session lookup policy', () => {

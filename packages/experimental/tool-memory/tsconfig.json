@@ -42,6 +42,9 @@
       "path": "../memory"
     },
     {
+      "path": "../../settings/settings"
+    },
+    {
       "path": "../../util/timeout"
     }
   ]

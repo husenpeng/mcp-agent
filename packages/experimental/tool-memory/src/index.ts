@@ -4,12 +4,13 @@
  * snapshot injection of profile and pinned workspace memories.
  * `memory_search` widens a literal query with model-suggested wordings when the
  * literal words match too few records; `memory_related` walks the relations one
- * record has to its neighbors.
+ * record has to its neighbors. Its configuration fields admit an automatic page
+ * on the Settings server when that server is composed.
  * @module @tomato/experimental-tool-memory
  */
 
 import { createHash } from 'node:crypto'
-import type { Context } from '@tomato/cordis'
+import type { Context, Volatile } from '@tomato/cordis'
 import z from '@tomato/schemastery'
 import { z as zod } from 'zod'
 import type { Agent, PreStepDecision } from '@tomato/agent'
@@ -25,6 +26,7 @@ import { MEMORY_KINDS, MEMORY_RELATIONS, MAX_RELATION_DEPTH, MemoryError, Memory
 import type { MemoryErrorCode, MemoryKind, MemoryRecord, MemoryRelation, MemoryScope, MemoryView, RelatedMemory } from '@tomato/experimental-memory'
 import { captureTurn, collectTurnMessages } from './capture.ts'
 import type {} from '@tomato/session-query'
+import type {} from '@tomato/settings'
 import { expandQuery } from './expansion.ts'
 import type { ExpansionPolicy } from './expansion.ts'
 import { messageText, normalizeQuote, quotedMessage } from './quote.ts'
@@ -58,51 +60,76 @@ import type { MemoryId as MemoryIdType } from '@tomato/experimental-memory/types
 export const name = 'experimental-tool-memory'
 export const inject = ['memory', 'tools', 'agents', 'commands', 'sessionProjections', 'llm']
 
-/** Snapshot, write-justification, and query-expansion policy. */
+/** Snapshot, write-justification, and query-expansion policy; each field is live-editable. */
 export interface Config {
   /** Maximum UTF-8 bytes of one rendered memory snapshot. */
-  maxSnapshotBytes?: number
+  maxSnapshotBytes?: number | Volatile<number | undefined>
   /** Whether the snapshot adds a subject index of this workspace's memories. */
-  projectIndex?: boolean
+  projectIndex?: boolean | Volatile<boolean | undefined>
   /** Minimum user-perceived characters of a `user_quote` that can activate a write. */
-  minQuoteChars?: number
+  minQuoteChars?: number | Volatile<number | undefined>
   /** Whether `memory_search` asks a model for alternative wordings when the literal query matches too few records. */
-  queryExpansion?: boolean
+  queryExpansion?: boolean | Volatile<boolean | undefined>
   /** Explicit expansion provider; omitted with `expansionModel` uses the calling agent's current model. */
-  expansionProvider?: string
+  expansionProvider?: string | Volatile<string | undefined>
   /** Explicit expansion model; must be paired with `expansionProvider`. */
-  expansionModel?: string
+  expansionModel?: string | Volatile<string | undefined>
   /** End-to-end deadline of one expansion request in milliseconds. */
-  expansionTimeoutMs?: number
+  expansionTimeoutMs?: number | Volatile<number | undefined>
   /** Output-token cap of one expansion request. */
-  expansionMaxTokens?: number
+  expansionMaxTokens?: number | Volatile<number | undefined>
   /** Maximum alternative wordings kept from one expansion. */
-  maxAlternatives?: number
+  maxAlternatives?: number | Volatile<number | undefined>
   /** Whether one bounded request captures durable statements from each finished turn as candidates. */
-  capture?: boolean
+  capture?: boolean | Volatile<boolean | undefined>
   /** Maximum UTF-8 bytes of the person messages sent to one capture request. */
-  captureMaxInputBytes?: number
+  captureMaxInputBytes?: number | Volatile<number | undefined>
   /** Output-token cap of one capture request. */
-  captureMaxTokens?: number
+  captureMaxTokens?: number | Volatile<number | undefined>
   /** End-to-end deadline of one capture request in milliseconds. */
+  captureTimeoutMs?: number | Volatile<number | undefined>
+}
+
+/** Raw Loader input before each volatile field becomes its live reference. */
+interface ConfigInput {
+  maxSnapshotBytes?: number
+  projectIndex?: boolean
+  minQuoteChars?: number
+  queryExpansion?: boolean
+  expansionProvider?: string
+  expansionModel?: string
+  expansionTimeoutMs?: number
+  expansionMaxTokens?: number
+  maxAlternatives?: number
+  capture?: boolean
+  captureMaxInputBytes?: number
+  captureMaxTokens?: number
   captureTimeoutMs?: number
 }
 
+/** Read one field Loader publishes as a live reference or a direct caller passes plain. */
+function current(value: number | Volatile<number | undefined> | undefined): number | undefined
+function current(value: boolean | Volatile<boolean | undefined> | undefined): boolean | undefined
+function current(value: string | Volatile<string | undefined> | undefined): string | undefined
+function current(value: string | number | boolean | Volatile<string | number | boolean | undefined> | undefined) {
+  return value === undefined || typeof value !== 'object' ? value : value.get()
+}
+
 /** Schemastery config for the memory consumers. */
-export const Config: z<Config> = z.object({
-  maxSnapshotBytes: z.number().step(1).min(256).max(65_536).default(4096),
-  projectIndex: z.boolean().default(true),
-  minQuoteChars: z.number().step(1).min(1).max(200).default(8),
-  queryExpansion: z.boolean().default(true),
-  expansionProvider: z.string(),
-  expansionModel: z.string(),
-  expansionTimeoutMs: z.number().step(1).min(1000).max(60_000).default(8000),
-  expansionMaxTokens: z.number().step(1).min(16).max(1024).default(120),
-  maxAlternatives: z.number().step(1).min(1).max(20).default(8),
-  capture: z.boolean().default(false),
-  captureMaxInputBytes: z.number().step(1).min(512).max(32_768).default(6000),
-  captureMaxTokens: z.number().step(1).min(64).max(2048).default(400),
-  captureTimeoutMs: z.number().step(1).min(1000).max(60_000).default(12_000),
+export const Config: z<ConfigInput, Config> = z.object({
+  maxSnapshotBytes: z.number().step(1).min(256).max(65_536).default(4096).volatile(),
+  projectIndex: z.boolean().default(true).volatile(),
+  minQuoteChars: z.number().step(1).min(1).max(200).default(8).volatile(),
+  queryExpansion: z.boolean().default(true).volatile(),
+  expansionProvider: z.string().volatile(),
+  expansionModel: z.string().volatile(),
+  expansionTimeoutMs: z.number().step(1).min(1000).max(60_000).default(8000).volatile(),
+  expansionMaxTokens: z.number().step(1).min(16).max(1024).default(120).volatile(),
+  maxAlternatives: z.number().step(1).min(1).max(20).default(8).volatile(),
+  capture: z.boolean().default(false).volatile(),
+  captureMaxInputBytes: z.number().step(1).min(512).max(32_768).default(6000).volatile(),
+  captureMaxTokens: z.number().step(1).min(64).max(2048).default(400).volatile(),
+  captureTimeoutMs: z.number().step(1).min(1000).max(60_000).default(12_000).volatile(),
 })
 
 /**
@@ -111,14 +138,15 @@ export const Config: z<Config> = z.object({
  * @returns the policy shared by every search.
  */
 function resolveExpansion(config: Config): ExpansionPolicy | undefined {
-  if (config.queryExpansion === false) return undefined
-  const timeoutMs = config.expansionTimeoutMs ?? 8000
-  const maxTokens = config.expansionMaxTokens ?? 120
-  const maxAlternatives = config.maxAlternatives ?? 8
+  if (current(config.queryExpansion) === false) return undefined
+  const timeoutMs = current(config.expansionTimeoutMs) ?? 8000
+  const maxTokens = current(config.expansionMaxTokens) ?? 120
+  const maxAlternatives = current(config.maxAlternatives) ?? 8
   for (const [field, value] of [['expansionTimeoutMs', timeoutMs], ['expansionMaxTokens', maxTokens], ['maxAlternatives', maxAlternatives]] as const) {
     if (!Number.isSafeInteger(value) || value < 1) throw new TypeError(`experimental-tool-memory: ${field} must be a positive safe integer`)
   }
-  const { expansionProvider: provider, expansionModel: model } = config
+  const provider = current(config.expansionProvider)
+  const model = current(config.expansionModel)
   if ((provider === undefined) !== (model === undefined)) {
     throw new TypeError('experimental-tool-memory: expansionProvider and expansionModel must be supplied together')
   }
@@ -461,27 +489,30 @@ function listText(records: readonly MemoryRecord[], heading: string, empty: stri
  * @param config - validated snapshot limits.
  */
 export async function apply(ctx: Context, config: Config): Promise<void> {
-  const maxSnapshotBytes = config.maxSnapshotBytes ?? 4096
+  ctx.inject(['settings'], (ctx) => {
+    ctx.settings.configure({}, ctx.fiber)
+  })
+  const maxSnapshotBytes = current(config.maxSnapshotBytes) ?? 4096
   if (!Number.isSafeInteger(maxSnapshotBytes) || maxSnapshotBytes < 256) {
     throw new TypeError('experimental-tool-memory: maxSnapshotBytes must be a safe integer of at least 256')
   }
-  const capture = config.capture === true
   const captureLimits = {
-    captureMaxInputBytes: config.captureMaxInputBytes ?? 6000,
-    captureMaxTokens: config.captureMaxTokens ?? 400,
-    captureTimeoutMs: config.captureTimeoutMs ?? 12_000,
+    captureMaxInputBytes: current(config.captureMaxInputBytes) ?? 6000,
+    captureMaxTokens: current(config.captureMaxTokens) ?? 400,
+    captureTimeoutMs: current(config.captureTimeoutMs) ?? 12_000,
   }
   for (const [field, value] of Object.entries(captureLimits)) {
     if (!Number.isSafeInteger(value) || value < 1) {
       throw new TypeError(`experimental-tool-memory: ${field} must be a positive safe integer`)
     }
   }
-  const projectIndex = config.projectIndex !== false
-  const minQuoteChars = config.minQuoteChars ?? 8
+  const minQuoteChars = current(config.minQuoteChars) ?? 8
   if (!Number.isSafeInteger(minQuoteChars) || minQuoteChars < 1) {
     throw new TypeError('experimental-tool-memory: minQuoteChars must be a positive safe integer')
   }
-  const expansion = resolveExpansion(config)
+  // Validate the initial expansion policy here; each search re-resolves it so a
+  // committed configuration change takes effect without remounting.
+  resolveExpansion(config)
   const sessions: ProjectionHandle<MemorySessionState> = await ctx.sessionProjections.register<'experimentalMemory', MemorySessionState>({
     key: 'experimentalMemory',
     stateVersion: 1,
@@ -529,6 +560,7 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
       const { agent, view } = await caller(exec)
       const filter = args.kind === undefined ? {} : { kind: args.kind }
       const literal = ctx.memory.recall({ view, text: args.query, ...filter })
+      const expansion = resolveExpansion(config)
       // A query that already fills the result, or lists everything, needs no other wording.
       if (expansion === undefined || args.query.trim() === '' || literal.length >= ctx.memory.limits.maxRecallResults
         || ctx.memory.list(view).every(record => record.status !== 'active')) {
@@ -596,7 +628,7 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
       }
       const value = args.value.trim()
       if (value.length === 0) reject('value must not be empty', 'MEMORY_INVALID_VALUE')
-      const seq = quotedMessage(sessions.stateOf(agent.session).turnQuotes, args.user_quote, minQuoteChars)
+      const seq = quotedMessage(sessions.stateOf(agent.session).turnQuotes, args.user_quote, current(config.minQuoteChars) ?? 8)
       const similar = ctx.memory.duplicates({
         owner: view.owner, scope, kind: args.kind, entity: args.entity, key: args.key, value,
       })
@@ -691,8 +723,9 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
    * @returns the complete snapshot text, or an empty string when neither part has content.
    */
   function renderTurnSnapshot(view: MemoryView): string {
+    const maxSnapshotBytes = current(config.maxSnapshotBytes) ?? 4096
     const snapshot = renderMemorySnapshot(ctx.memory.snapshot(view), maxSnapshotBytes)
-    if (!projectIndex) return snapshot
+    if (current(config.projectIndex) === false) return snapshot
     const used = Buffer.byteLength(snapshot, 'utf8')
     const remaining = maxSnapshotBytes - used - (snapshot === '' ? 0 : 2)
     if (remaining <= 0) return snapshot
@@ -817,45 +850,49 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
     }
   }, { prepend: true })
 
-  if (capture) {
-    ctx.effect(() => {
-      const controller = new AbortController()
-      const operations = new Set<Promise<void>>()
-      const stop = ctx.inject(['sessionQuery'], (child) => {
-        /** Capture one finished turn when its person text clears the input bounds. */
-        const run = async (session: Session, event: SessionEvent<'turn/end'>): Promise<void> => {
-          const access = await ctx.memory.accessOf(session)
-          if (access.kind !== 'available') return
-          using observation = await child.sessionQuery.observeSession(session.id, { projectionMode: 'none', signal: controller.signal })
-          const transcript = collectTurnMessages(observation.events, event.data.turn, event.seq, captureLimits.captureMaxInputBytes)
-          if (transcript === undefined) return
-          const header = observation.events.findLast(candidate => candidate.type === 'request/header')
-          if (header?.type !== 'request/header') return
-          const { provider, model } = header.data.header.config
-          await captureTurn(ctx, {
-            session,
-            view: access.view,
-            route: { provider, model },
-            transcript,
-            limits: { maxTokens: captureLimits.captureMaxTokens, timeoutMs: captureLimits.captureTimeoutMs },
-            signal: controller.signal,
-          })
-        }
-        return child.on('session/event', (session, event) => {
-          if (event.type !== 'turn/end' || controller.signal.aborted) return
-          const operation = run(session, event).catch((error: unknown) => {
-            // A failed capture must not reach the Session observer chain or the finished turn.
-            ctx.logger.warn(`experimental-tool-memory: post-turn capture failed: ${error instanceof Error ? error.message : String(error)}`)
-          })
-          operations.add(operation)
-          void operation.finally(() => { operations.delete(operation) })
+  ctx.effect(() => {
+    const controller = new AbortController()
+    const operations = new Set<Promise<void>>()
+    const stop = ctx.inject(['sessionQuery'], (child) => {
+      /** Capture one finished turn when its person text clears the input bounds. */
+      const run = async (session: Session, event: SessionEvent<'turn/end'>): Promise<void> => {
+        if (current(config.capture) !== true) return
+        const access = await ctx.memory.accessOf(session)
+        if (access.kind !== 'available') return
+        using observation = await child.sessionQuery.observeSession(session.id, { projectionMode: 'none', signal: controller.signal })
+        const transcript = collectTurnMessages(
+          observation.events, event.data.turn, event.seq, current(config.captureMaxInputBytes) ?? captureLimits.captureMaxInputBytes,
+        )
+        if (transcript === undefined) return
+        const header = observation.events.findLast(candidate => candidate.type === 'request/header')
+        if (header?.type !== 'request/header') return
+        const { provider, model } = header.data.header.config
+        await captureTurn(ctx, {
+          session,
+          view: access.view,
+          route: { provider, model },
+          transcript,
+          limits: {
+            maxTokens: current(config.captureMaxTokens) ?? captureLimits.captureMaxTokens,
+            timeoutMs: current(config.captureTimeoutMs) ?? captureLimits.captureTimeoutMs,
+          },
+          signal: controller.signal,
         })
-      })
-      return async () => {
-        controller.abort()
-        await stop.dispose()
-        await Promise.allSettled([...operations])
       }
-    }, 'experimental-tool-memory: post-turn capture')
-  }
+      return child.on('session/event', (session, event) => {
+        if (event.type !== 'turn/end' || controller.signal.aborted) return
+        const operation = run(session, event).catch((error: unknown) => {
+          // A failed capture must not reach the Session observer chain or the finished turn.
+          ctx.logger.warn(`experimental-tool-memory: post-turn capture failed: ${error instanceof Error ? error.message : String(error)}`)
+        })
+        operations.add(operation)
+        void operation.finally(() => { operations.delete(operation) })
+      })
+    })
+    return async () => {
+      controller.abort()
+      await stop.dispose()
+      await Promise.allSettled([...operations])
+    }
+  }, 'experimental-tool-memory: post-turn capture')
 }

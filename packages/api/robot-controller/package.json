@@ -55,7 +55,6 @@
   "files": [
     "lib/index.js",
     "lib/client.js",
-    "lib/types/**/*.js",
     "lib/types/**/*.d.ts",
     "lib/typert.host.js",
     "lib/typert.host.d.ts",
@@ -64,22 +63,29 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@tomato/typert-protocol": "workspace:*"
+    "@tomato/branded": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*",
+    "zod": "4.4.3"
   },
   "peerDependencies": {
     "@tomato/cordis": "workspace:~"
   },
   "devDependencies": {
+    "@tomato/agent": "workspace:*",
     "@tomato/api-gateway": "workspace:*",
-    "@tomato/branded": "workspace:*",
+    "@tomato/api-session-controller": "workspace:*",
     "@tomato/client-connection": "workspace:*",
     "@tomato/client-store": "workspace:*",
     "@tomato/cordis": "workspace:~",
     "@tomato/experimental-robot": "workspace:*",
     "@tomato/experimental-robot-local": "workspace:*",
+    "@tomato/mcp-resources": "workspace:*",
     "@tomato/session": "workspace:*",
+    "@tomato/skill": "workspace:*",
     "@tomato/storage": "workspace:*",
     "@tomato/storage-domain": "workspace:*",
-    "@tomato/typert-registry": "workspace:*"
+    "@tomato/tools": "workspace:*",
+    "@tomato/typert-registry": "workspace:*",
+    "@tomato/workspace": "workspace:*"
   }
 }

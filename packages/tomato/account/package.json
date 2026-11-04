@@ -1,5 +1,6 @@
 {
   "name": "@tomato/account",
+  "private": true,
   "description": "Tomato account surface: sidebar launcher and settings page over the local gateway's auth_service session",
   "version": "0.2.1-rc.3",
   "type": "module",

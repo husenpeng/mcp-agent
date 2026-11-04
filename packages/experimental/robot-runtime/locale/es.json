@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Entorno de ejecución de robots",
+    "description": "Ejecuta las ejecuciones de robots en cola mediante un agente y registra sus resultados."
+  }
+}

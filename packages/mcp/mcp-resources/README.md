@@ -39,6 +39,8 @@ When system-prompt assembly is mounted, the prompt lists server names visible to
 
 Every operation resolves the server in the calling agent's scope. A missing server argument or unavailable server fails before dispatch. The connection owner handles request cancellation, timeouts, and recovery; a failed request remains a failed tool call.
 
+`ctx.mcpResources.list(scope?)` returns the configured server names sorted by name. Use it when a caller needs the choices without issuing a resource request, such as a specification editor offering MCP servers; an omitted `scope` lists the global servers alone, and an agent scope also merges servers registered along its chain.
+
 -----
 
 <a id="understand-the-implementation"></a>

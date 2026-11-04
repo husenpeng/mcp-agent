@@ -18,6 +18,7 @@ import {
   IconRefreshOutlineRegular,
   IconSparkleRegular,
   SegmentedControl,
+  StateDot,
   Tag,
 } from '@tomato/client-ui-primitives'
 import type { HostObservable, InjectFace, PropsLocale, PropsRuntime } from '@tomato/client-ui-slots'
@@ -26,9 +27,9 @@ import type { DailyRecap, UnfinishedTask } from '../types.ts'
 import { recordedView } from './contract.ts'
 import { WORK_ITEM_TAB_KIND } from './definition.ts'
 import { EmptyState, InsightFailure, InsightLoading } from './InsightStates.tsx'
-import { formatDay, formatTime, workItemBrief } from './format.ts'
+import { formatDay, formatTime, workItemSessions } from './format.ts'
 import type { InsightsState, InsightsView } from './source.ts'
-import { recapStatusTag } from './status.ts'
+import { recapStatus } from './status.ts'
 import css from './Insights.module.css'
 
 /** Everything the Sidebar page needs injected. */
@@ -49,7 +50,7 @@ function RecapPanel({ recap, day, t, onOpenWorkItem }: {
   readonly recap: DailyRecap
   readonly day: string
   readonly t: InsightsTabProps['t']
-  readonly onOpenWorkItem: (day: string, title: string) => void
+  readonly onOpenWorkItem: (day: string, problem: string) => void
 }): ReactNode {
   const locale = t('date.locale')
   const meta = recap.sessions.length === 1
@@ -66,24 +67,37 @@ function RecapPanel({ recap, day, t, onOpenWorkItem }: {
       {recap.source === 'local' && <p className={css.note}>{t('recap.localNote')}</p>}
       {recap.workItems.length > 0 && (
         <section className={css.section}>
-          <h3>{t('recap.workItems')}</h3>
+          <div className={css.sectionHead}>
+            <h3>{t('recap.workItems')}</h3>
+            <span className={css.sectionCount}>
+              {t(recap.workItems.length === 1 ? 'recap.itemCount.one' : 'recap.itemCount.other', { count: recap.workItems.length })}
+            </span>
+          </div>
           <ul className={css.workList}>
             {recap.workItems.map((item) => {
-              const tag = recapStatusTag(item.status)
-              const brief = workItemBrief(item.detail)
+              const status = recapStatus(item.status)
+              const [first, ...rest] = workItemSessions(recap, item)
+              const meta = first === undefined
+                ? t(status.key)
+                : rest.length === 0
+                  ? `${t(status.key)} · ${first.title}`
+                  : `${t(status.key)} · ${t('workItem.session.other', { count: rest.length + 1 })} · ${first.title}`
               return (
-                <li key={item.title} className={css.workRow}>
+                <li key={item.problem} className={css.workRow}>
                   <button
                     type="button"
                     className={css.workRowButton}
-                    onClick={() => { onOpenWorkItem(recap.day, item.title) }}
+                    onClick={() => { onOpenWorkItem(recap.day, item.problem) }}
                   >
-                    <span className={css.taskHead}>
-                      <Tag tone={tag.tone}>{t(tag.key)}</Tag>
-                      <span className={css.taskTitle}>{item.title}</span>
-                      <IconChevronRightOutlineRegular size={14} className={css.workChevron} />
+                    <span className={css.workState}><StateDot state={status.state} size={12} /></span>
+                    <span className={css.workBody}>
+                      <span className={css.workHead}>
+                        <span className={css.workProblem}>{item.problem}</span>
+                        <IconChevronRightOutlineRegular size={14} className={css.workChevron} />
+                      </span>
+                      {item.conclusion !== '' && <span className={css.workConclusion}>{item.conclusion}</span>}
+                      <span className={css.workMeta}>{meta}</span>
                     </span>
-                    {brief !== '' && <span className={css.workBrief}>{brief}</span>}
                   </button>
                 </li>
               )
@@ -185,8 +199,8 @@ export function InsightsTab({ useTabInfo, useInsights, onRefresh, t }: InsightsT
   const refreshing = useInsights(state => state.refreshing)
   const base = `muse-insights-${tab.id}`
   const refresh = (): void => { void onRefresh(tab.signal) }
-  const openWorkItem = (day: string, title: string): void => {
-    tab.actions.openTab(WORK_ITEM_TAB_KIND, { params: { day, title } })
+  const openWorkItem = (day: string, problem: string): void => {
+    tab.actions.openTab(WORK_ITEM_TAB_KIND, { params: { day, problem } })
   }
   return (
     <div className={css.tab}>

@@ -1,20 +1,35 @@
 /** The recap list's brief keeps a work item's first prose line and nothing else. */
 import { describe, expect, it } from 'vitest'
-import { formatDay, formatTime, workItemBrief } from '../src/client/format.ts'
+import { formatDay, formatTime, workItemSessions } from '../src/client/format.ts'
+import type { DailyRecap, RecapWorkItem } from '../src/types.ts'
 
-describe('workItemBrief', () => {
-  it('takes the first prose line after empty and fenced lines', () => {
-    expect(workItemBrief('```text\n\nThe launch plan is ready.\nStill waiting on legal.\n```'))
-      .toBe('The launch plan is ready.')
+describe('workItemSessions', () => {
+  const session = (sessionId: string, title: string) => ({ sessionId, title, summary: '', messageCount: 1 })
+  const recap: DailyRecap = {
+    day: '2026-11-02',
+    generatedAt: 1,
+    source: 'local',
+    headline: '',
+    summary: '',
+    workItems: [],
+    openTasks: [],
+    sessions: [session('s1', 'Launch plan'), session('s2', 'Legal review')],
+    messageCount: 2,
+  }
+  const item: RecapWorkItem = {
+    problem: 'The launch plan has no owner',
+    conclusion: '',
+    solution: '',
+    status: 'done',
+    sessionIds: ['s2', 'missing', 's1'],
+  }
+
+  it('resolves the item’s Sessions in its own order', () => {
+    expect(workItemSessions(recap, item).map(entry => entry.title)).toEqual(['Legal review', 'Launch plan'])
   })
 
-  it('trims the line it takes', () => {
-    expect(workItemBrief('  Ready  ')).toBe('Ready')
-  })
-
-  it('keeps nothing without prose', () => {
-    expect(workItemBrief('')).toBe('')
-    expect(workItemBrief('\n```text\n```')).toBe('')
+  it('keeps nothing for an item that named no Session', () => {
+    expect(workItemSessions(recap, { ...item, sessionIds: [] })).toEqual([])
   })
 })
 

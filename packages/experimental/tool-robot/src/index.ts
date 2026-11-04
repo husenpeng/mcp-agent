@@ -7,7 +7,7 @@
 
 import type { Context } from '@tomato/cordis'
 import { emptyRobotSpec, RobotSpecValidationError } from '@tomato/experimental-robot'
-import type { RobotSpecRevision } from '@tomato/experimental-robot'
+import type { RobotSpec, RobotSpecRevision } from '@tomato/experimental-robot'
 import { HarnessError } from '@tomato/llm'
 import type { ContentBlock } from '@tomato/llm'
 import { defineTool } from '@tomato/tools'
@@ -95,12 +95,19 @@ export function apply(ctx: Context): void {
     presentCall: args => presentCall(args),
     async execute(args, exec): Promise<RobotCreateValue> {
       requireDirectHuman(ctx, robotToolExecution(ctx, exec))
-      const spec = emptyRobotSpec({
+      const created = emptyRobotSpec({
         name: args.name,
         ...args.description === undefined || args.description.trim() === '' ? {} : { description: args.description },
         mission: args.mission,
         ...args.successCriteria === undefined ? {} : { successCriteria: args.successCriteria },
       })
+      // A robot created from a conversation works in that conversation's
+      // Workspace unless the user names another one later; an explicit root
+      // keeps the run directory, its history, and its outputs inspectable.
+      const cwd = exec.agent?.session.header.cwd
+      const spec: RobotSpec = cwd === undefined
+        ? created
+        : { ...created, capability: { ...created.capability, workspaceRoots: [cwd] } }
       let revision: RobotSpecRevision
       try {
         revision = await ctx.robots.publish(spec)

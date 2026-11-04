@@ -48,7 +48,7 @@ kind: "package-bundle"
     approvalTools: ['mcp__hicreator__*']
 ```
 
-每日洞察行接受自己的范围参数和可选的显式回顾路由；[`@tomato/experimental-muse-insights`](../muse-insights/README.zh.md#configuration) 中的默认值无需覆盖。
+四个行都接受自己的配置，且每一行在**插件**页中都有**配置**页：每日洞察、记忆、记忆工具和目标专注。页面来自 [`@tomato/experimental-muse-insights`](../muse-insights/README.zh.md#configuration) 的浏览器侧，随本配置包一起加载，因此无需编辑 `cordis.patch.yml` 即可修改上限、开关和审批模式；超出插件 Config 范围的值会被 Host 拒绝。
 
 -----
 

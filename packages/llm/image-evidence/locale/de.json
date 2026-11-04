@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Bildbelege",
+    "description": "Lässt reine Textmodelle eingefügte Bilder über ein konfiguriertes Bildverständnismodell lesen."
+  }
+}

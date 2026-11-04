@@ -5,8 +5,15 @@ import type { RobotId, RunId } from '@tomato/api-robot-controller/client'
 /** Which robot page view is showing. */
 export type RobotPageView = 'roster' | 'config'
 
+/** Which robots the gallery shows by state. */
+export type RobotStatusFilter = 'all' | 'running' | 'idle'
+
 /** Robot page selection state. */
 export interface RobotPageState {
+  /** Gallery search text. */
+  query: string
+  /** Gallery state filter. */
+  filter: RobotStatusFilter
   /** The roster or the specification editor. */
   view: RobotPageView
   /** Robot the page shows or edits, when one is selected. */
@@ -21,6 +28,8 @@ type RobotPageActions = {
   configure: (draft: RobotPageState, robotId?: RobotId) => void
   openRun: (draft: RobotPageState, runId: RunId) => void
   back: (draft: RobotPageState) => void
+  search: (draft: RobotPageState, query: string) => void
+  filterBy: (draft: RobotPageState, filter: RobotStatusFilter) => void
 }
 
 /** Handle of the page selection store the slot renderer projects as `useRobotPage`. */
@@ -35,7 +44,7 @@ export type RobotPageInstance = ReturnType<RobotPageStore['create']>
  */
 export function createRobotPageStore(): RobotPageStore {
   return defineStore({
-    init: (): RobotPageState => ({ view: 'roster' }),
+    init: (): RobotPageState => ({ view: 'roster', query: '', filter: 'all' }),
     actions: {
       openRoster: (draft) => {
         draft.view = 'roster'
@@ -56,7 +65,14 @@ export function createRobotPageStore(): RobotPageStore {
       },
       back: (draft) => {
         draft.view = 'roster'
+        draft.robotId = undefined
         draft.runId = undefined
+      },
+      search: (draft, query) => {
+        draft.query = query
+      },
+      filterBy: (draft, filter) => {
+        draft.filter = filter
       },
     },
   })

@@ -9,8 +9,8 @@ const session = SessionId('session.with.dot')
 const otherSession = SessionId('session-other')
 const tab = 'tab1' as TabId
 const otherTab = 'tab2' as TabId
-const target = { day: '2026-11-02', title: 'Draft the plan' }
-const otherTarget = { day: '2026-11-02', title: 'Send the brief' }
+const target = { day: '2026-11-02', problem: 'The launch plan has no owner' }
+const otherTarget = { day: '2026-11-02', problem: 'The launch brief is still unsent' }
 
 /** The single storage key this Session's bindings were written under. */
 function storedKey(): string {
@@ -47,7 +47,7 @@ it('keeps one entry per tab page and one document per Session', () => {
   expect(localStorage.length).toBe(2)
 })
 
-it('keeps only the last item one page showed and stores only its day and title', () => {
+it('keeps only the last item one page showed and stores only its day and problem', () => {
   const bindings = new WorkItemTabBindings()
   bindings.write(session, tab, target)
   bindings.write(session, tab, otherTarget)
@@ -83,14 +83,14 @@ it('drops stored text this store did not write and keeps the values it did', () 
   localStorage.setItem(`tomato.muse-insights.work-item-tab.v1.${session}`, JSON.stringify({
     broken: null,
     scalar: 'text',
-    missingTitle: { day: '2026-11-02' },
-    missingDay: { title: 'Send the brief' },
-    typedDay: { day: 1, title: 'Send the brief' },
+    missingProblem: { day: '2026-11-02' },
+    missingDay: { problem: 'The launch brief is still unsent' },
+    typedDay: { day: 1, problem: 'The launch brief is still unsent' },
     kept: target,
   }))
   expect(bindings.read(session, 'broken' as TabId)).toBeUndefined()
   expect(bindings.read(session, 'scalar' as TabId)).toBeUndefined()
-  expect(bindings.read(session, 'missingTitle' as TabId)).toBeUndefined()
+  expect(bindings.read(session, 'missingProblem' as TabId)).toBeUndefined()
   expect(bindings.read(session, 'missingDay' as TabId)).toBeUndefined()
   expect(bindings.read(session, 'typedDay' as TabId)).toBeUndefined()
   expect(bindings.read(session, 'kept' as TabId)).toEqual(target)

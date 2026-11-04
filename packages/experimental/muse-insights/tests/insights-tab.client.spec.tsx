@@ -34,8 +34,20 @@ const recap: DailyRecap = {
   headline: 'Launch ready',
   summary: 'Prepared the launch and left one brief to send.',
   workItems: [
-    { title: 'Draft the plan', detail: 'The launch plan is ready.', status: 'done' },
-    { title: 'Send the brief', detail: '', status: 'ongoing' },
+    {
+      problem: 'The launch plan has no owner',
+      conclusion: 'The plan is drafted and the owner named.',
+      solution: 'Wrote the plan, chose the owner, and scheduled the review.',
+      status: 'done',
+      sessionIds: ['s1'],
+    },
+    {
+      problem: 'The launch brief is still unsent',
+      conclusion: 'Waiting on the legal review.',
+      solution: '',
+      status: 'ongoing',
+      sessionIds: ['s1'],
+    },
   ],
   openTasks: ['Send the brief'],
   sessions: [{ sessionId: 's1', title: 'Launch plan', summary: 'Drafted the plan.', messageCount: 4 }],
@@ -118,13 +130,15 @@ describe('InsightsTab', () => {
     expect(onRefresh).toHaveBeenCalledTimes(1)
   })
 
-  it('renders the daily recap with work item status, open tasks, and sessions', () => {
+  it('renders the daily recap with work items, open tasks, and sessions', () => {
     mount({ status: 'ready', snapshot: snapshot(), notice: null, refreshing: false })
     expect(screen.getByRole('heading', { name: 'Launch ready' })).toBeTruthy()
     expect(screen.getByText(/1 session · 8 messages/u)).toBeTruthy()
-    expect(screen.getByText('Draft the plan')).toBeTruthy()
-    expect(screen.getByText('Done')).toBeTruthy()
-    expect(screen.getByText('Ongoing')).toBeTruthy()
+    expect(screen.getByText('The launch plan has no owner')).toBeTruthy()
+    expect(screen.getByText('The plan is drafted and the owner named.')).toBeTruthy()
+    expect(screen.getByText(/Done · Launch plan/u)).toBeTruthy()
+    expect(screen.getByText(/Ongoing · Launch plan/u)).toBeTruthy()
+    expect(screen.getByText('2 items')).toBeTruthy()
     expect(screen.getByRole('heading', { name: 'Open tasks' })).toBeTruthy()
     expect(screen.getByRole('heading', { name: 'Sessions' })).toBeTruthy()
     expect(screen.getByText('Launch plan')).toBeTruthy()
@@ -180,19 +194,21 @@ describe('InsightsTab', () => {
     expect(screen.getByRole('heading', { name: 'The first analysis is still running.' })).toBeTruthy()
   })
 
-  it('draws each work item as one row carrying its brief, not its full detail', () => {
+  it('draws each work item with its problem and conclusion, not its solution', () => {
     const detailed = {
       ...recap,
       workItems: [{
-        title: 'Draft the plan',
-        detail: '```text\nThe launch plan is ready.\nStill waiting on legal.\n```',
+        problem: 'The launch plan has no owner',
+        conclusion: 'The plan is drafted and the owner named.',
+        solution: 'The first step was to write the plan down. The second step named the owner.',
         status: 'done' as const,
+        sessionIds: ['s1'],
       }],
     }
     mount({ status: 'ready', snapshot: snapshot({ recap: detailed }), notice: null, refreshing: false })
-    expect(screen.getByText('The launch plan is ready.')).toBeTruthy()
-    expect(screen.queryByText(/Still waiting on legal/u)).toBeNull()
-    expect(screen.queryByText(/```/u)).toBeNull()
+    expect(screen.getByText('The launch plan has no owner')).toBeTruthy()
+    expect(screen.getByText('The plan is drafted and the owner named.')).toBeTruthy()
+    expect(screen.queryByText(/The first step was to write/u)).toBeNull()
   })
 
   it('counts contributing sessions and marks a recap older than the shown day', () => {
@@ -263,11 +279,34 @@ describe('InsightsTab', () => {
     expect(screen.getByRole('tab', { name: 'Unfinished tasks' }).getAttribute('aria-selected')).toBe('true')
   })
 
+  it('labels an item that named no Session and one that named several', () => {
+    const mixed = {
+      ...recap,
+      workItems: [
+        { problem: 'No Session was recorded', conclusion: '', solution: '', status: 'done' as const, sessionIds: [] },
+        {
+          problem: 'Two Sessions addressed this',
+          conclusion: '',
+          solution: '',
+          status: 'done' as const,
+          sessionIds: ['s1', 's2'],
+        },
+      ],
+      sessions: [
+        { sessionId: 's1', title: 'Launch plan', summary: 'Drafted the plan.', messageCount: 4 },
+        { sessionId: 's2', title: 'Release notes', summary: 'Wrote the notes.', messageCount: 4 },
+      ],
+    }
+    mount({ status: 'ready', snapshot: snapshot({ recap: mixed }), notice: null, refreshing: false })
+    expect(screen.getByText('Done')).toBeTruthy()
+    expect(screen.getByText('Done · 2 sessions · Launch plan')).toBeTruthy()
+  })
+
   it('opens one work item page from its row', () => {
     const { openTab } = mount({ status: 'ready', snapshot: snapshot(), notice: null, refreshing: false })
-    fireEvent.click(screen.getByRole('button', { name: /Draft the plan/u }))
+    fireEvent.click(screen.getByRole('button', { name: /The launch plan has no owner/u }))
     expect(openTab).toHaveBeenCalledExactlyOnceWith('museInsightsWorkItem', {
-      params: { day: '2026-11-02', title: 'Draft the plan' },
+      params: { day: '2026-11-02', problem: 'The launch plan has no owner' },
     })
   })
 

@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`@tomato/experimental-robot` defines the durable vocabulary and the `ctx.robots` service contract for a robot platform: versioned specifications, robot instances bound to one exact revision, runs with explicit lifecycle states, and agent-to-agent admission fields. It adds no provider, persistence, execution, transport, tools, or prompt text; an installed provider owns all of that.
+`@tomato/experimental-robot` defines the durable vocabulary and the `ctx.robots` service contract for a robot platform: versioned specifications, robot instances bound to one exact revision, runs with explicit lifecycle states, and agent-to-agent admission fields. It adds no provider, persistence, execution, transport, tools, or prompt text; an installed provider owns all of that. It also ships the robot template registry, a separate in-memory `ctx.robotTemplates` row that lists hireable starting points.
 
 ## Table of Contents
 
@@ -30,6 +30,8 @@ This package is a Service Definition, not a provider. Load a package whose plugi
 - Consumers inject `robots` and call `publish`, `revision`, `specs`, `instantiate`, `robot`, `robots`, `start`, `cancel`, `finish`, `run`, and `runs`.
 - The service has no configuration fields.
 - `isTerminalRunState` is a pure predicate that any process can call without the service.
+- Mount `@tomato/experimental-robot/templates` as its own row to provide `ctx.robotTemplates`. Template packages call `register(template)` inside `ctx.effect`; a duplicate id throws, and every change emits `robot/changed` with `templates`.
+- `templateSpec(template, locale, name?)` builds the complete specification a hire publishes; `templateText(template, locale)` selects copy for an exact locale such as `zh-CN`, then its language `zh`, then `en`. The result shares no arrays with the template, so editing a hired robot never changes the template.
 
 The provider owns specification validation, persistence, execution, and transport. This package only states what callers may rely on.
 

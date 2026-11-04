@@ -6,9 +6,9 @@ import { Context } from '@tomato/cordis'
 import type { RobotSpec, Robots, Run, RunId } from '@tomato/experimental-robot'
 import { isTerminalRunState } from '@tomato/experimental-robot'
 import LocalRobots from '@tomato/experimental-robot-local'
-import { createAssistantMessage } from '@tomato/llm'
+import { createAssistantMessage, createUserMessage } from '@tomato/llm'
 import SessionStore from '@tomato/session'
-import type { Session, SessionEvent, UserMessage } from '@tomato/session'
+import type { Session, SessionEvent, SessionId, UserMessage } from '@tomato/session'
 import SessionProjectionRegistry from '@tomato/session-projection'
 import Storage from '@tomato/storage'
 import { DomainFacility } from '@tomato/storage-domain'
@@ -39,11 +39,11 @@ const BASE = {
   },
   capability: {
     tools: { allow: ['read'], deny: ['bash'] },
-    mcpServers: [],
-    skills: [],
+    mcpServers: [] as string[],
+    skills: [] as string[],
     workspaceRoots: ['/tmp/workspace'],
     dataClasses: ['internal'],
-    credentials: [],
+    credentials: [] as string[],
     sandbox: 'workspace',
     permissionPreset: 'workspace',
     network: 'allowlist',
@@ -69,6 +69,18 @@ interface BenchOptions {
   withPresets?: boolean
   deferRuntime?: boolean
   hang?: boolean
+  /** Registered tool names the runtime sees; each entry may also carry a description. */
+  tools?: readonly { readonly name: string }[]
+  /** Skill names the run's catalog offers. */
+  skills?: readonly { readonly name: string }[]
+  /** Whether the deployment mounts a skill registry at all. */
+  skillRegistry?: boolean
+  /** MCP servers the deployment has configured. */
+  mcpServers?: readonly string[]
+  /** Keep the first turn's Agent idle promise pending until its turn is cancelled. */
+  hangAfterFirstTurn?: boolean
+  /** Pause wait budget the composition configures, in milliseconds. */
+  pauseTimeoutMs?: number
 }
 
 function completedText(text: string): Script {
@@ -122,6 +134,8 @@ async function bench(script: Script, options: BenchOptions = {}) {
   const sections: unknown[] = []
   const filters: unknown[] = []
   const presets: unknown[] = []
+  const skillQueries: unknown[] = []
+  const skillRestrictions: unknown[] = []
   const created: CreateAgentOptions[] = []
   let disposed = 0
   let followups = 0
@@ -130,7 +144,28 @@ async function bench(script: Script, options: BenchOptions = {}) {
   } as never)
   ctx.provide('tools', {
     restrict: (filter: unknown) => { filters.push(filter); return () => {} },
+    definitions: () => options.tools ?? [],
   } as never)
+  if (options.skillRegistry !== false) {
+    ctx.provide('skills', {
+      list: async (query: unknown) => {
+        skillQueries.push(query)
+        return (options.skills ?? []).map(skill => ({ ...skill, description: '' }))
+      },
+      restrict: (filter: unknown) => {
+        skillRestrictions.push(filter)
+        return () => {}
+      },
+    } as never)
+  }
+  if (options.mcpServers !== undefined) {
+    ctx.provide('mcpResources', {
+      list: (scope?: unknown) => {
+        expect(scope).toBeUndefined()
+        return options.mcpServers
+      },
+    } as never)
+  }
   if (options.withPresets === true) {
     ctx.provide('permissionPresets', {
       set: (session: Session, preset: string) => { presets.push([session.id, preset]) },
@@ -157,18 +192,20 @@ async function bench(script: Script, options: BenchOptions = {}) {
       followup: (message: UserMessage) => {
         followups += 1
         running = true
-        if (options.hang === true) {
-          idle = new Promise<void>((resolve) => {
+        const hang = options.hang === true || (options.hangAfterFirstTurn === true && followups === 1)
+        idle = Promise.resolve().then(() => {
+          if (options.hang !== true) script(session, message, agent)
+        }).then(() => {
+          if (!hang) return
+          // Keep the turn open until its cancellation: the executor's wait must
+          // observe a run it still owns.
+          return new Promise<void>((resolve) => {
             stop = () => {
               running = false
               resolve()
             }
           })
-        } else {
-          idle = Promise.resolve().then(() => {
-            script(session, message, agent)
-          }).finally(() => { running = false })
-        }
+        }).finally(() => { running = false })
       },
       steer: () => {},
       inject: () => {},
@@ -196,9 +233,14 @@ async function bench(script: Script, options: BenchOptions = {}) {
   })
 
   await ctx.plugin(LocalRobots)
-  if (options.deferRuntime !== true) await ctx.plugin({ name, inject, apply })
+  if (options.deferRuntime !== true) {
+    await ctx.plugin({ name, inject, apply }, options.pauseTimeoutMs === undefined ? undefined : { pauseTimeoutMs: options.pauseTimeoutMs })
+  }
 
-  return { ctx, sections, filters, presets, created, disposed: () => disposed, followups: () => followups }
+  return {
+    ctx, sections, filters, presets, created, skillQueries, skillRestrictions,
+    disposed: () => disposed, followups: () => followups,
+  }
 }
 
 async function waitUntil(condition: () => boolean): Promise<void> {
@@ -225,6 +267,148 @@ async function startRun(robots: Robots, spec: RobotSpec = copy()): Promise<Run> 
 }
 
 describe('robot runtime', () => {
+  it('keeps only the MCP servers the specification selects', async () => {
+    const spec = copy()
+    spec.capability.mcpServers = ['github']
+    const test = await bench(completedText('reviewed'), {
+      tools: [
+        { name: 'read' },
+        { name: 'bash' },
+        { name: 'mcp__github__create_issue' },
+        { name: 'mcp__web__search' },
+      ],
+      mcpServers: ['github', 'web'],
+    })
+    try {
+      const run = await startRun(test.ctx.robots, spec)
+      await expect(waitForRun(test.ctx.robots, run.id)).resolves.toMatchObject({ state: 'succeeded' })
+      expect(test.filters).toEqual([{ allow: ['read', 'mcp__github__create_issue'], deny: ['bash'] }])
+    } finally {
+      await test.ctx.fiber.dispose()
+    }
+  })
+
+  it('hides every MCP tool when the specification names no server', async () => {
+    const test = await bench(completedText('reviewed'), {
+      tools: [{ name: 'read' }, { name: 'bash' }, { name: 'mcp__github__create_issue' }],
+      mcpServers: [],
+    })
+    try {
+      const run = await startRun(test.ctx.robots)
+      await expect(waitForRun(test.ctx.robots, run.id)).resolves.toMatchObject({ state: 'succeeded' })
+      expect(test.filters).toEqual([{ allow: ['read'], deny: ['bash'] }])
+    } finally {
+      await test.ctx.fiber.dispose()
+    }
+  })
+
+  it('fails a run whose MCP server is not configured instead of running without it', async () => {
+    const spec = copy()
+    spec.capability.mcpServers = ['web']
+    const test = await bench(completedText('unused'), {
+      tools: [{ name: 'read' }, { name: 'mcp__github__create_issue' }],
+      mcpServers: ['github'],
+    })
+    try {
+      const run = await startRun(test.ctx.robots, spec)
+      await expect(waitForRun(test.ctx.robots, run.id)).resolves.toMatchObject({
+        state: 'failed',
+        error: 'unavailable MCP server: web',
+      })
+      expect(test.created).toEqual([])
+    } finally {
+      await test.ctx.fiber.dispose()
+    }
+  })
+
+  it('fails a run that names an MCP server when this deployment mounts no MCP registry', async () => {
+    const spec = copy()
+    spec.capability.mcpServers = ['github']
+    const test = await bench(completedText('unused'))
+    try {
+      const run = await startRun(test.ctx.robots, spec)
+      await expect(waitForRun(test.ctx.robots, run.id)).resolves.toMatchObject({
+        state: 'failed',
+        error: 'unavailable MCP server: github',
+      })
+      expect(test.created).toEqual([])
+    } finally {
+      await test.ctx.fiber.dispose()
+    }
+  })
+
+  it('keeps every native tool when the specification allows no tool by name', async () => {
+    const spec = copy()
+    spec.capability.tools.allow = []
+    spec.capability.mcpServers = ['github']
+    const test = await bench(completedText('reviewed'), {
+      tools: [{ name: 'read' }, { name: 'bash' }, { name: 'mcp__github__create_issue' }],
+      mcpServers: ['github'],
+    })
+    try {
+      const run = await startRun(test.ctx.robots, spec)
+      await expect(waitForRun(test.ctx.robots, run.id)).resolves.toMatchObject({ state: 'succeeded' })
+      expect(test.filters).toEqual([{ allow: ['read', 'bash', 'mcp__github__create_issue'], deny: ['bash'] }])
+    } finally {
+      await test.ctx.fiber.dispose()
+    }
+  })
+
+  it('applies only a deny list when the specification allows every tool', async () => {
+    const spec = copy()
+    spec.capability.tools.allow = []
+    const test = await bench(completedText('reviewed'))
+    try {
+      const run = await startRun(test.ctx.robots, spec)
+      await expect(waitForRun(test.ctx.robots, run.id)).resolves.toMatchObject({ state: 'succeeded' })
+      expect(test.filters).toEqual([{ deny: ['bash'] }])
+    } finally {
+      await test.ctx.fiber.dispose()
+    }
+  })
+
+  it('restricts the run to the selected skills', async () => {
+    const spec = copy()
+    spec.capability.skills = ['office-docx']
+    const test = await bench(completedText('reviewed'), { skills: [{ name: 'office-docx' }] })
+    try {
+      const run = await startRun(test.ctx.robots, spec)
+      await expect(waitForRun(test.ctx.robots, run.id)).resolves.toMatchObject({ state: 'succeeded' })
+      expect(test.skillQueries).toEqual([{ cwd: '/tmp/workspace' }])
+      expect(test.skillRestrictions).toEqual([{ allow: ['office-docx'] }])
+    } finally {
+      await test.ctx.fiber.dispose()
+    }
+  })
+
+  it('fails a run whose selected skill is absent or has no registry', async () => {
+    const spec = copy()
+    spec.capability.skills = ['missing-skill']
+    const test = await bench(completedText('unused'), { skills: [{ name: 'office-docx' }] })
+    try {
+      const run = await startRun(test.ctx.robots, spec)
+      await expect(waitForRun(test.ctx.robots, run.id)).resolves.toMatchObject({
+        state: 'failed',
+        error: 'unavailable skill: missing-skill',
+      })
+      expect(test.created).toEqual([])
+    } finally {
+      await test.ctx.fiber.dispose()
+    }
+
+    const bare = await bench(completedText('unused'), { skillRegistry: false })
+    try {
+      const run = await startRun(bare.ctx.robots, spec)
+      await expect(waitForRun(bare.ctx.robots, run.id)).resolves.toMatchObject({
+        state: 'failed',
+        error: 'this deployment mounts no skill registry, so the selected skills cannot load',
+      })
+      expect(bare.created).toEqual([])
+    } finally {
+      await bare.ctx.fiber.dispose()
+    }
+  })
+
   it('executes a queued run and records the assistant text', async () => {
     const test = await bench(completedText('reviewed'))
     try {
@@ -411,6 +595,94 @@ describe('robot runtime', () => {
       await new Promise(resolve => setTimeout(resolve, 5))
       expect(test.created).toHaveLength(1)
       await test.ctx.robots.cancel(run.id)
+      await waitUntil(() => test.disposed() === 1)
+    } finally {
+      await test.ctx.fiber.dispose()
+    }
+  })
+
+  it('falls back to the first registered Workspace when the specification names none', async () => {
+    const spec = copy()
+    spec.capability.workspaceRoots = []
+    const test = await bench(completedText('reviewed'))
+    try {
+      test.ctx.provide('workspaceRegistry', { list: () => [{ path: '/registered/first' }] } as never)
+      const run = await startRun(test.ctx.robots, spec)
+      await expect(waitForRun(test.ctx.robots, run.id)).resolves.toMatchObject({ state: 'succeeded' })
+      expect(test.created[0]?.meta).toEqual({ cwd: '/registered/first' })
+    } finally {
+      await test.ctx.fiber.dispose()
+    }
+  })
+
+  it('falls back to the Host process directory when no Workspace is registered', async () => {
+    const spec = copy()
+    spec.capability.workspaceRoots = []
+    const test = await bench(completedText('reviewed'))
+    try {
+      const run = await startRun(test.ctx.robots, spec)
+      await expect(waitForRun(test.ctx.robots, run.id)).resolves.toMatchObject({ state: 'succeeded' })
+      expect(test.created[0]?.meta).toEqual({ cwd: process.cwd() })
+    } finally {
+      await test.ctx.fiber.dispose()
+    }
+  })
+
+  it('keeps a paused run and its Agent until a correction continues it', async () => {
+    let turn = 0
+    const script: Script = (session, message) => {
+      turn += 1
+      session.append('turn/start', { turn })
+      session.append('step/start', { turn, step: 1 })
+      session.append('user/message', message, { surfaceOp: 'append' })
+      session.append('assistant/message', {
+        stream: [],
+        turn,
+        step: 1,
+        message: createAssistantMessage({
+          content: [{ type: 'text', text: `answer ${turn}` }],
+          source: { provider: 'test-provider', model: 'test-model' },
+        }),
+      }, { surfaceOp: 'append' })
+      session.append('step/end', { turn, step: 1 })
+      session.append('turn/end', { turn, reason: { kind: 'completed' } })
+    }
+    const test = await bench(script, { hangAfterFirstTurn: true })
+    try {
+      const run = await startRun(test.ctx.robots)
+      await waitUntil(() => test.followups() === 1)
+      await waitUntil(() => turn === 1)
+      const agent = test.ctx.agents.get(test.created[0]?.sessionId as SessionId)
+      if (agent === undefined) throw new Error('the run Agent was not published')
+      // The Host pauses the run before it aborts the turn, then the turn
+      // settles; the executor must keep the run and the Agent.
+      await test.ctx.robots.advance(run.id, 'waiting')
+      agent.cancel({ kind: 'user' }, { keepInbox: true })
+      await new Promise(resolve => setTimeout(resolve, 10))
+      await expect(test.ctx.robots.run(run.id)).resolves.toMatchObject({ state: 'waiting' })
+      expect(test.disposed()).toBe(0)
+
+      agent.followup(createUserMessage({ content: [{ type: 'text', text: 'use the other method' }], source: { kind: 'user' } }))
+      await test.ctx.robots.advance(run.id, 'running')
+      await expect(waitForRun(test.ctx.robots, run.id)).resolves.toMatchObject({ state: 'succeeded', output: 'answer 2' })
+      await waitUntil(() => test.disposed() === 1)
+    } finally {
+      await test.ctx.fiber.dispose()
+    }
+  })
+
+  it('settles a paused run once its wait budget expires', async () => {
+    const test = await bench(completedText('first'), { hangAfterFirstTurn: true, pauseTimeoutMs: 5 })
+    try {
+      const run = await startRun(test.ctx.robots)
+      await waitUntil(() => test.followups() === 1)
+      const agent = test.ctx.agents.get(test.created[0]?.sessionId as SessionId)
+      if (agent === undefined) throw new Error('the run Agent was not published')
+      await test.ctx.robots.advance(run.id, 'waiting')
+      agent.cancel({ kind: 'user' }, { keepInbox: true })
+      const settled = await waitForRun(test.ctx.robots, run.id)
+      expect(settled).toMatchObject({ state: 'cancelled' })
+      expect(settled.error).toContain('paused')
       await waitUntil(() => test.disposed() === 1)
     } finally {
       await test.ctx.fiber.dispose()

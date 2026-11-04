@@ -287,6 +287,27 @@ describe('robot-local instantiation and runs', () => {
     }
   })
 
+  it('records executor progress and keeps a settled run state', async () => {
+    await withRobots(async (robots) => {
+      const revision = await robots.publish(copy())
+      const robot = await robots.instantiate(revision.ref)
+      const run = await robots.start(robot.id, { message: 'review' })
+
+      await robots.advance(run.id, 'running')
+      await expect(robots.run(run.id)).resolves.toMatchObject({ state: 'running' })
+      await expect(robots.robot(robot.id)).resolves.toMatchObject({ state: 'running' })
+      await robots.advance(run.id, 'waiting')
+      await expect(robots.run(run.id)).resolves.toMatchObject({ state: 'waiting' })
+      await robots.advance(run.id, 'running')
+      await expect(robots.run(run.id)).resolves.toMatchObject({ state: 'running' })
+
+      await robots.finish(run.id, { state: 'succeeded', output: 'reviewed' })
+      await robots.advance(run.id, 'running')
+      await expect(robots.run(run.id)).resolves.toMatchObject({ state: 'succeeded', output: 'reviewed' })
+      await expect(robots.advance(brandString<RunId>('missing-run'), 'running')).rejects.toThrow('unknown run')
+    })
+  })
+
   it('rebinds a robot to a newer revision without moving an accepted run', async () => {
     await withRobots(async (robots) => {
       const first = await robots.publish(copy())

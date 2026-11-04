@@ -1,4 +1,5 @@
 /** Memory service storage, scoping, replacement, limits, and restart durability. */
+import assert from 'node:assert/strict'
 import { mkdtemp, realpath, rm, symlink } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -19,7 +20,7 @@ import MemoryService, {
   resolveMemoryLimits,
   tokenContainment,
 } from '@tomato/experimental-memory'
-import type { Config, MemoryRecord, MemoryScope, MemoryView, RememberRequest } from '@tomato/experimental-memory'
+import type { MemoryRecord, MemoryScope, MemoryView, RememberRequest } from '@tomato/experimental-memory'
 import { MemoryMediaPool, MemoryStorageBackend } from '../../../storage/storage-domain/tests/helpers/memory-backend.ts'
 
 const contexts: Context[] = []
@@ -32,7 +33,7 @@ afterEach(async () => {
 })
 
 /** Mount the service over an in-memory storage medium that survives across harnesses. */
-async function harness(options: { pool?: MemoryMediaPool; config?: Config } = {}) {
+async function harness(options: { pool?: MemoryMediaPool; config?: Parameters<typeof MemoryService.Config>[0] } = {}) {
   const ctx = new Context()
   contexts.push(ctx)
   await ctx.plugin(SessionStore)
@@ -129,6 +130,34 @@ describe('limits', () => {
 })
 
 describe('MemoryService', () => {
+  it('admits its automatic page on a Settings server composed beside the class entry', async () => {
+    const configure = vi.fn((_presentation: { auto?: boolean }, _owner: Context['fiber']) => () => {})
+    const ctx = new Context()
+    contexts.push(ctx)
+    await ctx.plugin(SessionStore)
+    await ctx.plugin(Storage)
+    const backend = new MemoryStorageBackend(new MemoryMediaPool())
+    ctx.effect(() => ctx.storage.backend.register('fixture', backend))
+    const facility = new DomainFacility(ctx, { backend: 'fixture' })
+    ctx.effect(() => {
+      const unmount = ctx.storage.mount('domain', facility)
+      ctx.provide('storageDomain', facility)
+      return async () => { await facility.closeAll(); unmount() }
+    })
+    ctx.provide('settings', { configure } as never)
+    await ctx.plugin(MemoryService, {})
+    await vi.waitFor(() => { expect(configure).toHaveBeenCalledTimes(1) })
+    const [call] = configure.mock.calls
+    assert(call !== undefined)
+    assert(JSON.stringify(call[0]) === '{}')
+    assert(typeof call[1].dispose === 'function')
+  })
+
+  it('mounts without a Settings server', async () => {
+    const { ctx } = await harness()
+    expect(ctx.get('settings')).toBeUndefined()
+  })
+
   it('stores, replaces by scope, entity, and key, and keeps the earlier id and creation time', async () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(1_000)

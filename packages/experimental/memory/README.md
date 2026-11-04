@@ -50,6 +50,8 @@ Mount it after `@tomato/storage-domain`:
 
 The generated [configuration catalog](../../../docs/config-catalog.md#tomatoexperimental-memory) is the exhaustive source for every accepted field.
 
+On the Plugins page, the row's **Configure** page edits every field of this table; the page is the Muse bundle's [`Muse insights` client](../muse-insights/README.md#configuration) and appears while the Host serves this entry's settings namespace.
+
 ### Owners and scopes
 
 `accessOf(session)` answers which records a Session can use now. Without `ctx.tomatoAccount` (no gateway, or a gateway without auth_service) every record belongs to the local owner `local`. With it, the owner is `account:<id>` of the signed-in account, read at each call, so a sign-in or account switch applies from the next operation; while nobody is signed in, `accessOf()` answers `sign-in-required` and consumers must neither read nor write. The resulting view holds the owner's profile records and, when the Session has a project directory, the owner's records of that workspace. Records written under the local owner do not appear for an account, and the reverse.

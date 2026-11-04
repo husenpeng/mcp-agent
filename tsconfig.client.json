@@ -60,6 +60,7 @@
   ],
   "references": [
     { "path": "./packages/experimental/client-ui-action-cards" },
+    { "path": "./packages/experimental/robot-remote" },
     { "path": "./packages/experimental/client-ui-creation-recommendations" },
     { "path": "./packages/experimental/client-ui-plugin-recommendations" },
     { "path": "./packages/experimental/muse-insights/tsconfig.client.json" },

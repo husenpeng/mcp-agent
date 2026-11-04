@@ -1,0 +1,46 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/robot-templates-marketing/README.md
+/:
+  en: 7dd7f360b3796a0a
+  zh: f10cdfa561b64e68
+/tomato-experimental-robot-templates-marketing:
+  en: 737cd7768c12d1ea
+  zh: 16b98e438184ed06
+/tomato-experimental-robot-templates-marketing/summary:
+  en: 1e53c179b1232b3f
+  zh: d38e1e868837f62f
+/tomato-experimental-robot-templates-marketing/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: f14f34fce35a8d90
+/tomato-experimental-robot-templates-marketing/use-this-package:
+  en: a510f0be7ccf5fba
+  zh: 733a027882d170c1
+/tomato-experimental-robot-templates-marketing/understand-the-implementation:
+  en: b75c334bcd5597d7
+  zh: 19f4f74a57311050
+/tomato-experimental-robot-templates-marketing/further-exploration:
+  en: 382bbfc6302f5e4b
+  zh: acb0eed819dbd902
+/tomato-experimental-robot-templates-marketing/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/tomato-experimental-robot-templates-marketing/model-experience/robot-mission:
+  en: 0629e9bb6bb8699d
+  zh: 5a575ed71e59e24a
+/tomato-experimental-robot-templates-marketing/model-experience/robot-mission/what-the-model-sees:
+  en: 4b6b02e290d65399
+  zh: 27b6ebd21bae5497
+/tomato-experimental-robot-templates-marketing/model-experience/robot-mission/token-effect:
+  en: 966ec98e54d1c040
+  zh: 73e647c167717608
+/tomato-experimental-robot-templates-marketing/model-experience/robot-mission/kv-cache-effect:
+  en: 511803c913877060
+  zh: dbbdc847d9579da9
+/tomato-experimental-robot-templates-marketing/known-limitations-and-deferred-work:
+  en: 713f7713f2838b00
+  zh: 65095359bc0c46ae
+/tomato-experimental-robot-templates-marketing/known-limitations-and-deferred-work/dev-note:
+  en: 5b83c1ffa0cb7d9f
+  zh: 6ca456a01c556d01

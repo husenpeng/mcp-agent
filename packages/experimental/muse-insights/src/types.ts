@@ -11,14 +11,18 @@
 /** How one work item ended the day; `unknown` marks a deterministic item whose outcome was not stated. */
 export type RecapWorkStatus = 'done' | 'ongoing' | 'blocked' | 'unknown'
 
-/** One unit of work the day's conversations covered. */
+/** One problem the day's conversations addressed, with its outcome and its solution. */
 export interface RecapWorkItem {
-  /** Short imperative line naming what the person worked on. */
-  readonly title: string
-  /** Optional one-sentence outcome, blocker, or next step; empty when the source named none. */
-  readonly detail: string
+  /** The concrete problem or goal the Sessions worked on, stated in one line. */
+  readonly problem: string
+  /** The outcome or answer the work reached; empty when the source stated none. */
+  readonly conclusion: string
+  /** How the work was done: the approach, changes, and what was verified; empty without detail. */
+  readonly solution: string
   /** Whether the work finished, continued, or stopped on a blocker. */
   readonly status: RecapWorkStatus
+  /** Sessions that contributed to this item; empty for a recap stored before items named Sessions. */
+  readonly sessionIds: readonly string[]
 }
 
 /** One Session that contributed to a daily recap. */

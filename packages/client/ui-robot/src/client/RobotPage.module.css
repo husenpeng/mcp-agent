@@ -4,14 +4,6 @@
   min-height: 0;
 }
 
-.roster {
-  width: 240px;
-  flex: none;
-  overflow: auto;
-  padding: 12px;
-  border-right: 0.5px solid var(--dsw-alias-border-l4);
-}
-
 .detail {
   flex: 1;
   min-width: 0;
@@ -32,48 +24,6 @@
   font-weight: 600;
   line-height: 22px;
   color: var(--dsw-alias-label-primary);
-}
-
-.headingActions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.robotRow {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  width: 100%;
-  padding: 6px 8px;
-  border: 0;
-  border-radius: var(--dsw-radius-sm);
-  background: transparent;
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-@media (hover: hover) {
-  .robotRow:hover {
-    background: var(--dsw-alias-interactive-bg-hover);
-  }
-}
-
-.robotRow[data-active='true'] {
-  background: var(--dsw-alias-bg-layer-2);
-}
-
-.robotName {
-  font-size: 13px;
-  line-height: 20px;
-  color: var(--dsw-alias-label-primary);
-}
-
-.robotState {
-  font-size: 11px;
-  line-height: 16px;
-  color: var(--dsw-alias-label-tertiary);
 }
 
 .empty {
@@ -101,9 +51,66 @@
   min-width: 240px;
 }
 
-.conversation {
-  flex: 1;
-  min-height: 320px;
-  border-top: 0.5px solid var(--dsw-alias-border-l4);
-  padding-top: 12px;
+.runsPane {
+  display: flex;
+  flex: 0 0 40%;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+}
+
+.runItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.runItem:hover,
+.runItem[aria-current='true'] {
+  background: var(--dsw-alias-bg-layer-2);
+}
+
+.runState {
+  font-size: 12px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.runItem[data-state='waiting'] .runState {
+  color: var(--dsw-alias-state-warn-primary);
+}
+
+.runItem[data-state='failed'] .runState,
+.runItem[data-state='timed_out'] .runState {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.runText {
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--dsw-alias-label-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .page {
+    flex-direction: column;
+  }
+
+  .runsPane {
+    flex: 0 0 auto;
+  }
+
+  .detail {
+    min-height: 320px;
+  }
 }

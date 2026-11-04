@@ -12,9 +12,9 @@
  *
  * One storage key per Session holds one entry per tab id. A write keeps only
  * entries whose tab a non-empty list of committed ids still holds, so a tab the
- * Session closed leaves no entry behind. Only the recap day and the item's title
- * are stored: the detail text comes from the shared snapshot, so a reopened tab
- * shows the current generation of that item.
+ * Session closed leaves no entry behind. Only the recap day and the item's
+ * problem statement are stored: the item text comes from the shared snapshot, so
+ * a reopened tab shows the current generation of that item.
  * @module @tomato/experimental-muse-insights/client/work-item-bindings
  */
 
@@ -25,8 +25,8 @@ import type { SessionId } from '@tomato/session/types'
 export interface WorkItemTabTarget {
   /** Local calendar day key of the recap that listed the item. */
   readonly day: string
-  /** The item's title as that recap lists it. */
-  readonly title: string
+  /** The item's problem statement as that recap lists it. */
+  readonly problem: string
 }
 
 /** Entries keyed by the layout record's id. */
@@ -52,9 +52,9 @@ export type WorkItemTabLiveIds = (sessionId: SessionId) => readonly string[] | u
 function targetOf(value: unknown): WorkItemTabTarget | undefined {
   if (typeof value !== 'object' || value === null) return undefined
   const day = 'day' in value ? value.day : undefined
-  const title = 'title' in value ? value.title : undefined
-  if (typeof day !== 'string' || typeof title !== 'string') return undefined
-  return { day, title }
+  const problem = 'problem' in value ? value.problem : undefined
+  if (typeof day !== 'string' || typeof problem !== 'string') return undefined
+  return { day, problem }
 }
 
 /**

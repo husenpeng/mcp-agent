@@ -39,6 +39,8 @@ kind: "package-reference"
 
 每个操作都在调用 agent 的作用域中解析服务器。缺少服务器参数或服务器不可用时，会在派发前失败。连接所有者负责请求取消、超时与恢复；失败的请求仍表现为失败的工具调用。
 
+`ctx.mcpResources.list(scope?)` 按名称排序返回已配置的服务器名。调用方需要可选项而不想发起资源请求时（例如规格编辑器列出 MCP 服务器）可以直接使用它；省略 `scope` 只列出全局服务器，传入 agent 作用域时还会合并其作用域链上注册的服务器。
+
 -----
 
 <a id="understand-the-implementation"></a>

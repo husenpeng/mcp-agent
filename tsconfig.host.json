@@ -281,6 +281,7 @@
     { "path": "./packages/experimental/robot-runtime" },
     { "path": "./packages/experimental/robot-triggers" },
     { "path": "./packages/experimental/robot-app" },
+    { "path": "./packages/experimental/robot-templates-marketing" },
     { "path": "./packages/experimental/tool-robot" },
     { "path": "./packages/experimental/translator" },
     { "path": "./packages/client/product-analytics/tsconfig.host.json" },

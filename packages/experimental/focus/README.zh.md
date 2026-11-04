@@ -49,6 +49,8 @@ kind: "package-reference"
 
 生成的[配置目录](../../../docs/config-catalog.zh.md#tomatoexperimental-focus)是所有可接受字段的完整来源。
 
+在**插件**页中，该行的**配置**页可以修改上表的每个字段（包括模式列表）；该页面随 Muse 配置包的 [`Muse insights` 客户端](../muse-insights/README.zh.md#configuration)提供。
+
 ### 失败标识
 
 失败由工具名、规范化后的参数和失败代码共同标识；取消不算失败。某个工具的任意一次成功都会重置该工具的连续失败计数。脚本内部的嵌套调用只通过其外层调用计数。

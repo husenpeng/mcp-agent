@@ -1072,19 +1072,20 @@ export type Config = CuaConfig
 ## `@tomato/experimental-focus`
 
 - `inject`: `tools` · `agents` · `sessionProjections`
-- `source`: [`packages/experimental/focus/src/index.ts:36`](../packages/experimental/focus/src/index.ts)
+- `refs`: `Volatile` (`@tomato/cordis`)
+- `source`: [`packages/experimental/focus/src/index.ts:38`](../packages/experimental/focus/src/index.ts)
 
 ```ts config-catalog
-/** Focus policy for goal rounds. */
+/** Focus policy for goal rounds; each field is live-editable. */
 export interface Config {
   /** Consecutive identical failures of one call that trigger a reminder, at least 2. */
-  repeatedFailureThreshold?: number
+  repeatedFailureThreshold?: number | Volatile<number | undefined>
   /** Maximum distinct failures listed in the ledger. */
-  maxLedgerEntries?: number
+  maxLedgerEntries?: number | Volatile<number | undefined>
   /** Maximum characters of one failure message quoted in the ledger. */
-  maxMessageChars?: number
+  maxMessageChars?: number | Volatile<number | undefined>
   /** `*`-wildcard tool-name patterns that require approval before each call. */
-  approvalTools?: string[]
+  approvalTools?: string[] | Volatile<string[] | undefined>
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-focus -->
@@ -1164,21 +1165,22 @@ export interface InspectorOptions {
 ## `@tomato/experimental-memory`
 
 - `inject`: `storageDomain`
-- `source`: [`packages/experimental/memory/src/index.ts:57`](../packages/experimental/memory/src/index.ts)
+- `refs`: `Volatile` (`@tomato/cordis`)
+- `source`: [`packages/experimental/memory/src/index.ts:59`](../packages/experimental/memory/src/index.ts)
 
 ```ts config-catalog
-/** Deployment limits for stored and recalled memory. */
+/** Deployment limits for stored and recalled memory; Loader publishes each as a live reference. */
 export interface Config {
   /** Maximum records one recall returns. */
-  maxRecallResults?: number
+  maxRecallResults?: number | Volatile<number>
   /** Maximum pinned records one workspace exposes. */
-  maxPinnedRecords?: number
+  maxPinnedRecords?: number | Volatile<number>
   /** Maximum UTF-8 bytes of one record value. */
-  maxValueBytes?: number
+  maxValueBytes?: number | Volatile<number>
   /** Maximum stored records, including candidates, per owner and workspace. */
-  maxRecordsPerWorkspace?: number
+  maxRecordsPerWorkspace?: number | Volatile<number>
   /** Maximum stored profile records, including candidates, per owner. */
-  maxProfileRecords?: number
+  maxProfileRecords?: number | Volatile<number>
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-memory -->
@@ -1189,39 +1191,40 @@ export interface Config {
 ## `@tomato/experimental-muse-insights`
 
 - `inject`: `sessionQuery` · `storageDomain` · `llm`
-- `source`: [`packages/experimental/muse-insights/src/index.ts:45`](../packages/experimental/muse-insights/src/index.ts)
+- `refs`: `Volatile` (`@tomato/cordis`)
+- `source`: [`packages/experimental/muse-insights/src/index.ts:47`](../packages/experimental/muse-insights/src/index.ts)
 
 ```ts config-catalog
-/** Generation and retention policy for the capability. */
+/** Generation and retention policy for the capability. Every field is live-editable. */
 export interface Config {
   /** Minutes between daily-recap attempts; omission defaults to 30. */
-  recapIntervalMinutes?: number
+  recapIntervalMinutes?: Volatile<number>
   /** Minutes between unfinished-task analyses; omission defaults to 15. */
-  taskIntervalMinutes?: number
+  taskIntervalMinutes?: Volatile<number>
   /** Seconds after activation before the first background attempt; omission defaults to 5. */
-  initialDelaySeconds?: number
+  initialDelaySeconds?: Volatile<number>
   /** Local days of Session creation retained as recap and task evidence; omission defaults to 7. */
-  lookbackDays?: number
+  lookbackDays?: Volatile<number>
   /** Sessions read per recap or analysis, newest first; omission defaults to 20. */
-  maxSessions?: number
+  maxSessions?: Volatile<number>
   /** UTF-16 characters kept from one message; omission defaults to 700. */
-  maxMessageChars?: number
+  maxMessageChars?: Volatile<number>
   /** Messages retained per Session; omission defaults to 24. */
-  maxMessagesPerSession?: number
+  maxMessagesPerSession?: Volatile<number>
   /** Maximum UTF-8 bytes of the prepared recap input; omission defaults to 48 000. */
-  maxInputBytes?: number
-  /** Output-token cap for one recap request; omission defaults to 800. */
-  maxOutputTokens?: number
+  maxInputBytes?: Volatile<number>
+  /** Output-token cap for one recap request; omission defaults to 4 096. */
+  maxOutputTokens?: Volatile<number>
   /** End-to-end recap request deadline in milliseconds; omission defaults to 60 000. */
-  timeoutMs?: number
+  timeoutMs?: Volatile<number>
   /** Retained unfinished tasks; omission defaults to 30. */
-  maxTasks?: number
+  maxTasks?: Volatile<number>
   /** Retained local days of recaps per owner; omission defaults to 30. */
-  maxRecapDays?: number
+  maxRecapDays?: Volatile<number>
   /** Explicit recap provider route; omission follows the latest Session request route. */
-  provider?: string
+  provider?: Volatile<string | undefined>
   /** Explicit recap model id; always paired with `provider`. */
-  model?: string
+  model?: Volatile<string | undefined>
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-muse-insights -->
@@ -1294,6 +1297,21 @@ export interface Config {
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-ptc-runtime-python -->
+
+<!-- BEGIN GENERATED config-catalog:@tomato/experimental-robot-runtime -->
+<a id="tomatoexperimental-robot-runtime"></a>
+
+## `@tomato/experimental-robot-runtime`
+
+- `inject`: `agentDefaultModel` · `agents` · `robots` · `sessionProjections` · `sessions`
+- `refs`: `z` (`zod`)
+- `source`: [`packages/experimental/robot-runtime/src/index.ts:47`](../packages/experimental/robot-runtime/src/index.ts)
+
+```ts config-catalog
+/** Validated run-execution limits. */
+export type Config = z.infer<typeof Config>
+```
+<!-- END GENERATED config-catalog:@tomato/experimental-robot-runtime -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-speech-to-text -->
 <a id="tomatoexperimental-speech-to-text"></a>
@@ -1431,37 +1449,38 @@ export interface Config {
 ## `@tomato/experimental-tool-memory`
 
 - `inject`: `memory` · `tools` · `agents` · `commands` · `sessionProjections` · `llm`
-- `source`: [`packages/experimental/tool-memory/src/index.ts:62`](../packages/experimental/tool-memory/src/index.ts)
+- `refs`: `Volatile` (`@tomato/cordis`)
+- `source`: [`packages/experimental/tool-memory/src/index.ts:64`](../packages/experimental/tool-memory/src/index.ts)
 
 ```ts config-catalog
-/** Snapshot, write-justification, and query-expansion policy. */
+/** Snapshot, write-justification, and query-expansion policy; each field is live-editable. */
 export interface Config {
   /** Maximum UTF-8 bytes of one rendered memory snapshot. */
-  maxSnapshotBytes?: number
+  maxSnapshotBytes?: number | Volatile<number | undefined>
   /** Whether the snapshot adds a subject index of this workspace's memories. */
-  projectIndex?: boolean
+  projectIndex?: boolean | Volatile<boolean | undefined>
   /** Minimum user-perceived characters of a `user_quote` that can activate a write. */
-  minQuoteChars?: number
+  minQuoteChars?: number | Volatile<number | undefined>
   /** Whether `memory_search` asks a model for alternative wordings when the literal query matches too few records. */
-  queryExpansion?: boolean
+  queryExpansion?: boolean | Volatile<boolean | undefined>
   /** Explicit expansion provider; omitted with `expansionModel` uses the calling agent's current model. */
-  expansionProvider?: string
+  expansionProvider?: string | Volatile<string | undefined>
   /** Explicit expansion model; must be paired with `expansionProvider`. */
-  expansionModel?: string
+  expansionModel?: string | Volatile<string | undefined>
   /** End-to-end deadline of one expansion request in milliseconds. */
-  expansionTimeoutMs?: number
+  expansionTimeoutMs?: number | Volatile<number | undefined>
   /** Output-token cap of one expansion request. */
-  expansionMaxTokens?: number
+  expansionMaxTokens?: number | Volatile<number | undefined>
   /** Maximum alternative wordings kept from one expansion. */
-  maxAlternatives?: number
+  maxAlternatives?: number | Volatile<number | undefined>
   /** Whether one bounded request captures durable statements from each finished turn as candidates. */
-  capture?: boolean
+  capture?: boolean | Volatile<boolean | undefined>
   /** Maximum UTF-8 bytes of the person messages sent to one capture request. */
-  captureMaxInputBytes?: number
+  captureMaxInputBytes?: number | Volatile<number | undefined>
   /** Output-token cap of one capture request. */
-  captureMaxTokens?: number
+  captureMaxTokens?: number | Volatile<number | undefined>
   /** End-to-end deadline of one capture request in milliseconds. */
-  captureTimeoutMs?: number
+  captureTimeoutMs?: number | Volatile<number | undefined>
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-tool-memory -->
@@ -3478,7 +3497,7 @@ export interface Config {
 
 ## `@tomato/skill`
 
-- `source`: [`packages/skill/skill/src/index.ts:312`](../packages/skill/skill/src/index.ts)
+- `source`: [`packages/skill/skill/src/index.ts:330`](../packages/skill/skill/src/index.ts)
 
 ```ts config-catalog
 /** Skill registry configuration. */
@@ -5248,7 +5267,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@tomato/experimental-robot-app` | `skills` | [`packages/experimental/robot-app/src/index.ts`](../packages/experimental/robot-app/src/index.ts) |
 | `@tomato/experimental-robot-local` | `storageDomain` | [`packages/experimental/robot-local/src/index.ts`](../packages/experimental/robot-local/src/index.ts) |
 | `@tomato/experimental-robot-remote` | — | [`packages/experimental/robot-remote/src/index.ts`](../packages/experimental/robot-remote/src/index.ts) |
-| `@tomato/experimental-robot-runtime` | `agentDefaultModel` · `agents` · `robots` · `sessionProjections` · `sessions` | [`packages/experimental/robot-runtime/src/index.ts`](../packages/experimental/robot-runtime/src/index.ts) |
+| `@tomato/experimental-robot-templates-marketing` | `robotTemplates` · `skills` | [`packages/experimental/robot-templates-marketing/src/index.ts`](../packages/experimental/robot-templates-marketing/src/index.ts) |
 | `@tomato/experimental-robot-triggers` | `robots` | [`packages/experimental/robot-triggers/src/index.ts`](../packages/experimental/robot-triggers/src/index.ts) |
 | `@tomato/experimental-session-inspector` | — | [`packages/experimental/session-inspector/src/index.ts`](../packages/experimental/session-inspector/src/index.ts) |
 | `@tomato/experimental-tool-robot` | `agents` · `robots` · `tools` | [`packages/experimental/tool-robot/src/index.ts`](../packages/experimental/tool-robot/src/index.ts) |

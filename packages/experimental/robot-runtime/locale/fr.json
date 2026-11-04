@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Moteur d'exécution des robots",
+    "description": "Exécute les exécutions de robots en file d'attente via un agent et enregistre leurs résultats."
+  }
+}

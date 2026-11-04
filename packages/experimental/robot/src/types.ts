@@ -30,6 +30,9 @@ export type RobotState = 'provisioning' | 'idle' | 'running' | 'paused' | 'faile
 /** Durable run lifecycle state. */
 export type RunState = 'queued' | 'leased' | 'running' | 'waiting' | 'finalizing' | 'succeeded' | 'failed' | 'cancelled' | 'timed_out'
 
+/** Non-terminal run states an executor reports while it drives a run. */
+export type ActiveRunState = Extract<RunState, 'running' | 'waiting' | 'finalizing'>
+
 /** A condition that starts a run. */
 export type Trigger =
   | { readonly kind: 'manual' }
@@ -199,6 +202,50 @@ export interface RobotSpec {
   readonly a2a: A2aSpec
 }
 
+/** Stable identity of one robot template. */
+export type RobotTemplateId = Branded<'RobotTemplateId'>
+
+/** Localized copy of one template; hiring writes it into the new robot's specification. */
+export interface RobotTemplateText {
+  /** Label of the template's category, such as "Brand insight". */
+  readonly category: string
+  /** Robot display name. */
+  readonly name: string
+  /** One-line summary shown on the template card. */
+  readonly description: string
+  /** One-sentence purpose. */
+  readonly mission: string
+  /** Observable conditions that mean a run succeeded. */
+  readonly successCriteria: readonly string[]
+  /** Observable conditions a finished output must meet. */
+  readonly acceptance: readonly string[]
+}
+
+/** Specification blocks a template fixes; localized fields come from {@link RobotTemplateText}. */
+export interface RobotTemplateSpec {
+  readonly position: PositionSpec
+  readonly goal: Omit<GoalSpec, 'mission' | 'successCriteria'>
+  readonly capability: CapabilitySpec
+  readonly io: Omit<IoSpec, 'acceptance'>
+  readonly memory: MemorySpec
+  readonly a2a: A2aSpec
+}
+
+/**
+ * One published starting point for a robot. Hiring copies it into a new
+ * specification the user owns; later template changes never reach that copy.
+ */
+export interface RobotTemplate {
+  /** Identity unique among registered templates. */
+  readonly id: RobotTemplateId
+  /** Stable grouping key, such as `brand` or `youtube`. */
+  readonly category: string
+  /** Copy by lowercase locale id; `en` is required and is the fallback. */
+  readonly text: { readonly en: RobotTemplateText; readonly [locale: string]: RobotTemplateText }
+  /** Non-localized specification blocks. */
+  readonly spec: RobotTemplateSpec
+}
+
 /** One immutable published specification revision. */
 export interface RobotSpecRevision {
   /** Exact revision identity. */
@@ -253,7 +300,7 @@ export interface Run {
   readonly endedAt?: number
   /** Final assistant text for a succeeded run. */
   readonly output?: string
-  /** Failure detail for a failed or timed-out run. */
+  /** Failure, timeout, or interruption detail; present for `failed`, `timed_out`, and a pause that expired. */
   readonly error?: string
 }
 

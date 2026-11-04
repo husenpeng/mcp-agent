@@ -24,11 +24,16 @@
     "./session": {
       "types": "./lib/types/session.d.ts"
     },
+    "./templates": {
+      "types": "./lib/types/templates.d.ts",
+      "default": "./lib/types/templates.js"
+    },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
   "files": [
     "lib/index.js",
+    "lib/types/**/*.js",
     "lib/types/**/*.d.ts"
   ],
   "license": "MIT",

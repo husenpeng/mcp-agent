@@ -15,10 +15,12 @@ import css from './Switch.module.css'
  * @param props.className - extra class for layout placement.
  * @returns the switch element.
  */
-export function Switch({ checked, onChange, label, disabled = false, title, className }: {
+export function Switch({ checked, onChange, label, descriptionId, disabled = false, title, className }: {
   checked: boolean
   onChange: (next: boolean) => void
   label: string
+  /** Id of the visible text naming this switch, for a label beside it rather than an aria-label only. */
+  descriptionId?: string | undefined
   disabled?: boolean
   title?: string | undefined
   // `| undefined` so a caller can forward an optional class straight through
@@ -31,6 +33,7 @@ export function Switch({ checked, onChange, label, disabled = false, title, clas
       role="switch"
       aria-checked={checked}
       aria-label={label}
+      {...descriptionId === undefined ? {} : { 'aria-describedby': descriptionId }}
       title={title}
       disabled={disabled}
       className={clsx(css.switch, className)}

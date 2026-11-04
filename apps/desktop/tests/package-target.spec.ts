@@ -44,6 +44,20 @@ describe('desktop package target', () => {
       .toThrow(/at most one target/u)
   })
 
+  it('builds an install bundle only from a macOS directory build', () => {
+    expect(parseDesktopPackageInvocation(['mac-arm64', '--dir', '--bundle'], 'darwin', 'arm64'))
+      .toMatchObject({ directory: true, bundle: true, unsigned: false })
+    expect(parseDesktopPackageInvocation(['mac-arm64', '--unsigned', '--dir', '--bundle'], 'darwin', 'arm64'))
+      .toMatchObject({ directory: true, bundle: true, unsigned: true })
+    expect(parseDesktopPackageInvocation(['mac-arm64'], 'darwin', 'arm64').bundle).toBe(false)
+    expect(() => parseDesktopPackageInvocation(['mac-arm64', '--bundle'], 'darwin', 'arm64'))
+      .toThrow(/--bundle requires --dir/u)
+    expect(() => parseDesktopPackageInvocation(['win-x64', '--dir', '--bundle'], 'win32', 'x64'))
+      .toThrow(/macOS directory builds only/u)
+    expect(() => parseDesktopPackageInvocation(['mac-arm64', '--dir', '--bundle', '--prepare-only'], 'darwin', 'arm64'))
+      .toThrow(/macOS directory builds only/u)
+  })
+
   it('parses a build version, including the separator a pnpm run script forwards', () => {
     expect(parseDesktopPackageInvocation(['mac-arm64'], 'darwin', 'arm64').requestedBuildVersion).toBeUndefined()
     expect(parseDesktopPackageInvocation(['mac-arm64', '--build-version', '0.1.6-alpha.2.20260921.1'], 'darwin', 'arm64')

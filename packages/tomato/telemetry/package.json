@@ -1,5 +1,6 @@
 {
   "name": "@tomato/telemetry",
+  "private": true,
   "description": "Session-event traces for Tomato AI, delivered as OTLP/HTTP JSON to the internal relay",
   "version": "0.2.1-rc.3",
   "type": "module",

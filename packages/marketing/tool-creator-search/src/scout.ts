@@ -260,6 +260,7 @@ export function normalizeBrief(input: CreatorBriefInput, defaults: BriefDefaults
  * @param brief - resolved brief.
  * @param limits - the depth's call limits.
  * @param suffixes - deployed query suffixes for the variant round.
+ * @param policy - how far queries may go beyond the stated keywords; defaults to `balanced`.
  * @returns the ordered steps, at most `limits.maxSearchCalls`.
  */
 export function planSearches(

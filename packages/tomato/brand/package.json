@@ -1,5 +1,6 @@
 {
   "name": "@tomato/brand",
+  "private": true,
   "description": "Tomato brand occupants for the sidebar and conversation-hero slots",
   "version": "0.2.1-rc.3",
   "type": "module",

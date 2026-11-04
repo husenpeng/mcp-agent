@@ -51,6 +51,7 @@
     "@tomato/llm": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/session-projection": "workspace:*",
+    "@tomato/settings": "workspace:*",
     "@tomato/system-prompt": "workspace:*",
     "@tomato/tool-executor-native": "workspace:*",
     "@tomato/tool-testkit": "workspace:*",

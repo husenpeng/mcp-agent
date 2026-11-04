@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Ambiente de execução de robôs",
+    "description": "Executa as execuções de robôs na fila por meio de um agente e registra seus resultados."
+  }
+}

@@ -1,5 +1,5 @@
 /**
- * The work item page's chip: the title of the item its tab names, or the page's
+ * The work item page's chip: the problem statement its tab names, or the page's
  * own label when neither its navigation nor its stored binding resolves one.
  * Registered under `sidebar.right.pane.tab.title`; without it the chip would show
  * the constant text the definition captured at open time, which names no item.
@@ -23,12 +23,12 @@ export type WorkItemTabTitleProps = PropsRuntime<'sidebar.right.pane.tab.title'>
   & InjectFace<WorkItemTabTitleInjected>
 
 /**
- * Render the shown item's title as the chip text.
+ * Render the shown item's problem statement as the chip text.
  * @param props - tab information, the binding store, and localized copy.
- * @returns the item's title, or the page's label without a resolvable item.
+ * @returns the item's problem statement, or the page's label without a resolvable item.
  */
 export function WorkItemTabTitle({ sessionId, useTabInfo, workItemBindings, t }: WorkItemTabTitleProps): ReactNode {
   const { tab } = useTabInfo()
   const { params } = useWorkItemTarget(sessionId, tab, workItemBindings)
-  return params?.title ?? t('workItem.tabTitle')
+  return params?.problem ?? t('workItem.tabTitle')
 }

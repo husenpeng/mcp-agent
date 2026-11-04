@@ -1,4 +1,6 @@
-/** Display formatting shared by the notice and both Sidebar pages. */
+/** Display formatting and recap lookups shared by the notice and both Sidebar pages. */
+
+import type { DailyRecap, RecapSessionHighlight, RecapWorkItem } from '../types.ts'
 
 /**
  * Format one Host-local day for display without shifting it across the browser's zone.
@@ -23,17 +25,13 @@ export function formatTime(time: number, locale: string): string {
 }
 
 /**
- * The recap list's one-line brief for a work item: the first line of its detail
- * that carries prose. A model-written detail may be block text, so a fenced line
- * is skipped rather than shown as the item's summary; the item's own page shows
- * the detail complete.
- * @param detail - the item's full detail.
- * @returns the line to show under the title, or the empty string without prose.
+ * The Sessions one work item came from, resolved against the recap's highlights.
+ * @param recap - the recap that listed the item.
+ * @param item - the work item.
+ * @returns the matching highlights in the item's order; empty when none resolve.
  */
-export function workItemBrief(detail: string): string {
-  for (const line of detail.split('\n')) {
-    const text = line.trim()
-    if (text !== '' && !text.startsWith('```')) return text
-  }
-  return ''
+export function workItemSessions(recap: DailyRecap, item: RecapWorkItem): RecapSessionHighlight[] {
+  return item.sessionIds
+    .map(sessionId => recap.sessions.find(session => session.sessionId === sessionId))
+    .filter((session): session is RecapSessionHighlight => session !== undefined)
 }

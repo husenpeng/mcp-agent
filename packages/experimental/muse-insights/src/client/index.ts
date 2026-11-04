@@ -1,7 +1,9 @@
 /**
  * Browser entry for the Muse insights: mounts the Host Remote contribution,
- * then one right-Sidebar page type, the detail page of one recap work item, and
- * one frame-wide notice over a single shared read source.
+ * then one right-Sidebar page type, the detail page of one recap work item, one
+ * frame-wide notice over a single shared read source, and one configuration
+ * page per Muse bundle row on the Plugins page: the insights row's own page
+ * beside a schema page for memory, its tools, and goal focus.
  *
  * The Remote contribution is mounted here rather than in the central
  * `@tomato/api-remotes` assembly because this capability is optional and
@@ -17,15 +19,23 @@ import type { TypertRemoteContribution } from '@tomato/typert-protocol'
 import type {} from '@tomato/api-remotes/client'
 import type {} from '@tomato/client-locale/client'
 import type {} from '@tomato/client-ui-layout/client'
+import type {} from '@tomato/client-ui-plugin-manager/client'
 import type {} from '@tomato/client-ui-renderer/client'
+import type {} from '@tomato/client-ui-settings/client'
 import type {} from '@tomato/client-ui-sidebar-right/client'
 import type {} from '@tomato/client-ui-workspace/client'
 import type {} from './contract.ts'
+import type { ConfigForms } from '@tomato/client-ui-settings/client'
+import { CONFIG_ENTRY, CONFIG_ROW_KEY, MuseInsightsConfigController } from './config-form.ts'
+import { MuseInsightsConfigPage } from './ConfigPage.tsx'
+import { RowConfigPage } from './RowConfigPage.tsx'
+import { ROW_PAGES, RowFormController, type RowPage } from './row-form.ts'
+import { registeredRowKeys, rowConfigKey, MUSE_BUNDLE } from './row-config.ts'
 import { createInsightsController } from './controller.ts'
 import { INSIGHTS_TAB_ID, INSIGHTS_TAB_KIND, insightsDefinition, WORK_ITEM_TAB_ID, workItemDefinition } from './definition.ts'
 import { InsightNotice, type NoticeInjected } from './InsightNotice.tsx'
 import { InsightsTab, type InsightsTabInjected } from './InsightsTab.tsx'
-import { DICTIONARIES, NS } from './locales.ts'
+import { DICTIONARIES, NS, type MuseInsightsKey } from './locales.ts'
 import { createInsightsSource } from './source.ts'
 import { WorkItemTabBindings } from './work-item-bindings.ts'
 import { WorkItemTab, type WorkItemTabInjected } from './WorkItemTab.tsx'
@@ -33,6 +43,7 @@ import { WorkItemTabTitle, type WorkItemTabTitleInjected } from './WorkItemTabTi
 
 export type { InsightsTabParams, WorkItemTabParams } from './contract.ts'
 export type { MuseInsightsKey } from './locales.ts'
+export type { MuseInsightsConfig, MuseInsightsConfigFace, MuseInsightsConfigState } from './config-form.ts'
 
 /** Services the mounted browser contribution requires. */
 export const inject = ['remote', 'slots', 'locale', 'sidebarRightTabs', 'sidebarRight', 'uiWorkspace']
@@ -100,6 +111,85 @@ function registerUi(ctx: ClientContext): void {
       onDismiss: source.actions.dismissNotice,
     }),
   }, InsightNotice))
+  // The rows' Configure pages exist only while the Host serves their settings
+  // namespaces, and only where Settings provides the shared configuration
+  // forms. A profile without that client surface keeps the insight surfaces above.
+  ctx.inject(['configForms'], (configCtx) => {
+    const config = new MuseInsightsConfigController(configCtx.configForms.get(CONFIG_ENTRY))
+    configCtx.effect(() => () => { config.dispose() }, 'muse-insights: configuration form')
+    configCtx.effect(() => configCtx.configForms.whileServed([CONFIG_ENTRY], () => configCtx.slots.inject('plugins.row.config', () => configCtx.slots.register({
+      name: 'plugins.row.config',
+      key: CONFIG_ROW_KEY,
+      locale: NS,
+      inject: () => config.inject(),
+    }, MuseInsightsConfigPage))), 'muse-insights: configuration page')
+    registerSchemaRows(configCtx, configCtx.configForms, configCtx.locale.bind(NS), configCtx.slots.inject.bind(configCtx.slots))
+  })
+}
+
+/** A slot injection owned by the plugin that calls it: effects end with the plugin, not with one page. */
+type SlotInject = (key: 'plugins.row.config', callback: () => Iterable<() => void>) => () => void
+
+/** The rows this client half pages beside the insights row. */
+const SCHEMA_ROW_IDS: readonly string[] = ROW_PAGES.map(page => page.row)
+
+/**
+ * Register one page per Muse row that declares only a Config schema, for every
+ * row the Host serves whose key no other registration holds. Each page edits its
+ * own namespace, so a row whose plugin is absent shows no page.
+ * @param ctx - the browser context whose slot ledger and clock the pages observe.
+ * @param forms - the shared configuration forms.
+ * @param t - translate bound to the row copy dictionary.
+ * @param mount - the slot injection the pages register through, owned by the calling plugin.
+ */
+function registerSchemaRows(
+  ctx: ClientContext, forms: ConfigForms, t: (key: MuseInsightsKey) => string, mount: SlotInject,
+): void {
+  ctx.effect(() => forms.whileServed(SCHEMA_ROW_IDS, () => serveRows(forms, t, ctx, mount)), 'muse-insights: row pages')
+}
+
+/** How long a row page waits for a live registration to publish before it owns the key. */
+export const ROW_PAGE_SETTLE_MS = 250
+
+/**
+ * Register the row pages no live entry holds. A companion that ships a row's page
+ * loads beside this one, so a key held by neither at the moment this runs may
+ * still be about to register; the pages wait one settle step and re-read the
+ * ledger before taking their keys.
+ * @param forms - the shared configuration forms.
+ * @param t - translate bound to the row copy dictionary.
+ * @param ctx - the browser context whose slot ledger the pages re-read.
+ * @param mount - the slot injection the pages register through.
+ * @returns the disposer withdrawing the pages.
+ */
+function serveRows(
+  forms: ConfigForms, t: (key: MuseInsightsKey) => string, ctx: ClientContext, mount: SlotInject,
+): () => void {
+  let off: (() => void) | undefined
+  const register = (owned: readonly RowPage[]): void => {
+    off = mount('plugins.row.config', function* () {
+      for (const page of owned) {
+        const key = rowConfigKey(MUSE_BUNDLE, page.row)
+        if (registeredRowKeys(ctx).has(key)) continue
+        const controller = new RowFormController(forms.get(page.row), page.sections, () => t(page.title))
+        yield () => { controller.dispose() }
+        yield ctx.slots.register({
+          name: 'plugins.row.config',
+          key,
+          locale: NS,
+          inject: () => ({ ...controller.inject(), controller }),
+        }, RowConfigPage)
+      }
+    })
+  }
+  const free = (): readonly RowPage[] =>
+    ROW_PAGES.filter(page => !registeredRowKeys(ctx).has(rowConfigKey(MUSE_BUNDLE, page.row)))
+  if (free().length === 0) return () => { off?.() }
+  const timer = setTimeout(() => { register(free()) }, ROW_PAGE_SETTLE_MS)
+  return () => {
+    clearTimeout(timer)
+    off?.()
+  }
 }
 
 /**

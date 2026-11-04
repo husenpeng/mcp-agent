@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Preuves d'image",
+    "description": "Permet aux modèles texte seul de lire les images collées via un modèle de vision configuré."
+  }
+}

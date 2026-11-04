@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-`@tomato/experimental-robot` 定义机器人平台的持久词汇与 `ctx.robots` 服务契约：有版本的规格、绑定到某一个精确 revision 的机器人实例、带明确生命周期状态的 run，以及 agent-to-agent 准入字段。它不添加提供者、持久化、执行、传输、工具或提示文本；这些全部由已安装的提供者拥有。
+`@tomato/experimental-robot` 定义机器人平台的持久词汇与 `ctx.robots` 服务契约：有版本的规格、绑定到某一个精确 revision 的机器人实例、带明确生命周期状态的 run，以及 agent-to-agent 准入字段。它不添加提供者、持久化、执行、传输、工具或提示文本；这些全部由已安装的提供者拥有。它还提供机器人模板注册表：一个独立的内存型 `ctx.robotTemplates` 行，列出可聘用的起点。
 
 ## 目录
 
@@ -30,6 +30,8 @@ kind: "package-reference"
 - 消费者注入 `robots`，调用 `publish`、`revision`、`specs`、`instantiate`、`robot`、`robots`、`start`、`cancel`、`finish`、`run` 和 `runs`。
 - 服务没有配置字段。
 - `isTerminalRunState` 是纯谓词，任何进程无需该服务即可调用。
+- 将 `@tomato/experimental-robot/templates` 作为单独一行挂载，即可提供 `ctx.robotTemplates`。模板包在 `ctx.effect` 中调用 `register(template)`；id 重复时抛错，每次变更都会发出携带 `templates` 的 `robot/changed`。
+- `templateSpec(template, locale, name?)` 生成一次聘用要发布的完整规格；`templateText(template, locale)` 依次按精确语言（如 `zh-CN`）、其语种（`zh`）、`en` 选择文案。结果与模板不共享任何数组，因此修改已聘用的机器人不会改动模板。
 
 提供者负责规格校验、持久化、执行和传输。本包只声明调用方可以依赖的行为。
 

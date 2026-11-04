@@ -50,6 +50,8 @@ kind: "package-reference"
 
 生成的[配置目录](../../../docs/config-catalog.zh.md#tomatoexperimental-memory)是所有可接受字段的完整来源。
 
+在**插件**页中，该行的**配置**页可以修改上表的每个字段；该页面来自 Muse 配置包的 [`Muse insights` 客户端](../muse-insights/README.zh.md#configuration)，仅在 Host 提供该条目的设置命名空间时出现。
+
 ### 所有者与范围
 
 `accessOf(session)` 回答一个会话现在能使用哪些记录。没有 `ctx.tomatoAccount`（没有网关，或网关未配置 auth_service）时，所有记录都属于本地所有者 `local`。有它时，所有者是已登录账号的 `account:<id>`，每次调用时读取，因此登录或切换账号从下一次操作起生效；无人登录时，`accessOf()` 返回 `sign-in-required`，消费方既不能读也不能写。得到的视图包含该所有者的画像记录；会话有项目目录时，还包含该所有者在这个工作区的记录。本地所有者写入的记录不会出现在账号下，反之亦然。

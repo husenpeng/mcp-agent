@@ -9,8 +9,9 @@ import { Service, type Context } from '@tomato/cordis'
 import { RemoteStreamCarrierError, type ClientRemote } from '@tomato/api-gateway/client'
 import type { RemoteResult } from '@tomato/typert-protocol'
 import type {
-  Robot, RobotCancelRequest, RobotInstantiateRequest, RobotPublishRequest, RobotRebindRequest,
-  RobotRunsRequest, RobotSnapshotFrame, RobotSpecRevision, RobotStartRequest, Run,
+  Robot, RobotCancelRequest, RobotCapabilitiesRequest, RobotCapabilityCatalog, RobotCorrectRequest, RobotHireRequest,
+  RobotInstantiateRequest, RobotInterruptRequest, RobotPublishRequest, RobotRebindRequest, RobotRunsRequest, RobotSnapshotFrame,
+  RobotSpecRevision, RobotStartRequest, Run,
 } from '../types.ts'
 import type { RobotRunsModel, RobotRunsSource } from './model.ts'
 
@@ -35,6 +36,12 @@ export interface RobotRemote {
    */
   instantiate(request: RobotInstantiateRequest): Promise<RemoteResult<Robot>>
   /**
+   * Publish and instantiate a user-owned copy of one template.
+   * @param request - template, copy locale, and optional name.
+   * @returns the new robot, or the business/transport failure.
+   */
+  hire(request: RobotHireRequest): Promise<RemoteResult<Robot>>
+  /**
    * Bind a robot to a newer revision.
    * @param request - robot and the revision later runs should use.
    * @returns the rebound robot, or the business/transport failure.
@@ -53,11 +60,29 @@ export interface RobotRemote {
    */
   cancel(request: RobotCancelRequest): Promise<RemoteResult<void>>
   /**
+   * Pause one executing run for a human correction.
+   * @param request - run to pause.
+   * @returns settlement, or the business/transport failure.
+   */
+  interrupt(request: RobotInterruptRequest): Promise<RemoteResult<void>>
+  /**
+   * Deliver one correction into an executing run.
+   * @param request - run and the correction text.
+   * @returns settlement, or the business/transport failure.
+   */
+  correct(request: RobotCorrectRequest): Promise<RemoteResult<void>>
+  /**
    * List one robot's runs.
    * @param request - robot whose runs to read.
    * @returns the runs, or the business/transport failure.
    */
   runs(request: RobotRunsRequest): Promise<RemoteResult<readonly Run[]>>
+  /**
+   * List the local values the specification editor offers as choices.
+   * @param request - Workspace whose project skills apply.
+   * @returns the catalog, or the business/transport failure.
+   */
+  capabilities(request: RobotCapabilitiesRequest): Promise<RemoteResult<RobotCapabilityCatalog>>
 }
 
 /** Remote faces the service drives: the Gateway stream factory and the `robot` namespace. */
@@ -83,6 +108,12 @@ export interface IRobotRuns {
    */
   instantiate(request: RobotInstantiateRequest): Promise<RemoteResult<Robot>>
   /**
+   * Publish and instantiate a user-owned copy of one template.
+   * @param request - template, copy locale, and optional name.
+   * @returns the new robot, or the business/transport failure.
+   */
+  hire(request: RobotHireRequest): Promise<RemoteResult<Robot>>
+  /**
    * Bind a robot to a newer revision.
    * @param request - robot and the revision later runs should use.
    * @returns the rebound robot, or the business/transport failure.
@@ -101,11 +132,29 @@ export interface IRobotRuns {
    */
   cancel(request: RobotCancelRequest): Promise<RemoteResult<void>>
   /**
+   * Pause one executing run for a human correction.
+   * @param request - run to pause.
+   * @returns settlement, or the business/transport failure.
+   */
+  interrupt(request: RobotInterruptRequest): Promise<RemoteResult<void>>
+  /**
+   * Deliver one correction into an executing run.
+   * @param request - run and the correction text.
+   * @returns settlement, or the business/transport failure.
+   */
+  correct(request: RobotCorrectRequest): Promise<RemoteResult<void>>
+  /**
    * List one robot's runs.
    * @param request - robot whose runs to read.
    * @returns the runs, or the business/transport failure.
    */
   runs(request: RobotRunsRequest): Promise<RemoteResult<readonly Run[]>>
+  /**
+   * List the local values the specification editor offers as choices.
+   * @param request - Workspace whose project skills apply.
+   * @returns the catalog, or the business/transport failure.
+   */
+  capabilities(request: RobotCapabilitiesRequest): Promise<RemoteResult<RobotCapabilityCatalog>>
 }
 
 declare module '@tomato/cordis' {
@@ -168,6 +217,10 @@ export class ClientRobotRuns extends Service implements IRobotRuns {
     return this.remote.robot.rebind(request)
   }
 
+  hire(request: RobotHireRequest): Promise<RemoteResult<Robot>> {
+    return this.remote.robot.hire(request)
+  }
+
   start(request: RobotStartRequest): Promise<RemoteResult<Run>> {
     return this.remote.robot.start(request)
   }
@@ -176,7 +229,24 @@ export class ClientRobotRuns extends Service implements IRobotRuns {
     return this.remote.robot.cancel(request)
   }
 
+  interrupt(request: RobotInterruptRequest): Promise<RemoteResult<void>> {
+    return this.remote.robot.interrupt(request)
+  }
+
+  correct(request: RobotCorrectRequest): Promise<RemoteResult<void>> {
+    return this.remote.robot.correct(request)
+  }
+
   runs(request: RobotRunsRequest): Promise<RemoteResult<readonly Run[]>> {
     return this.remote.robot.runs(request)
+  }
+
+  /**
+   * List the local values the specification editor offers as choices.
+   * @param request - Workspace whose project skills apply.
+   * @returns the catalog, or the business/transport failure.
+   */
+  capabilities(request: RobotCapabilitiesRequest): Promise<RemoteResult<RobotCapabilityCatalog>> {
+    return this.remote.robot.capabilities(request)
   }
 }

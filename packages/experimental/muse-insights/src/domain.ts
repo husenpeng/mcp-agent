@@ -11,7 +11,7 @@
 
 import { z } from 'zod'
 import type { DomainSpec, DomainTableSpec } from '@tomato/storage-domain'
-import type { DailyRecap, UnfinishedAnalysis } from './types.ts'
+import type { DailyRecap, RecapWorkItem, RecapWorkStatus, UnfinishedAnalysis } from './types.ts'
 
 /** One exact auxiliary model request and the text it returned. */
 export interface RecapModelExchange {
@@ -38,11 +38,40 @@ const modelExchangeSchema = z.object({
   response: z.string(),
 }).strict()
 
-const workItemSchema = z.object({
+/** A work item stored before items carried a problem, conclusion, and Sessions. */
+export interface LegacyRecapWorkItem {
+  /** Short line naming what the person worked on. */
+  readonly title: string
+  /** One outcome, blocker, or next step, or the deterministic Session excerpt. */
+  readonly detail: string
+  /** Whether the work finished, continued, or stopped on a blocker. */
+  readonly status: RecapWorkStatus
+}
+
+/** Work items of any retained stored format. */
+export type StoredRecapWorkItem = RecapWorkItem | LegacyRecapWorkItem
+
+/** One retained recap as stored, before a legacy item becomes the served shape. */
+export interface StoredDailyRecap extends Omit<DailyRecap, 'workItems'> {
+  /** Work items in any retained stored format. */
+  readonly workItems: readonly StoredRecapWorkItem[]
+}
+
+const legacyWorkItemSchema = z.object({
   title: z.string().min(1).max(200),
   detail: z.string().max(1_000),
   status: z.enum(['done', 'ongoing', 'blocked', 'unknown']),
 }).strict()
+
+const currentWorkItemSchema = z.object({
+  problem: z.string().min(1).max(200),
+  conclusion: z.string().max(500),
+  solution: z.string().max(2_000),
+  status: z.enum(['done', 'ongoing', 'blocked', 'unknown']),
+  sessionIds: z.array(z.string().min(1)).max(20),
+}).strict()
+
+const workItemSchema = z.union([currentWorkItemSchema, legacyWorkItemSchema])
 
 const recapSessionSchema = z.object({
   sessionId: z.string().min(1),
@@ -51,7 +80,7 @@ const recapSessionSchema = z.object({
   messageCount: z.number().int().nonnegative(),
 }).strict()
 
-const dailyRecapSchema = z.object({
+const dailyRecapSchema: z.ZodType<StoredDailyRecap> = z.object({
   day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/u),
   generatedAt: z.number().int().nonnegative(),
   source: z.enum(['model', 'local']),
@@ -67,8 +96,8 @@ const dailyRecapSchema = z.object({
 export interface StoredRecap {
   /** Resolved owner identity. */
   readonly owner: string
-  /** The retained Client-facing recap. */
-  readonly recap: DailyRecap
+  /** The retained recap, whose work items may still be in an earlier stored format. */
+  readonly recap: StoredDailyRecap
   /** Latest source event time represented by this recap. */
   readonly latestEventTime: number
   /** Present only when a model wrote the narrative fields. */
@@ -121,9 +150,32 @@ const analysisTable: DomainTableSpec<string, StoredAnalysis> = { valueSchema: st
  */
 export const museInsightsDomain = {
   name: 'tomato_muse_insights',
+  // Version 1 holds both work-item forms; the single layout rejects a version
+  // bump without an on-disk migration, so the reader stays on version 1.
   version: 1,
   tables: { recaps: recapTable, analyses: analysisTable },
 } satisfies DomainSpec
+
+/**
+ * Convert one stored recap to the served shape, restating a legacy work item's
+ * single text as its problem and solution.
+ * @param recap - the retained recap record.
+ * @returns the Client-facing recap.
+ */
+export function servedRecap(recap: StoredDailyRecap): DailyRecap {
+  return {
+    ...recap,
+    workItems: recap.workItems.map(item => 'problem' in item
+      ? item
+      : {
+        problem: item.title,
+        conclusion: '',
+        solution: item.detail,
+        status: item.status,
+        sessionIds: [],
+      }),
+  }
+}
 
 /**
  * Key one owner's recap for one local day.

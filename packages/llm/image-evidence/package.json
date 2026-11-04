@@ -18,6 +18,7 @@
       "types": "./lib/types/index.d.ts",
       "default": "./lib/index.js"
     },
+    "./locale/*.json": "./locale/*.json",
     "./types": {
       "types": "./lib/types/projection-types.d.ts",
       "default": "./lib/types/projection-types.js"
@@ -26,6 +27,7 @@
     "./package.json": "./package.json"
   },
   "files": [
+    "locale/*.json",
     "lib/index.js",
     "lib/types/**/*.js",
     "lib/types/**/*.d.ts"

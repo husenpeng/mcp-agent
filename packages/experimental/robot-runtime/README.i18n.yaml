@@ -9,17 +9,17 @@
   en: 5dd9d1c8fc867599
   zh: 4f30e7c632aa0604
 /tomato-experimental-robot-runtime/summary:
-  en: b41106e54c8a24ed
-  zh: f2a3b9834c1dad8e
+  en: f71a4111b2f25775
+  zh: f90f507d196ec9ad
 /tomato-experimental-robot-runtime/table-of-contents:
   en: d152484eb41ac6b4
   zh: f14f34fce35a8d90
 /tomato-experimental-robot-runtime/use-this-package:
-  en: b5043171477c03eb
-  zh: f1f6e1709bbbe8b6
+  en: 7558597800d1f93c
+  zh: 7a9c1da22bec94a5
 /tomato-experimental-robot-runtime/understand-the-implementation:
-  en: fafe5a0b253a8dcd
-  zh: 3baf06ced4095410
+  en: cf586fe0ab23cb28
+  zh: 35dcd78930220ede
 /tomato-experimental-robot-runtime/further-exploration:
   en: 2e5dcd91bdd18b69
   zh: 0d741535e6625519
@@ -45,8 +45,8 @@
   en: a6454bc43260379a
   zh: 8187a0d9f205765a
 /tomato-experimental-robot-runtime/model-experience/tool-admission/what-the-model-sees:
-  en: 4697ff7118e66e4f
-  zh: 15cc03c7c07bad40
+  en: 53d4d611bfdb6a43
+  zh: 7a2680adf11cc144
 /tomato-experimental-robot-runtime/model-experience/tool-admission/token-effect:
   en: e022fe123d92d7cb
   zh: c3eaee2fce49a218
@@ -54,8 +54,8 @@
   en: 10a93b183d540d43
   zh: f8f6d8c80e7dda11
 /tomato-experimental-robot-runtime/known-limitations-and-deferred-work:
-  en: e83e61d6984c94d3
-  zh: f7fe30662b97fbdf
+  en: 31e61a598af075fa
+  zh: b0d186593001ce40
 /tomato-experimental-robot-runtime/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 8ec3e73528ddb1a6

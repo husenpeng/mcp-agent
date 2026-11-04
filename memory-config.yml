@@ -1,0 +1,106 @@
+- generic [ref=f1e4]:
+  - generic [ref=f1e7]:
+    - generic [ref=f1e8]:
+      - button "New session" [ref=f1e9] [cursor=pointer]:
+        - generic [ref=f1e15]: Tomato AI
+      - button "Collapse sidebar" [ref=f1e18] [cursor=pointer]
+    - button "New session" [ref=f1e21] [cursor=pointer]:
+      - generic [ref=f1e22]: New Session
+      - generic [aria-hidden]:
+        - generic:
+          - generic: ⌥
+          - generic: ⌘
+          - generic: "N"
+    - navigation "Global panels" [ref=f1e27]:
+      - button "Plugins" [ref=f1e28] [cursor=pointer]
+      - button "Automation tasks" [ref=f1e34] [cursor=pointer]
+      - button "Tomato Rbot" [ref=f1e494] [cursor=pointer]
+      - button "More" [ref=f1e50] [cursor=pointer]
+    - generic [ref=f1e503]:
+      - generic [ref=f1e504]: Tomato Rbot
+      - button "营销助手" [ref=f1e505] [cursor=pointer]
+      - button "品牌营销洞察师" [ref=f1e507] [cursor=pointer]
+      - button "品牌营销洞察师 2" [ref=f1e509] [cursor=pointer]
+    - generic [ref=f1e66]:
+      - generic [ref=f1e67]:
+        - generic [ref=f1e68]: Workspaces
+        - generic [ref=f1e70]:
+          - button "Search sessions" [ref=f1e71] [cursor=pointer]
+          - textbox "Search session names"
+        - generic [ref=f1e74]:
+          - button "View options" [ref=f1e76] [cursor=pointer]
+          - button "Add workspace" [ref=f1e79] [cursor=pointer]
+      - tree "Sessions" [ref=f1e84]:
+        - treeitem "search-agent-service" [ref=f1e87] [cursor=pointer]
+        - treeitem "services-monorepo" [ref=f1e95] [cursor=pointer]
+        - treeitem "client-monorepo" [ref=f1e103] [cursor=pointer]
+        - generic [ref=f1e109]:
+          - treeitem "tomatoHarness" [expanded] [ref=f1e111] [cursor=pointer]
+          - treeitem "New Session" [ref=f1e189] [cursor=pointer]
+          - treeitem "解决robot对话后白屏问题 24min" [ref=f1e658] [cursor=pointer]:
+            - generic [ref=f1e195]: 解决robot对话后白屏问题
+            - generic [ref=f1e196]: 24min
+          - treeitem "修复Muse回顾异常问题 25min" [ref=f1e659] [cursor=pointer]:
+            - generic [ref=f1e201]: 修复Muse回顾异常问题
+            - generic [ref=f1e202]: 25min
+          - treeitem "每日回顾任务列表格式调整 42min" [ref=f1e660] [cursor=pointer]:
+            - generic [ref=f1e207]: 每日回顾任务列表格式调整
+            - generic [ref=f1e208]: 42min
+          - treeitem "机器人运行历史加载失败排查 3h" [ref=f1e211] [cursor=pointer]:
+            - generic [ref=f1e213]: 机器人运行历史加载失败排查
+            - generic [ref=f1e214]: 3h
+          - treeitem "打包产物变为 app 而非 dmg 3h" [ref=f1e217] [cursor=pointer]:
+            - generic [ref=f1e219]: 打包产物变为 app 而非 dmg
+            - generic [ref=f1e220]: 3h
+          - button "Show 43 more sessions" [ref=f1e222] [cursor=pointer]
+        - treeitem "desktop" [ref=f1e119] [cursor=pointer]
+        - treeitem "高德打车电子发票" [ref=f1e127] [cursor=pointer]
+        - treeitem "Default workspace" [ref=f1e135] [cursor=pointer]
+        - treeitem "Ungrouped" [ref=f1e224] [cursor=pointer]
+    - button "Account menu" [ref=f1e148] [cursor=pointer]:
+      - generic [ref=f1e151]: Not signed in
+  - generic [ref=f1e661]:
+    - button "Back to Memory and goal focus" [ref=f1e663] [cursor=pointer]:
+      - generic [ref=f1e666]: Memory and goal focus
+    - generic [ref=f1e672]:
+      - heading "Profile and workspace memory" [level=3] [ref=f1e674]
+      - paragraph [ref=f1e675]:
+        - code [ref=f1e676]: optional-memory
+      - paragraph [ref=f1e677]:
+        - code [ref=f1e678]: "@tomato/experimental-memory"
+      - paragraph [ref=f1e679]: "Store preferences, constraints, decisions, and facts for later sessions: profile memories in every workspace, workspace memories in one project."
+    - generic [ref=f1e682]:
+      - generic [ref=f1e683]:
+        - heading "Stored and recalled records" [level=3] [ref=f1e684]
+        - generic [ref=f1e685]:
+          - generic [ref=f1e686]:
+            - generic [ref=f1e687]: Records per search
+            - textbox "Records per search" [ref=f1e690]:
+              - /placeholder: ""
+              - text: "10"
+            - paragraph [ref=f1e691]: How many records one memory search may return, 1 to 50. Default 10.
+          - generic [ref=f1e692]:
+            - generic [ref=f1e693]: Pinned records per workspace
+            - textbox "Pinned records per workspace" [ref=f1e696]:
+              - /placeholder: ""
+              - text: "20"
+            - paragraph [ref=f1e697]: How many pinned workspace memories reach every new session, 1 to 100. Default 20.
+          - generic [ref=f1e698]:
+            - generic [ref=f1e699]: Bytes per record
+            - textbox "Bytes per record" [ref=f1e702]:
+              - /placeholder: ""
+              - text: "1024"
+            - paragraph [ref=f1e703]: Longest memory value kept, 16 to 16384 UTF-8 bytes. Default 1024.
+          - generic [ref=f1e704]:
+            - generic [ref=f1e705]: Records per workspace
+            - textbox "Records per workspace" [ref=f1e708]:
+              - /placeholder: ""
+              - text: "1000"
+            - paragraph [ref=f1e709]: Stored records, including unconfirmed ones, for one workspace. Default 1000.
+          - generic [ref=f1e710]:
+            - generic [ref=f1e711]: Profile records
+            - textbox "Profile records" [ref=f1e714]:
+              - /placeholder: ""
+              - text: "100"
+            - paragraph [ref=f1e715]: Stored profile memories that apply in every workspace. Default 100.
+      - button "Save" [disabled] [ref=f1e717]

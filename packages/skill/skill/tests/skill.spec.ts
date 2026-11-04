@@ -1435,3 +1435,79 @@ describe('SkillRegistry scoped layers', () => {
     await preset.dispose()
   })
 })
+
+describe('SkillRegistry scoped restrictions', () => {
+  it('keeps only allowed names in the restricting scope and loads them by name', async () => {
+    const ctx = new Context()
+    await ctx.plugin(SkillRegistry)
+    registerProvider(ctx, new MemoryProvider([
+      memorySkill('keep-me', 'Kept', 100),
+      memorySkill('drop-me', 'Dropped', 100),
+    ]))
+    const preset = createScope(ctx, { preset: 'restricted' })
+    const skills = scopedSkills(preset.ctx)
+    const dispose = skills.restrict({ allow: ['keep-me'] })
+    const scope = scopeOf(preset.ctx)
+
+    expect((await skills.list({ scope })).map(skill => skill.name)).toEqual(['keep-me'])
+    expect((await ctx.skills.list()).map(skill => skill.name)).toEqual(['drop-me', 'keep-me'])
+    expect((await skills.get('keep-me', { scope }))?.content).toBe('keep-me body.')
+    expect(await skills.get('drop-me', { scope })).toBeUndefined()
+
+    dispose()
+    expect((await skills.list({ scope })).map(skill => skill.name)).toEqual(['drop-me', 'keep-me'])
+    await preset.dispose()
+  })
+
+  it('removes denied names and intersects with an ancestor restriction', async () => {
+    const ctx = new Context()
+    await ctx.plugin(SkillRegistry)
+    registerProvider(ctx, new MemoryProvider([
+      memorySkill('alpha', 'A', 100),
+      memorySkill('beta', 'B', 100),
+      memorySkill('gamma', 'C', 100),
+    ]))
+    const outerKey = { preset: 'outer' }
+    const outer = createScope(ctx, outerKey)
+    scopedSkills(outer.ctx).restrict({ deny: ['gamma'] })
+    const innerKey = { preset: 'inner' }
+    const inner = createScope(ctx, innerKey, { parent: outerKey })
+    scopedSkills(inner.ctx).restrict({ allow: ['alpha', 'gamma'] })
+
+    expect((await ctx.skills.list({ scope: scopeOf(inner.ctx) })).map(skill => skill.name)).toEqual(['alpha'])
+    expect((await ctx.skills.list({ scope: scopeOf(outer.ctx) })).map(skill => skill.name))
+      .toEqual(['alpha', 'beta'])
+    await inner.dispose()
+    await outer.dispose()
+  })
+
+  it('refuses an unscoped, empty, or contradictory restriction', async () => {
+    const ctx = new Context()
+    await ctx.plugin(SkillRegistry)
+    expect(() => ctx.skills.restrict({ allow: ['any'] })).toThrow(/scoped context/)
+    const preset = createScope(ctx, { preset: 'invalid' })
+    const skills = scopedSkills(preset.ctx)
+    expect(() => skills.restrict({})).toThrow(/no-op/)
+    expect(() => skills.restrict({ allow: ['same'], deny: ['same'] })).toThrow(/both/)
+    await preset.dispose()
+  })
+
+  it('admits a skill that appears after an allow-listed restriction', async () => {
+    const ctx = new Context()
+    await ctx.plugin(SkillRegistry)
+    const provider = new MemoryProvider([])
+    let control: { invalidate: () => void } | undefined
+    ctx.skills.registerProvider((given) => {
+      control = given
+      return provider
+    })
+    const preset = createScope(ctx, { preset: 'late' })
+    scopedSkills(preset.ctx).restrict({ allow: ['late-skill'] })
+    const scope = scopeOf(preset.ctx)
+    expect(await ctx.skills.list({ scope })).toEqual([])
+    provider.replace([memorySkill('late-skill', 'Late', 100)])
+    control?.invalidate()
+    expect((await ctx.skills.list({ scope })).map(skill => skill.name)).toEqual(['late-skill'])
+    await preset.dispose()
+  })
+})

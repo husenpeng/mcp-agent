@@ -1,10 +1,59 @@
 # tomato-market
 
-> 开源 DeepSeek Harness 插件目录的 Tomato 插件市场。English summary below.
+> Tomato 的两个插件市场：面向海外达人营销的精选市场，和完整的开源插件目录。English summary below.
 
-在 Tomato Harness 的 **插件** 页新增 **插件市场** 标签页：按分类浏览、按 GitHub 星标或更新时间排序、关键词搜索，点开任意插件查看说明、版本和来源，并把声明 `tomato.bundle` 的版本直接、声明 `dsh.bundle` 的版本经兼容层转换后，交给插件页已有的安装流程。目录数据来自开源的 [`dsh-plugin-catalog`](https://awesome-dsh-plugin.com)（4380 个可安装条目、23 个分类、每日更新）。
+在 Tomato Harness 的 **插件** 页新增两个标签页，顺序是 已安装 → **营销插件市场** → **通用插件市场** → 发现。
 
-![插件市场](docs/browse.jpg)
+## 营销插件市场
+
+精选 107 条开源、免费、与海外达人营销相关的能力，清单随插件打包（`src/host/marketing-catalog.json`），浏览不需要联网。不收录需要付费 key 的项目。
+
+| 类型 | 数量 | 安装方式 |
+|---|---|---|
+| 插件 | 28 | 交给插件页的安装对话框，版本固定 |
+| MCP 服务器 | 51 | 确认后写入当前 profile 的 `cordis.patch.yml`，用 `npx` 或 `uvx` 启动固定版本 |
+| Skill | 28 | 确认后把清单列出的子技能下载到 `$TOMATO_HOME/skills/<name>`，commit 固定 |
+
+其中 27 条标为 **手动安装**（Docker、浏览器扩展、pip 等），详情页给出步骤，不显示安装按钮。
+
+**标签**：类型（插件 / MCP / Skill）可筛选；**需免费 key**、**需自部署**、**需登录**、**手动安装**、**已安装** 显示在卡片上。标为 **需登录** 的 5 条使用用户自己的账号登录态，安装确认弹窗会提示封号风险。
+
+**分类**：达人发现与核验、社媒数据、视频与内容分析、广告与竞品、内容与素材生成、发布排期、外联与 CRM、SEO/GEO、电商、数据分析与报告、基础能力。一条可以属于多个分类；搜索也匹配平台名和子技能名。
+
+### MCP 怎么写入配置
+
+新增的行放在 `cordis.patch.yml` 里一段由注释标记的区块中，行 id 为 `mkt-mcp-<id>`，服务器名为 `mkt-<id>`，工具名形如 `mcp__mkt-<id>__<tool>`。
+
+- 区块以外的文字逐字节保留。卸载最后一条后，文件恢复成安装前的样子。
+- 每次写入前把原文件复制到 `cordis.patch.yml.bak-tomato-market`（只保留最近一份），用临时文件加重命名整体替换。写入在 HMR 队列和 profile 清单锁内完成，与插件页、配置编辑器的写入互斥。
+- profile 拒绝新配置时，写回原文件并重新加载；回滚也失败时，错误信息会给出备份路径。
+- 区块被手动改过时停止写入并说明原因，不做猜测修复。
+
+key 不写进配置文件。需要 key 的条目在 `env` 里只声明变量名，配置中是一个读取这些变量的 `!!js` 表达式，变量由用户写进 `~/.tomato/.env` 后重启生效。必须显式传递，因为 MCP 子进程的环境会去掉名字里带 KEY、TOKEN、SECRET、PASSWORD 的变量。
+
+### Skill 怎么安装和卸载
+
+文件通过 jsDelivr 按固定 commit 下载，先进暂存目录，全部成功后才移入技能根目录，因此下载失败不会留下半个技能。每个目录写入一个 `.tomato-market.json` 标记。
+
+- 已有同名技能（目录或 `<name>.md`）且不是这一条安装的，安装前提示并停止，不覆盖。
+- 卸载只删带标记且属于这一条的目录，用户自己写的同名技能不受影响。
+
+插件在 **已安装** 里卸载和更新。MCP 和 Skill 这一版不做更新，需要时卸载后重装。
+
+### 维护清单
+
+```sh
+node scripts/refresh-marketing-catalog.mjs          # 用 GitHub API 刷新星数和最近更新时间
+node scripts/refresh-marketing-catalog.mjs --check  # 只检查仓库是否还在、是否已归档
+```
+
+设置 `GITHUB_TOKEN` 可以提高 API 限额。脚本不改动版本、commit 和安装命令：改这些内容需要重新审核，因为一键安装执行的就是文件里写的东西。宿主启动时校验整份清单，字段不合法会直接报错。浏览器只传条目 id，命令永远来自打包的清单。
+
+## 通用插件市场
+
+按分类浏览、按 GitHub 星标或更新时间排序、关键词搜索，点开任意插件查看说明、版本和来源，并把声明 `tomato.bundle` 的版本直接、声明 `dsh.bundle` 的版本经兼容层转换后，交给插件页已有的安装流程。目录数据来自开源的 [`dsh-plugin-catalog`](https://awesome-dsh-plugin.com)（4380 个可安装条目、23 个分类、每日更新）。
+
+![通用插件市场](docs/browse.jpg)
 
 ![插件详情与说明](docs/detail.jpg)
 
@@ -16,10 +65,10 @@ pnpm tomato plugin --profile web add link:/absolute/path/to/plugins/tomato-marke
 
 # 或打包后安装
 cd plugins/tomato-market && npm pack
-pnpm tomato plugin --profile web add /absolute/path/tomato-market-0.2.0.tgz
+pnpm tomato plugin --profile web add /absolute/path/tomato-market-0.3.0.tgz
 ```
 
-安装后重启 profile（`pnpm tomato web`），打开侧栏 **插件 → 插件市场**。桌面端可在 **设置 → 插件 → 添加插件** 里用 `link:` 或 tgz 安装，重启应用后生效。
+安装后重启 profile（`pnpm tomato web`），打开侧栏 **插件 → 营销插件市场** 或 **通用插件市场**。桌面端可在 **设置 → 插件 → 添加插件** 里用 `link:` 或 tgz 安装，重启应用后生效。
 
 Tomato 识别本包的 `tomato.bundle.patch` 后会把 `tomato-market` 加入 profile 的 `tomato.profile.bundles`，因此安装日志里不会再出现 “declares no tomato.bundle — installed as a plain dependency” 这类静默失败。
 
@@ -65,15 +114,21 @@ Tomato 是 DeepSeek Harness 的改名分支，社区插件以 `@deepseek-ai/*` �
 | `cacheTtlMs` | `600000` | 目录、星标、清单读取的缓存时间 |
 | `registries` | `registry.npmjs.org`、`registry.npmmirror.com` | 清单与 README 的注册表回退顺序 |
 | `adaptDir` | `$TOMATO_HOME/.plugin-market/adapted` | 兼容转换产物的缓存目录 |
-| `home` | `$TOMATO_HOME`，否则 `~/.tomato` | 解析 `adaptDir` 的 home |
+| `home` | 当前 profile 的 home，否则 `$TOMATO_HOME`，再否则 `~/.tomato` | 解析 `adaptDir` 和 `skillRoot` 的 home |
+| `skillRoot` | `<home>/skills` | Skill 的安装目录 |
 
-Host 半只读取上述固定来源，不接受浏览器传入任意 URL；`detail`/`manifest`/`adapt` 只会查询目录里列出的 `name@version`，tarball URL 取自该版本注册表清单的 `dist.tarball`。
+Host 半只读取上述固定来源，不接受浏览器传入任意 URL；`detail`/`manifest`/`adapt` 只会查询目录或营销清单里列出的 `name@version`，tarball URL 取自该版本注册表清单的 `dist.tarball`。
 
 ## 已知限制
 
 - 兼容层是命名与清单转换，不是 API 适配；个别 DSH 插件仍可能因内部假设不同而加载失败。
 - 转换产物绑定到具体版本；安装后插件页显示的是本地 `file:` 来源，更新需要重新从市场安装。
-- 第三方客户端插件读不到 profile 的已安装清单，因此卡片不显示“已安装/可更新”；需要时从插件页的“已安装”列表确认。
+- 通用插件市场的卡片不显示“已安装/可更新”，需要时从插件页的“已安装”列表确认；营销插件市场由 Host 读取当前 profile，会显示“已安装”。
+- MCP 服务器启动失败不算安装失败：`@tomato/mcp-client` 记录错误后继续运行，配置已写入，但工具不会出现，原因在日志里（常见原因是 key 没设置或首次下载超时）。卸载后重装即可重试。
+- `uvx` 或 `npx` 不在 PATH 时只提示，不自动安装。确认弹窗里检查的是 Host 进程的 PATH。
+- 营销清单的星数是打包时的快照。多数“免 key”条目依赖第三方免费额度或公开接口，没有服务承诺。
+- 达人发现没有免费的一站式方案，能按品类和市场搜达人的工具都要付费。这个分类收录的是可以组合使用的读取工具和方法论 Skill。
+- 清单里的 AGPL 条目（Postiz、TryPost、BrightBean、wigolo、dsh-guizang-design）在本机使用没有问题，二次分发或做成托管服务前需要法务评估。
 - 星标来自目录每日更新的 `plugins.json`，不是实时 GitHub API。
 
 ## 目录来源与免责声明
@@ -94,6 +149,10 @@ node scripts/build-client.mjs --check
 
 ## English summary
 
-`tomato-market` adds a **Plugin market** tab to the Tomato Plugins page. It browses the open `dsh-plugin-catalog` by category, sorts by GitHub stars, last update, or name, searches names/authors/keywords/descriptions, and shows a details page with the README, source facts, and every listed version. Installing first reads the version's npm manifest: `tomato.bundle` versions go straight to the page's install dialog, and DeepSeek Harness versions are converted first — package names, `dsh` metadata fields, peer dependencies, and code imports are rewritten to the Tomato naming (the same table as `scripts/rescope-to-tomato.ts`), repacked, and then handed to the same installer. The conversion reads and rewrites text only; it never runs package code. Host reads are limited to the configured catalog mirrors, the listed `name@version` pairs, and the registry tarball of that version.
+`tomato-market` adds two tabs to the Tomato Plugins page, in the order Installed, **Marketing plugins**, **General plugins**, Discover.
 
-Install with `pnpm tomato plugin --profile web add link:$PWD`, restart, then open **Plugins → Plugin market**. Configure mirrors through the `tomato-market` row (`indexUrls`, `starUrls`, `timeoutMs`, `cacheTtlMs`, `registries`).
+**Marketing plugins** lists 107 reviewed, open-source, free entries for overseas creator marketing from a catalog bundled with the package: plugins, MCP servers, and Skills, with categories, a type filter, and tags for free keys, self-hosting, login sessions, manual installs, and installed entries. MCP servers install as `mkt-mcp-<id>` rows in a marked block of the running profile's `cordis.patch.yml`, written atomically with a backup and restored if the profile refuses them. Skills install below `$TOMATO_HOME/skills` at a pinned commit with a `.tomato-market.json` marker, and uninstall removes only marked directories. Credentials never reach the file: entries declare variable names only. Twenty-seven entries are manual installs with written steps.
+
+**General plugins** browses the open `dsh-plugin-catalog` by category, sorts by GitHub stars, last update, or name, searches names/authors/keywords/descriptions, and shows a details page with the README, source facts, and every listed version. Installing first reads the version's npm manifest: `tomato.bundle` versions go straight to the page's install dialog, and DeepSeek Harness versions are converted first — package names, `dsh` metadata fields, peer dependencies, and code imports are rewritten to the Tomato naming (the same table as `scripts/rescope-to-tomato.ts`), repacked, and then handed to the same installer. The conversion reads and rewrites text only; it never runs package code. Host reads are limited to the configured catalog mirrors, the listed `name@version` pairs, and the registry tarball of that version.
+
+Install with `pnpm tomato plugin --profile web add link:$PWD`, restart, then open **Plugins → Marketing plugins** or **General plugins**. Configure mirrors through the `tomato-market` row (`indexUrls`, `starUrls`, `timeoutMs`, `cacheTtlMs`, `registries`).

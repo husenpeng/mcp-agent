@@ -5,7 +5,7 @@ const ROUTE = 'api/tomato-market'
 
 /**
  * Call one market endpoint.
- * @param {string} endpoint - `catalog`, `manifest`, or `detail`.
+ * @param {string} endpoint - one of the route's endpoint names.
  * @param {object} [payload] - endpoint arguments.
  * @param {AbortSignal} [signal] - caller cancellation.
  * @returns {Promise<unknown>} the endpoint's data.
@@ -68,4 +68,44 @@ export function adaptVersion(plugin, version) {
  */
 export function readDetail(plugin, version) {
   return call('detail', { name: plugin.name, version: version.version })
+}
+/** @returns {Promise<{ categories: object[], entries: object[], installed: string[] }>} the curated catalog and the entries this profile has. */
+export function readMarketingCatalog() {
+  return call('marketing-catalog')
+}
+
+/**
+ * Read what installing one entry would do.
+ * @param {string} id - entry id.
+ * @returns {Promise<object>} the command and YAML of an MCP entry, or the directories and conflicts of a Skill entry.
+ */
+export function previewMarketingEntry(id) {
+  return call('marketing-preview', { id })
+}
+
+/**
+ * Install one MCP or Skill entry.
+ * @param {string} id - entry id.
+ * @returns {Promise<object>} the install result.
+ */
+export function installMarketingEntry(id) {
+  return call('marketing-install', { id })
+}
+
+/**
+ * Remove what one MCP or Skill entry installed.
+ * @param {string} id - entry id.
+ * @returns {Promise<object>} the removal result.
+ */
+export function uninstallMarketingEntry(id) {
+  return call('marketing-uninstall', { id })
+}
+
+/**
+ * Read one entry's README.
+ * @param {string} id - entry id.
+ * @returns {Promise<object>} `{ status: 'found', markdown, origin }` or `{ status: 'none' }`.
+ */
+export function readMarketingDetail(id) {
+  return call('marketing-detail', { id })
 }

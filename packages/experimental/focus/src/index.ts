@@ -3,18 +3,20 @@
  * plugin appends a progress ledger of repeated tool failures, reminds the
  * model once a failure keeps repeating, and asks for approval before calling
  * configured tools. It schedules no round and retries nothing: continuation
- * and its budget remain `@tomato/goal-round-driver` behavior.
+ * and its budget remain `@tomato/goal-round-driver` behavior. Its policy fields
+ * admit an automatic page on the Settings server when that server is composed.
  * @module @tomato/experimental-focus
  */
 
 import { createHash } from 'node:crypto'
-import type { Context } from '@tomato/cordis'
+import type { Context, Volatile } from '@tomato/cordis'
 import z from '@tomato/schemastery'
 import { z as zod } from 'zod'
 import type { PreStepDecision } from '@tomato/agent'
 import { createUserMessage } from '@tomato/llm'
 import type { ContextFormed } from '@tomato/llm'
 import type {} from '@tomato/goal'
+import type {} from '@tomato/settings'
 import type { SessionEvent } from '@tomato/session'
 import type { ProjectionHandle } from '@tomato/session-projection'
 import { TOOL_ABORTED, TOOL_ABORTED_BEFORE_DISPATCH } from '@tomato/tools'
@@ -32,24 +34,39 @@ declare module '@tomato/llm' {
 export const name = 'experimental-focus'
 export const inject = ['tools', 'agents', 'sessionProjections']
 
-/** Focus policy for goal rounds. */
+/** Focus policy for goal rounds; each field is live-editable. */
 export interface Config {
   /** Consecutive identical failures of one call that trigger a reminder, at least 2. */
-  repeatedFailureThreshold?: number
+  repeatedFailureThreshold?: number | Volatile<number | undefined>
   /** Maximum distinct failures listed in the ledger. */
-  maxLedgerEntries?: number
+  maxLedgerEntries?: number | Volatile<number | undefined>
   /** Maximum characters of one failure message quoted in the ledger. */
-  maxMessageChars?: number
+  maxMessageChars?: number | Volatile<number | undefined>
   /** `*`-wildcard tool-name patterns that require approval before each call. */
+  approvalTools?: string[] | Volatile<string[] | undefined>
+}
+
+/** Raw Loader input before each volatile field becomes its live reference. */
+interface ConfigInput {
+  repeatedFailureThreshold?: number
+  maxLedgerEntries?: number
+  maxMessageChars?: number
   approvalTools?: string[]
 }
 
+/** Read a scalar field Loader publishes as a live reference or a direct caller passes plain. */
+function current(value: number | Volatile<number | undefined> | undefined): number | undefined
+function current(value: string[] | Volatile<string[] | undefined> | undefined): string[] | undefined
+function current(value: number | string[] | Volatile<number | string[] | undefined> | undefined) {
+  return value === undefined || typeof value !== 'object' || Array.isArray(value) ? value : value.get()
+}
+
 /** Schemastery config for focus policy. */
-export const Config: z<Config> = z.object({
-  repeatedFailureThreshold: z.number().step(1).min(2).max(20).default(2),
-  maxLedgerEntries: z.number().step(1).min(1).max(20).default(5),
-  maxMessageChars: z.number().step(1).min(40).max(2000).default(200),
-  approvalTools: z.array(z.string()).default([]),
+export const Config: z<ConfigInput, Config> = z.object({
+  repeatedFailureThreshold: z.number().step(1).min(2).max(20).default(2).volatile(),
+  maxLedgerEntries: z.number().step(1).min(1).max(20).default(5).volatile(),
+  maxMessageChars: z.number().step(1).min(40).max(2000).default(200).volatile(),
+  approvalTools: z.array(z.string()).default([]).volatile(),
 })
 
 /** Fully resolved focus policy. */
@@ -118,9 +135,9 @@ function wildcard(pattern: string): RegExp {
 
 /** Validate policy even when `apply` runs outside Loader normalization. */
 function resolveConfig(config: Config): ResolvedConfig {
-  const threshold = config.repeatedFailureThreshold ?? 2
-  const maxLedgerEntries = config.maxLedgerEntries ?? 5
-  const maxMessageChars = config.maxMessageChars ?? 200
+  const threshold = current(config.repeatedFailureThreshold) ?? 2
+  const maxLedgerEntries = current(config.maxLedgerEntries) ?? 5
+  const maxMessageChars = current(config.maxMessageChars) ?? 200
   for (const [field, value, min] of [
     ['repeatedFailureThreshold', threshold, 2],
     ['maxLedgerEntries', maxLedgerEntries, 1],
@@ -130,7 +147,7 @@ function resolveConfig(config: Config): ResolvedConfig {
       throw new TypeError(`experimental-focus: ${field} must be a safe integer of at least ${min}`)
     }
   }
-  const patterns = config.approvalTools ?? []
+  const patterns = current(config.approvalTools) ?? []
   for (const pattern of patterns) {
     if (pattern.trim() === '') throw new TypeError('experimental-focus: approvalTools entries must be non-empty patterns')
   }
@@ -193,10 +210,10 @@ function without(pending: FocusState['pending'], callId: string): FocusState['pe
  * Pure fold over committed Session events. A goal round of another goal
  * resets the ledger; a tool failure during a goal updates its signature; a
  * successful call of a tool clears that tool's streaks.
- * @param config - resolved policy bounding retained entries and message length.
+ * @param config - live policy bounding retained entries and message length.
  * @returns the projection transition.
  */
-function focusFold(config: ResolvedConfig): (state: FocusState, event: SessionEvent) => FocusState {
+function focusFold(config: Config): (state: FocusState, event: SessionEvent) => FocusState {
   return (state, event) => {
     switch (event.type) {
       case 'user/message': {
@@ -222,9 +239,10 @@ function focusFold(config: ResolvedConfig): (state: FocusState, event: SessionEv
         }
         const code = event.data.error?.code ?? 'error'
         if (CANCELLED_CODES.has(code)) return { ...state, pending }
-        const failure = nextFailure(state, call.tool, call.args, code, resultMessage(event), config.maxMessageChars)
+        const resolved = resolveConfig(config)
+        const failure = nextFailure(state, call.tool, call.args, code, resultMessage(event), resolved.maxMessageChars)
         const others = state.failures.filter(entry => entry.signature !== failure.signature)
-        return { ...state, pending, failures: [failure, ...others].slice(0, config.maxLedgerEntries) }
+        return { ...state, pending, failures: [failure, ...others].slice(0, resolved.maxLedgerEntries) }
       }
       // SessionEventMap is merge-extensible; every other event leaves the ledger unchanged.
       default:
@@ -287,13 +305,16 @@ export function renderReminder(failure: FocusFailure): string {
  * @param config - validated focus policy.
  */
 export async function apply(ctx: Context, config: Config): Promise<void> {
-  const resolved = resolveConfig(config)
+  ctx.inject(['settings'], (ctx) => {
+    ctx.settings.configure({}, ctx.fiber)
+  })
+  resolveConfig(config)
   const ledger: ProjectionHandle<FocusState> = await ctx.sessionProjections.register<'experimentalFocus', FocusState>({
     key: 'experimentalFocus',
     stateVersion: 1,
     stateSchema: focusStateSchema,
     init: () => ({ goalId: null, round: 0, failures: [], pending: {} }),
-    apply: focusFold(resolved),
+    apply: focusFold(config),
   })
 
   ctx.on('agent/pre-step', async ({ agent, messages, signal }, next): Promise<PreStepDecision> => {
@@ -322,13 +343,13 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
     if (state.goalId === null) return undefined
     const code = result.error.info?.code ?? 'error'
     if (CANCELLED_CODES.has(code)) return undefined
-    return nextFailure(state, exec.name, exec.arguments, code, result.error.message, resolved.maxMessageChars)
+    return nextFailure(state, exec.name, exec.arguments, code, result.error.message, resolveConfig(config).maxMessageChars)
   }
 
   ctx.on('tools/post-execute', async (exec, result, next): Promise<PostToolDecision> => {
     const failure = pendingFailure(exec, result)
     const downstream = await next()
-    if (failure === undefined || failure.streak < resolved.threshold) return downstream
+    if (failure === undefined || failure.streak < resolveConfig(config).threshold) return downstream
     const reminder = createUserMessage({
       content: [{ type: 'text', text: renderReminder(failure) }],
       source: { kind: SOURCE_KIND, form: 'notice', summary: `${failure.tool} failed ${failure.streak}× in a row` },
@@ -338,19 +359,18 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
       : { ...downstream, additionalContexts: [reminder, ...downstream.additionalContexts ?? []] }
   }, { prepend: true })
 
-  if (resolved.approvalPatterns.length > 0) {
-    ctx.on('tools/pre-execute', async (exec, next): Promise<PreToolDecision> => {
-      const decision = await next()
-      if (decision.kind !== 'allow' || exec.agent === undefined) return decision
-      if (!resolved.approvalPatterns.some(pattern => pattern.test(exec.name))) return decision
-      return {
-        kind: 'ask',
-        reason: `Tool "${exec.name}" is configured to require approval before each call.`,
-        displayReason: {
-          en: `Allow ${exec.name} to run? This tool is configured to ask before each call.`,
-          zh: `允许运行 ${exec.name} 吗？该工具配置为每次调用前询问。`,
-        },
-      }
-    })
-  }
+  ctx.on('tools/pre-execute', async (exec, next): Promise<PreToolDecision> => {
+    const decision = await next()
+    if (decision.kind !== 'allow' || exec.agent === undefined) return decision
+    const patterns = resolveConfig(config).approvalPatterns
+    if (!patterns.some(pattern => pattern.test(exec.name))) return decision
+    return {
+      kind: 'ask',
+      reason: `Tool "${exec.name}" is configured to require approval before each call.`,
+      displayReason: {
+        en: `Allow ${exec.name} to run? This tool is configured to ask before each call.`,
+        zh: `允许运行 ${exec.name} 吗？该工具配置为每次调用前询问。`,
+      },
+    }
+  })
 }

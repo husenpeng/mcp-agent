@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Gatilhos de robôs",
+    "description": "Inicia execuções de robôs a partir de agendamentos cron e tópicos de eventos de robôs."
+  }
+}

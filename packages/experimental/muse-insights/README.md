@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-Give the person a private daily work recap and periodic reminders of unfinished tasks across Sessions. The Host service reads the day's top-level conversations and the `todos` projection, stores one retained recap per owner and local day plus the latest analysis in `tomato_muse_insights`, and exposes both through `ctx.remote.museInsights`. The Muse bundle mounts it beside memory and goal focus. The browser half adds a frame-wide notice, a Sidebar page with recap and unfinished-task views, and a work-item detail page. It writes no Session events and exposes no model tool.
+Give a private daily work recap and reminders of unfinished tasks across Sessions. The Host service reads the day's top-level conversations and the `todos` projection, stores one retained recap per owner and local day plus the latest analysis in `tomato_muse_insights`, and exposes both through `ctx.remote.museInsights`. The Muse bundle mounts it beside memory and goal focus. The browser half adds a frame-wide notice, a Sidebar page with recap and unfinished-task views, and a work-item detail page. It also pages the configuration of the Muse bundle's memory, memory-tool, and goal-focus rows. It writes no Session events and exposes no model tool.
 
 ## Table of Contents
 
@@ -42,13 +42,15 @@ The row needs `ctx.sessionQuery` with any query backend, `ctx.storageDomain`, an
 | `maxMessageChars` | `700` | Characters kept from one message |
 | `maxMessagesPerSession` | `24` | Messages retained per Session |
 | `maxInputBytes` | `48000` | UTF-8 ceiling for the prepared recap input |
-| `maxOutputTokens` | `800` | Output-token cap for one recap request |
+| `maxOutputTokens` | `4096` | Output-token cap for one recap request |
 | `timeoutMs` | `60000` | End-to-end recap request deadline |
 | `maxTasks` | `30` | Unfinished tasks retained per analysis |
 | `maxRecapDays` | `30` | Retained local days of recaps per owner |
 | `provider`, `model` | absent | Explicit recap route; both or neither, otherwise the latest Session request route |
 
-The generated [configuration catalog](../../../docs/config-catalog.md#tomatoexperimental-muse-insights) is the exhaustive source for every accepted field.
+The generated [configuration catalog](../../../docs/config-catalog.md#tomatoexperimental-muse-insights) is the exhaustive source for every accepted field. Every field is volatile: **Configure** on the row's page in Plugins edits them through the active profile's `cordis.patch.yml`, and the running service adopts the change without a remount — a changed cadence restarts only the background timers.
+
+The same browser half also pages the three sibling Muse bundle rows, which declare only a Config schema: `optional-memory` for stored and recalled records, `optional-tool-memory` for the snapshot, search expansion, and turn capture, and `optional-focus` for the repeated-failure reminders and the approval patterns. Each **Configure** page edits its own entry's settings namespace through the active profile's `cordis.patch.yml`; a row appears only while the Host serves that namespace, and a row whose key another registration already holds keeps that page. Every bound is validated by the plugin's own Config, so a value outside its range is refused by the Host rather than stored.
 
 ### What it reads
 
@@ -60,7 +62,7 @@ The unfinished-task analysis reads the `todos` projection of those Sessions: eve
 
 Records belong to the signed-in account where `ctx.tomatoAccount` names one, and to `local` where the Host names no accounts. While nobody is signed in, `snapshot()` reports `available: false` and the Host neither reads nor writes insight records; the vocabulary matches [`@tomato/experimental-memory`](../memory/README.md).
 
-One recap is retained per owner and local day, and the last `maxRecapDays` days are pruned after each write. One latest analysis is retained per owner. Deleting a stored record removes the recap or analysis; earlier browser notice state remains browser-local.
+One recap is retained per owner and local day, and the last `maxRecapDays` days are pruned after each write. The store keeps format version 1, whose reader accepts both stored work-item forms: an older item's title becomes its problem and its detail becomes its solution, while a current item keeps its problem, conclusion, solution, and Sessions. One latest analysis is retained per owner. Deleting a stored record removes the recap or analysis; earlier browser notice state remains browser-local.
 
 ### Failures
 
@@ -113,7 +115,7 @@ The auxiliary request keeps the model-visible input reconstructable even though 
 
 #### What the model sees
 
-One auxiliary request per accepted recap generation. The system instruction defines the recap JSON object; the user message contains the framed, bounded JSON of the day's Session titles and user and assistant text. The request names no tools and no Session identity.
+One auxiliary request per accepted recap generation. The system instruction defines the recap JSON object; the user message contains the framed, bounded JSON of the day's Sessions, each with its index, title, and user and assistant text. Each returned work item names one problem, the conclusion it reached, how it was solved, and the indexes of the Sessions it came from. The request names no tools and no Session identity.
 
 #### Token effect
 
@@ -129,10 +131,13 @@ No conversation prefix is invalidated. The auxiliary request is its own dispatch
 
 - **Created-Session window** — a long-running Session created before the lookback window contributes nothing, even when it was active today.
 - **Text-only evidence** — tool calls, file diffs, and image content are not summarized; work visible only through those calls may be missed.
+- **No conclusion without a model** — the deterministic recap names each Session's title and keeps its last message as the solution; it states no conclusion because nobody analyzed the Session.
 - **No cross-device sync** — records live on one Host, and notice bookkeeping lives in one browser.
 - **Not a Session-log record** — the auxiliary request is reconstructable from the stored recap, not from Session history or `sessionQuery`.
 - **Wording-based suppression** — a completed todo suppresses a recap task only when their normalized text matches.
 - **No model route discovery preflight** — an explicit route that the current Host cannot serve degrades to the deterministic recap and a logged failure.
+- **Configure pages key off the bundle rows** — the pages register under `@tomato/experimental-muse-bundle#<row id>`, so a profile that mounts a row under another id edits its fields in `cordis.patch.yml` directly.
+- **Row pages need the client half** — the memory, memory-tool, and goal-focus pages arrive with this browser half only; a profile that mounts those rows without the Muse bundle composes its own pages.
 
 <a id="dev-note"></a>
 ### Dev Note

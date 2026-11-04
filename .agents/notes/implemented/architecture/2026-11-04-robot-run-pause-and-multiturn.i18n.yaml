@@ -1,0 +1,22 @@
+# Bilingual-pair consistency record for 2026-11-04-robot-run-pause-and-multiturn.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-11-04-robot-run-pause-and-multiturn.md
+/agent-note-robot-run-pause-correction-and-the-working-directory:
+  en: 2043b7a80387fb41
+  zh: a4a2fd8a217ccff3
+/agent-note-robot-run-pause-correction-and-the-working-directory/problem:
+  en: 26e9b166dd211809
+  zh: 46ddf254d9e98dcf
+/agent-note-robot-run-pause-correction-and-the-working-directory/decision:
+  en: 55b40bf86398e923
+  zh: 0d50d742a8cbf2f7
+/agent-note-robot-run-pause-correction-and-the-working-directory/alternatives-considered:
+  en: 86eeeb75da55ceff
+  zh: e0e0e4ca46a56864
+/agent-note-robot-run-pause-correction-and-the-working-directory/consequences:
+  en: fc66a0e6d10fc3e6
+  zh: 8cd347957172d51b
+/agent-note-robot-run-pause-correction-and-the-working-directory/testing:
+  en: b3a6f0aae5a7b9ba
+  zh: 55ea88bdbf3c229d

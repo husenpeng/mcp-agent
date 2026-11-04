@@ -72,6 +72,15 @@ export class McpResourceRuntime extends Service {
   }
 
   /**
+   * List the configured MCP servers whose resources a caller can reach.
+   * @param scope - viewing scope (the calling agent); omitted lists the global servers alone.
+   * @returns server names sorted by code point.
+   */
+  list(scope?: ScopeKey): string[] {
+    return [...this.layers.merge(scope, layer => layer.servers).keys()].sort()
+  }
+
+  /**
    * Register one server and expose resource tools while that scope has providers.
    * @param server - configured server name, unique in this scope.
    * @param provider - connection-owned resource operations.

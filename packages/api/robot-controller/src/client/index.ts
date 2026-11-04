@@ -17,9 +17,10 @@ export type { RobotRunsSnapshot, RobotRunsSource } from './model.ts'
 // through this export: declaration emit drops the value import above.
 export type { IRobotRuns } from './service.ts'
 export type {
-  Robot, RobotCancelRequest, RobotId, RobotInstantiateRequest, RobotPublishRequest, RobotRebindRequest,
-  RobotRevisionRequest, RobotRunsRequest, RobotSnapshotFrame, RobotSpec, RobotSpecIssue, RobotSpecRef,
-  RobotSpecRevision, RobotStartRequest, Run, RunId,
+  Robot, RobotCancelRequest, RobotCapabilitiesRequest, RobotCapabilityCatalog, RobotCapabilityOption, RobotHireRequest,
+  RobotId, RobotInstantiateRequest, RobotPublishRequest, RobotRebindRequest, RobotRevisionRequest, RobotRunsRequest,
+  RobotSnapshotFrame, RobotSpec, RobotSpecIssue, RobotSpecRef, RobotSpecRevision, RobotStartRequest, RobotTemplate,
+  RobotTemplateId, RobotTemplateText, Run, RunId,
 } from '../types.ts'
 
 /** Required Client Remote services. */
