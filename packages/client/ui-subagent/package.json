@@ -63,7 +63,7 @@
     "@tomato/token-meter": "workspace:*",
     "@tomato/cordis": "workspace:~",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react-dom": "^19.3.0",
     "@tomato/api-session-controller": "workspace:*",
     "@tomato/client-connection": "workspace:*",
     "@tomato/session": "workspace:*",
