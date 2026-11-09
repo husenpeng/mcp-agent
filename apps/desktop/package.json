@@ -74,7 +74,7 @@
     "@tomato/official-bundles": "workspace:*",
     "@tomato/util-file-drag": "workspace:*",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^22.20.1",
+    "@types/node": "^26.6.5",
     "@types/qrcode": "^1.5.6",
     "@types/semver": "^7.8.0",
     "@types/three": "^0.186.0",
