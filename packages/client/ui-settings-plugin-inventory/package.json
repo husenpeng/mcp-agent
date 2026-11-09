@@ -58,7 +58,7 @@
     "@testing-library/react": "^16.3.3",
     "@tomato/cordis": "workspace:~",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react-dom": "^19.3.0",
     "@tomato/client-ui-renderer": "workspace:*",
     "@tomato/agent-preset-registry": "workspace:*",
     "@tomato/client-modules": "workspace:*",
