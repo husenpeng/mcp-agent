@@ -10,6 +10,7 @@ function snapshot(): MuseInsightsSnapshot {
     recap: null,
     unfinished: { analyzedAt: 0, tasks: [] },
     analyzing: false,
+    noticeIntervalMs: 60 * 60_000,
   }
 }
 

@@ -13,14 +13,14 @@ export const NOTICE_STORAGE_KEY = 'tomato.muse-insights.v1'
 
 /** What the controller remembers between page loads. */
 export interface NoticeMemory {
-  /** Local day whose recap notice was already shown, or null. */
-  readonly recapDay: string | null
-  /** Unix epoch milliseconds when the unfinished-task notice was last shown, or 0. */
+  /** Unix epoch milliseconds when the recap notice last appeared, or 0. */
+  readonly lastRecapNoticeAt: number
+  /** Unix epoch milliseconds when the unfinished-task notice last appeared, or 0. */
   readonly lastReminderAt: number
 }
 
 /** Empty memory, used without storage or after an unreadable value. */
-const EMPTY: NoticeMemory = { recapDay: null, lastReminderAt: 0 }
+const EMPTY: NoticeMemory = { lastRecapNoticeAt: 0, lastReminderAt: 0 }
 
 /** The browser storage this feature uses, or undefined outside a browser. */
 function storage(): Storage | undefined {
@@ -39,9 +39,11 @@ export function readNoticeMemory(): NoticeMemory {
     if (raw === null) return EMPTY
     const parsed: unknown = JSON.parse(raw)
     if (parsed === null || typeof parsed !== 'object') return EMPTY
-    const value = parsed as { recapDay?: unknown; lastReminderAt?: unknown }
+    const value = parsed as { lastRecapNoticeAt?: unknown; lastReminderAt?: unknown }
     return {
-      recapDay: typeof value.recapDay === 'string' ? value.recapDay : null,
+      lastRecapNoticeAt: typeof value.lastRecapNoticeAt === 'number' && Number.isFinite(value.lastRecapNoticeAt)
+        ? Math.max(0, value.lastRecapNoticeAt)
+        : 0,
       lastReminderAt: typeof value.lastReminderAt === 'number' && Number.isFinite(value.lastReminderAt)
         ? Math.max(0, value.lastReminderAt)
         : 0,

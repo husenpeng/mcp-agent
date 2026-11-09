@@ -66,6 +66,7 @@ function snapshot(overrides: Partial<MuseInsightsSnapshot> = {}): MuseInsightsSn
     recap,
     unfinished: { analyzedAt: new Date(2026, 10, 2, 18, 10).getTime(), tasks },
     analyzing: false,
+    noticeIntervalMs: 60 * 60_000,
     ...overrides,
   }
 }

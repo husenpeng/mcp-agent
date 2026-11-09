@@ -54,9 +54,9 @@ function mount(notice: InsightsState['notice'], chinese = false) {
 describe('InsightNotice', () => {
   it('renders a recap headline and opens the recap view from the card', () => {
     const { onOpen } = mount({ id: 1, kind: 'recap', recap })
-    expect(screen.getByText('Today’s recap is ready')).toBeTruthy()
+    expect(screen.getByText('Your recap is ready')).toBeTruthy()
     expect(screen.getByText('Launch ready')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: /Today’s recap is ready/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Your recap is ready/ }))
     expect(onOpen).toHaveBeenCalledExactlyOnceWith('recap')
   })
 

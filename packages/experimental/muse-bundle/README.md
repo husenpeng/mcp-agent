@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-Give agents memory of the person across sessions: profile memories in every workspace and workspace memories in one project directory, owned by the signed-in account where the Host names accounts. Keep long goals from repeating failed calls, and show a daily recap with unfinished-task reminders. The layer inserts four Host rows: memory and its tools, goal focus, and daily insights with a notice and right-Sidebar pages. Web and Desktop ship it off and omit it from the default list. It adds four tool schemas per request and asks before tools when a profile sets `approvalTools`; insights adds no model tool.
+Give agents memory of the person across sessions: profile memories in every workspace and workspace memories in one project directory, owned by the signed-in account where the Host names one. Keep long goals from repeating failed calls, and show a daily recap with unfinished-task reminders. It inserts five Host rows: memory and its tools, a disabled-by-default embedding provider, goal focus, and daily insights with notices and right-Sidebar pages. Web and Desktop ship it off and omit it from the default list. It adds four tool schemas per request and asks before tools when a profile sets `approvalTools`; insights adds none.
 
 ## Table of Contents
 
@@ -36,9 +36,10 @@ The rows need the base composition's storage, goal, approval, command, session-q
 | Row id | Package | Adds |
 |---|---|---|
 | `optional-memory` | [`@tomato/experimental-memory`](../memory/README.md) | `ctx.memory` over the `tomato_memory` storage domain, scoped by owner, then by profile or workspace |
-| `optional-tool-memory` | [`@tomato/experimental-tool-memory`](../tool-memory/README.md) | `memory_search` with query expansion, `memory_write`, `memory_forget`, `/memory`, profile and pinned-memory injection |
+| `optional-embeddings-http` | [`@tomato/experimental-embeddings-http`](../embeddings-http/README.md) | Disabled-by-default OpenAI-compatible embeddings provider, with a Configure page that tests the endpoint |
+| `optional-tool-memory` | [`@tomato/experimental-tool-memory`](../tool-memory/README.md) | `memory_search` with query expansion, `memory_get`, `memory_write`, `memory_forget`, `/memory`, profile and pinned-memory injection, deterministic project-history cards, turn summaries, and a relevance index |
 | `optional-focus` | [`@tomato/experimental-focus`](../focus/README.md) | Goal-round failure ledger, repeated-failure reminders, optional per-tool approval |
-| `optional-muse-insights` | [`@tomato/experimental-muse-insights`](../muse-insights/README.md) | Daily recap service, unfinished-task analysis, one frame-wide notice, and right-Sidebar pages |
+| `optional-muse-insights` | [`@tomato/experimental-muse-insights`](../muse-insights/README.md) | Daily recap service, unfinished-task analysis, one frame-wide notice, right-Sidebar pages, and a read-only Memory view in the conversation header |
 
 To ask before costly tools, override the focus row in the profile's `cordis.patch.yml`:
 
@@ -48,7 +49,7 @@ To ask before costly tools, override the focus row in the profile's `cordis.patc
     approvalTools: ['mcp__hicreator__*']
 ```
 
-All four rows accept configuration, and each has a **Configure** page on the Plugins page: insights, memory, memory tools, and goal focus. The pages come from the browser half of [`@tomato/experimental-muse-insights`](../muse-insights/README.md#configuration), which this bundle loads, so bounds, switches, and approval patterns change without editing `cordis.patch.yml`; the Host refuses a value outside the plugin's Config range.
+All five rows accept configuration, and each has a **Configure** page on the Plugins page: insights, memory, memory tools, and goal focus. The pages come from the browser half of [`@tomato/experimental-muse-insights`](../muse-insights/README.md#configuration), which this bundle loads, so bounds, switches, and approval patterns change without editing `cordis.patch.yml`; the Host refuses a value outside the plugin's Config range.
 
 -----
 

@@ -111,6 +111,8 @@
     "@tomato/experimental-plugin-market-bundle": "workspace:*",
     "@tomato/personalized-recommendations": "workspace:*",
     "@tomato/experimental-muse-bundle": "workspace:*",
+    "@tomato/experimental-embeddings": "workspace:*",
+    "@tomato/experimental-embeddings-http": "workspace:*",
     "@tomato/experimental-browser-use-playwright-bundle": "workspace:*"
   },
   "devDependencies": {
@@ -139,7 +141,6 @@
     "@tomato/llm": "workspace:*",
     "@tomato/llm-deepseek": "workspace:*",
     "@tomato/llm-deepseek-api-key": "workspace:*",
-    "@tomato/llm-deepseek-account": "workspace:*",
     "@tomato/llm-mock-server": "workspace:*",
     "@tomato/llm-pi-ai": "workspace:*",
     "@tomato/llm-replay": "workspace:*",

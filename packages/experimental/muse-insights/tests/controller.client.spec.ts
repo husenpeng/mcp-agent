@@ -35,6 +35,7 @@ function snapshot(overrides: Partial<MuseInsightsSnapshot> = {}): MuseInsightsSn
     recap,
     unfinished: { analyzedAt: 0, tasks: [] },
     analyzing: false,
+    noticeIntervalMs: 60 * 60_000,
     ...overrides,
   }
 }
@@ -96,20 +97,25 @@ function hostFixture(): HostFixture {
 }
 
 describe('insights controller', () => {
-  it('publishes the first snapshot and raises one recap notice per day', async () => {
+  it('raises the recap notice, then repeats it only after the popup interval', async () => {
     const fixture = hostFixture()
     const source = createInsightsSource()
     const controller = createInsightsController(fixture.host, source)
     await vi.waitFor(() => { expect(source.hooks.insights.getSnapshot().status).toBe('ready') })
     expect(source.hooks.insights.getSnapshot().notice).toMatchObject({ kind: 'recap' })
-    expect(JSON.parse(localStorage.getItem('tomato.muse-insights.v1') ?? '{}')).toMatchObject({ recapDay: '2026-11-02' })
+    expect(JSON.parse(localStorage.getItem('tomato.muse-insights.v1') ?? '{}')).toMatchObject({ lastRecapNoticeAt: expect.any(Number) })
     source.actions.dismissNotice()
     await controller.poll()
     expect(source.hooks.insights.getSnapshot().notice).toBeNull()
+    localStorage.setItem('tomato.muse-insights.v1', JSON.stringify({
+      lastRecapNoticeAt: Date.now() - 61 * 60_000, lastReminderAt: 0,
+    }))
+    await controller.poll()
+    expect(source.hooks.insights.getSnapshot().notice).toMatchObject({ kind: 'recap' })
     controller.dispose()
   })
 
-  it('raises the unfinished notice once per cooldown while tasks remain', async () => {
+  it('raises the unfinished notice once per popup interval while tasks remain', async () => {
     const fixture = hostFixture()
     fixture.snapshot.mockResolvedValue({
       ok: true,
@@ -127,7 +133,9 @@ describe('insights controller', () => {
     source.actions.dismissNotice()
     await controller.poll()
     expect(source.hooks.insights.getSnapshot().notice).toBeNull()
-    localStorage.setItem('tomato.muse-insights.v1', JSON.stringify({ recapDay: null, lastReminderAt: Date.now() - 31 * 60_000 }))
+    localStorage.setItem('tomato.muse-insights.v1', JSON.stringify({
+      lastRecapNoticeAt: 0, lastReminderAt: Date.now() - 61 * 60_000,
+    }))
     await controller.poll()
     expect(source.hooks.insights.getSnapshot().notice).toMatchObject({ kind: 'unfinished' })
     controller.dispose()

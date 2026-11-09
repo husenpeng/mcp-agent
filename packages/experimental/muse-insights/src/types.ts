@@ -107,4 +107,59 @@ export interface MuseInsightsSnapshot {
   readonly unfinished: UnfinishedAnalysis
   /** Whether a recap or task analysis is running now. */
   readonly analyzing: boolean
+  /** Host-configured milliseconds between proactive recap and task popups. */
+  readonly noticeIntervalMs: number
+}
+
+
+/** Staged embedding endpoint one Host-side probe reads. */
+export interface EmbeddingsProbeInput {
+  /** Endpoint base URL. */
+  readonly baseUrl: string
+  /** Model id to embed with. */
+  readonly model: string
+  /** Expected vector length; `0` accepts any. */
+  readonly dimensions: number
+  /** Credential name the Host resolves, when the endpoint needs a key. */
+  readonly apiKeyEnv?: string
+}
+
+/** Outcome of one Host-side embedding probe. */
+export interface EmbeddingsProbeResult {
+  /** Whether a vector came back. */
+  readonly ok: boolean
+  /** HTTP status, returned length, or failure reason. */
+  readonly detail: string
+  /** Vector length the endpoint returned, when it returned one. */
+  readonly dimensions?: number
+  /** Wall-clock milliseconds the probe took. */
+  readonly latencyMs: number
+}
+
+/** Embedding work counted since the provider mounted. */
+export interface EmbeddingsUsageView {
+  /** Calls that reached the provider. */
+  readonly requests: number
+  /** Texts submitted. */
+  readonly texts: number
+  /** Calls that failed. */
+  readonly failures: number
+  /** Milliseconds spent inside those calls. */
+  readonly totalMs: number
+  /** Most recent failure message, when one occurred. */
+  readonly lastError?: string
+}
+
+/** Provider state the embedding page displays. */
+export interface EmbeddingsStatusView {
+  /** Whether a provider is mounted at all. */
+  readonly available: boolean
+  /** Whether memory search may use it. */
+  readonly enabled: boolean
+  /** Provider model identity, when mounted. */
+  readonly model?: string
+  /** Provider vector length, when mounted. */
+  readonly dimensions?: number
+  /** Cumulative search work, when mounted. */
+  readonly usage?: EmbeddingsUsageView
 }

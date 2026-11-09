@@ -9,6 +9,7 @@ import {
   SettingsFormModel, settingsNumberField, settingsTextField,
   type SettingsFieldState, type SettingsFormActions, type SettingsFormScope, type SettingsFormShell,
 } from '@tomato/client-ui-primitives'
+import type { MuseRouteCatalog, RouteOptions } from './route-catalog.ts'
 
 /** Host entry id of the Muse insights row; also the settings namespace it serves. */
 export const CONFIG_ENTRY = 'optional-muse-insights'
@@ -18,8 +19,8 @@ export const CONFIG_ROW_KEY = '@tomato/experimental-muse-bundle#optional-muse-in
 
 /** The row's settings section, as the page stages edits over it. */
 export interface MuseInsightsConfig {
-  recapIntervalMinutes?: number
-  taskIntervalMinutes?: number
+  recapNoticeMinutes?: number
+  summaryIntervalMinutes?: number
   initialDelaySeconds?: number
   lookbackDays?: number
   maxSessions?: number
@@ -36,7 +37,7 @@ export interface MuseInsightsConfig {
 
 /** Whole-number fields of the section; the rest hold free text. */
 const NUMBER_FIELDS = [
-  'recapIntervalMinutes', 'taskIntervalMinutes', 'initialDelaySeconds', 'lookbackDays', 'maxSessions',
+  'recapNoticeMinutes', 'summaryIntervalMinutes', 'initialDelaySeconds', 'lookbackDays', 'maxSessions',
   'maxMessagesPerSession', 'maxMessageChars', 'maxInputBytes', 'maxOutputTokens', 'timeoutMs', 'maxTasks', 'maxRecapDays',
 ] as const satisfies readonly (keyof MuseInsightsConfig)[]
 
@@ -48,8 +49,8 @@ export type MuseInsightsConfigField = typeof CONFIG_FIELDS[number]
 
 /** What the configuration page renders. */
 export interface MuseInsightsConfigState extends SettingsFormShell {
-  recapIntervalMinutes: SettingsFieldState
-  taskIntervalMinutes: SettingsFieldState
+  recapNoticeMinutes: SettingsFieldState
+  summaryIntervalMinutes: SettingsFieldState
   initialDelaySeconds: SettingsFieldState
   lookbackDays: SettingsFieldState
   maxSessions: SettingsFieldState
@@ -69,6 +70,8 @@ export interface MuseInsightsConfigFace extends SettingsFormActions {
   hooks: {
     /** Page snapshot bound by the renderer. */
     config: SnapshotStore<MuseInsightsConfigState>
+    /** Provider and model choices the page offers beside the staged route. */
+    routes: SnapshotStore<RouteOptions>
   }
 }
 
@@ -77,8 +80,11 @@ export class MuseInsightsConfigController {
   private readonly form: SettingsFormModel<MuseInsightsConfig>
   private readonly store: SnapshotStore<MuseInsightsConfigState>
 
-  /** @param scope - the shared configuration form of the Muse insights entry. */
-  constructor(scope: SettingsFormScope<MuseInsightsConfig>) {
+  /**
+   * @param scope - the shared configuration form of the Muse insights entry.
+   * @param routes - the configured provider/model catalog the page offers.
+   */
+  constructor(scope: SettingsFormScope<MuseInsightsConfig>, private readonly routes: MuseRouteCatalog) {
     this.form = new SettingsFormModel(scope, CONFIG_FIELDS.map(field => field === 'provider' || field === 'model'
       ? settingsTextField(field)
       : settingsNumberField(field)))
@@ -88,8 +94,8 @@ export class MuseInsightsConfigController {
   private projection(): MuseInsightsConfigState {
     return {
       ...this.form.shell(),
-      recapIntervalMinutes: this.form.field('recapIntervalMinutes'),
-      taskIntervalMinutes: this.form.field('taskIntervalMinutes'),
+      recapNoticeMinutes: this.form.field('recapNoticeMinutes'),
+      summaryIntervalMinutes: this.form.field('summaryIntervalMinutes'),
       initialDelaySeconds: this.form.field('initialDelaySeconds'),
       lookbackDays: this.form.field('lookbackDays'),
       maxSessions: this.form.field('maxSessions'),
@@ -107,10 +113,13 @@ export class MuseInsightsConfigController {
 
   /**
    * Build the face the page's slot registration injects.
-   * @returns the page's snapshot and its form actions.
+   * @returns the page's snapshots and its form actions.
    */
   inject(): MuseInsightsConfigFace {
-    return { hooks: { config: this.store }, ...this.form.actions() }
+    return {
+      hooks: { config: this.store, routes: this.routes.options() },
+      ...this.form.actions(),
+    }
   }
 
   /** Release the form subscription. */

@@ -4,6 +4,7 @@ import { Context } from '@tomato/cordis'
 import LlmRuntime, { LlmAdapter } from '@tomato/llm'
 import type { GenerateOptions, StreamChunk } from '@tomato/llm'
 import type { CollectedDay } from '../src/collect.ts'
+import type { DailyRecap } from '../src/types.ts'
 import {
   RECAP_SYSTEM_PROMPT,
   buildRecapInput,
@@ -64,14 +65,14 @@ describe('parseRecap', () => {
           conclusion: 'The plan is drafted.',
           solution: 'Wrote the plan and named the owner.',
           status: 'done',
-          sessionIndexes: [0],
+          sessionIds: ['s1'],
         },
         {
           problem: 'the launch plan has no owner',
           conclusion: 'Duplicate.',
           solution: 'Duplicate.',
           status: 'ongoing',
-          sessionIndexes: [0],
+          sessionIds: ['s1'],
         },
         { problem: '   ', status: 'blocked' },
       ],
@@ -98,7 +99,7 @@ describe('parseRecap', () => {
     }])
   })
 
-  it('drops Session indexes the input does not hold and keeps the item', () => {
+  it('drops Session ids the input does not hold and keeps the item', () => {
     const recap = parseRecap(JSON.stringify({
       headline: 'Launch day',
       summary: 'Prepared the launch.',
@@ -107,11 +108,44 @@ describe('parseRecap', () => {
         conclusion: 'The plan is drafted.',
         solution: 'Wrote the plan.',
         status: 'done',
-        sessionIndexes: [4, 0, 0],
+        sessionIds: ['ghost', 's1', 's1'],
       }],
       openTasks: [],
     }), '2026-11-02', 5, collected)
     expect(recap.workItems[0]?.sessionIds).toEqual(['s1'])
+  })
+
+  it('keeps previous Session ids the day’s recap already carried', () => {
+    const previous: DailyRecap = {
+      day: '2026-11-02',
+      generatedAt: 1,
+      source: 'model',
+      headline: 'Earlier work',
+      summary: '',
+      workItems: [{
+        problem: 'Earlier problem',
+        conclusion: '',
+        solution: '',
+        status: 'ongoing',
+        sessionIds: ['s0'],
+      }],
+      openTasks: [],
+      sessions: [],
+      messageCount: 1,
+    }
+    const recap = parseRecap(JSON.stringify({
+      headline: 'Launch day',
+      summary: 'Prepared the launch.',
+      workItems: [{
+        problem: 'Earlier problem',
+        conclusion: 'Finished it.',
+        solution: '',
+        status: 'done',
+        sessionIds: ['s0', 's1', 'ghost'],
+      }],
+      openTasks: [],
+    }), '2026-11-02', 5, collected, previous)
+    expect(recap.workItems[0]?.sessionIds).toEqual(['s0', 's1'])
   })
 
   it('rejects a response that is not the documented object', () => {
@@ -167,7 +201,44 @@ describe('buildRecapInput', () => {
     }
     const input = buildRecapInput(huge, 260)
     expect(Buffer.byteLength(input, 'utf8')).toBeLessThanOrEqual(260)
-    expect((JSON.parse(input) as { sessions: unknown[] }).sessions.length).toBeLessThan(2)
+    expect((JSON.parse(input) as { newSessions: unknown[] }).newSessions.length).toBeLessThan(2)
+  })
+
+  it('carries the day’s previous recap and trims new evidence before previous detail', () => {
+    const huge: CollectedDay = {
+      sessions: [
+        { sessionId: 'a', title: 'A', latestTime: 2, messages: [{ role: 'user', text: 'a'.repeat(100) }] },
+        { sessionId: 'b', title: 'B', latestTime: 1, messages: [{ role: 'user', text: 'b'.repeat(100) }] },
+      ],
+      latestEventTime: 2,
+      messageCount: 2,
+    }
+    const previous: DailyRecap = {
+      day: '2026-11-02',
+      generatedAt: 1,
+      source: 'model',
+      headline: 'Earlier work',
+      summary: '',
+      workItems: [{
+        problem: 'Earlier problem',
+        conclusion: '',
+        solution: 's'.repeat(300),
+        status: 'ongoing',
+        sessionIds: ['s0'],
+      }],
+      openTasks: [],
+      sessions: [],
+      messageCount: 1,
+    }
+    const input = buildRecapInput(huge, 400, previous)
+    expect(Buffer.byteLength(input, 'utf8')).toBeLessThanOrEqual(400)
+    const parsed = JSON.parse(input) as {
+      previousRecap?: { headline: string; workItems: { solution: string }[] }
+      newSessions: unknown[]
+    }
+    expect(parsed.previousRecap?.headline).toBe('Earlier work')
+    expect(parsed.newSessions).toEqual([])
+    expect(parsed.previousRecap?.workItems[0]?.solution).toBe('')
   })
 })
 
@@ -183,7 +254,7 @@ describe('summarizeDay', () => {
         conclusion: 'The plan is drafted.',
         solution: 'Wrote the plan and named the owner.',
         status: 'done',
-        sessionIndexes: [0],
+        sessionIds: ['s1'],
       }],
       openTasks: ['Send the brief'],
     })))
@@ -195,7 +266,8 @@ describe('summarizeDay', () => {
     expect(outcome.failure).toBeUndefined()
     expect(outcome.model).toMatchObject({ provider: 'test', model: 'm', maxTokens: 200 })
     expect(outcome.model?.input).toContain("Summarize today's sessions from this JSON:")
-    expect(outcome.model?.input).toContain('"index":0')
+    expect(outcome.model?.input).toContain('"newSessions"')
+    expect(outcome.model?.input).toContain('"id":"s1"')
     expect(outcome.model?.input).toContain('Draft the launch plan')
     expect(outcome.model?.system).toBe(RECAP_SYSTEM_PROMPT)
     expect(adapter.requests[0]?.system).toBe(RECAP_SYSTEM_PROMPT)

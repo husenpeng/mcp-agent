@@ -19,6 +19,7 @@ const snapshot: MuseInsightsSnapshot = {
   },
   unfinished: { analyzedAt: 0, tasks: [] },
   analyzing: false,
+  noticeIntervalMs: 60 * 60_000,
 }
 
 /** Registration shape the fake tab registry receives. */
@@ -115,7 +116,9 @@ it('mounts the Remote, its page type, notice, and navigation face, then withdraw
   const refreshCall = vi.fn(async () => ({ ok: true as const, value: snapshot }))
   const configScope = {
     getSnapshot: () => ({
-      status: 'ready' as const, value: { recapIntervalMinutes: 60 }, base: {}, user: {}, writable: true, revision: 1,
+      status: 'ready' as const,
+      value: { recapNoticeMinutes: 240, summaryIntervalMinutes: 120 },
+      base: {}, user: {}, writable: true, revision: 1,
     }),
     subscribe: () => () => {},
     mutate: async () => true,
@@ -124,6 +127,12 @@ it('mounts the Remote, its page type, notice, and navigation face, then withdraw
   ctx.provide('sidebarRightTabs', { register } as never)
   ctx.provide('sidebarRight', sidebarRight as never)
   ctx.provide('uiWorkspace', { startSession } as never)
+  const emptyWindow = { entries: [], hasMore: false, revision: 0, change: { kind: 'append', entries: [] } }
+  ctx.provide('sessions', {
+    binding: (id: string) => id === 'missing'
+      ? undefined
+      : { eventSource: { getSnapshot: () => emptyWindow, subscribe: () => () => {} } },
+  } as never)
   ctx.provide('configForms', {
     get: () => configScope,
     whileServed: (namespaces: readonly string[], served: (available: ReadonlySet<string>) => () => void) => served(new Set(namespaces)),
@@ -137,6 +146,7 @@ it('mounts the Remote, its page type, notice, and navigation face, then withdraw
       'sidebar.right.pane.tab.title': { kind: 'keyed', scope: 'session' },
       'shell.overlay': { kind: 'list', scope: 'root' },
       'plugins.row.config': { kind: 'keyed', scope: 'root' },
+      'conversation.view': { kind: 'list', scope: 'session' },
     },
   } as never, () => null)
 
@@ -179,6 +189,10 @@ it('mounts the Remote, its page type, notice, and navigation face, then withdraw
   const titleEntry = ctx.slots.entries('sidebar.right.pane.tab.title')[0]!
   assert(typeof titleEntry.inject === 'function')
   assertTitleFace(titleEntry.inject())
+  const memoryEntry = ctx.slots.entries('conversation.view')[0]!
+  expect(memoryEntry.options.id).toBe('memory')
+  const memoryLabel = memoryEntry.options.label
+  expect(typeof memoryLabel === 'function' ? memoryLabel() : memoryLabel).toBe('Memory')
   const noticeEntry = ctx.slots.entries('shell.overlay')[0]!
   assert(typeof noticeEntry.inject === 'function')
   const noticeFace = noticeEntry.inject()
@@ -190,10 +204,12 @@ it('mounts the Remote, its page type, notice, and navigation face, then withdraw
     expect(sidebarRight.openTab).toHaveBeenCalledWith('muse-insights', { params: { view: 'recap' } })
   })
   noticeFace.onDismiss()
-  await vi.waitFor(() => { expect(ctx.slots.entries('plugins.row.config')).toHaveLength(1) })
-  const configEntry = ctx.slots.entries('plugins.row.config')[0]
+  await vi.waitFor(() => {
+    expect(ctx.slots.entries('plugins.row.config').some(entry => entry.options.key === '@tomato/experimental-muse-bundle#optional-muse-insights')).toBe(true)
+  })
+  const configEntry = ctx.slots.entries('plugins.row.config')
+    .find(entry => entry.options.key === '@tomato/experimental-muse-bundle#optional-muse-insights')
   assert(configEntry !== undefined)
-  expect(configEntry.options.key).toBe('@tomato/experimental-muse-bundle#optional-muse-insights')
   assert(typeof configEntry.inject === 'function')
   const configFace = configEntry.inject()
   assert(typeof configFace.hooks === 'object' && configFace.hooks !== null)
@@ -203,6 +219,7 @@ it('mounts the Remote, its page type, notice, and navigation face, then withdraw
   expect(ctx.slots.entries('sidebar.right.pane.tab')).toHaveLength(0)
   expect(ctx.slots.entries('sidebar.right.pane.tab.title')).toHaveLength(0)
   expect(ctx.slots.entries('shell.overlay')).toHaveLength(0)
+  expect(ctx.slots.entries('conversation.view')).toHaveLength(0)
   expect(ctx.slots.entries('plugins.row.config')).toHaveLength(0)
   expect(unmount).toHaveBeenCalledTimes(1)
   await ctx.fiber.dispose()
@@ -224,6 +241,12 @@ it('pages the schema rows the Plugins page holds no entry for, and yields a key 
     ctx.provide('sidebarRightTabs', { register: () => () => {} } as never)
     ctx.provide('sidebarRight', sidebarRight as never)
     ctx.provide('uiWorkspace', { startSession: () => {} } as never)
+    const emptyWindow = { entries: [], hasMore: false, revision: 0, change: { kind: 'append', entries: [] } }
+    ctx.provide('sessions', {
+      binding: (id: string) => id === 'missing'
+        ? undefined
+        : { eventSource: { getSnapshot: () => emptyWindow, subscribe: () => () => {} } },
+    } as never)
     const scope = {
       getSnapshot: () => ({ status: 'ready' as const, value: {}, base: {}, user: {}, writable: true, revision: 1 }),
       subscribe: () => () => {},
@@ -234,7 +257,7 @@ it('pages the schema rows the Plugins page holds no entry for, and yields a key 
     await ctx.plugin(SlotRegistry)
     ctx.slots.register({
       name: 'root',
-      children: { 'plugins.row.config': { kind: 'keyed', scope: 'root' } },
+      children: { 'plugins.row.config': { kind: 'keyed', scope: 'root' }, 'conversation.view': { kind: 'list', scope: 'session' } },
     } as never, () => null)
     // A companion already pages the focus row.
     ctx.slots.register({
@@ -245,6 +268,7 @@ it('pages the schema rows the Plugins page holds no entry for, and yields a key 
     await vi.advanceTimersByTimeAsync(ROW_PAGE_SETTLE_MS)
     const keys = ctx.slots.entries('plugins.row.config').map(entry => entry.options.key).sort()
     expect(keys).toEqual([
+      '@tomato/experimental-muse-bundle#optional-embeddings-http',
       '@tomato/experimental-muse-bundle#optional-focus',
       '@tomato/experimental-muse-bundle#optional-memory',
       '@tomato/experimental-muse-bundle#optional-muse-insights',

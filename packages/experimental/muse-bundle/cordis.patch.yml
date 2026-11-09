@@ -2,6 +2,14 @@
     - id: optional-memory
       name: '@tomato/experimental-memory'
 
+    - id: optional-embeddings-http
+      name: '@tomato/experimental-embeddings-http'
+      disabled: true
+      config:
+        baseUrl: http://127.0.0.1:11434/v1
+        model: nomic-embed-text
+        dimensions: 768
+
     - id: optional-tool-memory
       name: '@tomato/experimental-tool-memory'
 

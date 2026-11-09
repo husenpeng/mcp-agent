@@ -21,23 +21,29 @@
   en: c8f447fa85693f44
   zh: 9773790e92cdbcb5
 /tomato-experimental-memory/use-this-package/configuration:
-  en: 22451a6a760bc72d
-  zh: 8d6b53211827947a
+  en: 76384394a7e36056
+  zh: 75c51af199760a8a
 /tomato-experimental-memory/use-this-package/owners-and-scopes:
-  en: a3b0f728cf2923ea
-  zh: 1adf3aadbd7ef13c
+  en: 2e70b3d5509ea498
+  zh: fba78e06a78a2584
 /tomato-experimental-memory/use-this-package/records-and-lifecycle:
-  en: 49aa1e0e59bac35e
-  zh: 443cee6810f6930e
+  en: e663d484d5ba4823
+  zh: b9d0922a459d2516
+/tomato-experimental-memory/use-this-package/project-history:
+  en: c791bf4865d93f30
+  zh: 3ca10a2e7b780243
+/tomato-experimental-memory/use-this-package/local-vector-cache:
+  en: d3ccdc181d9ba7bc
+  zh: c1a23a0dc9454f21
 /tomato-experimental-memory/use-this-package/failures:
   en: fa9a3ebbe7f2bb01
   zh: db34bf0403aa1fb8
 /tomato-experimental-memory/understand-the-implementation:
-  en: c5821bcac0b1adc0
-  zh: ebda1242d4183207
+  en: 1936205307e2514d
+  zh: 80299096a70253bb
 /tomato-experimental-memory/further-exploration:
-  en: dcc2af602ece9154
-  zh: 3437357284ea6978
+  en: 546ea9ae1958f615
+  zh: 9bd136d2ff12c296
 /tomato-experimental-memory/model-experience:
   en: 379cb600b64f97e8
   zh: 05fbf2b8a6f4562c
@@ -45,8 +51,8 @@
   en: 0cd1ebf64d9cae87
   zh: 1f7f0c4175060d31
 /tomato-experimental-memory/known-limitations-and-deferred-work:
-  en: 2246e49461494e0f
-  zh: 7bbbde1fee2576d0
+  en: 55a4ef0174b593fd
+  zh: c7e16f7ff2af9814
 /tomato-experimental-memory/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 8ec3e73528ddb1a6

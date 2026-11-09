@@ -21,6 +21,9 @@
       "path": "../../core/session"
     },
     {
+      "path": "../embeddings"
+    },
+    {
       "path": "../../llm/llm"
     },
     {

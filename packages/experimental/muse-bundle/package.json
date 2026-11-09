@@ -40,6 +40,7 @@
     }
   },
   "dependencies": {
+    "@tomato/experimental-embeddings-http": "workspace:*",
     "@tomato/experimental-focus": "workspace:*",
     "@tomato/experimental-memory": "workspace:*",
     "@tomato/experimental-muse-insights": "workspace:*",

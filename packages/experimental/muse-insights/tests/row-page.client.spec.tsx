@@ -11,6 +11,7 @@ import type { GlobalStandardProps } from '@tomato/client-ui-slots'
 import { en } from '../src/client/locales.ts'
 import { RowConfigPage, type RowConfigPageProps } from '../src/client/RowConfigPage.tsx'
 import { FOCUS_ROW, MEMORY_ROW, ROW_PAGES, RowFormController, TOOL_MEMORY_ROW, type RowPage } from '../src/client/row-form.ts'
+import { MuseRouteCatalog, type PiAiSection } from '../src/client/route-catalog.ts'
 
 afterEach(cleanup)
 
@@ -22,6 +23,18 @@ const standard: GlobalStandardProps = {
   usePanelInfo: unused, useSessions: unused, useSessionStatus: unused, useSessionRetainInfo: unused,
   useResource: unused, useWorkspaces: unused,
   ...allowAllAccess,
+}
+
+const routeSection: PiAiSection = {
+  providers: {
+    blueai: { models: [{ id: 'DeepSeek-V4.1-Flash-1017', name: 'DeepSeek V4.1 Flash' }, { id: 'other', name: 'Other' }] },
+    anthropic: { models: [{ id: 'claude', name: 'Claude' }] },
+  },
+}
+
+/** The route catalog every page reads in these tests. */
+function routes(): MuseRouteCatalog {
+  return new MuseRouteCatalog({ getSnapshot: () => ({ value: routeSection }), subscribe: () => () => {} })
 }
 
 /** One entry's served section, as the shared configuration form reports it. */
@@ -57,7 +70,7 @@ function page(row: string): RowPage {
 
 function renderPage(row: string, value: Record<string, unknown>, options: { user?: Record<string, unknown>; writable?: boolean } = {}) {
   const served = scope(value, options)
-  const controller = new RowFormController(served.form, page(row).sections, () => 'page')
+  const controller = new RowFormController(served.form, page(row).sections, () => 'page', routes())
   const props = {
     ...standard,
     ...controller.inject(),
@@ -65,6 +78,7 @@ function renderPage(row: string, value: Record<string, unknown>, options: { user
     view: 'page',
     t,
     useRow: bindSnapshotSelector(controller.inject().hooks.row),
+    useRoutes: bindSnapshotSelector(controller.inject().hooks.routes),
   } as RowConfigPageProps & { controller: RowFormController }
   render(<RowConfigPage {...props} />)
   return { served, controller }
@@ -149,6 +163,38 @@ describe('RowConfigPage', () => {
     expect(served.mutate.mock.calls[1]?.[0]).toEqual([{ op: 'unset', path: ['approvalTools'] }])
   })
 
+  it('offers the configured routes and stages the provider with its first model', () => {
+    renderPage(TOOL_MEMORY_ROW, { expansionProvider: 'blueai', expansionModel: 'DeepSeek-V4.1-Flash-1017' })
+
+    const provider = screen.getByLabelText(en['row.toolMemory.expansionProvider']) as HTMLSelectElement
+    expect([...provider.options].map(option => option.value)).toEqual(['', 'anthropic', 'blueai'])
+    expect(provider.value).toBe('blueai')
+    const model = screen.getByLabelText(en['row.toolMemory.expansionModel']) as HTMLSelectElement
+    expect([...model.options].map(option => option.value)).toEqual(['DeepSeek-V4.1-Flash-1017', 'other'])
+    expect(model.value).toBe('DeepSeek-V4.1-Flash-1017')
+
+    fireEvent.change(provider, { target: { value: 'anthropic' } })
+    expect(model.value).toBe('claude')
+  })
+
+  it('clears both route fields when the expansion follows the calling agent', () => {
+    renderPage(TOOL_MEMORY_ROW, { expansionProvider: 'blueai', expansionModel: 'DeepSeek-V4.1-Flash-1017' })
+
+    fireEvent.change(screen.getByLabelText(en['row.toolMemory.expansionProvider']), { target: { value: '' } })
+    const provider = screen.getByLabelText(en['row.toolMemory.expansionProvider']) as HTMLSelectElement
+    const model = screen.getByLabelText(en['row.toolMemory.expansionModel']) as HTMLSelectElement
+    expect(provider.value).toBe('')
+    expect(model.value).toBe('')
+    expect([...model.options].map(option => option.value)).toEqual([''])
+    expect(model.options[0]?.textContent).toBe(en['row.routeFollow'])
+  })
+
+  it('blocks the save on half an expansion route', () => {
+    renderPage(TOOL_MEMORY_ROW, { expansionProvider: 'blueai' })
+    expect(screen.getByRole<HTMLButtonElement>('button', { name: en['config.save'] }).disabled).toBe(true)
+    expect(screen.getAllByText(en['config.routePair'])).toHaveLength(2)
+  })
+
   it('renders every policy switch of the memory tools under its section', () => {
     renderPage(TOOL_MEMORY_ROW, { projectIndex: true, queryExpansion: false })
     expect(screen.getByRole('switch', { name: en['row.toolMemory.projectIndex'] }).getAttribute('aria-checked')).toBe('true')
@@ -166,7 +212,7 @@ describe('RowConfigPage', () => {
 
   it('says so in place of the controls when the Host stops serving the entry', () => {
     const served = scope({})
-    const controller = new RowFormController(served.form, page(FOCUS_ROW).sections, () => 'page')
+    const controller = new RowFormController(served.form, page(FOCUS_ROW).sections, () => 'page', routes())
     const props = {
       ...standard,
       ...controller.inject(),
@@ -174,6 +220,7 @@ describe('RowConfigPage', () => {
       view: 'page',
       t,
       useRow: bindSnapshotSelector(controller.inject().hooks.row),
+      useRoutes: bindSnapshotSelector(controller.inject().hooks.routes),
     } as RowConfigPageProps & { controller: RowFormController }
     served.unserve()
     render(<RowConfigPage {...props} />)
@@ -182,7 +229,7 @@ describe('RowConfigPage', () => {
   })
 
   it('draws nothing for the summary view and releases its form on disposal', () => {
-    const controller = new RowFormController(scope({}).form, page(FOCUS_ROW).sections, () => 'Goal focus')
+    const controller = new RowFormController(scope({}).form, page(FOCUS_ROW).sections, () => 'Goal focus', routes())
     const props = {
       ...standard,
       ...controller.inject(),
@@ -190,6 +237,7 @@ describe('RowConfigPage', () => {
       view: 'summary',
       t,
       useRow: bindSnapshotSelector(controller.inject().hooks.row),
+      useRoutes: bindSnapshotSelector(controller.inject().hooks.routes),
     } as RowConfigPageProps & { controller: RowFormController }
     expect(controller.inject().title()).toBe('Goal focus')
     const { container } = render(<RowConfigPage {...props} />)

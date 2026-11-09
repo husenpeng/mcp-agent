@@ -9,7 +9,7 @@ kind: "package-bundle"
 
 ## 概述
 
-让智能体在多个会话之间记住已陈述的偏好、决定和关于这个人的事实：画像记忆适用于每个工作区，工作区记忆只属于一个项目目录；Host 提供账号时，记忆归已登录账号所有。防止长目标反复执行失败的调用，并提供每日工作回顾和未完成任务提醒。该配置层插入四个 Host 行：记忆及其工具、目标专注，以及带提示窗和右侧栏页面的每日洞察。Web 和 Desktop 随附此配置包，默认关闭，且不在默认插件列表中展示。它为每次请求增加四个工具 schema；只有 profile 配置 `approvalTools` 时才在调用工具前征求审批；每日洞察行不增加模型工具。
+让智能体在多个会话之间记住已陈述的偏好、决定和关于这个人的事实：画像记忆适用于每个工作区，工作区记忆只属于一个项目目录；Host 提供账号时，记忆归已登录账号所有。防止长目标反复执行失败的调用，并提供每日工作回顾和未完成任务提醒。该配置层插入五个 Host 行：记忆及其工具、默认关闭的向量提供方、目标专注，以及带提示窗和右侧栏页面的每日洞察。Web 和 Desktop 随附此配置包，默认关闭，且不在默认列表中展示。它为每次请求增加四个工具 schema；只有 profile 配置 `approvalTools` 时才在调用工具前征求审批；每日洞察行不增加模型工具。
 
 ## 目录
 
@@ -36,7 +36,8 @@ kind: "package-bundle"
 | 行 id | 包 | 新增 |
 |---|---|---|
 | `optional-memory` | [`@tomato/experimental-memory`](../memory/README.zh.md) | 基于 `tomato_memory` 存储域的 `ctx.memory`，先按所有者、再按画像或工作区隔离 |
-| `optional-tool-memory` | [`@tomato/experimental-tool-memory`](../tool-memory/README.zh.md) | 带查询扩展的 `memory_search`、`memory_write`、`memory_forget`、`/memory` 与画像和置顶记忆注入 |
+| `optional-embeddings-http` | [`@tomato/experimental-embeddings-http`](../embeddings-http/README.zh.md) | 默认禁用的 OpenAI 兼容向量提供方，带可测试端点的配置页 |
+| `optional-tool-memory` | [`@tomato/experimental-tool-memory`](../tool-memory/README.zh.md) | 带查询扩展的 `memory_search`、`memory_get`、`memory_write`、`memory_forget`、`/memory`、画像和置顶记忆注入、确定性的项目历史卡、回合总结与相关情节索引 |
 | `optional-focus` | [`@tomato/experimental-focus`](../focus/README.zh.md) | 目标轮次失败记录、重复失败提醒与可选的按工具审批 |
 | `optional-muse-insights` | [`@tomato/experimental-muse-insights`](../muse-insights/README.zh.md) | 每日回顾服务、未完成任务分析、一个全帧提示窗和右侧栏页面 |
 

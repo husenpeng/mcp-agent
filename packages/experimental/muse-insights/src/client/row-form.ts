@@ -16,6 +16,7 @@ import {
   type SettingsFormShell,
 } from '@tomato/client-ui-primitives'
 import type { MuseInsightsKey } from './locales.ts'
+import type { MuseRouteCatalog, RouteOptions } from './route-catalog.ts'
 
 /** The row id of `@tomato/experimental-memory`. */
 export const MEMORY_ROW = 'optional-memory'
@@ -29,7 +30,9 @@ export interface FieldSpec {
   readonly field: string
   readonly label: MuseInsightsKey
   readonly hint?: MuseInsightsKey
-  readonly kind: 'number' | 'text' | 'switch' | 'lines'
+  readonly kind: 'number' | 'text' | 'switch' | 'lines' | 'provider' | 'model'
+  /** The provider field this model field belongs to, when it is a model choice. */
+  readonly paired?: string
 }
 
 /** One heading of a row's page and its controls. */
@@ -70,8 +73,8 @@ export const ROW_PAGES = [
         heading: 'row.toolMemory.expansion',
         fields: [
           { field: 'queryExpansion', label: 'row.toolMemory.queryExpansion', hint: 'row.toolMemory.queryExpansionHint', kind: 'switch' },
-          { field: 'expansionProvider', label: 'row.toolMemory.expansionProvider', hint: 'row.toolMemory.routeHint', kind: 'text' },
-          { field: 'expansionModel', label: 'row.toolMemory.expansionModel', hint: 'row.toolMemory.routeHint', kind: 'text' },
+          { field: 'expansionProvider', label: 'row.toolMemory.expansionProvider', hint: 'row.toolMemory.routeHint', kind: 'provider', paired: 'expansionModel' },
+          { field: 'expansionModel', label: 'row.toolMemory.expansionModel', hint: 'row.toolMemory.routeHint', kind: 'model', paired: 'expansionProvider' },
           { field: 'expansionTimeoutMs', label: 'row.toolMemory.expansionTimeoutMs', hint: 'row.toolMemory.millisecondsHint', kind: 'number' },
           { field: 'expansionMaxTokens', label: 'row.toolMemory.expansionMaxTokens', hint: 'row.toolMemory.tokensHint', kind: 'number' },
           { field: 'maxAlternatives', label: 'row.toolMemory.maxAlternatives', hint: 'row.toolMemory.maxAlternativesHint', kind: 'number' },
@@ -133,6 +136,8 @@ export interface RowFormFace extends SettingsFormActions {
   readonly hooks: {
     /** Page snapshot. */
     readonly row: SnapshotStore<RowFormState>
+    /** Provider and model choices a route field offers. */
+    readonly routes: SnapshotStore<RouteOptions>
   }
 }
 
@@ -168,6 +173,8 @@ const SPECS: Record<FieldSpec['kind'], (field: string) => SettingsFieldSpec> = {
   text: settingsTextField,
   switch: settingsSwitchField,
   lines: settingsLinesField,
+  provider: settingsTextField,
+  model: settingsTextField,
 }
 
 /**
@@ -186,6 +193,7 @@ export class RowFormController {
     scope: SettingsFormScope<Record<string, unknown>>,
     private readonly sections: readonly SectionSpec[],
     private readonly title: () => string,
+    private readonly routes: MuseRouteCatalog,
   ) {
     const fields = sections.flatMap(section => section.fields)
     this.form = new SettingsFormModel(scope, fields.map(field => SPECS[field.kind](field.field)))
@@ -211,7 +219,7 @@ export class RowFormController {
    * @returns the page's title, snapshot, and form actions.
    */
   inject(): RowFormFace {
-    return { title: this.title, hooks: { row: this.store }, ...this.form.actions() }
+    return { title: this.title, hooks: { row: this.store, routes: this.routes.options() }, ...this.form.actions() }
   }
 
   /** Release the form subscription. */

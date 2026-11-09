@@ -9,8 +9,8 @@
   en: 011f01e11b026458
   zh: adb5eb9e1b922c09
 /tomato-experimental-tool-memory/summary:
-  en: 9be06d267ceed23f
-  zh: 5808de6114a72bd6
+  en: 09a8a7bfcb43f6ed
+  zh: ed11719f19dc29d0
 /tomato-experimental-tool-memory/table-of-contents:
   en: d152484eb41ac6b4
   zh: 988e839059414d27
@@ -21,17 +21,17 @@
   en: a8ba41a42da997cc
   zh: 8eb51f2b2e5f3554
 /tomato-experimental-tool-memory/use-this-package/configuration:
-  en: 691fbcf74edf1fbf
-  zh: b62652a251f0eb47
+  en: b7b2c7d7e5fbafdc
+  zh: fdb874ccc379353e
 /tomato-experimental-tool-memory/use-this-package/what-the-model-can-do:
-  en: c9e126ab2528adee
-  zh: da76971806f0d382
+  en: 3e1b5a2b5cacaa17
+  zh: 1de7946163abc8da
 /tomato-experimental-tool-memory/use-this-package/the-memory-command:
   en: 783cb53bc33a7a04
   zh: df50be2510ca14ac
 /tomato-experimental-tool-memory/understand-the-implementation:
-  en: 1dfdc83c61994c23
-  zh: 133a1c1667dcf06a
+  en: 4762282a0f070084
+  zh: 4018389ef3481e99
 /tomato-experimental-tool-memory/further-exploration:
   en: bae1a4f9fcf7d44d
   zh: ce4a36158e406424
@@ -42,10 +42,10 @@
   en: 3039bc5e7a796b21
   zh: 6b7a9eaf69c9ea53
 /tomato-experimental-tool-memory/model-experience/tool-schemas/what-the-model-sees:
-  en: 56184f4ea05793d4
+  en: c0a23e6b9df27a02
   zh: 11f943f39df1219b
 /tomato-experimental-tool-memory/model-experience/tool-schemas/token-effect:
-  en: 0bee7606a2930f09
+  en: acc62218be21dadb
   zh: 236d424ba05c1be2
 /tomato-experimental-tool-memory/model-experience/tool-schemas/kv-cache-effect:
   en: 70e99d9897d0ef55
@@ -54,7 +54,7 @@
   en: beaabb79f229692a
   zh: 8573891441963be4
 /tomato-experimental-tool-memory/model-experience/tool-results/what-the-model-sees:
-  en: 1ef9ef5f2f0b9af5
+  en: 4f8af49cfc08731e
   zh: c7a92d102f6e3112
 /tomato-experimental-tool-memory/model-experience/tool-results/token-effect:
   en: 9a10162cc6f2a929
@@ -62,12 +62,24 @@
 /tomato-experimental-tool-memory/model-experience/tool-results/kv-cache-effect:
   en: 853d87e815c2d862
   zh: 2c08fd4e25ff32b6
+/tomato-experimental-tool-memory/model-experience/episode-capture:
+  en: c80f958a96a96cef
+  zh: 76adc534c5386fde
+/tomato-experimental-tool-memory/model-experience/episode-capture/what-the-model-sees:
+  en: 99fbfc2f03cb7d50
+  zh: 2eecd992b82fe7c6
+/tomato-experimental-tool-memory/model-experience/episode-capture/token-effect:
+  en: cb59e697fbe19286
+  zh: e10dc3b14186e761
+/tomato-experimental-tool-memory/model-experience/episode-capture/kv-cache-effect:
+  en: e4cb27dc06e37e59
+  zh: e3fb75e8693c3ce5
 /tomato-experimental-tool-memory/model-experience/memory-snapshot:
   en: 6c52d79601a000ee
   zh: 7d61cee1caa2e769
 /tomato-experimental-tool-memory/model-experience/memory-snapshot/what-the-model-sees:
-  en: 61dd85647aaeab8f
-  zh: f1334eaf7013efec
+  en: 9e52be8025741d26
+  zh: 145d12095a7f7730
 /tomato-experimental-tool-memory/model-experience/memory-snapshot/what-the-model-sees/snapshot-heading:
   en: 130d583c5dc12785
   zh: ecc383256af5355b
@@ -96,20 +108,20 @@
   en: be584c275e1cc4d3
   zh: 20d3665396e100d4
 /tomato-experimental-tool-memory/model-experience/turn-capture-request/what-the-model-sees:
-  en: d0e87ec87a6e3ea0
-  zh: c36e36114428a621
+  en: 943aa9b6aa65c4ad
+  zh: dd24865b5d507b99
 /tomato-experimental-tool-memory/model-experience/turn-capture-request/what-the-model-sees/capture-system-text:
   en: 96a796bc67f52ac8
   zh: 79b581aeb773fac4
 /tomato-experimental-tool-memory/model-experience/turn-capture-request/token-effect:
-  en: b53273ed0a04038f
-  zh: eeb9d2dadc7446a0
+  en: 7435f3ee7dbf7458
+  zh: 69e8fbff576e65b8
 /tomato-experimental-tool-memory/model-experience/turn-capture-request/kv-cache-effect:
   en: 46ba04d15d8dd680
   zh: aaa161ca71499aa5
 /tomato-experimental-tool-memory/known-limitations-and-deferred-work:
-  en: 67d5fc9f14cce572
-  zh: 4f97629fb37f4f3c
+  en: 3e0abbd699b3adb0
+  zh: 4799107d3085da03
 /tomato-experimental-tool-memory/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 8ec3e73528ddb1a6

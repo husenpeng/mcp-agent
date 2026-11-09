@@ -47,7 +47,10 @@
         "@tomato/client-ui-renderer",
         "@tomato/client-ui-settings",
         "@tomato/client-ui-sidebar-right",
-        "@tomato/client-ui-workspace"
+        "@tomato/client-ui-workspace",
+        "@tomato/api-session-controller",
+        "@tomato/client-ui-conversation",
+        "@tomato/client-ui-session"
       ],
       "platform": "web"
     }
@@ -86,19 +89,23 @@
     }
   },
   "dependencies": {
+    "@tomato/experimental-embeddings-http": "workspace:*",
     "@tomato/schemastery": "workspace:~",
     "zod": "4.4.3"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.3",
     "@tomato/api-remotes": "workspace:*",
+    "@tomato/api-session-controller": "workspace:*",
     "@tomato/client-locale": "workspace:*",
     "@tomato/client-store": "workspace:*",
     "@tomato/client-test-runtime": "workspace:*",
+    "@tomato/client-ui-conversation": "workspace:*",
     "@tomato/client-ui-layout": "workspace:*",
     "@tomato/client-ui-plugin-manager": "workspace:*",
     "@tomato/client-ui-primitives": "workspace:*",
     "@tomato/client-ui-renderer": "workspace:*",
+    "@tomato/client-ui-session": "workspace:*",
     "@tomato/client-ui-settings": "workspace:*",
     "@tomato/client-ui-sidebar-right": "workspace:*",
     "@tomato/client-ui-slots": "workspace:*",
@@ -107,6 +114,7 @@
     "@tomato/cordis": "workspace:~",
     "@tomato/cordis-plugin-loader": "workspace:~",
     "@tomato/cordis-plugin-timer": "workspace:~",
+    "@tomato/experimental-embeddings": "workspace:*",
     "@tomato/gateway": "workspace:*",
     "@tomato/llm": "workspace:*",
     "@tomato/session": "workspace:*",

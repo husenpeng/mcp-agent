@@ -35,6 +35,7 @@
   "license": "MIT",
   "peerDependencies": {
     "@tomato/branded": "workspace:*",
+    "@tomato/experimental-embeddings": "workspace:*",
     "@tomato/gateway": "workspace:*",
     "@tomato/llm": "workspace:*",
     "@tomato/session": "workspace:*",
@@ -42,6 +43,9 @@
     "@tomato/cordis": "workspace:~"
   },
   "peerDependenciesMeta": {
+    "@tomato/experimental-embeddings": {
+      "optional": true
+    },
     "@tomato/gateway": {
       "optional": true
     }
@@ -53,6 +57,7 @@
   "devDependencies": {
     "@tomato/branded": "workspace:*",
     "@tomato/cordis": "workspace:~",
+    "@tomato/experimental-embeddings": "workspace:*",
     "@tomato/gateway": "workspace:*",
     "@tomato/llm": "workspace:*",
     "@tomato/session": "workspace:*",

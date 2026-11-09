@@ -89,6 +89,7 @@ function snapshot(overrides: Partial<MuseInsightsSnapshot> = {}): MuseInsightsSn
     recap,
     unfinished: { analyzedAt: 0, tasks: [] },
     analyzing: false,
+    noticeIntervalMs: 60 * 60_000,
     ...overrides,
   }
 }

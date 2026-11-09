@@ -46,6 +46,104 @@ export interface MemoryView {
   readonly workspace?: string
 }
 
+/** Stable identity of one stored embedding vector. */
+export type VectorId = Branded<'VectorId'>
+
+/** Record family a cached vector belongs to. */
+export type VectorTarget = 'fact' | 'episode'
+
+/** Stable identity of one stored episode. */
+export type EpisodeId = Branded<'EpisodeId'>
+
+/** What one episode records. */
+export type EpisodeKind = 'observation' | 'summary'
+
+/** Where one episode belongs: the canonical project directory of its Session. */
+export interface EpisodeScope {
+  /** Always `project`; robot, team, and task scopes arrive with the robot memory layer. */
+  readonly kind: 'project'
+  /** Canonical project directory the episode belongs to. */
+  readonly path: string
+}
+
+/** The write that produced one episode. */
+export interface EpisodeSource {
+  /** Session whose tool activity produced the episode. */
+  readonly sessionId: SessionId
+  /** Tool call identity, when the episode was compressed from one call. */
+  readonly toolCallId?: string
+  /** Robot run identity, when a run owns the Session. */
+  readonly runId?: string
+}
+
+/** Input of `ctx.memory.rememberEpisode()`. */
+export interface RememberEpisodeRequest {
+  /** Owner of the episode. */
+  readonly owner: MemoryOwner
+  /** Project the episode belongs to. */
+  readonly scope: EpisodeScope
+  /** Episode category. */
+  readonly kind: EpisodeKind
+  /** Lower-kebab-case summary type, for example `decision` or `bugfix`. */
+  readonly type: string
+  /** One-line title. */
+  readonly title: string
+  /** Optional second line. */
+  readonly subtitle?: string
+  /** What happened, in the observer's words. */
+  readonly narrative: string
+  /** Durable statements extracted from the observation. */
+  readonly facts?: readonly string[]
+  /** Concepts and keywords for later retrieval. */
+  readonly concepts?: readonly string[]
+  /** Files the observation read. */
+  readonly filesRead?: readonly string[]
+  /** Files the observation changed. */
+  readonly filesModified?: readonly string[]
+  /** Tool whose call produced the observation. */
+  readonly tool?: string
+  /** Content fingerprint that makes a repeated call update instead of append. */
+  readonly fingerprint: string
+  /** The write that produced the episode. */
+  readonly source: EpisodeSource
+}
+
+/** Input of `ctx.memory.searchEpisodes()`. */
+export interface EpisodeSearchRequest {
+  /** Owner and project that bound the search. */
+  readonly view: MemoryView
+  /** Free text; an empty string lists the newest episodes. */
+  readonly text: string
+  /** Additional wordings of the same query. */
+  readonly alternatives?: readonly string[]
+  /** Maximum episodes returned; defaults to `maxRecallResults`. */
+  readonly limit?: number
+  /** Episode kinds to include. */
+  readonly kinds?: readonly EpisodeKind[]
+  /** Epoch-millisecond lower bound on creation time. */
+  readonly since?: number
+  /** Epoch-millisecond upper bound on creation time. */
+  readonly until?: number
+  /** Cancellation forwarded to an embedding provider. */
+  readonly signal?: AbortSignal
+}
+
+/** Input of `ctx.memory.episodeTimeline()`. */
+export interface EpisodeTimelineRequest {
+  /** Owner and project that bound the timeline. */
+  readonly view: MemoryView
+  /** Episode the window centers on; absent starts at the newest episode. */
+  readonly anchor?: EpisodeId
+  /** Episodes older than the anchor to return; defaults to 3. */
+  readonly before?: number
+  /** Episodes newer than the anchor to return; defaults to 3. */
+  readonly after?: number
+  /** Episode kinds to include. */
+  readonly kinds?: readonly EpisodeKind[]
+  /** Cancellation forwarded to an embedding provider. */
+  readonly signal?: AbortSignal
+}
+
 /** Whether a Session can use memory now. */
 export type MemoryAccess =
   | { readonly kind: 'available'; readonly view: MemoryView }
@@ -58,6 +156,22 @@ export interface MemorySource {
   readonly sessionId: SessionId
   /** The person's `user/message` the model quoted; absent for candidates and command writes. */
   readonly userMessageSeq?: SessionSeq
+  /** Episode whose repeated facts promoted this record, when known. */
+  readonly episodeId?: EpisodeId
+}
+
+/** One repeated episode promoted into a saved record. */
+export interface PromotionOutcome {
+  /** Record the episode facts were promoted into, new or already existing. */
+  readonly recordId: MemoryId
+  /** Episodes marked as promoted by this outcome. */
+  readonly episodeIds: readonly string[]
+  /** Subject every promoted record shares. */
+  readonly entity: string
+  /** Deterministic attribute derived from the fact and the episode's first concept. */
+  readonly key: string
+  /** Statement the record carries. */
+  readonly value: string
 }
 
 /** Input of `ctx.memory.remember()`. */
@@ -92,6 +206,8 @@ export interface RecallRequest {
   readonly alternatives?: readonly string[]
   /** Optional kind filter. */
   readonly kind?: MemoryKind
+  /** Cancellation of the caller's operation, forwarded to an embedding provider. */
+  readonly signal?: AbortSignal
 }
 
 declare module '@tomato/llm' {

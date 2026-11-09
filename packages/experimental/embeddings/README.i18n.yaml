@@ -1,0 +1,46 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/embeddings/README.md
+/:
+  en: 16915e0fd1ce073a
+  zh: a274aa3dc43fbf0f
+/tomato-experimental-embeddings:
+  en: b8dfd5fa59fb2571
+  zh: a980f92b0f703ca4
+/tomato-experimental-embeddings/summary:
+  en: 829b17f4b696683c
+  zh: 56290199417ac2c2
+/tomato-experimental-embeddings/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 405b30feaf48c087
+/tomato-experimental-embeddings/use-this-package:
+  en: bbff250eba0f1b89
+  zh: 0a618f05cc88ee2b
+/tomato-experimental-embeddings/use-this-package/add-it-to-your-composition:
+  en: 94a7be414f3e80a9
+  zh: 519eab65e826b3f4
+/tomato-experimental-embeddings/use-this-package/embed-a-batch:
+  en: 3acfe4e6d5b46b0a
+  zh: 9a777e072a8842d7
+/tomato-experimental-embeddings/use-this-package/write-a-provider:
+  en: 6ddc288657f5e445
+  zh: ad01bc172131b8e1
+/tomato-experimental-embeddings/understand-the-implementation:
+  en: b2a170621563e7ba
+  zh: 4955b9312d8aa858
+/tomato-experimental-embeddings/further-exploration:
+  en: c6b42ac6010c59e3
+  zh: 9288581b3b402512
+/tomato-experimental-embeddings/model-experience:
+  en: fc49a6ef32004b67
+  zh: bb07c7f534820a92
+/tomato-experimental-embeddings/model-experience/kv-cache-effect:
+  en: 4f0eadf94828e66e
+  zh: 97d3eb3e79199354
+/tomato-experimental-embeddings/known-limitations-and-deferred-work:
+  en: 8a0078db9fe85850
+  zh: 67fb9d0ed82bb433
+/tomato-experimental-embeddings/known-limitations-and-deferred-work/dev-note:
+  en: 4111fb48052c2d65
+  zh: 75b8b3ac202bfafe

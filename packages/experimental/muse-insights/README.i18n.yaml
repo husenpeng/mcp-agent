@@ -3,56 +3,56 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/experimental/muse-insights/README.md
 /:
-  en: d3aab7ab06b5bcf9
-  zh: 53d115b1ca3f86fc
+  en: 0745413c3bd5e218
+  zh: f6521d2c5ba1526d
 /tomato-experimental-muse-insights:
   en: 532fbfde65e08597
   zh: 8c8034e69874403c
 /tomato-experimental-muse-insights/summary:
-  en: 25b86b7dbbc9dda7
-  zh: 28ae70a4e75fba67
+  en: ce355b6fdc93b142
+  zh: 54f24cf1b71a1183
 /tomato-experimental-muse-insights/table-of-contents:
   en: d152484eb41ac6b4
   zh: 2253022f777422f6
 /tomato-experimental-muse-insights/use-this-package:
-  en: 373b2ce622f48b93
-  zh: 1a4450fe9229ba21
+  en: 75b2965938603c50
+  zh: 3a16d9cc5e04778c
 /tomato-experimental-muse-insights/use-this-package/configuration:
-  en: d3bf57b0ee596615
-  zh: efcc73ec384792eb
+  en: 176b549ef5d70fb5
+  zh: 220c0114051851be
 /tomato-experimental-muse-insights/use-this-package/what-it-reads:
-  en: 7f62fa3991b396a0
-  zh: 4e6832a3432f1da2
+  en: 73c39b4fb1b9d8b0
+  zh: aab395d249faf137
 /tomato-experimental-muse-insights/use-this-package/owners-and-retention:
-  en: 029dd38d6b1a626b
-  zh: c8385162032ad86f
+  en: e67de50a62ff55b9
+  zh: 5caa80044e371830
 /tomato-experimental-muse-insights/use-this-package/failures:
-  en: 2342035727900cd0
-  zh: 5c6660e0dde65e20
+  en: d98a22f8a0aab41f
+  zh: 468bd9c5cf4bd96d
 /tomato-experimental-muse-insights/understand-the-implementation:
-  en: 11ffb1412644c82c
-  zh: cdba491ff41eb8ac
+  en: db7e256caf9f1436
+  zh: 1fcdc3de02dff6f2
 /tomato-experimental-muse-insights/further-exploration:
-  en: d650a9957ed44b69
-  zh: 603f5dd39188a95d
+  en: db68404dca1a3032
+  zh: 24b9b69d9f8c2edb
 /tomato-experimental-muse-insights/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
-/tomato-experimental-muse-insights/model-experience/auxiliary-daily-recap-request:
-  en: 636d595416f5a60f
-  zh: 0ec8b989e921ba24
-/tomato-experimental-muse-insights/model-experience/auxiliary-daily-recap-request/what-the-model-sees:
-  en: 130b8ee1ff05a015
-  zh: d52953498778d8c9
-/tomato-experimental-muse-insights/model-experience/auxiliary-daily-recap-request/token-effect:
-  en: 659e4b125f136e74
-  zh: 583072f56db07aa6
-/tomato-experimental-muse-insights/model-experience/auxiliary-daily-recap-request/kv-cache-effect:
-  en: 06af9ca1a60e0002
-  zh: 854b38e108eb387b
+/tomato-experimental-muse-insights/model-experience/auxiliary-recap-request:
+  en: f3a4aa3f76e01d3d
+  zh: 72f49d54c68c6e78
+/tomato-experimental-muse-insights/model-experience/auxiliary-recap-request/what-the-model-sees:
+  en: 07a21607449ae16d
+  zh: 2dd2b43c3ac0375e
+/tomato-experimental-muse-insights/model-experience/auxiliary-recap-request/token-effect:
+  en: af67dd45410e1d6a
+  zh: 617302e12d713659
+/tomato-experimental-muse-insights/model-experience/auxiliary-recap-request/kv-cache-effect:
+  en: 0536bb8d39101dd2
+  zh: ad35e003d36098b3
 /tomato-experimental-muse-insights/known-limitations-and-deferred-work:
-  en: a02d20ebe6dba896
-  zh: daaff7f1be35b68a
+  en: cc63e3e09bf9cd6c
+  zh: 3a441449c175bcf2
 /tomato-experimental-muse-insights/known-limitations-and-deferred-work/dev-note:
   en: 279d01435256cd2a
   zh: 6df6019931844fb2

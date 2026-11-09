@@ -14,6 +14,8 @@
   padding: 12px;
   border-radius: var(--dsw-radius-md);
   background: var(--dsw-alias-bg-layer-2);
+  --tomato-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
+  --tomato-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
   box-shadow: var(--dsw-shadow-lv3);
   color: var(--dsw-alias-label-primary);
   pointer-events: auto;

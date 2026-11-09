@@ -9,8 +9,8 @@
   en: 8ee041b7af9505f3
   zh: 02a768b7dbbc6425
 /tool-schema-catalog/tool-package-map:
-  en: e4fe1d2d64dc8986
-  zh: 7a8e4e3cb86d3607
+  en: 2d35ee57a447c7e4
+  zh: e4d9b4bc20625975
 /tool-schema-catalog/tomato-plugin-manager:
   en: c8e088f02e59c8b3
   zh: c8e088f02e59c8b3
@@ -131,6 +131,9 @@
 /tool-schema-catalog/tomato-tool-fs/edit:
   en: 5b6a252adde51af6
   zh: 7aa172a5d8b9cbd2
+/tool-schema-catalog/tomato-tool-fs/list-dir:
+  en: 7ccd81fda3074382
+  zh: d498158b6a45db3b
 /tool-schema-catalog/tomato-tool-fs/read:
   en: 94bfc5b03c63baef
   zh: 339338a0e74696c3
@@ -145,7 +148,7 @@
   zh: 9b46c7914608c1d8
 /tool-schema-catalog/tomato-tool-fs-search/glob:
   en: 3ba734ba7852cdd5
-  zh: c6ce31ff2c195520
+  zh: 9e1c1a587624ccdb
 /tool-schema-catalog/tomato-tool-fs-search/grep:
   en: e8da6ccad6d77d24
   zh: 9c522c594f3162ca
@@ -239,11 +242,14 @@
 /tool-schema-catalog/tomato-experimental-tool-memory/memory-forget:
   en: 1a0a8b038e518991
   zh: 3eae60d97312c005
+/tool-schema-catalog/tomato-experimental-tool-memory/memory-get:
+  en: c595a7d2e3419f55
+  zh: 2bc6e9033c6e6855
 /tool-schema-catalog/tomato-experimental-tool-memory/memory-related:
   en: 076a3c63c4f41219
   zh: 72d10ffc92bc7c3f
 /tool-schema-catalog/tomato-experimental-tool-memory/memory-search:
-  en: 26e1790b559ab673
+  en: c6118019d74f03bc
   zh: 80ee2d8bb396f7c0
 /tool-schema-catalog/tomato-experimental-tool-memory/memory-write:
   en: 463ca7ed85f2e37b
@@ -252,7 +258,7 @@
   en: 4512c84944105471
   zh: 4512c84944105471
 /tool-schema-catalog/tomato-experimental-tool-robot/robot-create:
-  en: 317b72fcc00d7c2d
+  en: 70c4f72c9c68056d
   zh: 01bc7e81c720e08c
 /tool-schema-catalog/tomato-experimental-tool-subagent-oar:
   en: af512ef50d34e11f

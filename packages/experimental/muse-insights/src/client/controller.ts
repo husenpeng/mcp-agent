@@ -5,8 +5,7 @@
  * Snapshot polling is the whole change feed: the Host exposes no forwarded
  * event for this optional capability, so one read per interval keeps a page
  * current across generations. Notices are raised only from polling, and only
- * for a day whose recap has not been announced and at most once per cooldown
- * while unfinished tasks remain.
+ * once the Host-configured popup interval has elapsed since the last one.
  * @module @tomato/experimental-muse-insights/client/controller
  */
 
@@ -15,9 +14,6 @@ import type { ObservableSnapshot } from '@tomato/client-store'
 import type { MuseInsightsSnapshot } from '../types.ts'
 import { readNoticeMemory, writeNoticeMemory } from './notice-state.ts'
 import type { InsightsSource, InsightsView } from './source.ts'
-
-/** Minimum interval between proactive unfinished-task notices while tasks remain. */
-export const REMINDER_COOLDOWN_MS = 30 * 60_000
 
 /** Snapshot polling interval. */
 export const POLL_INTERVAL_MS = 60_000
@@ -69,16 +65,17 @@ export function createInsightsController(host: InsightsControllerHost, source: I
   const consider = (snapshot: MuseInsightsSnapshot): void => {
     if (isDisposed() || !snapshot.available) return
     if (source.hooks.insights.getSnapshot().notice !== null) return
+    const now = Date.now()
     const memory = readNoticeMemory()
-    if (snapshot.recap !== null && snapshot.recap.day === snapshot.day && memory.recapDay !== snapshot.day) {
+    if (snapshot.recap !== null && now - memory.lastRecapNoticeAt >= snapshot.noticeIntervalMs) {
       source.actions.showNotice({ id: ++nextNoticeId, kind: 'recap', recap: snapshot.recap })
-      writeNoticeMemory({ recapDay: snapshot.day, lastReminderAt: memory.lastReminderAt })
+      writeNoticeMemory({ lastRecapNoticeAt: now, lastReminderAt: memory.lastReminderAt })
       return
     }
     if (snapshot.unfinished.tasks.length === 0) return
-    if (Date.now() - memory.lastReminderAt < REMINDER_COOLDOWN_MS) return
+    if (now - memory.lastReminderAt < snapshot.noticeIntervalMs) return
     source.actions.showNotice({ id: ++nextNoticeId, kind: 'unfinished', tasks: snapshot.unfinished.tasks })
-    writeNoticeMemory({ recapDay: memory.recapDay, lastReminderAt: Date.now() })
+    writeNoticeMemory({ lastRecapNoticeAt: memory.lastRecapNoticeAt, lastReminderAt: now })
   }
 
   const poll = async (): Promise<void> => {

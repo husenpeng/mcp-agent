@@ -1,13 +1,15 @@
 /**
  * The Muse insights row's configuration page on the Plugins page: every
  * generation, evidence, model, and retention bound, staged locally and written
- * only by the page's save.
+ * only by the page's save. The recap route is chosen from the third-party
+ * providers the Models page configures, never typed from memory.
  */
 
-import { SettingsForm, SettingsValueField } from '@tomato/client-ui-primitives'
+import { SettingsForm, SettingsSelectField, SettingsValueField } from '@tomato/client-ui-primitives'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@tomato/client-ui-slots'
 import type { MuseInsightsConfigFace, MuseInsightsConfigField, MuseInsightsConfigState } from './config-form.ts'
 import type { MuseInsightsKey } from './locales.ts'
+import type { RouteOptions } from './route-catalog.ts'
 import css from './Insights.module.css'
 
 /** One rendered field: the section entry and its locale key. */
@@ -18,8 +20,8 @@ interface FieldSpec {
 }
 
 const RHYTHM: readonly FieldSpec[] = [
-  { field: 'recapIntervalMinutes', label: 'config.recapIntervalMinutes' },
-  { field: 'taskIntervalMinutes', label: 'config.taskIntervalMinutes' },
+  { field: 'recapNoticeMinutes', label: 'config.recapNoticeMinutes', hint: 'config.recapNoticeHint' },
+  { field: 'summaryIntervalMinutes', label: 'config.summaryIntervalMinutes', hint: 'config.summaryIntervalHint' },
   { field: 'initialDelaySeconds', label: 'config.initialDelaySeconds' },
 ]
 
@@ -31,8 +33,6 @@ const EVIDENCE: readonly FieldSpec[] = [
 ]
 
 const MODEL: readonly FieldSpec[] = [
-  { field: 'provider', label: 'config.provider', hint: 'config.routeHint' },
-  { field: 'model', label: 'config.model', hint: 'config.routeHint' },
   { field: 'maxInputBytes', label: 'config.maxInputBytes' },
   { field: 'maxOutputTokens', label: 'config.maxOutputTokens' },
   { field: 'timeoutMs', label: 'config.timeoutMs' },
@@ -72,10 +72,10 @@ function ConfigSection({ heading, fields, props, state }: {
             id={`muse-insights-config-${field}`}
             label={t(label)}
             {...(hint === undefined ? {} : { hint: t(hint) })}
-            numeric={field !== 'provider' && field !== 'model'}
+            numeric
             overriddenLabel={t('config.overridden')}
             resetLabel={t('config.reset')}
-            invalidLabel={t(field === 'provider' || field === 'model' ? 'config.routePair' : 'config.invalidNumber')}
+            invalidLabel={t('config.invalidNumber')}
             disabled={disabled}
             {...state[field]}
             onEdit={(text) => { props.edit(field, text) }}
@@ -88,13 +88,68 @@ function ConfigSection({ heading, fields, props, state }: {
 }
 
 /**
+ * Render the recap route's provider and model choices from the configured routes.
+ * @param props - locale copy, the page state, its actions, and the configured routes.
+ * @returns the model section's route controls above its numeric bounds.
+ */
+function RouteFields({ props, state, routes }: {
+  readonly props: MuseInsightsConfigPageProps
+  readonly state: MuseInsightsConfigState
+  readonly routes: RouteOptions
+}) {
+  const { t } = props
+  const disabled = !state.writable || state.saving
+  const provider = routes.providers.find(entry => entry.id === state.provider.text)
+  const providerOptions = routes.providers.map(entry => ({ id: entry.id, label: entry.id }))
+  const modelOptions = (provider?.models ?? []).map(model => ({ id: model.id, label: model.name }))
+  const chooseProvider = (text: string): void => {
+    props.edit('provider', text)
+    const next = routes.providers.find(entry => entry.id === text)
+    if (next === undefined || next.models.some(model => model.id === state.model.text)) return
+    const first = next.models[0]
+    if (first !== undefined) props.edit('model', first.id)
+  }
+  return (
+    <div className={css.configGrid}>
+      <SettingsSelectField
+        id="muse-insights-config-provider"
+        label={t('config.provider')}
+        hint={t('config.routeHint')}
+        options={providerOptions}
+        overriddenLabel={t('config.overridden')}
+        resetLabel={t('config.reset')}
+        invalidLabel={t('config.routePair')}
+        disabled={disabled}
+        {...state.provider}
+        onEdit={chooseProvider}
+        onReset={() => { props.resetField('provider') }}
+      />
+      <SettingsSelectField
+        id="muse-insights-config-model"
+        label={t('config.model')}
+        hint={t('config.routeHint')}
+        options={modelOptions}
+        overriddenLabel={t('config.overridden')}
+        resetLabel={t('config.reset')}
+        invalidLabel={t('config.routePair')}
+        disabled={disabled || modelOptions.length === 0}
+        {...state.model}
+        onEdit={(text) => { props.edit('model', text) }}
+        onReset={() => { props.resetField('model') }}
+      />
+    </div>
+  )
+}
+
+/**
  * Render the Muse insights row's configuration form.
- * @param props - the view asked for, locale copy, the page state, and its actions.
+ * @param props - the view asked for, locale copy, the page state, its actions, and the configured routes.
  * @returns the form, or nothing for the summary view, which the row page renders only without a package description.
  */
 export function MuseInsightsConfigPage(props: MuseInsightsConfigPageProps) {
   const { t } = props
   const state = props.useConfig(snapshot => snapshot)
+  const routes = props.useRoutes(snapshot => snapshot)
   if (props.view === 'summary') return null
   // The Host rejects a route with only one half and a stored one would fail the
   // next load, so the page blocks that save instead of staging it.
@@ -117,7 +172,29 @@ export function MuseInsightsConfigPage(props: MuseInsightsConfigPageProps) {
     >
       <ConfigSection heading="config.rhythm" fields={RHYTHM} props={props} state={formState} />
       <ConfigSection heading="config.evidence" fields={EVIDENCE} props={props} state={formState} />
-      <ConfigSection heading="config.modelSection" fields={MODEL} props={props} state={formState} />
+      <section className={css.configSection}>
+        <h3 className={css.configHeading}>{t('config.modelSection')}</h3>
+        <RouteFields props={props} state={formState} routes={routes} />
+      </section>
+      <section className={css.configSection}>
+        <div className={css.configGrid}>
+          {MODEL.map(({ field, label }) => (
+            <SettingsValueField
+              key={field}
+              id={`muse-insights-config-${field}`}
+              label={t(label)}
+              numeric
+              overriddenLabel={t('config.overridden')}
+              resetLabel={t('config.reset')}
+              invalidLabel={t('config.invalidNumber')}
+              disabled={!state.writable || state.saving}
+              {...formState[field]}
+              onEdit={(text) => { props.edit(field, text) }}
+              onReset={() => { props.resetField(field) }}
+            />
+          ))}
+        </div>
+      </section>
       <ConfigSection heading="config.retention" fields={RETENTION} props={props} state={formState} />
     </SettingsForm>
   )

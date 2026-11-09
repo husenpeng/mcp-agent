@@ -99,6 +99,8 @@ export interface CorpusReadOptions {
 export interface CollectDayOptions extends CorpusReadOptions {
   /** Local day being summarized. */
   readonly day: DayRange
+  /** Exclusive lower event-time bound, so a run reads only evidence the retained recap does not cover. */
+  readonly since?: number
   /** UTF-16 characters kept from one message. */
   readonly maxMessageChars: number
   /** Messages retained per Session. */
@@ -212,9 +214,11 @@ interface ExtractedDay {
   readonly latestTime: number
 }
 
-/** Extract bounded human and assistant text from the day, keeping the first prompt and the most recent work. */
+/** Extract bounded human and assistant text from the day's uncovered window. */
 function extractDay(events: readonly SessionEvent[], options: CollectDayOptions): ExtractedDay {
-  const inDay = events.filter(event => event.time >= options.day.start && event.time < options.day.end)
+  const since = options.since
+  const inDay = events.filter(event => event.time >= options.day.start && event.time < options.day.end
+    && (since === undefined || event.time > since))
   const latestTime = inDay.reduce((latest, event) => Math.max(latest, event.time), 0)
   const messages: RecapMessage[] = []
   for (const event of inDay) {

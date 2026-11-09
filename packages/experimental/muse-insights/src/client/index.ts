@@ -17,6 +17,11 @@ import type { Context as ClientContext } from '@tomato/cordis'
 import remote from '@tomato/experimental-muse-insights/remote'
 import type { TypertRemoteContribution } from '@tomato/typert-protocol'
 import type {} from '@tomato/api-remotes/client'
+import type {} from '@tomato/api-session-controller/client'
+import type {} from '@tomato/client-ui-conversation/client'
+import type {} from '@tomato/client-ui-session/client'
+import type { SessionId } from '@tomato/session/types'
+import type { ObservableSnapshot } from '@tomato/client-store'
 import type {} from '@tomato/client-locale/client'
 import type {} from '@tomato/client-ui-layout/client'
 import type {} from '@tomato/client-ui-plugin-manager/client'
@@ -30,12 +35,18 @@ import { CONFIG_ENTRY, CONFIG_ROW_KEY, MuseInsightsConfigController } from './co
 import { MuseInsightsConfigPage } from './ConfigPage.tsx'
 import { RowConfigPage } from './RowConfigPage.tsx'
 import { ROW_PAGES, RowFormController, type RowPage } from './row-form.ts'
+import { MuseRouteCatalog, ROUTE_SETTINGS_NAMESPACE, type PiAiSection } from './route-catalog.ts'
 import { registeredRowKeys, rowConfigKey, MUSE_BUNDLE } from './row-config.ts'
 import { createInsightsController } from './controller.ts'
 import { INSIGHTS_TAB_ID, INSIGHTS_TAB_KIND, insightsDefinition, WORK_ITEM_TAB_ID, workItemDefinition } from './definition.ts'
 import { InsightNotice, type NoticeInjected } from './InsightNotice.tsx'
 import { InsightsTab, type InsightsTabInjected } from './InsightsTab.tsx'
 import { DICTIONARIES, NS, type MuseInsightsKey } from './locales.ts'
+import { createMemoryFlowSource, type MemoryFlowItem } from './memory-flow.ts'
+import { MEMORY_NS, en as memoryEn, zh as memoryZh } from './memory-locales.ts'
+import { MemoryView, type MemoryViewInjected } from './MemoryView.tsx'
+import { EMBEDDINGS_ENTRY, EMBEDDINGS_ROW_KEY } from './embeddings-config.ts'
+import { EmbeddingsConfigPage, type EmbeddingsPageInjected } from './EmbeddingsConfigPage.tsx'
 import { createInsightsSource } from './source.ts'
 import { WorkItemTabBindings } from './work-item-bindings.ts'
 import { WorkItemTab, type WorkItemTabInjected } from './WorkItemTab.tsx'
@@ -46,7 +57,7 @@ export type { MuseInsightsKey } from './locales.ts'
 export type { MuseInsightsConfig, MuseInsightsConfigFace, MuseInsightsConfigState } from './config-form.ts'
 
 /** Services the mounted browser contribution requires. */
-export const inject = ['remote', 'slots', 'locale', 'sidebarRightTabs', 'sidebarRight', 'uiWorkspace']
+export const inject = ['remote', 'slots', 'locale', 'sessions', 'sidebarRightTabs', 'sidebarRight', 'uiWorkspace']
 
 /**
  * Register the locale dictionaries, polling controller, both Sidebar page types,
@@ -55,7 +66,27 @@ export const inject = ['remote', 'slots', 'locale', 'sidebarRightTabs', 'sidebar
  */
 function registerUi(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, DICTIONARIES), 'muse-insights: dictionaries')
+  ctx.effect(() => ctx.locale.register(MEMORY_NS, { en: memoryEn, zh: memoryZh }), 'muse-insights: memory dictionaries')
   const t = ctx.locale.bind(NS)
+  const memoryT = ctx.locale.bind(MEMORY_NS)
+  const memoryFlows = new Map<SessionId, ObservableSnapshot<readonly MemoryFlowItem[]>>()
+  ctx.slots.inject('conversation.view', () => ctx.slots.register({
+    name: 'conversation.view',
+    id: 'memory',
+    order: 20,
+    locale: MEMORY_NS,
+    label: () => memoryT('tab'),
+    inject: (sessionId: SessionId): MemoryViewInjected => {
+      let flow = memoryFlows.get(sessionId)
+      if (flow === undefined) {
+        const binding = ctx.sessions.binding(sessionId)
+        if (binding === undefined) throw new Error(`muse-insights: session "${sessionId}" is unavailable`)
+        flow = createMemoryFlowSource(binding.eventSource)
+        memoryFlows.set(sessionId, flow)
+      }
+      return { flow }
+    },
+  }, MemoryView))
   const source = createInsightsSource()
   // A detail page the reload restored carries no navigation parameters, so its
   // kind remembers the item each tab last showed for as long as that layout lives.
@@ -115,15 +146,35 @@ function registerUi(ctx: ClientContext): void {
   // namespaces, and only where Settings provides the shared configuration
   // forms. A profile without that client surface keeps the insight surfaces above.
   ctx.inject(['configForms'], (configCtx) => {
-    const config = new MuseInsightsConfigController(configCtx.configForms.get(CONFIG_ENTRY))
-    configCtx.effect(() => () => { config.dispose() }, 'muse-insights: configuration form')
+    const routes = new MuseRouteCatalog(configCtx.configForms.get<PiAiSection>(ROUTE_SETTINGS_NAMESPACE))
+    const config = new MuseInsightsConfigController(configCtx.configForms.get(CONFIG_ENTRY), routes)
+    configCtx.effect(() => () => {
+      routes.dispose()
+      config.dispose()
+    }, 'muse-insights: configuration form')
     configCtx.effect(() => configCtx.configForms.whileServed([CONFIG_ENTRY], () => configCtx.slots.inject('plugins.row.config', () => configCtx.slots.register({
       name: 'plugins.row.config',
       key: CONFIG_ROW_KEY,
       locale: NS,
       inject: () => config.inject(),
     }, MuseInsightsConfigPage))), 'muse-insights: configuration page')
-    registerSchemaRows(configCtx, configCtx.configForms, configCtx.locale.bind(NS), configCtx.slots.inject.bind(configCtx.slots))
+    registerSchemaRows(configCtx, configCtx.configForms, routes, configCtx.locale.bind(NS), configCtx.slots.inject.bind(configCtx.slots))
+    configCtx.effect(() => configCtx.configForms.whileServed([EMBEDDINGS_ENTRY], () => configCtx.slots.inject('plugins.row.config', () => configCtx.slots.register({
+      name: 'plugins.row.config',
+      key: EMBEDDINGS_ROW_KEY,
+      locale: MEMORY_NS,
+      inject: (): EmbeddingsPageInjected => ({
+        scope: configCtx.configForms.get(EMBEDDINGS_ENTRY),
+        probe: async (input, signal) => {
+          const result = await configCtx.remote.museInsights.probeEmbeddings(input, signal)
+          return result.ok ? result.value : { ok: false, detail: result.error.message, latencyMs: 0 }
+        },
+        status: async (signal) => {
+          const result = await configCtx.remote.museInsights.embeddingsStatus(signal)
+          return result.ok ? result.value : { available: false, enabled: false }
+        },
+      }),
+    }, EmbeddingsConfigPage))), 'muse-insights: embeddings page')
   })
 }
 
@@ -143,9 +194,9 @@ const SCHEMA_ROW_IDS: readonly string[] = ROW_PAGES.map(page => page.row)
  * @param mount - the slot injection the pages register through, owned by the calling plugin.
  */
 function registerSchemaRows(
-  ctx: ClientContext, forms: ConfigForms, t: (key: MuseInsightsKey) => string, mount: SlotInject,
+  ctx: ClientContext, forms: ConfigForms, routes: MuseRouteCatalog, t: (key: MuseInsightsKey) => string, mount: SlotInject,
 ): void {
-  ctx.effect(() => forms.whileServed(SCHEMA_ROW_IDS, () => serveRows(forms, t, ctx, mount)), 'muse-insights: row pages')
+  ctx.effect(() => forms.whileServed(SCHEMA_ROW_IDS, () => serveRows(forms, routes, t, ctx, mount)), 'muse-insights: row pages')
 }
 
 /** How long a row page waits for a live registration to publish before it owns the key. */
@@ -157,13 +208,14 @@ export const ROW_PAGE_SETTLE_MS = 250
  * still be about to register; the pages wait one settle step and re-read the
  * ledger before taking their keys.
  * @param forms - the shared configuration forms.
+ * @param routes - the configured provider and model choices a route field offers.
  * @param t - translate bound to the row copy dictionary.
  * @param ctx - the browser context whose slot ledger the pages re-read.
  * @param mount - the slot injection the pages register through.
  * @returns the disposer withdrawing the pages.
  */
 function serveRows(
-  forms: ConfigForms, t: (key: MuseInsightsKey) => string, ctx: ClientContext, mount: SlotInject,
+  forms: ConfigForms, routes: MuseRouteCatalog, t: (key: MuseInsightsKey) => string, ctx: ClientContext, mount: SlotInject,
 ): () => void {
   let off: (() => void) | undefined
   const register = (owned: readonly RowPage[]): void => {
@@ -171,7 +223,7 @@ function serveRows(
       for (const page of owned) {
         const key = rowConfigKey(MUSE_BUNDLE, page.row)
         if (registeredRowKeys(ctx).has(key)) continue
-        const controller = new RowFormController(forms.get(page.row), page.sections, () => t(page.title))
+        const controller = new RowFormController(forms.get(page.row), page.sections, () => t(page.title), routes)
         yield () => { controller.dispose() }
         yield ctx.slots.register({
           name: 'plugins.row.config',

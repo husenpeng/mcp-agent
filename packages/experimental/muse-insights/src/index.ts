@@ -21,7 +21,9 @@ import type {} from '@tomato/session-query'
 import type { Domain } from '@tomato/storage-domain'
 import type {} from '@tomato/tool-todo'
 import { buildUnfinishedTasks } from './analyze.ts'
-import { collectDay, collectTodos, type CorpusReadOptions, type DayCorpus } from './collect.ts'
+import {
+  collectDay, collectTodos, type CollectedDay, type CorpusReadOptions, type DayCorpus,
+} from './collect.ts'
 import { dayRange, daysBefore, type DayRange } from './day.ts'
 import {
   analysisKey,
@@ -29,10 +31,15 @@ import {
   recapKey,
   servedRecap,
   type StoredAnalysis,
+  type StoredDailyRecap,
   type StoredRecap,
 } from './domain.ts'
 import { summarizeDay, type SummarySettings } from './summarize.ts'
-import type { MuseInsightsSnapshot, UnfinishedAnalysis } from './types.ts'
+import type {
+  DailyRecap, EmbeddingsProbeInput, EmbeddingsProbeResult, EmbeddingsStatusView, EmbeddingsUsageView,
+  MuseInsightsSnapshot, RecapSessionHighlight, UnfinishedAnalysis,
+} from './types.ts'
+import { probeEmbeddingsEndpoint } from '@tomato/experimental-embeddings-http'
 
 export type * from './types.ts'
 
@@ -45,11 +52,11 @@ declare module '@tomato/cordis' {
 
 /** Generation and retention policy for the capability. Every field is live-editable. */
 export interface Config {
-  /** Minutes between daily-recap attempts; omission defaults to 30. */
-  recapIntervalMinutes?: Volatile<number>
-  /** Minutes between unfinished-task analyses; omission defaults to 15. */
-  taskIntervalMinutes?: Volatile<number>
-  /** Seconds after activation before the first background attempt; omission defaults to 5. */
+  /** Minutes between recap popups; omission defaults to 240. */
+  recapNoticeMinutes?: Volatile<number>
+  /** Minutes between summary runs that refresh the day's recap and unfinished tasks; omission defaults to 120. */
+  summaryIntervalMinutes?: Volatile<number>
+  /** Seconds after activation before the first background run; omission defaults to 5. */
   initialDelaySeconds?: Volatile<number>
   /** Local days of Session creation retained as recap and task evidence; omission defaults to 7. */
   lookbackDays?: Volatile<number>
@@ -69,7 +76,7 @@ export interface Config {
   maxTasks?: Volatile<number>
   /** Retained local days of recaps per owner; omission defaults to 30. */
   maxRecapDays?: Volatile<number>
-  /** Explicit recap provider route; omission follows the latest Session request route. */
+  /** Explicit recap provider route; omission defaults to the deployment route. */
   provider?: Volatile<string | undefined>
   /** Explicit recap model id; always paired with `provider`. */
   model?: Volatile<string | undefined>
@@ -77,8 +84,8 @@ export interface Config {
 
 /** Fully resolved policy. */
 interface ResolvedConfig extends SummarySettings {
-  readonly recapIntervalMs: number
-  readonly taskIntervalMs: number
+  readonly noticeIntervalMs: number
+  readonly summaryIntervalMs: number
   readonly initialDelayMs: number
   readonly lookbackDays: number
   readonly lookbackMs: number
@@ -91,8 +98,8 @@ interface ResolvedConfig extends SummarySettings {
 
 /** Raw Loader input before each volatile field becomes its live reference. */
 interface ConfigInput {
-  recapIntervalMinutes?: number
-  taskIntervalMinutes?: number
+  recapNoticeMinutes?: number
+  summaryIntervalMinutes?: number
   initialDelaySeconds?: number
   lookbackDays?: number
   maxSessions?: number
@@ -107,10 +114,16 @@ interface ConfigInput {
   model?: string
 }
 
+/** Provider route the shipped deployment serves for auxiliary recaps. */
+export const DEFAULT_RECAP_PROVIDER = 'blueai'
+
+/** Model id the shipped deployment serves for auxiliary recaps. */
+export const DEFAULT_RECAP_MODEL = 'DeepSeek-V4.1-Flash-1017'
+
 /** Loader schema; the generated configuration catalog is the exhaustive field source. */
 export const Config: z<ConfigInput, Config> = z.object({
-  recapIntervalMinutes: z.number().step(1).min(1).max(1_440).default(30).volatile(),
-  taskIntervalMinutes: z.number().step(1).min(1).max(1_440).default(15).volatile(),
+  recapNoticeMinutes: z.number().step(1).min(1).max(1_440).default(240).volatile(),
+  summaryIntervalMinutes: z.number().step(1).min(1).max(1_440).default(120).volatile(),
   initialDelaySeconds: z.number().step(1).min(1).max(3_600).default(5).volatile(),
   lookbackDays: z.number().step(1).min(1).max(365).default(7).volatile(),
   maxSessions: z.number().step(1).min(1).max(200).default(20).volatile(),
@@ -121,8 +134,8 @@ export const Config: z<ConfigInput, Config> = z.object({
   timeoutMs: z.number().step(1).min(1_000).max(2_147_483_647).default(60_000).volatile(),
   maxTasks: z.number().step(1).min(1).max(200).default(30).volatile(),
   maxRecapDays: z.number().step(1).min(1).max(365).default(30).volatile(),
-  provider: z.string().volatile(),
-  model: z.string().volatile(),
+  provider: z.string().default(DEFAULT_RECAP_PROVIDER).volatile(),
+  model: z.string().default(DEFAULT_RECAP_MODEL).volatile(),
 })
 
 /**
@@ -139,17 +152,17 @@ function resolveConfig(config: Config): ResolvedConfig {
     }
     return resolved
   }
-  const recapMinutes = integer(config.recapIntervalMinutes?.get(), 'recapIntervalMinutes', 1, 1_440, 30)
-  const taskMinutes = integer(config.taskIntervalMinutes?.get(), 'taskIntervalMinutes', 1, 1_440, 15)
+  const noticeMinutes = integer(config.recapNoticeMinutes?.get(), 'recapNoticeMinutes', 1, 1_440, 240)
+  const summaryMinutes = integer(config.summaryIntervalMinutes?.get(), 'summaryIntervalMinutes', 1, 1_440, 120)
   const lookbackDays = integer(config.lookbackDays?.get(), 'lookbackDays', 1, 365, 7)
-  const provider = config.provider?.get()?.trim()
-  const model = config.model?.get()?.trim()
-  if ((provider === undefined) !== (model === undefined) || provider === '' || model === '') {
-    throw new TypeError('muse-insights: provider and model must be supplied together as non-empty strings')
+  const provider = (config.provider?.get() ?? DEFAULT_RECAP_PROVIDER).trim()
+  const model = (config.model?.get() ?? DEFAULT_RECAP_MODEL).trim()
+  if (provider === '' || model === '') {
+    throw new TypeError('muse-insights: provider and model must be non-empty strings')
   }
   return {
-    recapIntervalMs: recapMinutes * 60_000,
-    taskIntervalMs: taskMinutes * 60_000,
+    noticeIntervalMs: noticeMinutes * 60_000,
+    summaryIntervalMs: summaryMinutes * 60_000,
     initialDelayMs: integer(config.initialDelaySeconds?.get(), 'initialDelaySeconds', 1, 3_600, 5) * 1_000,
     lookbackDays,
     lookbackMs: lookbackDays * 86_400_000,
@@ -161,7 +174,36 @@ function resolveConfig(config: Config): ResolvedConfig {
     timeoutMs: integer(config.timeoutMs?.get(), 'timeoutMs', 1_000, 2_147_483_647, 60_000),
     maxTasks: integer(config.maxTasks?.get(), 'maxTasks', 1, 200, 30),
     maxRecapDays: integer(config.maxRecapDays?.get(), 'maxRecapDays', 1, 365, 30),
-    ...provider === undefined || model === undefined ? {} : { provider, model },
+    provider,
+    model,
+  }
+}
+
+/**
+ * Merge one window's accepted recap into the day's retained values: counts add,
+ * and the newest highlight for a Session wins while earlier ones keep their order.
+ * @param previous - the day's retained recap, absent on the first run.
+ * @param current - the recap produced from this window's evidence.
+ * @param collected - the window the current recap describes.
+ * @returns the stored day recap.
+ */
+function mergedRecap(
+  previous: StoredDailyRecap | undefined,
+  current: DailyRecap,
+  collected: CollectedDay,
+): StoredDailyRecap {
+  if (previous === undefined) return current
+  const seen = new Set<string>()
+  const sessions: RecapSessionHighlight[] = []
+  for (const highlight of [...current.sessions, ...previous.sessions]) {
+    if (seen.has(highlight.sessionId)) continue
+    seen.add(highlight.sessionId)
+    sessions.push(highlight)
+  }
+  return {
+    ...current,
+    sessions: sessions.slice(0, 200),
+    messageCount: previous.messageCount + collected.messageCount,
   }
 }
 
@@ -231,17 +273,22 @@ export default class MuseInsights extends TypertRemoteService {
   /** Mount the timers when they are absent or the configured cadence moved. */
   private startTimers(): void {
     if (this.closing) return
-    const { initialDelayMs, taskIntervalMs, recapIntervalMs } = this.policy()
-    const cadence = `${initialDelayMs}:${taskIntervalMs}:${recapIntervalMs}`
+    const { initialDelayMs, summaryIntervalMs } = this.policy()
+    const cadence = `${initialDelayMs}:${summaryIntervalMs}`
     if (this.timerFiber !== undefined && cadence === this.timerCadence) return
     void this.timerFiber?.dispose()
     this.timerCadence = cadence
     this.timerFiber = this.ctx.inject(['timer'], (child) => {
-      const initial = child.timeout(() => { this.requestTasks(); this.requestRecap() }, initialDelayMs)
-      const tasks = child.interval(() => { this.requestTasks() }, taskIntervalMs)
-      const recap = child.interval(() => { this.requestRecap() }, recapIntervalMs)
-      return () => { initial(); tasks(); recap() }
+      const initial = child.timeout(() => { this.runSummary() }, initialDelayMs)
+      const summary = child.interval(() => { this.runSummary() }, summaryIntervalMs)
+      return () => { initial(); summary() }
     })
+  }
+
+  /** Refresh the day's recap and the unfinished-task analysis from new evidence. */
+  private runSummary(): void {
+    this.requestTasks()
+    this.requestRecap()
   }
 
   /**
@@ -257,11 +304,14 @@ export default class MuseInsights extends TypertRemoteService {
     const config = this.policy()
     const value = this.snapshotOf(owner, now)
     if (owner !== undefined && !this.closing) {
-      const stale = value.unfinished.analyzedAt === 0 || now - value.unfinished.analyzedAt >= config.taskIntervalMs
-      if (stale) this.requestTasks()
-      if (value.recap === null || value.recap.day !== value.day) {
+      const staleTasks = value.unfinished.analyzedAt === 0 || now - value.unfinished.analyzedAt >= config.summaryIntervalMs
+      if (staleTasks) this.requestTasks()
+      const recap = value.recap
+      const sameDay = recap !== null && recap.day === value.day
+      const recapStale = !sameDay || now - recap.generatedAt >= config.summaryIntervalMs
+      if (recapStale) {
         const key = recapKey(owner, value.day)
-        if (now - (this.recapAttempts.get(key) ?? 0) >= config.recapIntervalMs) this.requestRecap()
+        if (now - (this.recapAttempts.get(key) ?? 0) >= config.summaryIntervalMs) this.requestRecap()
       }
     }
     return Promise.resolve(value)
@@ -284,6 +334,39 @@ export default class MuseInsights extends TypertRemoteService {
     return this.snapshotOf(this.owner(), Date.now())
   }
 
+  /**
+   * Probe one staged embedding endpoint from the Host, resolving its credential
+   * the way the mounted provider does.
+   * @param input - endpoint, model, expected length, and credential name.
+   * @param signal - caller cancellation.
+   * @returns whether a vector came back, its length, and the latency.
+   */
+  @Remote
+  async probeEmbeddings(input: EmbeddingsProbeInput, signal: AbortSignal): Promise<EmbeddingsProbeResult> {
+    signal.throwIfAborted()
+    return await probeEmbeddingsEndpoint(this.ctx, input, signal)
+  }
+
+  /**
+   * Read the mounted provider's state and cumulative usage.
+   * @param signal - caller cancellation, checked before the read.
+   * @returns availability, the live switch, model identity, and counters.
+   */
+  @Remote
+  embeddingsStatus(signal: AbortSignal): Promise<EmbeddingsStatusView> {
+    signal.throwIfAborted()
+    const embeddings = this.ctx.get('embeddings')
+    if (embeddings === undefined) return Promise.resolve({ available: false, enabled: false })
+    const usage: EmbeddingsUsageView = embeddings.usage
+    return Promise.resolve({
+      available: true,
+      enabled: embeddings.enabled,
+      model: embeddings.model,
+      dimensions: embeddings.dimensions,
+      usage,
+    })
+  }
+
   /** Snapshot for one resolved owner and instant. */
   private snapshotOf(owner: string | undefined, now: number): MuseInsightsSnapshot {
     const day = dayRange(now)
@@ -297,6 +380,7 @@ export default class MuseInsights extends TypertRemoteService {
       recap: recap === undefined ? null : servedRecap(recap.recap),
       unfinished: analysis,
       analyzing: this.tasksRunning || this.recapRunning,
+      noticeIntervalMs: this.policy().noticeIntervalMs,
     }
   }
 
@@ -392,7 +476,7 @@ export default class MuseInsights extends TypertRemoteService {
     }
   }
 
-  /** Summarize one local day when its evidence is new, then retain and prune it. */
+  /** Summarize the day's new evidence, merge it into the retained recap, then prune. */
   private async executeRecap(owner: string, day: DayRange): Promise<void> {
     if (this.domain === undefined) return
     const signal = this.stopped.signal
@@ -400,30 +484,34 @@ export default class MuseInsights extends TypertRemoteService {
     try {
       const now = Date.now()
       const config = this.policy()
+      const previous = this.recaps.get(owner)?.get(day.key)
       const collected = await collectDay(this.corpus(), {
         signal,
         earliestCreatedAt: daysBefore(day.start, config.lookbackDays),
         maxSessions: config.maxSessions,
         day,
+        ...previous === undefined ? {} : { since: Math.max(previous.latestEventTime, day.start) },
         maxMessageChars: config.maxMessageChars,
         maxMessagesPerSession: config.maxMessagesPerSession,
       })
       if (collected.messageCount === 0) return
-      const previous = this.recaps.get(owner)?.get(day.key)
-      const modelRoute = config.provider !== undefined || collected.route !== undefined
-      if (previous !== undefined && previous.latestEventTime >= collected.latestEventTime
-        && (previous.recap.source === 'model' || !modelRoute)) return
+      if (previous !== undefined && collected.latestEventTime <= previous.latestEventTime) return
       signal.throwIfAborted()
-      const outcome = await summarizeDay(this.ctx, config, collected, day.key, now, signal)
+      const outcome = await summarizeDay(
+        this.ctx, config, collected, day.key, now, signal,
+        previous === undefined ? undefined : servedRecap(previous.recap),
+      )
       signal.throwIfAborted()
       if (outcome.failure !== undefined) {
         this.warn('daily recap model call failed; retained evidence is unchanged', outcome.failure)
         if (previous !== undefined) return
       }
+      // A deterministic window recap never overwrites a model-written day.
+      if (previous !== undefined && outcome.recap.source === 'local') return
       const record: StoredRecap = {
         owner,
-        recap: outcome.recap,
-        latestEventTime: collected.latestEventTime,
+        recap: mergedRecap(previous?.recap, outcome.recap, collected),
+        latestEventTime: Math.max(previous?.latestEventTime ?? 0, collected.latestEventTime),
         ...outcome.model === undefined ? {} : { model: outcome.model },
       }
       await this.domain.table('recaps').put(recapKey(owner, day.key), record)
