@@ -598,6 +598,29 @@ it('installs only valid bundle declarations and honors installation without acti
   expect(another).toMatchObject({ application: 'applied', bundle: 'another-bundle' })
   expect(another).not.toHaveProperty('version')
   expect((await manager.listBundles()).find(row => row.name === 'another-bundle')?.enabled).toBe(true)
+
+})
+
+it('reports the version it installed when the spec named one this TOMATO rejects', async () => {
+  const { manager, dir, bundle } = await fixture()
+  const install = vi.spyOn(operations, 'runProfilePnpm').mockImplementation(async (_context, args) => {
+    const name = String(args[1]).split('@')[0] as string
+    bundle(name, [{ id: name, name: './plugin.mjs', config: { service: name } }])
+    const manifest = readProfileManifest('test', dir)
+    manifest.dependencies = { ...manifest.dependencies, [name]: '0.9.0' }
+    writeFileSync(join(dir, 'package.json'), JSON.stringify(manifest))
+    return {
+      exitCode: 0, output: 'installed', truncated: false, logPath: join(dir, 'pnpm.log'),
+      substituted: [{ requested: 'demo@1.0.0', selected: 'demo@0.9.0', requirements: '@tomato/agent ^0.2.2-rc.1' }],
+    }
+  })
+  onTestFinished(() => { install.mockRestore() })
+  expect(await manager.installBundle('demo@1.0.0')).toMatchObject({
+    application: 'applied',
+    bundle: 'demo',
+    substituted: [{ requested: 'demo@1.0.0', selected: 'demo@0.9.0', requirements: '@tomato/agent ^0.2.2-rc.1' }],
+    packageResult: { substituted: [{ requested: 'demo@1.0.0' }] },
+  })
 })
 
 it('reports blocked scripts after a failed installation and retries only after explicit profile build approval', async () => {
@@ -1934,6 +1957,22 @@ it('updates a registry bundle by removing it and installing the exact newer vers
   expect(ctx.get('managedProbe')).toBe(true)
 })
 
+it('updates to the newest version this TOMATO admits when the requested one is incompatible', async () => {
+  const { manager, dir, bundle } = await fixture()
+  const view = viewAnswers(extraRegistry)
+  const pnpm = extraPnpm(dir, bundle)
+  const updated = await manager.updateBundle('extra', '2.0.0')
+  expect(updated).toMatchObject({
+    from: '1.0.0', to: '1.2.0', step: 'install',
+    substituted: { requested: 'extra@2.0.0', selected: 'extra@1.2.0', requirements: '@tomato/cli >=999.0.0' },
+    result: { application: 'applied', version: '1.2.0' },
+  })
+  expect(pnpm.mock.calls.map(call => call[1])).toEqual([['remove', 'extra'], ['add', 'extra@1.2.0', '--save-exact']])
+  expect(readProfileManifest('test', dir).dependencies?.extra).toBe('1.2.0')
+  // The requested version is read once, then the listing and each candidate until one qualifies.
+  expect(view.mock.calls.map(call => call[1])).toEqual(['extra@2.0.0', 'extra', 'extra@2.0.0', 'extra@1.2.0'])
+})
+
 it('installs the removed version again when the target fails to install', async () => {
   const { manager, dir, bundle } = await fixture()
   viewAnswers(extraRegistry)
@@ -2016,9 +2055,10 @@ it('reports a reinstallation that fails too, leaving the package uninstalled', a
 
 it('refuses an update before changing anything when the target is not a newer compatible bundle', async () => {
   const { manager, dir, bundle } = await fixture()
-  viewAnswers((spec, fields) => spec === 'extra@3.0.0' ? { exitCode: 1, stdout: '', stderr: 'ERR_PNPM_NO_MATCHING_VERSION  No matching version found for extra@3.0.0', timedOut: false }
-    : spec === 'extra@1.5.0' ? { name: 'extra', version: '1.5.0', peerDependencies: { '@tomato/cli': 7 }, tomato: BUNDLE }
-      : extraRegistry(spec, fields))
+  viewAnswers((spec, fields) => fields.includes('versions') ? { versions: ['2.0.0'] }
+    : spec === 'extra@3.0.0' ? { exitCode: 1, stdout: '', stderr: 'ERR_PNPM_NO_MATCHING_VERSION  No matching version found for extra@3.0.0', timedOut: false }
+      : spec === 'extra@1.5.0' ? { name: 'extra', version: '1.5.0', peerDependencies: { '@tomato/cli': 7 }, tomato: BUNDLE }
+        : extraRegistry(spec, fields))
   const pnpm = extraPnpm(dir, bundle)
   const before = readFileSync(join(dir, 'package.json'), 'utf8')
   const refused = async (name: string, version: string) => (await manager.updateBundle(name, version)).result.error

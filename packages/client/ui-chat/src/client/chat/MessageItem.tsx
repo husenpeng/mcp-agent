@@ -164,11 +164,14 @@ function TurnMaxTokensItem({ t }: {
 function UserStyleBubble({
   content, loadImage, renderFactorySlot, actions, pending = false, echo = false, batchStart = false,
   referenceLabels, skillNames, previewAttachments, facts: inputFacts = EMPTY_TEXT_FACTS, interactive = false,
+  retracted,
 }: {
   content: readonly unknown[]
   renderFactorySlot: PropsRenderFactories['renderFactorySlot']
   /** Optional IconActions (or similar) below the bubble; receives the joined text. */
   actions?: (text: string) => ReactNode
+  /** Localized note shown when a later retraction removed this exchange from model history. */
+  retracted?: string | undefined
   /** Whether this is the Host-authoritative pre-admission steering projection. */
   pending?: boolean
   /** Whether this is a local submission echo (invisible marker; the echo renders exactly like its durable replacement). */
@@ -202,6 +205,7 @@ function UserStyleBubble({
       data-pending-steering={pending || undefined}
       data-submission-echo={echo || undefined}
       data-chat-steering-batch={batchStart ? 'start' : undefined}
+      data-retracted={retracted === undefined ? undefined : true}
     >
       {renderFactorySlot('conversation.chat.user.content', {
         content: prepared,
@@ -209,6 +213,7 @@ function UserStyleBubble({
         facts,
         interactive,
       })}
+      {retracted === undefined ? null : <span className={css.retractedNote}>{retracted}</span>}
       {actions?.(prepared.text)}
     </div>
   )
@@ -299,9 +304,11 @@ export function PendingSubmissionBubble({ submission, loadImage, renderFactorySl
 
 /** User and admitted-steering keyed Chat renderer. */
 export const UserMessageNodeView = memo(function UserMessageNodeView({
-  node, renderFactorySlot, loadImage, t,
+  node, renderFactorySlot, loadImage, retractAt, retractable, t,
 }: ChatNodeViewProps<'user' | 'steering'>) {
   const data = node.data
+  const retracted = node.kind === 'user' && node.data.retracted === true
+  const [retracting, setRetracting] = useState(false)
   return (
     <UserStyleBubble
       content={data.content}
@@ -309,6 +316,7 @@ export const UserMessageNodeView = memo(function UserMessageNodeView({
       renderFactorySlot={renderFactorySlot}
       loadImage={loadImage}
       batchStart={node.kind === 'steering' && node.data.batchStart === true}
+      retracted={retracted ? t('message.retracted') : undefined}
       {...data.referenceLabels === undefined ? {} : { referenceLabels: data.referenceLabels }}
       {...data.skillNames === undefined ? {} : { skillNames: data.skillNames }}
       actions={text => (
@@ -317,6 +325,13 @@ export const UserMessageNodeView = memo(function UserMessageNodeView({
           time={data.time}
           clock="start"
           className={css.actions}
+          onRetract={node.kind === 'user' && retractable === true && !retracted && !retracting
+            ? () => {
+              setRetracting(true)
+              void retractAt(data.seq, text)
+                .then(() => { setRetracting(false) }, () => { setRetracting(false) })
+            }
+            : undefined}
           t={t}
         />
       )}

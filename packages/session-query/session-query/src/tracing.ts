@@ -203,6 +203,13 @@ function analyzeEventLog(
       replacedBy.set(removedSeq, replacement.seq)
     }
   }
+  for (const retraction of folded.retractions) {
+    const removed = retraction.removedSeqs
+    replacedEventSeqs.set(retraction.seq, removed)
+    for (const removedSeq of removed) {
+      replacedBy.set(removedSeq, retraction.seq)
+    }
+  }
   return {
     records: events.map(event => ({
       sessionId,

@@ -187,7 +187,7 @@ describe('robot Remote controller', () => {
         list: async (options: unknown) => {
           queries.push(options)
           return [
-            { name: 'office-docx', description: 'Create Word documents' },
+            { name: 'office-docx', description: 'Create Word documents', path: '/work/alpha/.agents/skills/office-docx/SKILL.md' },
             { name: 'quiet-skill', description: '' },
           ]
         },
@@ -205,7 +205,12 @@ describe('robot Remote controller', () => {
 
       await expect(ctx.robotController.capabilities({ cwd: '/work/alpha' })).resolves.toEqual({
         skills: [
-          { value: 'office-docx', label: 'office-docx', description: 'Create Word documents' },
+          {
+            value: 'office-docx',
+            label: 'office-docx',
+            description: 'Create Word documents',
+            path: '/work/alpha/.agents/skills/office-docx',
+          },
           { value: 'quiet-skill', label: 'quiet-skill' },
         ],
         tools: [
@@ -216,7 +221,7 @@ describe('robot Remote controller', () => {
           { value: 'web', label: 'web' },
           { value: 'github', label: 'github' },
         ],
-        workspaceRoots: [{ value: '/work/alpha', label: 'Alpha' }],
+        workspaceRoots: [{ value: '/work/alpha', label: 'Alpha', path: '/work/alpha' }],
       })
       await ctx.robotController.capabilities({})
       expect(queries).toEqual([{ cwd: '/work/alpha' }, {}])

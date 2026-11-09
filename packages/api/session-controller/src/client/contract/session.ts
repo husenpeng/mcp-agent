@@ -112,6 +112,14 @@ export interface ISession {
    */
   cancel(): Promise<RemoteResult<{ accepted: true }>>
   /**
+   * Retract the trailing human exchange from model history. The seq must name
+   * the turn-opening human prompt of the last turn; a running turn is cancelled
+   * and settled by the Host first.
+   * @param atSeq - seq of the human `user/message` to retract.
+   * @returns the committed removal range, or the business error.
+   */
+  retract(atSeq: number): Promise<RemoteResult<{ accepted: true; startSeq: number; endSeq: number }>>
+  /**
    * Rename this session (explicit user title; pins it against automatic
    * regeneration).
    * @param title - raw title text (the host normalizes acceptance).

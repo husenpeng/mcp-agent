@@ -182,6 +182,150 @@ describe('hand-declared providers', () => {
     expect(resolved.get('acme-gateway')?.configuredMaxTokens.get('sized')).toBe(512)
   })
 
+  it('inherits a first-party model’s capacities and cache markers on a gateway', () => {
+    const claude = getBuiltinModels('anthropic').find(model => model.id === 'claude-opus-5-5')
+    if (claude === undefined) throw new Error('the installed catalog ships no Claude Opus 5.5')
+    const resolved = resolveProfiles({
+      'acme-gateway': {
+        api: 'openai-completions',
+        baseURL: 'https://acme.test',
+        models: [{ id: 'claude-opus-5-5' }],
+      },
+    }).get('acme-gateway')
+    const model = resolved?.piProvider?.getModels().find(candidate => candidate.id === 'claude-opus-5-5')
+
+    expect(model).toMatchObject({
+      contextWindow: claude.contextWindow,
+      maxTokens: claude.maxTokens,
+      input: claude.input,
+      promptCache: claude.promptCache,
+    })
+    // The gateway speaks OpenAI's request shape but Anthropic's cache markers;
+    // without a breakpoint it caches nothing and every step bills the history.
+    expect(model?.compat).toEqual({ cacheControlFormat: 'anthropic' })
+    // The vendor reasons natively; this protocol does not carry that metadata,
+    // so the route must declare its own effort levels or get no control.
+    expect(model?.reasoning).toBe(false)
+  })
+
+  it('inherits first-party compat on a native gateway route', () => {
+    const resolved = resolveProfiles({
+      'acme-claude': {
+        api: 'anthropic-messages',
+        baseURL: 'https://acme.test',
+        models: [{ id: 'claude-opus-5-5' }],
+      },
+    }).get('acme-claude')
+    const model = resolved?.piProvider?.getModels().find(candidate => candidate.id === 'claude-opus-5-5')
+
+    expect(model?.compat).toMatchObject({
+      forceAdaptiveThinking: true,
+      supportsMidConvoSystemMessages: true,
+      supportsMidConvoToolChanges: true,
+      supportsStrictTools: true,
+    })
+  })
+
+  it('normalizes gateway spelling and keeps explicit capacities over the catalog', () => {
+    const resolved = resolveProfiles({
+      'acme-gateway': {
+        api: 'openai-completions',
+        baseURL: 'https://acme.test',
+        models: [
+          { id: 'claude-opus-4.7' },
+          { id: 'claude-opus-5-5', contextWindow: 200_000, maxTokens: 64_000 },
+        ],
+      },
+    }).get('acme-gateway')
+    const models = resolved?.piProvider?.getModels() ?? []
+
+    expect(models.find(model => model.id === 'claude-opus-4.7')?.contextWindow).toBe(1_000_000)
+    expect(models.find(model => model.id === 'claude-opus-5-5')).toMatchObject({
+      contextWindow: 200_000,
+      maxTokens: 64_000,
+    })
+  })
+
+  it('normalizes vendor prefixes and keeps an explicit cache convention', () => {
+    const resolved = resolveProfiles({
+      'acme-gateway': {
+        api: 'openai-completions',
+        baseURL: 'https://acme.test',
+        models: [
+          { id: 'anthropic/claude-opus-4-7' },
+          { id: 'opus-5-5' },
+          { id: 'claude-opus-5-5', compat: { cacheControlFormat: 'anthropic' } },
+        ],
+      },
+      'acme-cache': {
+        api: 'openai-completions',
+        baseURL: 'https://acme-cache.test',
+        compat: { cacheControlFormat: 'anthropic' },
+        models: [{ id: 'claude-opus-5-5' }],
+      },
+    })
+    const models = (route: string): readonly Model<Api>[] => resolved.get(route)?.piProvider?.getModels() ?? []
+
+    expect(models('acme-gateway').find(model => model.id === 'anthropic/claude-opus-4-7')?.contextWindow).toBe(1_000_000)
+    expect(models('acme-gateway').find(model => model.id === 'opus-5-5')?.contextWindow).toBe(1_000_000)
+    // A deployment that already named the marker convention keeps it; the
+    // adapter default must not overwrite an explicit choice.
+    expect(models('acme-gateway').find(model => model.id === 'claude-opus-5-5')?.compat)
+      .toEqual({ cacheControlFormat: 'anthropic' })
+    expect(models('acme-cache')[0]?.compat).toEqual({ cacheControlFormat: 'anthropic' })
+  })
+
+  it('takes capabilities only from the model family’s own providers', () => {
+    const qwen = getBuiltinModels('qwen-token-plan').find(model => model.id === 'qwen3.8-max')
+    if (qwen === undefined) throw new Error('the installed catalog ships no Qwen 3.8 Max')
+    const resolved = resolveProfiles({
+      'acme-gateway': {
+        api: 'openai-completions',
+        baseURL: 'https://acme.test',
+        models: [{ id: 'qwen3.8-max' }, { id: 'deepseek-v4.1-flash' }],
+      },
+    }).get('acme-gateway')
+    const models = resolved?.piProvider?.getModels() ?? []
+
+    expect(models.find(model => model.id === 'qwen3.8-max')).toMatchObject({
+      contextWindow: qwen.contextWindow,
+      maxTokens: qwen.maxTokens,
+    })
+    // The Qwen plan lists this DeepSeek model with its own cap; a DeepSeek id
+    // must not adopt a reseller's limit when the vendor catalog omits it.
+    expect(models.find(model => model.id === 'deepseek-v4.1-flash')).toMatchObject({
+      contextWindow: 1_000_000,
+      maxTokens: 128_000,
+    })
+  })
+
+  it('sends Anthropic cache markers for an inherited Claude gateway model', async () => {
+    const server = await mockServer([{ events: textEvents }])
+    const ctx = await harness({
+      providers: {
+        'acme-gateway': {
+          apiKeyEnv: KEY_ENV,
+          api: 'openai-completions',
+          baseURL: `${server.url}/v1`,
+          models: [{ id: 'claude-opus-5-5' }],
+        },
+      },
+    })
+
+    await assemble(ctx, {
+      provider: 'acme-gateway',
+      model: 'claude-opus-5-5',
+      messages: [createUserMessage({
+        content: [{ type: 'text', text: 'hi' }],
+        source: { kind: 'test' },
+      })],
+    })
+
+    const body = server.requests[0] as { messages: { role: string; content: unknown }[] }
+    const last = body.messages.findLast(message => message.role === 'user')
+    expect(last?.content).toMatchObject([{ type: 'text', text: 'hi', cache_control: { type: 'ephemeral' } }])
+  })
+
   it('takes a model’s declared modalities, then the catalog’s, then the route’s', () => {
     const vision = getBuiltinModels('anthropic').find(model => model.input.includes('image'))
     if (vision === undefined) throw new Error('the installed catalog ships no anthropic vision model')

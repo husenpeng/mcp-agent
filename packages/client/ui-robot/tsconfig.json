@@ -21,6 +21,12 @@
       "path": "../../../vendor/cordis"
     },
     {
+      "path": "../../util/branded"
+    },
+    {
+      "path": "../../util/values"
+    },
+    {
       "path": "../locale/tsconfig.client.json"
     },
     {
@@ -46,6 +52,9 @@
     },
     {
       "path": "../ui-slots"
+    },
+    {
+      "path": "../ui-tool"
     },
     {
       "path": "../../api/remote-access/tsconfig.client.json"

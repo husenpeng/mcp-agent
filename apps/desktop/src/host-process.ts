@@ -2,7 +2,7 @@
 
 import { spawn, type ChildProcess } from 'node:child_process'
 import { join } from 'node:path'
-import type { PlatformSession } from '@tomato/deepseek-account'
+import type { PlatformSession } from '@tomato/account-service'
 import { desktopNodeEnvironment } from './node-environment.ts'
 
 interface ReadyEvent {

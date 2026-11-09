@@ -2,6 +2,8 @@
 import { memo, type ReactElement } from 'react'
 import type { PendingSubmission } from '@tomato/api-session-controller/client'
 import { assertNever } from '@tomato/util-values'
+import type { ChatNode } from '../contract/chat-nodes.ts'
+import type { ChatSnapshot } from '../contract/snapshot.ts'
 import type { ChatFlowSlotProps } from '../contract/slots.ts'
 import { ChatNodeSeat } from './ChatNodeSeat.tsx'
 import { ChatGroupSeat } from './ChatGroupSeat.tsx'
@@ -22,15 +24,41 @@ function isTranscriptEcho(item: PendingInput): boolean {
   return isLocalSubmission(item) && item.placement === 'transcript'
 }
 
+/**
+ * Resolve the trailing human prompt whose exchange the Host may retract. The
+ * prompt must open the last Turn and must not be retracted already; a
+ * notice-woken Turn or a later steering message therefore offers no action.
+ */
+function trailingHumanInputKey(snapshot: ChatSnapshot): string | undefined {
+  const lastTurn = snapshot.timeline.turnOrder.at(-1)
+  if (lastTurn === undefined) return undefined
+  for (let index = snapshot.order.length - 1; index >= 0; index -= 1) {
+    const key = snapshot.order[index] as string
+    const node = snapshot.nodes.get(key) as ChatNode | undefined
+    if (node?.kind !== 'user') continue
+    if (node.data.retracted === true) return undefined
+    const location = node.location
+    return (location.kind === 'turn' || location.kind === 'step') && location.turn.turn === lastTurn
+      ? key
+      : undefined
+  }
+  return undefined
+}
+
 /** Render the flow without adding a DOM parent or changing keyed row positions. */
 export const ChatFlow = memo(function ChatFlow({
   entries, pendingInputs, lastInputTurn, deferCollapse,
   useSession, useChat, useChatNode, useChatNodeBottom, useChatNodeProcess, useChatGroup, usePresentation, useConnectionState,
   useStore, actions, renderSlot, renderFactorySlot, t, useGroupAction, useGroupHeaderAction,
-  cwd, openFile, inspectCall, forkAt, loadImage, fileMentions,
+  cwd, openFile, inspectCall, forkAt, retractAt, loadImage, fileMentions,
 }: ChatFlowSlotProps) {
   const nodeStore = useChat(snapshot => snapshot.nodes)
+  const candidateInputKey = useChat(snapshot => trailingHumanInputKey(snapshot))
   const running = useSession(snapshot => snapshot.running)
+  // A subagent transcript is owned by its parent task; retracting it would
+  // desynchronize the delegation result, so the Host accepts only ordinary Sessions.
+  const subagent = useSession(snapshot => snapshot.subagent !== null)
+  const trailingInputKey = subagent ? undefined : candidateInputKey
   const disconnected = useConnectionState(state => state === 'disconnected' || state === 'connecting')
   const latestTurnAnchor = useChat(snapshot => snapshot.navigation.items().at(-1)?.anchorKey)
   const runningStartTime = useChatNode(latestTurnAnchor ?? '', (node) => {
@@ -42,7 +70,7 @@ export const ChatFlow = memo(function ChatFlow({
   const seatProps = {
     nodeStore, useChatNode, useChatNodeBottom, useChatNodeProcess, usePresentation,
     useStore, actions, renderSlot, t, useGroupAction, deferCollapse,
-    cwd, openFile, inspectCall, forkAt, loadImage, fileMentions,
+    cwd, openFile, inspectCall, forkAt, retractAt, loadImage, fileMentions, trailingInputKey,
   }
   const rows = entries.map((entry) => {
     switch (entry.kind) {

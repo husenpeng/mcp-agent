@@ -47,7 +47,7 @@ A subprocess backend, then the tools; the spill backend is optional and makes ca
 
 | Tool | Arguments | Behavior |
 |---|---|---|
-| `glob` | `pattern`, `path?` | Finds files whose paths match a glob pattern, including hidden and ignored files but excluding VCS metadata; a pattern with no `/` matches basenames at any depth, so `*` matches the whole tree; complete results stay modification-time ordered |
+| `glob` | `pattern`, `path?`, `depth?`, `exclude?`, `hidden?` | Finds files whose paths match a glob pattern; defaults include hidden and ignored files but exclude VCS metadata; `depth` bounds traversal, `exclude` adds path globs, and `hidden: false` respects ignore files and skips dot names; a pattern with no `/` matches basenames at any depth, so a bare `*` still searches the whole tree; complete results stay modification-time ordered |
 | `grep` | `pattern`, `path?`, `include?` | Searches file contents with a ripgrep regex and returns matches grouped by file as `Line N: <preview>`; `include` is one positive glob filter, with comma-separated lists and negated values rejected up front |
 
 Routine budgets stay out of the model-facing schema: a model that needs surrounding context reads the matched file with `read`, and one that needs later results follows the returned spill locator's retrieval hint.
@@ -60,6 +60,8 @@ Routine budgets stay out of the model-facing schema: a model that needs surround
 |---|---|---|
 | `sampleOverCapGlobResults` | none (required) | `true` samples an over-cap `glob` page across top-level entries; `false` keeps the modification-time-ordered head |
 | `globMaxResults` | `100` | Max paths one `glob` call shows inline |
+| `globMaxDepth` | `16` | Largest traversal depth one `glob` call may request |
+| `globMaxExcludes` | `20` | Largest number of `exclude` patterns one `glob` call may add |
 | `grepMaxMatches` | `250` | Max flat matches one `grep` call retains inline; later matches go to the formatted spill artifact |
 | `grepMaxLineBytes` | `2000` | Byte cap per matched-line preview, preserving UTF-8 boundaries |
 | `rawOutputMaxBytes` | `20000000` | Max complete raw `rg` stdout a search will parse; larger raw output fails with `SEARCH_RAW_OUTPUT_OVERFLOW` |
@@ -141,7 +143,7 @@ At assembly time, each section checks `ctx.tools.get(name, scope)` and renders o
 ##### Glob guidance
 
 ```markdown
-Use the glob tool — not shell find — to discover files by path pattern.
+Use the glob tool — not shell find — to discover files by path pattern. For a directory view, use list_dir first; for large trees, pass depth or exclude instead of a bare recursive pattern.
 ```
 
 ##### Grep guidance

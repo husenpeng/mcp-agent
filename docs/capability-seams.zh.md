@@ -13,6 +13,16 @@ flowchart LR
   svc_actionCards["ctx.actionCards<br/>Optional action cards"]
   pkg_creation_recommendations["creation-recommendations"]
   pkg_client_ui_action_cards["client-ui-action-cards"]
+  pkg_experimental_robot_crew["experimental-robot-crew"]
+  svc_crews["ctx.crews<br/>Crew specification and run orchestration"]
+  pkg_experimental_robot_crew_local["experimental-robot-crew-local"]
+  pkg_api_robot_crew_controller["api-robot-crew-controller"]
+  pkg_experimental_tool_robot_crew["experimental-tool-robot-crew"]
+  svc_crewController["ctx.crewController<br/>Crew roster and run Remote"]
+  pkg_client_ui_robot_crew["client-ui-robot-crew"]
+  pkg_experimental_embeddings["experimental-embeddings"]
+  svc_embeddings["ctx.embeddings<br/>Text embedding provider"]
+  pkg_experimental_embeddings_http["experimental-embeddings-http"]
   pkg_experimental_memory["experimental-memory"]
   svc_memory["ctx.memory<br/>Profile and workspace memory records"]
   pkg_experimental_tool_memory["experimental-tool-memory"]
@@ -142,10 +152,12 @@ flowchart LR
   pkg_credentials["credentials"]
   svc_credentials["ctx.credentials<br/>Credential seam"]
   pkg_credentials_local["credentials-local"]
-  pkg_deepseek_account["deepseek-account"]
-  svc_deepseekAccount["ctx.deepseekAccount<br/>DeepSeek account"]
-  pkg_deepseek_account_platform["deepseek-account-platform"]
+  pkg_account_service["account-service"]
+  svc_account["ctx.account<br/>account-service"]
+  pkg_account_gateway["account-gateway"]
   pkg_api_account_controller["api-account-controller"]
+  pkg_web_deepseek_api["web-deepseek-api"]
+  pkg_web_search_deepseek["web-search-deepseek"]
   pkg_authorization["authorization"]
   svc_authorization["ctx.authorization<br/>Authorization flow registry"]
   pkg_client_product_analytics["client-product-analytics"]
@@ -292,8 +304,6 @@ flowchart LR
   svc_web["ctx.web<br/>Web access provider registry"]
   pkg_web_search_exa["web-search-exa"]
   pkg_web_search_perplexity["web-search-perplexity"]
-  pkg_web_search_deepseek["web-search-deepseek"]
-  pkg_web_deepseek_api["web-deepseek-api"]
   pkg_web_fetch_http["web-fetch-http"]
   pkg_spill["spill"]
   svc_spillStore["ctx.spillStore<br/>Spill storage seam"]
@@ -323,6 +333,8 @@ flowchart LR
   pkg_cordis_host_runner["cordis-host-runner"]
   svc_dynamicCordisRunner["ctx.dynamicCordisRunner<br/>Dynamic Cordis package host runner"]
   svc_cordisInspect["ctx.cordisInspect<br/>Dynamic Cordis inspect registry"]
+  pkg_account_gateway --> svc_account
+  pkg_account_service --> svc_account
   pkg_action_cards --> svc_actionCards
   pkg_agent --> svc_agents
   pkg_agent_default_model --> svc_agentDefaultModel
@@ -332,6 +344,7 @@ flowchart LR
   pkg_api_job_controller --> svc_jobController
   pkg_api_remote_access --> svc_remoteAccess
   pkg_api_robot_controller --> svc_robotController
+  pkg_api_robot_crew_controller --> svc_crewController
   pkg_api_session_controller --> svc_sessionController
   pkg_api_session_controller --> svc_sessionFileReferences
   pkg_api_session_controller --> svc_sessionSkillCatalog
@@ -365,8 +378,6 @@ flowchart LR
   pkg_credentials --> svc_credentials
   pkg_credentials_local --> svc_credentials
   pkg_cua --> svc_cuaAccess
-  pkg_deepseek_account --> svc_deepseekAccount
-  pkg_deepseek_account_platform --> svc_deepseekAccount
   pkg_deepseek_llm_api_extensions --> svc_deepseekLlmApiExtensions
   pkg_experimental_agent_team --> svc_agentTeams
   pkg_experimental_api_speech_to_text --> svc_speechController
@@ -377,11 +388,15 @@ flowchart LR
   pkg_experimental_client_ui_cot_translation --> svc_cotTranslation
   pkg_experimental_computer_use_cua_driver_mcp --> svc_computerUse
   pkg_experimental_computer_use_cua_driver_native --> svc_computerUse
+  pkg_experimental_embeddings --> svc_embeddings
+  pkg_experimental_embeddings_http --> svc_embeddings
   pkg_experimental_memory --> svc_memory
   pkg_experimental_muse_insights --> svc_museInsights
   pkg_experimental_ptc_runtime_python --> svc_ptcRuntime
   pkg_experimental_robot --> svc_robotTemplates
   pkg_experimental_robot --> svc_robots
+  pkg_experimental_robot_crew --> svc_crews
+  pkg_experimental_robot_crew_local --> svc_crews
   pkg_experimental_robot_local --> svc_robots
   pkg_experimental_speech_to_text --> svc_speechToText
   pkg_experimental_speech_to_text_sensevoice --> svc_speechToText
@@ -491,6 +506,9 @@ flowchart LR
   pkg_working_directory --> svc_workingDirectory
   pkg_workspace --> svc_workspaceRegistry
   pkg_workspace_changes --> svc_workspaceChanges
+  svc_account --> pkg_api_account_controller
+  svc_account --> pkg_web_deepseek_api
+  svc_account --> pkg_web_search_deepseek
   svc_actionCards --> pkg_client_ui_action_cards
   svc_actionCards --> pkg_creation_recommendations
   svc_agentDefaultModel --> pkg_api_session_controller
@@ -524,12 +542,14 @@ flowchart LR
   svc_credentials --> pkg_api_settings_controller
   svc_credentials --> pkg_llm_deepseek
   svc_credentials --> pkg_llm_pi_ai
+  svc_crewController --> pkg_client_ui_robot_crew
+  svc_crews --> pkg_api_robot_crew_controller
+  svc_crews --> pkg_experimental_tool_robot_crew
   svc_cuaAccess --> pkg_cua
-  svc_deepseekAccount --> pkg_api_account_controller
-  svc_deepseekAccount --> pkg_llm_deepseek
   svc_deepseekLlmApiExtensions --> pkg_llm_deepseek
   svc_directoryPicker --> pkg_api_workspace_controller
   svc_dynamicCordisRunner --> pkg_tool_cordis
+  svc_embeddings --> pkg_experimental_memory
   svc_fileReferences --> pkg_api_session_controller
   svc_fileUploads --> pkg_api_session_controller
   svc_fs --> pkg_tool_fs
@@ -663,6 +683,9 @@ flowchart LR
 | ctx 键 | 角色 | 所属包 | 实现 | 直接消费方 | 配套插件 | 说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `ctx.actionCards` | `service` | [`action-cards`](../packages/experimental/action-cards) | - | [`creation-recommendations`](../packages/experimental/creation-recommendations), [`client-ui-action-cards`](../packages/experimental/client-ui-action-cards) | - | 负责卡片工具、卡片状态、用户操作和状态通知；各卡片种类注册自己的动作和处理器。 |
+| `ctx.crews` | `seam` | [`experimental-robot-crew`](../packages/experimental/experimental-robot-crew) | [`experimental-robot-crew-local`](../packages/experimental/experimental-robot-crew-local) | [`api-robot-crew-controller`](../packages/api/api-robot-crew-controller), [`experimental-tool-robot-crew`](../packages/experimental/experimental-tool-robot-crew) | - | 拥有 crew 词汇、循环保护、抽取与简报；本地 provider 执行运行并保存流程账本。 |
+| `ctx.crewController` | `service` | [`api-robot-crew-controller`](../packages/api/api-robot-crew-controller) | - | [`client-ui-robot-crew`](../packages/client/client-ui-robot-crew) | - | 把 crew seam 和生成的 crew Remote 命名空间投影给浏览器客户端。 |
+| `ctx.embeddings` | `seam` | [`experimental-embeddings`](../packages/experimental/embeddings) | [`experimental-embeddings-http`](../packages/experimental/embeddings-http) | [`experimental-memory`](../packages/experimental/memory) | - | provider 把文本转为向量；记忆拥有缓存与语义混合，缺少 provider 时只保留词法检索。 |
 | `ctx.memory` | `service` | [`experimental-memory`](../packages/experimental/memory) | - | [`experimental-tool-memory`](../packages/experimental/tool-memory) | - | 在 tomato_memory 存储域中先按所有者、再按画像或规范化项目目录保存记录；所有面向模型的工具、命令和快照都由记忆工具负责。 |
 | `ctx.museInsights` | `service` | [`experimental-muse-insights`](../packages/experimental/muse-insights) | - | - | - | 读取当天的 Session 文本与 `todos` 投影，按所有者与本地日期各保留一份回顾，并保留该所有者最新的分析，两者同时提供给浏览器提示与右侧栏页面。 |
 | `ctx.tomatoAccount` | `service` | [`gateway`](../packages/tomato/gateway) | - | [`experimental-memory`](../packages/experimental/memory) | - | 仅在配置了 auth_service 时，网关发布其最近一次 auth_service 校验所对应的账号；消费方用 ctx.get 读取，并把缺失视为不提供账号的 Host。 |
@@ -711,7 +734,7 @@ flowchart LR
 | `ctx.settings` | `core` | [`settings`](../packages/settings/settings) | - | [`api-settings-controller`](../packages/api/settings-controller) | - | Forms project volatile Config fields from active profile entries and delegate validated edits to config-editor. Plugins consume their own Config references. |
 | `ctx.subagentModelSelection` | `core` | [`tool-subagent`](../packages/subagent/tool-subagent) | - | [`tool-subagent`](../packages/subagent/tool-subagent) | - | 拥有默认关闭的设置命名空间；Agent 作用域的委派工具会在组合新顶层 Session 时读取它。 |
 | `ctx.credentials` | `seam` | [`credentials`](../packages/credentials/credentials) | [`credentials-local`](../packages/credentials/credentials-local) | [`api-settings-controller`](../packages/api/settings-controller), [`llm-deepseek`](../packages/llm/llm-deepseek), [`llm-pi-ai`](../packages/llm/llm-pi-ai) | - | 配置携带对机密信息的引用；提供方拥有实际值。消费方按操作解析，因此轮换后的凭据会在紧接着的下一次请求中生效；settings controller 提供不含实际值的视图和只写存储。 |
-| `ctx.deepseekAccount` | `seam` | [`deepseek-account`](../packages/credentials/deepseek-account) | [`deepseek-account-platform`](../packages/credentials/deepseek-account-platform) | [`api-account-controller`](../packages/api/account-controller), [`llm-deepseek`](../packages/llm/llm-deepseek) | - | Host 负责浏览器授权和本地凭证；UI 使用方只接收不含 token 的状态。 |
+| `ctx.account` | `seam` | [`account-service`](../packages/credentials/account-service) | [`account-gateway`](../packages/tomato/account-gateway) | [`api-account-controller`](../packages/api/account-controller), [`web-deepseek-api`](../packages/web/web-deepseek-api), [`web-search-deepseek`](../packages/web/web-search-deepseek) | - | 网关负责飞书浏览器授权与会话；provider 只投影已验证用户，不暴露凭据。 |
 | `ctx.authorization` | `seam` | [`authorization`](../packages/credentials/authorization) | - | [`llm-pi-ai`](../packages/llm/llm-pi-ai) | - | flow 由知道如何取得某份凭据的插件注册，并以其写入的记录为键；seam 拥有这段对话与"每个键同时只跑一次尝试"的生命周期，而非协议本身。 |
 | `ctx.productAnalytics` | `service` | [`client-product-analytics`](../packages/client/product-analytics) | - | - | - | 根据 Host 动态采集策略接收指定桌面事件、补充可用登录身份并监听实时压缩。 |
 | `ctx.otel` | `service` | [`otel`](../packages/telemetry/otel) | - | [`host-product-telemetry-otel`](../packages/host/product-telemetry-otel), [`session-telemetry-otel`](../packages/session/session-telemetry-otel) | - | 产品埋点和 Session 反馈适配器通过同一个注入服务创建独立上报通道。 |

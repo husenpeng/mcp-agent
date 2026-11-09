@@ -79,6 +79,7 @@ Each profile may set a `retryPolicy`; omission uses normal mode with five retrie
 | `api` | catalog protocol | Wire protocol; only needed for routes the catalog does not supply |
 | `baseURL` | catalog endpoint | Endpoint of every model on the route |
 | `models` | installed catalog | Replaces the route's catalog wholesale; each entry defaults from the installed model |
+| `modelPolicy` | absent | Deny-by-default allowlist for model listing and calls; omission leaves every model available |
 | `modelOverrides` | none | Reshapes individual installed-catalog models without replacing the rest |
 | `compat` | catalog detection | Wire-compatibility switches for unrecognized endpoints |
 | `defaultContextWindow` | `1,000,000` | Capacity fallback for undescribed models |
@@ -98,6 +99,8 @@ A provider pi-ai ships a login for can be signed into through the harness author
 
 A profile's `models` list replaces the route's installed catalog rather than extending it; each entry defaults its unset fields from the installed model of the same id, so narrowing a route to two models, correcting one capacity, or adding a model newer than the installed catalog are one-line edits. `modelOverrides` reshapes individual installed-catalog models without that cost — correct one model, keep the other thirty-seven — and is refused when set beside a `models` list, on a hand-declared route, or naming a model the catalog does not describe, because a silently unchanged model would be a typo someone hunts for later.
 
+A route pi-ai does not ship resolves each declared model id against the first-party catalog after folding gateway prefixes, dotted versions, and date or version suffixes; the route keeps its own protocol and endpoint, while capacities, modalities, and prompt-cache behavior come from the vendor entry unless the entry overrides them. Compatibility switches and reasoning metadata are inherited only when the route speaks the vendor's protocol, because a repointed model's wire switches are protocol-specific; otherwise it starts from the deployment's own declarations. The installed catalog stays authoritative for a route it ships, and an id it does not list never borrows another provider's capabilities. When such a match is an Anthropic Messages model reached through an OpenAI-compatible route, the adapter applies `cacheControlFormat: anthropic` unless the route or model already names the switch, so the gateway receives the cache breakpoints its native backend needs. A gateway may accept the field and still not honor it; verify `cacheReadTokens` before relying on the route, and use the native route when it does not. A gateway that rejects the marker opts the route out with `cacheRetention: none`.
+
 ### Run with reasoning and wire compatibility
 
 `reasoningEfforts` declares a model's selectable thinking levels: each key is a level selectors offer, its value the spelling dispatch sends on the wire, so `max: ultra` renames a level for a gateway with its own vocabulary. Omitting the field keeps the installed catalog entry's capability; `false` declares a non-reasoning model. `compat` switches reshape the request for endpoints pi-ai cannot recognize — which role carries the system prompt, which field caps output, how a thinking level travels — configurable per route and per model. A model neither the entry nor the installed catalog sizes takes the route's `defaultContextWindow` and `defaultMaxTokens` fallbacks.
@@ -106,6 +109,33 @@ Exact-model metadata lists `reasoning.efforts` from least to greatest selectable
 
 For self-hosted Chat Completions endpoints, `thinkingTokenBudgetField` selects the reasoning-budget parameter, and `vllmPriority` sets an integer scheduler priority when the server enables priority scheduling. Template arguments accept `$var: thinking.budget`. `openai-responses` gateways can set `supportsMaxOutputTokens: false` to omit `max_output_tokens`; Azure and Codex transports ignore this shared compatibility field. These controls are opt-in; catalog-owned Anthropic effort and fallback capabilities are not configurable switches.
 
+### Restrict models with an allowlist
+
+`modelPolicy` turns this adapter's route set into a deny-by-default allowlist. `local` names the models already in the deployment's local list; `releaseDates` maps `provider/model` to ISO release dates, and any dated model at or after `recentSince` is permitted without being listed in either list. `recent` remains for an explicit dated addition when no manifest entry exists, and an entry older than `recentSince` is not permitted. Listing returns every configured model but marks a refused pair with `blockedReason`, so selector surfaces show a disabled row with the reason and never offer it for selection; `prepareCall`/`stream` rejects any unpermitted pair with `MODEL_NOT_ALLOWED` before provider I/O. A later configuration edit cannot widen the list: an unlisted, undated model stays blocked until it is added here.
+
+```yaml
+- name: '@tomato/llm-pi-ai'
+  config:
+    providers:
+      blueai:
+        apiKeyEnv: BLUEAI_API_KEY
+        api: openai-completions
+        baseURL: https://relay.example.com/v1
+        models:
+          - id: claude-opus-5-5
+    modelPolicy:
+      enabled: true
+      recentSince: '2026-05-05'
+      local:
+        - provider: blueai
+          model: claude-opus-5-5
+      releaseDates:
+        blueai/claude-fable-5: '2026-06-09'
+        blueai/claude-fable-5-1: '2026-09-01'
+```
+
+Omission or `enabled: false` leaves every model available. An enabled policy with empty lists denies every model. The policy covers routes on this adapter; `@tomato/llm-deepseek` routes are outside it.
+
 ### Change configuration at runtime
 
 Each operation captures the current `providers` Config reference. New or changed provider profiles are validated before form persistence; unchanged catalog failures remain editable. Route-set or retry-policy changes update registration atomically, preserving previous routes if another adapter owns a requested route.
@@ -113,6 +143,42 @@ Each operation captures the current `providers` Config reference. New or changed
 ### Discover models from endpoints
 
 The plugin answers "which models can this provider serve?" for a route a configuration surface is editing or drafting. A route the installed catalog ships is answered from that catalog with no network call, preserving its `input` array as discovery `inputModalities`; only a route the catalog does not describe is interrogated over the wire. `openai-completions` and `openai-responses` use `GET {baseURL}/models` with bearer auth, while `anthropic-messages` uses native `GET /v1/models?limit=1000` semantics with `x-api-key` and `anthropic-version`; its listing URL accepts the API root with or without a trailing `/v1` because gateway documentation publishes both spellings, and only that listing URL normalizes the segment, so model requests receive the configured `baseURL` unchanged. A named configured route supplies its stored credential and profile `headers` inside the Host, so deployment headers configured through `cordis.patch.yml` or Cordis config reach model discovery without becoming discovery-request or Models-page fields; a key typed into the form still wins over the stored credential. The parser accepts either the standard `data` array or an enriched `models` map, normalizing each candidate's id, display name, context window, and output-token cap; Anthropic's `max_input_tokens` and `max_tokens` feed the same capacity fields, a map key remains the request id even when its entry names a different canonical id, primitive-valued map properties are ignored, and a missing display name falls back to that request id. The reply is candidate metadata a surface may offer for adoption — nothing is stored, and `cordis.patch.yml` remains the only thing that decides what a route serves.
+
+### Probe a native Anthropic endpoint
+
+A gateway can answer OpenAI Chat Completions for one model and still expose Anthropic's native Messages API for another. Before moving a third-party Claude model to `api: anthropic-messages`, probe the endpoint; do not infer native support from a model listing or from a 200 on the OpenAI path.
+
+```sh
+pnpm exec tsx packages/llm/llm-pi-ai/scripts/probe-anthropic.ts \
+  --base-url https://relay.example.com \
+  --model claude-opus-5-5 \
+  --api-key-env RELAY_API_KEY
+```
+
+The script sends a minimal adaptive-thinking request, a repeated long prefix for cache, and one tool definition. It prints `native`, `thinking`, `cache`, and `tools` states; exit 0 means native and thinking, 2 means native without thinking, and 1 means `/v1/messages` failed. It never prints the credential, and `--no-cache` / `--no-tools` skip those extra requests.
+
+Move only the models that pass to a native route; keep the OpenAI-compatible route for the rest:
+
+```yaml
+- name: '@tomato/llm-pi-ai'
+  config:
+    providers:
+      relay-anthropic:
+        apiKeyEnv: RELAY_API_KEY
+        api: anthropic-messages
+        baseURL: https://relay.example.com   # no trailing /v1
+        models:
+          - id: claude-opus-5-5
+            contextWindow: 1000000
+            maxTokens: 128000
+            compat:
+              forceAdaptiveThinking: true
+              supportsStrictTools: true
+              supportsCacheControlOnTools: true
+              supportsLongCacheRetention: true
+```
+
+`cache: ok` requires the endpoint to report `cache_read_input_tokens`; a gateway that caches only the fixed system/tools head reports `cache: fail` even though `native` is true. `thinking: fail` means calls succeed but the model is not thinking, so the native route is not buying the quality it was chosen for.
 
 ### Failures and recovery
 
@@ -156,6 +222,8 @@ Initial prompt text and active tools use pi-ai's `Context.systemPrompt` and `Con
 | [`src/stream.ts`](src/stream.ts) | pi-ai event conversion into harness `StreamChunk` values |
 | [`src/replay.ts`](src/replay.ts) | Versioned `ReplayEnvelope` storage and validation |
 | [`src/discovery.ts`](src/discovery.ts) | Endpoint interrogation for configuration surfaces |
+| [`src/probe.ts`](src/probe.ts) | One-shot native Anthropic capability probe |
+| [`scripts/probe-anthropic.ts`](scripts/probe-anthropic.ts) | CLI wrapper for the endpoint probe |
 
 ### Registration and directory
 

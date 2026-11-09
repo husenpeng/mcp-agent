@@ -116,6 +116,7 @@ export function createElectronBuilderConfig(
       tomatoDesktopAppId: appId,
       tomatoDesktopUpdateChannel: update?.channel ?? 'nightly',
       ...login.authServiceUrl === '' ? {} : { tomatoAuthServiceUrl: login.authServiceUrl, tomatoTomatoWebUrl: login.tomatoWebUrl },
+      ...login.imServiceUrl === '' ? {} : { tomatoImServiceUrl: login.imServiceUrl },
       ...(policy === undefined ? {} : { tomatoMandatoryUpdatePolicy: policy }),
       ...buildVersion === productVersion ? {} : { version: buildVersion },
       ...packaged === undefined ? {} : { tomatoBuildCommit: packaged.commit, tomatoBuildDirty: packaged.dirty },

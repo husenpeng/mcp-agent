@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { Context } from '@tomato/cordis'
 import { createScope, scopeOf } from '@tomato/scope'
 import type { Scope, ScopeKey } from '@tomato/scope'
-import SystemPrompt, { TOOL_ORDER_REST, renderContextSnapshot, renderPrompt } from '@tomato/system-prompt'
+import SystemPrompt, { TOOL_ORDER_REST, renderContextSnapshot, renderPrompt } from '../src/index.ts'
 import type { Config, PromptAssembly } from '@tomato/system-prompt'
 
 async function mount(config: Config = {}): Promise<Context> {

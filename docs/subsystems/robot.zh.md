@@ -10,9 +10,9 @@
 
 ## 创建机器人
 
-[机器人页](../../packages/client/ui-robot/README.zh.md)提供手动创建与会话创建，两者共用四项基础字段：名称、描述、任务目标、成功标准。基础配置页只收集这些字段；其余高级区块都从 [`emptyRobotSpec()`](../../packages/experimental/robot/src/spec.ts) 的通用默认值开始——手动触发器、plan 策略、workspace 沙箱与权限预设、100k token/600 秒/100 次工具调用预算、无网络、无记忆、无 A2A intent——并可在「高级配置」中修改。技能、工具、MCP 服务器与工作区根字段是选择器，选项来自部署的实时值（`robot.capabilities`）；本地没有来源的值仍可自由输入，来源缺失时只保留输入框并给出说明。
+[机器人页](../../packages/client/ui-robot/README.zh.md)提供三步创建向导与会话创建，两者共用四项基础字段：名称、描述、任务目标、成功标准。向导先问每次运行要做什么，再问名称与描述，然后是可选的成功标准，最后用预览确认并显示工作目录；它要求真实的名称与任务目标，在保存前检查重名，并就地发布规格、实例化修订。向导不会发布 [`emptyRobotSpec()`](../../packages/experimental/robot/src/spec.ts) 里的占位名称或占位任务。其余高级区块——手动触发器、plan 策略、workspace 沙箱与权限预设、100k token/600 秒/100 次工具调用预算、无网络、无记忆、无 A2A intent——都使用该通用默认值，创建后可在规格编辑器的「高级配置」中修改。技能、工具、MCP 服务器与工作区根字段是选择器，选项来自部署的实时值（`robot.capabilities`）；本地没有来源的值仍可自由输入，来源缺失时显示弹出层的空状态并保留输入框。技能、MCP 服务器与工作区根改用弹出层而不是菜单：技能行显示来源文件夹，MCP 行列出部署已配置的服务器，工作区根还提供基于 directory-picker seam 的应用内文件夹浏览器（部署提供 native 能力时改用宿主自己的选择器）。
 
-会话创建会在当前工作区新开一个会话，草稿点名随包提供的 `robot-creation` 技能。技能向用户询问同样的四项回答，并调用 [`@tomato/experimental-tool-robot`](../../packages/experimental/tool-robot/README.zh.md) 提供的 `robot_create`。该工具在一次调用中发布规格并实例化修订；只有调用方是存活的顶层 Agent、且当前回合包含人类消息时才执行。未选择 `@tomato/experimental-robot-app` 的 profile 既没有该工具，也没有该技能。
+会话创建会在当前工作区新开一个会话，并用用户的口吻发送一句简短的创建请求。随包提供的 `robot-creation` 技能一次只问一个问题，自己起草一句话描述，展示四项草稿并等待确认，然后调用 [`@tomato/experimental-tool-robot`](../../packages/experimental/tool-robot/README.zh.md) 提供的 `robot_create`。部署挂载 `ask_user_question` 时，每个问题会渲染成表单卡；没有该工具时改用纯文本提问。该工具在一次调用中发布规格并实例化修订，拒绝空白或占位的名称与任务目标，并把创建的机器人记录为展示元数据，让对话中的工具行提供「打开机器人」。只有调用方是存活的顶层 Agent、且当前回合包含人类消息时才执行。未选择 `@tomato/experimental-robot-app` 的 profile 既没有该工具，也没有该技能。
 
 ## 模板
 

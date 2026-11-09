@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for 2026-11-06-robot-creation-interaction.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-11-06-robot-creation-interaction.md
+/agent-note-robot-creation-as-a-guided-flow:
+  en: 6ec0f43801329f16
+  zh: b961fd3c00f65322
+/agent-note-robot-creation-as-a-guided-flow/problem:
+  en: c911072c6ebeafea
+  zh: f687acbafada9d45
+/agent-note-robot-creation-as-a-guided-flow/decision:
+  en: f4de308508691a3f
+  zh: d59279aff4c173a2
+/agent-note-robot-creation-as-a-guided-flow/alternatives-considered:
+  en: cf34ccc99f9a0009
+  zh: 33245723a82cd846
+/agent-note-robot-creation-as-a-guided-flow/consequences:
+  en: 165fd70620aea9ab
+  zh: c5b6fc9198ce47ea

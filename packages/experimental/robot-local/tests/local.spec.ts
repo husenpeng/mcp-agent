@@ -156,6 +156,40 @@ describe('robot-local specification registry', () => {
     })
   })
 
+  it('rejects a permission preset this deployment does not register', async () => {
+    const ctx = await createContext(new MemoryMediaPool())
+    try {
+      ctx.provide('permissionPresets', {
+        names: ['read-only', 'workspace-write', 'danger-full-access'],
+        resolve: (name: string) => {
+          if (name === 'stringly') throw 'stringly denied'
+          if (!['read-only', 'workspace-write', 'danger-full-access'].includes(name)) {
+            throw new Error(`permission: unknown preset "${name}" (known: read-only, workspace-write, danger-full-access)`)
+          }
+          return { name }
+        },
+      } as never)
+
+      const invalid = copy()
+      invalid.capability.permissionPreset = 'workspace'
+      await expect(ctx.robots.publish(invalid)).rejects.toMatchObject({
+        name: 'RobotSpecValidationError',
+        issues: [{ path: 'capability.permissionPreset' }],
+      })
+      await expect(ctx.robots.publish(invalid)).rejects.toBeInstanceOf(RobotSpecValidationError)
+
+      const stringly = copy()
+      stringly.capability.permissionPreset = 'stringly'
+      await expect(ctx.robots.publish(stringly)).rejects.toThrow('stringly denied')
+
+      const valid = copy()
+      valid.capability.permissionPreset = 'workspace-write'
+      await expect(ctx.robots.publish(valid)).resolves.toMatchObject({ ref: { revision: 1 } })
+    } finally {
+      await ctx.fiber.dispose()
+    }
+  })
+
   it('rejects an unknown or stale previous revision', async () => {
     await withRobots(async (robots) => {
       const unknownSpec = brandString<RobotSpecId>('missing')

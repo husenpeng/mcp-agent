@@ -24,7 +24,7 @@
     "@tomato/schedule": "workspace:*",
     "@tomato/tool-workspace-dependencies": "workspace:*",
     "@tomato/skill-office": "workspace:*",
-    "@tomato/deepseek-account": "workspace:*",
+    "@tomato/account-service": "workspace:*",
     "@tomato/workspace": "workspace:*"
   },
   "devDependencies": {

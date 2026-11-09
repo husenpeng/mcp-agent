@@ -138,6 +138,16 @@ export type PluginInstallFailureKind =
   | 'integrity'
   | 'unknown'
 
+/** One install spec replaced by a version the running TOMATO admits. */
+export interface SubstitutedVersion {
+  /** The spec as the caller wrote it. */
+  requested: string
+  /** The exact spec installed instead. */
+  selected: string
+  /** The unmet declarations that made the requested spec fail, as `name range` pairs; empty when none were read. */
+  requirements: string
+}
+
 /** Package operation completion, including Git checks and a retrieval path for unabridged diagnostics. */
 export interface PackageResult {
   exitCode: number
@@ -150,6 +160,8 @@ export interface PackageResult {
   timedOut?: boolean
   /** Present when a compatibility check refused the run: the packages the running TOMATO version rejects. */
   incompatible?: IncompatiblePlugin[]
+  /** Present when the run installed a version the caller did not name: the specs it replaced and why. */
+  substituted?: SubstitutedVersion[]
 }
 
 /** Persisted change and independently observed application outcome. */
@@ -177,6 +189,11 @@ export interface ChangeResult {
   approvedBuilds?: string[]
   /** The registries the installation asked, in order; `packageResult` is the last one's run. */
   registries?: Registry[]
+  /**
+   * Present when the installation replaced a spec the caller named with a version the running TOMATO
+   * admits; the installed dependency is the selected one.
+   */
+  substituted?: SubstitutedVersion[]
   /**
    * What the last failed run could not reach or get an answer from: the registry it asked, or the host a git or
    * tarball spec is fetched from, which no registry stands in for; absent for a failure neither explains.
@@ -327,9 +344,12 @@ export interface PluginUpdateProgress {
  */
 export interface PluginUpdateResult {
   readonly from: string
+  /** The version this update installed; the selected one when an incompatible request was replaced. */
   readonly to: string
   readonly step: 'check' | 'remove' | 'install'
   readonly result: ChangeResult
+  /** Present when `to` differs from the requested version because this TOMATO does not admit that one. */
+  readonly substituted?: SubstitutedVersion
   readonly restore?: ChangeResult
 }
 

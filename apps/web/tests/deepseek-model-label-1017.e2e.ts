@@ -24,7 +24,7 @@ describe.skipIf(MODE === 'record')('web e2e: temporary DeepSeek release badge', 
       replayFixture: FIXTURE,
       replayProvidersOnly: true,
       replayProviders: [
-        { id: 'deepseek-account', name: 'DeepSeek Account', models: [{ id: 'deepseek-flash', name: NAME }] },
+        { id: 'account', name: 'Account', models: [{ id: 'deepseek-flash', name: NAME }] },
         { id: 'deepseek-official', name: 'DeepSeek', models: [
           { id: 'deepseek-flash', name: NAME }, { id: 'deepseek-v4-pro', name: 'DeepSeek-V4-Pro' },
         ] },
@@ -57,11 +57,11 @@ describe.skipIf(MODE === 'record')('web e2e: temporary DeepSeek release badge', 
       await compareOrRefreshGolden(EXPECTED, await captureStableAria(page, '[role="menu"][aria-label="模型"]', scaffold.workspaceCwd), MODE)
       expect(await menu.getByText('1017', { exact: true }).count()).toBe(2)
       expect(await menu.getByRole('group', { name: 'External', exact: true }).getByText('1017', { exact: true }).count()).toBe(0)
-      const account = menu.getByRole('group', { name: 'DeepSeek 账号', exact: true })
+      const account = menu.getByRole('group', { name: '账号', exact: true })
       await account.getByRole('menuitemradio', { name: `${NAME} 1017`, exact: true }).click()
-      await expect.poll(() => scaffold.ctx.agentDefaultModel.currentSelection()).toEqual({ provider: 'deepseek-account', model: 'deepseek-flash' })
+      await expect.poll(() => scaffold.ctx.agentDefaultModel.currentSelection()).toEqual({ provider: 'account', model: 'deepseek-flash' })
       await expect.poll(() => trigger.textContent()).toContain(`${NAME} 1017`)
-      const catalog = await scaffold.ctx.llm.listModels('deepseek-account')
+      const catalog = await scaffold.ctx.llm.listModels('account')
       expect(catalog.map(model => ({ id: model.id, name: model.name }))).toEqual([{ id: 'deepseek-flash', name: NAME }])
     } finally {
       await page.keyboard.press('Escape')
@@ -76,7 +76,7 @@ describe.skipIf(MODE === 'record')('web e2e: temporary DeepSeek release badge', 
       await trigger.click()
       await page.getByRole('menuitem', { name: /^模型/ }).click()
       const menu = page.getByRole('menu', { name: '模型', exact: true })
-      const badge = menu.getByRole('group', { name: 'DeepSeek 账号', exact: true }).getByText('1017', { exact: true })
+      const badge = menu.getByRole('group', { name: '账号', exact: true }).getByText('1017', { exact: true })
       const box = await badge.boundingBox()
       expect(box).not.toBeNull()
       expect(box!.x).toBeGreaterThanOrEqual(12)

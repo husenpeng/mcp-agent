@@ -1,0 +1,33 @@
+/* One compact audit line after a retracted Turn. */
+
+.root {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 2px 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: var(--tomato-content-font-size-secondary, 13px);
+  line-height: calc(18px + var(--tomato-content-font-delta-secondary, 0px));
+}
+
+.icon {
+  flex: none;
+}
+
+.title {
+  flex: none;
+  white-space: nowrap;
+}
+
+.attachments {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.time {
+  flex: none;
+  margin-left: auto;
+}

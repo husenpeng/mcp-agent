@@ -7,9 +7,9 @@ export const NS = 'cotTranslation'
 /** English copy and key source. */
 export const en = {
   provider: 'Translation service', google: 'Google', bing: 'Bing',
-  deepseekAccount: 'Flash — account (paid)', deepseekOfficial: 'Flash — official API (paid)',
+  account: 'Flash — account (paid)', deepseekOfficial: 'Flash — official API (paid)',
   providerUnavailableOption: '{provider} — unavailable',
-  providerUnavailable: 'This provider is unavailable. Configure your DeepSeek account or official API provider, or choose an available service.',
+  providerUnavailable: 'This provider is unavailable. Configure your account or official API provider, or choose an available service.',
   paidNotice: 'Each uncached fragment sends a separate paid Flash request through the selected account or official API credentials. Reopening reasoning reuses saved results; changing the provider, language, source text, or request settings may send a new paid request.',
   anonymousNotice: 'Bing and Google need no translation login or API key. Their anonymous endpoints may reject or limit requests.', targetLanguage: 'Target language',
   targetLanguageHint: 'auto follows the UI language; language codes such as zh, en, and ja also work.',
@@ -28,9 +28,9 @@ export type CotTranslationKey = keyof typeof en
 /** Chinese copy. */
 export const zh: Record<CotTranslationKey, string> = {
   provider: '翻译服务', google: 'Google', bing: 'Bing',
-  deepseekAccount: 'Flash · 账号（付费）', deepseekOfficial: 'Flash · 官方 API（付费）',
+  account: 'Flash · 账号（付费）', deepseekOfficial: 'Flash · 官方 API（付费）',
   providerUnavailableOption: '{provider} — 不可用',
-  providerUnavailable: '此服务暂不可用，请配置 DeepSeek 账号或官方 API 服务，或选择可用的翻译服务',
+  providerUnavailable: '此服务暂不可用，请配置 账号或官方 API 服务，或选择可用的翻译服务',
   paidNotice: '每个未缓存片段都会通过所选账号或官方 API 凭据单独发送一次付费的 Flash 请求；重新展开会复用已保存的译文，更改服务、语言、原文或请求设置可能发送新的付费请求',
   anonymousNotice: 'Bing 和 Google 翻译无需额外登录或 API key，但匿名接口可能拒绝或限制请求', targetLanguage: '目标语言',
   targetLanguageHint: 'auto 使用界面语言；也可填写语言代码，例如 zh、en、ja',
@@ -57,7 +57,7 @@ export const ja = {
   'provider': '翻訳サービス',
   'google': 'Google',
   'bing': 'Bing',
-  'deepseekAccount': 'Flash — アカウント (有料)',
+  'account': 'Flash — アカウント (有料)',
   'deepseekOfficial': 'Flash — 公式 API (有料)',
   'providerUnavailableOption': '{provider} — 利用不可',
   'providerUnavailable': 'このプロバイダーは利用できません。DeepSeek アカウントまたは公式 API プロバイダーを設定するか、利用可能なサービスを選択してください。',
@@ -91,7 +91,7 @@ export const ja = {
 /** Spanish dictionary, checked against the English keys. */
 export const es = {
   provider: 'Servicio de traducción', google: 'google', bing: 'Bing',
-  deepseekAccount: 'Flash — cuenta (pago)', deepseekOfficial: 'Flash: API oficial (de pago)',
+  account: 'Flash — cuenta (pago)', deepseekOfficial: 'Flash: API oficial (de pago)',
   providerUnavailableOption: '{provider} — no disponible',
   providerUnavailable: 'Este proveedor no está disponible. Configura tu cuenta DeepSeek o proveedor oficial de API, o elige un servicio disponible.',
   paidNotice: 'Cada fragmento no almacenado en caché envía una solicitud Flash paga por separado a través de la cuenta seleccionada o las credenciales oficiales de API. El razonamiento de reapertura reutiliza los resultados guardados; cambiar el proveedor, el idioma, el texto fuente o la configuración de la solicitud puede enviar una nueva solicitud paga.',
@@ -109,7 +109,7 @@ export const es = {
 /** French dictionary, checked against the English keys. */
 export const fr = {
   provider: 'Service de traduction', google: 'Google', bing: 'Bing',
-  deepseekAccount: 'Flash — compte (payant)', deepseekOfficial: 'Flash — API officiel (payant)',
+  account: 'Flash — compte (payant)', deepseekOfficial: 'Flash — API officiel (payant)',
   providerUnavailableOption: '{provider} — indisponible',
   providerUnavailable: "Ce fournisseur n'est pas disponible. Configurez votre compte DeepSeek ou votre fournisseur officiel API, ou choisissez un service disponible.",
   paidNotice: "Chaque fragment non mis en cache envoie une demande Flash payante distincte via le compte sélectionné ou les informations d'identification officielles API. La réouverture du raisonnement réutilise les résultats enregistrés ; la modification du fournisseur, de la langue, du texte source ou des paramètres de la demande peut envoyer une nouvelle demande payante.",
@@ -127,7 +127,7 @@ export const fr = {
 /** German dictionary, checked against the English keys. */
 export const de = {
   provider: 'Übersetzungsdienst', google: 'Google', bing: 'Bing',
-  deepseekAccount: 'Flash – Konto (kostenpflichtig)', deepseekOfficial: 'Flash – offizieller API (kostenpflichtig)',
+  account: 'Flash – Konto (kostenpflichtig)', deepseekOfficial: 'Flash – offizieller API (kostenpflichtig)',
   providerUnavailableOption: '{provider} – nicht verfügbar',
   providerUnavailable: 'Dieser Anbieter ist nicht verfügbar. Konfigurieren Sie Ihr DeepSeek-Konto oder Ihren offiziellen API-Anbieter oder wählen Sie einen verfügbaren Dienst.',
   paidNotice: 'Jedes nicht zwischengespeicherte Fragment sendet eine separate kostenpflichtige DeepSeek-Flash-Anfrage über das ausgewählte Konto oder die offiziellen API-Anmeldeinformationen. Beim erneuten Öffnen der Argumentation werden gespeicherte Ergebnisse wiederverwendet. Wenn Sie den Anbieter, die Sprache, den Quelltext oder die Anfrageeinstellungen ändern, wird möglicherweise eine neue kostenpflichtige Anfrage gesendet.',
@@ -145,7 +145,7 @@ export const de = {
 /** Russian dictionary, checked against the English keys. */
 export const ru = {
   provider: 'Услуги перевода', google: 'Гугл', bing: 'Бинг',
-  deepseekAccount: 'Flash — аккаунт (платный)', deepseekOfficial: 'Flash — официальный API (платный)',
+  account: 'Flash — аккаунт (платный)', deepseekOfficial: 'Flash — официальный API (платный)',
   providerUnavailableOption: '{provider} — недоступен',
   providerUnavailable: 'Этот провайдер недоступен. Настройте свою учетную запись DeepSeek или официального провайдера API или выберите доступную услугу.',
   paidNotice: 'Каждый некэшированный фрагмент отправляет отдельный платный запрос Flash через выбранную учетную запись или официальные учетные данные API. При повторном открытии рассуждений повторно используются сохраненные результаты; изменение провайдера, языка, исходного текста или настроек запроса может привести к отправке нового платного запроса.',
@@ -163,7 +163,7 @@ export const ru = {
 /** Portuguese dictionary, checked against the English keys. */
 export const pt = {
   provider: 'Serviço de tradução', google: 'Google', bing: 'Google',
-  deepseekAccount: 'Flash — conta (paga)', deepseekOfficial: 'Flash — oficial API (pago)',
+  account: 'Flash — conta (paga)', deepseekOfficial: 'Flash — oficial API (pago)',
   providerUnavailableOption: '{provider} — indisponível',
   providerUnavailable: 'Este provedor não está disponível. Configure sua conta DeepSeek ou provedor API oficial ou escolha um serviço disponível.',
   paidNotice: 'Cada fragmento não armazenado em cache envia uma solicitação Flash paga separada por meio da conta selecionada ou das credenciais API oficiais. A reabertura do raciocínio reutiliza resultados salvos; alterar o provedor, o idioma, o texto fonte ou as configurações da solicitação pode enviar uma nova solicitação paga.',

@@ -46,6 +46,7 @@ import {
   CompactionNodeView, ContextMessageNodeView, RetryNodeView, TurnErrorNodeView,
   TurnMaxTokensNodeView, UnknownNodeView, UserMessageNodeView,
 } from '../src/client/chat/MessageItem.tsx'
+import { RetractionLogItem } from '../src/client/chat/RetractionLogItem.tsx'
 import { TurnTailNodeView } from '../src/client/chat/TurnTailNodeView.tsx'
 import { TurnProcessNodeView } from '../src/client/chat/TurnProcessNodeView.tsx'
 import { SystemPromptNodeView } from '../src/client/chat/SystemPromptRow.tsx'
@@ -327,6 +328,8 @@ function HarnessChatNode({ standard, owner, hookContext, usePerformanceUsage, to
       return <ManualCompactionNodeView {...nodeProps} node={owner.node} />
     case 'compaction':
       return <CompactionNodeView {...nodeProps} node={owner.node} />
+    case 'retraction':
+      return <RetractionLogItem {...nodeProps} node={owner.node} />
     case 'model-retry':
       return <RetryNodeView {...nodeProps} node={owner.node} />
     case 'turn-error':
@@ -415,6 +418,7 @@ function makeHarness(
     read: () => savedScroll,
   }
   const forkAt = vi.fn()
+  const retractAt = vi.fn(async () => {})
   // Rows and the harness must observe the same chat-store instance.
   const chat = createChatStore().create()
   const transcriptView = createSnapshotStore<TranscriptViewMode>('compact')
@@ -523,6 +527,7 @@ function makeHarness(
     loadImage: vi.fn(() => Promise.reject(new Error('not used'))),
     chatScroll,
     forkAt,
+    retractAt,
     // Absent-service default; mention tests override with a real resolver.
     fileMentions: () => undefined,
     t,
@@ -550,7 +555,7 @@ function makeHarness(
     setConnection: (state: ConnectionState) => { connection.set(state) },
     openFile, openUserFile, loadOlder, loadThrough, openView,
     setOutline: (value: unknown) => { outlineValue = value },
-    chatScroll, forkAt, toolOwners,
+    chatScroll, forkAt, retractAt, toolOwners,
     setPerformanceUsage: (mode: 'compact' | 'detailed') => { performanceUsage.set(mode) },
     setGrouped: (value: ConversationGroupedView<ProcessGroupData> | undefined) => {
       grouped = value
@@ -3529,6 +3534,74 @@ describe('ChatView', () => {
     expect(buttons[0]!.getAttribute('aria-disabled')).toBeNull()
     fireEvent.click(buttons[0]!)
     expect(h.forkAt.mock.calls).toEqual([[3]])
+  })
+
+  it('offers retraction only on the trailing human prompt', () => {
+    const h = makeHarness({
+      nodes: [userInTurn(1, 'question', 1), assistant(2, 'answer')],
+      turnEnds: new Map([[1, 3]]),
+    })
+    const view = render(<h.ChatView {...h.props} />)
+    const retract = view.getAllByRole('button', { name: '撤回这一轮并重新输入' })
+    expect(retract).toHaveLength(1)
+    fireEvent.click(retract[0]!)
+    expect(h.retractAt).toHaveBeenCalledWith(1, 'question')
+  })
+
+  it('withholds retraction when a later Turn has already opened', () => {
+    const h = makeHarness({
+      nodes: [
+        userInTurn(1, 'first', 1), assistant(2, 'answer'),
+        userInTurn(3, 'second', 2), assistant(4, 'later answer'),
+      ],
+      turnEnds: new Map([[1, 5], [2, 6]]),
+    })
+    const view = render(<h.ChatView {...h.props} />)
+    const retract = view.getAllByRole('button', { name: '撤回这一轮并重新输入' })
+    expect(retract).toHaveLength(1)
+    fireEvent.click(retract[0]!)
+    expect(h.retractAt.mock.calls).toEqual([[3, 'second']])
+  })
+
+  it('marks a retracted prompt and offers no second retract action', () => {
+    const retracted: UserMessageNode = { ...user(1, 'question'), retracted: true }
+    const h = makeHarness({ nodes: [retracted, assistant(2, 'answer')] })
+    const view = render(<h.ChatView {...h.props} />)
+    expect(view.getByText('已撤回')).toBeTruthy()
+    expect(view.queryByRole('button', { name: '撤回这一轮并重新输入' })).toBeNull()
+  })
+
+  it('renders the retraction audit row after the Turn', () => {
+    const base = chatSnapshotFixture({
+      nodes: [userInTurn(1, 'question', 1), assistant(2, 'answer')],
+      turnEnds: new Map([[1, 3]]),
+    })
+    const log: ChatNode<'retraction'> = {
+      key: 'fixture:retraction:user-1',
+      id: 'user-1',
+      target: 'chat',
+      kind: 'retraction',
+      anchorSeq: 4,
+      visibility: 'visible',
+      location: { kind: 'session' },
+      data: { messageId: 'user-1', seq: 4, time: 4_000, attachments: ['shot.png'] },
+    }
+    const builder = new ChatSnapshotBuilder()
+    const chat = builder.replace({ nodes: [...base.nodes.values(), log], timeline: base.timeline })
+    const h = makeHarness({}, {}, chat)
+    const view = render(<h.ChatView {...h.props} />)
+    expect(view.getByText('已撤回这一轮，模型上下文不再包含它')).toBeTruthy()
+    expect(view.getByText(/shot\.png/)).toBeTruthy()
+  })
+
+  it('disables branch on a retracted Turn', () => {
+    const retracted = { ...userInTurn(1, 'question', 1), retracted: true as const }
+    const h = makeHarness({ nodes: [retracted, assistant(2, 'answer')], turnEnds: new Map([[1, 3]]) })
+    const view = render(<h.ChatView {...h.props} />)
+    const branch = view.getByRole('button', { name: '在新对话中分支' })
+    expect(branch.getAttribute('aria-disabled')).toBe('true')
+    fireEvent.click(branch)
+    expect(h.forkAt).not.toHaveBeenCalled()
   })
 
   it('disables fork when the indexed Turn has a later steering Node', () => {

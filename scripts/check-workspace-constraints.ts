@@ -474,9 +474,48 @@ function isReleaseMemberDirectory(dir: string): boolean {
  * @returns one violation naming the manifest and the expected version, or
  * undefined when the manifest is compliant or not in the family.
  */
+/**
+ * Names pinned from `vendor/`. They share the `@tomato/` scope after rescoping
+ * but keep their own release sequences, so the family version does not apply.
+ */
+const VENDOR_PACKAGE_NAMES = new Set([
+  ...packageNamesIn(join(root, 'vendor')),
+  ...packageNamesIn(join(root, 'native', 'system')),
+  ...packageNamesIn(join(root, 'native', 'system', 'packages')),
+])
+
+/** @param directory - directory whose direct child packages (and its own manifest) name workspace packages. */
+function packageNamesIn(directory: string): string[] {
+  const names: string[] = []
+  const own = join(directory, 'package.json')
+  try {
+    const manifest = JSON.parse(readFileSync(own, 'utf8')) as PackageManifest
+    if (typeof manifest.name === 'string') names.push(manifest.name)
+  } catch {
+    // A directory without a readable manifest is not itself a package.
+  }
+  let entries
+  try {
+    entries = readdirSync(directory, { withFileTypes: true })
+  } catch {
+    return names
+  }
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue
+    try {
+      const manifest = JSON.parse(readFileSync(join(directory, entry.name, 'package.json'), 'utf8')) as PackageManifest
+      if (typeof manifest.name === 'string') names.push(manifest.name)
+    } catch {
+      // A child directory without a readable manifest is not a package.
+    }
+  }
+  return names
+}
+
 export function checkTomatoFamilyVersion(manifest: PackageManifest, expected: string | undefined): string | undefined {
   const name = manifest.name
-  if (name !== '@tomato/cli' && name?.startsWith('@tomato/') !== true) return undefined
+  if (name === undefined || VENDOR_PACKAGE_NAMES.has(name)) return undefined
+  if (name !== '@tomato/cli' && !name.startsWith('@tomato/')) return undefined
   if (manifest.version !== expected) {
     return `${name}: package.json version must match root version ${expected ?? '(missing)'}`
   }

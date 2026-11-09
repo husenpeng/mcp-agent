@@ -174,12 +174,15 @@ describe('robot_create registration and defaults', () => {
     const { ctx, root } = await harness()
     openHumanTurn(root)
     const robots = ctx.get('robots') as FakeRobots
-    const value = resultJson(await execute(ctx, {
+    const result = await execute(ctx, {
       name: 'Weekly digest',
       description: 'Summarizes the week',
       mission: 'Write a weekly summary from recent sessions',
       successCriteria: ['The summary names the week', 'No more than one page'],
-    }, root.agent))
+    }, root.agent)
+    const value = resultJson(result)
+    if (result.isError) throw new Error('expected robot tool success')
+    expect(result.meta).toEqual({ robotId: 'robot-1', name: 'Weekly digest' })
     expect(value).toMatchObject({ robotId: 'robot-1', name: 'Weekly digest', specId: 'spec-1', revision: 1 })
     expect(robots.instantiated).toEqual({ spec: 'spec-1', revision: 1 })
     expect(robots.published).toMatchObject({
@@ -195,7 +198,7 @@ describe('robot_create registration and defaults', () => {
       capability: {
         tools: { allow: [], deny: [] },
         sandbox: 'workspace',
-        permissionPreset: 'workspace',
+        permissionPreset: 'workspace-write',
         network: 'none',
       },
     })
@@ -207,6 +210,25 @@ describe('robot_create registration and defaults', () => {
     const robots = ctx.get('robots') as FakeRobots
     await execute(ctx, { name: 'Weekly digest', mission: 'Write a weekly summary' }, root.agent)
     expect(robots.published).toMatchObject({ capability: { workspaceRoots: ['/projects/creator'] } })
+  })
+
+  it('refuses placeholders instead of publishing a stub robot', async () => {
+    const { ctx, root } = await harness()
+    openHumanTurn(root)
+    const robots = ctx.get('robots') as FakeRobots
+    const placeholderMission = await execute(ctx, {
+      name: '营销助手',
+      mission: 'Describe what this robot does.',
+    }, root.agent)
+    expect(placeholderMission.isError).toBe(true)
+    expect(placeholderMission.error?.info?.code).toBe('ROBOT_SPEC_INVALID')
+    const placeholderName = await execute(ctx, {
+      name: 'New robot',
+      mission: '汇总竞品的每周更新',
+    }, root.agent)
+    expect(placeholderName.isError).toBe(true)
+    expect(placeholderName.error?.info?.code).toBe('ROBOT_SPEC_INVALID')
+    expect(robots.published).toBeUndefined()
   })
 
   it('omits a blank description and an empty success-criteria list', async () => {

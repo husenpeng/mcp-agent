@@ -2,7 +2,7 @@
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { SettingsSecretField, SettingsValueField } from '../src/settings-form/fields.tsx'
+import { SettingsSecretField, SettingsSelectField, SettingsValueField } from '../src/settings-form/fields.tsx'
 
 afterEach(cleanup)
 
@@ -17,6 +17,69 @@ const frame = {
   overridden: false,
   invalid: false,
 }
+
+const choices = [
+  { id: 'blueai', label: 'BlueAI' },
+  { id: 'local', label: 'Local' },
+]
+
+describe('SettingsSelectField', () => {
+  it('stages the picked option and renders the staged value', () => {
+    const onEdit = vi.fn()
+    render(<SettingsSelectField {...frame} text="blueai" options={choices} onEdit={onEdit} onReset={vi.fn()} />)
+
+    const select = screen.getByLabelText('Command timeout') as HTMLSelectElement
+    expect(select.value).toBe('blueai')
+    expect([...select.options].map(option => option.value)).toEqual(['blueai', 'local'])
+    fireEvent.change(select, { target: { value: 'local' } })
+    expect(onEdit).toHaveBeenCalledWith('local')
+  })
+
+  it('keeps a stored value the option list does not carry and renders an empty draft without adding one', () => {
+    const { rerender } = render(
+      <SettingsSelectField {...frame} text="custom" options={choices} onEdit={vi.fn()} onReset={vi.fn()} />,
+    )
+    expect([...(screen.getByLabelText('Command timeout') as HTMLSelectElement).options].map(option => option.value))
+      .toEqual(['custom', 'blueai', 'local'])
+
+    rerender(<SettingsSelectField {...frame} text="" options={choices} onEdit={vi.fn()} onReset={vi.fn()} />)
+    expect([...(screen.getByLabelText('Command timeout') as HTMLSelectElement).options].map(option => option.value))
+      .toEqual(['blueai', 'local'])
+  })
+
+  it('offers the reset while an override would stand and disables both when read-only', () => {
+    const onReset = vi.fn()
+    const { rerender } = render(
+      <SettingsSelectField {...frame} text="blueai" options={choices} onEdit={vi.fn()} onReset={onReset} />,
+    )
+    expect(screen.queryByRole('button', { name: 'Reset to default' })).toBeNull()
+
+    rerender(<SettingsSelectField {...frame} overridden text="blueai" options={choices} onEdit={vi.fn()} onReset={onReset} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Reset to default' }))
+    expect(onReset).toHaveBeenCalledOnce()
+
+    rerender(<SettingsSelectField {...frame} overridden disabled text="blueai" options={choices} onEdit={vi.fn()} onReset={onReset} />)
+    expect(screen.getByLabelText('Command timeout')).toHaveProperty('disabled', true)
+    expect(screen.getByRole('button', { name: 'Reset to default' })).toHaveProperty('disabled', true)
+  })
+
+  it('replaces the hint with the reason an invalid choice cannot be saved', () => {
+    const { rerender } = render(
+      <SettingsSelectField {...frame} invalid text="blueai" options={choices} onEdit={vi.fn()} onReset={vi.fn()} />,
+    )
+    expect(screen.getByText('Enter a number.')).toBeTruthy()
+    expect(screen.queryByText('How long one command may run.')).toBeNull()
+    expect(screen.getByLabelText('Command timeout').getAttribute('aria-invalid')).toBe('true')
+
+    const bare = {
+      id: 'field', label: 'Command timeout', overriddenLabel: 'Overridden', resetLabel: 'Reset to default',
+      invalidLabel: 'Enter a number.', disabled: false, overridden: false, invalid: false,
+      text: 'blueai', options: choices, onEdit: vi.fn(), onReset: vi.fn(),
+    }
+    rerender(<SettingsSelectField {...bare} />)
+    expect(screen.queryByText('Enter a number.')).toBeNull()
+  })
+})
 
 describe('SettingsValueField', () => {
   it('stages every keystroke without writing', () => {

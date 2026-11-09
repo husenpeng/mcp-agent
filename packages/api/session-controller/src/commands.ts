@@ -16,6 +16,7 @@ import {
 } from '@tomato/llm'
 import type { MessageSource } from '@tomato/llm'
 import { buildForkSeed } from '@tomato/session/fork'
+import { foldSurface } from '@tomato/session/surface'
 import { SessionLogOffset, SessionSeq } from '@tomato/session'
 import type { SessionEvent, SessionHeader, SessionId, UserMessage } from '@tomato/session'
 import { SessionQueryError, type SessionObservation } from '@tomato/session-query'
@@ -46,6 +47,8 @@ import type {
   SessionPromptValue,
   SessionRenameRequest,
   SessionRenameValue,
+  SessionRetractRequest,
+  SessionRetractValue,
   SessionSelectModelRequest,
   SessionSelectModelValue,
   SessionUpdateQueueRequest,
@@ -77,6 +80,25 @@ type PromptContentCandidate =
  */
 export function hasPromptContent(content: readonly PromptContentCandidate[]): boolean {
   return content.some(part => part.type !== 'text' || part.text.trim().length > 0)
+}
+
+/**
+ * Build one structured retraction refusal.
+ * @param sessionId - Session whose retraction was refused.
+ * @param reason - stable refusal category.
+ * @param detail - diagnostic explaining the concrete failed condition.
+ * @returns the Remote error to throw.
+ */
+function retractUnavailable(
+  sessionId: SessionId,
+  reason: 'not-leaf' | 'queued-input' | 'busy',
+  detail: string,
+): RemoteError<'session/retract-unavailable'> {
+  return new RemoteError(
+    'session/retract-unavailable',
+    `retraction is unavailable: ${detail}`,
+    { sessionId, reason },
+  )
 }
 
 /**
@@ -258,6 +280,17 @@ export class SessionCommandController {
         { sessionId: request.sessionId },
       )
     }
+    // A boundary at or after a retracted prompt but before its retraction event
+    // would inherit the removed exchange without the decision that removed it.
+    const retracted = foldSurface(source.events, this.ctx.sessions.messageProjections).retractions
+      .find(retraction => boundary >= retraction.start && boundary < retraction.seq)
+    if (retracted !== undefined) {
+      throw new RemoteError(
+        'session/fork-unavailable',
+        `event ${String(boundary)} belongs to a retracted exchange; fork before it or after the retraction`,
+        { sessionId: request.sessionId },
+      )
+    }
     const seed = buildForkSeed(source.events, boundary)
     let workspace: Workspace | undefined
     try {
@@ -306,6 +339,82 @@ export class SessionCommandController {
       }
     }
     return { sessionId: childId }
+  }
+
+  /**
+   * Retract the trailing human exchange from model history. The target must be
+   * the turn-opening human prompt of the Session's last turn, and the range from
+   * that prompt to the current surface tail must consist of appended surface
+   * nodes. A running turn is cancelled and settled first; queued next-turn input
+   * makes retraction unavailable instead of being discarded.
+   * @param request - Session identity and the human message seq to retract.
+   * @returns the committed removal range.
+   */
+  async retract(request: SessionRetractRequest): Promise<SessionRetractValue> {
+    let atSeq: SessionSeq
+    try {
+      atSeq = SessionSeq(request.atSeq)
+    } catch {
+      throw new RemoteError('gateway/bad-request', 'atSeq must be a non-negative safe integer', {})
+    }
+    const agent = await this.resolveAgent(request.sessionId)
+    if (hasApiSessionSubagentOwner(this.ctx, agent.session, agent)) {
+      throw apiSessionSubagentOwnershipError(request.sessionId)
+    }
+    if (agent.inbox.nextTurn.length > 0) {
+      throw retractUnavailable(request.sessionId, 'queued-input', 'remove queued messages before retracting the last turn')
+    }
+    if (agent.status === 'running') {
+      agent.cancel({ kind: 'user' })
+    }
+    // Resume may start background maintenance (title generation, for example)
+    // whose claim would reject runMaintenance.
+    await agent.whenIdle()
+    try {
+      return await agent.runMaintenance(async () => {
+        using observation = await this.ctx.sessionQuery.observeSession(request.sessionId, { projectionMode: 'none' })
+        const events = observation.events
+        const target = events[atSeq]
+        if (target?.seq !== atSeq || target.type !== 'user/message'
+          || target.surfaceOp !== 'append' || target.data.source.kind !== 'user') {
+          throw retractUnavailable(request.sessionId, 'not-leaf', `event ${atSeq} is not a human user/message`)
+        }
+        const turnStart = events.findLast(event => event.seq < atSeq && event.type === 'turn/start')
+        if (turnStart === undefined
+          || events.some(event => event.seq > atSeq && event.type === 'turn/start')
+          || events.some(event => event.seq > turnStart.seq && event.seq < atSeq
+            && event.type === 'user/message' && event.surfaceOp === 'append'
+            && event.data.source.kind === 'user')) {
+          throw retractUnavailable(request.sessionId, 'not-leaf', 'the target prompt does not open the last turn')
+        }
+        const surface = foldSurface(events, this.ctx.sessions.messageProjections)
+        const endSeq = surface.nodes.at(-1)
+        if (endSeq === undefined || atSeq > endSeq || !surface.nodes.includes(atSeq)
+          || surface.nodes.some(seq => seq > atSeq && events[seq]?.surfaceOp !== 'append')) {
+          throw retractUnavailable(request.sessionId, 'not-leaf', 'the target prompt is not the current leaf')
+        }
+        const retracted = agent.session.append('conversation/retraction', {
+          messageId: target.data.id,
+          startSeq: atSeq,
+          endSeq,
+        })
+        return { accepted: true, startSeq: atSeq, endSeq: retracted.data.endSeq }
+      })
+    } catch (error) {
+      if (error instanceof RemoteError) throw error
+      if (error instanceof SessionQueryError) {
+        throw new RemoteError(
+          'session/retract-unavailable',
+          `retraction could not read the Session: ${error.message}`,
+          { sessionId: request.sessionId, reason: 'busy' },
+        )
+      }
+      throw new RemoteError(
+        'session/retract-unavailable',
+        error instanceof Error ? error.message : 'retraction is unavailable',
+        { sessionId: request.sessionId, reason: 'busy' },
+      )
+    }
   }
 
   /**

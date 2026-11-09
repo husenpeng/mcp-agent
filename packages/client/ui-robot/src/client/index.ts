@@ -1,15 +1,16 @@
 /**
  * Tomato Rbot plugin, browser half: the robot roster in the left sidebar, the
- * `robots` main page with its template and robot gallery, six-block
- * specification editor, and run list, and a robot conversation surface bound
- * to a run's Session. All registry state and
- * control calls go through the `robotRuns` client service; this plugin holds no
- * transport state of its own.
+ * `robots` main page with its template and robot gallery, guided creation
+ * flow, six-block specification editor, and run list, a robot conversation
+ * surface bound to a run's Session, and the `robot_create` transcript row.
+ * All registry state and control calls go through the `robotRuns` client
+ * service; this plugin holds no transport state of its own.
  */
+import { brandString } from '@tomato/branded'
 import type { Context as ClientContext } from '@tomato/cordis'
 import type { MainPanelId } from '@tomato/client-ui-layout/client'
 import type { SessionReference } from '@tomato/api-session-controller/client'
-import type { RobotTemplate, Run } from '@tomato/api-robot-controller/client'
+import type { RobotId, RobotTemplate, Run } from '@tomato/api-robot-controller/client'
 import type { SessionId } from '@tomato/session/types'
 import type {} from '@tomato/api-remotes/client'
 import type {} from '@tomato/api-remote-access/client'
@@ -21,11 +22,12 @@ import type {} from '@tomato/client-ui-workspace/client'
 import type {} from '@tomato/client-ui-renderer/client'
 import type {} from '@tomato/client-ui-session/client'
 import type {} from '@tomato/client-ui-sidebar/client'
+import { RobotCreateRow, type RobotCreateRowInjected } from './RobotCreateRow.tsx'
 import { RobotPage, type RobotReferenceOption } from './RobotPage.tsx'
 import { RobotRunPanel } from './RobotRunPanel.tsx'
-import type { RunDetailActions } from './RunDetail.tsx'
+import type { RobotIdentity, RunDetailActions } from './RunDetail.tsx'
 import { RobotPanelIcon } from './RobotPanelIcon.tsx'
-import { RobotSidebar } from './RobotSidebar.tsx'
+import { RobotSubnav } from './RobotSubnav.tsx'
 import { retainRunSession } from './run-session.ts'
 import { createRobotPageStore } from './store.ts'
 import { templateTextFor } from './template-text.ts'
@@ -44,7 +46,7 @@ declare module '@tomato/client-ui-slots' {
     'robots.run': {
       kind: 'single'
       scope: 'session'
-      owner: { run: Run; actions: RunDetailActions }
+      owner: { run: Run; robot: RobotIdentity; actions: RunDetailActions; startBlocked: boolean; hasRuns: boolean }
     }
   }
 }
@@ -76,6 +78,8 @@ export function apply(ctx: ClientContext): void {
     },
     locale: () => ctx.locale.getSnapshot().active,
     templateText: (template: RobotTemplate) => templateTextFor(template, ctx.locale.getSnapshot().active),
+    listDirectory: (path?: string, signal?: AbortSignal) => ctx.uiWorkspace.listDirectory(path, signal),
+    pickDirectory: () => ctx.uiWorkspace.pickDirectory(),
     references: async () => {
       const presets: RobotReferenceOption[] = []
       const catalog = await ctx.remote.permissionPresets.catalog()
@@ -119,6 +123,20 @@ export function apply(ctx: ClientContext): void {
     inject: injected,
   }, RobotPage))
 
+  ctx.slots.inject('tool.call.toolview', () => ctx.slots.register({
+    name: 'tool.call.toolview',
+    key: 'robot_create',
+    locale: NS,
+    inject: (): RobotCreateRowInjected => ({
+      // The tool card lives in a conversation, so one click both selects the
+      // robot the call named and reveals the panel that owns its runs.
+      openRobot: (robotId) => {
+        instance.actions.selectRobot(brandString<RobotId>(robotId))
+        ctx.layout.selectPanel(PANEL_ID)
+      },
+    }),
+  }, RobotCreateRow))
+
   ctx.slots.inject('robots.run', () => ctx.slots.register({
     name: 'robots.run',
     locale: NS,
@@ -135,13 +153,16 @@ export function apply(ctx: ClientContext): void {
     label: () => t('nav'),
   }, RobotPanelIcon))
 
-  ctx.slots.inject('sidebar.robots', () => ctx.slots.register({
-    name: 'sidebar.robots',
+  ctx.slots.inject('sidebar.panellist.subnav', () => ctx.slots.register({
+    name: 'sidebar.panellist.subnav',
+    // The roster nests under its own panel launcher, so the list id is the
+    // panel id the sidebar filters this contribution by.
+    id: PANEL_ID,
     locale: NS,
     store,
     inject: () => ({
       hooks: { registry: ctx.robotRuns.state, robotPage: instance },
       selectPanel: () => { ctx.layout.selectPanel(PANEL_ID) },
     }),
-  }, RobotSidebar))
+  }, RobotSubnav))
 }

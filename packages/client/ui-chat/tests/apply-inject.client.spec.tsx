@@ -2,6 +2,7 @@ import { MessageId } from '@tomato/llm/brand'
 // @vitest-environment jsdom
 /** Chat inject factories exercised over independently mounted Conversation and Chat plugins. */
 import { createSnapshotStore } from '@tomato/client-store'
+import { RemoteError } from '@tomato/typert-protocol'
 import { describe, expect, it, vi } from 'vitest'
 import { AttachmentId } from '@tomato/attachment'
 import type { ISession, SessionReference } from '@tomato/api-session-controller/client'
@@ -49,6 +50,9 @@ function sessionFakeFor() {
     })),
     prompt: vi.fn<ISession['prompt']>(() => Promise.resolve({ ok: true, value: { accepted: true } })),
     cancel: vi.fn<ISession['cancel']>(() => Promise.resolve({ ok: true, value: { accepted: true } })),
+    retract: vi.fn<ISession['retract']>(() => Promise.resolve({
+      ok: true, value: { accepted: true, startSeq: 0, endSeq: 0 },
+    })),
   } satisfies SessionBehaviorOverrides
 }
 
@@ -286,6 +290,75 @@ describe('Chat inject API', () => {
       })
     })
     await b.runtime.dispose()
+  })
+
+  it('retracts the trailing exchange and restores its text through the composer facade', async () => {
+    const b = await bench()
+    try {
+      const { injected } = b.chatViewApi(b.rootReference)
+      const retract = vi.spyOn(b.session, 'retract').mockResolvedValue({
+        ok: true, value: { accepted: true, startSeq: 7, endSeq: 9 },
+      })
+      const input = b.runtime.ctx.conversation.input
+      const restore = vi.spyOn(input, 'requestDraftInitialization').mockReturnValue('applied')
+      const notify = vi.fn()
+      vi.spyOn(input, 'for').mockReturnValue({ notify } as never)
+
+      await injected.retractAt(7, 'typed by mistake')
+
+      expect(retract).toHaveBeenCalledExactlyOnceWith(7)
+      expect(restore).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ sessionId: ROOT }),
+        { prompt: 'typed by mistake', whenDraftExists: 'append' },
+      )
+      expect(notify).toHaveBeenCalledWith('info', expect.stringContaining('已撤回'))
+    } finally {
+      await b.runtime.dispose()
+    }
+  })
+
+  it('does not restore text when the Host refuses the retraction', async () => {
+    const b = await bench()
+    try {
+      const { injected } = b.chatViewApi(b.rootReference)
+      vi.spyOn(b.session, 'retract').mockResolvedValue({
+        ok: false,
+        error: new RemoteError('session/retract-unavailable', 'not the leaf', {
+          sessionId: ROOT, reason: 'not-leaf',
+        }),
+      })
+      const input = b.runtime.ctx.conversation.input
+      const restore = vi.spyOn(input, 'requestDraftInitialization')
+      await injected.retractAt(7, 'typed by mistake')
+      expect(restore).not.toHaveBeenCalled()
+    } finally {
+      await b.runtime.dispose()
+    }
+  })
+
+  it('reports a blocked restore and restores nothing for an attachment-only prompt', async () => {
+    const b = await bench()
+    try {
+      const { injected } = b.chatViewApi(b.rootReference)
+      vi.spyOn(b.session, 'retract').mockResolvedValue({
+        ok: true, value: { accepted: true, startSeq: 7, endSeq: 9 },
+      })
+      const input = b.runtime.ctx.conversation.input
+      const restore = vi.spyOn(input, 'requestDraftInitialization').mockReturnValue('blocked')
+      const notify = vi.fn()
+      vi.spyOn(input, 'for').mockReturnValue({ notify } as never)
+
+      await injected.retractAt(7, 'typed by mistake')
+      expect(notify).toHaveBeenCalledWith('error', expect.stringContaining('输入框正忙'))
+
+      restore.mockClear()
+      notify.mockClear()
+      await injected.retractAt(7, '')
+      expect(restore).not.toHaveBeenCalled()
+      expect(notify).toHaveBeenCalledWith('info', expect.stringContaining('没有可回填的文本'))
+    } finally {
+      await b.runtime.dispose()
+    }
   })
 
   it('addresses file paths under the Session\'s scope and opens them in the right Sidebar', async () => {

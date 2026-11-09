@@ -44,7 +44,7 @@ Desktop 在 `resources/runtime/primary-runtime/dependencies/pnpm` 中携带一�
 
 Platform 内嵌文档使用持久化 WebContentsView 分区，分区名由 Platform 来源和稳定账号 ID 的哈希决定。localStorage 中的页面偏好（包括已关闭的通知）在关闭视图和重启应用后保留；不同账号和来源使用独立存储。账号 ID 来自 Host 最近一次成功的资料读取；尚无该 ID 时，文档在一次性分区中打开，该分区不跨次保留偏好。打开持久分区会先清理 Cookie、文件系统、IndexedDB、Cache Storage、HTTP 与着色器缓存、Service Worker 及 HTTP 认证状态；一次性分区则清理其全部存储。关闭视图会销毁文档、移除请求拦截器并安排相同的清理，因此异常退出遗留的认证会在下一个文档加载前被清除。下次打开和应用退出都会等待该清理完成，更新安装也会在安装器接管退出前等待。清理失败会使该次打开失败，并在后续清理成功前阻止同一账号打开；其他账号不受影响。退出登录会销毁文档，但保留账号偏好供下次登录使用。同一凭证下账号 ID 迟到时，已以一次性分区打开的文档保持挂载；下次打开使用账号分区。[存储决策](../../.agents/notes/implemented/architecture/2026-09-22-platform-browser-storage.zh.md)说明保留策略。Host 通过私有 Node IPC 发送账号凭证；账号 RPC 和 Harness 渲染进程不接收 token。Platform preload 在页面脚本执行前通过一次同步 IPC 读取主进程中已准备的凭证。它暴露 displayMode、同步的 getAuthToken() 和 getLocale() getter，以及返回取消订阅函数的 onLocaleChange(listener)。两个 getter 都只读取 preload 内存，不再调用 IPC。bootstrap 包含 Desktop 已解析的语言（`zh_CN` 或 `en_US`）；Settings 语言变更会更新 preload 缓存并通知已打开的 Platform 文档，无需重载。Platform 在首屏渲染前应用该语言，且不将其持久化为浏览器偏好。主进程处理器仅校验调用来源并读取内存，不等待 Host、磁盘或网络。可信页面初始化失败时保留内嵌模式，由 getter 抛错，避免回退到浏览器凭证。只有受控 Platform 页面中、位于所配置签发来源的主 frame 能完成初始化。退登、凭证替换、Host 关闭及视图关闭都会销毁文档。跨来源文档导航被阻止。请求新窗口的 HTTPS 链接在系统浏览器中打开，不携带内嵌会话或 token；其他协议及带 URL 凭证的链接被拒绝。原生视图占据 Account 功能返回栏下方的视口。
 
-Desktop Host 的 Platform API 请求与更新策略请求用相同的 Platform 客户端请求头标识已安装客户端：平台、客户端版本、语言、以秒为单位的时区偏移，以及有意保持为空的 bundle id。账号操作按调用逐次传入调用界面的身份；账号 provider 管理[仅 API 使用的请求头配置](../../packages/credentials/deepseek-account-platform/README.zh.md#use-this-package)。更新策略额外上报架构、更新通道和内置运行时版本。 原生账号状态解析器接受 `no-response` 登录失败，并在供 UI 使用的安全投影中保留该错误码。
+Desktop Host 的 Platform API 请求与更新策略请求用相同的 Platform 客户端请求头标识已安装客户端：平台、客户端版本、语言、以秒为单位的时区偏移，以及有意保持为空的 bundle id。账号操作按调用逐次传入调用界面的身份；账号服务管理仅 API 使用的请求头配置。更新策略额外上报架构、更新通道和内置运行时版本。 原生账号状态解析器接受 `no-response` 登录失败，并在供 UI 使用的安全投影中保留该错误码。
 
 账号凭据被服务端判定失效后，未配置官方 API key 时返回 Welcome；有可用 API key 时保持工作区打开。主动退出登录遵循相同规则。Welcome 和工作区均显示本地化的登录失效提示。
 
@@ -307,11 +307,36 @@ Electron 主进程在启动时读取一次 `app.getPath('userData')/desktop/sett
 {
   "updates": {
     "allowTestAuthPopupWindow": false
+  },
+  "remote": {
+    "listenPort": 43110,
+    "keepAwake": false,
+    "launchAtLogin": false,
+    "trustedHosts": [],
+    "tunnel": false
   }
 }
 ```
 
 已有文件不会被覆盖；缺少 `updates` 对象或该字段时均按 `false` 处理。将字段设为 `true` 后完全退出并重启应用，即可允许测试鉴权弹窗。改回 `false` 并重启即可再次禁止。创建、读取或校验失败时使用默认值 `false`，不阻止启动。Desktop 尝试在 Electron 控制台记录包含文件路径的警告；日志不可用也不阻止启动。修正文件并重启后才会应用显式设置。未知字段会保留。安装更新保留此用户数据文件；Windows 卸载按[卸载规则](#windows-uninstall-rules)删除它。
+
+<a id="remote-access"></a>
+
+### 远程访问
+
+`remote` 决定这个壳层能被其他设备访问到什么程度。所有字段都需要显式开启，因此默认安装仍使用操作系统分配的本地回环端口，也不持任何电源断言。
+
+| 字段 | 默认值 | 含义 |
+|---|---|---|
+| `listenPort` | `43110` | 作为 `--port` 交给 Host 的本地回环端口；`0` 表示由操作系统分配。已配对的手机需要一个稳定地址来挂转发。 |
+| `keepAwake` | `false` | 持有 `prevent-app-suspension` 电源断言：系统保持活跃，显示器仍可关闭。 |
+| `launchAtLogin` | `false` | 把应用注册为登录项。 |
+| `trustedHosts` | `[]` | 除回环地址和绑定地址外，`/api` 浏览器信任栅栏额外接受的权威，每项对应一个 `--trusted-host`。转发主机若以自己的主机名访问，就必须把该名字写在这里。 |
+| `tunnel` | `false` | 由壳托管一条 Cloudflare quick tunnel，让设置页能把可从其他网络访问的链接交给已配对的手机。隧道指向回环监听，主机名每次启动都会变；`cloudflared` 从 `PATH` 或 Homebrew 目录查找。 |
+
+任一字段非法都会否决整份文件：壳层按文件路径告警，然后整体使用默认值，因此不会运行"只生效一部分"的访问配置。这些字段不改变回环绑定；外部链路、证书和路径前缀都归转发主机所有。
+
+设置 → 手机 可以启停当前进程的隧道，并显示配对链接及其二维码供手机扫描。Watchdog（`scripts/watchdog.mjs`，同目录 `launchd/` 下有 agent 模板）在 Host 之外以自己的本地回环端口运行，因此即使 Host 挂死，已配对的设备仍能读取 Desktop 的状态并重启它。`GET /health` 不需要凭据；`POST /restart` 与 `POST /stop` 需要 `~/.tomato-watchdog/token` 中的 bearer 令牌，这两个端点通过 `launchctl` 操作应用自己的 job。打包后的应用不包含这个脚本，因此在安装 agent 之前，请先把脚本和同目录的 agent 模板复制到一个稳定位置。
 
 <a id="mandatory-update-policy"></a>
 

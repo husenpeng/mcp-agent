@@ -19,7 +19,7 @@ import type {} from '@tomato/permission-presets'
 import type {} from '@tomato/skill'
 import type {} from '@tomato/tools'
 import { appendPluginRecord } from '@tomato/session'
-import type { SessionEvent, SessionId } from '@tomato/session'
+import type { Session, SessionEvent, SessionId } from '@tomato/session'
 import type {} from '@tomato/storage-domain'
 import type {} from '@tomato/system-prompt'
 import type {} from '@tomato/tools'
@@ -180,6 +180,32 @@ function messageOf(error: unknown): string {
 type ResumeOutcome = 'resumed' | 'terminal' | 'timeout'
 
 /**
+ * Apply the specification's permission preset to one run Session.
+ * The permission catalog is optional; without it the Agent keeps the composed
+ * permission settings. A preset the deployment does not register throws before
+ * the run's first turn, so the run ends with the reason instead of running
+ * under a policy the specification did not choose.
+ * @param ctx - runtime context that may carry the permission catalog.
+ * @param session - Session the run owns.
+ * @param spec - specification being executed.
+ * @throws when the named preset is unavailable; the message names the value and
+ *   the remedy because the run's failure text is the operator's only report.
+ */
+function applyPermissionPreset(ctx: Context, session: Session, spec: RobotSpec): void {
+  const presets = ctx.get('permissionPresets')
+  if (presets === undefined) return
+  const name = spec.capability.permissionPreset
+  try {
+    presets.set(session, name)
+  } catch (error) {
+    throw new Error(
+      `robot permission preset "${name}" is unavailable in this deployment: ${messageOf(error)}`
+      + ' Republish the robot specification with a preset this deployment registers.',
+    )
+  }
+}
+
+/**
  * Mount the queued-run executor. It scans existing queued runs on load and
  * follows `domain/changed` writes afterwards; each run drives its own Agent,
  * across as many turns as the run stays non-terminal, and records the Session
@@ -232,53 +258,59 @@ export async function apply(ctx: Context, config: Config = Config.parse({})): Pr
     }
   }
 
+  /**
+   * Record one run failure without letting the report itself escape.
+   * A provider refuses the failure write for a run it no longer holds; that
+   * must not become an unhandled rejection after the run has already failed.
+   * @param id - run to settle.
+   * @param error - failure the run is reporting.
+   */
+  const settleFailure = async (id: RunId, error: unknown): Promise<void> => {
+    try {
+      await ctx.robots.finish(id, { state: 'failed', error: messageOf(error) })
+    } catch (finishError) {
+      /* v8 ignore next -- the local provider refuses failure writes only for runs it no longer holds, and it never deletes a run */
+      ctx.logger.warn(`robot run ${id} failed and the failure could not be recorded: ${messageOf(finishError)}`)
+    }
+  }
+
   const execute = async (candidate: Run): Promise<void> => {
-    const revision = await ctx.robots.revision(candidate.spec)
-    /* v8 ignore next 4 -- the provider accepts runs only for published revisions */
-    if (revision === undefined) {
-      await ctx.robots.finish(candidate.id, { state: 'failed', error: 'robot specification revision is missing' })
-      return
-    }
-    const spec = revision.spec
-    const cwd = resolveWorkspaceRoot(ctx, spec)
-    let capabilities: RunCapabilities
+    let created: AgentHandle | undefined
+    let stop: (() => void) | undefined
     try {
-      capabilities = await resolveCapabilities(ctx, spec, cwd)
-    } catch (error: unknown) {
-      await ctx.robots.finish(candidate.id, { state: 'failed', error: messageOf(error) })
-      return
-    }
-    const sessionId = candidate.sessionId ?? brandString<SessionId>(`robot-run-${randomUUID()}`)
-    let handle: AgentHandle
-    try {
-      handle = await ctx.agents.create({
+      const revision = await ctx.robots.revision(candidate.spec)
+      /* v8 ignore next 4 -- the provider accepts runs only for published revisions */
+      if (revision === undefined) {
+        await ctx.robots.finish(candidate.id, { state: 'failed', error: 'robot specification revision is missing' })
+        return
+      }
+      const spec = revision.spec
+      const cwd = resolveWorkspaceRoot(ctx, spec)
+      const capabilities = await resolveCapabilities(ctx, spec, cwd)
+      const sessionId = candidate.sessionId ?? brandString<SessionId>(`robot-run-${randomUUID()}`)
+      const handle = await ctx.agents.create({
         sessionId,
         meta: { cwd },
         agentOptions: ctx.agentDefaultModel.currentSelection(),
         setup: setupFor(spec, capabilities),
       })
-    } catch (error: unknown) {
-      await ctx.robots.finish(candidate.id, { state: 'failed', error: messageOf(error) })
-      return
-    }
-    await ctx.robots.attachSession(candidate.id, sessionId)
-    // Log-only record: clients resolve the run's Session from this projection,
-    // and the record precedes any other event so the fold starts from the link.
-    appendPluginRecord(handle.agent.session, 'plugin:robot/run', { robotId: candidate.robot, runId: candidate.id })
-    await ctx.sessions.flush(handle.agent.session)
-    active.set(candidate.id, handle)
-    const presets = ctx.get('permissionPresets')
-    if (presets !== undefined) presets.set(handle.agent.session, spec.capability.permissionPreset)
-    let text = ''
-    let reason: TurnEndReason | undefined
-    const stop = ctx.on('session/event', (session, event) => {
-      if (session !== handle.agent.session) return
-      if (event.type === 'assistant/message') {
-        text = event.data.message.content.filter(block => block.type === 'text').map(block => block.text).join('')
-      }
-      if (event.type === 'turn/end') reason = event.data.reason
-    })
-    try {
+      created = handle
+      await ctx.robots.attachSession(candidate.id, sessionId)
+      // Log-only record: clients resolve the run's Session from this projection,
+      // and the record precedes any other event so the fold starts from the link.
+      appendPluginRecord(handle.agent.session, 'plugin:robot/run', { robotId: candidate.robot, runId: candidate.id })
+      await ctx.sessions.flush(handle.agent.session)
+      active.set(candidate.id, handle)
+      applyPermissionPreset(ctx, handle.agent.session, spec)
+      let text = ''
+      let reason: TurnEndReason | undefined
+      stop = ctx.on('session/event', (session, event) => {
+        if (session !== handle.agent.session) return
+        if (event.type === 'assistant/message') {
+          text = event.data.message.content.filter(block => block.type === 'text').map(block => block.text).join('')
+        }
+        if (event.type === 'turn/end') reason = event.data.reason
+      })
       await ctx.robots.advance(candidate.id, 'running')
       handle.agent.followup(createUserMessage({
         content: [{ type: 'text', text: candidate.input.message }],
@@ -305,12 +337,18 @@ export async function apply(ctx: Context, config: Config = Config.parse({})): Pr
         return
       }
     } catch (error: unknown) {
-      await ctx.robots.finish(candidate.id, { state: 'failed', error: messageOf(error) })
+      await settleFailure(candidate.id, error)
     } finally {
-      stop()
+      stop?.()
       active.delete(candidate.id)
       stateWaiters.delete(candidate.id)
-      await handle.dispose()
+      if (created !== undefined) {
+        try {
+          await created.dispose()
+        } catch (disposeError) {
+          ctx.logger.warn(`robot run ${candidate.id} could not dispose its Agent: ${messageOf(disposeError)}`)
+        }
+      }
     }
   }
 
@@ -319,7 +357,14 @@ export async function apply(ctx: Context, config: Config = Config.parse({})): Pr
     // keeps its own Agent, including across a pause.
     if (candidate.state !== 'queued' || queued.has(candidate.id)) return
     queued.add(candidate.id)
-    void execute(candidate).finally(() => { queued.delete(candidate.id) })
+    // The executor contains its own failures; this catch is the last resort for a
+    // defect in that containment, because an unhandled rejection ends the Host.
+    void execute(candidate)
+      .catch(
+        /* v8 ignore next -- execute contains its own failures; this arm covers a defect in that containment */
+        (error: unknown) => settleFailure(candidate.id, error),
+      )
+      .finally(() => { queued.delete(candidate.id) })
   }
 
   ctx.on('domain/changed', (change) => {
@@ -339,7 +384,10 @@ export async function apply(ctx: Context, config: Config = Config.parse({})): Pr
         return
       }
       dispatch(candidate)
-    })
+    }).catch(
+      /* v8 ignore next -- a durable storage read rejects only on a store fault; the warning keeps the Host alive */
+      (error: unknown) => { ctx.logger.warn(`robot run ${id} could not be read after its record changed: ${messageOf(error)}`) },
+    )
   })
 
   ctx.effect(() => () => Promise.all([...active.values()].map(handle => handle.dispose())))
@@ -348,5 +396,8 @@ export async function apply(ctx: Context, config: Config = Config.parse({})): Pr
     for (const robot of await ctx.robots.robots()) {
       for (const candidate of await ctx.robots.runs(robot.id)) dispatch(candidate)
     }
-  })()
+  })().catch(
+    /* v8 ignore next -- the load scan reads durable storage; the warning keeps the Host alive when that read fails */
+    (error: unknown) => { ctx.logger.warn(`robot runtime could not scan queued runs: ${messageOf(error)}`) },
+  )
 }

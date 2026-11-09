@@ -1,6 +1,6 @@
 {
   "name": "@tomato/client-ui-robot",
-  "description": "Tomato Rbot page: the robot roster in the sidebar, the robot specification editor, and a robot conversation surface separate from workspaces",
+  "description": "Tomato Rbot page: the robot roster in the sidebar, the guided creation flow, the robot specification editor, and a robot conversation surface separate from workspaces",
   "version": "0.2.1-rc.3",
   "type": "module",
   "main": "lib/index.js",
@@ -15,7 +15,8 @@
       "default": "./lib/client.js"
     },
     "./src/*": "./src/*",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
   },
   "scripts": {
     "bundle": "tsdown",
@@ -39,6 +40,7 @@
     "@tomato/api-remotes": "workspace:*",
     "@tomato/api-robot-controller": "workspace:*",
     "@tomato/api-session-controller": "workspace:*",
+    "@tomato/branded": "workspace:*",
     "@tomato/client-locale": "workspace:*",
     "@tomato/client-store": "workspace:*",
     "@tomato/client-test-runtime": "workspace:*",
@@ -50,18 +52,21 @@
     "@tomato/client-ui-session": "workspace:*",
     "@tomato/client-ui-sidebar": "workspace:*",
     "@tomato/client-ui-slots": "workspace:*",
+    "@tomato/client-ui-tool": "workspace:*",
     "@tomato/client-ui-workspace": "workspace:*",
     "@tomato/cordis": "workspace:~",
     "@tomato/experimental-robot": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/typert-protocol": "workspace:*",
+    "@tomato/util-values": "workspace:*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "files": [
-    "lib/index.js",
     "lib/client.js",
-    "lib/types/**/*.d.ts"
+    "lib/index.js",
+    "lib/types/**/*.d.ts",
+    "locale/*.json"
   ],
   "tomato": {
     "client": {

@@ -548,6 +548,12 @@ interface LlmModelInfo {
   description?: string
   /** Accepted request modalities; absent means unknown, while an explicit omission is negative capability. */
   inputModalities?: readonly ModelModality[]
+  /**
+   * Why a deployment policy refuses this model. Absent when the model may be
+   * selected; a non-empty string keeps it visible to selector surfaces as a
+   * disabled row while {@link LlmRuntime.stream} refuses to call it.
+   */
+  blockedReason?: string
 }
 ```
 

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /** Account state updates continue after default-model initialization refuses. */
 import { expect, it, vi, afterEach } from 'vitest'
-import type { AccountView, SignInAttemptId } from '@tomato/deepseek-account/types'
+import type { AccountView, SignInAttemptId } from '@tomato/account-service/types'
 import { apply, type AccountSectionInjected } from '../src/client/index.ts'
 
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs() })
@@ -79,7 +79,7 @@ it.each(['accepted', 'refused', 'disconnected', 'pending'] as const)('initialize
       { status: 'signed-out', failed: false },
     ])
     if (outcome === 'accepted' || outcome === 'pending') expect(log).not.toHaveBeenCalled()
-    else expect(log).toHaveBeenCalledWith('[deepseek-account] default model initialization failed', {
+    else expect(log).toHaveBeenCalledWith('[account] default model initialization failed', {
       reason: outcome === 'refused' ? 'refused' : 'disconnected',
     })
     expect(operations?.hooks.account.getSnapshot()).toMatchObject({ view: { status: 'signed-out' }, failed: false })

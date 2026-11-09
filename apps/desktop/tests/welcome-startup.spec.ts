@@ -4,7 +4,7 @@ vi.mock('../src/web-document.ts', () => ({ authenticateWebHost: async () => 'tes
 import { afterEach, expect, it, vi } from 'vitest'
 import type { BrowserWindowConstructorOptions } from 'electron'
 import type { DesktopLocale } from '../src/locale.ts'
-import type { AccountView } from '@tomato/deepseek-account/types'
+import type { AccountView } from '@tomato/account-service/types'
 import type { WelcomeOperations } from '../src/welcome-api.ts'
 import { DESKTOP_IPC } from '../src/ipc.ts'
 
@@ -60,12 +60,14 @@ vi.mock('electron', () => ({
     getAppPath: () => '/development-app',
     getPath: (name: string) => name === 'userData' ? '/desktop-user-data' : name === 'logs' ? `/tmp/tomato-welcome-startup-logs-${process.pid}` : `/development-${name}`,
     setAppLogsPath: vi.fn(),
+    setLoginItemSettings: vi.fn(),
     getPreferredSystemLanguages: () => ['en-US'],
     on: (name: string, callback: (...args: unknown[]) => void) => { state.appListeners.set(name, callback) },
     quit: state.quit,
     exit: vi.fn(),
   },
   powerMonitor: { on: vi.fn(), off: vi.fn() },
+  powerSaveBlocker: { start: () => 1, isStarted: () => true, stop: vi.fn() },
   BrowserWindow: class {
     constructor(options: BrowserWindowConstructorOptions) { state.windowOptions = options }
     private ready: (() => void) | undefined
@@ -102,7 +104,12 @@ vi.mock('electron', () => ({
 vi.mock('../src/tray.ts', () => ({ DesktopTray: class { relabel() {} dispose() {} } }))
 
 vi.mock('../src/paths.ts', () => ({ resolveDesktopPaths: () => ({ profile: '/profile' }) }))
-vi.mock('../src/settings.ts', () => ({ readDesktopSettings: () => ({ updates: { allowTestAuthPopupWindow: false } }) }))
+vi.mock('../src/settings.ts', () => ({
+  readDesktopSettings: () => ({
+    updates: { allowTestAuthPopupWindow: false },
+    remote: { listenPort: 43_110, keepAwake: false, launchAtLogin: false, trustedHosts: [] },
+  }),
+}))
 vi.mock('../src/login-shell-environment.ts', async importOriginal => ({
   ...await importOriginal<typeof import('../src/login-shell-environment.ts')>(),
   readDesktopLoginShellEnvironment: async (base: NodeJS.ProcessEnv) => ({ environment: base, failures: [] }),
@@ -115,6 +122,7 @@ vi.mock('../src/host-process.ts', () => ({
   DesktopHostProcess: class {
     start = state.startHost
     stop = state.stopHost
+    publishSession = vi.fn()
     fetch() {
       return Promise.resolve(Response.json({
         loggedIn: false, hasApiKey: state.hasApiKey, writable: true, localePreference: state.preference,

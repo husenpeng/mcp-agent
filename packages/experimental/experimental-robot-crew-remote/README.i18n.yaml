@@ -1,0 +1,31 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/experimental-robot-crew-remote/README.md
+/:
+  en: bf624132425703a7
+  zh: 00f0843b5fe84b81
+/robot-crew-remote:
+  en: 48956f2e5e126027
+  zh: f4760d4ccd59203a
+/robot-crew-remote/summary:
+  en: 5d4992f3938783a7
+  zh: afde150e4db468d6
+/robot-crew-remote/table-of-contents:
+  en: 4e53164159b5ce41
+  zh: 89582dc0294d0776
+/robot-crew-remote/use-this-package:
+  en: fde81271e8b505e9
+  zh: c6550f5ed6167281
+/robot-crew-remote/model-experience:
+  en: 5aa8fed73d99b083
+  zh: a74117d3647b7b7b
+/robot-crew-remote/model-experience/kv-cache-effect:
+  en: 4f029d8d273908f4
+  zh: 7ad3a74edef88fc0
+/robot-crew-remote/known-limitations-and-deferred-work:
+  en: e2390a67125fa967
+  zh: ac92d3bc6f38e985
+/robot-crew-remote/known-limitations-and-deferred-work/dev-note:
+  en: 0174054dc1b9a06d
+  zh: f4073a7fc19689d6

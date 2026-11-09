@@ -2,7 +2,7 @@
 import {
   Button, DetailDocument, IconChevronLeftOutlineRegular, Tag, Tooltip, useDetailDocumentLabels,
 } from '@tomato/client-ui-primitives'
-import { formatDate, formatStars, installTarget, latestVersion, localized, starsOf, targetsDeepSeek } from './search.js'
+import { formatDate, formatStars, installTarget, latestVersion, localized, requirementOf, starsOf, targetsDeepSeek } from './search.js'
 import { MarketIcon } from './widgets.jsx'
 
 /** @param {object} version - one listed version. @returns {Array<{ label: string, value: string }>} source facts. */
@@ -73,6 +73,9 @@ export function PluginPage({ plugin, state, controller, install, t }) {
   const version = latestVersion(plugin)
   const stars = starsOf(plugin, state.catalog?.stars ?? {})
   const description = localized(plugin.description, language)
+  const verdict = state.compat.status === 'ready' ? state.compat.data?.compatibility : undefined
+  const runtimeVersion = state.compat.status === 'ready' ? state.compat.data?.runtimeVersion : undefined
+  const requirement = verdict?.status === 'incompatible' ? requirementOf(verdict.requirements) : undefined
   const facts = version === undefined ? [] : sourceFacts(plugin, version, t)
   const labels = useDetailDocumentLabels({
     title: t('detailTitle'),
@@ -107,6 +110,9 @@ export function PluginPage({ plugin, state, controller, install, t }) {
               <Tag tone="info">{localized(state.catalog?.categories?.find(entry => entry.id === plugin.category)?.title, language) || plugin.category}</Tag>
             )}
             {targetsDeepSeek(version) ? <Tag tone="warning">{t('compatDsh')}</Tag> : null}
+            {verdict?.status === 'compatible' ? <Tag tone="success">{t('compatCurrent')}</Tag> : null}
+            {requirement === undefined ? null : <Tag tone="warning">{t(requirement.key, requirement.params)}</Tag>}
+            {runtimeVersion === undefined ? null : <span>{t('runtimeVersion', { version: runtimeVersion })}</span>}
             <Tooltip label={t('starNote')} side="bottom" portal delayMs={400}>
               <span className="tm-stars">{stars === undefined ? t('noStars') : t('stars', { count: formatStars(stars) })}</span>
             </Tooltip>

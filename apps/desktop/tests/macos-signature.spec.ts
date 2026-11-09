@@ -81,7 +81,7 @@ describe('desktop macOS release signature', () => {
         identity: RELEASE_ENVIRONMENT.TOMATO_DESKTOP_MACOS_SIGNING_IDENTITY,
         forceCodeSigning: true,
         notarize: true,
-        signIgnore: ['/Contents/Resources/app\\.asar\\.unpacked/tomato(?:/|$)', '/Contents/Resources/runtime/primary-runtime(?:/|$)', '\\.pak$'],
+        signIgnore: ['/Contents/Resources/app\\.asar\\.unpacked/tomato(?:/|$)', '/Contents/Resources/runtime/primary-runtime(?:/|$)', '/Contents/Resources/runtime/playwright-browsers(?:/|$)', '\\.pak$'],
       },
       dmg: {
         format: 'ULMO',

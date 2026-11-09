@@ -71,5 +71,8 @@ function classifySurface(events: readonly SessionEvent[]): Map<SessionSeq, Sessi
   for (const replacement of folded.replacements) {
     for (const seq of replacement.shadowedSeqs) result.set(seq, 'shadowed')
   }
+  for (const retraction of folded.retractions) {
+    for (const seq of retraction.removedSeqs) result.set(seq, 'shadowed')
+  }
   return result
 }

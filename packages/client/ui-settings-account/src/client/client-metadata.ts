@@ -4,7 +4,7 @@
  * the local UTC offset rather than any credential.
  * @module @tomato/client-ui-settings-account/src/client/client-metadata
  */
-import type { AccountClientMetadata } from '@tomato/deepseek-account/types'
+import type { AccountClientMetadata } from '@tomato/account-service/types'
 
 /**
  * Build the request identity for one account call.

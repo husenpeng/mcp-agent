@@ -60,7 +60,7 @@
     "@tomato/llm": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/host-product-telemetry-otel": "workspace:*",
-    "@tomato/deepseek-account": "workspace:*",
+    "@tomato/account-service": "workspace:*",
     "@tomato/host-webserver": "workspace:*",
     "@tomato/settings": "workspace:*",
     "@tomato/cordis-plugin-loader": "workspace:~",

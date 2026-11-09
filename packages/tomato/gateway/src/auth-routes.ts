@@ -77,6 +77,7 @@ function loopbackRequestOrigin(host: string | undefined, secure: boolean): strin
 export class AuthRoutes {
   private readonly attempts = new Map<string, Attempt>()
   private readonly secure: boolean
+  private advertisedRoot: (() => string) | undefined
 
   /**
    * @param config - validated gateway configuration.
@@ -94,6 +95,22 @@ export class AuthRoutes {
     private readonly onSignedOut: () => void = () => {},
   ) {
     this.secure = secure
+  }
+
+  /**
+   * Point the sign-in return leg at the root browsers actually use.
+   *
+   * A request that arrives through a forwarding host presents that host's
+   * authority, not this listener's, so deriving the callback from the request
+   * would send the browser back to a loopback address it cannot reach. The
+   * advertised root is a configured single value rather than a value read from
+   * the request, so adopting it cannot redirect anywhere an operator did not
+   * already publish. A loopback request still wins: there the request's own
+   * origin is the one whose session cookie the browser must receive.
+   * @param supplier - reads the advertised root, normalised to end in `/`; omitted means never advertised.
+   */
+  setAdvertisedRoot(supplier: (() => string) | undefined): void {
+    this.advertisedRoot = supplier
   }
 
   /** Drop one expired attempt, or the oldest attempt when the map is full. */
@@ -137,8 +154,10 @@ export class AuthRoutes {
     const verifier = randomBytes(32).toString('base64url')
     const challenge = createHash('sha256').update(verifier).digest('base64url')
     const desktop = new URL(request.url ?? '/', this.origin).searchParams.get('desktop') === '1'
-    const origin = loopbackRequestOrigin(request.headers.host, this.secure) ?? this.origin
-    const returnTo = `${origin}/api/auth/callback?state=${encodeURIComponent(state)}${desktop ? '&desktop=1' : ''}`
+    const origin = loopbackRequestOrigin(request.headers.host, this.secure)
+      ?? this.advertisedRoot?.()
+      ?? this.origin
+    const returnTo = `${origin}${origin.endsWith('/') ? '' : '/'}api/auth/callback?state=${encodeURIComponent(state)}${desktop ? '&desktop=1' : ''}`
     this.attempts.set(state, {
       state,
       verifier,

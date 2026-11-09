@@ -65,7 +65,7 @@ pnpm tomato plugin --profile web add link:/absolute/path/to/plugins/tomato-marke
 
 # 或打包后安装
 cd plugins/tomato-market && npm pack
-pnpm tomato plugin --profile web add /absolute/path/tomato-market-0.3.0.tgz
+pnpm tomato plugin --profile web add /absolute/path/tomato-market-0.4.0.tgz
 ```
 
 安装后重启 profile（`pnpm tomato web`），打开侧栏 **插件 → 营销插件市场** 或 **通用插件市场**。桌面端可在 **设置 → 插件 → 添加插件** 里用 `link:` 或 tgz 安装，重启应用后生效。
@@ -84,6 +84,17 @@ Tomato 识别本包的 `tomato.bundle.patch` 后会把 `tomato-market` 加入 pr
   - 声明 `dsh.bundle` → 提示后下载该版本的 npm tarball，把包名、`dsh` 清单字段与代码导入改写为 Tomato 命名，重打包成 `file:` 规格交给同一个安装对话框；
   - 没有声明任何 bundle → 提示这不是插件包；
   - 注册表不可达 → 说明原因，可选择“仍然安装”，由 Tomato 的安装器再检查一次。
+
+## 按 TOMATO 版本选版本
+
+安装前市场先判定该版本能否在当前 TOMATO 上运行，再从列出的版本里选一个能装的：
+
+- **判定规则与安装器一致**（`packages/boot/app-boot/src/plugin-compatibility.ts`）：包自己声明了 `engines.tomato` 就只看这条范围（DSH 包的 `engines.dsh` 按同一范围读），否则逐个检查 `@tomato/*` peer 依赖的范围是否包含当前版本。`@tomato/cordis*`、`cosmokit`、`schemastery` 这些 vendored 包由安装自带，固定版本，不参与判定；`@deepseek-ai/*` 先按兼容层映射成 Tomato 名字再判定，`@deepseek-ai/libreoffice-kit*` 保持第三方身份不判定。
+- **当前版本与安装器同源**：读 profile 启动时给出的 `installAnchor` 的 `package.json` 的 `version`，也就是安装器 `getTomatoRuntimeVersion()` 用的同一个值。
+- **自动回退**：点“安装”后先判定所选版本；不满足要求时，再按“目录里的其余版本 → 注册表发布的更早版本”由新到旧读清单，最多 8 个，取第一个满足要求的版本。所选版本不兼容时会自动改装这个版本，标签页顶部说明换成了哪个版本、当前 TOMATO 是什么。目录只保留每个插件最新的 24 个版本，更早的版本按注册表 packument 补齐，所以像 `0.30.1` 要求 `0.2.2` 而本机是 `0.2.1` 的情况，会回落到目录里没有的 `0.28.2`。
+- **没有可用版本**：不再把注定被拒的安装交给安装器，直接说明当前 TOMATO 版本和最新版本要求的范围。
+- **未知不阻塞**：读不到运行版本（没有 profile 的进程）或清单不可读时保持“未知”，按原流程交给安装器再检查一次。
+- 详情页标出所选版本是否兼容当前 TOMATO，并显示运行中的 TOMATO 版本。
 
 ## DSH 兼容层做了什么
 
@@ -122,6 +133,8 @@ Host 半只读取上述固定来源，不接受浏览器传入任意 URL；`deta
 ## 已知限制
 
 - 兼容层是命名与清单转换，不是 API 适配；个别 DSH 插件仍可能因内部假设不同而加载失败。
+- 兼容判定只看清单声明的范围，与安装器一致；它不预演插件在运行时会用到哪些服务。范围满足但实际不兼容的插件仍会在加载时报错。
+- 自动回退一次最多读 8 个版本清单（含所选版本）；注册表 packument 只用来补齐目录没有的更早版本，不保证所有历史版本都能翻到。
 - 转换产物绑定到具体版本；安装后插件页显示的是本地 `file:` 来源，更新需要重新从市场安装。
 - 通用插件市场的卡片不显示“已安装/可更新”，需要时从插件页的“已安装”列表确认；营销插件市场由 Host 读取当前 profile，会显示“已安装”。
 - MCP 服务器启动失败不算安装失败：`@tomato/mcp-client` 记录错误后继续运行，配置已写入，但工具不会出现，原因在日志里（常见原因是 key 没设置或首次下载超时）。卸载后重装即可重试。
@@ -154,5 +167,7 @@ node scripts/build-client.mjs --check
 **Marketing plugins** lists 107 reviewed, open-source, free entries for overseas creator marketing from a catalog bundled with the package: plugins, MCP servers, and Skills, with categories, a type filter, and tags for free keys, self-hosting, login sessions, manual installs, and installed entries. MCP servers install as `mkt-mcp-<id>` rows in a marked block of the running profile's `cordis.patch.yml`, written atomically with a backup and restored if the profile refuses them. Skills install below `$TOMATO_HOME/skills` at a pinned commit with a `.tomato-market.json` marker, and uninstall removes only marked directories. Credentials never reach the file: entries declare variable names only. Twenty-seven entries are manual installs with written steps.
 
 **General plugins** browses the open `dsh-plugin-catalog` by category, sorts by GitHub stars, last update, or name, searches names/authors/keywords/descriptions, and shows a details page with the README, source facts, and every listed version. Installing first reads the version's npm manifest: `tomato.bundle` versions go straight to the page's install dialog, and DeepSeek Harness versions are converted first — package names, `dsh` metadata fields, peer dependencies, and code imports are rewritten to the Tomato naming (the same table as `scripts/rescope-to-tomato.ts`), repacked, and then handed to the same installer. The conversion reads and rewrites text only; it never runs package code. Host reads are limited to the configured catalog mirrors, the listed `name@version` pairs, and the registry tarball of that version.
+
+**Choosing a version for the running TOMATO.** Before installing, the market judges the chosen version with the installer's own rule — its `engines.tomato` range alone, else every `@tomato/*` peer range, with vendored Cordis packages exempt — against the version of the running installation, read from the profile's `installAnchor`. A version that does not qualify makes the market walk the remaining catalog versions and then the older releases the registry publishes, newest-first and at most eight manifest reads, install the newest one that does, and say at the top of the tab which version it substituted and what the requested one required. When no listed version qualifies it refuses with the requirement instead of starting an install the installer would reject. An unreadable runtime version or manifest stays unknown and falls back to the installer's own check.
 
 Install with `pnpm tomato plugin --profile web add link:$PWD`, restart, then open **Plugins → Marketing plugins** or **General plugins**. Configure mirrors through the `tomato-market` row (`indexUrls`, `starUrls`, `timeoutMs`, `cacheTtlMs`, `registries`).

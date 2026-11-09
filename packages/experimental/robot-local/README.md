@@ -41,7 +41,7 @@ Publishing a specification with the same name as another latest specification fa
 <details>
 <summary>Implementation internals — click to expand</summary>
 
-Validation runs a Zod schema over every field, then checks cross-field invariants: duplicate entries in declared lists, a tool in both `allow` and `deny`, and a goal without triggers. A rejected specification throws `RobotSpecValidationError` with field paths. A successful publish deep-freezes the specification before it enters storage, so later caller mutations cannot change the revision.
+Validation runs a Zod schema over every field, then checks cross-field invariants: duplicate entries in declared lists, a tool in both `allow` and `deny`, and a goal without triggers. When the deployment mounts `permissionPresets`, publish also resolves `capability.permissionPreset` against that catalog and reports an unregistered name as a field issue, so the editor cannot save a specification no run can start. A rejected specification throws `RobotSpecValidationError` with field paths. A successful publish deep-freezes the specification before it enters storage, so later caller mutations cannot change the revision.
 
 The provider opens the `tomato_robot` domain and keeps no separate mutable state: revisions, robots, and runs are read from the domain's validated in-memory tables, and every write is durable before its promise resolves. The domain validates every stored record when it opens, so a malformed record rejects activation instead of being skipped. A single provider-owned chain serializes mutations, so concurrent publishes cannot pass the same name check and concurrent starts cannot both claim one robot.
 

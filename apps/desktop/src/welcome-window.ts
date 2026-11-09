@@ -1,4 +1,4 @@
-import type { SignInAttemptId } from '@tomato/deepseek-account/types'
+import type { SignInAttemptId } from '@tomato/account-service/types'
 /** Native welcome window and its presentation-only renderer. */
 
 import { join } from 'node:path'

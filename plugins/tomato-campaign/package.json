@@ -1,0 +1,49 @@
+{
+  "name": "tomato-campaign",
+  "version": "0.2.2",
+  "description": "达人营销活动工作台：把 client-monorepo 的 campaign / outreach 业务接进 Tomato Harness（同源 BFF 代理 + 工具 + skill + 前端面板）。",
+  "keywords": [
+    "tomato-plugin",
+    "tomato",
+    "campaign",
+    "outreach",
+    "creator-marketing"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "src/",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "node scripts/build-client.mjs",
+    "test": "node --test \"tests/*.test.mjs\""
+  },
+  "tomato": {
+    "client": {
+      "platform": "web"
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@tomato/cordis": "*",
+    "@tomato/tools": "*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  },
+  "engines": {
+    "tomato": ">=0.2.1-rc.3 <0.3.0"
+  }
+}

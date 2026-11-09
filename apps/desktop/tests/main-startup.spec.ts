@@ -1,4 +1,4 @@
-import type { AccountView } from '@tomato/deepseek-account/types'
+import type { AccountView } from '@tomato/account-service/types'
 import { WINDOWS_TITLEBAR_HEIGHT } from '../src/windows-layout.ts'
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import type { IpcMainInvokeEvent } from 'electron'
@@ -149,6 +149,7 @@ const harness = await vi.hoisted(async () => {
   }
   class FakeHost {
     readonly updateTasks = vi.fn(async (_action: 'inspect' | 'lock' | 'unlock') => false)
+    readonly publishSession = vi.fn()
     readonly inspectQuit = vi.fn(async () => ({ activeTasks: false, scheduledTasks: false }))
     url = 'http://127.0.0.1:3080/?token=test'
     fetch = vi.fn(async () => Response.json({ hasApiKey: true, writable: true, localePreference: null }))
@@ -179,6 +180,7 @@ const harness = await vi.hoisted(async () => {
     setAppLogsPath: vi.fn(),
     getPath: vi.fn<(name: string) => string>(),
     setAboutPanelOptions: vi.fn<(options: Electron.AboutPanelOptionsOptions) => void>(),
+    setLoginItemSettings: vi.fn<(settings: Electron.Settings) => void>(),
     requestSingleInstanceLock: (): boolean => true,
     setAsDefaultProtocolClient: vi.fn(),
     exit: vi.fn(),
@@ -328,6 +330,7 @@ vi.mock('electron', () => ({
   } },
   protocol: { registerSchemesAsPrivileged: vi.fn(), handle: harness.protocolHandle },
   powerMonitor: harness.powerMonitor,
+  powerSaveBlocker: { start: vi.fn(() => 1), isStarted: vi.fn(() => false), stop: vi.fn() },
   Tray: harness.FakeTray,
   nativeImage: { createFromPath: (path: string) => ({ path }) },
 }))
@@ -458,6 +461,9 @@ beforeEach(() => {
   vi.stubEnv('TOMATO_DESKTOP_MANDATORY_UPDATE_CONFIG', undefined)
   vi.stubEnv('TOMATO_DESKTOP_UPDATE_JOURNAL_DIR', undefined)
   vi.stubEnv('TOMATO_CLIENT_VERSION', '1.2.3')
+  // Startup coverage starts at the Host handoff; the splash has its own spec and
+  // would otherwise become the first window every test inspects.
+  vi.stubEnv('TOMATO_DESKTOP_SKIP_SPLASH', '1')
   harness.analyticsEnabled = true
 })
 
@@ -584,7 +590,7 @@ describe('desktop main startup', () => {
     expect({ menu: [{ label: about!.label, ...about!.role === undefined ? {} : { role: about!.role } }, separator], options: { ...options, iconPath: '<app icon>' } })
       .toEqual(expected[`${platform}:${locale}`])
     expect(options.iconPath).toBe(packaged ? join('desktop-test-resources', 'icon.png')
-      : join('desktop-test-app', 'resources', 'icon-windows.png'))
+      : join('desktop-test-app', 'resources', platform === 'darwin' ? 'icon-macos.png' : 'icon-windows.png'))
     if (platform !== 'win32') { expect(about!.click).toBeUndefined(); return }
     // Windows reuses the dimmed update dialog because Electron's fallback is a bare message box.
     harness.dialog.showMessageBox.mockResolvedValueOnce({ response: 0 })

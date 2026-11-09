@@ -27,7 +27,7 @@ This package shows `1017` beside `DeepSeek-V4.1-Flash` in the composer model sel
 
 The Web bundle includes this plugin, including when Desktop uses that bundle. It has no configuration fields.
 
-The badge appears only when the provider is `deepseek-official` or `deepseek-account`, the model ID is `deepseek-flash`, and the catalog name is exactly `DeepSeek-V4.1-Flash`. Other names and providers keep their catalog text. The input button, current-model menu row, and model options share the badge.
+The badge appears only when the provider is `deepseek-official` or `account`, the model ID is `deepseek-flash`, and the catalog name is exactly `DeepSeek-V4.1-Flash`. Other names and providers keep their catalog text. The input button, current-model menu row, and model options share the badge.
 
 Disable the following row through a profile patch to restore the catalog name:
 
@@ -57,7 +57,6 @@ These packages own the selector and its two directory sources.
 
 - [Model selection](../ui-model-selection/README.md) — label placement and selection behavior.
 - [DeepSeek transport](../../llm/llm-deepseek/README.md) — built-in model catalog.
-- [DeepSeek account](../../llm/llm-deepseek-account/README.md) — account-provided model directory.
 
 -----
 

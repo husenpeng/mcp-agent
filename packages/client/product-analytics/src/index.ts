@@ -3,7 +3,7 @@ import { type Context, type Volatile } from '@tomato/cordis'
 import z from '@tomato/schemastery'
 import { Remote, TypertRemoteService } from '@tomato/typert-protocol'
 import type {} from '@tomato/host-product-telemetry-otel'
-import type {} from '@tomato/deepseek-account'
+import type {} from '@tomato/account-service'
 import type {} from '@tomato/settings'
 import type {} from '@tomato/cordis-plugin-loader'
 import type {} from '@tomato/session'
@@ -31,7 +31,7 @@ declare module '@tomato/cordis' {
 
 /** Authenticated event intake; disabled instances do not inspect identity or accept new events. */
 export default class ProductAnalytics extends TypertRemoteService {
-  static inject = ['deepseekAccount', 'productTelemetry']
+  static inject = ['account', 'productTelemetry']
   static Config = z.object({
     enabled: z.boolean().default(true).volatile(), appVersion: z.string(),
     environmentQueryTimeoutMillis: z.number().step(1).min(1).max(2_147_483_647).default(5000),
@@ -106,7 +106,7 @@ export default class ProductAnalytics extends TypertRemoteService {
         signal: this.environmentLifetime.signal,
       })
       const [environment, identity] = await Promise.all([
-        this.environment, this.ctx.deepseekAccount.getDeviceIdentity().catch(() => undefined),
+        this.environment, this.ctx.account.getDeviceIdentity().catch(() => undefined),
       ])
       if (!this.enabled()) return
       const { missing_fields: missingFields, ...metadata } = environment

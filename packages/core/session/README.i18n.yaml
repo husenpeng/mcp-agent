@@ -21,8 +21,8 @@
   en: 971e583b3d6c1af8
   zh: c7da934ecb8f1e87
 /tomato-session/use-this-package/append-and-derive:
-  en: 1d8ed668d5a6c066
-  zh: 34ea046b9a023f61
+  en: aafd4cdd480e5109
+  zh: e96825fa070c57ad
 /tomato-session/use-this-package/read-the-log:
   en: ba923c09993be86c
   zh: 4b97772fade4c29d
@@ -39,8 +39,8 @@
   en: ce7e776e9d516bdb
   zh: 59d2751743db7795
 /tomato-session/understand-the-implementation/design-concept:
-  en: dabbe938e288c55a
-  zh: 31c7ac2bee2a2846
+  en: 8374378423e4aaeb
+  zh: 489cc9b4e32708cc
 /tomato-session/understand-the-implementation/request-headers:
   en: 18000930e4097dfe
   zh: ac7ca26be7e4de87
@@ -72,10 +72,10 @@
   en: 30ccd8296306b132
   zh: 19efa5a43745585c
 /tomato-session/model-experience/derived-message-history/token-effect:
-  en: 05e088199dac7f98
+  en: 94c04be8c2909e8f
   zh: 35868b5fb768e240
 /tomato-session/model-experience/derived-message-history/kv-cache-effect:
-  en: 6c8079c7de029ed4
+  en: 628b047c9a186dfb
   zh: 634d6f93ce6373c4
 /tomato-session/model-experience/tool-result-recovery-and-fork-results:
   en: 9c2efc3e9064e3c4

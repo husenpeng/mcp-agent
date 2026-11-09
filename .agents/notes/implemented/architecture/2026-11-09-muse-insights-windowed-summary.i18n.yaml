@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for 2026-11-09-muse-insights-windowed-summary.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-11-09-muse-insights-windowed-summary.md
+/agent-note-muse-insights-summarize-only-new-evidence:
+  en: 58f08a54c3389978
+  zh: 4fd0f6edce372034
+/agent-note-muse-insights-summarize-only-new-evidence/problem:
+  en: 82af69a7f20998af
+  zh: 4562f85bcdedb5a1
+/agent-note-muse-insights-summarize-only-new-evidence/decision:
+  en: a4d39c86aac50bd5
+  zh: d5b134d6390ddbe8
+/agent-note-muse-insights-summarize-only-new-evidence/alternatives-considered:
+  en: 9adbaa1aacc55ba3
+  zh: 4d4d76ea3f980edc
+/agent-note-muse-insights-summarize-only-new-evidence/consequences:
+  en: b5c0cd04dc3f05e6
+  zh: e6931cad9238a2de

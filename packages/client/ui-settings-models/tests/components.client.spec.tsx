@@ -140,7 +140,7 @@ function wireNamespaces(): SettingsNamespaceView[] {
       revision: 4,
     },
     {
-      ns: 'llm-deepseek-account',
+      ns: 'llm-account',
       schema: JSON.parse(JSON.stringify(DeepSeekConfig.toJSON())) as JsonValue,
       value: {
         baseURL: 'https://base',
@@ -2418,7 +2418,7 @@ it('renders the localized account row as signed in without an edit action', asyn
   const { controller } = await mountFace(scripted)
   const row = controller.store.getSnapshot().rows[0]!
   await act(async () => { controller.store.update((state) => {
-    state.rows = [{ ...row, accountAvailable: true, entry: { ...row.entry, provider: 'deepseek-account' } }]
+    state.rows = [{ ...row, accountAvailable: true, entry: { ...row.entry, provider: 'account' } }]
   }) })
   const item = screen.getByText(en.deepSeekAccount).closest('li')!
   expect(within(item).getByText(en.accountSignedIn)).toBeTruthy()

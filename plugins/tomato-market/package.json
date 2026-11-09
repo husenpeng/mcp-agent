@@ -1,6 +1,6 @@
 {
   "name": "tomato-market",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Plugin markets for Tomato Harness: a curated marketing catalog of open-source plugins, MCP servers, and Skills, plus the open DeepSeek Harness plugin catalog.",
   "keywords": [
     "tomato-plugin",
@@ -53,6 +53,7 @@
   },
   "dependencies": {
     "js-yaml": "^4.3.2",
+    "semver": "^7.8.6",
     "tar": "^7.5.22"
   }
 }

@@ -8,6 +8,8 @@ export const MARKET_CSS = `
 .tm-section { display: flex; flex-direction: column; gap: 16px; }
 .tm-lede { margin: 0; font-size: 13px; line-height: 20px; color: var(--dsw-alias-label-tertiary); }
 .tm-banner { display: flex; gap: 8px; align-items: flex-start; margin: 0; padding: 10px 12px; border-radius: var(--dsw-radius-lg); background: var(--dsw-alias-bg-module-platform); font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary); }
+.tm-substitution { display: flex; gap: 8px; align-items: baseline; margin: 0; padding: 10px 12px; border-radius: var(--dsw-radius-lg); background: var(--dsw-alias-bg-module-platform); font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-secondary); }
+.tm-substitutionText { flex: 1; min-width: 0; }
 .tm-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .tm-search { flex: 1; min-width: 160px; }
 .tm-source { color: var(--dsw-alias-state-business-primary); text-decoration: none; }

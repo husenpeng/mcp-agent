@@ -149,7 +149,7 @@ Tomato owns the durable pieces — Session logs, projections, jobs, schedules, g
 1. The control plane is a `robot-control` Session kind, not a separate event store. Slice 1 stores durable state in the `tomato_robot` storage domain because a persisted Session kind requires a session-format change; the Session-log control plane remains the target for replay and projections.
 2. Each run gets its own Session, not one long Session per robot.
 3. The first A2A transport is the local mailbox; HTTP follows the same envelope.
-4. Shared memory is a new `@tomato/robot-memory`, not an extension of `@tomato/experimental-memory`.
+4. Shared memory is a new `@tomato/robot-memory`, not an extension of `@tomato/experimental-memory`. The [long-term memory proposal](../feature/2026-11-05-long-term-memory-for-muse-and-robots.md) amends this decision: `ctx.memory` keeps one read surface with a per-scope write policy, and `@tomato/robot-memory` becomes the robot-facing policy and assembly layer.
 5. Authority uses `reportsTo` plus capability ACLs; either alone is insufficient.
 
 ## Alternatives considered

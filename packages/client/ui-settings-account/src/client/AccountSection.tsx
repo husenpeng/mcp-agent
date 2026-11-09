@@ -2,7 +2,7 @@
 import { Big } from 'big.js'
 import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import { Button, IconRightUpOutlineRegular } from '@tomato/client-ui-primitives'
-import type { AccountDetails, AccountView, SignInAttemptId } from '@tomato/deepseek-account/types'
+import type { AccountDetails, AccountView, SignInAttemptId } from '@tomato/account-service/types'
 import type { PropsRuntime, PropsLocale, InjectFace, HostObservable } from '@tomato/client-ui-slots'
 import type { ThemeSnapshot } from '@tomato/client-ui-theme/client'
 import type { PlatformPage, PlatformPages } from './platform-pages.ts'

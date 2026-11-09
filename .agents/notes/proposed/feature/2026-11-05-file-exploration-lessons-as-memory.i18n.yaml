@@ -1,0 +1,31 @@
+# Bilingual-pair consistency record for 2026-11-05-file-exploration-lessons-as-memory.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/proposed/feature/2026-11-05-file-exploration-lessons-as-memory.md
+/agent-note-file-exploration-lessons-as-long-term-memory:
+  en: c96b546411865066
+  zh: 795d7af7b8625536
+/agent-note-file-exploration-lessons-as-long-term-memory/problem:
+  en: 767ff7819b6a84a1
+  zh: cf072fb0aacb1866
+/agent-note-file-exploration-lessons-as-long-term-memory/proposal:
+  en: 986dd8097aac4d3d
+  zh: 2c89af85628555c5
+/agent-note-file-exploration-lessons-as-long-term-memory/proposal/tool-surfaces:
+  en: ae07845ab8204cd0
+  zh: ee3d8634ef96b5cb
+/agent-note-file-exploration-lessons-as-long-term-memory/proposal/deterministic-lessons:
+  en: f7557da9ed7efc3f
+  zh: c337374820fb11d7
+/agent-note-file-exploration-lessons-as-long-term-memory/proposal/personal-memory-execution:
+  en: 4dc0801ea8ad80f3
+  zh: f403c44071876298
+/agent-note-file-exploration-lessons-as-long-term-memory/alternatives-considered:
+  en: a735d66ae638b2b6
+  zh: 23930fd0c556fa3b
+/agent-note-file-exploration-lessons-as-long-term-memory/acceptance-criteria:
+  en: 43adac13b9cb8d90
+  zh: 0e0162e94aa9185f
+/agent-note-file-exploration-lessons-as-long-term-memory/risks:
+  en: dc9d9addbd4eb9a2
+  zh: d6c1be6d2bb43969

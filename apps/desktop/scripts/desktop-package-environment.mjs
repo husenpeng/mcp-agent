@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { parseEnv } from 'node:util'
 import {
   AUTH_SERVICE_URL_ENV,
+  IM_SERVICE_URL_ENV,
   TOMATO_WEB_URL_ENV,
   resolveDesktopAppId,
   resolveDesktopLoginEnvironment,
@@ -23,11 +24,19 @@ import { resolveWindowsPackageSettings } from './windows-package-settings.mjs'
 import { resolveDesktopTargetBuildPaths } from './desktop-build-paths.mjs'
 
 const APP_ROOT = fileURLToPath(new URL('..', import.meta.url))
-const SHARED_SETTING = /^(?:TOMATO_DESKTOP_(?:APP_ID|AUTO_UPDATE_ENV|NPM_REGISTRY|AUTH_SERVICE_URL|TOMATO_WEB_URL|MANDATORY_UPDATE_(?:CONFIG|(?:TEST|PROD)_ORIGIN))|DOWNLOAD_TEST_RELEASE_ID|DOWNLOAD_(?:TEST|PROD)_(?:ORIGIN|COS_BUCKET|COS_SECRET_ID|COS_SECRET_KEY))$/u
+const SHARED_SETTING = /^(?:TOMATO_DESKTOP_(?:APP_ID|AUTO_UPDATE_ENV|NPM_REGISTRY|AUTH_SERVICE_URL|TOMATO_WEB_URL|IM_SERVICE_URL|MANDATORY_UPDATE_(?:CONFIG|(?:TEST|PROD)_ORIGIN))|DOWNLOAD_TEST_RELEASE_ID|DOWNLOAD_(?:TEST|PROD)_(?:ORIGIN|COS_BUCKET|COS_SECRET_ID|COS_SECRET_KEY))$/u
 const WINDOWS_SETTING = /^TOMATO_DESKTOP_WINDOWS_(?:CER_FILE|SIGNTOOL|KEY_CONTAINER|TOKEN_PIN|SIGNATURE_CACHE_DIR|SIGNATURE_CACHE_CONCURRENCY|PACK_CONCURRENCY|COMPRESSION_LEVEL)$/u
 const MACOS_SETTING = /^(?:TOMATO_DESKTOP_MACOS_(?:SIGNING_IDENTITY|TEAM_ID|SIGNATURE_CACHE_DIR|PACK_CONCURRENCY|ZIP_COMPRESSION_LEVEL|DOWNLOAD_PROXY|NOTARIZATION_PROXY)|APPLE_(?:API_KEY|API_KEY_ID|API_ISSUER|ID|APP_SPECIFIC_PASSWORD|TEAM_ID|KEYCHAIN|KEYCHAIN_PROFILE)|CSC_(?:LINK|KEY_PASSWORD))$/u
-const AMBIENT_RELEASE_SETTING = /^(?:TOMATO_DESKTOP_(?:APP_ID|AUTO_UPDATE_ENV|AUTH_SERVICE_URL|TOMATO_WEB_URL|MANDATORY_UPDATE_.*|WINDOWS_.*|MACOS_.*)|APPLE_.*|(?:WIN_)?CSC_.*|DOWNLOAD_(?:TEST|PROD)_.*|DSH_.*)$/iu
+const AMBIENT_RELEASE_SETTING = /^(?:TOMATO_DESKTOP_(?:APP_ID|AUTO_UPDATE_ENV|AUTH_SERVICE_URL|TOMATO_WEB_URL|IM_SERVICE_URL|MANDATORY_UPDATE_.*|WINDOWS_.*|MACOS_.*)|APPLE_.*|(?:WIN_)?CSC_.*|DOWNLOAD_(?:TEST|PROD)_.*|DSH_.*)$/iu
 const FILE_SETTINGS = ['TOMATO_DESKTOP_WINDOWS_CER_FILE', 'TOMATO_DESKTOP_WINDOWS_SIGNTOOL', 'APPLE_API_KEY', 'APPLE_KEYCHAIN', 'CSC_LINK']
+
+/**
+ * Service origins a selected preset owns. A preset names the environment the
+ * artifact talks to, so an ambient export (often left over from a development
+ * shell) must not retarget a release build; the same names stay personal
+ * settings when no preset is selected.
+ */
+const PRESET_OWNED_SETTING = /^TOMATO_DESKTOP_(?:AUTH_SERVICE_URL|TOMATO_WEB_URL|IM_SERVICE_URL)$/u
 
 /**
  * Read the login origins an unsigned build seals into its app bundle. The local
@@ -44,8 +53,14 @@ function localLoginEnvironment(environment, appRoot) {
     [AUTH_SERVICE_URL_ENV]: environment[AUTH_SERVICE_URL_ENV] ?? settings[AUTH_SERVICE_URL_ENV],
     [TOMATO_WEB_URL_ENV]: environment[TOMATO_WEB_URL_ENV] ?? settings[TOMATO_WEB_URL_ENV],
   }
-  const { authServiceUrl, tomatoWebUrl } = resolveDesktopLoginEnvironment(selected)
-  return authServiceUrl === '' ? {} : { [AUTH_SERVICE_URL_ENV]: authServiceUrl, [TOMATO_WEB_URL_ENV]: tomatoWebUrl }
+  const { authServiceUrl, tomatoWebUrl, imServiceUrl } = resolveDesktopLoginEnvironment(selected)
+  const resolved = {}
+  if (authServiceUrl !== '') {
+    resolved[AUTH_SERVICE_URL_ENV] = authServiceUrl
+    resolved[TOMATO_WEB_URL_ENV] = tomatoWebUrl
+  }
+  if (imServiceUrl !== '') resolved[IM_SERVICE_URL_ENV] = imServiceUrl
+  return resolved
 }
 
 /**
@@ -74,7 +89,8 @@ export function localMacOSPackageEnvironment(environment = process.env, appRoot 
  * PACKAGE_TEST_RELEASE_ID overrides the test preset only; blank retains its configured ID.
  * PACKAGE_WINDOWS_COMPRESSION_LEVEL selects 3 or 7 for Windows workflow builds; blank retains the file setting.
  * @param {'win32' | 'darwin'} platform Target platform.
- * @param {NodeJS.ProcessEnv} environment Parent environment; accepted release settings override the file.
+ * @param {NodeJS.ProcessEnv} environment Parent environment; accepted release settings override the file,
+ *   except the service origins a selected preset owns.
  * @param {string} appRoot Desktop application directory; relative credential paths resolve here.
  * @param {{ unsigned?: boolean, prepareOnly?: boolean }} options Unsigned presets and Windows preparation-only presets never read signing credentials.
  * @returns {NodeJS.ProcessEnv} Environment with the platform file as defaults and personal settings on top.
@@ -110,7 +126,7 @@ export function loadDesktopPackageEnvironment(platform, environment = process.en
   const publicPlatformSetting = platform === 'win32'
     ? /^TOMATO_DESKTOP_WINDOWS_(?:SIGNATURE_CACHE_(?:DIR|CONCURRENCY)|PACK_CONCURRENCY|COMPRESSION_LEVEL)$/u
     : /^TOMATO_DESKTOP_MACOS_(?:SIGNATURE_CACHE_DIR|PACK_CONCURRENCY|ZIP_COMPRESSION_LEVEL|DOWNLOAD_PROXY|NOTARIZATION_PROXY)$/u
-  const presetSetting = /^(?:TOMATO_DESKTOP_(?:APP_ID|AUTO_UPDATE_ENV|NPM_REGISTRY|AUTH_SERVICE_URL|TOMATO_WEB_URL|MANDATORY_UPDATE_(?:CONFIG|(?:TEST|PROD)_ORIGIN))|DOWNLOAD_TEST_(?:ORIGIN|RELEASE_ID))$/u
+  const presetSetting = /^(?:TOMATO_DESKTOP_(?:APP_ID|AUTO_UPDATE_ENV|NPM_REGISTRY|AUTH_SERVICE_URL|TOMATO_WEB_URL|IM_SERVICE_URL|MANDATORY_UPDATE_(?:CONFIG|(?:TEST|PROD)_ORIGIN))|DOWNLOAD_TEST_(?:ORIGIN|RELEASE_ID))$/u
   const signingSetting = name => platform === 'win32'
     ? /^TOMATO_DESKTOP_WINDOWS_(?:CER_FILE|SIGNTOOL|KEY_CONTAINER|TOKEN_PIN)$/u.test(name)
     : MACOS_SETTING.test(name) && !publicPlatformSetting.test(name)
@@ -138,12 +154,20 @@ export function loadDesktopPackageEnvironment(platform, environment = process.en
     if (!/^[a-f0-9]{32}$/u.test(releaseId)) throw new Error('desktop package: test release ID must contain 32 lowercase hexadecimal characters')
     settings.DOWNLOAD_TEST_RELEASE_ID = releaseId
   }
+  // A selected preset owns the service origins: a personal value still wins for
+  // every other accepted setting, but never overrides what the preset ships.
+  // A selected preset reads its signing credentials from the machine secrets
+  // file; an ambient export from a development shell must neither override them
+  // nor survive unsigned, where the preset deliberately has none.
+  const personalSigning = name => signingSetting(name) === true && preset === undefined
   const personalSettings = Object.fromEntries(Object.entries(environment)
-    .filter(([name]) => accepts(name) || signingSetting(name) === true))
+    .filter(([name]) => accepts(name)
+      && !(preset !== undefined && PRESET_OWNED_SETTING.test(name))
+      || personalSigning(name)))
   // Keep build-tool and personal variables, but never forward an unrelated
   // release value (another platform's signing input, a stale legacy name).
   const retained = Object.fromEntries(Object.entries(environment)
-    .filter(([name]) => !AMBIENT_RELEASE_SETTING.test(name) || accepts(name) || signingSetting(name) === true))
+    .filter(([name]) => !AMBIENT_RELEASE_SETTING.test(name) || accepts(name) || personalSigning(name)))
   return {
     ...retained,
     ...settings,

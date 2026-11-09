@@ -21,23 +21,29 @@
   en: 07b2aea3829cfab4
   zh: b6b291af87257b9b
 /tomato-llm-pi-ai/use-this-package/configure-provider-routes:
-  en: c2fed19eee64e4c4
-  zh: b39195823e9db802
+  en: 7a98e6f687c3586a
+  zh: 782ff6f5445cf73c
 /tomato-llm-pi-ai/use-this-package/sign-in-to-a-provider:
   en: c36f66438638ae08
   zh: 066a2fc4cb97c86f
 /tomato-llm-pi-ai/use-this-package/resolve-the-model-catalog:
-  en: 376f83206858b601
-  zh: 38bb6993609c96a6
+  en: 89393157dd25cb98
+  zh: 546136dd67e884c3
 /tomato-llm-pi-ai/use-this-package/run-with-reasoning-and-wire-compatibility:
   en: b58b917e7f250aee
   zh: aff599081bac08c3
+/tomato-llm-pi-ai/use-this-package/restrict-models-with-an-allowlist:
+  en: be39333e6851e68c
+  zh: 2b29ff742d4f1fd3
 /tomato-llm-pi-ai/use-this-package/change-configuration-at-runtime:
   en: 92f554e1718614ca
   zh: f17ed3ad3e5d28e2
 /tomato-llm-pi-ai/use-this-package/discover-models-from-endpoints:
   en: 6619e8cfe7555c73
   zh: b2f80c25acb81cf8
+/tomato-llm-pi-ai/use-this-package/probe-a-native-anthropic-endpoint:
+  en: 6f4b80848a809bec
+  zh: fcd976f65070cdf9
 /tomato-llm-pi-ai/use-this-package/failures-and-recovery:
   en: 3c1edbc63de24a1a
   zh: 01592718c3a2c79f
@@ -48,8 +54,8 @@
   en: 8aba1113937b368a
   zh: 804a4ca672a776df
 /tomato-llm-pi-ai/understand-the-implementation/source-map:
-  en: 64912b8a3a336419
-  zh: 33a245969b4194f6
+  en: 193f378ae0c9896a
+  zh: 2ad31880ee706092
 /tomato-llm-pi-ai/understand-the-implementation/registration-and-directory:
   en: 0c6df3e8b6a75372
   zh: 476666a6f209542c

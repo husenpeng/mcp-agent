@@ -1,0 +1,49 @@
+# Bilingual-pair consistency record for 2026-11-05-long-term-memory-for-muse-and-robots.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/proposed/feature/2026-11-05-long-term-memory-for-muse-and-robots.md
+/agent-note-long-term-memory-for-muse-and-rbot:
+  en: 210d5460b3f09d0c
+  zh: 10f12ab5b9450f6c
+/agent-note-long-term-memory-for-muse-and-rbot/problem:
+  en: 5db0d91e6e681fb7
+  zh: 90b48bc94554f167
+/agent-note-long-term-memory-for-muse-and-rbot/proposal:
+  en: 6e4fb143a5e3e5a6
+  zh: 919dafb94af45d65
+/agent-note-long-term-memory-for-muse-and-rbot/proposal/records-scopes-and-write-policy:
+  en: fbd5248fad86238d
+  zh: 70e333e9d1a11c46
+/agent-note-long-term-memory-for-muse-and-rbot/proposal/episode-capture-and-compression:
+  en: 4e31de73d208949e
+  zh: c47a65ab926e5c46
+/agent-note-long-term-memory-for-muse-and-rbot/proposal/retrieval:
+  en: 0b89554f996ff156
+  zh: 165ed8fcd92e70c5
+/agent-note-long-term-memory-for-muse-and-rbot/proposal/injection:
+  en: fc696c6be828baf1
+  zh: 48d4673110fca0fb
+/agent-note-long-term-memory-for-muse-and-rbot/proposal/robots:
+  en: 9de3b78091ef50f2
+  zh: bfa5f7d566ad1a29
+/agent-note-long-term-memory-for-muse-and-rbot/proposal/packages-and-seams:
+  en: 0b36571a8eddf15a
+  zh: edff5ed41ff7cf44
+/agent-note-long-term-memory-for-muse-and-rbot/proposal/muse-page:
+  en: 9ff2ff9e1b0a120a
+  zh: 013ddf9e17840bfc
+/agent-note-long-term-memory-for-muse-and-rbot/proposal/rbot-page:
+  en: 6cc47168fe2b36c9
+  zh: 1cae7659b3e7e4a5
+/agent-note-long-term-memory-for-muse-and-rbot/proposal/delivery-phases:
+  en: 3afc922b2a8d121a
+  zh: 9cfa74d0bd7fd430
+/agent-note-long-term-memory-for-muse-and-rbot/alternatives-considered:
+  en: 724e7e456994a99e
+  zh: 5d422d79a5a9b901
+/agent-note-long-term-memory-for-muse-and-rbot/acceptance-criteria:
+  en: cd6c903dba6c77ac
+  zh: 02db98e3ff86a4a8
+/agent-note-long-term-memory-for-muse-and-rbot/risks:
+  en: 61d5c4c4659bddaf
+  zh: f22aca3efa4e3eff

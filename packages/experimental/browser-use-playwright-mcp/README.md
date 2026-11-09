@@ -35,13 +35,16 @@ Mount both entries before creating or resuming a Session, in a profile compositi
     headless: true
 ```
 
-Use `mode: attach` and set `endpoint` to an HTTP(S) debugging URL or WS(S) browser endpoint to operate an existing browser. The new live Session claims the attachment during initialization and retains it until unloading. If the attachment is busy, that activation continues without this browser and does not retry on later turns. After release, a newly created or resumed activation can acquire it. Direct calls from another Session fail. Cleanup disconnects and leaves the external browser and its pages running.
+The provider refuses a browser call before dispatch when the call carries an address other than HTTP(S), or when page code reaches this machine's filesystem. The refusal is the call's failure text and tells the model to use the file tools (`read`, `glob`, `grep`) for local paths instead; the upstream server never receives the call. Local folders and `file://` addresses are the usual trigger, and the browser cannot load them anyway.
+
+For a launch that must start signed in, export a Playwright storage-state file from an authenticated browser — for example `npx playwright open --save-storage=auth.json http://127.0.0.1:58337`, sign in, and close the window — then set `storageState` to that absolute path. The isolated context receives its cookies and local storage; keep the file private because it carries the session. Use `mode: attach` and set `endpoint` to an HTTP(S) debugging URL or WS(S) browser endpoint to operate an existing browser. The new live Session claims the attachment during initialization and retains it until unloading. If the attachment is busy, that activation continues without this browser and does not retry on later turns. After release, a newly created or resumed activation can acquire it. Direct calls from another Session fail. Cleanup disconnects and leaves the external browser and its pages running.
 
 | Field | Default | Meaning |
 |---|---|---|
 | `mode` | required | `launch` or `attach`, fixed for this provider activation |
 | `headless` | `true` | Launch without a visible window |
 | `executablePath` | `PLAYWRIGHT_MCP_EXECUTABLE_PATH` for headless launch, else upstream discovery | Chromium executable for launch |
+| `storageState` | unset | Existing absolute Playwright storage-state file whose cookies and local storage seed an isolated launch |
 | `endpoint` | required for attach | Existing browser debugging endpoint |
 | `toolCallTimeoutMs` | MCP client default | Per-call timeout in milliseconds |
 

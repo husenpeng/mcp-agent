@@ -39,6 +39,10 @@ export const DESKTOP_IPC = {
   windowFullscreen: 'tomato-desktop:window-fullscreen',
   windowsAppearance: 'tomato-desktop:windows-appearance',
   windowsMenu: 'tomato-desktop:windows-menu',
+  remoteStatus: 'tomato-desktop:remote-status',
+  remoteStart: 'tomato-desktop:remote-start',
+  remoteStop: 'tomato-desktop:remote-stop',
+  remoteChanged: 'tomato-desktop:remote-changed',
 } as const
 
 /** Desktop release update state rendered by desktop-owned UI. */
@@ -77,6 +81,37 @@ export interface DesktopUpdatePresentation {
   readonly failure?: DesktopUpdateFailureKind
 }
 
+/** Tunnel lifecycle the remote-access page renders. */
+export interface DesktopRemoteState {
+  readonly phase: 'off' | 'starting' | 'online' | 'failed'
+  /** Bare quick-tunnel authority, present once `online`. */
+  readonly host?: string
+  /**
+   * Pairing link for the phone: the tunnel's `https` root carrying this process's
+   * launch token. Absent until both the Host and the tunnel are up.
+   */
+  readonly pairingUrl?: string
+  /**
+   * PNG data URL of `pairingUrl`, rendered from the same string the phone must
+   * pair with. Absent when the pairing link is unavailable or encoding failed.
+   */
+  readonly pairingQr?: string
+  /** Operator-facing failure text; never carries the launch token. */
+  readonly message?: string
+}
+
+/** Shell-managed phone access; the tunnel outlives page reloads. */
+export interface DesktopRemoteApi {
+  /** @returns the current tunnel and pairing state. */
+  status(): Promise<DesktopRemoteState>
+  /** Enable the tunnel and @returns the state after the request. */
+  start(): Promise<DesktopRemoteState>
+  /** Disable the tunnel and @returns the state after the request. */
+  stop(): Promise<DesktopRemoteState>
+  /** @param listener - receives every state change. @returns unsubscribe. */
+  subscribe(listener: (state: DesktopRemoteState) => void): () => void
+}
+
 /** Native account entry points; the session id itself never crosses this bridge. */
 export interface DesktopAccountApi {
   /** Open the consent-gated welcome entry for sign-in. */
@@ -97,6 +132,7 @@ export interface TomatoDesktopProductApi {
   readonly fileDrag: DesktopFileDrag
   readonly keyboard: DesktopKeyboardApi
   readonly shortcuts: DesktopShortcutsApi
+  readonly remote: DesktopRemoteApi
   /**
    * Local machine description for the feedback questionnaire.
    * @returns `name=value` fields separated by `; `, with no hostname, user name, or serial number.

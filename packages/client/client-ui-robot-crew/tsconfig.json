@@ -1,0 +1,24 @@
+{
+  "extends": "../../../tsconfig.base.client.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib/types"
+  },
+  "include": [
+    "src"
+  ],
+  "references": [
+    { "path": "../../../vendor/cordis" },
+    { "path": "../../api/api-robot-crew-controller/tsconfig.client.json" },
+    { "path": "../../api/robot-controller/tsconfig.client.json" },
+    { "path": "../locale/tsconfig.client.json" },
+    { "path": "../store" },
+    { "path": "../ui-layout" },
+    { "path": "../ui-primitives" },
+    { "path": "../ui-slots" },
+    { "path": "../ui-renderer" },
+    { "path": "../ui-sidebar" },
+    { "path": "../ui-workspace" },
+    { "path": "../../experimental/experimental-robot-crew" }
+  ]
+}

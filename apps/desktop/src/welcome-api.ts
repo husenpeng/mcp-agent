@@ -1,6 +1,6 @@
 /** Operations available to the isolated native welcome renderer. */
 
-import type { AccountView, SignInAttemptId, SignInAttemptView } from '@tomato/deepseek-account/types'
+import type { AccountView, SignInAttemptId, SignInAttemptView } from '@tomato/account-service/types'
 import type { ProductEventMap } from '@tomato/client-product-analytics/types'
 import type { DesktopLocale } from './locale.ts'
 

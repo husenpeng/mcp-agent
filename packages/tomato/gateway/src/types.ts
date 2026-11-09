@@ -5,6 +5,10 @@ export interface SessionUser {
   readonly name: string | null
   readonly avatarUrl: string | null
   readonly language: string | null
+  /** Roles granted by auth_service; absent when the service publishes none. */
+  readonly roles?: readonly string[]
+  /** Numeric quotas keyed by feature; absent when the service publishes none. */
+  readonly quotas?: Readonly<Record<string, number>>
 }
 
 /** Three-state account projection the browser can render. */

@@ -1,5 +1,5 @@
 /** Desktop client identity for one Platform account call. */
-import type { AccountClientMetadata } from '@tomato/deepseek-account/types'
+import type { AccountClientMetadata } from '@tomato/account-service/types'
 
 /**
  * Read the client build version inlined by the Desktop build.

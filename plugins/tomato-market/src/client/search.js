@@ -178,6 +178,20 @@ export function targetsDeepSeek(version) {
 }
 
 /**
+ * The copy key that names one unmet declaration, most specific first.
+ * @param {Record<string, string>} [requirements] - unmet declarations, keyed `engines.tomato` or by peer name.
+ * @returns {{ key: string, params: Record<string, string> } | undefined} the label to render, or none.
+ */
+export function requirementOf(requirements) {
+  const entries = Object.entries(requirements ?? {})
+  if (entries.length === 0) return undefined
+  const engine = entries.find(([name]) => name === 'engines.tomato')
+  if (engine !== undefined) return { key: 'tomatoRequirement', params: { range: engine[1] } }
+  const [peer, range] = entries[0]
+  return { key: 'peerRequirement', params: { peer, range } }
+}
+
+/**
  * The install arguments for one version.
  * @param {{ name: string }} plugin - the plugin.
  * @param {object} version - the listed version.

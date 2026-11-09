@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v0.2.1-rc.4/muse-insights-cadence/guide.md
+/:
+  en: 49065d7af205c845
+  zh: 5e7206d2af342092
+/muse-insights-split-popup-cadence-from-summary-cadence:
+  en: 29a2859f67ac2b71
+  zh: 968f2d432e082f27
+/muse-insights-split-popup-cadence-from-summary-cadence/change:
+  en: ea8b3b576c9dcfb0
+  zh: 560c95c5d4ba80bd
+/muse-insights-split-popup-cadence-from-summary-cadence/migration:
+  en: 527dfc068cefea1b
+  zh: 0f07500f6051d5aa

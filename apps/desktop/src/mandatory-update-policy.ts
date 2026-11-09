@@ -1,7 +1,7 @@
 /** Mandatory-update policy, independent of local business traffic and updater artifacts. */
 
 import { valid } from 'semver'
-import { platformClientHeaders, type AccountClientMetadata } from '@tomato/deepseek-account'
+import { platformClientHeaders, type AccountClientMetadata } from '@tomato/account-service'
 
 /** Installed release identity; no field is supplied by a renderer. */
 export interface DesktopPolicyIdentity {

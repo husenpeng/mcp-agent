@@ -230,10 +230,10 @@ it.each(['plugin@1.0.0', '@scope/plugin@1.0.0'])('rejects the registry spec %s t
   expect(outcome.output).toContain('installation rejected')
   expect(outcome.output).toContain(`${name}@1.0.0`)
   expect(outcome.output).toContain('nothing was installed')
-  // The lookup is the only pnpm invocation: the refused spec never reached an install.
-  expect(pnpm.views).toEqual([spec])
-  expect(command.run).toHaveBeenCalledTimes(1)
+  // The refused spec never reached an install: the lookups are the only pnpm invocations.
+  expect(pnpm.views[0]).toBe(spec)
   expect(command.run.mock.calls[0]?.[1] as readonly string[]).toContain('view')
+  expect(command.run.mock.calls.filter(call => (call[1] as readonly string[]).includes('add'))).toHaveLength(0)
   expect(existsSync(join(dir, 'node_modules'))).toBe(false)
   expect(readFileSync(join(dir, 'package.json'), 'utf8')).toBe(manifestBefore)
 })
@@ -248,7 +248,7 @@ it('rejects a registry spec whose engines.tomato the pre-install lookup denies, 
   expect(outcome).toMatchObject({ exitCode: 1 })
   expect(outcome.incompatible).toMatchObject([{ name: 'plugin', version: '1.0.0', requirements: { 'engines.tomato': '999.0.0' } }])
   expect(command.run.mock.calls[0]?.[1] as readonly string[]).toEqual(expect.arrayContaining(['view', 'engines', 'peerDependencies']))
-  expect(command.run).toHaveBeenCalledTimes(1)
+  expect(command.run.mock.calls.filter(call => (call[1] as readonly string[]).includes('add'))).toHaveLength(0)
 })
 
 it('reads the last match when the registry lookup answers with several versions', async () => {
@@ -265,10 +265,42 @@ it('reads the last match when the registry lookup answers with several versions'
   })
   expect(outcome).toMatchObject({ exitCode: 1 })
   expect(outcome.output).toContain('plugin@2.0.0')
-  expect(pnpm.views).toEqual(['plugin@^2'])
+  expect(pnpm.views[0]).toBe('plugin@^2')
   // The lookup asks the registry the installation would use.
   expect(command.run.mock.calls[0]?.[1] as readonly string[]).toContain('--registry=https://registry.example')
-  expect(command.run).toHaveBeenCalledTimes(1)
+  expect(command.run.mock.calls.filter(call => (call[1] as readonly string[]).includes('add'))).toHaveLength(0)
+})
+
+it('installs the newest version the running runtime admits when the newest release needs a newer one', async () => {
+  const { dir, context, pnpm } = fixture()
+  pnpm.view = (spec) => {
+    if (spec === 'plugin') return { exitCode: 0, stdout: JSON.stringify(['0.9.0', '1.0.0']) }
+    if (spec === 'plugin@1.0.0') {
+      return { exitCode: 0, stdout: JSON.stringify({ name: 'plugin', version: '1.0.0', peerDependencies: { '@tomato/cli': '999.0.0' } }) }
+    }
+    if (spec === 'plugin@0.9.0') {
+      return { exitCode: 0, stdout: JSON.stringify({ name: 'plugin', version: '0.9.0', peerDependencies: { '@tomato/cli': '*' } }) }
+    }
+    return { exitCode: 1, stdout: '' }
+  }
+  pnpm.mutate = (target) => {
+    install(target, 'plugin')
+    writeFileSync(join(target, 'node_modules', 'plugin', 'package.json'), JSON.stringify({
+      name: 'plugin', version: '0.9.0', peerDependencies: { '@tomato/cli': '*' },
+      tomato: { bundle: { patch: './cordis.patch.yml' } },
+    }))
+  }
+  const messages: string[] = []
+  const outcome = await runProfilePnpm(context, ['add', 'plugin@1.0.0'], {
+    execution: 'service', outputBytes: 8192, onOutput: (text) => { messages.push(text) },
+  })
+  expect(outcome).toMatchObject({ exitCode: 0 })
+  expect(outcome.substituted).toEqual([{ requested: 'plugin@1.0.0', selected: 'plugin@0.9.0', requirements: '@tomato/cli 999.0.0' }])
+  expect(outcome.output).toContain('installing plugin@0.9.0 instead')
+  expect(messages.join('')).toContain('plugin@0.9.0')
+  const added = command.run.mock.calls.find(call => (call[1] as readonly string[]).includes('add'))
+  expect(added?.[1] as readonly string[]).toEqual(expect.arrayContaining(['add', 'plugin@0.9.0']))
+  expect(readProfileManifest('test', dir).tomato?.profile?.bundles).toEqual(['plugin'])
 })
 
 it('runs an invocation that names no command without a registry lookup', async () => {

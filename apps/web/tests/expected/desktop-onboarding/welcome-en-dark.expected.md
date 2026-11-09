@@ -1,6 +1,0 @@
-- region "Welcome to Tomato Harness":
-  - heading "Welcome to Tomato Harness" [level=1]:
-    - text: Welcome to
-    - emphasis: Tomato Harness
-  - paragraph: Tomato Harness works in a local folder and uses tools to read and write files on your computer. It can help you research and organize information, create documents and spreadsheets, write code, troubleshoot issues, and more.
-  - button "Get started"

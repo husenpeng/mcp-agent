@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-The Trajectory tab lets you inspect agent activity as a turn-aware ledger and interactive timing overview. It groups User, Assistant, Tool, nested Subtool, and compaction records, marks turn and step boundaries, and opens a record inspector for token usage, duration, input, output, timing, images, and attachment summaries. Long histories open at the current tail, load older pages on demand, and render only visible rows. During streaming, the view follows the tail until you scroll upward, and in-flight records show a start marker without inventing elapsed time.
+The Trajectory tab inspects agent activity as a trace strip, turn-aware ledger, and interactive timing overview. Each trace covers one user prompt: prompt preview, execution chain, model steps, tool calls, and token cost. The ledger groups User, Assistant, Tool, nested Subtool, and compaction records, marks turn and step boundaries, and opens a record inspector for usage, duration, input, output, timing, images, and attachments. Long histories open at the current tail, load older pages on demand, and render only visible rows. During streaming the view follows the tail until scrolling upward; in-flight records show a start marker without inventing elapsed time.
 
 ## Table of Contents
 
@@ -26,6 +26,12 @@ The Trajectory tab lets you inspect agent activity as a turn-aware ledger and in
 ## Use this package
 
 Open the Trajectory tab in the conversation's view ring to inspect agent activity as an event ledger and timeline. The ledger covers records with an explicit loading row until the initial tail is positioned; while an older prefix remains unloaded, a first-row control loads one earlier page on click and shows the shared ongoing loader while that page is pending.
+
+### Reading traces
+
+A trace is one user prompt and everything it caused. The strip above the timing overview renders one card per loaded trace: the prompt preview, a status dot, the model-step and tool-call counts, the settled wall span, and the provider-reported token cost. The card's execution chain shows the order of model steps and tool calls as colored pips — a wide accent bar for a model step, an amber dot for a native or nested tool call, and a red bar for a failed record. Tool chips name the recorded tools, and namespaced families are marked with their owning origin (`MCP`, `Subagent`, and so on, resolved from the recorded tool name). Clicking a card focuses the ledger at that trace's first loaded record, and selecting a record highlights its owning card.
+
+Token cost is the billed-equivalent total of uncached input, cache reads, cache writes, and output for the trace's assistant records; reasoning is reported separately and is not added to the total. A running trace reports `—` for its wall span rather than inventing elapsed time, and a trace with only its prompt is `Running` until a model step, tool call, or failure lands. Traces cover the loaded history window; loading earlier history adds their cards.
 
 ### Inspecting records
 

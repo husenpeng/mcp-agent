@@ -160,7 +160,9 @@ export function runSteps(chat: RunStepSource | undefined): readonly RunStep[] {
       }
       case 'assistant-step': {
         const text = textOfBlocks(node.data.blocks)
-        if (text !== '') steps.push({ kind: 'answer', key, seq: node.anchorSeq, text: shorten(text) })
+        // Answers are the conversation itself: keep their complete text instead
+        // of the shortened form the action rows use.
+        if (text !== '') steps.push({ kind: 'answer', key, seq: node.anchorSeq, text })
         continue
       }
       case 'tool-call':
@@ -168,4 +170,42 @@ export function runSteps(chat: RunStepSource | undefined): readonly RunStep[] {
     }
   }
   return steps
+}
+
+/** One tool action row of a run timeline. */
+export type RunActionStep = Extract<RunStep, { kind: 'action' }>
+
+/**
+ * One rendered block of a run conversation: the instruction, an answer, or the
+ * consecutive tool actions between them.
+ */
+export type RunBlock =
+  | { readonly kind: 'input'; readonly key: string; readonly seq: number; readonly text: string }
+  | { readonly kind: 'answer'; readonly key: string; readonly seq: number; readonly text: string }
+  | { readonly kind: 'process'; readonly key: string; readonly seq: number; readonly steps: readonly RunActionStep[] }
+
+/**
+ * Fold timeline lines into conversation blocks: consecutive actions become one
+ * process block, and an instruction or answer starts a new block.
+ * @param steps - timeline lines in durable order.
+ * @returns blocks in the same order.
+ */
+export function groupSteps(steps: readonly RunStep[]): readonly RunBlock[] {
+  const blocks: RunBlock[] = []
+  let process: RunActionStep[] = []
+  const flush = (): void => {
+    const first = process[0]
+    if (first !== undefined) blocks.push({ kind: 'process', key: `process:${first.key}`, seq: first.seq, steps: process })
+    process = []
+  }
+  for (const step of steps) {
+    if (step.kind === 'action') {
+      process.push(step)
+      continue
+    }
+    flush()
+    blocks.push({ kind: step.kind, key: step.key, seq: step.seq, text: step.text })
+  }
+  flush()
+  return blocks
 }

@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-Use `@tomato/tool-fs` to let a model read UTF-8 files with line numbers, read supported images, create or atomically replace files, and apply targeted literal edits. Results are capped, and failures provide stable error codes and recovery instructions. Add `@tomato/fs-observation-policy` when writes and edits must follow a successful read; without it, mutations remain atomic but are unconditional. Image reads require durable attachment storage and an image-capable routed model. Choose the sibling discovery package for glob or grep searches.
+Use `@tomato/tool-fs` to let a model list a directory, read UTF-8 files with line numbers, read supported images, create or atomically replace files, and apply targeted literal edits. Results are capped, and failures provide stable error codes and recovery instructions. Add `@tomato/fs-observation-policy` when writes and edits must follow a successful read; without it, mutations remain atomic but are unconditional. Image reads require durable attachment storage and an image-capable routed model. Choose the sibling discovery package for glob or grep searches.
 
 ## Table of Contents
 
@@ -45,6 +45,7 @@ The policy plugin is optional: without it the tools run against the bare provide
 
 | Tool | Arguments | Behavior |
 |---|---|---|
+| `list_dir` | `path?`, `depth?`, `all?`, `exclude?`, `limit?` | Directory tree view for "what is here": defaults to one level and 200 entries, skips hidden names and the configured excludes, and never returns file contents |
 | `read` | `file_path`, `offset?`, `limit?` | Line-numbered UTF-8 content with a pagination footer; `offset` is 1-based and `limit` defaults to and caps at the configured `readLimit` |
 | `read_image` | `file_path` | Reads and persists a PNG/JPEG/WebP/GIF source; an extension-less path (normalized attachment object paths included) is identified from its file signature; normalization can downscale it before the next model request, so the model need not create a thumbnail first |
 | `write` | `file_path`, `content` | Creates or fully replaces a file; with the policy plugin, overwriting requires a prior `read` at the unchanged version, creating does not |
@@ -54,10 +55,15 @@ Field names are snake_case to match Claude Code and existing harness tool schema
 
 ### Configuration
 
-All keys are optional. The `read`, `readImage`, `write`, and `edit` switches default to `true`; set a switch to `false` to omit that tool and its guidance. All four may be disabled. Enabling `readImage` still requires an attachment store and an image-capable model. Read caps remain validated when `read` is disabled.
+All keys are optional. The `list`, `read`, `readImage`, `write`, and `edit` switches default to `true`; set a switch to `false` to omit that tool and its guidance. All five may be disabled. Enabling `readImage` still requires an attachment store and an image-capable model. Read caps remain validated when `read` is disabled.
 
 | Key | Default | Meaning |
 |---|---|---|
+| `list` | `true` | Register `list_dir` and its guidance |
+| `listDepth` | `1` | Directory levels `list_dir` returns by default |
+| `listMaxDepth` | `4` | Largest depth one `list_dir` call may request |
+| `listMaxEntries` | `200` | Most entries one `list_dir` call returns |
+| `listExcludes` | `['node_modules', '.git', '.svn', '.hg', 'dist', 'build', 'coverage', '.next']` | Basenames `list_dir` skips by default |
 | `read` | `true` | Register `read` and its guidance |
 | `readImage` | `true` | Register `read_image` while an attachment store is mounted |
 | `write` | `true` | Register `write` and its guidance |
@@ -247,7 +253,7 @@ Append-only; newly visible content follows the reusable request prefix and does 
 
 These limits define when the tool suite is a poor fit or needs special operational care. They are current package constraints, not a general filesystem comparison or a task backlog.
 
-- **No model-facing directory listing ships** — `ctx.fs.listDir` serves provider code such as skill discovery, while the sibling `@tomato/tool-fs-search` package supplies ripgrep-backed `glob` and `grep` rather than extending the filesystem seam.
+- **`list_dir` returns metadata only** — it names entries and sizes but never content; use `read` for text and the sibling ripgrep-backed tools for pattern searches.
 - **`read` handles UTF-8 text files only** — images use the separate `read_image` tool; PDF, audio, and video remain deferred. A directory target is `FS_NOT_REGULAR_FILE`.
 - **Extension-declared media type** — an extension selects the declared type and the attachment store's magic-byte validation stays authoritative; a correctly formatted image under a wrong extension is refused with the rename remedy rather than sniffed. Only a path with no extension is identified from its file signature.
 - **Object paths re-enter source admission** — `read_image` on a normalized attachment object re-admits its bytes as a new source, so a deployment whose `maxImageBytes`/`maxMessageImageBytes` sit below the normalized-image byte budget can refuse an object path that `ctx.attachments.readImage` still serves; shipped defaults keep the normalized budget (4 MiB) far under the source caps (50 MiB).

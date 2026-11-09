@@ -47,7 +47,7 @@ kind: "package-reference"
 
 | 工具 | 参数 | 行为 |
 |---|---|---|
-| `glob` | `pattern`、`path?` | 查找路径匹配 glob 模式的文件，包含隐藏与忽略文件但排除 VCS 元数据；不含 `/` 的模式匹配任意深度的基名，因此 `*` 匹配整棵树；完整结果保持按修改时间排序 |
+| `glob` | `pattern`、`path?`、`depth?`、`exclude?`、`hidden?` | 查找路径匹配 glob 模式的文件；默认包含隐藏与忽略文件但排除 VCS 元数据；`depth` 限制遍历深度，`exclude` 追加路径 glob，`hidden: false` 尊重忽略文件并跳过点名称；不含 `/` 的模式匹配任意深度的基名，因此裸 `*` 仍会搜索整棵树；完整结果保持按修改时间排序 |
 | `grep` | `pattern`、`path?`、`include?` | 用 ripgrep 正则搜索文件内容，并按文件分组返回 `Line N: <preview>` 匹配；`include` 是一个正向 glob 过滤器，逗号分隔列表与否定值会被前置拒绝 |
 
 常规预算不进入面向模型的 schema：需要周边上下文的模型用 `read` 读取匹配文件，需要后续结果的模型遵循返回的 spill locator 检索提示。
@@ -60,6 +60,8 @@ kind: "package-reference"
 |---|---|---|
 | `sampleOverCapGlobResults` | 无（必填） | `true` 在顶层条目之间对超过上限的 `glob` 页面采样；`false` 保留按修改时间排序的前部 |
 | `globMaxResults` | `100` | 一次 `glob` 调用内联展示的最大路径数 |
+| `globMaxDepth` | `16` | 一次 `glob` 调用可请求的最大遍历深度 |
+| `globMaxExcludes` | `20` | 一次 `glob` 调用可追加的最大 `exclude` 模式数 |
 | `grepMaxMatches` | `250` | 一次 `grep` 调用内联保留的最大平铺匹配数；后续匹配写入格式化 spill 产物 |
 | `grepMaxLineBytes` | `2000` | 每条匹配行预览的字节上限，保留 UTF-8 边界 |
 | `rawOutputMaxBytes` | `20000000` | 搜索将解析的完整原始 `rg` stdout 上限；更大的原始输出以 `SEARCH_RAW_OUTPUT_OVERFLOW` 失败 |
@@ -141,7 +143,7 @@ Node 部署在受支持的 macOS、Linux 与 Windows 目标上获得 `@vscode/ri
 ##### Glob 指导
 
 ```markdown
-Use the glob tool — not shell find — to discover files by path pattern.
+Use the glob tool — not shell find — to discover files by path pattern. For a directory view, use list_dir first; for large trees, pass depth or exclude instead of a bare recursive pattern.
 ```
 
 ##### Grep 指导

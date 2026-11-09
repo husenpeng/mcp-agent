@@ -24,10 +24,11 @@
     "@tomato/cordis": "workspace:~"
   },
   "devDependencies": {
-    "@tomato/cordis": "workspace:~",
     "@tomato/client-connection": "workspace:*",
+    "@tomato/cordis": "workspace:~",
     "@tomato/host-webserver": "workspace:*",
-    "@tomato/schemastery": "workspace:~"
+    "@tomato/schemastery": "workspace:~",
+    "@tomato/web-app": "workspace:*"
   },
   "dependencies": {
     "@tomato/schemastery": "workspace:~"

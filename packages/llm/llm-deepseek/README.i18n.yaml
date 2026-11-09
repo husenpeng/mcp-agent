@@ -9,8 +9,8 @@
   en: 01a9876736751c06
   zh: d05540baf7112fe6
 /tomato-llm-deepseek/summary:
-  en: 373e091e0e19a1ad
-  zh: f766137317e93c05
+  en: 2baa7e89aa0f7585
+  zh: df213b8671078ed4
 /tomato-llm-deepseek/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -26,9 +26,9 @@
 /tomato-llm-deepseek/use-this-package/endpoint-and-wire-format:
   en: 522e74b770e9d4ca
   zh: a8b261b41677bfe7
-/tomato-llm-deepseek/use-this-package/account-credentials:
-  en: a79291131f3fd5b2
-  zh: 92284312abf3c06e
+/tomato-llm-deepseek/use-this-package/credentials:
+  en: 7759ed4a8eeb9dc2
+  zh: 54533e1d03f066f0
 /tomato-llm-deepseek/use-this-package/streaming-with-thinking-and-images:
   en: 81bf213499f015ba
   zh: e9107ef322213e56
@@ -39,8 +39,8 @@
   en: f13f24b504dcfb50
   zh: 69b0ed9e2adf3394
 /tomato-llm-deepseek/use-this-package/failures-and-recovery:
-  en: ee9e560db5515294
-  zh: e407920761b94208
+  en: 75dd3c735b7892db
+  zh: f9ca9836e5a88440
 /tomato-llm-deepseek/understand-the-implementation:
   en: 1598ac8a8bb9b6bf
   zh: fdd089c5ae7722cd
@@ -87,5 +87,5 @@
   en: 88c6c7430c3978c3
   zh: 4310f8aff1d6aaf9
 /tomato-llm-deepseek/known-limitations-and-deferred-work/dev-note:
-  en: a03b457dd8f44bb7
-  zh: c06a4341bb6ae514
+  en: 3152be90090f39ea
+  zh: 4609505f4418d08d

@@ -97,7 +97,7 @@
     "@tomato/client-ui-plugin-manager": "workspace:*",
     "@tomato/office-to-pdf": "workspace:*",
     "@tomato/api-account-controller": "workspace:*",
-    "@tomato/deepseek-account": "workspace:*",
+    "@tomato/account-service": "workspace:*",
     "@tomato/client-product-analytics": "workspace:*"
   }
 }

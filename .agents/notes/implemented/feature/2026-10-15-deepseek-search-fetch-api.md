@@ -18,7 +18,7 @@ The APIs register as `deepseek-search-api` and `deepseek-fetch-api`; Messages se
 
 The two protocols retain independent API bases. Messages keeps `https://api.deepseek.com/anthropic/v1` and appends `/messages`. Direct retrieval uses `web-deepseek-api.baseURL`, which defaults to the guide's public base `https://api.deepseek.com/v1/tools`, and appends `/search` or `/fetch`; the verified development base is `http://api-dev.deepseek.com:8031/api/v1/tools`. These prefixes are different and are never inferred from the hostname, so another deployment enters its complete base. The switch is already the explicit opt-in, so the documented public deployment serves as its default. A blank or unparseable base leaves both providers unavailable.
 
-The guide specifies API-key Bearer authentication, and requests send only the documented authorization and JSON content type. A Session on the DeepSeek account route sends its account token instead, as Messages search does; the public Search and Fetch routes accepted it on 2026-10-16, so account-only users can enable direct retrieval. An Anthropic-compatible gateway checked the same day served Messages web search and had no `/v1/tools` routes; such deployments keep Messages search.
+The guide specifies API-key Bearer authentication, and requests send only the documented authorization and JSON content type. A Session on the account route sends its account token instead, as Messages search does; the public Search and Fetch routes accepted it on 2026-10-16, so account-only users can enable direct retrieval. An Anthropic-compatible gateway checked the same day served Messages web search and had no `/v1/tools` routes; such deployments keep Messages search.
 
 ### Search results and model input
 
@@ -54,7 +54,7 @@ The retained Messages path explicitly sends `thinking: { type: 'disabled' }` and
 
 **Keep the APIs inside the Messages provider behind a provider-local switch.** A switch inside `web-search-deepseek` cannot change fetch routing, so turning it on left `web_fetch` on HTTP unless the user also edited `web.fetchProvider`; it also tied the APIs' lifecycle to Messages search, which the default migration may retire. Separate registrations let the web service's existing selection express the switch, and each package can change or retire alone.
 
-**Share one transport between Messages search and the new APIs.** Both resolve credentials through the same seams, `ctx.credentials` and `ctx.deepseekAccount`, so a shared module would save only the dispatch and failure-mapping code. It would make the Messages package depend on the new API package and tie their releases, while the default migration may retire Messages search. Each package keeps its own transport until then.
+**Share one transport between Messages search and the new APIs.** Both resolve credentials through the same seams, `ctx.credentials` and `ctx.account`, so a shared module would save only the dispatch and failure-mapping code. It would make the Messages package depend on the new API package and tie their releases, while the default migration may retire Messages search. Each package keeps its own transport until then.
 
 **Split Search and Fetch into separate packages.** The guide serves both APIs from one base with one credential, and the switch selects them together; separate packages would duplicate the settings a user edits once. Each operation lives in its own module, so either API can change without the other.
 

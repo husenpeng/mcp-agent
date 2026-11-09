@@ -195,6 +195,42 @@ describe('session-query document and filter helpers', () => {
     ])
   })
 
+  it('classifies a retracted exchange as shadowed', () => {
+    const human = createUserMessage({
+      content: [{ type: 'text', text: 'undo me' }], source: { kind: 'user' },
+    })
+    const retracted: SessionEvent[] = [
+      { type: 'user/message', seq: SessionSeq(0), time: 1, data: human, surfaceOp: 'append' },
+      {
+        type: 'assistant/message',
+        seq: SessionSeq(1),
+        time: 2,
+        surfaceOp: 'append',
+        data: {
+          turn: 1,
+          step: 1,
+          stream: [],
+          message: createMessage({
+            role: 'assistant',
+            content: [{ type: 'text', text: 'reply' }],
+            source: { kind: 'model', provider: 'mock', model: 'mock' },
+          }),
+        },
+      },
+      {
+        type: 'conversation/retraction',
+        seq: SessionSeq(2),
+        time: 3,
+        data: { messageId: human.id, startSeq: SessionSeq(0), endSeq: SessionSeq(1) },
+      },
+    ]
+    expect(buildSessionEventRecords(id, retracted).map(record => record.surface))
+      .toEqual(['shadowed', 'shadowed', 'log-only'])
+    expect(buildSessionEventSearchDocuments(id, retracted)
+      .map(document => [document.seq, document.surface]))
+      .toEqual([[0, 'shadowed'], [1, 'shadowed']])
+  })
+
   it('applies every session clause with OR values and validates closed values', () => {
     const parent = SessionId('parent')
     const records = [

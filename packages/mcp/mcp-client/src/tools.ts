@@ -23,6 +23,7 @@ import type { ToolDefinition, ToolExecution, ToolExecutionResult } from '@tomato
 import { assertSupportedJsonSchema } from '@tomato/tools'
 import type { JsonSchemaNode } from '@tomato/tools'
 import type { JsonValue } from '@tomato/util-values'
+import { withRequestHeaders } from './request-headers.ts'
 
 /** Resolved options relevant to tool bridging. */
 export interface ToolBridgeOptions {
@@ -30,6 +31,11 @@ export interface ToolBridgeOptions {
   registrationFailure: 'contain' | 'throw'
   serverName: string
   toolCallTimeoutMs: number
+  /**
+   * Resolve headers for one outbound `tools/call`; the bridge evaluates it
+   * inside the call's own async scope so concurrent calls never share headers.
+   */
+  requestHeaders?: ((execution: ToolExecution) => Record<string, string>) | undefined
 }
 
 /** State for one sync generation: the current set of disposers keyed by public name. */
@@ -135,9 +141,12 @@ export async function syncTools(
       inputSchema: tool.inputSchema,
       outputSchema: tool.outputSchema,
       taskRequired: tool.execution?.taskSupport === 'required',
-      call: (args, execution) => client.callTool(
-        { name: tool.name, arguments: args },
-        { signal: execution.signal, timeout: opts.toolCallTimeoutMs, toolDefinition: tool },
+      call: (args, execution) => withRequestHeaders(
+        opts.requestHeaders?.(execution),
+        () => client.callTool(
+          { name: tool.name, arguments: args },
+          { signal: execution.signal, timeout: opts.toolCallTimeoutMs, toolDefinition: tool },
+        ),
       ),
     }))
   }

@@ -169,6 +169,26 @@ async function mountPanels(runtime: SlotTestRuntime, locale: LocaleRuntime, beta
   return { alpha, beta }
 }
 
+/** A nested-list occupant that spells out the owner share it was rendered with. */
+function ProbeSubnav({ id, active, wide }: PropsRuntime<'sidebar.panellist.subnav'>) {
+  return (
+    <div data-testid="subnav" data-id={id} data-active={active} data-wide={wide}>
+      {active && wide ? <button type="button">Nested row</button> : null}
+    </div>
+  )
+}
+
+async function mountSubnav(runtime: SlotTestRuntime, id: MainPanelId = BETA) {
+  return runtime.mount({
+    inject: ['slots'],
+    apply(ctx: Context) {
+      ctx.slots.inject('sidebar.panellist.subnav', () => ctx.slots.register(
+        { name: 'sidebar.panellist.subnav', id }, ProbeSubnav,
+      ))
+    },
+  })
+}
+
 describe('sidebar global panels', () => {
   it('adds late registrations, removes each plugin contribution, and leaves no empty panel-list DOM', async () => {
     const { runtime, locale, view } = await bench()
@@ -198,6 +218,30 @@ describe('sidebar global panels', () => {
     expect(view.container.querySelector('[data-slot="sidebar.panellist"]')).toBeNull()
     expect(runtime.slots.entries('sidebar.panellist')).toEqual([])
     expect(runtime.slots.entries('main').map(entry => entry.options.key)).toEqual(['conversation'])
+  })
+
+  it.each([false, true])('renders a nested roster under its own panel row, ahead of the next row (collapsed=%s)', async (collapsed) => {
+    const { runtime, locale, view } = await bench(collapsed)
+    await mountPanels(runtime, locale)
+    const subnav = await mountSubnav(runtime)
+    const navigation = await view.findByRole('navigation', { name: 'Global panels' })
+    const cell = await within(navigation).findByTestId('subnav')
+    expect(cell.dataset.id).toBe(BETA)
+    expect(cell.dataset.wide).toBe(collapsed ? 'false' : 'true')
+    expect(cell.dataset.active).toBe('false')
+    // Only the row it names carries the roster, and it follows that row.
+    expect(within(navigation).getAllByTestId('subnav')).toHaveLength(1)
+    const betaRow = within(navigation).getByRole('button', { name: 'Beta panel' })
+    const alphaRow = within(navigation).getByRole('button', { name: 'Alpha panel' })
+    expect(betaRow.compareDocumentPosition(cell) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(cell.compareDocumentPosition(alphaRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    // The occupant decides what the fold state and selection mean for its rows.
+    expect(within(cell).queryByRole('button', { name: 'Nested row' })).toBeNull()
+    fireEvent.click(betaRow)
+    await waitFor(() => { expect(within(navigation).getByTestId('subnav').dataset.active).toBe('true') })
+    expect(within(navigation).queryByRole('button', { name: 'Nested row' }) !== null).toBe(!collapsed)
+    await subnav.dispose()
+    await waitFor(() => { expect(within(navigation).queryByTestId('subnav')).toBeNull() })
   })
 
   it.each([false, true])('renders ordered rows, icon sizes, and tooltip labels with collapsed=%s', async (collapsed) => {

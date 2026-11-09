@@ -17,6 +17,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Context } from '@tomato/cordis'
 import type {} from '@tomato/client-connection'
 import type {} from '@tomato/host-webserver'
+import type {} from '@tomato/web-app'
 import { AccountState } from './account-state.ts'
 import type { TomatoAccount } from './account-state.ts'
 import { AuthRoutes } from './auth-routes.ts'
@@ -68,6 +69,12 @@ export function apply(ctx: Context, config: Config): void {
     account.observe(outcome)
   })
   const routes = new AuthRoutes(config, auth, origin, secure, () => { account.signOut() })
+  // A browser that reaches this Host through a forwarding host presents that
+  // host's authority, so the sign-in return leg must name the advertised root
+  // instead of the loopback origin the listener happens to bind.
+  ctx.inject(['webApp'], (webAppCtx) => {
+    routes.setAdvertisedRoot(() => webAppCtx.webApp.getAdvertisedUrl())
+  })
   // Without auth_service no account can ever be verified, so the Host names no signed-in person.
   if (auth.configured()) ctx.provide('tomatoAccount', account.view())
   const proxy = new ServiceProxy(ctx, config, auth)

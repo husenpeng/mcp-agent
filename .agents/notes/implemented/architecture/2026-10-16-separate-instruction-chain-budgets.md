@@ -10,9 +10,9 @@ English | [中文](2026-10-16-separate-instruction-chain-budgets.zh.md)
 
 ## Decision
 
-The renderer splits the loaded files into the user-global and project chains, keeping their order, and renders each under the same `maxBytes`: omit the broadest files, truncate the last file, then fall back to the compact intro, to the notice with an empty heading, and to the notice alone. The project chain keeps the result it has when rendered alone; user-global files are omitted or truncated only beyond their own budget, except in the fallback below.
+The renderer splits the loaded files into the user-global and project chains, keeping their order, and budgets the instruction content of each under the same `maxBytes`: omit the broadest files, then truncate the last remaining file to the remaining content budget. The reminder frame, per-file headings, one intro, and the budget notice are scaffolding and are added on top, so no content is cut to make room for them and a chain may exceed `maxBytes` by that overhead. The project chain keeps the result it has when rendered alone; user-global files are omitted or truncated only beyond their own content budget.
 
-When all files fit `maxBytes` together, or only one chain has files, the output is unchanged byte for byte. Otherwise one `<system-reminder>` frame of at most twice `maxBytes` holds the merged notice when a file was omitted or truncated, one intro when a chain kept its frame, and the rendered sections in loaded order, with user-global files first in a baseline. If a chain renders without a frame and the merged frame would exceed that bound, all files render as one chain under one `maxBytes`, which can omit a user-global file that fit its own budget; this needs a budget of a few hundred bytes or a notice that nearly fills or exceeds `maxBytes`. Reconciliation batches apply the same split.
+When all content fits one `maxBytes`, or only one chain has files, the single-budget rendering applies. Otherwise one `<system-reminder>` frame holds the merged notice when a file was omitted or truncated, one full intro, and the rendered sections in loaded order, with user-global files first in a baseline; the message carries at most twice `maxBytes` of content plus that scaffolding, and a merged frame is never shortened to save bytes. Reconciliation batches apply the same split.
 
 The `maxBytes` key and the baseline identity are unchanged, so a resumed session keeps its visible baseline and receives a user-global file that baseline omitted as one additional-instructions transition.
 
@@ -28,7 +28,8 @@ The `maxBytes` key and the baseline identity are unchanged, so a resumed session
 
 ## Consequences
 
-- A baseline or batch holding both chains can reach twice `maxBytes`; deployments that sized `maxBytes` as a total budget halve it, per the [upgrade guide](../../../../docs/upgrade-guide/v0.2.1-rc.1/agent-instructions-chain-budgets/guide.md).
+- A baseline or batch holding both chains carries at most twice `maxBytes` of content plus the frame, headings, intro, and notice; deployments that sized `maxBytes` as a total prompt size leave that overhead in their margin. The rename-era numbers in the [upgrade guide](../../../../docs/upgrade-guide/v0.2.1-rc.1/agent-instructions-chain-budgets/guide.md) still describe the earlier total-size accounting.
+- No content or intro text is dropped to satisfy the byte cap: the cap applies to instruction content, and a message may exceed it by its scaffolding.
 - User-global instructions survive a large project chain.
 - The `agent-instructions-budget` snapshot shows a truncated user-global file beside the whole project file; `agent-instructions-budget-chains` shows two chains that fit only separately.
 - The package README, `Config.maxBytes` JSDoc, and configuration catalog state the per-chain bound.

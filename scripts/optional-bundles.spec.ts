@@ -56,7 +56,9 @@ function profileLayers(surface: 'web' | 'desktop'): ReturnType<typeof loadOverla
   else initProfile(directory, PROFILE_TEMPLATES.web!.bundles)
   const names = readProfileManifest('test', directory).tomato?.profile?.bundles
   if (names === undefined) throw new Error(`${surface} profile has no bundle list`)
-  return names.map(name => bundle(name).patches)
+  // A shipped template can also select published bundles (the marketplace rows);
+  // only workspace bundles carry patch layers this suite composes.
+  return names.filter(name => bundles.has(name)).map(name => bundle(name).patches)
 }
 
 describe.each(['web', 'desktop'] as const)('%s optional bundle overrides', (surface) => {

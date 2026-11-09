@@ -1395,7 +1395,19 @@ function InstallDialog({
           {phase === 'done' && install.restartRequired
             ? <p className={css.resultWarn} role="status">{restartText('installDoneRestart', install.restartReason, t)}</p>
             : null}
-          {phase === 'done' && subject?.kind === 'registry' && subject.name !== undefined && subject.version !== undefined
+          {phase === 'done' && (install.substituted?.length ?? 0) > 0
+            ? (
+              <p className={css.resultWarn} role="status">
+                {t('installDoneSubstituted', {
+                  requested: install.substituted?.[0]?.requested ?? '',
+                  selected: install.substituted?.[0]?.selected ?? install.installedVersion ?? '',
+                  requirements: install.substituted?.[0]?.requirements ?? '',
+                })}
+              </p>
+            )
+            : null}
+          {phase === 'done' && (install.substituted?.length ?? 0) === 0 && subject?.kind === 'registry'
+            && subject.name !== undefined && subject.version !== undefined
             && install.installedVersion !== null && install.installedVersion !== subject.version
             // A fallback registry can serve another release than the one inspected, so only a single-registry run is explained.
             && (install.attempts?.registries.length ?? 1) === 1

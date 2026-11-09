@@ -50,13 +50,13 @@
   },
   "peerDependencies": {
     "@tomato/cordis": "workspace:~",
-    "@tomato/deepseek-account": "workspace:*",
+    "@tomato/account-service": "workspace:*",
     "@tomato/typert-protocol": "workspace:*",
     "@tomato/agent": "workspace:*"
   },
   "devDependencies": {
     "@tomato/cordis": "workspace:~",
-    "@tomato/deepseek-account": "workspace:*",
+    "@tomato/account-service": "workspace:*",
     "@tomato/typert-protocol": "workspace:*",
     "@tomato/agent": "workspace:*"
   }

@@ -12,6 +12,8 @@ describe('robot-app creation skill', () => {
     expect(skill).toMatchObject({ source: 'bundled' })
     expect(skill?.description).toContain('Tomato Rbot')
     expect(skill?.content).toContain('robot_create')
+    expect(skill?.content.replace(/\s+/g, ' ')).toContain('one question at a time')
+    expect(skill?.content ?? '').not.toContain('Ask all four questions')
     expect((await ctx.skills.list()).map(summary => summary.name)).toContain('robot-creation')
     await fiber.dispose()
     expect(await ctx.skills.get('robot-creation')).toBeUndefined()

@@ -1,5 +1,5 @@
 ---
-description: "The Tomato Rbot bundle: robot registry, run executor, triggers, Remote controller, sidebar roster, specification editor, and a conversation surface separate from workspace chats."
+description: "The Tomato Rbot bundle: robot registry, run executor, triggers, Remote controller, sidebar roster, guided creation flow, specification editor, and a conversation surface separate from workspace chats."
 kind: "package-bundle"
 ---
 # Robot App
@@ -8,7 +8,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`@tomato/experimental-robot-app` mounts the Tomato Rbot feature as one optional bundle: `@tomato/experimental-robot-local` stores specifications, robots, and runs; `@tomato/experimental-robot-runtime` executes queued runs through one Agent per run and records the run's Session; `@tomato/experimental-robot-triggers` starts runs for cron and event schedules; `@tomato/experimental-robot-templates-marketing` adds hireable marketing templates; `@tomato/api-robot-controller` exposes the registry over the `robot` Remote namespace; `@tomato/client-ui-robot` renders the card gallery of robots and templates, the sidebar roster, the basic and advanced specification editor, and the run conversation; `@tomato/experimental-tool-robot` adds the model-facing `robot_create` tool; and the bundle registers the bundled `robot-creation` skill for creation Sessions. Profiles without this bundle are unchanged.
+`@tomato/experimental-robot-app` mounts the Tomato Rbot feature as one optional bundle: `@tomato/experimental-robot-local` stores specifications, robots, and runs; `@tomato/experimental-robot-runtime` executes queued runs through one Agent per run and records the run's Session; `@tomato/experimental-robot-triggers` starts runs for cron and event schedules; `@tomato/experimental-robot-templates-marketing` adds hireable marketing templates; `@tomato/api-robot-controller` exposes the registry over the `robot` Remote namespace; `@tomato/client-ui-robot` renders the card gallery of robots and templates, the sidebar roster, the guided three-step creation flow, the specification editor, and the run conversation; `@tomato/experimental-tool-robot` adds the model-facing `robot_create` tool; and the bundle registers the bundled `robot-creation` skill for creation Sessions. Profiles without this bundle are unchanged.
 
 ## Table of Contents
 
@@ -27,9 +27,9 @@ Add `@tomato/experimental-robot-app` to a profile's bundle list (or install it f
 <a id="create-a-robot"></a>
 ## Create a robot
 
-Manual creation opens the specification editor on the basic tab: name, description, task goal, and success criteria. Every other block — position and authority, triggers, budgets, tools and limits, input/output, memory, and agent-to-agent settings — stays on the advanced tab at the general default from `emptyRobotSpec()`; the editor states that unchanged fields keep those defaults.
+The robot page creates a robot through a guided three-step flow: what it does on every run, its name and description, then optional success criteria and a preview. Only name and task goal are required; the flow prefills the Workspace directory the page is viewing and lets the user change it from the preview. The flow publishes the specification and instantiates it in place, and refuses the placeholder name or mission from `emptyRobotSpec()`, so an unfinished draft cannot become a robot that runs a stub task. Every other block — position and authority, triggers, budgets, tools and limits, input/output, memory, and agent-to-agent settings — stays at the general default, and the editor offers them under Advanced after creation.
 
-Conversation creation opens a new Session in the current Workspace with a draft that names the `robot-creation` skill. The skill interviews the user for the same four answers, summarizes them, then calls `robot_create`; the tool publishes the specification and instantiates it, so the robot appears in the roster when the Session finishes. The skill ships with this bundle and is registered as a bundled skill, so it is available in any Workspace rather than only in this repository. `robot_create` requires a live top-level agent and a human message in the open turn.
+Conversation creation starts a new Session in the current Workspace with a short creation request. The `robot-creation` skill turns that into a one-question-at-a-time interview (the `ask_user_question` tool renders each question as a form card when the deployment has it), writes the one-line description itself, shows the four-field draft, and waits for confirmation before calling `robot_create`. The tool publishes the specification and instantiates it, so the robot appears in the roster when the call returns; a successful call also renders a transcript row naming the robot and offering **Open robot**. The skill ships with this bundle and is registered as a bundled skill, so it is available in any Workspace rather than only in this repository. `robot_create` requires a live top-level agent and a human message in the open turn, and rejects a placeholder name or mission instead of publishing a stub.
 
 Hiring a template from the gallery publishes a user-owned specification copied from the template in the page language and instantiates it; the robot then edits and runs like any other.
 
@@ -59,6 +59,7 @@ The section is stable for one revision; a new revision changes the prefix and st
 - MCP servers are mounted by the deployment as `@tomato/mcp-client` rows; a robot can select only servers the deployment already configured, and the runtime never starts one.
 - Cron and event triggers can start paid model runs; the bundle is opt-in for that reason.
 - `robot_create` collects only the four basic fields; triggers, tools, permissions, budgets, memory, and agent-to-agent settings remain editor-only.
+- Conversation creation opens a workspace Session rather than staying inside the robot page; the created row's **Open robot** action is the path back.
 
 <a id="dev-note"></a>
 ### Dev Note

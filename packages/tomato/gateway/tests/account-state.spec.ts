@@ -85,6 +85,14 @@ describe('AccountState through the gateway routes', () => {
     expect(seen).toEqual([{ status: 'signed-in', user: ALICE }])
   })
 
+  it('carries verified roles and quotas into the Host account', async () => {
+    const user = { ...ALICE, roles: ['admin'], quotas: { 'model.tokens.daily': 2000 } }
+    const fake = await authService({ status: 200, body: { valid: true, user } })
+    const { account, routes } = wire(fake.url)
+    await routes.session(request({ cookie: 'tomato_session=s1' }), recorder())
+    expect(account.current()).toEqual({ status: 'signed-in', user })
+  })
+
   it('switches account on a different verified user and signs out on an invalid session, a logout, or a missing session', async () => {
     const fake = await authService({ status: 200, body: { valid: true, user: ALICE } })
     const { account, seen, routes } = wire(fake.url)

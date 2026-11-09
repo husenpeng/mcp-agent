@@ -3,7 +3,8 @@
 
 import { useId, type ReactNode } from 'react'
 import {
-  IconBranchOutlineRegular, IconCheckOutlineRegular, IconCopyOutlineRegular, Tooltip, useClipboardCopy,
+  IconBranchOutlineRegular, IconCheckOutlineRegular, IconCopyOutlineRegular, IconEditOutlineRegular,
+  Tooltip, useClipboardCopy,
 } from '@tomato/client-ui-primitives'
 import type { ChatViewSlotProps } from '../contract/slots.ts'
 import { formatMessageClock } from './message-chrome.ts'
@@ -17,6 +18,8 @@ export interface MessageIconActionsProps {
   time?: number | undefined
   /** Clock before icons (user) or after (assistant). */
   clock: 'start' | 'end'
+  /** Retract the trailing human exchange; omission hides the retract action. */
+  onRetract?: (() => void) | undefined
   /** Fork the session at this message; omission hides the branch action. */
   onBranch?: (() => void) | undefined
   /** The message is not a completed transcript tail, so branch stays visible but unavailable. */
@@ -38,12 +41,12 @@ export interface MessageIconActionsProps {
 }
 
 /**
- * Copy / branch (/ clock) IconActions row shared by user and assistant chrome.
- * @param props - Copy text, event time, clock side, branch callback, className.
+ * Copy / retract / branch (/ clock) IconActions row shared by user and assistant chrome.
+ * @param props - Copy text, event time, clock side, retract and branch callbacks, className.
  * @returns The actions row element.
  */
 export function MessageIconActions({
-  text, time, clock, onBranch, branchUnavailable = false, className,
+  text, time, clock, onRetract, onBranch, branchUnavailable = false, className,
   extraActions, usageAction, t,
 }: MessageIconActionsProps) {
   const day = useCalendarDay()
@@ -62,6 +65,13 @@ export function MessageIconActions({
           {copied ? <IconCheckOutlineRegular /> : <IconCopyOutlineRegular />}
         </button>
       </Tooltip>
+      {onRetract !== undefined && (
+        <Tooltip label={t('message.retract')} side="bottom">
+          <button type="button" className={css.action} aria-label={t('message.retract')} onClick={onRetract}>
+            <IconEditOutlineRegular />
+          </button>
+        </Tooltip>
+      )}
       {extraActions}
       {onBranch !== undefined && (
         <Tooltip label={branchUnavailable ? t('message.branchUnavailable') : t('message.branch')} side="bottom" openOnClick={branchUnavailable}>

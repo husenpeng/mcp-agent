@@ -31,7 +31,6 @@
   "peerDependencies": {
     "@tomato/agent": "workspace:*",
     "@tomato/credentials": "workspace:*",
-    "@tomato/deepseek-account": "workspace:*",
     "@tomato/launch-environment": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/web": "workspace:*",
@@ -44,7 +43,6 @@
     "@tomato/agent": "workspace:*",
     "@tomato/credentials": "workspace:*",
     "@tomato/credentials-local": "workspace:*",
-    "@tomato/deepseek-account": "workspace:*",
     "@tomato/launch-environment": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/session-projection": "workspace:*",
@@ -53,7 +51,7 @@
     "@tomato/http-proxy": "workspace:*"
   },
   "peerDependenciesMeta": {
-    "@tomato/deepseek-account": {
+    "@tomato/account-service": {
       "optional": true
     }
   }

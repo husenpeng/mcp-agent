@@ -5,18 +5,23 @@ import type {
   Robot, RobotCapabilityCatalog, RobotHireRequest, RobotSpec, RobotSpecIssue, RobotSpecRef, RobotSpecRevision,
   RobotTemplate, RobotTemplateText, Run,
 } from '@tomato/api-robot-controller/client'
+import type { DirectoryListing } from '@tomato/api-remotes/client'
 import type { SessionReference } from '@tomato/api-session-controller/client'
 import type { RemoteResult } from '@tomato/typert-protocol'
 import type { SessionId } from '@tomato/session/types'
 import type { InjectFace, PropsLocale, PropsRenderSlots, PropsRuntime, PropsStore } from '@tomato/client-ui-slots'
 import type { RobotRunsSource } from '@tomato/api-robot-controller/client'
 import type { RobotPageInstance, RobotPageStore } from './store.ts'
-import { Button, Input } from '@tomato/client-ui-primitives'
+import { Button, StateDot, type StateDotState } from '@tomato/client-ui-primitives'
+import { RobotAvatar } from './RobotAvatar.tsx'
 import { RobotConfigEditor } from './RobotConfigEditor.tsx'
+import { RobotCreateFlow } from './RobotCreateFlow.tsx'
 import { RobotGallery } from './RobotGallery.tsx'
 import { NS } from './locales.ts'
-import { RunDetail, STATE_KEYS } from './RunDetail.tsx'
+import { RunDetail, STATE_KEYS, type RobotIdentity } from './RunDetail.tsx'
 import type { RunStep } from './run-steps.ts'
+import { durationLabel, runElapsed } from './run-time.ts'
+import { useLiveNow } from './use-live-now.ts'
 import css from './RobotPage.module.css'
 
 /** Run states that still hold the robot's only execution slot. */
@@ -26,6 +31,29 @@ const TERMINAL_RUN_STATES: ReadonlySet<Run['state']> = new Set<Run['state']>([
 
 /** Progress rows of a run whose Session the Client cannot read. */
 const NO_STEPS: readonly RunStep[] = []
+
+/**
+ * Map one run state to the shared status mark.
+ * @param state - run lifecycle state.
+ * @returns the dot state that conveys it.
+ */
+function dotState(state: Run['state']): StateDotState {
+  switch (state) {
+    case 'succeeded':
+      return 'done'
+    case 'failed':
+    case 'timed_out':
+      return 'error'
+    case 'waiting':
+      return 'warning'
+    case 'running':
+    case 'leased':
+    case 'finalizing':
+      return 'ongoing'
+    default:
+      return 'idle'
+  }
+}
 
 /** Registry and control actions the page drives. */
 export interface RobotPageActions {
@@ -82,6 +110,10 @@ export interface RobotInjected {
   readonly locale: () => string
   /** Template copy for the active locale. */
   readonly templateText: (template: RobotTemplate) => RobotTemplateText
+  /** List one Host directory level for the editor's folder picker. */
+  readonly listDirectory: (path?: string, signal?: AbortSignal) => Promise<DirectoryListing>
+  /** Open the Host's own folder chooser for the editor's folder picker. */
+  readonly pickDirectory: () => Promise<string | null>
 }
 
 /** Props of the robot main page. */
@@ -99,16 +131,25 @@ export type RobotPageProps =
  */
 export function RobotPage({
   useRobotPage, useRegistry, actions, registryActions, createWithConversation, references, locale, templateText,
-  useRemoteAccess, SessionProvider, renderSlot, t,
+  listDirectory, pickDirectory, useRemoteAccess, SessionProvider, renderSlot, t,
 }: RobotPageProps): ReactNode {
   const page = useRobotPage(snapshot => snapshot)
   const registry = useRegistry(snapshot => snapshot)
   const canCreateSession = useRemoteAccess('session/create')
-  const robot = page.robotId === undefined
+  const [created, setCreated] = useState<Robot>()
+  const [createdSpec, setCreatedSpec] = useState<RobotSpecRevision>()
+  const registered = page.robotId === undefined
     ? undefined
     : registry.robots.find(candidate => candidate.id === page.robotId)
+  // The registry stream and the control RPC settle independently. Keep the
+  // robot a create or hire just returned until its watch frame arrives, so the
+  // page never drops back to the gallery for a robot that already exists.
+  const robot = registered ?? (created !== undefined && created.id === page.robotId ? created : undefined)
   const runs = robot === undefined ? [] : registry.runs.filter(run => run.robot === robot.id)
   const run = page.runId === undefined ? undefined : runs.find(candidate => candidate.id === page.runId)
+  const runInProgress = runs.some(candidate => !TERMINAL_RUN_STATES.has(candidate.state))
+  // One clock drives every elapsed label; it only ticks while a run is live.
+  const now = useLiveNow(runInProgress)
   /** The Session reference held for one exact run Session. */
   const [owned, setOwned] = useState<{ readonly sessionId: SessionId; readonly reference: SessionReference }>()
   /** Run Session whose retention settled without a readable reference. */
@@ -118,7 +159,6 @@ export function RobotPage({
   // borrows the previous run's conversation while its own attempt is pending.
   const reference = owned !== undefined && owned.sessionId === runSessionId ? owned.reference : undefined
   const sessionUnavailable = runSessionId !== undefined && unresolved === runSessionId
-  const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string>()
   const [issues, setIssues] = useState<readonly RobotSpecIssue[]>()
@@ -183,6 +223,8 @@ export function RobotPage({
         setError(target.error.message)
         return
       }
+      setCreated(target.value)
+      setCreatedSpec(published.value)
       actions.selectRobot(target.value.id)
     })()
   }
@@ -198,32 +240,58 @@ export function RobotPage({
       setError(`${t('roster.hireFailed')}: ${hired.error.message}`)
       return
     }
+    setCreated(hired.value)
     actions.selectRobot(hired.value.id)
   }
 
-  const startRun = (): void => {
-    if (robot === undefined || message.trim() === '') return
+  const startRun = (text: string): void => {
     setBusy(true)
     setError(undefined)
     void (async () => {
-      const started = await registryActions.start({ robotId: robot.id, message })
+      const started = await registryActions.start({ robotId, message: text })
       setBusy(false)
       if (!started.ok) {
         setError(started.error.message)
         return
       }
-      setMessage('')
       actions.openRun(started.value.id)
     })()
   }
 
-  const edition = robot === undefined ? undefined : registry.specs.find(spec => spec.ref.spec === robot.spec.spec)
-  const runInProgress = runs.some(candidate => !TERMINAL_RUN_STATES.has(candidate.state))
+  const edition = robot === undefined
+    ? undefined
+    : registry.specs.find(spec => spec.ref.spec === robot.spec.spec)
+      ?? (createdSpec !== undefined && createdSpec.ref.spec === robot.spec.spec ? createdSpec : undefined)
 
-  if (page.view === 'config') {
+  if (page.view === 'create') {
     return (
       <div className={css.page}>
-        <div className={css.detail}>
+        <div className={css.main}>
+          <RobotCreateFlow
+            t={t}
+            existingNames={registry.robots.map(candidate => candidate.name)}
+            defaultWorkspaceRoot={referenceOptions.defaultWorkspaceRoot}
+            listDirectory={listDirectory}
+            pickDirectory={pickDirectory}
+            busy={busy}
+            error={error}
+            issues={issues}
+            onSubmit={submitSpec}
+            onCancel={() => {
+              setError(undefined)
+              setIssues(undefined)
+              actions.openRoster()
+            }}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  if (page.view === 'config' && robot !== undefined) {
+    return (
+      <div className={css.page}>
+        <div className={css.main}>
           <RobotConfigEditor
             t={t}
             initial={edition?.spec}
@@ -232,12 +300,11 @@ export function RobotPage({
             presetOptions={referenceOptions.presets}
             capabilities={referenceOptions.capabilities}
             defaultWorkspaceRoot={referenceOptions.defaultWorkspaceRoot}
+            listDirectory={listDirectory}
+            pickDirectory={pickDirectory}
             robotNames={registry.robots.map(candidate => candidate.name)}
             onSubmit={submitSpec}
-            onCancel={() => {
-              if (robot === undefined) actions.openRoster()
-              else actions.selectRobot(robot.id)
-            }}
+            onCancel={() => { actions.selectRobot(robot.id) }}
           />
         </div>
       </div>
@@ -247,7 +314,7 @@ export function RobotPage({
   if (robot === undefined) {
     return (
       <div className={css.page}>
-        <div className={css.detail}>
+        <div className={css.main}>
           <RobotGallery
             t={t}
             templates={registry.templates}
@@ -261,10 +328,14 @@ export function RobotPage({
             onFilter={actions.filterBy}
             onHire={hire}
             onOpen={(candidate) => { actions.selectRobot(candidate.id) }}
-            onCreate={() => { actions.configure(undefined) }}
+            onCreate={() => {
+              setError(undefined)
+              setIssues(undefined)
+              actions.startCreate()
+            }}
             onCreateWithChat={canCreateSession ? createWithConversation : undefined}
           />
-          {error === undefined ? null : <p className={css.error} role="alert">{error}</p>}
+          {error === undefined ? null : <p className={css.railError} role="alert">{error}</p>}
         </div>
       </div>
     )
@@ -280,65 +351,108 @@ export function RobotPage({
     stop: (target: Run): void => {
       void registryActions.cancel({ runId: target.id }).then((result) => { if (!result.ok) setError(result.error.message) })
     },
+    start: startRun,
+  }
+  const robotId = robot.id
+  const identity: RobotIdentity = {
+    name: robot.name,
+    skills: edition?.spec.capability.skills ?? [],
   }
 
   // The Session-bound occupant reads the run's Chat nodes; without a readable
-  // Session the same detail still shows the task, status, and result.
-  let detail: ReactNode = <p className={css.empty}>{t('run.emptyDetail')}</p>
-  if (run !== undefined) {
-    detail = reference === undefined
-      ? (
-        <RunDetail
-          run={run}
-          openState={sessionUnavailable ? 'error' : run.sessionId === undefined ? 'open' : 'loading'}
-          openError={sessionUnavailable ? t('run.sessionUnavailable') : undefined}
-          steps={NO_STEPS}
-          actions={runActions}
-          t={t}
-        />
-      )
-      : <SessionProvider session={reference}>{renderSlot('robots.run', { run, actions: runActions })}</SessionProvider>
+  // Session the same conversation still shows the task, status, and result.
+  let detail: ReactNode
+  if (run === undefined) {
+    detail = (
+      <RunDetail
+        run={undefined}
+        robot={identity}
+        openState="cold"
+        openError={undefined}
+        steps={NO_STEPS}
+        actions={runActions}
+        startBlocked={runInProgress}
+        hasRuns={runs.length > 0}
+        now={now}
+        t={t}
+      />
+    )
+  } else if (reference === undefined) {
+    detail = (
+      <RunDetail
+        run={run}
+        robot={identity}
+        openState={sessionUnavailable ? 'error' : run.sessionId === undefined ? 'open' : 'loading'}
+        openError={sessionUnavailable ? t('run.sessionUnavailable') : undefined}
+        steps={NO_STEPS}
+        actions={runActions}
+        startBlocked={runInProgress}
+        hasRuns
+        now={now}
+        t={t}
+      />
+    )
+  } else {
+    detail = (
+      <SessionProvider session={reference}>
+        {renderSlot('robots.run', { run, robot: identity, actions: runActions, startBlocked: runInProgress, hasRuns: true })}
+      </SessionProvider>
+    )
   }
 
   return (
     <div className={css.page}>
-      <div className={css.runsPane}>
-        <div>
-          <Button size="sm" variant="ghost" onClick={() => { actions.back() }}>{t('roster.back')}</Button>
-        </div>
-        <h2 className={css.heading}>
-          {robot.name}
-          <span>
+      <aside className={css.rail}>
+        <div className={css.railHead}>
+          <div className={css.toolbar}>
+            <Button size="sm" variant="ghost" onClick={() => { actions.back() }}>{t('roster.back')}</Button>
             <Button size="sm" variant="outline" onClick={() => { actions.configure(robot.id) }}>{t('roster.edit')}</Button>
-          </span>
-        </h2>
-        {edition === undefined ? null : <p className={css.empty}>{edition.spec.goal.mission}</p>}
-        <h3 className={css.heading}>{t('roster.runs')}</h3>
-        {runs.length === 0 ? <p className={css.empty}>{t('roster.noRuns')}</p> : runs.map(candidate => (
-          <button
-            key={candidate.id}
-            type="button"
-            className={css.runItem}
-            data-state={candidate.state}
-            aria-current={run?.id === candidate.id ? 'true' : undefined}
-            onClick={() => { actions.openRun(candidate.id) }}
-          >
-            <span className={css.runState}>{t(STATE_KEYS[candidate.state])}</span>
-            <span className={css.runText}>{candidate.input.message}</span>
-          </button>
-        ))}
-        <div className={css.runRow}>
-          <Input
-            className={css.runInput}
-            value={message}
-            placeholder={t('roster.message')}
-            onChange={(event) => { setMessage(event.target.value) }}
-          />
-          <Button size="sm" variant="primary" disabled={busy || runInProgress} onClick={startRun}>{t('roster.run')}</Button>
+          </div>
+          <div className={css.robotRow}>
+            <RobotAvatar name={robot.name} skills={identity.skills} />
+            <div className={css.robotInfo}>
+              <h2 className={css.robotName}>{robot.name}</h2>
+              <span className={css.robotState} data-running={runInProgress}>
+                <StateDot state={runInProgress ? 'ongoing' : 'idle'} />
+                {runInProgress ? t('roster.running') : t('roster.idle')}
+              </span>
+              {edition === undefined ? null : <p className={css.mission}>{edition.spec.goal.mission}</p>}
+            </div>
+          </div>
         </div>
-        {runInProgress ? <p className={css.empty}>{t('run.newRunBlocked')}</p> : null}
-        {error === undefined ? null : <p className={css.error} role="alert">{error}</p>}
-      </div>
+        <div className={css.listLabel}>
+          <span>{t('roster.runs')}</span>
+          <span>{runs.length}</span>
+        </div>
+        <div className={css.runList}>
+          {runs.length === 0
+            ? <p className={css.empty}>{t('roster.noRuns')}</p>
+            : runs.map(candidate => (
+              <button
+                key={candidate.id}
+                type="button"
+                className={css.runItem}
+                data-state={candidate.state}
+                aria-current={run?.id === candidate.id ? 'true' : undefined}
+                onClick={() => { actions.openRun(candidate.id) }}
+              >
+                <span className={css.runText}>{candidate.input.message}</span>
+                <span className={css.runMeta}>
+                  <StateDot state={dotState(candidate.state)} />
+                  <span className={css.runState}>{t(STATE_KEYS[candidate.state])}</span>
+                  <span className={css.sep} aria-hidden="true">·</span>
+                  <span>
+                    {candidate.endedAt === undefined
+                      ? t('run.elapsed', { duration: durationLabel(runElapsed(candidate, now), t) })
+                      : t('run.usedFor', { duration: durationLabel(runElapsed(candidate, now), t) })}
+                  </span>
+                </span>
+              </button>
+            ))}
+        </div>
+        {runInProgress ? <p className={css.railFoot}>{t('run.newRunBlocked')}</p> : null}
+        {error === undefined ? null : <p className={css.railError} role="alert">{error}</p>}
+      </aside>
       <div className={css.detail}>{detail}</div>
     </div>
   )

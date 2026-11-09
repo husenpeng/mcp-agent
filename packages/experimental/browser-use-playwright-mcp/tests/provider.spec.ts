@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { Context } from '@tomato/cordis'
 import { afterEach, expect, it, vi } from 'vitest'
 import { mountSessionMcp } from '@tomato/experimental-browser-use-runtime/mcp'
@@ -41,6 +42,36 @@ it('supports headed launch and attaches without launching a browser or creating 
   const options = vi.mocked(mountSessionMcp).mock.calls[1]![1]
   expect(options.exclusive).toBe(true)
   expect(options.args.slice(1)).toEqual(['--browser', 'chromium', '--cdp-endpoint', 'http://127.0.0.1:9222'])
+})
+
+it('seeds an isolated launch from an existing storage-state file', () => {
+  vi.stubEnv('PLAYWRIGHT_MCP_EXECUTABLE_PATH', '')
+  const storageState = resolve('package.json')
+  Provider.apply(new Context(), Provider.Config({ mode: 'launch', storageState }))
+  expect(vi.mocked(mountSessionMcp).mock.calls[0]![1].args.slice(1)).toEqual(
+    ['--browser', 'chromium', '--isolated', '--headless', '--storage-state', storageState])
+  expect(() => Provider.apply(new Context(), Provider.Config({ mode: 'launch', storageState: 'relative.json' })))
+    .toThrow('existing absolute file')
+  expect(() => Provider.apply(new Context(), Provider.Config({ mode: 'launch', storageState: resolve('missing-state.json') })))
+    .toThrow('existing absolute file')
+})
+
+it('refuses local addresses and page code that reads this machine', () => {
+  Provider.apply(new Context(), Provider.Config({ mode: 'launch' }))
+  const options = vi.mocked(mountSessionMcp).mock.calls[0]![1]
+  expect(options.deny).toBe(Provider.denyLocalAddresses)
+  const deny = options.deny!
+  expect(deny({ name: 'browser_navigate', arguments: { url: 'https://example.com/share' } })).toBeUndefined()
+  expect(deny({ name: 'browser_navigate', arguments: { url: 'file:///Users/me/Downloads/合同/' } }))
+    .toContain('Refused address: file:///Users/me/Downloads/合同/')
+  expect(deny({ name: 'browser_tabs', arguments: { url: 'about:blank' } })).toContain('http(s) pages only')
+  expect(deny({ name: 'browser_click', arguments: { element: 'Sign in', ref: 'e1' } })).toBeUndefined()
+  expect(deny({ name: 'browser_run_code_unsafe', arguments: { code: "await page.goto('https://example.com')" } })).toBeUndefined()
+  expect(deny({ name: 'browser_run_code_unsafe', arguments: { code: "await page.goto('file:///tmp/a.html')" } })).toContain('file tools')
+  expect(deny({ name: 'browser_run_code_unsafe', arguments: { code: "const fs = require('fs'); fs.readdirSync('/tmp')" } })).toContain('file tools')
+  expect(deny({ name: 'browser_run_code_unsafe', arguments: { code: 'await page.evaluate(() => document.title)' } })).toBeUndefined()
+  // Anything that is not a reviewed argument object reaches the upstream schema.
+  expect(deny({ name: 'browser_navigate', arguments: 'not-an-object' })).toBeUndefined()
 })
 
 it('rejects malformed endpoints before mounting any browser resources', () => {

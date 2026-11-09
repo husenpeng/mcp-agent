@@ -51,9 +51,9 @@ Run the real API tests with `DEEPSEEK_API_KEY` and `DEEPSEEK_SEARCH_API_TEST_BAS
 <a id="authentication"></a>
 ### Authentication
 
-A Session using the `deepseek-account` route asks the account service for a token authorized for the resolved endpoint and sends it as `x-tomato-auth-token`; the public Search and Fetch routes accepted it on 2026-10-16. Otherwise a non-empty literal `apiKey` wins over `apiKeyEnv`; the reference resolves through `ctx.credentials`, or the launch environment when that service is absent. API keys use `Authorization: Bearer`. Credential resolution and endpoint selection share one settings snapshot.
+A non-empty literal `apiKey` wins over `apiKeyEnv`; the reference resolves through `ctx.credentials`, or the launch environment when that service is absent. API keys use `Authorization: Bearer`. Credential resolution and endpoint selection share one settings snapshot.
 
-Each provider's `ready()` answers whether an operation for a model request has a credential, on any model route: the request's route is `deepseek-account` and `ctx.deepseekAccount` resolves a token for the API base, or a literal `apiKey` is set or `ctx.credentials.describe` reports the `apiKeyEnv` reference configured (without that service, the launch environment must carry it). A failed account-token or credential-store read answers false. While these providers are selected, [`@tomato/tool-web`](../tool-web/README.md#search-readiness) withholds `web_search` and `web_fetch` with their prompt guidance from each request for which they answer false. Only presence is checked: a wrong key counts as ready and fails each call.
+Each provider's `ready()` answers whether an operation for a model request has a credential: a literal `apiKey` is set or `ctx.credentials.describe` reports the `apiKeyEnv` reference configured (without that service, the launch environment must carry it). A failed credential-store read answers false. While these providers are selected, [`@tomato/tool-web`](../tool-web/README.md#search-readiness) withholds `web_search` and `web_fetch` with their prompt guidance from each request for which they answer false. Only presence is checked: a wrong key counts as ready and fails each call.
 
 ### Results and failures
 

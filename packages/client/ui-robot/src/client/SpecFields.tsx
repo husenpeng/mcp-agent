@@ -20,6 +20,8 @@ export interface TagOption {
   readonly label: string
   /** Optional one-line detail that helps a person choose. */
   readonly description?: string
+  /** Optional source folder the value belongs to. */
+  readonly path?: string
 }
 
 /** Props of the chip-based list field. */
@@ -44,6 +46,8 @@ export interface TagFieldProps {
   readonly removeLabel: string
   /** Localized picker button label. */
   readonly optionsLabel: string
+  /** Open the owner's picker layer instead of the built-in menu. */
+  readonly onChoose?: (() => void) | undefined
 }
 
 /**
@@ -53,7 +57,7 @@ export interface TagFieldProps {
  * @returns the field.
  */
 export function TagField({
-  label, values, onChange, options = [], placeholder, hint, issue, addLabel, removeLabel, optionsLabel,
+  label, values, onChange, options = [], placeholder, hint, issue, addLabel, removeLabel, optionsLabel, onChoose,
 }: TagFieldProps): ReactNode {
   const [draft, setDraft] = useState('')
   const [open, setOpen] = useState(false)
@@ -98,45 +102,57 @@ export function TagField({
           }}
         />
         <Button size="sm" variant="outline" onClick={() => { add(draft) }}>{addLabel}</Button>
-        {options.length === 0 ? null : (
-          <Menu
-            open={open}
-            align="end"
-            portal
-            className={css.pickerAnchor}
-            anchor={(
-              <Button
-                size="sm"
-                variant="outline"
-                aria-haspopup="menu"
-                aria-expanded={open}
-                aria-label={`${optionsLabel} ${label}`}
-                onClick={() => { setOpen(!open) }}
-              >
-                {optionsLabel}
-              </Button>
-            )}
-            onClose={() => { setOpen(false) }}
-          >
-            {options.map((option) => {
-              const selected = values.includes(option.value)
-              return (
-                <MenuItemButton
-                  key={option.value}
-                  icon={selected ? <IconCheckOutlineRegular /> : <span className={css.checkSpacer} />}
-                  onSelect={() => { toggle(option.value) }}
+        {onChoose !== undefined
+          ? (
+            <Button
+              size="sm"
+              variant="outline"
+              aria-haspopup="dialog"
+              aria-label={`${optionsLabel} ${label}`}
+              onClick={onChoose}
+            >
+              {optionsLabel}
+            </Button>
+          )
+          : options.length === 0 ? null : (
+            <Menu
+              open={open}
+              align="end"
+              portal
+              className={css.pickerAnchor}
+              anchor={(
+                <Button
+                  size="sm"
+                  variant="outline"
+                  aria-haspopup="menu"
+                  aria-expanded={open}
+                  aria-label={`${optionsLabel} ${label}`}
+                  onClick={() => { setOpen(!open) }}
                 >
-                  <span className={css.optionText}>
-                    <span>{option.label}</span>
-                    {option.description === undefined ? null : (
-                      <span className={css.optionDescription}>{option.description}</span>
-                    )}
-                  </span>
-                </MenuItemButton>
-              )
-            })}
-          </Menu>
-        )}
+                  {optionsLabel}
+                </Button>
+              )}
+              onClose={() => { setOpen(false) }}
+            >
+              {options.map((option) => {
+                const selected = values.includes(option.value)
+                return (
+                  <MenuItemButton
+                    key={option.value}
+                    icon={selected ? <IconCheckOutlineRegular /> : <span className={css.checkSpacer} />}
+                    onSelect={() => { toggle(option.value) }}
+                  >
+                    <span className={css.optionText}>
+                      <span>{option.label}</span>
+                      {option.description === undefined ? null : (
+                        <span className={css.optionDescription}>{option.description}</span>
+                      )}
+                    </span>
+                  </MenuItemButton>
+                )
+              })}
+            </Menu>
+          )}
       </div>
       {hint === undefined ? null : <span className={css.hint}>{hint}</span>}
       {issue === undefined ? null : <span className={css.issue}>{issue}</span>}

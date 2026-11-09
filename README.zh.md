@@ -10,7 +10,7 @@ Tomato AI 是面向达人营销团队的内部桌面 agent。它在 Electron 外
 
 - **外壳**：`apps/desktop`（Electron 主进程、preload、欢迎窗、更新、打包）与 `apps/desktop-host`（启动 `desktop` profile 的私有 Node Host 进程）。
 - **运行时**：tomato 的 Cordis 插件树。模型适配器、工具注册表、会话日志乃至 agent 循环本身都是插件，由多层 bundle 组成的 profile 挂载。
-- **产品界面**：tomato Web 客户端，由 Host 提供、通过 `tomato-app://` 方案加载；DeepSeek 账号、会话日志上传与产品分析各行已停用。
+- **产品界面**：tomato Web 客户端，由 Host 提供、通过 `tomato-app://` 方案加载；账号、会话日志上传与产品分析各行已停用。
 - **公司集成**：`@tomato/brand`（侧栏与首页标志）、`@tomato/telemetry`（turn 与工具 span），以及外壳的 `tomato-auth.ts`（浏览器登录、令牌交换、凭证写入）。
 
 ## Table of Contents
@@ -66,7 +66,7 @@ $TOMATO_HOME/profiles/desktop/package.json      tomato.profile.bundles = [@tomat
 | `system-prompt` 与四个预设 | 人格改为达人营销助手 |
 | `agent-default-model` | 空的 provider/model：用户选择前没有默认模型 |
 | `llm-pi-ai` | 不预置路由；第三方 OpenAI 或 Anthropic 兼容端点由模型页声明 |
-| `deepseek-account`、`llm-deepseek`、`llm-deepseek-account`、`deepseek-llm-api-extensions`、`session-log-deepseek`、`plugin-package-inventory-deepseek` | `disabled: true` |
+| `account`、`llm-deepseek`、`llm-account`、`deepseek-llm-api-extensions`、`session-log-deepseek`、`plugin-package-inventory-deepseek` | `disabled: true` |
 | `session-telemetry-otel`、`product-analytics`、`desktop-product-telemetry` | `disabled: true` |
 | `web-search-deepseek`、`web-deepseek-api` | `disabled: true`；HTTP fetch 保留 |
 | `tomato-telemetry` | 新增行：把 span 发往 `TOMATO_OTLP_ENDPOINT` |

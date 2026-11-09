@@ -54,6 +54,8 @@ import type {
   SessionPromptValue,
   SessionRenameRequest,
   SessionRenameValue,
+  SessionRetractRequest,
+  SessionRetractValue,
   SessionSearchRequest,
   SessionSearchValue,
   SessionSelectModelRequest,
@@ -308,7 +310,7 @@ export class SessionController extends TypertRemoteService {
    */
   @Remote
   async initializeDefaultModel(): Promise<void> {
-    const provider = 'deepseek-account'
+    const provider = 'account'
     if (await hasProviderApiKey(this.ctx)) return
     const catalog = await buildModelCatalog(this.ctx)
     const model = catalog.groups.find(group => group.id === provider)?.models[0]
@@ -440,6 +442,18 @@ export class SessionController extends TypertRemoteService {
       }
     }
     return this.commands.fork(request)
+  }
+
+  /**
+   * Retract the Session's trailing human exchange from model history. Only the
+   * turn-opening prompt of the last turn can be retracted; a running turn is
+   * cancelled and settled first.
+   * @param request - Session identity and the human prompt seq to retract.
+   * @returns the committed removal range.
+   */
+  @Remote('retract')
+  retract(request: SessionRetractRequest): Promise<SessionRetractValue> {
+    return this.commands.retract(request)
   }
 
   /**

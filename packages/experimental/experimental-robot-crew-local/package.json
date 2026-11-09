@@ -1,0 +1,57 @@
+{
+  "name": "@tomato/experimental-robot-crew-local",
+  "description": "Storage-backed crew provider that orchestrates crew runs through one Agent per node with A2A messages, memory briefs, and loop protection",
+  "version": "0.2.1-rc.3",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/experimental/experimental-robot-crew-local"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@tomato/cordis": "workspace:~"
+  },
+  "dependencies": {
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@tomato/agent": "workspace:*",
+    "@tomato/agent-default-model": "workspace:*",
+    "@tomato/branded": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/experimental-memory": "workspace:*",
+    "@tomato/experimental-robot": "workspace:*",
+    "@tomato/experimental-robot-crew": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/permission-presets": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/skill": "workspace:*",
+    "@tomato/storage-domain": "workspace:*",
+    "@tomato/system-prompt": "workspace:*",
+    "@tomato/tools": "workspace:*",
+    "@tomato/util-values": "workspace:*",
+    "@tomato/workspace": "workspace:*"
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  }
+}

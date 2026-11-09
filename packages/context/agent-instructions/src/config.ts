@@ -19,9 +19,11 @@ export interface Config {
   /** Directory entries that identify the project root while walking upward from the current working directory. */
   projectRootMarkers?: string[]
   /**
-   * UTF-8 byte cap for each instruction chain (user-global, project) within one
-   * rendered baseline or dynamic batch, so a baseline or batch holding both
-   * chains is at most twice this size; non-positive or non-finite disables loading.
+   * UTF-8 byte cap on the instruction content of each chain (user-global,
+   * project) within one rendered baseline or dynamic batch. The reminder frame,
+   * per-file headings, the intro, and the budget notice are scaffolding and are
+   * added on top, so a message can exceed this cap by that overhead; non-positive
+   * or non-finite disables loading.
    */
   maxBytes: number
   /** Maximum UTF-8 bytes read from one instruction file; larger files are ignored. */

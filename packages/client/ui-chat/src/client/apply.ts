@@ -310,6 +310,26 @@ export function apply(ctx: Context): void {
                 // Fork or child-title failure leaves the source view unchanged.
               })
           },
+          retractAt: async (messageSeq, text) => {
+            const result = await session.retract(messageSeq)
+            if (!result.ok) return
+            const current = ctx.sessions.binding(sessionId)
+            /* v8 ignore next -- the binding disappears only when the Session is disposed during the retraction round-trip. */
+            if (current === undefined) return
+            // Chat can mount beside a host without the Conversation composer.
+            const input = ctx.get('conversation')?.input
+            /* v8 ignore next -- a Chat-only composition has no composer to restore into. */
+            if (input === undefined) return
+            if (text === '') {
+              input.for(current.ctx).notify('info', t('message.retract.nothingToRestore'))
+              return
+            }
+            const outcome = input.requestDraftInitialization(current, { prompt: text, whenDraftExists: 'append' })
+            input.for(current.ctx).notify(
+              outcome === 'applied' ? 'info' : 'error',
+              t(outcome === 'applied' ? 'message.retract.restored' : 'message.retract.restoreBlocked'),
+            )
+          },
         }
       },
     }, ChatView)

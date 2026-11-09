@@ -62,7 +62,7 @@
     "@tomato/client-ui-settings": "workspace:*",
     "@tomato/client-ui-slots": "workspace:*",
     "@tomato/client-ui-theme": "workspace:*",
-    "@tomato/deepseek-account": "workspace:*",
+    "@tomato/account-service": "workspace:*",
     "@tomato/settings": "workspace:*",
     "@testing-library/react": "^16.3.3",
     "@types/big.js": "^6.2.2",

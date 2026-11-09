@@ -191,11 +191,12 @@ Web and Desktop share one command pair. `start:*` launches the artifacts of a pr
 ```sh
 pnpm run start:web       # serve built Web artifacts through the source launcher (the same launch as pnpm tomato web)
 pnpm run dev:web         # build, serve, and rebuild Web client bundles on source edits
+pnpm run web:phone       # serve the same Web profile to a phone through a Cloudflare quick tunnel
 pnpm run start:desktop   # launch built Desktop artifacts
 pnpm run dev:desktop     # build, then launch Desktop
 ```
 
-Arguments after a Web command reach `tomato web`, for example `pnpm run dev:web --no-open --port 3081`; `dev:web` also accepts `--skip-build` to reuse the existing artifact tree and `--no-serve` to run only the rebuild watchers beside a server started elsewhere. Both Web commands use the normal Harness home, while the Desktop commands use the isolated development home described in the [Desktop README](../apps/desktop/README.md). The root `Makefile` names the same commands as `make web`, `make dev-web`, `make desktop`, `make dev-desktop`, and `make build`; `ARGS='--no-open'` forwards options.
+Arguments after a Web command reach `tomato web`, for example `pnpm run dev:web --no-open --port 3081`; `dev:web` also accepts `--skip-build` to reuse the existing artifact tree and `--no-serve` to run only the rebuild watchers beside a server started elsewhere. Both Web commands use the normal Harness home, while the Desktop commands use the isolated development home described in the [Desktop README](../apps/desktop/README.md). `web:phone` starts a Cloudflare quick tunnel first and then serves the Web profile with that tunnel hostname trusted, printing the authenticated URL to open on the phone; it needs `cloudflared` on `PATH` or in `--bin`, and Ctrl+C stops both processes. The root `Makefile` names the same commands as `make web`, `make dev-web`, `make desktop`, `make dev-desktop`, and `make build`; `ARGS='--no-open'` forwards options.
 
 ### TODO markers
 

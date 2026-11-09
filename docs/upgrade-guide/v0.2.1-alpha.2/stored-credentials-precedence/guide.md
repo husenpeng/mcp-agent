@@ -13,7 +13,7 @@ Earlier releases used an exported environment variable before the `refs` entry w
 
 Now the stored entry wins. The exported variable applies only while the file stores no value for that name, and `$cwd/.env` and `$DSH_HOME/.env` still apply only after both. The Models page can save and replace a key while the name is exported.
 
-The shipped `headless` profile instead disables the credential store, authorization and DeepSeek account provider. It uses the launch environment, project `.env`, then Harness-home `.env`, and leaves `.credentials.yaml` untouched. Saved API keys and sign-ins no longer authenticate headless jobs by default. Web, SDK and ACP retain the store.
+The shipped `headless` profile instead disables the credential store, authorization and account provider. It uses the launch environment, project `.env`, then Harness-home `.env`, and leaves `.credentials.yaml` untouched. Saved API keys and sign-ins no longer authenticate headless jobs by default. Web, SDK and ACP retain the store.
 
 You are affected when a harness home stores a value under `refs` and the process that launches `dsh` exports the same name. This includes a container that mounts such a home. Requests now use the stored key instead of the exported one. A CI job or container that starts with a fresh harness home, without `.credentials.yaml`, is not affected. The [stored credential precedence](../../../../.agents/notes/implemented/architecture/2026-10-09-stored-credential-precedence.md) Agent Note records the reason.
 

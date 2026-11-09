@@ -42,8 +42,9 @@ export async function buildModelCatalog(
         return {
           id: model.id,
           name: model.name,
-          ...(model.description === undefined ? {} : { description: model.description }),
+          ...model.description === undefined ? {} : { description: model.description },
           ...(reasoning === undefined ? {} : { reasoning }),
+          ...(model.blockedReason === undefined ? {} : { blockedReason: model.blockedReason }),
         }
       }))
       return {
@@ -86,7 +87,7 @@ export async function modelAvailable(ctx: Context, selection: ModelSelection): P
       error instanceof Error ? error.message : String(error),
       { provider: selection.provider, model: selection.model })
   }
-  return models.some(model => model.id === selection.model)
+  return models.some(model => model.id === selection.model && model.blockedReason === undefined)
 }
 
 /**
@@ -102,7 +103,7 @@ export async function hasProviderApiKey(ctx: Context): Promise<boolean> {
   }
   const namespaces = settings.describe({ redactSecrets: true })
   for (const provider of ctx.llm.listConfigurableProviders()) {
-    if (provider.provider === 'deepseek-account') continue
+    if (provider.provider === 'account') continue
     let profile = namespaces.find(namespace => namespace.ns === provider.settingsNs)?.value
     for (const key of provider.settingsPath) {
       profile = typeof profile === 'object' && profile !== null ? Reflect.get(profile, key) : undefined

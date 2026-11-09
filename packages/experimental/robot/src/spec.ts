@@ -17,9 +17,10 @@ import type { RobotSpec } from './types.ts'
  *
  * Defaults: a manual trigger, plan strategy, fail-on-failure policy, a
  * 100k-token/600s/100-tool-call budget, one concurrent run, every tool
- * available (an empty allow list restricts nothing), workspace sandbox and
- * permission preset, no network, no memory recall, and no agent-to-agent
- * intents. Callers override only the basic fields and leave the rest untouched.
+ * available (an empty allow list restricts nothing), workspace sandbox and the
+ * `workspace-write` permission preset shipped by @tomato/base, no network, no
+ * memory recall, and no agent-to-agent intents. Callers override only the basic
+ * fields and leave the rest untouched.
  * @param basic - name and purpose a caller collected; omitted fields keep the neutral placeholder.
  * @returns a new mutable specification value.
  */
@@ -51,7 +52,7 @@ export function emptyRobotSpec(basic: {
       dataClasses: [],
       credentials: [],
       sandbox: 'workspace',
-      permissionPreset: 'workspace',
+      permissionPreset: 'workspace-write',
       network: 'none',
     },
     io: {

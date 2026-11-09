@@ -32,6 +32,7 @@
     "@tomato/branded": "workspace:*",
     "@tomato/cordis": "workspace:~",
     "@tomato/experimental-robot": "workspace:*",
+    "@tomato/permission-presets": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/storage-domain": "workspace:*",
     "@tomato/util-values": "workspace:*"
@@ -43,6 +44,7 @@
     "@tomato/branded": "workspace:*",
     "@tomato/cordis": "workspace:~",
     "@tomato/experimental-robot": "workspace:*",
+    "@tomato/permission-presets": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/storage": "workspace:*",
     "@tomato/storage-domain": "workspace:*",

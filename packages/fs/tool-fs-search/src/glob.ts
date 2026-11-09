@@ -50,6 +50,10 @@ export interface GlobToolCaps {
   graceMs: number
   /** Cap on the retained stderr diagnostic tail. */
   stderrMaxBytes: number
+  /** Largest directory depth one `glob` call may request. */
+  maxDepth: number
+  /** Largest number of `exclude` patterns one call may add. */
+  maxExcludes: number
   /** Cooperative tool-call budget (ms) attached as `ToolDefinition.timeoutMs`. */
   timeoutMs: number
 }
@@ -58,6 +62,10 @@ export interface GlobToolCaps {
 export interface GlobInput {
   pattern: string
   path?: string
+  depth?: number
+  exclude?: readonly string[]
+  /** Whether ignored and dot files are searched; defaults to true. */
+  hidden?: boolean
 }
 
 /**
@@ -68,10 +76,33 @@ export interface GlobInput {
  * @param args - the schema-validated `glob` arguments.
  * @returns the accepted input, unchanged.
  */
-export function parseGlobArgs(args: { pattern: string; path?: string }): GlobInput {
+export function parseGlobArgs(args: {
+  pattern: string
+  path?: string
+  depth?: number
+  exclude?: readonly string[]
+  hidden?: boolean
+}, caps?: GlobToolCaps): GlobInput {
   if (args.pattern.trim().length === 0) throw new Error('pattern must be a non-empty string')
   if (args.path !== undefined && args.path.trim().length === 0) throw new Error('path must be a non-empty string when given')
-  return { pattern: args.pattern, ...args.path !== undefined ? { path: args.path } : {} }
+  if (args.depth !== undefined) {
+    const maxDepth = caps?.maxDepth ?? Number.MAX_SAFE_INTEGER
+    if (!Number.isInteger(args.depth) || args.depth < 1 || args.depth > maxDepth) {
+      throw new Error(`depth must be an integer from 1 to ${maxDepth}`)
+    }
+  }
+  if (args.exclude !== undefined) {
+    const maxExcludes = caps?.maxExcludes ?? 20
+    if (args.exclude.length > maxExcludes) throw new Error(`exclude accepts at most ${maxExcludes} patterns`)
+    if (args.exclude.some(value => value.trim() === '')) throw new Error('exclude patterns must not be empty')
+  }
+  return {
+    pattern: args.pattern,
+    ...args.path !== undefined ? { path: args.path } : {},
+    ...args.depth !== undefined ? { depth: args.depth } : {},
+    ...args.exclude !== undefined ? { exclude: args.exclude } : {},
+    ...args.hidden === undefined ? {} : { hidden: args.hidden },
+  }
 }
 
 /**
@@ -91,8 +122,9 @@ export function buildGlobCommand(input: GlobInput): string[] {
     '--files',
     `--glob=${input.pattern}`,
     '--sort=modified',
-    '--no-ignore',
-    '--hidden',
+    ...input.hidden === false ? [] : ['--no-ignore', '--hidden'],
+    ...input.depth === undefined ? [] : [`--max-depth=${input.depth}`],
+    ...(input.exclude ?? []).map(pattern => `--glob=!${pattern}`),
     // Two negated globs per VCS name: the bare form prunes the directory
     // during traversal; the /** form still excludes the contents when the
     // search root is AT or INSIDE the directory (where the bare form,
@@ -316,6 +348,13 @@ export function applyGlobTool(ctx: Context, caps: GlobToolCaps): void {
           + 'A pattern with no "/" matches the basename at any depth, so "*" and "*.ts" both search the whole tree; include a separator to anchor the depth.',
       },
       path: { type: 'string', description: 'Directory to search in. Defaults to the session workspace; a relative path resolves against it.' },
+      depth: { type: 'number', description: `Limit traversal depth, from 1 to ${caps.maxDepth}. Omit for the whole tree; prefer a shallow depth or a narrower path for a quick look.` },
+      exclude: {
+        type: 'array',
+        items: { type: 'string' },
+        description: `Path globs to exclude, at most ${caps.maxExcludes}; for example ["dist/**", "**/*.snap"].`,
+      },
+      hidden: { type: 'boolean', description: 'Search ignored and dot files. Defaults to true; set false to respect .gitignore and skip hidden names.' },
     },
     timeoutMs: caps.timeoutMs,
     output: {
@@ -334,7 +373,7 @@ export function applyGlobTool(ctx: Context, caps: GlobToolCaps): void {
       },
     },
     async execute(args, exec) {
-      const input = parseGlobArgs(args)
+      const input = parseGlobArgs(args, caps)
       const run = await runRipgrep(ctx, exec, 'glob', buildGlobCommand(input), caps.rawOutputMaxBytes, caps.graceMs, caps.stderrMaxBytes)
       const root = input.path === undefined ? '.' : toWorkdirRelative(input.path, run.workdir)
       if (run.noMatches) return { root, paths: [] }

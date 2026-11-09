@@ -1,0 +1,32 @@
+{
+  "name": "@tomato/client-ui-account-access",
+  "description": "Feishu account access section showing verified roles and quotas",
+  "version": "0.2.1-rc.3",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": { "types": "./lib/types/index.d.ts", "default": "./lib/index.js" },
+    "./client": { "types": "./lib/types/client/index.d.ts", "default": "./lib/client.js" },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "tomato": {
+    "client": {
+      "inject": ["@tomato/client-locale", "@tomato/client-ui-settings", "@tomato/client-ui-slots"],
+      "platform": "web"
+    }
+  },
+  "scripts": { "bundle": "tsdown", "watch": "tsdown --watch" },
+  "license": "MIT",
+  "peerDependencies": { "@tomato/cordis": "workspace:~" },
+  "devDependencies": {
+    "@tomato/cordis": "workspace:~",
+    "@tomato/client-locale": "workspace:*",
+    "@tomato/client-ui-settings": "workspace:*",
+    "@tomato/client-ui-slots": "workspace:*",
+    "react": "^18.2.0"
+  },
+  "files": ["lib/index.js", "lib/client.js", "lib/types/**/*.d.ts"]
+}

@@ -1,10 +1,13 @@
 /** The Tomato Rbot specification editor: basic fields first, advanced blocks behind one tab. */
 import type { ReactNode } from 'react'
 import { useEffect, useId, useState } from 'react'
+import type { DirectoryListing } from '@tomato/api-remotes/client'
 import { type RobotCapabilityCatalog, type RobotSpec, type RobotSpecIssue } from '@tomato/api-robot-controller/client'
-import { emptyRobotSpec } from './spec.ts'
+import { emptyRobotSpec, MISSION_STUB, NAME_STUB } from './spec.ts'
 import { Button, Checkbox, Input, SegmentedTabs } from '@tomato/client-ui-primitives'
 import type { PropsLocale } from '@tomato/client-ui-slots'
+import { FolderPicker } from './FolderPicker.tsx'
+import { ResourcePicker } from './ResourcePicker.tsx'
 import { ChoiceRow, TagField, type Choice, type TagOption } from './SpecFields.tsx'
 import { NS, type RobotKey } from './locales.ts'
 import css from './RobotConfigEditor.module.css'
@@ -55,11 +58,16 @@ export interface RobotConfigEditorProps extends PropsLocale<typeof NS> {
   readonly capabilities?: RobotCapabilityCatalog | undefined
   /** Workspace directory that fills an empty root list, so a saved robot always records one. */
   readonly defaultWorkspaceRoot?: string | undefined
+  /** List one Host directory level; omitted hides the folder browse action. */
+  readonly listDirectory?: ((path?: string, signal?: AbortSignal) => Promise<DirectoryListing>) | undefined
+  /** Open the Host's own folder chooser; omitted hides the folder browse action. */
+  readonly pickDirectory?: (() => Promise<string | null>) | undefined
 }
 
 /** Render the six-block specification form. */
 export function RobotConfigEditor({
-  initial, busy, issues, onSubmit, onCancel, presetOptions = [], robotNames = [], capabilities, defaultWorkspaceRoot, t,
+  initial, busy, issues, onSubmit, onCancel, presetOptions = [], robotNames = [], capabilities, defaultWorkspaceRoot,
+  listDirectory, pickDirectory, t,
 }: RobotConfigEditorProps): ReactNode {
   const [spec, setSpec] = useState<Writable<RobotSpec>>(() => {
     const draft = structuredClone(initial ?? emptyRobotSpec()) as Writable<RobotSpec>
@@ -71,6 +79,9 @@ export function RobotConfigEditor({
     return draft
   })
   const [scope, setScope] = useState<ConfigScope>('basic')
+  const [showRequired, setShowRequired] = useState(false)
+  const [picker, setPicker] = useState<'skills' | 'mcp' | 'workspace'>()
+  const [folderOpen, setFolderOpen] = useState(false)
   const scopeId = useId()
   // A rejected advanced field must be visible; keep the basic form selected while every issue fits it.
   useEffect(() => {
@@ -81,22 +92,38 @@ export function RobotConfigEditor({
     mutate(next)
     setSpec(next)
   }
-  const issueFor = (path: string): string | undefined => issues?.find(issue => issue.path === path)?.message
+  const missing: readonly RobotSpecIssue[] = [
+    ...spec.name.trim() === '' || spec.name.trim() === NAME_STUB
+      ? [{ path: 'name', message: t('editor.required') }]
+      : [],
+    ...spec.goal.mission.trim() === '' || spec.goal.mission.trim() === MISSION_STUB
+      ? [{ path: 'goal.mission', message: t('editor.required') }]
+      : [],
+  ]
+  const shownIssues: readonly RobotSpecIssue[] = showRequired ? [...missing, ...issues ?? []] : issues ?? []
+  const shownIssueFor = (path: string): string | undefined =>
+    shownIssues.find(issue => issue.path === path)?.message
   const heading = initial === undefined ? t('editor.create') : t('editor.edit')
 
   const text = (label: RobotKey, value: string, change: (next: string) => void, path?: string): ReactNode => (
-    <label className={css.field}>
+    <div className={css.field}>
       <span className={css.label}>{t(label)}</span>
-      <Input value={value} onChange={(event) => { change(event.target.value) }} />
-      {path === undefined || issueFor(path) === undefined ? null : <em className={css.issue}>{issueFor(path)}</em>}
-    </label>
+      <Input aria-label={t(label)} value={value} onChange={(event) => { change(event.target.value) }} />
+      {path === undefined || shownIssueFor(path) === undefined ? null : <em className={css.issue}>{shownIssueFor(path)}</em>}
+    </div>
   )
-  const area = (label: RobotKey, value: string, change: (next: string) => void, path?: string): ReactNode => (
-    <label className={css.field}>
+  const area = (label: RobotKey, value: string, change: (next: string) => void, path?: string, placeholder?: string): ReactNode => (
+    <div className={css.field}>
       <span className={css.label}>{t(label)}</span>
-      <textarea rows={3} value={value} onChange={(event) => { change(event.target.value) }} />
-      {path === undefined || issueFor(path) === undefined ? null : <em className={css.issue}>{issueFor(path)}</em>}
-    </label>
+      <textarea
+        aria-label={t(label)}
+        rows={3}
+        value={value}
+        placeholder={placeholder}
+        onChange={(event) => { change(event.target.value) }}
+      />
+      {path === undefined || shownIssueFor(path) === undefined ? null : <em className={css.issue}>{shownIssueFor(path)}</em>}
+    </div>
   )
   const number = (label: RobotKey, value: number, change: (next: number) => void): ReactNode => (
     <label className={css.field}>
@@ -110,7 +137,7 @@ export function RobotConfigEditor({
   )
   const tags = (
     label: RobotKey, values: readonly string[], change: (next: string[]) => void,
-    options: readonly TagOption[], hint?: RobotKey, path?: string,
+    options: readonly TagOption[], hint?: RobotKey, path?: string, choose?: () => void,
   ): ReactNode => (
     <TagField
       label={t(label)}
@@ -120,8 +147,9 @@ export function RobotConfigEditor({
       addLabel={t('editor.add')}
       removeLabel={t('editor.remove')}
       optionsLabel={t('editor.pickLocal')}
+      {...choose === undefined ? {} : { onChoose: choose }}
       {...hint === undefined ? {} : { hint: t(hint) }}
-      {...path === undefined ? {} : { issue: issueFor(path) }}
+      {...path === undefined ? {} : { issue: shownIssueFor(path) }}
     />
   )
   const presetChoices: Choice<string>[] = [...new Map(
@@ -142,6 +170,10 @@ export function RobotConfigEditor({
   }
 
   const submit = (): void => {
+    if (missing.length > 0) {
+      setShowRequired(true)
+      return
+    }
     const next = structuredClone(spec)
     // Empty peer rows are unfinished entries, not records the provider may reject.
     next.a2a.peers = next.a2a.peers.filter(peer => peer.peer.trim() !== '')
@@ -185,7 +217,7 @@ export function RobotConfigEditor({
               set((draft) => { if (value === '') delete draft.description; else draft.description = value })
             }, 'description')}
           </div>
-          {area('field.mission', spec.goal.mission, (value) => { set((draft) => { draft.goal.mission = value }) }, 'goal.mission')}
+          {area('field.mission', spec.goal.mission, (value) => { set((draft) => { draft.goal.mission = value }) }, 'goal.mission', t('editor.missionPlaceholder'))}
           {area('field.successCriteria', spec.goal.successCriteria.join('\n'), (value) => {
             set((draft) => { draft.goal.successCriteria = lines(value) })
           })}
@@ -304,7 +336,7 @@ export function RobotConfigEditor({
               className={css.addButton}
               onClick={() => { set((draft) => { draft.goal.triggers.push({ kind: 'manual' }) }) }}
             >{t('editor.addTrigger')}</Button>
-            {issueFor('goal.triggers') === undefined ? null : <em className={css.issue}>{issueFor('goal.triggers')}</em>}
+            {shownIssueFor('goal.triggers') === undefined ? null : <em className={css.issue}>{shownIssueFor('goal.triggers')}</em>}
           </div>
         </section>
 
@@ -315,11 +347,35 @@ export function RobotConfigEditor({
             {tags('field.toolsDeny', spec.capability.tools.deny, (value) => { set((draft) => { draft.capability.tools.deny = value }) }, capabilities?.tools ?? [])}
           </div>
           <div className={css.row}>
-            {tags('field.skills', spec.capability.skills, (value) => { set((draft) => { draft.capability.skills = value }) }, capabilities?.skills ?? [], 'editor.skillsHint')}
-            {tags('field.mcpServers', spec.capability.mcpServers, (value) => { set((draft) => { draft.capability.mcpServers = value }) }, capabilities?.mcpServers ?? [], 'editor.mcpHint')}
+            {tags(
+              'field.skills',
+              spec.capability.skills,
+              (value) => { set((draft) => { draft.capability.skills = value }) },
+              capabilities?.skills ?? [],
+              'editor.skillsHint',
+              undefined,
+              () => { setPicker('skills') },
+            )}
+            {tags(
+              'field.mcpServers',
+              spec.capability.mcpServers,
+              (value) => { set((draft) => { draft.capability.mcpServers = value }) },
+              capabilities?.mcpServers ?? [],
+              'editor.mcpHint',
+              undefined,
+              () => { setPicker('mcp') },
+            )}
           </div>
           <div className={css.row}>
-            {tags('field.workspaceRoots', spec.capability.workspaceRoots, (value) => { set((draft) => { draft.capability.workspaceRoots = value }) }, capabilities?.workspaceRoots ?? [])}
+            {tags(
+              'field.workspaceRoots',
+              spec.capability.workspaceRoots,
+              (value) => { set((draft) => { draft.capability.workspaceRoots = value }) },
+              capabilities?.workspaceRoots ?? [],
+              undefined,
+              undefined,
+              () => { setPicker('workspace') },
+            )}
             {tags('field.credentials', spec.capability.credentials, (value) => { set((draft) => { draft.capability.credentials = value }) }, [])}
           </div>
           <div className={css.row}>
@@ -466,6 +522,62 @@ export function RobotConfigEditor({
           </div>
         </section>
       </div>
+
+      <ResourcePicker
+        t={t}
+        open={picker === 'skills'}
+        title={t('picker.skillsTitle')}
+        description={t('picker.skillsHint')}
+        kind="skill"
+        options={capabilities?.skills ?? []}
+        selected={spec.capability.skills}
+        onChange={(next) => { set((draft) => { draft.capability.skills = next }) }}
+        onClose={() => { setPicker(undefined) }}
+      />
+      <ResourcePicker
+        t={t}
+        open={picker === 'mcp'}
+        title={t('picker.mcpTitle')}
+        description={t('picker.mcpHint')}
+        kind="server"
+        options={capabilities?.mcpServers ?? []}
+        selected={spec.capability.mcpServers}
+        onChange={(next) => { set((draft) => { draft.capability.mcpServers = next }) }}
+        onClose={() => { setPicker(undefined) }}
+      />
+      <ResourcePicker
+        t={t}
+        open={picker === 'workspace'}
+        title={t('picker.workspaceTitle')}
+        description={t('picker.workspaceHint')}
+        kind="folder"
+        options={capabilities?.workspaceRoots ?? []}
+        selected={spec.capability.workspaceRoots}
+        onChange={(next) => { set((draft) => { draft.capability.workspaceRoots = next }) }}
+        onBrowse={listDirectory === undefined || pickDirectory === undefined ? undefined : () => { setFolderOpen(true) }}
+        browseLabel={t('picker.browse')}
+        onClose={() => { setPicker(undefined) }}
+      />
+      {listDirectory === undefined || pickDirectory === undefined
+        ? null
+        : (
+          <FolderPicker
+            t={t}
+            open={folderOpen}
+            title={t('picker.browseTitle')}
+            description={t('picker.workspaceHint')}
+            initialPath={spec.capability.workspaceRoots[0] ?? defaultWorkspaceRoot}
+            listDirectory={listDirectory}
+            pickDirectory={pickDirectory}
+            onPicked={(path) => {
+              set((draft) => {
+                if (!draft.capability.workspaceRoots.includes(path)) draft.capability.workspaceRoots.push(path)
+              })
+              setFolderOpen(false)
+            }}
+            onCancel={() => { setFolderOpen(false) }}
+          />
+        )}
 
       <footer className={css.actions}>
         <Button variant="outline" onClick={onCancel}>{t('roster.cancel')}</Button>

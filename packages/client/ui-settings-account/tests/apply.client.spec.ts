@@ -6,7 +6,7 @@ import { RemoteError } from '@tomato/typert-protocol'
 import { ClientRoster, createClientTest, type TestClient, webApp } from '@tomato/client-test-runtime/src/assembly/index.ts'
 import type {
   AccountBonusBatch, AccountBonusOrderId, AccountDetails, AccountUserId, AccountView, SignInAttemptId,
-} from '@tomato/deepseek-account/types'
+} from '@tomato/account-service/types'
 import type { QuotaNoticeOwnerProps } from '@tomato/client-ui-chat/client'
 import type { ThemeRuntime } from '@tomato/client-ui-theme/client'
 import { resolveSlotLabel } from '@tomato/client-ui-slots'
@@ -23,7 +23,7 @@ import { AccountQuotaNotice } from '../src/client/AccountQuotaNotice.tsx'
 import type { AccountQuotaNoticeInjected } from '../src/client/AccountQuotaNotice.tsx'
 
 const SELF = '@tomato/client-ui-settings-account'
-/** The account package's own roster: shipped Web rows with the DeepSeek account row restored. */
+/** The account package's own roster: shipped Web rows with the account row restored. */
 const ACCOUNT_ROSTER = ClientRoster.of([
   ...webApp.without(['@tomato/account']).rows,
   { name: SELF, inject: [
@@ -285,21 +285,21 @@ it('keeps successful account refreshes silent and reports only failed reads', as
   await vi.waitFor(() => { expect(actions.hooks.account.getSnapshot().details?.profile).toEqual(profile) })
   await actions.refreshAccount()
   for (const spy of [output, info, log]) {
-    expect(spy.mock.calls.filter(call => String(call[0]).startsWith('[deepseek-account]'))).toEqual([])
+    expect(spy.mock.calls.filter(call => String(call[0]).startsWith('[account]'))).toEqual([])
   }
   c.mock.remote.account.getProfile.mockResolvedValueOnce(ok({ status: 'failed' }))
   c.mock.remote.account.getBalance.mockRejectedValueOnce(new Error('private-transport-detail'))
   await actions.refreshAccount()
-  expect(output).toHaveBeenCalledWith('[deepseek-account] account read failed', expect.objectContaining({
+  expect(output).toHaveBeenCalledWith('[account] account read failed', expect.objectContaining({
     field: 'profile',
   }))
-  expect(output).toHaveBeenCalledWith('[deepseek-account] account read failed', expect.objectContaining({
+  expect(output).toHaveBeenCalledWith('[account] account read failed', expect.objectContaining({
     field: 'balance',
   }))
   expect(JSON.stringify(output.mock.calls)).not.toContain('private-transport-detail')
   c.mock.remote.account.getBalance.mockResolvedValueOnce({ ok: false, error: new RemoteError('gateway/internal', 'private-rpc-detail', {}) })
   await actions.refreshAccount()
-  expect(output).toHaveBeenCalledWith('[deepseek-account] account read failed', expect.objectContaining({
+  expect(output).toHaveBeenCalledWith('[account] account read failed', expect.objectContaining({
     field: 'balance',
   }))
   expect(JSON.stringify(output.mock.calls)).not.toContain('private-rpc-detail')
@@ -727,7 +727,7 @@ it('forwards live account notices and removes their subscriptions', async ({ sta
   const unavailable = vi.fn()
   const offExpired = actions.subscribeSessionExpired!(expired)
   const offUnavailable = actions.subscribeModelSignInRequired!(unavailable)
-  for (const event of ['deepseek-account/session-expired', 'deepseek-account/model-sign-in-required']) {
+  for (const event of ['account/session-expired', 'account/model-sign-in-required']) {
     c.mock.streams.push('$events', { type: 'emit', event, args: [] })
   }
   await c.flush()
@@ -735,7 +735,7 @@ it('forwards live account notices and removes their subscriptions', async ({ sta
   expect(unavailable).toHaveBeenCalledOnce()
   offExpired()
   offUnavailable()
-  for (const event of ['deepseek-account/session-expired', 'deepseek-account/model-sign-in-required']) {
+  for (const event of ['account/session-expired', 'account/model-sign-in-required']) {
     c.mock.streams.push('$events', { type: 'emit', event, args: [] })
   }
   await c.flush()

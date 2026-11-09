@@ -137,6 +137,12 @@ describe('local gateway', () => {
     const session = await fetch(new URL('/api/auth/session', host), { headers: { cookie: `${hostCookie!}; ${tomatoCookie!}` } })
     await expect(session.json()).resolves.toMatchObject({ status: 'signed-in', user: { id: 'user-1' } })
 
+    const account = scaffold.ctx.get('account')
+    expect(account).toBeDefined()
+    await expect(account!.getState()).resolves.toMatchObject({ status: 'credential-stored' })
+    await expect(account!.getProfile({ version: '1', locale: 'zh-CN', timezoneOffsetSeconds: 0 }))
+      .resolves.toMatchObject({ status: 'ready', value: { id: 'user-1' } })
+
     const forwarded = await fetch(new URL('/api/services/demo/echo?from=browser', host), {
       method: 'POST',
       headers: { cookie: `${hostCookie!}; ${tomatoCookie!}`, 'content-type': 'application/json' },

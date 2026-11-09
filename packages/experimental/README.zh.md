@@ -45,6 +45,8 @@ kind: "package-group"
 | [`personalized-recommendations`](personalized-recommendations/README.zh.md) | 默认禁用的个性化页面、插件推荐及其操作卡片组合 | — |
 | [`tool-session-query`](tool-session-query/README.zh.md) | 按工作区授权的模型会话搜索、追踪与事件读取 | — |
 | [`session-search`](session-search/README.zh.md) | 可选实验性全局会话搜索工具 | — |
+| [`embeddings`](embeddings/README.zh.md) | 可选的文本 embedding 能力接缝，供本地语义排序使用 | `ctx.embeddings` |
+| [`embeddings-http`](embeddings-http/README.zh.md) | 带凭据解析的 OpenAI 兼容 HTTP embedding 提供方 | — |
 | [`memory`](memory/README.zh.md) | 按账号隔离、保存在会话日志之外的画像与工作区记忆记录 | `ctx.memory` |
 | [`tool-memory`](tool-memory/README.zh.md) | 带查询扩展的记忆模型工具、`/memory` 与画像和置顶记忆注入 | — |
 | [`tool-robot`](tool-robot/README.zh.md) | 面向模型的 `robot_create` 工具：用四项基础字段发布并实例化机器人 | — |

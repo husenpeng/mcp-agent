@@ -61,6 +61,25 @@ describe('desktop welcome Web operations', () => {
     }
   })
 
+  it('authenticates with the Host cookie on the origin and reuses it for RPCs', async () => {
+    const host = transport()
+    const backend = await connectDesktopWelcome(url, host.send, 'tomato_web=fixture')
+    expect(host.send).toHaveBeenNthCalledWith(1, 'http://127.0.0.1:19387/', {
+      credentials: 'omit',
+      headers: { cookie: 'tomato_web=fixture' },
+      redirect: 'manual',
+    })
+    host.send.mockClear()
+    await backend.analyticsEnabled()
+    const [input, init] = host.send.mock.calls.at(-1)!
+    expect(input).toBe('http://127.0.0.1:19387/api/productAnalytics/enabled')
+    expect(init).toMatchObject({
+      credentials: 'omit',
+      headers: { cookie: 'tomato_web=fixture' },
+      redirect: 'error',
+    })
+  })
+
   it('reads the explicit language preference and recognizes another provider key', async () => {
     const host = transport('zh')
     host.keys.set('EXAMPLE_API_KEY', 'sk-other')

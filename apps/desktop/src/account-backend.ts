@@ -2,7 +2,7 @@
 import { randomUUID } from 'node:crypto'
 import WebSocket from 'ws'
 import { parseRemoteStreamServerMessage, REMOTE_STREAM_MUX_PATH } from '@tomato/api-gateway/stream-protocol'
-import type { AccountClientMetadata, AccountView, SignInAttemptId } from '@tomato/deepseek-account/types'
+import type { AccountClientMetadata, AccountView, SignInAttemptId } from '@tomato/account-service/types'
 
 /** Authenticated unary caller shared with native onboarding. */
 export type AccountInvoke = (request: { namespace: string; method: string; args: Record<string, unknown> }) => Promise<unknown>

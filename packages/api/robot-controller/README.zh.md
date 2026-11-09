@@ -26,7 +26,7 @@ Host controller 必须在 `@tomato/experimental-robot` provider 之后挂载：�
 
 `hire` 从可选的 `robotTemplates` 注册表读取模板，按请求的语言填入文案，并以本地化的模板名命名 robot；重名时依次追加 ` 2`、` 3` 等后缀。显式传入的 `name` 原样使用，重名时与普通发布一样报冲突。模板不存在、或部署中没有注册表时返回 `robot/not-found`，此时帧中的 `templates` 为空列表。
 
-`capabilities` 把本地可选项投影给规格编辑器：请求工作区可见的技能、已注册的工具名、已配置的 MCP 服务器名，以及工作区目录。每个来源都是可选的，缺失时贡献空列表而不是让读取失败；Client 会传入当前查看 Session 的目录，以便包含项目级技能。
+`capabilities` 把本地可选项投影给规格编辑器：请求工作区可见的技能、已注册的工具名、已配置的 MCP 服务器名，以及工作区目录。技能选项在 `path` 里带上来源文件夹（虚拟技能省略），工作区选项在 `path` 里重复其目录；MCP 服务器只有名称，因此省略该字段。每个来源都是可选的，缺失时贡献空列表而不是让读取失败；Client 会传入当前查看 Session 的目录，以便包含项目级技能。
 
 Client 入口只在装配选择了 `remote.robot` 的地方挂载；它为应用生命周期开启一条可重连的快照流，并把 RPC 透传暴露为 `RemoteResult` 值。服务名为 `robotRuns`，为浏览器上下文保留未来的 `ctx.robots` 槽位给客户端领域服务。
 

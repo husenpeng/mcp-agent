@@ -545,6 +545,23 @@ describe('tab switching in ConversationRoot', () => {
     expect(b.loadOlder).not.toHaveBeenCalled()
   })
 
+  it('renders one trace card per user prompt and focuses a trace in the ledger', async () => {
+    const b = await bench()
+    const view = mount(b)
+    fireEvent.click(screen.getByRole('tab', { name: 'Trajectory' }))
+    const strip = screen.getByRole('region', { name: '轨迹' })
+    const cards = within(strip).getAllByRole('button')
+    expect(cards).toHaveLength(2)
+    expect(within(cards[0]!).getByText('T1')).toBeTruthy()
+    expect(within(cards[1]!).getByText('T2')).toBeTruthy()
+    expect(within(cards[0]!).getByText('1 个步骤 · 1 个工具调用')).toBeTruthy()
+    expect(within(strip).getByText(/^2 条轨迹/)).toBeTruthy()
+    expect(cards[0]?.getAttribute('aria-pressed')).toBe('false')
+    fireEvent.click(cards[0]!)
+    expect(cards[0]?.getAttribute('aria-pressed')).toBe('true')
+    expect(view.container.querySelectorAll('tr[data-turn-start="true"]')).toHaveLength(2)
+  })
+
   it('labels the trajectory tab in the active locale', async () => {
     const b = await bench()
     const labelOf = () => tabsOf(b.slots).find(tab => tab.id === 'trajectory')?.label

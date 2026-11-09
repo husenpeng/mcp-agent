@@ -15,10 +15,14 @@ import {
 } from './TrajectoryTable.tsx'
 import { TrajectoryToolbar } from './TrajectoryToolbar.tsx'
 import { TrajectoryTimeline } from './TrajectoryTimeline.tsx'
+import { TrajectoryTraceOverview } from './TrajectoryTraceOverview.tsx'
 import {
   appendTrajectoryPartialLayout, deriveTrajectoryLayout,
   type TrajectoryTurnModel,
 } from './layout.ts'
+import {
+  deriveTraceOverview, traceTotalsOf, traceTurnAtRecordIndex, type TraceSummary,
+} from './trace-overview.ts'
 import {
   trajectoryTimelineFocusIndexes,
   type TrajectoryTimelineMode,
@@ -154,6 +158,7 @@ export function TrajectoryView({
   const [timelineRecordFocus, setTimelineRecordFocus] = useState<{
     readonly index: number
   } | null>(null)
+  const [focusedTraceTurn, setFocusedTraceTurn] = useState<number | null>(null)
   const completeInspection = useTrajectory(snapshot => snapshot)
   const latestNodeSeq = completeInspection.eventNodes.at(-1)?.seq
   const [historyTailSeq, setHistoryTailSeq] = useState(latestNodeSeq)
@@ -345,6 +350,22 @@ export function TrajectoryView({
     () => appendTrajectoryPartialLayout(finalized.turns, timelinePartial, finalized.lastIndex, t),
     [finalized, timelinePartial, t],
   )
+  // Settled turns fold once; only the live tail turn refolds while tokens stream.
+  const settledTraceOverview = useMemo(() => deriveTraceOverview(finalized.turns), [finalized.turns])
+  const liveTrace = useMemo(() => {
+    const last = timelineTurns.at(-1)
+    return last === undefined ? undefined : deriveTraceOverview([last]).traces[0]
+  }, [timelineTurns])
+  const traceOverview = useMemo(() => {
+    if (liveTrace === undefined) return settledTraceOverview
+    const replaced = settledTraceOverview.traces.some(trace => trace.turn === liveTrace.turn)
+    const traces = replaced
+      ? settledTraceOverview.traces.map(trace => trace.turn === liveTrace.turn ? liveTrace : trace)
+      : [...settledTraceOverview.traces, liveTrace]
+    return { traces, totals: traceTotalsOf(traces) }
+  }, [liveTrace, settledTraceOverview])
+  const selectedTraceTurn = traceTurnAtRecordIndex(traceOverview.traces, selectedTimelineIndex)
+  const activeTraceTurn = selectedTraceTurn ?? focusedTraceTurn
   const timelineMode: TrajectoryTimelineMode = actualDuration
     ? actualTime ? 'actual' : 'duration'
     : actualTime ? 'time' : 'sequence'
@@ -426,6 +447,11 @@ export function TrajectoryView({
   }, [])
   const handleTimelineRecordFocus = useCallback((index: number) => {
     setTimelineRecordFocus({ index })
+  }, [])
+  const handleTraceFocus = useCallback((trace: TraceSummary) => {
+    setTimelineSelection(null)
+    setFocusedTraceTurn(trace.turn)
+    setTimelineRecordFocus({ index: trace.anchorIndex })
   }, [])
   const collapsibleTurnIds = useMemo(
     () => timelineTurns
@@ -528,6 +554,12 @@ export function TrajectoryView({
         onToggleAllAssistants={toggleAllAssistants}
         searchQuery={searchQuery}
         onSearchQueryChange={setSearchQuery}
+        t={t}
+      />
+      <TrajectoryTraceOverview
+        overview={traceOverview}
+        activeTurn={activeTraceTurn}
+        onFocus={handleTraceFocus}
         t={t}
       />
       <TrajectoryTimeline

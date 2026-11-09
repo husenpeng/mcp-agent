@@ -10,7 +10,7 @@ Status: implemented
 
 ## 决策
 
-付费翻译是[默认匿名路径](2026-10-05-anonymous-reasoning-translation.zh.md)的显式替代选项。只有内置 `deepseek-account` 与 `deepseek-official` 所有者处于活动状态、凭据已配置，且目录包含 ID 恰好为 `deepseek-flash` 的模型时才符合条件。显示名称和版本不参与匹配，pi-ai 路由被排除。每个片段执行一次新的纯文本查询，使用简单翻译指令并关闭思考，不携带此前片段或主历史。
+付费翻译是[默认匿名路径](2026-10-05-anonymous-reasoning-translation.zh.md)的显式替代选项。只有内置 `account` 与 `deepseek-official` 所有者处于活动状态、凭据已配置，且目录包含 ID 恰好为 `deepseek-flash` 的模型时才符合条件。显示名称和版本不参与匹配，pi-ai 路由被排除。每个片段执行一次新的纯文本查询，使用简单翻译指令并关闭思考，不携带此前片段或主历史。
 
 原始 Session 在派发前通过实验性记录 `plugin:translator/request` 在可选 `metadata.modelRequest` 中保留精确的模型可见请求，采用[统一的翻译请求记录](2026-10-05-persistent-machine-translation.zh.md)。现有 `appendPluginRecord` 写入器快照其 JSON 载荷并标为可忽略，不替换主历史。只读缓存查找先于原生准入，且不要求 Session 已激活。缓存未命中时使用已激活 Session 的写入器，在派发前刷新；GUI 按需等待正常 Session 激活，保留普通启动与恢复行为。格式迁移以尽力而为的方式保留这些信息性记录。翻译不向原生请求扩展提供主 Session 身份，因此单个片段不能授权上传完整对话日志。Host 在计费前强制要求已配置的付费选择。
 

@@ -45,6 +45,8 @@ Promotion requires a named product role, documented public behavior and limitati
 | [`personalized-recommendations`](personalized-recommendations/README.md) | Default-disabled bundle of personalized pages, plugin recommendations and their action cards | — |
 | [`tool-session-query`](tool-session-query/README.md) | Workspace-authorized model session search, trace, and event reads | — |
 | [`session-search`](session-search/README.md) | Optional experimental global session search tools | — |
+| [`embeddings`](embeddings/README.md) | Optional text embedding capability seam for local semantic ranking | `ctx.embeddings` |
+| [`embeddings-http`](embeddings-http/README.md) | OpenAI-compatible HTTP embeddings provider with credential resolution | — |
 | [`memory`](memory/README.md) | Account-scoped profile and workspace memory records stored outside Session logs | `ctx.memory` |
 | [`tool-memory`](tool-memory/README.md) | Memory model tools with query expansion, `/memory`, and profile and pinned-memory injection | — |
 | [`tool-robot`](tool-robot/README.md) | Model-facing `robot_create` tool that publishes and instantiates a robot from the four basic fields | — |

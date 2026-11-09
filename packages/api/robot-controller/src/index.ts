@@ -7,6 +7,7 @@
  */
 
 import { randomUUID } from 'node:crypto'
+import { dirname } from 'node:path'
 import type { Agent } from '@tomato/agent'
 import type {} from '@tomato/api-session-controller'
 import type { SessionRequestId } from '@tomato/api-session-controller'
@@ -44,10 +45,16 @@ function messageOf(error: unknown): string {
  * @param value - stored specification value.
  * @param label - display label.
  * @param description - optional detail; an empty string is omitted.
+ * @param path - optional source folder; an empty string is omitted.
  * @returns the option.
  */
-function option(value: string, label: string, description?: string): RobotCapabilityOption {
-  return { value, label, ...(description === undefined || description === '' ? {} : { description }) }
+function option(value: string, label: string, description?: string, path?: string): RobotCapabilityOption {
+  return {
+    value,
+    label,
+    ...(description === undefined || description === '' ? {} : { description }),
+    ...(path === undefined || path === '' ? {} : { path }),
+  }
 }
 
 /**
@@ -313,12 +320,19 @@ export class RobotController extends TypertRemoteService {
     const mcpServers = this.ctx.get('mcpResources')?.list() ?? []
     const workspaces = this.ctx.get('workspaceRegistry')?.list() ?? []
     return {
-      skills: summaries.map(skill => option(skill.name, skill.name, skill.description)),
+      skills: summaries.map(skill => option(
+        skill.name,
+        skill.name,
+        skill.description,
+        // A skill's instruction file identifies the folder a person recognizes;
+        // virtual skills have no folder and keep the name-only option.
+        skill.path === undefined || skill.path === '' ? undefined : dirname(skill.path),
+      )),
       tools: tools
         .map(tool => option(tool.name, tool.name, tool.description))
         .sort((left, right) => left.value.localeCompare(right.value)),
       mcpServers: mcpServers.map(name => option(name, name)),
-      workspaceRoots: workspaces.map(workspace => option(workspace.path, workspace.title)),
+      workspaceRoots: workspaces.map(workspace => option(workspace.path, workspace.title, undefined, workspace.path)),
     }
   }
 

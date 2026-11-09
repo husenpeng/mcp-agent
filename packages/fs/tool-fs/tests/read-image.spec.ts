@@ -131,7 +131,7 @@ async function setup(options: SetupOptions = {}) {
       { provider: 'visual', id: 'legacy-model', name: 'Legacy' },
     ], options.resolvedModels))
   }
-  await ctx.plugin(ToolFs, options.toolFs ?? {})
+  await ctx.plugin(ToolFs, { list: false, ...options.toolFs })
   return ctx
 }
 
@@ -796,7 +796,7 @@ describe('registration surface', () => {
       await ctx.plugin(NativeToolExecutor)
       await ctx.plugin(LocalFileSystem, { cwd: dir })
       const attachment = await ctx.plugin(LocalAttachmentStore, { tomatoHome: home })
-      const plugin = await ctx.plugin(ToolFs, { read: false, write: false, edit: false })
+      const plugin = await ctx.plugin(ToolFs, { list: false, read: false, write: false, edit: false })
       const names = () => ctx.tools.schemas().map(tool => tool.name).sort()
       expect(names()).toEqual(['read_image'])
       await attachment.dispose()
@@ -819,7 +819,7 @@ describe('registration surface', () => {
     await ctx.plugin(LocalFileSystem, { cwd: dir })
     await ctx.plugin(FsPolicy)
     const attachmentsFiber = await ctx.plugin(LocalAttachmentStore, { tomatoHome: home })
-    const toolFsFiber = await ctx.plugin(ToolFs)
+    const toolFsFiber = await ctx.plugin(ToolFs, { list: false })
     const names = () => ctx.tools.schemas().map(schema => schema.name).sort()
     expect(names()).toEqual(['edit', 'read', 'read_image', 'write'])
 

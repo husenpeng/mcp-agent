@@ -11,6 +11,8 @@ export interface RobotAvatarProps {
   readonly name: string
   /** Skill ids from the robot's bound specification. */
   readonly skills: readonly string[]
+  /** Rendered diameter in px; defaults to 36 where the roster shows it. */
+  readonly size?: number
 }
 
 /**
@@ -25,14 +27,15 @@ function initial(name: string): string {
 
 /**
  * Render a robot's avatar circle.
- * @param props - display name and the bound specification's skills.
+ * @param props - display name, the bound specification's skills, and the diameter.
  * @returns role artwork when a skill is recognized, otherwise the name initial.
  */
-export function RobotAvatar({ name, skills }: RobotAvatarProps): ReactNode {
+export function RobotAvatar({ name, skills, size }: RobotAvatarProps): ReactNode {
   const artwork = robotAvatarArt(skills)
   const Art = artwork?.Art
+  const dimensions = size === undefined ? undefined : { width: size, height: size, fontSize: size * 0.42 }
   return (
-    <span className={css.avatar} data-art={artwork?.skill} aria-hidden="true">
+    <span className={css.avatar} data-art={artwork?.skill} style={dimensions} aria-hidden="true">
       {Art === undefined ? initial(name) : <Art />}
     </span>
   )

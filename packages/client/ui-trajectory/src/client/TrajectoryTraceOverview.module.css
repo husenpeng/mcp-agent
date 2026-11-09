@@ -1,0 +1,297 @@
+/* Trace overview strip: one card per user prompt above the turn ledger. The
+ * rail scrolls horizontally; every card is a text-first reading (prompt,
+ * execution chain, steps/calls, token cost) with a compact chain of pips. */
+
+.root {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  box-sizing: border-box;
+  gap: 6px;
+  padding: 8px 12px 10px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+  background: var(--dsw-alias-bg-layer-1);
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+  gap: 10px;
+}
+
+.title {
+  flex: none;
+  color: var(--dsw-alias-label-primary);
+  font: var(--dsw-font-xs-strong-13);
+  user-select: none;
+}
+
+.summary {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--dsw-alias-label-tertiary);
+  font: var(--dsw-font-xxs-12);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rail {
+  --tomato-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
+  --tomato-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+
+  display: flex;
+  min-width: 0;
+  padding: 1px 1px 3px;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scroll-behavior: smooth;
+}
+
+.card {
+  display: flex;
+  flex: 0 0 252px;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 7px 9px 8px;
+  gap: 4px;
+  border: 0.5px solid var(--dsw-alias-border-l2-darkmode-thin);
+  border-radius: var(--dsw-radius-lg);
+  background: var(--dsw-alias-bg-module-platform);
+  color: var(--dsw-alias-label-primary);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 120ms var(--ds-ease-in-out),
+    border-color 120ms var(--ds-ease-in-out);
+}
+
+@media (hover: hover) {
+  .card:hover {
+    border-color: var(--dsw-alias-border-l3);
+    background: var(--dsw-alias-interactive-bg-hover);
+  }
+}
+
+.card:focus-visible {
+  outline: var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: -1px;
+}
+
+.card[data-active='true'] {
+  border-color: var(--dsw-alias-state-business-primary);
+  background: color-mix(
+    in srgb,
+    var(--dsw-alias-state-business-primary) 6%,
+    var(--dsw-alias-bg-layer-1)
+  );
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 5px;
+}
+
+.cardLabel {
+  flex: none;
+  color: var(--dsw-alias-label-secondary);
+  font: 600 10px/12px var(--ds-font-family-code);
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+.statusDot {
+  flex: none;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  corner-shape: round;
+  background: var(--dsw-alias-state-success-primary);
+}
+
+.statusDot[data-status='running'] {
+  background: var(--dsw-alias-state-business-primary);
+  animation: tracePulse 1.4s var(--ds-ease-in-out) infinite;
+}
+
+.statusDot[data-status='failed'] {
+  background: var(--dsw-alias-state-error-primary);
+}
+
+.cardCounts {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--dsw-alias-label-tertiary);
+  font: var(--dsw-font-xxs-12);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardDuration {
+  flex: none;
+  margin-left: auto;
+  color: var(--dsw-alias-label-secondary);
+  font: 10px/12px var(--ds-font-family-code);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.prompt {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--dsw-alias-label-primary);
+  font: var(--dsw-font-xs-13);
+  line-height: 17px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prompt[data-empty='true'] {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.chain {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 7px;
+  gap: 3px;
+  overflow: hidden;
+}
+
+.pip {
+  flex: 0 0 10px;
+  height: 7px;
+  border-radius: 2px;
+  corner-shape: round;
+  background: var(--dsw-alias-brand-primary-new-colorprimary-new-color);
+}
+
+.pip[data-kind='tool'] {
+  flex-basis: 4px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  corner-shape: round;
+  background: var(--dsw-alias-state-warn-label);
+}
+
+.pip[data-kind='subtool'] {
+  flex-basis: 3px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  corner-shape: round;
+  background: color-mix(
+    in srgb,
+    var(--dsw-alias-state-warn-label) 55%,
+    var(--dsw-alias-bg-layer-1)
+  );
+}
+
+.pip[data-kind='error'] {
+  flex-basis: 3px;
+  height: 7px;
+  background: var(--dsw-alias-state-error-primary);
+}
+
+.chainEmpty {
+  flex: 1;
+  height: 0.5px;
+  background: var(--dsw-alias-border-l1);
+}
+
+.cardFoot {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 6px;
+}
+
+.tools {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.tool,
+.toolMore {
+  flex: none;
+  max-width: 118px;
+  overflow: hidden;
+  padding: 0 4px;
+  border-radius: var(--dsw-radius-xs);
+  color: var(--dsw-alias-label-secondary);
+  background: color-mix(in srgb, var(--dsw-alias-label-primary) 6%, transparent);
+  font: 10px/15px var(--ds-font-family-code);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tool[data-origin='mcp'] {
+  color: var(--dsw-alias-state-business-primary);
+  background: var(--dsw-alias-state-business-tertiary);
+}
+
+.tool[data-origin='subagent'] {
+  color: var(--dsw-alias-state-success-primary);
+  background: var(--dsw-alias-state-success-tertiary);
+}
+
+.toolMore {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.cost {
+  flex: none;
+  margin-left: auto;
+  color: var(--dsw-alias-label-secondary);
+  font: 600 10px/15px var(--ds-font-family-code);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@keyframes tracePulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--dsw-alias-state-business-primary) 45%, transparent);
+  }
+
+  50% {
+    opacity: 0.55;
+    box-shadow: 0 0 0 2px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail {
+    scroll-behavior: auto;
+  }
+
+  .statusDot[data-status='running'] {
+    animation: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .root {
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+
+  .card {
+    flex-basis: 224px;
+  }
+}

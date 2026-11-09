@@ -10,7 +10,7 @@ This repository is a one-time hard fork of `deepseek-harness` at commit `22ddee3
 
 - **Shell**: `apps/desktop` (Electron main, preloads, welcome window, updates, coding-free packaging) and `apps/desktop-host` (the private Node host process that boots a `desktop` profile).
 - **Runtime**: Tomato's Cordis plugin tree. Every capability — the model adapter, the tool registry, the session log, the agent loop itself — is a plugin mounted from a profile composed of bundle layers.
-- **Product surface**: the Tomato web client, served by the host and loaded through the `tomato-app://` scheme, with the DeepSeek account, session-log upload, and product analytics rows switched off.
+- **Product surface**: the Tomato web client, served by the host and loaded through the `tomato-app://` scheme, with the account, session-log upload, and product analytics rows switched off.
 - **Company integration**: `@tomato/brand` (sidebar and hero marks), `@tomato/telemetry` (turn/tool spans), and the shell's `tomato-auth.ts` (browser sign-in, token exchange, credential write).
 
 ## Table of Contents
@@ -66,7 +66,7 @@ Tomato's changes live in the two shipped bundle files, so a fresh profile inheri
 | `system-prompt`, four presets | Persona reads as a creator-marketing assistant |
 | `agent-default-model` | Empty provider/model: no default until the user selects one |
 | `llm-pi-ai` | No routes shipped; the Models page declares third-party OpenAI- or Anthropic-compatible endpoints |
-| `deepseek-account`, `llm-deepseek`, `llm-deepseek-account`, `deepseek-llm-api-extensions`, `session-log-deepseek`, `plugin-package-inventory-deepseek` | `disabled: true` |
+| `account`, `llm-deepseek`, `llm-account`, `deepseek-llm-api-extensions`, `session-log-deepseek`, `plugin-package-inventory-deepseek` | `disabled: true` |
 | `session-telemetry-otel`, `product-analytics`, `desktop-product-telemetry` | `disabled: true` |
 | `web-search-deepseek`, `web-deepseek-api` | `disabled: true`; HTTP fetch stays |
 | `tomato-telemetry` | New row: OTLP spans to `TOMATO_OTLP_ENDPOINT` |

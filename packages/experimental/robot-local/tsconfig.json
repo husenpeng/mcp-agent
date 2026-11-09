@@ -18,6 +18,9 @@
       "path": "../../util/values"
     },
     {
+      "path": "../../interaction/permission-presets"
+    },
+    {
       "path": "../../storage/storage-domain"
     },
     {

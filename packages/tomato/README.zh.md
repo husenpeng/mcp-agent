@@ -23,6 +23,8 @@ kind: "package-group"
 | 包 | 职责 |
 |---|---|
 | [`account`](account/README.zh.md) | 侧栏入口与设置账户页，读取网关的 auth 会话 |
+| [`account-access`](account-access/README.zh.md) | 飞书账号的角色与额度设置区块 |
+| [`account-gateway`](account-gateway/README.zh.md) | Host 账号服务的飞书网关账号 provider |
 | [`brand`](brand/README.zh.md) | 侧栏标志、侧栏名称与 hero 标志的占位 |
 | [`gateway`](gateway/README.zh.md) | 同源 `/api/auth/*` 与固定服务表 `/api/services/*` 路由 |
 | [`telemetry`](telemetry/README.zh.md) | 发往内部 OTLP 中继的 turn 与工具 span |

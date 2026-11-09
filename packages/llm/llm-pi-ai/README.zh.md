@@ -79,6 +79,7 @@ kind: "package-reference"
 | `api` | 目录协议 | 协议格式；仅目录不提供的路由需要 |
 | `baseURL` | 目录端点 | 路由上所有模型的端点 |
 | `models` | 已安装目录 | 整体替换路由目录；每个条目从已安装模型取默认值 |
+| `modelPolicy` | 缺省 | 模型列举与调用的默认拒绝允许清单；省略时所有模型可用 |
 | `modelOverrides` | 无 | 重塑个别已安装目录模型，而不替换其余模型 |
 | `compat` | 目录检测 | 无法识别端点的协议兼容开关 |
 | `defaultContextWindow` | `1,000,000` | 未描述模型的容量回退 |
@@ -98,6 +99,8 @@ pi-ai 提供登录的提供方可以通过 harness 授权 seam 登录：流程�
 
 profile 的 `models` 列表会替换而非扩展路由的已安装目录；每个条目从同 id 已安装模型取未设置字段的默认值，因此把路由收窄到两个模型、修正一个容量或添加比已安装目录更新的模型都是一行编辑。`modelOverrides` 无需该代价即可重塑个别已安装目录模型——修正一个模型，保留其余三十七个——当它与 `models` 列表并存、位于手工声明路由上、或点名目录未描述的模型时会被拒绝，因为静默不变的模型会成为别人日后寻找的拼写错误。
 
+pi-ai 未提供的路由会先把网关前缀、点号版本和日期/版本后缀归一，再用声明中的模型 id 查询第一方目录；路由保留自己的协议与端点，容量、模态和提示缓存行为在条目未覆盖时来自厂商条目。协议兼容开关与推理元数据只在路由使用厂商协议时继承，因为改接协议后的线上开关具有协议特异性；否则从部署自己的声明开始。pi-ai 已提供的路由以自身目录为准，其未列出的 id 不会借用其他提供方的能力。当这样匹配到的是通过 OpenAI 兼容路由访问的 Anthropic Messages 模型时，适配器会在路由或模型未显式声明该开关时应用 `cacheControlFormat: anthropic`，让网关收到其原生后端所需的缓存断点。网关可能接受该字段却不执行；依赖该路由前先验证 `cacheReadTokens`，不生效时改用原生路由。若网关拒绝该标记，可用 `cacheRetention: none` 让该路由退出缓存。
+
 ### 带推理（reasoning）与协议兼容运行
 
 `reasoningEfforts` 声明模型可选择的 thinking 等级：每个键都是选择器提供的等级，其值是分派时在协议中发送的拼写，因此 `max: ultra` 可以为拥有自有词汇的网关重命名等级。省略该字段时保留已安装目录条目的能力；`false` 声明非推理模型。对于 pi-ai 无法识别的端点，`compat` 开关重塑请求——哪个角色携带系统提示词、哪个字段限制输出、thinking 等级如何传递——可逐路由、逐模型配置。条目与已安装目录都没有尺寸的模型，会采用路由的 `defaultContextWindow` 与 `defaultMaxTokens` 回退值。
@@ -106,6 +109,33 @@ profile 的 `models` 列表会替换而非扩展路由的已安装目录；每�
 
 对于自托管 Chat Completions 端点，`thinkingTokenBudgetField` 选择推理预算参数，`vllmPriority` 在服务端启用优先级调度时设置整数调度优先级。模板参数接受 `$var: thinking.budget`。`openai-responses` 网关可设置 `supportsMaxOutputTokens: false` 来省略 `max_output_tokens`；Azure 与 Codex 传输会忽略这个共享兼容字段。这些控制均需显式启用；目录拥有的 Anthropic effort 和回退能力不是可配置开关。
 
+### 用允许清单限制模型
+
+`modelPolicy` 把本适配器的路由集合变成默认拒绝的允许清单。`local` 点名部署本地列表中已有的模型；`releaseDates` 以 `provider/model` 为键记录 ISO 发布日期，任何日期不早于 `recentSince` 的模型无需出现在任一列表中即可放行。`recent` 保留给没有清单条目的显式日期补充，早于 `recentSince` 的条目不被允许。模型列举返回所有已配置模型，但用 `blockedReason` 标记被拒绝的组合，因此选择器显示为带原因的禁用行且不能被选中；`prepareCall`/`stream` 会在任何提供方 I/O 之前以 `MODEL_NOT_ALLOWED` 拒绝未允许的组合。之后修改 provider 配置不会扩大清单：未列出且没有日期的模型在加入这里之前一直保持拦截。
+
+```yaml
+- name: '@tomato/llm-pi-ai'
+  config:
+    providers:
+      blueai:
+        apiKeyEnv: BLUEAI_API_KEY
+        api: openai-completions
+        baseURL: https://relay.example.com/v1
+        models:
+          - id: claude-opus-5-5
+    modelPolicy:
+      enabled: true
+      recentSince: '2026-05-05'
+      local:
+        - provider: blueai
+          model: claude-opus-5-5
+      releaseDates:
+        blueai/claude-fable-5: '2026-06-09'
+        blueai/claude-fable-5-1: '2026-09-01'
+```
+
+省略或 `enabled: false` 时所有模型可用；启用但清单为空时所有模型都被拒绝。策略覆盖本适配器上的路由；`@tomato/llm-deepseek` 路由不在其范围内。
+
 ### 运行时更改配置
 
 每次操作捕获当前 `providers` Config 引用。新增或修改的 provider 配置在表单持久化前验证；未更改的目录故障仍可编辑。路由集合或重试策略变化时原子更新注册；如果其他适配器已拥有所请求的路由，则保留先前路由。
@@ -113,6 +143,42 @@ profile 的 `models` 列表会替换而非扩展路由的已安装目录；每�
 ### 从端点发现模型
 
 插件会回答「该提供方可以提供哪些模型？」，供配置界面正在编辑或起草的路由使用。已安装目录提供的路由直接由目录回答，不发网络请求，并将其 `input` 数组保留为发现结果的 `inputModalities`；只有目录未描述的路由才会经网络询问。`openai-completions` 与 `openai-responses` 使用带 bearer 鉴权的 `GET {baseURL}/models`，`anthropic-messages` 则以 `x-api-key` 和 `anthropic-version` 使用原生 `GET /v1/models?limit=1000` 语义；其列表 URL 接受带或不带末尾 `/v1` 的 API 根地址，因为网关文档两种写法都会发布，且只有该列表 URL 会归一化这一段，模型请求收到的仍是配置原样的 `baseURL`。已配置且具名的路由会在 Host 内部提供已存凭据与 profile `headers`，因此通过 `cordis.patch.yml` 或 Cordis 配置设置的部署标头可以到达模型发现请求，但不会成为发现请求或 Models 页面的字段；表单中新键入的密钥仍优先于已存凭据。解析器接受标准 `data` 数组或富信息 `models` 对象，并归一化每个候选的 id、显示名、上下文窗口与最大输出 token 数；Anthropic 的 `max_input_tokens` 与 `max_tokens` 会进入相同容量字段，即使对象条目点名了另一个规范 id，对象键仍是请求 id，原始类型的对象属性会被忽略，缺失的显示名则回退到该请求 id。回答是界面可以提供给用户采纳的候选元数据——不存储任何内容，`cordis.patch.yml` 仍然是决定路由服务内容的唯一事实。
+
+### 探测原生 Anthropic 端点
+
+网关可能对某个模型提供 OpenAI Chat Completions，同时对另一个模型暴露 Anthropic 原生 Messages API。在把第三方 Claude 模型迁到 `api: anthropic-messages` 之前，先探测端点；不要根据模型列表或 OpenAI 路径的 200 推断原生可用。
+
+```sh
+pnpm exec tsx packages/llm/llm-pi-ai/scripts/probe-anthropic.ts \
+  --base-url https://relay.example.com \
+  --model claude-opus-5-5 \
+  --api-key-env RELAY_API_KEY
+```
+
+脚本会发送一条最小的 adaptive-thinking 请求、一个用于缓存的重复长前缀，以及一个工具定义；打印 `native`、`thinking`、`cache`、`tools` 状态。退出码 0 表示原生且 thinking 可用，2 表示原生可用但 thinking 不可用，1 表示 `/v1/messages` 失败。脚本不会打印凭据；`--no-cache` / `--no-tools` 可跳过额外请求。
+
+只把探测通过的模型迁到原生路由；其余模型保留 OpenAI 兼容路由：
+
+```yaml
+- name: '@tomato/llm-pi-ai'
+  config:
+    providers:
+      relay-anthropic:
+        apiKeyEnv: RELAY_API_KEY
+        api: anthropic-messages
+        baseURL: https://relay.example.com   # no trailing /v1
+        models:
+          - id: claude-opus-5-5
+            contextWindow: 1000000
+            maxTokens: 128000
+            compat:
+              forceAdaptiveThinking: true
+              supportsStrictTools: true
+              supportsCacheControlOnTools: true
+              supportsLongCacheRetention: true
+```
+
+`cache: ok` 要求端点返回 `cache_read_input_tokens`；只缓存固定 system/tools 头部的网关会在 `native` 为 true 时仍报 `cache: fail`。`thinking: fail` 表示调用能成功但模型没有思考，原生路由并没有带来选择它的质量收益。
 
 ### 失败与恢复
 
@@ -156,6 +222,8 @@ Config 更新严格验证发生变化的 provider。初始加载将已存储的�
 | [`src/stream.ts`](src/stream.ts) | 把 pi-ai 事件转换为 harness `StreamChunk` 值 |
 | [`src/replay.ts`](src/replay.ts) | 带版本的 `ReplayEnvelope` 存储与校验 |
 | [`src/discovery.ts`](src/discovery.ts) | 面向配置界面的端点询问 |
+| [`src/probe.ts`](src/probe.ts) | 一次性探测原生 Anthropic 端点能力 |
+| [`scripts/probe-anthropic.ts`](scripts/probe-anthropic.ts) | 端点探测的 CLI 包装 |
 
 ### 注册与目录
 

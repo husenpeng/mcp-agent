@@ -9,8 +9,8 @@
   en: 8d83c55b6a74d4fc
   zh: aff4814dc404998c
 /tomato-web-search-deepseek/summary:
-  en: 175295f68122b530
-  zh: 261cdc4c2aca35ab
+  en: e9056c8f78f1824b
+  zh: d9fbc8573455ce72
 /tomato-web-search-deepseek/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -18,14 +18,14 @@
   en: e0d352d6402d9d3b
   zh: a449234557ef8bd6
 /tomato-web-search-deepseek/use-this-package/when-to-choose-it:
-  en: 0187c8af8d2d98c5
-  zh: 1c9607b3a662bcaa
+  en: 0109d77993124152
+  zh: 1a0f108e36a2c53a
 /tomato-web-search-deepseek/use-this-package/minimal-configuration:
-  en: c2c01e6778b96463
-  zh: 883f3cbc39e49f36
+  en: ffb07beceed0e7f1
+  zh: bebb848b5d901336
 /tomato-web-search-deepseek/use-this-package/authentication:
-  en: 1e973bb26533b93b
-  zh: 56a5e6b7163648cc
+  en: 7d80e5ad49b00fcf
+  zh: 067284c5cb100329
 /tomato-web-search-deepseek/use-this-package/what-a-search-returns:
   en: e30442c90365357b
   zh: e8072e21f7ce6a81
@@ -39,14 +39,14 @@
   en: 9842c69ad3636bb3
   zh: 3cdc3f816cbdd0cb
 /tomato-web-search-deepseek/understand-the-implementation/design-philosophy:
-  en: 1b1760efbf4568c1
-  zh: fca06c959e51ce16
+  en: 2dccf1d5dd926cb5
+  zh: 1731c7c5da0ebe3f
 /tomato-web-search-deepseek/understand-the-implementation/source-map:
   en: 6488e1c85646339f
   zh: 2b5ca1c6b5939a8c
 /tomato-web-search-deepseek/understand-the-implementation/request-flow:
-  en: d6c3f30b70a5f4b5
-  zh: ab7c5b7d6fc3cae6
+  en: 8711ed3995972e9d
+  zh: 200ba5e58a35924f
 /tomato-web-search-deepseek/further-exploration:
   en: b6cdf30dfbc3a890
   zh: 0994befe9e45d3a3
@@ -69,8 +69,8 @@
   en: 666f5753c99783ab
   zh: b44328e99bcc45c9
 /tomato-web-search-deepseek/model-experience/conversation-tool-result-indirectly/what-the-model-sees:
-  en: ff01120815212a5f
-  zh: 909360c861e2552c
+  en: f1f7bc0b087006d9
+  zh: d656ec5065faf91e
 /tomato-web-search-deepseek/model-experience/conversation-tool-result-indirectly/token-effect:
   en: 01ec43a9b616139d
   zh: 0a5b7c28fde34bcf

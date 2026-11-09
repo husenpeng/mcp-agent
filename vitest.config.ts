@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import { resolvePwshPath } from './packages/shell/pwsh-local/src/resolve.ts'
@@ -13,6 +14,27 @@ import { LOCAL_TEST_PARALLELISM_CAP, defaultParallelism } from './scripts/parall
 // threshold ERRORs name only the file. Absolute path because istanbul-reports
 // require()s custom reporters (which is also why the reporter is CJS).
 const uncoveredLocationsReporter = fileURLToPath(new URL('./scripts/coverage-uncovered-locations.cjs', import.meta.url))
+
+/**
+ * Explicit workspace aliases built from `tsconfig.base.json`. Vite's package
+ * exports win over the paths plugin for a workspace package's own name, so a
+ * spec importing its package by name would load the built `lib/` copy beside the
+ * source copy another import pulls in — two module singletons, two class
+ * identities, one test failure. The aliases pin every bare workspace name to
+ * `src/`, matching the paths facade's intent.
+ */
+const workspaceAliases = ((): { find: RegExp; replacement: string }[] => {
+  const raw = readFileSync(new URL('./tsconfig.base.json', import.meta.url), 'utf8')
+    .replace(/^\s*\/\/.*$/gmu, '')
+  const paths = (JSON.parse(raw) as { compilerOptions?: { paths?: Record<string, string[]> } })
+    .compilerOptions?.paths ?? {}
+  return Object.entries(paths)
+    .filter(([, targets]) => targets.length === 1)
+    .map(([name, [target]]) => ({
+      find: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}$`),
+      replacement: fileURLToPath(new URL(target!, new URL('./tsconfig.base.json', import.meta.url))),
+    }))
+})()
 
 // Resolution facade shared by every plugin instance below: tsconfig.base.json
 // has no include, which vite-tsconfig-paths treats as match-all, so its paths
@@ -179,7 +201,7 @@ const claudeCodeTestingAliases = {
 
 export default defineConfig({
   plugins: [pathsPlugin(), standardDecoratorPlugin()],
-  resolve: { alias: claudeCodeTestingAliases },
+  resolve: { alias: [...workspaceAliases, ...Object.entries(claudeCodeTestingAliases).map(([find, replacement]) => ({ find, replacement }))] },
   test: {
     ...localWorkerBudget,
     setupFiles: [
@@ -193,7 +215,7 @@ export default defineConfig({
     projects: [
       {
         plugins: [pathsPlugin(), standardDecoratorPlugin()],
-        resolve: { alias: claudeCodeTestingAliases },
+        resolve: { alias: [...workspaceAliases, ...Object.entries(claudeCodeTestingAliases).map(([find, replacement]) => ({ find, replacement }))] },
         test: {
           name: 'thread-safe',
           execArgv: vitestExecArgv,
@@ -215,7 +237,7 @@ export default defineConfig({
       },
       {
         plugins: [pathsPlugin(), standardDecoratorPlugin()],
-        resolve: { alias: claudeCodeTestingAliases },
+        resolve: { alias: [...workspaceAliases, ...Object.entries(claudeCodeTestingAliases).map(([find, replacement]) => ({ find, replacement }))] },
         test: {
           name: 'process-bound',
           execArgv: vitestExecArgv,

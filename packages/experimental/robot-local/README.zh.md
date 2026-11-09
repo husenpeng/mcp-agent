@@ -41,7 +41,7 @@ kind: "package-reference"
 <details>
 <summary>实现内部 — 点击展开</summary>
 
-校验先对每个字段运行 Zod schema，再检查跨字段不变量：声明列表中的重复项、同时出现在 `allow` 与 `deny` 的工具，以及没有触发条件的 goal。被拒绝的规格抛出带字段路径的 `RobotSpecValidationError`。成功的发布在规格进入存储前深冻结它，因此调用方之后的修改无法改变 revision。
+校验先对每个字段运行 Zod schema，再检查跨字段不变量：声明列表中的重复项、同时出现在 `allow` 与 `deny` 的工具，以及没有触发条件的 goal。部署挂载 `permissionPresets` 时，发布还会用该目录解析 `capability.permissionPreset`，把未注册的名字报告为字段问题，因此编辑器无法保存一个任何 run 都启动不了的规格。被拒绝的规格抛出带字段路径的 `RobotSpecValidationError`。成功的发布在规格进入存储前深冻结它，因此调用方之后的修改无法改变 revision。
 
 提供者打开 `tomato_robot` 域，不保留独立的可变状态：revision、机器人与 run 都从域中已校验的内存表读取，每次写入在其 Promise 解决前已经持久。域在打开时校验每条存储记录，因此损坏记录会拒绝激活而不是被跳过。提供者自有的单一链串行化变更，所以并发发布无法同时通过同名检查，并发启动也无法同时占用同一个机器人。
 

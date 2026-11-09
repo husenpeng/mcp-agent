@@ -55,7 +55,7 @@ type PanelRowProps =
   & Pick<SidebarSectionOwnerProps, 'wide'>
   & Pick<PropsRuntime<'sidebar'>, 'usePanelInfo'>
   & Pick<InjectFace<SidebarRootInjected>, 'selectPanel' | 'trackEntryClick'>
-  & PropsRenderSlots<'sidebar.panellist'>
+  & PropsRenderSlots<'sidebar.panellist' | 'sidebar.panellist.subnav'>
 
 /** Analytics category of an official panel; other panels are never reported. */
 function officialEntry(id: string): 'plugin' | 'cron' | undefined {
@@ -63,32 +63,39 @@ function officialEntry(id: string): 'plugin' | 'cron' | undefined {
   return id === 'schedules' ? 'cron' : undefined
 }
 
-/** Each panel row subscribes only to its own selection state. */
+/**
+ * One panel launcher. Each row subscribes only to its own selection state, so
+ * a panel switch re-renders the two rows it touches: the one that lost the
+ * selection and the one that gained it (with the nested rows it reveals).
+ */
 function PanelRow({ id, label, wide, usePanelInfo, selectPanel, trackEntryClick, renderSlot }: PanelRowProps) {
   const active = usePanelInfo(info => info.activePanelId === id)
   return (
-    <Tooltip label={label} delayMs={500} disabled={wide}>
-      <button
-        type="button"
-        className={clsx(css.panelRow, active && css.panelActive)}
-        aria-label={label}
-        aria-current={active ? 'page' : undefined}
-        onClick={() => {
-          const entry = officialEntry(id)
-          if (entry !== undefined) trackEntryClick({ menu_name: entry, position: 'sidebar' })
-          selectPanel(id)
-        }}
-      >
-        <span className={css.panelGlyph} aria-hidden="true">
-          {renderSlot('sidebar.panellist', { size: wide ? 16 : 18, active }, { only: id })}
-        </span>
-        {wide && (
-          <span className={clsx(css.panelTitle, css.wide)}>
-            {label}
+    <>
+      <Tooltip label={label} delayMs={500} disabled={wide}>
+        <button
+          type="button"
+          className={clsx(css.panelRow, active && css.panelActive)}
+          aria-label={label}
+          aria-current={active ? 'page' : undefined}
+          onClick={() => {
+            const entry = officialEntry(id)
+            if (entry !== undefined) trackEntryClick({ menu_name: entry, position: 'sidebar' })
+            selectPanel(id)
+          }}
+        >
+          <span className={css.panelGlyph} aria-hidden="true">
+            {renderSlot('sidebar.panellist', { size: wide ? 16 : 18, active }, { only: id })}
           </span>
-        )}
-      </button>
-    </Tooltip>
+          {wide && (
+            <span className={clsx(css.panelTitle, css.wide)}>
+              {label}
+            </span>
+          )}
+        </button>
+      </Tooltip>
+      {renderSlot('sidebar.panellist.subnav', { id, active, wide }, { only: id })}
+    </>
   )
 }
 
@@ -396,12 +403,6 @@ export function SidebarRoot({
           )}
         </nav>
       )}
-
-      {/* The robot roster sits above the browsing region and owns its own chrome. */}
-      {renderSlot('sidebar.robots', {
-        wide,
-        expandSidebar: () => { if (collapsed) toggleSidebar() },
-      })}
 
       {/* The browsing region fills the column between the controls and the
           foot in both states; its rail icon column rides the same slot. */}

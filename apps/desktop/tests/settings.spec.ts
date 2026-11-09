@@ -22,15 +22,75 @@ it('creates a discoverable default file on first launch without touching other p
   const { userData, path } = fixture()
   rmSync(join(userData, 'desktop'), { recursive: true })
   writeFileSync(join(userData, 'keybindings.json'), 'existing shortcuts\n')
-  expect(readDesktopSettings(userData)).toEqual({ updates: { allowTestAuthPopupWindow: false } })
-  expect(readFileSync(path, 'utf8')).toBe('{\n  "updates": {\n    "allowTestAuthPopupWindow": false\n  }\n}\n')
+  expect(readDesktopSettings(userData)).toEqual({
+    updates: { allowTestAuthPopupWindow: false },
+    remote: { listenPort: 43_110, keepAwake: false, launchAtLogin: false, trustedHosts: [], tunnel: false },
+  })
+  expect(readFileSync(path, 'utf8')).toBe(`{
+  "updates": {
+    "allowTestAuthPopupWindow": false
+  },
+  "remote": {
+    "listenPort": 43110,
+    "keepAwake": false,
+    "launchAtLogin": false,
+    "trustedHosts": [],
+    "tunnel": false
+  }
+}
+`)
   expect(readFileSync(join(userData, 'keybindings.json'), 'utf8')).toBe('existing shortcuts\n')
 })
 
 it.each(['{}', '{"updates": {}}', '{"other": 1, "updates": {"other": true}}'])('defaults an older document without rewriting it: %s', (raw) => {
   const { userData, path } = fixture()
   writeFileSync(path, raw)
-  expect(readDesktopSettings(userData).updates.allowTestAuthPopupWindow).toBe(false)
+  expect(readDesktopSettings(userData)).toEqual({
+    updates: { allowTestAuthPopupWindow: false },
+    remote: { listenPort: 43_110, keepAwake: false, launchAtLogin: false, trustedHosts: [], tunnel: false },
+  })
+  expect(readFileSync(path, 'utf8')).toBe(raw)
+})
+
+it('reads each remote posture field independently', () => {
+  const { userData, path } = fixture()
+  type Remote = { listenPort: number; keepAwake: boolean; launchAtLogin: boolean; trustedHosts: readonly string[]; tunnel: boolean }
+  const cases: readonly [Record<string, unknown>, Remote][] = [
+    [{}, { listenPort: 43_110, keepAwake: false, launchAtLogin: false, trustedHosts: [], tunnel: false }],
+    [{ listenPort: 0 }, { listenPort: 0, keepAwake: false, launchAtLogin: false, trustedHosts: [], tunnel: false }],
+    [{ keepAwake: true }, { listenPort: 43_110, keepAwake: true, launchAtLogin: false, trustedHosts: [], tunnel: false }],
+    [{ launchAtLogin: true }, { listenPort: 43_110, keepAwake: false, launchAtLogin: true, trustedHosts: [], tunnel: false }],
+    [{ trustedHosts: ['hub.example'] }, { listenPort: 43_110, keepAwake: false, launchAtLogin: false, trustedHosts: ['hub.example'], tunnel: false }],
+    [{ tunnel: true }, { listenPort: 43_110, keepAwake: false, launchAtLogin: false, trustedHosts: [], tunnel: true }],
+    [{ listenPort: 65_535, keepAwake: true, launchAtLogin: true, trustedHosts: ['a.example', 'b.example:8443'] },
+      { listenPort: 65_535, keepAwake: true, launchAtLogin: true, trustedHosts: ['a.example', 'b.example:8443'], tunnel: false }],
+  ]
+  for (const [remote, expected] of cases) {
+    writeFileSync(path, JSON.stringify({ remote }))
+    expect(readDesktopSettings(userData).remote).toEqual(expected)
+  }
+})
+
+it.each([
+  '{"remote":null}',
+  '{"remote":[]}',
+  '{"remote":{"listenPort":"43110"}}',
+  '{"remote":{"listenPort":43110.5}}',
+  '{"remote":{"listenPort":-1}}',
+  '{"remote":{"listenPort":65536}}',
+  '{"remote":{"keepAwake":"true"}}',
+  '{"remote":{"launchAtLogin":1}}',
+  '{"remote":{"trustedHosts":"hub.example"}}',
+  '{"remote":{"trustedHosts":[""]}}',
+  '{"remote":{"trustedHosts":[1]}}',
+  '{"remote":{"tunnel":"on"}}',
+])('rejects an invalid remote posture and keeps the original document: %s', (raw) => {
+  const { userData, path } = fixture()
+  writeFileSync(path, raw)
+  expect(readDesktopSettings(userData).remote).toEqual({
+    listenPort: 43_110, keepAwake: false, launchAtLogin: false, trustedHosts: [], tunnel: false,
+  })
+  expect(console.warn).toHaveBeenCalledWith(expect.stringContaining(path), expect.any(Error))
   expect(readFileSync(path, 'utf8')).toBe(raw)
 })
 

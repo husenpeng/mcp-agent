@@ -18,6 +18,9 @@ export const AUTH_SERVICE_URL_ENV = 'TOMATO_DESKTOP_AUTH_SERVICE_URL'
 /** Environment variable carrying the company BFF origin sealed into the application. */
 export const TOMATO_WEB_URL_ENV = 'TOMATO_DESKTOP_TOMATO_WEB_URL'
 
+/** Packaging variable naming the company IM service origin used by the direct MCP row. */
+export const IM_SERVICE_URL_ENV = 'TOMATO_DESKTOP_IM_SERVICE_URL'
+
 const DEFAULT_NPM_REGISTRY = 'https://registry.npmjs.org/'
 
 const APPLE_API_KEY_ENV = 'APPLE_API_KEY'
@@ -146,9 +149,12 @@ function resolveOptionalOrigin(env, name) {
 }
 
 /**
- * Resolve the login service origins sealed into the packaged application.
+ * Resolve the service origins sealed into the packaged application. The IM
+ * origin is independent of the login pair: an installation may carry a company
+ * IM service while login is unconfigured, and the direct MCP row stays disabled
+ * when it is empty.
  * @param {NodeJS.ProcessEnv} env - Packaging environment.
- * @returns {{ authServiceUrl: string, tomatoWebUrl: string }} Origins, both empty when no login services are configured.
+ * @returns {{ authServiceUrl: string, tomatoWebUrl: string, imServiceUrl: string }} Origins, each empty when unconfigured.
  */
 export function resolveDesktopLoginEnvironment(env) {
   const authServiceUrl = resolveOptionalOrigin(env, AUTH_SERVICE_URL_ENV)
@@ -156,5 +162,5 @@ export function resolveDesktopLoginEnvironment(env) {
   if ((authServiceUrl === '') !== (tomatoWebUrl === '')) {
     throw new Error(`desktop release environment: ${AUTH_SERVICE_URL_ENV} and ${TOMATO_WEB_URL_ENV} must be set together`)
   }
-  return { authServiceUrl, tomatoWebUrl }
+  return { authServiceUrl, tomatoWebUrl, imServiceUrl: resolveOptionalOrigin(env, IM_SERVICE_URL_ENV) }
 }

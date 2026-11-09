@@ -1,5 +1,5 @@
 ---
-description: "Tomato Rbot 组合包：robot 注册表、run 执行器、触发器、Remote 控制器、侧栏名册、规格编辑器，以及独立于工作区对话的对话界面。"
+description: "Tomato Rbot 组合包：robot 注册表、run 执行器、触发器、Remote 控制器、侧栏名册、三步创建向导、规格编辑器，以及独立于工作区对话的对话界面。"
 kind: "package-bundle"
 ---
 # Robot App
@@ -8,7 +8,7 @@ kind: "package-bundle"
 
 ## 概述
 
-`@tomato/experimental-robot-app` 把 Tomato Rbot 作为一个可选 bundle 挂载：`@tomato/experimental-robot-local` 存储规格、robot 与 run；`@tomato/experimental-robot-runtime` 用每个 run 一个 Agent 执行排队中的 run，并记录该 run 的 Session；`@tomato/experimental-robot-triggers` 按 cron 与事件日程启动 run；`@tomato/experimental-robot-templates-marketing` 提供可聘用的营销模板；`@tomato/api-robot-controller` 通过 `robot` Remote 命名空间暴露注册表；`@tomato/client-ui-robot` 渲染机器人与模板的卡片网格、侧栏名册、基础/高级规格编辑器与 run 对话；`@tomato/experimental-tool-robot` 提供面向模型的 `robot_create` 工具；bundle 还会为创建会话注册内置的 `robot-creation` 技能。未添加该 bundle 的 profile 不变。
+`@tomato/experimental-robot-app` 把 Tomato Rbot 作为一个可选 bundle 挂载：`@tomato/experimental-robot-local` 存储规格、robot 与 run；`@tomato/experimental-robot-runtime` 用每个 run 一个 Agent 执行排队中的 run，并记录该 run 的 Session；`@tomato/experimental-robot-triggers` 按 cron 与事件日程启动 run；`@tomato/experimental-robot-templates-marketing` 提供可聘用的营销模板；`@tomato/api-robot-controller` 通过 `robot` Remote 命名空间暴露注册表；`@tomato/client-ui-robot` 渲染机器人与模板的卡片网格、侧栏名册、三步创建向导、规格编辑器与 run 对话；`@tomato/experimental-tool-robot` 提供面向模型的 `robot_create` 工具；bundle 还会为创建会话注册内置的 `robot-creation` 技能。未添加该 bundle 的 profile 不变。
 
 ## 目录
 
@@ -27,9 +27,9 @@ kind: "package-bundle"
 <a id="create-a-robot"></a>
 ## 创建机器人
 
-手动创建时，规格编辑器默认打开「基础配置」：名称、描述、任务目标、成功标准。其余区块——定位与权限、触发器、预算、工具与限制、输入输出、记忆、Agent 间通信——都留在「高级配置」中，使用 `emptyRobotSpec()` 的通用默认值；编辑器会说明未修改的字段沿用这些默认值。
+机器人页面通过三步向导创建：每次运行要做什么、名称与描述、可选的成功标准与预览。只有名称与任务目标必填，向导会预填页面正在查看的工作区目录，并允许在预览里改用其他文件夹。向导就地发布规格并实例化，且拒绝 `emptyRobotSpec()` 里的占位名称或占位任务，因此未完成的草稿不会变成一个执行占位任务的机器人。其余区块——定位与权限、触发器、预算、工具与限制、输入输出、记忆、Agent 间通信——保持通用默认值，创建后可在编辑器的「高级配置」里修改。
 
-会话创建会在当前工作区新开一个会话，草稿中点名 `robot-creation` 技能。技能向用户询问同样的四项回答，汇总后调用 `robot_create`；工具发布规格并实例化，因此会话结束时机器人已出现在名册中。该技能随本 bundle 打包并注册为 bundled 技能，因此在任意工作区都可用，而不只限于本仓库。`robot_create` 要求存活的顶层 Agent，且当前回合包含人类消息。
+会话创建会在当前工作区新开一个会话，并发送一句简短的创建请求。`robot-creation` 技能把它变成一次只问一个问题的访谈（部署提供 `ask_user_question` 时，每个问题会渲染成表单卡），一句话描述由技能自己起草，随后展示四项草稿并等待确认，确认后才调用 `robot_create`。工具发布规格并实例化，因此调用返回时机器人已出现在名册中；成功调用还会在对话里渲染一行，显示机器人名称并提供「打开机器人」。该技能随本 bundle 打包并注册为 bundled 技能，因此在任意工作区都可用，而不只限于本仓库。`robot_create` 要求存活的顶层 Agent，且当前回合包含人类消息，并拒绝占位名称或占位任务，而不是发布一个空壳。
 
 在卡片网格中聘用模板时，会按页面语言从模板复制出一份归用户所有的规格并实例化；之后该机器人与其他机器人一样编辑和运行。
 
@@ -59,6 +59,7 @@ kind: "package-bundle"
 - MCP 服务器由部署以 `@tomato/mcp-client` 条目挂载；robot 只能选择部署已配置的服务器，runtime 不会自行启动。
 - cron 与事件触发器可能启动计费的模型运行；因此该 bundle 为可选安装。
 - `robot_create` 只收集四项基础字段；触发器、工具、权限、预算、记忆与 Agent 间通信设置仍需在编辑器里调整。
+- 会话创建会打开工作区会话而不是留在机器人页面；创建成功那行的「打开机器人」是回去的入口。
 
 <a id="dev-note"></a>
 ### 开发备注

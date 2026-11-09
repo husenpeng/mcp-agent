@@ -10,6 +10,7 @@ import type { Context } from '@tomato/cordis'
 import z from '@tomato/schemastery'
 import type {} from '@tomato/user-approval'
 import { applyReadTool, READ_LIMIT, STREAM_MIN_SIZE } from './read.ts'
+import { applyListTool } from './list.ts'
 import { applyWriteTool } from './write.ts'
 import { applyEditTool } from './edit.ts'
 import { applyReadImageTool } from './read-image.ts'
@@ -32,6 +33,16 @@ export interface Config {
   write?: boolean
   /** Register `edit` and its guidance. Defaults to true. */
   edit?: boolean
+  /** Register `list_dir` and its guidance. Defaults to true. */
+  list?: boolean
+  /** Directory levels `list_dir` returns by default. */
+  listDepth?: number
+  /** Largest depth one `list_dir` call may request. */
+  listMaxDepth?: number
+  /** Most entries one `list_dir` call returns. */
+  listMaxEntries?: number
+  /** Basenames `list_dir` skips by default. */
+  listExcludes?: string[]
   /** Default and maximum number of lines returned by one `read` call. */
   readLimit?: number
   /** Maximum characters returned for a single line before truncation. */
@@ -47,6 +58,11 @@ export const Config: z<Config> = z.object({
   readImage: z.boolean().default(true),
   write: z.boolean().default(true),
   edit: z.boolean().default(true),
+  list: z.boolean().default(true),
+  listDepth: z.number().default(1),
+  listMaxDepth: z.number().default(4),
+  listMaxEntries: z.number().default(200),
+  listExcludes: z.array(z.string()).default(['node_modules', '.git', '.svn', '.hg', 'dist', 'build', 'coverage', '.next']),
   readLimit: z.number().default(READ_LIMIT),
   readMaxLineLength: z.number().default(READ_MAX_LINE_LENGTH),
   readMaxBytes: z.number().default(READ_MAX_BYTES),
@@ -71,6 +87,19 @@ export function apply(ctx: Context, config: Config): void {
   assertPositiveInteger('readMaxLineLength', resolved.readMaxLineLength)
   assertPositiveInteger('readMaxBytes', resolved.readMaxBytes)
   assertPositiveInteger('readStreamMinSize', resolved.readStreamMinSize)
+  assertPositiveInteger('listDepth', resolved.listDepth)
+  assertPositiveInteger('listMaxDepth', resolved.listMaxDepth)
+  assertPositiveInteger('listMaxEntries', resolved.listMaxEntries)
+  if (resolved.listDepth > resolved.listMaxDepth) throw new Error('tool-fs: listDepth must not exceed listMaxDepth')
+  if (resolved.listExcludes.some(name => name.trim() === '')) throw new Error('tool-fs: listExcludes entries must not be empty')
+  if (resolved.list) {
+    applyListTool(ctx, {
+      depth: resolved.listDepth,
+      maxDepth: resolved.listMaxDepth,
+      maxEntries: resolved.listMaxEntries,
+      excludes: resolved.listExcludes,
+    })
+  }
   if (resolved.read) {
     applyReadTool(ctx, {
       limit: resolved.readLimit,

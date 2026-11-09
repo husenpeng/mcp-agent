@@ -11,7 +11,7 @@ import { LocaleRuntime } from '@tomato/client-locale/client'
 import type { SessionLiveEventEntry, SessionReference } from '@tomato/api-session-controller/client'
 import type { SessionId, SessionSeq } from '@tomato/session/types'
 import type { WorkspaceId } from '@tomato/workspace/types'
-import type { AccountView } from '@tomato/deepseek-account/types'
+import type { AccountView } from '@tomato/account-service/types'
 import type { ThemeSnapshot } from '@tomato/client-ui-theme/client'
 import {
   apply as applyConversation, inject as injectConversation,

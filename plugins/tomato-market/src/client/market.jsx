@@ -196,6 +196,18 @@ export function MarketTab({ controller, t, install }) {
             t={t}
           />
         )}
+      {state.substitution === null ? null : (
+        <p className="tm-substitution" role="status">
+          <span className="tm-substitutionText">
+            {t('substitutedVersion', {
+              requested: state.substitution.requested.version,
+              selected: state.substitution.selected.version,
+              runtime: state.substitution.runtimeVersion ?? '',
+            })}
+          </span>
+          <button type="button" className="tm-groupMore" onClick={controller.dismissSubstitution}>{t('close')}</button>
+        </p>
+      )}
       {state.notice === null ? null : (
         <InstallNotice notice={state.notice} t={t} onClose={controller.dismissNotice}
           onContinue={() => { controller.confirmOverride(install) }}

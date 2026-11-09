@@ -196,11 +196,12 @@ Web 与 Desktop 共用同一对命令。`start:*` 启动上一次 `pnpm run buil
 ```sh
 pnpm run start:web       # serve built Web artifacts through the source launcher (the same launch as pnpm tomato web)
 pnpm run dev:web         # build, serve, and rebuild Web client bundles on source edits
+pnpm run web:phone       # serve the same Web profile to a phone through a Cloudflare quick tunnel
 pnpm run start:desktop   # launch built Desktop artifacts
 pnpm run dev:desktop     # build, then launch Desktop
 ```
 
-Web 命令后面的参数会传给 `tomato web`，例如 `pnpm run dev:web --no-open --port 3081`；`dev:web` 还接受 `--skip-build` 复用现有产物树，以及 `--no-serve` 只运行重建 watcher、配合别处启动的服务器。两个 Web 命令使用正常的 Harness home，而 Desktop 命令使用 [Desktop README](../apps/desktop/README.zh.md) 描述的隔离开发 home。根目录 `Makefile` 以 `make web`、`make dev-web`、`make desktop`、`make dev-desktop` 和 `make build` 命名同一套命令；`ARGS='--no-open'` 用于转发参数。
+Web 命令后面的参数会传给 `tomato web`，例如 `pnpm run dev:web --no-open --port 3081`；`dev:web` 还接受 `--skip-build` 复用现有产物树，以及 `--no-serve` 只运行重建 watcher、配合别处启动的服务器。两个 Web 命令使用正常的 Harness home，而 Desktop 命令使用 [Desktop README](../apps/desktop/README.zh.md) 描述的隔离开发 home。`web:phone` 先起一条 Cloudflare quick tunnel，再用这个隧道域名启动同一个 Web profile，并打印手机上要打开的带 token 链接；它要求 `cloudflared` 在 `PATH` 上或通过 `--bin` 指定，Ctrl+C 同时停掉这两个进程。根目录 `Makefile` 以 `make web`、`make dev-web`、`make desktop`、`make dev-desktop` 和 `make build` 命名同一套命令；`ARGS='--no-open'` 用于转发参数。
 
 ### TODO 标记
 

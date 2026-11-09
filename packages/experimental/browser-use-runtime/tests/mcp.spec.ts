@@ -80,7 +80,13 @@ class PresentationRuntime extends PtcRuntime {
   run(): Promise<never> { return Promise.reject(new Error('Unexpected PTC execution in a presentation test')) }
 }
 
-async function load(exclusive = false, mode?: string, toolCallTimeoutMs?: number, toolOrder?: string[]) {
+async function load(
+  exclusive = false,
+  mode?: string,
+  toolCallTimeoutMs?: number,
+  toolOrder?: string[],
+  deny?: (call: { readonly name: string; readonly arguments: unknown }) => string | undefined,
+) {
   const root = await mkdtemp(join(tmpdir(), 'tomato-browser-mcp-'))
   roots.push(root)
   const model = new FixtureModel()
@@ -90,7 +96,12 @@ async function load(exclusive = false, mode?: string, toolCallTimeoutMs?: number
     ['fs', LocalFileSystem], ['workingDirectory', WorkingDirectory],
     ['model', { inject: ['llm'], apply(ctx: Context) { ctx.effect(() => ctx.llm.registerAdapter(['fixture'], model)) } }],
     ['browser', { inject: ['browserUse', 'agents', 'tools', 'systemPrompt', 'workingDirectory'], apply(ctx: Context) {
-      mountSessionMcp(ctx, { name: 'browser-fixture', exclusive, command: process.execPath, args: [fixture, root, ...mode === undefined ? [] : [mode]], ...toolCallTimeoutMs === undefined ? {} : { toolCallTimeoutMs, env: {} } })
+      mountSessionMcp(ctx, {
+        name: 'browser-fixture', exclusive, command: process.execPath,
+        args: [fixture, root, ...mode === undefined ? [] : [mode]],
+        ...toolCallTimeoutMs === undefined ? {} : { toolCallTimeoutMs, env: {} },
+        ...deny === undefined ? {} : { deny },
+      })
     } }],
   ])
   const configPath = join(root, 'cordis.yml')
@@ -180,6 +191,30 @@ it('waits for SystemPrompt and ToolRuntime before reserving the provider', async
   await ctx.plugin(SystemPrompt)
   await Promise.all([tools, browser])
   expect(ctx.browserUse.providerName).toBe('browser-fixture')
+})
+
+describe('provider call policy', () => {
+  it('denies a refused call before the server sees it and leaves other calls running', async () => {
+    const deny = vi.fn((call: { readonly name: string; readonly arguments: unknown }) => {
+      const label = typeof call.arguments === 'object' && call.arguments !== null
+        ? (call.arguments as { label?: unknown }).label
+        : undefined
+      return label === 'blocked' ? 'browser tools open http(s) pages only' : undefined
+    })
+    const { ctx, root } = await load(false, undefined, undefined, undefined, deny)
+    const first = await ctx.agents.create({ sessionId: SessionId('policy'), meta: { cwd: root }, agentOptions: { provider: 'fixture', model: 'fixture' } })
+    await warm(ctx, first.agent)
+    expect((await execute(ctx, first.agent)).content).toEqual([{ type: 'text', text: 'Visit 1: direct' }])
+    const blocked = await executeToolFixture(ctx, {
+      agent: first.agent, name: TOOL, arguments: { label: 'blocked' }, callId: ToolCallId('blocked'), signal: new AbortController().signal,
+    })
+    expect(blocked.isError).toBe(true)
+    expect(blocked.content).toEqual([{ type: 'text', text: 'Error: browser tools open http(s) pages only' }])
+    expect(deny).toHaveBeenCalledWith({ name: 'visit', arguments: { label: 'blocked' } })
+    // The refusal happened before dispatch: the fixture server's own call
+    // counter advanced by one only, not two.
+    expect((await execute(ctx, first.agent)).content).toEqual([{ type: 'text', text: 'Visit 2: direct' }])
+  })
 })
 
 describe('Session MCP Loader composition', () => {

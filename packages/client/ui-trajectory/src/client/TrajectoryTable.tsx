@@ -38,6 +38,7 @@ import {
 import type { TrajectoryVirtualRow } from './trajectory-virtual-rows.ts'
 import type { TrajectoryTurnModel } from './layout.ts'
 import { trajectoryPreviewText } from './trajectory-preview.ts'
+import { cellTokenCost, classifyToolOrigin, traceOriginLabel } from './trace-overview.ts'
 import type { TrajectoryKey, TrajectoryTranslate } from './locales.ts'
 import { COMPACTION_INTERRUPTED_ERROR } from './copy-codes.ts'
 import { codeProgram, PTC_TOOL_NAME, type CodeProgram } from './code-program.ts'
@@ -724,6 +725,34 @@ function collapseAssistantRecords(
     i += calls.length
   }
   return out
+}
+
+/** Per-record cost and duration chips, plus the owning tool family. */
+function TraceRowChips({ cell, t }: { cell: TrajectoryCellProps; t: TrajectoryTranslate }) {
+  if (cell.kind !== 'message' && cell.kind !== 'tool' && cell.kind !== 'subtool') return null
+  const origin = cell.kind === 'message' ? undefined : classifyToolOrigin(cell.toolName ?? '')
+  const cost = cell.kind === 'message' ? cellTokenCost(cell) : undefined
+  const duration = cell.timeSeconds === null
+    ? undefined
+    : formatElapsedSeconds(cell.timeSeconds, t)
+  if (cost === undefined && duration === undefined && (origin === undefined || origin === 'builtin')) {
+    return null
+  }
+  return (
+    <span className={css.rowChips}>
+      {origin !== undefined && origin !== 'builtin' && (
+        <span className={css.rowOrigin} data-origin={origin} title={traceOriginLabel(origin, t)}>
+          {traceOriginLabel(origin, t)}
+        </span>
+      )}
+      {duration !== undefined && <span className={css.rowChip}>{duration}</span>}
+      {cost !== undefined && (
+        <span className={css.rowChip} title={t('trace.cost')}>
+          {t('unit.tokens', { value: cost })}
+        </span>
+      )}
+    </span>
+  )
 }
 
 function stateOf(record: TableRecord): RecordState {
@@ -2891,43 +2920,48 @@ export function TrajectoryTable({
                         </div>
                       </td>
                       <td className={css.content}>
-                        {isRequestOnly
-                          ? null
-                          : record.collapsedSummary !== undefined
-                            ? (
-                              <span className={css.collapsedTurnContent} title={record.collapsedSummary}>
-                                <span className={css.collapsedTurnEllipsis}>…</span>
-                                <span className={css.collapsedTurnText}>{record.collapsedSummary}</span>
-                              </span>
-                            )
-                            : (
-                              <span
-                                className={resultText === undefined ? css.contentText : css.resultPreview}
-                                title={resultText === undefined
-                                  ? listDisplayText
-                                  : `${listDisplayText} → ${resultText}`}
-                              >
-                                <span className={resultText === undefined ? undefined : css.resultRequest}>
-                                  <RecordListText
-                                    displayText={displayText}
-                                    toolCallOnly={toolCallOnly}
-                                    toolCallText={toolCallText}
-                                    t={t}
-                                  />
+                        <div className={css.rowBody}>
+                          {isRequestOnly
+                            ? null
+                            : record.collapsedSummary !== undefined
+                              ? (
+                                <span className={css.collapsedTurnContent} title={record.collapsedSummary}>
+                                  <span className={css.collapsedTurnEllipsis}>…</span>
+                                  <span className={css.collapsedTurnText}>{record.collapsedSummary}</span>
                                 </span>
-                                {resultText !== undefined && (
-                                  <span className={record.cell.isError ? `${css.inlineResult} ${css.error}` : css.inlineResult}>
-                                    <span className={css.arrow}>→</span>
-                                    <span className={resultText === t('record.noOutput')
-                                      ? `${css.inlineResultText} ${css.noOutputText}`
-                                      : css.inlineResultText}
-                                    >
-                                      {resultText}
-                                    </span>
+                              )
+                              : (
+                                <span
+                                  className={resultText === undefined ? css.contentText : css.resultPreview}
+                                  title={resultText === undefined
+                                    ? listDisplayText
+                                    : `${listDisplayText} → ${resultText}`}
+                                >
+                                  <span className={resultText === undefined ? undefined : css.resultRequest}>
+                                    <RecordListText
+                                      displayText={displayText}
+                                      toolCallOnly={toolCallOnly}
+                                      toolCallText={toolCallText}
+                                      t={t}
+                                    />
                                   </span>
-                                )}
-                              </span>
-                            )}
+                                  {resultText !== undefined && (
+                                    <span className={record.cell.isError ? `${css.inlineResult} ${css.error}` : css.inlineResult}>
+                                      <span className={css.arrow}>→</span>
+                                      <span className={resultText === t('record.noOutput')
+                                        ? `${css.inlineResultText} ${css.noOutputText}`
+                                        : css.inlineResultText}
+                                      >
+                                        {resultText}
+                                      </span>
+                                    </span>
+                                  )}
+                                </span>
+                              )}
+                          {!isRequestOnly && record.collapsedSummary === undefined && (
+                            <TraceRowChips cell={record.cell} t={t} />
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )

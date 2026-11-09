@@ -37,7 +37,7 @@ const ROOT_PACKAGES = [TOMATO_PACKAGE, DESKTOP_HOST_PACKAGE] as const
 /** First-party packages the Desktop runtime needs but the public release family omits. */
 const EXTRA_PACKAGES = [
   'tomato-market',
-  '@tomato/account',
+  '@tomato/account-service',
   '@tomato/brand',
   '@tomato/gateway',
   '@tomato/telemetry',
@@ -45,6 +45,8 @@ const EXTRA_PACKAGES = [
 /** Private workspace packages that supply runtime plugins but are never published. */
 const PRIVATE_RUNTIME_PACKAGES = [
   'packages/tomato/account',
+  'packages/tomato/account-access',
+  'packages/tomato/account-gateway',
   'packages/tomato/brand',
   'packages/tomato/gateway',
   'packages/tomato/telemetry',

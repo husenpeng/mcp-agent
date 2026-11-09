@@ -35,13 +35,16 @@ kind: "package-reference"
     headless: true
 ```
 
-使用 `mode: attach`，并在 `endpoint` 中设置 HTTP(S) 调试 URL 或 WS(S) 浏览器端点，即可操作已有浏览器。新的活动 Session 在初始化时占用附加连接，并持续保留直到卸载。如果连接已被占用，本次激活不使用该浏览器，但继续运行，后续轮次不会重试。连接释放后，新创建或恢复的激活可以获取它。其他 Session 的直接调用会失败。清理只断开连接，保留外部浏览器及其页面。
+提供方会在派发前拒绝两类浏览器调用：地址不是 HTTP(S) 的调用，以及页面代码访问本机文件系统的调用。拒绝结果就是这次调用的失败文本，并提示模型改用文件工具（`read`、`glob`、`grep`）处理本地路径；上游服务器不会收到这次调用。本地目录和 `file://` 地址是最常见的触发来源，浏览器本身也无法加载它们。
+
+若启动时必须已登录，先从已登录浏览器导出 Playwright storage-state 文件——例如 `npx playwright open --save-storage=auth.json http://127.0.0.1:58337`，登录后关闭窗口——再把 `storageState` 设为该绝对路径。隔离开启的上下文会获得其中的 cookie 与 localStorage；该文件携带会话，需妥善保管。使用 `mode: attach`，并在 `endpoint` 中设置 HTTP(S) 调试 URL 或 WS(S) 浏览器端点，即可操作已有浏览器。新的活动 Session 在初始化时占用附加连接，并持续保留直到卸载。如果连接已被占用，本次激活不使用该浏览器，但继续运行，后续轮次不会重试。连接释放后，新创建或恢复的激活可以获取它。其他 Session 的直接调用会失败。清理只断开连接，保留外部浏览器及其页面。
 
 | 字段 | 默认值 | 含义 |
 |---|---|---|
 | `mode` | 必填 | `launch` 或 `attach`，在本次提供方激活期间固定 |
 | `headless` | `true` | 启动时不显示窗口 |
 | `executablePath` | headless 启动时取 `PLAYWRIGHT_MCP_EXECUTABLE_PATH`，否则上游发现 | 启动使用的 Chromium 可执行文件 |
+| `storageState` | 未设置 | 已存在的绝对 Playwright storage-state 文件；其 cookie 与 localStorage 用于初始化隔离开启的浏览器 |
 | `endpoint` | attach 时必填 | 已有浏览器调试端点 |
 | `toolCallTimeoutMs` | MCP 客户端默认值 | 单次调用超时，单位为毫秒 |
 

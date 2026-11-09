@@ -10,7 +10,7 @@ import type {} from '@tomato/client-ui-chat/client'
 import type {} from '@tomato/client-ui-layout/client'
 import type {} from '@tomato/api-remote-access/client'
 import type {} from '@tomato/api-remotes/client'
-import type { AccountView, AccountDetails } from '@tomato/deepseek-account/types'
+import type { AccountView, AccountDetails } from '@tomato/account-service/types'
 import type { OnboardingChange } from './onboarding-contract.ts'
 import type { PlatformBridge } from './PlatformOverlay.tsx'
 import { ContactConfig, CONTACT_CONFIG_GLOBAL } from '../contact-config.ts'
@@ -96,7 +96,7 @@ export function apply(ctx: Context): void {
       let value: AccountDetails[K] | null
       try { value = await query() }
       catch { value = { status: 'failed' } }
-      if (value?.status === 'failed') console.error('[deepseek-account] account read failed', { field })
+      if (value?.status === 'failed') console.error('[account] account read failed', { field })
       if (generation === revision && value !== null) publish({ ...snapshot, details: { ...snapshot.details, [field]: value } })
     }
     const request = Promise.all([
@@ -160,9 +160,9 @@ export function apply(ctx: Context): void {
         if (initialize) void (async () => {
           try {
             const initialized = await ctx.remote.session.initializeDefaultModel()
-            if (!initialized.ok) console.error('[deepseek-account] default model initialization failed', { reason: 'refused' })
+            if (!initialized.ok) console.error('[account] default model initialization failed', { reason: 'refused' })
           } catch (_error) {
-            console.error('[deepseek-account] default model initialization failed', { reason: 'disconnected' })
+            console.error('[account] default model initialization failed', { reason: 'disconnected' })
           }
         })()
         void refresh()
@@ -196,8 +196,8 @@ export function apply(ctx: Context): void {
     })
   const operations: AccountSectionInjected = {
     avatarFailed: (value) => { avatar.failed(value) },
-    subscribeSessionExpired: listener => ctx.remote.$on('deepseek-account/session-expired', listener),
-    subscribeModelSignInRequired: listener => ctx.remote.$on('deepseek-account/model-sign-in-required', listener),
+    subscribeSessionExpired: listener => ctx.remote.$on('account/session-expired', listener),
+    subscribeModelSignInRequired: listener => ctx.remote.$on('account/model-sign-in-required', listener),
     ...nativePlatform === undefined ? {} : { openPlatformPage: platformPageOpener(refreshAccount) },
     refreshAccount,
     contactUs() {

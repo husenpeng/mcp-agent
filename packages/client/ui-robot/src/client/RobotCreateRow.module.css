@@ -1,0 +1,15 @@
+/* Dedicated robot_create row inside a tool call tree. */
+
+.row {
+  min-width: 0;
+}
+
+.failure {
+  margin: 6px 0 4px;
+  color: var(--dsw-alias-state-error-primary);
+  font-family: var(--tomato-font-mono, monospace);
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

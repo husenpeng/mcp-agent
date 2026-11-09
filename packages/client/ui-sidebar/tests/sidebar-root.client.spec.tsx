@@ -75,7 +75,7 @@ function mountShell({ collapsed = false, width = 300, shortcuts = [] }: {
           footerActionOwner = owner
           return <div data-testid="footer-action-seat" data-wide={owner.wide} />
         }
-        if (key === 'sidebar.robots') return null
+        if (key === 'sidebar.panellist' || key === 'sidebar.panellist.subnav') return null
         regionOwner = owner as SidebarSectionOwnerProps
         return <div data-testid="region" data-wide={owner.wide} />
       }) as SidebarRootComponentProps['renderSlot']}

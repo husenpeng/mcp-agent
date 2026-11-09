@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-Adds one `robot_create` tool so a creation Session can turn four answers — name, description, mission, success criteria — into a published specification and an instantiated robot. Every advanced setting starts from the shared general default; later changes belong to the robot page's advanced configuration.
+Adds one `robot_create` tool so a creation Session can turn four answers — name, description, mission, success criteria — into a published specification and an instantiated robot. It refuses a blank or placeholder name or mission rather than publishing a stub robot, and records the created robot's identity as presentation metadata so a Client transcript row can offer its page. Every advanced setting starts from the shared general default; later changes belong to the robot page's advanced configuration.
 
 ## Table of Contents
 
@@ -38,7 +38,7 @@ The plugin requires `agents`, `robots`, and `tools`. The bundle also ships the `
 | `mission` | yes | Purpose every run pursues |
 | `successCriteria` | no | Observable conditions a run must meet |
 
-One call publishes the specification and instantiates that revision, returning the robot id, specification id, and revision. Every other field comes from `emptyRobotSpec()` in `@tomato/experimental-robot`, so a conversation-made robot and an untouched basic form run the same configuration.
+One call publishes the specification and instantiates that revision, returning the robot id, specification id, and revision. The name and mission must be real answers: a blank value or the placeholder text `New robot` / `Describe what this robot does.` is rejected as `ROBOT_SPEC_INVALID` with the field to collect. Success criteria are trimmed, and an empty list is omitted. Every other field comes from `emptyRobotSpec()` in `@tomato/experimental-robot`, so a conversation-made robot and a manually created robot run the same advanced configuration. The successful result also carries `{ robotId, name }` presentation metadata on the `tool/result` event; `@tomato/client-ui-robot` renders it as a row with an **Open robot** action, without exposing that metadata to the model.
 
 The tool refuses unless the calling agent is a live top-level agent whose open turn contains a human message; delegated and unattended turns cannot create robots. Tool registration, publication, and instantiation belong to the mounting fiber and its provider.
 

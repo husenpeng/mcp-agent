@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v0.2.1-rc.4/model-policy/guide.md
+/:
+  en: 06f20b4dfaba0530
+  zh: 866a568e98e24f83
+/custom-routes-inherit-model-capabilities-and-a-model-policy-can-refuse-models:
+  en: 6ba114df4504b497
+  zh: 6d6477ffb4b83b11
+/custom-routes-inherit-model-capabilities-and-a-model-policy-can-refuse-models/change:
+  en: 5515f7acefb8b97d
+  zh: 87ddcaab29a22f0e
+/custom-routes-inherit-model-capabilities-and-a-model-policy-can-refuse-models/migration:
+  en: 135811935a476355
+  zh: 2ae781c92e225b98

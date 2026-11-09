@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  launchd agent for the Tomato Remote process keeper.
+
+  Install (replace __NODE__ with an absolute node path; launchd does not read PATH):
+
+    sed -e "s|__NODE__|$(which node)|g" \
+        -e "s|__SCRIPT__|$PWD/apps/desktop/scripts/watchdog.mjs|g" \
+        apps/desktop/launchd/ai.tomato.watchdog.plist \
+        > ~/Library/LaunchAgents/ai.tomato.watchdog.plist
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/ai.tomato.watchdog.plist
+
+  Remove:
+    launchctl bootout gui/$(id -u)/ai.tomato.watchdog
+
+  `KeepAlive` restarts the keeper if it exits, so the phone keeps a recovery path
+  even after the keeper itself fails.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>ai.tomato.watchdog</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>__NODE__</string>
+    <string>__SCRIPT__</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>TOMATO_WATCHDOG_PORT</key>
+    <string>43111</string>
+    <key>TOMATO_HUB_PORT</key>
+    <string>43110</string>
+    <key>TOMATO_DESKTOP_LAUNCH_LABEL</key>
+    <string>ai.tomato.desktop</string>
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/tmp/tomato-watchdog.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/tomato-watchdog.err</string>
+</dict>
+</plist>

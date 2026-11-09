@@ -1,0 +1,43 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/web/web-fetch-company/README.md
+/:
+  en: 36483b672a80fe57
+  zh: 22a8f36dd8d61d31
+/tomato-web-fetch-company:
+  en: 5877330504684ff2
+  zh: 4681ad897767e7dd
+/tomato-web-fetch-company/summary:
+  en: cc6ec5ab0d4c583c
+  zh: a01e55e1ca45fd3f
+/tomato-web-fetch-company/table-of-contents:
+  en: 122f0d41696980b1
+  zh: f366d2759fbb78b1
+/tomato-web-fetch-company/use-this-package:
+  en: 5173746cebc7af7a
+  zh: 10ac2b42941404b3
+/tomato-web-fetch-company/understand-the-implementation:
+  en: a313f49644ff0596
+  zh: db7cae49b53bdfe6
+/tomato-web-fetch-company/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/tomato-web-fetch-company/model-experience/page-retrieval:
+  en: 02858d34ee9fa50c
+  zh: 153c4be921251729
+/tomato-web-fetch-company/model-experience/page-retrieval/what-the-model-sees:
+  en: 3042e6a33b7712a2
+  zh: f5298c44637325b2
+/tomato-web-fetch-company/model-experience/page-retrieval/token-effect:
+  en: d7478eea6eca3f20
+  zh: c54e818bfb9eefa7
+/tomato-web-fetch-company/model-experience/page-retrieval/kv-cache-effect:
+  en: f498d3f87308e7a8
+  zh: 1b6f1e8efdb07f93
+/tomato-web-fetch-company/known-limitations-and-deferred-work:
+  en: daf86d0cc976d5a4
+  zh: 55a74336976415e4
+/tomato-web-fetch-company/known-limitations-and-deferred-work/dev-note:
+  en: aa7ed536ea3322eb
+  zh: 23d04451cdcdea6b

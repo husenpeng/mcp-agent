@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for 2026-11-06-robot-resource-pickers.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-11-06-robot-resource-pickers.md
+/agent-note-folder-style-pickers-for-robot-resources:
+  en: f343a3c4607f0c95
+  zh: 5b38042bfe63ab8f
+/agent-note-folder-style-pickers-for-robot-resources/problem:
+  en: 23b0cad72970abf2
+  zh: 21ebab19217119a8
+/agent-note-folder-style-pickers-for-robot-resources/decision:
+  en: 4bb4ed0f051d6d68
+  zh: 41821e3ef5fa7276
+/agent-note-folder-style-pickers-for-robot-resources/alternatives-considered:
+  en: f546c874a73495ab
+  zh: f39b1f5639e7dd9b
+/agent-note-folder-style-pickers-for-robot-resources/consequences:
+  en: 7ef2071d26db026e
+  zh: b8b956fd876c9be4

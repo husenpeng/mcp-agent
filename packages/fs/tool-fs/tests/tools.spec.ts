@@ -63,6 +63,7 @@ class FakeFs extends FileSystem {
   }
   override async stat(target: FsTarget): Promise<FsInfo | undefined> {
     this.throwIfArmed()
+    if (this.directories.has(target.targetKey)) return { version: FsVersion('v1'), type: 'directory' }
     const content = this.files.get(target.targetKey)
     if (content === undefined) return undefined
     return { version: FsVersion('v1'), type: 'file', size: content.length }
@@ -89,8 +90,9 @@ class FakeFs extends FileSystem {
   override async readByteRange(target: FsTarget, range: { offset: number; length: number }): Promise<Uint8Array> {
     return new TextEncoder().encode(this.files.get(target.targetKey) ?? '').subarray(range.offset, range.offset + range.length)
   }
-  override async listDir(_target: FsTarget): Promise<FsDirEntry[]> {
-    return []
+  directories = new Map<string, FsDirEntry[]>()
+  override async listDir(target: FsTarget): Promise<FsDirEntry[]> {
+    return this.directories.get(target.targetKey) ?? []
   }
   override async writeText(target: FsTarget, content: string, expected?: FsWriteIntent): Promise<FsWriteOutcome> {
     this.throwIfArmed()
@@ -117,7 +119,7 @@ async function setup(config: ToolFs.Config = {}) {
   await ctx.plugin(NativeToolExecutor)
   await ctx.plugin(FakeFs)
   await ctx.plugin(FsPolicy)
-  await ctx.plugin(ToolFs, config)
+  await ctx.plugin(ToolFs, { list: false, ...config })
   const fs = ctx.fs as FakeFs
   return { ctx, fs }
 }
@@ -232,7 +234,7 @@ describe('registration', () => {
     await ctx.plugin(NativeToolExecutor)
     await ctx.plugin(FakeFs)
     await ctx.plugin(FsPolicy)
-    const fiber = await ctx.plugin(ToolFs)
+    const fiber = await ctx.plugin(ToolFs, { list: false })
     // Each tool contributes BOTH a schema and a prompt section; disposal must
     // withdraw both, not just the schemas.
     expect(ctx.tools.schemas()).toHaveLength(3)
@@ -1168,5 +1170,105 @@ describe('scope-aware PTC guidance', () => {
     } finally {
       await scope.dispose()
     }
+  })
+})
+
+describe('list_dir', () => {
+  /** Seed one small tree: a source directory, a skipped directory, a hidden directory, and a file. */
+  function seedTree(fs: FakeFs): void {
+    const entry = (name: string, type: FsDirEntry['type'], size?: number): FsDirEntry => ({
+      name,
+      type,
+      target: { targetKey: FsTargetKey(`key:${name}`), displayPath: `/abs/${name}` },
+      ...size === undefined ? {} : { size },
+    })
+    fs.directories.set('key:.', [
+      entry('node_modules', 'directory'),
+      entry('.hidden', 'directory'),
+      entry('README.md', 'file', 12),
+      entry('src', 'directory'),
+    ])
+    fs.directories.set('key:src', [
+      entry('index.ts', 'file', 34),
+      entry('nested', 'directory'),
+    ])
+    fs.directories.set('key:nested', [entry('deep.ts', 'file', 56)])
+  }
+
+  it('lists one level by default, skipping hidden names and configured excludes', async () => {
+    const { ctx, fs } = await setup({ list: true })
+    seedTree(fs)
+    const result = await call(ctx, 'list_dir', {})
+    expect(result.isError).toBe(false)
+    expect(text(result)).toBe([
+      '<path>/abs/.</path>',
+      '<type>directory</type>',
+      '<entries>',
+      'README.md (12 bytes)',
+      'src/',
+      '</entries>',
+    ].join('\n'))
+  })
+
+  it('honors depth, all, extra excludes, and the entry limit', async () => {
+    const { ctx, fs } = await setup({ list: true, listMaxEntries: 4 })
+    seedTree(fs)
+    expect(text(await call(ctx, 'list_dir', { depth: 2 }))).toContain('src/index.ts (34 bytes)')
+    expect(text(await call(ctx, 'list_dir', { depth: 2 }))).not.toContain('deep.ts')
+    expect(text(await call(ctx, 'list_dir', { all: true }))).toContain('.hidden/')
+    expect(text(await call(ctx, 'list_dir', { path: 'src', depth: 3 }))).toContain('nested/deep.ts (56 bytes)')
+    expect(text(await call(ctx, 'list_dir', { exclude: ['src'] }))).not.toContain('src/')
+    const capped = await call(ctx, 'list_dir', { depth: 3, all: true })
+    expect(text(capped)).toContain('listing truncated')
+    expect(capped.isError).toBe(false)
+  })
+
+  it('rejects a missing directory, a file, and an out-of-range depth', async () => {
+    const { ctx, fs } = await setup({ list: true })
+    seedTree(fs)
+    fs.files.set('key:a.txt', 'text')
+    expect(text(await call(ctx, 'list_dir', { path: 'missing' }))).toContain('not found')
+    expect(text(await call(ctx, 'list_dir', { path: 'a.txt' }))).toContain('not a directory')
+    expect(text(await call(ctx, 'list_dir', { depth: 9 }))).toContain('depth must be an integer')
+  })
+
+  it('adds its prompt guidance and can be disabled', async () => {
+    const enabled = await setup({ list: true })
+    expect(renderPrompt(await enabled.ctx.systemPrompt.assemble())).toContain('Use list_dir to see what a directory contains')
+    const disabled = await setup({ list: false })
+    expect(disabled.ctx.tools.schemas().map(schema => schema.name)).not.toContain('list_dir')
+  })
+})
+
+describe('list_dir validation and presentation', () => {
+  it('rejects an empty path, unusable limits, empty excludes, and invalid configured caps', async () => {
+    const { ctx } = await setup({ list: true })
+    expect(text(await call(ctx, 'list_dir', { path: '   ' }))).toContain('path must not be empty')
+    expect(text(await call(ctx, 'list_dir', { limit: 0 }))).toContain('limit must be an integer')
+    expect(text(await call(ctx, 'list_dir', { limit: 201 }))).toContain('limit must be an integer')
+    expect(text(await call(ctx, 'list_dir', { exclude: [''] }))).toContain('exclude entries must not be empty')
+    await expect(setup({ list: true, listDepth: 5, listMaxDepth: 4 })).rejects.toThrow('listDepth must not exceed listMaxDepth')
+    await expect(setup({ list: true, listExcludes: [''] })).rejects.toThrow('listExcludes entries must not be empty')
+  })
+
+  it('reports other entries, supports wildcard excludes and a presenter', async () => {
+    const { ctx, fs } = await setup({ list: true })
+    const entry = (name: string, type: FsDirEntry['type'], size?: number): FsDirEntry => ({
+      name, type, target: { targetKey: FsTargetKey(`key:${name}`), displayPath: `/abs/${name}` },
+      ...size === undefined ? {} : { size },
+    })
+    fs.directories.set('key:.', [
+      entry('socket', 'other'),
+      entry('note.snap', 'file', 4),
+      entry('.hidden', 'file'),
+    ])
+    const output = text(await call(ctx, 'list_dir', { exclude: ['*.snap'] }))
+    expect(output).toContain('socket')
+    expect(output).not.toContain('note.snap')
+    expect(output).not.toContain('.hidden')
+    const view = ctx.tools.get('list_dir')?.presentCall?.({})
+    expect(view).toMatchObject({ card: 'generic', title: 'List .', kind: 'read' })
+    expect(new ToolExecutionPipeline(ctx).executionMode({ signal: testToolSignal, callId: ToolCallId('list-safe'), name: 'list_dir', arguments: {} }))
+      .toEqual({ kind: 'parallel' })
   })
 })

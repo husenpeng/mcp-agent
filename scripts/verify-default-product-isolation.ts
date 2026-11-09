@@ -172,7 +172,11 @@ export function verifyDefaultProductIsolation(root: string): ProductIsolationRes
     const pkg = packages.get(packageName)
     if (pkg !== undefined) add(pkg, origin)
     else if (EXTERNAL_KIT_PACKAGES.has(packageName)) return
-    else if (packageName.startsWith('@tomato/')) failures.push(`${origin}: unknown workspace package ${name}`)
+    else if (packageName.startsWith('@tomato/') || packageName.startsWith('@deepseek-ai/')) {
+      // Both scopes are product-owned namespaces: the workspace and the published
+      // office kit. A name in either that is not known here is a typo or a leak.
+      failures.push(`${origin}: unknown workspace package ${name}`)
+    }
   }
   const dependency = (name: string, range: string, owner: Package, origin: string): void => {
     reference(name, origin, owner)

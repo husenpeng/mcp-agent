@@ -1,5 +1,5 @@
 import { Context } from '@tomato/cordis'
-import { DeepSeekAccount, type AccountView, type PlatformSession } from '@tomato/deepseek-account'
+import { Account as AccountService, type AccountView, type PlatformSession } from '@tomato/account-service'
 import { expect, it } from 'vitest'
 import { installPlatformSessionPublisher } from '../src/platform-session.ts'
 
@@ -8,7 +8,8 @@ const state: AccountView = {
   links: { usageUrl: 'https://platform.example/usage', topUpUrl: 'https://platform.example/top_up' },
 }
 
-class Account extends DeepSeekAccount {
+class Account extends AccountService {
+  getEntitlements = async () => null
   getDeviceIdentity = async () => ({ osVersion: 'test-os' })
   fail = false
   identityChangesRequested = false
@@ -50,9 +51,9 @@ it('clears removed credentials and publishes the replacement provider session', 
   try {
     const first = await ctx.plugin(Account)
     await delivered.promise
-    expect(ctx.deepseekAccount).toBeInstanceOf(Account)
-    if (!(ctx.deepseekAccount instanceof Account)) throw new Error('missing account fixture')
-    expect(ctx.deepseekAccount.identityChangesRequested).toBe(true)
+    expect(ctx.account).toBeInstanceOf(Account)
+    if (!(ctx.account instanceof Account)) throw new Error('missing account fixture')
+    expect(ctx.account.identityChangesRequested).toBe(true)
     expect(sessions.at(-1)?.token).toBe('test')
     await first.dispose()
     expect(sessions.at(-1)).toBeNull()
@@ -74,7 +75,7 @@ it.each([false, true])('clears credentials when the account stream ends (failure
   installPlatformSessionPublisher(ctx, (session) => { if (session === null) cleared.resolve(undefined) })
   try {
     await ctx.plugin(Account)
-    const account = ctx.get('deepseekAccount')
+    const account = ctx.get('account')
     expect(account).toBeInstanceOf(Account)
     if (!(account instanceof Account)) throw new Error('missing account fixture')
     await account.reading.promise
@@ -98,7 +99,7 @@ it('suppresses a credential read that completes during provider disposal', async
       const account = new Account(scope)
       account.read = () => pending.promise
     })
-    const account = ctx.deepseekAccount
+    const account = ctx.account
     if (!(account instanceof Account)) throw new Error('missing account fixture')
     await account.reading.promise
     const disposed = provider.dispose()

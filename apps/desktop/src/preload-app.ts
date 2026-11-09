@@ -2,7 +2,7 @@
 
 import type { DesktopShortcutInput, ShortcutConfigSnapshot, ShortcutSaveResult } from '@tomato/client-shortcuts/protocol'
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
-import { DESKTOP_IPC, SCHEME, type TomatoDesktopProductApi, type DesktopUpdatePresentation } from './ipc.ts'
+import { DESKTOP_IPC, SCHEME, type TomatoDesktopProductApi, type DesktopRemoteState, type DesktopUpdatePresentation } from './ipc.ts'
 import { PLATFORM_IPC } from './platform-ipc.ts'
 import { markDocumentPlatform, syncWindowFullscreen } from './preload-platform.ts'
 import { syncNativeTheme } from './preload-theme.ts'
@@ -37,6 +37,16 @@ function createProductApi(): TomatoDesktopProductApi {
       }) },
     },
     deviceInfo: () => ipcRenderer.invoke(DESKTOP_IPC.deviceInfo) as Promise<string>,
+    remote: {
+      status: () => ipcRenderer.invoke(DESKTOP_IPC.remoteStatus) as Promise<DesktopRemoteState>,
+      start: () => ipcRenderer.invoke(DESKTOP_IPC.remoteStart) as Promise<DesktopRemoteState>,
+      stop: () => ipcRenderer.invoke(DESKTOP_IPC.remoteStop) as Promise<DesktopRemoteState>,
+      subscribe: (listener) => {
+        const handle = (_event: Electron.IpcRendererEvent, state: DesktopRemoteState): void => { listener(state) }
+        ipcRenderer.on(DESKTOP_IPC.remoteChanged, handle)
+        return () => { ipcRenderer.off(DESKTOP_IPC.remoteChanged, handle) }
+      },
+    },
     keyboard: {
       closeWindow: revision => ipcRenderer.invoke(DESKTOP_IPC.shortcutsCloseWindow, revision) as Promise<void>,
       subscribe: (listener) => {

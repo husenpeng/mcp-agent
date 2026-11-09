@@ -13,6 +13,7 @@ import {
   ipcMain,
   Menu,
   powerMonitor,
+  powerSaveBlocker,
   nativeImage,
   nativeTheme,
   net,
@@ -31,7 +32,7 @@ import { installDesktopFileDrag } from './file-drag.ts'
 import { installDesktopDirectoryPicker } from './directory-picker.ts'
 import { installMicrophonePermissions } from './microphone-permissions.ts'
 import { DesktopBackendController } from './backend-controller.ts'
-import { DESKTOP_IPC, SCHEME, assertDesktopSender, type DesktopUpdateState } from './ipc.ts'
+import { DESKTOP_IPC, SCHEME, assertDesktopSender, type DesktopRemoteState, type DesktopUpdateState } from './ipc.ts'
 import { readDeviceInfo } from './device-info.ts'
 import { desktopUpdateReadyConfirmation, formatDesktopMessage, resolveDesktopLocale, resolveDesktopStartupLocale } from './locale.ts'
 import { claimDesktopSingleInstance } from './single-instance.ts'
@@ -48,6 +49,9 @@ import { openSplashWindow, type DesktopSplash } from './splash-window.ts'
 import { WELCOME_IPC, needsWelcome, type WelcomeNotice } from './welcome-api.ts'
 import { connectDesktopWelcome, type DesktopWelcomeBackend } from './welcome-backend.ts'
 import { webBaseUrl } from './tomato-auth.ts'
+import { registerRemoteIpc } from './remote-ipc.ts'
+import { encodePairingQr, pairingSnapshot } from './remote-link.ts'
+import { RemoteTunnel, type RemoteTunnelState } from './remote-tunnel.ts'
 import { resolveLoginEnvironment, withLoginEnvironment, type DesktopLoginEnvironment } from './login-environment.ts'
 import { DesktopUpdateJournal } from './update-journal.ts'
 import { DesktopUpdatePreparationError } from './update-error.ts'
@@ -59,7 +63,7 @@ import { DesktopMandatoryUpdatePolicy, resolveDesktopPolicyConfig, type DesktopP
 import { desktopClientMetadata, desktopClientVersion } from './client-metadata.ts'
 import { DesktopMandatoryUpdateWindow } from './mandatory-update-window.ts'
 import { DesktopPolicyTestAuth } from './policy-test-auth.ts'
-import { readDesktopSettings } from './settings.ts'
+import { readDesktopSettings, type DesktopSettings } from './settings.ts'
 import { DesktopUpdateDialog, type UpdateDialogOptions } from './update-dialog.ts'
 import { readDesktopRuntime } from './runtime-tree.ts'
 import { DesktopBrowserGuests } from './browser-guests.ts'
@@ -339,8 +343,26 @@ function createWindow(preload: string, show = false, primary = false): BrowserWi
   return window
 }
 
+/**
+ * Apply the remote-access posture this launch was configured with.
+ *
+ * `prevent-app-suspension` keeps the system active while the display may still
+ * turn off, which is what a Host serving a paired phone needs: the display going
+ * dark must not suspend the process holding the agent loop.
+ * @param remote - the validated `remote` section of the shell settings.
+ */
+function applyRemotePosture(remote: DesktopSettings['remote']): void {
+  app.setLoginItemSettings({ openAtLogin: remote.launchAtLogin })
+  if (!remote.keepAwake) return
+  // Process exit releases the assertion; the handler keeps an explicit owner for
+  // the ordinary quit path so a later release cannot act on a recycled id.
+  const assertion = powerSaveBlocker.start('prevent-app-suspension')
+  app.on('will-quit', () => { if (powerSaveBlocker.isStarted(assertion)) powerSaveBlocker.stop(assertion) })
+}
+
 async function main(): Promise<void> {
   const desktopSettings = readDesktopSettings(app.getPath('userData'))
+  applyRemotePosture(desktopSettings.remote)
   void pruneCrashReports(app.getPath('logs'))
   const journalDirectory = process.env.TOMATO_DESKTOP_UPDATE_JOURNAL_DIR
   const updateJournal = journalDirectory === undefined ? undefined : new DesktopUpdateJournal(journalDirectory, app.getVersion())
@@ -492,6 +514,36 @@ async function main(): Promise<void> {
     }
     return mainWindow
   }
+
+  /** Pairing snapshot: tunnel state plus the tokenized root once both sides are up. */
+  const remoteSnapshot = (state: RemoteTunnelState = remoteTunnel.state()): DesktopRemoteState =>
+    pairingSnapshot(state, hostUrl)
+  /** Last encoded pairing QR; regenerated whenever the tunnel hands out a new link. */
+  let pairingQr: { readonly url: string; readonly data: string } | undefined
+  const withPairingQr = async (snapshot: DesktopRemoteState): Promise<DesktopRemoteState> => {
+    const url = snapshot.pairingUrl
+    if (url === undefined) return snapshot
+    if (pairingQr?.url === url) return { ...snapshot, pairingQr: pairingQr.data }
+    const data = await encodePairingQr(url)
+    if (data === undefined) return snapshot
+    pairingQr = { url, data }
+    return { ...snapshot, pairingQr: data }
+  }
+  const remoteTunnel = new RemoteTunnel({
+    binaries: ['cloudflared', '/opt/homebrew/bin/cloudflared', '/usr/local/bin/cloudflared'],
+    target: () => {
+      if (hostUrl === undefined) return undefined
+      const url = new URL(hostUrl)
+      return { host: url.hostname, port: url.port === '' ? 80 : Number(url.port) }
+    },
+    onChange: (state) => {
+      void withPairingQr(remoteSnapshot(state)).then((snapshot) => {
+        mainWindow?.webContents.send(DESKTOP_IPC.remoteChanged, snapshot)
+      })
+    },
+  })
+  app.on('will-quit', () => { remoteTunnel.stop() })
+
   let navigation: { window: BrowserWindow; url: string; promise: Promise<void> } | undefined
   const navigateMain = (url: string): Promise<void> => {
     const window = mainWindow
@@ -516,6 +568,11 @@ async function main(): Promise<void> {
       hostInspectPort, {
         ...withPlaywrightBrowsers(hostEnvironment, playwrightBrowsers, playwrightShell),
         TOMATO_CLIENT_VERSION: desktopClientVersion(),
+        // A stable loopback port is what lets a paired phone reach one tunnel
+        // address across restarts; the Host validates the value as `--port`.
+        TOMATO_DESKTOP_LISTEN_PORT: String(desktopSettings.remote.listenPort),
+        // Newline-separated so an authority can never be confused with a separator.
+        TOMATO_DESKTOP_TRUSTED_HOSTS: desktopSettings.remote.trustedHosts.join('\n'),
         ...(resources.releaseOverlay === undefined ? {} : {
           TOMATO_DESKTOP_RELEASE_OVERLAY: resources.releaseOverlay,
           TOMATO_PROTECTED_READ_ROOTS: JSON.stringify([app.getAppPath()]),
@@ -530,6 +587,7 @@ async function main(): Promise<void> {
         hostCookie = await authenticateWebHost(ready.url)
         hostUrl = ready.url
         diagnostics.write('info', `host ready at ${ready.url}`)
+        if (desktopSettings.remote.tunnel) remoteTunnel.start()
         if (ready.injections === undefined) throw new Error('Desktop Host did not provide boot injections')
         injections = ready.injections
         welcomeBackend = await connectDesktopWelcome(ready.url, (input, init) => net.fetch(input, init), hostCookie)
@@ -812,6 +870,12 @@ async function main(): Promise<void> {
   ipcMain.handle(DESKTOP_IPC.browserRelease, (event, lease: unknown) => {
     assertProductSender(event)
     return browserGuests.release(event.sender, lease)
+  })
+  registerRemoteIpc({
+    host: { handle: (channel, listener) => { ipcMain.handle(channel, listener) } },
+    tunnel: remoteTunnel,
+    assertSender: (event) => { assertProductSender(event) },
+    snapshot: () => withPairingQr(remoteSnapshot()),
   })
 
   session.defaultSession.webRequest.onBeforeSendHeaders({ urls: ['ws://127.0.0.1/*', 'wss://127.0.0.1/*'] }, (details, callback) => {

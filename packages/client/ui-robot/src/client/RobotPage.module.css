@@ -1,91 +1,154 @@
+/* Robot page: the run rail on the left and one run's conversation on the right. */
+
 .page {
   display: flex;
   height: 100%;
   min-height: 0;
 }
 
-.detail {
-  flex: 1;
-  min-width: 0;
-  overflow: auto;
-  padding: 16px;
+.rail {
   display: flex;
+  flex: 0 0 300px;
   flex-direction: column;
-  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  border-right: 0.5px solid var(--dsw-alias-border-l4);
 }
 
-.heading {
+.railHead {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px 14px 12px;
+}
+
+.toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin: 0 0 8px;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 22px;
+}
+
+.robotRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.robotInfo {
+  min-width: 0;
+}
+
+.robotName {
+  margin: 0;
+  overflow: hidden;
   color: var(--dsw-alias-label-primary);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 22px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.empty {
-  margin: 0;
-  font-size: 13px;
-  color: var(--dsw-alias-label-tertiary);
-}
-
-.error {
-  margin: 0;
-  color: var(--dsw-alias-state-error-primary);
-  font-size: 13px;
-}
-
-.runRow {
+.robotState {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
+  margin-top: 2px;
+  color: var(--dsw-alias-label-tertiary);
   font-size: 12px;
-  color: var(--dsw-alias-label-secondary);
+  line-height: 18px;
 }
 
-.runInput {
-  flex: 1;
-  min-width: 240px;
+.robotState[data-running='true'] {
+  color: var(--dsw-alias-state-success-primary);
 }
 
-.runsPane {
+.mission {
+  display: -webkit-box;
+  overflow: hidden;
+  max-height: 36px;
+  margin: 4px 0 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.listLabel {
   display: flex;
-  flex: 0 0 40%;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 20px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.runList {
+  display: flex;
+  flex: 1;
   flex-direction: column;
-  gap: 8px;
-  min-width: 0;
+  gap: 2px;
   min-height: 0;
   overflow: auto;
-  padding: 16px;
+  padding: 0 8px 12px;
+  /* The rail rows elevate on hover, so this scroller rebinds the thumb indirection. */
+  --tomato-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
+  --tomato-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
 }
 
 .runItem {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 8px;
+  gap: 4px;
+  padding: 9px 10px;
   border: 0;
-  border-radius: 8px;
-  background: transparent;
+  border-radius: var(--dsw-radius-sm);
+  background: none;
+  color: inherit;
+  font: inherit;
   text-align: left;
   cursor: pointer;
 }
 
-.runItem:hover,
+@media (hover: hover) {
+  .runItem:hover {
+    background: var(--dsw-alias-bg-layer-2);
+  }
+}
+
 .runItem[aria-current='true'] {
   background: var(--dsw-alias-bg-layer-2);
+  box-shadow: inset 0 0 0 0.5px var(--dsw-alias-border-l4);
+}
+
+.runText {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--dsw-alias-label-primary);
+  font-size: 13px;
+  line-height: 19px;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.runMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
 }
 
 .runState {
-  font-size: 12px;
-  color: var(--dsw-alias-label-tertiary);
-}
-
-.runItem[data-state='waiting'] .runState {
-  color: var(--dsw-alias-state-warn-primary);
+  flex: none;
 }
 
 .runItem[data-state='failed'] .runState,
@@ -93,21 +156,78 @@
   color: var(--dsw-alias-state-error-primary);
 }
 
-.runText {
-  overflow: hidden;
-  font-size: 13px;
-  color: var(--dsw-alias-label-primary);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.runItem[data-state='waiting'] .runState {
+  color: var(--dsw-alias-state-warn-primary);
 }
 
-@media (max-width: 760px) {
+.sep {
+  color: var(--dsw-alias-label-secondary);
+}
+
+.railFoot {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 10px 16px 14px;
+  border-top: 0.5px solid var(--dsw-alias-border-l4);
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.empty {
+  margin: 0;
+  padding: 10px 12px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.railError {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 10px 16px;
+  border-top: 0.5px solid var(--dsw-alias-border-l4);
+  color: var(--dsw-alias-state-error-primary);
+  font-size: 13px;
+  line-height: 19px;
+}
+
+.main > .railError {
+  padding: 0;
+  border-top: 0;
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  overflow: auto;
+  padding: 16px;
+}
+
+.detail {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+@media (max-width: 900px) {
   .page {
     flex-direction: column;
   }
 
-  .runsPane {
+  .rail {
     flex: 0 0 auto;
+    border-right: 0;
+    border-bottom: 0.5px solid var(--dsw-alias-border-l4);
+  }
+
+  .runList {
+    max-height: 200px;
   }
 
   .detail {

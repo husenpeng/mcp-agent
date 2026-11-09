@@ -197,6 +197,16 @@ export function validateSessionEventData(
       }
     }
   }
+  if (event.type === 'conversation/retraction') {
+    if (!isRecord(data)) throw new Error(`${subject} data must be an object`)
+    if (typeof data['messageId'] !== 'string' || data['messageId'].length === 0) {
+      throw new Error(`${subject} requires a nonempty messageId`)
+    }
+    if (!isEventSeq(data['startSeq']) || !isEventSeq(data['endSeq'])
+      || data['startSeq'] > data['endSeq']) {
+      throw new Error(`${subject} requires startSeq <= endSeq as non-negative safe event seqs`)
+    }
+  }
   if (event.type === 'request/header') {
     if (!isRecord(data)) throw new Error(`${subject} data must be an object`)
     const header = data['header']
@@ -231,12 +241,26 @@ export interface SurfaceFoldReplacement {
   shadowedSeqs: SessionSeq[]
 }
 
+/** One human retraction observed while folding a session surface. */
+export interface SurfaceFoldRetraction {
+  /** Seq of the `conversation/retraction` event. */
+  seq: SessionSeq
+  /** Declared inclusive start seq of the removed surface range. */
+  start: SessionSeq
+  /** Declared inclusive end seq of the removed surface range. */
+  end: SessionSeq
+  /** Actual surface entries removed by the operation, in surface order. */
+  removedSeqs: SessionSeq[]
+}
+
 /** Complete result of replaying the surface operations in a session log. */
 export interface SurfaceFoldResult {
   /** Current surface event sequences in model-visible order. */
   nodes: SessionSeq[]
   /** Replacement operations in event order. */
   replacements: SurfaceFoldReplacement[]
+  /** Human retractions in event order. */
+  retractions: SurfaceFoldRetraction[]
   /** Immutable projected messages, keyed by their original event sequences. */
   projectedMessages: ReadonlyMap<SessionSeq, Message>
 }
@@ -245,9 +269,9 @@ export interface SurfaceFoldResult {
 export interface SessionSurface {
   /** Current surface event sequences in model-visible order. */
   readonly nodes: readonly SessionSeq[]
-  /** Monotonic count of committed positional replacements. */
+  /** Monotonic count of committed positional surface changes: replacements and retractions. */
   readonly replaceGeneration: number
-  /** Monotonic count of committed replacements and plugin-owned message changes. */
+  /** Monotonic count of committed surface changes and plugin-owned message changes. */
   readonly contentGeneration: number
 }
 
@@ -267,10 +291,17 @@ interface SurfaceReplacePlan extends SurfaceFoldReplacement {
   endIdx: number
 }
 
+/** A validated retraction transition that has not mutated fold state yet. */
+interface SurfaceRetractPlan extends SurfaceFoldRetraction {
+  kind: 'retract'
+  startIdx: number
+}
+
 /** One validated surface transition that has not mutated fold state yet. */
 type SurfacePlan =
   | { kind: 'append'; seq: SessionSeq }
   | SurfaceReplacePlan
+  | SurfaceRetractPlan
   | { kind: 'project'; projection: SessionMessageProjection; messages: ReadonlyMap<SessionSeq, Message> }
 
 /** Create an empty surface fold state. */
@@ -506,6 +537,58 @@ function assertSystemHeadRewrite(
   }
 }
 
+/**
+ * Validate one retraction against the current surface and plan its tail removal.
+ * A retraction must name the turn-opening human message it starts at, and the
+ * surface tail it ends at; this is what makes retraction leaf-only.
+ */
+function planRetraction(
+  state: SurfaceFoldState,
+  event: SessionEvent<'conversation/retraction'>,
+  events: readonly SessionEvent[],
+  baseSeq: SessionLogOffset,
+): SurfaceRetractPlan {
+  const data: unknown = event.data
+  if (!isRecord(data)) throw new Error(`conversation/retraction at seq ${event.seq} requires an object payload`)
+  const startSeq = data['startSeq']
+  const endSeq = data['endSeq']
+  const messageId = data['messageId']
+  if (!isEventSeq(startSeq) || !isEventSeq(endSeq) || startSeq > endSeq) {
+    throw new Error(`conversation/retraction at seq ${event.seq} requires startSeq <= endSeq as event seqs`)
+  }
+  if (typeof messageId !== 'string' || messageId.length === 0) {
+    throw new Error(`conversation/retraction at seq ${event.seq} requires a nonempty messageId`)
+  }
+  if (state.nodes.length === 0 || state.nodes.at(-1) !== endSeq) {
+    throw new Error(`conversation/retraction at seq ${event.seq} must end at the current surface tail`)
+  }
+  const startIdx = state.nodes.indexOf(startSeq)
+  if (startIdx === -1) {
+    throw new Error(`conversation/retraction at seq ${event.seq} start seq ${startSeq} is not on the current surface`)
+  }
+  const startEvent = events[startSeq - baseSeq]
+  if (startEvent?.seq !== startSeq || startEvent.type !== 'user/message'
+    || startEvent.surfaceOp !== 'append' || startEvent.data.source.kind !== 'user'
+    || startEvent.data.id !== messageId) {
+    throw new Error(`conversation/retraction at seq ${event.seq} must start at the named human user/message`)
+  }
+  // Removing a replacement node would silently lose the content it shadowed:
+  // only append-origin nodes can be dropped from the surface tail.
+  for (const seq of state.nodes.slice(startIdx)) {
+    if (events[seq - baseSeq]?.surfaceOp !== 'append') {
+      throw new Error(`conversation/retraction at seq ${event.seq} may remove only append-origin surface nodes`)
+    }
+  }
+  return {
+    kind: 'retract',
+    seq: event.seq,
+    start: startSeq,
+    end: endSeq,
+    startIdx,
+    removedSeqs: state.nodes.slice(startIdx),
+  }
+}
+
 /** Validate one event at its replay boundary and prepare its atomic fold transition. */
 function planSurfaceEvent(
   state: SurfaceFoldState,
@@ -529,6 +612,7 @@ function planSurfaceEvent(
   if (MESSAGE_PROJECTION_EVENT_TYPES.has(event.type)) {
     throw new Error(`session event "${event.type}" requires a message projection; load its owning plugin or supply its projection definition`)
   }
+  if (event.type === 'conversation/retraction') return planRetraction(state, event, events, baseSeq)
   if (surfaceOp === undefined) return
   if (surfaceOp === 'append') {
     return { kind: 'append', seq: event.seq }
@@ -546,7 +630,12 @@ function planSurfaceEvent(
   }
 }
 
-/** Apply one event and return replacement metadata only when one occurred. */
+/** One fold transition reported to complete-history callers. */
+type SurfaceFoldObservation =
+  | { readonly kind: 'replace'; readonly replacement: SurfaceFoldReplacement }
+  | { readonly kind: 'retract'; readonly retraction: SurfaceFoldRetraction }
+
+/** Apply one event and return the fold transition it committed, when observable. */
 function applySurfaceEvent(
   state: SurfaceFoldState,
   event: SessionEvent,
@@ -554,7 +643,7 @@ function applySurfaceEvent(
   events: readonly SessionEvent[],
   baseSeq: SessionLogOffset,
   projections: readonly SessionMessageProjection[],
-): SurfaceFoldReplacement | undefined {
+): SurfaceFoldObservation | undefined {
   const plan = planSurfaceEvent(state, event, expectedSeq, events, baseSeq, projections)
   return applySurfacePlan(state, plan)
 }
@@ -563,11 +652,15 @@ function applySurfaceEvent(
 function applySurfacePlan(
   state: SurfaceFoldState,
   plan: SurfacePlan | undefined,
-): SurfaceFoldReplacement | undefined {
+): SurfaceFoldObservation | undefined {
   if (plan?.kind === 'append') {
     state.nodes.push(plan.seq)
   } else if (plan?.kind === 'replace') {
     state.nodes.splice(plan.startIdx, plan.endIdx - plan.startIdx + 1, plan.seq)
+    state.replaceGeneration += 1
+    state.contentGeneration += 1
+  } else if (plan?.kind === 'retract') {
+    state.nodes.splice(plan.startIdx, plan.removedSeqs.length)
     state.replaceGeneration += 1
     state.contentGeneration += 1
   } else if (plan?.kind === 'project') {
@@ -575,12 +668,27 @@ function applySurfacePlan(
     state.projections.add(plan.projection)
     state.contentGeneration += 1
   }
-  if (plan?.kind !== 'replace') return
-  return {
-    seq: plan.seq,
-    start: plan.start,
-    end: plan.end,
-    shadowedSeqs: plan.shadowedSeqs,
+  if (plan?.kind === 'replace') {
+    return {
+      kind: 'replace',
+      replacement: {
+        seq: plan.seq,
+        start: plan.start,
+        end: plan.end,
+        shadowedSeqs: plan.shadowedSeqs,
+      },
+    }
+  }
+  if (plan?.kind === 'retract') {
+    return {
+      kind: 'retract',
+      retraction: {
+        seq: plan.seq,
+        start: plan.start,
+        end: plan.end,
+        removedSeqs: plan.removedSeqs,
+      },
+    }
   }
 }
 
@@ -594,8 +702,9 @@ function applySurfacePlan(
 export function foldSurface(events: readonly SessionEvent[], projections: readonly SessionMessageProjection[] = []): SurfaceFoldResult {
   const state = createFoldState()
   const replacements: SurfaceFoldReplacement[] = []
+  const retractions: SurfaceFoldRetraction[] = []
   for (const [index, event] of events.entries()) {
-    const replacement = applySurfaceEvent(
+    const observation = applySurfaceEvent(
       state,
       event,
       SessionSeq(index),
@@ -603,9 +712,15 @@ export function foldSurface(events: readonly SessionEvent[], projections: readon
       SessionLogOffset(0),
       projections,
     )
-    if (replacement !== undefined) replacements.push(replacement)
+    if (observation?.kind === 'replace') replacements.push(observation.replacement)
+    else if (observation?.kind === 'retract') retractions.push(observation.retraction)
   }
-  return { nodes: [...state.nodes], replacements, projectedMessages: new Map(state.projectedMessages) }
+  return {
+    nodes: [...state.nodes],
+    replacements,
+    retractions,
+    projectedMessages: new Map(state.projectedMessages),
+  }
 }
 
 /** Incremental ordered surface view and append-boundary validator. */

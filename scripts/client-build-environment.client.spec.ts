@@ -85,7 +85,7 @@ describe('client build environment', () => {
     const expected = {
       TOMATO_CLIENT_BUILD_PROFILE: 'official',
       TOMATO_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
-      TOMATO_CLIENT_TITLE: 'Tomato Harness',
+      TOMATO_CLIENT_TITLE: 'Tomato AI',
       TOMATO_CLIENT_VERSION: '1.2.3',
     } as const
 
@@ -115,7 +115,7 @@ describe('client build environment', () => {
     expect(resolveClientBuildEnvironment(parent)).toEqual({
       TOMATO_CLIENT_BUILD_PROFILE: 'official',
       TOMATO_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
-      TOMATO_CLIENT_TITLE: 'Tomato Harness',
+      TOMATO_CLIENT_TITLE: 'Tomato AI',
       TOMATO_CLIENT_VERSION: '1.2.3',
     })
     expect(() => {
@@ -131,13 +131,13 @@ describe('client build environment', () => {
     expect(clientBuildProcessEnvironment(parent, {
       TOMATO_CLIENT_BUILD_PROFILE: 'official',
       TOMATO_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
-      TOMATO_CLIENT_TITLE: 'Tomato Harness',
+      TOMATO_CLIENT_TITLE: 'Tomato AI',
       TOMATO_CLIENT_VERSION: '1.2.3',
     })).toEqual({
       PATH: '/bin',
       TOMATO_CLIENT_BUILD_PROFILE: 'official',
       TOMATO_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
-      TOMATO_CLIENT_TITLE: 'Tomato Harness',
+      TOMATO_CLIENT_TITLE: 'Tomato AI',
       TOMATO_CLIENT_VERSION: '1.2.3',
     })
     expect(repositoryCommitHash('/unused', { TOMATO_CLIENT_COMMIT_HASH: COMMIT_HASH })).toBe(COMMIT_HASH.slice(0, 7))
@@ -147,7 +147,7 @@ describe('client build environment', () => {
     const parent = {
       TOMATO_BUILD_CLIENT_PROFILE: 'official',
       TOMATO_CLIENT_BUILD_PROFILE: 'official',
-      TOMATO_CLIENT_TITLE: 'Tomato Harness',
+      TOMATO_CLIENT_TITLE: 'Tomato AI',
       TOMATO_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
       TOMATO_CLIENT_VERSION: '1.2.3',
       TOMATO_CLIENT_GIT_DIRTY: dirty,
@@ -165,7 +165,7 @@ describe('client build environment', () => {
     expect(resolveClientBuildEnvironment({ ...parent, ...local }, 'official')).toEqual({
       TOMATO_CLIENT_BUILD_PROFILE: 'official',
       TOMATO_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
-      TOMATO_CLIENT_TITLE: 'Tomato Harness',
+      TOMATO_CLIENT_TITLE: 'Tomato AI',
       TOMATO_CLIENT_VERSION: '1.2.3',
     })
   })
@@ -191,12 +191,13 @@ describe('client build environment', () => {
     })).toEqual({
       TOMATO_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
       TOMATO_CLIENT_EXTRA: 'preserved',
+      TOMATO_CLIENT_TITLE: 'Tomato AI',
       TOMATO_CLIENT_VERSION: '1.2.3-rc.4',
     })
     expect(officialClientBuildEnvironment(fixtureRoot)).toEqual({
       TOMATO_CLIENT_BUILD_PROFILE: 'official',
       TOMATO_CLIENT_COMMIT_HASH: commit,
-      TOMATO_CLIENT_TITLE: 'Tomato Harness',
+      TOMATO_CLIENT_TITLE: 'Tomato AI',
       TOMATO_CLIENT_VERSION: '1.2.3-rc.4',
     })
 
@@ -225,6 +226,7 @@ describe('client build environment', () => {
     })).toEqual({
       TOMATO_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
       TOMATO_CLIENT_GIT_DIRTY: 'true',
+      TOMATO_CLIENT_TITLE: 'Tomato AI',
       TOMATO_CLIENT_VERSION: '1.2.3-rc.4',
     })
 
@@ -248,6 +250,7 @@ describe('client build environment', () => {
       TOMATO_CLIENT_GIT_DIRTY: 'true',
     })).toEqual({
       TOMATO_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
+      TOMATO_CLIENT_TITLE: 'Tomato AI',
       TOMATO_CLIENT_VERSION: '2.0.0',
     })
   })
@@ -305,7 +308,7 @@ describe('client build environment', () => {
     const officialEnvironment = {
       TOMATO_CLIENT_BUILD_PROFILE: 'official',
       TOMATO_CLIENT_COMMIT_HASH: COMMIT_HASH.slice(0, 7),
-      TOMATO_CLIENT_TITLE: 'Tomato Harness',
+      TOMATO_CLIENT_TITLE: 'Tomato AI',
       TOMATO_CLIENT_VERSION: '1.2.3',
     }
     const official = buildFixture(officialEnvironment)

@@ -1,0 +1,40 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/experimental-robot-crew-local/README.md
+/:
+  en: 1f7c9d6372464699
+  zh: eedbbc40d0e1400d
+/robot-crew-local:
+  en: 13f9cafb02a371b6
+  zh: 6713898fe78e4fd4
+/robot-crew-local/summary:
+  en: 3b3d0df2118d3f50
+  zh: 23020e79f9fd0328
+/robot-crew-local/table-of-contents:
+  en: 4e53164159b5ce41
+  zh: 89582dc0294d0776
+/robot-crew-local/use-this-package:
+  en: 85661cb211d5d516
+  zh: 96a4a8d4deb03cb3
+/robot-crew-local/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/robot-crew-local/model-experience/member-brief-and-a2a-tool:
+  en: 7dd20ef1f6e53e72
+  zh: 4c6667411a4cd4c7
+/robot-crew-local/model-experience/member-brief-and-a2a-tool/what-the-model-sees:
+  en: 2b21c6eb4894ec4c
+  zh: db564262a4d5bfc8
+/robot-crew-local/model-experience/member-brief-and-a2a-tool/token-effect:
+  en: d401794e25832a9b
+  zh: ea9f708fe8186f02
+/robot-crew-local/model-experience/member-brief-and-a2a-tool/kv-cache-effect:
+  en: a44e1714f0f6c6be
+  zh: 110b5c79b19c3aa5
+/robot-crew-local/known-limitations-and-deferred-work:
+  en: 86abdb63f99ebe9a
+  zh: ac3a5631c1ccf7c1
+/robot-crew-local/known-limitations-and-deferred-work/dev-note:
+  en: bd295c308e2d2580
+  zh: 32a1efe5ac947753

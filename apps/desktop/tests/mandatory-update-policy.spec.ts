@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { AccountClientMetadata } from '@tomato/deepseek-account/types'
+import type { AccountClientMetadata } from '@tomato/account-service/types'
 import { DesktopMandatoryUpdatePolicy, desktopPolicyPage, resolveDesktopPolicyConfig, type DesktopPolicyState } from '../src/mandatory-update-policy.ts'
 
 const identity = { platform: 'win32', arch: 'x64', channel: 'nightly', bundledTomatoVersion: '0.1.5-rc.1' } as const

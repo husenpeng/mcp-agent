@@ -1,5 +1,5 @@
 /** Tab state and actions: catalog load, query, selection, detail reads, and install preflight. */
-import { adaptVersion, readCatalog, readDetail, readManifest } from './api.js'
+import { adaptVersion, readCatalog, readDetail, readManifest, resolveVersion } from './api.js'
 import { installTarget, latestVersion, localized } from './search.js'
 
 /**
@@ -43,6 +43,7 @@ export function createController(i18n) {
     compat: { status: 'idle' },
     checking: null,
     notice: null,
+    substitution: null,
   })
   let loadToken = 0
   let detailToken = 0
@@ -89,29 +90,43 @@ export function createController(i18n) {
     void open(plugin)
   }
 
+  /** Install one version, switching first to a listed version the running TOMATO admits. */
   const install = async (plugin, version, installFn) => {
     if (state().checking !== null) return
     set({ checking: plugin.name, notice: null })
+    const resolution = await resolveVersion(plugin, version).catch(error => ({ status: 'unknown', reason: error?.message ?? String(error) }))
+    if (resolution.status === 'none') {
+      set({ checking: null, notice: { kind: 'incompatible', plugin, version, resolution } })
+      return
+    }
+    const selected = resolution.status === 'resolved'
+      ? plugin.versions.find(entry => entry.version === resolution.selected)
+        ?? { version: resolution.selected, source: { type: 'npm' } }
+      : undefined
+    const chosen = selected ?? version
+    if (chosen.version !== version.version) {
+      set({ substitution: { plugin, requested: version, selected: chosen, runtimeVersion: resolution.runtimeVersion } })
+    }
     let compat
     try {
-      compat = await readManifest(plugin, version)
+      compat = await readManifest(plugin, chosen)
     } catch (error) {
       set({
         checking: null,
         notice: {
           kind: 'unknown',
           plugin,
-          version,
+          version: chosen,
           reason: error?.message ?? String(error),
         },
       })
       return
     }
     const title = localized(plugin.title, state().language) || plugin.name
-    const target = installTarget(plugin, version)
+    const target = installTarget(plugin, chosen)
     if (compat.class === 'tomato') {
       set({ checking: null })
-      installFn({ ...target, title, version: version.version })
+      installFn({ ...target, title, version: chosen.version })
       return
     }
     set({
@@ -119,7 +134,7 @@ export function createController(i18n) {
       notice: {
         kind: compat.class === 'dsh' ? 'compat' : 'other',
         plugin,
-        version,
+        version: chosen,
         compat,
       },
     })
@@ -178,5 +193,6 @@ export function createController(i18n) {
     adaptAndInstall,
     confirmOverride,
     dismissNotice: () => { set({ notice: null }) },
+    dismissSubstitution: () => { set({ substitution: null }) },
   }
 }

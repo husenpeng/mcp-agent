@@ -101,6 +101,12 @@ export interface RobotCapabilityOption {
   readonly label: string
   /** One-line detail that helps a person choose. */
   readonly description?: string
+  /**
+   * Absolute folder the value belongs to, when the source publishes one: a
+   * skill's source folder or a Workspace root. Omitted for values that exist
+   * only as names, such as MCP server registrations.
+   */
+  readonly path?: string
 }
 
 /**

@@ -61,6 +61,17 @@ export function adaptVersion(plugin, version) {
 }
 
 /**
+ * Ask which listed version the running TOMATO admits, starting from the one asked for.
+ * @param {{ name: string, versions: object[] }} plugin - the plugin.
+ * @param {{ version: string }} version - the version the reader chose.
+ * @returns {Promise<object>} `{ status: 'resolved', runtimeVersion, requested, selected, rejected }`,
+ *   `{ status: 'none', ... }` when no listed version is compatible, or `{ status: 'unknown', reason }`.
+ */
+export function resolveVersion(plugin, version) {
+  return call('resolve', { name: plugin.name, version: version.version })
+}
+
+/**
  * Read one version's README.
  * @param {{ name: string }} plugin - the plugin.
  * @param {{ version: string }} version - the listed version.

@@ -53,7 +53,7 @@ The generated [configuration catalog](../../../docs/config-catalog.md#tomatohead
 <a id="credentials"></a>
 ### Credentials
 
-The shipped headless profile disables the managed credential store and its authorization and DeepSeek account consumers. API-key routes use the launch environment, then `<invocation cwd>/.env`, then `$TOMATO_HOME/.env`. Keys and sign-ins saved by the GUI are ignored without changing their file. Providers that require a saved sign-in fail unless stored authentication is restored; external provider credential chains, such as AWS profiles, remain available.
+The shipped headless profile disables the managed credential store and its authorization consumer. API-key routes use the launch environment, then `<invocation cwd>/.env`, then `$TOMATO_HOME/.env`. Keys and sign-ins saved by the GUI are ignored without changing their file. Providers that require a saved sign-in fail unless stored authentication is restored; external provider credential chains, such as AWS profiles, remain available.
 
 Unset an empty launch variable to allow its `.env` fallback; an exported empty value shadows that fallback.
 
@@ -63,8 +63,6 @@ To restore stored authentication, add these rows to `$TOMATO_HOME/profiles/headl
 - id: credentials
   disabled: false
 - id: authorization
-  disabled: false
-- id: deepseek-account
   disabled: false
 ```
 

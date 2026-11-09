@@ -19,7 +19,7 @@
  */
 import type {
   AccountBonusBatch, AccountBonusOrderId, AccountUserId,
-} from '@tomato/deepseek-account/types'
+} from '@tomato/account-service/types'
 
 /** Notice eligible for display; the message is server-authored for the active locale. */
 export interface BonusNotice {

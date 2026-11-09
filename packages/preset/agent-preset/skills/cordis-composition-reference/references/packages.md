@@ -20,6 +20,7 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@tomato/api-remote-access` | no | Method-level Remote access control for non-owner Peers and the per-Peer access snapshot |
 | `@tomato/api-remotes` | no | Remote BFF assembly for application-selected Host capabilities |
 | `@tomato/api-robot-controller` | no | Robot Remote roster stream, specification publication, and run control for browser clients |
+| `@tomato/api-robot-crew-controller` | no | Crew Remote roster stream, specification publication, run start, and flow-ledger reads for browser clients |
 | `@tomato/api-session-controller` | yes | Session Remote commands, cold reads, and live control transport |
 | `@tomato/api-settings-controller` | yes | Remote owner for the configuration surfaces over the settings-domain seams |
 | `@tomato/api-terminal-controller` | yes | Session-owned interactive terminals with shell discovery, screen recovery and typed Remote control |
@@ -96,6 +97,7 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@tomato/client-ui-reference` | no | Unified Web @file and @session reference source |
 | `@tomato/client-ui-renderer` | no | Browser UI renderer: React slot bindings, ctx.uiRenderer, and the assembled application root |
 | `@tomato/client-ui-robot` | no | Tomato Rbot page: the robot roster in the sidebar, the robot specification editor, and a robot conversation surface separate from workspaces |
+| `@tomato/client-ui-robot-crew` | no | Tomato Rbot crew studio: a multi-agent workflow canvas, node inspector, loop-guard settings, and live flow ledger |
 | `@tomato/client-ui-schedule` | no | Host task management page and Session reminder catalog |
 | `@tomato/client-ui-secret-mask` | no | Web display masking for recognized credentials in sent user text |
 | `@tomato/client-ui-session` | no | Session Controller adapter for React and session-scoped slots |
@@ -175,7 +177,6 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 |---|---|---|
 | `@tomato/authorization` | no | Authorization seam (ctx.authorization): plugin-owned flows that obtain a credential through a conversation with the human |
 | `@tomato/credentials-local` | yes | File-backed credentials provider ($TOMATO_HOME/.env under the live process environment) for the Tomato Harness |
-| `@tomato/deepseek-account-platform` | yes | Authorize DeepSeek accounts through browser PKCE |
 
 ## deliverables
 
@@ -215,15 +216,18 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@tomato/experimental-computer-use-cua-driver-mcp` | yes | Experimental computer use through an installed Cua Driver MCP executable |
 | `@tomato/experimental-computer-use-cua-driver-native` | no | Experimental computer-use provider embedding the Cua Driver native npm SDK |
 | `@tomato/experimental-cua-macos` | yes | macOS native provider for shared Computer Use application and window objects |
+| `@tomato/experimental-embeddings-http` | yes | OpenAI-compatible embeddings provider for ctx.embeddings over one batched HTTP request |
 | `@tomato/experimental-focus` | yes | Goal-round failure ledger, repeated-failure reminders, and per-tool approval policy for long-running goals |
 | `@tomato/experimental-inspector` | yes | Experimental cross-realm CDP hub for Host debugging and Client Runtime inspection |
 | `@tomato/experimental-memory` | yes | Account-scoped cross-session memory: profile and workspace records stored outside Session logs |
 | `@tomato/experimental-muse-insights` | yes | Daily work recaps and proactive unfinished-task nudges over the Muse memory bundle |
 | `@tomato/experimental-ptc-runtime-python` | yes | CPython subprocess implementation of the Tomato Harness PTC execution seam |
 | `@tomato/experimental-robot-app` | no | The Tomato Rbot bundle: the robot registry, run executor, triggers, Remote controller, and the robot page with its sidebar roster and separate conversation surface |
+| `@tomato/experimental-robot-crew-local` | no | Storage-backed crew provider that orchestrates crew runs through one Agent per node with A2A messages, memory briefs, and loop protection |
+| `@tomato/experimental-robot-crew-remote` | no | Mounts the generated crew Remote contribution in an optional client assembly |
 | `@tomato/experimental-robot-local` | no | Storage-backed robot specification registry, instantiation, and run control |
 | `@tomato/experimental-robot-remote` | no | Mounts the generated robot Remote contribution in an optional client assembly |
-| `@tomato/experimental-robot-runtime` | no | Executes queued robot runs through a composed Agent and records their outcomes |
+| `@tomato/experimental-robot-runtime` | yes | Executes queued robot runs through a composed Agent and records their outcomes |
 | `@tomato/experimental-robot-templates-marketing` | no | Eleven creator-marketing robot templates and the skills they run: brand insight, influencer marketing, creative and competitor intelligence, and product selection and data insight for TikTok, Instagram, X, and YouTube |
 | `@tomato/experimental-robot-triggers` | no | Starts robot runs from cron schedules and robot event topics |
 | `@tomato/experimental-session-inspector` | no | Experimental virtualized Session log and live Chat group/node inspectors |
@@ -233,6 +237,7 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@tomato/experimental-tool-agent-team` | yes | Scoped model-facing Agent Teams tools over ctx.agentTeams |
 | `@tomato/experimental-tool-memory` | yes | Model-facing memory tools, the /memory command, and profile and pinned-memory injection over ctx.memory |
 | `@tomato/experimental-tool-robot` | no | Model-facing robot_create tool that publishes and instantiates a Tomato Rbot from the four basic fields |
+| `@tomato/experimental-tool-robot-crew` | no | Model-facing robot_crew_create tool that publishes a multi-agent crew graph from a conversation |
 | `@tomato/experimental-tool-subagent-oar` | yes | Delegate standalone tasks to configured external subagent providers |
 | `@tomato/experimental-tool-worktree` | no | Model tool that creates and enters a new Git worktree |
 | `@tomato/experimental-translator` | yes | Machine translation with reusable Session results |
@@ -328,7 +333,6 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@tomato/deepseek-llm-api-extensions` | no | Additive request-field registry for the official DeepSeek LLM API adapter |
 | `@tomato/image-evidence` | yes | Image evidence bridge: text-only models read pasted images through a configured vision model |
 | `@tomato/llm` | no | Provider-neutral LLM service interface for the Tomato Harness |
-| `@tomato/llm-deepseek-account` | yes | DeepSeek account provider authentication and discovery |
 | `@tomato/llm-deepseek-api-key` | yes | DeepSeek api-key provider authentication and discovery |
 | `@tomato/llm-pi-ai` | yes | pi-ai-backed DeepSeek adapter for the Tomato Harness LLM seam (design-verification twin of @tomato/llm-deepseek) |
 | `@tomato/llm-retry` | yes | Provider-routed LLM request retry policy for the Tomato Harness |
@@ -527,7 +531,9 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | Package | Config | Description |
 |---|---|---|
 | `@tomato/account` | no | Tomato account surface: sidebar launcher and settings page over the local gateway's auth_service session |
+| `@tomato/account-gateway` | yes | Feishu gateway account provider for the Host account service |
 | `@tomato/brand` | no | Tomato brand occupants for the sidebar and conversation-hero slots |
+| `@tomato/client-ui-account-access` | no | Feishu account access section showing verified roles and quotas |
 | `@tomato/gateway` | yes | Tomato local gateway: same-origin auth routes and a fixed-table HTTP forwarder for company services |
 | `@tomato/telemetry` | yes | Session-event traces for Tomato AI, delivered as OTLP/HTTP JSON to the internal relay |
 
@@ -544,6 +550,7 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@tomato/tool-web` | yes | Model-facing web tools (web_search, web_fetch) over the Tomato Harness web capability seam (ctx.web) |
 | `@tomato/web` | yes | Abstract web access capability seam (ctx.web) for the Tomato Harness — search/fetch provider registry, registration-order-independent selection, request/result vocabulary, and the WebError taxonomy |
 | `@tomato/web-deepseek-api` | yes | DeepSeek Search and Fetch API providers for the Tomato Harness web capability seam (ctx.web) |
+| `@tomato/web-fetch-company` | yes | Company-gateway fetch provider for the Tomato Harness web capability seam (ctx.web) |
 | `@tomato/web-fetch-http` | yes | Anonymous HTTP(S) fetch provider for the Tomato Harness web capability seam (ctx.web) |
 | `@tomato/web-search-company` | yes | Company-gateway search provider for the Tomato Harness web capability seam (ctx.web) |
 | `@tomato/web-search-deepseek` | yes | DeepSeek-backed search provider (native web_search via the Anthropic-compatible API) for the Tomato Harness web capability seam (ctx.web) |

@@ -3,14 +3,14 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/experimental/robot-app/README.md
 /:
-  en: 1032fe8fd1d4c83e
-  zh: dd9ef5f68c63cd21
+  en: f6123f9897beb6c9
+  zh: 50d991ca0bdaef0b
 /robot-app:
   en: b6fcebfc6030cc1b
   zh: 0e0f414295b182f6
 /robot-app/summary:
-  en: 73d6b16e802a059d
-  zh: cdf9391f26d6a16e
+  en: af91023006dc9a0a
+  zh: e4bf55664cabaf02
 /robot-app/table-of-contents:
   en: 18675861de54d03d
   zh: d6c46a84569e6df8
@@ -18,8 +18,8 @@
   en: db402f3ab7d1194c
   zh: f0e33e38ea0af1fe
 /robot-app/create-a-robot:
-  en: 179f057d47a25cda
-  zh: e928cdabf0702f5e
+  en: 78bfeb901cda903d
+  zh: e7bffb340943bcd0
 /robot-app/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
@@ -36,8 +36,8 @@
   en: 6ca52c13e0a49fdf
   zh: 89990d3592e627b1
 /robot-app/known-limitations-and-deferred-work:
-  en: a75d6a57c0b06e25
-  zh: a03bbe066120c542
+  en: b7b98ef780b50429
+  zh: ea6bb1bed0c9b82c
 /robot-app/known-limitations-and-deferred-work/dev-note:
   en: 3c54258dcfd18d44
   zh: 3327f21629f51196

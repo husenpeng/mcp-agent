@@ -8,15 +8,17 @@
 import { randomUUID } from 'node:crypto'
 import { brandString } from '@tomato/branded'
 import { Service } from '@tomato/cordis'
+import type { Context } from '@tomato/cordis'
 import Robots, { isTerminalRunState } from '@tomato/experimental-robot'
 import type {
   ActiveRunState, Robot, RobotId, RobotSpec, RobotSpecId, RobotSpecRef, RobotSpecRevision, Run, RunId, RunInput, RunOutcome,
 } from '@tomato/experimental-robot'
+import type {} from '@tomato/permission-presets'
 import type { SessionId } from '@tomato/session/types'
 import type { Domain } from '@tomato/storage-domain'
 import { robotDomain } from './storage.ts'
 import type { RobotRow, RevisionRow, RunRow } from './storage.ts'
-import { parseRobotSpec } from './validate.ts'
+import { parseRobotSpec, RobotSpecValidationError, type RobotSpecIssue } from './validate.ts'
 
 /** Runtime specification validation, exported for callers that pre-check before publishing. */
 export { parseRobotSpec, RobotSpecValidationError } from './validate.ts'
@@ -58,6 +60,32 @@ function toRun(row: RunRow): Run {
     ...(row.output === undefined ? {} : { output: row.output }),
     ...(row.error === undefined ? {} : { error: row.error }),
   })
+}
+
+function messageOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
+/**
+ * Reject a specification whose permission preset the deployment does not register.
+ * The catalog is optional: a composition without the permission service accepts the
+ * name as written, and the run executor owns that deployment's failure report.
+ * @param ctx - provider context that may carry the permission catalog.
+ * @param spec - parsed specification about to publish.
+ * @returns the field issue when the named preset is unavailable.
+ */
+function permissionPresetIssue(ctx: Context, spec: RobotSpec): RobotSpecIssue | undefined {
+  const presets = ctx.get('permissionPresets')
+  if (presets === undefined) return undefined
+  try {
+    presets.resolve(spec.capability.permissionPreset)
+    return undefined
+  } catch (error) {
+    return {
+      path: 'capability.permissionPreset',
+      message: `${messageOf(error)}. Choose one of the deployment presets and publish again.`,
+    }
+  }
 }
 
 /**
@@ -123,6 +151,8 @@ export default class LocalRobots extends Robots {
 
   private async publishRevision(spec: RobotSpec, previous?: RobotSpecRef): Promise<RobotSpecRevision> {
     const parsed = parseRobotSpec(spec)
+    const presetIssue = permissionPresetIssue(this.ctx, parsed)
+    if (presetIssue !== undefined) throw new RobotSpecValidationError([presetIssue])
     let specId: RobotSpecId
     let revisionNumber: number
     let supersedes: number | undefined

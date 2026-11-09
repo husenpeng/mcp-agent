@@ -31,6 +31,7 @@ import * as ToolFsSearch from '@tomato/tool-fs-search'
 import {
   buildGlobCommand,
   buildGrepCommand,
+  parseGlobArgs,
   formatGrepMatches,
   parseGrepMatches,
   presentGlobCall,
@@ -366,6 +367,33 @@ describe('command construction (plain argv)', () => {
       '--glob=!**/.jj', '--glob=!**/.jj/**',
       '--glob=!**/.sl', '--glob=!**/.sl/**',
       '--', 'docs dir'])
+  })
+
+  it('glob: narrows with max-depth, excludes, and an ignore-respecting mode', () => {
+    const args = buildGlobCommand({ pattern: '**/*.ts', depth: 2, exclude: ['dist/**', '**/*.snap'], hidden: false })
+    expect(args.slice(0, 3)).toEqual(['--files', '--glob=**/*.ts', '--sort=modified'])
+    expect(args).not.toContain('--no-ignore')
+    expect(args).not.toContain('--hidden')
+    expect(args).toContain('--max-depth=2')
+    expect(args.indexOf('--max-depth=2')).toBeLessThan(args.indexOf('--glob=!dist/**'))
+    expect(args.indexOf('--glob=!dist/**')).toBeLessThan(args.indexOf('--glob=!**/*.snap'))
+    expect(args).toContain('--glob=!**/.git')
+  })
+
+  it('glob: validates depth and exclude bounds against configured caps', () => {
+    const caps = {
+      sampleOverCapGlobResults: false, maxResults: 100, maxMetaBytes: 4096, rawOutputMaxBytes: 1024,
+      graceMs: 100, stderrMaxBytes: 1024, timeoutMs: 1000, maxDepth: 3, maxExcludes: 1,
+    }
+    expect(() => parseGlobArgs({ pattern: '*', depth: 4 }, caps)).toThrow('depth must be an integer from 1 to 3')
+    expect(() => parseGlobArgs({ pattern: '*', depth: 0 }, caps)).toThrow('depth must be an integer from 1 to 3')
+    expect(() => parseGlobArgs({ pattern: '*', exclude: ['a', 'b'] }, caps)).toThrow('exclude accepts at most 1')
+    expect(() => parseGlobArgs({ pattern: '*', exclude: [' '] }, caps)).toThrow('exclude patterns must not be empty')
+    expect(parseGlobArgs({ pattern: '*', depth: 2 })).toMatchObject({ depth: 2 })
+    expect(() => parseGlobArgs({ pattern: '*', exclude: Array.from({ length: 21 }, (_, index) => `x${index}`) })).toThrow('exclude accepts at most 20')
+    expect(parseGlobArgs({ pattern: '*', depth: 2, hidden: false, exclude: ['dist'] }, caps)).toMatchObject({
+      depth: 2, hidden: false, exclude: ['dist'],
+    })
   })
 
   it('grep: fixed rg --json argv with the pattern in --regexp= form', () => {

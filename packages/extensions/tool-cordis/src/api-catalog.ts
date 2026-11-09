@@ -1016,7 +1016,7 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
-    key: 'deepseekAccount',
+    key: 'account',
     summary: 'Account operations; only Host consumers can obtain a request credential.',
     description: 'Account operations; only Host consumers can obtain a request credential.',
     methods: [
@@ -4869,25 +4869,25 @@ export const EVENT_API: readonly EventApiEntry[] = [
     parameters: [{ name: 'ref', description: 'the reference whose stored value changed.' }],
   },
   {
-    name: 'deepseek-account/model-sign-in-required',
+    name: 'account/model-sign-in-required',
     mode: 'emit',
-    signature: '\'deepseek-account/model-sign-in-required\'(): void',
+    signature: '\'account/model-sign-in-required\'(): void',
     summary: 'An account model request requires the user to sign in.',
     description: 'An account model request requires the user to sign in.',
     parameters: [],
   },
   {
-    name: 'deepseek-account/session-expired',
+    name: 'account/session-expired',
     mode: 'emit',
-    signature: '\'deepseek-account/session-expired\'(): void',
+    signature: '\'account/session-expired\'(): void',
     summary: 'Server rejection removed the current account credential; this notification is not replayed.',
     description: 'Server rejection removed the current account credential; this notification is not replayed.',
     parameters: [],
   },
   {
-    name: 'deepseek-account/signed-out',
+    name: 'account/signed-out',
     mode: 'emit',
-    signature: '\'deepseek-account/signed-out\'(): void',
+    signature: '\'account/signed-out\'(): void',
     summary: 'Local grant removal has completed.',
     description: 'Local grant removal has completed.',
     parameters: [],
@@ -7174,7 +7174,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'PaidTranslationProvider',
-    declaration: 'export type PaidTranslationProvider = \'deepseek-account\' | \'deepseek-official\';',
+    declaration: 'export type PaidTranslationProvider = \'account\' | \'deepseek-official\';',
   },
   {
     name: 'PaidTranslationSpec',

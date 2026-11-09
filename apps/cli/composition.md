@@ -54,8 +54,6 @@ flowchart LR
   cfg --> plugin_tomato_base_settings
   plugin_tomato_base_authorization["authorization<br/>@tomato/authorization"]
   cfg --> plugin_tomato_base_authorization
-  plugin_tomato_base_deepseek_account["deepseek-account<br/>@tomato/deepseek-account-platform"]
-  cfg --> plugin_tomato_base_deepseek_account
   plugin_tomato_base_credentials["credentials<br/>@tomato/credentials-local"]
   cfg --> plugin_tomato_base_credentials
   plugin_tomato_base_llm_pi_ai["llm-pi-ai<br/>@tomato/llm-pi-ai"]
@@ -184,6 +182,8 @@ flowchart LR
   cfg --> plugin_tomato_base_web_search_company
   plugin_tomato_base_web_deepseek_api["web-deepseek-api<br/>@tomato/web-deepseek-api"]
   cfg --> plugin_tomato_base_web_deepseek_api
+  plugin_tomato_base_web_fetch_company["web-fetch-company<br/>@tomato/web-fetch-company"]
+  cfg --> plugin_tomato_base_web_fetch_company
   plugin_tomato_base_web_fetch_http["web-fetch-http<br/>@tomato/web-fetch-http"]
   cfg --> plugin_tomato_base_web_fetch_http
   plugin_tomato_base_tool_web["tool-web<br/>@tomato/tool-web"]
@@ -204,8 +204,6 @@ flowchart LR
   cfg --> plugin_tomato_base_fs_sandbox
   plugin_tomato_base_llm_deepseek["llm-deepseek<br/>@tomato/llm-deepseek-api-key"]
   cfg --> plugin_tomato_base_llm_deepseek
-  plugin_tomato_base_llm_deepseek_account["llm-deepseek-account<br/>@tomato/llm-deepseek-account"]
-  cfg --> plugin_tomato_base_llm_deepseek_account
 ```
 
 | Plugin id | Package / module |
@@ -233,7 +231,6 @@ flowchart LR
 | `config-editor` | `@tomato/config-editor` |
 | `settings` | `@tomato/settings` |
 | `authorization` | `@tomato/authorization` |
-| `deepseek-account` | `@tomato/deepseek-account-platform` |
 | `credentials` | `@tomato/credentials-local` |
 | `llm-pi-ai` | `@tomato/llm-pi-ai` |
 | `session-persistence-jsonl` | `@tomato/session-persistence-jsonl` |
@@ -298,6 +295,7 @@ flowchart LR
 | `web-search-deepseek` | `@tomato/web-search-deepseek` |
 | `web-search-company` | `@tomato/web-search-company` |
 | `web-deepseek-api` | `@tomato/web-deepseek-api` |
+| `web-fetch-company` | `@tomato/web-fetch-company` |
 | `web-fetch-http` | `@tomato/web-fetch-http` |
 | `tool-web` | `@tomato/tool-web` |
 | `mcp-resources` | `@tomato/mcp-resources` |
@@ -308,7 +306,6 @@ flowchart LR
 | `agent-loop` | `@tomato/agent-loop` |
 | `fs-sandbox` | `@tomato/fs-sandbox` |
 | `llm-deepseek` | `@tomato/llm-deepseek-api-key` |
-| `llm-deepseek-account` | `@tomato/llm-deepseek-account` |
 
 Source config: [`packages/bundle/base/cordis.patch.yml`](../../packages/bundle/base/cordis.patch.yml).
 

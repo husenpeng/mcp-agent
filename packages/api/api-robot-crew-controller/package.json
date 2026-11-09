@@ -1,0 +1,80 @@
+{
+  "name": "@tomato/api-robot-crew-controller",
+  "description": "Crew Remote roster stream, specification publication, run start, and flow-ledger reads for browser clients",
+  "version": "0.2.1-rc.3",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/api/api-robot-crew-controller"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./typert": {
+      "types": "./lib/typert.host.d.ts",
+      "default": "./lib/typert.host.js"
+    },
+    "./remote": {
+      "types": "./lib/typert.remote-client.d.ts",
+      "default": "./lib/typert.remote-client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "tomato": {
+    "client": {
+      "external": [
+        "@tomato/api-gateway/client"
+      ],
+      "inject": [
+        "@tomato/api-gateway",
+        "@tomato/client-connection"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts",
+    "lib/typert.host.js",
+    "lib/typert.host.d.ts",
+    "lib/typert.remote-client.js",
+    "lib/typert.remote-client.d.ts"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@tomato/typert-protocol": "workspace:*",
+    "zod": "4.4.3"
+  },
+  "peerDependencies": {
+    "@tomato/cordis": "workspace:~"
+  },
+  "devDependencies": {
+    "@tomato/api-gateway": "workspace:*",
+    "@tomato/client-connection": "workspace:*",
+    "@tomato/client-store": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/experimental-robot-crew": "workspace:*",
+    "@tomato/typert-registry": "workspace:*"
+  }
+}

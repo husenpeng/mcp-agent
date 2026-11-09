@@ -38,11 +38,12 @@ import { approveBuilds, recordPendingBuilds } from './build-approval.ts'
 import { checkGithubConnection } from './github-connection.ts'
 import { chooseGitTransport, sshGitSpec } from './git-transport.ts'
 import { newerVersions, VERSION_FIELDS, VERSION_LIST_FIELDS, versionFacts } from './versions.ts'
+import { resolveCompatibleVersion } from './resolution.ts'
 import type {
   BundleDetail, BundleInfo, BundleRowInfo, ChangeResult, InspectOptions, InstallBundleOptions, ListVersionsOptions, ManagementError,
   PackageResult, PluginChange, PluginEntryId, PluginInfo, PluginInstallCancellation, PluginInstallProgress, PluginInstallRequestId,
   PluginRegistries, PluginSpecInspection, PluginUpdateResult, PluginUpdateStep, PluginVersion, PluginVersionList, Registry,
-  RegistryAttempt, UpdateBundleOptions,
+  RegistryAttempt, SubstitutedVersion, UpdateBundleOptions,
 } from './types.ts'
 export type * from './types.ts'
 export { classifyInstallFailure, type InstallFailureFacts } from './install-failure.ts'
@@ -692,37 +693,57 @@ export class PluginManager extends TypertRemoteService {
     if (semver.valid(version) === null || !semver.gt(version, from)) {
       return refusedBefore({ code: 'invalid-spec', diagnostic: `${version} is not a version newer than the installed ${from}` })
     }
-    const spec = `${name}@${version}`
+    const requested = `${name}@${version}`
     const plan = registryPlan(this.registryFor(name, options?.registry), await this.registries())
-    const checked = await this.askRegistries(spec, VERSION_FIELDS, plan, { kind: 'registry', spec, name })
+    const checked = await this.askRegistries(requested, VERSION_FIELDS, plan, { kind: 'registry', spec: requested, name })
     if (checked.status === 'refused') return refusedBefore({ code: 'operation-error', diagnostic: checked.reason })
     const facts = versionFacts(checked.answer, name, version)
     if (!facts.bundle) return refusedBefore({ code: 'not-bundle' })
     let compatibility
     try { compatibility = evaluatePluginCompatibility(facts.manifest, readProfileVersionExemptions(this.profile.dir)) }
     catch (error) { return refusedBefore({ code: 'operation-error', diagnostic: messageOf(error) }) }
+    let chosen = version
+    let used = checked.registry
+    let substituted: SubstitutedVersion | undefined
     if (compatibility !== undefined && !compatibility.exempted) {
-      return refusedBefore({ code: 'incompatible-version', incompatible: [incompatiblePlugin(compatibility)] })
+      // The newest published version this TOMATO admits replaces the one the caller named.
+      const fallback = await this.resolveUpdateTarget(name, from, plan)
+      if (fallback === undefined) {
+        return refusedBefore({ code: 'incompatible-version', incompatible: [incompatiblePlugin(compatibility)] })
+      }
+      chosen = fallback.version
+      used = fallback.registry
+      substituted = {
+        requested,
+        selected: `${name}@${chosen}`,
+        requirements: Object.entries(compatibility.requirements).map(([key, range]) => `${key} ${range}`).join(', '),
+      }
     }
+    const spec = `${name}@${chosen}`
     const { enabled } = bundle
     // A lock timeout or disposal rejects instead of reporting; it reads as the failed step it is.
     const settled = (stage: ChangeResult['stage'], target: string, operation: Promise<ChangeResult>): Promise<ChangeResult> =>
       operation.catch((error: unknown) => ({ changed: false, application: 'failed', stage, target, error: managementError(error) }))
+    const outcome = (step: PluginUpdateResult['step'], result: ChangeResult, restore?: ChangeResult): PluginUpdateResult => ({
+      from, to: chosen, step, result,
+      ...substituted === undefined ? {} : { substituted },
+      ...restore === undefined ? {} : { restore },
+    })
     const installTarget = (): Promise<ChangeResult> => settled('install', spec, this.installBundle(spec, {
-      saveExact: true, registry: checked.registry, enabled, ...requestId === undefined ? {} : { requestId },
+      saveExact: true, registry: used, enabled, ...requestId === undefined ? {} : { requestId },
     }))
     if (this.ownerContext.get('hmr') === undefined) {
       announce('installing')
-      return { from, to: version, step: 'install', result: await installTarget() }
+      return outcome('install', await installTarget())
     }
     // The removed version is installed again where it came from, else over the configured plan, as its removal asks.
     const previousRegistry = this.installedFrom.get(name)
     announce('removing')
     const removal = await settled('remove', name, this.removeBundle(name))
-    if (removal.application === 'failed' || removal.application === 'cancelled') return { from, to: version, step: 'remove', result: removal }
+    if (removal.application === 'failed' || removal.application === 'cancelled') return outcome('remove', removal)
     announce('installing')
     const result = await installTarget()
-    if (result.application !== 'failed' && result.application !== 'cancelled') return { from, to: version, step: 'install', result }
+    if (result.application !== 'failed' && result.application !== 'cancelled') return outcome('install', result)
     announce('restoring')
     // A target that installed but failed to start is still a dependency; it goes before the removed version returns.
     if (result.stage === 'enable') await settled('remove', name, this.removeBundle(name))
@@ -731,7 +752,47 @@ export class PluginManager extends TypertRemoteService {
     const restore = await settled('install', previous, this.installBundle(previous, {
       saveExact: true, enabled, ...previousRegistry === undefined ? {} : { registry: previousRegistry },
     }))
-    return { from, to: version, step: 'install', result, restore }
+    return outcome('install', result, restore)
+  }
+
+  /**
+   * The newest published version newer than the installed one that this TOMATO admits as a bundle.
+   * Automatic choice skips prereleases and versions that declare no bundle, so it never installs
+   * something an update cannot select explicitly.
+   * @param name Installed profile dependency name.
+   * @param from The installed version.
+   * @param plan The registries to ask, in order.
+   * @returns the selected version and the registry that listed it, or undefined when none qualifies.
+   */
+  private async resolveUpdateTarget(
+    name: string,
+    from: string,
+    plan: readonly Registry[],
+  ): Promise<{ version: string; registry: Registry } | undefined> {
+    const listing = await this.askRegistries(name, VERSION_LIST_FIELDS, plan, { kind: 'registry', spec: name, name })
+    if (listing.status === 'refused') return undefined
+    let published
+    try { published = newerVersions(listing.answer, from) }
+    catch { return undefined }
+    const resolution = await resolveCompatibleVersion({
+      versions: published.map(entry => entry.version),
+      runtimeVersion: getTomatoRuntimeVersion(),
+      exemptions: readProfileVersionExemptions(this.profile.dir),
+      manifestOf: async (version): Promise<object> => {
+        const spec = `${name}@${version}`
+        const answer = await this.askRegistries(spec, VERSION_FIELDS, [listing.registry], { kind: 'registry', spec, name })
+        if (answer.status === 'refused') throw new Error(answer.reason)
+        const raw = Array.isArray(answer.answer) ? answer.answer.at(-1) : answer.answer
+        if (typeof raw !== 'object' || raw === null) throw new Error('pnpm view answered no package')
+        return raw as object
+      },
+      skip: (manifest, version) => {
+        if (semver.prerelease(version) !== null) return 'prerelease version'
+        return versionFacts(manifest, name, version).bundle ? undefined : 'version declares no tomato.bundle'
+      },
+    })
+    if (resolution.status !== 'resolved' || resolution.selected === undefined) return undefined
+    return { version: resolution.selected, registry: listing.registry }
   }
 
   /**
@@ -914,6 +975,8 @@ export class PluginManager extends TypertRemoteService {
         // A terminated run reports no usable exit status, so neither its files nor its bundle are trusted.
         const succeeded = run.exitCode === 0 && run.timedOut !== true
         if (succeeded) delete result.failedAt
+        // A successful run reports the specs it replaced; a failed one restored the files already.
+        if (succeeded && run.substituted !== undefined) result.substituted = run.substituted
         if (!succeeded) {
           // pnpm-workspace.yaml is not restored, so the names it left undecided, or reported as blocked, are offered for approval.
           try { result.pendingBuilds = await recordPendingBuilds(this.profile.dir, run.output) }

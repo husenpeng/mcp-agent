@@ -11,6 +11,16 @@ flowchart LR
   svc_actionCards["ctx.actionCards<br/>Optional action cards"]
   pkg_creation_recommendations["creation-recommendations"]
   pkg_client_ui_action_cards["client-ui-action-cards"]
+  pkg_experimental_robot_crew["experimental-robot-crew"]
+  svc_crews["ctx.crews<br/>Crew specification and run orchestration"]
+  pkg_experimental_robot_crew_local["experimental-robot-crew-local"]
+  pkg_api_robot_crew_controller["api-robot-crew-controller"]
+  pkg_experimental_tool_robot_crew["experimental-tool-robot-crew"]
+  svc_crewController["ctx.crewController<br/>Crew roster and run Remote"]
+  pkg_client_ui_robot_crew["client-ui-robot-crew"]
+  pkg_experimental_embeddings["experimental-embeddings"]
+  svc_embeddings["ctx.embeddings<br/>Text embedding provider"]
+  pkg_experimental_embeddings_http["experimental-embeddings-http"]
   pkg_experimental_memory["experimental-memory"]
   svc_memory["ctx.memory<br/>Profile and workspace memory records"]
   pkg_experimental_tool_memory["experimental-tool-memory"]
@@ -140,10 +150,12 @@ flowchart LR
   pkg_credentials["credentials"]
   svc_credentials["ctx.credentials<br/>Credential seam"]
   pkg_credentials_local["credentials-local"]
-  pkg_deepseek_account["deepseek-account"]
-  svc_deepseekAccount["ctx.deepseekAccount<br/>DeepSeek account"]
-  pkg_deepseek_account_platform["deepseek-account-platform"]
+  pkg_account_service["account-service"]
+  svc_account["ctx.account<br/>account-service"]
+  pkg_account_gateway["account-gateway"]
   pkg_api_account_controller["api-account-controller"]
+  pkg_web_deepseek_api["web-deepseek-api"]
+  pkg_web_search_deepseek["web-search-deepseek"]
   pkg_authorization["authorization"]
   svc_authorization["ctx.authorization<br/>Authorization flow registry"]
   pkg_client_product_analytics["client-product-analytics"]
@@ -290,8 +302,6 @@ flowchart LR
   svc_web["ctx.web<br/>Web access provider registry"]
   pkg_web_search_exa["web-search-exa"]
   pkg_web_search_perplexity["web-search-perplexity"]
-  pkg_web_search_deepseek["web-search-deepseek"]
-  pkg_web_deepseek_api["web-deepseek-api"]
   pkg_web_fetch_http["web-fetch-http"]
   pkg_spill["spill"]
   svc_spillStore["ctx.spillStore<br/>Spill storage seam"]
@@ -321,6 +331,8 @@ flowchart LR
   pkg_cordis_host_runner["cordis-host-runner"]
   svc_dynamicCordisRunner["ctx.dynamicCordisRunner<br/>Dynamic Cordis package host runner"]
   svc_cordisInspect["ctx.cordisInspect<br/>Dynamic Cordis inspect registry"]
+  pkg_account_gateway --> svc_account
+  pkg_account_service --> svc_account
   pkg_action_cards --> svc_actionCards
   pkg_agent --> svc_agents
   pkg_agent_default_model --> svc_agentDefaultModel
@@ -330,6 +342,7 @@ flowchart LR
   pkg_api_job_controller --> svc_jobController
   pkg_api_remote_access --> svc_remoteAccess
   pkg_api_robot_controller --> svc_robotController
+  pkg_api_robot_crew_controller --> svc_crewController
   pkg_api_session_controller --> svc_sessionController
   pkg_api_session_controller --> svc_sessionFileReferences
   pkg_api_session_controller --> svc_sessionSkillCatalog
@@ -363,8 +376,6 @@ flowchart LR
   pkg_credentials --> svc_credentials
   pkg_credentials_local --> svc_credentials
   pkg_cua --> svc_cuaAccess
-  pkg_deepseek_account --> svc_deepseekAccount
-  pkg_deepseek_account_platform --> svc_deepseekAccount
   pkg_deepseek_llm_api_extensions --> svc_deepseekLlmApiExtensions
   pkg_experimental_agent_team --> svc_agentTeams
   pkg_experimental_api_speech_to_text --> svc_speechController
@@ -375,11 +386,15 @@ flowchart LR
   pkg_experimental_client_ui_cot_translation --> svc_cotTranslation
   pkg_experimental_computer_use_cua_driver_mcp --> svc_computerUse
   pkg_experimental_computer_use_cua_driver_native --> svc_computerUse
+  pkg_experimental_embeddings --> svc_embeddings
+  pkg_experimental_embeddings_http --> svc_embeddings
   pkg_experimental_memory --> svc_memory
   pkg_experimental_muse_insights --> svc_museInsights
   pkg_experimental_ptc_runtime_python --> svc_ptcRuntime
   pkg_experimental_robot --> svc_robotTemplates
   pkg_experimental_robot --> svc_robots
+  pkg_experimental_robot_crew --> svc_crews
+  pkg_experimental_robot_crew_local --> svc_crews
   pkg_experimental_robot_local --> svc_robots
   pkg_experimental_speech_to_text --> svc_speechToText
   pkg_experimental_speech_to_text_sensevoice --> svc_speechToText
@@ -489,6 +504,9 @@ flowchart LR
   pkg_working_directory --> svc_workingDirectory
   pkg_workspace --> svc_workspaceRegistry
   pkg_workspace_changes --> svc_workspaceChanges
+  svc_account --> pkg_api_account_controller
+  svc_account --> pkg_web_deepseek_api
+  svc_account --> pkg_web_search_deepseek
   svc_actionCards --> pkg_client_ui_action_cards
   svc_actionCards --> pkg_creation_recommendations
   svc_agentDefaultModel --> pkg_api_session_controller
@@ -522,12 +540,14 @@ flowchart LR
   svc_credentials --> pkg_api_settings_controller
   svc_credentials --> pkg_llm_deepseek
   svc_credentials --> pkg_llm_pi_ai
+  svc_crewController --> pkg_client_ui_robot_crew
+  svc_crews --> pkg_api_robot_crew_controller
+  svc_crews --> pkg_experimental_tool_robot_crew
   svc_cuaAccess --> pkg_cua
-  svc_deepseekAccount --> pkg_api_account_controller
-  svc_deepseekAccount --> pkg_llm_deepseek
   svc_deepseekLlmApiExtensions --> pkg_llm_deepseek
   svc_directoryPicker --> pkg_api_workspace_controller
   svc_dynamicCordisRunner --> pkg_tool_cordis
+  svc_embeddings --> pkg_experimental_memory
   svc_fileReferences --> pkg_api_session_controller
   svc_fileUploads --> pkg_api_session_controller
   svc_fs --> pkg_tool_fs
@@ -661,6 +681,9 @@ flowchart LR
 | ctx key | Role | Owner | Implementations | Direct consumers | Companion plugins | Note |
 | --- | --- | --- | --- | --- | --- | --- |
 | `ctx.actionCards` | `service` | [`action-cards`](../packages/experimental/action-cards) | - | [`creation-recommendations`](../packages/experimental/creation-recommendations), [`client-ui-action-cards`](../packages/experimental/client-ui-action-cards) | - | Owns the card tool, card state, user actions and status notices; card kinds register their actions and handlers. |
+| `ctx.crews` | `seam` | [`experimental-robot-crew`](../packages/experimental/experimental-robot-crew) | [`experimental-robot-crew-local`](../packages/experimental/experimental-robot-crew-local) | [`api-robot-crew-controller`](../packages/api/api-robot-crew-controller), [`experimental-tool-robot-crew`](../packages/experimental/experimental-tool-robot-crew) | - | Owns crew vocabulary, loop protection, extraction and briefs; the local provider executes runs and stores the flow ledger. |
+| `ctx.crewController` | `service` | [`api-robot-crew-controller`](../packages/api/api-robot-crew-controller) | - | [`client-ui-robot-crew`](../packages/client/client-ui-robot-crew) | - | Projects the crew seam and the generated crew Remote namespace to browser clients. |
+| `ctx.embeddings` | `seam` | [`experimental-embeddings`](../packages/experimental/embeddings) | [`experimental-embeddings-http`](../packages/experimental/embeddings-http) | [`experimental-memory`](../packages/experimental/memory) | - | A provider turns text into vectors; memory owns the cache and semantic blend, and a missing provider keeps lexical retrieval only. |
 | `ctx.memory` | `service` | [`experimental-memory`](../packages/experimental/memory) | - | [`experimental-tool-memory`](../packages/experimental/tool-memory) | - | Stores records in the tomato_memory storage domain scoped by owner, then by profile or canonical project directory; the memory tools own every model-facing tool, command, and snapshot. |
 | `ctx.museInsights` | `service` | [`experimental-muse-insights`](../packages/experimental/muse-insights) | - | - | - | Reads the day’s Session text and the todos projection, retains one recap per owner and local day plus the owner’s latest analysis, and serves both to its browser notice and right-Sidebar page. |
 | `ctx.tomatoAccount` | `service` | [`gateway`](../packages/tomato/gateway) | - | [`experimental-memory`](../packages/experimental/memory) | - | The gateway publishes the account its latest auth_service verification names, only when auth_service is configured; consumers read it with ctx.get and treat absence as a Host without accounts. |
@@ -709,7 +732,7 @@ flowchart LR
 | `ctx.settings` | `core` | [`settings`](../packages/settings/settings) | - | [`api-settings-controller`](../packages/api/settings-controller) | - | Forms project volatile Config fields from active profile entries and delegate validated edits to config-editor. Plugins consume their own Config references. |
 | `ctx.subagentModelSelection` | `core` | [`tool-subagent`](../packages/subagent/tool-subagent) | - | [`tool-subagent`](../packages/subagent/tool-subagent) | - | Owns the default-off settings namespace that Agent-scoped delegation tools sample when composing a new top-level Session. |
 | `ctx.credentials` | `seam` | [`credentials`](../packages/credentials/credentials) | [`credentials-local`](../packages/credentials/credentials-local) | [`api-settings-controller`](../packages/api/settings-controller), [`llm-deepseek`](../packages/llm/llm-deepseek), [`llm-pi-ai`](../packages/llm/llm-pi-ai) | - | Configuration carries references to secrets; providers own the values. Consumers resolve per operation, so a rotated credential reaches the very next request; the settings controller exposes value-free views and write-only storage. |
-| `ctx.deepseekAccount` | `seam` | [`deepseek-account`](../packages/credentials/deepseek-account) | [`deepseek-account-platform`](../packages/credentials/deepseek-account-platform) | [`api-account-controller`](../packages/api/account-controller), [`llm-deepseek`](../packages/llm/llm-deepseek) | - | The Host owns browser authorization and local credentials; UI consumers receive state without tokens. |
+| `ctx.account` | `seam` | [`account-service`](../packages/credentials/account-service) | [`account-gateway`](../packages/tomato/account-gateway) | [`api-account-controller`](../packages/api/account-controller), [`web-deepseek-api`](../packages/web/web-deepseek-api), [`web-search-deepseek`](../packages/web/web-search-deepseek) | - | The Feishu gateway owns browser authorization; the gateway provider projects the verified user without exposing credentials or minting model tokens. |
 | `ctx.authorization` | `seam` | [`authorization`](../packages/credentials/authorization) | - | [`llm-pi-ai`](../packages/llm/llm-pi-ai) | - | Flows are registered by the plugin that knows how to obtain one credential and keyed by the record they write; the seam owns the conversation and the one-attempt-per-key lifecycle, never the protocol. |
 | `ctx.productAnalytics` | `service` | [`client-product-analytics`](../packages/client/product-analytics) | - | - | - | Accepts selected Desktop events, enriches available login identity, and observes live compaction under the live Host collection policy. |
 | `ctx.otel` | `service` | [`otel`](../packages/telemetry/otel) | - | [`host-product-telemetry-otel`](../packages/host/product-telemetry-otel), [`session-telemetry-otel`](../packages/session/session-telemetry-otel) | - | Product analytics and Session feedback adapters create independent reporting channels through one injected service. |

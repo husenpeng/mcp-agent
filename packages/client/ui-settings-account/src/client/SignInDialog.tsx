@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { Button, IconCloseOutlineRegular, IconLoadingOutlineRegular, Modal } from '@tomato/client-ui-primitives'
 import type { AccountSnapshot } from './AccountSection.tsx'
-import type { SignInAttemptId } from '@tomato/deepseek-account/types'
+import type { SignInAttemptId } from '@tomato/account-service/types'
 import type { AccountKey } from './locales.ts'
 import { authorizeUrlWithTheme } from './authorize-url.ts'
 import css from './SignInDialog.module.css'

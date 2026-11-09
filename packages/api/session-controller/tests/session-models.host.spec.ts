@@ -397,14 +397,14 @@ describe('Web session model selection', () => {
     const { configurationFixture } = await import('../../../settings/settings/tests/configuration-fixture.ts')
     const configured = await configurationFixture({ hmr: false })
     const { ctx } = await harness(undefined, configured.ctx)
-    ctx.effect(() => ctx.llm.registerAdapter(['deepseek-account'], new CatalogAdapter('Account', [
-      { provider: 'deepseek-account', id: 'first-model', name: 'First' },
-      { provider: 'deepseek-account', id: 'second-model', name: 'Second' },
+    ctx.effect(() => ctx.llm.registerAdapter(['account'], new CatalogAdapter('Account', [
+      { provider: 'account', id: 'first-model', name: 'First' },
+      { provider: 'account', id: 'second-model', name: 'Second' },
     ], REASONING)))
     const describe = vi.fn(async () => ({ configured: configuredKey, writable: true }))
     ctx.provide('credentials', { describe } as never)
     ctx.effect(() => ctx.llm.registerConfigurableProviders([
-      { provider: 'deepseek-account', displayName: 'Account', settingsNs: 'account', settingsPath: [] },
+      { provider: 'account', displayName: 'Account', settingsNs: 'account', settingsPath: [] },
       { provider: 'removed-model-provider', displayName: 'Custom', settingsNs: 'first', settingsPath: ['providers', 'custom'] },
     ]))
     vi.spyOn(ctx.settings, 'describe').mockReturnValue([{
@@ -419,7 +419,7 @@ describe('Web session model selection', () => {
     expect(describe).toHaveBeenCalledWith('CUSTOM_API_KEY')
     expect(ctx.agentDefaultModel.currentSelection()).toEqual(configuredKey
       ? { provider: 'removed', model: 'saved' }
-      : { provider: 'deepseek-account', model: 'first-model', reasoningEffort: 'high' })
+      : { provider: 'account', model: 'first-model', reasoningEffort: 'high' })
     await ctx.fiber.dispose()
   })
 
@@ -939,18 +939,39 @@ it('initializes the account model without reasoning metadata and rejects an empt
   const configured = await configurationFixture({ hmr: false })
   const { ctx } = await harness(undefined, configured.ctx)
   ctx.provide('credentials', { describe: vi.fn() } as never)
-  const dispose = ctx.llm.registerAdapter(['deepseek-account'], new CatalogAdapter('Account', [
-    { provider: 'deepseek-account', id: 'basic', name: 'Basic' },
+  const dispose = ctx.llm.registerAdapter(['account'], new CatalogAdapter('Account', [
+    { provider: 'account', id: 'basic', name: 'Basic' },
   ]))
   const controller = await createSessionTestController(ctx, {
     defaultModelSelection: () => ctx.agentDefaultModel.currentSelection(), cwd: '/tmp',
   })
   await controller.initializeDefaultModel()
-  expect(ctx.agentDefaultModel.currentSelection()).toEqual({ provider: 'deepseek-account', model: 'basic' })
+  expect(ctx.agentDefaultModel.currentSelection()).toEqual({ provider: 'account', model: 'basic' })
   dispose()
   await expect(controller.initializeDefaultModel()).rejects.toMatchObject({
-    code: 'session/provider-models-unavailable', details: { provider: 'deepseek-account' },
+    code: 'session/provider-models-unavailable', details: { provider: 'account' },
   })
+})
+
+it('keeps a policy-blocked model visible but unavailable', async () => {
+  const { ctx } = await harness()
+  const dispose = ctx.llm.registerAdapter(['blocked-catalog'], new CatalogAdapter('Blocked Catalog', [
+    { provider: 'blocked-catalog', id: 'blocked-model', name: 'Blocked Model', blockedReason: 'outside the deployment model allowlist' },
+    { provider: 'blocked-catalog', id: 'allowed-model', name: 'Allowed Model' },
+  ]))
+  try {
+    const catalog = await buildModelCatalog(ctx, { provider: 'blocked-catalog', model: 'allowed-model' })
+    expect(catalog.groups.find(group => group.id === 'blocked-catalog')?.models).toEqual([
+      { id: 'blocked-model', name: 'Blocked Model', blockedReason: 'outside the deployment model allowlist' },
+      { id: 'allowed-model', name: 'Allowed Model' },
+    ])
+    const { modelAvailable } = await import('../src/catalog.ts')
+    expect(await modelAvailable(ctx, { provider: 'blocked-catalog', model: 'blocked-model' })).toBe(false)
+    expect(await modelAvailable(ctx, { provider: 'blocked-catalog', model: 'allowed-model' })).toBe(true)
+  } finally {
+    dispose()
+    await ctx.fiber.dispose()
+  }
 })
 
 it.each([new Error('catalog disconnected'), 'catalog disconnected'])('reports catalog rejection as an unavailable selection: %s', async (failure) => {

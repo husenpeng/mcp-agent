@@ -52,12 +52,29 @@ Add one entry per server; nothing else is required. After the harness starts, th
       Authorization: !!js '`Bearer ${process.env.MCP_TOKEN}`'
 ```
 
+When a header must carry identity that changes between calls, give `requestHeaders` an expression instead of a static value. It runs once per `tools/call` inside that call's own async scope, so concurrent calls never share headers:
+
+```yaml
+- id: mcp-im
+  name: '@tomato/mcp-client'
+  config:
+    serverName: im
+    transport: streamable-http
+    url: http://127.0.0.1:8013/mcp/im
+    requestHeaders: !!js >
+      () => {
+        const account = ctx.tomatoAccount.current()
+        return account.status === 'signed-in' ? { 'x-user-id': account.user.userId } : {}
+      }
+```
+
 | Field | Default | Meaning |
 |---|---|---|
 | `transport` | required | `stdio` or `streamable-http` |
 | `serverName` | required | Namespace for the server's tool names; `[A-Za-z0-9_-]{1,32}`, unique inside one registration scope |
 | `command` / `args` / `env` / `cwd` | — | stdio: executable, arguments, extra env merged over scrubbed ambient env, working directory |
 | `url` / `headers` | — | streamable-http: endpoint URL and extra request headers |
+| `requestHeaders` | — | streamable-http only: `(execution) => Record<string, string>` evaluated for one `tools/call`, merged over `headers`; connection-time requests use only `headers` |
 | `toolCallTimeoutMs` | `60,000` | Timeout per `tools/call` or resource request |
 | `maxInstructionBytes` | `32,768` | Maximum UTF-8 bytes of server instructions including attribution; an oversized value rejects the connection |
 | `failOnStartupError` | `false` | Reject plugin activation when the initial connection or tool synchronization fails |

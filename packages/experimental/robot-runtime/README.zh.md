@@ -42,9 +42,9 @@ kind: "package-reference"
 
 每个 run 在 `robot-run-<uuid>` 身份下获得一条新 Session，以及由 Agent 工厂组合的一个 Agent。run 在规格的第一个 workspace 根目录中工作，否则取部署第一个已注册的工作区，否则取 Host 进程目录，并把该目录记录到 Session 上。规格贡献一个提示段落、工具准入掩码、技能限制、权限预设，以及由 `agentDefaultModel` 选出的默认模型。
 
-`allow` 非空时成为允许掩码；否则 `deny` 非空时成为拒绝掩码。规格点名了组合中不存在的工具时，run 会失败，而不是静默放行。部署注册了 MCP 工具（`mcp__<server>__<tool>`）时，run 只放行 `capability.mcpServers` 中点名的服务器；列表为空则一个都不放行，其余原生工具仍按 `allow` 处理（无论其是否为空）。选中的 MCP 服务器未配置、或选中的技能不在目录中时，run 会在创建 Agent 之前失败；技能列表为空表示沿用部署目录，非空则通过 `ctx.skills.restrict` 限制该 Agent 作用域。挂载了可选的 `permissionPresets` 服务时，权限预设通过它应用。
+`allow` 非空时成为允许掩码；否则 `deny` 非空时成为拒绝掩码。规格点名了组合中不存在的工具时，run 会失败，而不是静默放行。部署注册了 MCP 工具（`mcp__<server>__<tool>`）时，run 只放行 `capability.mcpServers` 中点名的服务器；列表为空则一个都不放行，其余原生工具仍按 `allow` 处理（无论其是否为空）。选中的 MCP 服务器未配置、或选中的技能不在目录中时，run 会在创建 Agent 之前失败；技能列表为空表示沿用部署目录，非空则通过 `ctx.skills.restrict` 限制该 Agent 作用域。挂载了可选的 `permissionPresets` 服务时，权限预设通过它应用；目录中不存在该预设时，run 以目录给出的报告失败，而不会改用另一种策略运行。
 
-runtime 只监听该 Agent 的已提交 `session/event`。最后一段助手文本成为 run 输出；最后一个 `turn/end` 原因决定结果：`completed` 成功，`error` 以提供者 code 与 message 失败，`aborted` 结算为 `cancelled`，其他原因以该 kind 失败。turn 结束时没有 `turn/end` 事件的 run 失败。每个回合空闲之后 runtime 会读取 run 记录：`waiting` 的 run 保留 Agent 并等待下一次写入，终态 run 直接释放 Agent 而不重复结算，其余非终态则以该回合结果结算 run。超过 `pauseTimeoutMs` 的暂停以 `cancelled` 结算，并把过期等待写进错误。Agent 创建或 turn 驱动失败会以错误消息把 run 结算为 `failed`。
+runtime 只监听该 Agent 的已提交 `session/event`。最后一段助手文本成为 run 输出；最后一个 `turn/end` 原因决定结果：`completed` 成功，`error` 以提供者 code 与 message 失败，`aborted` 结算为 `cancelled`，其他原因以该 kind 失败。turn 结束时没有 `turn/end` 事件的 run 失败。每个回合空闲之后 runtime 会读取 run 记录：`waiting` 的 run 保留 Agent 并等待下一次写入，终态 run 直接释放 Agent 而不重复结算，其余非终态则以该回合结果结算 run。超过 `pauseTimeoutMs` 的暂停以 `cancelled` 结算，并把过期等待写进错误。Agent 创建或 turn 驱动失败会以错误消息把 run 结算为 `failed`。run 失败绝不会逃逸为未处理的 Promise 拒绝：执行器包住每一步，并只对无法记录的失败写日志，因为未处理的拒绝会终止 Host 进程。
 
 排队 run 通过两条路径发现：插件加载时扫描一次，之后跟随 `tomato_robot` 的 `runs` 表上的 `domain/changed` 写入。进程内记账阻止同一个 run 被认领两次。卸载插件会释放它仍拥有的每个 Agent。
 

@@ -50,7 +50,7 @@ console.log(JSON.stringify({ paths: app.paths, home: process.env.TOMATO_HOME, jo
       const root = join(directory, 'application-data/tomato-update-qualification', run.id)
       expect(results).toEqual([0, 1].map(() => ({ paths: { userData: join(root, 'user-data'), sessionData: join(root, 'user-data') },
         home: join(root, 'tomato-home'), journals: join(root, 'journals') })))
-      expect((await readdir(root)).sort()).toEqual(['tomato-home', 'journals', 'user-data'])
+      expect((await readdir(root)).sort()).toEqual(['journals', 'tomato-home', 'user-data'])
       await expect(prepareInstalledUpdateBootstrap(join(run.root, 'run.json'))).rejects.toMatchObject({ code: 'EEXIST' })
     })
   })

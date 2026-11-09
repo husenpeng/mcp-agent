@@ -34,7 +34,6 @@
     }
   },
   "dependencies": {
-    "@tomato/cordis-plugin-timer": "workspace:~",
     "@tomato/agent": "workspace:*",
     "@tomato/agent-default-model": "workspace:*",
     "@tomato/agent-instructions": "workspace:*",
@@ -52,8 +51,8 @@
     "@tomato/compaction-image-offload": "workspace:*",
     "@tomato/compaction-tool-result-pruner": "workspace:*",
     "@tomato/config-editor": "workspace:*",
+    "@tomato/cordis-plugin-timer": "workspace:~",
     "@tomato/credentials-local": "workspace:*",
-    "@tomato/deepseek-account-platform": "workspace:*",
     "@tomato/deepseek-llm-api-extensions": "workspace:*",
     "@tomato/fs-local": "workspace:*",
     "@tomato/fs-observation-policy": "workspace:*",
@@ -63,7 +62,6 @@
     "@tomato/hmr": "workspace:*",
     "@tomato/jobs-local": "workspace:*",
     "@tomato/llm": "workspace:*",
-    "@tomato/llm-deepseek-account": "workspace:*",
     "@tomato/llm-deepseek-api-key": "workspace:*",
     "@tomato/llm-pi-ai": "workspace:*",
     "@tomato/llm-retry": "workspace:*",
@@ -102,6 +100,7 @@
     "@tomato/subagent-spawn-in-process": "workspace:*",
     "@tomato/subprocess-local": "workspace:*",
     "@tomato/system-prompt": "workspace:*",
+    "@tomato/telemetry": "workspace:*",
     "@tomato/token-meter": "workspace:*",
     "@tomato/tool-bash": "workspace:*",
     "@tomato/tool-call-timeout-policy": "workspace:*",
@@ -127,12 +126,12 @@
     "@tomato/user-questions": "workspace:*",
     "@tomato/web": "workspace:*",
     "@tomato/web-deepseek-api": "workspace:*",
+    "@tomato/web-fetch-company": "workspace:*",
     "@tomato/web-fetch-http": "workspace:*",
     "@tomato/web-search-company": "workspace:*",
     "@tomato/web-search-deepseek": "workspace:*",
     "@tomato/workflow-ptc": "workspace:*",
-    "@tomato/working-directory": "workspace:*",
-    "@tomato/telemetry": "workspace:*"
+    "@tomato/working-directory": "workspace:*"
   },
   "peerDependencies": {
     "@tomato/cordis": "workspace:~"

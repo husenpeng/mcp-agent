@@ -3,7 +3,7 @@ import { defineStore, type EngineStoreHandle } from '@tomato/client-store'
 import type { RobotId, RunId } from '@tomato/api-robot-controller/client'
 
 /** Which robot page view is showing. */
-export type RobotPageView = 'roster' | 'config'
+export type RobotPageView = 'roster' | 'config' | 'create'
 
 /** Which robots the gallery shows by state. */
 export type RobotStatusFilter = 'all' | 'running' | 'idle'
@@ -14,7 +14,7 @@ export interface RobotPageState {
   query: string
   /** Gallery state filter. */
   filter: RobotStatusFilter
-  /** The roster or the specification editor. */
+  /** The roster, the guided creation flow, or the specification editor. */
   view: RobotPageView
   /** Robot the page shows or edits, when one is selected. */
   robotId?: RobotId | undefined
@@ -25,6 +25,7 @@ export interface RobotPageState {
 type RobotPageActions = {
   openRoster: (draft: RobotPageState) => void
   selectRobot: (draft: RobotPageState, robotId: RobotId) => void
+  startCreate: (draft: RobotPageState) => void
   configure: (draft: RobotPageState, robotId?: RobotId) => void
   openRun: (draft: RobotPageState, runId: RunId) => void
   back: (draft: RobotPageState) => void
@@ -53,6 +54,11 @@ export function createRobotPageStore(): RobotPageStore {
       selectRobot: (draft, robotId) => {
         draft.view = 'roster'
         draft.robotId = robotId
+        draft.runId = undefined
+      },
+      startCreate: (draft) => {
+        draft.view = 'create'
+        draft.robotId = undefined
         draft.runId = undefined
       },
       configure: (draft, robotId) => {

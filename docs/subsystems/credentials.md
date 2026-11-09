@@ -263,7 +263,7 @@ Source: [`packages/api/settings-controller/src/credentials.ts`](../../packages/a
 
 <a id="ctxdeepseekaccount--deepseekaccount-abstract-seam"></a>
 
-### `ctx.deepseekAccount` — `DeepSeekAccount` (abstract seam)
+### `ctx.account` — `Account` (abstract seam)
 
 Account operations; only Host consumers can obtain a request credential.
 
@@ -365,7 +365,7 @@ abstract getPlatformSession(): Promise<PlatformSession | null>
 abstract getDeviceIdentity(): Promise<{ deviceId?: string; userId?: AccountUserId; osVersion: string }>
 ```
 
-Source: [`packages/credentials/deepseek-account/src/index.ts`](../../packages/credentials/deepseek-account/src/index.ts)
+Source: [`packages/credentials/account-service/src/index.ts`](../../packages/credentials/account-service/src/index.ts)
 
 <a id="ctxtomatoaccount--tomatoaccount"></a>
 
@@ -461,13 +461,13 @@ Committed change to a provider-managed credential source: a `set`, an `unset`, o
 
 Source: [`packages/credentials/credentials/src/types.ts`](../../packages/credentials/credentials/src/types.ts)
 
-<a id="deepseek-account-events"></a>
+<a id="account-events"></a>
 
-### `deepseek-account/*` events
+### `account/*` events
 
-<a id="deepseek-accountmodel-sign-in-required--emit"></a>
+<a id="accountmodel-sign-in-required--emit"></a>
 
-#### `deepseek-account/model-sign-in-required` — emit
+#### `account/model-sign-in-required` — emit
 
 An account model request requires the user to sign in.
 
@@ -475,14 +475,14 @@ An account model request requires the user to sign in.
 /** An account model request requires the user to sign in.
  * @mode emit
  */
-'deepseek-account/model-sign-in-required'(): void
+'account/model-sign-in-required'(): void
 ```
 
-Source: [`packages/credentials/deepseek-account/src/types.ts`](../../packages/credentials/deepseek-account/src/types.ts)
+Source: [`packages/credentials/account-service/src/types.ts`](../../packages/credentials/account-service/src/types.ts)
 
-<a id="deepseek-accountsession-expired--emit"></a>
+<a id="accountsession-expired--emit"></a>
 
-#### `deepseek-account/session-expired` — emit
+#### `account/session-expired` — emit
 
 Server rejection removed the current account credential; this notification is not replayed.
 
@@ -490,14 +490,14 @@ Server rejection removed the current account credential; this notification is no
 /** Server rejection removed the current account credential; this notification is not replayed.
  * @mode emit
  */
-'deepseek-account/session-expired'(): void
+'account/session-expired'(): void
 ```
 
-Source: [`packages/credentials/deepseek-account/src/types.ts`](../../packages/credentials/deepseek-account/src/types.ts)
+Source: [`packages/credentials/account-service/src/types.ts`](../../packages/credentials/account-service/src/types.ts)
 
-<a id="deepseek-accountsigned-out--emit"></a>
+<a id="accountsigned-out--emit"></a>
 
-#### `deepseek-account/signed-out` — emit
+#### `account/signed-out` — emit
 
 Local grant removal has completed.
 
@@ -505,12 +505,12 @@ Local grant removal has completed.
 /** Local grant removal has completed.
  * @mode emit
  */
-'deepseek-account/signed-out'(): void
+'account/signed-out'(): void
 ```
 
-Source: [`packages/credentials/deepseek-account/src/index.ts`](../../packages/credentials/deepseek-account/src/index.ts)
+Source: [`packages/credentials/account-service/src/index.ts`](../../packages/credentials/account-service/src/index.ts)
 <!-- END GENERATED cordis-surface -->
 
-The account Service Definition exposes getState, getProfile, getBalance, getUnnotifiedBonuses, ackBonusNotified, startSignIn, cancelSignIn, signOut, watch, and Host-only resolveToken and getPlatformSession. The platform provider implements it with an AuthorizationFlow and a private GrantRecord. AccountView distinguishes stored presence from server validation; attempt IDs bind cancellation to one local flow. See [the account package](../../packages/credentials/deepseek-account/README.md).
+The account Service Definition exposes getState, getProfile, getBalance, getUnnotifiedBonuses, ackBonusNotified, startSignIn, cancelSignIn, signOut, watch, and Host-only resolveToken and getPlatformSession. The Feishu gateway provider (`@tomato/account-gateway`) projects the gateway's verified user; it returns no model token and no wallet or bonus data. AccountView distinguishes stored presence from server validation; attempt IDs bind cancellation to one local flow. See [the account package](../../packages/credentials/account-service/README.md).
 
 `AccountClientMetadata` carries `version` from the caller’s `TOMATO_CLIENT_VERSION`, its active UI `locale`, and `timezoneOffsetSeconds` sampled when the operation begins. The offset is local time minus UTC in seconds: UTC+8 is `28800`. It contains no credentials. Login attempts retain their initiating metadata through exchange and cancellation; sign-out retains its metadata for revocation retries.

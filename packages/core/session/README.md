@@ -51,6 +51,8 @@ session.deriveMessages()         // the derived model history
 
 Surface events (`system/message`, `developer/message`, `user/message`, `assistant/message`, `tool/result`) require `surfaceOp` in both typed events and append input. A replacement uses exactly `{ op: 'replace', startSeq, endSeq }`, with inclusive `SessionSeq` endpoints in current surface order. An Assistant message embeds its exact compact provider stream and forbids `sourceEventSeqs`. Known log-only events forbid both metadata fields and never produce a message.
 
+`conversation/retraction` is log-only and removes model history instead of adding it. Its `startSeq` must be the append-origin human `user/message` that opened the last turn, and `endSeq` must be the current surface tail; every removed node must be append-origin, so a compaction replacement cannot be dropped and its shadowed history cannot silently reappear. The fold splices the range out, invalidates derived caches, and reports the removal; image and file blocks and attachment-derived context messages inside the range leave model history with the message. The raw events and the human transcript remain. Later appends continue from the shortened surface.
+
 `developer/message` stores tool-addition names and a `headerSeq` reference to an earlier `request/header`. The reference is required exactly when additions are present, and each name must identify exactly one complete schema in that header. Removals name the tool without a header reference. Historical headers remain available across restart, fork, and surface replacement; the current registry and latest header do not select an earlier addition's definition. `sourceEventSeqs` continues to describe derivation and replaced nodes.
 
 Plugins declare content-changing events with `@messageProjection` and register a pure definition through `ctx.sessions.registerMessageProjection()`. Session calls the definition before accepting an event and caches its immutable message updates. Missing definitions reject append and restore; unloading a used definition also blocks cached reads. Detached constructors and `foldSurface(events, projections)` require explicit definitions. Reconstructors pass the fold's `projectedMessages` to `deriveEventMessage()`; live instance methods apply the same projections automatically. [Plugin-owned message projections](../../../.agents/notes/implemented/architecture/2026-09-11-plugin-owned-message-projections.md) defines ownership and offline assembly.
@@ -99,7 +101,7 @@ This section explains how the package realizes the behavior above; the observabl
 
 ### Design concept
 
-The package is built on event sourcing: a `Session` is an append-only log of typed `SessionEvent`s, and everything else — model history, transcripts, telemetry, titles, persistence — derives from that stream. The surface is a derived projection: an incremental manager validates append candidates, advances the ordered view from committed events, and tracks `replaceGeneration` for positional replacements and `contentGeneration` for replacements and plugin-owned message changes. Model-visible means logged: anything that reaches a model request must be reconstructable from the log. Each model attempt that reaches settlement commits one event: `assistant/message` carries the assembled model-visible message plus its compact timed stream, while `assistant/attempt` retains a failed, retried, cancelled, or stream-error attempt without adding model history. A hard process loss before settlement leaves no durable attempt stream.
+The package is built on event sourcing: a `Session` is an append-only log of typed `SessionEvent`s, and everything else — model history, transcripts, telemetry, titles, persistence — derives from that stream. The surface is a derived projection: an incremental manager validates append candidates, advances the ordered view from committed events, and tracks `replaceGeneration` for positional replacements and retractions and `contentGeneration` for those changes and plugin-owned message changes. Model-visible means logged: anything that reaches a model request must be reconstructable from the log. Each model attempt that reaches settlement commits one event: `assistant/message` carries the assembled model-visible message plus its compact timed stream, while `assistant/attempt` retains a failed, retried, cancelled, or stream-error attempt without adding model history. A hard process loss before settlement leaves no durable attempt stream.
 
 ### Request headers
 
@@ -160,11 +162,11 @@ The model receives the complete messages from `system/message`, `developer/messa
 
 #### Token effect
 
-Appended surface entries are resent on later steps. A `replace` surface operation removes the shadowed entries from future inputs without deleting their raw log records.
+Appended surface entries are resent on later steps. A `replace` surface operation removes the shadowed entries from future inputs without deleting their raw log records. `conversation/retraction` likewise removes the trailing exchange from later inputs while keeping its events.
 
 #### KV Cache effect
 
-Appended surface entries preserve reusable prefixes. A `replace` operation invalidates reuse from the first shadowed message even though the underlying event log stays append-only.
+Appended surface entries preserve reusable prefixes. A `replace` operation or `conversation/retraction` invalidates reuse from the first removed message even though the underlying event log stays append-only.
 
 ### Tool-result recovery and fork results
 

@@ -115,6 +115,62 @@ export function SettingsValueField(props: Omit<SettingsFieldProps, 'hint'> & {
 }
 
 /**
+ * A staged choice field over a fixed option list. The draft stays text like
+ * every other field, so selection, reset, and save share one form contract;
+ * a value outside the supplied list renders as its own selected entry so a
+ * stored route is never silently replaced.
+ * @param props - the field's copy, its staged value, its choices, and the edit actions.
+ * @returns the labelled select control.
+ */
+export function SettingsSelectField(props: Omit<SettingsFieldProps, 'hint'> & {
+  /** Optional explanation shown below the select. */
+  hint?: string
+  /** Choices in render order; each id is the text a save would store. */
+  options: readonly { id: string; label: string }[]
+}) {
+  const messageId = `${props.id}-message`
+  const known = props.options.some(option => option.id === props.text)
+  const options = known || props.text === '' ? props.options : [{ id: props.text, label: props.text }, ...props.options]
+  const hasMessage = props.invalid || Boolean(props.hint)
+  return (
+    <div className={css.field}>
+      <div className={css.head}>
+        <label className={css.label} htmlFor={props.id}>{props.label}</label>
+        {props.overridden
+          ? (
+            <span className={css.badges}>
+              <Tag tone="neutral">{props.overriddenLabel}</Tag>
+              <button
+                type="button"
+                className={css.reset}
+                disabled={props.disabled}
+                onClick={props.onReset}
+              >
+                {props.resetLabel}
+              </button>
+            </span>
+          )
+          : null}
+      </div>
+      <select
+        id={props.id}
+        className={css.select}
+        {...props.invalid ? { 'aria-invalid': true } : {}}
+        aria-describedby={hasMessage ? messageId : undefined}
+        value={props.text}
+        disabled={props.disabled}
+        onChange={(event) => { props.onEdit(event.target.value) }}
+      >
+        {options.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
+      </select>
+      {hasMessage
+        ? <p id={messageId} className={props.invalid ? css.invalid : css.hint}>{props.invalid ? props.invalidLabel : props.hint}</p>
+        : null}
+    </div>
+  )
+}
+
+/**
  * A write-only credential control. The value never rides a response, so the
  * control reports only whether one is configured and starts blank; a blank
  * draft writes nothing, which keeps the stored key rather than clearing it.

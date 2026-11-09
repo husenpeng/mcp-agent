@@ -21,7 +21,7 @@ export const name = 'experimental-tool-robot'
 export const inject = ['agents', 'robots', 'tools']
 
 const CREATE_DESCRIPTION = 'Create a Tomato Rbot from a name, purpose, and success criteria. '
-  + 'Use it when the user asks to create a robot; every other setting starts from the general default '
+  + 'Use it after the user confirmed a concrete name and purpose; every other setting starts from the general default '
   + 'and can be changed later on the robot page.'
 
 const CREATE_OUTPUT_SCHEMA = {
@@ -72,6 +72,36 @@ function invalidSpecification(error: RobotSpecValidationError): HarnessError {
   return new HarnessError(`Invalid robot specification: ${detail}`, 'ROBOT_SPEC_INVALID')
 }
 
+/** Text `emptyRobotSpec()` uses when no real mission was collected; keep equal to the shared default. */
+const MISSION_PLACEHOLDER = 'Describe what this robot does.'
+
+/** Name `emptyRobotSpec()` uses when no real name was collected. */
+const NAME_PLACEHOLDER = 'New robot'
+
+/**
+ * Refuse the placeholder values a rushed creation would otherwise publish.
+ * The model must ask for a real answer instead of shipping a robot that looks
+ * ready and runs a stub task.
+ * @param name - display name supplied by the call.
+ * @param mission - one-run purpose supplied by the call.
+ * @returns the trimmed values.
+ * @throws `ROBOT_SPEC_INVALID` naming the field the model must collect.
+ */
+function requireRealBasics(name: string, mission: string): { readonly name: string; readonly mission: string } {
+  const trimmedName = name.trim()
+  if (trimmedName === '' || trimmedName === NAME_PLACEHOLDER) {
+    throw new HarnessError('Invalid robot specification: name: ask the user for a name', 'ROBOT_SPEC_INVALID')
+  }
+  const trimmedMission = mission.trim()
+  if (trimmedMission === '' || trimmedMission === MISSION_PLACEHOLDER) {
+    throw new HarnessError(
+      'Invalid robot specification: goal.mission: ask the user what the robot should accomplish on every run',
+      'ROBOT_SPEC_INVALID',
+    )
+  }
+  return { name: trimmedName, mission: trimmedMission }
+}
+
 /**
  * Register `robot_create` in the mounting scope, so a composition decides which
  * agents receive it.
@@ -91,15 +121,21 @@ export function apply(ctx: Context): void {
         description: 'Observable conditions that mean a run succeeded; omit when the user gave none.',
       },
     },
-    output: { schema: CREATE_OUTPUT_SCHEMA, render: renderValue },
+    output: {
+      schema: CREATE_OUTPUT_SCHEMA,
+      render: renderValue,
+      presentationMeta: (_args, value) => ({ robotId: value.robotId, name: value.name }),
+    },
     presentCall: args => presentCall(args),
     async execute(args, exec): Promise<RobotCreateValue> {
       requireDirectHuman(ctx, robotToolExecution(ctx, exec))
+      const basics = requireRealBasics(args.name, args.mission)
+      const successCriteria = (args.successCriteria ?? []).map(item => item.trim()).filter(item => item !== '')
       const created = emptyRobotSpec({
-        name: args.name,
-        ...args.description === undefined || args.description.trim() === '' ? {} : { description: args.description },
-        mission: args.mission,
-        ...args.successCriteria === undefined ? {} : { successCriteria: args.successCriteria },
+        name: basics.name,
+        ...args.description === undefined || args.description.trim() === '' ? {} : { description: args.description.trim() },
+        mission: basics.mission,
+        successCriteria,
       })
       // A robot created from a conversation works in that conversation's
       // Workspace unless the user names another one later; an explicit root

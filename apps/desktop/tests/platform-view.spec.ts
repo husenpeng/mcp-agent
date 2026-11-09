@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import type { AccountUserId } from '@tomato/deepseek-account/types'
+import type { AccountUserId } from '@tomato/account-service/types'
 import { DesktopPlatformView, platformBounds } from '../src/platform-view.ts'
 
 const state = vi.hoisted(() => ({

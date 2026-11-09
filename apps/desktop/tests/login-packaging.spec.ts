@@ -11,16 +11,25 @@ const LOGIN = {
   TOMATO_DESKTOP_TOMATO_WEB_URL: 'https://app.example.com',
 }
 
+const IM = { TOMATO_DESKTOP_IM_SERVICE_URL: 'http://im.example.com:8013' }
+
 describe('packaged login environment', () => {
-  it('normalizes both origins', () => {
+  it('normalizes the origins and keeps the IM service independent', () => {
     expect(resolveDesktopLoginEnvironment(LOGIN)).toEqual({
       authServiceUrl: 'https://auth.example.com',
       tomatoWebUrl: 'https://app.example.com',
+      imServiceUrl: '',
     })
+    expect(resolveDesktopLoginEnvironment({ ...LOGIN, ...IM })).toEqual({
+      authServiceUrl: 'https://auth.example.com',
+      tomatoWebUrl: 'https://app.example.com',
+      imServiceUrl: 'http://im.example.com:8013',
+    })
+    expect(resolveDesktopLoginEnvironment(IM)).toEqual({ authServiceUrl: '', tomatoWebUrl: '', imServiceUrl: 'http://im.example.com:8013' })
   })
 
   it('requires the origins together and rejects non-origin values', () => {
-    expect(resolveDesktopLoginEnvironment({})).toEqual({ authServiceUrl: '', tomatoWebUrl: '' })
+    expect(resolveDesktopLoginEnvironment({})).toEqual({ authServiceUrl: '', tomatoWebUrl: '', imServiceUrl: '' })
     expect(() => resolveDesktopLoginEnvironment({ TOMATO_DESKTOP_AUTH_SERVICE_URL: 'https://auth.example.com' }))
       .toThrow(/set together/)
     expect(() => resolveDesktopLoginEnvironment({ ...LOGIN, TOMATO_DESKTOP_TOMATO_WEB_URL: 'https://app.example.com/ui' }))
@@ -37,10 +46,12 @@ describe('packaged login environment', () => {
       TOMATO_DESKTOP_TARGET_PLATFORM: 'darwin',
       TOMATO_DESKTOP_TARGET_ARCH: 'arm64',
       ...LOGIN,
+      ...IM,
     }, 'darwin', 'arm64')
     expect(config.extraMetadata).toMatchObject({
       tomatoAuthServiceUrl: 'https://auth.example.com',
       tomatoTomatoWebUrl: 'https://app.example.com',
+      tomatoImServiceUrl: 'http://im.example.com:8013',
     })
   })
 
@@ -54,6 +65,7 @@ describe('packaged login environment', () => {
     }, 'darwin', 'arm64')
     expect(config.extraMetadata).not.toHaveProperty('tomatoAuthServiceUrl')
     expect(config.extraMetadata).not.toHaveProperty('tomatoTomatoWebUrl')
+    expect(config.extraMetadata).not.toHaveProperty('tomatoImServiceUrl')
   })
 
   it('accepts the origins in a machine preset and never inherits ambient ones', async () => {
@@ -61,15 +73,17 @@ describe('packaged login environment', () => {
     try {
       await mkdir(join(root, 'presets'))
       await writeFile(join(root, 'presets/test.env'),
-        'TOMATO_DESKTOP_AUTO_UPDATE_ENV=test\nTOMATO_DESKTOP_AUTH_SERVICE_URL=https://auth.example.com\nTOMATO_DESKTOP_TOMATO_WEB_URL=https://app.example.com\n')
+        'TOMATO_DESKTOP_AUTO_UPDATE_ENV=test\nTOMATO_DESKTOP_AUTH_SERVICE_URL=https://auth.example.com\nTOMATO_DESKTOP_TOMATO_WEB_URL=https://app.example.com\nTOMATO_DESKTOP_IM_SERVICE_URL=https://im.example.com\n')
       const selected = loadDesktopPackageEnvironment('darwin', {
         TOMATO_PACKAGING_PRESET: 'test',
         TOMATO_PACKAGING_CONFIG_DIR: root,
         TOMATO_DESKTOP_AUTH_SERVICE_URL: 'https://ambient.example.com',
         TOMATO_DESKTOP_TOMATO_WEB_URL: 'https://ambient.example.com',
+        TOMATO_DESKTOP_IM_SERVICE_URL: 'https://ambient.example.com',
       }, root, { unsigned: true })
       expect(selected.TOMATO_DESKTOP_AUTH_SERVICE_URL).toBe('https://auth.example.com')
       expect(selected.TOMATO_DESKTOP_TOMATO_WEB_URL).toBe('https://app.example.com')
+      expect(selected.TOMATO_DESKTOP_IM_SERVICE_URL).toBe('https://im.example.com')
     } finally {
       await rm(root, { recursive: true, force: true })
     }

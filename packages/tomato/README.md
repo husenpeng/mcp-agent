@@ -23,6 +23,8 @@ This group carries the packages that make the harness a Tomato AI product rather
 | Package | Role |
 |---|---|
 | [`account`](account/README.md) | Sidebar launcher and Account settings page over the gateway's auth session |
+| [`account-access`](account-access/README.md) | Roles and quotas section for the Feishu account |
+| [`account-gateway`](account-gateway/README.md) | Feishu gateway account provider for the Host account service |
 | [`brand`](brand/README.md) | Sidebar mark, sidebar name, and hero mark occupants |
 | [`gateway`](gateway/README.md) | Same-origin `/api/auth/*` and fixed-table `/api/services/*` routes |
 | [`telemetry`](telemetry/README.md) | Turn and tool spans sent to the internal OTLP relay |

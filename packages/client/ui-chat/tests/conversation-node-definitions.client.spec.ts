@@ -23,6 +23,7 @@ import { compactionDefinition } from '../src/client/conversation-nodes/compactio
 import { unknownFallbackDefinition } from '../src/client/conversation-nodes/fallback.ts'
 import { nextStepInboxDefinition, nextTurnInboxDefinition } from '../src/client/conversation-nodes/inbox.ts'
 import { developerMessageDefinition, messageDefinition } from '../src/client/conversation-nodes/message.ts'
+import { retractionLogDefinition } from '../src/client/conversation-nodes/retraction.ts'
 import { inspectRequestPrompt } from '@tomato/client-ui-conversation/client'
 import { requestPromptDefinition, systemMessageDefinition } from '../src/client/conversation-nodes/request-prompt.ts'
 import { retryDefinition } from '../src/client/conversation-nodes/retry.ts'
@@ -39,6 +40,7 @@ const DEFINITIONS: readonly ConversationNodeDefinition[] = [
   nextStepInboxDefinition,
   nextTurnInboxDefinition,
   messageDefinition,
+  retractionLogDefinition,
   developerMessageDefinition,
   systemMessageDefinition(inspectSystemPrompt),
   requestPromptDefinition(inspectRequestPrompt),
@@ -2977,7 +2979,7 @@ describe('built-in conversation node Definitions', () => {
 
 it('retains a sign-out cancellation notice when reopening a partial turn', () => {
   const value = assembler([
-    at(7, 'turn/end', { turn: 1, reason: { kind: 'aborted', reason: { kind: 'hook', reason: 'deepseek-account/signed-out' } } }),
+    at(7, 'turn/end', { turn: 1, reason: { kind: 'aborted', reason: { kind: 'hook', reason: 'account/signed-out' } } }),
   ], true)
   expect(node(snapshot(value), 'turn-error')?.data).toMatchObject({
     code: 'ACCOUNT_SIGNED_OUT', message: 'Stopped because you signed out of DeepSeek.',
@@ -3006,4 +3008,45 @@ it('keeps user cancellations and forked endings free of a failure row', () => {
     const value = assembler([at(7, 'turn/end', { turn: 1, reason })], true)
     expect(node(snapshot(value), 'turn-error')).toBeUndefined()
   }
+})
+
+it('marks a retracted prompt while keeping the exchange in the transcript', () => {
+  const value = assembler([
+    at(1, 'turn/start', { turn: 1 }),
+    at(2, 'user/message', textMessage('user-1', 'typed by mistake'), { surfaceOp: 'append' }),
+    at(3, 'assistant/message', { turn: 1, step: 1, message: assistantMessage('answer-1', 'answer') }, { surfaceOp: 'append' }),
+    at(4, 'turn/end', { turn: 1, reason: { kind: 'completed' } }),
+    at(5, 'conversation/retraction', { messageId: 'user-1', startSeq: 2, endSeq: 3 }),
+  ])
+  const current = snapshot(value)
+  const prompt = [...current.nodes.values()].find(candidate => candidate.kind === 'user')
+  expect(prompt?.data).toMatchObject({ retracted: true })
+  expect([...current.nodes.values()].some(candidate => candidate.kind === 'assistant-step')).toBe(true)
+})
+
+
+it('logs one retraction with the attachment names it removed from context', () => {
+  const user = at(1, 'user/message', {
+    id: 'user-1', role: 'user', source: { kind: 'user' },
+    content: [
+      { type: 'text', text: 'typed by mistake' },
+      { type: 'image', attachment: { attachmentId: 'image-1', mediaType: 'image/png', bytes: 1, name: 'shot.png' } },
+      { type: 'image', attachment: { attachmentId: 'image-2', mediaType: 'image/png', bytes: 1 } },
+      { type: 'file', attachment: { attachmentId: 'file-1', name: 'notes.pdf', mediaType: 'application/pdf', bytes: 2 } },
+    ],
+  }, { surfaceOp: 'append' })
+  const value = assembler([
+    at(0, 'turn/start', { turn: 1 }),
+    user,
+    at(2, 'assistant/message', { turn: 1, step: 1, message: assistantMessage('answer-1', 'answer') }, { surfaceOp: 'append' }),
+    at(3, 'turn/end', { turn: 1, reason: { kind: 'completed' } }),
+    at(4, 'conversation/retraction', { messageId: 'user-1', startSeq: 1, endSeq: 2 }),
+  ])
+  const current = snapshot(value)
+  const prompt = [...current.nodes.values()].find(candidate => candidate.kind === 'user')
+  expect(prompt?.data).toMatchObject({ retracted: true })
+  expect(node(current, 'retraction')?.data).toMatchObject({
+    messageId: 'user-1',
+    attachments: ['shot.png', 'image-2', 'notes.pdf'],
+  })
 })

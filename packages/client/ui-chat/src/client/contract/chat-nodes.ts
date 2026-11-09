@@ -103,6 +103,17 @@ export interface TurnTailChatData {
   readonly tokenUsage?: TurnTokenUsage
 }
 
+/** Durable audit row for one human retraction, derived from its two events. */
+export interface RetractionLogChatData {
+  readonly messageId: string
+  /** Seq of the retraction event. */
+  readonly seq: number
+  /** Unix epoch ms of the retraction event. */
+  readonly time: number
+  /** Display names of attachments carried by the retracted message. */
+  readonly attachments: readonly string[]
+}
+
 /** Turn-level process disclosure projected before the finalized answer. */
 export interface TurnProcessChatData {
   readonly turn: number

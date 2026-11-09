@@ -112,7 +112,7 @@
       "path": "../account-controller"
     },
     {
-      "path": "../../credentials/deepseek-account"
+      "path": "../../credentials/account-service"
     }
   ]
 }

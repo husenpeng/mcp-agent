@@ -263,7 +263,7 @@ Source: [`packages/api/settings-controller/src/credentials.ts`](../../packages/a
 
 <a id="ctxdeepseekaccount--deepseekaccount-abstract-seam"></a>
 
-### `ctx.deepseekAccount` — `DeepSeekAccount` (abstract seam)
+### `ctx.account` — `Account` (abstract seam)
 
 Account operations; only Host consumers can obtain a request credential.
 
@@ -365,7 +365,7 @@ abstract getPlatformSession(): Promise<PlatformSession | null>
 abstract getDeviceIdentity(): Promise<{ deviceId?: string; userId?: AccountUserId; osVersion: string }>
 ```
 
-Source: [`packages/credentials/deepseek-account/src/index.ts`](../../packages/credentials/deepseek-account/src/index.ts)
+Source: [`packages/credentials/account-service/src/index.ts`](../../packages/credentials/account-service/src/index.ts)
 
 <a id="ctxtomatoaccount--tomatoaccount"></a>
 
@@ -461,13 +461,13 @@ Committed change to a provider-managed credential source: a `set`, an `unset`, o
 
 Source: [`packages/credentials/credentials/src/types.ts`](../../packages/credentials/credentials/src/types.ts)
 
-<a id="deepseek-account-events"></a>
+<a id="account-events"></a>
 
-### `deepseek-account/*` events
+### `account/*` events
 
-<a id="deepseek-accountmodel-sign-in-required--emit"></a>
+<a id="accountmodel-sign-in-required--emit"></a>
 
-#### `deepseek-account/model-sign-in-required` — emit
+#### `account/model-sign-in-required` — emit
 
 An account model request requires the user to sign in.
 
@@ -475,14 +475,14 @@ An account model request requires the user to sign in.
 /** An account model request requires the user to sign in.
  * @mode emit
  */
-'deepseek-account/model-sign-in-required'(): void
+'account/model-sign-in-required'(): void
 ```
 
-Source: [`packages/credentials/deepseek-account/src/types.ts`](../../packages/credentials/deepseek-account/src/types.ts)
+Source: [`packages/credentials/account-service/src/types.ts`](../../packages/credentials/account-service/src/types.ts)
 
-<a id="deepseek-accountsession-expired--emit"></a>
+<a id="accountsession-expired--emit"></a>
 
-#### `deepseek-account/session-expired` — emit
+#### `account/session-expired` — emit
 
 Server rejection removed the current account credential; this notification is not replayed.
 
@@ -490,14 +490,14 @@ Server rejection removed the current account credential; this notification is no
 /** Server rejection removed the current account credential; this notification is not replayed.
  * @mode emit
  */
-'deepseek-account/session-expired'(): void
+'account/session-expired'(): void
 ```
 
-Source: [`packages/credentials/deepseek-account/src/types.ts`](../../packages/credentials/deepseek-account/src/types.ts)
+Source: [`packages/credentials/account-service/src/types.ts`](../../packages/credentials/account-service/src/types.ts)
 
-<a id="deepseek-accountsigned-out--emit"></a>
+<a id="accountsigned-out--emit"></a>
 
-#### `deepseek-account/signed-out` — emit
+#### `account/signed-out` — emit
 
 Local grant removal has completed.
 
@@ -505,12 +505,12 @@ Local grant removal has completed.
 /** Local grant removal has completed.
  * @mode emit
  */
-'deepseek-account/signed-out'(): void
+'account/signed-out'(): void
 ```
 
-Source: [`packages/credentials/deepseek-account/src/index.ts`](../../packages/credentials/deepseek-account/src/index.ts)
+Source: [`packages/credentials/account-service/src/index.ts`](../../packages/credentials/account-service/src/index.ts)
 <!-- END GENERATED cordis-surface -->
 
-账号服务定义提供 getState、getProfile、getBalance、getUnnotifiedBonuses、ackBonusNotified、startSignIn、cancelSignIn、signOut、watch 及仅限 Host 的 resolveToken 和 getPlatformSession。平台提供者使用 AuthorizationFlow 和私有 GrantRecord 实现这些操作。AccountView 区分本地存在与服务器验证；尝试 ID 将取消绑定到单次本地流程。参见[账号包](../../packages/credentials/deepseek-account/README.zh.md)。
+账号服务定义提供 getState、getProfile、getBalance、getUnnotifiedBonuses、ackBonusNotified、startSignIn、cancelSignIn、signOut、watch 及仅限 Host 的 resolveToken 和 getPlatformSession。飞书网关提供者（`@tomato/account-gateway`）投影网关已验证用户；它不返回模型 token，也不提供钱包或奖励数据。AccountView 区分本地存在与服务器验证；尝试 ID 将取消绑定到单次本地流程。参见[账号包](../../packages/credentials/account-service/README.zh.md)。
 
 `AccountClientMetadata` 携带调用方 `TOMATO_CLIENT_VERSION` 提供的 `version`、当前界面 `locale`，以及操作发起时采样的 `timezoneOffsetSeconds`。偏移为本地时间减 UTC 的秒数：UTC+8 对应 `28800`。其中不含凭证。登录申请在兑换及取消期间保留发起时的元数据；退出操作为撤销重试保留其元数据。

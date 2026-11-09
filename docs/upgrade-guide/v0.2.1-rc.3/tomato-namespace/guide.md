@@ -24,7 +24,7 @@ Every name this repository owns changed from `DSH` / `dsh` to `TOMATO` / `tomato
 | Desktop app ID | `com.deepseek.dsh` | `vip.tomatoai.desktop` |
 | Local desktop build ID | `com.deepseek.harness` | `vip.tomatoai.harness` |
 
-DeepSeek's own identity did not change: `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, `api.deepseek.com`, `deepseek-*` model ids, the `deepseek-official` / `deepseek-account` / `deepseek-api-key` provider ids, and the `deepseek` adapter package leaves. The real third-party packages under `@deepseek-ai/libreoffice-kit*` also keep their names.
+DeepSeek's own identity did not change: `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, `api.deepseek.com`, `deepseek-*` model ids, the `deepseek-official` / `account` / `deepseek-api-key` provider ids, and the `deepseek` adapter package leaves. The real third-party packages under `@deepseek-ai/libreoffice-kit*` also keep their names.
 
 ## Migration
 

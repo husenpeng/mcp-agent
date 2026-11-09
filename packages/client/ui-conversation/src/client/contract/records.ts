@@ -48,6 +48,12 @@ export interface UserMessageNode {
   time: number
   content: readonly ContentBlock[]
   source: unknown
+  /**
+   * A later `conversation/retraction` removed this exchange from model history.
+   * The transcript keeps the message; the marker is presentation, not the
+   * surface identity.
+   */
+  retracted?: true
 }
 
 /** Recorded boundaries used to derive assistant latency and throughput. */

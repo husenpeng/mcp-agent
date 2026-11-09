@@ -42,6 +42,8 @@ const RENAMED_PRODUCERS: Readonly<Record<string, string>> = Object.freeze({
   'tools-ptc': 'ptc-mode',
   'dsh-compaction-basic': 'compact-basic',
   '@deepseek-ai/dsh-system-prompt': 'runtime-context',
+  // The same producer after the rename to the tomato scope.
+  '@tomato/system-prompt': 'runtime-context',
   'dsh-session-title-llm': '@tomato/session-title-llm',
 })
 
@@ -57,7 +59,7 @@ const RELEASED_SAME_NAME_PRODUCERS: ReadonlySet<string> = new Set([
 
 /** Resolve the current producer kind for one released V3 plugin string. */
 function producerKind(plugin: string, role: SessionFormatJsonValue | undefined): string {
-  if (plugin === '@deepseek-ai/dsh-system-prompt' && role === 'system') return 'system-prompt'
+  if ((plugin === '@deepseek-ai/dsh-system-prompt' || plugin === '@tomato/system-prompt') && role === 'system') return 'system-prompt'
   const renamed = Object.hasOwn(RENAMED_PRODUCERS, plugin) ? RENAMED_PRODUCERS[plugin] : undefined
   if (renamed !== undefined) return renamed
   if (RELEASED_SAME_NAME_PRODUCERS.has(plugin)) return plugin

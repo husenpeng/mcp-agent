@@ -1,6 +1,7 @@
 /** Chromium browser tools from the pinned Playwright MCP server. @module */
 
-import { dirname, join } from 'node:path'
+import { existsSync } from 'node:fs'
+import { dirname, isAbsolute, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { Context } from '@tomato/cordis'
 import { BrowserMcpConfig, mountSessionMcp, validateBrowserMcpConfig } from '@tomato/experimental-browser-use-runtime/mcp'
@@ -17,6 +18,49 @@ export type Config = BrowserMcpConfig
 
 /** Validate the launch or attachment configuration before activation. */
 export const Config: typeof BrowserMcpConfig = BrowserMcpConfig
+
+/** Model-facing refusal for an address the browser never loads. */
+const NON_HTTP_REFUSAL = 'The browser tools open http(s) pages only. To read a local file or folder, use the file tools (read, glob, grep) instead; the browser does not load file:// addresses or local paths.'
+
+/** Model-facing refusal for page code that reaches the browser host's filesystem. */
+const LOCAL_FILE_CODE_REFUSAL = 'Browser page code cannot read files from this machine. Use the file tools (read, glob, grep) to inspect a local file or folder instead.'
+
+/** Code shapes that reach the browser host filesystem through Playwright page code. */
+const LOCAL_FILE_CODE = [
+  /file:\/\//iu,
+  /\brequire\s*\(\s*['"](?:node:)?fs['"]\s*\)/iu,
+  /\bimport\s*\(\s*['"](?:node:)?fs['"]\s*\)/iu,
+  /\bread(?:File|dir)(?:Sync)?\s*\(/iu,
+]
+
+/**
+ * Read one string field from a parsed tool argument object.
+ * @param args - parsed tool arguments.
+ * @param field - property to read.
+ * @returns the value when it is a string.
+ */
+function stringField(args: unknown, field: string): string | undefined {
+  if (typeof args !== 'object' || args === null) return undefined
+  const value = (args as Record<string, unknown>)[field]
+  return typeof value === 'string' ? value : undefined
+}
+
+/**
+ * Decide whether one browser call names an address or a local-file read that
+ * the browser provider refuses to dispatch.
+ * @param call - MCP tool name without its server prefix, and its parsed arguments.
+ * @returns the model-facing refusal, or undefined when the call may run.
+ */
+export function denyLocalAddresses(call: { readonly name: string; readonly arguments: unknown }): string | undefined {
+  const url = stringField(call.arguments, 'url')
+  if (url !== undefined) {
+    if (/^https?:\/\//iu.test(url)) return undefined
+    return `${NON_HTTP_REFUSAL} Refused address: ${url}`
+  }
+  const code = stringField(call.arguments, 'code')
+  if (code !== undefined && LOCAL_FILE_CODE.some(pattern => pattern.test(code))) return LOCAL_FILE_CODE_REFUSAL
+  return undefined
+}
 
 /**
  * Expose Playwright's upstream tools in each live Session's scope.
@@ -40,6 +84,12 @@ export function apply(ctx: Context, config: Config): void {
     if (config.headless) args.push('--headless')
     // Upstream's `chromium` selection resolves the full Chrome for Testing build, while Desktop ships only the
     // headless shell. The Host names that shell; an explicit provider path remains authoritative.
+    if (config.storageState !== undefined) {
+      if (!isAbsolute(config.storageState) || !existsSync(config.storageState)) {
+        throw new Error(`browser storageState must be an existing absolute file: ${config.storageState}`)
+      }
+      args.push('--storage-state', config.storageState)
+    }
     const inherited = process.env.PLAYWRIGHT_MCP_EXECUTABLE_PATH
     const executablePath = config.executablePath
       ?? (config.headless && inherited !== undefined && inherited !== '' ? inherited : undefined)
@@ -47,6 +97,7 @@ export function apply(ctx: Context, config: Config): void {
   }
   mountSessionMcp(ctx, {
     name: 'playwright-mcp',
+    deny: denyLocalAddresses,
     exclusive: config.mode === 'attach',
     command: process.execPath,
     args,

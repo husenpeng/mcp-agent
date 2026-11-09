@@ -41,7 +41,7 @@ kind: "package-reference"
 
 第一次访问会等待列表，最长 `modelsTimeoutMs`。之后的访问直接使用已加载的列表，列表超过 `modelsMaxAgeMs` 后在后台刷新；路由空闲时不发请求。获取失败或得到空列表时保留上一份；还没有加载到任何列表时，路由提供当前版本内置的目录（`deepseek-flash` 与 `deepseek-v4-pro`）。列表请求返回 HTTP 401 只让这一次加载失败。每次加载成功、连续失败中的第一次失败及其退回的目录、以及每个因声明无法读取或不可用而被隐藏的列表条目，都会以 `[llm-deepseek-api-key]` 标签写到 stderr；stdout 保留给协议消息，且不记录任何密钥。
 
-列出的模型按[账号路由的规则](../llm-deepseek-account/README.zh.md#use-this-package)提供、与本版本的内置条目合并，并在网络请求之前以 `CLIENT_UPGRADE_REQUIRED` 或 `MODEL_UNSUPPORTED` 拒绝；列表没有列出的模型 id 照常透传。
+列出的模型按本路由的规则提供、与本版本的内置条目合并，并在网络请求之前以 `CLIENT_UPGRADE_REQUIRED` 或 `MODEL_UNSUPPORTED` 拒绝；列表没有列出的模型 id 照常透传。
 
 与内置目录不同的 `models` 列表会替换整个目录，并停止请求列表；模型页把编辑后的目录存在这里。删除这个列表（即模型页上的**恢复默认模型**）后，路由重新使用列表，即使缓存的列表尚未过期，下一次访问也会重新加载。与内置目录完全相同的列表视为未自定义。
 
@@ -50,7 +50,7 @@ kind: "package-reference"
 | `modelsTimeoutMs` | `5,000` | 单次列表请求以及首次访问等待的上限 |
 | `modelsMaxAgeMs` | `600,000` | 列表超过这个时长后，下一次访问时刷新；获取失败后同样在这个时长后重试 |
 
-设置命名空间采用 Cordis entry id，没有 entry 时采用插件名。产品保留 official 的 `llm-deepseek` entry id，账号使用 `llm-deepseek-account`。
+设置命名空间采用 Cordis entry id，没有 entry 时采用插件名。产品保留 official 的 `llm-deepseek` entry id。
 
 <a id="understand-the-implementation"></a>
 ## 理解实现

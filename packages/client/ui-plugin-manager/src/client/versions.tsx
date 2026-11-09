@@ -359,7 +359,14 @@ function outcomeOf(update: UpdateState, title: string, t: Translate): Omit<Summa
   if (!failed(result.result.application)) {
     return result.result.application === 'restart-required'
       ? { tone: 'warn', glyph: <IconWarningOutlineRegular size={14} />, title: t('updateRestart', { version: update.to }), detail: restartText('restartNotice', result.result.restartReason, t) }
-      : { tone: 'success', glyph: <IconCheckOutlineRegular size={14} />, title: t('updateDone', { version: update.to }), detail: t('updateDoneDetail') }
+      : {
+        tone: 'success', glyph: <IconCheckOutlineRegular size={14} />, title: t('updateDone', { version: update.to }),
+        detail: result.substituted === undefined
+          ? t('updateDoneDetail')
+          : t('updateDoneSubstituted', {
+            requested: result.substituted.requested, selected: result.substituted.selected, requirements: result.substituted.requirements,
+          }),
+      }
   }
   // Without a reinstallation nothing was removed: the installation went over the running version and was rolled back.
   if (result.restore === undefined) {

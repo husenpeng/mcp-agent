@@ -1,0 +1,12 @@
+# The campaign workspace: one same-origin proxy to the company BFF, the tools
+# over campaigns / rosters / Feishu / outreach, and one embedded skill. The
+# browser half is discovered through the package's `tomato.client` manifest.
+- insert:
+    - id: tomato-campaign
+      name: tomato-campaign
+      config:
+        # Company BFF origin. TOMATO_COMPANY_WEB_URL names it explicitly (the
+        # local gateway reads the same name); TOMATO_WEB_URL is the Desktop's
+        # baked origin. Neither can come from a .env file: TOMATO_* is
+        # bootstrap-only.
+        baseUrl: !!js process.env.TOMATO_COMPANY_WEB_URL ?? process.env.TOMATO_WEB_URL ?? ''

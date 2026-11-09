@@ -23,6 +23,15 @@
     - id: robot-runtime
       name: '@tomato/experimental-robot-runtime'
 
+    - id: robot-crew-local
+      name: '@tomato/experimental-robot-crew-local'
+
+    - id: robot-crew-remote
+      name: '@tomato/experimental-robot-crew-remote'
+
+    - id: api-robot-crew-controller
+      name: '@tomato/api-robot-crew-controller'
+
     - id: robot-triggers
       name: '@tomato/experimental-robot-triggers'
 
@@ -35,8 +44,14 @@
     - id: ui-robot
       name: '@tomato/client-ui-robot'
 
+    - id: ui-robot-crew
+      name: '@tomato/client-ui-robot-crew'
+
     - id: robot-skill
       name: '@tomato/experimental-robot-app'
 
     - id: robot-tool
       name: '@tomato/experimental-tool-robot'
+
+    - id: robot-crew-tool
+      name: '@tomato/experimental-tool-robot-crew'

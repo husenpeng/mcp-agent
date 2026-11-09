@@ -5,6 +5,7 @@ import type { Agent } from '@tomato/agent'
 import Schema from '@tomato/schemastery'
 import { BrowserUseProviderName } from '@tomato/browser-use/brand'
 import * as McpClient from '@tomato/mcp-client'
+import type { PreToolDecision } from '@tomato/tools'
 import { createScope } from '@tomato/scope'
 import type { Scope } from '@tomato/scope'
 import { SessionResources } from './index.ts'
@@ -21,6 +22,8 @@ export interface BrowserMcpLaunchConfig {
   headless: boolean
   /** Chromium executable; omission uses the upstream server's installation discovery. */
   executablePath?: string
+  /** Absolute Playwright storage-state file whose cookies and local storage seed the isolated browser. */
+  storageState?: string
   /** Per-call timeout override in milliseconds; omission uses the MCP client default. */
   toolCallTimeoutMs?: number
 }
@@ -44,6 +47,7 @@ export const BrowserMcpConfig: Schema<BrowserMcpAttachConfig | (Omit<BrowserMcpL
     mode: Schema.const('launch').required(),
     headless: Schema.boolean().default(true),
     executablePath: Schema.string().pattern(/\S/u),
+    storageState: Schema.string().pattern(/\S/u),
     toolCallTimeoutMs: Schema.number().min(1),
   }),
   Schema.object({
@@ -84,6 +88,12 @@ export interface SessionMcpOptions {
   env?: Record<string, string>
   /** Per-call timeout override; omission retains the MCP client default. */
   toolCallTimeoutMs?: number
+  /**
+   * Provider policy for one browser tool call. The name arrives without its
+   * `mcp__<server>__` prefix; a returned reason denies the call before dispatch
+   * and reaches the model as that call's failure text.
+   */
+  deny?: (call: { readonly name: string; readonly arguments: unknown }) => string | undefined
 }
 
 interface ClientState {
@@ -193,6 +203,11 @@ export function mountSessionMcp(ctx: Context, options: SessionMcpOptions): void 
     clients.set(agent, state)
   }, { prepend: true })
   ctx.on('tools/change', refreshBlockedMasks)
+  ctx.on('tools/pre-execute', async (exec, next): Promise<PreToolDecision> => {
+    if (options.deny === undefined || !exec.name.startsWith(toolPrefix)) return next()
+    const reason = options.deny({ name: exec.name.slice(toolPrefix.length), arguments: exec.arguments })
+    return reason === undefined ? next() : { kind: 'deny', reason }
+  })
   ctx.on('tools/execute', async (exec, next) => {
     const ownResource = resourceTools.has(exec.name)
       && typeof exec.arguments === 'object' && exec.arguments !== null

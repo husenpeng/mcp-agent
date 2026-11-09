@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { Config, resolveProfiles } from '../src/config.ts'
 import { THINKING_TOKEN_BUDGET_FIELDS } from '../src/catalog.ts'
 
-function configured(compat: Record<string, unknown>, api = 'openai-completions'): Config {
+function configured(compat: Record<string, unknown>, api = 'openai-completions'): ReturnType<typeof Config> {
   return Config({ providers: { gateway: {
     api, baseURL: 'https://gateway.test/v1', models: [{ id: 'model' }], compat,
   } } })

@@ -1,0 +1,49 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/experimental-robot-crew/README.md
+/:
+  en: 252be61c07f2c394
+  zh: c497a40f067802e4
+/robot-crew:
+  en: f552fad423df1cfd
+  zh: 1e0a537a9a65d718
+/robot-crew/summary:
+  en: 3f7a25aac5e3a392
+  zh: 01796459f4bfe4a2
+/robot-crew/table-of-contents:
+  en: 4e53164159b5ce41
+  zh: 89582dc0294d0776
+/robot-crew/use-this-package:
+  en: 07d82279df0bd7de
+  zh: 4a0f84f469a46a3e
+/robot-crew/use-this-package/loop-protection:
+  en: 30134faacc0d6022
+  zh: 28e6d0ed77d5180f
+/robot-crew/use-this-package/execution-memory:
+  en: 571402ca3bfd39b3
+  zh: 7d66ef8338ca80b7
+/robot-crew/use-this-package/long-task-memory:
+  en: b07d341b0a89f479
+  zh: 49ed848fad3870e4
+/robot-crew/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/robot-crew/model-experience/member-brief-and-output-contract:
+  en: 29d7696f93ee4414
+  zh: c3a0b459da8e2e07
+/robot-crew/model-experience/member-brief-and-output-contract/what-the-model-sees:
+  en: 322980ff53403cd0
+  zh: 6416cfb96e9e6690
+/robot-crew/model-experience/member-brief-and-output-contract/token-effect:
+  en: e03964bcc2a7cf85
+  zh: 178c70247f8dc9de
+/robot-crew/model-experience/member-brief-and-output-contract/kv-cache-effect:
+  en: d5814d4ab91a9441
+  zh: 51e4bfcf47a30874
+/robot-crew/known-limitations-and-deferred-work:
+  en: 73e989443dc50f38
+  zh: 23c4355314d5c2e3
+/robot-crew/known-limitations-and-deferred-work/dev-note:
+  en: 3f088963ce6a4e79
+  zh: 451aad0c7c41f154

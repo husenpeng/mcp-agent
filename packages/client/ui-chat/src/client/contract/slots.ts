@@ -217,6 +217,13 @@ export interface ChatNodeOwnerProps {
   openFile: (path: string, options?: OpenFileOptions) => void
   inspectCall: ((callId: ToolCallId) => void) | undefined
   forkAt: (seq: number) => void
+  /**
+   * Retract the trailing human exchange that opens at `messageSeq`, restoring
+   * its text to the composer after the Host commits the retraction.
+   */
+  retractAt: (messageSeq: number, text: string) => Promise<void>
+  /** The Node is the trailing human input the Host may retract. */
+  retractable?: boolean
   /** Session-authorized image loader supplied by the Chat view. */
   loadImage: MessageImageLoader
   fileMentions: (owner: TurnTailOwnerProps) => MarkdownFileMentions | undefined
@@ -340,6 +347,8 @@ export interface ChatViewInjected {
     read: () => ChatScrollPosition | null
   }
   forkAt: (seq: number) => void
+  /** Retract one trailing human exchange and restore its text to the composer. */
+  retractAt: (messageSeq: number, text: string) => Promise<void>
   fileMentions: (owner: TurnTailOwnerProps) => MarkdownFileMentions | undefined
 }
 
@@ -353,7 +362,7 @@ export type ChatFlowDataInjected = Pick<ChatViewInjected, 'keyedHooks'> & {
 
 /** Ordered rows and reconciled local echoes rendered inside one Chat viewport. */
 export interface ChatFlowOwnerProps extends Pick<ChatNodeOwnerProps,
-  'cwd' | 'openFile' | 'inspectCall' | 'forkAt' | 'loadImage' | 'fileMentions'> {
+  'cwd' | 'openFile' | 'inspectCall' | 'forkAt' | 'retractAt' | 'loadImage' | 'fileMentions'> {
   readonly entries: readonly RenderEntry[]
   readonly pendingInputs: readonly (PendingSubmission | InboxState['next-step'][number])[]
   readonly lastInputTurn: number | undefined

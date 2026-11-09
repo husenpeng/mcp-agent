@@ -1,0 +1,15 @@
+{
+  "formatVersion": 2,
+  "roots": [
+    {"key":"event:conversation/retraction","kind":"event","event":"conversation/retraction","surface":false,"digest":"ed99eec168ee791a94081ab3cd56e505975271dd69177c89d7937cfb93133737"}
+  ],
+  "types": [],
+  "nodes": {
+    "0657d3ca5ac4e7bf": {"kind":"primitive","type":"number"},
+    "2b190a907eb42196": {"kind":"object","properties":[{"name":"endSeq","type":"0657d3ca5ac4e7bf","optional":false},{"name":"messageId","type":"4cd48f3e5108bd6e","optional":false},{"name":"startSeq","type":"0657d3ca5ac4e7bf","optional":false}],"indices":[]},
+    "4cd48f3e5108bd6e": {"kind":"primitive","type":"string"},
+    "da7bdb01ff504345": {"kind":"literal","value":"conversation/retraction"},
+    "dacf3d5f3e4ff619": {"kind":"literal","value":true},
+    "ed99eec168ee791a": {"kind":"object","properties":[{"name":"data","type":"2b190a907eb42196","optional":false},{"name":"ignorable","type":"dacf3d5f3e4ff619","optional":true},{"name":"seq","type":"0657d3ca5ac4e7bf","optional":false},{"name":"time","type":"0657d3ca5ac4e7bf","optional":false},{"name":"type","type":"da7bdb01ff504345","optional":false}],"indices":[]}
+  }
+}

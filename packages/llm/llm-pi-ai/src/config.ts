@@ -226,10 +226,169 @@ export interface Config {
    * and registers them the moment a settings section supplies profiles.
    */
   providers: Volatile<Record<string, PiAiProviderProfile>>
+  /**
+   * Optional allowlist of provider/model pairs this adapter may list and call.
+   * Omission leaves the adapter unrestricted; presence denies every unlisted
+   * model, so a configuration edit cannot add one outside the policy.
+   */
+  modelPolicy: Volatile<ModelPolicyConfig | null>
 }
 
 /** Plain options accepted by the provider resolver. */
-export type Options = { [K in keyof Config]?: Config[K] extends Volatile<infer T> ? T : never }
+export interface Options {
+  /** Provider routes, as the schema receives them. */
+  providers?: Record<string, PiAiProviderProfile>
+  /** Allowlist input, as the schema receives it. */
+  modelPolicy?: ModelPolicyOptions
+}
+
+/** Mutable allowlist input the schema accepts. */
+export interface ModelPolicyOptions {
+  enabled: boolean
+  local: ModelPolicyRef[]
+  recent: ModelPolicyRef[]
+  releaseDates?: Record<string, string>
+  recentSince?: string
+}
+
+/** One provider/model pair a deployment's model policy permits. */
+export interface ModelPolicyRef {
+  /** Provider route the model belongs to. */
+  provider: string
+  /** Exact model id the route serves. */
+  model: string
+  /** ISO release date; required for a recent entry once `recentSince` is set. */
+  releasedAt?: string
+}
+
+/**
+ * Allowlist for the models this adapter may list and call. Omission leaves the
+ * adapter unrestricted; presence turns every unlisted pair into a denied
+ * model, including one a later configuration edit adds.
+ */
+export interface ModelPolicyConfig {
+  /** Whether the allowlist is in force; `false` leaves the adapter unrestricted. */
+  enabled: boolean
+  /** Models already present in the deployment's local model list. */
+  local: readonly ModelPolicyRef[]
+  /** Models released inside the deployment's recent-release window. */
+  recent: readonly ModelPolicyRef[]
+  /**
+   * ISO release dates keyed by `provider/model`; a model with a date on or after
+   * `recentSince` is permitted even when it is in neither list. Requires
+   * `recentSince`, and an unknown key is refused rather than ignored.
+   */
+  releaseDates?: Readonly<Record<string, string>>
+  /** ISO date describing the recent window's lower bound, and the recent-date cutoff. */
+  recentSince?: string
+}
+
+/** A resolved allowlist; omission means no policy and every model is permitted. */
+export interface ResolvedModelPolicy {
+  /**
+   * Whether one exact route/model pair may be listed and called.
+   * @param provider - provider route.
+   * @param model - exact model id.
+   * @returns whether the pair is in the local or recent allowlist.
+   */
+  isAllowed(provider: string, model: string): boolean
+  /** Configured local entries, in configuration order. */
+  readonly local: readonly ModelPolicyRef[]
+  /** Configured recent-release entries, in configuration order. */
+  readonly recent: readonly ModelPolicyRef[]
+  /** Release dates by `provider/model`, when the deployment supplied a manifest. */
+  readonly releaseDates: ReadonlyMap<string, string>
+  /** Configured recent-release lower bound, when one was named. */
+  readonly recentSince?: string
+}
+
+const modelPolicyRef = z.object({
+  provider: z.string().required(),
+  model: z.string().required(),
+  releasedAt: z.string(),
+})
+
+const modelPolicy = z.object({
+  enabled: z.boolean().default(false),
+  local: z.array(modelPolicyRef).default([]),
+  recent: z.array(modelPolicyRef).default([]),
+  releaseDates: z.dict(z.string()).default({}),
+  recentSince: z.string(),
+})
+
+/**
+ * Resolve one allowlist and validate its entries.
+ * @param config - configured allowlist; omission leaves the adapter unrestricted.
+ * @returns the resolved allowlist, or `undefined` when none was configured.
+ * @throws Error naming an empty entry or an unusable recent-window date.
+ */
+export function resolveModelPolicy(config: ModelPolicyConfig | null | undefined): ResolvedModelPolicy | undefined {
+  if (config === undefined || config === null || !config.enabled) return undefined
+  const since = config.recentSince === undefined
+    ? undefined
+    : Date.parse(config.recentSince)
+  if (since !== undefined && Number.isNaN(since)) {
+    throw new Error('llm-pi-ai: modelPolicy.recentSince must be an ISO date')
+  }
+  const pairs = new Set<string>()
+  const normalize = (entries: readonly ModelPolicyRef[], field: string): ModelPolicyRef[] =>
+    entries.map((entry, index) => {
+      if (entry.provider.length === 0 || entry.model.length === 0) {
+        throw new Error(`llm-pi-ai: modelPolicy.${field}[${index}] needs non-empty provider and model`)
+      }
+      const releasedAt = entry.releasedAt
+      if (releasedAt !== undefined && Number.isNaN(Date.parse(releasedAt))) {
+        throw new Error(`llm-pi-ai: modelPolicy.${field}[${index}].releasedAt must be an ISO date`)
+      }
+      return {
+        provider: entry.provider,
+        model: entry.model,
+        ...releasedAt === undefined ? {} : { releasedAt },
+      }
+    })
+  const local = normalize(config.local, 'local')
+  for (const entry of local) pairs.add(`${entry.provider}\u0000${entry.model}`)
+  const recent = normalize(config.recent, 'recent')
+  for (const [index, entry] of recent.entries()) {
+    if (since === undefined) {
+      pairs.add(`${entry.provider}\u0000${entry.model}`)
+      continue
+    }
+    if (entry.releasedAt === undefined) {
+      throw new Error(`llm-pi-ai: modelPolicy.recent[${index}].releasedAt is required when recentSince is set`)
+    }
+    if (Date.parse(entry.releasedAt) >= since) pairs.add(`${entry.provider}\u0000${entry.model}`)
+  }
+  const releaseDates = new Map<string, string>()
+  const releaseTimes = new Map<string, number>()
+  for (const [key, value] of Object.entries(config.releaseDates ?? {})) {
+    const slash = key.indexOf('/')
+    if (slash <= 0 || slash === key.length - 1) {
+      throw new Error(`llm-pi-ai: modelPolicy.releaseDates key "${key}" must be provider/model`)
+    }
+    const date = Date.parse(value)
+    if (Number.isNaN(date)) {
+      throw new Error(`llm-pi-ai: modelPolicy.releaseDates["${key}"] must be an ISO date`)
+    }
+    releaseDates.set(key, value)
+    releaseTimes.set(key, date)
+  }
+  if (releaseDates.size > 0 && since === undefined) {
+    throw new Error('llm-pi-ai: modelPolicy.releaseDates requires recentSince')
+  }
+  const cutoff = since ?? Number.NEGATIVE_INFINITY
+  return {
+    isAllowed: (provider, model) => {
+      if (pairs.has(`${provider}\u0000${model}`)) return true
+      const date = releaseTimes.get(`${provider}/${model}`)
+      return date !== undefined && date >= cutoff
+    },
+    local,
+    recent,
+    releaseDates,
+    ...config.recentSince === undefined ? {} : { recentSince: config.recentSince },
+  }
+}
 
 const thinkingBudgets = z.object({
   minimal: z.number(),
@@ -351,6 +510,7 @@ const profile = z.object({
 /** Runtime schema for {@link Config}. */
 export const Config = z.object({
   providers: z.dict(profile).default({}).volatile(),
+  modelPolicy: modelPolicy.volatile(),
 })
 
 /**

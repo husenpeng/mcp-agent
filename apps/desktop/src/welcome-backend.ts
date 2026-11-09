@@ -47,20 +47,33 @@ export async function connectDesktopWelcome(
   hostCookie?: string | null,
 ): Promise<DesktopWelcomeBackend> {
   const origin = new URL(authenticatedUrl).origin
-  const authenticated = await send(authenticatedUrl, { credentials: 'include' })
+  const cookie = hostCookie ?? null
+  const authenticated = cookie === null
+    ? await send(authenticatedUrl, { credentials: 'include' })
+    : await send(new URL('/', origin).href, {
+      credentials: 'omit', headers: { cookie }, redirect: 'manual',
+    })
   const setCookie = authenticated.headers.get('set-cookie')
-  const cookie = hostCookie ?? (setCookie === null ? null : setCookie.split(';')[0]?.trim() ?? null)
+  const sessionCookie = cookie ?? (setCookie === null ? null : setCookie.split(';')[0]?.trim() ?? null)
   await authenticated.body?.cancel()
-  if (!authenticated.ok) throw new Error('desktop welcome: Web authentication failed')
+  if (!authenticated.ok && authenticated.status !== 303) {
+    throw new Error('desktop welcome: Web authentication failed')
+  }
   const invoke = async (
     request: { namespace: string; method: string; args: Record<string, unknown> },
     signal?: AbortSignal,
   ): Promise<unknown> => {
     const rpcId = randomUUID()
     const method = `${request.namespace}/${request.method}`
+    const headers = cookie === null
+      ? { 'content-type': 'application/json' }
+      : { 'content-type': 'application/json', cookie }
     const response = await send(new URL(`/api/${method}`, origin).href, {
-      method: 'POST', credentials: 'include', redirect: 'error', ...(signal === undefined ? {} : { signal }),
-      headers: { 'content-type': 'application/json' },
+      method: 'POST',
+      ...cookie === null ? { credentials: 'include' as const } : { credentials: 'omit' as const },
+      redirect: 'error',
+      ...(signal === undefined ? {} : { signal }),
+      headers,
       body: JSON.stringify({ type: 'client-request', rpcId, method, payload: { args: request.args } }),
     })
     const envelope: unknown = await response.json().catch(() => undefined)
@@ -75,7 +88,7 @@ export async function connectDesktopWelcome(
     }
     return envelope.result.value
   }
-  const account = desktopTomatoAuth({ origin, hostCookie: cookie, request: send })
+  const account = desktopTomatoAuth({ origin, hostCookie: sessionCookie, request: send })
   const settingsAndReference = async () => {
     const settings = await invoke({ namespace: 'settings', method: 'describe', args: {} })
     if (!record(settings) || !Array.isArray(settings.namespaces)) throw new Error('desktop welcome: missing settings namespaces')

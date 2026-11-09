@@ -27,7 +27,9 @@ const RUN: Run = {
   output: '报告已生成',
 }
 
-const ACTIONS: RunDetailActions = { interrupt: () => {}, correct: () => {}, stop: () => {} }
+const ROBOT = { name: '品牌营销洞察师', skills: [] }
+
+const ACTIONS: RunDetailActions = { interrupt: () => {}, correct: () => {}, stop: () => {}, start: () => {} }
 
 /** Selector hook over one fixed Session snapshot. */
 const sessionHook = (session: SessionSnapshot) =>
@@ -43,7 +45,10 @@ describe('robot run panel', () => {
     const chat: ChatSnapshot = EMPTY_CHAT_SNAPSHOT
     const props: RobotRunPanelProps = {
       run: RUN,
+      robot: ROBOT,
       actions: ACTIONS,
+      startBlocked: false,
+      hasRuns: true,
       useSession: sessionHook(session),
       useRunChat: chatHook(chat),
       t,
@@ -51,14 +56,18 @@ describe('robot run panel', () => {
     render(<RobotRunPanel {...props} />)
     expect(screen.getByText('已完成')).toBeDefined()
     expect(screen.getByText('报告已生成')).toBeDefined()
-    expect(screen.getByText('等待机器人开始执行…')).toBeDefined()
+    // The run's own instruction is shown while its Session has no nodes yet.
+    expect(screen.getByText('整理报告')).toBeDefined()
   })
 
   it('reports the Session open error through the detail', () => {
     const session = { openState: 'error', openError: { message: 'history unavailable' } } as SessionSnapshot
     const props: RobotRunPanelProps = {
       run: RUN,
+      robot: ROBOT,
       actions: ACTIONS,
+      startBlocked: false,
+      hasRuns: true,
       useSession: sessionHook(session),
       useRunChat: chatHook(undefined),
       t,

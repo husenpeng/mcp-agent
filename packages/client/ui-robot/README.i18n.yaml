@@ -3,23 +3,23 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-robot/README.md
 /:
-  en: b662dec90ff0f17b
-  zh: a0c968a18f6e9a10
+  en: 69d3dcf0556ae29d
+  zh: 4a1a7442f1ffae76
 /robot-ui:
   en: 80f8edd09a932929
   zh: e70a66f9bf8ac89a
 /robot-ui/summary:
-  en: ca092426bb8e26a0
-  zh: cacf7d694c1dd0ab
+  en: 5dfa793ceb494c0a
+  zh: 29502a44f78ecf21
 /robot-ui/table-of-contents:
   en: 134c9b5c374e0e8e
   zh: f79065d96be7863e
 /robot-ui/use-this-package:
-  en: dafb0d32719b2ce9
-  zh: 15eeff99a1ce1e26
+  en: 65f07265df22b4e7
+  zh: aebdcc2004e10968
 /robot-ui/dev-note:
-  en: 121f7a392f1e6052
-  zh: 98bde2e5fd02666c
+  en: 66a7daa4b5869b08
+  zh: 66b3ffa5c6fe14c7
 /robot-ui/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
@@ -36,5 +36,5 @@
   en: 08672aaed2728c7f
   zh: bf88365de5710b28
 /robot-ui/known-limitations-and-deferred-work:
-  en: 68a55a829f41b76e
-  zh: fbfd2f053c923b90
+  en: 61cb0fcee72e6dee
+  zh: c2b715d7b868ef8d

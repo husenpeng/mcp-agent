@@ -6,17 +6,17 @@ Status: implemented
 
 ## Problem
 
-`dsh-tool-web` 在启用搜索时总会注册 `web_search`，而 [web 能力 seam 决策](2026-06-24-web-capability-seam.zh.md)让它在选中的提供方无法运行时仍然可见。发行版的搜索提供方 `dsh-web-search-deepseek` 只对 `deepseek-account` 路由上的模型请求使用 DeepSeek 账号 token 鉴权；其他路由都需要已配置的 API 密钥。因此，API 密钥路由上没有搜索密钥的会话会获得一个每次调用都以 `WEB_PROVIDER_CREDENTIAL_MISSING` 失败的工具。同一 Host 中的会话可以使用不同路由，一个会话可以在请求之间切换路由，而 Web 应用按 agent preset 只注册一次 `web_search`，因此任何注册层面的决定都无法与每个请求相符。Web 搜索设置开关会同时选中 `dsh-web-deepseek-api` 的 Search 与 Fetch API，两个操作都需要这份凭据，因此同一会话还会获得一个每次调用都失败的 `web_fetch`。
+`dsh-tool-web` 在启用搜索时总会注册 `web_search`，而 [web 能力 seam 决策](2026-06-24-web-capability-seam.zh.md)让它在选中的提供方无法运行时仍然可见。发行版的搜索提供方 `dsh-web-search-deepseek` 只对 `account` 路由上的模型请求使用 账号 token 鉴权；其他路由都需要已配置的 API 密钥。因此，API 密钥路由上没有搜索密钥的会话会获得一个每次调用都以 `WEB_PROVIDER_CREDENTIAL_MISSING` 失败的工具。同一 Host 中的会话可以使用不同路由，一个会话可以在请求之间切换路由，而 Web 应用按 agent preset 只注册一次 `web_search`，因此任何注册层面的决定都无法与每个请求相符。Web 搜索设置开关会同时选中 `dsh-web-deepseek-api` 的 Search 与 Fetch API，两个操作都需要这份凭据，因此同一会话还会获得一个每次调用都失败的 `web_fetch`。
 
 ## Decision
 
 web 能力 seam 的每个角色各负责逐步骤检查的一部分：
 
 - **Service Definition。** `WebSearchProvider` 与 `WebFetchProvider` 有一个可选的 `ready(llmProvider)`，回答为该对话路由上的模型请求发起的操作是否有可发送的凭据。它只检查配置，不发起网络调用。`ctx.web.searchReady(llmProvider?)` 与 `ctx.web.fetchReady(llmProvider?)` 按与 `search()`、`fetch()` 相同的规则解析提供方并返回其回答。没有 `ready()` 的提供方视为就绪；选择失败时回答 true，因为对应操作会把该失败报告为结构化 `WebError`。
-- **Service Provider。** `dsh-web-search-deepseek` 在以下任一情况下回答 true：路由为 `deepseek-account` 且 `ctx.deepseekAccount.resolveToken()` 为配置的搜索端点返回 token；配置段带有字面 `apiKey`；或 `ctx.credentials.describe()` 报告 `apiKeyEnv` 引用已配置（没有该服务时，启动环境中存在该变量）。它按 `search()` 解析凭据的顺序检查凭据，读取账号 token 或凭据存储失败时回答 false，因为 `search()` 会在该次读取上失败，而不会尝试下一种凭据。`dsh-web-deepseek-api` 的 Search 与 Fetch API 提供方共用一份凭据，并对其 API 基础地址以同样方式回答；它们的传输层重复了这些检查，因此两个包互不依赖。提供方不点名任何工具或提示词段落。
+- **Service Provider。** `dsh-web-search-deepseek` 在以下任一情况下回答 true：路由为 `account` 且 `ctx.account.resolveToken()` 为配置的搜索端点返回 token；配置段带有字面 `apiKey`；或 `ctx.credentials.describe()` 报告 `apiKeyEnv` 引用已配置（没有该服务时，启动环境中存在该变量）。它按 `search()` 解析凭据的顺序检查凭据，读取账号 token 或凭据存储失败时回答 false，因为 `search()` 会在该次读取上失败，而不会尝试下一种凭据。`dsh-web-deepseek-api` 的 Search 与 Fetch API 提供方共用一份凭据，并对其 API 基础地址以同样方式回答；它们的传输层重复了这些检查，因此两个包互不依赖。提供方不点名任何工具或提示词段落。
 - **Consumer。** `dsh-tool-web` 注册 `web_search` 与 `web_fetch` 时各带一个[步骤激活条件](../../../../packages/core/tools/README.zh.md#conditional-tools)，以该步骤模型选择的路由询问 `ctx.web.searchReady()` 与 `ctx.web.fetchReady()`。agent loop 在组装该步骤之前解析各条件，因此声明的工具、`tool:web_search` 与 `tool:web_fetch` 提示词段落、PTC 程序绑定与派发都读取同一个准入集合。
 
-路由只决定是否在 API 密钥之前检查账号 token，这只发生在 `deepseek-account` 路由上；API 密钥在任何路由上都算数，因此只要配置了 DeepSeek 密钥，使用其他提供方模型的对话也会获得 DeepSeek Web 工具。提供方不比较聊天路由的地址与自己的端点：即使官方路由经网关聊天，每次操作也把配置的密钥（默认 `DEEPSEEK_API_KEY`）发往配置的端点。
+路由只决定是否在 API 密钥之前检查账号 token，这只发生在 `account` 路由上；API 密钥在任何路由上都算数，因此只要配置了 DeepSeek 密钥，使用其他提供方模型的对话也会获得 DeepSeek Web 工具。提供方不比较聊天路由的地址与自己的端点：即使官方路由经网关聊天，每次操作也把配置的密钥（默认 `DEEPSEEK_API_KEY`）发往配置的端点。
 
 只看凭据是否存在：不读取 API 密钥的值，也不访问任何端点，因此错误的密钥，或不提供原生 `web_search_20250305` 服务器工具的端点，仍会让该工具保持准入。未准入某个 Web 工具的步骤也会以 `UNKNOWN_TOOL` 拒绝对它的调用，因此模型重复先前的调用也到达不了任何提供方；在模型步骤之外发起的操作在运行时解析凭据，没有凭据时以 `WEB_PROVIDER_CREDENTIAL_MISSING` 失败。
 
@@ -34,7 +34,7 @@ web 能力 seam 的每个角色各负责逐步骤检查的一部分：
 
 **从组装好的请求中移除 `web_search`。** `system-prompt/assemble` 监听器可以删掉该声明及其段落，但工具仍可执行，因此模型重复先前的调用时仍会运行它，PTC 程序也仍能绑定它。提示词组装也已不再携带工具声明。
 
-**只在 DeepSeek 账号路由上提供搜索。** 账号 token 只对官方端点签发，因此网关的密钥不可能到达 DeepSeek。但所有发行 profile 的默认路由都是 `deepseek-official`，搜索会因此默认关闭，连官方 API 密钥的情况也一并关闭。
+**只在 账号路由上提供搜索。** 账号 token 只对官方端点签发，因此网关的密钥不可能到达 DeepSeek。但所有发行 profile 的默认路由都是 `deepseek-official`，搜索会因此默认关闭，连官方 API 密钥的情况也一并关闭。
 
 **除非搜索有自己的密钥，否则不向其他提供方的对话提供这些工具。** 其他模型对话中的搜索会由 DeepSeek 密钥计费，但 DeepSeek 搜索本就是该密钥付费使用的服务之一，配置了它的用户也期望无论用哪个模型对话，搜索都能用。Web 搜索设置页把密钥存在 `apiKeyEnv` 指向的引用下，默认是聊天路由也在读取的 `DEEPSEEK_API_KEY`，因此在那里输入的密钥永远无法服务其他模型；再加一个开放这些路由的 `routes` 配置项，只会让用户多找一样东西。
 

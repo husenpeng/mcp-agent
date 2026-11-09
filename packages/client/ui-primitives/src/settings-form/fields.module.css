@@ -134,6 +134,11 @@
   cursor: default;
 }
 
+.select {
+  composes: input;
+  cursor: pointer;
+}
+
 .input[aria-invalid='true'] {
   border-color: var(--dsw-alias-state-error-primary);
 }

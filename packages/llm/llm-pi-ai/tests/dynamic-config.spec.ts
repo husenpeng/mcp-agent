@@ -180,7 +180,7 @@ describe('request-level dynamic profiles', () => {
     expect(server.headers[0]?.authorization).toBe('Bearer pk-from-settings')
 
     // Emptying the user layer returns the adapter to its dormant state.
-    await configurations.get(ctx)!.replace(initialConfigs.get(ctx)!)
+    await configurations.get(ctx)!.replace({ ...initialConfigs.get(ctx)! })
     expect(ctx.llm.listProviders()).toEqual([])
   })
 
@@ -208,7 +208,7 @@ describe('request-level dynamic profiles', () => {
 
     // Reset the user layer: the settings-born route unregisters, the
     // composition route stays.
-    await configurations.get(ctx)!.replace(initialConfigs.get(ctx)!)
+    await configurations.get(ctx)!.replace({ ...initialConfigs.get(ctx)! })
     expect(ctx.llm.listProviders().map(provider => provider.id)).toEqual(['openai'])
     const removed = await assemble(ctx, { provider: 'deepseek', model: 'deepseek-flash', messages: [] })
     expect(removed.finish).toMatchObject({ kind: 'error', failure: { code: 'NO_ADAPTER' } })
@@ -298,7 +298,7 @@ describe('request-level dynamic profiles', () => {
 
     // Reverting to the working configuration re-applies, even though its
     // facts equal the ones the registry already holds.
-    await configurations.get(ctx)!.replace(initialConfigs.get(ctx)!)
+    await configurations.get(ctx)!.replace({ ...initialConfigs.get(ctx)! })
     expect(ctx.llm.listProviders().map(provider => provider.id).sort()).toEqual(['anthropic', 'openai'])
     await assemble(ctx, { provider: 'openai', model: 'gpt-4.1', messages: [] })
     expect(server.paths).toEqual(['/v1/responses', '/v1/responses'])

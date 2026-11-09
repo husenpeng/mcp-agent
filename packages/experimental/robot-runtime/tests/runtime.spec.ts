@@ -45,7 +45,7 @@ const BASE = {
     dataClasses: ['internal'],
     credentials: [] as string[],
     sandbox: 'workspace',
-    permissionPreset: 'workspace',
+    permissionPreset: 'workspace-write',
     network: 'allowlist',
   },
   io: {
@@ -67,6 +67,8 @@ type Script = (session: Session, message: UserMessage, agent: Agent) => void
 interface BenchOptions {
   failCreate?: string | Error
   withPresets?: boolean
+  /** Preset name the mounted permission catalog refuses to apply. */
+  failPreset?: string
   deferRuntime?: boolean
   hang?: boolean
   /** Registered tool names the runtime sees; each entry may also carry a description. */
@@ -81,6 +83,8 @@ interface BenchOptions {
   hangAfterFirstTurn?: boolean
   /** Pause wait budget the composition configures, in milliseconds. */
   pauseTimeoutMs?: number
+  /** Make the run's Agent disposal reject after the run settles. */
+  failDispose?: boolean
 }
 
 function completedText(text: string): Script {
@@ -168,7 +172,12 @@ async function bench(script: Script, options: BenchOptions = {}) {
   }
   if (options.withPresets === true) {
     ctx.provide('permissionPresets', {
-      set: (session: Session, preset: string) => { presets.push([session.id, preset]) },
+      names: ['read-only', 'workspace-write', 'danger-full-access'],
+      resolve: (preset: string) => ({ name: preset }),
+      set: (session: Session, preset: string) => {
+        if (options.failPreset === preset) throw new Error(`permission: unknown preset "${preset}" (known: read-only, workspace-write, danger-full-access)`)
+        presets.push([session.id, preset])
+      },
     } as never)
   }
 
@@ -225,7 +234,13 @@ async function bench(script: Script, options: BenchOptions = {}) {
       created.push(createOptions)
       const session = ctx.sessions.create(createOptions.sessionId, createOptions.meta === undefined ? {} : { meta: createOptions.meta })
       const agent = await mount(ownerCtx, session, createOptions)
-      return { agent, dispose: async () => { disposed += 1 } }
+      return {
+        agent,
+        dispose: async () => {
+          disposed += 1
+          if (options.failDispose === true) throw new Error('dispose failed')
+        },
+      }
     },
     async resume(): Promise<AgentHandle> {
       throw new Error('not used')
@@ -521,7 +536,34 @@ describe('robot runtime', () => {
       const run = await startRun(test.ctx.robots, spec)
       await expect(waitForRun(test.ctx.robots, run.id)).resolves.toMatchObject({ state: 'succeeded' })
       expect(test.filters).toEqual([{ deny: ['bash'] }])
-      expect(test.presets).toEqual([[test.created[0]?.sessionId, 'workspace']])
+      expect(test.presets).toEqual([[test.created[0]?.sessionId, 'workspace-write']])
+    } finally {
+      await test.ctx.fiber.dispose()
+    }
+  })
+
+  it('fails a run whose permission preset the deployment cannot apply', async () => {
+    const spec = copy()
+    spec.capability.permissionPreset = 'legacy'
+    const test = await bench(completedText('unused'), { withPresets: true, failPreset: 'legacy' })
+    try {
+      const run = await startRun(test.ctx.robots, spec)
+      const settled = await waitForRun(test.ctx.robots, run.id)
+      expect(settled.state).toBe('failed')
+      expect(settled.error).toContain('robot permission preset "legacy" is unavailable in this deployment')
+      expect(test.presets).toEqual([])
+      expect(test.disposed()).toBe(1)
+    } finally {
+      await test.ctx.fiber.dispose()
+    }
+  })
+
+  it('keeps the run result when Agent disposal rejects', async () => {
+    const test = await bench(completedText('reviewed'), { failDispose: true })
+    try {
+      const run = await startRun(test.ctx.robots)
+      await expect(waitForRun(test.ctx.robots, run.id)).resolves.toMatchObject({ state: 'succeeded', output: 'reviewed' })
+      expect(test.disposed()).toBe(1)
     } finally {
       await test.ctx.fiber.dispose()
     }

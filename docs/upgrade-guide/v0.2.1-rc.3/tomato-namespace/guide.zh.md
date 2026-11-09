@@ -24,7 +24,7 @@ description: "仓库自有的 DSH/dsh 命名统一改为 TOMATO/tomato。启动�
 | 桌面 app ID | `com.deepseek.dsh` | `vip.tomatoai.desktop` |
 | 本地桌面构建 ID | `com.deepseek.harness` | `vip.tomatoai.harness` |
 
-DeepSeek 自身的身份不变：`DEEPSEEK_API_KEY`、`DEEPSEEK_BASE_URL`、`api.deepseek.com`、`deepseek-*` 模型 id、`deepseek-official` / `deepseek-account` / `deepseek-api-key` provider id，以及适配器包名中的 `deepseek` leaf。`@deepseek-ai/libreoffice-kit*` 这些真实第三方包也保留原名。
+DeepSeek 自身的身份不变：`DEEPSEEK_API_KEY`、`DEEPSEEK_BASE_URL`、`api.deepseek.com`、`deepseek-*` 模型 id、`deepseek-official` / `account` / `deepseek-api-key` provider id，以及适配器包名中的 `deepseek` leaf。`@deepseek-ai/libreoffice-kit*` 这些真实第三方包也保留原名。
 
 ## 迁移
 

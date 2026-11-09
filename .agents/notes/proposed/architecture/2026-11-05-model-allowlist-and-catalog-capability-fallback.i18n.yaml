@@ -1,0 +1,28 @@
+# Bilingual-pair consistency record for 2026-11-05-model-allowlist-and-catalog-capability-fallback.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/proposed/architecture/2026-11-05-model-allowlist-and-catalog-capability-fallback.md
+/agent-note-model-allowlist-and-cross-provider-capability-fallback:
+  en: 61fa2f189e46dc41
+  zh: 114962e5fdf4c019
+/agent-note-model-allowlist-and-cross-provider-capability-fallback/problem:
+  en: 3b56efbfdff1570d
+  zh: 4f05541214babaea
+/agent-note-model-allowlist-and-cross-provider-capability-fallback/proposal:
+  en: 986dd8097aac4d3d
+  zh: 986dd8097aac4d3d
+/agent-note-model-allowlist-and-cross-provider-capability-fallback/proposal/capability-fallback-by-canonical-model-id:
+  en: 184dc1b50cfa23c7
+  zh: 20ea30fe2a4b4586
+/agent-note-model-allowlist-and-cross-provider-capability-fallback/proposal/allowlist-with-a-release-date-manifest:
+  en: 7931f925a0c0781c
+  zh: 303c4789a495eda7
+/agent-note-model-allowlist-and-cross-provider-capability-fallback/alternatives-considered:
+  en: 3b7c62a5e422de1c
+  zh: f9b8b6cd58e83b45
+/agent-note-model-allowlist-and-cross-provider-capability-fallback/acceptance-criteria:
+  en: 7139f5fed1b0c392
+  zh: 216c5938fe47f6b4
+/agent-note-model-allowlist-and-cross-provider-capability-fallback/risks:
+  en: 70daa19ca1502cc1
+  zh: a9d8f28e1df37697

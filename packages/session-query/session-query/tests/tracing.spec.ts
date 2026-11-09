@@ -351,6 +351,39 @@ describe('session event tracing', () => {
       })
   })
 
+  it('links a retracted exchange to its retraction event', async () => {
+    const ctx = await queryContext()
+    const session = ctx.sessions.create(SessionId('trace-retraction'))
+    const human = createUserMessage({ content: [{ type: 'text', text: 'undo me' }], source: { kind: 'user' } })
+    const humanSeq = session.append('user/message', human, { surfaceOp: 'append' }).seq
+    const replySeq = session.append('assistant/message', {
+      turn: 1,
+      step: 1,
+      stream: [],
+      message: createMessage({
+        role: 'assistant',
+        content: [{ type: 'text', text: 'reply' }],
+        source: { kind: 'model', provider: 'mock', model: 'mock' },
+      }),
+    }, { surfaceOp: 'append' }).seq
+    const retraction = session.append('conversation/retraction', {
+      messageId: human.id,
+      startSeq: humanSeq,
+      endSeq: replySeq,
+    })
+
+    await expect(ctx.sessionQuery.traceEvent({ sessionId: session.id, seq: humanSeq }))
+      .resolves.toMatchObject({
+        target: { surface: 'shadowed' },
+        replacedBy: retraction.seq,
+      })
+    await expect(ctx.sessionQuery.traceEvent({ sessionId: session.id, seq: retraction.seq }))
+      .resolves.toMatchObject({
+        target: { type: 'conversation/retraction', surface: 'log-only' },
+        replacedEventSeqs: [humanSeq, replySeq],
+      })
+  })
+
   it('returns fresh trace arrays and target records', async () => {
     const ctx = await queryContext()
     const session = ctx.sessions.create(SessionId('detached'))

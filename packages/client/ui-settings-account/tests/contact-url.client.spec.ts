@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import type { AccountUserId } from '@tomato/deepseek-account/types'
+import type { AccountUserId } from '@tomato/account-service/types'
 import { ContactConfig } from '../src/contact-config.ts'
 import { contactUrl } from '../src/client/contact-url.ts'
 

@@ -72,7 +72,7 @@ function moduleShortName(moduleName: string): string {
   return unscoped
     .replace(/^cordis:/, '')
     .replace(/^cordis-plugin-/, '')
-    .replace(/^tomato-(?:host-|client-)?/, '')
+    .replace(/^(?:tomato-)?(?:host-|client-)?/, '')
 }
 
 /** Display an entry identity without the composition-only `include:` marker. */

@@ -35,7 +35,7 @@ kind: "package-reference"
 
 ### 配置
 
-默认设置适合典型检出：`.git` 标记项目根目录，`AGENTS.md` 与 `CLAUDE.md` 是基础候选，`AGENTS.local.md` 与 `CLAUDE.local.md` 是叠加的本地 overlay。只有 `maxBytes` 必填——它在每条渲染消息内分别限制用户全局指令链与项目指令链，让每个部署显式选择自己的提示词预算；同时包含两条链的消息最多为 `maxBytes` 的两倍。
+默认设置适合典型检出：`.git` 标记项目根目录，`AGENTS.md` 与 `CLAUDE.md` 是基础候选，`AGENTS.local.md` 与 `CLAUDE.local.md` 是叠加的本地 overlay。只有 `maxBytes` 必填——它分别限制每条链的指令内容，让每个部署显式选择自己的提示词预算；同时包含两条链的消息内容至多为 `maxBytes` 的两倍，脚手架另计。
 
 存放用户全局 `AGENTS.md` 的 harness home 属于进程策略，而不是配置行：该插件通过 `@tomato/home-paths` 解析 `$TOMATO_HOME` 或 `~/.tomato`，因此指令加载始终读取进程 home。共享 agents 根目录同样如此解析：`$TOMATO_AGENTS_HOME` 或 `~/.agents`。残留的 `tomatoHome` 与 `agentsHome` 配置行字段会被忽略。
 
@@ -61,7 +61,7 @@ export interface Config {
 
 | 字段 | 默认值 | 含义 |
 |---|---|---|
-| `maxBytes` | 必填 | 一条渲染消息中每条指令链（用户全局、项目）的上限，单位为字节；同时包含两条链的消息最多为该值的两倍 |
+| `maxBytes` | 必填 | 一条渲染消息中每条指令链（用户全局、项目）的**内容**上限，单位为字节；框架、标题、引言与通知另计 |
 | `maxSourceBytes` | `1048576` | 渲染前单个源指令文件的上限 |
 | `projectRootMarkers` | `['.git']` | 标记项目根目录的目录名 |
 | `instructionFileCandidates` | `['AGENTS.md', 'CLAUDE.md']` | 每个项目目录中加载的基础文件名 |
@@ -71,9 +71,9 @@ export interface Config {
 
 ### 观察预算
 
-渲染分别为用户全局指令链与项目指令链做预算，每条链各受 `maxBytes` 限制。在一条链内，渲染优先保留最具体的文件：先丢弃完整的较宽泛文件，再截断剩下的最后一个文件，然后依次退回到精简引言、带该文件空标题的预算通知，最后是仅含预算通知的文本。因此用户全局文件只有超出自身预算时才会被省略或截断，且 harness home 文件先于共享根目录文件被省略；下文的回退情形除外。可见的 `Workspace instruction budget ...` 通知会指名两条链中被省略与被截断的路径。超出预算的宽泛文件会被忽略；刷新期间它被视为暂时不可用，而非被移除。
+渲染分别预算每条链的指令内容，各受 `maxBytes` 限制；`<system-reminder>` 框架、每条文件的标题、一份引言与预算通知属于脚手架，另计在预算之上，因此一条消息可能超出该上限这部分开销。链内优先保留最具体的文件：先丢弃完整的较宽泛文件，再把剩下的最后一个文件截断到剩余的内容预算。可见的 `Workspace instruction budget ...` 通知会指名两条链中被省略与被截断的路径。超出预算的宽泛文件会被忽略；刷新期间它被视为暂时不可用，而非被移除。
 
-所有文件合起来能放进 `maxBytes` 时，消息包含全部文件且没有预算通知；只有一条链有文件时，该链单独在 `maxBytes` 内渲染。其他情况下，一个 `<system-reminder>` 框架包含合并后的预算通知（仅当有文件被省略或截断时）、一段引言（仅当某条链保留了框架时），以及按加载顺序排列的两条链渲染段落，因此基线中用户全局文件在前；这条消息可以超过 `maxBytes`，但至多为其两倍。若某条链在没有框架的情况下渲染，且合并后的框架会超过 `maxBytes` 的两倍，则所有文件改为作为一条链在一个 `maxBytes` 内渲染，这可能省略一个本可放进自身预算的用户全局文件；这只会在预算只有几百字节，或预算通知接近或超过 `maxBytes` 时发生。[按指令链分别预算的决策](../../../.agents/notes/implemented/architecture/2026-10-16-separate-instruction-chain-budgets.zh.md)记录了两条链分别预算的原因。
+所有文件的内容合起来能放进 `maxBytes` 时，消息包含全部文件且没有预算通知；只有一条链有文件时，该链单独渲染。其他情况下，一个 `<system-reminder>` 框架包含合并后的预算通知（仅当有文件被省略或截断时）、一份完整引言，以及按加载顺序排列的两条链渲染段落，因此基线中用户全局文件在前；内容总量至多为 `maxBytes` 的两倍，脚手架另计。 [按指令链分别预算的决策](../../../.agents/notes/implemented/architecture/2026-10-16-separate-instruction-chain-budgets.zh.md)记录了两条链分别预算的原因。
 
 -----
 

@@ -73,12 +73,18 @@ var zh = {
   compatDsh: "DSH 兼容",
   compatOther: "不是插件包",
   compatUnknown: "兼容性未知",
+  compatCurrent: "兼容当前 TOMATO",
+  runtimeVersion: "当前 TOMATO {version}",
   dshRequirement: "需要 DeepSeek Harness {range}",
   tomatoRequirement: "需要 Tomato {range}",
+  peerRequirement: "需要 {peer} {range}",
+  substitutedVersion: "已改用与当前 TOMATO {runtime} 兼容的 {selected}：{requested} 在这个版本上无法运行。",
   compatNoticeTitle: "此插件来自 DeepSeek Harness，将通过兼容层安装",
   compatNoticeBody: "安装时会下载该版本，把 @deepseek-ai/* 包名、dsh 清单字段与代码导入改写为 @tomato/*，再交给 Tomato 的安装器。兼容层只做命名与清单转换，不保证插件内部 API 完全一致，个别插件仍可能加载失败。",
   adaptFailedTitle: "兼容转换失败",
   adaptFailedBody: "转换这个版本时失败：{reason}",
+  incompatibleTitle: "没有与该 TOMATO 兼容的版本",
+  incompatibleBody: "当前 TOMATO {runtime} 无法运行 {name} 的任何已列出发布版本，最新版本 {version} 也不满足要求。",
   installCompat: "安装兼容版",
   otherNoticeTitle: "此包不是 Tomato 插件",
   otherNoticeBody: "它没有声明 tomato.bundle，安装后不会出现在插件列表中，也不会被加载。",
@@ -201,12 +207,18 @@ var en = {
   compatDsh: "DSH compatible",
   compatOther: "Not a plugin package",
   compatUnknown: "Compatibility unknown",
+  compatCurrent: "Compatible with this TOMATO",
+  runtimeVersion: "Running TOMATO {version}",
   dshRequirement: "Requires DeepSeek Harness {range}",
   tomatoRequirement: "Requires Tomato {range}",
+  peerRequirement: "Requires {peer} {range}",
+  substitutedVersion: "Installed {selected} instead: {requested} cannot run on TOMATO {runtime}.",
   compatNoticeTitle: "This DeepSeek Harness plugin installs through the compatibility layer",
   compatNoticeBody: "Installation downloads this version, rewrites @deepseek-ai package names, dsh manifest fields, and code imports to @tomato names, then hands it to Tomato's installer. The layer converts names and metadata only; an individual plugin may still fail to load if its internals changed.",
   adaptFailedTitle: "Compatibility conversion failed",
   adaptFailedBody: "Converting this version failed: {reason}",
+  incompatibleTitle: "No version compatible with this TOMATO",
+  incompatibleBody: "No listed release of {name} runs on TOMATO {runtime}; the newest, {version}, does not meet its requirements.",
   installCompat: "Install compatible build",
   otherNoticeTitle: "This package is not a Tomato plugin",
   otherNoticeBody: "It declares no tomato.bundle, so installation would not add a loadable plugin layer.",
@@ -325,6 +337,9 @@ function readManifest(plugin, version) {
 }
 function adaptVersion(plugin, version) {
   return call("adapt", { name: plugin.name, version: version.version });
+}
+function resolveVersion(plugin, version) {
+  return call("resolve", { name: plugin.name, version: version.version });
 }
 function readDetail(plugin, version) {
   return call("detail", { name: plugin.name, version: version.version });
@@ -446,6 +461,14 @@ function categorySections(plugins, categories, stars, language, limit, sort = "s
 function targetsDeepSeek(version) {
   return typeof version?.dsh === "string";
 }
+function requirementOf(requirements) {
+  const entries = Object.entries(requirements ?? {});
+  if (entries.length === 0) return void 0;
+  const engine = entries.find(([name]) => name === "engines.tomato");
+  if (engine !== void 0) return { key: "tomatoRequirement", params: { range: engine[1] } };
+  const [peer, range] = entries[0];
+  return { key: "peerRequirement", params: { peer, range } };
+}
 function installTarget(plugin, version) {
   if (version.source.type === "git") {
     return { spec: `git+${version.source.url}.git#${version.source.commit}${version.source.path === void 0 ? "" : `&path:/${version.source.path}`}` };
@@ -488,7 +511,8 @@ function createController(i18n) {
     detail: { status: "idle" },
     compat: { status: "idle" },
     checking: null,
-    notice: null
+    notice: null,
+    substitution: null
   });
   let loadToken = 0;
   let detailToken = 0;
@@ -543,26 +567,36 @@ function createController(i18n) {
   const install = async (plugin, version, installFn) => {
     if (state().checking !== null) return;
     set({ checking: plugin.name, notice: null });
+    const resolution = await resolveVersion(plugin, version).catch((error) => ({ status: "unknown", reason: error?.message ?? String(error) }));
+    if (resolution.status === "none") {
+      set({ checking: null, notice: { kind: "incompatible", plugin, version, resolution } });
+      return;
+    }
+    const selected = resolution.status === "resolved" ? plugin.versions.find((entry) => entry.version === resolution.selected) ?? { version: resolution.selected, source: { type: "npm" } } : void 0;
+    const chosen = selected ?? version;
+    if (chosen.version !== version.version) {
+      set({ substitution: { plugin, requested: version, selected: chosen, runtimeVersion: resolution.runtimeVersion } });
+    }
     let compat;
     try {
-      compat = await readManifest(plugin, version);
+      compat = await readManifest(plugin, chosen);
     } catch (error) {
       set({
         checking: null,
         notice: {
           kind: "unknown",
           plugin,
-          version,
+          version: chosen,
           reason: error?.message ?? String(error)
         }
       });
       return;
     }
     const title = localized(plugin.title, state().language) || plugin.name;
-    const target = installTarget(plugin, version);
+    const target = installTarget(plugin, chosen);
     if (compat.class === "tomato") {
       set({ checking: null });
-      installFn({ ...target, title, version: version.version });
+      installFn({ ...target, title, version: chosen.version });
       return;
     }
     set({
@@ -570,7 +604,7 @@ function createController(i18n) {
       notice: {
         kind: compat.class === "dsh" ? "compat" : "other",
         plugin,
-        version,
+        version: chosen,
         compat
       }
     });
@@ -641,6 +675,9 @@ function createController(i18n) {
     confirmOverride,
     dismissNotice: () => {
       set({ notice: null });
+    },
+    dismissSubstitution: () => {
+      set({ substitution: null });
     }
   };
 }
@@ -771,6 +808,8 @@ var MARKET_CSS = `
 .tm-section { display: flex; flex-direction: column; gap: 16px; }
 .tm-lede { margin: 0; font-size: 13px; line-height: 20px; color: var(--dsw-alias-label-tertiary); }
 .tm-banner { display: flex; gap: 8px; align-items: flex-start; margin: 0; padding: 10px 12px; border-radius: var(--dsw-radius-lg); background: var(--dsw-alias-bg-module-platform); font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary); }
+.tm-substitution { display: flex; gap: 8px; align-items: baseline; margin: 0; padding: 10px 12px; border-radius: var(--dsw-radius-lg); background: var(--dsw-alias-bg-module-platform); font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-secondary); }
+.tm-substitutionText { flex: 1; min-width: 0; }
 .tm-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .tm-search { flex: 1; min-width: 160px; }
 .tm-source { color: var(--dsw-alias-state-business-primary); text-decoration: none; }
@@ -980,6 +1019,9 @@ function PluginPage({ plugin, state, controller, install, t }) {
   const version = latestVersion(plugin);
   const stars = starsOf(plugin, state.catalog?.stars ?? {});
   const description = localized(plugin.description, language);
+  const verdict = state.compat.status === "ready" ? state.compat.data?.compatibility : void 0;
+  const runtimeVersion = state.compat.status === "ready" ? state.compat.data?.runtimeVersion : void 0;
+  const requirement = verdict?.status === "incompatible" ? requirementOf(verdict.requirements) : void 0;
   const facts = version === void 0 ? [] : sourceFacts(plugin, version, t);
   const labels = (0, import_client_ui_primitives2.useDetailDocumentLabels)({
     title: t("detailTitle"),
@@ -1005,6 +1047,9 @@ function PluginPage({ plugin, state, controller, install, t }) {
         /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "tm-headMeta", children: [
           plugin.category === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_client_ui_primitives2.Tag, { tone: "info", children: localized(state.catalog?.categories?.find((entry) => entry.id === plugin.category)?.title, language) || plugin.category }),
           targetsDeepSeek(version) ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_client_ui_primitives2.Tag, { tone: "warning", children: t("compatDsh") }) : null,
+          verdict?.status === "compatible" ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_client_ui_primitives2.Tag, { tone: "success", children: t("compatCurrent") }) : null,
+          requirement === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_client_ui_primitives2.Tag, { tone: "warning", children: t(requirement.key, requirement.params) }),
+          runtimeVersion === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: t("runtimeVersion", { version: runtimeVersion }) }),
           /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(import_client_ui_primitives2.Tooltip, { label: t("starNote"), side: "bottom", portal: true, delayMs: 400, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "tm-stars", children: stars === void 0 ? t("noStars") : t("stars", { count: formatStars(stars) }) }) }),
           plugin.author === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: t("author", { author: plugin.author }) })
         ] })
@@ -1058,11 +1103,17 @@ function Row({ label, value, link, directory }) {
 // src/client/notice.jsx
 var import_jsx_runtime3 = require("react/jsx-runtime");
 var import_client_ui_primitives3 = require("@tomato/client-ui-primitives");
+var TITLES = {
+  compat: "compatNoticeTitle",
+  "adapt-failed": "adaptFailedTitle",
+  other: "otherNoticeTitle",
+  incompatible: "incompatibleTitle"
+};
 function InstallNotice({ notice, t, onClose, onContinue, onAdapt }) {
-  const { kind, plugin, compat } = notice;
-  const title = kind === "compat" ? t("compatNoticeTitle") : kind === "adapt-failed" ? t("adaptFailedTitle") : kind === "other" ? t("otherNoticeTitle") : t("unknownNoticeTitle");
-  const body = kind === "compat" ? t("compatNoticeBody") : kind === "adapt-failed" ? t("adaptFailedBody", { reason: notice.reason ?? "" }) : kind === "other" ? t("otherNoticeBody") : t("unknownNoticeBody", { reason: notice.reason ?? "" });
-  const range = kind === "compat" && typeof compat?.dshRange === "string" ? t("dshRequirement", { range: compat.dshRange }) : "";
+  const { kind, plugin, compat, resolution } = notice;
+  const title = t(TITLES[kind] ?? "unknownNoticeTitle");
+  const body = kind === "compat" ? t("compatNoticeBody") : kind === "adapt-failed" ? t("adaptFailedBody", { reason: notice.reason ?? "" }) : kind === "other" ? t("otherNoticeBody") : kind === "incompatible" ? t("incompatibleBody", { runtime: resolution?.runtimeVersion ?? "", name: plugin.name, version: notice.version?.version ?? "" }) : t("unknownNoticeBody", { reason: notice.reason ?? "" });
+  const requirement = kind === "incompatible" ? requirementOf(resolution?.rejected?.[0]?.requirements) ?? void 0 : kind === "compat" && typeof compat?.dshRange === "string" ? { key: "dshRequirement", params: { range: compat.dshRange } } : void 0;
   const repository = plugin.repository?.url;
   return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
     import_client_ui_primitives3.Modal,
@@ -1078,7 +1129,7 @@ function InstallNotice({ notice, t, onClose, onContinue, onAdapt }) {
       ] }),
       children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "tm-notice", children: [
         /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("p", { children: body }),
-        range === "" ? null : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("p", { className: "tm-noticeRange", children: range }),
+        requirement === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("p", { className: "tm-noticeRange", children: t(requirement.key, requirement.params) }),
         repository === void 0 ? null : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("a", { className: "tm-linkButton", href: repository, target: "_blank", rel: "noreferrer noopener", children: t("viewRepository") })
       ] })
     }
@@ -1291,6 +1342,14 @@ function MarketTab({ controller, t, install }) {
         t
       }
     ),
+    state.substitution === null ? null : /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("p", { className: "tm-substitution", role: "status", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "tm-substitutionText", children: t("substitutedVersion", {
+        requested: state.substitution.requested.version,
+        selected: state.substitution.selected.version,
+        runtime: state.substitution.runtimeVersion ?? ""
+      }) }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("button", { type: "button", className: "tm-groupMore", onClick: controller.dismissSubstitution, children: t("close") })
+    ] }),
     state.notice === null ? null : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
       InstallNotice,
       {

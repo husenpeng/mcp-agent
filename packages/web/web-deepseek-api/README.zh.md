@@ -51,9 +51,9 @@ kind: "package-reference"
 <a id="authentication"></a>
 ### 鉴权
 
-使用 `deepseek-account` 路由的会话向账号服务请求已授权用于解析后端点的令牌，并通过 `x-tomato-auth-token` 发送；2026-10-16 公网 Search 与 Fetch 路由已接受该令牌。其他情况下，非空的字面 `apiKey` 优先于 `apiKeyEnv`；凭据引用通过 `ctx.credentials` 解析，该服务缺省时使用启动环境。API 密钥使用 `Authorization: Bearer`。凭据解析和端点选择使用同一份设置快照。
+非空的字面 `apiKey` 优先于 `apiKeyEnv`；凭据引用通过 `ctx.credentials` 解析，该服务缺省时使用启动环境。API 密钥使用 `Authorization: Bearer`。凭据解析和端点选择使用同一份设置快照。
 
-每个提供者的 `ready()` 回答模型请求将发起的操作是否有凭据，不论模型路由：该请求的路由是 `deepseek-account` 且 `ctx.deepseekAccount` 为 API 基础地址解析出令牌，或者设置了字面 `apiKey`，或 `ctx.credentials.describe` 报告 `apiKeyEnv` 引用已配置（没有该服务时，启动环境必须包含它）。账号令牌或凭据存储读取失败时回答 false。这两个提供者被选中时，[`@tomato/tool-web`](../tool-web/README.zh.md#search-readiness) 会从它们回答 false 的每个请求中撤下 `web_search` 与 `web_fetch` 及其提示词指引。只检查是否存在：错误的密钥仍算就绪，并使每次调用失败。
+每个提供者的 `ready()` 回答模型请求将发起的操作是否有凭据：设置了字面 `apiKey`，或 `ctx.credentials.describe` 报告 `apiKeyEnv` 引用已配置（没有该服务时，启动环境必须包含它）。凭据存储读取失败时回答 false。这两个提供者被选中时，[`@tomato/tool-web`](../tool-web/README.zh.md#search-readiness) 会从它们回答 false 的每个请求中撤下 `web_search` 与 `web_fetch` 及其提示词指引。只检查是否存在：错误的密钥仍算就绪，并使每次调用失败。
 
 ### 结果与失败
 

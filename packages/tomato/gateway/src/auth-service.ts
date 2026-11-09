@@ -14,12 +14,19 @@ function userOf(value: unknown): SessionUser | undefined {
   if (name !== undefined && name !== null && typeof name !== 'string') return undefined
   if (avatarUrl !== undefined && avatarUrl !== null && typeof avatarUrl !== 'string') return undefined
   if (language !== undefined && language !== null && typeof language !== 'string') return undefined
+  const roles = record.roles
+  if (roles !== undefined && (!Array.isArray(roles) || !roles.every(role => typeof role === 'string'))) return undefined
+  const quotas = record.quotas
+  if (quotas !== undefined && (typeof quotas !== 'object' || quotas === null || Array.isArray(quotas)
+    || !Object.values(quotas).every(value => typeof value === 'number' && Number.isFinite(value)))) return undefined
   return {
     id: record.id,
     email: record.email,
     name: typeof name === 'string' ? name : null,
     avatarUrl: typeof avatarUrl === 'string' ? avatarUrl : null,
     language: typeof language === 'string' ? language : null,
+    ...roles === undefined ? {} : { roles: roles as string[] },
+    ...quotas === undefined ? {} : { quotas: quotas as Record<string, number> },
   }
 }
 

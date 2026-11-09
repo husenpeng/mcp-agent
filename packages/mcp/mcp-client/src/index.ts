@@ -14,6 +14,7 @@
  */
 
 import type { Context } from '@tomato/cordis'
+import type { ToolExecution } from '@tomato/tools'
 import z from '@tomato/schemastery'
 import { scopeOf } from '@tomato/scope'
 import { MAX_TIMER_DELAY_MS } from '@tomato/timeout'
@@ -90,6 +91,13 @@ export interface StreamableHttpConfig {
   url: string
   /** Additional headers attached to MCP requests. */
   headers: Record<string, string>
+  /**
+   * Resolve headers for one outbound `tools/call`, merged over {@link headers}.
+   * Supply it from `cordis.yml` as a `!!js` function when a header must carry
+   * per-call identity that static configuration cannot (for example the
+   * signed-in company account). Connection-time requests use only `headers`.
+   */
+  requestHeaders?: (execution: ToolExecution) => Record<string, string>
   /** Timeout per tool call or resource request in milliseconds. */
   toolCallTimeoutMs: number
   /** Fail plugin activation when the initial connection or tool synchronization fails. */
@@ -134,6 +142,7 @@ export const Config = z.union([
     serverName: z.string().required().pattern(SERVER_NAME_PATTERN),
     url: z.string().required(),
     headers: z.dict(String).default({}),
+    requestHeaders: z.any(),
     toolCallTimeoutMs: z.number().default(DEFAULT_TOOL_CALL_TIMEOUT_MS),
     failOnStartupError: z.boolean().default(false),
     maxInstructionBytes: z.number().step(1).min(1).default(DEFAULT_MAX_INSTRUCTION_BYTES),
@@ -156,6 +165,12 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
   // construction that bypassed Schemastery) rejects THIS instance before any
   // effect registers.
   const reconnect = resolveReconnectPolicy(config.reconnect, `mcp-client(${config.serverName}): reconnect`)
+  // A programmatic construction can bypass Schemastery; reject a non-callable
+  // resolver here so a misconfiguration fails this instance at load.
+  if (config.transport === 'streamable-http' && config.requestHeaders !== undefined
+    && typeof config.requestHeaders !== 'function') {
+    throw new TypeError(`mcp-client(${config.serverName}): requestHeaders must be a function`)
+  }
 
   // Reserve the namespace next: a duplicate `serverName` fails THIS instance
   // at load with an actionable error and leaves the earlier instance intact.

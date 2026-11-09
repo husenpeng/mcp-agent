@@ -58,7 +58,7 @@ import type {
 } from '@tomato/llm'
 import type { AttachmentStore, ImageAttachmentRef } from '@tomato/attachment'
 import { idleWatchdog, timeoutOf } from '@tomato/timeout'
-import type { ResolvedPiAiProviderProfile } from './config.ts'
+import type { ResolvedModelPolicy, ResolvedPiAiProviderProfile } from './config.ts'
 import { requestImageTarget, toPiContext } from './context.ts'
 import { conversationUpdates, createModels, getSupportedThinkingLevels } from './models.ts'
 import { toStreamChunks } from './stream.ts'
@@ -85,6 +85,12 @@ interface PiAiSnapshot {
 export interface PiAiAdapterOptions {
   /** Current validated profiles by provider route; called once per operation. */
   profiles: () => ReadonlyMap<string, ResolvedPiAiProviderProfile>
+  /**
+   * Current deployment allowlist, or `undefined` when the deployment named
+   * none. Listing filters by it and a call outside it fails before any
+   * provider I/O, so a configuration edit cannot bypass the policy.
+   */
+  modelPolicy?: () => ResolvedModelPolicy | undefined
   /**
    * Resolve the credential for one already-resolved profile; called once per
    * stream call and frozen for that call, and by `listModels`, which offers no
@@ -302,11 +308,15 @@ export class PiAiAdapter extends LlmAdapter {
         if (error instanceof LlmError && error.code === 'MISSING_CREDENTIAL') return []
         throw error
       }
+      const policy = this.config.modelPolicy?.()
       return snapshot.models.getModels(provider).map(model => ({
         provider,
         id: model.id,
         name: model.name,
         inputModalities: [...model.input],
+        ...policy === undefined || policy.isAllowed(provider, model.id)
+          ? {}
+          : { blockedReason: 'outside the deployment model allowlist' },
       }))
     })
   }
@@ -341,7 +351,19 @@ export class PiAiAdapter extends LlmAdapter {
     }
   }
 
+  /** Refuse one model outside the deployment allowlist before any provider I/O. */
+  private assertAllowed(provider: string, model: string): void {
+    const policy = this.config.modelPolicy?.()
+    if (policy === undefined || policy.isAllowed(provider, model)) return
+    throw new LlmError(
+      `model "${provider}/${model}" is outside this deployment's model allowlist;`
+      + ' add it to modelPolicy.local or modelPolicy.recent',
+      'MODEL_NOT_ALLOWED',
+    )
+  }
+
   override prepareCall(provider: string, model: string, _signal?: AbortSignal): Promise<PreparedAdapterCall> {
+    this.assertAllowed(provider, model)
     const snapshot = this.current()
     return Promise.resolve({
       model: this.modelInfo(snapshot, provider, model),
@@ -357,6 +379,7 @@ export class PiAiAdapter extends LlmAdapter {
     options: GenerateOptions,
     snapshot: PiAiSnapshot,
   ): AsyncIterable<StreamChunk> {
+    this.assertAllowed(options.provider, options.model)
     if (options.stop !== undefined) {
       throw new LlmError('llm-pi-ai does not support GenerateOptions.stop', 'UNSUPPORTED_OPTION')
     }

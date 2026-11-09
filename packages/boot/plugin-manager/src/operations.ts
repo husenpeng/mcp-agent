@@ -4,19 +4,21 @@ import { existsSync, readFileSync } from 'node:fs'
 import { mkdir, mkdtemp, open, rm } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { execa } from 'execa'
+import semver from 'semver'
 import type { EntryOptions } from '@tomato/cordis-plugin-loader'
 import { withFileLock, writeFileAtomic } from '@tomato/atomic-write'
 import {
-  bundlePatchPaths, initProfile, readProfileManifest,
+  bundlePatchPaths, getTomatoRuntimeVersion, initProfile, readProfileManifest,
   resolveBundleDir, resolveProfileDir, loadOverlayPatches, composeEntries, readProfileVersionExemptions,
   evaluatePluginCompatibility, pluginCompatibilityWarning, type ProfileManifest,
 } from '@tomato/app-boot'
 import { PROFILE_TEMPLATES, DEFAULT_PROFILE_BUNDLES } from '@tomato/official-bundles'
 import { scrubbedParentEnv } from '@tomato/subprocess'
 import { parseInstallSpec } from './install-spec.ts'
+import { resolveCompatibleVersion, type VersionResolution } from './resolution.ts'
 import { awaitTreeGone, leadsOwnGroup, treeAlive, type RunTree } from './run-tree.ts'
 import { incompatiblePlugin } from './failure.ts'
-import type { IncompatiblePlugin, PackageResult, Registry } from './types.ts'
+import type { IncompatiblePlugin, PackageResult, Registry, SubstitutedVersion } from './types.ts'
 export { setProfileVersionExemption, readProfileVersionExemptions } from '@tomato/app-boot'
 
 /** Profile and invocation locations supplied by the launcher. */
@@ -175,17 +177,68 @@ async function namedSpecManifest(
     return existsSync(filename) ? JSON.parse(readFileSync(filename, 'utf8')) as object : undefined
   }
   if (parsed.kind !== 'registry') return undefined
+  const value = await viewJson(dir, parsed.spec, ['name', 'version', 'engines', 'peerDependencies'], options, environment, flags)
+  return (Array.isArray(value) ? value.at(-1) : value) as object | undefined
+}
+
+/**
+ * Ask the registry one question through `pnpm view`, in the profile directory.
+ * @param dir Profile directory the lookup runs in.
+ * @param spec Registry spec, normally a name or name@version.
+ * @param fields Manifest fields to print, as `pnpm view` names them.
+ * @param options Pnpm executable, prefix arguments, the caller's bound and signal.
+ * @param environment Environment of the caller's pnpm invocations.
+ * @param flags Flags of the run itself, so the lookup asks the registry that run will use.
+ * @returns The parsed answer, or undefined when the lookup failed.
+ */
+async function viewJson(
+  dir: string, spec: string, fields: readonly string[], options: PackageOperationOptions,
+  environment: Readonly<Record<string, string | undefined>>, flags: readonly string[],
+): Promise<unknown> {
   const viewed = await execa(options.command ?? 'pnpm', [
-    ...options.args ?? [], 'view', parsed.spec, 'name', 'version', 'engines', 'peerDependencies', '--json',
-    ...flags, '--config.fetch-retries=0',
+    ...options.args ?? [], 'view', spec, ...fields, '--json', ...flags, '--config.fetch-retries=0',
   ], {
     cwd: dir, env: environment, extendEnv: false, reject: false, stdin: 'ignore',
     ...options.signal === undefined ? {} : { cancelSignal: options.signal },
     timeout: options.lookupTimeoutMs ?? LOOKUP_TIMEOUT_MS,
   })
   if (viewed.exitCode !== 0) return undefined
-  const value: unknown = JSON.parse(viewed.stdout)
-  return (Array.isArray(value) ? value.at(-1) : value) as object
+  return JSON.parse(viewed.stdout) as unknown
+}
+
+/**
+ * Pick the newest published version of one named spec that the running TOMATO admits.
+ * @param dir Profile directory the lookups run in.
+ * @param spec Anchored install spec.
+ * @param options Pnpm executable, prefix arguments, the caller's bound and signal.
+ * @param environment Environment of the caller's pnpm invocations.
+ * @param flags Flags of the run itself, so the lookups ask the registry that run will use.
+ * @returns The package name and its resolution, or undefined for a spec the registry does not enumerate.
+ */
+async function resolveNamedSpec(
+  dir: string, spec: string, options: PackageOperationOptions, environment: Readonly<Record<string, string | undefined>>,
+  flags: readonly string[],
+): Promise<{ name: string; resolution: VersionResolution } | undefined> {
+  const parsed = parseInstallSpec(spec)
+  if (parsed.kind !== 'registry') return undefined
+  const listed = await viewJson(dir, parsed.name, ['versions'], options, environment, flags).catch(() => undefined)
+  const versions = Array.isArray(listed)
+    ? listed.filter((entry): entry is string => typeof entry === 'string')
+    : typeof listed === 'string' ? [listed] : []
+  if (versions.length === 0) return undefined
+  const resolution = await resolveCompatibleVersion({
+    versions,
+    ...parsed.range === undefined ? {} : { range: parsed.range },
+    ...parsed.range !== undefined && semver.valid(parsed.range) !== null ? { requested: parsed.range } : {},
+    runtimeVersion: getTomatoRuntimeVersion(),
+    exemptions: readProfileVersionExemptions(dir),
+    async manifestOf(version) {
+      const manifest = await namedSpecManifest(dir, `${parsed.name}@${version}`, options, environment, flags)
+      if (manifest === undefined) throw new Error(`the registry did not answer for ${parsed.name}@${version}`)
+      return manifest
+    },
+  })
+  return { name: parsed.name, resolution }
 }
 
 /** Missing installed packages are repairable; their absence is part of the before/after comparison. */
@@ -333,7 +386,11 @@ export async function runProfilePnpm(
   }
   // An install command names the packages it adds, so their manifests are read and checked before
   // pnpm runs: an incompatible version is never installed, and the one already in use keeps working.
+  // A spec whose newest match is incompatible is replaced by the newest version this TOMATO admits,
+  // so `tomato plugin` and the Plugin Manager fall back the same way.
   const preflight: string[] = []
+  const substituted: SubstitutedVersion[] = []
+  const replacements = new Map<string, string>()
   const exemptions = readProfileVersionExemptions(dir)
   // The run's own registry flags, so the lookup asks the registry the installation will use.
   const registryFlags = args.filter(argument => argument.startsWith('--registry='))
@@ -341,22 +398,37 @@ export async function runProfilePnpm(
     // A spec whose manifest cannot be read or validated is left to the run itself and to the check
     // after installation, which reports what it could not validate.
     try {
-      const manifest = await namedSpecManifest(dir, anchorPathSpec(raw, context.cwd), options, environment, registryFlags)
+      const anchored = anchorPathSpec(raw, context.cwd)
+      const manifest = await namedSpecManifest(dir, anchored, options, environment, registryFlags)
       if (manifest === undefined) continue
       const issue = evaluatePluginCompatibility(manifest, exemptions)
-      if (issue !== undefined && !issue.exempted) {
-        preflight.push(pluginCompatibilityWarning(issue))
-        incompatible.push(incompatiblePlugin(issue))
+      if (issue === undefined || issue.exempted) continue
+      const fallback = await resolveNamedSpec(dir, anchored, options, environment, registryFlags)
+      if (fallback?.resolution.status === 'resolved' && fallback.resolution.selected !== undefined) {
+        const selected = `${fallback.name}@${fallback.resolution.selected}`
+        const requirements = Object.entries(fallback.resolution.rejected[0]?.requirements ?? {})
+          .map(([name, range]) => `${name} ${range}`).join(', ')
+        replacements.set(raw, selected)
+        substituted.push({ requested: raw, selected, requirements })
+        const notice = `\ntomato: ${raw} requires newer TOMATO packages; installing ${selected} instead`
+          + `${requirements === '' ? '' : ` (${requirements})`}.\n`
+        await log.write(notice)
+        options.onOutput?.(notice, 'stderr')
+        append(Buffer.from(notice))
+        continue
       }
+      preflight.push(pluginCompatibilityWarning(issue))
+      incompatible.push(incompatiblePlugin(issue))
     } catch (error) { void error; continue }
   }
   if (preflight.length > 0) return await rejected(preflight, 'nothing was installed')
+  const plannedArgs = args.map(argument => replacements.get(argument) ?? argument)
   const cancellation = new AbortController()
   // A service run captures output, so execa terminates the tree it leads when the
   // run is killed: a lifecycle script outlives the pnpm process that started it.
   // The CLI keeps the caller's process group, so an interrupt still reaches it.
   const grouped = leadsOwnGroup(options.execution)
-  const child = execa(options.command ?? 'pnpm', [...options.args ?? [], ...args.map(arg => anchorPathSpec(arg, context.cwd))], {
+  const child = execa(options.command ?? 'pnpm', [...options.args ?? [], ...plannedArgs.map(arg => anchorPathSpec(arg, context.cwd))], {
     cwd: dir, env: environment, extendEnv: false, reject: false,
     stdout: options.execution === 'cli' ? 'inherit' : 'pipe',
     stderr: options.execution === 'cli' ? 'inherit' : 'pipe',
@@ -534,6 +606,7 @@ export async function runProfilePnpm(
   return {
     exitCode, output: output.toString('utf8'), truncated, logPath,
     ...control.stalled ? { timedOut: true } : {}, ...incompatible.length > 0 ? { incompatible } : {},
+    ...substituted.length > 0 ? { substituted } : {},
   }
 }
 

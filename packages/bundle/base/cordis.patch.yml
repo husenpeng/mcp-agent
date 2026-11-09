@@ -127,12 +127,6 @@
     - id: authorization
       name: '@tomato/authorization'
 
-    # Tomato AI authenticates through its own desktop token exchange, so
-    # the DeepSeek account provider and its Platform sign-in flow stay off.
-    - id: deepseek-account
-      name: '@tomato/deepseek-account-platform'
-      disabled: true
-
     - id: credentials
       name: '@tomato/credentials-local'
 
@@ -465,6 +459,9 @@
     - id: web
       name: '@tomato/web'
       config:
+        # Fetch stays on the local provider: the seam pins exactly one provider and
+        # has no fallback chain, so opting into `web-fetch-company` is a per-profile
+        # decision (`fetchProvider: company`), never an implicit preference.
         searchProvider: company
         fetchProvider: http
 
@@ -486,6 +483,9 @@
     - id: web-deepseek-api
       name: '@tomato/web-deepseek-api'
       disabled: true
+
+    - id: web-fetch-company
+      name: '@tomato/web-fetch-company'
 
     - id: web-fetch-http
       name: '@tomato/web-fetch-http'
@@ -534,12 +534,7 @@
       name: '@tomato/fs-sandbox'
 
     # Tomato AI serves models only through user-configured third-party routes
-    # on `llm-pi-ai`; the official DeepSeek adapters and their account sign-in
-    # stay off.
+    # on `llm-pi-ai`; the official DeepSeek API-key adapter stays off.
     - id: llm-deepseek
       name: '@tomato/llm-deepseek-api-key'
-      disabled: true
-
-    - id: llm-deepseek-account
-      name: '@tomato/llm-deepseek-account'
       disabled: true

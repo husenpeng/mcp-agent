@@ -3,8 +3,8 @@ import { fileURLToPath } from 'node:url'
 import { join } from 'node:path'
 import { chromium, type Locator } from 'playwright'
 import { expect, it, onTestFinished, vi } from 'vitest'
-import type { AccountView } from '@tomato/deepseek-account/types'
-import type {} from '@tomato/deepseek-account'
+import type { AccountView } from '@tomato/account-service/types'
+import type {} from '@tomato/account-service'
 import {
   captureStableAria, compareOrRefreshGolden, launchWebScaffold, webSnapshotMode,
 } from './scaffold.ts'
@@ -30,7 +30,7 @@ it('shares settings card materials and control sizes in both palettes', async ()
     { op: 'set', path: ['step'], value: 'done' },
     { op: 'set', path: ['completion'], value: 'completed' },
   ])
-  const account = scaffold.ctx.deepseekAccount
+  const account = scaffold.ctx.account
   const state: AccountView = {
     status: 'credential-stored', attempt: null,
     links: { usageUrl: 'https://platform.deepseek.com/usage', topUpUrl: 'https://platform.deepseek.com/top_up' },

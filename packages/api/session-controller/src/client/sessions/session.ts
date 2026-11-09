@@ -361,6 +361,21 @@ export class Session implements SessionFace {
   }
 
   /**
+   * Retract the trailing human exchange. Failures also land in promptError,
+   * the same display slot as a rejected prompt or stop.
+   * @param atSeq - seq of the turn-opening human `user/message`.
+   * @returns the committed removal range, or the business error.
+   */
+  async retract(atSeq: number): Promise<RemoteResult<{ accepted: true; startSeq: number; endSeq: number }>> {
+    const result = await this.remote.session.retract({ sessionId: this.sessionId, atSeq })
+    if (!result.ok) {
+      this.promptError = { op: 'stop', error: result.error }
+      this.notifier.markDirty()
+    }
+    return result
+  }
+
+  /**
    * Rename: contract session.rename 1:1. On success settle the 'title'
    * projection cell from the response's `{title, seq}` under the store's
    * higher-seq-wins rule (the push frame arriving later is a no-op replay),

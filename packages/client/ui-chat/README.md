@@ -85,6 +85,8 @@ Artifact extensions can subscribe to one Turn and Node kind through `ChatNodeSto
 
 The completed-turn action footer follows the recorded Turn end. Its action row starts 20px below preceding prose or extension content. Actions remain visible only on the latest Turn when its final visible content is a reply; other endings and historical Turns reveal actions on hover or keyboard focus. Devices without hover keep actions visible. An unavailable branch action opens its explanation on click or tap without creating a branch.
 
+The trailing human prompt's own action row carries the retract action. It appears only while that prompt opens the last Turn and no `conversation/retraction` has landed for it; a notice-woken Turn, later steering messages, and queued next-turn prompts therefore offer none. The action asks the Host to retract the exchange — cancelling a running Turn first — then restores the prompt text to the composer; attachments stay in the transcript. The committed event marks the prompt with a retracted note and dims its bubble, keeps the exchange in the transcript, adds a compact audit row after the Turn with the retraction time and attachment names, and disables that Turn's branch action so a fork cut cannot resurrect the removed history.
+
 -----
 
 <a id="turn-process-folding"></a>

@@ -9,6 +9,7 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { createCache, fetchBytes, fetchJson, fetchText } from './src/host/http.js'
 import { createAdapter } from './src/host/adapt.js'
+import { candidateOrder, evaluateCompatibility } from './src/host/compatibility.js'
 import {
   DEFAULT_INDEX_URLS, DEFAULT_STAR_URLS, compactCatalog, parseStars, readCatalog,
 } from './src/host/catalog.js'
@@ -35,6 +36,8 @@ export const inject = ['connection']
 const LISTED_NAME = /^[^\s\u0000-\u001f]{1,300}$/
 /** Exact SemVer versions, including prerelease and build suffixes. */
 const EXACT_VERSION = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/
+/** Most published versions one compatibility resolution reads; every candidate is a registry request. */
+const RESOLVE_CANDIDATES = 8
 
 /**
  * Validate a package name coming from the browser.
@@ -83,8 +86,9 @@ export function readMarketingCatalog() {
  * @param {number} [config.cacheTtlMs] - lifetime of a successful catalog, star, or manifest read.
  * @param {string} [config.skillRoot] - where Skills install; defaults to `<home>/skills`.
  * @param {object} [host] - what the running profile supplies.
- * @param {{ dir: string, patchPath: string, home: string }} [host.profile] - the running profile's locations; without
- *   them MCP installs are refused.
+ * @param {{ dir: string, patchPath: string, home: string, installAnchor?: string }} [host.profile] - the running
+ *   profile's locations; without them MCP installs are refused. `installAnchor` is the installation's
+ *   `package.json`, whose `version` is the runtime every compatibility decision compares against.
  * @param {object} [host.liveProfile] - serialization and recomposition, as {@link createMcpInstaller} takes them.
  * @returns {object} the market reads plus `dispose`.
  */
@@ -164,19 +168,74 @@ export function createMarket(config = {}, host = {}) {
     }
   }
   const marketingDetailCaches = new Map()
-  const manifestCaches = new Map()
-  const rawManifestCaches = new Map()
+  const versionManifestCaches = new Map()
+  const packumentCaches = new Map()
   const detailCaches = new Map()
 
-  /** One version the catalog lists; names and versions outside the catalog are refused before any read. */
+  /** The running installation's version, read once from the manifest its launcher named. */
+  let runtimeVersionRead
+  const runtimeVersion = () => {
+    if (runtimeVersionRead === undefined) {
+      runtimeVersionRead = (async () => {
+        const anchor = host.profile?.installAnchor
+        if (anchor === undefined) return undefined
+        try {
+          const manifest = JSON.parse(await readFile(anchor, 'utf8'))
+          return typeof manifest.version === 'string' && manifest.version.trim() !== '' ? manifest.version : undefined
+        } catch {
+          // An unreadable installation manifest leaves compatibility unknown; the installer checks again.
+          return undefined
+        }
+      })()
+    }
+    return runtimeVersionRead
+  }
+
+  /**
+   * The versions a registry publishes for one catalog name.
+   * @param {string} name - package name, already listed in the catalog.
+   * @param {string} [registryHint] - the registry the catalog entry names, asked first.
+   * @returns {Promise<{ registry: string, versions: string[] }>} the answering registry and its published versions.
+   * @throws {Error} naming the registries when none lists the package.
+   */
+  const publishedVersions = async (name, registryHint) => {
+    const cache = cacheFor(packumentCaches, `${name}@${registryHint ?? ''}`, async () => {
+      const requested = registryHint === undefined ? registries : [registryHint, ...registries.filter(entry => entry !== registryHint)]
+      const failures = []
+      for (const registry of requested) {
+        try {
+          const { value } = await readJson(`${registry.replace(/\/$/, '')}/${encodeURIComponent(name)}`, { maxBytes: 8 * 1024 * 1024 })
+          const versions = typeof value?.versions === 'object' && value.versions !== null ? Object.keys(value.versions) : []
+          if (versions.length === 0) throw new Error('the registry lists no version')
+          return { registry, versions }
+        } catch (error) {
+          failures.push(`${new URL(registry).host}: ${error?.message ?? error}`)
+        }
+      }
+      throw new Error(`registry unavailable (${failures.join('; ')})`)
+    })
+    return cache.get()
+  }
+
+  /**
+   * One version of a catalog entry, whether the catalog lists that version or the registry publishes it.
+   * @param {string} name - package name.
+   * @param {string} version - exact version.
+   * @returns {Promise<object>} the listed entry, or a registry-sourced entry with the same fields.
+   * @throws {Error} when the name is not listed, or the registry does not publish that version.
+   */
   const listedVersion = async (name, version) => {
     const pinned = marketing.entries.find(entry => entry.install.type === 'plugin' && entry.install.name === name && entry.install.version === version)
     if (pinned !== undefined) return { version, source: { type: 'npm' } }
     const catalog = await catalogCache.get()
     const plugin = catalog.plugins.find(entry => entry.name === name)
-    const listed = plugin?.versions.find(entry => entry.version === version)
-    if (listed === undefined) throw new Error('version is not listed in the catalog')
-    return listed
+    if (plugin === undefined) throw new Error('package is not listed in the catalog')
+    const listed = plugin.versions.find(entry => entry.version === version)
+    if (listed !== undefined) return listed
+    // The catalog keeps the newest 24 versions; an older one still installs from its registry.
+    const published = await publishedVersions(name, plugin.versions[0]?.source?.registry)
+    if (!published.versions.includes(version)) throw new Error('version is not published for this package')
+    return { version, source: { type: 'npm', registry: published.registry } }
   }
 
   /** Per-name caches keep a slow registry from delaying unrelated plugins. */
@@ -189,6 +248,30 @@ export function createMarket(config = {}, host = {}) {
     return cache
   }
 
+  /**
+   * One listed version's published manifest, from its own source.
+   * @param {string} name - package name.
+   * @param {string} version - exact version.
+   * @param {{ type: string, registry?: string, url?: string, commit?: string, path?: string }} source - the listed source.
+   * @returns {Promise<{ manifest: object, registry: string }>} the manifest and the origin that answered.
+   */
+  const listedManifest = async (name, version, source) => {
+    const cache = cacheFor(versionManifestCaches, `${name}@${version}@${source.registry ?? ''}`, async () => {
+      if (source.type === 'git') {
+        for (const url of gitManifestCandidates(source)) {
+          try {
+            const { value } = await readJson(url, { maxBytes: 4 * 1024 * 1024 })
+            return { manifest: value, registry: 'git' }
+          } catch { /* the pinned package.json is absent; the version stays unknown */ }
+        }
+        throw new Error('repository package.json is unavailable')
+      }
+      const requested = source.registry === undefined ? registries : [source.registry, ...registries.filter(entry => entry !== source.registry)]
+      return readManifest(readJson, name, version, { registries: requested, signal: controller.signal })
+    })
+    return cache.get()
+  }
+
   return {
     /** One catalog page, with star counts merged in. */
     async catalog(refresh = false) {
@@ -198,37 +281,83 @@ export function createMarket(config = {}, host = {}) {
       ])
       return { ...catalog, stars }
     },
-    /** Which harness one listed version targets. */
+    /** What the running TOMATO is, and whether it admits the version asked for. */
+    async runtime() {
+      const version = await runtimeVersion()
+      return version === undefined ? {} : { version }
+    },
+    /** Which harness one listed version targets, and whether the running TOMATO admits it. */
     async manifest(name, version) {
       const listed = await listedVersion(name, version)
-      const catalogRegistry = listed.source.registry
-      const cache = cacheFor(manifestCaches, `${name}@${version}@${catalogRegistry ?? ''}`, async () => {
-        if (listed.source.type === 'git') {
-          for (const url of gitManifestCandidates(listed.source)) {
-            try {
-              const { value } = await readJson(url, { maxBytes: 4 * 1024 * 1024 })
-              return { manifest: value, registry: 'git' }
-            } catch { /* the pinned package.json is absent; the version stays unknown */ }
-          }
-          throw new Error('repository package.json is unavailable')
+      const { manifest, registry: answered } = await listedManifest(name, version, listed.source)
+      const runtime = await runtimeVersion()
+      return {
+        ...classifyManifest(manifest),
+        registry: answered,
+        ...runtime === undefined ? {} : { compatibility: evaluateCompatibility(manifest, runtime), runtimeVersion: runtime },
+      }
+    },
+    /** The newest version the running TOMATO admits, starting from the one asked for. */
+    async resolve(name, version) {
+      const listed = await listedVersion(name, version)
+      const runtime = await runtimeVersion()
+      if (runtime === undefined) {
+        return { status: 'unknown', requested: version, reason: 'the running installation names no TOMATO version', rejected: [] }
+      }
+      const rejected = []
+
+      /**
+       * Judge one candidate, reporting the outcome only when it settles the resolution.
+       * @param {{ version: string, source: object }} candidate - the version to judge.
+       * @param {boolean} requested - whether it is the version the reader chose.
+       * @returns {Promise<object | undefined>} the resolution outcome, or undefined to keep looking.
+       */
+      const judge = async (candidate, requested) => {
+        let manifest
+        try {
+          ({ manifest } = await listedManifest(name, candidate.version, candidate.source))
+        } catch (error) {
+          const reason = error?.message ?? String(error)
+          if (requested) return { status: 'unknown', runtimeVersion: runtime, requested: version, reason, rejected }
+          rejected.push({ version: candidate.version, reason })
+          return undefined
         }
-        const requested = catalogRegistry === undefined ? registries : [catalogRegistry, ...registries.filter(entry => entry !== catalogRegistry)]
-        return readManifest(readJson, name, version, { registries: requested, signal: controller.signal })
-      })
-      const { manifest, registry: answered } = await cache.get()
-      return { ...classifyManifest(manifest), registry: answered }
+        const verdict = evaluateCompatibility(manifest, runtime)
+        if (verdict.status === 'compatible') {
+          return { status: 'resolved', runtimeVersion: runtime, requested: version, selected: candidate.version, rejected }
+        }
+        if (verdict.status === 'unknown' && requested) {
+          return { status: 'unknown', runtimeVersion: runtime, requested: version, reason: verdict.reason, rejected }
+        }
+        rejected.push({ version: candidate.version, ...verdict.status === 'incompatible' ? { requirements: verdict.requirements } : { reason: verdict.reason } })
+        return undefined
+      }
+
+      const settled = await judge(listed, true)
+      if (settled !== undefined) return settled
+      // The catalog keeps the newest versions of each plugin; older releases come from the registry so a
+      // newer plugin release that needs a newer TOMATO still has a compatible predecessor to fall back to.
+      const catalog = await catalogCache.get()
+      let order = candidateOrder(catalog.plugins.find(entry => entry.name === name)?.versions ?? [], version)
+      try {
+        const published = await publishedVersions(name, listed.source.registry)
+        const known = new Set(order.map(entry => entry.version))
+        order = [...order, ...candidateOrder(
+          published.versions.map(entry => ({ version: entry, source: { type: 'npm', registry: published.registry } })),
+          version,
+        ).filter(entry => !known.has(entry.version))]
+      } catch { /* the registry listed nothing; resolution stays within the catalog */ }
+      for (const candidate of order.filter(entry => entry.version !== version).slice(0, RESOLVE_CANDIDATES - 1)) {
+        const outcome = await judge(candidate, false)
+        if (outcome !== undefined) return outcome
+      }
+      return { status: 'none', runtimeVersion: runtime, requested: version, rejected }
     },
     /** Convert one listed DeepSeek Harness version into a Tomato-installable tarball. */
     async adapt(name, version) {
       const listed = await listedVersion(name, version)
       if (listed.source.type !== 'npm') throw new Error('only npm-published versions can be adapted')
-      const cache = cacheFor(rawManifestCaches, `${name}@${version}`, async () => {
-        const requested = listed.source.registry === undefined
-          ? registries
-          : [listed.source.registry, ...registries.filter(entry => entry !== listed.source.registry)]
-        return readManifest(readJson, name, version, { registries: requested, signal: controller.signal })
-      })
-      const { manifest } = await cache.get()
+      const { manifest } = await listedManifest(name, version, listed.source)
       if (typeof manifest.tomato === 'object' && manifest.tomato !== null && manifest.tomato.bundle !== undefined) {
         return { adapted: false, spec: `${name}@${version}` }
       }
@@ -392,6 +521,11 @@ export function apply(ctx, config = {}) {
             return reply({
               ok: true,
               data: await market.manifest(packageName(payload.name), exactVersion(payload.version)),
+            })
+          case 'resolve':
+            return reply({
+              ok: true,
+              data: await market.resolve(packageName(payload.name), exactVersion(payload.version)),
             })
           case 'detail':
             return reply({ ok: true, data: await market.detail(packageName(payload.name), exactVersion(payload.version)) })

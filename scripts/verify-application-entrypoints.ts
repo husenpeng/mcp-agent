@@ -58,6 +58,7 @@ const ROOT_LAUNCHER_POLICIES = new Map<string, LauncherPolicy>([
   ['demo:inspector', { kind: 'tomato-direct' }],
   ['start:web', { kind: 'tomato-direct' }],
   ['dev:web', { kind: 'tomato-wrapper', wrapper: 'scripts/dev-web.ts' }],
+  ['web:phone', { kind: 'tomato-wrapper', wrapper: 'scripts/phone-web.ts' }],
 ])
 
 const SOURCE_PATTERNS = [

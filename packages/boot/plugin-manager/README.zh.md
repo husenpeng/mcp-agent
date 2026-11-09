@@ -53,7 +53,7 @@ kind: "package-reference"
 
 `listVersions(name, options)` 读取 `listBundles` 标为 `updatable` 的已安装组合包的新版本：以自身包名、按注册表 spec 保存（不是 `npm:` 别名）的第三方 profile 依赖，清单声明 semver 版本，且不承载插件管理。一次 `pnpm view <name> versions time dist-tags` 按注册表计划询问，计划从 `options.registry` 开始，否则从本进程上次安装该包所用的注册表开始，否则从配置的注册表开始。随后从作答的注册表逐个读取比已安装版本新的最新 `versionListLimit` 个版本，每个版本一次 `pnpm view <name>@<version>`，同时最多 `versionLookupConcurrency` 个，因为 pnpm 对范围只打印最高的匹配版本。列表按从新到旧排列，带有各版本的 dist-tag、发布时间、预发布标记、弃用说明、是否声明组合包，以及在其 `engines.tomato` 或 TOMATO peer 拒绝当前运行版本且没有豁免时的 `incompatible` 记录；`omitted` 统计未列出的新版本数，`attempts` 列出问过的每个注册表及其失败原因。拒绝为 `not-updatable`、`not-found`、`network` 或 `unknown`；任一版本查询失败都会拒绝整个列表。官方组合包跟随 TOMATO 版本，不会列出。
 
-`updateBundle(name, version, options)` 把可更新的组合包替换为一个更新的确切版本；更旧的版本会被拒绝。目标版本先按与 `listVersions` 相同的计划查询，版本不存在、未声明组合包，或其 `engines.tomato` 或 TOMATO peer 拒绝当前 TOMATO 时，更新停在 `step: 'check'`，profile 保持不变。有 HMR 时，更新先移除已安装版本，使其插件停止，再以 `saveExact` 和当前的选中状态从作答的注册表安装 `name@version`。该安装失败、被取消，或已安装但无法启动时，先移除仍留下的目标版本，再从本进程安装被移除版本所用的注册表重新安装它，没有记录时按配置的计划安装，与移除的做法一致，结果以 `restore` 报告；重新安装也失败时，包处于未安装状态。移除或安装被拒绝（例如锁等待超时）时，报告为该步骤失败。没有 HMR 时，目标版本直接安装在运行中的版本之上，结果报告 `restart-required`。`plugin-manager/update-state` 以调用方的 `requestId` 通告 `checking`、`removing`、`installing` 与 `restoring`；目标版本的安装以同一 id 流式输出日志并接受 `cancelInstall`，重新安装不带 id，因此取消无法中止它。
+`updateBundle(name, version, options)` 把可更新的组合包替换为一个更新的确切版本；更旧的版本会被拒绝。目标版本先按与 `listVersions` 相同的计划查询；版本不存在或未声明组合包时，更新停在 `step: 'check'`，profile 保持不变。目标的 `engines.tomato` 或 TOMATO peer 拒绝当前 TOMATO 时，改用比已安装版本更新、且本 TOMATO 接受的最新已发布版本；这次查找不会选择预发布版本或未声明组合包的版本。更新改为安装该版本，`to` 给出实际安装的版本，`substituted` 携带被请求的 spec 与未满足的要求；没有版本符合条件时，更新停在 `step: 'check'` 并按原样报告拒绝。有 HMR 时，更新先移除已安装版本，使其插件停止，再以 `saveExact` 和当前的选中状态从作答的注册表安装 `name@version`。该安装失败、被取消，或已安装但无法启动时，先移除仍留下的目标版本，再从本进程安装被移除版本所用的注册表重新安装它，没有记录时按配置的计划安装，与移除的做法一致，结果以 `restore` 报告；重新安装也失败时，包处于未安装状态。移除或安装被拒绝（例如锁等待超时）时，报告为该步骤失败。没有 HMR 时，目标版本直接安装在运行中的版本之上，结果报告 `restart-required`。`plugin-manager/update-state` 以调用方的 `requestId` 通告 `checking`、`removing`、`installing` 与 `restoring`；目标版本的安装以同一 id 流式输出日志并接受 `cancelInstall`，重新安装不带 id，因此取消无法中止它。
 
 `installBundle` 在启动 pnpm 前通过 `git ls-remote` 检查 GitHub 仓库，使用 profile 目录及安装器的 Git 与代理配置。`githubConnectionTimeoutMs` 默认为 5000 毫秒，只限制这次检查，不限制包下载或构建。检查禁用凭据助手和认证提示；只有网络失败与超时会停止安装，通过现有失败类型与诊断日志返回，并标记 `failedAt: 'spec-host'`。认证、仓库查找及其他失败继续交给 pnpm，包括其 HTTPS 到 SSH 的回退。取消安装或销毁管理器会停止检查及其子进程。注册表包、本地路径、压缩包和其他 Git 主机跳过此检查。仓库可达后，下载或组合包验证仍可能失败。
 
@@ -79,6 +79,8 @@ pnpm 11 拦下依赖脚本时，失败的安装在 `pendingBuilds` 里报告 pro
 授权在下一次组合时生效。在线 profile 会重新组合，被授权的插件会在当前会话中挂载，结果报告 `applied`；仅启动型 profile 在重启前保留当前条目并报告 `restart-required`。
 
 CLI 提供 `tomato plugin --profile <profile> version-exemptions`、`allow-version <package@version> --tomato-version <runtime> --accept-risk` 和 `revoke-version <package@version> --tomato-version <runtime>`。授权会在保存前打印风险警告。兼容性拒绝带有 `incompatible-version` 错误码，以及每个被拒绝软件包的 `name`、`version`、`runtimeVersion` 和未满足的 `requirements`（键为 `engines.tomato` 或 TOMATO peer 包名）；各界面自行呈现这份记录。Web 页面通过 locale 词典生成文案，CLI 拒绝时打印精确的 `allow-version` 命令。通过工具或 CLI 添加豁免后，重试原操作。
+
+某个 registry spec 选中的版本被拒绝时不会直接拒绝。系统列出已发布版本（`pnpm view <name> versions`），选出运行中的 TOMATO 接受的最新版本，并以该版本安装这个 spec。候选顺序是 spec 指定的确切版本、其范围内的其余版本，再到范围外的版本，按从新到旧排列，最多读取八个 manifest；profile 已豁免的版本视为被接受。`tomato plugin`、运行中的插件管理器安装弹窗及其更新弹窗共用这次查找，三者的回退行为一致：CLI 会打印实际安装的 spec，每个结果都以 `substituted` 条目携带被请求的 spec、选中的版本与未满足的要求。更新另外跳过预发布版本和不声明组合包的版本，因为它绝不会用更新流程无法选中的包替换组合包。没有任何已发布版本符合条件时，拒绝行为保持不变。
 
 ### 配置
 

@@ -22,7 +22,7 @@ import {
   SessionHandleClosedError,
   SessionPersistenceNotFoundError,
   SessionReadOnlyError,
-} from '../src/index.ts'
+} from '@tomato/session-persistence'
 import type { SessionHandle, SessionPersistence } from '../src/index.ts'
 
 /** One backend service instance under test plus its teardown. */

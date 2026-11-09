@@ -24,6 +24,7 @@ import {
   freezeMessage,
 } from '@tomato/llm'
 import type { ContextFormed, MessageSource } from '@tomato/llm'
+import type { FileAttachmentRef, ImageAttachmentRef } from '@tomato/attachment/types'
 
 declare module '@tomato/llm' {
   interface MessageSourceMap {
@@ -1026,5 +1027,239 @@ describe('developer message history', () => {
     expect(isSurfaceEligibleType('developer/message')).toBe(true)
     const restored = Session.fromRestore(session.id, session.snapshotEvents(), session.header, SessionLogOffset(0), 'shared-frozen')
     expect(restored.deriveMessages()).toEqual([replacement])
+  })
+})
+
+describe('conversation retraction', () => {
+  /** One completed human exchange whose surface nodes are the retraction target. */
+  function retractionSession(): {
+    session: Session
+    human: ReturnType<typeof createUserMessage>
+    humanSeq: SessionSeq
+    replySeq: SessionSeq
+  } {
+    const session = Session.create(SessionId('retraction'))
+    session.append('turn/start', { turn: 1 })
+    const human = createUserMessage({ content: [{ type: 'text', text: 'typed by mistake' }], source: { kind: 'user' } })
+    const humanSeq = session.append('user/message', human, { surfaceOp: 'append' }).seq
+    const replySeq = session.append('assistant/message', {
+      turn: 1, step: 1, stream: [],
+      message: createMessage({
+        role: 'assistant',
+        content: [{ type: 'text', text: 'answer to remove' }],
+        source: { kind: 'model', provider: 'mock', model: 'mock' },
+      }),
+    }, { surfaceOp: 'append' }).seq
+    session.append('turn/end', { turn: 1, reason: { kind: 'completed' } })
+    return { session, human, humanSeq, replySeq }
+  }
+
+  it('removes the trailing exchange from derived history and keeps later appends', () => {
+    const { session, human, humanSeq, replySeq } = retractionSession()
+    expect(session.deriveMessages()).toHaveLength(2)
+    const retraction = session.append('conversation/retraction', {
+      messageId: human.id,
+      startSeq: humanSeq,
+      endSeq: replySeq,
+    })
+    expect(retraction.seq).toEqual(SessionSeq(4))
+    expect(session.surface.nodes).toEqual([])
+    expect(session.deriveMessages()).toEqual([])
+
+    session.append('turn/start', { turn: 2 })
+    const next = createUserMessage({ content: [{ type: 'text', text: 'corrected' }], source: { kind: 'user' } })
+    session.append('user/message', next, { surfaceOp: 'append' })
+    expect(session.deriveMessages()).toEqual([next])
+  })
+
+  it('is included in the complete surface fold with its removed seqs', () => {
+    const { session, human, humanSeq, replySeq } = retractionSession()
+    const events = session.snapshotEvents()
+    session.append('conversation/retraction', { messageId: human.id, startSeq: humanSeq, endSeq: replySeq })
+    const folded = foldSurface(session.snapshotEvents())
+    expect(folded.nodes).toEqual([])
+    expect(folded.retractions).toEqual([{
+      seq: SessionSeq(events.length),
+      start: humanSeq,
+      end: replySeq,
+      removedSeqs: [humanSeq, replySeq],
+    }])
+  })
+
+  it('rejects a range that does not end at the current surface tail', () => {
+    const { session, human, humanSeq } = retractionSession()
+    expect(() => session.append('conversation/retraction', {
+      messageId: human.id, startSeq: humanSeq, endSeq: humanSeq,
+    })).toThrow('must end at the current surface tail')
+  })
+
+  it('rejects a start that is not the named human user message', () => {
+    const { session, human, humanSeq, replySeq } = retractionSession()
+    expect(() => session.append('conversation/retraction', {
+      messageId: human.id, startSeq: replySeq, endSeq: replySeq,
+    })).toThrow('must start at the named human user/message')
+    expect(() => session.append('conversation/retraction', {
+      messageId: MessageId('different'), startSeq: humanSeq, endSeq: replySeq,
+    })).toThrow('must start at the named human user/message')
+  })
+
+  it('rejects removing a replacement node', () => {
+    const { session, human, humanSeq, replySeq } = retractionSession()
+    const replacement = replacementMessage('compacted')
+    const replacementSeq = session.append('user/message', replacement, {
+      surfaceOp: { op: 'replace', startSeq: replySeq, endSeq: replySeq },
+      sourceEventSeqs: [replySeq],
+    }).seq
+    expect(session.surface.nodes).toHaveLength(2)
+    expect(() => session.append('conversation/retraction', {
+      messageId: human.id, startSeq: humanSeq, endSeq: replacementSeq,
+    })).toThrow('may remove only append-origin surface nodes')
+  })
+
+  it('rejects a replacement source that was already retracted', () => {
+    const { session, human, humanSeq, replySeq } = retractionSession()
+    session.append('conversation/retraction', { messageId: human.id, startSeq: humanSeq, endSeq: replySeq })
+    const replacement = replacementMessage('stale')
+    expect(() => session.append('user/message', replacement, {
+      surfaceOp: { op: 'replace', startSeq: replySeq, endSeq: replySeq },
+      sourceEventSeqs: [replySeq],
+    })).toThrow('not found in surface')
+  })
+})
+
+describe('conversation retraction payload validation', () => {
+  it('rejects malformed payloads at Session admission', () => {
+    const session = surfaceSession()
+    expect(() => session.append('conversation/retraction', {
+      messageId: MessageId(''), startSeq: SessionSeq(1), endSeq: SessionSeq(2),
+    })).toThrow('nonempty messageId')
+    expect(() => session.append('conversation/retraction', {
+      messageId: MessageId('x'), startSeq: -1 as never, endSeq: SessionSeq(2),
+    })).toThrow('startSeq <= endSeq')
+    expect(() => session.append('conversation/retraction', null as never))
+      .toThrow('data must be an object')
+  })
+
+  it('rejects an empty surface and a start outside the surface', () => {
+    const empty = Session.create(SessionId('retraction-empty'))
+    expect(() => empty.append('conversation/retraction', {
+      messageId: MessageId('x'), startSeq: SessionSeq(0), endSeq: SessionSeq(0),
+    })).toThrow('must end at the current surface tail')
+
+    const session = surfaceSession()
+    expect(() => session.append('conversation/retraction', {
+      messageId: MessageId('x'), startSeq: SessionSeq(0), endSeq: SessionSeq(2),
+    })).toThrow('is not on the current surface')
+  })
+})
+
+describe('conversation retraction fold validation', () => {
+  const human = createUserMessage({ content: [{ type: 'text', text: 'seed' }], source: { kind: 'user' } })
+  const base = { type: 'user/message', seq: 0, time: 1, data: human, surfaceOp: 'append' }
+
+  it('rejects a non-object payload and an empty message identity without a reader', () => {
+    expect(() => foldSurface([
+      base,
+      { type: 'conversation/retraction', seq: 1, time: 2, data: null },
+    ] as never)).toThrow('requires an object payload')
+    expect(() => foldSurface([
+      base,
+      {
+        type: 'conversation/retraction',
+        seq: 1,
+        time: 2,
+        data: { messageId: '', startSeq: SessionSeq(0), endSeq: SessionSeq(0) },
+      },
+    ] as never)).toThrow('nonempty messageId')
+    expect(() => foldSurface([
+      base,
+      {
+        type: 'conversation/retraction',
+        seq: 1,
+        time: 2,
+        data: { messageId: 'x', startSeq: SessionSeq(1), endSeq: SessionSeq(0) },
+      },
+    ] as never)).toThrow('requires startSeq <= endSeq')
+    expect(() => foldSurface([
+      base,
+      {
+        type: 'conversation/retraction',
+        seq: 1,
+        time: 2,
+        data: { messageId: 'x', startSeq: SessionSeq(0), endSeq: SessionSeq(0) },
+      },
+    ] as never)).toThrow('must start at the named human user/message')
+  })
+})
+
+describe('surface generation reads', () => {
+  it('folds pending events before reporting the content generation', () => {
+    const session = Session.create(SessionId('generation-read'))
+    const first = session.append('user/message', createUserMessage({
+      content: [{ type: 'text', text: 'first' }], source: { kind: 'user' },
+    }), { surfaceOp: 'append' })
+    session.append('user/message', createUserMessage({
+      content: [{ type: 'text', text: 'replacement' }], source: { kind: 'test' },
+    }), {
+      surfaceOp: { op: 'replace', startSeq: first.seq, endSeq: first.seq },
+      sourceEventSeqs: [first.seq],
+    })
+    expect(session.surface.contentGeneration).toBe(1)
+  })
+})
+
+describe('conversation retraction attachment removal', () => {
+  it('removes attachment blocks and their context messages from derived history', () => {
+    const session = Session.create(SessionId('retraction-attachments'))
+    session.append('turn/start', { turn: 1 })
+    const human = createUserMessage({
+      source: { kind: 'user' },
+      content: [
+        { type: 'text', text: 'use these files' },
+        {
+          type: 'image',
+          attachment: {
+            attachmentId: 'image-1' as ImageAttachmentRef['attachmentId'],
+            mediaType: 'image/png',
+            bytes: 1,
+            width: 1,
+            height: 1,
+            name: 'shot.png',
+          },
+        },
+        {
+          type: 'file',
+          attachment: {
+            attachmentId: 'file-1' as FileAttachmentRef['attachmentId'],
+            name: 'notes.md',
+            bytes: 2,
+          },
+        },
+      ],
+    })
+    const humanSeq = session.append('user/message', human, { surfaceOp: 'append' }).seq
+    const contextSeq = session.append('user/message', createUserMessage({
+      source: { kind: 'test' },
+      content: [{ type: 'text', text: 'notes.md contents' }],
+    }), { surfaceOp: 'append' }).seq
+    const replySeq = session.append('assistant/message', {
+      turn: 1, step: 1, stream: [],
+      message: createMessage({
+        role: 'assistant',
+        content: [{ type: 'text', text: 'done' }],
+        source: { kind: 'model', provider: 'mock', model: 'mock' },
+      }),
+    }, { surfaceOp: 'append' }).seq
+    session.append('turn/end', { turn: 1, reason: { kind: 'completed' } })
+
+    expect(session.deriveMessages().length).toBe(3)
+    session.append('conversation/retraction', {
+      messageId: human.id,
+      startSeq: humanSeq,
+      endSeq: replySeq,
+    })
+    expect(session.deriveMessages()).toEqual([])
+    expect(session.surface.nodes).toEqual([])
+    expect(contextSeq).toBeGreaterThan(humanSeq)
   })
 })

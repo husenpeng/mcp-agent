@@ -1,0 +1,40 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/experimental-tool-robot-crew/README.md
+/:
+  en: 7bb7fc5bca5a7b17
+  zh: eaad841bf7130e89
+/tool-robot-crew-create:
+  en: 3122dc106c5b1475
+  zh: 027fbe40b06d534c
+/tool-robot-crew-create/summary:
+  en: c5e3064fb7ab1ee2
+  zh: e50f05497279456a
+/tool-robot-crew-create/table-of-contents:
+  en: 4e53164159b5ce41
+  zh: 89582dc0294d0776
+/tool-robot-crew-create/use-this-package:
+  en: d7ac75690a228631
+  zh: ad9827592d49ecde
+/tool-robot-crew-create/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/tool-robot-crew-create/model-experience/robot-crew-create:
+  en: 0c3b2c728df58c03
+  zh: 0c3b2c728df58c03
+/tool-robot-crew-create/model-experience/robot-crew-create/what-the-model-sees:
+  en: 0efbb3248d6f4d2a
+  zh: 8568bda8be90874a
+/tool-robot-crew-create/model-experience/robot-crew-create/token-effect:
+  en: d3fec8ba33bcb44a
+  zh: 5fd7fdf32858d080
+/tool-robot-crew-create/model-experience/robot-crew-create/kv-cache-effect:
+  en: 7118b46154c6fd7d
+  zh: 58e8f59afa7ac676
+/tool-robot-crew-create/known-limitations-and-deferred-work:
+  en: 03168838bf5fd64d
+  zh: ff6eb93c21f9a68e
+/tool-robot-crew-create/known-limitations-and-deferred-work/dev-note:
+  en: 4b6a89798cf0cd20
+  zh: 6a6058732e604b2f

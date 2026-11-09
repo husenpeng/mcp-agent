@@ -2055,3 +2055,64 @@
   white-space: pre;
   overflow-x: auto;
 }
+
+/* Per-record trace chips: token cost for one model step, duration for one
+ * operation, and the owning tool family for MCP and control-tool calls. */
+
+.rowBody {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 100%;
+  gap: 8px;
+}
+
+.rowBody > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.rowChips {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+}
+
+.rowChip,
+.rowOrigin {
+  flex: none;
+  padding: 0 4px;
+  border-radius: var(--dsw-radius-xs);
+  color: var(--dsw-alias-label-tertiary);
+  background: color-mix(in srgb, var(--dsw-alias-label-primary) 5%, transparent);
+  font: 10px/15px var(--ds-font-family-code);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rowOrigin {
+  color: var(--dsw-alias-label-secondary);
+  font-weight: 600;
+}
+
+.rowOrigin[data-origin='mcp'] {
+  color: var(--dsw-alias-state-business-primary);
+  background: var(--dsw-alias-state-business-tertiary);
+}
+
+.rowOrigin[data-origin='subagent'] {
+  color: var(--dsw-alias-state-success-primary);
+  background: var(--dsw-alias-state-success-tertiary);
+}
+
+.rowOrigin[data-origin='workflow'],
+.rowOrigin[data-origin='ptc'] {
+  color: var(--dsw-alias-state-warn-label);
+  background: var(--dsw-alias-state-warn-tertiary);
+}
+
+.rowOrigin[data-origin='skill'] {
+  color: var(--dsw-alias-label-secondary);
+  background: var(--dsw-alias-bg-module-platform);
+}

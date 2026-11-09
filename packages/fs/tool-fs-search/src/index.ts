@@ -76,6 +76,10 @@ export interface Config {
   sampleOverCapGlobResults: boolean
   /** Max paths one `glob` call retains inline; later paths go to the formatted spill file. */
   globMaxResults?: number
+  /** Largest traversal depth one `glob` call may request. */
+  globMaxDepth?: number
+  /** Largest number of `exclude` patterns one `glob` call may add. */
+  globMaxExcludes?: number
   /** Max flat matches one `grep` call retains inline; later matches go to the formatted spill file. */
   grepMaxMatches?: number
   /** Max bytes retained for one matched-line preview (the cut preserves UTF-8 boundaries). */
@@ -98,6 +102,8 @@ export interface Config {
 export const Config: z<Config> = z.object({
   sampleOverCapGlobResults: z.boolean().required(),
   globMaxResults: z.number().default(GLOB_MAX_RESULTS),
+  globMaxDepth: z.number().default(16),
+  globMaxExcludes: z.number().default(20),
   grepMaxMatches: z.number().default(GREP_MAX_MATCHES),
   grepMaxLineBytes: z.number().default(GREP_MAX_LINE_BYTES),
   searchMetaMaxBytes: z.number().default(SEARCH_META_MAX_BYTES),
@@ -130,6 +136,8 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
   // schemastery (Config) has already filled every defaulted field.
   const resolved = config as ResolvedConfig
   assertPositiveInteger('globMaxResults', resolved.globMaxResults)
+  assertPositiveInteger('globMaxDepth', resolved.globMaxDepth)
+  assertPositiveInteger('globMaxExcludes', resolved.globMaxExcludes)
   assertPositiveInteger('grepMaxMatches', resolved.grepMaxMatches)
   assertPositiveInteger('grepMaxLineBytes', resolved.grepMaxLineBytes)
   assertPositiveInteger('searchMetaMaxBytes', resolved.searchMetaMaxBytes)
@@ -148,6 +156,8 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
     graceMs: resolved.graceMs,
     stderrMaxBytes: resolved.stderrMaxBytes,
     timeoutMs: resolved.timeoutMs,
+    maxDepth: resolved.globMaxDepth,
+    maxExcludes: resolved.globMaxExcludes,
   })
   applyGrepTool(ctx, {
     maxMatches: resolved.grepMaxMatches,

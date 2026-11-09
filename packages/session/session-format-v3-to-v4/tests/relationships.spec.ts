@@ -216,3 +216,24 @@ describe('V4 protected system surface and malformed relationship inputs', () => 
     expect(() => reopen(inherited, 5, true)).toThrow(/does not match the open turn/)
   })
 })
+
+describe('conversation retraction relationships', () => {
+  const exchange = (): Row[] => [...begin(), input(), ...end()]
+
+  it('accepts a trailing human retraction and removes its message', () => {
+    const rows: Row[] = [
+      ...exchange(),
+      row('conversation/retraction', { messageId: 'input', startSeq: 2, endSeq: 2 }),
+    ]
+    expect(reopen(rows).messages).toEqual([])
+  })
+
+  it.each([
+    ['not the surface tail', [...exchange(), input(), row('conversation/retraction', { messageId: 'input', startSeq: 2, endSeq: 2 })]],
+    ['not a human message', [...begin(), assistant([]), ...end(), row('conversation/retraction', { messageId: 'assistant', startSeq: 2, endSeq: 2 })]],
+    ['wrong message identity', [...exchange(), row('conversation/retraction', { messageId: 'other', startSeq: 2, endSeq: 2 })]],
+    ['a replacement node', [...compact(), row('conversation/retraction', { messageId: 'input', startSeq: 1, endSeq: 4 })]],
+  ] satisfies Array<[string, Row[]]>)('rejects %s', (_name, rows) => {
+    expect(() => reopen(rows)).toThrow()
+  })
+})

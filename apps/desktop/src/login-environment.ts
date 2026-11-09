@@ -6,6 +6,8 @@ export interface DesktopLoginEnvironment {
   readonly authServiceUrl: string
   /** Company BFF origin, or an empty string when login is unconfigured. */
   readonly tomatoWebUrl: string
+  /** Company IM service origin for the direct MCP connection, or an empty string. */
+  readonly imServiceUrl: string
 }
 
 /** Manifest key carrying the auth_service origin baked by packaging. */
@@ -13,6 +15,9 @@ const AUTH_MANIFEST_KEY = 'tomatoAuthServiceUrl'
 
 /** Manifest key carrying the company BFF origin baked by packaging. */
 const TOMATO_MANIFEST_KEY = 'tomatoTomatoWebUrl'
+
+/** Manifest key carrying the company IM service origin baked by packaging. */
+const IM_MANIFEST_KEY = 'tomatoImServiceUrl'
 
 /** Runtime variable that overrides the packaged auth_service origin. */
 export const AUTH_SERVICE_ENV = 'AUTH_SERVICE_URL'
@@ -26,6 +31,12 @@ export const TOMATO_WEB_ENV = 'TOMATO_WEB_URL'
  * because `/api/v1/search/web` is served by that BFF.
  */
 export const SEARCH_GATEWAY_ENV = 'TOMATO_SEARCH_GATEWAY_URL'
+
+/**
+ * Runtime variable carrying the company IM service origin (`/mcp/im` base).
+ * The direct MCP row reads it; packaging may bake the same value.
+ */
+export const IM_SERVICE_ENV = 'TOMATO_IM_SERVICE_URL'
 
 /**
  * Read one optional HTTP(S) origin.
@@ -65,6 +76,9 @@ export function resolveLoginEnvironment(manifest: unknown, env: NodeJS.ProcessEn
     tomatoWebUrl: readOrigin(env[TOMATO_WEB_ENV], TOMATO_WEB_ENV)
       ?? readOrigin(record[TOMATO_MANIFEST_KEY], TOMATO_MANIFEST_KEY)
       ?? '',
+    imServiceUrl: readOrigin(env[IM_SERVICE_ENV], IM_SERVICE_ENV)
+      ?? readOrigin(record[IM_MANIFEST_KEY], IM_MANIFEST_KEY)
+      ?? '',
   }
 }
 
@@ -84,5 +98,6 @@ export function withLoginEnvironment(env: NodeJS.ProcessEnv, login: DesktopLogin
     ...login.tomatoWebUrl === '' ? {} : { [TOMATO_WEB_ENV]: login.tomatoWebUrl },
     ...login.tomatoWebUrl === '' || env[SEARCH_GATEWAY_ENV] !== undefined
       ? {} : { [SEARCH_GATEWAY_ENV]: login.tomatoWebUrl },
+    ...login.imServiceUrl === '' ? {} : { [IM_SERVICE_ENV]: login.imServiceUrl },
   }
 }

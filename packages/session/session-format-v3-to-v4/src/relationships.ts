@@ -10,7 +10,8 @@ const RELATIONSHIP_TYPES = new Set([
   ...SURFACE_TYPES, ...STEP_EVENT_TYPES, 'turn/start', 'turn/end', 'step/start', 'step/end',
   'tool/call', 'request/header', 'request/context', 'tool/ptc-dispatch-start', 'tool/ptc-dispatch',
   'llm/retry', 'llm/retry-started', 'session/title', 'session/title-llm-request', 'command/run',
-  'command/done', 'compaction/start', 'compaction/summary', 'compaction/end', 'compaction/prune', 'session/end-seed',
+  'command/done', 'compaction/start', 'compaction/summary', 'compaction/end', 'compaction/prune',
+  'session/end-seed', 'conversation/retraction',
 ])
 
 function record(value: SessionFormatJsonValue | undefined, subject: string): SessionFormatJsonObject {
@@ -324,6 +325,26 @@ class Relationships {
         if (event['surfaceOp'] !== 'append' && source['kind'] === 'compact-checkpoint') this.compactionOwner(source, 'compaction checkpoint')
         break
       }
+      case 'conversation/retraction': {
+        const messageId = text(data['messageId'], 'retraction messageId')
+        const start = earlier(data['startSeq'], event.seq, 'retraction startSeq')
+        const end = earlier(data['endSeq'], event.seq, 'retraction endSeq')
+        const first = this.surface.indexOf(start)
+        if (first < 0 || end !== this.surface.at(-1)) {
+          throw new SessionFormatError('conversation/retraction must remove a trailing current surface range')
+        }
+        const startEvent = this.artifact.events[start]
+        const message = startEvent?.type === 'user/message' ? record(startEvent.data, 'retracted message') : undefined
+        if (startEvent?.['surfaceOp'] !== 'append'
+          || record(message?.['source'], 'retracted message source')['kind'] !== 'user'
+          || message?.['id'] !== messageId) {
+          throw new SessionFormatError('conversation/retraction must start at the named human user/message')
+        }
+        // The start is a human user/message, so it can never name the protected
+        // system head at node 0.
+        this.surface.splice(first)
+        break
+      }
       case 'session/end-seed': this.compaction = undefined; break
     }
   }
@@ -367,8 +388,9 @@ function titleSources(
   const message = record(messages[0], 'title message')
   const content = array(message['content'], 'title content')
   const block = content[0]
+  const sourceKind = record(message['source'], 'title source')['kind']
   if (references.length === 0 || messages.length !== 1 || message['role'] !== 'user'
-    || !['@tomato/session-title-llm', 'dsh-session-title-llm'].includes(String(record(message['source'], 'title source')['kind']))
+    || (sourceKind !== '@tomato/session-title-llm' && sourceKind !== 'dsh-session-title-llm')
     || content.length !== 1 || !isSessionFormatJsonObject(block) || block['type'] !== 'text') {
     throw new SessionFormatError('session/title-llm-request messages do not represent messageSeqs')
   }

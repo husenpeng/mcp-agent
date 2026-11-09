@@ -1,0 +1,28 @@
+# Bilingual-pair consistency record for 2026-11-05-conversation-retraction.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/persistence-changes/2026-11-05-conversation-retraction.md
+/:
+  en: 3d5a424ae7d7e46b
+  zh: c22a8e4a62d8cc1a
+/2026-11-05-conversation-retraction:
+  en: 6aae1351d4882de4
+  zh: f75624d8107e5f75
+/2026-11-05-conversation-retraction/summary:
+  en: 3efe1b93395d38ae
+  zh: a319f1d93aac5755
+/2026-11-05-conversation-retraction/table-of-contents:
+  en: 6cf314a069ceb451
+  zh: 9adff678e9ecab3b
+/2026-11-05-conversation-retraction/declaration:
+  en: 6907136f28e48c90
+  zh: 02f8298485f3d8e7
+/2026-11-05-conversation-retraction/compatibility:
+  en: ca63d474e3de403f
+  zh: 45d6947d28ddee4c
+/2026-11-05-conversation-retraction/verification:
+  en: 009661aacaa7911f
+  zh: ca9c4937ff18b28b
+/2026-11-05-conversation-retraction/dev-note:
+  en: b75c8458928b72b9
+  zh: 003ba4e17b4b5269

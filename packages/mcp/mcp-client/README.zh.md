@@ -52,12 +52,29 @@ kind: "package-reference"
       Authorization: !!js '`Bearer ${process.env.MCP_TOKEN}`'
 ```
 
+当标头需要在调用之间携带会变化的身份时，给 `requestHeaders` 一个表达式而不是静态值。它在每次 `tools/call` 中、该调用自己的异步作用域内运行一次，因此并发调用不会共享标头：
+
+```yaml
+- id: mcp-im
+  name: '@tomato/mcp-client'
+  config:
+    serverName: im
+    transport: streamable-http
+    url: http://127.0.0.1:8013/mcp/im
+    requestHeaders: !!js >
+      () => {
+        const account = ctx.tomatoAccount.current()
+        return account.status === 'signed-in' ? { 'x-user-id': account.user.userId } : {}
+      }
+```
+
 | 字段 | 默认值 | 含义 |
 |---|---|---|
 | `transport` | 必填 | `stdio` 或 `streamable-http` |
 | `serverName` | 必填 | 服务器工具名称的 namespace；`[A-Za-z0-9_-]{1,32}`，在一个注册作用域内唯一 |
 | `command` / `args` / `env` / `cwd` | — | stdio：可执行文件、参数、合并到清洗过的环境之上的额外环境变量、工作目录 |
 | `url` / `headers` | — | streamable-http：端点 URL 与额外请求标头 |
+| `requestHeaders` | — | 仅 streamable-http：`(execution) => Record<string, string>`，在单次 `tools/call` 求值并合并到 `headers` 之上；连接期请求只使用 `headers` |
 | `toolCallTimeoutMs` | `60,000` | 每次 `tools/call` 或资源请求的超时 |
 | `maxInstructionBytes` | `32,768` | 包括服务器归属信息在内的服务器指令 UTF-8 字节上限；超出时连接失败 |
 | `failOnStartupError` | `false` | 初始连接或工具同步失败时拒绝插件激活 |

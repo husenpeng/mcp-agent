@@ -140,9 +140,9 @@ describe('robot gallery', () => {
     const props = mount()
     fireEvent.click(screen.getByRole('button', { name: '周报机器人' }))
     expect(props.onOpen).toHaveBeenCalledWith(ROBOTS[0])
-    fireEvent.click(screen.getByRole('button', { name: '新建机器人' }))
+    fireEvent.click(screen.getByRole('button', { name: '创建机器人' }))
     expect(props.onCreate).toHaveBeenCalledOnce()
-    fireEvent.click(screen.getByRole('button', { name: '用对话创建' }))
+    fireEvent.click(screen.getByRole('button', { name: '让助手帮我创建' }))
     expect(props.onCreateWithChat).toHaveBeenCalledOnce()
   })
 
@@ -151,12 +151,12 @@ describe('robot gallery', () => {
     screen.getByText('故障机器人')
     screen.getByText('?')
     expect(screen.getAllByText('0 次运行')).toHaveLength(2)
-    expect(screen.queryByRole('button', { name: '用对话创建' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '让助手帮我创建' })).toBeNull()
   })
 
   it('shows the empty roster prompt when no robot exists', () => {
     mount({ robots: [] })
-    screen.getByText('还没有机器人。先创建一个。')
+    screen.getByText('还没有机器人。创建一个，把你的重复工作交给它。')
   })
 })
 

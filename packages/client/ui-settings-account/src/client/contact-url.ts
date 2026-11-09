@@ -1,5 +1,5 @@
 /** Feishu questionnaire context: Harness build and reported environment. */
-import type { AccountUserId } from '@tomato/deepseek-account/types'
+import type { AccountUserId } from '@tomato/account-service/types'
 import type { ContactConfig } from '../contact-config.ts'
 
 /**

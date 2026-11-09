@@ -29,7 +29,7 @@ it.each(['desktop', 'web'])('limits collection and its shutdown to the Desktop l
     cwd: '/workspace', home: '/home', startedBundles: [], overlays: [], telemetryDisabledEnv: undefined,
   })
   const identity = vi.fn().mockResolvedValue(undefined)
-  ctx.provide('deepseekAccount', { getDeviceIdentity: identity } as never)
+  ctx.provide('account', { getDeviceIdentity: identity } as never)
   await ctx.plugin(OTel)
   ctx.baseUrl = 'file:///'
   await ctx.plugin(Loader).await()

@@ -6,7 +6,7 @@ import { loadLayeredEnv, loadProfileDirectory, reportSkippedBundles } from '@tom
 import { runProfile } from '@tomato/cli/profile-boot'
 import type {} from '@tomato/client-connection'
 import type {} from '@tomato/host-webserver'
-import type {} from '@tomato/deepseek-account'
+import type {} from '@tomato/account-service'
 import { resolveTomatoHome } from '@tomato/home-paths'
 import * as desktopOffice from './office.ts'
 import { localDragResource } from './file-drag.ts'
@@ -16,6 +16,7 @@ import { installDesktopUpdateTaskControl } from './update-tasks.ts'
 import { installDesktopQuitInspection } from './quit-inspection.ts'
 import { installPlatformSessionPublisher } from './platform-session.ts'
 import { installOfficeEngineResolution } from './office-engine.ts'
+import { listenPortArgument, trustedHostArguments } from './launch-arguments.ts'
 
 async function main(): Promise<void> {
   const runtimeDir = process.argv[2] as string
@@ -29,7 +30,11 @@ async function main(): Promise<void> {
     profile: 'desktop',
     resolvedProfile: { profile, installAnchor },
     patchFiles: releasePatchFiles(process.env),
-    args: ['--no-open', '--host', '127.0.0.1', '--port', '0'],
+    // The shell owns the loopback port: a paired phone needs one stable address to
+    // point a tunnel at, while an absent value keeps the historical OS-assigned port.
+    // `web-startup` validates the argument and rejects a non-numeric value.
+    args: ['--no-open', '--host', '127.0.0.1', '--port', listenPortArgument(process.env),
+      ...trustedHostArguments(process.env)],
     ...(process.argv[5] === undefined ? {} : {
       packageManager: {
         command: process.execPath,

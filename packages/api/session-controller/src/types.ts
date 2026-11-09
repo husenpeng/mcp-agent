@@ -110,6 +110,8 @@ export interface ModelCatalogModel {
   readonly name: string
   readonly description?: string
   readonly reasoning?: ModelReasoning
+  /** Why a deployment policy refuses this model; absent when it may be selected. */
+  readonly blockedReason?: string
 }
 
 /** One provider and its successfully loaded model catalog. */
@@ -197,6 +199,10 @@ declare module '@tomato/typert-protocol' {
     'session/steer-unavailable': { readonly itemId: MessageId }
     'session/title-invalid': { readonly sessionId: SessionId }
     'session/fork-unavailable': { readonly sessionId: SessionId }
+    'session/retract-unavailable': {
+      readonly sessionId: SessionId
+      readonly reason: 'not-leaf' | 'queued-input' | 'busy'
+    }
     'session/migration-required': { readonly sessionId: SessionId }
     'subagent/not-found': {
       readonly parentSessionId: SessionId
@@ -362,6 +368,26 @@ export interface SessionForkRequest {
 /** Identity of a newly forked Session. */
 export interface SessionForkValue {
   readonly sessionId: SessionId
+}
+
+/**
+ * Session retraction request. The Host verifies that `atSeq` opens the Session's
+ * last turn, cancels that turn when it is still running, and removes it from
+ * model history from `atSeq` through the current surface tail.
+ */
+export interface SessionRetractRequest {
+  readonly sessionId: SessionId
+  /** Seq of the trailing human `user/message` to retract. */
+  readonly atSeq: number
+}
+
+/** Receipt after one retraction reached durable model history. */
+export interface SessionRetractValue {
+  readonly accepted: true
+  /** Inclusive first removed surface seq (the named human message). */
+  readonly startSeq: number
+  /** Inclusive last removed surface seq. */
+  readonly endSeq: number
 }
 
 /** Session prompt request. */

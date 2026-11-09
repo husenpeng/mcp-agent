@@ -34,8 +34,13 @@ async function authService(): Promise<string> {
   return `http://127.0.0.1:${(server.address() as AddressInfo).port}`
 }
 
-/** Mount the plugin over a Web server and Connection that admit every request and record routes. */
-async function mount(authServiceUrl: string, companyWebUrl = '') {
+/**
+ * Mount the plugin over a Web server and Connection that admit every request and record routes.
+ * @param authServiceUrl - auth_service base URL; an empty value mounts with no configured account.
+ * @param companyWebUrl - company BFF origin the handoff starts on.
+ * @param advertisedRoot - Web application root browsers use, when this deployment advertises one.
+ */
+async function mount(authServiceUrl: string, companyWebUrl = '', advertisedRoot?: string) {
   const ctx = new Context()
   contexts.push(ctx)
   const routes = new Map<string, WebRoute['handler']>()
@@ -52,6 +57,9 @@ async function mount(authServiceUrl: string, companyWebUrl = '') {
   const connection = { admit: () => admitted } as Partial<HostConnectionHandle> as HostConnectionHandle
   ctx.provide('webServer', webServer)
   ctx.provide('connection', connection)
+  if (advertisedRoot !== undefined) {
+    ctx.provide('webApp', { getAdvertisedUrl: () => advertisedRoot })
+  }
   // The Loader passes partial YAML config through the same schema, which fills every default.
   const fiber = await ctx.plugin(Gateway, Gateway.Config({ authServiceUrl, companyWebUrl } as Gateway.GatewayConfig))
   return { ctx, fiber, routes }
@@ -97,6 +105,45 @@ describe('gateway account service', () => {
     const location = new URL(String(captured.headers?.location))
     expect(location.origin).toBe('https://company.example')
     expect(location.searchParams.get('returnTo')).toMatch(/^http:\/\/localhost:4100\/api\/auth\/callback\?state=/)
+  })
+
+  /** Drive one `/api/auth/start` request and return the parsed BFF handoff URL. */
+  async function handoff(routes: Map<string, WebRoute['handler']>, host: string): Promise<URL> {
+    const request = new IncomingMessage(new Socket())
+    request.method = 'GET'
+    request.url = '/api/auth/start'
+    request.headers = { host }
+    const response = new ServerResponse(new IncomingMessage(new Socket()))
+    const captured: Record<string, unknown> = {}
+    response.writeHead = ((_status: number, headers: Record<string, unknown>) => {
+      Object.assign(captured, headers)
+      return response
+    }) as typeof response.writeHead
+    response.end = (() => response) as typeof response.end
+    await routes.get('/api/auth/start')?.(request, response)
+    return new URL(String(captured.location))
+  }
+
+  it('returns through the advertised root when a forwarding host presents its own authority', async () => {
+    const { routes } = await mount(await authService(), 'https://company.example', 'https://hub.example/app/')
+    const location = await handoff(routes, 'hub.example')
+    // The prefix stays: the proxy strips it before the request reaches this listener.
+    expect(location.searchParams.get('returnTo'))
+      .toMatch(/^https:\/\/hub\.example\/app\/api\/auth\/callback\?state=/)
+  })
+
+  it('keeps the request origin for a loopback browser even when a root is advertised', async () => {
+    const { routes } = await mount(await authService(), 'https://company.example', 'https://hub.example/app/')
+    const location = await handoff(routes, '127.0.0.1:4100')
+    expect(location.searchParams.get('returnTo'))
+      .toMatch(/^http:\/\/127\.0\.0\.1:4100\/api\/auth\/callback\?state=/)
+  })
+
+  it('falls back to the listener origin when nothing is advertised', async () => {
+    const { routes } = await mount(await authService(), 'https://company.example')
+    const location = await handoff(routes, 'hub.example')
+    expect(location.searchParams.get('returnTo'))
+      .toMatch(/^http:\/\/127\.0\.0\.1:4100\/api\/auth\/callback\?state=/)
   })
 
   it('names no account when auth_service is not configured', async () => {

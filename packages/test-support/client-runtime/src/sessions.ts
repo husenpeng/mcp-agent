@@ -147,6 +147,15 @@ export class FixtureSession implements SessionFace {
   }
 
   /**
+   * Fail-loud stub; supply `retract` on the fixture's session face to exercise it.
+   * @param _atSeq - seq of the turn-opening human message.
+   * @returns never — always throws.
+   */
+  retract(_atSeq: number): Promise<never> {
+    throw new Error(`test session "${this.sessionId}": retract is not stubbed — supply it on the fixture's session face`)
+  }
+
+  /**
    * Fail-loud stub; supply `command` on the fixture's session face to exercise it.
    * @returns never — always throws.
    */

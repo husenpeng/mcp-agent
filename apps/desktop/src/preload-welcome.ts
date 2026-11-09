@@ -1,4 +1,4 @@
-import type { SignInAttemptId } from '@tomato/deepseek-account/types'
+import type { SignInAttemptId } from '@tomato/account-service/types'
 /** Localized welcome copy and write-only credential actions. */
 
 import { contextBridge, ipcRenderer } from 'electron'

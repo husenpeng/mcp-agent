@@ -125,7 +125,7 @@
 
     # Configuration-surface reads and writes over Typert Remote. Each method
     # reports an actionable error when its settings-domain provider is absent.
-    # Tomato AI replaces the DeepSeek account surface with `@tomato/account`.
+    # Tomato AI replaces the account surface with `@tomato/account`.
     - id: ui-settings-account
       name: '@tomato/client-ui-settings-account'
       disabled: true
@@ -141,8 +141,15 @@
       name: '@tomato/gateway'
       config:
         authServiceUrl: !!js process.env.AUTH_SERVICE_URL ?? ''
-        companyWebUrl: !!js process.env.TOMATO_WEB_URL ?? ''
+        # The Desktop shell publishes TOMATO_WEB_URL as the company origin; a
+        # Web profile publishes that name as its own GUI URL, so the company
+        # origin comes from its own explicit variable first.
+        companyWebUrl: !!js process.env.TOMATO_COMPANY_WEB_URL ?? process.env.TOMATO_WEB_URL ?? ''
         services: {}
+
+    - id: account-gateway
+      name: '@tomato/account-gateway'
+
 
     # hiCreator creator-data MCP over remote Streamable HTTP. The row stays
     # disabled until HICREATOR_API_KEY is present, so a checkout without a key
@@ -344,6 +351,11 @@
     - id: ui-settings-developer
       name: '@tomato/client-ui-settings-developer'
 
+    # Remote-access page: the Desktop shell's phone tunnel, its pairing link,
+    # and the QR code the phone scans. A browser page renders its notice.
+    - id: ui-settings-remote
+      name: '@tomato/client-ui-settings-remote'
+
     - id: ui-conversation
       name: '@tomato/client-ui-conversation'
 
@@ -368,6 +380,10 @@
     # Sidebar account launcher and Account settings section over the local gateway.
     - id: tomato-account
       name: '@tomato/account'
+
+    - id: account-access
+      name: '@tomato/client-ui-account-access'
+
 
     - id: ui-attachment
       name: '@tomato/client-ui-attachment'

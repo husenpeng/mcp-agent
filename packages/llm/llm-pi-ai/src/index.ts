@@ -67,8 +67,8 @@ import { deepEqualJson } from '@tomato/util-values'
 import { PiAiAdapter } from './adapter.ts'
 import { authContextFrom, credentialStoreFrom } from './auth.ts'
 import { catalogProvider, catalogProviderIds } from './catalog.ts'
-import { assertServiceable, Config, resolveProfiles } from './config.ts'
-import type { ResolvedPiAiProviderProfile } from './config.ts'
+import { assertServiceable, Config, resolveModelPolicy, resolveProfiles } from './config.ts'
+import type { ModelPolicyConfig, ResolvedModelPolicy, ResolvedPiAiProviderProfile } from './config.ts'
 import { discoverModels } from './discovery.ts'
 import type { StoredModelDiscoveryProfile } from './discovery.ts'
 import { registerPiAiFlows } from './login.ts'
@@ -78,6 +78,8 @@ export { PiAiAdapter } from './adapter.ts'
 export type { PiAiAdapterOptions } from './adapter.ts'
 export { Config } from './config.ts'
 export type {
+  ModelPolicyConfig,
+  ModelPolicyRef,
   Options,
   PiAiCompatProfile,
   PiAiModality,
@@ -86,6 +88,7 @@ export type {
   PiAiProviderProfile,
   PiAiReasoningEfforts,
   PiAiThinkingFormat,
+  ResolvedModelPolicy,
   ResolvedPiAiProviderProfile,
 } from './config.ts'
 export { recordKeyFor } from './auth.ts'
@@ -174,6 +177,18 @@ export function apply(ctx: Context, config: Config): void {
     return next
   }
   profiles()
+  let lastPolicyRaw: ModelPolicyConfig | null | undefined
+  let lastPolicy: ResolvedModelPolicy | undefined
+  /** The current allowlist, memoized by the volatile policy snapshot. */
+  const modelPolicy = (): ResolvedModelPolicy | undefined => {
+    const raw = config.modelPolicy.get()
+    if (raw === lastPolicyRaw) return lastPolicy
+    lastPolicy = resolveModelPolicy(raw)
+    lastPolicyRaw = raw
+    return lastPolicy
+  }
+  // Fail the mount, not the first request, on an unusable allowlist entry.
+  modelPolicy()
   ctx.on('internal/config', function (this: import('@tomato/cordis').Fiber, _raw, next) {
     const raw: unknown = next()
     if (this !== ctx.fiber) return raw
@@ -182,6 +197,7 @@ export function apply(ctx: Context, config: Config): void {
       { providers: structuredClone(candidate.providers.get()) } as import('./config.ts').Options,
       { providers: structuredClone(config.providers.get()) } as import('./config.ts').Options,
     )
+    resolveModelPolicy(candidate.modelPolicy.get())
     return raw
   })
 
@@ -216,6 +232,7 @@ export function apply(ctx: Context, config: Config): void {
   const auth = { credentials: credentialStoreFrom(ctx), authContext: authContextFrom(ctx) }
   const adapter = new PiAiAdapter({
     profiles,
+    modelPolicy,
     resolveApiKey,
     auth,
     resolveAttachments: () => ctx.get('attachments'),

@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, act, within } from '@testing-librar
 import { useMemo, useSyncExternalStore } from 'react'
 import { afterEach, expect, it, onTestFinished, vi } from 'vitest'
 import type { GlobalStandardProps } from '@tomato/client-ui-slots'
-import type { AccountDetails, AccountView, SignInAttemptId } from '@tomato/deepseek-account/types'
+import type { AccountDetails, AccountView, SignInAttemptId } from '@tomato/account-service/types'
 import type { ThemeSnapshot } from '@tomato/client-ui-theme/client'
 import type { PlatformBridge } from '../src/client/PlatformOverlay.tsx'
 import { createPlatformPages, type PlatformPages } from '../src/client/platform-pages.ts'

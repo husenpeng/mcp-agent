@@ -98,7 +98,7 @@ export function ModelSelect(
     ...group,
     provider: {
       id: group.id,
-      name: group.id === 'deepseek-account' ? accountProviderName : group.name,
+      name: group.id === 'account' ? accountProviderName : group.name,
     },
   })), [state.groups, accountProviderName])
   const choices = useMemo(() => groups.flatMap(group =>
@@ -567,7 +567,7 @@ export function ModelSelect(
               )}
               {state.failures.map(failure => (
                 <div className={css.warning} key={failure.id}>
-                  <span>{t('warning.groupLoad', { name: failure.id === 'deepseek-account' ? t('provider.account') : failure.name, message: failure.message })}</span>
+                  <span>{t('warning.groupLoad', { name: failure.id === 'account' ? t('provider.account') : failure.name, message: failure.message })}</span>
                   <button type="button" className={css.retry} onClick={reload}>{t('retry')}</button>
                 </div>
               ))}
@@ -585,6 +585,7 @@ export function ModelSelect(
                       {group.models.map((model) => {
                         const index = modelIndex++
                         const selected = state.current?.provider === group.id && state.current.model === model.id
+                        const blocked = model.blockedReason !== undefined
                         return (
                           <button
                             ref={itemRef()}
@@ -603,12 +604,13 @@ export function ModelSelect(
                               else itemRefs.current[index]?.focus()
                             }}
                             key={model.id}
-                            title={model.name}
-                            disabled={busy}
+                            title={blocked ? t('blocked.allowlist') : model.name}
+                            disabled={busy || blocked}
                             onClick={() => { choose({ provider: group.id, model: model.id }) }}
                           >
                             <span className={css.optionCopy}>
                               <span className={css.modelName}>{renderModelLabel(group.provider, model, 'option', selected)}</span>
+                              {blocked ? <span className={css.blockedReason}>{t('blocked.allowlist')}</span> : null}
                             </span>
                             <span className={css.check}>
                               {pending?.provider === group.id && pending.model === model.id

@@ -7,6 +7,7 @@ import type {
   LlmCallConfig,
   LlmCallConfigAdapterDefaults,
   LlmFailure,
+  MessageId,
   SystemMessage,
   SystemPromptUpdate,
   TokenUsage,
@@ -313,6 +314,27 @@ export interface SessionEventMap {
    * project their `content` verbatim; `source` tells them apart.
    */
   'user/message': UserMessage
+  /**
+   * A human retracted the trailing exchange they had started. The event is
+   * log-only: it removes the named surface nodes from derived model history so
+   * later requests never see the retracted input or its output. The durable
+   * events and the human transcript keep them.
+   *
+   * `startSeq` is the turn-opening human `user/message` and must still be a
+   * current surface node. `endSeq` is the current surface tail, so only the
+   * conversation's leaf can be retracted. Attachment blocks and
+   * attachment-derived context messages inside the range leave model history
+   * with the message. Later appends are unaffected. This event is the durable
+   * audit record of the action.
+   */
+  'conversation/retraction': {
+    /** Identity of the retracted human message. */
+    messageId: MessageId
+    /** Inclusive first removed surface node. */
+    startSeq: SessionSeq
+    /** Inclusive last removed surface node; the surface tail when this event is appended. */
+    endSeq: SessionSeq
+  }
   /** An incremental agent session change admitted at the named turn and step. */
   'developer/message': {
     turn: number

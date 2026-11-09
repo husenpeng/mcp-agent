@@ -1,9 +1,34 @@
 /** Copy a verified runtime into isolated, version-bound qualification resources without signing. */
 import { createHash } from 'node:crypto'
+import { readdirSync, readFileSync } from 'node:fs'
 import { cp, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { runtimePath, verifyDesktopRuntime, writeDesktopRuntime } from '../src/runtime-tree.ts'
 import { readInstalledUpdateRun } from './installed-update-qualification.ts'
+
+/**
+ * Names pinned from `vendor/`. They carry the same `@tomato/` scope as release
+ * packages but are rescoped upstream copies, so a release must not retag them.
+ */
+const VENDOR_PACKAGES = (() => {
+  const root = join(import.meta.dirname, '../../../vendor')
+  try {
+    return new Set(readdirSync(root, { withFileTypes: true })
+      .filter(entry => entry.isDirectory())
+      .flatMap((entry) => {
+        try {
+          const metadata = JSON.parse(readFileSync(join(root, entry.name, 'package.json'), 'utf8')) as { name?: unknown }
+          return typeof metadata.name === 'string' ? [metadata.name] : []
+        } catch {
+          // A directory without a readable manifest is not a package.
+          return []
+        }
+      }))
+  } catch {
+    // A packaged qualification environment carries no vendor tree; nothing to exclude there.
+    return new Set<string>()
+  }
+})()
 
 interface PackageMetadata {
   name?: string
@@ -33,7 +58,8 @@ export async function prepareInstalledUpdateRuntime(manifest: string, sourceRoot
     await writeFile(join(receipt, 'source.json'), `${JSON.stringify({ sourceHash, version: run.source.version })}\n`,
       { flag: 'wx', mode: 0o600, flush: true })
     const releaseNames = new Set(source.sharedPackages.filter(entry => entry.version === run.source.version
-      && (entry.name === '@tomato/cli' || entry.name.startsWith('@tomato/'))).map(entry => entry.name))
+      && (entry.name === '@tomato/cli' || entry.name.startsWith('@tomato/'))
+      && !VENDOR_PACKAGES.has(entry.name)).map(entry => entry.name))
     for (const version of run.versions) {
       const directory = join(run.root, version)
       await mkdir(directory)

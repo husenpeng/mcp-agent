@@ -15,8 +15,8 @@
   en: 05fd227f99ee535a
   zh: 60d7d62bc0026973
 /tomato-harness-desktop/application-overview:
-  en: 32fb95151ebe869d
-  zh: 8da530fc12b49f19
+  en: 06427e2fc6bbb47f
+  zh: 4d48db810693d0d4
 /tomato-harness-desktop/terminal-command:
   en: 9370f5a3ee9af98f
   zh: ce89e56246c6d468
@@ -60,8 +60,11 @@
   en: f6e6531b5c50aadc
   zh: d64ba322164cdb87
 /tomato-harness-desktop/updates/local-desktop-settings:
-  en: a3962e4ccffafb3b
-  zh: 39082e8cbbacd41e
+  en: d79abdb271559d8d
+  zh: 4e024cc15f93ba27
+/tomato-harness-desktop/updates/remote-access:
+  en: bd8a9ca5d46266cd
+  zh: 65441b25fdc3b255
 /tomato-harness-desktop/updates/mandatory-update-policy:
   en: f8b63c377ff83872
   zh: 95cc7f3cb4ff9464

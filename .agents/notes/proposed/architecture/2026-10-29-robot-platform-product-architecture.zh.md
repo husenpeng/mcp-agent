@@ -149,7 +149,7 @@ Tomato 已经拥有持久化部件——Session 日志、投影、jobs、schedul
 1. 控制面是 `robot-control` 类型的 Session，不是独立事件存储。切片 1 把持久状态放在 `tomato_robot` 存储域中，因为持久 Session kind 需要一次会话格式变更；Session 日志控制面仍是回放与投影的目标。
 2. 每次 run 使用独立 Session，不是每个机器人一条长 Session。
 3. 首个 A2A 传输是本地邮箱；HTTP 沿用同一信封。
-4. 共享记忆是新包 `@tomato/robot-memory`，不扩展 `@tomato/experimental-memory`。
+4. 共享记忆是新包 `@tomato/robot-memory`，不扩展 `@tomato/experimental-memory`。[长期记忆提案](../feature/2026-11-05-long-term-memory-for-muse-and-robots.zh.md) 修正了这项决定：`ctx.memory` 保留唯一读取面与按作用域的写入策略，`@tomato/robot-memory` 成为面向机器人的策略与组装层。
 5. 权威模型同时使用 `reportsTo` 与能力 ACL；单独任何一个都不够。
 
 ## 备选方案
