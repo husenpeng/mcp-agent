@@ -1,0 +1,31 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/api/api-robot-crew-controller/README.md
+/:
+  en: ec6355d03918b96d
+  zh: 6c9f22471251d68d
+/robot-crew-controller:
+  en: 252ad15a38053a5b
+  zh: a0c5b087bdf49353
+/robot-crew-controller/summary:
+  en: d458413df0cb4420
+  zh: 20cac3445e03ef90
+/robot-crew-controller/table-of-contents:
+  en: 134c9b5c374e0e8e
+  zh: f79065d96be7863e
+/robot-crew-controller/use-this-package:
+  en: 7cf8bee7ed49f3c5
+  zh: aeb4ec0408ae7bc4
+/robot-crew-controller/dev-note:
+  en: 86543639c8152068
+  zh: cf1c7ff324dd2ece
+/robot-crew-controller/model-experience:
+  en: bd45f18965d0ca8e
+  zh: 11c1b156652fa626
+/robot-crew-controller/model-experience/kv-cache-effect:
+  en: 4f029d8d273908f4
+  zh: 7ad3a74edef88fc0
+/robot-crew-controller/known-limitations-and-deferred-work:
+  en: 7c4ff1f6716a3482
+  zh: fd5eba4cfe31ab96
