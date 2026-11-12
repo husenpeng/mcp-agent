@@ -34,7 +34,6 @@ const declarations = (selector: string): Map<string, string> | undefined => decl
 const rowDeclarations = (selector: string): Map<string, string> | undefined => declarationsFrom(rowsCss, selector)
 
 describe('WorkspaceBrowser.module.css list', () => {
-  const root = declarations('.root')
   const listArea = declarations('.root:not(.rail) .listArea')
 
   it('is the scrolling region', () => {

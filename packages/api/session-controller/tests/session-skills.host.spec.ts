@@ -84,6 +84,7 @@ describe('SessionSkillCatalog', () => {
         modelInvocable: true,
         userInvocable: true,
         editable: false,
+        source: 'unknown',
       }],
     })
     expect(observeSession).toHaveBeenCalledWith(sessionId)
@@ -152,6 +153,7 @@ describe('SessionSkillCatalog', () => {
         modelInvocable: false,
         userInvocable: true,
         editable: false,
+        source: 'unknown',
       }],
     })
     expect(scopedList).toHaveBeenCalledWith({ cwd: '/live/current', scope: agent })
