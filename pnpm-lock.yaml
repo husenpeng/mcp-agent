@@ -3201,9 +3201,6 @@ importers:
       '@tomato/client-ui-account-access':
         specifier: workspace:*
         version: link:../../tomato/account-access
-      '@tomato/client-ui-account-notifications':
-        specifier: workspace:*
-        version: link:../../client/ui-account-notifications
       '@tomato/client-ui-agent-preset':
         specifier: workspace:*
         version: link:../../client/ui-agent-preset
@@ -4045,49 +4042,6 @@ importers:
       zustand:
         specifier: ~4.5.7
         version: 4.5.7(@types/react@18.3.31)(immer@10.2.0)(react@18.3.1)
-
-  packages/client/ui-account-notifications:
-    dependencies:
-      '@tomato/schemastery':
-        specifier: link:../../../vendor/schemastery
-        version: link:../../../vendor/schemastery
-    devDependencies:
-      '@testing-library/react':
-        specifier: ^16.3.3
-        version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@tomato/api-remotes':
-        specifier: workspace:*
-        version: link:../../api/remotes
-      '@tomato/client-locale':
-        specifier: workspace:*
-        version: link:../locale
-      '@tomato/client-test-runtime':
-        specifier: workspace:*
-        version: link:../../test-support/client-runtime
-      '@tomato/client-ui-primitives':
-        specifier: workspace:*
-        version: link:../ui-primitives
-      '@tomato/client-ui-renderer':
-        specifier: workspace:*
-        version: link:../ui-renderer
-      '@tomato/client-ui-settings-account':
-        specifier: workspace:*
-        version: link:../ui-settings-account
-      '@tomato/client-ui-slots':
-        specifier: workspace:*
-        version: link:../ui-slots
-      '@tomato/cordis':
-        specifier: workspace:~
-        version: link:../../../vendor/cordis
-      '@tomato/host-webserver':
-        specifier: workspace:*
-        version: link:../../host/webserver
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
 
   packages/client/ui-agent-preset:
     devDependencies:

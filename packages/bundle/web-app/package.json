@@ -81,7 +81,6 @@
     "@tomato/client-product-analytics": "workspace:*",
     "@tomato/client-resources": "workspace:*",
     "@tomato/client-shortcuts": "workspace:*",
-    "@tomato/client-ui-account-notifications": "workspace:*",
     "@tomato/client-ui-agent-preset": "workspace:*",
     "@tomato/client-ui-agent-team": "workspace:*",
     "@tomato/client-ui-approval": "workspace:*",
