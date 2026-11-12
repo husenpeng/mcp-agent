@@ -1,12 +1,12 @@
-// Approximate the Windows Desktop window chrome on Linux: dsh's preload sets data-windows-titlebar
-// and --dsh-windows-titlebar-height (apps/desktop/src/preload-windows.ts), and Electron draws the
+// Approximate the Windows Desktop window chrome on Linux: tomato's preload sets data-windows-titlebar
+// and --tomato-windows-titlebar-height (apps/desktop/src/preload-windows.ts), and Electron draws the
 // native minimize/maximize/close buttons over the top-right 40 px. The red boxes stand in for those
 // native buttons and for the drag band, which neither paints nor takes clicks on Linux.
 export default async function (page) {
   await page.evaluate(() => {
     const root = document.documentElement
     root.dataset.windowsTitlebar = ''
-    root.style.setProperty('--dsh-windows-titlebar-height', '40px')
+    root.style.setProperty('--tomato-windows-titlebar-height', '40px')
     document.querySelector('[data-caption-sim]')?.remove()
     const sim = document.createElement('div')
     sim.dataset.captionSim = ''

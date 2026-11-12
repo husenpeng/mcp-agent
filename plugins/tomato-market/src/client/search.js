@@ -169,12 +169,12 @@ export function categorySections(plugins, categories, stars, language, limit, so
 }
 
 /**
- * Whether a version declares DeepSeek Harness requirements in the catalog.
+ * Whether a version declares Tomato Harness requirements in the catalog.
  * @param {object} version - one listed version.
- * @returns {boolean} whether `engines.dsh` is present.
+ * @returns {boolean} whether `engines.tomato` is present.
  */
 export function targetsDeepSeek(version) {
-  return typeof version?.dsh === 'string'
+  return typeof version?.tomato === 'string'
 }
 
 /**

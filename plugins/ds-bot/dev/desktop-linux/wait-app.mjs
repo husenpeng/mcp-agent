@@ -1,10 +1,10 @@
 // Wait until a Desktop started by desktop.sh shows the Bot team.
-// Usage: node wait-app.mjs <dsh-repo> <renderer-port> [timeout-seconds=240]
+// Usage: node wait-app.mjs <tomato-repo> <renderer-port> [timeout-seconds=240]
 import { connectApp, waitTeam } from './lib.mjs'
 
 const [repo, port, seconds = '240'] = process.argv.slice(2)
 if (!repo || !port) {
-  console.error('usage: node wait-app.mjs <dsh-repo> <renderer-port> [timeout-seconds]')
+  console.error('usage: node wait-app.mjs <tomato-repo> <renderer-port> [timeout-seconds]')
   process.exit(2)
 }
 const started = Date.now()

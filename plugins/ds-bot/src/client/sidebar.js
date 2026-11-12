@@ -429,7 +429,7 @@ export function holdShellShortcuts(shortcuts) {
   return () => { if (shellShortcuts === shortcuts) shellShortcuts = null }
 }
 
-// DeepSeek Harness hands its settings opener only to the settings.launcher seat. When
+// Tomato Harness hands its settings opener only to the settings.launcher seat. When
 // the Desktop's account menu holds that seat, its first item (Settings) is the way in;
 // the Desktop on Windows and macOS takes shortcuts natively, so a synthetic key press
 // reaches the shell only where the page delivers them (the Web, Linux).

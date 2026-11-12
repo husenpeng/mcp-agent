@@ -10,21 +10,21 @@
 
 - insert:
     - id: agent-preset-registry
-      name: '@deepseek-ai/dsh-agent-preset-registry'
+      name: '@tomato/agent-preset-registry'
       config:
         default: standard
     - id: cua-standard-preset
-      name: '@deepseek-ai/dsh-agent-preset'
+      name: '@tomato/agent-preset'
       config:
         id: standard
         plugins:
-          - name: '@deepseek-ai/dsh-tool-executor-native'
+          - name: '@tomato/tool-executor-native'
     - id: cua-standard-selection
       name: '../../../packages/test-support/session-snapshot/tests/fixtures/parent-agent-preset.ts'
       config:
         presets: [standard]
     - id: computer-use
-      name: '@deepseek-ai/dsh-computer-use'
+      name: '@tomato/computer-use'
     - id: cua-run-code-fixture
       name: '../cua-run-code/provider.mjs'
       config:

@@ -30,11 +30,11 @@ pnpm tomato plugin --profile robot add /absolute/path/ds-bot-0.2.3.tgz
 
 ## 改造内容
 
-1. **命名**：`scripts/tomato-codemod.ts` 调用仓库的 `scripts/rescope-to-tomato.ts`，执行 `pkg`、`env`、`ident`、`cli` 四层（不开 `prose`，避免误改产品文案）。覆盖包名、`DSH_` 环境变量、`~/.dsh`、`dsh` 清单字段、`dsh-*` 文件引用与 `--dsh-*` CSS 变量。
-2. **文件名**：`dsh-update.js`、`dsh-primitives.js`、`dsh-offer.js` 及两个测试文件改为 `tomato-*`，与 import 同步。
-3. **清单**：`package.json` 的 `dsh` 字段改为 `tomato`，peer 依赖改为 `@tomato/*`，新增 `engines.tomato`。
+1. **命名**：`scripts/tomato-codemod.ts` 调用仓库的 `scripts/rescope-to-tomato.ts`，执行 `pkg`、`env`、`ident`、`cli` 四层（不开 `prose`，避免误改产品文案）。覆盖包名、`TOMATO_` 环境变量、`~/.tomato`、`tomato` 清单字段、`tomato-*` 文件引用与 `--tomato-*` CSS 变量。
+2. **文件名**：`tomato-update.js`、`tomato-primitives.js`、`tomato-offer.js` 及两个测试文件改为 `tomato-*`，与 import 同步。
+3. **清单**：`package.json` 的 `tomato` 字段改为 `tomato`，peer 依赖改为 `@tomato/*`，新增 `engines.tomato`。
 4. **客户端**：`scripts/build-client.mjs` 的平台模块改为 `@tomato/client-ui-primitives`，并用它重新生成 `client.js`。npm 包不含 client 源码时也必须从本目录构建。
-5. **secrets**：`DSH_SECRET_` 改为 `TOMATO_SECRET_`，因为 Tomato 的 `shellEnv.register` 只接受 `TOMATO_` 前缀。
+5. **secrets**：`TOMATO_SECRET_` 改为 `TOMATO_SECRET_`，因为 Tomato 的 `shellEnv.register` 只接受 `TOMATO_` 前缀。
 
 重跑改造（上游升级后）：
 

@@ -1,7 +1,7 @@
 {
   "name": "tomato-market",
   "version": "0.4.0",
-  "description": "Plugin markets for Tomato Harness: a curated marketing catalog of open-source plugins, MCP servers, and Skills, plus the open DeepSeek Harness plugin catalog.",
+  "description": "Plugin markets for Tomato Harness: a curated marketing catalog of open-source plugins, MCP servers, and Skills, plus the open Tomato Harness plugin catalog.",
   "keywords": [
     "tomato-plugin",
     "tomato",
@@ -12,7 +12,7 @@
     "marketing",
     "influencer-marketing"
   ],
-  "homepage": "https://awesome-dsh-plugin.com",
+  "homepage": "https://awesome-tomato-plugin.com",
   "license": "MIT",
   "type": "module",
   "main": "index.js",

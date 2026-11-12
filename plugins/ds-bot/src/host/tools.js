@@ -117,7 +117,7 @@ export function install(rt) {
     const turn = rt.live.get(exec.agent?.id)
     return [rt.workOf(turn?.info), ...(turn?.joined ?? []).map(joined => rt.workOf(joined.info))].filter(Boolean)
   }
-  const tooLong = text => `Not sent: the message has ${text.length} characters, more than ${MESSAGE_INLINE_MAX}, and this DeepSeek Harness cannot send it as a file. Write it to a file in your working folder and send its path instead.`
+  const tooLong = text => `Not sent: the message has ${text.length} characters, more than ${MESSAGE_INLINE_MAX}, and this Tomato Harness cannot send it as a file. Write it to a file in your working folder and send its path instead.`
 
   // Work for a group stays in it: from a group Session, message_bot calls a member there
   // exactly as an "@Name" line would, and never reaches a Bot outside the group.

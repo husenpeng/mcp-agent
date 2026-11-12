@@ -1,6 +1,6 @@
 /** Typed native fixture shared by CUA composition and recorded-session replay. */
-import type { NativeChannelFactory } from '@deepseek-ai/dsh-cua/native-client'
-import type { JsonValue } from '@deepseek-ai/dsh-util-values'
+import type { NativeChannelFactory } from '@tomato/cua/native-client'
+import type { JsonValue } from '@tomato/util-values'
 
 export const png: string
 

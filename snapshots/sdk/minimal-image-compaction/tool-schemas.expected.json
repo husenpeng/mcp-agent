@@ -17,38 +17,6 @@
       }
     },
     {
-      "name": "list_dir",
-      "description": "List a directory tree to answer \"what is here\" before searching. Returns at most 200 entries by default, skips hidden names and common build directories unless all is set, and stops at the requested depth.",
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "path": {
-            "type": "string",
-            "description": "Directory to list. Defaults to the session workspace."
-          },
-          "depth": {
-            "type": "number",
-            "description": "Levels to show, from 1 to 4. Defaults to 1."
-          },
-          "all": {
-            "type": "boolean",
-            "description": "Include hidden names and dot directories. Defaults to false."
-          },
-          "exclude": {
-            "type": "array",
-            "description": "Extra basenames or simple globs to skip, for example \"dist\" or \"*.snap\".",
-            "items": {
-              "type": "string"
-            }
-          },
-          "limit": {
-            "type": "number",
-            "description": "Maximum entries returned, from 1 to 200."
-          }
-        }
-      }
-    },
-    {
       "name": "read_image",
       "description": "Read a PNG/JPEG/WebP/GIF file and return the image itself. Large images are downscaled automatically; do not install image libraries or create thumbnails to inspect an image.",
       "parameters": {
@@ -97,38 +65,6 @@
         }
       },
       {
-        "name": "list_dir",
-        "description": "List a directory tree to answer \"what is here\" before searching. Returns at most 200 entries by default, skips hidden names and common build directories unless all is set, and stops at the requested depth.",
-        "parameters": {
-          "type": "object",
-          "properties": {
-            "path": {
-              "type": "string",
-              "description": "Directory to list. Defaults to the session workspace."
-            },
-            "depth": {
-              "type": "number",
-              "description": "Levels to show, from 1 to 4. Defaults to 1."
-            },
-            "all": {
-              "type": "boolean",
-              "description": "Include hidden names and dot directories. Defaults to false."
-            },
-            "exclude": {
-              "type": "array",
-              "description": "Extra basenames or simple globs to skip, for example \"dist\" or \"*.snap\".",
-              "items": {
-                "type": "string"
-              }
-            },
-            "limit": {
-              "type": "number",
-              "description": "Maximum entries returned, from 1 to 200."
-            }
-          }
-        }
-      },
-      {
         "name": "read_image",
         "description": "Read a PNG/JPEG/WebP/GIF file and return the image itself. Large images are downscaled automatically; do not install image libraries or create thumbnails to inspect an image.",
         "parameters": {
@@ -173,38 +109,6 @@
           "required": [
             "command"
           ]
-        }
-      },
-      {
-        "name": "list_dir",
-        "description": "List a directory tree to answer \"what is here\" before searching. Returns at most 200 entries by default, skips hidden names and common build directories unless all is set, and stops at the requested depth.",
-        "parameters": {
-          "type": "object",
-          "properties": {
-            "path": {
-              "type": "string",
-              "description": "Directory to list. Defaults to the session workspace."
-            },
-            "depth": {
-              "type": "number",
-              "description": "Levels to show, from 1 to 4. Defaults to 1."
-            },
-            "all": {
-              "type": "boolean",
-              "description": "Include hidden names and dot directories. Defaults to false."
-            },
-            "exclude": {
-              "type": "array",
-              "description": "Extra basenames or simple globs to skip, for example \"dist\" or \"*.snap\".",
-              "items": {
-                "type": "string"
-              }
-            },
-            "limit": {
-              "type": "number",
-              "description": "Maximum entries returned, from 1 to 200."
-            }
-          }
         }
       },
       {

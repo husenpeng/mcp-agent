@@ -10,5 +10,3 @@ header:
   systemPromptSource: compaction-recovery
   toolSchemasSource: compaction-recovery
   changes: 1
-replay:
-  override: true

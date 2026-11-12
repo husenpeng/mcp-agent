@@ -51,7 +51,7 @@ export function readManifest(plugin, version) {
 }
 
 /**
- * Convert one listed DeepSeek Harness version into a Tomato-installable tarball.
+ * Convert one listed Tomato Harness version into a Tomato-installable tarball.
  * @param {{ name: string }} plugin - the plugin.
  * @param {{ version: string }} version - the listed version.
  * @returns {Promise<{ adapted: boolean, spec: string, changed?: number, from?: string }>} the install spec.

@@ -67,7 +67,7 @@ const noticeText = (line) => {
 // `text` is what to show of a message line, by default what the log keeps of it.
 export const lineText = (line, text = line.text) => {
   if (line.kind === 'lookup') return `[${speakerOf(line)} looked up its own chat${line.text ? ` for "${line.text}"` : ''}]`
-  if (line.kind === 'resumed') return `[${speakerOf(line)}'s work here was cut off when DeepSeek Harness restarted; it is picking it back up and posts when done]`
+  if (line.kind === 'resumed') return `[${speakerOf(line)}'s work here was cut off when Tomato Harness restarted; it is picking it back up and posts when done]`
   if (line.kind === 'cut') return `[${speakerOf(line)}'s work here was cut off by a restart again, so it stopped; ask it to go on if it still matters]`
   if (line.kind === 'stopped') return `[The user stopped ${speakerOf(line)}'s work here]`
   if (line.kind === 'done') return `[${speakerOf(line)} finished the work it was asked for]`

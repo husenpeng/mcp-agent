@@ -122,7 +122,7 @@ Before pushing, follow [dsh-pre-push-checks](.agents/skills/dsh-pre-push-checks/
 
 ### Finish every task with its review pass
 
-Before reporting a task complete, review its own diff against the standards here and against the request itself: fix every `P0`/`P1` finding, re-run the checks the touched surface needs, and report what was left. The procedure and checklist live in [RULE.md](RULE.md#every-finished-task-runs-the-review-pass) and [dsh-post-task-review](.agents/skills/dsh-post-task-review/SKILL.md).
+Before reporting a task complete, review its own diff against the standards here and against the request itself: fix every `P0`/`P1` finding, re-run the checks the touched surface needs, and report what was left. The procedure and checklist live in [RULE.md](RULE.md#every-finished-task-runs-the-review-pass) and [tomato-post-task-review](.agents/skills/tomato-post-task-review/SKILL.md).
 
 ## Secrets / .env
 

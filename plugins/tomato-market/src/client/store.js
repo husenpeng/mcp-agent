@@ -132,7 +132,7 @@ export function createController(i18n) {
     set({
       checking: null,
       notice: {
-        kind: compat.class === 'dsh' ? 'compat' : 'other',
+        kind: compat.class === 'tomato' ? 'compat' : 'other',
         plugin,
         version: chosen,
         compat,

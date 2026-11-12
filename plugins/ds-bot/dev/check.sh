@@ -14,8 +14,8 @@
 # Screenshots and logs go to --out (default: shots/check-<YYYYMMDD-HHMM> beside ds-bot/ in
 # the main worktree).
 # Ports follow SLOT=n (0-9, default 0): Web 31n0/88n0, smoke 31n1/88n1, and the Desktop
-# ports of desktop.sh. Bench data: <checkout>/.dsh-test-check-web, -check-smoke and
-# .dsh-test-desktop-check. Web shots need Chrome or Chromium (CHROME_BIN, see ui-shots.mjs);
+# ports of desktop.sh. Bench data: <checkout>/.tomato-test-check-web, -check-smoke and
+# .tomato-test-desktop-check. Web shots need Chrome or Chromium (CHROME_BIN, see ui-shots.mjs);
 # the Desktop step needs xvfb-run and ffmpeg and about 1 GB of memory.
 set -u
 PLUGIN="$(cd "$(dirname "$0")/.." && pwd)"
@@ -44,12 +44,12 @@ OUT=${OUT:-"$MAIN/shots/check-$(date +%Y%m%d-%H%M)"}
 mkdir -p "$OUT/logs"
 OUT="$(cd "$OUT" && pwd)"
 
-if [ -z "${DSH_HARNESS:-}" ]; then
-  DSH_HARNESS="$ROOT/deepseek-harness"
-  [ -d "$DSH_HARNESS" ] || DSH_HARNESS="$MAIN/deepseek-harness"
-  [ -d "$DSH_HARNESS" ] || DSH_HARNESS="$(dirname "$(git -C "$ROOT" rev-parse --path-format=absolute --git-common-dir)")/deepseek-harness"
+if [ -z "${TOMATO_HARNESS:-}" ]; then
+  TOMATO_HARNESS="$ROOT/deepseek-harness"
+  [ -d "$TOMATO_HARNESS" ] || TOMATO_HARNESS="$MAIN/deepseek-harness"
+  [ -d "$TOMATO_HARNESS" ] || TOMATO_HARNESS="$(dirname "$(git -C "$ROOT" rev-parse --path-format=absolute --git-common-dir)")/deepseek-harness"
 fi
-export DSH_HARNESS
+export TOMATO_HARNESS
 WEB_PORT=31${SLOT}0 WEB_MOCK=88${SLOT}0 SMOKE_PORT=31${SLOT}1 SMOKE_MOCK=88${SLOT}1
 DESKTOP="$PLUGIN/dev/desktop-linux/desktop.sh"
 
@@ -57,7 +57,7 @@ cleanup() {
   "$PLUGIN/dev/bench.sh" check-smoke "$SMOKE_PORT" "$SMOKE_MOCK" stop >/dev/null 2>&1
   "$PLUGIN/dev/bench.sh" check-web "$WEB_PORT" "$WEB_MOCK" stop >/dev/null 2>&1
   SLOT=$SLOT "$DESKTOP" check stop >/dev/null 2>&1
-  pages="$ROOT/.dsh-test-desktop-check/read-pages.pid"
+  pages="$ROOT/.tomato-test-desktop-check/read-pages.pid"
   if [ -f "$pages" ]; then kill -TERM "-$(cat "$pages")" 2>/dev/null; rm -f "$pages"; fi
 }
 trap cleanup EXIT
@@ -70,8 +70,8 @@ wanted() {
 }
 
 port_free() { ! node -e "const s=require('net').connect($1,'127.0.0.1');s.on('connect',()=>process.exit(0));s.on('error',()=>process.exit(1))"; }
-# One retry: on this shared server a bench's dsh web once exited at start with an empty log
-# while other sessions used the same dsh checkout, and the next start worked.
+# One retry: on this shared server a bench's tomato web once exited at start with an empty log
+# while other sessions used the same tomato checkout, and the next start worked.
 bench_reset() {
   dev/bench.sh "$@" reset && return 0
   echo "bench $1 did not start; retrying once"
@@ -102,7 +102,7 @@ step_web() {
   dev/bench.sh check-web "$WEB_PORT" "$WEB_MOCK" stop >/dev/null
   need_ports "$WEB_PORT" "$WEB_MOCK" || return 1
   bench_reset check-web "$WEB_PORT" "$WEB_MOCK" || return 1
-  node dev/ui-shots.mjs web "$DSH_HARNESS" "$OUT" check-web "$WEB_PORT"
+  node dev/ui-shots.mjs web "$TOMATO_HARNESS" "$OUT" check-web "$WEB_PORT"
   status=$?
   dev/bench.sh check-web "$WEB_PORT" "$WEB_MOCK" stop
   return $status
@@ -111,13 +111,13 @@ step_desktop() {
   cd "$PLUGIN" || return 1
   SLOT=$SLOT "$DESKTOP" check stop >/dev/null
   SLOT=$SLOT "$DESKTOP" check reset || return 1
-  home="$ROOT/.dsh-test-desktop-check"
+  home="$ROOT/.tomato-test-desktop-check"
   . "$home/desktop.env"
   status=0
-  SHOT_DISPLAY=":$DISPLAY_NUM" XAUTHORITY="$home/.xauth" node dev/ui-shots.mjs desktop "$DSH_HARNESS" "$OUT" "$RENDERER_PORT" || status=1
+  SHOT_DISPLAY=":$DISPLAY_NUM" XAUTHORITY="$home/.xauth" node dev/ui-shots.mjs desktop "$TOMATO_HARNESS" "$OUT" "$RENDERER_PORT" || status=1
   mkdir -p "$OUT/desktop-browser"
   SHOT_DISPLAY=":$DISPLAY_NUM" XAUTHORITY="$home/.xauth" COOKIE_PORT="$COOKIE_PORT" \
-    node dev/desktop-linux/browser-check.mjs "$DSH_HARNESS" "$OUT/desktop-browser" "$RENDERER_PORT" || status=1
+    node dev/desktop-linux/browser-check.mjs "$TOMATO_HARNESS" "$OUT/desktop-browser" "$RENDERER_PORT" || status=1
   # The reader check on the sample pages only (--offline): real sites change under it.
   pages_port=88${SLOT}4
   if need_ports "$pages_port"; then
@@ -125,7 +125,7 @@ step_desktop() {
     echo $! >"$home/read-pages.pid"
     sleep 1
     SHOT_DISPLAY=":$DISPLAY_NUM" XAUTHORITY="$home/.xauth" \
-      node dev/desktop-linux/read-check.mjs "$DSH_HARNESS" "$OUT/desktop-read" "$RENDERER_PORT" "$pages_port" Chief --offline || status=1
+      node dev/desktop-linux/read-check.mjs "$TOMATO_HARNESS" "$OUT/desktop-read" "$RENDERER_PORT" "$pages_port" Chief --offline || status=1
     kill -TERM "-$(cat "$home/read-pages.pid")" 2>/dev/null
     rm -f "$home/read-pages.pid"
   else

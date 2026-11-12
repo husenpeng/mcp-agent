@@ -74,10 +74,10 @@ export function scrubbedParentEnv(): Record<string, string> {
   const env: Record<string, string> = {}
   for (const [key, value] of Object.entries(process.env)) {
     const upper = key.toUpperCase()
-    // The pre-rename DSH_ namespace is as binding as TOMATO_: a stale export
+    // The pre-rename TOMATO_ namespace is as binding as TOMATO_: a stale export
     // must not reach a child that resolves one namespaced fact by name.
     if (value !== undefined && !SENSITIVE_ENV_PATTERN.test(key)
-      && !upper.startsWith(TOMATO_ENV_PREFIX) && !upper.startsWith('DSH_')) env[key] = value
+      && !upper.startsWith(TOMATO_ENV_PREFIX) && !upper.startsWith('TOMATO_')) env[key] = value
   }
   // A child Node ignores the inherited proxy variables unless the flag this adds is set, so an MCP
   // stdio server or subagent CLI would connect directly while its parent proxies. The same overlay

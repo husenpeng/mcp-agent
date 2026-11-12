@@ -63,6 +63,8 @@
         id: parent
         plugins:
           - name: '@tomato/tool-fs'
+            config:
+              applyPatch: true
           - name: '@tomato/tool-fs-search'
             config:
               sampleOverCapGlobResults: false
@@ -71,6 +73,8 @@
               fetch: true
               searchTimeoutMs: 60000
           - name: '@tomato/tool-subagent-control'
+            config:
+              interrupt: false
     - id: preset-child
       name: '@tomato/agent-preset'
       config:

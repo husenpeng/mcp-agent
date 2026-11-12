@@ -4,7 +4,7 @@ Two standing rules hold for every change in this repository: the review pass eve
 
 ## Every finished task runs the review pass
 
-A task ends only after its own diff has been reviewed and every finding worth fixing has been fixed. Run [dsh-post-task-review](.agents/skills/dsh-post-task-review/SKILL.md) in the same session, without being asked, before reporting the task complete.
+A task ends only after its own diff has been reviewed and every finding worth fixing has been fixed. Run [tomato-post-task-review](.agents/skills/tomato-post-task-review/SKILL.md) in the same session, without being asked, before reporting the task complete.
 
 - **Review the diff, not the memory of it.** Compare against the point where the task started and read every untracked file the task created. The task's own edits are the scope, not the whole working tree and not the whole repository.
 - **Severity decides what blocks.** Fix `P0` (broken behavior, data loss, leaked credentials, corrupted state) and `P1` (wrong behavior at an edge, a failure path with no owner, a contract the code no longer meets) inside the same task. Fix `P2` (naming, duplication, structure) when the change is local and cheap, and report it otherwise. Report nits and do not spend the task on them.

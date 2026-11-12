@@ -51,7 +51,7 @@ node scripts/refresh-marketing-catalog.mjs --check  # 只检查仓库是否还�
 
 ## 通用插件市场
 
-按分类浏览、按 GitHub 星标或更新时间排序、关键词搜索，点开任意插件查看说明、版本和来源，并把声明 `tomato.bundle` 的版本直接、声明 `dsh.bundle` 的版本经兼容层转换后，交给插件页已有的安装流程。目录数据来自开源的 [`dsh-plugin-catalog`](https://awesome-dsh-plugin.com)（4380 个可安装条目、23 个分类、每日更新）。
+按分类浏览、按 GitHub 星标或更新时间排序、关键词搜索，点开任意插件查看说明、版本和来源，并把声明 `tomato.bundle` 的版本直接、声明 `tomato.bundle` 的版本经兼容层转换后，交给插件页已有的安装流程。目录数据来自开源的 [`tomato-plugin-catalog`](https://awesome-tomato-plugin.com)（4380 个可安装条目、23 个分类、每日更新）。
 
 ![通用插件市场](docs/browse.jpg)
 
@@ -79,9 +79,9 @@ Tomato 识别本包的 `tomato.bundle.patch` 后会把 `tomato-market` 加入 pr
 - **关键词搜索**：在名称、标题、描述、作者、分类与关键词中匹配，多个词按“全部命中”处理，中英文均可。
 - **单独条目**：48px 图标框、标题、分类标签、两行描述、版本/日期/作者、星标数与安装按钮，与插件页“已安装/发现”列表同一套排版和 `--dsw-*` 设计令牌。
 - **详情页**：说明文档（npm 包或仓库 README）、主页、源码仓库、版本列表与每个版本的安装入口，以及兼容性标签。
-- **安装前检查与 DSH 兼容层**：点“安装”时先读该版本的 npm 清单：
+- **安装前检查与 TOMATO 兼容层**：点“安装”时先读该版本的 npm 清单：
   - 声明 `tomato.bundle` → 直接调用插件页的安装对话框；
-  - 声明 `dsh.bundle` → 提示后下载该版本的 npm tarball，把包名、`dsh` 清单字段与代码导入改写为 Tomato 命名，重打包成 `file:` 规格交给同一个安装对话框；
+  - 声明 `tomato.bundle` → 提示后下载该版本的 npm tarball，把包名、`tomato` 清单字段与代码导入改写为 Tomato 命名，重打包成 `file:` 规格交给同一个安装对话框；
   - 没有声明任何 bundle → 提示这不是插件包；
   - 注册表不可达 → 说明原因，可选择“仍然安装”，由 Tomato 的安装器再检查一次。
 
@@ -89,29 +89,29 @@ Tomato 识别本包的 `tomato.bundle.patch` 后会把 `tomato-market` 加入 pr
 
 安装前市场先判定该版本能否在当前 TOMATO 上运行，再从列出的版本里选一个能装的：
 
-- **判定规则与安装器一致**（`packages/boot/app-boot/src/plugin-compatibility.ts`）：包自己声明了 `engines.tomato` 就只看这条范围（DSH 包的 `engines.dsh` 按同一范围读），否则逐个检查 `@tomato/*` peer 依赖的范围是否包含当前版本。`@tomato/cordis*`、`cosmokit`、`schemastery` 这些 vendored 包由安装自带，固定版本，不参与判定；`@deepseek-ai/*` 先按兼容层映射成 Tomato 名字再判定，`@deepseek-ai/libreoffice-kit*` 保持第三方身份不判定。
+- **判定规则与安装器一致**（`packages/boot/app-boot/src/plugin-compatibility.ts`）：包自己声明了 `engines.tomato` 就只看这条范围（TOMATO 包的 `engines.tomato` 按同一范围读），否则逐个检查 `@tomato/*` peer 依赖的范围是否包含当前版本。`@tomato/cordis*`、`cosmokit`、`schemastery` 这些 vendored 包由安装自带，固定版本，不参与判定；`@tomato/*` 先按兼容层映射成 Tomato 名字再判定，`@deepseek-ai/libreoffice-kit*` 保持第三方身份不判定。
 - **当前版本与安装器同源**：读 profile 启动时给出的 `installAnchor` 的 `package.json` 的 `version`，也就是安装器 `getTomatoRuntimeVersion()` 用的同一个值。
 - **自动回退**：点“安装”后先判定所选版本；不满足要求时，再按“目录里的其余版本 → 注册表发布的更早版本”由新到旧读清单，最多 8 个，取第一个满足要求的版本。所选版本不兼容时会自动改装这个版本，标签页顶部说明换成了哪个版本、当前 TOMATO 是什么。目录只保留每个插件最新的 24 个版本，更早的版本按注册表 packument 补齐，所以像 `0.30.1` 要求 `0.2.2` 而本机是 `0.2.1` 的情况，会回落到目录里没有的 `0.28.2`。
 - **没有可用版本**：不再把注定被拒的安装交给安装器，直接说明当前 TOMATO 版本和最新版本要求的范围。
 - **未知不阻塞**：读不到运行版本（没有 profile 的进程）或清单不可读时保持“未知”，按原流程交给安装器再检查一次。
 - 详情页标出所选版本是否兼容当前 TOMATO，并显示运行中的 TOMATO 版本。
 
-## DSH 兼容层做了什么
+## TOMATO 兼容层做了什么
 
-Tomato 是 DeepSeek Harness 的改名分支，社区插件以 `@deepseek-ai/*` 为 peer 依赖、以 `dsh.bundle` 声明插件层。兼容层在**安装时**完成与仓库 `scripts/rescope-to-tomato.ts` 相同的改名：
+Tomato 是 Tomato Harness 的改名分支，社区插件以 `@tomato/*` 为 peer 依赖、以 `tomato.bundle` 声明插件层。兼容层在**安装时**完成与仓库 `scripts/rescope-to-tomato.ts` 相同的改名：
 
 | 原名称 | 转换后 |
 |---|---|
-| `@deepseek-ai/dsh-<leaf>` | `@tomato/<leaf>` |
-| `@deepseek-ai/dsh`、`dsh-brand`、`dsh-root`、`dsh-subagent-dsh-sdk`、`dshx` | `@tomato/cli`、`branded`、`harness`、`subagent-sdk`、`x` |
-| `@deepseek-ai/cordis`、`schemastery`、`cosmokit` | `@tomato/cordis`、`schemastery`、`cosmokit` |
+| `@tomato/<leaf>` | `@tomato/<leaf>` |
+| `@tomato/cli`、`@tomato/branded`、`@tomato/harness`、`@tomato/subagent-sdk`、`dshx` | `@tomato/cli`、`branded`、`harness`、`subagent-sdk`、`x` |
+| `@tomato/cordis`、`schemastery`、`cosmokit` | `@tomato/cordis`、`schemastery`、`cosmokit` |
 | `@cordisjs/plugin-<name>` | `@tomato/cordis-plugin-<name>` |
-| `dsh.bundle` / `dsh.client` / `engines.dsh` | `tomato.bundle` / `tomato.client` / `engines.tomato` |
+| `tomato.bundle` / `tomato.client` / `engines.tomato` | `tomato.bundle` / `tomato.client` / `engines.tomato` |
 | `@deepseek-ai/libreoffice-kit*` | 保持不变（真正的第三方包） |
 
-转换只读写文本，不执行插件代码：在临时目录解包（拒绝绝对路径与 `..` 条目、限制条目数与展开大小），改写 `package.json`、`cordis.patch.yml`、JS/TS/JSON/YAML 中的包引用，再重打为 `package/` 根目录的 tgz，缓存到 `$TOMATO_HOME/.plugin-market/adapted/`。`@deepseek-ai/*` 依赖会移到 peer 依赖，由运行中的 Tomato 安装提供，避免重复安装一份 Cordis。随后仍走 Tomato 自己的安装器：清单检查、pnpm 安装、bundle 协调与启用。
+转换只读写文本，不执行插件代码：在临时目录解包（拒绝绝对路径与 `..` 条目、限制条目数与展开大小），改写 `package.json`、`cordis.patch.yml`、JS/TS/JSON/YAML 中的包引用，再重打为 `package/` 根目录的 tgz，缓存到 `$TOMATO_HOME/.plugin-market/adapted/`。`@tomato/*` 依赖会移到 peer 依赖，由运行中的 Tomato 安装提供，避免重复安装一份 Cordis。随后仍走 Tomato 自己的安装器：清单检查、pnpm 安装、bundle 协调与启用。
 
-兼容层只做命名与清单转换，**不保证插件内部 API 与 Tomato 完全一致**；依赖特定 DSH 行为、或在运行时读取 `@deepseek-ai/*` 真实包路径的插件仍可能加载失败。失败会出现在插件页的启用/加载日志里，而不是 marketplace 的安装步骤。
+兼容层只做命名与清单转换，**不保证插件内部 API 与 Tomato 完全一致**；依赖特定 TOMATO 行为、或在运行时读取 `@tomato/*` 真实包路径的插件仍可能加载失败。失败会出现在插件页的启用/加载日志里，而不是 marketplace 的安装步骤。
 
 ## 配置
 
@@ -119,8 +119,8 @@ Tomato 是 DeepSeek Harness 的改名分支，社区插件以 `@deepseek-ai/*` �
 
 | 字段 | 默认 | 含义 |
 |---|---|---|
-| `indexUrls` | jsDelivr 的 `dsh-plugin-catalog/index.json`，其次 awesome-dsh-plugin.com、dshmarket.com | 目录镜像，按顺序取第一个可用的 |
-| `starUrls` | jsDelivr 的 `dsh-plugin-catalog/plugins.json`，其次 awesome-dsh-plugin.com | 星标文档 |
+| `indexUrls` | jsDelivr 的 `tomato-plugin-catalog/index.json`，其次 awesome-tomato-plugin.com、dshmarket.com | 目录镜像，按顺序取第一个可用的 |
+| `starUrls` | jsDelivr 的 `tomato-plugin-catalog/plugins.json`，其次 awesome-tomato-plugin.com | 星标文档 |
 | `timeoutMs` | `20000` | 单次 HTTP 读取的上限 |
 | `cacheTtlMs` | `600000` | 目录、星标、清单读取的缓存时间 |
 | `registries` | `registry.npmjs.org`、`registry.npmmirror.com` | 清单与 README 的注册表回退顺序 |
@@ -132,7 +132,7 @@ Host 半只读取上述固定来源，不接受浏览器传入任意 URL；`deta
 
 ## 已知限制
 
-- 兼容层是命名与清单转换，不是 API 适配；个别 DSH 插件仍可能因内部假设不同而加载失败。
+- 兼容层是命名与清单转换，不是 API 适配；个别 TOMATO 插件仍可能因内部假设不同而加载失败。
 - 兼容判定只看清单声明的范围，与安装器一致；它不预演插件在运行时会用到哪些服务。范围满足但实际不兼容的插件仍会在加载时报错。
 - 自动回退一次最多读 8 个版本清单（含所选版本）；注册表 packument 只用来补齐目录没有的更早版本，不保证所有历史版本都能翻到。
 - 转换产物绑定到具体版本；安装后插件页显示的是本地 `file:` 来源，更新需要重新从市场安装。
@@ -141,12 +141,12 @@ Host 半只读取上述固定来源，不接受浏览器传入任意 URL；`deta
 - `uvx` 或 `npx` 不在 PATH 时只提示，不自动安装。确认弹窗里检查的是 Host 进程的 PATH。
 - 营销清单的星数是打包时的快照。多数“免 key”条目依赖第三方免费额度或公开接口，没有服务承诺。
 - 达人发现没有免费的一站式方案，能按品类和市场搜达人的工具都要付费。这个分类收录的是可以组合使用的读取工具和方法论 Skill。
-- 清单里的 AGPL 条目（Postiz、TryPost、BrightBean、wigolo、dsh-guizang-design）在本机使用没有问题，二次分发或做成托管服务前需要法务评估。
+- 清单里的 AGPL 条目（Postiz、TryPost、BrightBean、wigolo、tomato-guizang-design）在本机使用没有问题，二次分发或做成托管服务前需要法务评估。
 - 星标来自目录每日更新的 `plugins.json`，不是实时 GitHub API。
 
 ## 目录来源与免责声明
 
-数据来自 [awesome-dsh-plugin.com](https://awesome-dsh-plugin.com) 的 `dsh-plugin-catalog` npm 包（CC0-1.0）。条目的标题、描述、作者与仓库都是第三方声明，Tomato 只校验格式，不校验内容；安装前请核对来源。
+数据来自 [awesome-tomato-plugin.com](https://awesome-tomato-plugin.com) 的 `tomato-plugin-catalog` npm 包（CC0-1.0）。条目的标题、描述、作者与仓库都是第三方声明，Tomato 只校验格式，不校验内容；安装前请核对来源。
 
 ## 开发
 
@@ -166,7 +166,7 @@ node scripts/build-client.mjs --check
 
 **Marketing plugins** lists 107 reviewed, open-source, free entries for overseas creator marketing from a catalog bundled with the package: plugins, MCP servers, and Skills, with categories, a type filter, and tags for free keys, self-hosting, login sessions, manual installs, and installed entries. MCP servers install as `mkt-mcp-<id>` rows in a marked block of the running profile's `cordis.patch.yml`, written atomically with a backup and restored if the profile refuses them. Skills install below `$TOMATO_HOME/skills` at a pinned commit with a `.tomato-market.json` marker, and uninstall removes only marked directories. Credentials never reach the file: entries declare variable names only. Twenty-seven entries are manual installs with written steps.
 
-**General plugins** browses the open `dsh-plugin-catalog` by category, sorts by GitHub stars, last update, or name, searches names/authors/keywords/descriptions, and shows a details page with the README, source facts, and every listed version. Installing first reads the version's npm manifest: `tomato.bundle` versions go straight to the page's install dialog, and DeepSeek Harness versions are converted first — package names, `dsh` metadata fields, peer dependencies, and code imports are rewritten to the Tomato naming (the same table as `scripts/rescope-to-tomato.ts`), repacked, and then handed to the same installer. The conversion reads and rewrites text only; it never runs package code. Host reads are limited to the configured catalog mirrors, the listed `name@version` pairs, and the registry tarball of that version.
+**General plugins** browses the open `tomato-plugin-catalog` by category, sorts by GitHub stars, last update, or name, searches names/authors/keywords/descriptions, and shows a details page with the README, source facts, and every listed version. Installing first reads the version's npm manifest: `tomato.bundle` versions go straight to the page's install dialog, and Tomato Harness versions are converted first — package names, `tomato` metadata fields, peer dependencies, and code imports are rewritten to the Tomato naming (the same table as `scripts/rescope-to-tomato.ts`), repacked, and then handed to the same installer. The conversion reads and rewrites text only; it never runs package code. Host reads are limited to the configured catalog mirrors, the listed `name@version` pairs, and the registry tarball of that version.
 
 **Choosing a version for the running TOMATO.** Before installing, the market judges the chosen version with the installer's own rule — its `engines.tomato` range alone, else every `@tomato/*` peer range, with vendored Cordis packages exempt — against the version of the running installation, read from the profile's `installAnchor`. A version that does not qualify makes the market walk the remaining catalog versions and then the older releases the registry publishes, newest-first and at most eight manifest reads, install the newest one that does, and say at the top of the tab which version it substituted and what the requested one required. When no listed version qualifies it refuses with the requirement instead of starting an install the installer would reject. An unreadable runtime version or manifest stays unknown and falls back to the installer's own check.
 

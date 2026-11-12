@@ -19,6 +19,8 @@
         id: parent
         plugins:
           - name: '@tomato/tool-fs'
+            config:
+              applyPatch: true
           - name: '@tomato/tool-fs-search'
             config:
               sampleOverCapGlobResults: false

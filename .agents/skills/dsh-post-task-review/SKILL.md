@@ -1,5 +1,5 @@
 ---
-name: dsh-post-task-review
+name: tomato-post-task-review
 description: Use after finishing any task that changed files, before reporting it complete — reviews the task's own diff against this repository's standards and against the original request, fixes the findings that block, re-runs the checks the touched surface needs, and reports what remains.
 ---
 

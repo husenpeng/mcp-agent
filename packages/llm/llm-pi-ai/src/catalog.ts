@@ -3,10 +3,7 @@
  * catalog supplies defaults keyed by model id, and a profile's own model
  * entries override them field by field, so a route naming a catalog provider
  * stays configuration-free while a route pi-ai has never heard of is fully
- * describable from `cordis.patch.yml`. A route pi-ai does not ship resolves
- * its models against the first-party catalog by canonical model id, so a
- * gateway re-export inherits the vendor's capacities and cache behavior
- * instead of the route's generic fallbacks.
+ * describable from `cordis.patch.yml`.
  *
  * Strict resolution rejects unserviceable models before settings writes.
  * Deferred resolution retains their diagnostics so stored catalog drift does
@@ -223,40 +220,14 @@ export function catalogModels(provider: string): Map<string, Model<Api>> {
   return new Map(models.map(model => [model.id, model]))
 }
 
-/**
- * First-party providers whose catalog entries describe a model's own
- * capabilities, in preference order. A custom-gateway route inherits from
- * these before any reseller's copy, so one model id re-exported by several
- * gateways keeps the vendor's capacities instead of whichever gateway's copy
- * matched first.
- */
+/** First-party providers whose catalog entries describe a model's own capabilities, in preference order. */
 const CAPABILITY_PROVIDERS: readonly string[] = [
-  'anthropic',
-  'openai',
-  'openai-codex',
-  'google',
-  'google-vertex',
-  'deepseek',
-  'zai',
-  'zai-coding-cn',
-  'qwen-token-plan',
-  'qwen-token-plan-cn',
-  'qwen-token-plan-individual',
-  'moonshotai',
-  'moonshotai-cn',
-  'kimi-coding',
-  'minimax',
-  'minimax-cn',
-  'xai',
-  'mistral',
+  'anthropic', 'openai', 'openai-codex', 'google', 'google-vertex', 'deepseek',
+  'zai', 'zai-coding-cn', 'qwen-token-plan', 'qwen-token-plan-cn', 'qwen-token-plan-individual',
+  'moonshotai', 'moonshotai-cn', 'kimi-coding', 'minimax', 'minimax-cn', 'xai', 'mistral',
 ]
 
-/**
- * The providers that may describe one model family. A reseller can list a
- * model it does not own under the same id, with its own output cap; matching
- * the vendor's entry instead keeps a gateway route from adopting a reseller's
- * limits. A family absent here inherits nothing and states its own capacities.
- */
+/** Model-id families whose capabilities a first-party provider owns. */
 const MODEL_FAMILIES: readonly { pattern: RegExp; providers: readonly string[] }[] = [
   { pattern: /^claude/, providers: ['anthropic'] },
   { pattern: /^(?:gpt|chatgpt|o\d)/, providers: ['openai', 'openai-codex'] },
@@ -272,11 +243,9 @@ const MODEL_FAMILIES: readonly { pattern: RegExp; providers: readonly string[] }
 
 /**
  * Fold a configured model id onto the catalog's identity: gateways prefix the
- * vendor (`anthropic/`), spell versions with dots (`4.7`), and append date or
- * version suffixes. The route's own exact id still wins; this canonical form
- * only lets a custom route find the first-party entry.
+ * vendor, spell versions with dots, and append date or version suffixes.
  * @param id - configured model id.
- * @returns the canonical model id.
+ * @returns the canonical model id used to find the first-party catalog entry.
  */
 function canonicalModelId(id: string): string {
   const slash = id.lastIndexOf('/')
@@ -298,11 +267,9 @@ function familyProviders(id: string): readonly string[] {
 }
 
 /**
- * First-party catalog entries by canonical model id. A provider pi-ai does not
- * mark as first-party may still resell the same model; the first provider in
- * {@link CAPABILITY_PROVIDERS} wins so that copy cannot shadow the vendor's
- * capabilities.
- * @returns canonical model ids mapped to their catalog entries.
+ * First-party catalog entries by canonical model id, preferring the vendor's
+ * copy over a reseller's so a custom gateway route inherits real capabilities.
+ * @returns canonical model ids mapped to their first-party catalog entries.
  */
 function catalogModelIndex(): Map<string, Model<Api>> {
   const index = new Map<string, Model<Api>>()
@@ -886,9 +853,8 @@ type ModelCompat = OpenAICompletionsCompat | OpenAIResponsesCompat | AnthropicMe
  * @param provider - provider route key, for diagnostics.
  * @param entry - the configured model entry.
  * @param route - the route-level switches, when any.
- * @param base - the catalog entry that describes the model, when one exists.
+ * @param base - the installed catalog entry of the same id, when one exists.
  * @param api - the model's resolved wire protocol.
- * @param defaults - adapter-owned switches applied under the profile's, when any.
  * @returns a `compat` field to spread into the model, or nothing.
  */
 function resolveModelCompat(
@@ -897,13 +863,9 @@ function resolveModelCompat(
   route: PiAiCompatProfile | undefined,
   base: Model<Api> | undefined,
   api: string,
-  defaults?: PiAiCompatProfile,
 ): { compat: ModelCompat } | Record<string, never> {
   const gate = compatGate(api)
   const configured: Record<string, unknown> = {}
-  // Adapter defaults are constructed for the protocol this model resolves to,
-  // so they need no gate check; a deployment cannot write them.
-  for (const [field, value] of configuredCompatEntries(defaults)) configured[field] = value
   for (const [field, value] of configuredCompatEntries(route)) {
     if (gate?.[field] !== 'offer') continue
     configured[field] = value
@@ -917,6 +879,7 @@ function resolveModelCompat(
     }
     configured[field] = value
   }
+  if (Object.keys(configured).length === 0) return {}
   // The installed entry's compat matches the entry's OWN api — a route-level
   // `api` repoint (an anthropic catalog served through an OpenAI-compatible
   // gateway) leaves `base.compat` in the other protocol's shape, so it is
@@ -924,35 +887,7 @@ function resolveModelCompat(
   // model starts from pi-ai's baseURL-derived detection instead, which is
   // what a protocol change means for every other compat field too.
   const inherited = base?.api === api ? base.compat : undefined
-  if (Object.keys(configured).length === 0 && inherited === undefined) return {}
   return { compat: { ...inherited, ...configured } as ModelCompat }
-}
-
-/**
- * Cache-marker convention to apply when neither the entry nor the route
- * chooses one.
- *
- * An Anthropic model reached through an OpenAI-compatible gateway loses the
- * native cache breakpoints, so every step bills the complete history as
- * uncached input. The protocol itself supports caching, and the gateway speaks
- * the Anthropic marker dialect; applying it is the difference between a
- * per-step cache read and no cache at all.
- * @param entry - the configured model entry.
- * @param route - route-level switches.
- * @param base - the catalog entry describing the model, when one exists.
- * @param api - the resolved wire protocol.
- * @returns switches applied under the profile's, or `undefined` when none apply.
- */
-function defaultCacheCompat(
-  entry: PiAiModelProfile,
-  route: PiAiCompatProfile | undefined,
-  base: Model<Api> | undefined,
-  api: string,
-): PiAiCompatProfile | undefined {
-  if (api !== 'openai-completions') return undefined
-  if (base?.api !== 'anthropic-messages') return undefined
-  if (route?.cacheControlFormat !== undefined || entry.compat?.cacheControlFormat !== undefined) return undefined
-  return { cacheControlFormat: 'anthropic' }
 }
 
 /** One route's materialized catalog, plus the request caps its profile chose. */
@@ -1031,32 +966,25 @@ export function resolveRouteModels(
       + ' must be listed in configuration')
   }
   const routeApi = sharedCatalogApi(defaults)
-  // A route pi-ai does not ship resolves capabilities across the first-party
-  // catalog once, rather than rebuilding that index for every model entry.
-  const capabilityIndex = defaults.size === 0 ? catalogModelIndex() : undefined
   // Vocabulary before protocols: a withheld or undeclared switch is refused
   // wherever it is written, so it cannot look applied on a route whose models
   // never reach the protocol that would have taken it.
   assertOfferedCompatFields(provider, 'route', request.compat)
   const seen = new Set<string>()
   const configuredMaxTokens = new Map<string, number>()
+  const capabilityIndex = defaults.size === 0 ? catalogModelIndex() : undefined
   const resolveEntry = (entry: PiAiModelProfile): Model<Api> => {
     assertOfferedCompatFields(provider, `model "${entry.id}"`, entry.compat)
     if (entry.id.length === 0) invalid(provider, 'has a model with an empty id')
     if (seen.has(entry.id)) invalid(provider, `lists model "${entry.id}" more than once`)
     seen.add(entry.id)
-    const routeBase = defaults.get(entry.id)
-    // Only a route pi-ai does not ship falls back to the first-party catalog:
-    // a catalog route's own entry is authoritative, and an id it does not
-    // list must not silently borrow another provider's capabilities.
-    const capabilityBase = routeBase ?? capabilityIndex?.get(canonicalModelId(entry.id))
-    const api = request.api ?? routeBase?.api ?? routeApi
+    const base = defaults.get(entry.id) ?? capabilityIndex?.get(canonicalModelId(entry.id))
+    const api = request.api ?? base?.api ?? routeApi
     if (api === undefined) {
       invalid(provider, `model "${entry.id}" needs an api; the installed catalog does not describe it, so set the`
         + ' route\'s api to the wire protocol its endpoint speaks')
     }
-    const sameProtocol = capabilityBase?.api === api
-    const baseUrl = request.baseURL ?? routeBase?.baseUrl ?? providerBaseUrl
+    const baseUrl = request.baseURL ?? base?.baseUrl ?? providerBaseUrl
     if (baseUrl === undefined) {
       invalid(provider, `model "${entry.id}" needs a baseURL; the installed catalog does not describe this route`)
     }
@@ -1064,48 +992,35 @@ export function resolveRouteModels(
     // discloses nothing but ids still yields a serviceable route. The fallback
     // is a guess by construction, which is why it is a configurable route field
     // rather than a constant buried here.
-    const contextWindow = entry.contextWindow ?? capabilityBase?.contextWindow ?? request.defaultContextWindow
+    const contextWindow = entry.contextWindow ?? base?.contextWindow ?? request.defaultContextWindow
     if (!Number.isInteger(contextWindow) || contextWindow <= 0) {
       invalid(provider, `model "${entry.id}" contextWindow must be a positive integer`)
     }
-    const maxTokens = entry.maxTokens ?? capabilityBase?.maxTokens ?? request.defaultMaxTokens
+    const maxTokens = entry.maxTokens ?? base?.maxTokens ?? request.defaultMaxTokens
     if (!Number.isInteger(maxTokens) || maxTokens <= 0) {
       invalid(provider, `model "${entry.id}" maxTokens must be a positive integer`)
     }
     // Only a value the profile named is a deployment choice; the catalog's is
     // the model's capability and stays out of request defaults.
     if (entry.maxTokens !== undefined) configuredMaxTokens.set(entry.id, entry.maxTokens)
-    // `compat` is resolved separately: a cross-provider match may describe a
-    // different protocol, whose compat block would be wrong verbatim.
-    const { compat: _catalogCompat, ...capabilityFields } = capabilityBase ?? {}
     return {
       // The installed entry lays the floor, and the fields below override it.
       // Enumerating instead would silently drop every `Model` field this
       // package does not model — reasoning-level spellings, compatibility
       // quirks, model headers, and whatever a pi-ai upgrade adds next. Spread,
       // never enumerate.
-      ...capabilityFields,
+      ...base,
       id: entry.id,
-      name: entry.name ?? capabilityBase?.name ?? entry.id,
+      name: entry.name ?? base?.name ?? entry.id,
       api,
       provider,
       baseUrl,
-      input: declaredInput(entry.input) ?? capabilityBase?.input ?? [...request.defaultInput],
-      cost: routeBase?.cost ?? NO_COST,
+      input: declaredInput(entry.input) ?? base?.input ?? [...request.defaultInput],
+      cost: base?.cost ?? NO_COST,
       contextWindow,
       maxTokens,
-      // Reasoning metadata describes the protocol the vendor serves. A model
-      // repointed to another protocol keeps only the deployment's own
-      // declaration; a gateway that supports thinking declares its efforts.
-      ...resolveModelReasoning(provider, entry, sameProtocol ? capabilityBase : undefined),
-      ...resolveModelCompat(
-        provider,
-        entry,
-        request.compat,
-        capabilityBase,
-        api,
-        defaultCacheCompat(entry, request.compat, capabilityBase, api),
-      ),
+      ...resolveModelReasoning(provider, entry, base),
+      ...resolveModelCompat(provider, entry, request.compat, base, api),
     }
   }
   const models: Model<Api>[] = []

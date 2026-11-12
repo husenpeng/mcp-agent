@@ -19,7 +19,7 @@ function indexOf(versions) {
     format: 1,
     title: { en: 'Test catalog' },
     plugins: [{
-      name: 'dsh-better-sidebar',
+      name: 'tomato-better-sidebar',
       versions: versions.map((version, at) => ({ version, publishTimestamp: versions.length - at, source: { type: 'npm' } })),
     }],
   }
@@ -27,9 +27,9 @@ function indexOf(versions) {
 
 /** Manifests by version: 0.30.x needs a newer runtime than the one under test. */
 const MANIFESTS = {
-  '0.30.1': { peerDependencies: { '@deepseek-ai/dsh-agent': '^0.2.2-rc.1' } },
-  '0.30.0': { peerDependencies: { '@deepseek-ai/dsh-agent': '^0.2.2-rc.1' } },
-  '0.28.2': { peerDependencies: { '@deepseek-ai/dsh-agent': '^0.2.1-rc.1' } },
+  '0.30.1': { peerDependencies: { '@tomato/agent': '^0.2.2-rc.1' } },
+  '0.30.0': { peerDependencies: { '@tomato/agent': '^0.2.2-rc.1' } },
+  '0.28.2': { peerDependencies: { '@tomato/agent': '^0.2.1-rc.1' } },
 }
 
 /** @param {unknown} body - JSON body. @returns {Response} a JSON response. */
@@ -86,7 +86,7 @@ test('resolution falls back to the newest version this TOMATO admits', async () 
   const restore = stubNetwork(indexOf(['0.30.1', '0.30.0', '0.28.2']))
   const { market, dir } = await marketFor()
   try {
-    const resolution = await market.resolve('dsh-better-sidebar', '0.30.1')
+    const resolution = await market.resolve('tomato-better-sidebar', '0.30.1')
     assert.equal(resolution.status, 'resolved')
     assert.equal(resolution.runtimeVersion, RUNTIME)
     assert.equal(resolution.requested, '0.30.1')
@@ -104,7 +104,7 @@ test('a version this TOMATO admits resolves to itself', async () => {
   const restore = stubNetwork(indexOf(['0.28.2']))
   const { market, dir } = await marketFor()
   try {
-    assert.deepEqual(await market.resolve('dsh-better-sidebar', '0.28.2'), {
+    assert.deepEqual(await market.resolve('tomato-better-sidebar', '0.28.2'), {
       status: 'resolved',
       runtimeVersion: RUNTIME,
       requested: '0.28.2',
@@ -123,7 +123,7 @@ test('resolution reports when no published version is compatible', async () => {
   const restore = stubNetwork(indexOf(['0.30.1', '0.30.0']), incompatible)
   const { market, dir } = await marketFor()
   try {
-    const resolution = await market.resolve('dsh-better-sidebar', '0.30.1')
+    const resolution = await market.resolve('tomato-better-sidebar', '0.30.1')
     assert.equal(resolution.status, 'none')
     assert.deepEqual(resolution.rejected.map(entry => entry.version), ['0.30.1', '0.30.0'])
   } finally {
@@ -137,13 +137,13 @@ test('a catalog listing only the newest release still falls back through the reg
   const restore = stubNetwork(indexOf(['0.30.1']))
   const { market, dir } = await marketFor()
   try {
-    const resolution = await market.resolve('dsh-better-sidebar', '0.30.1')
+    const resolution = await market.resolve('tomato-better-sidebar', '0.30.1')
     assert.equal(resolution.status, 'resolved')
     assert.equal(resolution.selected, '0.28.2')
     assert.deepEqual(resolution.rejected.map(entry => entry.version), ['0.30.1', '0.30.0'])
-    const older = await market.manifest('dsh-better-sidebar', '0.28.2')
+    const older = await market.manifest('tomato-better-sidebar', '0.28.2')
     assert.deepEqual(older.compatibility, { status: 'compatible' })
-    await assert.rejects(market.manifest('dsh-better-sidebar', '0.27.0'), /not published for this package/)
+    await assert.rejects(market.manifest('tomato-better-sidebar', '0.27.0'), /not published for this package/)
     await assert.rejects(market.manifest('unlisted-package', '1.0.0'), /not listed in the catalog/)
   } finally {
     restore()
@@ -156,7 +156,7 @@ test('a missing installation version leaves resolution unknown', async () => {
   const restore = stubNetwork(indexOf(['0.28.2']))
   const { market, dir } = await marketFor({})
   try {
-    const resolution = await market.resolve('dsh-better-sidebar', '0.28.2')
+    const resolution = await market.resolve('tomato-better-sidebar', '0.28.2')
     assert.equal(resolution.status, 'unknown')
     assert.equal(resolution.runtimeVersion, undefined)
   } finally {
@@ -170,10 +170,10 @@ test('manifest reads report whether this TOMATO admits the version', async () =>
   const restore = stubNetwork(indexOf(['0.30.1', '0.28.2']))
   const { market, dir } = await marketFor()
   try {
-    const refused = await market.manifest('dsh-better-sidebar', '0.30.1')
+    const refused = await market.manifest('tomato-better-sidebar', '0.30.1')
     assert.equal(refused.runtimeVersion, RUNTIME)
     assert.deepEqual(refused.compatibility, { status: 'incompatible', requirements: { '@tomato/agent': '^0.2.2-rc.1' } })
-    const admitted = await market.manifest('dsh-better-sidebar', '0.28.2')
+    const admitted = await market.manifest('tomato-better-sidebar', '0.28.2')
     assert.deepEqual(admitted.compatibility, { status: 'compatible' })
   } finally {
     restore()

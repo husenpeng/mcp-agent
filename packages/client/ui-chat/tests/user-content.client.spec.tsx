@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { contextMenuHook } from '@tomato/client-test-runtime'
 // @vitest-environment jsdom
 import { useState, type ReactNode } from 'react'

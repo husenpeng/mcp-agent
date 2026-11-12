@@ -9,6 +9,7 @@ import { credentialRef } from '@tomato/credentials'
 import { LocalCredentialProvider } from '@tomato/credentials-local'
 import { liveConfig } from '../../../settings/settings/tests/live-config.ts'
 import * as LlmPiAi from '@tomato/llm-pi-ai'
+import { recordKeyFor } from '../src/auth.ts'
 import AuthorizationService from '@tomato/authorization'
 import { assemble } from './assemble.ts'
 import { closeMockServers, mockServer, textEvents } from './mock-server.ts'
@@ -61,7 +62,7 @@ describe('login flows in a real composition', () => {
 
     // Zero routes configured: signing in is what makes a route worth adding,
     // so the offer cannot wait for a profile to name the provider.
-    const codex = ctx.authorization.describe(LlmPiAi.recordKeyFor('openai-codex'))
+    const codex = ctx.authorization.describe(recordKeyFor('openai-codex'))
     expect(codex?.methods.map(method => method.id)).toEqual(['oauth'])
   })
 
@@ -180,7 +181,7 @@ describe('request-level dynamic profiles', () => {
     expect(server.headers[0]?.authorization).toBe('Bearer pk-from-settings')
 
     // Emptying the user layer returns the adapter to its dormant state.
-    await configurations.get(ctx)!.replace({ ...initialConfigs.get(ctx)! })
+    await configurations.get(ctx)!.replace(initialConfigs.get(ctx)!)
     expect(ctx.llm.listProviders()).toEqual([])
   })
 
@@ -208,7 +209,7 @@ describe('request-level dynamic profiles', () => {
 
     // Reset the user layer: the settings-born route unregisters, the
     // composition route stays.
-    await configurations.get(ctx)!.replace({ ...initialConfigs.get(ctx)! })
+    await configurations.get(ctx)!.replace(initialConfigs.get(ctx)!)
     expect(ctx.llm.listProviders().map(provider => provider.id)).toEqual(['openai'])
     const removed = await assemble(ctx, { provider: 'deepseek', model: 'deepseek-flash', messages: [] })
     expect(removed.finish).toMatchObject({ kind: 'error', failure: { code: 'NO_ADAPTER' } })
@@ -298,7 +299,7 @@ describe('request-level dynamic profiles', () => {
 
     // Reverting to the working configuration re-applies, even though its
     // facts equal the ones the registry already holds.
-    await configurations.get(ctx)!.replace({ ...initialConfigs.get(ctx)! })
+    await configurations.get(ctx)!.replace(initialConfigs.get(ctx)!)
     expect(ctx.llm.listProviders().map(provider => provider.id).sort()).toEqual(['anthropic', 'openai'])
     await assemble(ctx, { provider: 'openai', model: 'gpt-4.1', messages: [] })
     expect(server.paths).toEqual(['/v1/responses', '/v1/responses'])

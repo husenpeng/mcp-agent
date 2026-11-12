@@ -255,7 +255,7 @@
     "apps/web/tests/autolink-cjk-punctuation.e2e.ts",
     "apps/web/tests/open-in-app-menus.e2e.ts",
     "apps/web/tests/prompt-admission.e2e.ts",
-    "apps/web/tests/standard-dsh-doc.e2e.ts",
+    "apps/web/tests/standard-tomato-doc.e2e.ts",
     "apps/web/tests/creator-persona.e2e.ts",
     "apps/web/tests/schedule-manual.e2e.ts",
     "apps/web/tests/context-menus.e2e.ts",

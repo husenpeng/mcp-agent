@@ -35,7 +35,7 @@ const hostOf = (url) => { try { return new URL(url).hostname.replace(/^www\./, '
 const shortUrl = url => String(url ?? '').replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/$/, '')
 const EMPTY_TABS = { ids: [], active: null }
 
-// The Bot's permission preset, from the presets DeepSeek Harness offers.
+// The Bot's permission preset, from the presets Tomato Harness offers.
 function PermissionRow({ bot, roster, actions, run }) {
   const catalog = roster.permissions
   if (!catalog?.options?.length) return null

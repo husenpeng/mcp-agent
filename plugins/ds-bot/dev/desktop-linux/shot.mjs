@@ -1,5 +1,5 @@
-// Screenshot the dsh Desktop windows through the renderer debugging port.
-// Usage: node shot.mjs <dsh-repo> <out-prefix> [cdp-port] [script.mjs]
+// Screenshot the tomato Desktop windows through the renderer debugging port.
+// Usage: node shot.mjs <tomato-repo> <out-prefix> [cdp-port] [script.mjs]
 // The optional script exports default async (page) => {} and runs before the capture.
 import { createRequire } from 'node:module'
 import { join, resolve } from 'node:path'

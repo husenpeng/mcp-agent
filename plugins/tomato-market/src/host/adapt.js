@@ -1,5 +1,5 @@
 /**
- * Build a Tomato-installable tarball from a published DeepSeek Harness plugin.
+ * Build a Tomato-installable tarball from a published Tomato Harness plugin.
  *
  * The conversion reads and rewrites text only: it never executes package code.
  * Archives are extracted below one temporary directory after every entry path

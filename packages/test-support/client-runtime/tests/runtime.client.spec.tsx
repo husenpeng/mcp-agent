@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { AttachmentId } from '@tomato/attachment'
 // @vitest-environment jsdom
 /**

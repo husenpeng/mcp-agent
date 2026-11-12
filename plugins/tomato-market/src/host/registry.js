@@ -40,25 +40,25 @@ export function manifestCandidates(name, version, registries = DEFAULT_REGISTRIE
  * Whether a manifest declares a harness bundle, and the facts the market shows.
  * @param {object | undefined} manifest - one version's registry manifest.
  * @returns {object} the compatibility record; `class` is `tomato` when the
- * package declares `tomato.bundle`, `dsh` when it targets DeepSeek Harness
+ * package declares `tomato.bundle`, `tomato` when it targets Tomato Harness
  * instead, and `other` when it declares no bundle at all.
  */
 export function classifyManifest(manifest) {
   if (typeof manifest !== 'object' || manifest === null) return { class: 'unknown' }
   const tomato = typeof manifest.tomato === 'object' && manifest.tomato !== null ? manifest.tomato : undefined
-  const dsh = typeof manifest.dsh === 'object' && manifest.dsh !== null ? manifest.dsh : undefined
+  const tomato = typeof manifest.tomato === 'object' && manifest.tomato !== null ? manifest.tomato : undefined
   const peers = typeof manifest.peerDependencies === 'object' && manifest.peerDependencies !== null ? manifest.peerDependencies : {}
   const peerNames = Object.keys(peers)
-  const deepseekPeers = peerNames.filter(peer => peer.startsWith('@deepseek-ai/'))
+  const deepseekPeers = peerNames.filter(peer => peer.startsWith('@tomato/'))
   const tomatoPeers = peerNames.filter(peer => peer.startsWith('@tomato/'))
   const engines = typeof manifest.engines === 'object' && manifest.engines !== null ? manifest.engines : {}
-  const declaredBundle = tomato?.bundle !== undefined || dsh?.bundle !== undefined
+  const declaredBundle = tomato?.bundle !== undefined || tomato?.bundle !== undefined
   return {
-    class: tomato?.bundle !== undefined ? 'tomato' : dsh?.bundle !== undefined || deepseekPeers.length > 0 ? 'dsh' : 'other',
-    bundlePatch: tomato?.bundle?.patch ?? dsh?.bundle?.patch,
+    class: tomato?.bundle !== undefined ? 'tomato' : tomato?.bundle !== undefined || deepseekPeers.length > 0 ? 'tomato' : 'other',
+    bundlePatch: tomato?.bundle?.patch ?? tomato?.bundle?.patch,
     declaredBundle,
     tomatoRange: typeof engines.tomato === 'string' ? engines.tomato : undefined,
-    dshRange: typeof engines.dsh === 'string' ? engines.dsh : undefined,
+    tomatoRange: typeof engines.tomato === 'string' ? engines.tomato : undefined,
     deepseekPeers,
     tomatoPeers,
     deprecated: typeof manifest.deprecated === 'string' ? manifest.deprecated : undefined,

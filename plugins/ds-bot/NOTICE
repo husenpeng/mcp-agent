@@ -7,11 +7,11 @@ This product is licensed under the Apache License, Version 2.0 (see LICENSE).
 Third-party code in this repository
 ==============================================================================
 
-DeepSeek Harness (https://github.com/deepseek-ai/deepseek-harness)
+Tomato Harness (https://github.com/deepseek-ai/deepseek-harness)
 MIT License, Copyright (c) 2026 DeepSeek
 
   - ds-bot/dev/desktop-linux/launch.mts follows the steps of
-    apps/desktop/scripts/dev.ts in DeepSeek Harness and reuses a few of its
+    apps/desktop/scripts/dev.ts in Tomato Harness and reuses a few of its
     lines (the release record and the Electron launch arguments). It is a
     developer script for screenshots on Linux and is not in the npm package.
   - app/src/host.mjs and app/src/profile.mjs follow
@@ -34,13 +34,13 @@ MIT License, Copyright (c) 2026 DeepSeek
     checks and fixed guest preferences, the session policy and the new-window
     requests.
   - app/engine/cordis.patch.yml follows the bundle patch of
-    @deepseek-ai/dsh-web-app (packages/bundle/web-app/cordis.patch.yml): the
+    @tomato/web-app (packages/bundle/web-app/cordis.patch.yml): the
     transport and host-service rows and the agent-plane rows it turns off.
     app/engine/preset-standard.patch.yml copies its standard preset
     (presets/standard.patch.yml), including the plan-mode prompt text,
     without the goal rows.
   - .agents/skills/record-browser-gif/ comes from the skill of the same name
-    in DeepSeek Harness (.agents/skills/record-browser-gif/): SKILL.md is
+    in Tomato Harness (.agents/skills/record-browser-gif/): SKILL.md is
     adapted and translated for this repository; scripts/encode_gif.py and
     scripts/test_encode_gif.py are copied unchanged.
 
@@ -76,15 +76,15 @@ Apache License, Version 2.0, Copyright (c) Microsoft Corporation
     (ariaSnapshot({ mode: 'ai' }) and the aria-ref locators those refs
     resolve to). The playwright package is not bundled: the plugin loads
     it at run time from the install it is pointed at (playwrightUrl),
-    the same way it uses the host's @deepseek-ai/* packages.
+    the same way it uses the host's @tomato/* packages.
 
   The license is the same Apache License, Version 2.0 that covers this
   repository; see LICENSE for the text.
 
 No other third-party code is copied into this repository. At run time the
-plugin uses the @deepseek-ai/* packages of the DeepSeek Harness install it
+plugin uses the @tomato/* packages of the Tomato Harness install it
 runs in; they are not bundled. esbuild is a build tool only. The desktop app
-in app/ installs the pinned @deepseek-ai/* packages, Electron and pnpm from
+in app/ installs the pinned @tomato/* packages, Electron and pnpm from
 npm; they keep their own licenses. The build of its window (app/ui) bundles,
 from npm, React and React DOM (MIT, Copyright (c) Meta Platforms, Inc. and
 affiliates), and react-markdown and remark-gfm with the packages they use
@@ -117,7 +117,7 @@ their ideas; it does not contain their code.
     when to condense a long conversation, and what a handoff note holds.
   - obelisk (https://github.com/tommy0103/obelisk), AGPL-3.0:
     searching a Bot's own chat with a SQLite FTS5 index ranked by BM25.
-  - DeepSeek Harness Voice Input plugin
+  - Tomato Harness Voice Input plugin
     (packages/experimental/client-ui-voice-input), MIT: the voice chat
     records with the same steps (record, resample to 16 kHz mono, PCM16 WAV)
     before it calls the plugin's speech service.

@@ -11,7 +11,7 @@ const MENU_EXIT_MS = 120
 
 // -------------------------------------------------------------------------
 // A Bot's model: the picker in its details panel and settings, and the message its
-// chat opens on while it has none. Models come from DeepSeek Harness, grouped by provider.
+// chat opens on while it has none. Models come from Tomato Harness, grouped by provider.
 
 export function groupModels(models) {
   const groups = new Map()
@@ -188,7 +188,7 @@ export function ModelMenu({ bot, roster, actions, run, wide = false, onPick, onP
     h(Caret)),
     shownPlace ? createPortal(h('div', { ref: menu, className: `bt-menu bt-model-menu${shownPlace.bottom !== undefined ? ' bt-menu-up' : ''}`, role: 'menu', 'aria-label': t('Model for {name}', { name: bot.name }), style: shownPlace, 'data-leaving': leaving || undefined },
       models.length > 0 ? h(ModelRows, { roster, current, onPick: pick })
-        : h('div', { className: 'bt-model-none' }, t('No models are set up in DeepSeek Harness yet.')),
+        : h('div', { className: 'bt-model-none' }, t('No models are set up in Tomato Harness yet.')),
       effortRows(reasoning).length > 0 ? h(EffortRows, { reasoning, current: picked, onPick: pickEffort }) : null,
       manage ? h('div', { className: 'bt-menu-sep', role: 'separator' }) : null,
       manage ? h('button', { type: 'button', role: 'menuitem', onClick: () => { close(); manage() } }, h(SlidersIcon), h('span', { className: 'bt-menu-label' }, t('Models and providers…'))) : null), document.body) : null)

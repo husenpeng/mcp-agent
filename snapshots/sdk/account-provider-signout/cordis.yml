@@ -7,8 +7,8 @@
   config:
     includeDefaultRoots: false
 
-- id: llm-deepseek-api-key
-  name: '@tomato/llm-deepseek-api-key'
+- id: llm-deepseek-account
+  name: '@tomato/llm-deepseek-account'
   config:
     thinking: enabled
     reasoningEffort: max

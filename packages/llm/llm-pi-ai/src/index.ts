@@ -67,19 +67,19 @@ import { deepEqualJson } from '@tomato/util-values'
 import { PiAiAdapter } from './adapter.ts'
 import { authContextFrom, credentialStoreFrom } from './auth.ts'
 import { catalogProvider, catalogProviderIds } from './catalog.ts'
-import { assertServiceable, Config, resolveModelPolicy, resolveProfiles } from './config.ts'
-import type { ModelPolicyConfig, ResolvedModelPolicy, ResolvedPiAiProviderProfile } from './config.ts'
+import { assertServiceable, Config, resolveProfiles } from './config.ts'
+import type { ResolvedPiAiProviderProfile } from './config.ts'
 import { discoverModels } from './discovery.ts'
 import type { StoredModelDiscoveryProfile } from './discovery.ts'
 import { registerPiAiFlows } from './login.ts'
 import { providerDefaultsOf } from './provider-data.ts'
+import type { PiAiRequestHeaderContext } from './types.ts'
 
 export { PiAiAdapter } from './adapter.ts'
 export type { PiAiAdapterOptions } from './adapter.ts'
+export type { PiAiRequestHeaderContext } from './types.ts'
 export { Config } from './config.ts'
 export type {
-  ModelPolicyConfig,
-  ModelPolicyRef,
   Options,
   PiAiCompatProfile,
   PiAiModality,
@@ -88,14 +88,31 @@ export type {
   PiAiProviderProfile,
   PiAiReasoningEfforts,
   PiAiThinkingFormat,
-  ResolvedModelPolicy,
   ResolvedPiAiProviderProfile,
 } from './config.ts'
-export { recordKeyFor } from './auth.ts'
 export { supportedProtocols } from './provider.ts'
 
 export const name = 'llm-pi-ai'
 export const inject = ['llm']
+
+declare module '@tomato/cordis' {
+  interface Events {
+    /**
+     * Prepare headers for one pi-ai inference call, excluding model discovery.
+     * Listeners run synchronously and must call next(); they may edit only the
+     * request-owned headers and must not retain them. Throws fail the call with
+     * REQUEST_HEADERS before inference I/O. Harness attribution wins afterward.
+     * Non-TypeError messages are user-visible and must exclude secrets. TypeError
+     * details and non-Error values are replaced with safe guidance.
+     * @mode waterfall
+     * @param request - immutable routing metadata from the exact prepared call.
+     * @param headers - fresh profile headers, shared only within this dispatch.
+     * @param next - continue header preparation through the remaining listeners.
+     * @returns headers passed to pi-ai after Harness attribution is applied.
+     */
+    'llm-pi-ai/request-headers'(request: PiAiRequestHeaderContext, headers: Headers, next: () => Headers): Headers
+  }
+}
 
 const NS = 'llm-pi-ai'
 
@@ -177,27 +194,14 @@ export function apply(ctx: Context, config: Config): void {
     return next
   }
   profiles()
-  let lastPolicyRaw: ModelPolicyConfig | null | undefined
-  let lastPolicy: ResolvedModelPolicy | undefined
-  /** The current allowlist, memoized by the volatile policy snapshot. */
-  const modelPolicy = (): ResolvedModelPolicy | undefined => {
-    const raw = config.modelPolicy.get()
-    if (raw === lastPolicyRaw) return lastPolicy
-    lastPolicy = resolveModelPolicy(raw)
-    lastPolicyRaw = raw
-    return lastPolicy
-  }
-  // Fail the mount, not the first request, on an unusable allowlist entry.
-  modelPolicy()
-  ctx.on('internal/config', function (this: import('@tomato/cordis').Fiber, _raw, next) {
+  ctx.on('internal/config', (fiber, next) => {
     const raw: unknown = next()
-    if (this !== ctx.fiber) return raw
+    if (fiber !== ctx.fiber) return raw
     const candidate = Config(raw as import('./config.ts').Options)
     assertServiceable(
       { providers: structuredClone(candidate.providers.get()) } as import('./config.ts').Options,
       { providers: structuredClone(config.providers.get()) } as import('./config.ts').Options,
     )
-    resolveModelPolicy(candidate.modelPolicy.get())
     return raw
   })
 
@@ -232,9 +236,9 @@ export function apply(ctx: Context, config: Config): void {
   const auth = { credentials: credentialStoreFrom(ctx), authContext: authContextFrom(ctx) }
   const adapter = new PiAiAdapter({
     profiles,
-    modelPolicy,
     resolveApiKey,
     auth,
+    prepareHeaders: (request, headers) => ctx.waterfall('llm-pi-ai/request-headers', request, headers, () => headers),
     resolveAttachments: () => ctx.get('attachments'),
     resolveImageAccess: (attachments, ref) => resolveImageAttachmentAccess(
       attachments,
@@ -246,6 +250,9 @@ export function apply(ctx: Context, config: Config): void {
         `llm-pi-ai: unusable replay state on assistant history for route "${provider}/${model}";`
         + ` sending that message as provider-neutral content (${reason})`,
       )
+    },
+    onThinkingOmitted: ({ provider, model, count }) => {
+      ctx.logger.debug(`llm-pi-ai: omitted stale thinking from ${count} assistant message(s) for route "${provider}/${model}"`)
     },
   })
   // Independent of the route set: signing in is what makes a route worth

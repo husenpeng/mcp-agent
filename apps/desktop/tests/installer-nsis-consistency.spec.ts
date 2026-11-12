@@ -14,8 +14,8 @@ const adapter = readFileSync(join(appRoot, 'scripts', 'windows-directory-install
 /** Names electron-builder or the adapter defines at packaging time, after these sources load. */
 const INJECTED = ['TOMATO_SEVENZIP_PATH', 'TOMATO_SEVENZIP_LICENSE_DIR', 'TOMATO_UPDATER_CACHE_NAME']
 
-it.each(sources)('%s carries no legacy dsh identifier', (path, text) => {
-  expect(text, path).not.toMatch(/dsh/i)
+it.each(sources)('%s carries no legacy tomato identifier', (path, text) => {
+  expect(text, path).not.toMatch(/tomato/i)
 })
 
 it('hashes every NSIS source the desktop ships', () => {

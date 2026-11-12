@@ -82,7 +82,7 @@
   ],
   "entries": [
     {
-      "id": "dsh-postiz",
+      "id": "tomato-postiz",
       "kind": "plugin",
       "title": {
         "zh": "Postiz 发布排期",
@@ -106,7 +106,7 @@
       },
       "install": {
         "type": "plugin",
-        "name": "dsh-postiz",
+        "name": "tomato-postiz",
         "version": "0.1.0"
       }
     },
@@ -137,7 +137,7 @@
       }
     },
     {
-      "id": "dsh-web-search-pro",
+      "id": "tomato-web-search-pro",
       "kind": "plugin",
       "title": {
         "zh": "多引擎搜索 Pro",
@@ -147,7 +147,7 @@
         "zh": "多引擎搜索与结果缓存，覆盖 YouTube、Reddit、Twitter、RSS 等通道。",
         "en": "Multi-engine search with caching, covering YouTube, Reddit, Twitter and RSS channels."
       },
-      "repository": "https://github.com/anweat/dsh-web-search-pro",
+      "repository": "https://github.com/anweat/tomato-web-search-pro",
       "stars": 83,
       "pushedAt": "2026-11-03",
       "license": "MIT",
@@ -158,12 +158,12 @@
       "access": "none",
       "install": {
         "type": "plugin",
-        "name": "dsh-web-search-pro",
+        "name": "tomato-web-search-pro",
         "version": "0.2.3"
       }
     },
     {
-      "id": "dsh-harvest",
+      "id": "tomato-harvest",
       "kind": "plugin",
       "title": {
         "zh": "Harvest 多源调研",
@@ -173,7 +173,7 @@
         "zh": "跨 Web、X、Reddit、YouTube 并行调研，并生成带来源核验的长篇研报。",
         "en": "Runs parallel research across the web, X, Reddit and YouTube and writes long-form reports with source checks."
       },
-      "repository": "https://github.com/toustifer/dsh-harvest",
+      "repository": "https://github.com/toustifer/tomato-harvest",
       "stars": 16,
       "pushedAt": "2026-09-18",
       "license": "MIT",
@@ -188,12 +188,12 @@
       },
       "install": {
         "type": "plugin",
-        "name": "@stifer/dsh-harvest",
+        "name": "@stifer/tomato-harvest",
         "version": "0.2.0"
       }
     },
     {
-      "id": "dsh-hacker-news",
+      "id": "tomato-hacker-news",
       "kind": "plugin",
       "title": {
         "zh": "Hacker News",
@@ -213,7 +213,7 @@
       "access": "none",
       "install": {
         "type": "plugin",
-        "name": "dsh-hacker-news",
+        "name": "tomato-hacker-news",
         "version": "0.1.0"
       }
     },
@@ -228,7 +228,7 @@
         "zh": "RSS 订阅、播客转录与文章改写，用于选题监听。",
         "en": "RSS subscriptions, podcast transcription and article rewriting for topic monitoring."
       },
-      "repository": "https://github.com/joeseesun/qiaomu-rss-dsh",
+      "repository": "https://github.com/joeseesun/qiaomu-rss-tomato",
       "stars": 81,
       "pushedAt": "2026-10-31",
       "license": "GPL-3.0",
@@ -240,13 +240,13 @@
       "install": {
         "type": "manual",
         "steps": {
-          "zh": "1. 打开 **插件** 页，点 **添加插件**，填入 `github:joeseesun/qiaomu-rss-dsh`（该包不在 DSH 插件目录中，需从 GitHub 直接安装）。\n2. 重启 Tomato 或刷新插件页确认已启用。",
-          "en": "1. Open **Plugins**, choose **Add plugin**, and enter `github:joeseesun/qiaomu-rss-dsh` (the package is not in the DSH plugin index, so it installs straight from GitHub).\n2. Restart Tomato or reload the Plugins page to confirm it is enabled."
+          "zh": "1. 打开 **插件** 页，点 **添加插件**，填入 `github:joeseesun/qiaomu-rss-tomato`（该包不在 TOMATO 插件目录中，需从 GitHub 直接安装）。\n2. 重启 Tomato 或刷新插件页确认已启用。",
+          "en": "1. Open **Plugins**, choose **Add plugin**, and enter `github:joeseesun/qiaomu-rss-tomato` (the package is not in the TOMATO plugin index, so it installs straight from GitHub).\n2. Restart Tomato or reload the Plugins page to confirm it is enabled."
         }
       }
     },
     {
-      "id": "dsh-video-storyboard",
+      "id": "tomato-video-storyboard",
       "kind": "plugin",
       "title": {
         "zh": "视频宫格分镜",
@@ -256,7 +256,7 @@
         "zh": "把本地视频或 yt-dlp 链接压成带时间码和台词的宫格图，让纯文本模型也能“看”视频。",
         "en": "Turns a local video or yt-dlp link into timestamped contact sheets with dialogue so text-only models can read it."
       },
-      "repository": "https://github.com/SAOS-3624/dsh-video-storyboard",
+      "repository": "https://github.com/SAOS-3624/tomato-video-storyboard",
       "stars": 405,
       "pushedAt": "2026-11-03",
       "license": "Apache-2.0",
@@ -270,12 +270,12 @@
       },
       "install": {
         "type": "plugin",
-        "name": "dsh-video-storyboard",
+        "name": "tomato-video-storyboard",
         "version": "0.6.2"
       }
     },
     {
-      "id": "dsh-video-downloader",
+      "id": "tomato-video-downloader",
       "kind": "plugin",
       "title": {
         "zh": "视频下载器",
@@ -285,7 +285,7 @@
         "zh": "检测并下载 YouTube 等平台的视频，分析画质和格式。",
         "en": "Detects and downloads videos from YouTube and other platforms and reports quality and formats."
       },
-      "repository": "https://github.com/zimai233/dsh-video-downloader",
+      "repository": "https://github.com/zimai233/tomato-video-downloader",
       "stars": 5,
       "pushedAt": "2026-08-14",
       "license": "MIT",
@@ -296,13 +296,13 @@
       "install": {
         "type": "manual",
         "steps": {
-          "zh": "1. 打开 **插件** 页，点 **添加插件**，填入 `github:zimai233/dsh-video-downloader`（该包不在 DSH 插件目录中，需从 GitHub 直接安装）。\n2. 重启 Tomato 或刷新插件页确认已启用。",
-          "en": "1. Open **Plugins**, choose **Add plugin**, and enter `github:zimai233/dsh-video-downloader` (the package is not in the DSH plugin index, so it installs straight from GitHub).\n2. Restart Tomato or reload the Plugins page to confirm it is enabled."
+          "zh": "1. 打开 **插件** 页，点 **添加插件**，填入 `github:zimai233/tomato-video-downloader`（该包不在 TOMATO 插件目录中，需从 GitHub 直接安装）。\n2. 重启 Tomato 或刷新插件页确认已启用。",
+          "en": "1. Open **Plugins**, choose **Add plugin**, and enter `github:zimai233/tomato-video-downloader` (the package is not in the TOMATO plugin index, so it installs straight from GitHub).\n2. Restart Tomato or reload the Plugins page to confirm it is enabled."
         }
       }
     },
     {
-      "id": "dsh-voice",
+      "id": "tomato-voice",
       "kind": "plugin",
       "title": {
         "zh": "配音与转写",
@@ -312,7 +312,7 @@
         "zh": "免费 edge-tts 配音、批量试听与 ASR 转写。",
         "en": "Free edge-tts voiceover, batch previews and ASR transcription."
       },
-      "repository": "https://github.com/STARDUSTLC666/dsh-voice",
+      "repository": "https://github.com/STARDUSTLC666/tomato-voice",
       "stars": 5,
       "pushedAt": "2026-10-30",
       "license": "MIT AND LGPL-3.0",
@@ -323,12 +323,12 @@
       "access": "none",
       "install": {
         "type": "plugin",
-        "name": "dsh-voice",
+        "name": "tomato-voice",
         "version": "0.5.4"
       }
     },
     {
-      "id": "dsh-industry-research",
+      "id": "tomato-industry-research",
       "kind": "plugin",
       "title": {
         "zh": "行业研究报告",
@@ -338,7 +338,7 @@
         "zh": "只用公开来源生成可溯源的公司与行业研究报告。",
         "en": "Produces traceable company and industry research reports from public sources only."
       },
-      "repository": "https://github.com/PerryLink/dsh-industry-research",
+      "repository": "https://github.com/PerryLink/tomato-industry-research",
       "stars": 215,
       "pushedAt": "2026-11-01",
       "license": "Apache-2.0",
@@ -349,12 +349,12 @@
       "access": "none",
       "install": {
         "type": "plugin",
-        "name": "dsh-industry-research",
+        "name": "tomato-industry-research",
         "version": "0.3.23"
       }
     },
     {
-      "id": "dsh-data-quality",
+      "id": "tomato-data-quality",
       "kind": "plugin",
       "title": {
         "zh": "数据质量",
@@ -364,7 +364,7 @@
         "zh": "数据画像、清洗与校验并输出结构化报告，适合清洗达人名单。",
         "en": "Profiles, cleans and validates data with structured reports, useful for cleaning creator lists."
       },
-      "repository": "https://github.com/PerryLink/dsh-data-quality",
+      "repository": "https://github.com/PerryLink/tomato-data-quality",
       "stars": 53,
       "pushedAt": "2026-11-01",
       "license": "Apache-2.0",
@@ -374,12 +374,12 @@
       "access": "none",
       "install": {
         "type": "plugin",
-        "name": "dsh-data-quality",
+        "name": "tomato-data-quality",
         "version": "0.3.24"
       }
     },
     {
-      "id": "dsh-univer-office",
+      "id": "tomato-univer-office",
       "kind": "plugin",
       "title": {
         "zh": "Univer 办公套件",
@@ -389,7 +389,7 @@
         "zh": "内置表格、文档与幻灯片环境，用于达人台账和结案报告。",
         "en": "Built-in spreadsheet, document and slide workspace for creator trackers and campaign reports."
       },
-      "repository": "https://github.com/dream-num/dsh-univer-office",
+      "repository": "https://github.com/dream-num/tomato-univer-office",
       "stars": 660,
       "pushedAt": "2026-11-03",
       "license": "Apache-2.0",
@@ -399,12 +399,12 @@
       "access": "none",
       "install": {
         "type": "plugin",
-        "name": "dsh-univer-office",
+        "name": "tomato-univer-office",
         "version": "0.3.9"
       }
     },
     {
-      "id": "dsh-genui",
+      "id": "tomato-genui",
       "kind": "plugin",
       "title": {
         "zh": "GenUI 交互组件",
@@ -414,7 +414,7 @@
         "zh": "在回复里内联渲染图表、表单等交互组件。",
         "en": "Renders charts, forms and other interactive components inline in replies."
       },
-      "repository": "https://github.com/omdsh-dev/dsh-genui",
+      "repository": "https://github.com/omtomato-dev/tomato-genui",
       "stars": 850,
       "pushedAt": "2026-11-03",
       "license": "MIT",
@@ -424,12 +424,12 @@
       "access": "none",
       "install": {
         "type": "plugin",
-        "name": "@changfenhuang/dsh-genui",
+        "name": "@changfenhuang/tomato-genui",
         "version": "0.15.0"
       }
     },
     {
-      "id": "dsh-smart-charts",
+      "id": "tomato-smart-charts",
       "kind": "plugin",
       "title": {
         "zh": "智能图表",
@@ -439,7 +439,7 @@
         "zh": "把 CSV/XLSX/JSON 转成独立的交互式 ECharts HTML，支持 32 种图表。",
         "en": "Turns CSV, XLSX or JSON into standalone interactive ECharts HTML with 32 chart types."
       },
-      "repository": "https://github.com/hherosoul/dsh-smart-charts",
+      "repository": "https://github.com/hherosoul/tomato-smart-charts",
       "stars": 20,
       "pushedAt": "2026-09-29",
       "license": "MIT",
@@ -450,13 +450,13 @@
       "install": {
         "type": "manual",
         "steps": {
-          "zh": "1. 打开 **插件** 页，点 **添加插件**，填入 `github:hherosoul/dsh-smart-charts`（该包不在 DSH 插件目录中，需从 GitHub 直接安装）。\n2. 重启 Tomato 或刷新插件页确认已启用。",
-          "en": "1. Open **Plugins**, choose **Add plugin**, and enter `github:hherosoul/dsh-smart-charts` (the package is not in the DSH plugin index, so it installs straight from GitHub).\n2. Restart Tomato or reload the Plugins page to confirm it is enabled."
+          "zh": "1. 打开 **插件** 页，点 **添加插件**，填入 `github:hherosoul/tomato-smart-charts`（该包不在 TOMATO 插件目录中，需从 GitHub 直接安装）。\n2. 重启 Tomato 或刷新插件页确认已启用。",
+          "en": "1. Open **Plugins**, choose **Add plugin**, and enter `github:hherosoul/tomato-smart-charts` (the package is not in the TOMATO plugin index, so it installs straight from GitHub).\n2. Restart Tomato or reload the Plugins page to confirm it is enabled."
         }
       }
     },
     {
-      "id": "dsh-office-tools",
+      "id": "tomato-office-tools",
       "kind": "plugin",
       "title": {
         "zh": "Office 工具",
@@ -466,7 +466,7 @@
         "zh": "读写 Word、Excel、PowerPoint，可插入图片。",
         "en": "Reads and writes Word, Excel and PowerPoint files, including images."
       },
-      "repository": "https://github.com/kw78/dsh-office-tools",
+      "repository": "https://github.com/kw78/tomato-office-tools",
       "stars": 41,
       "pushedAt": "2026-10-26",
       "license": "MIT",
@@ -476,12 +476,12 @@
       "access": "none",
       "install": {
         "type": "plugin",
-        "name": "dsh-office-tools",
+        "name": "tomato-office-tools",
         "version": "1.0.8"
       }
     },
     {
-      "id": "dsh-design-studio",
+      "id": "tomato-design-studio",
       "kind": "plugin",
       "title": {
         "zh": "设计工作室",
@@ -491,7 +491,7 @@
         "zh": "侧栏设计画布，实时预览海报、邮件和落地页的 HTML。",
         "en": "Sidebar design canvas with live HTML previews of posters, emails and landing pages."
       },
-      "repository": "https://github.com/OrderG-X/dsh-design-studio",
+      "repository": "https://github.com/OrderG-X/tomato-design-studio",
       "stars": 17,
       "pushedAt": "2026-11-03",
       "license": "MIT",
@@ -501,12 +501,12 @@
       "access": "none",
       "install": {
         "type": "plugin",
-        "name": "dsh-design-studio",
+        "name": "tomato-design-studio",
         "version": "0.6.2"
       }
     },
     {
-      "id": "dsh-guizang-design",
+      "id": "tomato-guizang-design",
       "kind": "plugin",
       "title": {
         "zh": "归藏设计技能包",
@@ -516,7 +516,7 @@
         "zh": "打包网页 PPT、社媒图文卡片、网页排版等 5 个设计技能。",
         "en": "Bundles five design skills including web slides, social image cards and web layout."
       },
-      "repository": "https://github.com/op7418/dsh-guizang-design",
+      "repository": "https://github.com/op7418/tomato-guizang-design",
       "stars": 333,
       "pushedAt": "2026-10-31",
       "license": "AGPL-3.0",
@@ -526,12 +526,12 @@
       "access": "none",
       "install": {
         "type": "plugin",
-        "name": "dsh-guizang-design",
+        "name": "tomato-guizang-design",
         "version": "0.1.3"
       }
     },
     {
-      "id": "dsh-image-gen",
+      "id": "tomato-image-gen",
       "kind": "plugin",
       "title": {
         "zh": "对话生图",
@@ -541,7 +541,7 @@
         "zh": "对话式文生图和图生图，支持 ComfyUI 或已有的 ChatGPT/Google 订阅登录。",
         "en": "Conversational text-to-image and image-to-image via ComfyUI or an existing ChatGPT or Google subscription login."
       },
-      "repository": "https://github.com/shanliuling/dsh-image-gen",
+      "repository": "https://github.com/shanliuling/tomato-image-gen",
       "stars": 1084,
       "pushedAt": "2026-11-02",
       "license": "Apache-2.0",
@@ -555,7 +555,7 @@
       },
       "install": {
         "type": "plugin",
-        "name": "dsh-image-gen",
+        "name": "tomato-image-gen",
         "version": "0.10.1"
       }
     },
@@ -563,14 +563,14 @@
       "id": "jacky-creator",
       "kind": "plugin",
       "title": {
-        "zh": "DSH Creator 内容工作台",
-        "en": "DSH Creator"
+        "zh": "TOMATO Creator 内容工作台",
+        "en": "TOMATO Creator"
       },
       "description": {
         "zh": "本地内容生产工作台：选题、脚本、素材、排期、发布状态与复盘。",
         "en": "Local content workbench for ideas, scripts, assets, scheduling, publishing status and retrospectives."
       },
-      "repository": "https://github.com/Jackywxsz/DSH-Creator",
+      "repository": "https://github.com/Jackywxsz/TOMATO-Creator",
       "stars": 126,
       "pushedAt": "2026-10-09",
       "license": "MIT",
@@ -608,8 +608,8 @@
       "install": {
         "type": "manual",
         "steps": {
-          "zh": "1. 打开 **插件** 页，点 **添加插件**，填入 `github:sandbaseai/sandbase-skills`（该包不在 DSH 插件目录中，需从 GitHub 直接安装）。\n2. 重启 Tomato 或刷新插件页确认已启用。",
-          "en": "1. Open **Plugins**, choose **Add plugin**, and enter `github:sandbaseai/sandbase-skills` (the package is not in the DSH plugin index, so it installs straight from GitHub).\n2. Restart Tomato or reload the Plugins page to confirm it is enabled."
+          "zh": "1. 打开 **插件** 页，点 **添加插件**，填入 `github:sandbaseai/sandbase-skills`（该包不在 TOMATO 插件目录中，需从 GitHub 直接安装）。\n2. 重启 Tomato 或刷新插件页确认已启用。",
+          "en": "1. Open **Plugins**, choose **Add plugin**, and enter `github:sandbaseai/sandbase-skills` (the package is not in the TOMATO plugin index, so it installs straight from GitHub).\n2. Restart Tomato or reload the Plugins page to confirm it is enabled."
         }
       }
     },
@@ -624,7 +624,7 @@
         "zh": "桥接 SHOPLINE 官方开发者 MCP，附 7 个店铺开发技能。",
         "en": "Bridges the official SHOPLINE developer MCP and adds seven store development skills."
       },
-      "repository": "https://github.com/lunw/shopline-ai-toolkit-dsh",
+      "repository": "https://github.com/lunw/shopline-ai-toolkit-tomato",
       "stars": 5,
       "pushedAt": "2026-10-27",
       "license": "MIT",
@@ -635,13 +635,13 @@
       "install": {
         "type": "manual",
         "steps": {
-          "zh": "1. 打开 **插件** 页，点 **添加插件**，填入 `github:lunw/shopline-ai-toolkit-dsh`（该包不在 DSH 插件目录中，需从 GitHub 直接安装）。\n2. 重启 Tomato 或刷新插件页确认已启用。",
-          "en": "1. Open **Plugins**, choose **Add plugin**, and enter `github:lunw/shopline-ai-toolkit-dsh` (the package is not in the DSH plugin index, so it installs straight from GitHub).\n2. Restart Tomato or reload the Plugins page to confirm it is enabled."
+          "zh": "1. 打开 **插件** 页，点 **添加插件**，填入 `github:lunw/shopline-ai-toolkit-tomato`（该包不在 TOMATO 插件目录中，需从 GitHub 直接安装）。\n2. 重启 Tomato 或刷新插件页确认已启用。",
+          "en": "1. Open **Plugins**, choose **Add plugin**, and enter `github:lunw/shopline-ai-toolkit-tomato` (the package is not in the TOMATO plugin index, so it installs straight from GitHub).\n2. Restart Tomato or reload the Plugins page to confirm it is enabled."
         }
       }
     },
     {
-      "id": "dsh-email",
+      "id": "tomato-email",
       "kind": "plugin",
       "title": {
         "zh": "邮件工具",
@@ -651,7 +651,7 @@
         "zh": "IMAP/SMTP 邮件工具：列出、搜索、发送、回复、标记与监听新邮件。",
         "en": "IMAP and SMTP tools to list, search, send, reply to, flag and watch email."
       },
-      "repository": "https://github.com/STARDUSTLC666/dsh-email",
+      "repository": "https://github.com/STARDUSTLC666/tomato-email",
       "stars": 31,
       "pushedAt": "2026-10-30",
       "license": "MIT",
@@ -665,12 +665,12 @@
       },
       "install": {
         "type": "plugin",
-        "name": "dsh-email",
+        "name": "tomato-email",
         "version": "0.21.2"
       }
     },
     {
-      "id": "eduwork-dsh-mail",
+      "id": "eduwork-tomato-mail",
       "kind": "plugin",
       "title": {
         "zh": "EduWork 邮件",
@@ -694,12 +694,12 @@
       },
       "install": {
         "type": "plugin",
-        "name": "@eduwork/dsh-mail",
+        "name": "@eduwork/tomato-mail",
         "version": "0.2.3"
       }
     },
     {
-      "id": "dsh-ego-browser",
+      "id": "tomato-ego-browser",
       "kind": "plugin",
       "title": {
         "zh": "Ego 浏览器",
@@ -709,7 +709,7 @@
         "zh": "用 35 个结构化工具驱动真实 Chrome，可导入登录态。",
         "en": "Drives a real Chrome with 35 structured tools and can import signed-in sessions."
       },
-      "repository": "https://github.com/Fisfzy/dsh-ego-browser",
+      "repository": "https://github.com/Fisfzy/tomato-ego-browser",
       "stars": 410,
       "pushedAt": "2026-11-01",
       "license": "MIT",
@@ -719,7 +719,7 @@
       "access": "none",
       "install": {
         "type": "plugin",
-        "name": "dsh-ego-browser",
+        "name": "tomato-ego-browser",
         "version": "0.9.8"
       }
     },
@@ -734,7 +734,7 @@
         "zh": "Chrome 侧栏扩展，让 Agent 直接操作当前标签页，不依赖视觉。",
         "en": "Chrome side-panel extension that lets the agent operate the current tab without vision."
       },
-      "repository": "https://github.com/omdsh-dev/dsh-browser",
+      "repository": "https://github.com/omtomato-dev/tomato-browser",
       "stars": 972,
       "pushedAt": "2026-10-01",
       "license": "MIT",
@@ -745,13 +745,13 @@
       "install": {
         "type": "manual",
         "steps": {
-          "zh": "1. 打开 **插件** 页，点 **添加插件**，填入 `github:omdsh-dev/dsh-browser#path:packages/browser/bridge-browser`（该包不在 DSH 插件目录中，需从 GitHub 直接安装）。\n2. 按 https://github.com/omdsh-dev/dsh-browser 的 README 安装配套 Chrome 侧栏扩展，并保持 Chrome 打开。\n3. 重启 Tomato 或刷新插件页确认已启用。",
-          "en": "1. Open **Plugins**, choose **Add plugin**, and enter `github:omdsh-dev/dsh-browser#path:packages/browser/bridge-browser` (the package is not in the DSH plugin index, so it installs straight from GitHub).\n2. Install the companion Chrome side-panel extension as described in the https://github.com/omdsh-dev/dsh-browser README and keep Chrome open.\n3. Restart Tomato or reload the Plugins page to confirm it is enabled."
+          "zh": "1. 打开 **插件** 页，点 **添加插件**，填入 `github:omtomato-dev/tomato-browser#path:packages/browser/bridge-browser`（该包不在 TOMATO 插件目录中，需从 GitHub 直接安装）。\n2. 按 https://github.com/omtomato-dev/tomato-browser 的 README 安装配套 Chrome 侧栏扩展，并保持 Chrome 打开。\n3. 重启 Tomato 或刷新插件页确认已启用。",
+          "en": "1. Open **Plugins**, choose **Add plugin**, and enter `github:omtomato-dev/tomato-browser#path:packages/browser/bridge-browser` (the package is not in the TOMATO plugin index, so it installs straight from GitHub).\n2. Install the companion Chrome side-panel extension as described in the https://github.com/omtomato-dev/tomato-browser README and keep Chrome open.\n3. Restart Tomato or reload the Plugins page to confirm it is enabled."
         }
       }
     },
     {
-      "id": "dsh-doyourweb",
+      "id": "tomato-doyourweb",
       "kind": "plugin",
       "title": {
         "zh": "DoYourWeb 标签页操作",
@@ -761,7 +761,7 @@
         "zh": "引用已登录的 Chrome/Edge 标签页，读取快照并执行批量操作。",
         "en": "References signed-in Chrome or Edge tabs, reads snapshots and runs batch actions."
       },
-      "repository": "https://github.com/SheepofSheep/dsh-doyourweb",
+      "repository": "https://github.com/SheepofSheep/tomato-doyourweb",
       "stars": 41,
       "pushedAt": "2026-11-02",
       "license": "MIT",
@@ -771,12 +771,12 @@
       "access": "none",
       "install": {
         "type": "plugin",
-        "name": "dsh-doyourweb",
+        "name": "tomato-doyourweb",
         "version": "0.1.8"
       }
     },
     {
-      "id": "anweat-dsh-browser",
+      "id": "anweat-tomato-browser",
       "kind": "plugin",
       "title": {
         "zh": "浏览器运行时（anweat）",
@@ -786,7 +786,7 @@
         "zh": "自带 Playwright 与 OpenCLI 的浏览器运行时。",
         "en": "Browser runtime that bundles Playwright and OpenCLI."
       },
-      "repository": "https://github.com/anweat/dsh-browser",
+      "repository": "https://github.com/anweat/tomato-browser",
       "stars": 31,
       "pushedAt": "2026-10-29",
       "license": "MIT",
@@ -796,12 +796,12 @@
       "access": "none",
       "install": {
         "type": "plugin",
-        "name": "@anweat/dsh-browser",
+        "name": "@anweat/tomato-browser",
         "version": "0.2.2"
       }
     },
     {
-      "id": "dsh-searxng",
+      "id": "tomato-searxng",
       "kind": "plugin",
       "title": {
         "zh": "SearXNG 搜索",
@@ -811,7 +811,7 @@
         "zh": "用自建 SearXNG 作为免 key 的元搜索 provider。",
         "en": "Uses a self-hosted SearXNG instance as a keyless metasearch provider."
       },
-      "repository": "https://github.com/rogerdigital/dsh-searxng",
+      "repository": "https://github.com/rogerdigital/tomato-searxng",
       "stars": 11,
       "pushedAt": "2026-09-21",
       "license": "MIT",
@@ -826,7 +826,7 @@
       },
       "install": {
         "type": "plugin",
-        "name": "dsh-searxng",
+        "name": "tomato-searxng",
         "version": "0.4.0"
       }
     },

@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import type { SessionId } from '@tomato/session/types'
 import { AttachmentId } from '@tomato/attachment'
 // @vitest-environment jsdom

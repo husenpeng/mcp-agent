@@ -35,7 +35,7 @@ var import_jsx_runtime6 = require("react/jsx-runtime");
 var NS = "tomato-market";
 var zh = {
   tab: "通用插件市场",
-  lede: "浏览开源 DeepSeek Harness 插件目录，安装能在 Tomato 中运行的插件。",
+  lede: "浏览开源 Tomato Harness 插件目录，安装能在 Tomato 中运行的插件。",
   searchPlaceholder: "搜索插件、作者或关键词",
   all: "全部",
   sortLabel: "排序",
@@ -70,17 +70,17 @@ var zh = {
   detailFailed: "读取说明失败",
   retryDetail: "重试",
   compatTomato: "兼容 Tomato",
-  compatDsh: "DSH 兼容",
+  compatDsh: "TOMATO 兼容",
   compatOther: "不是插件包",
   compatUnknown: "兼容性未知",
   compatCurrent: "兼容当前 TOMATO",
   runtimeVersion: "当前 TOMATO {version}",
-  dshRequirement: "需要 DeepSeek Harness {range}",
+  tomatoRequirement: "需要 Tomato Harness {range}",
   tomatoRequirement: "需要 Tomato {range}",
   peerRequirement: "需要 {peer} {range}",
   substitutedVersion: "已改用与当前 TOMATO {runtime} 兼容的 {selected}：{requested} 在这个版本上无法运行。",
-  compatNoticeTitle: "此插件来自 DeepSeek Harness，将通过兼容层安装",
-  compatNoticeBody: "安装时会下载该版本，把 @deepseek-ai/* 包名、dsh 清单字段与代码导入改写为 @tomato/*，再交给 Tomato 的安装器。兼容层只做命名与清单转换，不保证插件内部 API 完全一致，个别插件仍可能加载失败。",
+  compatNoticeTitle: "此插件来自 Tomato Harness，将通过兼容层安装",
+  compatNoticeBody: "安装时会下载该版本，把 @tomato/* 包名、tomato 清单字段与代码导入改写为 @tomato/*，再交给 Tomato 的安装器。兼容层只做命名与清单转换，不保证插件内部 API 完全一致，个别插件仍可能加载失败。",
   adaptFailedTitle: "兼容转换失败",
   adaptFailedBody: "转换这个版本时失败：{reason}",
   incompatibleTitle: "没有与该 TOMATO 兼容的版本",
@@ -169,7 +169,7 @@ var zh = {
 };
 var en = {
   tab: "General plugins",
-  lede: "Browse the open DeepSeek Harness plugin catalog and install plugins that run in Tomato.",
+  lede: "Browse the open Tomato Harness plugin catalog and install plugins that run in Tomato.",
   searchPlaceholder: "Search plugins, authors, or keywords",
   all: "All",
   sortLabel: "Sort",
@@ -204,17 +204,17 @@ var en = {
   detailFailed: "Could not read the description",
   retryDetail: "Retry",
   compatTomato: "Tomato compatible",
-  compatDsh: "DSH compatible",
+  compatDsh: "TOMATO compatible",
   compatOther: "Not a plugin package",
   compatUnknown: "Compatibility unknown",
   compatCurrent: "Compatible with this TOMATO",
   runtimeVersion: "Running TOMATO {version}",
-  dshRequirement: "Requires DeepSeek Harness {range}",
+  tomatoRequirement: "Requires Tomato Harness {range}",
   tomatoRequirement: "Requires Tomato {range}",
   peerRequirement: "Requires {peer} {range}",
   substitutedVersion: "Installed {selected} instead: {requested} cannot run on TOMATO {runtime}.",
-  compatNoticeTitle: "This DeepSeek Harness plugin installs through the compatibility layer",
-  compatNoticeBody: "Installation downloads this version, rewrites @deepseek-ai package names, dsh manifest fields, and code imports to @tomato names, then hands it to Tomato's installer. The layer converts names and metadata only; an individual plugin may still fail to load if its internals changed.",
+  compatNoticeTitle: "This Tomato Harness plugin installs through the compatibility layer",
+  compatNoticeBody: "Installation downloads this version, rewrites @tomato package names, tomato manifest fields, and code imports to @tomato names, then hands it to Tomato's installer. The layer converts names and metadata only; an individual plugin may still fail to load if its internals changed.",
   adaptFailedTitle: "Compatibility conversion failed",
   adaptFailedBody: "Converting this version failed: {reason}",
   incompatibleTitle: "No version compatible with this TOMATO",
@@ -459,7 +459,7 @@ function categorySections(plugins, categories, stars, language, limit, sort = "s
   }).sort((a, b) => b.total - a.total || new Intl.Collator(language).compare(a.title, b.title));
 }
 function targetsDeepSeek(version) {
-  return typeof version?.dsh === "string";
+  return typeof version?.tomato === "string";
 }
 function requirementOf(requirements) {
   const entries = Object.entries(requirements ?? {});
@@ -602,7 +602,7 @@ function createController(i18n) {
     set({
       checking: null,
       notice: {
-        kind: compat.class === "dsh" ? "compat" : "other",
+        kind: compat.class === "tomato" ? "compat" : "other",
         plugin,
         version: chosen,
         compat
@@ -969,7 +969,7 @@ function compatKey(compat) {
   switch (compat.data?.class) {
     case "tomato":
       return "compatTomato";
-    case "dsh":
+    case "tomato":
       return "compatDsh";
     case "other":
       return "compatOther";
@@ -982,7 +982,7 @@ function compatTone(compat) {
   switch (compat.data?.class) {
     case "tomato":
       return "success";
-    case "dsh":
+    case "tomato":
       return "info";
     case "other":
       return "neutral";
@@ -993,7 +993,7 @@ function compatTone(compat) {
 function VersionRow({ plugin, version, state, controller, install, t }) {
   const reg = installTarget(plugin, version);
   const date = formatDate(version.publishTimestamp, state.language);
-  const requirement = version.dsh !== void 0 ? t("dshRequirement", { range: version.dsh }) : version.tomato !== void 0 ? t("tomatoRequirement", { range: version.tomato }) : "";
+  const requirement = version.tomato !== void 0 ? t("tomatoRequirement", { range: version.tomato }) : version.tomato !== void 0 ? t("tomatoRequirement", { range: version.tomato }) : "";
   return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("li", { className: "tm-version", children: [
     /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "tm-versionMain", children: [
       /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "tm-versionName", children: version.version }),
@@ -1113,7 +1113,7 @@ function InstallNotice({ notice, t, onClose, onContinue, onAdapt }) {
   const { kind, plugin, compat, resolution } = notice;
   const title = t(TITLES[kind] ?? "unknownNoticeTitle");
   const body = kind === "compat" ? t("compatNoticeBody") : kind === "adapt-failed" ? t("adaptFailedBody", { reason: notice.reason ?? "" }) : kind === "other" ? t("otherNoticeBody") : kind === "incompatible" ? t("incompatibleBody", { runtime: resolution?.runtimeVersion ?? "", name: plugin.name, version: notice.version?.version ?? "" }) : t("unknownNoticeBody", { reason: notice.reason ?? "" });
-  const requirement = kind === "incompatible" ? requirementOf(resolution?.rejected?.[0]?.requirements) ?? void 0 : kind === "compat" && typeof compat?.dshRange === "string" ? { key: "dshRequirement", params: { range: compat.dshRange } } : void 0;
+  const requirement = kind === "incompatible" ? requirementOf(resolution?.rejected?.[0]?.requirements) ?? void 0 : kind === "compat" && typeof compat?.tomatoRange === "string" ? { key: "tomatoRequirement", params: { range: compat.tomatoRange } } : void 0;
   const repository = plugin.repository?.url;
   return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
     import_client_ui_primitives3.Modal,
@@ -1188,7 +1188,7 @@ function Browse({ state, controller, install, t }) {
         " · ",
         t("categories", { count: String(pills.length) }),
         " · ",
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("a", { className: "tm-source", href: "https://awesome-dsh-plugin.com", target: "_blank", rel: "noreferrer noopener", children: "awesome-dsh-plugin.com" })
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("a", { className: "tm-source", href: "https://awesome-tomato-plugin.com", target: "_blank", rel: "noreferrer noopener", children: "awesome-tomato-plugin.com" })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("p", { className: "tm-banner", children: t("banner") })
     ] }),

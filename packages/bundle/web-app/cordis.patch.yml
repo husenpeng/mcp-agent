@@ -418,6 +418,15 @@
     - id: deliverable-file-references
       name: '@tomato/deliverable-file-references'
 
+    # Pointer and keyboard context menus owned by one provider; every client
+    # plugin reaches them through the contextMenus service.
+    - id: ui-context-menu
+      name: '@tomato/client-ui-context-menu'
+
+    # File-level actions (reveal, open in app, drag) for transcript rows.
+    - id: ui-file-actions
+      name: '@tomato/client-ui-file-actions'
+
     # Turn tail: the changed-files card and delivery cards under each closing
     # assistant message. Remove this entry to turn the surface off; the tail
     # hole renders empty.
