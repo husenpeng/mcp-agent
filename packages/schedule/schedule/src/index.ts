@@ -19,7 +19,8 @@ import {
   ScheduleInputError, ScheduleId, MIN_EVERY_INTERVAL_SECONDS,
 } from './domain.ts'
 import type {
-  ScheduleCatalogEntry, ScheduleCreateRequest, ScheduleDeleteInactiveResult, ScheduleDeliveryHistoryRequest,
+  ScheduleCatalogEntry, ScheduleCreateRequest, ScheduleDeleteInactiveResult, ScheduleDeletionReply,
+  ScheduleDeliveryHistoryRequest, SchedulePauseReply, ScheduleSessionTaskRequest,
   ScheduleDeliveryHistoryResult, ScheduleEditRequest, ScheduleEditResult, ScheduleListRequest,
   ScheduleListResult, SchedulePatch, ScheduleRecord, ScheduleRunRequest, ScheduleRunResult, ScheduleSessionCreateSpec,
   ScheduleTarget, ScheduleTargetRequest, ScheduleViewRequest, ScheduleViewResult,
@@ -362,7 +363,13 @@ export class ScheduleService extends TypertRemoteService {
   @Remote('create')
   async remoteCreate(request: ScheduleCreateRequest, signal?: AbortSignal): Promise<ScheduleCatalogEntry> {
     try {
-      return await this.create(request, undefined, signal)
+      const bound = request.sessionId
+      if (bound === undefined) return await this.create(request, undefined, signal)
+      return await this.create(
+        request.target === undefined ? { ...request, target: { kind: 'session', sessionId: bound } } : request,
+        bound,
+        signal,
+      )
     } catch (error: unknown) {
       throwRemoteScheduleInput(error)
     }
@@ -438,6 +445,11 @@ export class ScheduleService extends TypertRemoteService {
    * @returns All tasks, active first, with target and execution metadata.
    */
   @Remote('catalog')
+  async remoteCatalog(): Promise<ScheduleCatalogEntry[]> {
+    return this.entries()
+  }
+
+  /** Read every Host task for in-process callers, without the phone-facing extras. */
   async catalog(): Promise<ScheduleCatalogEntry[]> {
     return this.entries()
   }
@@ -540,6 +552,44 @@ export class ScheduleService extends TypertRemoteService {
     } catch (error: unknown) {
       throwRemoteScheduleInput(error)
     }
+  }
+
+  /**
+   * Pause one task for a phone client; the rule survives and resumes later.
+   * @param request - Filed Session and task identity.
+   * @returns the resulting state, or a refusal code when the task is gone.
+   */
+  @Remote('pause')
+  async pause(request: ScheduleSessionTaskRequest): Promise<SchedulePauseReply> {
+    return await this.setPaused(request, true)
+  }
+
+  /**
+   * Resume one paused task for a phone client from its next future occurrence.
+   * @param request - Filed Session and task identity.
+   * @returns the resulting state, or a refusal code when the task is gone.
+   */
+  @Remote('resume')
+  async resume(request: ScheduleSessionTaskRequest): Promise<SchedulePauseReply> {
+    return await this.setPaused(request, false)
+  }
+
+  /** Store one pause state through the shared edit path. */
+  private async setPaused(request: ScheduleSessionTaskRequest, paused: boolean): Promise<SchedulePauseReply> {
+    const result = await this.edit({ id: request.id, action: 'update', patch: { active: !paused } })
+    if ('code' in result) return { id: request.id, updated: false, paused: !paused, code: result.code }
+    return { id: request.id, updated: true, paused }
+  }
+
+  /**
+   * Remove one task for a phone client.
+   * @param request - Filed Session and task identity.
+   * @returns whether a stored task was removed.
+   */
+  @Remote('delete')
+  async remoteDelete(request: ScheduleSessionTaskRequest): Promise<ScheduleDeletionReply> {
+    const result = await this.edit({ id: request.id, action: 'delete' })
+    return { deleted: !('code' in result) }
   }
 
   /**
@@ -698,6 +748,7 @@ export class ScheduleService extends TypertRemoteService {
       ...(task.lastDelivery === undefined ? {} : { lastDelivery: task.lastDelivery }),
     }
   }
+
 
   /**
    * Tell each involved Session's live Agent about one committed change, except the acting Session.

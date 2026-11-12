@@ -236,7 +236,7 @@ export function taskTable(ctx: Context): KvTable<ScheduleId, ScheduleTask> {
 /** Extract the authoritative rule from a management response for storage assertions. */
 export function recordOf(entry: ScheduleCatalogEntry): ScheduleRecord {
   const { target: _target, involvedSessionIds: _involved, status: _status, createdAt: _createdAt, updatedAt: _updatedAt,
-    lastDelivery: _lastDelivery,
+    lastDelivery: _lastDelivery, sessionId: _sessionId, paused: _paused,
     executionActive: _execution, deliveryFloorEndsAt: _floor, ...record } = entry
   return record
 }

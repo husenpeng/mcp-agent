@@ -229,6 +229,9 @@ export const VIEWER_ENDPOINT_CLASSES = {
   'schedule/deleteInactive': 'owner-only', // owner schedules
   'schedule/edit': 'owner-only', // owner schedules
   'schedule/history': 'owner-only', // owner schedules
+  'schedule/pause': 'owner-only', // owner schedules
+  'schedule/resume': 'owner-only', // owner schedules
+  'schedule/delete': 'owner-only', // owner schedules
   'schedule/list': 'owner-only', // owner schedules
   'schedule/run': 'owner-only', // owner schedules
   'schedule/view': 'owner-only', // owner schedules

@@ -38,6 +38,9 @@ export const RETIRED_BUNDLES: ReadonlySet<string> = new Set([
   // The Web composition mounts Schedule itself
   // ([upgrade guide](../../../../docs/upgrade-guide/v0.2.0-rc.2/schedule-bundle-retired/guide.md)).
   '@tomato/experimental-schedule-bundle',
+  // Replaced by the upstream agent-team capability; the fork profile that mounted
+  // this bundle is migrated to the shipped compositions instead.
+  '@tomato/experimental-agent-team-profile',
 ])
 
 /** The bundle list a `tomato plugin` init uses for a name with no shipped template. */

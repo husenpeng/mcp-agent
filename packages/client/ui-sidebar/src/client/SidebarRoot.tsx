@@ -62,6 +62,7 @@ type PanelRowProps =
   & Pick<InjectFace<SidebarRootInjected>, 'selectPanel' | 'trackEntryClick' | 'setPinned'>
   & { readonly unpinLabel: string; readonly unpinTooltip: string; readonly canUnpin: boolean }
   & PropsRenderFactories
+  & PropsRenderSlots<'sidebar.panellist.subnav'>
 
 /** Analytics category of an official panel; other panels are never reported. */
 function officialEntry(id: string): 'plugin' | 'cron' | undefined {
@@ -72,6 +73,7 @@ function officialEntry(id: string): 'plugin' | 'cron' | undefined {
 /** Each panel row subscribes only to its own selection state. */
 function PanelRow({
   id, label, wide, unpinLabel, unpinTooltip, canUnpin, usePanelInfo, selectPanel, setPinned, trackEntryClick, renderFactorySlot,
+  renderSlot,
 }: PanelRowProps) {
   const active = usePanelInfo(info => info.activePanelId === id)
   return (
@@ -98,6 +100,7 @@ function PanelRow({
           )}
         </button>
       </Tooltip>
+      {renderSlot('sidebar.panellist.subnav', { id, active, wide }, { only: id })}
       {wide && canUnpin && <Tooltip label={unpinTooltip} side="bottom" align="end" delayMs={500} portal>
         <button type="button" className={css.panelUnpin} aria-label={unpinLabel} onClick={(event) => {
           // Unpin is rendered only while this navigation also renders More.
@@ -423,6 +426,7 @@ export function SidebarRoot({
                   selectPanel={selectPanel}
                   trackEntryClick={trackEntryClick}
                   renderFactorySlot={renderFactorySlot}
+                  renderSlot={renderSlot}
                 />
               ))}
               {hasEntryActions && (

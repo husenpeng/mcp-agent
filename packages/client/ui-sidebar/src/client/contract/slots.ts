@@ -47,6 +47,8 @@ declare module '@tomato/client-ui-slots' {
     'sidebar.panellist': { kind: 'list'; scope: 'root'; owner: SidebarPanelIconOwnerProps }
     /** Rows of the panel list's More menu; the sidebar shows More only while this list has registrations. */
     'sidebar.panellist.actions': { kind: 'list'; scope: 'root'; owner: SidebarPanelActionsOwnerProps }
+    /** Nested navigation under one panel row; empty lists render nothing. */
+    'sidebar.panellist.subnav': { kind: 'list'; scope: 'root'; owner: SidebarPanelSubnavOwnerProps }
     /**
      * The workspace/session browsing region: section header, search, the
      * grouped/flat session list, and every workspace dialog. Declared by this
@@ -116,6 +118,16 @@ export interface SidebarPanelActionEntry {
   readonly pinned: boolean
   /** Whether this panel is selected, independently of its pin state. */
   readonly active?: boolean
+}
+
+/** Owner facts for the nested navigation a panel row may list below its launcher. */
+export interface SidebarPanelSubnavOwnerProps {
+  /** Main panel the row opens. */
+  readonly id: MainPanelId
+  /** Whether that panel is the selected one. */
+  readonly active: boolean
+  /** Whether the column is wide enough to nest a list under the row. */
+  readonly wide: boolean
 }
 
 /** Owner share of the panel list's More menu rows. */

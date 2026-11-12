@@ -27,6 +27,7 @@ import { RobotPage, type RobotReferenceOption } from './RobotPage.tsx'
 import { RobotRunPanel } from './RobotRunPanel.tsx'
 import type { RobotIdentity, RunDetailActions } from './RunDetail.tsx'
 import { RobotPanelIcon } from './RobotPanelIcon.tsx'
+import { RobotSubnav } from './RobotSubnav.tsx'
 import { retainRunSession } from './run-session.ts'
 import { robotModelCatalog, type RobotModelCatalog } from './model-catalog.ts'
 import { createRobotPageStore } from './store.ts'
@@ -175,4 +176,17 @@ export function apply(ctx: ClientContext): void {
     locale: NS,
     label: () => t('nav'),
   }, RobotPanelIcon))
+
+  ctx.slots.inject('sidebar.panellist.subnav', () => ctx.slots.register({
+    name: 'sidebar.panellist.subnav',
+    // The roster nests under its own panel launcher, so the list id is the
+    // panel id the sidebar filters this contribution by.
+    id: PANEL_ID,
+    locale: NS,
+    store,
+    inject: () => ({
+      hooks: { registry: ctx.robotRuns.state, robotPage: instance },
+      selectPanel: () => { ctx.layout.selectPanel(PANEL_ID) },
+    }),
+  }, RobotSubnav))
 }

@@ -413,12 +413,40 @@ export interface ScheduleDeliveryRecord extends ScheduleDeliveryReceipt {
 
 /** Bounded newest-first query over the saved deliveries of one task. */
 export interface ScheduleDeliveryHistoryRequest {
+  /** Session the caller files the task under; accepted for phone clients and ignored by the Host. */
+  readonly sessionId?: SessionId
   /** Task whose saved deliveries are read. */
   readonly id: ScheduleId
   /** Required safe-integer page size from 1 through 100. */
   readonly limit: number
   /** Message identity of the oldest entry in the previous page; excluded from this page. */
   readonly before?: MessageId
+}
+
+/** One task addressed through its filed Session by a phone client. */
+export interface ScheduleSessionTaskRequest {
+  /** Session the task is filed under. */
+  readonly sessionId: SessionId
+  /** Task identity. */
+  readonly id: ScheduleId
+}
+
+/** Pause or resume reply for a phone client. */
+export interface SchedulePauseReply {
+  /** Task identity. */
+  readonly id: ScheduleId
+  /** Whether the requested state is now stored. */
+  readonly updated: boolean
+  /** Stored paused state after the call. */
+  readonly paused: boolean
+  /** Stable refusal code when the task or Session was not found. */
+  readonly code?: string
+}
+
+/** Deletion reply for a phone client. */
+export interface ScheduleDeletionReply {
+  /** Whether a task was removed. */
+  readonly deleted: boolean
 }
 
 /** One newest-first page of saved deliveries. */
@@ -472,10 +500,16 @@ export type ScheduleCatalogEntry = ScheduleRecord & {
   readonly deliveryFloorEndsAt?: string
   /** Most recent durably acknowledged inbox delivery, when available. */
   readonly lastDelivery?: ScheduleDeliveryReceipt
+  /** Session this task is filed under for phone clients; the target Session or the creating Session. */
+  readonly sessionId?: SessionId
+  /** Whether the owner paused the task; a paused task keeps its rule. */
+  readonly paused?: boolean
 }
 
 /** Host task creation request. */
 export interface ScheduleCreateRequest {
+  /** Session the task is filed under by a phone caller; omitted for Agent and Host-wide callers. */
+  readonly sessionId?: SessionId
   /** Task name of at most 120 characters, non-empty after trimming. */
   readonly title: string
   /** Instruction sent at each occurrence; non-empty after trimming. */

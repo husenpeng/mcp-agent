@@ -96,6 +96,9 @@ const TASK_PROPERTIES = {
     status: { type: 'string', required: true, enum: ['active', 'paused', 'ended'] },
     updatedAt: { type: 'string' },
     lastDelivery: DELIVERY_SCHEMA,
+    // Phone-facing extras the catalog carries; omitted when no Session applies.
+    sessionId: { type: 'string' },
+    paused: { type: 'boolean' },
   },
 } as const
 
