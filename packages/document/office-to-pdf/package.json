@@ -65,6 +65,7 @@
     "@tomato/schemastery": "workspace:~",
     "@tomato/branded": "workspace:*",
     "@tomato/typert-protocol": "workspace:*",
-    "zod": "4.4.3"
+    "zod": "4.4.3",
+    "@deepseek-ai/libreoffice-kit": "0.2.3"
   }
 }

@@ -2,7 +2,6 @@ import { createServer, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { installProxyFromEnvironment } from '@tomato/http-proxy'
-import { customGuidance } from './guidance.ts'
 
 let seen: string[] = []
 let proxy: Server
@@ -35,7 +34,7 @@ async function observe(run: () => Promise<unknown>): Promise<string[]> {
 import { DeepSeekSearchApiProvider } from '../src/search.ts'
 describe('deepseek search api egress', () => {
   it('goes through the proxy', async () => {
-    const p = new DeepSeekSearchApiProvider(() => ({ auth: { sources: [{ kind: 'api-key', baseURL: 'http://dsk-probe.invalid/api/v1/tools', key: 'probe' }] }, count: 10, requestsPerSecond: 5, guidance: customGuidance('search') }))
+    const p = new DeepSeekSearchApiProvider(() => ({ apiKey: 'probe', baseURL: 'http://dsk-probe.invalid/api/v1/tools', count: 10 }))
     expect(await observe(() => p.search({ query: 'probe' }))).toEqual(['REQ http://dsk-probe.invalid/api/v1/tools/search'])
   })
 })

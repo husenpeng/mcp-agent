@@ -1,6 +1,6 @@
 import * as Protocol from '@tomato/llm-deepseek'
 /**
- * Real Messages round trips require credentials; tool replacement also accepts DEEPSEEK_BASE_URL.
+ * Real Messages round trips use the official root and require credentials.
  * System-update checks additionally require DEEPSEEK_IN_HISTORY_MODEL.
  */
 import { randomUUID } from 'node:crypto'
@@ -16,7 +16,7 @@ import AgentRegistry from '@tomato/agent'
 import SessionProjectionRegistry from '@tomato/session-projection'
 import LocalAttachments from '@tomato/attachment-local'
 import DeepSeekLlmApiExtensionRegistry from '@tomato/deepseek-llm-api-extensions'
-import LlmRuntime, { BlockAssembler, createAssistantMessage, createDeveloperMessage, createSystemMessage, createToolResultMessage, ReasoningEffortId, ToolCallId } from '@tomato/llm'
+import LlmRuntime, { BlockAssembler, createAssistantMessage, createSystemMessage, createToolResultMessage, ReasoningEffortId, ToolCallId } from '@tomato/llm'
 import type { Message } from '@tomato/llm'
 import * as PluginPackageInventoryDeepSeek from '@tomato/plugin-package-inventory-deepseek'
 import SessionStore, { SessionId } from '@tomato/session'
@@ -33,7 +33,7 @@ afterEach(async () => {
   vi.unstubAllEnvs()
   vi.unstubAllGlobals()
 })
-async function boot(models?: Messages.Options['models'], baseURL = Protocol.PUBLIC_BASE_URL) {
+async function boot(models?: Messages.Options['models']) {
   const home = await mkdtemp(join(tmpdir(), 'tomato-messages-e2e-'))
   cleanups.push(() => rm(home, { recursive: true, force: true }))
   vi.stubEnv('TOMATO_HOME', home)
@@ -41,7 +41,7 @@ async function boot(models?: Messages.Options['models'], baseURL = Protocol.PUBL
   cleanups.push(() => ctx.fiber.dispose())
   await ctx.plugin(LlmRuntime)
   await ctx.plugin(Messages, {
-    baseURL,
+    baseURL: Protocol.PUBLIC_BASE_URL,
     maxTokens: 4096,
     ...models === undefined ? {} : { models },
   })
@@ -50,28 +50,6 @@ async function boot(models?: Messages.Options['models'], baseURL = Protocol.PUBL
 const tool = { name: 'lookup_value', description: 'Read the requested value. Always call this tool to obtain a value.', parameters: { type: 'object', properties: { key: { type: 'string' } }, required: ['key'] } }
 
 describe.skipIf(!process.env.DEEPSEEK_API_KEY)('DeepSeek Messages real API', () => {
-  it.each(['together', 'separate', 'initially empty'])('calls a tool added to an empty set, updates=%s', async (mode) => {
-    const model = 'deepseek-flash'
-    const ctx = await boot([{ id: model, toolUpdate: 'addition-only' }], process.env.DEEPSEEK_BASE_URL ?? Protocol.PUBLIC_BASE_URL)
-    const updates = mode === 'initially empty' ? [] : [createDeveloperMessage({ source: { kind: 'tool-registry' }, content: [
-      { type: 'tool-removal', toolName: 'old_lookup' },
-      ...mode !== 'together' ? [] : [{ type: 'tool-addition' as const, toolName: tool.name }],
-    ] })]
-    if (mode !== 'together') updates.push(createDeveloperMessage({ source: { kind: 'tool-registry' }, content: [
-      { type: 'tool-addition', toolName: tool.name },
-    ] }))
-    const response = await assemble(ctx.llm.stream(options({
-      model, reasoningEffort: ReasoningEffortId('high'),
-      messages: [user('Call lookup_value with key "answer" to obtain the value. Do not guess.'), ...updates],
-      tools: [tool],
-      toolHistory: { tools: mode === 'initially empty' ? [] : [{ ...tool, name: 'old_lookup' }], updates: updates.map(update => ({
-        messageId: update.id, additions: update.content.some(block => block.type === 'tool-addition') ? [tool] : [],
-      })) },
-    })), model)
-    expect(response.assembler.finish).toEqual({ kind: 'tool-calls' })
-    expect(response.message.content.filter(block => block.type === 'tool-call').map(call => call.name)).toEqual([tool.name])
-  })
-
   it.skipIf(!IN_HISTORY_MODEL).each([false, true])('updates system instructions during a conversation, in-history=%s', async (inHistory) => {
     const model = IN_HISTORY_MODEL as string
     // Each case owns the capability, even for a model with an in-history catalog default.

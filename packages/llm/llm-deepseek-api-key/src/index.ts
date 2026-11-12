@@ -1,12 +1,10 @@
 /** API-key authentication, credential-gated discovery, and the official model listing for the official DeepSeek route. */
 import type { Context } from '@tomato/cordis'
-import { APP_IDENTITY, LlmError } from '@tomato/llm'
-import type { LlmModelBadge } from '@tomato/llm'
+import { APP_IDENTITY, assertUsableApiKey, LlmError } from '@tomato/llm'
 import type {} from '@tomato/cordis-plugin-loader'
 import { launchEnvironmentOf } from '@tomato/launch-environment'
 import {
-  catalogModelInfo, createModelListingCache, refuseListedModel, registerDeepSeekProvider, requestModelListing, resolveListedCatalog,
-  resolveDeepSeekApiKey,
+  catalogModelInfo, ModelListingCache, refuseListedModel, registerDeepSeekProvider, requestModelListing, resolveListedCatalog,
 } from '@tomato/llm-deepseek'
 import type { CatalogRefusal, DeepSeekCatalogModel, ListingView, ModelListing } from '@tomato/llm-deepseek'
 import { Config, plainOptions, resolveAdapterOptions } from './config.ts'
@@ -27,8 +25,6 @@ interface OfficialConnection extends ResolvedDeepSeekOptions {
   readonly offered: readonly DeepSeekCatalogModel[]
   /** Listed models refused before network I/O, by id. */
   readonly refusals: ReadonlyMap<string, CatalogRefusal>
-  /** Listed badges of offered models, by id; empty without a followed listing. */
-  readonly badges: ReadonlyMap<string, LlmModelBadge>
 }
 
 export function apply(ctx: Context, config: Config): void {
@@ -36,8 +32,14 @@ export function apply(ctx: Context, config: Config): void {
   options()
   const resolveApiKey = async (connection: ResolvedDeepSeekOptions): Promise<string> => {
     const ref = connection.apiKeyEnv
-    const key = await resolveDeepSeekApiKey(ctx, ref)
-    if (key !== undefined) return key
+    const credentials = ctx.get('credentials')
+    if (credentials !== undefined) {
+      const hit = await credentials.resolve(ref)
+      if (hit !== undefined) return assertUsableApiKey(hit.value, 'llm-deepseek', ref)
+    } else {
+      const ambient = launchEnvironmentOf(ctx).get(ref)
+      if (ambient !== undefined && ambient.value.length > 0) return assertUsableApiKey(ambient.value, 'llm-deepseek', ref)
+    }
     throw new LlmError(
       `llm-deepseek: no API key for provider route "${PROVIDER}"; store ${ref} through the credentials`
       + ` service (the web Models page writes it), or export ${ref} in the launching environment`,
@@ -52,15 +54,18 @@ export function apply(ctx: Context, config: Config): void {
       throw error
     }
   }
-  const listings = createModelListingCache(ctx, name, PROVIDER, {
-    settings: () => options().listing,
+  const listings = new ModelListingCache({
     credential: async () => presentApiKey(options()),
     load: (url, apiKey, signal) => requestModelListing(url, { 'x-api-key': apiKey }, signal),
+    now: () => Date.now(),
+    // ACP reserves stdout for protocol messages, including during successful catalog loads.
+    info: (message) => { console.error(LOG_TAG, message) },
+    warn: (message) => { console.warn(LOG_TAG, message) },
   })
   let reportedListing: ModelListing | undefined
-  /** Resolve the catalog, reporting each listing's hidden entries and dropped badges once. */
+  /** Resolve the catalog of one operation, reporting each listing's hidden entries once. */
   const connectionOf = (connection: ResolvedDeepSeekOptions, view: ListingView | undefined): OfficialConnection => {
-    if (view === undefined) return { ...connection, offered: connection.models, refusals: new Map(), badges: new Map() }
+    if (view === undefined) return { ...connection, offered: connection.models, refusals: new Map() }
     const catalog = resolveListedCatalog({
       listing: view.listing?.entries,
       supported: connection.models,
@@ -72,7 +77,7 @@ export function apply(ctx: Context, config: Config): void {
       reportedListing = view.listing
       for (const problem of catalog.problems) console.warn(LOG_TAG, problem)
     }
-    return { ...connection, models: catalog.resolution, offered: catalog.offered, refusals: catalog.refusals, badges: catalog.badges }
+    return { ...connection, models: catalog.resolution, offered: catalog.offered, refusals: catalog.refusals }
   }
   ctx.llm.registerConfigurableProviders([
     { provider: PROVIDER, displayName: 'DeepSeek', settingsNs: ctx.fiber.entry?.options.id ?? name, settingsPath: [] },
@@ -105,9 +110,7 @@ export function apply(ctx: Context, config: Config): void {
         return connection.models.map(model => catalogModelInfo(provider, model))
       }
       const view = await listings.view(connection.listing)
-      if (!view.authenticated) return []
-      const { offered, badges } = connectionOf(connection, view)
-      return offered.map(model => catalogModelInfo(provider, model, badges.get(model.id)))
+      return view.authenticated ? connectionOf(connection, view).offered.map(model => catalogModelInfo(provider, model)) : []
     },
   })
   // Starting or stopping to follow the listing discards it, so restoring the built-in
@@ -121,4 +124,5 @@ export function apply(ctx: Context, config: Config): void {
     if (next !== following) listings.invalidate()
     following = next
   })
+  ctx.effect(() => () => { listings.dispose() }, 'llm-deepseek-api-key: model listing')
 }

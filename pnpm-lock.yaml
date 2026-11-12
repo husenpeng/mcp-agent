@@ -640,9 +640,6 @@ importers:
       '@tomato/llm-deepseek':
         specifier: workspace:*
         version: link:../../packages/llm/llm-deepseek
-      '@tomato/llm-deepseek-account':
-        specifier: workspace:*
-        version: link:../../packages/llm/llm-deepseek-account
       '@tomato/llm-deepseek-api-key':
         specifier: workspace:*
         version: link:../../packages/llm/llm-deepseek-api-key
@@ -809,9 +806,6 @@ importers:
       '@tomato/client-ui-theme':
         specifier: workspace:*
         version: link:../../packages/client/ui-theme
-      '@tomato/deepseek-account':
-        specifier: workspace:*
-        version: link:../../packages/credentials/deepseek-account
       '@tomato/home-paths':
         specifier: workspace:*
         version: link:../../packages/util/home-paths
@@ -911,9 +905,6 @@ importers:
       '@tomato/cordis':
         specifier: workspace:~
         version: link:../../vendor/cordis
-      '@tomato/deepseek-account':
-        specifier: workspace:*
-        version: link:../../packages/credentials/deepseek-account
       '@tomato/host-webserver':
         specifier: workspace:*
         version: link:../../packages/host/webserver
@@ -1638,9 +1629,6 @@ importers:
       '@tomato/credentials':
         specifier: workspace:*
         version: link:../../credentials/credentials
-      '@tomato/deepseek-account':
-        specifier: workspace:*
-        version: link:../../credentials/deepseek-account
       '@tomato/file-reference':
         specifier: workspace:*
         version: link:../../context/file-reference
@@ -2638,9 +2626,6 @@ importers:
       '@tomato/credentials-local':
         specifier: workspace:*
         version: link:../../credentials/credentials-local
-      '@tomato/deepseek-account':
-        specifier: workspace:*
-        version: link:../../credentials/deepseek-account
       '@tomato/deepseek-llm-api-extensions':
         specifier: workspace:*
         version: link:../../llm/deepseek-llm-api-extensions
@@ -2668,9 +2653,6 @@ importers:
       '@tomato/llm':
         specifier: workspace:*
         version: link:../../llm/llm
-      '@tomato/llm-deepseek-account':
-        specifier: workspace:*
-        version: link:../../llm/llm-deepseek-account
       '@tomato/llm-deepseek-api-key':
         specifier: workspace:*
         version: link:../../llm/llm-deepseek-api-key
@@ -3975,9 +3957,6 @@ importers:
       '@tomato/cordis-plugin-loader':
         specifier: workspace:~
         version: link:../../../vendor/loader
-      '@tomato/deepseek-account':
-        specifier: workspace:*
-        version: link:../../credentials/deepseek-account
       '@tomato/host-product-telemetry-otel':
         specifier: workspace:*
         version: link:../../host/product-telemetry-otel
@@ -4100,9 +4079,6 @@ importers:
       '@tomato/cordis':
         specifier: workspace:~
         version: link:../../../vendor/cordis
-      '@tomato/deepseek-account':
-        specifier: workspace:*
-        version: link:../../credentials/deepseek-account
       '@tomato/host-webserver':
         specifier: workspace:*
         version: link:../../host/webserver
@@ -6320,9 +6296,6 @@ importers:
       '@tomato/cordis':
         specifier: workspace:~
         version: link:../../../vendor/cordis
-      '@tomato/deepseek-account':
-        specifier: workspace:*
-        version: link:../../credentials/deepseek-account
       '@tomato/host-webserver':
         specifier: workspace:*
         version: link:../../host/webserver
@@ -8956,43 +8929,6 @@ importers:
         specifier: workspace:*
         version: link:../../util/launch-environment
 
-  packages/credentials/deepseek-account:
-    dependencies:
-      '@tomato/schemastery':
-        specifier: link:../../../vendor/schemastery
-        version: link:../../../vendor/schemastery
-      zod:
-        specifier: 4.6.6
-        version: 4.6.6
-    devDependencies:
-      '@tomato/agent':
-        specifier: workspace:*
-        version: link:../../core/agent
-      '@tomato/authorization':
-        specifier: workspace:*
-        version: link:../authorization
-      '@tomato/branded':
-        specifier: workspace:*
-        version: link:../../util/branded
-      '@tomato/cordis':
-        specifier: workspace:~
-        version: link:../../../vendor/cordis
-      '@tomato/credentials':
-        specifier: workspace:*
-        version: link:../credentials
-      '@tomato/host-webserver':
-        specifier: workspace:*
-        version: link:../../host/webserver
-      '@tomato/llm':
-        specifier: workspace:*
-        version: link:../../llm/llm
-      '@tomato/typert-protocol':
-        specifier: workspace:*
-        version: link:../../typert/protocol
-      '@tomato/util-values':
-        specifier: workspace:*
-        version: link:../../util/values
-
   packages/deliverables/deliverable-file-references:
     devDependencies:
       '@tomato/cordis':
@@ -9123,6 +9059,9 @@ importers:
 
   packages/document/office-kit:
     dependencies:
+      '@deepseek-ai/libreoffice-kit':
+        specifier: 0.2.3
+        version: 0.2.3
       '@tomato/branded':
         specifier: workspace:*
         version: link:../../util/branded
@@ -9160,6 +9099,9 @@ importers:
 
   packages/document/office-to-pdf:
     dependencies:
+      '@deepseek-ai/libreoffice-kit':
+        specifier: 0.2.3
+        version: 0.2.3
       '@tomato/branded':
         specifier: workspace:*
         version: link:../../util/branded
@@ -9316,80 +9258,6 @@ importers:
       '@tomato/util-values':
         specifier: workspace:*
         version: link:../../util/values
-
-  packages/experimental/agent-team:
-    dependencies:
-      '@tomato/branded':
-        specifier: workspace:*
-        version: link:../../util/branded
-      '@tomato/schemastery':
-        specifier: link:../../../vendor/schemastery
-        version: link:../../../vendor/schemastery
-      zod:
-        specifier: 4.6.6
-        version: 4.6.6
-    devDependencies:
-      '@tomato/agent':
-        specifier: workspace:*
-        version: link:../../core/agent
-      '@tomato/agent-loop':
-        specifier: workspace:*
-        version: link:../../core/agent-loop
-      '@tomato/agent-loop-testkit':
-        specifier: workspace:*
-        version: link:../../test-support/agent-loop-testkit
-      '@tomato/cordis':
-        specifier: workspace:~
-        version: link:../../../vendor/cordis
-      '@tomato/llm':
-        specifier: workspace:*
-        version: link:../../llm/llm
-      '@tomato/session':
-        specifier: workspace:*
-        version: link:../../core/session
-      '@tomato/session-persistence':
-        specifier: workspace:*
-        version: link:../../session/session-persistence
-      '@tomato/session-persistence-jsonl':
-        specifier: workspace:*
-        version: link:../../session/session-persistence-jsonl
-      '@tomato/session-projection':
-        specifier: workspace:*
-        version: link:../../session/session-projection
-      '@tomato/session-query':
-        specifier: workspace:*
-        version: link:../../session-query/session-query
-      '@tomato/subagent':
-        specifier: workspace:*
-        version: link:../../subagent/subagent
-      '@tomato/subagent-fork-in-process':
-        specifier: workspace:*
-        version: link:../../subagent/subagent-fork-in-process
-      '@tomato/subagent-spawn-in-process':
-        specifier: workspace:*
-        version: link:../../subagent/subagent-spawn-in-process
-
-  packages/experimental/agent-team-profile:
-    dependencies:
-      '@tomato/experimental-agent-team':
-        specifier: workspace:*
-        version: link:../agent-team
-      '@tomato/experimental-client-ui-agent-team':
-        specifier: workspace:*
-        version: link:../client-ui-agent-team
-      '@tomato/experimental-tool-agent-team':
-        specifier: workspace:*
-        version: link:../tool-agent-team
-    devDependencies:
-      '@tomato/cordis':
-        specifier: workspace:~
-        version: link:../../../vendor/cordis
-      '@tomato/cordis-plugin-include':
-        specifier: workspace:~
-        version: link:../../../vendor/include
-      js-yaml:
-        specifier: ^4.3.2
-        version: 4.3.2
 
   packages/experimental/api-speech-to-text:
     dependencies:
@@ -9948,60 +9816,6 @@ importers:
       react:
         specifier: ^18.2.0
         version: 18.3.1
-
-  packages/experimental/client-ui-agent-team:
-    devDependencies:
-      '@testing-library/react':
-        specifier: ^16.3.3
-        version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@tomato/agent':
-        specifier: workspace:*
-        version: link:../../core/agent
-      '@tomato/api-session-controller':
-        specifier: workspace:*
-        version: link:../../api/session-controller
-      '@tomato/client-locale':
-        specifier: workspace:*
-        version: link:../../client/locale
-      '@tomato/client-store':
-        specifier: workspace:*
-        version: link:../../client/store
-      '@tomato/client-test-runtime':
-        specifier: workspace:*
-        version: link:../../test-support/client-runtime
-      '@tomato/client-ui-conversation':
-        specifier: workspace:*
-        version: link:../../client/ui-conversation
-      '@tomato/client-ui-primitives':
-        specifier: workspace:*
-        version: link:../../client/ui-primitives
-      '@tomato/client-ui-renderer':
-        specifier: workspace:*
-        version: link:../../client/ui-renderer
-      '@tomato/client-ui-session':
-        specifier: workspace:*
-        version: link:../../client/ui-session
-      '@tomato/client-ui-slots':
-        specifier: workspace:*
-        version: link:../../client/ui-slots
-      '@tomato/client-ui-workspace':
-        specifier: workspace:*
-        version: link:../../client/ui-workspace
-      '@tomato/cordis':
-        specifier: workspace:~
-        version: link:../../../vendor/cordis
-      '@tomato/experimental-agent-team':
-        specifier: workspace:*
-        version: link:../agent-team
-      '@tomato/session':
-        specifier: workspace:*
-        version: link:../../core/session
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
 
   packages/experimental/client-ui-claude-code-mods:
     devDependencies:
@@ -13156,70 +12970,6 @@ importers:
         specifier: workspace:*
         version: link:../../session/working-directory
 
-  packages/experimental/tool-agent-team:
-    dependencies:
-      '@tomato/schemastery':
-        specifier: link:../../../vendor/schemastery
-        version: link:../../../vendor/schemastery
-    devDependencies:
-      '@tomato/agent':
-        specifier: workspace:*
-        version: link:../../core/agent
-      '@tomato/agent-loop':
-        specifier: workspace:*
-        version: link:../../core/agent-loop
-      '@tomato/agent-loop-testkit':
-        specifier: workspace:*
-        version: link:../../test-support/agent-loop-testkit
-      '@tomato/cordis':
-        specifier: workspace:~
-        version: link:../../../vendor/cordis
-      '@tomato/experimental-agent-team':
-        specifier: workspace:*
-        version: link:../agent-team
-      '@tomato/llm':
-        specifier: workspace:*
-        version: link:../../llm/llm
-      '@tomato/llm-deepseek':
-        specifier: workspace:*
-        version: link:../../llm/llm-deepseek
-      '@tomato/scope':
-        specifier: workspace:*
-        version: link:../../core/scope
-      '@tomato/session':
-        specifier: workspace:*
-        version: link:../../core/session
-      '@tomato/session-persistence-jsonl':
-        specifier: workspace:*
-        version: link:../../session/session-persistence-jsonl
-      '@tomato/session-projection':
-        specifier: workspace:*
-        version: link:../../session/session-projection
-      '@tomato/session-query':
-        specifier: workspace:*
-        version: link:../../session-query/session-query
-      '@tomato/subagent':
-        specifier: workspace:*
-        version: link:../../subagent/subagent
-      '@tomato/subagent-fork-in-process':
-        specifier: workspace:*
-        version: link:../../subagent/subagent-fork-in-process
-      '@tomato/subagent-spawn-in-process':
-        specifier: workspace:*
-        version: link:../../subagent/subagent-spawn-in-process
-      '@tomato/system-prompt':
-        specifier: workspace:*
-        version: link:../../core/system-prompt
-      '@tomato/tool-subagent-control':
-        specifier: workspace:*
-        version: link:../../subagent/tool-subagent-control
-      '@tomato/tool-testkit':
-        specifier: workspace:*
-        version: link:../../test-support/tool-testkit
-      '@tomato/tools':
-        specifier: workspace:*
-        version: link:../../core/tools
-
   packages/experimental/tool-memory:
     dependencies:
       '@tomato/schemastery':
@@ -13637,9 +13387,6 @@ importers:
       '@tomato/credentials':
         specifier: workspace:*
         version: link:../../credentials/credentials
-      '@tomato/deepseek-account':
-        specifier: workspace:*
-        version: link:../../credentials/deepseek-account
       '@tomato/deepseek-llm-api-extensions':
         specifier: workspace:*
         version: link:../../llm/deepseek-llm-api-extensions
@@ -13652,9 +13399,6 @@ importers:
       '@tomato/llm-deepseek':
         specifier: workspace:*
         version: link:../../llm/llm-deepseek
-      '@tomato/llm-deepseek-account':
-        specifier: workspace:*
-        version: link:../../llm/llm-deepseek-account
       '@tomato/llm-deepseek-api-key':
         specifier: workspace:*
         version: link:../../llm/llm-deepseek-api-key
@@ -15364,6 +15108,9 @@ importers:
         specifier: ^7.8.5
         version: 7.8.6
     devDependencies:
+      '@tomato/account-service':
+        specifier: workspace:*
+        version: link:../../credentials/account-service
       '@tomato/agent':
         specifier: workspace:*
         version: link:../../core/agent
@@ -15397,9 +15144,6 @@ importers:
       '@tomato/credentials-local':
         specifier: workspace:*
         version: link:../../credentials/credentials-local
-      '@tomato/deepseek-account':
-        specifier: workspace:*
-        version: link:../../credentials/deepseek-account
       '@tomato/deepseek-llm-api-extensions':
         specifier: workspace:*
         version: link:../deepseek-llm-api-extensions
@@ -15418,9 +15162,6 @@ importers:
       '@tomato/llm':
         specifier: workspace:*
         version: link:../llm
-      '@tomato/llm-deepseek-account':
-        specifier: workspace:*
-        version: link:../llm-deepseek-account
       '@tomato/llm-deepseek-api-key':
         specifier: workspace:*
         version: link:../llm-deepseek-api-key
@@ -15457,40 +15198,6 @@ importers:
       '@types/semver':
         specifier: ^7.8.0
         version: 7.8.0
-
-  packages/llm/llm-deepseek-account:
-    dependencies:
-      '@tomato/cosmokit':
-        specifier: link:../../../vendor/cosmokit
-        version: link:../../../vendor/cosmokit
-      '@tomato/schemastery':
-        specifier: link:../../../vendor/schemastery
-        version: link:../../../vendor/schemastery
-    devDependencies:
-      '@tomato/cordis':
-        specifier: workspace:~
-        version: link:../../../vendor/cordis
-      '@tomato/cordis-plugin-loader':
-        specifier: workspace:~
-        version: link:../../../vendor/loader
-      '@tomato/deepseek-account':
-        specifier: workspace:*
-        version: link:../../credentials/deepseek-account
-      '@tomato/launch-environment':
-        specifier: workspace:*
-        version: link:../../util/launch-environment
-      '@tomato/llm':
-        specifier: workspace:*
-        version: link:../llm
-      '@tomato/llm-deepseek':
-        specifier: workspace:*
-        version: link:../llm-deepseek
-      '@tomato/llm-deepseek-api-key':
-        specifier: workspace:*
-        version: link:../llm-deepseek-api-key
-      '@tomato/timeout':
-        specifier: workspace:*
-        version: link:../../util/timeout
 
   packages/llm/llm-deepseek-api-key:
     dependencies:
@@ -20347,42 +20054,21 @@ importers:
       '@tomato/agent':
         specifier: workspace:*
         version: link:../../core/agent
-      '@tomato/app-boot':
-        specifier: workspace:*
-        version: link:../../boot/app-boot
       '@tomato/cordis':
         specifier: workspace:~
         version: link:../../../vendor/cordis
-      '@tomato/cordis-plugin-loader':
-        specifier: workspace:~
-        version: link:../../../vendor/loader
       '@tomato/credentials':
         specifier: workspace:*
         version: link:../../credentials/credentials
       '@tomato/credentials-local':
         specifier: workspace:*
         version: link:../../credentials/credentials-local
-      '@tomato/deepseek-account':
-        specifier: workspace:*
-        version: link:../../credentials/deepseek-account
       '@tomato/http-proxy':
         specifier: workspace:*
         version: link:../../util/http-proxy
       '@tomato/launch-environment':
         specifier: workspace:*
         version: link:../../util/launch-environment
-      '@tomato/llm':
-        specifier: workspace:*
-        version: link:../../llm/llm
-      '@tomato/llm-deepseek':
-        specifier: workspace:*
-        version: link:../../llm/llm-deepseek
-      '@tomato/llm-deepseek-account':
-        specifier: workspace:*
-        version: link:../../llm/llm-deepseek-account
-      '@tomato/llm-deepseek-api-key':
-        specifier: workspace:*
-        version: link:../../llm/llm-deepseek-api-key
       '@tomato/session':
         specifier: workspace:*
         version: link:../../core/session
@@ -20465,9 +20151,6 @@ importers:
       '@tomato/credentials-local':
         specifier: workspace:*
         version: link:../../credentials/credentials-local
-      '@tomato/deepseek-account':
-        specifier: workspace:*
-        version: link:../../credentials/deepseek-account
       '@tomato/http-proxy':
         specifier: workspace:*
         version: link:../../util/http-proxy
@@ -21753,6 +21436,39 @@ packages:
   '@csstools/css-tokenizer@4.0.2':
     resolution: {integrity: sha512-OoKoR0f76dCY666JlcbhmVTs2drYj1GUXZTYTcbUgJjh9Nv41aFfZ21bPQTERm5+L5cBDo466NltB2lplS5GBw==}
     engines: {node: '>=20.19.0'}
+
+  '@deepseek-ai/libreoffice-kit-darwin-arm64@0.2.3':
+    resolution: {integrity: sha512-0dfiEQR6SqAQjh9hxyY8x77Sj3r+AGC+Xn2A/zF+bag9g40leYPL/c2UirSqYR6xUwE9a/5YgWFIHjw1eOh+3A==}
+    engines: {node: '>=22.19.0'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@deepseek-ai/libreoffice-kit-darwin-x64@0.2.3':
+    resolution: {integrity: sha512-vq0Fp7MTlZwV/yxLpmvQmx1uiiozLTjjODmgrOa9WC5WhrSQYZ+M1OiQKI0qbPAjpMZVBzcZvxlAGnDiTrG4jA==}
+    engines: {node: '>=22.19.0'}
+    cpu: [x64]
+    os: [darwin]
+
+  '@deepseek-ai/libreoffice-kit-wasm@0.2.3':
+    resolution: {integrity: sha512-g81zHATxolq/HKRglfrSO2gQgj4RZ//nJo98BcTIs9l8GPU4STNcWwplx5CE6Iy/20lZFbwT9jvGw1Key9xZmg==}
+    engines: {node: '>=22.19.0'}
+
+  '@deepseek-ai/libreoffice-kit-win32-arm64@0.2.3':
+    resolution: {integrity: sha512-cAQ0hRZ/8jt8Dudn7vYdpd5OeWpg0AOHzXqgn6UkkPXmQt1/+HCdc4MZbAM927I+c3lwJyLN1fyKIMW5iXCYpg==}
+    engines: {node: '>=22.19.0'}
+    cpu: [arm64]
+    os: [win32]
+
+  '@deepseek-ai/libreoffice-kit-win32-x64@0.2.3':
+    resolution: {integrity: sha512-GMW+m/09Ts0m4gRUjIckeRN48OVYgJI7aLG1uoUHcG3LRPDsKnsyeRo+BSQn8rh4CmWtJg5c6qtl0uSW7b9zEg==}
+    engines: {node: '>=22.19.0'}
+    cpu: [x64]
+    os: [win32]
+
+  '@deepseek-ai/libreoffice-kit@0.2.3':
+    resolution: {integrity: sha512-MbpucYPrZpeec/smy7u8Z066JeQU6lMVK6A1oysUv1R/OATDvtlVmrsIlfcIz6bVbfJVpgregIK86dOdat9qdA==}
+    engines: {node: '>=22.19.0'}
+    hasBin: true
 
   '@dimforge/rapier3d-compat@0.12.0':
     resolution: {integrity: sha512-uekIGetywIgopfD97oDL5PfeezkFpNhwlzlaEYNOA0N6ghdsOvh/HYjSMek5Q2O1PYvRSDFcqFVJl4r4ZBwOow==}
@@ -23653,6 +23369,9 @@ packages:
     peerDependencies:
       eslint: ^9.0.0 || ^10.0.0
 
+  '@swc/helpers@0.5.24':
+    resolution: {integrity: sha512-6tcXo4kA8HgGO7AVmawB57RYi/piBPYVHVcO6dXjX+SZw8GoHmi262sp4v2Ha2kNP9Cx84qei27yT+fjS1lxgg==}
+
   '@szmarczak/http-timer@4.0.6':
     resolution: {integrity: sha512-4BAffykYOgO+5nzBWYwE3W90sBgLJoUPRWWcL8wlyiM8IB8ipJz3UMJ9KXQd1RKQXpKp8Tutn80HZtWsu2u76w==}
     engines: {node: '>=10'}
@@ -24761,6 +24480,9 @@ packages:
     resolution: {integrity: sha512-YovQ3rzhaLMIrDjNDMkNS01tea93qhEhG5xy8f6+R0l+dw3Ki+5sCoIoI942iuLZTHWogWktgwVDhU09iNEimQ==}
     engines: {node: 20 || >=22}
 
+  brotli@1.3.3:
+    resolution: {integrity: sha512-oTKjJdShmDuGW94SyyaoQvAjf30dZaHnjJ8uAF+u2/vGJkJbJPJAT1gDiOJP5v1Zb6f9KEyW/1HpuaWIXtGHPg==}
+
   browserslist@4.29.5:
     resolution: {integrity: sha512-khTmKu5NGYTotqcYo8Bew2k4RAE9PuXRSFRXG2lQBrCEQHyeQ/vX6gKMxfokwywBsLiXZMnHsmWMG1pnO8J7uQ==}
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
@@ -24951,6 +24673,10 @@ packages:
 
   clone-response@1.0.3:
     resolution: {integrity: sha512-ROoL94jJH2dUVML2Y/5PEDNaSHgeOdSDicUyS7izcF63G6sTc/FTjLub4b8Il9S8S0beOfYt0TaA5qvFK+w0wA==}
+
+  clone@2.1.2:
+    resolution: {integrity: sha512-3Pe/CF1Nn94hyhIYpjtiLhdCoEoz0DqQ+988E9gmeEdQZlojxnOb74wctFyuwWQHzqyf9X7C7MG8juUpqBJT8w==}
+    engines: {node: '>=0.8'}
 
   clsx@2.1.1:
     resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
@@ -25373,6 +25099,9 @@ packages:
   devlop@1.1.0:
     resolution: {integrity: sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA==}
 
+  dfa@1.2.0:
+    resolution: {integrity: sha512-ED3jP8saaweFTjeGX8HQPjeC1YYyZs98jGNZx6IiBvxW7JG5v492kamAQB3m2wop07CvU/RQmzcKr6bgcC5D/Q==}
+
   diff@8.0.4:
     resolution: {integrity: sha512-DPi0FmjiSU5EvQV0++GFDOJ9ASQUVFh5kD+OzOnYdi7n3Wpm9hWWGfB/O2blfHcMVTL5WkQXSnRiK9makhrcnw==}
     engines: {node: '>=0.3.1'}
@@ -25749,6 +25478,9 @@ packages:
     resolution: {integrity: sha512-7yAQpD2UMJzLi1Dqv7qFYnPbaPx7ZfFK6PiIxQ4PfkGPyNyl2Ugx+a/umUonmKqjhM4DnfbMvdX6otXq83soQQ==}
     engines: {node: ^12.20 || >= 14.13}
 
+  fflate@0.8.2:
+    resolution: {integrity: sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==}
+
   fflate@0.8.3:
     resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
 
@@ -25791,6 +25523,9 @@ packages:
     peerDependenciesMeta:
       debug:
         optional: true
+
+  fontkit@2.0.4:
+    resolution: {integrity: sha512-syetQadaUEDNdxdugga9CpEYVaQIxOwk7GlwZWWZ19//qW4zE5bknOKeMBDYAASwnpaSHKJITRLMF9m1fp3s6g==}
 
   for-each@0.3.5:
     resolution: {integrity: sha512-dKx12eRCVIzqCxFGplyFKJMPvLEWgmNtUrpTiJIR5u97zEhRG8ySrtboPHZXx7daLxQVrl643cTzbab2tkQjxg==}
@@ -27432,6 +27167,9 @@ packages:
   package-manager-detector@1.9.0:
     resolution: {integrity: sha512-zAMfbta9nPA8AKkA4WdmNAT8R8s6Dk0/xwPsqNnRidMFcLo1YkLuPDTgs2f64XdzS8vbLNnoJ+uUIkgbz7oRHA==}
 
+  pako@0.2.9:
+    resolution: {integrity: sha512-NUcwaKxUxWrZLpDG+z/xZaCgQITkA/Dv4V/T6bw7VON6l1Xz/VnrBqrYjZQ12TamKHzITTfOEIYUj48y2KXImA==}
+
   pako@1.0.11:
     resolution: {integrity: sha512-4hLB8Py4zZce5s4yd9XzopqwVv/yGNhV1Bl8NTmCq1763HeK2+EwVTv+leGeL13Dnh2wfbqowVPXCIO0z4taYw==}
 
@@ -27822,6 +27560,9 @@ packages:
   responselike@4.0.2:
     resolution: {integrity: sha512-cGk8IbWEAnaCpdAt1BHzJ3Ahz5ewDJa0KseTsE3qIRMJ3C698W8psM7byCeWVpd/Ha7FUYzuRVzXoKoM6nRUbA==}
     engines: {node: '>=20'}
+
+  restructure@3.0.2:
+    resolution: {integrity: sha512-gSfoiOEA0VPE6Tukkrr7I0RBdE0s7H1eFCDBk05l1KIQT1UIKNc5JZy6jdyW6eYH3aR3g5b3PuL77rq0hvwtAw==}
 
   retry@0.12.0:
     resolution: {integrity: sha512-9LkiTwjUh6rT555DtE9rTX+BKByPfrMzEAtnlEtdEwr3Nkffwiihqe2bWADg+OQRjt9gl6ICdmB/ZFDCGAtSow==}
@@ -28342,6 +28083,9 @@ packages:
   tiny-emitter@2.1.0:
     resolution: {integrity: sha512-NB6Dk1A9xgQPMoGqC5CVXn123gWyte215ONT5Pp5a0yt4nlEoO1ZWeCwpncaekPHXO60i47ihFnZPiRPjRMq4Q==}
 
+  tiny-inflate@1.0.3:
+    resolution: {integrity: sha512-pkY1fj1cKHb2seWDy0B16HeWyczlJA9/WW3u3c4z/NiWDsO3DOU5D7nhTLE9CF0yXv/QZFY7sEJmj24dK+Rrqw==}
+
   tiny-typed-emitter@2.1.0:
     resolution: {integrity: sha512-qVtvMxeXbVej0cQWKqVSSAHmKZEHAvxdF8HEUBFWts8h+xEo5m/lEiPakuyZ3BnCBjOD8i24kzNOiOLLgsSxhA==}
 
@@ -28575,6 +28319,12 @@ packages:
   undici@8.12.3:
     resolution: {integrity: sha512-+fdndUTwBP86cVjihTp21hZHo7d6oj1c/47XPA3lL8mM0XHs+C4EkcjmgRsFnFk2f/UONGDy9ItBItmXsLOQHw==}
     engines: {node: '>=22.19.0'}
+
+  unicode-properties@1.4.1:
+    resolution: {integrity: sha512-CLjCCLQ6UuMxWnbIylkisbRj31qxHPAurvena/0iwSVbQ2G1VY5/HjV0IRabOEbDHlzZlRdCrD4NhB0JtU40Pg==}
+
+  unicode-trie@2.0.0:
+    resolution: {integrity: sha512-x7bc76x0bm4prf1VLg79uhAzKw8DVboClSN5VxJuQ+LKDOVEW9CdH+VY7SP+vX7xCYQqzzgQpFqz15zeLvAtZQ==}
 
   unicorn-magic@0.3.0:
     resolution: {integrity: sha512-+QBBXBCvifc56fsbuxZQ6Sic3wqqc3WWaqxs58gvJrcOuN83HGTCwz3oS5phzU9LthRNE9VrJCFCLUgHeeFnfA==}
@@ -29715,6 +29465,34 @@ snapshots:
       css-tree: 3.2.1
 
   '@csstools/css-tokenizer@4.0.2': {}
+
+  '@deepseek-ai/libreoffice-kit-darwin-arm64@0.2.3':
+    optional: true
+
+  '@deepseek-ai/libreoffice-kit-darwin-x64@0.2.3':
+    optional: true
+
+  '@deepseek-ai/libreoffice-kit-wasm@0.2.3':
+    optional: true
+
+  '@deepseek-ai/libreoffice-kit-win32-arm64@0.2.3':
+    optional: true
+
+  '@deepseek-ai/libreoffice-kit-win32-x64@0.2.3':
+    optional: true
+
+  '@deepseek-ai/libreoffice-kit@0.2.3':
+    dependencies:
+      fflate: 0.8.2
+      fontkit: 2.0.4
+      saxes: 6.0.0
+    optionalDependencies:
+      '@deepseek-ai/libreoffice-kit-darwin-arm64': 0.2.3
+      '@deepseek-ai/libreoffice-kit-darwin-x64': 0.2.3
+      '@deepseek-ai/libreoffice-kit-wasm': 0.2.3
+      '@deepseek-ai/libreoffice-kit-win32-arm64': 0.2.3
+      '@deepseek-ai/libreoffice-kit-win32-x64': 0.2.3
+      koffi: 3.1.1
 
   '@dimforge/rapier3d-compat@0.12.0': {}
 
@@ -31344,6 +31122,8 @@ snapshots:
       estraverse: 5.3.0
       picomatch: 4.0.7
 
+  '@swc/helpers@0.5.24': {}
+
   '@szmarczak/http-timer@4.0.6':
     dependencies:
       defer-to-connect: 2.0.1
@@ -32570,6 +32350,10 @@ snapshots:
     dependencies:
       balanced-match: 4.0.4
 
+  brotli@1.3.3:
+    dependencies:
+      base64-js: 1.5.1
+
   browserslist@4.29.5:
     dependencies:
       baseline-browser-mapping: 2.11.35
@@ -32767,6 +32551,8 @@ snapshots:
   clone-response@1.0.3:
     dependencies:
       mimic-response: 1.0.1
+
+  clone@2.1.2: {}
 
   clsx@2.1.1: {}
 
@@ -33202,6 +32988,8 @@ snapshots:
   devlop@1.1.0:
     dependencies:
       dequal: 2.0.3
+
+  dfa@1.2.0: {}
 
   diff@8.0.4: {}
 
@@ -33826,6 +33614,8 @@ snapshots:
       node-domexception: 1.0.0
       web-streams-polyfill: 3.3.3
 
+  fflate@0.8.2: {}
+
   fflate@0.8.3: {}
 
   figures@6.1.0:
@@ -33876,6 +33666,18 @@ snapshots:
   follow-redirects@1.16.3(debug@4.4.3(supports-color@9.4.0)):
     optionalDependencies:
       debug: 4.4.3(supports-color@9.4.0)
+
+  fontkit@2.0.4:
+    dependencies:
+      '@swc/helpers': 0.5.24
+      brotli: 1.3.3
+      clone: 2.1.2
+      dfa: 1.2.0
+      fast-deep-equal: 3.1.3
+      restructure: 3.0.2
+      tiny-inflate: 1.0.3
+      unicode-properties: 1.4.1
+      unicode-trie: 2.0.0
 
   for-each@0.3.5:
     dependencies:
@@ -35712,6 +35514,8 @@ snapshots:
 
   package-manager-detector@1.9.0: {}
 
+  pako@0.2.9: {}
+
   pako@1.0.11: {}
 
   papaparse@5.5.3: {}
@@ -36089,6 +35893,8 @@ snapshots:
   responselike@4.0.2:
     dependencies:
       lowercase-keys: 3.0.0
+
+  restructure@3.0.2: {}
 
   retry@0.12.0: {}
 
@@ -36769,6 +36575,8 @@ snapshots:
 
   tiny-emitter@2.1.0: {}
 
+  tiny-inflate@1.0.3: {}
+
   tiny-typed-emitter@2.1.0: {}
 
   tinybench@2.9.0: {}
@@ -36986,6 +36794,16 @@ snapshots:
   undici@8.11.2: {}
 
   undici@8.12.3: {}
+
+  unicode-properties@1.4.1:
+    dependencies:
+      base64-js: 1.5.1
+      unicode-trie: 2.0.0
+
+  unicode-trie@2.0.0:
+    dependencies:
+      pako: 0.2.9
+      tiny-inflate: 1.0.3
 
   unicorn-magic@0.3.0: {}
 

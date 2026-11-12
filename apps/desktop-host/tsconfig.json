@@ -57,9 +57,6 @@
       "path": "../../packages/util/branded"
     },
     {
-      "path": "../../packages/credentials/deepseek-account"
-    },
-    {
       "path": "../../packages/skill/skill-office"
     },
     {

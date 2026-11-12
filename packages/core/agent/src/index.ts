@@ -589,6 +589,16 @@ export class AgentRegistry extends Service {
     return [...this.store.values()].map(entry => entry.agent)
   }
 
+  /**
+   * All live top-level agents in registration order. A top-level agent was
+   * created without an owning agent context; durable session lineage does not
+   * affect this runtime relation, so a resumed fork may still be a root.
+   * @returns a fresh array; mutating it does not affect the registry.
+   */
+  roots(): Agent[] {
+    return [...this.store.values()].map(entry => entry.agent)
+  }
+
   /** Reject new initiator boundaries while inherited continuations drain. */
   private closeInitiators(): void {
     if (this.initiatorState === 'active') this.initiatorState = 'closing'

@@ -33,9 +33,6 @@
       "path": "../../packages/client/ui-file-actions"
     },
     {
-      "path": "../../packages/credentials/deepseek-account"
-    },
-    {
       "path": "../../packages/api/gateway/tsconfig.host.json"
     },
     {

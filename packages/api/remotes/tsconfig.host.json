@@ -75,9 +75,6 @@
       "path": "../../host/plugin-inventory"
     },
     {
-      "path": "../../credentials/deepseek-account"
-    },
-    {
       "path": "../../credentials/account-service"
     },
     {

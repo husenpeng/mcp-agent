@@ -24,9 +24,6 @@
       "path": "../ui-settings-account"
     },
     {
-      "path": "../../credentials/deepseek-account"
-    },
-    {
       "path": "../../host/webserver"
     },
     {

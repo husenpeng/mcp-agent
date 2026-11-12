@@ -447,9 +447,6 @@
       "path": "./packages/tomato/account-gateway"
     },
     {
-      "path": "./packages/credentials/deepseek-account"
-    },
-    {
       "path": "./vendor/cosmokit"
     },
     {
@@ -1248,9 +1245,6 @@
       "path": "./apps/desktop-host"
     },
     {
-      "path": "./packages/llm/llm-deepseek-account"
-    },
-    {
       "path": "./packages/document/office-to-pdf"
     },
     {
@@ -1258,15 +1252,6 @@
     },
     {
       "path": "./packages/web/web-search-perplexity"
-    },
-    {
-      "path": "./packages/experimental/agent-team"
-    },
-    {
-      "path": "./packages/experimental/agent-team-profile"
-    },
-    {
-      "path": "./packages/experimental/tool-agent-team"
     },
     {
       "path": "./packages/experimental/client-ui-cot-translation/tsconfig.host.json"

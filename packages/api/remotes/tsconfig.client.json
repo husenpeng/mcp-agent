@@ -93,9 +93,6 @@
       "path": "../../credentials/account-service"
     },
     {
-      "path": "../../credentials/deepseek-account"
-    },
-    {
       "path": "../../web/web"
     },
     {

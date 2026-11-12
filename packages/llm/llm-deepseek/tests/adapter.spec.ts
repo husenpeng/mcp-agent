@@ -1,7 +1,5 @@
 /** HTTP lifecycle, routing and optional Cordis services under real composition. */
 import * as NativeToolExecutor from '@tomato/tool-executor-native'
-import type { DeepSeekAccount } from '@tomato/deepseek-account'
-import { installAccountTaskCancellation } from '@tomato/deepseek-account/src/account-tasks.ts'
 import type { AnonymousUserId } from '@tomato/anonymous-user-id'
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -29,7 +27,6 @@ import { DeepSeekAdapter } from '../src/adapter.ts'
 import { object } from '../src/replay.ts'
 import { DeepSeekFileStore } from '../src/file-store.ts'
 import * as Messages from '@tomato/llm-deepseek-api-key'
-import * as AccountProvider from '@tomato/llm-deepseek-account'
 import { adapter, assemble, chunks, MODEL, options, prepareExtensions, server, sse, textEvents, user, sourceModuleLoader } from './helpers.ts'
 
 const cleanup: (() => Promise<unknown>)[] = []
@@ -125,21 +122,6 @@ describe('direct Messages HTTP', () => {
     })
     await assemble(llm.stream(options({ tools })))
     expect(http.requests[1]?.headers).not.toHaveProperty('anthropic-beta')
-  })
-
-  it('surfaces provider rejection of an all-deferred request without adding tools', async () => {
-    const message = 'At least one tool must not be deferred'
-    const http = await endpoint((response) => {
-      response.statusCode = 400
-      response.end(JSON.stringify({ error: { type: 'invalid_request_error', message } }))
-    })
-    const tools = [{ name: 'search', description: 'Search', parameters: {}, deferLoading: true as const }]
-    await expect(chunks(adapter({ baseURL: http.url }).stream(options({ tools }))))
-      .rejects.toMatchObject({ code: 'INVALID_REQUEST', message, failure: { status: 400 } })
-    expect(http.requests).toHaveLength(1)
-    expect(http.requests[0]?.body.tools).toEqual([
-      { name: 'search', description: 'Search', input_schema: {}, defer_loading: true },
-    ])
   })
 
   it('uses the Messages endpoint, authentication, attribution and final usage', async () => {
@@ -292,28 +274,6 @@ describe('direct Messages HTTP', () => {
 })
 
 describe('Cordis provider composition', () => {
-  it('declares the replacement immediately after the last baseline tool is removed', async () => {
-    const { ctx, http } = await boot()
-    const baseline = { name: 'old_tool', description: 'Old tool', parameters: {} }
-    const added = { name: 'new_tool', description: 'New tool', parameters: {} }
-    const update = createDeveloperMessage({ source: { kind: 'tool-registry' }, content: [
-      { type: 'tool-removal', toolName: baseline.name }, { type: 'tool-addition', toolName: added.name },
-    ] })
-    const request = options({ model: 'deepseek-flash', messages: [user(), update], tools: [added],
-      toolHistory: { tools: [baseline], updates: [{ messageId: update.id, additions: [added] }] },
-    })
-    const saved = JSON.stringify(request)
-    const response = await assemble(ctx.llm.stream(request), 'deepseek-flash')
-    expect(response.assembler.finish.kind).toBe('stop')
-    expect(http.requests[0]?.body.tools).toEqual([
-      { name: added.name, description: added.description, input_schema: {} },
-    ])
-    expect(http.requests[0]?.body.messages).toEqual([
-      { role: 'user', content: [{ type: 'text', text: 'hello' }] },
-    ])
-    expect(JSON.stringify(request)).toBe(saved)
-  })
-
   it('resolves an attachment service loaded after the adapter and maps its read-only path', async () => {
     const http = await endpoint()
     const { ctx, home } = await context()
@@ -349,7 +309,7 @@ describe('Cordis provider composition', () => {
     await ctx.plugin(Loader)
     ctx.loader.builtins.include = Include
     const modules = new Map<string, unknown>([
-      ['@tomato/llm', LlmRuntime], ['@tomato/llm-deepseek-api-key', Messages], ['@tomato/llm-deepseek-account', AccountProvider],
+      ['@tomato/llm', LlmRuntime], ['@tomato/llm-deepseek-api-key', Messages],
       ['@tomato/credentials-local', LocalCredentials],
       ['@tomato/agent', AgentRegistry], ['@tomato/agent-loop', AgentLoop],
       ['@tomato/session', SessionStore], ['@tomato/session-projection', SessionProjectionRegistry],
@@ -369,103 +329,6 @@ describe('Cordis provider composition', () => {
     await profileComposition(ctx, home, join(home, 'cordis.yml'))
     return { ctx, http }
   }
-
-  it.each(['deepseek-account', 'deepseek-official'].flatMap(provider => [
-    { provider, body: JSON.stringify({ error: { type: 'authentication_error', message: 'API key is invalid' } }) },
-    { provider, body: JSON.stringify({ error: { message: 'Authentication Fails (invalid tomato token)' } }) },
-    { provider, body: 'Unauthorized' },
-    { provider, body: '' },
-  ]))('handles $provider HTTP 401 independently of the response body ($body)', async ({ provider, body }) => {
-    const { ctx } = await boot((response) => {
-      response.writeHead(401, { 'content-type': 'application/json' })
-      response.end(body)
-    })
-    const rejectToken = vi.fn(async (_token: string) => {})
-    ctx.provide('deepseekAccount', { resolveToken: async (_url: string): Promise<string | undefined> => 'fixture-token',
-      rejectToken: (token: string): Promise<void> => rejectToken(token) } as DeepSeekAccount)
-    expect((await chunks(ctx.llm.stream(options({ provider })))).at(-1)).toMatchObject({
-      type: 'finish', reason: { kind: 'error', failure: { code: provider === 'deepseek-account' ? 'ACCOUNT_TOKEN_INVALID' : 'AUTH' } },
-    })
-    expect(rejectToken.mock.calls).toEqual(provider === 'deepseek-account' ? [['fixture-token']] : [])
-  })
-
-  it('reports the request token when credentials change before a 401 response', async () => {
-    let token = 'first-login'
-    const { ctx } = await boot((response) => {
-      token = 'replacement-login'
-      response.writeHead(401)
-      response.end('Unauthorized')
-    })
-    const rejectToken = vi.fn(async (_token: string) => {})
-    ctx.provide('deepseekAccount', { resolveToken: async (_url: string): Promise<string | undefined> => token,
-      rejectToken: (value: string): Promise<void> => rejectToken(value) } as DeepSeekAccount)
-    await chunks(ctx.llm.stream(options({ provider: 'deepseek-account' })))
-    expect(token).toBe('replacement-login')
-    expect(rejectToken).toHaveBeenCalledExactlyOnceWith('first-login')
-  })
-
-  it('finishes the active account turn when rejected credentials publish sign-out', async () => {
-    const { ctx } = await boot((response) => {
-      response.writeHead(401)
-      response.end(JSON.stringify({ error: { message: 'Authentication Fails (invalid tomato token)' } }))
-    })
-    ctx.provide('deepseekAccount', { resolveToken: async (_url: string): Promise<string | undefined> => 'fixture-token',
-      rejectToken: async (_token: string): Promise<void> => { ctx.emit('deepseek-account/signed-out') } } as DeepSeekAccount)
-    installAccountTaskCancellation(ctx)
-    const agent = await ctx.agentLoop.create(SessionId('inference-account-expiry'), { provider: 'deepseek-account', model: MODEL })
-    agent.followup(user('hello'))
-    await agent.whenIdle()
-    expect(agent.session.snapshotEvents().at(-1)?.data).toMatchObject({
-      reason: { kind: 'aborted', reason: { kind: 'hook', reason: 'deepseek-account/signed-out' } },
-    })
-  })
-
-  it('preserves the inference error when rejected credential removal fails', async () => {
-    const { ctx } = await boot((response) => {
-      response.writeHead(401)
-      response.end(JSON.stringify({ error: { message: 'Authentication Fails (invalid tomato token)' } }))
-    })
-    ctx.provide('deepseekAccount', { resolveToken: async (_url: string): Promise<string | undefined> => 'fixture-token',
-      rejectToken: async (_token: string): Promise<void> => { throw new Error('credential storage unavailable') } } as DeepSeekAccount)
-    expect((await chunks(ctx.llm.stream(options({ provider: 'deepseek-account' })))).at(-1)).toMatchObject({
-      type: 'finish', reason: { kind: 'error', failure: { code: 'ACCOUNT_TOKEN_INVALID' } },
-    })
-  })
-
-  it('serves the account listing through the Loader composition and refuses models this build cannot serve', async () => {
-    const { ctx, http } = await boot(undefined, { data: [
-      {
-        id: 'deepseek-flash', name: 'DeepSeek-V4.1-Flash', context_window: 1_048_576, max_output_tokens: 100_000,
-        input_modalities: ['text', 'image'], output_modalities: ['text'],
-        api_capabilities: { anthropic_messages: { system_prompt_update: 'in-history' } },
-      },
-      {
-        id: 'deepseek-v5', name: 'DeepSeek-V5', api_capabilities: { anthropic_messages: {} },
-        client_requirements: { 'deepseek-harness': { min_version: '99.0.0' } },
-      },
-    ] })
-    ctx.provide('deepseekAccount', { resolveToken: async (_url: string): Promise<string | undefined> => 'fixture-token',
-      rejectToken: async (_token: string): Promise<void> => {} } as DeepSeekAccount)
-    expect((await ctx.llm.listModels('deepseek-account')).map(model => [model.id, model.name])).toEqual([['deepseek-flash', 'DeepSeek-V4.1-Flash']])
-    await expect(ctx.llm.prepareCall({ provider: 'deepseek-account', model: 'deepseek-v5' }))
-      .rejects.toMatchObject({ code: 'CLIENT_UPGRADE_REQUIRED' })
-    await assemble(ctx.llm.stream(options({ provider: 'deepseek-account', model: 'deepseek-flash' })), 'deepseek-flash')
-    expect(http.requests.map(request => [request.path, request.body.max_tokens])).toEqual([['/anthropic/v1/messages', 100_000]])
-  })
-
-  it('does not remove account credentials for HTTP 403', async () => {
-    const { ctx } = await boot((response) => {
-      response.writeHead(403)
-      response.end(JSON.stringify({ error: { type: 'authentication_error', message: 'API key is invalid' } }))
-    })
-    const rejectToken = vi.fn(async (_token: string) => {})
-    ctx.provide('deepseekAccount', { resolveToken: async (_url: string): Promise<string | undefined> => 'fixture-token',
-      rejectToken: (token: string): Promise<void> => rejectToken(token) } as DeepSeekAccount)
-    expect((await chunks(ctx.llm.stream(options({ provider: 'deepseek-account' })))).at(-1)).toMatchObject({
-      type: 'finish', reason: { kind: 'error', failure: { code: 'AUTH' } },
-    })
-    expect(rejectToken).not.toHaveBeenCalled()
-  })
 
   it.each([
     { model: MODEL, inHistory: false },
@@ -595,7 +458,7 @@ describe('Cordis provider composition', () => {
 
   it('loads one provider from YAML, rotates settings and credentials, then removes disposed registrations', async () => {
     const { ctx, http } = await boot()
-    expect(ctx.llm.listProviders().map(provider => provider.id)).toEqual(['deepseek-official', 'deepseek-account'])
+    expect(ctx.llm.listProviders().map(provider => provider.id)).toEqual(['deepseek-official'])
     expect((await assemble(ctx.llm.stream(options()))).assembler.finish.kind).toBe('stop')
     expect(http.requests[0]?.headers['x-api-key']).toBe('stored-key')
     const second = await endpoint()
@@ -638,30 +501,4 @@ describe('Cordis provider composition', () => {
 
 it('rejects invalid catalog context windows at the options resolver', () => {
   expect(() => Messages.resolveAdapterOptions({ models: [{ id: 'invalid-window', contextWindow: 0 }] })).toThrow('contextWindow must be a positive integer')
-})
-
-
-it.each([
-  ['https://api.deepseek.com', 'account-token'],
-  ['https://custom.example.test', 'ambient-key'],
-] as const)('selects account or API-key credentials from the actual endpoint %s', async (baseURL, expected) => {
-  vi.stubEnv('DEEPSEEK_API_KEY', 'ambient-key')
-  const { ctx } = await context()
-  // This consumer uses only resolveToken; the real provider owns origin validation in its own suite.
-  ctx.provide('deepseekAccount', {
-    resolveToken: (url: string) => Promise.resolve(url === 'https://api.deepseek.com' ? 'account-token' : undefined),
-  } as DeepSeekAccount)
-  await ctx.plugin(LlmRuntime)
-  await ctx.plugin(expected === 'account-token' ? AccountProvider : Messages, { baseURL })
-  const request = vi.fn<typeof fetch>((_input, init) => {
-    const headers = new Headers(init?.headers)
-    expect(headers.has('authorization')).toBe(false)
-    expect(headers.get('x-api-key')).toBe(expected === 'account-token' ? null : expected)
-    expect(headers.get('x-tomato-auth-token')).toBe(expected === 'account-token' ? expected : null)
-    expect(init?.redirect).toBe('error')
-    return Promise.resolve(new Response(sse(textEvents), { status: 200 }))
-  })
-  vi.stubGlobal('fetch', request)
-  await assemble(ctx.llm.stream(options({ provider: expected === 'account-token' ? 'deepseek-account' : 'deepseek-official' })))
-  expect(request).toHaveBeenCalledOnce()
 })

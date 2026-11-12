@@ -77,6 +77,5 @@
     {
       "path": "../../client/connection/tsconfig.host.json"
     }
-  ],
-  "files": []
+  ]
 }

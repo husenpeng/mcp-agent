@@ -316,9 +316,6 @@
       "path": "./apps/web"
     },
     {
-      "path": "./packages/experimental/client-ui-agent-team"
-    },
-    {
       "path": "./packages/client/ui-deepseek-model-label-1017"
     },
     {

@@ -8,7 +8,6 @@ import userQuestionsRemote from '@tomato/user-questions/remote'
 import commandsRemote from '@tomato/commands/remote'
 import agentTeamsRemote from '@tomato/agent-team/remote'
 export type {} from '@tomato/agent-team/remote'
-import accountRemote from '@tomato/deepseek-account/remote'
 import settingsControllerRemote from '@tomato/api-settings-controller/remote'
 import officeKitRemote from '@tomato/office-kit/remote'
 import goalsRemote from '@tomato/goal/remote'
@@ -197,7 +196,7 @@ export async function apply(ctx: Context): Promise<() => Promise<void>> {
   const disposers: Array<() => Promise<void>> = []
   try {
     for (const contribution of [
-      productAnalyticsRemote, agentPresetsRemote, commandsRemote, agentTeamsRemote, settingsControllerRemote, accountRemote,
+      productAnalyticsRemote, agentPresetsRemote, commandsRemote, agentTeamsRemote, settingsControllerRemote,
       goalsRemote, llmRemote, dynamicRemote, scheduleRemote,
       pluginInventoryRemote, pluginManagerRemote, mcpManagerRemote, pluginMarketRemote, pluginRegistryProbeRemote,
       toolResultsRemote,

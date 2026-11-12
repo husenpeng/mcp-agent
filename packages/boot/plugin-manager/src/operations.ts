@@ -4,21 +4,19 @@ import { existsSync, readFileSync } from 'node:fs'
 import { mkdir, mkdtemp, open, rm } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { execa } from 'execa'
-import semver from 'semver'
 import type { EntryOptions } from '@tomato/cordis-plugin-loader'
 import { withFileLock, writeFileAtomic } from '@tomato/atomic-write'
 import {
-  bundlePatchPaths, getTomatoRuntimeVersion, initProfile, readProfileManifest,
+  assertBundlePlatform, UnsupportedBundlePlatformError, bundlePatchPaths, initProfile, readProfileManifest,
   resolveBundleDir, resolveProfileDir, loadOverlayPatches, composeEntries, readProfileVersionExemptions,
   evaluatePluginCompatibility, pluginCompatibilityWarning, type ProfileManifest,
 } from '@tomato/app-boot'
 import { PROFILE_TEMPLATES, DEFAULT_PROFILE_BUNDLES } from '@tomato/official-bundles'
 import { scrubbedParentEnv } from '@tomato/subprocess'
 import { parseInstallSpec } from './install-spec.ts'
-import { resolveCompatibleVersion, type VersionResolution } from './resolution.ts'
 import { awaitTreeGone, leadsOwnGroup, treeAlive, type RunTree } from './run-tree.ts'
 import { incompatiblePlugin } from './failure.ts'
-import type { IncompatiblePlugin, PackageResult, Registry, SubstitutedVersion } from './types.ts'
+import type { IncompatiblePlugin, PackageResult, Registry } from './types.ts'
 export { setProfileVersionExemption, readProfileVersionExemptions } from '@tomato/app-boot'
 
 /** Profile and invocation locations supplied by the launcher. */
@@ -55,6 +53,12 @@ export interface PackageOperationOptions {
   idleTimeoutMs?: number
   /** Bound on the pre-install registry lookup, in milliseconds; without one a fixed bound applies. */
   lookupTimeoutMs?: number
+  /**
+   * The bundle package and manifest version the run must install. A run that leaves this package missing, at another
+   * version, or without a bundle declaration or bundle patches that load, or that adds or changes another direct
+   * dependency, is undone like a compatibility rejection after it.
+   */
+  expected?: { readonly name: string; readonly version: string }
 }
 
 /** Resolve relative package specs against the caller's directory.
@@ -88,12 +92,13 @@ export async function saveManifest(dir: string, manifest: ProfileManifest): Prom
   await writeFileAtomic(join(dir, 'package.json'), JSON.stringify(manifest, undefined, 2) + '\n', { mode: 0o600 })
 }
 
-/** Reconcile package removals and newly installed bundles without re-enabling retained dependencies. */
-async function reconcile(before: ProfileManifest, dir: string, anchor: string, options: PackageOperationOptions): Promise<void> {
+/** Reconcile bundle selection, returning platform denials without saving any selection changes. */
+async function reconcile(before: ProfileManifest, dir: string, anchor: string, options: PackageOperationOptions): Promise<string[]> {
   const after = readProfileManifest('tomato', dir)
   const dependencies = Object.keys(after.dependencies ?? {})
   const beforeDeps = new Set(Object.keys(before.dependencies ?? {}))
   const previous = after.tomato?.profile?.bundles ?? []
+  const unsupported: string[] = []
   const bundles = previous.filter((name) => {
     if (!beforeDeps.has(name) && !dependencies.includes(name)) return true
     return dependencies.includes(name) && bundleManifest(name, dir, anchor) !== undefined
@@ -105,14 +110,21 @@ async function reconcile(before: ProfileManifest, dir: string, anchor: string, o
       options.onOutput?.(`tomato: warning: ${name} declares no tomato.bundle — installed as a plain dependency, not a profile layer\n`, 'stderr')
       continue
     }
+    try { assertBundlePlatform(metadata.tomato.bundle.platforms, process.platform) } catch (error) {
+      if (!(error instanceof UnsupportedBundlePlatformError)) throw error
+      unsupported.push(`${name}: ${error.message}`)
+      continue
+    }
     for (const file of bundlePatchPaths(resolveBundleDir('tomato', name, anchor, dir), metadata.tomato.bundle)) loadOverlayPatches('tomato', file)
     if (!bundles.includes(name)) {
       bundles.push(name)
     }
   }
-  if (JSON.stringify(previous) === JSON.stringify(bundles)) return
+  if (unsupported.length > 0) return unsupported
+  if (JSON.stringify(previous) === JSON.stringify(bundles)) return []
   after.tomato = { ...after.tomato, profile: { ...after.tomato?.profile, bundles } }
   await saveManifest(dir, after)
+  return []
 }
 
 /**
@@ -177,68 +189,17 @@ async function namedSpecManifest(
     return existsSync(filename) ? JSON.parse(readFileSync(filename, 'utf8')) as object : undefined
   }
   if (parsed.kind !== 'registry') return undefined
-  const value = await viewJson(dir, parsed.spec, ['name', 'version', 'engines', 'peerDependencies'], options, environment, flags)
-  return (Array.isArray(value) ? value.at(-1) : value) as object | undefined
-}
-
-/**
- * Ask the registry one question through `pnpm view`, in the profile directory.
- * @param dir Profile directory the lookup runs in.
- * @param spec Registry spec, normally a name or name@version.
- * @param fields Manifest fields to print, as `pnpm view` names them.
- * @param options Pnpm executable, prefix arguments, the caller's bound and signal.
- * @param environment Environment of the caller's pnpm invocations.
- * @param flags Flags of the run itself, so the lookup asks the registry that run will use.
- * @returns The parsed answer, or undefined when the lookup failed.
- */
-async function viewJson(
-  dir: string, spec: string, fields: readonly string[], options: PackageOperationOptions,
-  environment: Readonly<Record<string, string | undefined>>, flags: readonly string[],
-): Promise<unknown> {
   const viewed = await execa(options.command ?? 'pnpm', [
-    ...options.args ?? [], 'view', spec, ...fields, '--json', ...flags, '--config.fetch-retries=0',
+    ...options.args ?? [], 'view', parsed.spec, 'name', 'version', 'engines', 'peerDependencies', '--json',
+    ...flags, '--config.fetch-retries=0',
   ], {
     cwd: dir, env: environment, extendEnv: false, reject: false, stdin: 'ignore',
     ...options.signal === undefined ? {} : { cancelSignal: options.signal },
     timeout: options.lookupTimeoutMs ?? LOOKUP_TIMEOUT_MS,
   })
   if (viewed.exitCode !== 0) return undefined
-  return JSON.parse(viewed.stdout)
-}
-
-/**
- * Pick the newest published version of one named spec that the running TOMATO admits.
- * @param dir Profile directory the lookups run in.
- * @param spec Anchored install spec.
- * @param options Pnpm executable, prefix arguments, the caller's bound and signal.
- * @param environment Environment of the caller's pnpm invocations.
- * @param flags Flags of the run itself, so the lookups ask the registry that run will use.
- * @returns The package name and its resolution, or undefined for a spec the registry does not enumerate.
- */
-async function resolveNamedSpec(
-  dir: string, spec: string, options: PackageOperationOptions, environment: Readonly<Record<string, string | undefined>>,
-  flags: readonly string[],
-): Promise<{ name: string; resolution: VersionResolution } | undefined> {
-  const parsed = parseInstallSpec(spec)
-  if (parsed.kind !== 'registry') return undefined
-  const listed = await viewJson(dir, parsed.name, ['versions'], options, environment, flags).catch(() => undefined)
-  const versions = Array.isArray(listed)
-    ? listed.filter((entry): entry is string => typeof entry === 'string')
-    : typeof listed === 'string' ? [listed] : []
-  if (versions.length === 0) return undefined
-  const resolution = await resolveCompatibleVersion({
-    versions,
-    ...parsed.range === undefined ? {} : { range: parsed.range },
-    ...parsed.range !== undefined && semver.valid(parsed.range) !== null ? { requested: parsed.range } : {},
-    runtimeVersion: getTomatoRuntimeVersion(),
-    exemptions: readProfileVersionExemptions(dir),
-    async manifestOf(version) {
-      const manifest = await namedSpecManifest(dir, `${parsed.name}@${version}`, options, environment, flags)
-      if (manifest === undefined) throw new Error(`the registry did not answer for ${parsed.name}@${version}`)
-      return manifest
-    },
-  })
-  return { name: parsed.name, resolution }
+  const value: unknown = JSON.parse(viewed.stdout)
+  return (Array.isArray(value) ? value.at(-1) : value) as object
 }
 
 /** Missing installed packages are repairable; their absence is part of the before/after comparison. */
@@ -326,14 +287,19 @@ function bundleComponentManifests(manifest: ProfileManifest, dir: string, anchor
 }
 
 /** Execute pnpm inside a profile whose caller already holds the profile write lock.
- * Newly installed or updated direct dependencies are checked even when activation is disabled;
- * an untouched dependency never blocks an unrelated operation and stays denied at startup.
- * Compatibility denial restores the profile manifest and lockfile, but leaves downloaded modules on disk.
+ * Newly installed or updated direct dependencies are checked even when activation is disabled. With `expected`, each
+ * of them must be the expected package, which must be installed at its version with a bundle declaration. Any other
+ * untouched dependency never blocks an unrelated operation and stays denied at startup.
+ * A denial before pnpm runs changes nothing; one after it restores the profile manifest and lockfile and reinstalls
+ * the restored lockfile, while downloaded files stay in the pnpm store.
  * @param context Launcher-owned profile and resolution locations.
  * @param args Pnpm arguments, before relative path anchoring.
  * @param options Output, activation and cancellation policy.
  * @returns Exit status, whether the silence bound stopped the run, and the diagnostic path.
- * A compatibility denial returns exit code 1. Service output is bounded; CLI output uses inherited descriptors.
+ * A compatibility or `expected` denial returns exit code 1 and names what it refused.
+ * Unsupported Host activation returns exit code 1 with named diagnostics; installed dependencies remain,
+ * and no bundle selection changes are saved. Other reconciliation or filesystem errors reject.
+ * Service output is bounded; CLI output uses inherited descriptors.
  * The diagnostic file is closed on return or rejection, including preparation and spawn failures.
  */
 export async function runProfilePnpm(
@@ -376,6 +342,14 @@ export async function runProfilePnpm(
   }
   /** Packages a compatibility check refused; callers render them for their own surface. */
   const incompatible: IncompatiblePlugin[] = []
+  /** Why the post-install check undoes a successful run. */
+  const warnings: string[] = []
+  /** What `options.expected` found wrong with the run, `unexpected-package` taking precedence. */
+  let unmet: PackageResult['unmet']
+  const fail = (code: NonNullable<PackageResult['unmet']>, warning: string): void => {
+    if (unmet !== 'unexpected-package') unmet = code
+    warnings.push(warning)
+  }
   const rejected = async (warnings: readonly string[], restoration: string): Promise<PackageResult> => {
     const diagnostic = `\ntomato: installation rejected: ${warnings.join('\n')}\ntomato: ${restoration}.\n`
     await log.write(diagnostic)
@@ -386,11 +360,7 @@ export async function runProfilePnpm(
   }
   // An install command names the packages it adds, so their manifests are read and checked before
   // pnpm runs: an incompatible version is never installed, and the one already in use keeps working.
-  // A spec whose newest match is incompatible is replaced by the newest version this TOMATO admits,
-  // so `tomato plugin` and the Plugin Manager fall back the same way.
   const preflight: string[] = []
-  const substituted: SubstitutedVersion[] = []
-  const replacements = new Map<string, string>()
   const exemptions = readProfileVersionExemptions(dir)
   // The run's own registry flags, so the lookup asks the registry the installation will use.
   const registryFlags = args.filter(argument => argument.startsWith('--registry='))
@@ -398,37 +368,22 @@ export async function runProfilePnpm(
     // A spec whose manifest cannot be read or validated is left to the run itself and to the check
     // after installation, which reports what it could not validate.
     try {
-      const anchored = anchorPathSpec(raw, context.cwd)
-      const manifest = await namedSpecManifest(dir, anchored, options, environment, registryFlags)
+      const manifest = await namedSpecManifest(dir, anchorPathSpec(raw, context.cwd), options, environment, registryFlags)
       if (manifest === undefined) continue
       const issue = evaluatePluginCompatibility(manifest, exemptions)
-      if (issue === undefined || issue.exempted) continue
-      const fallback = await resolveNamedSpec(dir, anchored, options, environment, registryFlags)
-      if (fallback?.resolution.status === 'resolved' && fallback.resolution.selected !== undefined) {
-        const selected = `${fallback.name}@${fallback.resolution.selected}`
-        const requirements = Object.entries(fallback.resolution.rejected[0]?.requirements ?? {})
-          .map(([name, range]) => `${name} ${range}`).join(', ')
-        replacements.set(raw, selected)
-        substituted.push({ requested: raw, selected, requirements })
-        const notice = `\ntomato: ${raw} requires newer TOMATO packages; installing ${selected} instead`
-          + `${requirements === '' ? '' : ` (${requirements})`}.\n`
-        await log.write(notice)
-        options.onOutput?.(notice, 'stderr')
-        append(Buffer.from(notice))
-        continue
+      if (issue !== undefined && !issue.exempted) {
+        preflight.push(pluginCompatibilityWarning(issue))
+        incompatible.push(incompatiblePlugin(issue))
       }
-      preflight.push(pluginCompatibilityWarning(issue))
-      incompatible.push(incompatiblePlugin(issue))
     } catch (error) { void error; continue }
   }
   if (preflight.length > 0) return await rejected(preflight, 'nothing was installed')
-  const plannedArgs = args.map(argument => replacements.get(argument) ?? argument)
   const cancellation = new AbortController()
   // A service run captures output, so execa terminates the tree it leads when the
   // run is killed: a lifecycle script outlives the pnpm process that started it.
   // The CLI keeps the caller's process group, so an interrupt still reaches it.
   const grouped = leadsOwnGroup(options.execution)
-  const child = execa(options.command ?? 'pnpm', [...options.args ?? [], ...plannedArgs.map(arg => anchorPathSpec(arg, context.cwd))], {
+  const child = execa(options.command ?? 'pnpm', [...options.args ?? [], ...args.map(arg => anchorPathSpec(arg, context.cwd))], {
     cwd: dir, env: environment, extendEnv: false, reject: false,
     stdout: options.execution === 'cli' ? 'inherit' : 'pipe',
     stderr: options.execution === 'cli' ? 'inherit' : 'pipe',
@@ -532,13 +487,16 @@ export async function runProfilePnpm(
     if (result.failed && output.length === 0) {
       const diagnostic = result.shortMessage ?? 'pnpm failed'
       await log.write(diagnostic)
+      // The run printed nothing, so this diagnostic is the whole of its captured output; stream it as such.
+      options.onOutput?.(diagnostic, 'stderr')
       truncated = Buffer.byteLength(diagnostic) > options.outputBytes
       output = Buffer.from(diagnostic).subarray(0, options.outputBytes)
     }
     // A terminated run's exit status says nothing about what it wrote, so it never reconciles the selection.
     if (exitCode === 0 && !control.stalled) {
       const after = readProfileManifest('tomato', dir)
-      const warnings: string[] = []
+      const { expected } = options
+      let seen = false
       for (const [name, spec] of Object.entries(directDependencies(after))) {
         const packageDir = join(dir, 'node_modules', name)
         const installed = optionalFile(join(packageDir, 'package.json'))
@@ -549,6 +507,18 @@ export async function runProfilePnpm(
         const issues: IncompatiblePlugin[] = []
         try {
           const manifest = readProfileManifest('tomato', packageDir)
+          const installedAs = `${name}@${String(manifest.version)}`
+          const wanted = expected === undefined ? undefined : `${expected.name}@${expected.version}`
+          // The expected package is checked even when the run left it as it was, as adding its saved spec again does.
+          if (name === expected?.name) {
+            seen = true
+            if (installedAs !== wanted) fail('unexpected-package', `${installedAs} is installed where ${String(wanted)} was expected`)
+            else if (manifest.tomato?.bundle === undefined) fail('not-bundle', `${installedAs} declares no bundle`)
+            // The caller loads these patches next; one that cannot load is refused here, while its modules can go back.
+            else for (const file of bundlePatchPaths(packageDir, manifest.tomato.bundle)) loadOverlayPatches('tomato', file)
+          } else if (wanted !== undefined && !untouched) {
+            fail('unexpected-package', `${installedAs} is installed where ${wanted} was expected`)
+          }
           for (const candidate of [manifest, ...bundleComponentManifests(manifest, packageDir, context.installAnchor)]) {
             const issue = evaluatePluginCompatibility(candidate, readProfileVersionExemptions(dir))
             if (issue !== undefined && !issue.exempted) {
@@ -570,6 +540,7 @@ export async function runProfilePnpm(
           options.onOutput?.(notice, 'stderr')
         }
       }
+      if (expected !== undefined && !seen) fail('unexpected-package', `${expected.name}@${expected.version} is not installed`)
       if (warnings.length > 0) {
         // A bundle component's requirements need installed contents, so this rejection lands after pnpm
         // replaced the tree: restore the files, then reinstall the restored lockfile so the version
@@ -593,7 +564,14 @@ export async function runProfilePnpm(
         options.onOutput?.(diagnostic, 'stderr')
         append(Buffer.from(diagnostic))
       } else if (options.activateNewBundles !== false) {
-        await reconcile(before, dir, context.installAnchor, options)
+        const unsupported = await reconcile(before, dir, context.installAnchor, options)
+        if (unsupported.length > 0) {
+          exitCode = 1
+          const diagnostic = `\ntomato: bundle activation rejected: ${unsupported.join('\n')}\ntomato: installed dependencies remain; bundle selection is unchanged. Use a supported Host or remove the unwanted dependencies with 'tomato plugin remove <package>'.\n`
+          await log.write(diagnostic)
+          options.onOutput?.(diagnostic, 'stderr')
+          append(Buffer.from(diagnostic))
+        }
       }
     }
   } finally {
@@ -606,7 +584,7 @@ export async function runProfilePnpm(
   return {
     exitCode, output: output.toString('utf8'), truncated, logPath,
     ...control.stalled ? { timedOut: true } : {}, ...incompatible.length > 0 ? { incompatible } : {},
-    ...substituted.length > 0 ? { substituted } : {},
+    ...unmet === undefined ? {} : { unmet },
   }
 }
 

@@ -1,8 +1,7 @@
 /** Resolve the update channel sealed into the installed application manifest. */
-import type { DesktopUpdatePreferences } from './settings-file.ts'
 
 /** Installer-owned channel, independent of release version and upload environment. */
-export type DesktopUpdateChannel = DesktopUpdatePreferences['channel']
+export type DesktopUpdateChannel = 'nightly' | 'latest'
 
 /**
  * Read the packaged channel; older manifests retain their existing nightly behavior.
@@ -13,6 +12,6 @@ export function desktopUpdateChannel(manifest: unknown): DesktopUpdateChannel {
   if (typeof manifest !== 'object' || manifest === null) throw new Error('desktop update: invalid application manifest')
   if (!('tomatoDesktopUpdateChannel' in manifest)) return 'nightly'
   const channel = manifest.tomatoDesktopUpdateChannel
-  if (channel !== 'nightly' && channel !== 'stable') throw new Error('desktop update: invalid packaged channel')
+  if (channel !== 'nightly' && channel !== 'latest') throw new Error('desktop update: invalid packaged channel')
   return channel
 }
