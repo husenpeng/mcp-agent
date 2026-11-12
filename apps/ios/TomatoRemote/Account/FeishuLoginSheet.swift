@@ -189,7 +189,7 @@ private struct FeishuWebView: UIViewRepresentable {
                 components.host = host
                 components.port = url.port
                 companyOrigin = components.url?.absoluteString
-                AppLog.info(.ui, "飞书登录跳转", detail: "\(url.absoluteString) → \(companyOrigin ?? "nil")")
+                AppLog.info(.ui, "飞书登录跳转", detail: companyOrigin ?? url.path)
             }
             guard url.path.contains("/api/auth/callback") else { return }
             // The callback page replaces itself with the app root when it

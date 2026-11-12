@@ -41,7 +41,10 @@ extension View {
     @ViewBuilder
     func tomatoScrollEdge() -> some View {
         if #available(iOS 26.0, *) {
-            scrollEdgeEffectStyle(.soft, for: .all)
+            // A soft effect on every edge washed out the transcript far above
+            // the dock. The bottom edge keeps a crisp fade; the top edge stays
+            // legible under the navigation bar.
+            scrollEdgeEffectStyle(.hard, for: .bottom)
         } else {
             self
         }
@@ -51,12 +54,19 @@ extension View {
     /// than sitting under a divider.
     /// - Parameter content: the dock, typically the composer.
     /// - Returns: the view with the dock occupying the bottom edge.
-    @ViewBuilder
     func tomatoBottomBar(@ViewBuilder _ content: () -> some View) -> some View {
-        if #available(iOS 26.0, *) {
-            safeAreaBar(edge: .bottom, spacing: 0, content: content)
-        } else {
-            safeAreaInset(edge: .bottom, spacing: 0, content: content)
+        // `safeAreaBar` on iOS 26 floats a glass bar over the scroll view: the
+        // chat kept drawing beneath it and the dock appeared to hover mid-page.
+        // Reserving the inset keeps the transcript above the dock, and the dock
+        // hugs its own content instead of stretching a glass sheet.
+        safeAreaInset(edge: .bottom, spacing: 0) {
+            content()
+                .background(.ultraThinMaterial)
+                .overlay(alignment: .top) {
+                    Rectangle()
+                        .fill(TomatoToken.borderL1)
+                        .frame(height: 0.5)
+                }
         }
     }
 

@@ -35,18 +35,20 @@ extension ChatModel {
         return kind == "user"
     }
 
-    /// What one person's message shows in the transcript.
+    /// What one person's message carries in the transcript.
     ///
-    /// A prompt may carry nothing but a photo or a staged document; joining only
-    /// its text blocks returned nothing for those, so the whole message vanished
-    /// from history. Each attachment contributes one marker instead.
+    /// Photos are structure, not words: the Host records each as a durable
+    /// reference beside the text, and the transcript draws the pictures. Only a
+    /// staged document keeps a marker in the bubble, because the app shows its
+    /// name in the composer but has no card for it yet.
     /// - Parameter data: the `user/message` payload.
-    /// - Returns: the text to render, or nil when the message holds no content.
-    static func body(of data: JSONValue?) -> String? {
-        guard let blocks = data?["content"]?.arrayValue else { return text(of: data) }
+    /// - Returns: the message's text, photo references, and document count.
+    static func content(of data: JSONValue?) -> ChatMessageContent {
+        guard let blocks = data?["content"]?.arrayValue else {
+            return ChatMessageContent(text: text(of: data) ?? "")
+        }
+        var content = ChatMessageContent()
         var parts: [String] = []
-        var images = 0
-        var files = 0
         for block in blocks {
             switch block["type"]?.stringValue {
             case "text":
@@ -54,45 +56,46 @@ extension ChatModel {
                     parts.append(value)
                 }
             case "image":
-                images += 1
+                if let id = block["attachment"]?["attachmentId"]?.stringValue, !id.isEmpty {
+                    content.images.append(ChatImageRef(id: id))
+                }
             case "file":
-                files += 1
+                content.files += 1
             default:
                 break
             }
         }
-        parts.append(contentsOf: markers(images: images, files: files))
-        return parts.isEmpty ? nil : parts.joined(separator: "\n")
+        content.text = ([parts.joined(separator: "\n")].filter { !$0.isEmpty }
+            + markers(files: content.files)).joined(separator: "\n")
+        return content
     }
 
-    /// One person's prompt rows, in the same words `body(of:)` renders.
+    /// What one injected context message reads as.
+    ///
+    /// These are harness notices rather than the person's own words: the row is
+    /// a text disclosure, so a photo they carry has no place in it.
+    /// - Parameter data: the `user/message` payload.
+    /// - Returns: the text to render, or nil when the message holds no content.
+    static func body(of data: JSONValue?) -> String? {
+        let content = content(of: data)
+        return content.isEmpty ? nil : content.text
+    }
+
+    /// One person's prompt row, in the same words `content(of:)` renders.
     /// @param text - what the person typed; may be empty.
-    /// @param images - photos attached to the prompt.
     /// @param hasDocument - whether a staged document rides along.
     /// @returns the row text this phone shows before the Host echoes it.
-    static func promptBody(text: String, images: Int, hasDocument: Bool) -> String {
-        var parts: [String] = []
-        if !text.isEmpty {
-            parts.append(text)
-        }
-        parts.append(contentsOf: markers(images: images, files: hasDocument ? 1 : 0))
-        return parts.joined(separator: "\n")
+    static func promptBody(text: String, hasDocument: Bool) -> String {
+        ([text].filter { !$0.isEmpty } + markers(files: hasDocument ? 1 : 0)).joined(separator: "\n")
     }
 
-    /// One line per attachment kind, so the durable row and the local echo of the
-    /// same prompt can never word it differently.
-    /// @param images - photos the message carries.
-    /// @param files - staged documents it carries.
+    /// One line per staged document, so the durable row and the local echo of
+    /// the same prompt can never word it differently.
+    /// @param files - staged documents the message carries.
     /// @returns the markers in the order attachments were sent.
-    private static func markers(images: Int, files: Int) -> [String] {
-        var parts: [String] = []
-        if images > 0 {
-            parts.append(images == 1 ? "［图片］" : "［图片 ×\(images)］")
-        }
-        if files > 0 {
-            parts.append(files == 1 ? "［文件］" : "［文件 ×\(files)］")
-        }
-        return parts
+    private static func markers(files: Int) -> [String] {
+        guard files > 0 else { return [] }
+        return [files == 1 ? "［文件］" : "［文件 ×\(files)］"]
     }
 
     /// Identity the Host recorded for one prompt, when it reported one.

@@ -41,6 +41,8 @@ struct ChatView: View {
     @State private var live = LiveActivityController()
     @StateObject private var progress: ProgressModel
     @State private var previewFile: DeliveredFile?
+    /// Photo of this conversation opened full screen.
+    @State private var previewPhoto: ChatImageRef?
     /// Document staged on the Host for the next prompt.
     @State private var staged: StagedFile?
     @State private var isUploading = false
@@ -303,6 +305,13 @@ struct ChatView: View {
             FilePreviewSheet(file: file)
                 .tomatoFullSheet()
         }
+        .sheet(item: $previewPhoto) { photo in
+            if let image = chat.photos.image(for: photo.id) {
+                ImagePreviewSheet(image: image)
+                    .tomatoFullSheet()
+                    .presentationBackground(.black)
+            }
+        }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active:
@@ -503,8 +512,14 @@ extension ChatView {
     private func row(_ item: ChatItem) -> some View {
         switch item.kind {
         case .user:
-            UserRow(text: item.text)
-                .opacity(item.pending ? 0.7 : 1)
+            UserRow(
+                text: item.text,
+                images: item.images,
+                photos: chat.photos,
+                open: { previewPhoto = $0 },
+                needs: { chat.loadImage($0.id) }
+            )
+            .opacity(item.pending ? 0.7 : 1)
         case .assistant:
             AssistantRow(text: item.text, pending: item.pending)
         case .tool:

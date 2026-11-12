@@ -26,6 +26,9 @@ struct ChatItem: Identifiable, Equatable {
     let id: String
     let kind: Kind
     var text: String
+    /// Photos the message carries, in the order they were sent. An image-only
+    /// prompt has no text at all; the transcript draws the photos themselves.
+    var images: [ChatImageRef] = []
     var pending: Bool = false
     var time: Double?
     /// Turn the row was recorded in, so one turn's work folds as a unit even
@@ -37,6 +40,35 @@ struct ChatItem: Identifiable, Equatable {
     /// Prompt identity this phone chose; set only on a local echo, so the row
     /// steps aside once the durable message carrying the same `rpcId` arrives.
     var requestId: String?
+}
+
+/// One photo inside one of the person's messages.
+///
+/// The key is what the transcript looks the picture up by: the Host's durable
+/// attachment identity once the message is recorded, or a prompt's temporary key
+/// while it is still on its way.
+struct ChatImageRef: Identifiable, Equatable {
+    let id: String
+
+    /// Whether the message carrying this photo is still being sent.
+    var isPending: Bool {
+        id.hasPrefix("pending:")
+    }
+}
+
+/// What one of the person's messages carries, before it becomes a row.
+struct ChatMessageContent: Equatable {
+    /// The words the person typed.
+    var text = ""
+    /// Photos, in sent order.
+    var images: [ChatImageRef] = []
+    /// Staged documents, still shown as one line inside the bubble.
+    var files = 0
+
+    /// Whether the message would draw anything at all.
+    var isEmpty: Bool {
+        text.isEmpty && images.isEmpty && files == 0
+    }
 }
 
 /// Everything a tool card needs, including the payload behind its detail sheet.

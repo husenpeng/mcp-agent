@@ -53,6 +53,9 @@ final class ChatModel: ObservableObject {
     /// Why the last switch failed. The model sheet shows it in place instead of
     /// the transcript's error banner, which belongs to the conversation itself.
     @Published var modelError: String?
+    /// Photos this transcript draws, keyed by what the Host recorded. The rows
+    /// carry references rather than pixels, so the fold stays cheap to replay.
+    let photos = ChatImages()
     /// Files the Agent presented in this conversation, newest turn first.
     @Published private(set) var deliverables: [DeliveredFile] = []
     @Published private(set) var hasEarlier = false
@@ -80,6 +83,9 @@ final class ChatModel: ObservableObject {
     private let seededBlank: Bool
     /// Guards the backfill that closes a hole a socket drop left behind.
     private var isFillingGap = false
+    /// Photos of prompts still in flight, by request identity, so the durable
+    /// message can adopt the bytes this phone already holds.
+    private var echoImages: [String: [String]] = [:]
     /// Whether a prompt from this phone is still on its way to the Host. The
     /// button already turns into Stop once `isRunning` flips, but two taps in
     /// one run-loop turn would otherwise send two prompts with two identities,
@@ -253,10 +259,20 @@ final class ChatModel: ObservableObject {
         // The Host records this identity on the durable message, so the echo
         // below can recognize the log's own copy of the prompt and stand down.
         let requestId = UUID().uuidString
+        // The photos are already on the phone, so the echo draws them instead of
+        // a placeholder; the durable message adopts these bytes once it arrives.
+        let imageKeys = images.indices.map { index in "pending:\(requestId):\(index)" }
+        for (key, data) in zip(imageKeys, images) {
+            photos.seed(data, for: key)
+        }
+        if !imageKeys.isEmpty {
+            echoImages[requestId] = imageKeys
+        }
         echo.append(ChatItem(
             id: localId,
             kind: .user,
-            text: Self.promptBody(text: trimmed, images: images.count, hasDocument: receiptId != nil),
+            text: Self.promptBody(text: trimmed, hasDocument: receiptId != nil),
+            images: imageKeys.map { ChatImageRef(id: $0) },
             pending: true,
             requestId: requestId
         ))
@@ -285,6 +301,9 @@ final class ChatModel: ObservableObject {
             isRunning = false
             agentAttached = wasAttached
             echo.removeAll { $0.id == localId }
+            if let keys = echoImages.removeValue(forKey: requestId) {
+                photos.forget(keys)
+            }
             rows = folded.rows + liveEcho
             // A Session another client holds open is not over: its history is
             // current and the next prompt works once that writer lets go. The
@@ -816,14 +835,17 @@ extension ChatModel {
         time: Double?,
         to fold: inout Fold
     ) {
-        guard let joined = Self.body(of: data), !joined.isEmpty else { return }
+        let content = Self.content(of: data)
+        guard !content.isEmpty else { return }
         guard Self.isPersonMessage(data) else {
             // The Desktop renders these as a context disclosure; a row keeps the
-            // same information without claiming the person wrote it.
+            // same information without claiming the person wrote it. A notice
+            // with no words of its own has nothing to disclose.
+            guard !content.text.isEmpty else { return }
             fold.rows.append(ChatItem(
                 id: "context-\(event["seq"]?.doubleValue ?? Double(fold.rows.count))",
                 kind: .context,
-                text: joined,
+                text: content.text,
                 time: time,
                 turn: fold.turn,
                 label: Self.contextLabel(data)
@@ -834,14 +856,21 @@ extension ChatModel {
         // shown while the prompt travelled — has nothing left to stand in for.
         if let requestId = Self.requestId(of: data) {
             fold.echoedRequests.insert(requestId)
+            // The same prompt's photos were seeded under the echo's own keys;
+            // hand them to the identities the Host recorded so the picture does
+            // not blink when the row becomes durable.
+            if let keys = echoImages.removeValue(forKey: requestId) {
+                photos.adopt(keys, as: content.images.map(\.id))
+            }
         }
-        let text = PersonalMemory.strippingContextBlock(joined)
-        guard !text.isEmpty else { return }
+        let text = PersonalMemory.strippingContextBlock(content.text)
+        guard !text.isEmpty || !content.images.isEmpty else { return }
         fold.sawMessage = true
         fold.rows.append(ChatItem(
             id: "user-\(event["seq"]?.doubleValue ?? Double(fold.rows.count))",
             kind: .user,
             text: text,
+            images: content.images,
             time: time,
             turn: fold.turn
         ))
@@ -979,6 +1008,17 @@ extension ChatModel {
 // MARK: - Model
 
 extension ChatModel {
+    /// Read one photo a realized row is about to draw.
+    ///
+    /// The row asks when it appears rather than the transcript scanning every
+    /// row it holds: a long conversation keeps only the photos it has shown, and
+    /// the store dedupes so a redraw never repeats a request.
+    /// - Parameter id: the durable attachment identity.
+    func loadImage(_ id: String) {
+        guard let hub else { return }
+        photos.load([id], sessionId: sessionId, hub: hub)
+    }
+
     /// Whether this screen may change the model at all.
     ///
     /// A child Session is served only through its parent's durable address, so

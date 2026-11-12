@@ -40,6 +40,9 @@ enum PhoneWebTools {
         guard !trimmed.isEmpty else {
             throw AgentError.rejected("web_search 需要一个查询词")
         }
+        guard trimmed.count <= 400 else {
+            throw AgentError.rejected("web_search 的查询词不能超过 400 个字")
+        }
         let limit = min(max(maxResults ?? 5, 1), maxSearchResults)
         guard let context = AccountAuthStore.shared.searchContext else {
             throw AgentError.rejected("web_search 需要先用飞书登录；登录后由公司搜索服务执行")
@@ -57,9 +60,10 @@ enum PhoneWebTools {
         guard let target = URL(string: trimmed),
               let scheme = target.scheme?.lowercased(),
               scheme == "http" || scheme == "https",
-              target.host != nil
+              target.host != nil,
+              target.user == nil
         else {
-            throw AgentError.rejected("web_fetch 需要一个 http 或 https 地址")
+            throw AgentError.rejected("web_fetch 需要一个不含凭据的 http 或 https 地址")
         }
         guard !isPrivate(target) else {
             throw AgentError.rejected("web_fetch 只读取公开网页，不访问本机或局域网地址")
@@ -82,7 +86,7 @@ enum PhoneWebTools {
             throw AgentError.transport("网页返回 HTTP \(http.statusCode)")
         }
         let contentType = http.value(forHTTPHeaderField: "Content-Type") ?? ""
-        let body = String(decoding: data.prefix(maxFetchBytes), as: UTF8.self)
+        let body = String(bytes: data.prefix(maxFetchBytes), encoding: .utf8) ?? ""
         let readable = contentType.contains("html") ? plainText(body) : body
         let bound = min(max(maxChars ?? maxFetchOutput, 1000), maxFetchOutput)
         let text = String(readable.prefix(bound))
@@ -258,8 +262,16 @@ enum PhoneWebTools {
         if host == "localhost" || host.hasSuffix(".local") || host == "::1" {
             return true
         }
+        // Decimal, hexadecimal, and shortened IPv4 forms all resolve to the
+        // same address as the dotted quad; refuse them before resolution.
+        if host.allSatisfy(\.isNumber) || host.hasPrefix("0x") {
+            return true
+        }
         let parts = host.split(separator: ".").compactMap { UInt8($0) }
         guard parts.count == 4 else {
+            if !host.contains(":"), host.split(separator: ".").allSatisfy({ UInt8($0) != nil }) {
+                return true
+            }
             // IPv6 unique-local and link-local ranges.
             return host.hasPrefix("fc") || host.hasPrefix("fd") || host.hasPrefix("fe80")
         }

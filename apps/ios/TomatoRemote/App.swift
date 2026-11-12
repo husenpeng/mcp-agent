@@ -59,7 +59,15 @@ struct RootView: View {
                     if lock.unavailable {
                         NoticeBar(text: "此设备没有面容 ID、触控 ID 或密码，配对后的钥匙没有任何本地保护。")
                     }
-                    MainTabs()
+                    #if DEBUG
+                        if ProcessInfo.processInfo.arguments.contains("-TOMATO_CHAT_STYLE_PREVIEW") {
+                            ChatStylePreview()
+                        } else {
+                            MainTabs()
+                        }
+                    #else
+                        MainTabs()
+                    #endif
                 }
             }
         }
@@ -592,6 +600,8 @@ final class AppModel: ObservableObject {
                     NSLog("TomatoRemote debug pairing kept in memory: %@", describe(error))
                     AppLog.error(.app, "凭据未存入钥匙串，仅本次运行有效", detail: describe(error))
                 }
+                // A new Host gets no account session minted for the old one.
+                AccountAuthStore.shared.clear()
                 profile = stored
                 phase = .ready
                 AppLog.info(.app, "配对成功", detail: "Host \(stored.base)")
@@ -649,6 +659,7 @@ final class AppModel: ObservableObject {
             RemoteSocket.forgetCookie(for: url)
         }
         KeychainStore.clear()
+        AccountAuthStore.shared.clear()
         profile = nil
         sessions = []
         sessionsError = nil

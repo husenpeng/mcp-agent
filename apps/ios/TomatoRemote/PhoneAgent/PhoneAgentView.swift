@@ -714,6 +714,7 @@ struct PhoneAgentView: View {
             || !images.isEmpty
             || file != nil
         else { return }
+        UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
         draft = ""
         photos = []
         pickerItems = []
