@@ -1,7 +1,7 @@
 import { memo, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { PendingSubmission } from '@tomato/api-session-controller/client'
-import type { PropsRenderFactories } from '@tomato/client-ui-slots'
+import type { PropsRenderFactories, PropsRenderSlots } from '@tomato/client-ui-slots'
 import type { UserTextFacts } from '@tomato/client-ui-conversation/client'
 import { JsonBlock, StateDot, TextShimmer } from '@tomato/client-ui-primitives'
 import type {
@@ -160,18 +160,35 @@ function TurnMaxTokensItem({ t }: {
   )
 }
 
+/**
+ * A row the message-source seat decorates. A durable Chat node satisfies it;
+ * pending and local-echo rows pass a source-less stand-in.
+ */
+interface DecoratedRow {
+  readonly kind: 'user' | 'steering'
+  readonly data: { readonly source: unknown }
+}
+
+/** Pending and local-echo rows carry no durable source for the seat to elect. */
+const UNDECORATED_ROW: DecoratedRow = { kind: 'user', data: { source: null } }
+
+/** Occupant used by rows that do not own the message-source seat. */
+const NO_MESSAGE_SOURCE: PropsRenderSlots<'conversation.chat.user.before'>['renderSlotChain'] = () => null
+
 /** Right-aligned bubble shared by user and steering rows. */
 function UserStyleBubble({
-  content, loadImage, renderFactorySlot, actions, pending = false, echo = false, batchStart = false,
+  node, renderSlotChain, content, loadImage, renderFactorySlot, actions,
+  pending = false, echo = false, batchStart = false,
   referenceLabels, skillNames, previewAttachments, facts: inputFacts = EMPTY_TEXT_FACTS, interactive = false,
-  retracted,
 }: {
   content: readonly unknown[]
   renderFactorySlot: PropsRenderFactories['renderFactorySlot']
   /** Optional IconActions (or similar) below the bubble; receives the joined text. */
   actions?: (text: string) => ReactNode
-  /** Localized note shown when a later retraction removed this exchange from model history. */
-  retracted?: string | undefined
+  /** Row whose durable source the message-source seat elects above this bubble. */
+  node: DecoratedRow
+  /** Seat renderer; rows that do not own the seat pass {@link NO_MESSAGE_SOURCE}. */
+  renderSlotChain: PropsRenderSlots<'conversation.chat.user.before'>['renderSlotChain']
   /** Whether this is the Host-authoritative pre-admission steering projection. */
   pending?: boolean
   /** Whether this is a local submission echo (invisible marker; the echo renders exactly like its durable replacement). */
@@ -205,15 +222,14 @@ function UserStyleBubble({
       data-pending-steering={pending || undefined}
       data-submission-echo={echo || undefined}
       data-chat-steering-batch={batchStart ? 'start' : undefined}
-      data-retracted={retracted === undefined ? undefined : true}
     >
+      {renderSlotChain('conversation.chat.user.before', { source: node.data.source, kind: node.kind }, { fallback: null })}
       {renderFactorySlot('conversation.chat.user.content', {
         content: prepared,
         loadImage,
         facts,
         interactive,
       })}
-      {retracted === undefined ? null : <span className={css.retractedNote}>{retracted}</span>}
       {actions?.(prepared.text)}
     </div>
   )
@@ -232,6 +248,8 @@ export function PendingSteeringBubble({ content, loadImage, renderFactorySlot, t
 } & Pick<ChatNodeOwnerProps, 'loadImage'>): ReactNode {
   return (
     <UserStyleBubble
+      node={UNDECORATED_ROW}
+      renderSlotChain={NO_MESSAGE_SOURCE}
       content={content}
       renderFactorySlot={renderFactorySlot}
       loadImage={loadImage}
@@ -283,6 +301,8 @@ export function PendingSubmissionBubble({ submission, loadImage, renderFactorySl
   )
   return (
     <UserStyleBubble
+      node={UNDECORATED_ROW}
+      renderSlotChain={NO_MESSAGE_SOURCE}
       content={content}
       previewAttachments={previewAttachments}
       renderFactorySlot={renderFactorySlot}
@@ -302,21 +322,29 @@ export function PendingSubmissionBubble({ submission, loadImage, renderFactorySl
   )
 }
 
-/** User and admitted-steering keyed Chat renderer. */
+/**
+ * Official user and admitted-steering keyed Chat renderer.
+ *
+ * Renders the durable-message chain seat directly above the bubble. The seat is
+ * declared by the `user` registration alone, so a steering row renders the same
+ * bubble without asking for it.
+ */
 export const UserMessageNodeView = memo(function UserMessageNodeView({
-  node, renderFactorySlot, loadImage, retractAt, retractable, t,
-}: ChatNodeViewProps<'user' | 'steering'>) {
+  node, renderFactorySlot, loadImage, renderSlotChain, t,
+}: ChatNodeViewProps<'user' | 'steering'> & {
+  /** Bound by the `user` keyed registration, the only entry that declares the seat. */
+  renderSlotChain: PropsRenderSlots<'conversation.chat.user.before'>['renderSlotChain']
+}) {
   const data = node.data
-  const retracted = node.kind === 'user' && node.data.retracted === true
-  const [retracting, setRetracting] = useState(false)
   return (
     <UserStyleBubble
+      node={node}
+      renderSlotChain={renderSlotChain}
       content={data.content}
       interactive
       renderFactorySlot={renderFactorySlot}
       loadImage={loadImage}
       batchStart={node.kind === 'steering' && node.data.batchStart === true}
-      retracted={retracted ? t('message.retracted') : undefined}
       {...data.referenceLabels === undefined ? {} : { referenceLabels: data.referenceLabels }}
       {...data.skillNames === undefined ? {} : { skillNames: data.skillNames }}
       actions={text => (
@@ -325,13 +353,6 @@ export const UserMessageNodeView = memo(function UserMessageNodeView({
           time={data.time}
           clock="start"
           className={css.actions}
-          onRetract={node.kind === 'user' && retractable === true && !retracted && !retracting
-            ? () => {
-              setRetracting(true)
-              void retractAt(data.seq, text)
-                .then(() => { setRetracting(false) }, () => { setRetracting(false) })
-            }
-            : undefined}
           t={t}
         />
       )}

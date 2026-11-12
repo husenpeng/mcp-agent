@@ -16,10 +16,16 @@
       "path": "../../../vendor/cordis"
     },
     {
+      "path": "../../api/remotes/tsconfig.client.json"
+    },
+    {
       "path": "../../boot/plugin-manager"
     },
     {
       "path": "../../test-support/client-runtime"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
     },
     {
       "path": "../store"
@@ -43,12 +49,6 @@
       "path": "../../util/crypto"
     },
     {
-      "path": "../../api/remotes/tsconfig.client.json"
-    },
-    {
-      "path": "../locale/tsconfig.client.json"
-    },
-    {
       "path": "../ui-settings/tsconfig.client.json"
     },
     {
@@ -58,6 +58,5 @@
   "include": [
     "src/client",
     "src/css-modules.d.ts"
-  ],
-  "files": []
+  ]
 }

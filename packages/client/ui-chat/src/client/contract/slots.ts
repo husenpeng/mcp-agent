@@ -3,7 +3,7 @@ import type { RefObject } from 'react'
 import type { MessageId } from '@tomato/llm/brand'
 import type { SessionId, SessionSeq } from '@tomato/session/types'
 import type { PendingSubmission } from '@tomato/api-session-controller/client'
-import type { FileAttachmentRef, ImageAttachmentRef } from '@tomato/attachment'
+import type { FileAttachmentRef } from '@tomato/attachment'
 import type { InboxState } from '@tomato/agent/types'
 import type {
   CommandNode, CompactionSummaryNode, ConversationLocationDataStore, ConversationTurnDataMap,
@@ -17,7 +17,9 @@ import type {
 } from '@tomato/client-ui-slots'
 import type { ObservableSnapshot } from '@tomato/client-store'
 import type { ConnectionStateSource } from '@tomato/client-connection/client'
-import type { MarkdownFileMentions, MarkdownLabels } from '@tomato/client-ui-primitives'
+import type { FileDragActions, MarkdownDelegateFenceInfo, MarkdownFileMentions, MarkdownLabels } from '@tomato/client-ui-primitives'
+import type { ContextMenuTriggerProps } from '@tomato/client-ui-context-menu/client'
+import type { ChatKey } from '../locale.ts'
 import type {} from '@tomato/client-ui-layout/client'
 // Type-only: the Session-scope access Hook (`useAccess`) the Chat entries read.
 import type {} from '@tomato/client-ui-session/client'
@@ -77,16 +79,22 @@ export interface QuotaNoticeState {
   seq: number
 }
 
-/** Original model-provided reasoning offered to the expanded Body Slot. */
+/** Original and display-ready reasoning offered to the expanded Body Slot. */
 export interface ReasoningBodyOwnerProps {
-  /** Complete or streaming reasoning text. */
+  /** Complete or streaming model output. */
+  readonly rawText: string
+  /** Reasoning text prepared for display. */
   readonly text: string
   /** Whether the reasoning tail is still streaming. */
   readonly running: boolean
 }
 
 /** Session-independent original or derived display input to the Content Factory. */
-export interface ReasoningContentInput extends ReasoningBodyOwnerProps {
+export interface ReasoningContentInput {
+  /** Caller-selected Markdown. */
+  readonly text: string
+  /** Whether the supplied text is still streaming. */
+  readonly running: boolean
   /** Localized Markdown controls, used unchanged when supplied; omission uses Chat's defaults. */
   readonly labels?: MarkdownLabels
 }
@@ -136,9 +144,12 @@ export interface ChatFileMentions {
    * Resolve prose links for one closing Turn.
    * @param owner - closing-Turn identity and file opener.
    * @param sessionId - viewed Session, including when history is inherited from a fork.
+   * @param getFileTriggerProps - ordinary gesture binding for a resolved file path.
    * @returns link resolver when available.
    */
-  forClosing(owner: TurnTailOwnerProps, sessionId: SessionId): MarkdownFileMentions | undefined
+  forClosing(
+    owner: TurnTailOwnerProps, sessionId: SessionId, getFileTriggerProps?: (path: string) => ContextMenuTriggerProps,
+  ): MarkdownFileMentions | undefined
 }
 
 declare module '@tomato/cordis' {
@@ -209,6 +220,20 @@ export interface ChatNodeInjected {
   }
 }
 
+/**
+ * Owner currency of the message-source decoration above one user message bubble.
+ *
+ * Entry selectors receive the durable message `source` and row kind. A
+ * non-null selection elects the component and reaches it as `matched`.
+ * Entries own their markup and copy; Chat does not interpret the source.
+ */
+export interface UserBeforeOwnerProps {
+  /** Durable message source; Chat does not interpret it. */
+  readonly source: unknown
+  /** Chat row kind that owns the decoration site. */
+  readonly kind: 'user' | 'steering'
+}
+
 /** Stable owner currency delivered to a keyed Chat renderer. */
 export interface ChatNodeOwnerProps {
   /** Renderer-owned Node portion selected by the grouping Definition. */
@@ -217,16 +242,8 @@ export interface ChatNodeOwnerProps {
   openFile: (path: string, options?: OpenFileOptions) => void
   inspectCall: ((callId: ToolCallId) => void) | undefined
   forkAt: (seq: number) => void
-  /**
-   * Retract the trailing human exchange that opens at `messageSeq`, restoring
-   * its text to the composer after the Host commits the retraction.
-   */
-  retractAt: (messageSeq: number, text: string) => Promise<void>
-  /** The Node is the trailing human input the Host may retract. */
-  retractable?: boolean
   /** Session-authorized image loader supplied by the Chat view. */
   loadImage: MessageImageLoader
-  fileMentions: (owner: TurnTailOwnerProps) => MarkdownFileMentions | undefined
   /** Turn-process state when this Node belongs to a projected Turn. */
   turnProcess?: TurnProcessOwnerProps | undefined
 }
@@ -235,16 +252,6 @@ export interface ChatNodeOwnerProps {
 export type UserContentAttachment =
   | { readonly type: 'image'; readonly image: MessageImageSource }
   | { readonly type: 'file'; readonly file: FileAttachmentRef }
-
-/**
- * Owner currency of one durable user-message image's side entries. A
- * submission echo has no attachment yet, so it offers no side entry; the
- * owner passes the admitted reference once the image is stored.
- */
-export interface UserImageMetaOwnerProps {
-  /** Admitted image reference the message carried. */
-  readonly image: ImageAttachmentRef
-}
 
 /** Prepared user contents without row identity, admission state, time, or actions. */
 export interface UserContentData {
@@ -316,7 +323,9 @@ export interface PerformanceUsageInjected {
 /** Business callbacks injected into the Chat view. */
 export interface ChatViewInjected {
   /** File preparation and failure callbacks owned by the file-drag plugin. */
-  readonly fileDrag: import('@tomato/client-ui-primitives').FileDragActions
+  readonly fileDrag: FileDragActions
+  /** Resolve the reference against this Session and its current path base when the gesture begins. */
+  resolveFilePath: (path: string) => string
   /** Dispatch one gesture to the Conversation plugin registry. */
   dispatchInteraction: (gesture: TextInteractionGesture) => string | null
   hooks: {
@@ -338,7 +347,10 @@ export interface ChatViewInjected {
   /** Open one HTTP(S) message link at the selected destination, using an external tab if Sidebar Browser is unavailable. */
   openExternalLink: (url: string) => void
   openFile: (path: string, options?: OpenFileOptions) => Promise<void>
+  /** Prepare one older page without publishing it. */
   loadOlder: () => void
+  /** Consume the prepared page synchronously; false when none is ready. */
+  consumeOlder: () => boolean
   /** Jump loader: page history back through seq; resolves when the window covers it. */
   loadThrough: (seq: SessionSeq) => Promise<void>
   loadImage: MessageImageLoader
@@ -347,9 +359,6 @@ export interface ChatViewInjected {
     read: () => ChatScrollPosition | null
   }
   forkAt: (seq: number) => void
-  /** Retract one trailing human exchange and restore its text to the composer. */
-  retractAt: (messageSeq: number, text: string) => Promise<void>
-  fileMentions: (owner: TurnTailOwnerProps) => MarkdownFileMentions | undefined
 }
 
 /** Session-owned node sources shared with the view, plus the flow's connection state. */
@@ -362,7 +371,7 @@ export type ChatFlowDataInjected = Pick<ChatViewInjected, 'keyedHooks'> & {
 
 /** Ordered rows and reconciled local echoes rendered inside one Chat viewport. */
 export interface ChatFlowOwnerProps extends Pick<ChatNodeOwnerProps,
-  'cwd' | 'openFile' | 'inspectCall' | 'forkAt' | 'retractAt' | 'loadImage' | 'fileMentions'> {
+  'cwd' | 'openFile' | 'inspectCall' | 'forkAt' | 'loadImage'> {
   readonly entries: readonly RenderEntry[]
   readonly pendingInputs: readonly (PendingSubmission | InboxState['next-step'][number])[]
   readonly lastInputTurn: number | undefined
@@ -381,7 +390,7 @@ export type ChatFlowSlotProps =
 /** Full Chat view props. */
 export type ChatViewSlotProps =
   PropsRuntime<'conversation.view'>
-  & PropsRenderSlots<'conversation.chat.flow' | 'conversation.chat.text-interaction'>
+  & PropsRenderSlots<'conversation.chat.flow' | 'conversation.chat.text-interaction' | 'conversation.chat.markdown.fence'>
   & PropsStore<ChatStore>
   & InjectFace<ChatViewInjected>
   & PropsLocale<'chat'>
@@ -398,7 +407,7 @@ declare module '@tomato/client-ui-slots' {
 
   interface LocaleNamespaceMap {
     /** Chat target, transcript node, statistics, and details copy. */
-    chat: import('../locale.ts').ChatKey
+    chat: ChatKey
   }
 
   interface SlotFactoryMap {
@@ -407,10 +416,7 @@ declare module '@tomato/client-ui-slots' {
       scope: 'session'
       props: UserContentInput
       locale: 'chat'
-      children: {
-        'conversation.chat.user.images': { kind: 'single'; scope: 'session' }
-        'conversation.chat.user.image-meta': { kind: 'list'; scope: 'session' }
-      }
+      children: { 'conversation.chat.user.images': { kind: 'single'; scope: 'session' } }
     }
     /** Session-independent reasoning Markdown with Chat labels and compact typography. */
     'conversation.chat.reasoning.content': {
@@ -423,6 +429,8 @@ declare module '@tomato/client-ui-slots' {
   interface SlotMap {
     /** Area-local text gestures and surfaces; each consumer registers its own synchronous admission. */
     'conversation.chat.text-interaction': { kind: 'keyed'; scope: 'session'; owner: TextInteractionSurface }
+    /** Language-keyed layers around one Markdown fence in the Chat flow; the content is the plain code block. */
+    'conversation.chat.markdown.fence': { kind: 'hoc'; scope: 'session'; owner: MarkdownDelegateFenceInfo }
 
     /** Ordered Chat rows and local echoes with viewport-bound visibility hooks. */
     'conversation.chat.flow': {
@@ -446,6 +454,17 @@ declare module '@tomato/client-ui-slots' {
       inject: ChatNodeInjected
     }
     /**
+     * Message-source decoration owned and rendered by the user Node entry.
+     * Selectors elect one component from the durable source and row kind.
+     * No match renders no visible content; steering and pending rows do not
+     * render this slot.
+     */
+    'conversation.chat.user.before': {
+      kind: 'chain'
+      scope: 'session'
+      owner: UserBeforeOwnerProps
+    }
+    /**
      * Renderer for one consecutive group of durable message images. The owner
      * supplies image references, an authorized loader, and alignment. A
      * registration replaces the shipped gallery; without one, images are omitted.
@@ -454,22 +473,15 @@ declare module '@tomato/client-ui-slots' {
     /** User-message images, including pending and local-echo previews, independently replaceable from output images. */
     'conversation.chat.user.images': { kind: 'single'; scope: 'session'; owner: MessageImagesOwnerProps }
     /**
-     * Ordered entries beside one durable user-message image, rendered under it
-     * in the attachment row. Each entry receives the admitted reference; a
-     * message image that is still a local preview offers no entry. With no
-     * entries nothing appears beside the image.
-     */
-    'conversation.chat.user.image-meta': { kind: 'list'; scope: 'session'; owner: UserImageMetaOwnerProps }
-    /**
      * Command row keyed by the command name. The component receives the folded
      * command lifecycle and linked compaction when present. Reusing a key
      * replaces that command renderer; an unoccupied key uses the generic card.
      */
     'conversation.chat.commandview': { kind: 'keyed'; scope: 'session'; owner: CommandRowOwnerProps }
     /**
-     * Expanded reasoning body with the unchanged model text. The official entry
+     * Expanded reasoning body with raw and display-ready text. The official entry
      * has priority 100 and calls the reasoning Content Factory; smaller priority
-     * values replace it. Contributions must preserve access to the original text.
+     * values replace it. Contributions must preserve access to untranslated display text.
      */
     'conversation.chat.reasoning.body': { kind: 'single'; scope: 'session'; owner: ReasoningBodyOwnerProps }
     /**

@@ -113,6 +113,8 @@ export interface ModelCatalogModel {
   readonly name: string
   readonly description?: string
   readonly reasoning?: ModelReasoning
+  /** Why a deployment policy refuses this model; absent when it may be selected. */
+  readonly blockedReason?: string
   /** Provider-authored label shown beside the name; display data only. */
   readonly badge?: LlmModelBadge
 }

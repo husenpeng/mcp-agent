@@ -7,18 +7,6 @@
   gap: 6px;
 }
 
-/* A retracted exchange stays in the transcript; the bubble reads as withdrawn
-   without hiding text the user may still want to copy. */
-.userRow[data-retracted] [data-message-bubble] {
-  opacity: 0.55;
-}
-
-.retractedNote {
-  color: var(--dsw-alias-label-tertiary);
-  font-size: var(--tomato-content-font-size-secondary, 13px);
-  line-height: calc(18px + var(--tomato-content-font-delta-secondary, 0px));
-}
-
 .userStack {
   display: flex;
   flex-direction: column;
@@ -323,15 +311,6 @@
   justify-content: flex-end;
   max-width: 100%;
   gap: 8px;
-}
-
-/* One user-message image with the entries registered for it stacked underneath. */
-.imageCell {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  min-width: 0;
-  gap: 4px;
 }
 
 .fileCard {

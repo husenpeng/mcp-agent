@@ -13,13 +13,31 @@
   ],
   "references": [
     {
+      "path": "../ui-settings/tsconfig.client.json"
+    },
+    {
       "path": "../../../vendor/cordis"
+    },
+    {
+      "path": "../../api/remotes/tsconfig.client.json"
+    },
+    {
+      "path": "../connection/tsconfig.client.json"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
     },
     {
       "path": "../store"
     },
     {
+      "path": "../ui-conversation/tsconfig.client.json"
+    },
+    {
       "path": "../ui-dockkit"
+    },
+    {
+      "path": "../ui-chat/tsconfig.client.json"
     },
     {
       "path": "../ui-renderer"
@@ -53,25 +71,6 @@
     },
     {
       "path": "../ui-context-menu"
-    },
-    {
-      "path": "../ui-settings/tsconfig.client.json"
-    },
-    {
-      "path": "../../api/remotes/tsconfig.client.json"
-    },
-    {
-      "path": "../connection/tsconfig.client.json"
-    },
-    {
-      "path": "../locale/tsconfig.client.json"
-    },
-    {
-      "path": "../ui-conversation/tsconfig.client.json"
-    },
-    {
-      "path": "../ui-chat/tsconfig.client.json"
     }
-  ],
-  "files": []
+  ]
 }

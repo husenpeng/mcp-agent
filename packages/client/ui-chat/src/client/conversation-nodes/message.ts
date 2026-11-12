@@ -88,9 +88,6 @@ export const messageDefinition: ConversationNodeDefinition<MessageNode> = {
         ? { id: String(event.data.id), role: 'start' }
         : null
     }
-    if (event.type === 'conversation/retraction') {
-      return { id: String(event.data.messageId), role: 'update' }
-    }
     return null
   },
   start: (_context, match, reader) => {
@@ -136,14 +133,7 @@ export const messageDefinition: ConversationNodeDefinition<MessageNode> = {
         source: event.data.source,
       }
   },
-  update: (context, match) => {
-    if (match.event.type !== 'conversation/retraction') return context.state
-    const start = context.start
-    if (start?.event.type !== 'user/message'
-      || context.state.kind !== 'user'
-      || start.event.seq !== match.event.data.startSeq) return context.state
-    return { ...context.state, retracted: true }
-  },
+  update: context => context.state,
   buildViewNode: (context) => {
     if (context.state === undefined) return null
     const location = contextLocation(context)

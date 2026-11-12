@@ -1,4 +1,5 @@
 /** Reusable user contents inside a caller-owned message row. */
+import { Fragment } from 'react'
 import type { FactoryComponentPropsOf } from '@tomato/client-ui-slots'
 import { fileExtension, FileTypeIcon, fileSizeText, JsonBlock, UserMessageBubble } from '@tomato/client-ui-primitives'
 import css from './MessageItem.module.css'
@@ -23,14 +24,11 @@ FactoryComponentPropsOf<'conversation.chat.user.content'>) {
         <div className={css.attachmentRow} data-message-attachments>
           {attachments.map((attachment, index) => attachment.type === 'image'
             ? (
-              <div key={`image:${index}`} className={css.imageCell}>
+              <Fragment key={`image:${index}`}>
                 {renderSlot('conversation.chat.user.images', {
                   images: [attachment.image], loadImage, align: 'end', compact: compactImages,
                 })}
-                {'attachment' in attachment.image
-                  ? renderSlot('conversation.chat.user.image-meta', { image: attachment.image.attachment })
-                  : null}
-              </div>
+              </Fragment>
             )
             : (
               <span key={`file:${index}`} className={css.fileCard} title={attachment.file.name}>
