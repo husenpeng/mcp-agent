@@ -32,10 +32,13 @@ enum JSONValue: Codable, Hashable, Sendable {
         let container = try decoder.singleValueContainer()
         if container.decodeNil() {
             self = .null
+        } else if let value = try? container.decode(Double.self) {
+            // Numbers first: JSONDecoder also accepts `1` and `0` as booleans,
+            // which would otherwise turn every sequence or revision of 1 into
+            // `.bool(true)` and fail the typed model that reads it.
+            self = .number(value)
         } else if let value = try? container.decode(Bool.self) {
             self = .bool(value)
-        } else if let value = try? container.decode(Double.self) {
-            self = .number(value)
         } else if let value = try? container.decode(String.self) {
             self = .string(value)
         } else if let value = try? container.decode([JSONValue].self) {
@@ -59,54 +62,106 @@ enum JSONValue: Codable, Hashable, Sendable {
         }
     }
 
+    /// Whether this value is JSON `null`.
+    var isNull: Bool {
+        if case .null = self {
+            return true
+        }
+        return false
+    }
+
+    /// Drop `null` object members, recursively.
+    ///
+    /// The Host's wire schema treats an absent optional field as undefined and
+    /// rejects an explicit `null`, so an optional Swift member that encodes as
+    /// null must leave the object instead of travelling.
+    /// - Returns: this value with null object members removed; array elements stay.
+    func omittingNullMembers() -> JSONValue {
+        switch self {
+        case let .array(values):
+            .array(values.map { $0.omittingNullMembers() })
+        case let .object(fields):
+            .object(fields.compactMapValues { $0.isNull ? nil : $0.omittingNullMembers() })
+        case .null, .bool, .number, .string:
+            self
+        }
+    }
+
     /// Bridge a `JSONSerialization` result, which the stream mux parses.
     static func from(_ any: Any) -> JSONValue {
         switch any {
         case is NSNull:
-            return .null
-        case let value as Bool:
-            return .bool(value)
-        case let value as Int:
-            return .number(Double(value))
-        case let value as Double:
-            return .number(value)
+            .null
+        case let value as NSNumber:
+            // JSONSerialization bridges `true` and `false` to the singleton
+            // CFBoolean numbers, which also match `Int` and `Double`; read the
+            // type id so `1` stays a number and a real boolean stays a boolean.
+            if CFGetTypeID(value) == CFBooleanGetTypeID() {
+                .bool(value.boolValue)
+            } else {
+                .number(value.doubleValue)
+            }
         case let value as String:
-            return .string(value)
+            .string(value)
         case let value as [Any]:
-            return .array(value.map(JSONValue.from))
+            .array(value.map(JSONValue.from))
         case let value as [String: Any]:
-            return .object(value.mapValues(JSONValue.from))
+            .object(value.mapValues(JSONValue.from))
         default:
-            return .null
+            .null
         }
     }
 
     var stringValue: String? {
-        if case let .string(value) = self { return value }
+        if case let .string(value) = self {
+            return value
+        }
         return nil
     }
 
     var doubleValue: Double? {
-        if case let .number(value) = self { return value }
+        if case let .number(value) = self {
+            return value
+        }
         return nil
     }
 
     var boolValue: Bool? {
-        if case let .bool(value) = self { return value }
+        if case let .bool(value) = self {
+            return value
+        }
         return nil
     }
 
     var objectValue: [String: JSONValue]? {
-        if case let .object(value) = self { return value }
+        if case let .object(value) = self {
+            return value
+        }
         return nil
     }
 
     var arrayValue: [JSONValue]? {
-        if case let .array(value) = self { return value }
+        if case let .array(value) = self {
+            return value
+        }
         return nil
     }
 
-    subscript(key: String) -> JSONValue? { objectValue?[key] }
+    subscript(key: String) -> JSONValue? {
+        objectValue?[key]
+    }
+
+    /// Read this value as one typed wire model.
+    ///
+    /// Forwarded Host events carry their payload as plain JSON, so a model that
+    /// already declares `Decodable` is read through the same decoder the HTTP
+    /// carrier uses instead of a second hand-written mapping.
+    /// - Parameter type - model to read.
+    /// - Returns: the decoded value, or nil when the value does not match it.
+    func decoded<Value: Decodable>(_ type: Value.Type) -> Value? {
+        guard let data = try? JSONEncoder().encode(self) else { return nil }
+        return try? JSONDecoder().decode(type, from: data)
+    }
 }
 
 /// Reads the first non-empty string found under any of `keys`, tolerating one
@@ -114,12 +169,16 @@ enum JSONValue: Codable, Hashable, Sendable {
 func firstString(in values: [String: JSONValue]?, keys: [String]) -> String? {
     guard let values else { return nil }
     for key in keys {
-        if let found = values[key]?.stringValue, !found.isEmpty { return found }
+        if let found = values[key]?.stringValue, !found.isEmpty {
+            return found
+        }
     }
     for key in keys {
         guard let nested = values[key]?.objectValue else { continue }
         for nestedKey in ["value", "text", "title", "preview"] {
-            if let found = nested[nestedKey]?.stringValue, !found.isEmpty { return found }
+            if let found = nested[nestedKey]?.stringValue, !found.isEmpty {
+                return found
+            }
         }
     }
     return nil
@@ -137,36 +196,132 @@ enum HubError: LocalizedError, Equatable {
     case transport(String)
     case remote(code: String, message: String)
     case decoding(String)
-    case stream(String)
+    /// A stream the Host refused in band, or a frame this client could not encode.
+    case stream(code: String?, message: String)
+    /// The WebSocket upgrade was answered with a non-101 response.
+    ///
+    /// CFNetwork hides the status line, so this case states only what is known:
+    /// the upgrade did not complete. Whether the cookie is dead or the link is
+    /// down is the HTTP carrier's question to answer.
+    case handshakeRefused
 
     var errorDescription: String? {
         switch self {
         case .invalidBaseURL:
-            return "Host 地址无效，请填形如 https://tomato-hub.xxx.ts.net 的地址"
+            "Host 地址无效，请填形如 https://tomato-hub.xxx.ts.net 的地址"
         case .notPaired:
-            return "尚未配对，请先输入设备码"
+            "尚未配对，请先输入设备码"
         case .unauthorized:
-            return "认证已失效，请用新的设备码重新配对"
+            "认证已失效，请用新的设备码重新配对"
         case .forbidden:
-            return "Host 拒绝了这个来源（Host/Origin 校验未通过）"
+            "Host 拒绝了这个来源（Host/Origin 校验未通过）"
         case .notFound:
-            return "Host 上没有这个接口，版本可能不匹配"
+            "Host 上没有这个接口，版本可能不匹配"
         case let .transport(message):
-            return "网络错误：\(message)"
+            "网络错误：\(message)"
         case let .remote(code, message):
-            return "\(message)（\(code)）"
+            "\(message)（\(code)）"
         case let .decoding(message):
-            return "响应无法解析：\(message)"
-        case let .stream(message):
-            return "事件流中断：\(message)"
+            "响应无法解析：\(message)"
+        case let .stream(code, message):
+            code.map { "事件流中断：\(message)（\($0)）" } ?? "事件流中断：\(message)"
+        case .handshakeRefused:
+            "无法建立事件流连接，正在重试"
         }
+    }
+
+    /// Whether a retry can change this outcome.
+    ///
+    /// Whether retrying the same request could ever succeed.
+    ///
+    /// A stream refusal is final unless the Host named a state that clears by
+    /// itself: `session/writer-held` ends when the other writer finishes, so a
+    /// reconnect is exactly the right retry.
+    var isFinal: Bool {
+        switch self {
+        case .unauthorized, .forbidden, .notFound, .notPaired, .invalidBaseURL:
+            true
+        case let .stream(code, _):
+            !Self.transientStreamCodes.contains(code ?? "")
+        case .handshakeRefused:
+            // The same upgrade is refused identically only when the credential
+            // is dead, and this failure alone cannot say that.
+            false
+        case .transport, .remote, .decoding:
+            false
+        }
+    }
+
+    /// Stream refusals that describe a temporary owner of the write handle.
+    static let transientStreamCodes: Set<String> = ["session/writer-held"]
+
+    /// Whether this failure names another writer holding the Session.
+    var isWriterHeld: Bool {
+        if case let .stream(code, _) = self {
+            return code == "session/writer-held"
+        }
+        if case let .remote(code, _) = self {
+            return code == "session/writer-held"
+        }
+        return false
     }
 }
 
 // MARK: - Session wire types
 
+/// Liveness of one conversation.
+///
+/// The list reads it from the Host flags on each row; the conversation reads it
+/// from the same flags plus what it has loaded. Both go through `resolve`, so
+/// the two screens can never disagree about the same Session.
+///
+/// The flags are live: the Host forwards `api-session/status` and
+/// `api-session/added` over the event stream, so a row follows a turn that
+/// starts or ends without waiting for the next list read.
+enum SessionState: Hashable, Sendable {
+    /// A turn is executing on the Host right now.
+    case running
+    /// An Agent is attached and waiting for the next prompt.
+    case live
+    /// The Session exists but no turn has ever run.
+    case fresh
+    /// No Agent is attached: the conversation has ended, history only.
+    case ended
+
+    /// One derivation for the list row and the conversation header.
+    /// - Parameters:
+    ///   - running: whether a turn is executing.
+    ///   - agentAttached: whether the Host holds an Agent for this Session.
+    ///   - hasContent: whether any turn or message exists.
+    /// - Returns: the state both screens report.
+    static func resolve(running: Bool, agentAttached: Bool, hasContent: Bool) -> SessionState {
+        if running {
+            return .running
+        }
+        // Content decides first: the Host reports `agentAvailable: false` for
+        // every Session without a live Agent, including one that never ran.
+        guard hasContent else {
+            return .fresh
+        }
+        return agentAttached ? .live : .ended
+    }
+}
+
+/// Page sizes the phone asks the Host for. One opening page fills a phone
+/// screen; older pages load only when the reader reaches the top.
+enum SessionPageLimit {
+    /// Newest messages fetched before the reader has read anything.
+    static let opening = 20
+    /// One step further back through history.
+    static let earlier = 24
+}
+
 /// One Session list row. `sessionId`, `updatedAt` and the flags always exist;
 /// `projections` is a partial, possibly stale hint block.
+///
+/// `updatedAt`, `running`, `blank` and `agentAvailable` are the facts the Host
+/// also forwards as notifications, so the list replaces them in place instead of
+/// waiting for the next read.
 struct SessionSummary: Decodable, Identifiable, Hashable, Sendable {
     struct Projections: Decodable, Hashable, Sendable {
         let kind: String?
@@ -175,16 +330,21 @@ struct SessionSummary: Decodable, Identifiable, Hashable, Sendable {
     }
 
     let sessionId: String
-    let updatedAt: Double
-    let running: Bool
-    let blank: Bool
-    let agentAvailable: Bool
+    var updatedAt: Double
+    var running: Bool
+    var blank: Bool
+    var agentAvailable: Bool
+    /// Parent of a subagent child; the Host only serves these through the
+    /// parent's durable address.
+    let parentSessionId: String?
     let formatStatus: String?
     let cwd: String?
     let origin: String?
     let projections: Projections?
 
-    var id: String { sessionId }
+    var id: String {
+        sessionId
+    }
 
     /// Title fallback chain. The list endpoint does not guarantee a title
     /// projection, so a row may legitimately have none.
@@ -194,11 +354,43 @@ struct SessionSummary: Decodable, Identifiable, Hashable, Sendable {
             ?? "未命名会话"
     }
 
+    /// The folder a reader sees for a Session whose cwd is known.
+    var folderName: String? {
+        cwd.map { URL(fileURLWithPath: $0).lastPathComponent }
+    }
+
     /// Best-effort secondary line for the row.
     var displaySubtitle: String {
         firstString(in: projections?.values, keys: ["lastMessage", "lastMessagePreview", "summary", "preview"])
             ?? cwd
             ?? String(sessionId.prefix(8))
+    }
+
+    /// How the conversation currently stands, as the list and the conversation
+    /// header both report it.
+    ///
+    /// The Host publishes two independent facts: `running` (a turn is executing)
+    /// and `agentAvailable` (an Agent is attached). A session with neither is
+    /// cold: its history stays readable, but the conversation has ended until
+    /// the next prompt activates an Agent.
+    var state: SessionState {
+        SessionState.resolve(running: running, agentAttached: agentAvailable, hasContent: !blank)
+    }
+
+    /// Whether this Session is a subagent's transcript. The Host serves those
+    /// only through the parent's durable address.
+    var isSubagent: Bool {
+        origin == "subagent"
+    }
+
+    /// Whether this Session is the transcript of a Tomato Rbot run.
+    ///
+    /// The browser keeps those out of the workspace tree and lists them under
+    /// the robot; this app does the same, so an agent the person configured
+    /// does not read as an ordinary conversation.
+    var isRobotRun: Bool {
+        guard let value = projections?.values?["robotRun"] else { return false }
+        return !value.isNull
     }
 }
 
@@ -266,9 +458,11 @@ struct SessionPageRequest: Encodable {
     let beforeSeq: Double?
     let maxMessages: Int?
 }
+
 struct SessionFollowRequest: Encodable {
     let address: SessionAddress
     let assistantStream: Bool
+    let maxMessages: Int?
 }
 
 /// One element of a prompt. An image travels inline as base64 because the Host
@@ -276,9 +470,12 @@ struct SessionFollowRequest: Encodable {
 enum PromptContentPart: Encodable {
     case text(String)
     case image(mediaType: String, base64: String, name: String?)
+    /// A document staged through the Host's upload route; the receipt is single
+    /// Session and retired once the Host reads it.
+    case file(receiptId: String)
 
     private enum CodingKeys: String, CodingKey {
-        case type, text, mediaType, data, name
+        case type, text, mediaType, data, name, receiptId
     }
 
     func encode(to encoder: Encoder) throws {
@@ -292,6 +489,9 @@ enum PromptContentPart: Encodable {
             try container.encode(mediaType, forKey: .mediaType)
             try container.encode(base64, forKey: .data)
             try container.encodeIfPresent(name, forKey: .name)
+        case let .file(receiptId):
+            try container.encode("file", forKey: .type)
+            try container.encode(receiptId, forKey: .receiptId)
         }
     }
 }
@@ -306,24 +506,38 @@ struct SessionPromptRequest: Encodable {
 
 // MARK: - Account wire types
 
-/// Identity of the requesting UI, forwarded by the Host to Platform.
-struct AccountClientMetadata: Encodable {
-    let version: String
-    let locale: String
-    let timezoneOffsetSeconds: Int
-}
-
-/// `account/getState` value.
-struct AccountState: Decodable, Sendable {
+/// `GET /api/auth/session` projection: `signed-in`, `signed-out`, or
+/// `unavailable` when the Host has no configured login service.
+struct AccountSession: Decodable, Sendable {
     let status: String
-    let links: JSONValue?
-    let attempt: JSONValue?
+    let user: AccountProfile?
+    /// The Desktop shell's account, projected to this paired device.
+    let shared: Bool?
 
-    var isSignedIn: Bool { status == "credential-stored" }
+    var isSignedIn: Bool {
+        status == "signed-in"
+    }
+
+    var isUnavailable: Bool {
+        status == "unavailable"
+    }
+
+    var isShared: Bool {
+        shared == true
+    }
 }
 
-/// `account/getProfile` is display-safe platform data whose members are owned
-/// by the platform; read only the names this client renders.
+/// Desktop posture the shell reports for this Host (`GET /api/desktop/status`).
+struct DesktopStatus: Decodable, Sendable {
+    let listenPort: Int?
+    let trustedHosts: [String]?
+    let tunnel: Bool?
+    let keepAwake: Bool?
+    let launchAtLogin: Bool?
+    let version: String?
+}
+
+/// Platform-owned display data; read only the names this client renders.
 struct AccountProfile: Decodable, Sendable {
     let raw: [String: JSONValue]
 
@@ -340,13 +554,16 @@ struct AccountProfile: Decodable, Sendable {
         firstString(in: raw, keys: ["displayName", "name", "nickname", "nickName", "userName", "email"])
     }
 
-    var email: String? { firstString(in: raw, keys: ["email", "mail"]) }
+    var email: String? {
+        firstString(in: raw, keys: ["email", "mail"])
+    }
 }
 
 // MARK: - Pairing
 
-/// The launch token travels in the printed `tomato web:` URL; the Host
-/// exchanges it at `/connect` for a persistent signed cookie.
+// The launch token travels in the printed `tomato web:` URL; the Host
+// exchanges it at its root route for a persistent signed browser cookie,
+// which stays valid across reconnections for its whole lifetime.
 
 // MARK: - Watchdog wire types
 
@@ -357,6 +574,11 @@ struct WatchdogHealth: Decodable, Sendable {
     let state: String
     let pid: Double?
 
-    var isOnline: Bool { state == "running" }
-    var isUnresponsive: Bool { state == "unresponsive" }
+    var isOnline: Bool {
+        state == "running"
+    }
+
+    var isUnresponsive: Bool {
+        state == "unresponsive"
+    }
 }

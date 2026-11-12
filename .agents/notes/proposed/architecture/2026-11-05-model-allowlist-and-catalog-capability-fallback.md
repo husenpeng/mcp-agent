@@ -41,7 +41,7 @@ The adapter lists every configured model but marks a refused pair with `blockedR
 
 ## Risks
 
-- **The cache marker is advisory.** A gateway can accept `cache_control` and still not honor it. Only a live `cacheReadTokens` observation proves caching; a route that fails it needs the native `/v1/messages` protocol, not a different marker shape.
+- **The cache marker is advisory.** A gateway can accept `cache_control` and still not honor it. Only a live `cacheReadTokens` observation proves caching; a route that fails it needs the native `/v1/messages` protocol, not a different marker shape. The marker is now a declared dialect a probe can confirm: [Prompt-cache dialect and tool-with-effort capability are endpoint facts](../../implemented/architecture/2026-11-12-prompt-cache-dialect-and-tool-effort-capability.md).
 - **The release manifest is external data.** Dates can be wrong, stale, or use a different model id than the relay. A wrong date changes the allowlist silently; the manifest needs an owner and a refresh path.
 - **The allowlist covers `@tomato/llm-pi-ai` routes only.** A `@tomato/llm-deepseek` route is outside it; a deployment serving models through both adapters needs a policy at a higher seam.
 - **`local` is a snapshot.** Adding a model to the provider list later is blocked until the allowlist is updated. That is the intended failure mode, but it needs a configuration workflow rather than an implicit refresh.

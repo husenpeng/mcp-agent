@@ -1,0 +1,52 @@
+# SwiftLint for the Tomato Remote app: correctness and readability rules the
+# codebase actually follows. Style-only rules SwiftFormat owns stay off.
+excluded:
+  - .derived
+  - TomatoRemote.xcodeproj
+  - TomatoRemote/Design/Tokens.swift
+
+file_length:
+  warning: 800
+  error: 1200
+
+cyclomatic_complexity:
+  warning: 15
+  error: 22
+
+line_length:
+  warning: 160
+  error: 240
+  ignores_comments: true
+  ignores_urls: true
+
+identifier_name:
+  min_length: 2
+  max_length: 48
+  excluded: [id, x, y, up]
+
+type_name:
+  min_length: 3
+  max_length: 56
+
+disabled_rules:
+  - todo
+  - trailing_whitespace
+  - trailing_comma
+  - statement_position
+  - trailing_newline
+  - opening_brace
+  - explicit_acl
+  - explicit_top_level_acl
+
+opt_in_rules:
+  - empty_count
+  - force_try
+  - implicit_return
+  - redundant_nil_coalescing
+  - toggle_bool
+  - unneeded_parentheses_in_closure_argument
+
+force_cast: warning
+force_try: warning
+
+reporter: xcode

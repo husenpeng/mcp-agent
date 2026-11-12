@@ -1,0 +1,6 @@
+--swiftversion 5.9
+--indent 4
+--maxwidth 140
+--wraparguments before-first
+--stripunusedargs closure-only
+--exclude .derived,TomatoRemote.xcodeproj,TomatoRemote/Design/Tokens.swift

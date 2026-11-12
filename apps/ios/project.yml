@@ -31,6 +31,10 @@ targets:
       - path: TomatoRemote
         excludes:
           - "Resources/Info.plist"
+          # Build output and browser probes must never become app resources;
+          # a stray DerivedData here also makes XcodeGen emit duplicate tasks.
+          - ".derived"
+          - ".playwright-mcp"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: ai.tomato.remote
@@ -48,10 +52,45 @@ targets:
         SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
         SWIFT_EMIT_LOC_STRINGS: YES
         DEVELOPMENT_ASSET_PATHS: ""
+    dependencies:
+      - target: TomatoRemoteWidgets
+        embed: true
     scheme:
       testTargets:
         - TomatoRemoteUITests
       gatherCoverageData: false
+
+  TomatoRemoteWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: TomatoRemoteWidgets
+      # The activity attributes are compiled into both faces so one declaration
+      # defines what the app writes and what the island reads.
+      - path: TomatoRemote/Shared/TomatoRunAttributes.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ai.tomato.remote.widgets
+        PRODUCT_NAME: TomatoRemoteWidgets
+        GENERATE_INFOPLIST_FILE: YES
+        SKIP_INSTALL: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+        CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]: NO
+        CODE_SIGNING_REQUIRED[sdk=iphonesimulator*]: NO
+        CODE_SIGN_IDENTITY[sdk=iphonesimulator*]: ""
+        INFOPLIST_KEY_CFBundleDisplayName: Tomato
+        INFOPLIST_KEY_NSExtension: ""
+    info:
+      path: TomatoRemoteWidgets/Info.plist
+      properties:
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    dependencies:
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+      - sdk: ActivityKit.framework
 
   TomatoRemoteUITests:
     type: bundle.ui-testing
@@ -65,3 +104,4 @@ targets:
         TEST_TARGET_NAME: TomatoRemote
         PRODUCT_BUNDLE_IDENTIFIER: ai.tomato.remote.uitests
         GENERATE_INFOPLIST_FILE: YES
+

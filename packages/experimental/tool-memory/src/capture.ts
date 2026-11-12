@@ -90,6 +90,33 @@ export interface TurnCaptureRecord {
   readonly outcome: CaptureOutcome
 }
 
+/**
+ * Record a capture the plugin skipped before any model request. The route is a
+ * sentinel: `memory`/`unavailable` names that no provider was called, which keeps
+ * every capture record carrying a route and a reconstructable outcome.
+ * @param session - Session that finished the turn.
+ * @param transcript - person messages the turn contributed.
+ * @param limits - token cap the capture would have used.
+ * @param reason - why no request was made, for example `sign-in-required`.
+ */
+export function captureSkipped(
+  session: Session,
+  transcript: TurnTranscript,
+  limits: { readonly maxTokens: number },
+  reason: string,
+): CaptureOutcome {
+  const outcome: CaptureOutcome = { status: 'skipped', reason }
+  appendPluginRecord(session, 'plugin:tool-memory/turn-capture', {
+    route: { provider: 'memory', model: 'unavailable' },
+    system: CAPTURE_SYSTEM,
+    fromSeq: transcript.fromSeq,
+    toSeq: transcript.toSeq,
+    maxTokens: limits.maxTokens,
+    outcome,
+  })
+  return outcome
+}
+
 /** One person message of the finished turn, as sent to the capture request. */
 export interface CapturedMessage {
   /** Seq of the `user/message` event. */

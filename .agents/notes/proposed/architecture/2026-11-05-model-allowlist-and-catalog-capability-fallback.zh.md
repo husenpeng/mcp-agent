@@ -41,7 +41,7 @@ Status: proposed
 
 ## Risks
 
-- **缓存标记只是建议。** 网关可能接受 `cache_control` 却不执行。只有实际观测到 `cacheReadTokens` 才能证明缓存；验证失败的路由需要原生 `/v1/messages` 协议，而不是换一种标记形状。
+- **缓存标记只是建议。** 网关可能接受 `cache_control` 却不执行。只有实际观测到 `cacheReadTokens` 才能证明缓存；验证失败的路由需要原生 `/v1/messages` 协议，而不是换一种标记形状。该标记现在是可声明、可由探测确认的方言：[提示词缓存方言与「工具+推理」能力属于端点事实](../../implemented/architecture/2026-11-12-prompt-cache-dialect-and-tool-effort-capability.zh.md)。
 - **发布清单是外部数据。** 日期可能错误、过期，或使用与 relay 不同的模型 id。错误日期会静默改变允许清单；清单需要负责人和刷新路径。
 - **允许清单只覆盖 `@tomato/llm-pi-ai` 路由。** `@tomato/llm-deepseek` 路由不在范围内；同时通过两个适配器提供模型的部署需要更高层的策略。
 - **`local` 是快照。** 之后把模型加入提供方列表会被拦截，直到更新允许清单。这是预期的失败方式，但需要配置工作流而不是隐式刷新。

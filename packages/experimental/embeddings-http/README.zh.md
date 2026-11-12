@@ -45,6 +45,9 @@ kind: "package-reference"
 | `timeoutMs` | `15000` | 单次 HTTP 请求的截止时间 |
 | `batchSize` | `32` | 每次 HTTP 请求的文本数 |
 | `maxInputChars` | `4000` | 发送前每条文本保留的字符数 |
+| `failureThreshold` | `3` | 连续失败多少次后暂停提供方 |
+| `cooldownMs` | `30000` | 达到阈值后的首次暂停时长；之后每次翻倍 |
+| `maxCooldownMs` | `300000` | 翻倍暂停的上限 |
 
 生成的[配置目录](../../../docs/config-catalog.zh.md#tomatoexperimental-embeddings-http)是全部接受字段的完整来源。
 

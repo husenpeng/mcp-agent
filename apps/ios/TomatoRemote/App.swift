@@ -11,19 +11,43 @@ import SwiftUI
 @main
 struct TomatoRemoteApp: App {
     @StateObject private var model = AppModel()
+    @StateObject private var journal = UsageJournal()
+    @StateObject private var interactions = InteractionCenter()
+
+    init() {
+        // Installed before the first view builds, so a launch that hangs leaves
+        // a record instead of a silent freeze.
+        AppDiagnostics.start()
+        #if DEBUG
+            // A sign-in check starts from a known state; a release build never
+            // reaches this branch.
+            if ProcessInfo.processInfo.arguments.contains("-TOMATO_CLEAR_ACCOUNT") {
+                AccountAuthStore.shared.clear()
+            }
+        #endif
+    }
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environmentObject(model)
+                .environmentObject(model.modelCatalog)
+                .environmentObject(journal)
+                .environmentObject(interactions)
         }
     }
 }
 
 struct RootView: View {
     @EnvironmentObject private var model: AppModel
+    @EnvironmentObject private var journal: UsageJournal
+    @EnvironmentObject private var interactions: InteractionCenter
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var lock = BiometricLock()
+    #if DEBUG
+        /// Owner of a `-TOMATO_LIVE_DEMO` activity, which has no Session to hold it.
+        @State private var demoLive = LiveActivityController()
+    #endif
 
     var body: some View {
         Group {
@@ -41,39 +65,267 @@ struct RootView: View {
         }
         .tint(TomatoToken.brandPrimary)
         .overlay {
-            if model.phase == .ready && !lock.unlocked {
+            if model.phase == .ready, !lock.unlocked, !skipsLock {
                 LockedCover(failure: lock.failure) { Task { await lock.unlock() } }
             }
         }
         // `.inactive` also fires while the system's own biometric sheet is up, so
         // only leaving the foreground drops the gate.
         .onChange(of: scenePhase) { _, phase in
+            AppDiagnostics.scene(Self.label(phase))
             switch phase {
             case .background: lock.lock()
             case .active: Task { await unlockIfPaired() }
             default: break
             }
         }
-        .task { await unlockIfPaired() }
+        // A test run opens one Host file directly; no other presentation is
+        // attached here, so this sheet is the only one the root owns.
+        .sheet(item: $model.debugPreview) { file in
+            FilePreviewSheet(file: file)
+        }
+        .task {
+            model.attach(journal)
+            model.attach(interactions)
+            AppLog.shared.recordEnvironment(host: model.hostLabel)
+            AppLog.screen("根视图")
+            // A test run names its Host explicitly, so it also replaces a
+            // pairing left on the device by an earlier run.
+            AppModel.logLaunchArguments()
+            #if DEBUG
+                // A simulator or device check may leave one model seed, one MCP
+                // server, and one prompt; run the local agent and record it.
+                if AgentDebugSeed.isPresent {
+                    model.tab = .phoneAgent
+                    await AgentDebugSeed.runIfPresent()
+                } else if ProcessInfo.processInfo.arguments.contains("-TOMATO_PHONE_TAB") {
+                    model.tab = .phoneAgent
+                }
+                // A design check on a real Lock Screen need not depend on a turn.
+                if let demo = LiveActivityController.demoState {
+                    await demoLive.startDemo(demo)
+                }
+            #endif
+            if let pairing = AppModel.debugPairing {
+                do {
+                    try await model.pair(base: pairing.base, token: pairing.token)
+                } catch {
+                    // A test run that cannot pair must say why; the pairing screen
+                    // shows no other trace of the attempt.
+                    NSLog("TomatoRemote debug pairing failed: %@", describe(error))
+                    AppLog.error(.app, "调试配对失败", detail: describe(error))
+                }
+            }
+            #if DEBUG
+                // UI automation cannot accept the system's "open in app?" prompt
+                // a simulator `openurl` raises, so a debug launch may route one
+                // link itself through the same handler.
+                let arguments = ProcessInfo.processInfo.arguments
+                if let index = arguments.firstIndex(of: "-TOMATO_OPEN_URL"),
+                   arguments.indices.contains(index + 1),
+                   let url = URL(string: arguments[index + 1])
+                {
+                    // `-TOMATO_DELAY_OPEN <seconds>` lets a launch settle (and
+                    // warm its renderers) before the link lands.
+                    var delay: Double = 0
+                    if let delayIndex = arguments.firstIndex(of: "-TOMATO_DELAY_OPEN"),
+                       arguments.indices.contains(delayIndex + 1),
+                       let value = Double(arguments[delayIndex + 1])
+                    {
+                        delay = value
+                    }
+                    if delay > 0 {
+                        Task {
+                            try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                            model.handle(url)
+                        }
+                    } else {
+                        model.handle(url)
+                    }
+                }
+            #endif
+            #if DEBUG
+                // Prove the export path on a device: write the same report the
+                // share sheet would, next to the log so `devicectl copy` can
+                // bring it back.
+                if ProcessInfo.processInfo.arguments.contains("-TOMATO_EXPORT_LOGS") {
+                    Task { @MainActor in
+                        try? await Task.sleep(nanoseconds: 3_000_000_000)
+                        let text = AppLog.shared.exportText()
+                        let url = DiagnosticsStorage.directory.appendingPathComponent("export-test.txt")
+                        try? text.write(to: url, atomically: true, encoding: .utf8)
+                        AppLog.info(.diagnostics, "导出测试已写入 export-test.txt", detail: "\(text.count) 字符")
+                    }
+                }
+            #endif
+            await unlockIfPaired()
+        }
         .onOpenURL { url in model.handle(url) }
     }
 
+    /// One-word scene label the diagnostics log records.
+    /// - Parameter phase: the scene phase SwiftUI reported.
+    /// - Returns: a stable English word, so the log is greppable.
+    private static func label(_ phase: ScenePhase) -> String {
+        switch phase {
+        case .active: "active"
+        case .inactive: "inactive"
+        case .background: "background"
+        @unknown default: "unknown"
+        }
+    }
+
     private func unlockIfPaired() async {
-        guard model.phase == .ready else { return }
+        guard model.phase == .ready, !skipsLock else { return }
         await lock.unlock()
+    }
+
+    /// Debug launches can bypass the biometric gate so UI automation can reach
+    /// the screens; a release build never sees the argument.
+    private var skipsLock: Bool {
+        #if DEBUG
+            ProcessInfo.processInfo.arguments.contains("-TOMATO_NO_LOCK")
+        #else
+            false
+        #endif
     }
 }
 
-/// Three destinations; a Session's conversation is pushed from the list.
+/// Five destinations; a Session's conversation is pushed from its list.
+///
+/// The tab bar is the app's whole navigation layer, so it takes the release's
+/// own glass treatment and shrinks while a list scrolls. Personal memory is not
+/// a tab: it is a property of the account, reached from there.
 struct MainTabs: View {
+    @EnvironmentObject private var model: AppModel
+    @EnvironmentObject private var interactions: InteractionCenter
+    @Environment(\.scenePhase) private var scenePhase
+    // The robot and room streams belong to the tab container: a pushed detail
+    // must keep receiving registry frames after the list disappears.
+    @StateObject private var robots = RobotListModel()
+    @StateObject private var rooms = RoomListModel()
+
     var body: some View {
-        TabView {
+        TabView(selection: $model.tab) {
+            HomeView()
+                .tabItem { Label("记忆", systemImage: "brain") }
+                .badge(interactions.pending.count)
+                .tag(AppModel.Tab.home)
             SessionListView()
                 .tabItem { Label("会话", systemImage: "bubble.left.and.bubble.right") }
+                .tag(AppModel.Tab.sessions)
+            PhoneAgentView()
+                .tabItem { Label("Tomato Phone", systemImage: "iphone.gen3") }
+                .tag(AppModel.Tab.phoneAgent)
+            RobotsView(robotModel: robots)
+                .tabItem { Label("智能体", systemImage: "brain.head.profile") }
+                .tag(AppModel.Tab.robots)
+            RoomsView(roomModel: rooms, availableRobots: robots.ordered)
+                .tabItem { Label("群聊", systemImage: "person.3") }
+                .tag(AppModel.Tab.rooms)
             AccountView()
                 .tabItem { Label("账号", systemImage: "person.crop.circle") }
-            DesktopStatusView()
-                .tabItem { Label("桌面", systemImage: "desktopcomputer") }
+                .tag(AppModel.Tab.account)
+        }
+        .modifier(TabBarBehavior())
+        .task {
+            interactions.start(hub: model.hub)
+            robots.start(hub: model.hub)
+            rooms.start(hub: model.hub)
+            AppLog.screen(Self.label(for: model.tab))
+            #if DEBUG
+                autotourIfAsked()
+            #endif
+            // A returning diagram reader warms the 3.4 MB runtime while the
+            // list settles, so opening a chat does not start that compile.
+            Task {
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
+                await MermaidRenderer.shared.warmIfUsedBefore()
+            }
+        }
+        // Attribute a dropped frame to the tab that was on screen.
+        .onChange(of: model.tab) { _, tab in
+            AppLog.screen(Self.label(for: tab))
+            AppLog.info(.ui, "切换到 \(Self.label(for: tab))", detail: "占用 \(MemoryFootprint.text())")
+        }
+        // A suspended app receives no frames. The sockets may have ended while
+        // the app was away, so returning to the foreground reopens the ones
+        // that stopped.
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            interactions.resume(hub: model.hub)
+            robots.resume(hub: model.hub)
+            rooms.resume(hub: model.hub)
+        }
+        // A reopened stream delivers new changes only, so the rows that changed
+        // while it was down are read again. The first connection needs no read:
+        // the list's own opening read covers it.
+        .onChange(of: interactions.isConnected) { was, connected in
+            guard was, connected else { return }
+            Task { await model.refreshSessions(force: true) }
+        }
+        .onDisappear {
+            robots.stop()
+            rooms.stop()
+            interactions.stop()
+        }
+    }
+
+    #if DEBUG
+        /// Cycle every tab without XCUITest, so the frame log measures the
+        /// screen transitions themselves. Present only with `-TOMATO_AUTOTOUR`.
+        private func autotourIfAsked() {
+            guard ProcessInfo.processInfo.arguments.contains("-TOMATO_AUTOTOUR") else { return }
+            Task { @MainActor in
+                // Let the first screen and its reads settle.
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                let tabs: [(AppModel.Tab, String)] = [
+                    (.home, "今天"),
+                    (.sessions, "会话"),
+                    (.robots, "智能体"),
+                    (.rooms, "群聊"),
+                    (.account, "账号"),
+                ]
+                for _ in 0 ..< 2 {
+                    for (tab, label) in tabs {
+                        AppLog.mark("切页 → \(label)")
+                        model.tab = tab
+                        try? await Task.sleep(nanoseconds: 1_500_000_000)
+                    }
+                }
+                AppLog.info(.ui, "自动切页结束")
+            }
+        }
+    #endif
+
+    /// Screen name the diagnostics log records for one tab.
+    /// - Parameter tab: selected destination.
+    /// - Returns: the label the log reader groups by.
+    private static func label(for tab: AppModel.Tab) -> String {
+        switch tab {
+        case .home: "记忆"
+        case .sessions: "会话"
+        case .phoneAgent: "Tomato Phone"
+        case .robots: "智能体"
+        case .rooms: "群聊"
+        case .account: "账号"
+        }
+    }
+}
+
+/// Collapse the tab bar while content scrolls, where the release supports it.
+private struct TabBarBehavior: ViewModifier {
+    /// `-TOMATO_NO_TAB_MINIMIZE` turns the collapse off so a test can tell
+    /// whether its animation is responsible for dropped scroll frames.
+    private var enabled: Bool {
+        !ProcessInfo.processInfo.arguments.contains("-TOMATO_NO_TAB_MINIMIZE")
+    }
+
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *), enabled {
+            content.tabBarMinimizeBehavior(.onScrollDown)
+        } else {
+            content
         }
     }
 }
@@ -96,39 +348,195 @@ final class AppModel: ObservableObject {
     @Published private(set) var phase: Phase
     @Published private(set) var profile: PairingProfile?
 
+    /// Destinations, addressed by a deep link as well as by the tab bar.
+    enum Tab: Hashable {
+        case home
+        case sessions
+        case phoneAgent
+        case robots
+        case rooms
+        case account
+    }
+
+    @Published var tab: Tab = .home
+    /// Whether the account tab shows the personal-memory page; a
+    /// `tomato://memory` link sets it.
+    @Published var showsMemory = false
+    /// Whether the account tab opens the diagnostics page; a `tomato://logs`
+    /// link sets it, and a support reply can point at that address.
+    @Published var showsLogs = false
+    /// One file a test run asked to preview, present only with
+    /// `-TOMATO_PREVIEW_PATH <absolute path>`. A release build leaves it nil.
+    @Published var debugPreview: DeliveredFile?
     @Published var sessions: [SessionSummary] = []
     @Published var sessionsError: String?
+    /// The paired Host's model directory. One read serves every conversation,
+    /// because the provider list belongs to the Host rather than to a Session.
+    let modelCatalog = ModelCatalogStore()
+    /// Recent event pages keyed by Session, filled ahead of a tap so the
+    /// conversation renders its history immediately.
+    @Published private(set) var previewEvents: [String: [JSONValue]] = [:]
     @Published var isLoadingSessions = false
     @Published var isCreatingSession = false
+    /// When the last successful list read landed.
+    private(set) var lastSessionsRead: Date?
+
+    /// Where list-level interactions are remembered. Optional so a test can
+    /// build the model without a journal.
+    private weak var journal: UsageJournal?
+    /// Host event stream the list follows. Optional for the same reason; a model
+    /// without it falls back to reading the whole list.
+    private weak var interactions: InteractionCenter?
+
+    /// Point this model at the device journal that records what the list does.
+    /// - Parameter journal: the session's journal, owned by the app scene.
+    func attach(_ journal: UsageJournal) {
+        self.journal = journal
+    }
+
+    /// Follow the Host's forwarded notifications through the open event stream.
+    ///
+    /// The stream already exists for approvals and questions, and the Host
+    /// forwards its Session notifications on it, so the list learns about a turn
+    /// that starts or ends without reading every row again.
+    /// - Parameter interactions: the event-stream owner, owned by the app scene.
+    func attach(_ interactions: InteractionCenter) {
+        self.interactions = interactions
+        interactions.onHostEvent = { [weak self] event, args in
+            self?.applyHostEvent(event, args: args)
+        }
+    }
+
+    /// Whether the Host is pushing Session changes right now.
+    ///
+    /// A list that cannot follow events is only a snapshot, so its header says
+    /// so rather than presenting rows as current.
+    var isFollowingEvents: Bool {
+        interactions?.isConnected == true
+    }
 
     /// Session a `tomato://session/<id>` link asked to open, consumed by the list
     /// once it can resolve the row.
     @Published var pendingSessionId: String?
+    /// Room a `tomato://room/<id>` link asked to open, consumed by the room list
+    /// once its snapshot carries the room.
+    @Published var pendingRoomId: String?
 
     init() {
-        if let stored = KeychainStore.load(), stored.url != nil {
+        if let preview = Self.previewProfile {
+            // UI automation cannot pair: the token is process-scoped and the Host
+            // is not reachable from the runner. A debug launch may therefore
+            // enter the paired phase against an address that never answers, so
+            // screens render their own offline state instead of the pairing
+            // flow. The named address also wins over a pairing an earlier run
+            // left in the keychain.
+            profile = preview
+            phase = .ready
+        } else if let stored = KeychainStore.load(), stored.url != nil {
             profile = stored
             phase = .ready
         } else {
             profile = nil
             phase = .pairing
         }
+        #if DEBUG
+            let arguments = ProcessInfo.processInfo.arguments
+            if let index = arguments.firstIndex(of: "-TOMATO_PREVIEW_PATH"),
+               arguments.indices.contains(index + 1)
+            {
+                let path = arguments[index + 1]
+                debugPreview = DeliveredFile(path: path, description: nil, seq: nil)
+            }
+        #endif
+    }
+
+    /// Debug-only standing pairing, present only with `-TOMATO_PREVIEW_PAIRING`.
+    private static var previewProfile: PairingProfile? {
+        #if DEBUG
+            let arguments = ProcessInfo.processInfo.arguments
+            guard let index = arguments.firstIndex(of: "-TOMATO_PREVIEW_PAIRING"),
+                  arguments.indices.contains(index + 1)
+            else { return nil }
+            let base = arguments[index + 1]
+            guard URL(string: base) != nil else { return nil }
+            return PairingProfile(base: base, cookie: "", authority: URL(string: base)?.host)
+        #else
+            return nil
+        #endif
     }
 
     /// Route one incoming deep link.
     ///
-    /// Only `session` is accepted for now; an unrecognised host or a malformed
-    /// path is reported rather than ignored, because a notification that leads
-    /// nowhere is indistinguishable from a broken app.
+    /// `session/<id>` opens a conversation and `memory` opens the personal
+    /// memory page; an unrecognised host or a malformed path is reported rather
+    /// than ignored, because a notification that leads nowhere is
+    /// indistinguishable from a broken app.
     /// @param url - the URL the system handed the application.
     func handle(_ url: URL) {
-        guard url.scheme == "tomato" else { return }
+        guard url.scheme == "tomato" else {
+            AppLog.warning(.app, "忽略了非 tomato 链接")
+            return
+        }
+        AppLog.info(.app, "深链 \(url.host ?? "")", detail: url.absoluteString)
         // `tomato://session/<id>` puts `session` in the host position.
         let segments = [url.host].compactMap { $0 } + url.pathComponents.filter { $0 != "/" }
+        if segments == ["new"] {
+            tab = .sessions
+            pendingSessionId = "new"
+            return
+        }
+        if segments == ["latest"] || segments == ["recent"] {
+            tab = .sessions
+            pendingSessionId = segments[0]
+            return
+        }
+        if segments == ["sessions"] {
+            tab = .sessions
+            return
+        }
+        if segments == ["account"] {
+            tab = .account
+            return
+        }
+        if segments == ["memory"] {
+            tab = .account
+            showsMemory = true
+            return
+        }
+        #if DEBUG
+            // A diagnostics self-test ends the process on purpose so the next
+            // launch can show what the crash guard recorded.
+            if segments == ["crash"] {
+                AppLog.warning(.crash, "调试：主动触发崩溃")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    CrashGuard.selfTest()
+                }
+                return
+            }
+        #endif
+        if segments == ["logs"] || segments == ["diagnostics"] {
+            tab = .account
+            showsLogs = true
+            return
+        }
+        if segments == ["robots"] {
+            tab = .robots
+            return
+        }
+        if segments == ["rooms"] {
+            tab = .rooms
+            return
+        }
+        if segments.first == "room", segments.count >= 2 {
+            tab = .rooms
+            pendingRoomId = segments[1]
+            return
+        }
         guard segments.first == "session", segments.count >= 2 else {
             sessionsError = "无法识别的链接：\(url.absoluteString)"
             return
         }
+        tab = .sessions
         pendingSessionId = segments[1]
     }
 
@@ -140,7 +548,12 @@ final class AppModel: ObservableObject {
     /// Client bound to the paired Host, or `nil` before pairing.
     var hub: HubClient? {
         guard let profile, let url = profile.url else { return nil }
-        return HubClient(base: url, cookie: profile.cookie, watchdogToken: profile.watchdogToken)
+        return HubClient(
+            base: url,
+            cookie: profile.cookie,
+            accountCookie: AccountAuthStore.shared.accountCookie,
+            watchdogToken: profile.watchdogToken
+        )
     }
 
     var hostLabel: String {
@@ -151,14 +564,15 @@ final class AppModel: ObservableObject {
 
     /// Exchange a launch token for the persistent cookie and become ready.
     ///
-    /// A host typed without a scheme gets `https://`, while a tailnet deployment
-    /// serves plain HTTP until its certificate is issued, so both schemes are
-    /// tried before the attempt is called a failure. The cookie's authority is the
-    /// host either way, so a retry costs nothing but one round trip.
+    /// A host typed without a scheme gets `https://`. The other scheme is tried
+    /// only where plain HTTP can legally work — a local network or tailnet host —
+    /// because ATS refuses cleartext for a public name, and that refusal would
+    /// otherwise replace the real failure with a misleading one.
     /// @param base - host root the user supplied.
     /// @param token - the launch token from the printed URL.
     func pair(base: URL, token: String) async throws {
-        var lastError: Error?
+        AppLog.info(.app, "开始配对", detail: "Host \(base.absoluteString)")
+        var firstError: Error?
         for candidate in Self.pairCandidates(base) {
             do {
                 let cookie = try await HubClient.connect(base: candidate, token: token)
@@ -167,34 +581,79 @@ final class AppModel: ObservableObject {
                     cookie: cookie,
                     authority: candidate.host
                 )
-                try KeychainStore.save(stored)
+                do {
+                    try KeychainStore.save(stored)
+                } catch {
+                    // The simulator build carries no keychain entitlement
+                    // (`-34018`). A debug launch that named its Host keeps the
+                    // profile in memory for this run; a release build never
+                    // reaches this branch.
+                    guard Self.debugPairing != nil else { throw error }
+                    NSLog("TomatoRemote debug pairing kept in memory: %@", describe(error))
+                    AppLog.error(.app, "凭据未存入钥匙串，仅本次运行有效", detail: describe(error))
+                }
                 profile = stored
                 phase = .ready
-                await refreshSessions()
+                AppLog.info(.app, "配对成功", detail: "Host \(stored.base)")
+                AppLog.shared.recordEnvironment(host: stored.base)
+                await refreshSessions(force: true)
                 return
             } catch {
-                lastError = error
+                AppLog.warning(.app, "配对尝试失败", detail: "\(candidate.absoluteString)：\(describe(error))")
+                if firstError == nil {
+                    firstError = error
+                }
             }
         }
-        throw lastError ?? HubError.invalidBaseURL
+        AppLog.error(.app, "配对失败", detail: firstError.map(describe) ?? "没有可用地址")
+        throw firstError ?? HubError.invalidBaseURL
     }
 
-    /// The base plus the same host under the other HTTP scheme.
+    /// The requested host root first, plus the same host under the other HTTP
+    /// scheme when that scheme can work for this address.
     /// @param base - the requested host root.
     /// @returns one or two candidates, the requested one first.
     private static func pairCandidates(_ base: URL) -> [URL] {
         var alternate = URLComponents(url: base, resolvingAgainstBaseURL: false)
         alternate?.scheme = base.scheme == "https" ? "http" : "https"
         guard let other = alternate?.url, other != base else { return [base] }
+        if base.scheme == "https", !isLocalHost(base.host ?? "") {
+            return [base]
+        }
         return [base, other]
     }
 
+    /// Whether plain HTTP to this host is exempt from ATS: a literal address, an
+    /// unqualified name, or a `.local` / tailnet name.
+    /// @param host - the URL host.
+    /// @returns true when the cleartext fallback may be attempted.
+    private static func isLocalHost(_ host: String) -> Bool {
+        if host.contains(":") {
+            return true
+        }
+        if !host.contains(".") {
+            return true
+        }
+        if host.hasSuffix(".local") || host.hasSuffix(".ts.net") {
+            return true
+        }
+        let parts = host.split(separator: ".")
+        return parts.count == 4 && parts.allSatisfy { Int($0).map { (0 ... 255).contains($0) } == true }
+    }
+
     func unpair() {
+        AppLog.notice(.app, "解除配对")
+        // The mirrored WebSocket cookie lives outside the Keychain; leaving it
+        // behind would keep presenting a credential the person revoked.
+        if let profile, let url = profile.url {
+            RemoteSocket.forgetCookie(for: url)
+        }
         KeychainStore.clear()
         profile = nil
         sessions = []
         sessionsError = nil
         phase = .pairing
+        AppLog.shared.recordEnvironment(host: "未配对")
     }
 
     /// Attach or replace the Watchdog bearer token on the stored pairing.
@@ -213,32 +672,121 @@ final class AppModel: ObservableObject {
 
     // MARK: Sessions
 
-    func refreshSessions() async {
+    func refreshSessions(force: Bool = false) async {
         guard let hub else { return }
+        // A tab return reads again only when the last read is stale; replacing an
+        // equal list would re-diff every row for no new information.
+        if !force, !sessions.isEmpty, let lastSessionsRead,
+           Date().timeIntervalSince(lastSessionsRead) < Self.sessionFreshness
+        {
+            return
+        }
         isLoadingSessions = true
         defer { isLoadingSessions = false }
+        AppLog.mark("刷新列表")
+        let started = CFAbsoluteTimeGetCurrent()
         do {
             let items = try await hub.listSessions()
-            sessions = items.sorted { $0.updatedAt > $1.updatedAt }
+            let sorted = items.sorted { $0.updatedAt > $1.updatedAt }
+            if sorted != sessions {
+                sessions = sorted
+            }
             sessionsError = nil
+            lastSessionsRead = Date()
+            AppLog.info(
+                .session,
+                "会话列表已刷新",
+                detail: "\(items.count) 条 · \(Self.milliseconds(since: started)) ms"
+            )
         } catch {
             sessionsError = describe(error)
+            AppLog.error(.session, "会话列表刷新失败", detail: describe(error))
         }
     }
 
+    /// Seconds a read stays fresh for a plain appearance-driven refresh.
+    private static let sessionFreshness: TimeInterval = 15
+
+    /// Elapsed milliseconds, rounded, for a log detail.
+    /// - Parameter start: `CFAbsoluteTimeGetCurrent()` the work began at.
+    /// - Returns: the elapsed time in milliseconds.
+    private static func milliseconds(since start: CFAbsoluteTime) -> Int {
+        Int(((CFAbsoluteTimeGetCurrent() - start) * 1000).rounded())
+    }
+
+    // MARK: Forwarded Host events
+
+    /// Apply one Host notification to the rows on screen.
+    ///
+    /// The Host announces every Agent and Session change on the event stream the
+    /// approval cards already follow, which is how a browser client stays
+    /// current. A row whose turn starts while the reader watches must not keep
+    /// showing what the last read said.
+    /// - Parameters:
+    ///   - event - forwarded event name.
+    ///   - args - the Host's positional arguments, in its own order.
+    func applyHostEvent(_ event: String, args: [JSONValue]) {
+        AppLog.debug(.stream, "Host 事件 \(event)", detail: "\(args.count) 个参数")
+        guard let next = SessionLiveEvents.apply(event: event, args: args, to: sessions) else { return }
+        sessions = next
+    }
+
     /// Creates a Session and returns its identity, or reports why it failed.
-    func createSession() async -> String? {
+    /// - Parameter cwd: absolute folder the new Session joins; nil lets the Host choose.
+    func createSession(cwd: String? = nil) async -> String? {
         guard let hub else { return nil }
         isCreatingSession = true
         defer { isCreatingSession = false }
         do {
-            let created = try await hub.createSession()
-            await refreshSessions()
+            let created = try await hub.createSession(cwd: cwd)
+            AppLog.info(.session, "创建会话", detail: "\(created.sessionId.prefix(8))")
+            journal?.record(UsageEvent(kind: .created))
+            await refreshSessions(force: true)
             return created.sessionId
         } catch {
             sessionsError = describe(error)
+            AppLog.error(.session, "创建会话失败", detail: describe(error))
             return nil
         }
+    }
+
+    /// Fetch one Session's newest page into the preview cache.
+    ///
+    /// A failure is not reported: the conversation loads its own first page and
+    /// this cache only decides whether it can paint before that round trip ends.
+    /// - Parameter summary: Session to warm; already-cached entries stay as-is.
+    func prefetch(_ summary: SessionSummary) async {
+        guard previewEvents[summary.sessionId] == nil, let hub else { return }
+        // The Host refuses a `throughSeq` past the Session's cursor, so the only
+        // usable address is the watermark the list projected. Without one the
+        // conversation waits for its follow snapshot instead of guessing.
+        let started = CFAbsoluteTimeGetCurrent()
+        guard let cursor = summary.projections?.asOfSeq, let page = try? await hub.pageEvents(
+            sessionId: summary.sessionId,
+            throughSeq: cursor,
+            maxMessages: SessionPageLimit.opening
+        ) else { return }
+        previewEvents[summary.sessionId] = page.events
+        AppLog.debug(
+            .session,
+            "预取会话 \(summary.sessionId.prefix(8))",
+            detail: "\(page.events.count) 条 · \(Int((CFAbsoluteTimeGetCurrent() - started) * 1000)) ms"
+        )
+    }
+
+    /// Warm the one conversation a reader is most likely to open next. Warming
+    /// several spent a slow link's bandwidth on pages nobody read.
+    /// - Parameter summaries: rows currently visible, newest first.
+    func prefetchLikely(_ summaries: [SessionSummary]) async {
+        guard let next = summaries.first(where: { !$0.isSubagent && !$0.isRobotRun }) else { return }
+        await prefetch(next)
+    }
+
+    /// Events already fetched for one Session, if any.
+    /// @param sessionId - Session whose preview is read.
+    /// @returns the cached page, or an empty array.
+    func cachedEvents(_ sessionId: String) -> [JSONValue] {
+        previewEvents[sessionId] ?? []
     }
 
     func rename(_ summary: SessionSummary, to title: String) async {
@@ -247,9 +795,18 @@ final class AppModel: ObservableObject {
         guard !trimmed.isEmpty else { return }
         do {
             try await hub.renameSession(sessionId: summary.sessionId, title: trimmed)
-            await refreshSessions()
+            AppLog.info(.session, "重命名会话", detail: "\(summary.sessionId.prefix(8))")
+            journal?.record(UsageEvent(kind: .renamed, project: summary.folderName))
+            await refreshSessions(force: true)
         } catch {
             sessionsError = describe(error)
+            AppLog.error(.session, "重命名会话失败", detail: describe(error))
         }
+    }
+
+    /// Remember that the list opened one conversation.
+    /// - Parameter summary: the row the reader tapped.
+    func noteOpened(_ summary: SessionSummary) {
+        journal?.record(UsageEvent(kind: .opened, project: summary.folderName))
     }
 }

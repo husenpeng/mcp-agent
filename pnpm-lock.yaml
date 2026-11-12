@@ -10829,6 +10829,72 @@ importers:
         specifier: ^4.3.2
         version: 4.3.2
 
+  packages/experimental/phone-use:
+    dependencies:
+      '@tomato/branded':
+        specifier: workspace:*
+        version: link:../../util/branded
+      '@tomato/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
+      '@tomato/tools':
+        specifier: workspace:*
+        version: link:../../core/tools
+      '@tomato/typert-protocol':
+        specifier: workspace:*
+        version: link:../../typert/protocol
+      '@tomato/util-values':
+        specifier: workspace:*
+        version: link:../../util/values
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@tomato/agent':
+        specifier: workspace:*
+        version: link:../../core/agent
+      '@tomato/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@tomato/user-questions':
+        specifier: workspace:*
+        version: link:../../interaction/user-questions
+
+  packages/experimental/phone-use-bundle:
+    dependencies:
+      '@tomato/experimental-phone-use':
+        specifier: workspace:*
+        version: link:../phone-use
+      '@tomato/experimental-phone-use-macos':
+        specifier: workspace:*
+        version: link:../phone-use-macos
+    devDependencies:
+      '@tomato/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+
+  packages/experimental/phone-use-macos:
+    dependencies:
+      '@tomato/branded':
+        specifier: workspace:*
+        version: link:../../util/branded
+      '@tomato/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
+      '@tomato/subprocess':
+        specifier: workspace:*
+        version: link:../../subprocess/subprocess
+      '@tomato/typert-protocol':
+        specifier: workspace:*
+        version: link:../../typert/protocol
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@tomato/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+
   packages/experimental/plugin-market-bundle:
     dependencies:
       '@tomato/client-ui-plugin-market':

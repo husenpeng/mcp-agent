@@ -68,28 +68,68 @@ export function configOf(value: unknown): EmbeddingsConfigView {
   }
 }
 
-/** The two fields the page may edit. */
+/** The fields the page may edit. */
 export interface EndpointDraft {
   /** Endpoint base URL. */
   readonly baseUrl: string
   /** Credential name, or an empty string to send no authorization. */
   readonly apiKeyEnv: string
+  /** Embedding model id. */
+  readonly model: string
+  /** Vector length as text; empty defers to the first response. */
+  readonly dimensions: string
 }
 
 /** Read the editable fields from one stored section. */
 export function endpointDraftOf(value: unknown): EndpointDraft {
   const config = configOf(value)
-  return { baseUrl: config.baseUrl, apiKeyEnv: config.apiKeyEnv }
+  return { baseUrl: config.baseUrl, apiKeyEnv: config.apiKeyEnv, model: config.model, dimensions: config.dimensions }
 }
 
-/** Field writes the endpoint save stages; an empty credential clears its override. */
-export function endpointWrites(draft: EndpointDraft): readonly SettingsFormPathOp[] {
+/**
+ * Merge stored settings with the mounted provider so the page names the values
+ * actually in effect when the profile leaves a field to its bundle default.
+ * @param view - stored section values.
+ * @param mounted - live provider identity from the Host, when mounted.
+ * @returns the values the page displays.
+ */
+export function effectiveConfig(view: EmbeddingsConfigView, mounted: { readonly baseUrl?: string | undefined; readonly model?: string | undefined; readonly dimensions?: number | undefined } | undefined): EmbeddingsConfigView {
+  return {
+    baseUrl: view.baseUrl === '' ? mounted?.baseUrl ?? '' : view.baseUrl,
+    model: view.model === '' ? mounted?.model ?? '' : view.model,
+    dimensions: view.dimensions === '' || view.dimensions === '0'
+      ? mounted?.dimensions === undefined ? '' : String(mounted.dimensions)
+      : view.dimensions,
+    apiKeyEnv: view.apiKeyEnv,
+    enabled: view.enabled,
+  }
+}
+
+/** Field writes the save stages; an empty value clears its override. */
+export function endpointWrites(draft: EndpointDraft, baseline?: EmbeddingsConfigView): readonly SettingsFormPathOp[] {
   const baseUrl = draft.baseUrl.trim()
   const apiKeyEnv = draft.apiKeyEnv.trim()
-  return [
+  const model = draft.model.trim()
+  const dimensions = draft.dimensions.trim()
+  const parsed = Number(dimensions)
+  const length = dimensions === '' || !Number.isSafeInteger(parsed) || parsed < 0 ? undefined : parsed
+  const writes: SettingsFormPathOp[] = [
     baseUrl === '' ? { op: 'unset', path: ['baseUrl'] } : { op: 'set', path: ['baseUrl'], value: baseUrl },
     apiKeyEnv === '' ? { op: 'unset', path: ['apiKeyEnv'] } : { op: 'set', path: ['apiKeyEnv'], value: apiKeyEnv },
+    model === '' ? { op: 'unset', path: ['model'] } : { op: 'set', path: ['model'], value: model },
+    length === undefined ? { op: 'unset', path: ['dimensions'] } : { op: 'set', path: ['dimensions'], value: length },
   ]
+  if (baseline === undefined) return writes
+  return writes.filter(write => {
+    const [field] = write.path
+    const stored = field === 'baseUrl' ? baseline.baseUrl
+      : field === 'apiKeyEnv' ? baseline.apiKeyEnv
+        : field === 'model' ? baseline.model
+          : field === 'dimensions' ? baseline.dimensions
+            : undefined
+    const next = write.op === 'set' ? String(write.value) : ''
+    return stored !== next
+  })
 }
 
 /** The one write the enable switch stages. */

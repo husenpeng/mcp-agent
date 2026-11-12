@@ -82,6 +82,8 @@ Each profile may set a `retryPolicy`; omission uses normal mode with five retrie
 | `modelPolicy` | absent | Deny-by-default allowlist for model listing and calls; omission leaves every model available |
 | `modelOverrides` | none | Reshapes individual installed-catalog models without replacing the rest |
 | `compat` | catalog detection | Wire-compatibility switches for unrecognized endpoints |
+| `cache` | inferred | Prompt-cache dialect the route's models start from; an entry's own dialect wins |
+| `toolsWithReasoning` | absent | Whether the route's endpoints accept function tools beside a reasoning effort; an entry's own answer wins |
 | `defaultContextWindow` | `1,000,000` | Capacity fallback for undescribed models |
 | `defaultMaxTokens` | `128,000` | Output-cap fallback for undescribed models |
 | `requestImagePixelBudget` | `4,194,304` | Total-pixel budget for each deterministic request image |
@@ -108,6 +110,38 @@ A route pi-ai does not ship resolves each declared model id against the first-pa
 Exact-model metadata lists `reasoning.efforts` from least to greatest selectable effort. A configuration function can select from that list before `prepareCall()` validates the concrete effort. The adapter receives only the resolved controls. Selecting `off` does not guarantee disabled reasoning: a protocol that expresses it by omitting the reasoning field leaves the gateway's default in effect. Reasoning tokens at any selected level count toward the request's output cap.
 
 For self-hosted Chat Completions endpoints, `thinkingTokenBudgetField` selects the reasoning-budget parameter, and `vllmPriority` sets an integer scheduler priority when the server enables priority scheduling. Template arguments accept `$var: thinking.budget`. `openai-responses` gateways can set `supportsMaxOutputTokens: false` to omit `max_output_tokens`; Azure and Codex transports ignore this shared compatibility field. These controls are opt-in; catalog-owned Anthropic effort and fallback capabilities are not configurable switches.
+
+### Declare prompt caching and tool pairing
+
+Caching is a property of the endpoint, not of a model family: one model caches differently behind two gateways, and a marker one honors another rejects. Two route-level fields state what configuration alone cannot infer; both accept a per-model override, so one route can mix a native Claude model with a gateway model that refuses the pairing.
+
+`cache.dialect` names the marker the endpoint honors:
+
+| Dialect | Wire effect | Use when |
+|---|---|---|
+| `anthropic` | `cache_control: {type: ephemeral}` on the system prompt, last tool, and last message; `openai-completions` only | The gateway speaks Anthropic's marker dialect |
+| `key` | `prompt_cache_key` from the session id; `openai-completions` also pins long retention, which is what makes pi-ai emit the key there | The gateway routes reuse by cache key |
+| `implicit` | Nothing is sent | The endpoint reuses a repeated stable prefix on its own |
+| `none` | Nothing is sent, and request retention becomes `none` | The endpoint has no usable prompt cache |
+
+An Anthropic catalog model reached through an `openai-completions` route keeps the adapter's inferred `anthropic` dialect when no layer declares one. Every declared dialect wins over that inference; the probe below replaces it with an observation.
+
+`toolsWithReasoning: never` records that an endpoint refuses function tools beside a reasoning effort — several OpenAI-compatible relays answer that pair with `Function tools with reasoning_effort are not supported … use /v1/responses`. An agent turn always declares tools, so `never` means the model cannot think on that route. The adapter then sends no effort and reports the degradation through `onCapabilityDegrade`; move such a model to a route speaking `/v1/responses` when the thinking is wanted.
+
+```yaml
+      blueai:
+        api: openai-completions
+        baseURL: https://relay.example.com/v1
+        cache:
+          dialect: implicit
+        toolsWithReasoning: never
+        models:
+          - id: claude-opus-5-5
+            cache:
+              dialect: anthropic
+              retention: long
+          - id: gpt-6.1-sol
+```
 
 ### Restrict models with an allowlist
 
@@ -179,6 +213,31 @@ Move only the models that pass to a native route; keep the OpenAI-compatible rou
 ```
 
 `cache: ok` requires the endpoint to report `cache_read_input_tokens`; a gateway that caches only the fixed system/tools head reports `cache: fail` even though `native` is true. `thinking: fail` means calls succeed but the model is not thinking, so the native route is not buying the quality it was chosen for.
+
+### Probe an OpenAI-style endpoint
+
+The same gateway usually answers an OpenAI-style protocol too, and that path has its own two unknowns: whether a prompt prefix is reused at all, and whether function tools may travel beside a reasoning effort. Probe both protocols before writing the route:
+
+```sh
+pnpm exec tsx packages/llm/llm-pi-ai/scripts/probe-endpoint.ts \
+  --base-url https://relay.example.com/v1 \
+  --model gpt-6.1-sol \
+  --provider blueai \
+  --api-key-env RELAY_API_KEY
+```
+
+The script sends a plain completion, two identical long-prefix requests, a cache-key request, a tool request, and a tool request with an effort. It reads the cache count from whichever usage field the endpoint reports (`prompt_tokens_details.cached_tokens`, `prompt_cache_hit_tokens`, or `cache_read_input_tokens`) and prints the route configuration those observations support, for example:
+
+```text
+# blueai/gpt-6.1-sol
+api: openai-responses
+models:
+  - id: gpt-6.1-sol
+    cache:
+      dialect: key
+```
+
+A tool request refused only beside an effort yields `toolsWithReasoning: never`; a protocol that accepts the pairing is named as the route's `api`, because that is the route that can think with tools. `--no-cache` and `--no-tools` skip those requests, `--effort` selects the level the pair is probed at, and `--json` prints the raw results. The script never prints the credential.
 
 ### Failures and recovery
 
@@ -285,7 +344,7 @@ Provider tokenization governs exact input. Retained images add the stable attach
 
 #### KV Cache effect
 
-Later system messages supplied to the adapter stay out of the initial prompt, preserving the preceding request prefix. This does not change the agent loop’s prompt admission, which consolidates updates on routes without native system-update support. Conversion preserves logical request order, while image handles and offload placeholders add model-visible text. A changed execution-world path rewrites a historical handle and can prevent reuse from that image even when attachment identity and request bytes stay stable. Changing adapter instance, provider, model, or another upstream token has the same suffix effect. An offload decision turns an earlier image into placeholder text, so reuse ends at that message; the omission never reverts, so the prefix stays stable afterwards.
+Later system messages supplied to the adapter stay out of the initial prompt, preserving the preceding request prefix. This does not change the agent loop’s prompt admission, which consolidates updates on routes without native system-update support. Conversion preserves logical request order, while image handles and offload placeholders add model-visible text. A changed execution-world path rewrites a historical handle and can prevent reuse from that image even when attachment identity and request bytes stay stable. Changing adapter instance, provider, model, or another upstream token has the same suffix effect. The declared `cache.dialect` decides which marker leaves the adapter — Anthropic breakpoints, an OpenAI cache key, or nothing — and a dialect of `none` suppresses markers a route would otherwise send. Dropping a reasoning effort because the endpoint refuses tools beside one changes the request body from that turn on, though the cached prefix is unaffected. An offload decision turns an earlier image into placeholder text, so reuse ends at that message; the omission never reverts, so the prefix stays stable afterwards.
 
 ### Provider response
 
@@ -324,6 +383,7 @@ These limits define where the adapter stops and future work begins. They are cur
 - **Conversation update support comes only from the installed pi-ai catalog** — native system and tool updates require the catalog model’s mid-conversation compat flags, which profiles cannot set. Hand-declared routes and unflagged models receive later system text as user-role reminders and the complete current tool list at the start of each request.
 - **Images are accepted only in user and tool-result messages** — images in system, developer, or assistant history fail with `UNSUPPORTED_CONTENT` on both conversion paths.
 - **Provider HTTP status is unavailable** — pi-ai error events do not expose a stable HTTP status across providers.
+- **A declared cache dialect is a claim; only a cache read proves it** — an endpoint may accept `cache_control` and not honor it, so `cacheReadTokens` on a repeated prefix is the evidence. A tool/effort refusal learned from a provider 400 is remembered for the process only: a restarted process pays one refused request before it stops sending the effort again.
 - **Retry policy is provider-owned, not an SDK retry** — pi-ai SDK retries stay disabled so durable agent steps and `llm/retry` events own every visible attempt, and direct `ctx.llm.stream()` calls remain single-attempt.
 - **Streamed JSON tool-call arguments avoid per-delta reparsing** — the installed pi-ai carries [`patches/@earendil-works__pi-ai@1.3.0.patch`](../../../patches/@earendil-works__pi-ai@1.3.0.patch), which removes the per-delta re-parse of the whole accumulated argument JSON in every stream adapter (upstream [earendil-works/pi#9265](https://github.com/earendil-works/pi/issues/9265)); unpatched, a multi-megabyte argument stream costs O(n²) CPU on the event loop and stalls every session in the process. Completion events supply parsed arguments; Responses may parse at both argument completion and output-item completion. This adapter reads only delta strings and finalized arguments. Re-apply or retire the patch on every pi-ai upgrade.
 - **Gemini tool-call thought signatures are patched into Chat Completions** — the same patch reads `tool_calls[].extra_content.google.thought_signature` from a streamed OpenAI-compatible response into the tool call's replay signature and sends it back as `extra_content` when the same model resumes (upstream [earendil-works/pi#10157](https://github.com/earendil-works/pi/issues/10157)); unpatched, Gemini rejects the next step of a tool-calling turn with HTTP 400. Encrypted OpenRouter reasoning details keep their `reasoning_details` replay.

@@ -8,6 +8,7 @@ export const MEMORY_NS = 'museMemory'
 /** English copy of the memory tab. */
 export const en = {
   'tab': 'Memory',
+  'pausedSignIn': 'Memory capture is paused because this app is not signed in. Sign in to resume capture, injection, and promotion.',
   'note': 'Read-only log of memory snapshots, memory tool calls, capture passes, and promotion passes in this session.',
   'empty': 'No memory activity in this session yet.',
   'kind.snapshot': 'Snapshot',
@@ -21,6 +22,9 @@ export const en = {
   'embeddings.model': 'Model id',
   'embeddings.apiKeyEnv': 'Credential name',
   'embeddings.dimensions': 'Vector length',
+  'embeddings.modelHint': 'Changing the model or vector length re-embeds this workspace records on the next search.',
+  'embeddings.effectiveEndpoint': 'Effective endpoint',
+  'embeddings.paused': 'Semantic search paused after {failures} consecutive failures; retrying in {seconds}s.',
   'embeddings.test': 'Test connection',
   'embeddings.testing': 'Testing…',
   'embeddings.testOk': 'Connected',
@@ -62,6 +66,7 @@ declare module '@tomato/client-ui-slots' {
 /** Chinese copy, checked against the English key set. */
 export const zh: Record<MemoryKey, string> = {
   'tab': '记忆',
+  'pausedSignIn': '记忆采集已暂停：当前未登录。登录后会恢复采集、注入与晋升。',
   'note': '本会话中记忆快照、记忆工具调用、捕捉与提升过程的只读日志。',
   'empty': '本会话还没有记忆活动。',
   'kind.snapshot': '快照',
@@ -75,6 +80,9 @@ export const zh: Record<MemoryKey, string> = {
   'embeddings.model': '模型 id',
   'embeddings.apiKeyEnv': '凭据名',
   'embeddings.dimensions': '向量长度',
+  'embeddings.modelHint': '更换模型或向量长度后，本工作区的记录会在下次检索时重新向量化。',
+  'embeddings.effectiveEndpoint': '实际生效地址',
+  'embeddings.paused': '语义检索已连续失败 {failures} 次并暂停，{seconds} 秒后重试。',
   'embeddings.test': '测试连接',
   'embeddings.testing': '测试中…',
   'embeddings.testOk': '连接成功',

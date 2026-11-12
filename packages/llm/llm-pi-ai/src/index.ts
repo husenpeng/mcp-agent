@@ -247,6 +247,13 @@ export function apply(ctx: Context, config: Config): void {
         + ` sending that message as provider-neutral content (${reason})`,
       )
     },
+    onCapabilityDegrade: ({ provider, model, requested, reason }) => {
+      ctx.logger.warn(
+        `llm-pi-ai: route "${provider}/${model}" refuses function tools beside a reasoning effort`
+        + ` (${reason}${requested === undefined ? '' : `, requested "${requested}"`});`
+        + ' the request carries no reasoning effort',
+      )
+    },
   })
   // Independent of the route set: signing in is what makes a route worth
   // adding, so the flows are offered before any profile names their provider.

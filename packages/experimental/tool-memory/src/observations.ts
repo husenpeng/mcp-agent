@@ -49,6 +49,24 @@ const filePathArguments = z.object({ file_path: z.string() })
 const pathArguments = z.object({ path: z.string() })
 const exitValue = z.object({ exitCode: z.number().int().nullable() })
 
+/**
+ * Normalize one failure line so the same fault from different paths, line
+ * numbers, hashes, ports, and ids produces one lesson: absolute or relative
+ * directories are reduced to the file name, positions and hex ids become
+ * placeholders, and whitespace collapses. The result is bounded to 200
+ * characters because it becomes a title and a stored fact.
+ * @param text - raw failure text.
+ * @returns the stable one-line signature.
+ */
+export function normalizeFailure(text: string): string {
+  const line = text.replace(/\s+/gu, ' ').trim()
+  return line
+    .replace(/\b[0-9a-f]{7,}\b/giu, '<id>')
+    .replace(/\b(?:at )?(?:[A-Za-z]:)?[^\s:()]*(?:[\\/][^\s:()]+)+:(\d+)(?::\d+)?\b/gu, (_match, line?: string) => `<path>:${line ?? '0'}`)
+    .replace(/\b\d{2,5}\b(?=\s*(?:ms|s)?\b)/gu, '<n>')
+    .slice(0, 200)
+}
+
 /** Shorten one line to a character budget, marking the cut. */
 function firstLine(text: string, limit: number): string {
   /* v8 ignore next -- split always yields one element */
@@ -98,7 +116,7 @@ export function buildObservationCard(call: ObservationCall): ObservationCard {
   const command = commandOf(call.arguments)
   const path = pathOf(call.arguments)
   const exitCode = exitCodeOf(call.value)
-  const outputLine = firstLine(call.output, 200)
+  const outputLine = failed ? normalizeFailure(call.output) : firstLine(call.output, 200)
   const type = failed ? 'failure'
     : call.tool === 'bash' ? 'command'
       : call.tool === 'read' ? 'file-read'

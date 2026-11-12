@@ -82,6 +82,8 @@ kind: "package-reference"
 | `modelPolicy` | 缺省 | 模型列举与调用的默认拒绝允许清单；省略时所有模型可用 |
 | `modelOverrides` | 无 | 重塑个别已安装目录模型，而不替换其余模型 |
 | `compat` | 目录检测 | 无法识别端点的协议兼容开关 |
+| `cache` | 推断 | 路由模型起始的提示词缓存方言；模型条目自身的声明优先 |
+| `toolsWithReasoning` | 未设置 | 路由端点是否接受函数工具与推理强度同时出现；模型条目自身的答复优先 |
 | `defaultContextWindow` | `1,000,000` | 未描述模型的容量回退 |
 | `defaultMaxTokens` | `128,000` | 未描述模型的输出上限回退 |
 | `requestImagePixelBudget` | `4,194,304` | 每张确定性请求图片的总像素预算 |
@@ -108,6 +110,38 @@ pi-ai 未提供的路由会先把网关前缀、点号版本和日期/版本后�
 确切模型元数据将 `reasoning.efforts` 按可选强度从低到高排列。配置函数可从该列表中选择，再由 `prepareCall()` 校验具体强度。适配器只接收解析后的控制项。选择 `off` 不保证禁用推理：以省略推理字段表达该值的协议会沿用网关默认行为。所选等级下产生的推理 token 都计入该请求的输出上限。
 
 对于自托管 Chat Completions 端点，`thinkingTokenBudgetField` 选择推理预算参数，`vllmPriority` 在服务端启用优先级调度时设置整数调度优先级。模板参数接受 `$var: thinking.budget`。`openai-responses` 网关可设置 `supportsMaxOutputTokens: false` 来省略 `max_output_tokens`；Azure 与 Codex 传输会忽略这个共享兼容字段。这些控制均需显式启用；目录拥有的 Anthropic effort 和回退能力不是可配置开关。
+
+### 声明提示词缓存与工具配对
+
+缓存是端点的属性，而非模型家族：同一个模型在两个网关后面表现不同，一个网关接受的标记另一个会拒绝。有两个路由级字段用来声明配置无法推断的事实；两者都允许逐模型覆盖，因此一条路由可以混用原生 Claude 模型与拒绝该配对的网关模型。
+
+`cache.dialect` 指定端点接受的标记：
+
+| 方言 | 协议效果 | 适用情形 |
+|---|---|---|
+| `anthropic` | 在系统提示词、最后一个工具与最后一条消息上发送 `cache_control: {type: ephemeral}`；仅 `openai-completions` | 网关使用 Anthropic 的标记方言 |
+| `key` | 发送由会话 id 派生的 `prompt_cache_key`；`openai-completions` 还会固定长保留期，pi-ai 才在该协议发送该键 | 网关按缓存键路由复用 |
+| `implicit` | 不发送任何内容 | 端点自行复用重复的稳定前缀 |
+| `none` | 不发送任何内容，请求保留期变为 `none` | 端点没有可用的提示词缓存 |
+
+经 `openai-completions` 路由访问的 Anthropic 目录模型，在没有任何一层声明时保留适配器推断出的 `anthropic` 方言。任何显式声明的方言都优先于该推断；下文探测脚本用实测替换它。
+
+`toolsWithReasoning: never` 记录端点拒绝函数工具与推理强度同时出现——若干 OpenAI 兼容 relay 对该配对的答复是 `Function tools with reasoning_effort are not supported … use /v1/responses`。Agent 回合始终声明工具，因此 `never` 表示该模型在这条路由上无法思考。适配器随后不发送推理强度，并通过 `onCapabilityDegrade` 报告该降级；需要思考时，应把模型迁到使用 `/v1/responses` 的路由。
+
+```yaml
+      blueai:
+        api: openai-completions
+        baseURL: https://relay.example.com/v1
+        cache:
+          dialect: implicit
+        toolsWithReasoning: never
+        models:
+          - id: claude-opus-5-5
+            cache:
+              dialect: anthropic
+              retention: long
+          - id: gpt-6.1-sol
+```
 
 ### 用允许清单限制模型
 
@@ -179,6 +213,31 @@ pnpm exec tsx packages/llm/llm-pi-ai/scripts/probe-anthropic.ts \
 ```
 
 `cache: ok` 要求端点返回 `cache_read_input_tokens`；只缓存固定 system/tools 头部的网关会在 `native` 为 true 时仍报 `cache: fail`。`thinking: fail` 表示调用能成功但模型没有思考，原生路由并没有带来选择它的质量收益。
+
+### 探测 OpenAI 风格端点
+
+同一网关通常也提供 OpenAI 风格协议，而该路径有两个独有的未知项：提示词前缀是否真的被复用，以及函数工具能否与推理强度同时出现。写路由之前，两个协议都要探测：
+
+```sh
+pnpm exec tsx packages/llm/llm-pi-ai/scripts/probe-endpoint.ts \
+  --base-url https://relay.example.com/v1 \
+  --model gpt-6.1-sol \
+  --provider blueai \
+  --api-key-env RELAY_API_KEY
+```
+
+脚本会发送一次普通补全、两次相同长前缀请求、一次缓存键请求、一次工具请求，以及一次带推理强度的工具请求。它从端点报告的任一 usage 字段读取缓存计数（`prompt_tokens_details.cached_tokens`、`prompt_cache_hit_tokens` 或 `cache_read_input_tokens`），并打印这些观测支持的配置，例如：
+
+```text
+# blueai/gpt-6.1-sol
+api: openai-responses
+models:
+  - id: gpt-6.1-sol
+    cache:
+      dialect: key
+```
+
+只有当推理强度同时存在时才被拒绝的工具请求会得到 `toolsWithReasoning: never`；接受该配对的协议会被写成路由的 `api`，因为那才是能带着工具思考的路由。`--no-cache` 与 `--no-tools` 跳过对应请求，`--effort` 指定配对探测使用的等级，`--json` 打印原始结果。脚本绝不打印凭据。
 
 ### 失败与恢复
 
@@ -285,7 +344,7 @@ git add packages/llm/llm-pi-ai/src/provider-data.generated.ts
 
 #### KV Cache 影响
 
-传给适配器的后续系统消息不会进入初始提示词，从而保留此前的请求前缀。这不改变 Agent loop 的提示词纳入行为；它仍在不支持原生系统更新的路由上合并更新。转换保持逻辑请求顺序，图片句柄与卸载占位符则会添加模型可见文本。即使附件身份与请求字节保持稳定，执行世界路径变化也会改写历史句柄，并可能从该图片起阻止复用。更换适配器实例、提供方、模型或其他上游 token 具有相同的后缀影响。一次省略决策会把较早图片换成占位文本，因此复用在该消息处结束；省略永不回退，此后前缀保持稳定。
+传给适配器的后续系统消息不会进入初始提示词，从而保留此前的请求前缀。这不改变 Agent loop 的提示词纳入行为；它仍在不支持原生系统更新的路由上合并更新。转换保持逻辑请求顺序，图片句柄与卸载占位符则会添加模型可见文本。即使附件身份与请求字节保持稳定，执行世界路径变化也会改写历史句柄，并可能从该图片起阻止复用。更换适配器实例、提供方、模型或其他上游 token 具有相同的后缀影响。声明的 `cache.dialect` 决定适配器发出哪种标记——Anthropic 断点、OpenAI 缓存键，还是什么也不发——`none` 方言会抑制路由本来会发送的标记。因端点拒绝工具与推理强度同发而丢弃推理强度，会从该回合起改变请求体，但不影响已缓存的前缀。一次省略决策会把较早图片换成占位文本，因此复用在该消息处结束；省略永不回退，此后前缀保持稳定。
 
 ### 提供方响应
 
@@ -324,6 +383,7 @@ pi-ai 事件变成 harness 的推理、文本、工具调用、用量与 finish 
 - **对话更新支持只来自已安装的 pi-ai 目录**——原生系统与工具更新需要目录模型的对话中 compat 标志，profile 不能设置这些标志。手工声明的路由与未标记的模型会以用户角色提醒接收后续系统文本，并在每次请求开头接收完整的当前工具列表。
 - **图片只在 user 与工具结果消息中被接受**——system、developer 或 assistant 历史中的图片在两条转换路径上都会以 `UNSUPPORTED_CONTENT` 失败。
 - **提供方 HTTP 状态不可用**——pi-ai 错误事件不跨提供方暴露稳定 HTTP 状态。
+- **声明的缓存方言只是声明，只有缓存读取能证明它**——端点可能接受 `cache_control` 却不真正缓存，重复前缀上的 `cacheReadTokens` 才是证据。从提供方 400 学到的工具/推理冲突仅在进程内记忆：重启后的进程会先付出一次被拒请求，然后才不再发送该推理强度。
 - **重试策略由提供方自有，而非 SDK 重试**——pi-ai SDK 重试保持禁用，因此持久 agent（智能体）步骤与 `llm/retry` 事件拥有每个可见尝试，直接 `ctx.llm.stream()` 调用仍是单次尝试。
 - **流式 JSON 工具调用参数避免逐 delta 重复解析**——安装的 pi-ai 带有 [`patches/@earendil-works__pi-ai@1.3.0.patch`](../../../patches/@earendil-works__pi-ai@1.3.0.patch)，它移除了每个流适配器中对整段累计参数 JSON 的逐 delta 重新解析（上游 [earendil-works/pi#9265](https://github.com/earendil-works/pi/issues/9265)）；未打补丁时，数 MB 的参数流会在事件循环上消耗 O(n²) CPU，并使进程内所有会话停滞。完成事件提供解析后的参数；Responses 可能在参数完成和输出项完成时分别解析。本适配器只读取 delta 字符串与最终参数。每次升级 pi-ai 时都要重新应用或撤销该补丁。
 - **Chat Completions 中的 Gemini 工具调用思考签名由补丁保留**——同一补丁把 OpenAI 兼容流式响应里的 `tool_calls[].extra_content.google.thought_signature` 读入工具调用的重放签名，并在同一模型继续时以 `extra_content` 发回（上游 [earendil-works/pi#10157](https://github.com/earendil-works/pi/issues/10157)）；未打补丁时，Gemini 会以 HTTP 400 拒绝工具调用轮次的下一步。OpenRouter 的加密推理详情仍通过 `reasoning_details` 重放。

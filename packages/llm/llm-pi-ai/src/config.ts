@@ -24,6 +24,7 @@ import type { ResolvedRetryPolicy, RetryPolicyConfig } from '@tomato/llm'
 import { deepEqualJson } from '@tomato/util-values'
 import {
   CACHE_CONTROL_FORMATS,
+  CACHE_DIALECTS,
   CHAT_TEMPLATE_VARS,
   MAX_TOKENS_FIELDS,
   MODALITIES,
@@ -32,13 +33,16 @@ import {
   SUPPORTED_THINKING_FORMATS,
   THINKING_LEVELS,
   THINKING_TOKEN_BUDGET_FIELDS,
+  TOOLS_WITH_REASONING,
 } from './catalog.ts'
 import type {
+  PiAiCacheDefault,
   PiAiCompatProfile,
   PiAiModality,
   PiAiModelOverride,
   PiAiModelProfile,
   PiAiReasoningEfforts,
+  PiAiToolsWithReasoning,
   RouteCatalog,
 } from './catalog.ts'
 import { buildProvider, supportedProtocols } from './provider.ts'
@@ -156,6 +160,10 @@ export interface PiAiProviderProfile {
   thinkingBudgets?: ThinkingBudgets
   /** Prompt-cache retention preference. */
   cacheRetention?: CacheRetention
+  /** Prompt-cache dialect every model on this route starts from; an entry's own dialect wins. */
+  cache?: PiAiCacheDefault
+  /** Whether this route's endpoints accept tools beside a reasoning effort; an entry's own answer wins. */
+  toolsWithReasoning?: PiAiToolsWithReasoning
   /** Streaming transport preference. */
   transport?: Transport
   /** HTTP/provider SDK timeout in milliseconds. */
@@ -216,6 +224,10 @@ export interface ResolvedPiAiProviderProfile
    * own, so a catalog capability must not appear here.
    */
   configuredMaxTokens: ReadonlyMap<string, number>
+  /** Per-model prompt-cache retention this profile declared, by model id. */
+  configuredCacheRetention: ReadonlyMap<string, CacheRetention>
+  /** Per-model tools-with-reasoning answer this profile declared, by model id. */
+  configuredToolsWithReasoning: ReadonlyMap<string, PiAiToolsWithReasoning>
 }
 
 /** Plugin configuration: the provider routes this instance owns. */
@@ -472,6 +484,11 @@ const modelFields = {
   // installed catalog's capability", while `false` disables reasoning.
   reasoningEfforts: z.union([z.const(false), reasoningEfforts]),
   compat: compatProfile,
+  cache: z.object({
+    dialect: z.union(CACHE_DIALECTS),
+    retention: z.union(['none', 'short', 'long']),
+  }),
+  toolsWithReasoning: z.union(TOOLS_WITH_REASONING),
 }
 
 const modelProfile: z<PiAiModelProfile> = z.object({
@@ -497,6 +514,10 @@ const profile = z.object({
   reasoning: z.union(THINKING_LEVELS),
   thinkingBudgets,
   cacheRetention: z.union(['none', 'short', 'long']),
+  cache: z.object({
+    dialect: z.union(CACHE_DIALECTS),
+  }),
+  toolsWithReasoning: z.union(TOOLS_WITH_REASONING),
   transport: z.union(['sse', 'websocket', 'websocket-cached', 'auto']),
   timeoutMs: z.natural(),
   websocketConnectTimeoutMs: z.natural(),
@@ -630,6 +651,9 @@ export function resolveProfiles(
         ...source.models === undefined ? {} : { models: source.models },
         ...source.modelOverrides === undefined ? {} : { modelOverrides: source.modelOverrides },
         ...source.compat === undefined ? {} : { compat: source.compat },
+        ...source.cache === undefined ? {} : { cache: source.cache },
+        ...source.cacheRetention === undefined ? {} : { cacheRetention: source.cacheRetention },
+        ...source.toolsWithReasoning === undefined ? {} : { toolsWithReasoning: source.toolsWithReasoning },
         defaultInput,
         defaultContextWindow: source.defaultContextWindow ?? DEFAULT_CONTEXT_WINDOW,
         defaultMaxTokens: source.defaultMaxTokens ?? DEFAULT_MAX_TOKENS,
@@ -661,6 +685,8 @@ export function resolveProfiles(
       ...rest.headers === undefined ? {} : { headers: { ...rest.headers } },
       ...rest.thinkingBudgets === undefined ? {} : { thinkingBudgets: { ...rest.thinkingBudgets } },
       configuredMaxTokens: catalog?.configuredMaxTokens ?? new Map(),
+      configuredCacheRetention: catalog?.configuredCacheRetention ?? new Map(),
+      configuredToolsWithReasoning: catalog?.configuredToolsWithReasoning ?? new Map(),
       modelErrors: catalog?.modelErrors ?? new Map(),
       ...piProvider === undefined ? {} : { piProvider },
       ...catalogError === undefined ? {} : { catalogError },

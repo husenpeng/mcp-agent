@@ -1075,6 +1075,12 @@ export interface Config {
   batchSize?: number | Volatile<number>
   /** Characters kept from one text before it is sent. */
   maxInputChars?: number | Volatile<number>
+  /** Consecutive failed calls that open the retry breaker. */
+  failureThreshold?: number | Volatile<number>
+  /** First breaker cooldown in milliseconds; later trips double it. */
+  cooldownMs?: number | Volatile<number>
+  /** Ceiling of the doubled breaker cooldown. */
+  maxCooldownMs?: number | Volatile<number>
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-embeddings-http -->
@@ -1099,6 +1105,8 @@ export interface Config {
   maxMessageChars?: number | Volatile<number | undefined>
   /** `*`-wildcard tool-name patterns that require approval before each call. */
   approvalTools?: string[] | Volatile<string[] | undefined>
+  /** Ledger scope: goal rounds only, or every turn of the Session. */
+  sessions?: 'goal' | 'all' | Volatile<'goal' | 'all' | undefined>
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-focus -->
@@ -1179,7 +1187,7 @@ export interface InspectorOptions {
 
 - `inject`: `storageDomain`
 - `refs`: `Volatile` (`@tomato/cordis`)
-- `source`: [`packages/experimental/memory/src/index.ts:80`](../packages/experimental/memory/src/index.ts)
+- `source`: [`packages/experimental/memory/src/index.ts:81`](../packages/experimental/memory/src/index.ts)
 
 ```ts config-catalog
 /** Deployment limits for stored and recalled memory; Loader publishes each as a live reference. */
@@ -1481,7 +1489,7 @@ export interface Config {
 
 - `inject`: `memory` · `tools` · `agents` · `commands` · `sessionProjections` · `llm`
 - `refs`: `Volatile` (`@tomato/cordis`)
-- `source`: [`packages/experimental/tool-memory/src/index.ts:112`](../packages/experimental/tool-memory/src/index.ts)
+- `source`: [`packages/experimental/tool-memory/src/index.ts:113`](../packages/experimental/tool-memory/src/index.ts)
 
 ```ts config-catalog
 /** Snapshot, write-justification, and query-expansion policy; each field is live-editable. */
@@ -1506,6 +1514,10 @@ export interface Config {
   maxAlternatives?: number | Volatile<number | undefined>
   /** Whether one bounded request captures durable statements from each finished turn as candidates. */
   capture?: boolean | Volatile<boolean | undefined>
+  /** Explicit capture provider; omitted with `captureModel` uses the finished turn's model. */
+  captureProvider?: string | Volatile<string | undefined>
+  /** Explicit capture model; must be paired with `captureProvider`. */
+  captureModel?: string | Volatile<string | undefined>
   /** Maximum UTF-8 bytes of the person messages sent to one capture request. */
   captureMaxInputBytes?: number | Volatile<number | undefined>
   /** Output-token cap of one capture request. */
@@ -2159,7 +2171,7 @@ export interface Config extends ProtocolConfig, ModelListingConfig {
 
 - `inject`: `llm`
 - `refs`: `Api` (`@earendil-works/pi-ai`) · `CacheRetention` (`@earendil-works/pi-ai`) · `Model` (`@earendil-works/pi-ai`) · `ModelThinkingLevel` (`@earendil-works/pi-ai`) · `OpenAICompletionsCompat` (`@earendil-works/pi-ai`) · [`RetryPolicyConfig`](../packages/llm/llm/src/index.ts) · `ThinkingBudgets` (`@earendil-works/pi-ai`) · `Transport` (`@earendil-works/pi-ai`) · `Volatile` (`@tomato/cordis`)
-- `source`: [`packages/llm/llm-pi-ai/src/config.ts:222`](../packages/llm/llm-pi-ai/src/config.ts)
+- `source`: [`packages/llm/llm-pi-ai/src/config.ts:234`](../packages/llm/llm-pi-ai/src/config.ts)
 
 ```ts config-catalog
 /** Plugin configuration: the provider routes this instance owns. */
@@ -2246,6 +2258,10 @@ export interface PiAiProviderProfile {
   thinkingBudgets?: ThinkingBudgets
   /** Prompt-cache retention preference. */
   cacheRetention?: CacheRetention
+  /** Prompt-cache dialect every model on this route starts from; an entry's own dialect wins. */
+  cache?: PiAiCacheDefault
+  /** Whether this route's endpoints accept tools beside a reasoning effort; an entry's own answer wins. */
+  toolsWithReasoning?: PiAiToolsWithReasoning
   /** Streaming transport preference. */
   transport?: Transport
   /** HTTP/provider SDK timeout in milliseconds. */
@@ -2331,6 +2347,10 @@ export interface PiAiModelProfile {
   reasoningEfforts?: false | PiAiReasoningEfforts
   /** pi-ai wire-compatibility switches for this model, winning over the route's per field; one its protocol does not declare is refused. */
   compat?: PiAiCompatProfile
+  /** Prompt-cache handling for this model, winning over the route's dialect and retention. */
+  cache?: PiAiCacheProfile
+  /** Whether this model's endpoint accepts tools beside a reasoning effort; absent applies the route's value. */
+  toolsWithReasoning?: PiAiToolsWithReasoning
 }
 
 /**
@@ -2437,6 +2457,25 @@ export interface PiAiCompatProfile {
 /** One request modality a pi-ai model may accept. */
 export type PiAiModality = Model<Api>['input'][number]
 
+/** Prompt-cache declaration every model on a route starts from. */
+export interface PiAiCacheDefault {
+  /** Marker the route's models honor; an entry's own dialect wins. */
+  dialect?: PiAiCacheDialect
+}
+
+/**
+ * Whether the endpoint accepts function tools together with a reasoning
+ * effort.
+ *
+ * Some OpenAI-compatible endpoints reject the pair for models whose tool
+ * requests are otherwise fine — "Function tools with reasoning_effort are not
+ * supported … use /v1/responses" — while accepting either feature alone. An
+ * agent turn always declares tools, so `never` means this model cannot think
+ * on this route; declaring it turns a mid-turn 400 into a request that carries
+ * no effort, which the adapter reports as a capability degradation.
+ */
+export type PiAiToolsWithReasoning = 'allowed' | 'never'
+
 /** One provider/model pair a deployment's model policy permits. */
 export interface ModelPolicyRef {
   /** Provider route the model belongs to. */
@@ -2457,11 +2496,37 @@ export interface ModelPolicyRef {
  */
 export type PiAiReasoningEfforts = Partial<Record<ModelThinkingLevel, string | null>>
 
+/** Prompt-cache declaration for one model entry. */
+export interface PiAiCacheProfile {
+  /** Marker the endpoint honors; absent applies the route's dialect, then the adapter's fallback. */
+  dialect?: PiAiCacheDialect
+  /** How long the endpoint keeps a cached prefix; overrides the route's `cacheRetention` for this model. */
+  retention?: CacheRetention
+}
+
 /** One reasoning-dispatch wire format a profile may name. */
 export type PiAiThinkingFormat = NonNullable<OpenAICompletionsCompat['thinkingFormat']>
 
 /** The reasoning-budget field spellings pi-ai accepts. */
 export type PiAiThinkingTokenBudgetField = NonNullable<OpenAICompletionsCompat['thinkingTokenBudgetField']>
+
+/**
+ * How one endpoint reuses a prompt prefix.
+ *
+ * Declaring the dialect is what makes caching a property of the route rather
+ * than of a model family: the marker a gateway honors is a fact about the
+ * endpoint, and a deployment that names it here stops depending on the
+ * adapter's Anthropic-shaped fallback.
+ *
+ * - `anthropic`: Anthropic `cache_control` breakpoints; `openai-completions`
+ *   only, because the native protocol carries them itself.
+ * - `key`: OpenAI `prompt_cache_key` routing; both OpenAI protocols.
+ * - `implicit`: nothing is sent; the endpoint caches a repeated stable prefix
+ *   on its own, which the probe proved by observing cache reads.
+ * - `none`: caching is off for this model; request retention becomes `none`, so
+ *   no marker or key is emitted.
+ */
+export type PiAiCacheDialect = 'anthropic' | 'key' | 'implicit' | 'none'
 ```
 <!-- END GENERATED config-catalog:@tomato/llm-pi-ai -->
 

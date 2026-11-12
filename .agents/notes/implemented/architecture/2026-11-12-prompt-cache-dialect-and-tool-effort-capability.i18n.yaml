@@ -1,0 +1,25 @@
+# Bilingual-pair consistency record for 2026-11-12-prompt-cache-dialect-and-tool-effort-capability.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-11-12-prompt-cache-dialect-and-tool-effort-capability.md
+/agent-note-prompt-cache-dialect-and-tool-with-effort-capability-are-endpoint-facts:
+  en: 01eb05b4b0f92ec1
+  zh: 4988ba4850d3fedb
+/agent-note-prompt-cache-dialect-and-tool-with-effort-capability-are-endpoint-facts/problem:
+  en: 46c2d5173a4acda1
+  zh: 66fca4add368b985
+/agent-note-prompt-cache-dialect-and-tool-with-effort-capability-are-endpoint-facts/decision:
+  en: 619aa4b9b1e4b75b
+  zh: ab8d2503c69b659d
+/agent-note-prompt-cache-dialect-and-tool-with-effort-capability-are-endpoint-facts/alternatives-considered:
+  en: 343793f78c9521a3
+  zh: ebffa88543a765f1
+/agent-note-prompt-cache-dialect-and-tool-with-effort-capability-are-endpoint-facts/testing:
+  en: d5f8cf61339a781a
+  zh: c4ce2b25337fb7fc
+/agent-note-prompt-cache-dialect-and-tool-with-effort-capability-are-endpoint-facts/risks:
+  en: 14eeb4a4cfa1470b
+  zh: ca31176236e17da2
+/agent-note-prompt-cache-dialect-and-tool-with-effort-capability-are-endpoint-facts/consequences:
+  en: f2f8308854251c3f
+  zh: fc7bcf67a4e84467

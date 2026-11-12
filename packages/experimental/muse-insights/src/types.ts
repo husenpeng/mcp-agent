@@ -148,6 +148,10 @@ export interface EmbeddingsUsageView {
   readonly totalMs: number
   /** Most recent failure message, when one occurred. */
   readonly lastError?: string
+  /** Consecutive failures since the last successful call. */
+  readonly consecutiveFailures?: number
+  /** Milliseconds until the breaker retries, present while it is open. */
+  readonly retryInMs?: number
 }
 
 /** Provider state the embedding page displays. */
@@ -160,6 +164,8 @@ export interface EmbeddingsStatusView {
   readonly model?: string
   /** Provider vector length, when mounted. */
   readonly dimensions?: number
+  /** Endpoint the mounted provider calls, when known. */
+  readonly baseUrl?: string
   /** Cumulative search work, when mounted. */
   readonly usage?: EmbeddingsUsageView
 }

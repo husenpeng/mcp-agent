@@ -10,3 +10,16 @@
 - id: harness-dev-context
   config:
     sourceContext: false
+# Memory: the packaged Desktop profile reaches the company embedding relay and
+# sends turn capture to the cheap Claude route instead of the conversation model.
+- id: optional-embeddings-http
+  config:
+    baseUrl: https://bmc-llm-relay.bluemediagroup.cn/v1
+    model: text-embedding-v4
+    dimensions: 1024
+    apiKeyEnv: CLAUDE_SONNET_5_5_API_KEY
+- id: optional-tool-memory
+  config:
+    capture: true
+    captureProvider: blue-opus
+    captureModel: claude-haiku-5-5

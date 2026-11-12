@@ -40,9 +40,11 @@ function stamp(time: number): string {
  */
 export function MemoryView({ flow, t }: MemoryViewInjected & PropsLocale<'museMemory'>) {
   const rows = useSyncExternalStore(flow.subscribe, flow.getSnapshot)
+  const paused = rows.some(row => row.kind === 'capture' && row.detail.includes('"reason":"sign-in-required"'))
   return (
     <section className={css.view} aria-label={t('tab')}>
       <p className={css.note}>{t('note')}</p>
+      {paused ? <p className={css.bad} role="status">{t('pausedSignIn')}</p> : null}
       {rows.length === 0
         ? <p className={css.empty}>{t('empty')}</p>
         : (

@@ -2,195 +2,365 @@
 //  AccountView.swift
 //  Tomato Remote
 //
-//  Sign-in state and display-safe account facts. Sign-in is a Host-side OAuth
-//  flow: the app opens `/api/auth/start` in an `ASWebAuthenticationSession`
-//  and then reads the resulting state from the Host, because the credential
-//  lives on the Host, not in this app.
+//  Account state as the Host projects it. Pairing signs the device in; Feishu
+//  sign-in signs the person in and stores the gateway session on this phone.
 //
 
-import AuthenticationServices
 import SwiftUI
 
 struct AccountView: View {
     @EnvironmentObject private var model: AppModel
+    @StateObject private var auth = AccountAuthStore.shared
 
-    @State private var state: AccountState?
-    @State private var profile: AccountProfile?
-    @State private var balance: JSONValue?
+    @State private var session: AccountSession?
     @State private var errorMessage: String?
     @State private var isLoading = false
-    @State private var isSigningIn = false
-    @State private var coordinator = SignInCoordinator()
+    @State private var isSigningOut = false
+    @State private var showsLogin = false
+    /// When the account card last read successfully; a tab return inside the
+    /// window reuses it.
+    @State private var loadedAt: Date?
+    /// Pushed destinations; a deep link appends the memory page once rather
+    /// than flipping a bound presentation flag from two places.
+    @State private var path = NavigationPath()
+    private static let memoryRoute = "memory"
+    private static let desktopRoute = "desktop"
+    private static let logsRoute = "logs"
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 18) {
+                    // The title lives in the bar on every release; iOS 26 also
+                    // carries the caption there, so the page starts with its
+                    // first section instead of a second heading.
+                    CaptionFallback(caption: "用飞书账号登录这台手机；配对凭据和登录会话分开保存。")
+
                     if let errorMessage {
                         ErrorBanner(message: errorMessage) { Task { await load() } }
                     }
 
-                    TomatoCard {
-                        VStack(alignment: .leading, spacing: 12) {
-                            SectionHeader(title: "账号")
-                            InfoRow(
-                                label: "状态",
-                                value: isLoading ? "读取中…" : (state?.isSignedIn == true ? "已登录" : "未登录")
-                            )
-                            if let name = profile?.displayName {
-                                InfoRow(label: "昵称", value: name)
-                            }
-                            if let email = profile?.email {
-                                InfoRow(label: "邮箱", value: email)
-                            }
-                            if let balanceText {
-                                InfoRow(label: "余额", value: balanceText)
-                            }
-                        }
+                    profileCard
+                    if !auth.isSignedIn {
+                        loginButton
                     }
-
-                    TomatoCard {
-                        VStack(alignment: .leading, spacing: 12) {
-                            SectionHeader(title: "Host")
-                            InfoRow(label: "地址", value: model.hostLabel)
-                            if let authority = model.profile?.authority {
-                                InfoRow(label: "主机", value: authority)
-                            }
-                        }
+                    NavigationLink(value: Self.memoryRoute) {
+                        memoryRow
                     }
-
-                    if state?.isSignedIn == true {
-                        TomatoSecondaryButton(title: "退出登录", systemImage: "rectangle.portrait.and.arrow.right", isDestructive: true) {
-                            Task { await signOut() }
-                        }
-                    } else {
-                        TomatoPrimaryButton(
-                            title: "登录",
-                            systemImage: "person.crop.circle.badge.checkmark",
-                            isBusy: isSigningIn
-                        ) {
-                            Task { await signIn() }
-                        }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("account.memory")
+                    hostCard
+                    NavigationLink(value: Self.desktopRoute) {
+                        linkRow(
+                            systemImage: "desktopcomputer",
+                            title: "桌面状态",
+                            detail: "Watchdog 与重启 Mac 上的 Desktop"
+                        )
                     }
-
-                    TomatoSecondaryButton(title: "解除配对", systemImage: "link.badge.plus", isDestructive: true) {
-                        model.unpair()
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("account.desktop")
+                    NavigationLink(value: Self.logsRoute) {
+                        linkRow(
+                            systemImage: "doc.text.magnifyingglass",
+                            title: "运行日志",
+                            detail: "崩溃、卡顿与网络记录，可导出"
+                        )
                     }
-
-                    Text("登录在 Host 上完成，凭据不会进入这个 App。解除配对会清除本机保存的 cookie，之后需要重新输入设备码。")
-                        .font(.caption)
-                        .foregroundStyle(TomatoToken.labelDimmed)
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("account.logs")
+                    actions
                 }
-                .padding(16)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 28)
             }
             .background(TomatoToken.bgBase)
-            .navigationTitle("账号")
-            .task { await load() }
-            .refreshable { await load() }
+            .tomatoPageTitle("账号", caption: "用飞书账号登录这台手机；配对凭据和登录会话分开保存。")
+            .navigationBarTitleDisplayMode(.large)
+            .tomatoScrollEdge()
+            .navigationDestination(for: String.self) { route in
+                switch route {
+                case Self.memoryRoute: MemoryView()
+                case Self.desktopRoute: DesktopStatusView()
+                case Self.logsRoute: DiagnosticsView()
+                default: EmptyView()
+                }
+            }
+            .task(id: model.showsMemory) {
+                guard model.showsMemory, path.isEmpty else { return }
+                path.append(Self.memoryRoute)
+                model.showsMemory = false
+            }
+            .task(id: model.showsLogs) {
+                guard model.showsLogs, path.isEmpty else { return }
+                path.append(Self.logsRoute)
+                model.showsLogs = false
+            }
+            .task {
+                if let loadedAt, Date().timeIntervalSince(loadedAt) < 30 {
+                    return
+                }
+                await load()
+                if errorMessage == nil {
+                    loadedAt = Date()
+                }
+            }
+            .refreshable {
+                await load()
+                if errorMessage == nil {
+                    loadedAt = Date()
+                }
+            }
+            .task {
+                #if DEBUG
+                    // A sign-in check can open the flow without a tap; a release
+                    // build never reaches this branch.
+                    if ProcessInfo.processInfo.arguments.contains("-TOMATO_OPEN_LOGIN"), !auth.isSignedIn {
+                        showsLogin = true
+                    }
+                #endif
+            }
+            .sheet(isPresented: $showsLogin) {
+                if let profile = model.profile, let base = profile.url {
+                    FeishuLoginSheet(base: base, pairingCookie: profile.cookie) { session, origin in
+                        auth.save(sessionId: session, searchBaseURL: origin)
+                        Task { await load() }
+                    }
+                    .tomatoSheet([.large])
+                }
+            }
+            .onChange(of: auth.isSignedIn) { _, signedIn in
+                // The web view's own dismiss can race the cookie hand-off; the
+                // parent closes the sheet as soon as the session is stored.
+                if signedIn {
+                    showsLogin = false
+                }
+            }
         }
     }
 
-    private var balanceText: String? {
-        guard let balance else { return nil }
-        if let wallets = balance.arrayValue {
-            let parts = wallets.compactMap { wallet -> String? in
-                let currency = wallet["currency"]?.stringValue
-                let amount = wallet["balance"]?.stringValue
-                guard let amount else { return nil }
-                return currency.map { "\($0) \(amount)" } ?? amount
+    /// One row of a page linked from the account screen.
+    /// - Parameters:
+    ///   - systemImage: leading glyph.
+    ///   - title: row name.
+    ///   - detail: one line saying what the page shows.
+    /// - Returns: the row, styled like the memory entry.
+    private func linkRow(systemImage: String, title: String, detail: String) -> some View {
+        TomatoCard(padding: 16) {
+            HStack(spacing: 12) {
+                Image(systemName: systemImage)
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(TomatoToken.brandPrimary)
+                    .frame(width: 28)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(TomatoToken.labelPrimary)
+                    Text(detail)
+                        .font(.caption)
+                        .foregroundStyle(TomatoToken.labelCaption)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(TomatoToken.labelDimmed)
             }
-            return parts.isEmpty ? nil : parts.joined(separator: " · ")
         }
-        if let amount = balance["balance"]?.stringValue {
-            let currency = balance["currency"]?.stringValue
-            return currency.map { "\($0) \(amount)" } ?? amount
-        }
-        return balance.stringValue
     }
+
+    /// Personal memory is a property of this device, reached from the account
+    /// page rather than given a tab of its own.
+    private var memoryRow: some View {
+        TomatoCard(padding: 16) {
+            HStack(spacing: 12) {
+                Image(systemName: "brain")
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(TomatoToken.brandPrimary)
+                    .frame(width: 28)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("个人记忆")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(TomatoToken.labelPrimary)
+                    Text("这台手机怎么用 Agent，以及它被告知了什么")
+                        .font(.caption)
+                        .foregroundStyle(TomatoToken.labelCaption)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(TomatoToken.labelDimmed)
+            }
+        }
+    }
+
+    // MARK: - Cards
+
+    private var profileCard: some View {
+        TomatoCard(padding: 18) {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 14) {
+                    monogram
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(title)
+                            .font(.headline)
+                            .foregroundStyle(TomatoToken.labelPrimary)
+                        Text(subtitle)
+                            .font(.footnote)
+                            .foregroundStyle(TomatoToken.labelCaption)
+                    }
+                    Spacer(minLength: 8)
+                    StatusPill(text: statusText, tone: statusTone)
+                }
+
+                Divider().overlay(TomatoToken.borderL1)
+
+                InfoRow(label: "状态", value: isLoading ? "读取中…" : statusText)
+                if let name = session?.user?.displayName {
+                    InfoRow(label: "昵称", value: name)
+                }
+                if let email = session?.user?.email {
+                    InfoRow(label: "邮箱", value: email)
+                }
+            }
+        }
+    }
+
+    private var hostCard: some View {
+        TomatoCard(padding: 18) {
+            VStack(alignment: .leading, spacing: 12) {
+                SectionHeader(title: "Host") {
+                    Image(systemName: "desktopcomputer")
+                        .font(.footnote)
+                        .foregroundStyle(TomatoToken.labelDimmed)
+                }
+                InfoRow(label: "地址", value: model.hostLabel)
+                if let authority = model.profile?.authority {
+                    InfoRow(label: "主机", value: authority)
+                }
+            }
+        }
+    }
+
+    /// The one account action a signed-out phone needs, kept beside the profile
+    /// card instead of at the bottom of the page.
+    private var loginButton: some View {
+        TomatoPrimaryButton(
+            title: session?.isSignedIn == true ? "在此手机登录" : "用飞书登录",
+            systemImage: "person.badge.key",
+            isEnabled: !isLoading && model.profile != nil
+        ) {
+            showsLogin = true
+        }
+        .accessibilityIdentifier("account.login")
+    }
+
+    private var actions: some View {
+        VStack(spacing: 12) {
+            if session?.isSignedIn == true {
+                TomatoSecondaryButton(
+                    title: "退出登录",
+                    systemImage: "rectangle.portrait.and.arrow.right",
+                    isDestructive: true,
+                    isEnabled: !isSigningOut
+                ) {
+                    Task { await signOut() }
+                }
+            }
+            TomatoSecondaryButton(title: "解除配对", systemImage: "link.badge.plus", isDestructive: true) {
+                auth.clear()
+                model.unpair()
+            }
+            Text("登录由公司飞书完成；会话保存在这台手机的钥匙串。解除配对会同时清除配对 cookie 与登录会话。")
+                .font(.caption)
+                .foregroundStyle(TomatoToken.labelDimmed)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var monogram: some View {
+        ZStack {
+            Circle()
+                .fill(TomatoToken.brandPrimary.opacity(session?.isSignedIn == true ? 0.16 : 0.08))
+                .frame(width: 52, height: 52)
+            if let initial = (session?.user?.displayName ?? "").first {
+                Text(String(initial))
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(TomatoToken.brandPrimary)
+            } else {
+                Image(systemName: "person.fill")
+                    .font(.title3)
+                    .foregroundStyle(TomatoToken.brandPrimary.opacity(0.7))
+            }
+        }
+    }
+
+    // MARK: - State
+
+    private var title: String {
+        if let name = session?.user?.displayName {
+            return name
+        }
+        return session?.isSignedIn == true ? "已登录" : "未登录"
+    }
+
+    private var subtitle: String {
+        if session?.isUnavailable == true {
+            return "Host 没有配置登录服务"
+        }
+        if auth.isSignedIn {
+            return "本机飞书登录"
+        }
+        if session?.isShared == true {
+            return "来自这台 Mac 的登录"
+        }
+        return session?.user?.email ?? "Host 账号"
+    }
+
+    private var statusText: String {
+        if isLoading {
+            return "读取中"
+        }
+        if session?.isUnavailable == true {
+            return "未启用"
+        }
+        return session?.isSignedIn == true ? "已登录" : "未登录"
+    }
+
+    private var statusTone: StatusPill.Tone {
+        if session?.isUnavailable == true {
+            return .warn
+        }
+        return session?.isSignedIn == true ? .ok : .idle
+    }
+
+    // MARK: - Actions
 
     private func load() async {
         guard let hub = model.hub else { return }
+        AppLog.screen("账号")
         isLoading = true
         defer { isLoading = false }
         do {
-            state = try await hub.accountState()
+            session = try await hub.accountSession()
             errorMessage = nil
         } catch {
             errorMessage = describe(error)
-            return
         }
-        guard state?.isSignedIn == true else {
-            profile = nil
-            balance = nil
-            return
-        }
-        profile = try? await hub.accountProfile()
-        balance = try? await hub.accountBalance()
-    }
-
-    private func signIn() async {
-        guard let hub = model.hub, let base = model.profile?.url else { return }
-        isSigningIn = true
-        defer { isSigningIn = false }
-        errorMessage = nil
-        let startURL = base.appendingPathComponent("api/auth/start")
-        await coordinator.present(url: startURL)
-        // The credential lands on the Host, so the app polls the resulting
-        // state instead of waiting for a callback scheme the Host never sends.
-        for _ in 0..<60 {
-            try? await Task.sleep(nanoseconds: 2_000_000_000)
-            if let latest = try? await hub.accountState(), latest.isSignedIn {
-                coordinator.dismiss()
-                await load()
-                return
-            }
-        }
-        coordinator.dismiss()
-        errorMessage = "登录未完成，请重试"
     }
 
     private func signOut() async {
         guard let hub = model.hub else { return }
+        isSigningOut = true
+        defer { isSigningOut = false }
         do {
-            try await hub.signOut()
-            await load()
+            try await hub.signOutAccount()
         } catch {
             errorMessage = describe(error)
         }
-    }
-}
-
-/// Thin wrapper so the view stays declarative around an imperative UIKit flow.
-@MainActor
-final class SignInCoordinator {
-    private var session: ASWebAuthenticationSession?
-
-    func present(url: URL) async {
-        let session = ASWebAuthenticationSession(
-            url: url,
-            callbackURLScheme: "tomato",
-            completionHandler: { _, _ in }
-        )
-        session.presentationContextProvider = AnchorProvider.shared
-        session.prefersEphemeralWebBrowserSession = true
-        self.session = session
-        _ = session.start()
-    }
-
-    func dismiss() {
-        session?.cancel()
-        session = nil
-    }
-}
-
-/// Supplies the window the authentication sheet attaches to.
-final class AnchorProvider: NSObject, ASWebAuthenticationPresentationContextProviding {
-    static let shared = AnchorProvider()
-
-    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        let scene = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .first { $0.activationState == .foregroundActive }
-        return scene?.keyWindow ?? ASPresentationAnchor()
+        // The local session is cleared even when the Host could not be told; a
+        // phone that keeps a revoked cookie would look signed in forever.
+        auth.clear()
+        await load()
     }
 }

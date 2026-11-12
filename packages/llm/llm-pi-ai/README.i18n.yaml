@@ -21,8 +21,8 @@
   en: 07b2aea3829cfab4
   zh: b6b291af87257b9b
 /tomato-llm-pi-ai/use-this-package/configure-provider-routes:
-  en: 7a98e6f687c3586a
-  zh: 782ff6f5445cf73c
+  en: 9204d543ab0dc036
+  zh: 3f51fb88dc6cbdd0
 /tomato-llm-pi-ai/use-this-package/sign-in-to-a-provider:
   en: c36f66438638ae08
   zh: 066a2fc4cb97c86f
@@ -32,6 +32,9 @@
 /tomato-llm-pi-ai/use-this-package/run-with-reasoning-and-wire-compatibility:
   en: b58b917e7f250aee
   zh: aff599081bac08c3
+/tomato-llm-pi-ai/use-this-package/declare-prompt-caching-and-tool-pairing:
+  en: 896e813a1a179e73
+  zh: 79a7cdab41e4f96f
 /tomato-llm-pi-ai/use-this-package/restrict-models-with-an-allowlist:
   en: be39333e6851e68c
   zh: 2b29ff742d4f1fd3
@@ -44,6 +47,9 @@
 /tomato-llm-pi-ai/use-this-package/probe-a-native-anthropic-endpoint:
   en: 6f4b80848a809bec
   zh: fcd976f65070cdf9
+/tomato-llm-pi-ai/use-this-package/probe-an-openai-style-endpoint:
+  en: a8116243104e7a03
+  zh: bfbfdcc26fef2d67
 /tomato-llm-pi-ai/use-this-package/failures-and-recovery:
   en: 3c1edbc63de24a1a
   zh: 01592718c3a2c79f
@@ -81,8 +87,8 @@
   en: 820221e8ae37aa61
   zh: 7e6ff4db10067fc0
 /tomato-llm-pi-ai/model-experience/provider-request-through-pi-ai/kv-cache-effect:
-  en: 7a2595060340d7d5
-  zh: e4ba753dcdaa89fc
+  en: 5e33e8fef68afc6d
+  zh: 8fe808d2393d0264
 /tomato-llm-pi-ai/model-experience/provider-response:
   en: 802d7ff60a1d03ff
   zh: c41c56e28f3e8680
@@ -96,8 +102,8 @@
   en: b6bd570c0159ba08
   zh: 7d2d91eea6a8d830
 /tomato-llm-pi-ai/known-limitations-and-deferred-work:
-  en: 1c54b949c81df84f
-  zh: b894d01aa3e6afc1
+  en: 41e2f3ae72b25cc2
+  zh: feed002616e109fd
 /tomato-llm-pi-ai/known-limitations-and-deferred-work/dev-note:
   en: 3678dd0f6642c2a5
   zh: 75cbdd064cc64282

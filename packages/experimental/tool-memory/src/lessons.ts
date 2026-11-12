@@ -78,3 +78,32 @@ export function globLesson(args: unknown, meta: unknown, minPaths: number = GLOB
     fingerprint,
   }
 }
+
+/** One failed call followed by a successful retry in the same turn. */
+export interface RetryPair {
+  /** Tool both calls used. */
+  readonly tool: string
+  /** Normalized failure of the first call. */
+  readonly failure: string
+  /** Stable identity of the arguments both calls aimed at. */
+  readonly target: string
+}
+
+/**
+ * Build one lesson from a turn that failed a call and then succeeded with the
+ * same tool and target. The lesson names the failure and the retry so a later
+ * Session starts from the working approach.
+ * @param pair - tool, normalized failure, and target identity.
+ * @returns the lesson to store as an episode.
+ */
+export function retryLesson(pair: RetryPair): LessonDraft {
+  const fingerprint = createHash('sha256').update(`retry\u0000${pair.tool}\u0000${pair.target}\u0000${pair.failure}`).digest('hex')
+  return {
+    title: `${pair.tool} retry succeeded after a failure`,
+    narrative: `The ${pair.tool} call failed first with "${pair.failure}"; retrying the same target then succeeded. `
+      + 'Check the retry arguments or environment before repeating the first attempt.',
+    facts: [`${pair.tool} failed first: ${pair.failure}`],
+    concepts: [pair.tool, 'retry', 'failure'],
+    fingerprint,
+  }
+}

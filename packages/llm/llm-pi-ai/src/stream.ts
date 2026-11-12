@@ -128,6 +128,36 @@ export function mapStopReason(message: AssistantMessage, contextWindow?: number)
 }
 
 /**
+ * The wording endpoints use for the refusal, in the orders they have been seen:
+ * the pair named first, `reasoning_effort` first, or tools first.
+ */
+const TOOLS_REASONING_CONFLICT = new RegExp([
+  'function tools?\\s+(?:with|and)\\s+reasoning[_ ]?effort',
+  'reasoning[_ ]effort[^.]{0,160}(?:not supported|unsupported)[^.]{0,160}\\btools?\\b',
+  '\\btools?\\b[^.]{0,160}(?:not supported|unsupported)[^.]{0,160}reasoning[_ ]effort',
+].join('|'), 'iu')
+
+/**
+ * Whether a failed finish is the endpoint's "function tools with
+ * `reasoning_effort` are not supported" refusal.
+ *
+ * The refusal is not a malformed request: the same request without an effort
+ * succeeds, and an agent turn cannot drop its tools. Recognizing it lets one
+ * retry recover the turn instead of ending it, and reading the message is the
+ * only way, because pi-ai flattens the provider's structured error into text
+ * before it reaches the harness.
+ * @param reason - a finished attempt's reason.
+ * @returns the provider message when it states that conflict, otherwise `undefined`.
+ */
+export function toolsReasoningConflict(reason: FinishReason): string | undefined {
+  if (reason.kind !== 'error') return undefined
+  const message = reason.failure.message
+  return TOOLS_REASONING_CONFLICT.test(message)
+    ? message
+    : undefined
+}
+
+/**
  * Translate the pi-ai event stream into StreamChunks. pi-ai never throws
  * mid-stream — failures arrive as `error` events, which become error/aborted
  * `finish` chunks (the harness protocol's other error-delivery style).

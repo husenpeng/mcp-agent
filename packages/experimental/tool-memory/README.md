@@ -49,6 +49,8 @@ Choose it whenever the memory service is mounted: the service alone has no model
 | `expansionMaxTokens` | `120` | Output-token cap of one expansion request |
 | `maxAlternatives` | `8` | Wordings kept from one expansion reply |
 | `capture` | `false` | Whether one bounded request captures durable statements from each finished turn as candidates |
+| `captureProvider` | current turn | Explicit provider of the capture request; set it with `captureModel` to keep review off an expensive conversation model |
+| `captureModel` | current turn | Explicit capture model; must be paired with `captureProvider` |
 | `captureMaxInputBytes` | `6000` | UTF-8 bytes of the person messages sent to one capture request |
 | `captureMaxTokens` | `400` | Output-token cap of one capture request |
 | `captureTimeoutMs` | `12000` | Deadline of one capture request |

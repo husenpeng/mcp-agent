@@ -3,13 +3,15 @@
 //  Tomato Remote
 //
 //  First run: paste the `tomato web:` link the Desktop prints (or type the
-//  host plus the launch token), exchange it at Connection's `/connect` route,
-//  and store the resulting signed cookie in the Keychain.
+//  host plus the launch token), exchange it at Connection's root route, and
+//  store the resulting signed cookie in the Keychain.
 //
-//  The exchange is one `GET <base>/connect?token=…&interactions=answer` whose
-//  `302` carries `Set-Cookie`. Following that redirect would load the GUI
-//  document and discard the only response that matters, so redirects are
-//  refused rather than followed.
+//  The exchange is one `GET <base>/?token=…` whose `303` carries `Set-Cookie`.
+//  Following that redirect would load the GUI document and discard the only
+//  response that matters, so redirects are refused rather than followed. Root
+//  mints the browser-session cookie; `/connect` would mint an API operator that
+//  the Host releases with its one WebSocket, which a reconnecting phone cannot
+//  use.
 //
 
 import SwiftUI
@@ -131,7 +133,9 @@ struct PairingFlow: View {
             .simultaneousGesture(
                 DragGesture(minimumDistance: 20)
                     .onChanged { value in
-                        if value.translation.height > 20 { focusedField = nil }
+                        if value.translation.height > 20 {
+                            focusedField = nil
+                        }
                     }
             )
             .navigationTitle("连接 Desktop")
@@ -143,9 +147,10 @@ struct PairingFlow: View {
                 if let extracted = PairingInput.tokenInRawText(text)
                     ?? PairingInput.urlComponents(in: text).flatMap({ components in
                         components.queryItems?.first { $0.name == "token" }?.value
-                    }) {
+                    })
+                {
                     let cleaned = PairingInput.sanitize(extracted)
-                    if !cleaned.isEmpty && cleaned != token {
+                    if !cleaned.isEmpty, cleaned != token {
                         token = cleaned
                     }
                 }
@@ -190,8 +195,8 @@ struct PairingFlow: View {
     private var hint: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("App \(buildLabel)")
-            Text("· token 是进程级的：Desktop 重启后会换一个新的，但换来的 cookie 默认 30 天有效，所以只需成功连一次。")
-            Text("· cookie 和主机名绑定：把地址从 tailnet 名字改成局域网 IP，需要重新连一次。")
+            Text("· token 是进程级的：Desktop 重启后会换一个新的，但换来的 cookie 默认 30 天有效、每次连接都能重复使用，所以只需成功配一次。")
+            Text("· cookie 绑的是配对时用的地址：换成 tailnet 名字、局域网 IP 或新的隧道域名，都要重新配一次。")
         }
         .font(.caption)
         .foregroundStyle(TomatoToken.labelDimmed)

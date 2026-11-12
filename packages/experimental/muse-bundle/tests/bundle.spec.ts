@@ -31,10 +31,16 @@ import Approval from '@tomato/user-approval'
 import * as Memory from '@tomato/experimental-memory'
 import * as MemoryTools from '@tomato/experimental-tool-memory'
 import * as Focus from '@tomato/experimental-focus'
+import * as EmbeddingsHttp from '@tomato/experimental-embeddings-http'
 import MuseInsights from '@tomato/experimental-muse-insights'
 import SessionQuerySqlite from '@tomato/session-query-sqlite'
 
-interface Row { readonly id: string; readonly name: string }
+interface Row {
+  readonly id: string
+  readonly name: string
+  readonly disabled?: boolean
+  readonly config?: Readonly<Record<string, unknown>>
+}
 
 const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
   name: string
@@ -49,6 +55,7 @@ const rows = patch[0]?.insert ?? []
 /** Source modules standing in for the row packages, which the Loader would otherwise import from their built lib. */
 const MODULES: Readonly<Record<string, object>> = {
   '@tomato/experimental-memory': Memory,
+  '@tomato/experimental-embeddings-http': EmbeddingsHttp,
   '@tomato/experimental-tool-memory': MemoryTools,
   '@tomato/experimental-focus': Focus,
   '@tomato/experimental-muse-insights': MuseInsights,
@@ -130,8 +137,16 @@ async function bootBundle(toolMemoryConfig: Record<string, unknown> = {}): Promi
   await bundle(home, manifest.name, rows.map(row => ({
     id: row.id,
     name: `cordis:${row.id}`,
-    ...row.id === 'optional-focus' ? { config: focusConfig } : {},
-    ...row.id === 'optional-tool-memory' && Object.keys(toolMemoryConfig).length > 0 ? { config: toolMemoryConfig } : {},
+    ...row.config === undefined && row.id !== 'optional-focus' ? {} : {
+      config: {
+        ...row.config,
+        // Capture defaults to on in the shipped layer; keep scripted-model tests
+        // deterministic unless a test opts in with its own capture script.
+        ...row.id === 'optional-tool-memory' ? { capture: false } : {},
+        ...row.id === 'optional-focus' ? focusConfig : {},
+        ...row.id === 'optional-tool-memory' ? toolMemoryConfig : {},
+      },
+    },
   })))
   await writeFile(join(dir, 'cordis.yml'), '[]\n')
   const profile: ProfileContext = {
@@ -150,7 +165,7 @@ async function bootBundle(toolMemoryConfig: Record<string, unknown> = {}): Promi
     })
   })
   for (const row of rows) {
-    expect([...ctx.loader.entries()].filter(entry => entry.options.id === row.id && entry.fiber !== undefined)).toHaveLength(1)
+    expect([...ctx.loader.entries()].filter(entry => entry.options.id === row.id && entry.fiber !== undefined), row.id).toHaveLength(1)
   }
 
   return { ctx, home, workspace }
@@ -160,13 +175,18 @@ it('publishes one default-off layer whose rows are its only runtime dependencies
   expect(manifest.tomato.bundle).toEqual({ patch: './cordis.patch.yml', listedByDefault: true })
   expect(rows).toEqual([
     { id: 'optional-memory', name: '@tomato/experimental-memory' },
-    { id: 'optional-tool-memory', name: '@tomato/experimental-tool-memory' },
+    {
+      id: 'optional-embeddings-http', name: '@tomato/experimental-embeddings-http', disabled: true,
+      config: { baseUrl: 'http://127.0.0.1:11434/v1', model: 'nomic-embed-text', dimensions: 768 },
+    },
+    { id: 'optional-tool-memory', name: '@tomato/experimental-tool-memory', config: { capture: true } },
     { id: 'optional-focus', name: '@tomato/experimental-focus' },
     { id: 'optional-muse-insights', name: '@tomato/experimental-muse-insights' },
   ])
   expect(Object.keys(manifest.dependencies).sort())
     .toEqual([
-      '@tomato/experimental-focus',
+      '@tomato/experimental-embeddings-http',
+    '@tomato/experimental-focus',
       '@tomato/experimental-memory',
       '@tomato/experimental-muse-insights',
       '@tomato/experimental-tool-memory',

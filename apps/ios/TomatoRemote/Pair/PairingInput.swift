@@ -102,7 +102,7 @@ enum PairingInput {
             candidate = tail.split(whereSeparator: { $0.isWhitespace }).first.map(String.init) ?? String(tail)
         } else if trimmed.contains("://") {
             return nil
-        } else if trimmed.contains(".") && !trimmed.contains(" ") {
+        } else if trimmed.contains("."), !trimmed.contains(" ") {
             candidate = "https://" + trimmed
         } else {
             return nil

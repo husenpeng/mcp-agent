@@ -44,6 +44,8 @@ export interface Config {
   maxMessageChars?: number | Volatile<number | undefined>
   /** `*`-wildcard tool-name patterns that require approval before each call. */
   approvalTools?: string[] | Volatile<string[] | undefined>
+  /** Ledger scope: goal rounds only, or every turn of the Session. */
+  sessions?: string | Volatile<string | undefined>
 }
 
 /** Raw Loader input before each volatile field becomes its live reference. */
@@ -52,9 +54,13 @@ interface ConfigInput {
   maxLedgerEntries?: number
   maxMessageChars?: number
   approvalTools?: string[]
+  sessions?: string
 }
 
 /** Read a scalar field Loader publishes as a live reference or a direct caller passes plain. */
+function currentString(value: string | Volatile<string | undefined> | undefined): string | undefined {
+  return value === undefined || typeof value === 'string' ? value : value.get()
+}
 function current(value: number | Volatile<number | undefined> | undefined): number | undefined
 function current(value: string[] | Volatile<string[] | undefined> | undefined): string[] | undefined
 function current(value: number | string[] | Volatile<number | string[] | undefined> | undefined) {
@@ -67,6 +73,7 @@ export const Config: z<ConfigInput, Config> = z.object({
   maxLedgerEntries: z.number().step(1).min(1).max(20).default(5).volatile(),
   maxMessageChars: z.number().step(1).min(40).max(2000).default(200).volatile(),
   approvalTools: z.array(z.string()).default([]).volatile(),
+  sessions: z.string().default('goal').volatile(),
 })
 
 /** Fully resolved focus policy. */
@@ -75,6 +82,7 @@ interface ResolvedConfig {
   readonly maxLedgerEntries: number
   readonly maxMessageChars: number
   readonly approvalPatterns: readonly RegExp[]
+  readonly allSessions: boolean
 }
 
 /** Message source kind of every focus context. */
@@ -151,7 +159,11 @@ function resolveConfig(config: Config): ResolvedConfig {
   for (const pattern of patterns) {
     if (pattern.trim() === '') throw new TypeError('experimental-focus: approvalTools entries must be non-empty patterns')
   }
-  return { threshold, maxLedgerEntries, maxMessageChars, approvalPatterns: patterns.map(wildcard) }
+  const sessions = currentString(config.sessions) ?? 'goal'
+  if (sessions !== 'goal' && sessions !== 'all') {
+    throw new TypeError('experimental-focus: sessions must be "goal" or "all"')
+  }
+  return { threshold, maxLedgerEntries, maxMessageChars, approvalPatterns: patterns.map(wildcard), allSessions: sessions === 'all' }
 }
 
 /** Deep key-sort of parsed JSON so property order does not change identity. */
@@ -223,7 +235,7 @@ function focusFold(config: Config): (state: FocusState, event: SessionEvent) => 
         return { ...state, goalId: source.goalId, round: source.round, failures: [] }
       }
       case 'tool/call':
-        if (state.goalId === null) return state
+        if (state.goalId === null && !resolveConfig(config).allSessions) return state
         return { ...state, pending: { ...state.pending, [event.data.callId]: { tool: event.data.name, args: event.data.arguments } } }
       case 'tool/result': {
         const callId = event.data.message.toolCallId
@@ -280,10 +292,12 @@ function nextFailure(state: FocusState, tool: string, args: unknown, code: strin
  * @param failures - distinct failures, most recent first.
  * @returns the ledger text, or an empty string when nothing failed.
  */
-export function renderLedger(failures: readonly FocusFailure[]): string {
+export function renderLedger(failures: readonly FocusFailure[], allSessions = false): string {
   if (failures.length === 0) return ''
   return [
-    'Failures so far in this goal (do not repeat a failed call unchanged; change the approach, ask the user, or report the blocker):',
+    allSessions
+      ? 'Failures so far in this session (do not repeat a failed call unchanged; change the approach, ask the user, or report the blocker):'
+      : 'Failures so far in this goal (do not repeat a failed call unchanged; change the approach, ask the user, or report the blocker):',
     ...failures.map(failure => `- ${failure.tool} failed ${failure.count}× (${failure.code}, latest in round ${failure.round}): ${failure.message}`),
   ].join('\n')
 }
@@ -320,12 +334,15 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
   ctx.on('agent/pre-step', async ({ agent, messages, signal }, next): Promise<PreStepDecision> => {
     const decision = await next()
     if (decision.kind === 'reject' || signal.aborted) return decision
+    const allSessions = resolveConfig(config).allSessions
     const round = messages.find(message => message.source.kind === 'goal' && message.source.round > 0)
-    if (round?.source.kind !== 'goal' || !decision.messages.includes(round)) return decision
+    if (!allSessions && (round?.source.kind !== 'goal' || !decision.messages.includes(round))) return decision
     // The round message is not committed yet, so the ledger still names the previous round's goal.
     const state = ledger.stateOf(agent.session)
-    const failures = state.goalId === round.source.goalId ? state.failures : []
-    const text = renderLedger(failures)
+    const failures = allSessions || round?.source.kind !== 'goal'
+      ? state.failures
+      : state.goalId === round.source.goalId ? state.failures : []
+    const text = renderLedger(failures, allSessions)
     if (text === '') return decision
     return {
       ...decision,
@@ -340,7 +357,7 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
   function pendingFailure(exec: ToolExecution, result: Readonly<ToolExecutionResult>): FocusFailure | undefined {
     if (exec.agent === undefined || exec.parent !== undefined || !result.isError) return undefined
     const state = ledger.stateOf(exec.agent.session)
-    if (state.goalId === null) return undefined
+    if (state.goalId === null && !resolveConfig(config).allSessions) return undefined
     const code = result.error.info?.code ?? 'error'
     if (CANCELLED_CODES.has(code)) return undefined
     return nextFailure(state, exec.name, exec.arguments, code, result.error.message, resolveConfig(config).maxMessageChars)
