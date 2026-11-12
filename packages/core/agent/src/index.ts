@@ -248,6 +248,8 @@ export class AgentRegistry extends Service {
 
   private turnBoundaryProjectionHandle!: ProjectionHandle<TurnBoundaryProjection>
   private store = new Map<SessionId, AgentEntry>()
+  /** Owner recorded for a delegated agent; absence marks a top-level agent. */
+  private readonly owners = new WeakMap<Agent, Agent>()
   private factory: FactorySlot | undefined
   private readonly initiators = new AsyncLocalStorage<Agent | undefined>()
   private readonly initiatorRuns = new AsyncLocalStorage<InitiatorRun>()
@@ -471,8 +473,9 @@ export class AgentRegistry extends Service {
    *   `agent/created` listener, removal and disposal wait until the serial
    *   creation dispatch settles.
    */
-  enter(agent: Agent, _owner?: Agent): () => void {
+  enter(agent: Agent, owner?: Agent): () => void {
     const id = agent.id
+    if (owner !== undefined) this.owners.set(agent, owner)
     if (id !== agent.session.id) {
       throw new Error(`agent id "${id}" does not match session id "${agent.session.id}"`)
     }
@@ -596,7 +599,7 @@ export class AgentRegistry extends Service {
    * @returns a fresh array; mutating it does not affect the registry.
    */
   roots(): Agent[] {
-    return [...this.store.values()].map(entry => entry.agent)
+    return [...this.store.values()].map(entry => entry.agent).filter(agent => !this.owners.has(agent))
   }
 
   /** Reject new initiator boundaries while inherited continuations drain. */

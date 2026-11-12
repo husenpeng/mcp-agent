@@ -1,8 +1,8 @@
 /** Workspace placement for snapshots that must not inherit temporary-directory write grants. */
 
-import { accessSync, constants } from 'node:fs'
+import { accessSync, constants, mkdirSync, mkdtempSync, rmSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
-import { dirname, isAbsolute, parse, relative, sep } from 'node:path'
+import { dirname, isAbsolute, join, parse, relative, sep } from 'node:path'
 import { canonicalPath, writableRoots } from '@tomato/sandbox'
 
 function contains(root: string, path: string): boolean {
@@ -18,6 +18,22 @@ function contains(root: string, path: string): boolean {
  * @returns existing parent outside the automatic temporary write grants.
  */
 export function outsideTempWorkspaceParent(tempRoot = tmpdir(), home = homedir()): string {
+  // A sandboxed runner can confine the home directory; use a checkout-local
+  // scratch parent then, still outside the automatic temporary write grants.
+  const writable = (parent: string): boolean => {
+    try {
+      const probe = mkdtempSync(join(parent, '.tomato-temp-parent-probe-'))
+      rmSync(probe, { recursive: true, force: true })
+      return true
+    } catch {
+      return false
+    }
+  }
+  if (!writable(home)) {
+    const scratch = join(process.cwd(), 'tmp', 'workspace-parent')
+    mkdirSync(scratch, { recursive: true })
+    return canonicalPath(scratch)
+  }
   const temporary = canonicalPath(tempRoot)
   const systemTemporary = canonicalPath('/tmp')
   const parent = dirname(temporary)
