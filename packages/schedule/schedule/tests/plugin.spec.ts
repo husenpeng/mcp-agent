@@ -272,9 +272,9 @@ describe('shared Schedule management', () => {
     const readSession = vi.spyOn(ctx.sessions, 'get')
     const createSession = vi.spyOn(ctx.sessions, 'create')
     const expected = [
-      { ...delayed, sessionId: secondSession, status: 'active' },
-      { ...absolute, sessionId: secondSession, status: 'active' },
-      { ...recurring, sessionId: firstSession, status: 'active' },
+      { ...delayed, sessionId: secondSession, status: 'active', paused: false },
+      { ...absolute, sessionId: secondSession, status: 'active', paused: false },
+      { ...recurring, sessionId: firstSession, status: 'active', paused: false },
     ]
     expect(await service.catalog()).toEqual(expected)
     expect(await service.catalog()).toEqual(expected)
@@ -292,7 +292,7 @@ describe('shared Schedule management', () => {
     const sessionId = SessionId('cold')
     const record = await service.create(sessionId, { prompt: 'Later', after_seconds: 60, title: 'Later' })
     expect(await service.list({ sessionId })).toEqual([record])
-    expect(await service.catalog()).toEqual([{ ...record, sessionId, status: 'active' }])
+    expect(await service.catalog()).toEqual([{ ...record, sessionId, status: 'active', paused: false }])
     expect(resolve).not.toHaveBeenCalled()
     expect(await service.delete({ sessionId, id: record.id })).toEqual({ id: record.id, deleted: true })
     expect(await service.list({ sessionId })).toEqual([])
@@ -307,7 +307,7 @@ describe('shared Schedule management', () => {
     expect(await service.delete({ sessionId: SessionId('other'), id: record.id }))
       .toEqual({ id: record.id, deleted: false, code: 'schedule_not_found' })
     expect(await service.list({ sessionId: owner })).toEqual([record])
-    expect(await service.catalog()).toEqual([{ ...record, sessionId: owner, status: 'active' }])
+    expect(await service.catalog()).toEqual([{ ...record, sessionId: owner, status: 'active', paused: false }])
   })
 
   it('allocates different identities across Sessions and rejects conflicting selectors', async () => {
@@ -393,7 +393,7 @@ describe('retained Schedule delivery', () => {
     await vi.advanceTimersByTimeAsync(1000)
     const catalog = await first.service.catalog()
     expect(catalog).toEqual([{
-      ...record, sessionId, status: 'inactive',
+      ...record, sessionId, status: 'inactive', paused: false,
       lastDelivery: {
         scheduledAt: record.scheduledAt, deliveredAt: '2026-09-16T00:00:01.000Z',
         messageId: followup.mock.calls[0]![0].id,
@@ -440,7 +440,7 @@ describe('retained Schedule delivery', () => {
     expect(followup).toHaveBeenCalledTimes(1)
     expect(test.flush).toHaveBeenCalledTimes(1)
     expect(changed).not.toHaveBeenCalled()
-    expect(await test.service.catalog()).toEqual([{ ...record, sessionId, status: 'active' }])
+    expect(await test.service.catalog()).toEqual([{ ...record, sessionId, status: 'active', paused: false }])
     expect(await test.service.list({ sessionId })).toEqual([record])
     expect(test.pool.media.get('schedule')!.tables.get('tasks')!.get(record.id))
       .toEqual({ record, sessionId, status: 'active', deliveryHistory: { records: [], earlierRecordsUnavailable: false } })
@@ -472,11 +472,11 @@ describe('Schedule activation and shutdown', () => {
     expect(remaining).toHaveLength(1)
     expect(remaining[0]).toMatchObject({ kind: 'every', scheduledAt: '2026-09-16T00:10:00.000Z' })
     expect(await test.service.catalog()).toEqual([
-      { ...pending, sessionId, status: 'inactive', lastDelivery: {
+      { ...pending, sessionId, status: 'inactive', paused: false, lastDelivery: {
         scheduledAt: pending.scheduledAt, deliveredAt: '2026-09-16T00:00:01.000Z',
         messageId: followup.mock.calls[0]![0].id,
       } },
-      { ...remaining[0], sessionId, status: 'active', lastDelivery: {
+      { ...remaining[0], sessionId, status: 'active', paused: false, lastDelivery: {
         scheduledAt: '2026-09-16T00:05:00.000Z', deliveredAt: '2026-09-16T00:05:00.000Z',
         messageId: followup.mock.calls[1]![0].id,
       } },

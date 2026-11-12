@@ -86,6 +86,17 @@ export class SqliteKvUnit implements KvUnit {
     })
   }
 
+  /**
+   * SQLite's connection-local data version, which moves whenever another
+   * connection commits to this database file.
+   */
+  changeStamp(): Promise<number> {
+    return this.settle(() => {
+      const row = this.db.prepare('PRAGMA data_version').get() as { data_version: number }
+      return row.data_version
+    })
+  }
+
   /** Parse one stored value column, mapping bad JSON to `malformed-medium`. */
   private parseValue(text: string, slot: string): unknown {
     try {

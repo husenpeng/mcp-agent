@@ -92,16 +92,15 @@
       name: '@tomato/plugin-package-inventory-deepseek'
       disabled: true
 
-    # The transport-independent default for Agents created by entry points.
-    # No model route ships in the base composition: the Models page creates
-    # third-party OpenAI- or Anthropic-compatible routes. The empty pair means
-    # there is no default until the user selects one; a new Session asks for a
-    # model before its first message.
+    # The transport-independent default for Agents created by entry points:
+    # the shipped `blueai-anthropic` route below. Until the user stores that
+    # route's key on the Models page, a request fails with MISSING_CREDENTIAL.
     - id: agent-default-model
       name: '@tomato/agent-default-model'
       config:
-        provider: ''
-        model: ''
+        provider: blueai-anthropic
+        model: claude-opus-5-5
+        reasoningEffort: high
 
     - id: jobs
       name: '@tomato/jobs-local'
@@ -130,12 +129,30 @@
     - id: credentials
       name: '@tomato/credentials-local'
 
-    # The pi-ai multi-provider twin. No route ships: the Models page's custom
-    # form declares third-party endpoints and model catalogs, and stores each
-    # key through the credential seam. A route can also be adopted from the
-    # installed pi-ai catalog.
+    # The pi-ai multi-provider twin. One route ships: the company relay's native
+    # Anthropic Messages endpoint. Each person stores their own key under
+    # BLUEAI_API_KEY on the Models page; the key never ships in the package.
+    # Model entries name only ids, so capacities, reasoning efforts, and
+    # prompt-cache behavior come from the installed first-party catalog; the
+    # native protocol carries cache breakpoints itself, which an
+    # OpenAI-compatible relay route would lose.
+    # A profile `llm-pi-ai` config replaces this whole config, not field by
+    # field. A Models-page save writes the complete current config, this route
+    # included, into the profile, which then stops tracking later edits here.
     - id: llm-pi-ai
       name: '@tomato/llm-pi-ai'
+      config:
+        providers:
+          blueai-anthropic:
+            displayName: BlueAI Claude
+            apiKeyEnv: BLUEAI_API_KEY
+            api: anthropic-messages
+            baseURL: https://bmc-llm-relay.bluemediagroup.cn
+            cacheRetention: short
+            models:
+              - id: claude-opus-5-5
+              - id: claude-sonnet-5-5
+              - id: claude-haiku-5-5
 
     - id: session-persistence-jsonl
       name: '@tomato/session-persistence-jsonl'
@@ -459,11 +476,11 @@
     - id: web
       name: '@tomato/web'
       config:
-        # Fetch stays on the local provider: the seam pins exactly one provider and
-        # has no fallback chain, so opting into `web-fetch-company` is a per-profile
-        # decision (`fetchProvider: company`), never an implicit preference.
+        # Both web tools use the company gateway: the local fetch provider needs a
+        # DeepSeek login that is not available in this deployment, while the BFF
+        # session already authenticates the same account.
         searchProvider: company
-        fetchProvider: http
+        fetchProvider: company
 
     - id: web-search-deepseek
       name: '@tomato/web-search-deepseek'

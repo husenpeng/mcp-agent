@@ -11,7 +11,7 @@ import AgentRegistry, { agentEvents } from '@tomato/agent'
 import type { Agent, AgentStatus } from '@tomato/agent'
 import { createInboxStub } from '@tomato/agent-loop-testkit'
 import CommandRuntime from '@tomato/commands'
-import LlmRuntime, { LlmAdapter, createUserMessage, ToolCallId } from '@tomato/llm'
+import LlmRuntime, { LlmAdapter, createToolResultMessage, createUserMessage, ToolCallId } from '@tomato/llm'
 import type { ContextFormed, GenerateOptions, MessageSource, StreamChunk } from '@tomato/llm'
 import SessionStore, { SessionId, SessionSeq } from '@tomato/session'
 import { pluginRecordOf } from '@tomato/session'
@@ -24,12 +24,15 @@ import ToolRuntime, { defineTool } from '@tomato/tools'
 import type { ToolExecutionResult } from '@tomato/tools'
 import * as NativeToolExecutor from '@tomato/tool-executor-native'
 import { executeToolFixture } from '@tomato/tool-testkit'
-import MemoryService, { LOCAL_MEMORY_OWNER, MemoryError } from '@tomato/experimental-memory'
-import type { EpisodeRecord, MemoryRecord, MemoryView, RememberRequest } from '@tomato/experimental-memory'
+import MemoryService, { LOCAL_MEMORY_OWNER, MemoryError, provisionalProjectId } from '@tomato/experimental-memory'
+import type { EpisodeRecord, MemoryRecord, MemoryView, MemoryWorkspace, RememberRequest } from '@tomato/experimental-memory'
 import { AccountState } from '@tomato/gateway'
 import type { SessionUser } from '@tomato/gateway'
 import * as memoryTools from '@tomato/experimental-tool-memory'
 import { MemoryMediaPool, MemoryStorageBackend } from '../../../storage/storage-domain/tests/helpers/memory-backend.ts'
+
+/* oxlint-disable typescript/no-unsafe-assignment -- Vitest asymmetric matchers are typed as any. */
+
 
 
 /** Whether a schema value is a Loader-published live reference. */
@@ -85,7 +88,7 @@ interface Harness {
   readonly ctx: Context
   readonly workspace: string
   /** The local owner's view of {@link workspace}. */
-  readonly view: MemoryView
+  readonly view: MemoryView & { readonly workspace: MemoryWorkspace }
   readonly fiber: Context['fiber']
   readonly model: ExpansionModel
 }
@@ -120,7 +123,13 @@ async function harness(
   await ctx.plugin(MemoryService, {})
   const fiber = await ctx.plugin(memoryTools, config)
   const canonical = await realpath(workspace)
-  return { ctx, workspace: canonical, view: { owner: LOCAL_MEMORY_OWNER, workspace: canonical }, fiber, model }
+  return {
+    ctx,
+    workspace: canonical,
+    view: { owner: LOCAL_MEMORY_OWNER, workspace: { id: provisionalProjectId(canonical), path: canonical } },
+    fiber,
+    model,
+  }
 }
 
 /** Snapshot body without its leading byte-count header. */
@@ -241,18 +250,24 @@ describe('plugin exports', () => {
     expect(memoryTools.name).toBe('experimental-tool-memory')
     expect('default' in memoryTools).toBe(false)
     expect(plainConfig(memoryTools.Config({}))).toEqual({
-      maxSnapshotBytes: 4096, projectIndex: true, minQuoteChars: 8, queryExpansion: true,
+      maxSnapshotBytes: 4096, maxRelevantRecords: 5, minRelevantScore: 0.25, projectIndex: true, minQuoteChars: 8, queryExpansion: true,
       expansionProvider: undefined, expansionModel: undefined,
       expansionTimeoutMs: 8000, expansionMaxTokens: 120, maxAlternatives: 8,
-      capture: false, captureMaxInputBytes: 6000, captureMaxTokens: 400, captureTimeoutMs: 12_000,
+      capture: false, captureProfileActive: true, captureMaxToolBytes: 1200, captureMaxInputBytes: 6000,
+      captureMaxTokens: 400, captureTimeoutMs: 12_000,
       episodeCapture: false, episodeTools: ['edit', 'write', 'bash'], episodeMaxInputBytes: 6000, episodeMaxResultBytes: 6000,
-      episodeMaxTokens: 500, episodeTimeoutMs: 20_000, maxHistoryBytes: 1536,
+      episodeMaxTokens: 500, episodeTimeoutMs: 20_000, episodeSampleRate: 1, episodeSampleBudget: 0, maxHistoryBytes: 1536,
+      minHistoryScore: 0.25,
       lessonCapture: true, lessonGlobMinPaths: 200, lessonMaxPerSession: 5,
       observationCards: true, observationTools: ['edit', 'write', 'bash'], maxIndexCards: 5, maxIndexBytes: 1024,
       budgetHeader: true, maxSearchEpisodes: 5, maxGetBytes: 4096,
     })
     const test = await harness()
     await expect(memoryTools.apply(test.ctx, { maxSnapshotBytes: 100 })).rejects.toThrow('maxSnapshotBytes must be a safe integer of at least 256')
+    await expect(memoryTools.apply(test.ctx, { maxRelevantRecords: -1 })).rejects.toThrow('maxRelevantRecords must be a non-negative safe integer')
+    await expect(memoryTools.apply(test.ctx, { minRelevantScore: 2 })).rejects.toThrow('minRelevantScore must be a number from 0 to 1')
+    await expect(memoryTools.apply(test.ctx, { minHistoryScore: 2 })).rejects.toThrow('minHistoryScore must be a number from 0 to 1')
+    await expect(memoryTools.apply(test.ctx, { captureMaxToolBytes: 0 })).rejects.toThrow('captureMaxToolBytes must be a positive safe integer')
     await expect(memoryTools.apply(test.ctx, { minQuoteChars: 0 })).rejects.toThrow('minQuoteChars must be a positive safe integer')
     await expect(memoryTools.apply(test.ctx, { expansionTimeoutMs: 0 })).rejects.toThrow('expansionTimeoutMs must be a positive safe integer')
     await expect(memoryTools.apply(test.ctx, { expansionProvider: 'mock' })).rejects.toThrow('expansionProvider and expansionModel must be supplied together')
@@ -261,6 +276,9 @@ describe('plugin exports', () => {
     await expect(memoryTools.apply(test.ctx, { episodeCapture: true, episodeMaxResultBytes: 0 })).rejects.toThrow('episodeMaxResultBytes must be a positive safe integer')
     await expect(memoryTools.apply(test.ctx, { episodeCapture: true, episodeTimeoutMs: 0 })).rejects.toThrow('episodeTimeoutMs must be a positive safe integer')
     await expect(memoryTools.apply(test.ctx, { episodeCapture: true, episodeTools: [''] })).rejects.toThrow('episodeTools must list non-empty tool names')
+    await expect(memoryTools.apply(test.ctx, { episodeCapture: true, episodeSampleRate: 2 })).rejects.toThrow('episodeSampleRate must be a number from 0 to 1')
+    await expect(memoryTools.apply(test.ctx, { episodeCapture: true, episodeSampleBudget: -1 })).rejects.toThrow('episodeSampleBudget must be a non-negative safe integer')
+    await expect(memoryTools.apply(test.ctx, { episodeCapture: true, episodeSampleBudget: 1.5 })).rejects.toThrow('episodeSampleBudget must be a non-negative safe integer')
     await expect(memoryTools.apply(test.ctx, { captureMaxInputBytes: 0 })).rejects.toThrow('captureMaxInputBytes must be a positive safe integer')
     await expect(memoryTools.apply(test.ctx, { maxIndexCards: -1 })).rejects.toThrow('maxIndexCards must be a non-negative safe integer')
     await expect(memoryTools.apply(test.ctx, { maxIndexBytes: -1 })).rejects.toThrow('maxIndexBytes must be a non-negative safe integer')
@@ -389,7 +407,7 @@ describe('memory_write', () => {
   it('rejects invalid identifiers, an empty value, delegated callers, and workspace writes without a workspace', async () => {
     const test = await harness()
     const root = await live(test)
-    expect((await write(test, root.agent, { entity: 'Brand X' })).error?.info?.code).toBe('MEMORY_INVALID_IDENTIFIER')
+    expect((await write(test, root.agent, { entity: 'brand/x' })).error?.info?.code).toBe('MEMORY_INVALID_IDENTIFIER')
     expect((await write(test, root.agent, { value: '  ' })).error?.info?.code).toBe('MEMORY_INVALID_VALUE')
     const child = await live(test, { owner: root.agent })
     expect((await write(test, child.agent)).error?.info?.code).toBe('MEMORY_WRITE_DENIED')
@@ -842,6 +860,153 @@ describe('post-turn capture', () => {
     expect(test.ctx.memory.list(test.view)).toEqual([existing])
   })
 
+  it('activates a quote-verified profile preference and replaces its earlier value', async () => {
+    const test = await harness({ capture: true })
+    provideSessionQuery(test)
+    const { session } = await live(test)
+    startTurn(session)
+    say(session, '以后所有邮件都用简短直接的中文语气回复')
+    session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    test.model.replies.push(JSON.stringify([{
+      scope: 'profile', kind: 'preference', entity: 'user', key: 'email-tone',
+      value: '邮件简短直接', quote: '简短直接的中文语气',
+    }]))
+    endTurn(session)
+    await vi.waitFor(() => { expect(test.ctx.memory.list(test.view)).toHaveLength(1) })
+    const [first] = test.ctx.memory.list(test.view) as [MemoryRecord]
+    expect(first).toMatchObject({ status: 'active', scope: { kind: 'profile' }, source: { sessionId: session.id } })
+    await vi.waitFor(() => { expect(captures(session)).toHaveLength(1) })
+    expect(captures(session)[0]).toMatchObject({ outcome: { status: 'stored', activated: [first.id] } })
+
+    startTurn(session)
+    say(session, '邮件还是用更正式的中文语气，别用口语')
+    session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    test.model.replies.push(JSON.stringify([{
+      scope: 'profile', kind: 'preference', entity: 'user', key: 'email-tone',
+      value: '邮件用正式中文语气', quote: '更正式的中文语气',
+    }]))
+    endTurn(session)
+    await vi.waitFor(() => { expect(captures(session)).toHaveLength(2) })
+    const [current] = test.ctx.memory.list(test.view) as [MemoryRecord]
+    expect(current).toMatchObject({ status: 'active', value: '邮件用正式中文语气' })
+    expect(current.id).not.toBe(first.id)
+  })
+
+  it('does not replace an existing workspace record with the same captured value', async () => {
+    const test = await harness({ capture: true })
+    provideSessionQuery(test)
+    const { agent, session } = await live(test)
+    await seed(test, agent, { entity: 'user', key: 'email-tone', value: '邮件简短直接' })
+    startTurn(session)
+    say(session, '以后所有邮件都用简短直接的中文语气回复')
+    session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    test.model.replies.push(JSON.stringify([{
+      scope: 'workspace', kind: 'preference', entity: 'user', key: 'email-tone',
+      value: '邮件简短直接', quote: '简短直接的中文语气',
+    }]))
+    endTurn(session)
+    await vi.waitFor(() => { expect(captures(session)).toHaveLength(1) })
+    expect(captures(session)[0]).toMatchObject({ outcome: { status: 'skipped', reason: 'nothing new to store' } })
+    expect(test.ctx.memory.list(test.view)).toHaveLength(1)
+  })
+
+  it('names successful and failed tool activity and keeps at most eight lines', async () => {
+    const test = await harness()
+    const { session } = await live(test)
+    startTurn(session)
+    for (let index = 0; index < 10; index += 1) {
+      const callId = ToolCallId(`tool-${index}`)
+      session.append('tool/call', { turn: turns, step: 1, callId, name: 'bash', arguments: `{"command":"run ${index}"}` })
+      session.append('tool/result', {
+        turn: turns, step: 1,
+        message: createToolResultMessage({
+          callId,
+          isError: index === 1,
+          content: [{ type: 'text', text: index === 1 ? 'boom line' : 'ok line' }],
+        }),
+      }, { surfaceOp: 'append' })
+    }
+    const seq = session.snapshotEvents().at(-1)?.seq
+    if (seq === undefined) throw new Error('missing event')
+    const lines = memoryTools.collectTurnTools(session.snapshotEvents(), turns, seq, 4096)
+    expect(lines).toHaveLength(8)
+    expect(lines[0]).toBe('- bash {"command":"run 0"} => ok: ok line')
+    expect(lines[1]).toBe('- bash {"command":"run 1"} => failed: boom line')
+  })
+
+  it('bounds the tool activity digest by lines and bytes and skips a turn that did not start', async () => {
+    const test = await harness()
+    const { session } = await live(test)
+    startTurn(session)
+    const callId = ToolCallId('tool-1')
+    session.append('tool/call', { turn: turns, step: 1, callId, name: 'bash', arguments: '{"command":"pnpm test"}' })
+    session.append('tool/result', {
+      turn: turns, step: 1,
+      message: createToolResultMessage({ callId, isError: true, content: [{ type: 'reasoning', text: 'hidden' }] }),
+    }, { surfaceOp: 'append' })
+    session.append('tool/call', { turn: turns, step: 1, callId: ToolCallId('tool-2'), name: 'bash', arguments: '{}' })
+    session.append('tool/call', { turn: turns, step: 1, callId: ToolCallId('tool-3'), name: 'bash', arguments: '{}' })
+    session.append('tool/result', {
+      turn: turns, step: 1,
+      message: createToolResultMessage({ callId: ToolCallId('tool-3'), isError: false, content: [{ type: 'reasoning', text: 'hidden' }] }),
+    }, { surfaceOp: 'append' })
+    const seq = session.snapshotEvents().at(-1)?.seq
+    if (seq === undefined) throw new Error('missing event')
+    expect(memoryTools.collectTurnTools(session.snapshotEvents(), turns, seq, 4096))
+      .toEqual(['- bash {"command":"pnpm test"} => failed', '- bash {}', '- bash {} => ok'])
+    expect(memoryTools.collectTurnTools(session.snapshotEvents(), 99, seq, 4096)).toEqual([])
+    expect(memoryTools.collectTurnTools(session.snapshotEvents(), turns, seq, 1)).toEqual([])
+  })
+
+  it('activates an existing profile candidate that states the same captured value', async () => {
+    const test = await harness({ capture: true })
+    provideSessionQuery(test)
+    const { agent, session } = await live(test)
+    await seed(test, agent, {
+      scope: { kind: 'profile' }, entity: 'user', key: 'email-tone', value: '邮件简短直接', status: 'candidate',
+    })
+    startTurn(session)
+    say(session, '以后所有邮件都用简短直接的中文语气回复')
+    session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    test.model.replies.push(JSON.stringify([{
+      scope: 'profile', kind: 'preference', entity: 'user', key: 'email-tone',
+      value: '邮件简短直接', quote: '简短直接的中文语气',
+    }]))
+    endTurn(session)
+    await vi.waitFor(() => { expect(test.ctx.memory.list(test.view)[0]).toMatchObject({ status: 'active' }) })
+    await vi.waitFor(() => { expect(captures(session)).toHaveLength(1) })
+    expect(captures(session)[0]).toMatchObject({ outcome: { status: 'stored' } })
+  })
+
+  it('includes bounded tool activity in the capture request for the summary', async () => {
+    const test = await harness({ capture: true })
+    provideSessionQuery(test)
+    const { session } = await live(test)
+    startTurn(session)
+    say(session, '以后给达人写邮件都用简短直接的语气，不要用 emoji')
+    const callId = ToolCallId('call-1')
+    session.append('tool/call', { turn: turns, step: 1, callId, name: 'bash', arguments: '{"command":"pnpm test"}' })
+    session.append('tool/result', {
+      turn: turns,
+      step: 1,
+      message: createToolResultMessage({
+        callId, isError: false, content: [{ type: 'text', text: 'ok 2 files' }],
+      }),
+    }, { surfaceOp: 'append' })
+    session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    test.model.replies.push(JSON.stringify({
+      summary: {
+        title: 'Ran the tests', narrative: 'The tests passed for two files.',
+        facts: [], concepts: ['test'], filesModified: [],
+      },
+      candidates: [],
+    }))
+    endTurn(session)
+    await vi.waitFor(() => { expect(captures(session)).toHaveLength(1) })
+    expect(JSON.stringify(test.model.requests[0]?.messages)).toContain('Tool activity')
+    expect(JSON.stringify(test.model.requests[0]?.messages)).toContain('pnpm test')
+  })
+
   it('records a failed request without touching the finished turn', async () => {
     const test = await harness({ capture: true })
     provideSessionQuery(test)
@@ -886,7 +1051,7 @@ describe('post-turn capture', () => {
     await vi.waitFor(() => { expect(warn).toHaveBeenCalledWith('experimental-tool-memory: post-turn capture failed: disk failed') })
   })
 
-  it('stores a profile candidate and drops a workspace candidate without a project directory', async () => {
+  it('activates a profile statement and drops a workspace statement without a project directory', async () => {
     const test = await harness({ capture: true })
     provideSessionQuery(test)
     const homeless = await live(test, { cwd: null })
@@ -903,7 +1068,7 @@ describe('post-turn capture', () => {
       expect(test.ctx.memory.list({ owner: LOCAL_MEMORY_OWNER }).filter(record => record.key === 'role')).toHaveLength(1)
     })
     const record = test.ctx.memory.list({ owner: LOCAL_MEMORY_OWNER }).find(candidate => candidate.key === 'role')
-    expect(record).toMatchObject({ scope: { kind: 'profile' }, entity: 'user', status: 'candidate' })
+    expect(record).toMatchObject({ scope: { kind: 'profile' }, entity: 'user', status: 'active' })
     await vi.waitFor(() => { expect(captures(homeless.session)).toHaveLength(1) })
     expect(captures(homeless.session)[0]).toMatchObject({ outcome: { status: 'stored' } })
   })
@@ -1229,7 +1394,7 @@ describe('capture transcript and parsing', () => {
       JSON.stringify([
         { scope: 'profile', kind: 'fact', entity: 'user', key: 'role', value: 'Brand manager', quote: 'I manage brands' },
         { scope: 'profile', kind: 'fact', entity: 'user', key: 'role', value: 'Duplicate', quote: 'I manage brands' },
-        { scope: 'workspace', kind: 'preference', entity: 'Brand X', key: 'tone', value: 'x', quote: 'y' },
+        { scope: 'workspace', kind: 'preference', entity: 'brand/x', key: 'tone', value: 'x', quote: 'y' },
         { scope: 'workspace', kind: 'preference', entity: 'user', key: 'tone', value: 'x'.repeat(201), quote: 'y' },
         { scope: 'workspace', kind: 'preference', entity: 'user', key: 'tone-2', value: '', quote: 'y' },
         { scope: 'workspace', kind: 'preference', entity: 'user', key: 'tone-3', value: 'ok', quote: '   ' },
@@ -1238,6 +1403,15 @@ describe('capture transcript and parsing', () => {
     ].join('\n')
     expect(memoryTools.parseCaptureReply(reply)).toEqual([
       { scope: 'profile', kind: 'fact', entity: 'user', key: 'role', value: 'Brand manager', quote: 'I manage brands' },
+    ])
+  })
+
+  it('canonicalizes candidate identity and statement before dedupe', () => {
+    const reply = JSON.stringify([{
+      scope: 'workspace', kind: 'preference', entity: ' Brand:X ', key: 'Tone', value: '  Use   English ', quote: 'quote here',
+    }])
+    expect(memoryTools.parseCaptureReply(reply)).toEqual([
+      { scope: 'workspace', kind: 'preference', entity: 'brand:x', key: 'tone', value: 'Use English', quote: 'quote here' },
     ])
   })
 
@@ -1315,7 +1489,7 @@ describe('/memory', () => {
     expect(await command(test, agent, '/memory stats')).toEqual({
       kind: 'success',
       text: [
-        'Memory stats: 2 stored, 2 active, 0 unconfirmed, 0 pinned.',
+        'Memory stats: 2 stored, 2 versions, 2 active, 0 unconfirmed, 0 pinned.',
         'Profile: 0 of 100.',
         'This workspace: 2 of 1000.',
         `Oldest active memory: ${today}.`,
@@ -1361,12 +1535,31 @@ describe('account scope', () => {
     return { test, account }
   }
 
-  it('refuses every memory surface while nobody is signed in', async () => {
-    const { test } = await accountHarness()
+  it('refuses every memory surface while the account is loading and after a sign-out', async () => {
+    const { test, account } = await accountHarness()
     const { agent } = await live(test)
+    expect((await call(test, 'memory_search', { query: '' }, agent)).error?.info?.code).toBe('MEMORY_ACCOUNT_LOADING')
+    expect((await write(test, agent)).error?.info?.code).toBe('MEMORY_ACCOUNT_LOADING')
+    expect(await command(test, agent, '/memory')).toEqual({
+      kind: 'error', text: 'Memory is waiting for the signed-in account to load. Retry in a moment.',
+    })
+    expect(await preStep(test, agent)).toEqual([])
+    account.signOut()
     expect((await call(test, 'memory_search', { query: '' }, agent)).error?.info?.code).toBe('MEMORY_SIGN_IN_REQUIRED')
     expect((await write(test, agent)).error?.info?.code).toBe('MEMORY_SIGN_IN_REQUIRED')
     expect(await command(test, agent, '/memory')).toEqual({ kind: 'error', text: 'Memory is unavailable until you sign in.' })
+    expect(await preStep(test, agent)).toEqual([])
+  })
+
+  it('keeps a delivered snapshot while the account state is still loading', async () => {
+    const { test, account } = await accountHarness()
+    const { agent, session } = await live(test)
+    account.observe({ kind: 'valid', user: ALICE })
+    startTurn(session)
+    say(session, '以后给达人写邮件都用简短直接的语气，不要用 emoji')
+    await write(test, agent, { scope: 'profile' })
+    expect(await preStep(test, agent)).toHaveLength(1)
+    vi.spyOn(account, 'current').mockReturnValue({ status: 'unknown' })
     expect(await preStep(test, agent)).toEqual([])
   })
 
@@ -1382,7 +1575,7 @@ describe('account scope', () => {
     account.observe({ kind: 'valid', user: BOB })
     expect(text(await call(test, 'memory_search', { query: '邮件' }, agent))).toBe('No saved memories match.')
     account.signOut()
-    expect(await preStep(test, agent)).toEqual(['Saved memories: none are shown now. Earlier saved memories in this session no longer apply.'])
+    expect(await preStep(test, agent)).toEqual(['Saved memories: no memory is shown for this turn. Earlier saved memories in this session may no longer apply.'])
     account.observe({ kind: 'valid', user: ALICE })
     expect(text(await call(test, 'memory_search', { query: '邮件' }, agent))).toContain('email-tone')
   })
@@ -1461,7 +1654,7 @@ describe('snapshot injection', () => {
     const [record] = test.ctx.memory.list(test.view) as [MemoryRecord]
     await test.ctx.memory.setPinned(test.view, record.id, false)
     expect(await preStep(test, agent, 2)).toEqual([])
-    expect(await preStep(test, agent)).toEqual(['Saved memories: none are shown now. Earlier saved memories in this session no longer apply.'])
+    expect(await preStep(test, agent)).toEqual(['Saved memories: no memory is shown for this turn. Earlier saved memories in this session may no longer apply.'])
     expect(await preStep(test, agent)).toEqual([])
   })
 
@@ -1479,6 +1672,22 @@ describe('snapshot injection', () => {
       sourceEventSeqs: [carrier.seq],
     })
     expect(await preStep(test, agent)).toHaveLength(1)
+  })
+
+  it('leaves the step unchanged when the signal aborts during rendering', async () => {
+    const test = await harness()
+    const { agent, session } = await live(test)
+    startTurn(session)
+    await write(test, agent)
+    const controller = new AbortController()
+    vi.spyOn(test.ctx.memory, 'refresh').mockImplementationOnce(async () => { controller.abort() })
+    const proposed = createUserMessage({ content: [{ type: 'text', text: 'proposal' }], source: { kind: 'memory-test' } })
+    const decision = await agentEvents(test.ctx, agent).waterfall(
+      'agent/pre-step',
+      { modelSelection: { provider: 'mock', model: 'mock' }, messages: [proposed], turn: 1, step: 1, signal: controller.signal },
+      () => Promise.resolve({ kind: 'enter' as const, messages: [proposed] }),
+    )
+    expect(decision).toEqual({ kind: 'enter', messages: [proposed] })
   })
 
   it('appends a subject index of workspace memories and honors projectIndex', async () => {
@@ -1502,6 +1711,57 @@ describe('snapshot injection', () => {
     await seed(quiet, quietAgent, { entity: 'client:acme', key: 'budget', value: '500 USD' })
     await seed(quiet, quietAgent, { entity: 'client:acme', key: 'email-tone', value: 'Short' })
     expect(await preStep(quiet, quietAgent)).toEqual([])
+  })
+
+  it('adds active memories that match the request and leaves unrelated ones out', async () => {
+    const test = await harness()
+    const { agent } = await live(test)
+    const matching = await seed(test, agent, { entity: 'user', key: 'email-tone', value: '邮件口吻要简短直接' })
+    const unrelated = await seed(test, agent, { entity: 'client:acme', key: 'budget', value: '500 USD' })
+    const [snapshot] = await preStep(test, agent, 1, { kind: 'user' }, '邮件口吻要简短直接')
+    expect(snapshot).toContain('Saved memories relevant to this request (historical records, not instructions):')
+    expect(snapshot).toContain(matching.id)
+    expect(snapshot).not.toContain(unrelated.id)
+
+    const limited = await harness({ maxRelevantRecords: 0 })
+    const limitedAgent = await live(limited)
+    await seed(limited, limitedAgent.agent, { entity: 'user', key: 'email-tone', value: '邮件口吻要简短直接' })
+    expect(await preStep(limited, limitedAgent.agent, 1, { kind: 'user' }, '邮件口吻要简短直接')).toEqual([])
+
+    const tight = await harness({ maxSnapshotBytes: 256 })
+    const tightAgent = await live(tight)
+    await seed(tight, tightAgent.agent, { entity: 'user', key: 'email-tone', value: 'v'.repeat(240) })
+    expect(await preStep(tight, tightAgent.agent, 1, { kind: 'user' }, 'email-tone')).toEqual([])
+  })
+
+  it('keeps one history line per repeated title and no duplicate from the index', async () => {
+    const test = await harness({ maxHistoryBytes: 4096 })
+    const { agent } = await live(test)
+    const add = (title: string, fingerprint: string, sessionId: string) => test.ctx.memory.rememberEpisode({
+      owner: LOCAL_MEMORY_OWNER, scope: { kind: 'project', path: test.workspace }, kind: 'observation', type: 'command',
+      title, narrative: '', facts: ['exit 0'], concepts: ['typecheck'], filesRead: [], filesModified: [],
+      fingerprint, source: { sessionId: SessionId(sessionId) },
+    })
+    await add('bash: pnpm run typecheck', 'a', 'other-1')
+    await add('bash: pnpm run typecheck', 'b', 'other-2')
+    await add('bash: pnpm run test', 'c', 'other-3')
+    const [snapshot] = await preStep(test, agent, 1, { kind: 'user' }, 'typecheck')
+    expect((snapshot?.match(/bash: pnpm run typecheck/gu) ?? [])).toHaveLength(1)
+  })
+
+  it('keeps this Session\'s own episodes out of its history and index', async () => {
+    const test = await harness({ maxHistoryBytes: 4096 })
+    const { agent, session } = await live(test)
+    const episode = (title: string, fingerprint: string, sessionId: SessionId) => test.ctx.memory.rememberEpisode({
+      owner: LOCAL_MEMORY_OWNER, scope: { kind: 'project', path: test.workspace }, kind: 'observation', type: 'decision',
+      title, narrative: '', facts: ['FTS5'], concepts: ['fts5'], filesRead: [], filesModified: [],
+      fingerprint, source: { sessionId },
+    })
+    const own = await episode('Own FTS5 choice', 'own', session.id)
+    const other = await episode('Earlier FTS5 choice', 'other', SessionId('different-session'))
+    const [snapshot] = await preStep(test, agent, 1, { kind: 'user' }, 'FTS5')
+    expect(snapshot).toContain(other.id)
+    expect(snapshot).not.toContain(own.id)
   })
 
   it('leaves no room for the index when the snapshot fills the budget', async () => {
@@ -1627,7 +1887,7 @@ describe('snapshot injection', () => {
     expect(shown).toMatchObject({ snapshotSeq: 4 })
     expect(shown.snapshot).not.toBeNull()
     const cleared = memoryTools.applyMemorySessionEvent(shown, message(
-      'Saved memories: none are shown now. Earlier saved memories in this session no longer apply.', 'experimental-memory', 5,
+      'Saved memories: no memory is shown for this turn. Earlier saved memories in this session may no longer apply.', 'experimental-memory', 5,
     ))
     expect(cleared).toMatchObject({ snapshot: null, snapshotSeq: 5 })
     const turnEnd: SessionEvent = { type: 'turn/end', seq: SessionSeq(6), time: 0, data: { turn: 1, reason: { kind: 'completed' } } }
@@ -1673,7 +1933,9 @@ describe('episode capture', () => {
     })
     expect(memoryTools.parseEpisodeReply('no json here')).toBeUndefined()
     expect(memoryTools.parseEpisodeReply('{not json}')).toBeUndefined()
-    expect(memoryTools.parseEpisodeReply(JSON.stringify({ type: 'Decision', title: 'x', subtitle: '', narrative: '', facts: [], concepts: [], filesRead: [], filesModified: [] }))).toBeUndefined()
+    expect(memoryTools.parseEpisodeReply(JSON.stringify({ type: 'Decision', title: '  x ', subtitle: ' ', narrative: 'a\nb', facts: [], concepts: [], filesRead: [], filesModified: [] }))).toMatchObject({ type: 'decision', title: 'x', narrative: 'a b' })
+    expect(memoryTools.parseEpisodeReply(JSON.stringify({ type: 'decision:x', title: 'x', subtitle: '', narrative: '', facts: [], concepts: [], filesRead: [], filesModified: [] }))).toBeUndefined()
+    expect(memoryTools.parseEpisodeReply(JSON.stringify({ type: 'task', title: '   ', subtitle: '', narrative: '', facts: [], concepts: [], filesRead: [], filesModified: [] }))).toBeUndefined()
     expect(memoryTools.parseEpisodeReply(JSON.stringify({ type: 'task' }))).toBeUndefined()
     expect(memoryTools.isEmptyDraft({ type: 'task', title: 'x', narrative: '', facts: [], concepts: [], filesRead: [], filesModified: [] })).toBe(true)
     expect(memoryTools.isEmptyDraft({ type: 'task', title: 'x', narrative: '', facts: ['fact'], concepts: [], filesRead: [], filesModified: [] })).toBe(false)
@@ -1684,7 +1946,7 @@ describe('episode capture', () => {
       agent,
       input,
       toolCallId: 'call-1',
-      view: { ...test.view, workspace: test.workspace },
+      view: test.view,
       route: { provider: 'mock', model: 'mock' },
       limits: { maxTokens: 200, timeoutMs: 5_000 },
       signal: controller.signal,
@@ -1793,6 +2055,25 @@ describe('promotion', () => {
     expect(record).toMatchObject({ entity: 'project', status: 'candidate', kind: 'fact' })
     await vi.waitFor(() => { expect(promotions(session)).toHaveLength(1) })
     expect(promotions(session)[0]).toMatchObject({ records: [{ id: record.id, entity: 'project', episodes: expect.any(Array) }] })
+  })
+
+  it('never promotes failure observations or a bare exit code', async () => {
+    const test = await harness()
+    await test.ctx.memory.rememberEpisode({
+      ...episodeRequest('s1', 'f1', test.workspace), type: 'failure', facts: ['failed: cannot edit "src/a.ts"'],
+    })
+    await test.ctx.memory.rememberEpisode({
+      ...episodeRequest('s2', 'f2', test.workspace), type: 'failure', facts: ['failed: cannot edit "src/a.ts"'],
+    })
+    expect(await test.ctx.memory.promote(test.view)).toEqual([])
+    await test.ctx.memory.rememberEpisode({
+      ...episodeRequest('s3', 'x1', test.workspace), facts: ['exit 0'],
+    })
+    await test.ctx.memory.rememberEpisode({
+      ...episodeRequest('s4', 'x2', test.workspace), facts: ['exit 0'],
+    })
+    expect(await test.ctx.memory.promote(test.view)).toEqual([])
+    expect(test.ctx.memory.list(test.view)).toEqual([])
   })
 
   it('skips a turn with nothing to promote, no project, or nobody signed in', async () => {
@@ -2134,6 +2415,38 @@ describe('episode capture listener', () => {
     await vi.waitFor(() => { expect(test.ctx.memory.listEpisodes(test.view)).toHaveLength(3) })
     expect(new Set(test.ctx.memory.listEpisodes(test.view).map(record => record.title)))
       .toEqual(new Set(['First call', 'Second call', 'Third call']))
+  })
+
+  it('captures no call when the sample rate is zero', async () => {
+    const test = await harness({ episodeCapture: true, episodeTools: ['fake_edit'], episodeSampleRate: 0 })
+    registerEdit(test)
+    const { agent, session } = await live(test)
+    session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    test.model.replies.push(JSON.stringify({
+      type: 'task', title: 'Never stored', subtitle: '', narrative: 'The call changed a file.',
+      facts: [], concepts: [], filesRead: [], filesModified: ['src/a.ts'],
+    }))
+    await call(test, 'fake_edit', { path: 'a' }, agent)
+    await new Promise(resolve => setTimeout(resolve, 20))
+    expect(test.ctx.memory.listEpisodes(test.view)).toEqual([])
+    expect(test.model.requests).toEqual([])
+  })
+
+  it('stops capturing when the per-Session budget is spent', async () => {
+    const test = await harness({ episodeCapture: true, episodeTools: ['fake_edit'], episodeSampleBudget: 1 })
+    registerEdit(test)
+    const { agent, session } = await live(test)
+    session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    for (const title of ['First call', 'Second call']) {
+      test.model.replies.push(JSON.stringify({
+        type: 'task', title, subtitle: '', narrative: 'The call changed a file.',
+        facts: [], concepts: [], filesRead: [], filesModified: ['src/a.ts'],
+      }))
+    }
+    await call(test, 'fake_edit', { path: 'a' }, agent)
+    await call(test, 'fake_edit', { path: 'b' }, agent)
+    await vi.waitFor(() => { expect(test.ctx.memory.listEpisodes(test.view)).toHaveLength(1) })
+    expect(test.ctx.memory.listEpisodes(test.view)[0]?.title).toBe('First call')
   })
 
   it('does not observe tools while episode capture is off', async () => {

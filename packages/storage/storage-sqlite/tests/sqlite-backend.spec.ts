@@ -155,6 +155,36 @@ describe('sqlite backend specifics', () => {
     await backend.close()
   })
 
+  it('adopts the current unit version when the stored stamp is declared compatible', async () => {
+    const path = await freshDbPath()
+    const listed = { ...DESCRIPTOR, version: 2, compatibleVersions: [1] }
+    const backend = backendAt(path)
+    const unit = await backend.kv.open(listed)
+    await unit.putRecord('records', 'k', { n: 1 })
+    await backend.close()
+
+    const db = new DatabaseSync(path)
+    try {
+      db.prepare('UPDATE units SET version = 1 WHERE name = ?').run(listed.name)
+    } finally {
+      db.close()
+    }
+
+    const reopened = backendAt(path)
+    const compatible = await reopened.kv.open(listed)
+    expect(await compatible.loadAll()).toEqual({ tables: { records: { k: { n: 1 } } }, global: null })
+    await compatible.close()
+    await reopened.close()
+
+    const after = new DatabaseSync(path)
+    try {
+      const row = after.prepare('SELECT version FROM units WHERE name = ?').get(listed.name) as { version: number }
+      expect(row.version).toBe(2)
+    } finally {
+      after.close()
+    }
+  })
+
   it('rejects invalid unit and table names before touching the medium', async () => {
     const backend = backendAt(':memory:')
     await expect(backend.kv.open({ ...DESCRIPTOR, name: 'Bad-Name' })).rejects.toThrow(/violates/)
@@ -355,5 +385,20 @@ describe('sqlite backend specifics', () => {
       code: 'malformed-medium',
     })
     await reopened.close()
+  })
+
+  it('reports a change stamp that moves when another connection commits', async () => {
+    const path = await freshDbPath()
+    const first = backendAt(path)
+    const writer = await first.kv.open(DESCRIPTOR)
+    const second = backendAt(path)
+    const reader = await second.kv.open(DESCRIPTOR)
+    const before = await reader.changeStamp!()
+    await writer.putRecord('records', 'k', { v: 1 })
+    expect(await reader.changeStamp!()).not.toBe(before)
+    await writer.close()
+    await reader.close()
+    await first.close()
+    await second.close()
   })
 })

@@ -10,7 +10,7 @@
  * @module @tomato/storage-json/src/single-unit
  */
 
-import { readFile } from 'node:fs/promises'
+import { readFile, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { StorageError } from '@tomato/storage'
 import type { KvUnit, KvUnitDescriptor } from '@tomato/storage'
@@ -70,6 +70,22 @@ class SingleJsonUnit implements KvUnit {
       tables[table] = Object.fromEntries(records)
     }
     return { tables, global: this.state.global }
+  }
+
+  /**
+   * File modification time: every publish replaces the whole document, so any
+   * writer's commit moves it. A missing file is the empty unit, reported as 0.
+   */
+  async changeStamp(): Promise<number> {
+    this.assertOpen()
+    try {
+      return (await stat(this.path)).mtimeMs
+    } catch (error) {
+      /* v8 ignore next 2 -- a missing file is the empty unit; any other stat failure is environmental */
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return 0
+      /* v8 ignore next -- see the environmental exception above */
+      throw error
+    }
   }
 
   async putRecord(table: string, key: string, value: unknown): Promise<void> {

@@ -414,7 +414,7 @@ describe('ui-schedule browser half', () => {
 
   it('retains an ended task in the global page and navigates and deletes with its original Session binding', async () => {
     const record: ScheduleCatalogEntry = {
-      id: 'host-task' as ScheduleId, sessionId: 'cold-original' as SessionId, status: 'active',
+      id: 'host-task' as ScheduleId, sessionId: 'cold-original' as SessionId, status: 'active', paused: false,
       kind: 'after', title: 'Review deployment', prompt: 'Review deployment', afterSeconds: 60,
       scheduledAt: '2099-01-01T00:00:00.000Z',
     }
@@ -500,7 +500,7 @@ describe('ui-schedule browser half', () => {
 
   it('clears every ended task from the global page, reads the catalog back, and reports the count', async () => {
     const record: ScheduleCatalogEntry = {
-      id: 'host-ended' as ScheduleId, sessionId: 'cold-original' as SessionId, status: 'inactive',
+      id: 'host-ended' as ScheduleId, sessionId: 'cold-original' as SessionId, status: 'inactive', paused: false,
       kind: 'after', title: 'Ended review', prompt: 'Ended review', afterSeconds: 60,
       scheduledAt: '2099-01-01T00:00:00.000Z',
     }
@@ -637,7 +637,7 @@ describe('task timing Remote injection', () => {
   it.each(['saved', 'noop', 'conflict', 'ended', 'missing', 'invalid', 'remote', 'reject'] as const)(
     'preserves the exact request and refreshes only acknowledged or stale %s results', async (mode) => {
       const record: ScheduleCatalogEntry = {
-        id: 'timing' as ScheduleId, sessionId: 'cold-original' as SessionId, status: 'active', kind: 'every',
+        id: 'timing' as ScheduleId, sessionId: 'cold-original' as SessionId, status: 'active', paused: false, kind: 'every',
         title: 'Original instruction', prompt: 'Original instruction', everySeconds: 301,
         scheduledAt: '2099-01-01T00:00:00.000Z',
       }
@@ -702,7 +702,7 @@ describe('task timing Remote injection', () => {
 
   it('reads again for an accepted update instead of joining the read in flight', async () => {
     const record: ScheduleCatalogEntry = {
-      id: 'timing' as ScheduleId, sessionId: 'cold-original' as SessionId, status: 'active', kind: 'every',
+      id: 'timing' as ScheduleId, sessionId: 'cold-original' as SessionId, status: 'active', paused: false, kind: 'every',
       title: 'Original instruction', prompt: 'Original instruction', everySeconds: 301,
       scheduledAt: '2099-01-01T00:00:00.000Z',
     }

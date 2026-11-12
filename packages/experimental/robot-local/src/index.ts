@@ -28,6 +28,10 @@ function toRef(row: { readonly spec: RobotSpecId; readonly revision: number }): 
   return Object.freeze({ spec: row.spec, revision: row.revision })
 }
 
+function sameRef(left: RobotSpecRef, right: RobotSpecRef): boolean {
+  return left.spec === right.spec && left.revision === right.revision
+}
+
 function toRevision(row: RevisionRow): RobotSpecRevision {
   return Object.freeze({
     ref: toRef(row.ref),
@@ -44,6 +48,9 @@ function toRobot(row: RobotRow, state: Robot['state']): Robot {
     spec: toRef(row.ref),
     state,
     createdAt: row.createdAt,
+    ...(row.installation === undefined
+      ? {}
+      : { installation: Object.freeze({ ref: toRef(row.installation.ref), installedAt: row.installation.installedAt }) }),
   })
 }
 
@@ -216,10 +223,36 @@ export default class LocalRobots extends Robots {
     if (revision === undefined) {
       throw new Error(`unknown robot specification revision ${ref.spec}@${ref.revision}`)
     }
-    const rebound: RobotRow = { ...row, name: revision.spec.name, ref: toRef(revision.ref) }
+    const { installation: previousInstallation, ...rowBase } = row
+    const rebound: RobotRow = {
+      ...rowBase,
+      name: revision.spec.name,
+      ref: toRef(revision.ref),
+      // A revision move invalidates the verification the old revision passed;
+      // the next run of the new revision is not what the user installed.
+      ...(previousInstallation !== undefined && sameRef(previousInstallation.ref, revision.ref)
+        ? { installation: previousInstallation }
+        : {}),
+    }
     await this.robotsTable.update(robot, () => rebound)
     this.changed('robots')
     return this.view(rebound)
+  }
+
+  private async installRobot(robot: RobotId): Promise<Robot> {
+    const row = this.robotsTable.get(robot)
+    if (row === undefined) throw new Error(`unknown robot ${robot}`)
+    const installed: RobotRow = { ...row, installation: { ref: toRef(row.ref), installedAt: Date.now() } }
+    await this.robotsTable.update(robot, () => installed)
+    this.changed('robots')
+    return this.view(installed)
+  }
+
+  private async removeRobot(robot: RobotId): Promise<void> {
+    if (this.robotsTable.get(robot) === undefined) throw new Error(`unknown robot ${robot}`)
+    if (this.activeRun(robot) !== undefined) throw new Error(`robot ${robot} is running; stop its run before removing it`)
+    await this.robotsTable.delete(robot)
+    this.changed('robots')
   }
 
   private async startRun(robot: RobotId, input: RunInput): Promise<Run> {
@@ -301,6 +334,14 @@ export default class LocalRobots extends Robots {
 
   override rebind(robot: RobotId, ref: RobotSpecRef): Promise<Robot> {
     return this.serialized(() => this.rebindRobot(robot, ref))
+  }
+
+  override install(robot: RobotId): Promise<Robot> {
+    return this.serialized(() => this.installRobot(robot))
+  }
+
+  override remove(robot: RobotId): Promise<void> {
+    return this.serialized(() => this.removeRobot(robot))
   }
 
   override robot(id: RobotId): Promise<Robot | undefined> {

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Fournisseur local de salles de robots",
+    "description": "Fournisseur adossé au stockage avec journal durable, planificateur de réveil borné, sessions de membres persistantes et outils de salle."
+  }
+}

@@ -19,7 +19,7 @@ const failure = { ok: false as const, error: new RemoteError('gateway/internal',
 
 function catalogEntry(taskId: string, sessionId: string, status: 'active' | 'inactive'): ScheduleCatalogEntry {
   return {
-    id: taskId as ScheduleId, sessionId: sessionId as SessionId, status, kind: 'at',
+    id: taskId as ScheduleId, sessionId: sessionId as SessionId, status, paused: false, kind: 'at',
     title: 'Read status', prompt: 'Read status', scheduledAt: '2026-10-01T00:00:00.000Z',
   }
 }

@@ -1,0 +1,31 @@
+{
+  "unit": {
+    "name": "tomato_memory",
+    "version": 1
+  },
+  "global": null,
+  "tables": {
+    "records": {
+      "memory-0d6a4f39-3f52-4a51-9cd6-6a1d0f2f4c11": {
+        "id": "memory-0d6a4f39-3f52-4a51-9cd6-6a1d0f2f4c11",
+        "owner": "account:0f5c1a0b2d3e4f60718293a4b5c6d7e8",
+        "scope": {
+          "kind": "workspace",
+          "path": "/work/legacy-project"
+        },
+        "kind": "preference",
+        "entity": "user",
+        "key": "commit-style",
+        "value": "One subject line, imperative mood.",
+        "status": "active",
+        "pinned": false,
+        "createdAt": 1793000000000,
+        "updatedAt": 1793000000000,
+        "source": {
+          "sessionId": "session-legacy-1",
+          "userMessageSeq": 2
+        }
+      }
+    }
+  }
+}

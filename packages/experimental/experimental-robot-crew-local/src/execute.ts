@@ -175,6 +175,9 @@ interface ResolvedRobot {
 
 /** Mutable per-run orchestrator state and every step it drives. */
 class NodeExecutor {
+  /** Whether the caller's signal has aborted; a method read avoids stale control-flow narrowing across awaits. */
+  private aborted(): boolean { return this.options.signal.aborted }
+
   private readonly memory: { decisions: string[]; constraints: string[]; open: string[] } = {
     decisions: [],
     constraints: [],
@@ -436,7 +439,7 @@ class NodeExecutor {
     try {
       await memory.rememberEpisode({
         owner: this.memoryView.owner,
-        scope: { kind: 'project', path: this.memoryView.workspace ?? this.options.cwd },
+        scope: { kind: 'project', path: this.memoryView.workspace?.path ?? this.options.cwd },
         kind: 'summary',
         type: 'crew-run',
         title: bound(`${this.spec.name}: ${this.options.run.input}`, 200),
@@ -506,7 +509,7 @@ class NodeExecutor {
    * @returns the activation's text, turns, and token estimate.
    */
   private async activate(node: CrewNode, brief: string, message: string, hop: number): Promise<Activation> {
-    if (this.options.signal.aborted) throw new Error('the run was cancelled')
+    if (this.aborted()) throw new Error('the run was cancelled')
     this.activations += 1
     const sessionId = brandString<SessionId>(`crew-${this.options.run.id}-${node.id}-${this.activations}`)
     this.lastSessionId = sessionId
@@ -542,7 +545,7 @@ class NodeExecutor {
       handle.agent.followup(createUserMessage({ content: [{ type: 'text', text: message }], source: { kind: 'user' } }))
       await handle.agent.whenIdle()
       let turns = 1
-      while (turns < node.maxTurns && !this.options.signal.aborted && turnFailure === undefined && /CONTINUE\s*:/iu.test(text)) {
+      while (turns < node.maxTurns && !this.aborted() && turnFailure === undefined && /CONTINUE\s*:/iu.test(text)) {
         turns += 1
         handle.agent.followup(createUserMessage({
           content: [{ type: 'text', text: 'Continue and finish your answer. Keep the final answer first.' }],
@@ -550,7 +553,7 @@ class NodeExecutor {
         }))
         await handle.agent.whenIdle()
       }
-      if (this.options.signal.aborted) throw new Error('the run was cancelled')
+      if (this.aborted()) throw new Error('the run was cancelled')
       const tokens = estimateTokens(brief) + estimateTokens(message) + estimateTokens(text)
       if (tokens > node.budgetTokens) {
         const note = `This node used about ${tokens} tokens, over its ${node.budgetTokens} budget.`
@@ -624,7 +627,7 @@ class NodeExecutor {
         },
       },
       execute: async (args, exec) => {
-        const input = args as { to: string; intent?: 'request' | 'delegate'; task: string; context?: string }
+        const input = args
         return await this.onA2aSend(node, input, hop + 1, exec.signal)
       },
     }))

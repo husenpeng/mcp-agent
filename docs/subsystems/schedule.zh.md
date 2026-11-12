@@ -340,6 +340,10 @@ type ScheduleCatalogEntry = ScheduleRecord & {
   readonly sessionId: SessionId
   /** Inactive reminders remain visible but never schedule another delivery. */
   readonly status: 'active' | 'inactive'
+  /** Whether the owner paused this reminder; a paused task keeps its rule and resumes later. */
+  readonly paused: boolean
+  /** When the owner paused it, as an ISO instant, while `paused` is true. */
+  readonly pausedAt?: string
   /** Most recent durably acknowledged inbox delivery, when available. */
   readonly lastDelivery?: ScheduleDeliveryReceipt
 }
@@ -504,15 +508,45 @@ async create(sessionId: SessionId, request: ScheduleCreateRequest, signal?: Abor
 @Remote('history') async history(request: ScheduleDeliveryHistoryRequest): Promise<ScheduleDeliveryHistoryResult>
 
 /**
- * Delete one task belonging to the selected Session, leaving queued messages intact.
+ * Create one reminder for a phone, bound to its Session without activating it.
  *
- * The row is removed: the task no longer schedules, leaves `list` and `catalog`, and its
- * saved delivery records go with it. A task bound to a Session a delegated child owns
- * stays deletable even though creation and timing edits refuse that binding, so a task
- * stored before that rule existed remains removable.
- * @param request - Session and exact task identity.
- * @param signal - Optional cancellation checked before persistence begins, including after FIFO waits.
- * @returns Whether that Session owned a deleted task. Cancellation does not roll back an in-flight write.
+ * The Remote face differs from the tool only in where the Session comes from:
+ * a phone names it in the request. Every selector and refusal is the same, so
+ * a task created here behaves exactly like one the Agent created.
+ * @param request - Session binding, title, prompt, and one selector.
+ * @param signal - optional cancellation, forwarded to storage.
+ * @returns the stored task as the catalog reports it.
+ */
+@Remote('create') async createReminder(request: ScheduleRemoteCreateRequest, signal?: AbortSignal): Promise<ScheduleCatalogEntry>
+
+/**
+ * Pause one task, keeping its rule for a later resume.
+ *
+ * A paused task stays visible in the catalog and never schedules a delivery
+ * while paused; unlike deletion its recurrence survives.
+ * @param request - Session binding and the task to pause.
+ * @param signal - optional cancellation, forwarded to storage.
+ * @returns the resulting state, or the refusal that kept it unchanged.
+ */
+@Remote('pause') async pause(request: SchedulePauseRequest, signal?: AbortSignal): Promise<SchedulePauseResult>
+
+/**
+ * Resume a paused task, returning it to the schedule its rule describes.
+ *
+ * A recurring task whose occurrence passed while paused returns at its next
+ * occurrence after now, not one in the past; a one-shot task already past is
+ * delivered on the next drive rather than skipped.
+ * @param request - Session binding and the task to resume.
+ * @param signal - optional cancellation, forwarded to storage.
+ * @returns the resulting state, or the refusal that kept it unchanged.
+ */
+@Remote('resume') async resume(request: SchedulePauseRequest, signal?: AbortSignal): Promise<SchedulePauseResult>
+
+/**
+ * Delete one task from its owning Session.
+ * @param request - Session binding and the task to delete.
+ * @param signal - optional cancellation, forwarded to storage.
+ * @returns the delete outcome, or the refusal that kept the task.
  */
 @Remote('delete') async delete(request: ScheduleDeleteRequest, signal?: AbortSignal): Promise<ScheduleDeleteResult>
 
@@ -549,7 +583,7 @@ async create(sessionId: SessionId, request: ScheduleCreateRequest, signal?: Abor
 @Remote('update') async update(request: ScheduleUpdateRequest, signal?: AbortSignal): Promise<ScheduleUpdateResult>
 ```
 
-Types: [SessionId](core.zh.md)
+Types: [SchedulePauseRequest](../../packages/schedule/schedule/README.zh.md) · [SchedulePauseResult](../../packages/schedule/schedule/README.zh.md) · [ScheduleRemoteCreateRequest](../../packages/schedule/schedule/README.zh.md) · [SessionId](core.zh.md)
 
 Source: [`packages/schedule/schedule/src/index.ts`](../../packages/schedule/schedule/src/index.ts)
 

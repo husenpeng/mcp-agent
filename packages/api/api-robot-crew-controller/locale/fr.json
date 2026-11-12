@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Contrôleur d’équipes de robots",
+    "description": "Flux Remote des équipes, publication des spécifications, démarrage des exécutions et lecture du journal de flux pour les clients navigateur."
+  }
+}

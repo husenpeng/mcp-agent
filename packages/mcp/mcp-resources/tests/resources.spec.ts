@@ -291,7 +291,7 @@ describe('MCP resource tools', () => {
     const disposeAlpha = ctx.mcpResources.register('alpha', provider)
 
     expect(ctx.mcpResources.list()).toEqual(['alpha', 'zeta'])
-    expect(ctx.mcpResources.list({} as Agent)).toEqual(['alpha', 'zeta'])
+    expect(ctx.mcpResources.list({})).toEqual(['alpha', 'zeta'])
 
     disposeAlpha()
     expect(ctx.mcpResources.list()).toEqual(['zeta'])

@@ -1,13 +1,14 @@
 /**
- * Model-facing `robot_create` tool over `ctx.robots`: publish a specification
- * assembled from the four basic fields and instantiate it, so a creation
- * Session can produce a robot without asking the user about advanced settings.
+ * Model-facing robot tools over `ctx.robots`: `robot_create` publishes the four
+ * basic fields plus any capabilities the user selected and instantiates the
+ * result; `robot_update` republishes an existing robot's skill, plugin, and MCP
+ * selections. Both keep every other advanced setting at its shared default.
  * @module @tomato/experimental-tool-robot
  */
 
 import type { Context } from '@tomato/cordis'
 import { emptyRobotSpec, RobotSpecValidationError } from '@tomato/experimental-robot'
-import type { RobotSpec, RobotSpecRevision } from '@tomato/experimental-robot'
+import type { Robot, RobotSpec, RobotSpecRevision } from '@tomato/experimental-robot'
 import { HarnessError } from '@tomato/llm'
 import type { ContentBlock } from '@tomato/llm'
 import { defineTool } from '@tomato/tools'
@@ -21,10 +22,14 @@ export const name = 'experimental-tool-robot'
 export const inject = ['agents', 'robots', 'tools']
 
 const CREATE_DESCRIPTION = 'Create a Tomato Rbot from a name, purpose, and success criteria. '
-  + 'Use it after the user confirmed a concrete name and purpose; every other setting starts from the general default '
-  + 'and can be changed later on the robot page.'
+  + 'Use it after the user confirmed a concrete name and purpose. Optionally select the skills, plugins, and MCP '
+  + 'servers it may use; every other setting starts from the general default and can be changed later on the robot page.'
 
-const CREATE_OUTPUT_SCHEMA = {
+const UPDATE_DESCRIPTION = 'Change which skills, plugins, or MCP servers an existing robot uses. '
+  + 'Pass only the lists to change; an omitted list keeps its current value. '
+  + 'The new revision must be installed on the robot page before it can run.'
+
+const ROBOT_OUTPUT_SCHEMA = {
   type: 'object',
   additionalProperties: false,
   properties: {
@@ -103,8 +108,132 @@ function requireRealBasics(name: string, mission: string): { readonly name: stri
 }
 
 /**
- * Register `robot_create` in the mounting scope, so a composition decides which
- * agents receive it.
+ * Normalize one capability list a caller supplied: trim, drop blanks, and
+ * deduplicate, because a repeated value is a specification error the user did
+ * not intend.
+ * @param values - names supplied by the tool call, when any.
+ * @returns the cleaned list, empty when the caller omitted it.
+ */
+function dependencyList(values: readonly string[] | undefined): string[] {
+  return [...new Set((values ?? []).map(value => value.trim()).filter(value => value !== ''))]
+}
+
+/**
+ * Resolve the robot one update names.
+ * @param ctx - Context carrying the robot registry.
+ * @param nameOrId - display name or robot identity supplied by the call.
+ * @returns the single matching robot.
+ * @throws `ROBOT_NOT_FOUND` when nothing matches, or `ROBOT_AMBIGUOUS` when a
+ *   name matches several robots and the identity is required.
+ */
+async function resolveRobot(ctx: Context, nameOrId: string): Promise<Robot> {
+  const needle = nameOrId.trim()
+  const robots = await ctx.robots.robots()
+  const byId = robots.find(robot => robot.id === needle)
+  if (byId !== undefined) return byId
+  const byName = robots.filter(robot => robot.name === needle)
+  const [only] = byName
+  if (only === undefined) throw new HarnessError(`No robot is named "${needle}".`, 'ROBOT_NOT_FOUND')
+  if (byName.length > 1) {
+    throw new HarnessError(
+      `Several robots are named "${needle}"; pass one of their ids instead: ${byName.map(robot => robot.id).join(', ')}.`,
+      'ROBOT_AMBIGUOUS',
+    )
+  }
+  return only
+}
+
+/**
+ * Render one update for the model and the generic card fallback.
+ * @param _args - validated arguments, unused by this rendering.
+ * @param value - the updated robot and its specification revision.
+ * @returns one text block naming the robot and the install requirement.
+ */
+function renderUpdatedValue(_args: unknown, value: RobotCreateValue): ContentBlock[] {
+  return [{
+    type: 'text',
+    text: `Updated robot "${value.name}" (specification ${value.specId}, revision ${value.revision}). `
+      + 'Install the new revision on the robot page before starting a run.',
+  }]
+}
+
+/**
+ * Register `robot_update`, which republishes one robot's capability selections.
+ * Only the lists the caller passes change; every other field keeps its current
+ * value. Publishing a new revision clears an installation that covered the old
+ * one, so the model must tell the user to install again.
+ * @param ctx - Context carrying the robot registry.
+ */
+function registerUpdateTool(ctx: Context): void {
+  ctx.tools.register(defineTool({
+    name: 'robot_update',
+    description: UPDATE_DESCRIPTION,
+    parameters: {
+      robot: { type: 'string', required: true, description: 'Robot name or id, as the robot page lists it.' },
+      skills: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Complete list of skills the robot should load; omit to keep the current list.',
+      },
+      plugins: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Complete list of plugins the robot depends on; omit to keep the current list.',
+      },
+      mcpServers: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Complete list of MCP servers the robot may use; omit to keep the current list.',
+      },
+    },
+    output: {
+      schema: ROBOT_OUTPUT_SCHEMA,
+      render: renderUpdatedValue,
+      presentationMeta: (_args, value) => ({ robotId: value.robotId, name: value.name }),
+    },
+    presentCall: args => ({ card: 'generic', title: 'Update robot', kind: 'other', rawInput: args.robot }),
+    async execute(args, exec): Promise<RobotCreateValue> {
+      requireDirectHuman(ctx, robotToolExecution(ctx, exec))
+      const lists = [args.skills, args.plugins, args.mcpServers]
+      if (lists.every(list => list === undefined)) {
+        throw new HarnessError('Pass at least one of skills, plugins, or mcpServers.', 'ROBOT_UPDATE_EMPTY')
+      }
+      const robot = await resolveRobot(ctx, args.robot)
+      const latest = (await ctx.robots.specs()).find(entry => entry.ref.spec === robot.spec.spec)
+      const current = latest ?? await ctx.robots.revision(robot.spec)
+      if (current === undefined) {
+        throw new HarnessError(`Robot "${robot.name}" has no readable specification revision.`, 'ROBOT_SPEC_MISSING')
+      }
+      const spec: RobotSpec = {
+        ...current.spec,
+        capability: {
+          ...current.spec.capability,
+          ...(args.skills === undefined ? {} : { skills: dependencyList(args.skills) }),
+          ...(args.plugins === undefined ? {} : { plugins: dependencyList(args.plugins) }),
+          ...(args.mcpServers === undefined ? {} : { mcpServers: dependencyList(args.mcpServers) }),
+        },
+      }
+      let revision: RobotSpecRevision
+      try {
+        revision = await ctx.robots.publish(spec, current.ref)
+      } catch (error) {
+        if (error instanceof RobotSpecValidationError) throw invalidSpecification(error)
+        throw error
+      }
+      await ctx.robots.rebind(robot.id, revision.ref)
+      return {
+        robotId: robot.id,
+        name: robot.name,
+        specId: revision.ref.spec,
+        revision: revision.ref.revision,
+      }
+    },
+  }))
+}
+
+/**
+ * Register `robot_create` and `robot_update` in the mounting scope, so a
+ * composition decides which agents receive them.
  * @param ctx - Context that resolved the agents, robots, and tools services.
  */
 export function apply(ctx: Context): void {
@@ -120,9 +249,24 @@ export function apply(ctx: Context): void {
         items: { type: 'string' },
         description: 'Observable conditions that mean a run succeeded; omit when the user gave none.',
       },
+      skills: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Skills the robot loads on every run; omit when the user named none.',
+      },
+      plugins: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Plugins the robot depends on, named as the deployment loads them; omit when the user named none.',
+      },
+      mcpServers: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'MCP servers the robot may use; omit when the user named none.',
+      },
     },
     output: {
-      schema: CREATE_OUTPUT_SCHEMA,
+      schema: ROBOT_OUTPUT_SCHEMA,
       render: renderValue,
       presentationMeta: (_args, value) => ({ robotId: value.robotId, name: value.name }),
     },
@@ -141,9 +285,16 @@ export function apply(ctx: Context): void {
       // Workspace unless the user names another one later; an explicit root
       // keeps the run directory, its history, and its outputs inspectable.
       const cwd = exec.agent?.session.header.cwd
-      const spec: RobotSpec = cwd === undefined
-        ? created
-        : { ...created, capability: { ...created.capability, workspaceRoots: [cwd] } }
+      const spec: RobotSpec = {
+        ...created,
+        capability: {
+          ...created.capability,
+          skills: dependencyList(args.skills),
+          plugins: dependencyList(args.plugins),
+          mcpServers: dependencyList(args.mcpServers),
+          ...(cwd === undefined ? {} : { workspaceRoots: [cwd] }),
+        },
+      }
       let revision: RobotSpecRevision
       try {
         revision = await ctx.robots.publish(spec)
@@ -160,4 +311,5 @@ export function apply(ctx: Context): void {
       }
     },
   }))
+  registerUpdateTool(ctx)
 }

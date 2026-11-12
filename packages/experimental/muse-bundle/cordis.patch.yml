@@ -12,6 +12,8 @@
 
     - id: optional-tool-memory
       name: '@tomato/experimental-tool-memory'
+      config:
+        capture: true
 
     - id: optional-focus
       name: '@tomato/experimental-focus'

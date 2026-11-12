@@ -36,6 +36,7 @@ const BASE = {
   capability: {
     tools: { allow: [], deny: [] },
     mcpServers: [],
+    plugins: [],
     skills: [],
     workspaceRoots: [],
     dataClasses: ['internal'],

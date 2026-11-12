@@ -75,13 +75,12 @@ async function boot(configLines: readonly string[]): Promise<Context> {
     ['@tomato/storage', Storage],
     ['test-memory-storage', MemoryStorage],
   ])
-  ctx.loader.internal = {
-    version: 'v2',
-    async import(specifier: string) {
-      if (!modules.has(specifier)) throw new Error(`unexpected Loader import: ${specifier}`)
-      return modules.get(specifier)
-    },
-  } as unknown as NonNullable<typeof ctx.loader.internal>
+  const internal = ctx.loader.internal!
+  internal.version = 'v2'
+  internal.import = async (specifier: string) => {
+    if (!modules.has(specifier)) throw new Error(`unexpected Loader import: ${specifier}`)
+    return modules.get(specifier)
+  }
   await ctx.loader.create({ name: 'cordis:include', config: { path: pathToFileURL(configPath).href } })
   await ctx.loader.await()
   for (const entry of ctx.loader.entries()) await entry.fiber?.await()

@@ -1,0 +1,43 @@
+{
+  "patches": [
+    {
+      "at": 3,
+      "entry": {
+        "kind": "chunks",
+        "chunks": [
+          {
+            "type": "block-start",
+            "index": 0,
+            "blockType": "text"
+          },
+          {
+            "type": "text-delta",
+            "index": 0,
+            "text": "PROACTIVE COMPACTION COMPLETE"
+          },
+          {
+            "type": "block-end",
+            "index": 0,
+            "block": {
+              "type": "text",
+              "text": "PROACTIVE COMPACTION COMPLETE"
+            }
+          },
+          {
+            "type": "usage",
+            "usage": {
+              "inputTokens": 20,
+              "outputTokens": 4
+            }
+          },
+          {
+            "type": "finish",
+            "reason": {
+              "kind": "stop"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

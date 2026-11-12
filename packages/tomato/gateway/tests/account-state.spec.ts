@@ -53,7 +53,7 @@ function request(headers: Record<string, string>): IncomingMessage {
 }
 
 /** Wire the routes exactly as the plugin does; tests read the published view. */
-function wire(url: string) {
+function wire(url: string, desktopSessionId?: () => string | undefined) {
   const state = new AccountState()
   const account = state.view()
   const seen: CurrentAccount[] = []
@@ -68,7 +68,7 @@ function wire(url: string) {
     stateTtlMs: 60_000,
   }
   const auth = new AuthService(url, config.verifyTimeoutMs, config.requestTimeoutMs, (outcome) => { state.observe(outcome) })
-  const routes = new AuthRoutes(config, auth, 'http://127.0.0.1', false, () => { state.signOut() })
+  const routes = new AuthRoutes(config, auth, 'http://127.0.0.1', false, () => { state.signOut() }, desktopSessionId)
   return { account, seen, routes }
 }
 
@@ -113,6 +113,21 @@ describe('AccountState through the gateway routes', () => {
     expect(account.current()).toEqual({ status: 'signed-out' })
     expect(seen.map(entry => entry.status === 'signed-in' ? entry.user.id : entry.status))
       .toEqual(['u-alice', 'u-bob', 'signed-out', 'u-alice', 'signed-out', 'u-alice', 'signed-out'])
+  })
+
+  it('projects the Desktop shell account to a paired device and keeps a plain browser signed out', async () => {
+    const fake = await authService({ status: 200, body: { valid: true, user: ALICE } })
+    const projected = wire(fake.url, () => 'desktop-session')
+    const projectedResponse = recorder()
+    const projectedEnd = vi.spyOn(projectedResponse, 'end')
+    await projected.routes.session(request({}), projectedResponse)
+    expect(JSON.parse(String(projectedEnd.mock.calls.at(-1)?.[0]))).toEqual({ status: 'signed-in', user: ALICE, shared: true })
+
+    const plain = wire(fake.url)
+    const plainResponse = recorder()
+    const plainEnd = vi.spyOn(plainResponse, 'end')
+    await plain.routes.session(request({}), plainResponse)
+    expect(JSON.parse(String(plainEnd.mock.calls.at(-1)?.[0]))).toEqual({ status: 'signed-out' })
   })
 
   it('publishes nothing for an equal state, removes listeners, and contains a failing listener', () => {

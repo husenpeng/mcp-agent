@@ -8,6 +8,9 @@ import { createInsightsController, POLL_INTERVAL_MS, type InsightsControllerHost
 import { createInsightsSource } from '../src/client/source.ts'
 import type { DailyRecap, MuseInsightsSnapshot } from '../src/types.ts'
 
+/* oxlint-disable typescript/no-unsafe-assignment -- Vitest asymmetric matchers are typed as any. */
+
+
 afterEach(() => { vi.useRealTimers(); localStorage.clear(); vi.restoreAllMocks() })
 
 const recap: DailyRecap = {

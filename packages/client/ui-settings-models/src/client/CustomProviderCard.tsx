@@ -9,9 +9,11 @@
  * custom-API panel of the section's add card; the card's mode switch names it
  * when both modes are offered, and with the custom mode alone the card shows
  * this form directly. One `settings.mutate` sets the whole profile at
- * `providers.<route>`; the key travels separately through `credentials/set`
- * under the reference the profile records, exactly as an existing provider's
- * key does.
+ * `providers.<route>`; when the deployment enforces a model allowlist, the
+ * same mutate also appends this route's models to `modelPolicy.local`, since a
+ * provider missing from that list is born blocked. The key travels separately
+ * through `credentials/set` under the reference the profile records, exactly
+ * as an existing provider's key does.
  *
  * The three fields a hand-declared route cannot default — endpoint, protocol,
  * and at least one model — are required here rather than at load, so the
@@ -28,6 +30,7 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { JsonValue } from '@tomato/util-values'
+import type { SettingsPathOpView } from '@tomato/api-remotes/client'
 import { apiKeyFailure } from './apiKey.ts'
 import { ApiKeyInput } from './ApiKeyInput.tsx'
 import { EditorFooter } from './EditorFooter.tsx'
@@ -35,6 +38,7 @@ import { validateDeepSeekModels } from './DeepSeekModelsEditor.tsx'
 import { ModelListEditor } from './ModelListEditor.tsx'
 import type { ModelDraft } from './ModelListEditor.tsx'
 import { validateReasoningEfforts } from './ModelReasoningEfforts.tsx'
+import { allowlistOps, type ModelPolicyView } from './policy.ts'
 import { deriveKeyRef } from './store.ts'
 import { protocolLabel } from './protocol-label.ts'
 import type { ModelsOperations } from './operations.ts'
@@ -77,6 +81,11 @@ export interface CustomProviderCardProps {
    * than a silent overwrite of its whole profile.
    */
   revision: number
+  /**
+   * Deployment model allowlist, when one is enforced. The create appends this
+   * route's models to it so the new provider is selectable immediately.
+   */
+  policy?: ModelPolicyView | undefined
   /** The Host operations this card writes and interrogates through. */
   operations: ModelsOperations
   /** Section copy. */
@@ -175,11 +184,20 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
       // `taken` is a snapshot too, so the id check alone cannot see a route
       // declared after this card opened; the revision makes that race a
       // `settings-conflict` instead of a write over the other profile.
-      const written = await operations.writeSettings(
-        NS,
-        [{ op: 'set', path: ['providers', route], value: profile as JsonValue }],
-        openedAt,
-      )
+      const ops: SettingsPathOpView[] = [
+        { op: 'set', path: ['providers', route], value: profile as JsonValue },
+      ]
+      // The deployment's allowlist matches exact (provider, model) pairs, and
+      // the page cannot edit `modelPolicy`; a route missing from it would be
+      // born blocked. Keep the profile and its allowlist entries in one mutate.
+      if (props.policy !== undefined) {
+        const ids = models.flatMap((model) => {
+          /* v8 ignore next -- validateDeepSeekModels rejects a missing or empty id before submit */
+          return typeof model.id === 'string' && model.id.length > 0 ? [model.id] : []
+        })
+        ops.push(...allowlistOps(props.policy, route, ids))
+      }
+      const written = await operations.writeSettings(NS, ops, openedAt)
       if (written.kind !== 'written') {
         return written.kind === 'conflict' ? t('conflict') : written.message
       }

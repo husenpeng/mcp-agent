@@ -203,7 +203,7 @@ async function viewJson(
     timeout: options.lookupTimeoutMs ?? LOOKUP_TIMEOUT_MS,
   })
   if (viewed.exitCode !== 0) return undefined
-  return JSON.parse(viewed.stdout) as unknown
+  return JSON.parse(viewed.stdout)
 }
 
 /**

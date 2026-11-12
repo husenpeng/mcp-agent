@@ -33,8 +33,7 @@
         "@tomato/api-session-controller",
         "@tomato/client-locale",
         "@tomato/client-ui-renderer",
-        "@tomato/client-ui-sidebar-right",
-        "@tomato/plugin-manager"
+        "@tomato/client-ui-sidebar-right"
       ],
       "platform": "web"
     }

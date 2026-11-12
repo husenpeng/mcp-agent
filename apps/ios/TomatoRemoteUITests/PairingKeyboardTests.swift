@@ -20,8 +20,10 @@ final class PairingKeyboardTests: XCTestCase {
         XCTAssertTrue(app.keyboards.element.waitForExistence(timeout: 10), "keyboard did not open")
 
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.45))
-            .press(forDuration: 0.05,
-                   thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9)))
+            .press(
+                forDuration: 0.05,
+                thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9))
+            )
 
         let gone = XCTNSPredicateExpectation(
             predicate: NSPredicate(format: "exists == false"),

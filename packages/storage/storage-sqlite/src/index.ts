@@ -103,10 +103,15 @@ export class SqliteStorageBackend implements StorageBackend {
     if (row === undefined) {
       db.prepare('INSERT INTO units (name, version) VALUES (?, ?)').run(descriptor.name, descriptor.version)
     } else if (row.version !== descriptor.version) {
-      throw new StorageError(
-        'version-mismatch',
-        `kv unit '${descriptor.name}' is stamped version ${row.version} on the medium, incompatible with descriptor version ${descriptor.version}`,
-      )
+      if (!(descriptor.compatibleVersions ?? []).includes(row.version)) {
+        throw new StorageError(
+          'version-mismatch',
+          `kv unit '${descriptor.name}' is stamped version ${row.version} on the medium, incompatible with descriptor version ${descriptor.version}`,
+        )
+      }
+      // The owner vouched for these records under its current schemas: adopt
+      // the current stamp so later opens stay exact-version.
+      db.prepare('UPDATE units SET version = ? WHERE name = ?').run(descriptor.version, descriptor.name)
     }
     for (const table of descriptor.tables) {
       // Both segments passed UNIT_NAME_RE, so the identifier is safe in DDL.

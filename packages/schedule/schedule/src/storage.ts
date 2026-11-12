@@ -38,6 +38,8 @@ export const scheduleTaskSchema = z.object({
   sessionId: z.string().min(1).transform(SessionId),
   record: recordSchema,
   status: z.enum(['active', 'inactive']).default('active'),
+  /** Set while the owner paused the task; absent in rows written before pausing existed. */
+  pausedAt: z.string().min(1).optional(),
   lastDelivery: deliveryReceiptSchema.optional(),
   deliveryHistory: deliveryHistorySchema.optional(),
 }).strict().refine((task) => {
@@ -55,6 +57,6 @@ export type ScheduleTask = z.infer<typeof scheduleTaskSchema>
 
 /** Authoritative Schedule storage; malformed tasks reject opening the domain. */
 export const scheduleDomain = defineDomain({
-  name: 'schedule', version: 1,
+  name: 'schedule', version: 2, compatibleVersions: [1],
   tables: { tasks: domainTable<ScheduleId, ScheduleTask>(scheduleTaskSchema) },
 })

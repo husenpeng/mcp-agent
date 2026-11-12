@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "keywords": [
+    "支付", "付款", "确认付款", "立即购买", "提交订单", "转账", "确认转账",
+    "发送", "删除", "清空", "注销", "分享",
+    "Pay", "Buy", "Purchase", "Send", "Delete", "Remove", "Share", "Confirm payment", "Transfer"
+  ],
+  "blockedBundleIds": [
+    "com.apple.Passbook"
+  ],
+  "sensitiveTextPatterns": [
+    "^\\d{16,19}$",
+    "^\\d{17}[0-9Xx]$",
+    "^\\d{4,8}$"
+  ]
+}

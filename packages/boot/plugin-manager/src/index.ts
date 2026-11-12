@@ -782,9 +782,11 @@ export class PluginManager extends TypertRemoteService {
         const spec = `${name}@${version}`
         const answer = await this.askRegistries(spec, VERSION_FIELDS, [listing.registry], { kind: 'registry', spec, name })
         if (answer.status === 'refused') throw new Error(answer.reason)
-        const raw = Array.isArray(answer.answer) ? answer.answer.at(-1) : answer.answer
+        const answerValue: unknown = answer.answer
+        let raw: unknown = answerValue
+        if (Array.isArray(answerValue)) raw = answerValue[answerValue.length - 1]
         if (typeof raw !== 'object' || raw === null) throw new Error('pnpm view answered no package')
-        return raw as object
+        return raw
       },
       skip: (manifest, version) => {
         if (semver.prerelease(version) !== null) return 'prerelease version'

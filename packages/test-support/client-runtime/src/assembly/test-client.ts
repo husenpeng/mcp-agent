@@ -123,7 +123,7 @@ function messageOf(error: unknown): string {
 }
 
 function connectionOf(ctx: Context): ConnectionHandle {
-  const connection = ctx.get('connection') as ConnectionHandle | undefined
+  const connection = ctx.get('connection')
   if (connection === undefined) {
     throw new Error('client-test-runtime: the roster provides no `connection` service')
   }

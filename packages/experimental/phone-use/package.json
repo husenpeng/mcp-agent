@@ -1,0 +1,63 @@
+{
+  "name": "@tomato/experimental-phone-use",
+  "description": "Observe and operate an attached iPhone over the phone-use Remote namespace",
+  "version": "0.2.1-rc.3",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/experimental/phone-use"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./typert": {
+      "types": "./lib/typert.host.d.ts",
+      "default": "./lib/typert.host.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./remote": {
+      "types": "./lib/typert.remote-client.d.ts",
+      "default": "./lib/typert.remote-client.js"
+    }
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/typert.host.js",
+    "lib/typert.host.d.ts",
+    "lib/typert.remote-client.js",
+    "lib/typert.remote-client.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@tomato/cordis": "workspace:~",
+    "@tomato/user-questions": "workspace:*"
+  },
+  "dependencies": {
+    "@tomato/branded": "workspace:*",
+    "@tomato/schemastery": "workspace:~",
+    "@tomato/tools": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*",
+    "@tomato/util-values": "workspace:*",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tomato/agent": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/user-questions": "workspace:*"
+  }
+}

@@ -107,7 +107,7 @@ final class QRCaptureController: UIViewController, AVCaptureMetadataOutputObject
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        let session = self.session
+        let session = session
         sessionQueue.async { session.stopRunning() }
     }
 
@@ -135,7 +135,7 @@ final class QRCaptureController: UIViewController, AVCaptureMetadataOutputObject
         preview.videoGravity = .resizeAspectFill
         view.layer.addSublayer(preview)
 
-        let session = self.session
+        let session = session
         sessionQueue.async { session.startRunning() }
     }
 

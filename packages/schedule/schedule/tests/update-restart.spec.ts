@@ -58,7 +58,7 @@ it.each([true, false])('persists same-ID daily edits with saved history=%s witho
   expect(result).toEqual({ id, updated: true, record: updated })
   const bytes = await readFile(file, 'utf8')
   expect(JSON.parse(bytes)).toEqual({
-    unit: { name: 'schedule', version: 1 },
+    unit: { name: 'schedule', version: 2 },
     global: null,
     tables: { tasks: { [id]: { ...task, record: updated } } },
   })
@@ -67,7 +67,7 @@ it.each([true, false])('persists same-ID daily edits with saved history=%s witho
   await first.ctx.fiber.dispose()
   const second = await setup(root)
   expect(await second.service.list({ sessionId })).toEqual([updated])
-  expect(await second.service.catalog()).toEqual([{ ...updated, sessionId, status: 'active', lastDelivery }])
+  expect(await second.service.catalog()).toEqual([{ ...updated, sessionId, status: 'active', paused: false, lastDelivery }])
   expect(await second.service.history({ sessionId, id, limit: 100 })).toEqual({
     id, records: withHistory ? [{ ...lastDelivery, prompt: record.prompt }] : [lastDelivery],
     earlierRecordsUnavailable: !withHistory, earlierRecordsPruned: false, retention: { days: 30, records: 200 },

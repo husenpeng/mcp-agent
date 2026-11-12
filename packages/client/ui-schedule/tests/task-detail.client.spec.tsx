@@ -26,48 +26,48 @@ import { zoneOffsetMinutes } from './zone-fixture.ts'
 import css from '../src/client/TaskManagerPage.module.css'
 
 const at: ScheduleCatalogEntry = {
-  id: 'task-at' as ScheduleId, sessionId: 'session-alpha' as SessionId, kind: 'at', status: 'active',
+  id: 'task-at' as ScheduleId, sessionId: 'session-alpha' as SessionId, kind: 'at', status: 'active', paused: false,
   title: 'Review release', prompt: 'Review release', scheduledAt: '2026-10-01T09:00:00.000Z',
 }
 
 const every: ScheduleCatalogEntry = {
-  id: 'task-every' as ScheduleId, sessionId: 'session-beta' as SessionId, kind: 'every', status: 'active',
+  id: 'task-every' as ScheduleId, sessionId: 'session-beta' as SessionId, kind: 'every', status: 'active', paused: false,
   title: 'Check metrics', prompt: 'Check metrics', everySeconds: 301, scheduledAt: '2026-10-01T09:30:00.000Z',
 }
 
 const daily: ScheduleCatalogEntry = {
-  id: 'task-daily' as ScheduleId, sessionId: 'session-gamma' as SessionId, kind: 'daily', status: 'active',
+  id: 'task-daily' as ScheduleId, sessionId: 'session-gamma' as SessionId, kind: 'daily', status: 'active', paused: false,
   title: 'Daily weather', prompt: 'Daily weather', time: '23:00:00.000', timeZone: 'Asia/Shanghai',
   scheduledAt: '2026-10-01T15:00:00.000Z',
 }
 
 const weeklyMonday: ScheduleCatalogEntry = {
-  id: 'task-weekly-monday' as ScheduleId, sessionId: 'session-alpha' as SessionId, kind: 'weekly', status: 'active',
+  id: 'task-weekly-monday' as ScheduleId, sessionId: 'session-alpha' as SessionId, kind: 'weekly', status: 'active', paused: false,
   title: 'Weekly Monday', prompt: 'Weekly Monday', time: '09:30:00.000', timeZone: 'Asia/Shanghai',
   weekdays: [1], scheduledAt: '2026-10-05T01:30:00.000Z',
 }
 
 const weekdayRule: ScheduleCatalogEntry = {
-  id: 'task-weekday-rule' as ScheduleId, sessionId: 'session-beta' as SessionId, kind: 'weekly', status: 'active',
+  id: 'task-weekday-rule' as ScheduleId, sessionId: 'session-beta' as SessionId, kind: 'weekly', status: 'active', paused: false,
   title: 'Weekday rule', prompt: 'Weekday rule', time: '09:30:00.000', timeZone: 'Asia/Shanghai',
   weekdays: [1, 2, 3, 4, 5], scheduledAt: '2026-10-05T01:30:00.000Z',
 }
 
 const sparseWeekdays: ScheduleCatalogEntry = {
-  id: 'task-sparse' as ScheduleId, sessionId: 'session-beta' as SessionId, kind: 'weekly', status: 'active',
+  id: 'task-sparse' as ScheduleId, sessionId: 'session-beta' as SessionId, kind: 'weekly', status: 'active', paused: false,
   title: 'Sparse weekdays', prompt: 'Sparse weekdays', time: '09:30:00.000', timeZone: 'Asia/Shanghai',
   weekdays: [1, 3], scheduledAt: '2026-10-05T01:30:00.000Z',
 }
 
 const cron: ScheduleCatalogEntry = {
-  id: 'task-cron' as ScheduleId, sessionId: daily.sessionId, kind: 'cron', status: 'active',
+  id: 'task-cron' as ScheduleId, sessionId: daily.sessionId, kind: 'cron', status: 'active', paused: false,
   title: 'Cron report', prompt: 'Cron report', expression: '0 9 * * 1-5', timeZone: 'UTC',
   scheduledAt: '2026-10-05T01:30:00.000Z',
 }
 
 /** The same `every` task after another client switched its kind to Every day. */
 const movedToDaily: ScheduleCatalogEntry = {
-  id: every.id, sessionId: every.sessionId, kind: 'daily', status: 'active',
+  id: every.id, sessionId: every.sessionId, kind: 'daily', status: 'active', paused: false,
   title: every.title, prompt: every.prompt, time: '09:30:00.000', timeZone: 'UTC',
   scheduledAt: every.scheduledAt,
 }

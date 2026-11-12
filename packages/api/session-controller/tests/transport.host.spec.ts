@@ -581,7 +581,7 @@ describe('SessionHistoryController', () => {
     expect(inspect).not.toHaveBeenCalled()
   })
 
-  it('rejects incomplete cold metadata before serving a source', async () => {
+  it('rejects conflicting cold metadata and serves a consistent no-cwd header', async () => {
     const first = await setup()
     const sessionId = SessionId('incomplete')
     const address = { kind: 'session' as const, sessionId }
@@ -594,8 +594,10 @@ describe('SessionHistoryController', () => {
         events: [],
       }),
     }) as never)
+    // A consistent header without a cwd is a complete legacy Session; only
+    // conflicting list/inspect metadata is unservable.
     await expect(first.transport.page({ address, throughSeq: -1 }, signal()))
-      .rejects.toMatchObject({ code: 'session/not-found' })
+      .resolves.toEqual({ records: [], hasMore: false })
 
     const second = await setup()
     const listed: SessionHeader = { version: SESSION_FORMAT_VERSION, id: sessionId, createdAt: 1, cwd: '/workspace', isSeeded: false }

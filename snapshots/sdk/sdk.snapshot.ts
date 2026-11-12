@@ -146,7 +146,7 @@ const SDK_ASSERTIONS: Readonly<Record<string, SdkAssertions>> = {
   'desktop-ptc-context': { expectedFinalResponse: 'SDK snapshot OK' },
   'minimal-image-compaction': {
     expectedFinalResponse: 'MINIMAL_IMAGE_OK',
-    expectedTools: { bash: ['command'], read_image: ['file_path'], working_directory: [] },
+    expectedTools: { bash: ['command'], list_dir: [], read_image: ['file_path'], working_directory: [] },
   },
   'session-title-stability': { waitForProviderTitle: true },
   'dynamic-tool-updates': {

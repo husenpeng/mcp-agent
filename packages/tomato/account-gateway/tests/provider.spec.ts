@@ -3,6 +3,9 @@ import type { CurrentAccount, TomatoAccount } from '@tomato/gateway'
 import { afterEach, describe, expect, it } from 'vitest'
 import * as AccountGateway from '../src/index.ts'
 
+/* oxlint-disable typescript/no-unsafe-assignment -- Vitest asymmetric matchers are typed as any. */
+
+
 const user = { id: 'user-1', email: 'person@example.com', name: 'Person', avatarUrl: null, language: 'zh-CN', roles: ['admin'], quotas: { 'model.tokens.daily': 2000 } }
 const clients: Context[] = []
 afterEach(async () => { await Promise.all(clients.splice(0).map(ctx => ctx.fiber.dispose())) })
@@ -22,7 +25,7 @@ function fixture(initial: CurrentAccount) {
   clients.push(ctx)
   return {
     ctx,
-    set(account: CurrentAccount) {
+    set: (account: CurrentAccount) => {
       current = account
       for (const listener of [...listeners]) listener(account)
     },

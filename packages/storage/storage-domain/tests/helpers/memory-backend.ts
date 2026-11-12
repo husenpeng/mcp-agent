@@ -144,7 +144,7 @@ export class MemoryStorageBackend implements StorageBackend {
         const stamped = this.pool.versions.get(descriptor.name)
         if (stamped === undefined) {
           this.pool.versions.set(descriptor.name, descriptor.version)
-        } else if (stamped !== descriptor.version) {
+        } else if (stamped !== descriptor.version && !(descriptor.compatibleVersions ?? []).includes(stamped)) {
           throw new StorageError(
             'version-mismatch',
             `memory unit '${descriptor.name}' is stamped v${stamped}, descriptor wants v${descriptor.version}`,

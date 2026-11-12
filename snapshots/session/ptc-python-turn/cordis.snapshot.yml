@@ -41,6 +41,8 @@
 - insert:
     - id: ptc-runtime-python
       name: '@tomato/experimental-ptc-runtime-python'
+      config:
+        pythonBin: !!js process.env.TOMATO_SNAPSHOT_PYTHON_BIN ?? 'python3'
 
 - id: system-prompt
   name: '@tomato/system-prompt'

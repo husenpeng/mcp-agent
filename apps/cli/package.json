@@ -111,8 +111,6 @@
     "@tomato/experimental-plugin-market-bundle": "workspace:*",
     "@tomato/personalized-recommendations": "workspace:*",
     "@tomato/experimental-muse-bundle": "workspace:*",
-    "@tomato/experimental-embeddings": "workspace:*",
-    "@tomato/experimental-embeddings-http": "workspace:*",
     "@tomato/experimental-browser-use-playwright-bundle": "workspace:*"
   },
   "devDependencies": {

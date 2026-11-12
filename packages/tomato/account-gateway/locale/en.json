@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Account gateway",
+    "description": "Feishu gateway account provider for the Host account service."
+  }
+}

@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for 2026-11-10-rbot-agent-collaboration-orchestration.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-11-10-rbot-agent-collaboration-orchestration.md
+/agent-note-rbot-agents-own-multi-agent-collaboration:
+  en: d6b5273b57ae2f7c
+  zh: 7711b65eabe428ba
+/agent-note-rbot-agents-own-multi-agent-collaboration/problem:
+  en: 7546c0f0bfa3409e
+  zh: 4295df41c5e64e15
+/agent-note-rbot-agents-own-multi-agent-collaboration/decision:
+  en: f311e6f864dd97bc
+  zh: e0202e3a4c2f2cff
+/agent-note-rbot-agents-own-multi-agent-collaboration/alternatives-considered:
+  en: 271e581d19e4e6f9
+  zh: 82e3cbab525f7045
+/agent-note-rbot-agents-own-multi-agent-collaboration/consequences:
+  en: bc90ac874de75e70
+  zh: 95a232ff3971acea

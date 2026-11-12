@@ -215,8 +215,18 @@ export type ScheduleCatalogEntry = ScheduleRecord & {
   readonly sessionId: SessionId
   /** Inactive reminders remain visible but never schedule another delivery. */
   readonly status: 'active' | 'inactive'
+  /** Whether the owner paused this reminder; a paused task keeps its rule and resumes later. */
+  readonly paused: boolean
+  /** When the owner paused it, as an ISO instant, while `paused` is true. */
+  readonly pausedAt?: string
   /** Most recent durably acknowledged inbox delivery, when available. */
   readonly lastDelivery?: ScheduleDeliveryReceipt
+}
+
+/** Create request of the Remote face, binding the task to one Session. */
+export interface ScheduleRemoteCreateRequest extends ScheduleCreateRequest {
+  /** Original Session receiving the reminder. */
+  sessionId: SessionId
 }
 
 /** Creates one durable reminder record. */
@@ -396,6 +406,24 @@ export interface ScheduleCreateRequest {
 export interface ScheduleListRequest {
   /** Original Session binding. */
   sessionId: SessionId
+}
+
+/** Pause or resume one task within its original Session binding. */
+export interface SchedulePauseRequest extends ScheduleListRequest {
+  /** Task to pause or resume. */
+  id: ScheduleId
+}
+
+/** Outcome of a pause or resume. */
+export interface SchedulePauseResult {
+  /** Task addressed by the request. */
+  readonly id: ScheduleId
+  /** Whether the stored task now carries the requested state. */
+  readonly updated: boolean
+  /** Whether the task is paused after this call. */
+  readonly paused: boolean
+  /** `schedule_not_found`, `schedule_ended`, or `subagent_session` when the change was refused. */
+  readonly code?: string
 }
 
 /** Delete request identifying a task within its original Session binding. */

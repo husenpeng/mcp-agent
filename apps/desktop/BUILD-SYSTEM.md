@@ -268,7 +268,8 @@ Windows 目标会对 Electron、primary-runtime、Playwright 三路并发准备�
 
 1. 输入目录：`packed/tomato`（`release:pack --family tomato`）、`packed/vendor`、`packed/landlock`（`native/system/packages/entry`）、`packed/node-addons`（`native/system/packages/<platform>-<arch>`，如 flock），再加现场 `npm pack` / `pnpm pack` 的 `tomato-market` 与私有运行时插件（`packages/tomato/{account,brand,gateway,telemetry}`）。
 2. 从 `@tomato/cli` 与 `@tomato/desktop-host` 出发做闭包遍历：`dependencies` 与 `peerDependencies` 必须命中已打包 tarball（否则报错），`optionalDependencies` 按 `os`/`cpu` 过滤后决定是否纳入。
-3. 输出 `package-set/desktop-packages.json`（`schemaVersion`、按名排序的 `{name, version, file, bytes, integrity: sha512-…}`）与 `desktop-packages/*.tgz`；随后 `verifyDesktopCorePackageSet` 校验版本与排序。
+3. 载荷排除（`EXCLUDED_PACKAGES_BY_BUNDLE`）：协作画布（crew）一组包不进桌面载荷，workspace 仍为 Web 与 CLI 安装保留它们。闭包遍历跳过这些包；组合它们的 `@tomato/experimental-robot-app` tarball 被重写——`package.json` 去掉对它们的 `dependencies` 声明，`cordis.patch.yml` 去掉指向它们的 insert 行（注释头逐字保留），因此桌面端即使启用 Rbot bundle 也不会组合缺失模块。其它包若声明被排除的包，打包直接报错：摘掉那条声明只会把一处缺模块的 import 藏起来。
+4. 输出 `package-set/desktop-packages.json`（`schemaVersion`、按名排序的 `{name, version, file, bytes, integrity: sha512-…}`）与 `desktop-packages/*.tgz`；随后 `verifyDesktopCorePackageSet` 校验版本与排序。
 
 ### 4.3 `prepare:tomato`（`scripts/prepare-tomato.ts`）
 
@@ -553,7 +554,7 @@ Tomato AI.app/Contents/
 - **Web**：Desktop 打包同一个 Web 前端（`@tomato/web-frontend`）与同一套 profile 初始化/插件管理；主进程只提供窗口、协议、IPC 与原生能力。`tomato-app://app/` 由 Electron 提供静态资源与请求转发，`tomato-app://shell/` 提供更新文档。
 - **CLI**：`@tomato/cli` 与 desktop 同版本；安装后的 `runtime/cli/bin/tomato` 用 Desktop 的 Electron 与自带 pnpm 运行，可与 npm 安装版共存但绝不共享 profile 与 `node_modules`。
 - **SDK**：共享 primary-runtime 构建器与 Office 资源布局；Desktop 自带的 `load_workspace_dependencies` 工具把同一份载荷离线安装到 `$TOMATO_HOME/tomato-runtimes`。
-- **运行时插件面**：Desktop profile 的初始 bundle 为 `@tomato/base`、`@tomato/web-app`、`@tomato/experimental-browser-use-playwright-bundle` 加内置 `tomato-market`；插件安装与激活走共享 Web Plugin Manager 与自带 pnpm，打包侧只保证这些包的 tarball 在闭包里（`prepare-package-set` 的 `EXTRA_PACKAGES`/`PRIVATE_RUNTIME_PACKAGES`）。
+- **运行时插件面**：Desktop profile 的初始 bundle 为 `@tomato/base`、`@tomato/web-app`、`@tomato/experimental-browser-use-playwright-bundle` 加内置 `tomato-market`；插件安装与激活走共享 Web Plugin Manager 与自带 pnpm，打包侧只保证这些包的 tarball 在闭包里（`prepare-package-set` 的 `EXTRA_PACKAGES`/`PRIVATE_RUNTIME_PACKAGES`）。协作画布（crew）一组包不进桌面载荷，见 `prepare:packages`（4.2）的载荷排除。
 
 <a id="workflows"></a>
 

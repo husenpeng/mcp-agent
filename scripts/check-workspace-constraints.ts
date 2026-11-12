@@ -243,6 +243,8 @@ const packageFileExtras: Readonly<Record<string, readonly string[]>> = {
   '@tomato/experimental-robot-app': ['skills'],
   // Marketing robot skills ship their SKILL.md and Python scripts; the notices cover the projects those scripts install.
   '@tomato/experimental-robot-templates-marketing': ['skills', 'THIRD_PARTY_NOTICES.md'],
+  // Knowledge-work templates load a byte-for-byte vendored upstream plugin tree; the notices and the upstream license ship beside it.
+  '@tomato/experimental-robot-templates-knowledge-work': ['plugins', 'THIRD_PARTY_NOTICES.md', 'LICENSE-APACHE-2.0'],
   '@tomato/subprocess': ['lib/control.js'],
   // SSH launches a private helper and shares wire definitions and TLS setup
   // between that helper and the connection owner.

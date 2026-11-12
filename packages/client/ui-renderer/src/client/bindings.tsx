@@ -10,6 +10,7 @@ import type {
 } from '@tomato/client-ui-slots'
 import { bindSnapshotSelector } from './bind.ts'
 import { SlotAssemblyError } from './errors.ts'
+import { usePageSyncing } from './page-sync.tsx'
 
 /** In-package renderer host context. */
 export const HostContext = createContext<SlotRendererHost | null>(null)
@@ -26,6 +27,13 @@ export function useHost(): SlotRendererHost {
 
 const RootBindingContext = createContext<StandardSourceBinding | null>(null)
 const ScopeBindingContext = createContext<StandardSourceBinding | null>(null)
+
+/** Binding served while no scope adapter is installed: no identity, no sources. */
+const ABSENT_SCOPE_BINDING: StandardSourceBinding = { key: undefined, hooks: {}, keyedHooks: {}, props: {} }
+const ABSENT_SCOPE_SOURCE: HostObservable<StandardSourceBinding> = {
+  getSnapshot: () => ABSENT_SCOPE_BINDING,
+  subscribe: () => () => {},
+}
 
 /**
  * Read the root standard-source binding.
@@ -193,9 +201,18 @@ export function ScopeProvider({
   children: ReactNode
 }) {
   const host = useHost()
+  const syncing = usePageSyncing()
   observableHook(host.scopeRevision)(value => value)
   const adapter = host.scope(scope)
-  if (adapter === undefined) throw new SlotAssemblyError(`scope '${scope}' rendered without an installed adapter`)
-  const binding = observableHook(adapter.current)(value => value)
+  // Hook order stays fixed across the installed and absent adapter: the fix
+  // below decides the render, not the number of hooks.
+  const binding = observableHook(adapter?.current ?? ABSENT_SCOPE_SOURCE)(value => value)
+  // A client-entry swap disposes the entry that installs this adapter before
+  // its replacement applies; that window renders nothing instead of failing
+  // assembly, while a missing adapter outside a swap stays a loud error.
+  if (adapter === undefined) {
+    if (syncing) return null
+    throw new SlotAssemblyError(`scope '${scope}' rendered without an installed adapter`)
+  }
   return <ScopeBindingContext.Provider value={binding}>{children}</ScopeBindingContext.Provider>
 }

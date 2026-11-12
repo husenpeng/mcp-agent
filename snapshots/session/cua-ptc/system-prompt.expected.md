@@ -17,6 +17,8 @@ Read a file before editing it (the default fs-observation-policy requires it), u
 
 Use the glob tool — not shell find — to discover files by path pattern.
 
+Use list_dir to see what a directory contains before searching. Prefer a shallow depth with excludes over a broad glob; glob returns file paths, not directories.
+
 Use the grep tool — not shell grep or rg — to search file contents. Use read on a matched file when you need surrounding context.
 
 Track every background job id you start. You are notified in-session when a job finishes — do not busy-poll or sleep on one; keep working on independent steps and do not duplicate a running job's work. Before giving a final answer, collect every still-relevant job with job_output (set wait: true only when you are genuinely blocked on it), and job_kill jobs that stopped mattering.
@@ -144,6 +146,12 @@ interface ToolArgsMap {
     pattern: string;
     /** Directory to search in. Defaults to the session workspace; a relative path resolves against it. */
     path?: string;
+    /** Limit traversal depth, from 1 to 16. Omit for the whole tree; prefer a shallow depth or a narrower path for a quick look. */
+    depth?: number;
+    /** Path globs to exclude, at most 20; for example ["dist/**", "**\/*.snap"]. */
+    exclude?: string[];
+    /** Search ignored and dot files. Defaults to true; set false to respect .gitignore and skip hidden names. */
+    hidden?: boolean;
   } & Record<string, JsonValue>;
   /** Search file contents with a ripgrep regular expression. Returns matching lines with line numbers, grouped by file. Returns up to 250 matches; a larger result reports where the complete match list was saved. */
   grep: {
@@ -181,6 +189,19 @@ interface ToolArgsMap {
   list_agents: {
     /** children (default) lists direct children, which accept send_message in any status. descendants lists the whole tree below you with each entry's parent session id and depth; entries deeper than 1 accept only interrupt_agent. */
     scope?: "children" | "descendants";
+  } & Record<string, JsonValue>;
+  /** List a directory tree to answer "what is here" before searching. Returns at most 200 entries by default, skips hidden names and common build directories unless all is set, and stops at the requested depth. */
+  list_dir: {
+    /** Directory to list. Defaults to the session workspace. */
+    path?: string;
+    /** Levels to show, from 1 to 4. Defaults to 1. */
+    depth?: number;
+    /** Include hidden names and dot directories. Defaults to false. */
+    all?: boolean;
+    /** Extra basenames or simple globs to skip, for example "dist" or "*.snap". */
+    exclude?: string[];
+    /** Maximum entries returned, from 1 to 200. */
+    limit?: number;
   } & Record<string, JsonValue>;
   /** Read a UTF-8 text file and return line-numbered content. */
   read: {
@@ -447,6 +468,15 @@ interface ToolOutputMap {
     parent?: string;
     depth?: number;
   })[];
+  list_dir: {
+    root: string;
+    entries: ({
+      path: string;
+      type: "file" | "directory" | "other";
+      size?: number;
+    })[];
+    truncated: boolean;
+  };
   read: {
     /** Canonical absolute path in the filesystem execution world. */
     path: string;

@@ -32,8 +32,7 @@
         "@tomato/client-locale",
         "@tomato/client-ui-chat",
         "@tomato/client-ui-renderer",
-        "@tomato/client-ui-session",
-        "@tomato/image-evidence"
+        "@tomato/client-ui-session"
       ],
       "platform": "web"
     }

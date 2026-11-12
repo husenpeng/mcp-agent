@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Robot crew tool",
+    "description": "Model-facing tool that creates a multi-agent crew graph from a conversation."
+  }
+}

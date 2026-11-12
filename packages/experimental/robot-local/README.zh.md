@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-`@tomato/experimental-robot-local` 是 [`ctx.robots`](../robot/README.zh.md) 服务定义的存储提供者。它校验规格、发布不可变 revision、以 `idle` 实例化机器人，并接受与取消 run。记录保存在持久的 `tomato_robot` 存储域中；它不执行工作，也不添加提示、工具或传输。
+`@tomato/experimental-robot-local` 是 [`ctx.robots`](../robot/README.zh.md) 服务定义的存储提供者。它校验规格、发布不可变 revision、以 `idle` 实例化机器人、记录安装与删除，并接受与取消 run。记录保存在持久的 `tomato_robot` 存储域中；它不执行工作，也不添加提示、工具或传输。
 
 ## 目录
 
@@ -43,9 +43,9 @@ kind: "package-reference"
 
 校验先对每个字段运行 Zod schema，再检查跨字段不变量：声明列表中的重复项、同时出现在 `allow` 与 `deny` 的工具，以及没有触发条件的 goal。部署挂载 `permissionPresets` 时，发布还会用该目录解析 `capability.permissionPreset`，把未注册的名字报告为字段问题，因此编辑器无法保存一个任何 run 都启动不了的规格。被拒绝的规格抛出带字段路径的 `RobotSpecValidationError`。成功的发布在规格进入存储前深冻结它，因此调用方之后的修改无法改变 revision。
 
-提供者打开 `tomato_robot` 域，不保留独立的可变状态：revision、机器人与 run 都从域中已校验的内存表读取，每次写入在其 Promise 解决前已经持久。域在打开时校验每条存储记录，因此损坏记录会拒绝激活而不是被跳过。提供者自有的单一链串行化变更，所以并发发布无法同时通过同名检查，并发启动也无法同时占用同一个机器人。
+该域当前为版本 3：版本 2 的记录早于 `capability.plugins`，因此存储规格 schema 会补一个空插件列表，下一次写入即盖当前版本。提供者打开 `tomato_robot` 域，不保留独立的可变状态：revision、机器人与 run 都从域中已校验的内存表读取，每次写入在其 Promise 解决前已经持久。域在打开时校验每条存储记录，因此损坏记录会拒绝激活而不是被跳过。提供者自有的单一链串行化变更，所以并发发布无法同时通过同名检查，并发启动也无法同时占用同一个机器人。
 
-revision 是以规格身份与 revision 号为键的追加行。每次读取时推导每个规格的最新 revision，`specs()` 按首次发布顺序为每个规格返回一项。实例化把一个机器人绑定到精确的已发布 revision，并以 `idle` 返回。
+revision 是以规格身份与 revision 号为键的追加行。每次读取时推导每个规格的最新 revision，`specs()` 按首次发布顺序为每个规格返回一项。实例化把一个机器人绑定到精确的已发布 revision，并以 `idle` 返回。`install` 把安装记录写到机器人行的当前绑定 revision 上；重绑定到其他 revision 会清除它，因此后续 run 不会沿用用户未执行过的校验。`remove` 只删除机器人行：revision 与 run 行保留，历史仍可读取；仍有未终态 run 的机器人拒绝删除。
 
 `start` 为每个机器人接受一个 run 并记录为 `queued`；存在未终态 run 期间，`robot()` 与 `robots()` 报告 `running`。`cancel` 把 run 更新为 `cancelled` 并记录 `endedAt`，机器人因此重新报告 `idle`。`advance` 记录执行器在 `running`、`waiting` 或 `finalizing` 中的进展，客户端因此能区分执行中、暂停与排队中的 run；已处于终态的 run 保持原状态。`finish` 记录执行器的终态及其输出或错误详情；已经处于终态的 run 保持原状态。取消已经处于终态的 run 不写入地返回。重启后的提供者读取同一个域，报告相同的 revision、机器人与 run。
 

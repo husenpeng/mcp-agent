@@ -4,6 +4,7 @@
  * browser session or credential and cannot mint model credentials.
  * @module @tomato/account-gateway
  */
+/* oxlint-disable typescript/require-await -- Provider state is local and synchronous; the Account seam returns promises. */
 
 import { randomUUID } from 'node:crypto'
 import { release } from 'node:os'

@@ -89,6 +89,13 @@ describe('plugin locale display metadata', () => {
     })
   })
 
+  it('ignores macOS AppleDouble files copied beside locale dictionaries', () => {
+    dictionary('en', { meta: { title: 'Team' } })
+    file(join(dir, 'locale', '._en.json'), 'resource-fork junk')
+    file(join(dir, 'locale', '._de.json'), 'resource-fork junk')
+    expect(readPluginMeta('localized', parentURL)).toEqual({ title: { en: 'Team' } })
+  })
+
   it('treats percent markers as literal display text', () => {
     dictionary('en', { meta: { title: '%title%', description: 'Plugin %name%' } })
     expect(readPluginMeta('localized', parentURL)).toEqual({

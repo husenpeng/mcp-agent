@@ -15,7 +15,8 @@
       "default": "./lib/client.js"
     },
     "./src/*": "./src/*",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
   },
   "scripts": {
     "bundle": "tsdown",
@@ -41,7 +42,6 @@
     "@tomato/client-ui-layout": "workspace:*",
     "@tomato/client-ui-primitives": "workspace:*",
     "@tomato/client-ui-renderer": "workspace:*",
-    "@tomato/client-ui-sidebar": "workspace:*",
     "@tomato/client-ui-slots": "workspace:*",
     "@tomato/client-ui-workspace": "workspace:*",
     "@tomato/cordis": "workspace:~",
@@ -51,6 +51,7 @@
     "react-dom": "^18.2.0"
   },
   "files": [
+    "locale/*.json",
     "lib/index.js",
     "lib/client.js",
     "lib/types/**/*.d.ts"

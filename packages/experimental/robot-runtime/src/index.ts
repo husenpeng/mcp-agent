@@ -7,13 +7,15 @@
  */
 
 import { randomUUID } from 'node:crypto'
-import type { Agent, AgentHandle } from '@tomato/agent'
+import type { Agent, AgentHandle, AgentOptions } from '@tomato/agent'
 import type {} from '@tomato/agent-default-model'
 import { brandString } from '@tomato/branded'
 import type { Context } from '@tomato/cordis'
 import { isTerminalRunState } from '@tomato/experimental-robot'
 import type { RobotSpec, Run, RunId, RunOutcome } from '@tomato/experimental-robot'
+import type { PluginInventorySnapshot } from '@tomato/host-plugin-inventory'
 import { createUserMessage } from '@tomato/llm'
+import type { LlmModelInfo } from '@tomato/llm'
 import type {} from '@tomato/mcp-resources'
 import type {} from '@tomato/permission-presets'
 import type {} from '@tomato/skill'
@@ -83,6 +85,44 @@ function resolveWorkspaceRoot(ctx: Context, spec: RobotSpec): string {
 /** Prefix that namespaces every tool an MCP server registers. */
 const MCP_TOOL_PREFIX = 'mcp__'
 
+/**
+ * Resolve the model route one run uses. A specification that names a route is
+ * checked against the live deployment before its Agent exists, because a
+ * removed third-party provider must fail the run instead of silently running
+ * on another model. A specification that names none keeps the deployment
+ * default.
+ * @param ctx - runtime context carrying the LLM registry.
+ * @param spec - specification of the queued run.
+ * @returns the agent route options for this run.
+ * @throws when the named provider or model is unavailable, or when the
+ *   deployment mounts no LLM registry to verify a named route.
+ */
+async function resolveAgentOptions(ctx: Context, spec: RobotSpec): Promise<AgentOptions> {
+  const selected = spec.goal.model
+  if (selected === undefined) return ctx.agentDefaultModel.currentSelection()
+  const llm = ctx.get('llm')
+  if (llm === undefined) {
+    throw new Error('this deployment mounts no LLM registry, so the robot\'s selected model cannot be resolved')
+  }
+  let models: readonly LlmModelInfo[]
+  try {
+    models = await llm.listModels(selected.provider)
+  } catch (error) {
+    throw new Error(`robot model provider "${selected.provider}" is unavailable: ${messageOf(error)}`)
+  }
+  const model = models.find(entry => entry.id === selected.model)
+  if (model === undefined) {
+    throw new Error(
+      `robot model "${selected.provider}/${selected.model}" is unavailable in this deployment.`
+      + ' Republish the robot specification with a model this deployment advertises.',
+    )
+  }
+  if (model.blockedReason !== undefined) {
+    throw new Error(`robot model "${selected.provider}/${selected.model}" is blocked: ${model.blockedReason}`)
+  }
+  return { provider: selected.provider, model: selected.model }
+}
+
 /** Capability filters one run applies to its Agent. */
 interface RunCapabilities {
   /** Tool allow list; present when the run must exclude registered MCP tools it did not select. */
@@ -94,15 +134,15 @@ interface RunCapabilities {
 }
 
 /**
- * Resolve the specification's skill and MCP selections against the live
- * deployment. A selection that no mounted service or configured server can
+ * Resolve the specification's skill, plugin, and MCP selections against the
+ * live deployment. A selection that no mounted service or configured server can
  * satisfy fails the run before an Agent is created, because silently running
  * without a requested capability would misreport what the run did.
- * @param ctx - runtime context carrying the optional skill, tool, and MCP services.
+ * @param ctx - runtime context carrying the optional skill, plugin, tool, and MCP services.
  * @param spec - specification of the queued run.
  * @param cwd - the run's working directory, which selects project skills.
  * @returns the restrictions to apply in the Agent scope.
- * @throws when a selected skill or MCP server is not available.
+ * @throws when a selected skill, plugin, or MCP server is not available.
  */
 async function resolveCapabilities(ctx: Context, spec: RobotSpec, cwd: string): Promise<RunCapabilities> {
   const skills = spec.capability.skills
@@ -112,6 +152,19 @@ async function resolveCapabilities(ctx: Context, spec: RobotSpec, cwd: string): 
     const available = new Set((await registry.list({ cwd })).map(skill => skill.name))
     const missing = skills.filter(name => !available.has(name))
     if (missing.length > 0) throw new Error(`unavailable skill${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}`)
+  }
+
+  const plugins = spec.capability.plugins
+  if (plugins.length > 0) {
+    const inventory = ctx.get('pluginInventory') as { list(): Promise<PluginInventorySnapshot> } | undefined
+    if (inventory === undefined) {
+      throw new Error('this deployment mounts no plugin inventory, so the selected plugins cannot be verified')
+    }
+    const active = new Set((await inventory.list()).entries
+      .filter(entry => entry.enabled && entry.fiberPhase === 'active')
+      .map(entry => entry.moduleName))
+    const missing = plugins.filter(name => !active.has(name))
+    if (missing.length > 0) throw new Error(`unavailable plugin${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}`)
   }
 
   const servers = spec.capability.mcpServers
@@ -287,11 +340,12 @@ export async function apply(ctx: Context, config: Config = Config.parse({})): Pr
       const spec = revision.spec
       const cwd = resolveWorkspaceRoot(ctx, spec)
       const capabilities = await resolveCapabilities(ctx, spec, cwd)
+      const agentOptions = await resolveAgentOptions(ctx, spec)
       const sessionId = candidate.sessionId ?? brandString<SessionId>(`robot-run-${randomUUID()}`)
       const handle = await ctx.agents.create({
         sessionId,
         meta: { cwd },
-        agentOptions: ctx.agentDefaultModel.currentSelection(),
+        agentOptions,
         setup: setupFor(spec, capabilities),
       })
       created = handle

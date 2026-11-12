@@ -37,6 +37,10 @@ export const PRODUCT_PACKAGE_POLICY: Readonly<Record<string, ProductPackagePolic
   'packages/fs/tool-str-replace-editor': { category: 'optional', reason: 'Explicit alternative to the default filesystem editing tools.' },
   // Tomato disables the account/model/telemetry rows in its shipped bundles.
   'packages/client/ui-brand-official': { category: 'optional', reason: 'Tomato brand slots replace the official occupant; retained as a non-default upstream package.' },
+  'packages/bundle/marketing-app': { category: 'optional', reason: 'Advertising and marketing bundle whose every provider stays off until configured.' },
+  'packages/client/ui-settings-marketing': { category: 'optional', reason: 'Settings page mounted only with the optional marketing bundle.' },
+  'packages/llm/image-evidence': { category: 'optional', reason: 'Opt-in text evidence bridge for pasted images; the default route keeps native vision input.' },
+  'packages/marketing/marketing': { category: 'optional', reason: 'Ad and marketing integration plugin whose MCP servers stay off until configured.' },
   'packages/client/ui-settings-account': { category: 'optional', reason: 'Tomato account UI replaces the account section; retained as a non-default upstream package.' },
   'packages/host/product-telemetry-otel': { category: 'optional', reason: 'Tomato sends its own OTLP spans; the upstream product telemetry row stays off.' },
   'packages/session/session-telemetry': { category: 'optional', reason: 'Tomato uses its own OTLP reporter; the upstream session telemetry seam stays off.' },

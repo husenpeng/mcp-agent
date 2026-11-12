@@ -69,7 +69,7 @@ export function routeOptions(section: PiAiSection | undefined): RouteOptions {
   if (providers === undefined || providers === null || typeof providers !== 'object') return { providers: [] }
   const options: RouteProviderOption[] = []
   for (const [id, provider] of Object.entries(providers)) {
-    const models = Array.isArray(provider?.models) ? provider.models : []
+    const models: readonly ProviderModelSection[] = provider?.models ?? []
     const entries: RouteModelOption[] = []
     for (const model of models) {
       const modelId = typeof model.id === 'string' ? model.id.trim() : ''

@@ -43,6 +43,7 @@ function marketingSpec(skill: string): RobotTemplateSpec {
     capability: {
       tools: { allow: [], deny: [] },
       mcpServers: [],
+      plugins: [],
       skills: [skill],
       workspaceRoots: [],
       dataClasses: ['public'],

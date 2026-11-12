@@ -58,6 +58,19 @@
 
 .pickerAnchor {
   display: inline-flex;
+  max-width: 100%;
+}
+
+.modelTrigger {
+  max-width: 100%;
+  justify-content: flex-start;
+}
+
+.modelTriggerText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .hint {

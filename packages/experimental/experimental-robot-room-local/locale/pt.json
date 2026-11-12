@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Provedor local de salas de robôs",
+    "description": "Provedor baseado em armazenamento com registro durável, agendador de ativação limitado, sessões persistentes de membros e ferramentas de sala."
+  }
+}

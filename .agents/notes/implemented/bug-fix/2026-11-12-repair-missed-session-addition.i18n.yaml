@@ -1,0 +1,25 @@
+# Bilingual-pair consistency record for 2026-11-12-repair-missed-session-addition.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/bug-fix/2026-11-12-repair-missed-session-addition.md
+/agent-note-repair-a-missed-session-addition-from-later-notifications:
+  en: c036dde8376293b2
+  zh: c78179fea47191a7
+/agent-note-repair-a-missed-session-addition-from-later-notifications/problem:
+  en: a0ae02c11ae97ce2
+  zh: d8ad9f2a5214861a
+/agent-note-repair-a-missed-session-addition-from-later-notifications/decision:
+  en: 8292c2731b06e00c
+  zh: d491691acaa3f638
+/agent-note-repair-a-missed-session-addition-from-later-notifications/alternatives-considered:
+  en: b0bb8d6022359ac4
+  zh: 79cb50e0103be278
+/agent-note-repair-a-missed-session-addition-from-later-notifications/consequences:
+  en: ac1e0d955b096588
+  zh: 01202b37c366ea1d
+/agent-note-repair-a-missed-session-addition-from-later-notifications/verification:
+  en: f6737d2dea072ebb
+  zh: a5a3adc89d4366d0
+/agent-note-repair-a-missed-session-addition-from-later-notifications/related-decisions:
+  en: 375ad31f9b6e8ab9
+  zh: 22998118577d77cc

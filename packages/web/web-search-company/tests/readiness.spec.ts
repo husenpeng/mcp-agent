@@ -61,7 +61,7 @@ describe('company search readiness', () => {
 
 describe('company search registration', () => {
   it('runs a search through the registered provider with the published session', async () => {
-    const fetchStub = vi.fn(async () => jsonResponse({
+    const fetchStub = vi.fn(async (_input: URL, _init: RequestInit) => jsonResponse({
       data: { results: [{ url: 'https://a.test', snippet: 'one' }], truncated: false },
     }))
     vi.stubGlobal('fetch', fetchStub)
@@ -70,19 +70,19 @@ describe('company search registration', () => {
     const result = await ctx.web.search({ query: 'q', maxResults: 3 })
 
     expect(result.sources).toEqual([{ url: 'https://a.test', snippet: 'one' }])
-    const [url, init] = fetchStub.mock.calls[0] as unknown as [URL, RequestInit]
+    const [url, init] = fetchStub.mock.calls[0]!
     expect(String(url)).toBe('https://bff.test/api/v1/search/web')
     expect(new Headers(init.headers).get('cookie')).toBe('session_id=session-9')
   })
 
   it('applies the configured result bound and budget', async () => {
-    const fetchStub = vi.fn(async () => jsonResponse({ data: { results: [] } }))
+    const fetchStub = vi.fn(async (_input: URL, _init: RequestInit) => jsonResponse({ data: { results: [] } }))
     vi.stubGlobal('fetch', fetchStub)
     const ctx = await boot(() => 'session-1', { baseURL: 'https://bff.test', timeoutMs: 5000, maxResults: 5 })
 
     await ctx.web.search({ query: 'q' })
 
-    const [, init] = fetchStub.mock.calls[0] as unknown as [URL, RequestInit]
+    const [, init] = fetchStub.mock.calls[0]!
     expect(bodyOf(init)).toEqual({ query: 'q', maxResults: 5, maxCharsPerResult: 500, maxChars: 3000 })
   })
 
@@ -95,13 +95,13 @@ describe('company search registration', () => {
 
   it('reads the gateway origin from the environment when config omits it', async () => {
     process.env.TOMATO_SEARCH_GATEWAY_URL = 'https://env-bff.test'
-    const fetchStub = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => jsonResponse({ data: { results: [] } }))
+    const fetchStub = vi.fn(async (_input: URL, _init: RequestInit) => jsonResponse({ data: { results: [] } }))
     vi.stubGlobal('fetch', fetchStub)
     const ctx = await boot(() => 'session-1', {})
 
     await ctx.web.search({ query: 'q' })
 
-    const [url] = fetchStub.mock.calls[0] as unknown as [URL, RequestInit]
+    const [url] = fetchStub.mock.calls[0]!
     expect(String(url)).toBe('https://env-bff.test/api/v1/search/web')
   })
 })

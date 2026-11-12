@@ -194,7 +194,7 @@ function cardProps(
       ...task,
       title: task.title ?? task.prompt?.split('\n', 1)[0] ?? '',
       sessionId: 'session',
-      status: 'active',
+      status: 'active', paused: false,
     } as ScheduleCatalogEntry
   }),
   status: 'loading' | 'ready' | 'error' = 'ready',
@@ -384,7 +384,7 @@ describe('ScheduleTurnCard', () => {
       id: dailyTask.id,
       title: 'Updated deployment check',
       sessionId: 'session',
-      status: 'active',
+      status: 'active', paused: false,
     } as ScheduleCatalogEntry
     const { view, snapshot } = mountTurnCard([settledBlock(dailyTask)], [current])
     await act(async () => {})

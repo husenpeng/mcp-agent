@@ -29,6 +29,7 @@ import type { LlmNativeAuth, SettingsNamespaceView } from '@tomato/api-remotes/c
 // Type-only: pulls this package's SlotMap merge (the two Models child slots).
 import type {} from './slot-contract.ts'
 import { CustomProviderCard } from './CustomProviderCard.tsx'
+import { readModelPolicy } from './policy.ts'
 import { deriveKeyRef, protocolChoices, providerUsable, reasoningLevelChoices } from './store.ts'
 import type { ModelsSettingsStore, ProviderRow } from './store.ts'
 import type { ModelsOperations } from './operations.ts'
@@ -377,6 +378,7 @@ function Loaded({ injected, renderSlot }: { injected: ModelsSectionFace; renderS
   const piAi = state.namespaces.get('llm-pi-ai')
   const protocols = protocolChoices(piAi, schema)
   const reasoningLevels = reasoningLevelChoices(piAi, schema)
+  const policy = readModelPolicy(piAi, schema)
   // Each mode is offered while its namespace is mounted and enabled while it
   // has something to offer; the card shows the chosen mode where both are
   // offered, else the only one there is. A mode's panel is mounted while it is
@@ -676,6 +678,7 @@ function Loaded({ injected, renderSlot }: { injected: ModelsSectionFace; renderS
                       protocols={protocols}
                       reasoningLevels={reasoningLevels}
                       revision={piAi.revision}
+                      policy={policy}
                       operations={operations}
                       t={t}
                       readOnly={!state.writable}

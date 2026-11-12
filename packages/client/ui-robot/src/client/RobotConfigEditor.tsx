@@ -9,6 +9,8 @@ import type { PropsLocale } from '@tomato/client-ui-slots'
 import { FolderPicker } from './FolderPicker.tsx'
 import { ResourcePicker } from './ResourcePicker.tsx'
 import { ChoiceRow, TagField, type Choice, type TagOption } from './SpecFields.tsx'
+import { ModelField } from './ModelField.tsx'
+import type { RobotModelCatalog } from './model-catalog.ts'
 import { NS, type RobotKey } from './locales.ts'
 import css from './RobotConfigEditor.module.css'
 
@@ -56,6 +58,8 @@ export interface RobotConfigEditorProps extends PropsLocale<typeof NS> {
   readonly robotNames?: readonly string[]
   /** Local values the deployment offers for skill, tool, MCP, and Workspace fields. */
   readonly capabilities?: RobotCapabilityCatalog | undefined
+  /** Model routes the deployment advertises, grouped by configured provider. */
+  readonly models?: RobotModelCatalog | undefined
   /** Workspace directory that fills an empty root list, so a saved robot always records one. */
   readonly defaultWorkspaceRoot?: string | undefined
   /** List one Host directory level; omitted hides the folder browse action. */
@@ -66,7 +70,7 @@ export interface RobotConfigEditorProps extends PropsLocale<typeof NS> {
 
 /** Render the six-block specification form. */
 export function RobotConfigEditor({
-  initial, busy, issues, onSubmit, onCancel, presetOptions = [], robotNames = [], capabilities, defaultWorkspaceRoot,
+  initial, busy, issues, onSubmit, onCancel, presetOptions = [], robotNames = [], capabilities, models, defaultWorkspaceRoot,
   listDirectory, pickDirectory, t,
 }: RobotConfigEditorProps): ReactNode {
   const [spec, setSpec] = useState<Writable<RobotSpec>>(() => {
@@ -80,7 +84,7 @@ export function RobotConfigEditor({
   })
   const [scope, setScope] = useState<ConfigScope>('basic')
   const [showRequired, setShowRequired] = useState(false)
-  const [picker, setPicker] = useState<'skills' | 'mcp' | 'workspace'>()
+  const [picker, setPicker] = useState<'skills' | 'plugins' | 'mcp' | 'workspace'>()
   const [folderOpen, setFolderOpen] = useState(false)
   const scopeId = useId()
   // A rejected advanced field must be visible; keep the basic form selected while every issue fits it.
@@ -103,6 +107,9 @@ export function RobotConfigEditor({
   const shownIssues: readonly RobotSpecIssue[] = showRequired ? [...missing, ...issues ?? []] : issues ?? []
   const shownIssueFor = (path: string): string | undefined =>
     shownIssues.find(issue => issue.path === path)?.message
+  // The provider reports nested field paths (`goal.model.provider`), while the
+  // model field is one control; show the first problem it names.
+  const modelIssue = shownIssues.find(issue => issue.path === 'goal.model' || issue.path.startsWith('goal.model.'))?.message
   const heading = initial === undefined ? t('editor.create') : t('editor.edit')
 
   const text = (label: RobotKey, value: string, change: (next: string) => void, path?: string): ReactNode => (
@@ -270,6 +277,25 @@ export function RobotConfigEditor({
             })}
           </div>
           <div className={css.row}>
+            <ModelField
+              label={t('field.model')}
+              chooseLabel={t('editor.modelChoose')}
+              defaultLabel={models === undefined
+                ? t('editor.modelDefault')
+                : t('editor.modelDefaultNamed', { name: models.defaultLabel })}
+              groups={models?.groups ?? []}
+              value={spec.goal.model}
+              onChange={(next) => {
+                set((draft) => {
+                  if (next === undefined) delete draft.goal.model
+                  else draft.goal.model = next
+                })
+              }}
+              hint={t('editor.modelHint')}
+              emptyHint={t('editor.modelEmpty')}
+              {...models?.partial === true ? { partialHint: t('editor.modelPartial') } : {}}
+              issue={modelIssue}
+            />
             <ChoiceRow
               label={t('field.strategy')}
               value={typeof spec.goal.strategy === 'string' ? spec.goal.strategy : 'plan'}
@@ -347,6 +373,15 @@ export function RobotConfigEditor({
             {tags('field.toolsDeny', spec.capability.tools.deny, (value) => { set((draft) => { draft.capability.tools.deny = value }) }, capabilities?.tools ?? [])}
           </div>
           <div className={css.row}>
+            {tags(
+              'field.plugins',
+              spec.capability.plugins,
+              (value) => { set((draft) => { draft.capability.plugins = value }) },
+              capabilities?.plugins ?? [],
+              'editor.pluginsHint',
+              undefined,
+              () => { setPicker('plugins') },
+            )}
             {tags(
               'field.skills',
               spec.capability.skills,
@@ -532,6 +567,17 @@ export function RobotConfigEditor({
         options={capabilities?.skills ?? []}
         selected={spec.capability.skills}
         onChange={(next) => { set((draft) => { draft.capability.skills = next }) }}
+        onClose={() => { setPicker(undefined) }}
+      />
+      <ResourcePicker
+        t={t}
+        open={picker === 'plugins'}
+        title={t('picker.pluginsTitle')}
+        description={t('picker.pluginsHint')}
+        kind="plugin"
+        options={capabilities?.plugins ?? []}
+        selected={spec.capability.plugins}
+        onChange={(next) => { set((draft) => { draft.capability.plugins = next }) }}
         onClose={() => { setPicker(undefined) }}
       />
       <ResourcePicker

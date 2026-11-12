@@ -1024,6 +1024,39 @@ describe('hand-declared providers', () => {
     expect(set).toHaveBeenCalledWith('ACME_GATEWAY_API_KEY', 'gw-key')
   })
 
+  it('adds a created route and its models to an enforced allowlist', async () => {
+    const existing = { provider: 'openai', model: 'gpt-4.1' }
+    const { mutate, onClose } = mountCard({ policy: { local: [existing] } })
+
+    fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'acme-gateway' } })
+    fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://gateway.acme.example/v1' } })
+    fireEvent.click(screen.getByRole('button', { name: en.addModel }))
+    fireEvent.change(screen.getByLabelText(`${en.modelId} 1`), { target: { value: 'acme-large' } })
+    fireEvent.click(screen.getByText(en.create))
+
+    await waitFor(() => { expect(onClose).toHaveBeenCalledWith(true) })
+    expect(firstMutate(mutate)).toEqual({
+      ns: 'llm-pi-ai',
+      ops: [
+        {
+          op: 'set',
+          path: ['providers', 'acme-gateway'],
+          value: {
+            api: 'openai-completions',
+            baseURL: 'https://gateway.acme.example/v1',
+            models: [{ id: 'acme-large' }],
+          },
+        },
+        {
+          op: 'set',
+          path: ['modelPolicy', 'local'],
+          value: [existing, { provider: 'acme-gateway', model: 'acme-large' }],
+        },
+      ],
+      expectedRevision: 7,
+    })
+  })
+
   it('scopes each card to fields a provider can actually own', async () => {
     // Reasoning effort is a per-MODEL capability and the
     // models under one provider disagree about it, so a provider-scoped

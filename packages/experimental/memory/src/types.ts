@@ -13,6 +13,21 @@ import type { SessionId, SessionSeq } from '@tomato/session/types'
 export type MemoryId = Branded<'MemoryId'>
 
 /**
+ * Stable identity of one project: the workspace registry's id when that
+ * service is mounted, otherwise a deterministic provisional id derived from
+ * the canonical directory. Paths are display snapshots, never the identity.
+ */
+export type ProjectId = Branded<'ProjectId'>
+
+/** One resolved project: its stable identity and canonical directory snapshot. */
+export interface MemoryWorkspace {
+  /** Stable project identity. */
+  readonly id: ProjectId
+  /** Canonical directory the identity was resolved for. */
+  readonly path: string
+}
+
+/**
  * Whose records a Host serves: `local` on a Host without accounts, or
  * `account:<id>` for the account the Host's sign-in names.
  */
@@ -29,21 +44,29 @@ export type MemoryStatus = 'candidate' | 'active'
 
 /**
  * Where one record applies: `profile` records describe the person in every
- * workspace; `workspace` records belong to one canonical project directory.
+ * workspace; `workspace` records belong to one stable project identity.
+ * `workspaceId` is absent only in records written before domain v2; the
+ * service maps them during activation.
  */
 export type MemoryScope =
   | { readonly kind: 'profile' }
-  | { readonly kind: 'workspace'; readonly path: string }
+  | {
+    readonly kind: 'workspace'
+    /** Stable project identity; absent only in pre-v2 records. */
+    readonly workspaceId?: ProjectId | undefined
+    /** Canonical directory snapshot; absent only in records written with an identity alone. */
+    readonly path?: string | undefined
+  }
 
 /**
  * The records one Session can see: the owner's profile records and, when the
- * Session has a project directory, the owner's records of that workspace.
+ * Session has a project directory, the owner's records of that project.
  */
 export interface MemoryView {
   /** Owner of every visible record. */
   readonly owner: MemoryOwner
-  /** Canonical project directory; absent when the Session has none, which leaves only profile records visible. */
-  readonly workspace?: string
+  /** Resolved project; absent when the Session has none, which leaves only profile records visible. */
+  readonly workspace?: MemoryWorkspace
 }
 
 /** Stable identity of one stored embedding vector. */
@@ -58,12 +81,14 @@ export type EpisodeId = Branded<'EpisodeId'>
 /** What one episode records. */
 export type EpisodeKind = 'observation' | 'summary'
 
-/** Where one episode belongs: the canonical project directory of its Session. */
+/** Where one episode belongs: the stable project identity of its Session. */
 export interface EpisodeScope {
   /** Always `project`; robot, team, and task scopes arrive with the robot memory layer. */
   readonly kind: 'project'
-  /** Canonical project directory the episode belongs to. */
-  readonly path: string
+  /** Stable project identity; absent only in episodes written before domain v2. */
+  readonly workspaceId?: ProjectId | undefined
+  /** Canonical project directory snapshot; absent only in episodes written with an identity alone. */
+  readonly path?: string | undefined
 }
 
 /** The write that produced one episode. */
@@ -124,6 +149,10 @@ export interface EpisodeSearchRequest {
   readonly since?: number
   /** Epoch-millisecond upper bound on creation time. */
   readonly until?: number
+  /** Session whose own episodes are excluded, so an injection never repeats the current turn's work. */
+  readonly excludeSession?: SessionId
+  /** Lowest lexical coverage a matching episode needs, from 0 to 1; `0` keeps every match. */
+  readonly minScore?: number
   /** Cancellation forwarded to an embedding provider. */
   readonly signal?: AbortSignal
 }
@@ -149,6 +178,12 @@ export type MemoryAccess =
   | { readonly kind: 'available'; readonly view: MemoryView }
   /** The Host names accounts and none is signed in, so no owner's records may be read or written. */
   | { readonly kind: 'sign-in-required' }
+  /**
+   * The Host names accounts and has not verified who is signed in yet, for
+   * example during startup or after a resumed Session. A consumer keeps what it
+   * already showed and retries; it must not treat this state as a sign-out.
+   */
+  | { readonly kind: 'account-loading' }
 
 /** The write that justified one record. */
 export interface MemorySource {

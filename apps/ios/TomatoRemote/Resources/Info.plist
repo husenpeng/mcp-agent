@@ -20,6 +20,14 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>连接同一局域网里 Mac 上的 Tomato Host，收发会话、文件与审批。</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>把你说的话转成指令文字；录音只在本机做识别，不上传。</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>用系统语音识别把口述转成文字，填入输入框。</string>
 	<key>NSCameraUsageDescription</key>
 	<string>用相机扫描 Desktop 上显示的配对二维码，省去手动粘贴链接和 token。</string>
 	<key>LSRequiresIPhoneOS</key>
@@ -47,16 +55,65 @@
 	<dict>
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
-		<!-- The Hub is reached over the tailnet, whose HTTPS certificates need an
-		     admin-console toggle. Until then the tailnet's own WireGuard transport
-		     carries plain HTTP, so this one suffix is exempt rather than the world. -->
+		<!-- The Hub address is user-supplied: the Desktop Host serves plain HTTP on
+		     loopback, on the local network, and on a tailnet, while its optional
+		     cloudflared tunnel serves HTTPS. iOS 17 stopped exempting IP addresses by
+		     default, so every private address family pairing accepts is listed here.
+		     Public hosts stay under the default ATS rules. -->
 		<key>NSExceptionDomains</key>
 		<dict>
-			<key>tail7e382c.ts.net</key>
+			<!-- Any Tailscale tailnet: HTTPS certificates are an admin-console option,
+			     so the tailnet's own WireGuard transport carries plain HTTP until set. -->
+			<key>ts.net</key>
 			<dict>
 				<key>NSExceptionAllowsInsecureHTTPLoads</key>
 				<true/>
 				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+			<key>127.0.0.0/8</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+			<key>10.0.0.0/8</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+			<key>172.16.0.0/12</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+			<key>192.168.0.0/16</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+			<key>169.254.0.0/16</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+			<key>100.64.0.0/10</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+			<key>::1/128</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+			<key>fc00::/7</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+			<key>fe80::/10</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
 				<true/>
 			</dict>
 		</dict>

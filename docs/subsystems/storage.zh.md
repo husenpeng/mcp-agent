@@ -44,7 +44,7 @@ interface StorageBackend {
 }
 ```
 
-一个后端拥有一个介质（一棵文件树的根目录、一个数据库文件），并提供可选的操作组；`kv` 是唯一已交付的操作组。`KvFacet.open(descriptor)` 打开一个具名 unit——`KvUnitDescriptor` 携带名称、当前格式版本、可选的兼容记录版本、表名清单，以及是否存在全局单例 slot——并返回提供 `loadAll`、`putRecord`、`deleteRecord`、`deleteRecords`、`setGlobal` 和 `close` 的 `KvUnit`。unit 名与表名必须匹配 `UNIT_NAME_RE`（既可安全用作文件名，也可安全用作 SQL 标识符片段）；记录键在 `single` 布局中是不透明字符串，在 `per-record` 布局中则是匹配 `[a-zA-Z0-9_-]+` 的路径片段。unit 不对并发写入做串行化——顺序由调用方负责——但每次单独调用在介质上都是原子的；单记录写入与整文件发布在 resolve 后即已持久，`per-record` 批量删除则依赖文件系统对目录项更新的持久化。`deleteRecords` 以一次调用应用整批删除：所有列出的记录都从可读状态消失且后端接受该批后才 resolve，拒绝时通常整批未应用；无法建立或恢复批次状态的批量删除会以 `unknown-state` 拒绝，之后该 unit 的所有操作都以同一错误拒绝，直到 `close()` 释放它（关闭后的调用以 `closed` 拒绝）。`single` 布局在原子替换之后失败（目录 fsync 错误）时，新文件可能已落在介质上而调用方看到拒绝；unit 的内存保持一致，下一次发布会重写该文件。`single` 介质上记录的版本不同时拒绝 `version-mismatch`；`per-record` 文档的版本在接受集合之外时读作不存在。无法按该 unit 解析的介质拒绝 `malformed-medium`。[`backend.ts`](../../packages/storage/storage/src/backend.ts) 是逐条款的规范性约定，[`tests/contract.ts`](../../packages/storage/storage/tests/contract.ts) 中的共享一致性套件会针对每个后端检查共享条款。[json 后端](../../packages/storage/storage-json/README.zh.md)以原子方式为每个 unit 整文件重新发布一份人类可读文件；[sqlite 后端](../../packages/storage/storage-sqlite/README.zh.md)在单个数据库中每行存储一份文档，用于频繁更新的数据。
+一个后端拥有一个介质（一棵文件树的根目录、一个数据库文件），并提供可选的操作组；`kv` 是唯一已交付的操作组。`KvFacet.open(descriptor)` 打开一个具名 unit——`KvUnitDescriptor` 携带名称、当前格式版本、可选的兼容记录版本、表名清单，以及是否存在全局单例 slot——并返回提供 `loadAll`、`putRecord`、`deleteRecord`、`deleteRecords`、`setGlobal` 和 `close` 的 `KvUnit`。unit 名与表名必须匹配 `UNIT_NAME_RE`（既可安全用作文件名，也可安全用作 SQL 标识符片段）；记录键在 `single` 布局中是不透明字符串，在 `per-record` 布局中则是匹配 `[a-zA-Z0-9_-]+` 的路径片段。unit 不对并发写入做串行化——顺序由调用方负责——但每次单独调用在介质上都是原子的；单记录写入与整文件发布在 resolve 后即已持久，`per-record` 批量删除则依赖文件系统对目录项更新的持久化。`deleteRecords` 以一次调用应用整批删除：所有列出的记录都从可读状态消失且后端接受该批后才 resolve，拒绝时通常整批未应用；无法建立或恢复批次状态的批量删除会以 `unknown-state` 拒绝，之后该 unit 的所有操作都以同一错误拒绝，直到 `close()` 释放它（关闭后的调用以 `closed` 拒绝）。`single` 布局在原子替换之后失败（目录 fsync 错误）时，新文件可能已落在介质上而调用方看到拒绝；unit 的内存保持一致，下一次发布会重写该文件。`single` 介质的版本戳既非当前版本也不在声明的兼容集合内时拒绝 `version-mismatch`；`per-record` 文档的版本在该集合之外时读作不存在。无法按该 unit 解析的介质拒绝 `malformed-medium`。[`backend.ts`](../../packages/storage/storage/src/backend.ts) 是逐条款的规范性约定，[`tests/contract.ts`](../../packages/storage/storage/tests/contract.ts) 中的共享一致性套件会针对每个后端检查共享条款。[json 后端](../../packages/storage/storage-json/README.zh.md)以原子方式为每个 unit 整文件重新发布一份人类可读文件；[sqlite 后端](../../packages/storage/storage-sqlite/README.zh.md)在单个数据库中每行存储一份文档，用于频繁更新的数据。
 
 ## 声明领域
 
@@ -55,7 +55,7 @@ interface StorageBackend {
 interface DomainSpec {
   /** Domain name; must match `UNIT_NAME_RE` (doubles as the backend unit name). */
   readonly name: string
-  /** Current domain format version; reads enforce it according to the selected layout. */
+  /** Current domain format version; reads accept it or a declared {@link compatibleVersions} entry. */
   readonly version: number
   /**
    * Medium layout for the backend unit: `single` (the default) stores the
@@ -68,10 +68,12 @@ interface DomainSpec {
   /**
    * Older domain versions whose stored records the current record schemas
    * also accept (the declaring owner vouches for that, typically by
-   * declaring the fields older records lack as optional). `per-record` backends
-   * read documents stamped with a listed version instead of discarding them,
-   * and accept a legacy whole-unit file so stamped for the one-time
-   * bootstrap; writes always stamp {@link version}.
+   * declaring the fields older records lack as optional). A unit stamped
+   * with a listed version opens instead of rejecting: `per-record` backends
+   * read such record documents and accept a legacy whole-unit file for the
+   * one-time bootstrap, `single` backends read the whole document, and the
+   * next write stamps {@link version}. Records that fail the current schemas
+   * still follow {@link invalidRecords}.
    */
   readonly compatibleVersions?: readonly number[]
   /**
@@ -110,6 +112,22 @@ interface Domain<S extends DomainSpec> {
    * @returns the typed table handle.
    */
   table<N extends keyof S['tables'] & string>(name: N): KvTable<TableKeyOf<S, N>, TableValueOf<S, N>>
+
+  /**
+   * Report the backend medium's change token. A caller compares two readings
+   * to decide whether another process published since its mirror was loaded.
+   * @returns the token, or `undefined` when the backend reports none.
+   */
+  changeStamp(): Promise<number | undefined>
+
+  /**
+   * Re-read the unit and replace this domain's in-memory mirror with the
+   * stored state, after draining queued writes. Records are re-validated on
+   * the way in, and no `domain/changed` event is emitted: the mirror caught up
+   * with the medium instead of accepting a write.
+   * @throws when the medium is unreadable or a stored record fails its schema.
+   */
+  reload(): Promise<void>
 
   /**
    * Close this domain: reject new writes immediately, drain already-queued
@@ -160,6 +178,24 @@ type DomainChanged = DomainChangedPut | DomainChangedDeleted
 
 Generated from source by `scripts/gen-cordis-catalog.ts` (verified fresh by `pnpm run verify-cordis-catalog` in doc-sync; regenerate with `pnpm run gen-cordis-catalog`) — the language sides differ only in locale-specific paired document paths. Signature blocks use a `ts cordis-catalog` fence and keep the original source JSDoc; dispatch modes are defined in the [primer](../cordis-primer.zh.md#dispatch-modes), and the framework-inherited `ctx` API lives in [cordis-api/inherited.md](../cordis-api/inherited.md).
 
+<a id="ctxembeddings--embeddings-abstract-seam"></a>
+
+### `ctx.embeddings` — `Embeddings` (abstract seam)
+
+Text-to-vector capability. A provider declares the model identity and vector length it returns, and embeds a batch in one operation.
+
+```ts cordis-catalog
+/**
+ * Embed one batch of texts.
+ * @param request - texts in caller order and the caller's cancellation.
+ * @returns one vector per text, in the same order.
+ * @throws {@link EmbeddingsError} when the provider cannot answer.
+ */
+abstract embed(request: EmbedRequest): Promise<readonly Float32Array[]>
+```
+
+Source: [`packages/experimental/embeddings/src/index.ts`](../../packages/experimental/embeddings/src/index.ts)
+
 <a id="ctxmemory--memoryservice"></a>
 
 ### `ctx.memory` — `MemoryService`
@@ -170,24 +206,58 @@ Host-wide memory service. Every operation names the owner or view it acts on, an
 /**
  * Resolve which records a Session can use now.
  * @param session - Session whose original project directory scopes workspace records.
- * @returns the current owner's view, or `sign-in-required` while the Host names accounts and none is signed in.
+ * @returns the current owner's view, `sign-in-required` after a confirmed sign-out, or `account-loading`
+ *   before the gateway has verified who is signed in.
  */
 async accessOf(session: Session): Promise<MemoryAccess>
 
 /**
- * Store one record, replacing the owner's record with the same scope, entity, and key.
+ * Build the view a caller with no Session uses: the signed-in owner's profile
+ * records, with no workspace. The phone's memory page reads through this when
+ * the Session it follows has no project directory.
+ * @returns the owner's profile-only access, `sign-in-required` after a confirmed sign-out, or `account-loading`
+ *   before the gateway has verified who is signed in.
+ */
+accessProfile(): MemoryAccess
+
+/**
+ * Resolve which records work in one project directory can use now.
+ *
+ * A run without a Session asks by directory instead of by Session. An
+ * unavailable directory leaves the owner's profile records only, the same
+ * fallback a Session without one gets.
+ * @param path - project directory the work happens in.
+ * @returns the current owner's view, `sign-in-required` after a confirmed sign-out, or `account-loading`
+ *   before the gateway has verified who is signed in.
+ */
+async accessFor(path: string): Promise<MemoryAccess>
+
+/**
+ * Store one record version, closing the current version of the same owner,
+ * scope, entity, and key.
+ * Entity, key, and value are normalized before the identity lookup.
  * @param request - owner, scope, statement, lifecycle state, and the write that justified it.
- * @returns the stored record; a replacement keeps the earlier id and creation time.
- * @throws {@link MemoryError} `value-too-large`, `workspace-full`, or `profile-full`.
+ * @returns the newly stored version; the superseded version keeps its id and gains `validTo` and `supersededBy`.
+ * @throws {@link MemoryError} `invalid-identifier`, `empty-value`, `value-too-large`, `workspace-full`, `profile-full`, or `write-busy`.
  */
 async remember(request: RememberRequest): Promise<MemoryRecord>
 
 /**
- * Rank the view's active records against free text.
- * @param request - view, query text, optional alternative wordings, and optional kind filter.
+ * Re-read the stored domains when another Host process may have written
+ * since the last check. A backend that reports a change token makes this a
+ * few `stat` calls per interval; one without a token is never re-read.
+ * @returns resolution after this process's mirror matches the medium.
+ */
+async refresh(): Promise<void>
+
+/**
+ * Rank the view's active records against free text. A mounted embedding
+ * provider blends vector similarity into the lexical score for the strongest
+ * candidates; without one, or when the provider fails, ranking stays lexical.
+ * @param request - view, query text, optional alternative wordings, kind filter, and cancellation.
  * @returns at most `maxRecallResults` records, best match first.
  */
-recall(request: RecallRequest): readonly MemoryRecord[]
+async recall(request: RecallRequest): Promise<readonly MemoryRecord[]>
 
 /**
  * Walk the relations of one active record: records about the same subject,
@@ -222,6 +292,14 @@ duplicates(query: DuplicateQuery): readonly DuplicateMatch[]
 stats(view: MemoryView): MemoryStats
 
 /**
+ * Every stored version of one record identity, newest first.
+ * @param view - view that must see the record.
+ * @param id - any version id of the identity.
+ * @returns the versions including the given one, or an empty list when the view sees no such record.
+ */
+versions(view: MemoryView, id: MemoryIdType): readonly MemoryRecord[]
+
+/**
  * Delete one record durably.
  * @param view - view that must see the record.
  * @param id - record to delete.
@@ -254,6 +332,80 @@ async confirm(view: MemoryView, id: MemoryIdType): Promise<MemoryRecord | undefi
 list(view: MemoryView): readonly MemoryRecord[]
 
 /**
+ * Store one compressed episode. A repeated fingerprint of the same owner and
+ * project updates the earlier record's timestamp instead of appending.
+ * Every text field is normalized before the size check and the fingerprint lookup.
+ * @param request - owner, project, episode fields, fingerprint, and source.
+ * @returns the stored episode.
+ * @throws {@link MemoryError} `invalid-identifier`, `empty-value`, `episode-too-large`, or `episodes-full`.
+ */
+async rememberEpisode(request: RememberEpisodeRequest): Promise<EpisodeRecord>
+
+/**
+ * Promote repeated observation facts into candidate records. Two episodes
+ * from different Sessions whose first facts share
+ * {@link DUPLICATE_COVERAGE} of their words form one group; the group's fact
+ * becomes one workspace record unless an active record already states it,
+ * and every member is marked with the record it promoted into. Failure
+ * observations and facts that only report an exit code never promote.
+ * @param view - owner and project; a view without a project promotes nothing.
+ * @returns the records created or reused, with the episodes each covers.
+ */
+async promote(view: MemoryView): Promise<readonly PromotionOutcome[]>
+
+/**
+ * Read one episode the view can see.
+ * @param view - owner and optional project.
+ * @param id - episode identity.
+ * @returns the episode, or `undefined` when it is outside the view.
+ */
+episode(view: MemoryView, id: EpisodeIdType): EpisodeRecord | undefined
+
+/**
+ * List the view's episodes newest first, for human management and `/memory history`.
+ * @param view - owner and optional project.
+ * @returns every episode of the owner's project, newest first.
+ */
+listEpisodes(view: MemoryView): readonly EpisodeRecord[]
+
+/**
+ * Search the view's episodes by lexical text and, when a provider is mounted,
+ * vector similarity. The same pool and fallback rules as record search apply.
+ * `excludeSession` keeps the caller's own work out of the result, and
+ * `minScore` drops weak single-word matches from recency-ordered pools.
+ * @param request - view, text, optional kinds, time bounds, session exclusion, match floor, limit, and cancellation.
+ * @returns at most `limit` episodes, best match first.
+ */
+async searchEpisodes(request: EpisodeSearchRequest): Promise<readonly EpisodeRecord[]>
+
+/**
+ * Read the episodes around one anchor, newest first.
+ * @param request - view, optional anchor, window sizes, and kind filter.
+ * @returns the window, at most `before + after + 1` episodes.
+ */
+episodeTimeline(request: EpisodeTimelineRequest): readonly EpisodeRecord[]
+
+/**
+ * Select the episodes one snapshot injects: the newest summaries and the
+ * observations most relevant to the query, both bounded by configuration.
+ * `excludeSession` keeps the Session's own episodes out of its snapshot, and
+ * `minScore` drops single-word matches that only share a generic token.
+ * @param view - owner and optional project.
+ * @param text - the Session's first message, used for observation relevance.
+ * @param options - the Session to exclude and the lowest lexical match kept.
+ * @returns summaries first, then observations, newest first within each group.
+ */
+async history( view: MemoryView, text: string, options: { readonly excludeSession?: SessionId; readonly minScore?: number } = {}, ): Promise<readonly EpisodeRecord[]>
+
+/**
+ * Delete one episode.
+ * @param view - owner and optional project.
+ * @param id - episode identity.
+ * @returns whether the view held the episode.
+ */
+async forgetEpisode(view: MemoryView, id: EpisodeIdType): Promise<boolean>
+
+/**
  * Select the records a Session receives without searching.
  * @param view - owner and optional workspace.
  * @returns every active profile record, then at most `maxPinnedRecords` pinned workspace records; each group ordered by entity, then key.
@@ -261,7 +413,7 @@ list(view: MemoryView): readonly MemoryRecord[]
 snapshot(view: MemoryView): readonly MemoryRecord[]
 ```
 
-Types: [Session](session.zh.md)
+Types: [PromotionOutcome](../../packages/experimental/memory/README.zh.md) · [Session](session.zh.md) · [SessionId](core.zh.md)
 
 Source: [`packages/experimental/memory/src/index.ts`](../../packages/experimental/memory/src/index.ts)
 
@@ -287,7 +439,25 @@ Host service behind `ctx.remote.museInsights`.
  * @returns the snapshot after the accepted runs.
  */
 @Remote async refresh(signal: AbortSignal): Promise<MuseInsightsSnapshot>
+
+/**
+ * Probe one staged embedding endpoint from the Host, resolving its credential
+ * the way the mounted provider does.
+ * @param input - endpoint, model, expected length, and credential name.
+ * @param signal - caller cancellation.
+ * @returns whether a vector came back, its length, and the latency.
+ */
+@Remote async probeEmbeddings(input: EmbeddingsProbeInput, signal: AbortSignal): Promise<EmbeddingsProbeResult>
+
+/**
+ * Read the mounted provider's state and cumulative usage.
+ * @param signal - caller cancellation, checked before the read.
+ * @returns availability, the live switch, model identity, and counters.
+ */
+@Remote embeddingsStatus(signal: AbortSignal): Promise<EmbeddingsStatusView>
 ```
+
+Types: [EmbeddingsProbeInput](../../packages/experimental/embeddings-http/README.zh.md) · [EmbeddingsProbeResult](../../packages/experimental/embeddings-http/README.zh.md) · [EmbeddingsStatusView](../../packages/experimental/muse-insights/README.zh.md)
 
 Source: [`packages/experimental/muse-insights/src/index.ts`](../../packages/experimental/muse-insights/src/index.ts)
 

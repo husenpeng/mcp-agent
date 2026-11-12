@@ -24,7 +24,7 @@ async function mount(): Promise<ConnectionHandle> {
   const ctx = new Context()
   contexts.add(ctx)
   await ctx.plugin({ apply, inject: [] })
-  const connection = ctx.get('connection') as ConnectionHandle | undefined
+  const connection = ctx.get('connection')
   if (connection === undefined) throw new Error('plugin did not provide Connection')
   return connection
 }

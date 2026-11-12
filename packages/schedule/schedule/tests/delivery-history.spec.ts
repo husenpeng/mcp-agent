@@ -71,7 +71,7 @@ it('paginates more than one full page by identity across appended arrivals and c
   first.records.splice(0)
   expect(await test.service.history({ sessionId, id, limit: 100 })).toMatchObject({ records: [...records, arrival].slice(4).reverse() })
   expect(await test.service.catalog()).toEqual([{
-    ...stored(records).record, sessionId, status: 'inactive', lastDelivery: {
+    ...stored(records).record, sessionId, status: 'inactive', paused: false, lastDelivery: {
       scheduledAt: arrival.scheduledAt, deliveredAt: arrival.deliveredAt, messageId: arrival.messageId,
     },
   }])

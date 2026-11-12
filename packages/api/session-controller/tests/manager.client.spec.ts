@@ -50,6 +50,87 @@ function makeManager(
   return new SessionManager(remote as unknown as SessionRemotes)
 }
 
+describe('SessionManager remote Session arrival', () => {
+  it('recovers a row a status notification names while the addition was lost', async ({ mock, remote }) => {
+    const manager = makeManager(mock, remote)
+    onTestFinished(() => manager.dispose())
+    remote.session.list.mockResolvedValueOnce(ok({ items: [] }))
+    await manager.refreshList()
+    remote.session.list.mockResolvedValueOnce(ok({ items: [summary(S1)] }))
+
+    manager.handleSessionStatus(S1, true)
+
+    await vi.waitFor(() => {
+      expect(manager.getListSnapshot().items.map(entry => entry.sessionId)).toEqual([S1])
+    })
+  })
+
+  it('recovers a row an activity notification names while the addition was lost', async ({ mock, remote }) => {
+    const manager = makeManager(mock, remote)
+    onTestFinished(() => manager.dispose())
+    remote.session.list.mockResolvedValueOnce(ok({ items: [] }))
+    await manager.refreshList()
+    remote.session.list.mockResolvedValueOnce(ok({ items: [summary(S1)] }))
+
+    manager.handleSessionActivity(S1, 200)
+
+    await vi.waitFor(() => {
+      expect(manager.getListSnapshot().items.map(entry => entry.sessionId)).toEqual([S1])
+    })
+  })
+
+  it('reads again when the repair joins a pull that predates the notification', async ({ mock, remote }) => {
+    const manager = makeManager(mock, remote)
+    onTestFinished(() => manager.dispose())
+    const response = Promise.withResolvers<Awaited<ReturnType<typeof remote.session.list>>>()
+    remote.session.list.mockReturnValueOnce(response.promise)
+    const pending = manager.refreshList()
+    remote.session.list.mockResolvedValueOnce(ok({ items: [summary(S1)] }))
+
+    manager.handleSessionActivity(S1, 200)
+    response.resolve(ok({ items: [] }))
+    await pending
+
+    await vi.waitFor(() => {
+      expect(manager.getListSnapshot().items.map(entry => entry.sessionId)).toEqual([S1])
+    })
+  })
+
+  it('asks for one repair per unknown identity and Host generation', async ({ mock, remote }) => {
+    const manager = makeManager(mock, remote)
+    onTestFinished(() => manager.dispose())
+    remote.session.list.mockResolvedValue(ok({ items: [] }))
+
+    manager.handleSessionStatus(S1, true)
+    expect(remote.session.list).toHaveBeenCalledTimes(1)
+    manager.handleSessionStatus(S1, false)
+    manager.handleSessionError(S1, 'agent failed')
+    expect(remote.session.list).toHaveBeenCalledTimes(1)
+
+    manager.handleConnected()
+    expect(remote.session.list).toHaveBeenCalledTimes(2)
+  })
+
+  it('ends the draft presentation on another client durable message', async ({ mock, remote }) => {
+    const manager = makeManager(mock, remote)
+    onTestFinished(() => manager.dispose())
+    manager.handleSessionAdded(summary(S1, { blank: true }))
+    expect(manager.getListSnapshot().items[0]?.blank).toBe(true)
+
+    manager.handleSessionActivity(S1, 250)
+
+    expect(manager.getListSnapshot().items[0]).toMatchObject({ blank: false, updatedAt: 250 })
+  })
+
+  it('lists a Session announced while its Agent already runs', async ({ mock, remote }) => {
+    const manager = makeManager(mock, remote)
+    onTestFinished(() => manager.dispose())
+    manager.handleSessionAdded(summary(S1, { blank: true, running: true }))
+
+    expect(manager.getListSnapshot().items[0]?.blank).toBe(false)
+  })
+})
+
 describe('SessionManager instances', () => {
   it.for(['event', 'list'] as const)(
     'forgets running when an unretained identity disappears through a %s',
@@ -133,11 +214,13 @@ describe('SessionManager instances', () => {
     async (source, { mock, remote }) => {
       const manager = makeManager(mock, remote)
       onTestFinished(() => manager.dispose())
+      const error = new RemoteError('gateway/internal', 'list unavailable', {})
+      // Every read fails: a live notification for an unknown identity asks for
+      // one immediately, and the caller's pull joins or follows it.
+      if (source === 'result') remote.session.list.mockResolvedValue(err(error))
+      else remote.session.list.mockRejectedValue(error)
       manager.handleSessionStatus(S1, true)
       manager.handleSessionStatus(S1, false)
-      const error = new RemoteError('gateway/internal', 'list unavailable', {})
-      if (source === 'result') remote.session.list.mockResolvedValueOnce(err(error))
-      else remote.session.list.mockRejectedValueOnce(error)
 
       await manager.refreshList()
       expect(manager.getListSnapshot().state).toBe('error')

@@ -41,8 +41,9 @@ export function serialize(name: string, state: UnitState): string {
 /**
  * Parse file content into unit state, validating shape and version.
  * @param text - Raw file content.
- * @param descriptor - Expected identity; version mismatch rejects.
- * @returns the parsed state.
+ * @param descriptor - Expected identity; a stored version that is neither the
+ * current one nor a declared compatible version rejects.
+ * @returns the parsed state, stamped with the descriptor's current version.
  */
 export function parse(text: string, descriptor: KvUnitDescriptor): UnitState {
   let document: unknown
@@ -63,7 +64,7 @@ export function parse(text: string, descriptor: KvUnitDescriptor): UnitState {
     throw new StorageError('malformed-medium', `unit '${descriptor.name}': missing or foreign unit header`)
   }
   const version = (unit as Record<string, unknown>)['version'] as number
-  if (version !== descriptor.version) {
+  if (version !== descriptor.version && !(descriptor.compatibleVersions ?? []).includes(version)) {
     throw new StorageError(
       'version-mismatch',
       `unit '${descriptor.name}': stored version ${version} != expected ${descriptor.version}`,
@@ -75,7 +76,10 @@ export function parse(text: string, descriptor: KvUnitDescriptor): UnitState {
   if (typeof tables !== 'object' || tables === null || Array.isArray(tables)) {
     throw new StorageError('malformed-medium', `unit '${descriptor.name}': tables is not an object`)
   }
-  const state: UnitState = { version, global: globalValue ?? null, tables: new Map() }
+  // Accepted records are restamped current: the owner declared the stored
+  // version readable under its current schemas, and the next publish writes
+  // the unit at its current version.
+  const state: UnitState = { version: descriptor.version, global: globalValue ?? null, tables: new Map() }
   for (const table of descriptor.tables) {
     const records = (tables as Record<string, unknown>)[table]
     if (records === undefined) {

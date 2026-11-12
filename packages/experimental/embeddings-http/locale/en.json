@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "HTTP embeddings provider",
+    "description": "OpenAI-compatible embeddings provider for ctx.embeddings over one batched HTTP request."
+  }
+}

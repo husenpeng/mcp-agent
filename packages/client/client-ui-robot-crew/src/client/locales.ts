@@ -6,7 +6,6 @@ export const NS = 'crew'
 /** Simplified Chinese dictionary (the key-set source of truth). */
 export const zh = {
   title: '多 Rbot 协作',
-  nav: '协作画布',
   subtitle: '多个 Rbot 协同完成一件事，每一步都带着前情与护栏',
   'list.title': '我的协作',
   'list.new': '新建协作',
@@ -163,7 +162,6 @@ export const zh = {
   'role.publish': '发布',
   'role.analyze': '分析',
 
-  'group.nav': '多智能体协作',
   'group.title': '多智能体协作',
   'group.manual': '手动建群',
   'group.auto': '自动建群',
@@ -213,7 +211,6 @@ export const zh = {
 /** English dictionary with the same keys. */
 export const en: typeof zh = {
   title: 'Multi-Rbot collaboration',
-  nav: 'Collaboration canvas',
   subtitle: 'Several Rbts working one outcome, each step carrying prior context and guardrails',
   'list.title': 'My collaborations',
   'list.new': 'New collaboration',
@@ -370,7 +367,6 @@ export const en: typeof zh = {
   'role.publish': 'Publish',
   'role.analyze': 'Analyze',
 
-  'group.nav': 'Multi-agent',
   'group.title': 'Multi-agent collaboration',
   'group.manual': 'New group chat',
   'group.auto': 'Create from chat',

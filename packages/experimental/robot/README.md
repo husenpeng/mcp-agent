@@ -27,7 +27,9 @@ English | [中文](README.zh.md)
 
 This package is a Service Definition, not a provider. Load a package whose plugin subclasses `Robots`; that subclass registers as `ctx.robots` and implements every abstract operation.
 
-- Consumers inject `robots` and call `publish`, `revision`, `specs`, `instantiate`, `robot`, `robots`, `start`, `cancel`, `finish`, `run`, and `runs`.
+- Consumers inject `robots` and call `publish`, `revision`, `specs`, `instantiate`, `rebind`, `install`, `remove`, `robot`, `robots`, `start`, `cancel`, `advance`, `finish`, `attachSession`, `run`, and `runs`.
+- A specification declares its resolvable dependencies in `capability`: skills, plugins (by deployment module name), and MCP servers. `install` records that a deployment verified them for one exact revision; `remove` deletes the robot instance only.
+- A specification may name the model every run uses in `goal.model` as a provider and model id; omitting it keeps the executing deployment's default model. The executing provider owns resolving and verifying that route, because only it knows which providers and models the deployment advertises.
 - The service has no configuration fields.
 - `isTerminalRunState` is a pure predicate that any process can call without the service.
 - Mount `@tomato/experimental-robot/templates` as its own row to provide `ctx.robotTemplates`. Template packages call `register(template)` inside `ctx.effect`; a duplicate id throws, and every change emits `robot/changed` with `templates`.
@@ -48,6 +50,7 @@ The abstract class constructor binds the Cordis service key, so a second provide
 - Published revisions are append-only. Revision `n + 1` supersedes `n`, and an existing revision never changes.
 - `instantiate` binds one robot to one exact revision. Publishing a later revision does not move an existing robot.
 - `start` accepts a run only from `idle`; it rejects while the robot is `provisioning`, `paused`, `failed`, or `stopped`.
+- `install` records the caller's verification that the bound revision's declared dependencies are available; `rebind` clears an installation that named another revision, and `remove` deletes the instance without its specifications or runs.
 - `cancel` is cooperative. A run that already reached a terminal state keeps that state.
 
 Identities are compile-time brands, so a `RobotId` cannot be passed where a `RunId` is expected. The package has no runtime identity, storage, or I/O. The [source](src/index.ts) and [types](src/types.ts) are the complete contract.

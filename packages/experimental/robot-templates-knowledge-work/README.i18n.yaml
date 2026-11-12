@@ -1,0 +1,58 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/robot-templates-knowledge-work/README.md
+/:
+  en: fc732d320679798f
+  zh: d027d8d3564ae7b0
+/tomato-experimental-robot-templates-knowledge-work:
+  en: a00e7a6edabad720
+  zh: 1c238f4e9442d4b5
+/tomato-experimental-robot-templates-knowledge-work/summary:
+  en: a986e6323ee075a4
+  zh: 76185926720dabcd
+/tomato-experimental-robot-templates-knowledge-work/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: aeb0c157b94d91f5
+/tomato-experimental-robot-templates-knowledge-work/use-this-package:
+  en: 2e50b0112e69a0b6
+  zh: 1155ab2058e28895
+/tomato-experimental-robot-templates-knowledge-work/understand-the-implementation:
+  en: 2254a59ba00be36b
+  zh: 0c9f239119f14706
+/tomato-experimental-robot-templates-knowledge-work/further-exploration:
+  en: e9b31d67252ac80d
+  zh: 3f8d4ce36fba2b16
+/tomato-experimental-robot-templates-knowledge-work/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/tomato-experimental-robot-templates-knowledge-work/model-experience/robot-mission:
+  en: 0629e9bb6bb8699d
+  zh: d50535078dcf4d33
+/tomato-experimental-robot-templates-knowledge-work/model-experience/robot-mission/what-the-model-sees:
+  en: c28802fc7373d4ea
+  zh: 43d0a555446792fd
+/tomato-experimental-robot-templates-knowledge-work/model-experience/robot-mission/token-effect:
+  en: 96835f0bda986db5
+  zh: 6e2faa2757d32590
+/tomato-experimental-robot-templates-knowledge-work/model-experience/robot-mission/kv-cache-effect:
+  en: 6369a497d1b10d89
+  zh: fbff8ecf952f258e
+/tomato-experimental-robot-templates-knowledge-work/model-experience/bundled-skill-catalog:
+  en: 9751722eda11978a
+  zh: c31c0ba392ae6454
+/tomato-experimental-robot-templates-knowledge-work/model-experience/bundled-skill-catalog/what-the-model-sees:
+  en: 06f145bb87d25b36
+  zh: 3b399046aa0e80df
+/tomato-experimental-robot-templates-knowledge-work/model-experience/bundled-skill-catalog/token-effect:
+  en: 69b1cf727ba65a19
+  zh: 9bae9bada18a0661
+/tomato-experimental-robot-templates-knowledge-work/model-experience/bundled-skill-catalog/kv-cache-effect:
+  en: 3b183dc448edec08
+  zh: 2715bece520166ea
+/tomato-experimental-robot-templates-knowledge-work/known-limitations-and-deferred-work:
+  en: 6ba99ea9360d9810
+  zh: 539c718afbc912f9
+/tomato-experimental-robot-templates-knowledge-work/known-limitations-and-deferred-work/dev-note:
+  en: e55e94e6d495fcac
+  zh: 5a28f5ac431528d4

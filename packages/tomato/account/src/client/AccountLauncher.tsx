@@ -79,7 +79,18 @@ export function AccountLauncher(props: AccountLauncherProps) {
           ...state.status === 'unavailable'
             ? [{ id: 'retry', label: t('retry'), icon: <IconRefreshOutlineMedium size={16} />, disabled: state.busy }]
             : signedIn
-              ? [{ id: 'signout', label: t('signOut'), icon: <IconCloseOutlineMedium size={16} />, disabled: state.busy }]
+              // Signing out leaves the account for good, so it sits in its own
+              // group and reads as destructive.
+              ? [
+                { type: 'separator' as const, id: 'account-signout-separator' },
+                {
+                  id: 'signout',
+                  label: t('signOut'),
+                  icon: <IconCloseOutlineMedium size={16} />,
+                  disabled: state.busy,
+                  danger: true,
+                },
+              ]
               : [{ id: 'signin', label: t('signIn'), icon: <IconUserOutlineMedium size={16} />, disabled: state.busy }],
         ]}
         onClose={() => { setOpen(false) }}

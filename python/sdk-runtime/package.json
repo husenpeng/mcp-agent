@@ -159,6 +159,7 @@
     "@tomato/workspace": "workspace:*",
     "@tomato/schemastery": "workspace:~",
     "@tomato/tool-working-directory": "workspace:*",
-    "@tomato/working-directory": "workspace:*"
+    "@tomato/working-directory": "workspace:*",
+    "@tomato/tool-creator-search": "workspace:*"
   }
 }

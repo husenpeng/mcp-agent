@@ -332,8 +332,9 @@ async function recompose(
     // and the built packages a real profile imports), and the registration
     // therefore lives in the other copy's WeakMap. The root Include entry is
     // still the one Loader row with the pinned id, so fall back to that row.
+    const loader = ctx.get('loader')
     const entry = bootstrapIncludes.get(ctx)
-      ?? [...ctx.loader.entries()].find(row => row.options.id === 'include')
+      ?? (loader === undefined ? undefined : [...loader.entries()].find(row => row.options.id === 'include'))
     if (entry === undefined) throw new Error(`${binName}: profile reload requires the root Include entry`)
     // Reading the prior state imports nothing, so plugin code does not run before the next resolution publishes.
     const previousFailures = (await inactiveEntries(ctx, false)).map((failure): RecordedFailure => ({

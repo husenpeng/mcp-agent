@@ -115,14 +115,35 @@ describe('pi-ai request context conversion', () => {
 
   it('converts complete text-only history and rejects tool images without storage', () => {
     const callId = ToolCallId('call-1')
+    const lookup = { name: 'lookup', description: 'lookup', parameters: { type: 'object' } }
+    // A baseline that lists the declaration the history never declares reads natively in place.
     expect(toPiContext(request([
       history('system', [{ type: 'text', text: 'history system' }]),
       history('assistant', [{ type: 'tool-call', id: callId, name: 'lookup', arguments: '{}' }]),
       user([{ type: 'text', text: 'after tool' }]),
       createToolResultMessage({ callId, content: [{ type: 'text', text: '' }], isError: false }),
-    ]))).toMatchObject({
+    ]), undefined, undefined, true)).toMatchObject({
       systemPrompt: 'history system',
       messages: [
+        { role: 'assistant' },
+        { role: 'user', content: 'after tool' },
+        { role: 'toolResult', toolCallId: 'call-1', toolName: 'lookup', isError: false },
+      ],
+    })
+
+    // A declaration baseline without them makes the prompt a mid-conversation update.
+    expect(toPiContext({
+      ...request([
+        history('system', [{ type: 'text', text: 'history system' }]),
+        history('assistant', [{ type: 'tool-call', id: callId, name: 'lookup', arguments: '{}' }]),
+        user([{ type: 'text', text: 'after tool' }]),
+        createToolResultMessage({ callId, content: [{ type: 'text', text: '' }], isError: false }),
+      ]),
+      tools: [lookup],
+      toolHistory: { tools: [lookup], updates: [] },
+    })).toMatchObject({
+      messages: [
+        { role: 'user', content: '<system-reminder>\nhistory system\n</system-reminder>' },
         { role: 'assistant' },
         { role: 'user', content: 'after tool' },
         {
@@ -464,13 +485,25 @@ describe('pi-ai request context conversion', () => {
       expect(readImageRequest).not.toHaveBeenCalled()
     }
 
-    await expect(toPiContext(request([
+    const messages = [
       history('system', [{ type: 'text', text: 'history system' }]),
       history('assistant', [{ type: 'text', text: 'answer' }]),
       user([{ type: 'text', text: 'plain' }]),
-    ]), imageContext(attachments))).resolves.toMatchObject({
+    ]
+    await expect(toPiContext(request(messages), imageContext(attachments))).resolves.toMatchObject({
       systemPrompt: 'history system',
       messages: [
+        { role: 'assistant' },
+        { role: 'user', content: 'plain' },
+      ],
+    })
+    // A baseline that does not declare the prompt's place in history moves it into a reminder.
+    await expect(toPiContext({
+      ...request(messages), toolHistory: { tools: [], updates: [] },
+    }, imageContext(attachments))).resolves.toMatchObject({
+      systemPrompt: undefined,
+      messages: [
+        { role: 'user', content: '<system-reminder>\nhistory system\n</system-reminder>' },
         { role: 'assistant' },
         { role: 'user', content: 'plain' },
       ],
@@ -540,6 +573,7 @@ describe('pi-ai system prompt source', () => {
     const update = history('system', [{ type: 'text', text }])
     const options = { ...base, messages: [update, question, update] }
     for (const supported of [false, true]) {
+      // A leading replay is the initial prompt; only the later one can become a reminder.
       const expected = {
         systemPrompt: text,
         messages: [
@@ -566,10 +600,12 @@ describe('pi-ai system prompt source', () => {
       history('system', [{ type: 'text', text: 'additional rule' }]),
       leading, history('system', []),
     ] }
-    const expected = { systemPrompt: 'direct\n\nlead rule', messages: [
+    // Request-level text holds the prompt, so a replayed prompt arrives mid-conversation and is
+    // re-sent where the history carries it: a supporting route cannot read it at the front.
+    const expected = { systemPrompt: 'direct', messages: [
       { role: 'user', content: 'hi', timestamp: 0 },
-      { role: 'system', content: 'additional rule', timestamp: 0 },
-      { role: 'system', content: 'lead rule', timestamp: 0 },
+      { role: 'user', content: '<system-reminder>\nadditional rule\n</system-reminder>', timestamp: 0 },
+      { role: 'user', content: '<system-reminder>\nlead rule\n</system-reminder>', timestamp: 0 },
     ] }
     expect(toPiContext(options, undefined, undefined, true)).toEqual(expected)
     await expect(toPiContext(options, imageContext(attachments), undefined, true)).resolves.toEqual(expected)
@@ -585,12 +621,12 @@ describe('pi-ai system prompt source', () => {
       createToolResultMessage({ callId, content: [{ type: 'text', text: 'found' }], isError: false }),
       snapshot,
     ] }
-    const expected = { systemPrompt: 'direct\n\nlead rule\n\nlead rule\nnew rule', messages: [
+    const expected = { systemPrompt: 'direct', messages: [
       { role: 'user', content: 'hi', timestamp: 0 },
       expect.objectContaining({ role: 'assistant' }),
-      { role: 'system', content: 'lead rule\nnew rule', timestamp: 0 },
+      { role: 'user', content: '<system-reminder>\nlead rule\nnew rule\n</system-reminder>', timestamp: 0 },
       expect.objectContaining({ role: 'toolResult', content: [{ type: 'text', text: 'found' }] }),
-      { role: 'system', content: 'lead rule\nnew rule', timestamp: 0 },
+      { role: 'user', content: '<system-reminder>\nlead rule\nnew rule\n</system-reminder>', timestamp: 0 },
     ] }
     expect(toPiContext(options, undefined, undefined, true)).toEqual(expected)
     await expect(toPiContext(options, imageContext(attachments), undefined, true)).resolves.toEqual(expected)
@@ -654,7 +690,10 @@ describe('pi-ai system prompt source', () => {
       { type: 'text', text: 'second' }, { type: 'tool-addition', toolName: 'search' },
     ] })
     const options: GenerateOptions = { ...base, tools: [lookup, search], messages: [leading, update, question] }
-    const expected = { systemPrompt: 'lead rule', tools: [lookup], messages: [
+    // A leading system message with tool changes is a series-start rebuild, so the earlier prompt replays
+    // as history rather than occupying the front of the message list.
+    const expected = { systemPrompt: undefined, tools: [lookup], messages: [
+      { role: 'user', content: '<system-reminder>\nlead rule\n</system-reminder>', timestamp: 0 },
       { role: 'system', content: [{ type: 'text', text: 'first' }, { type: 'text', text: 'second' }], timestamp: 0,
         toolsAdded: [{ name: 'search', description: 'later', parameters: { type: 'object' } }], toolsRemoved: [{ name: 'lookup' }] },
       { role: 'user', content: 'hi', timestamp: 0 },
@@ -674,6 +713,59 @@ describe('pi-ai system prompt source', () => {
     ] }
     expect(toPiContext(options, undefined, undefined, true)).toEqual(expected)
     await expect(toPiContext(options, imageContext(attachments), undefined, true)).resolves.toEqual(expected)
+  })
+
+  it('wraps every surviving prompt as history when a series-start request leads with system', async () => {
+    const current = history('system', [{ type: 'text', text: 'current prompt' }])
+    const options: GenerateOptions = { ...base, system: 'direct', messages: [leading, question, current, user([{ type: 'text', text: 'next' }])] }
+    const reminder = (text: string) => ({ role: 'user', content: `<system-reminder>\n${text}\n</system-reminder>`, timestamp: 0 })
+    const expected = { messages: [
+      reminder('lead rule'),
+      { role: 'user', content: 'hi', timestamp: 0 },
+      reminder('current prompt'),
+      { role: 'user', content: 'next', timestamp: 0 },
+    ] }
+    expect(toPiContext(options, undefined, undefined, true)).toEqual(expected)
+    await expect(toPiContext(options, imageContext(attachments), undefined, true)).resolves.toEqual(expected)
+  })
+
+  it('reads a leading prompt in place while the series keeps its history baseline', async () => {
+    const lookup = { name: 'lookup', description: 'initial', parameters: { type: 'object' } }
+    const update = history('system', [{ type: 'text', text: 'new rule' }])
+    const options: GenerateOptions = { ...base, tools: [lookup], messages: [leading, question, update], toolHistory: { tools: [lookup], updates: [] } }
+    const expected = { systemPrompt: 'lead rule', tools: [lookup], messages: [
+      { role: 'user', content: 'hi', timestamp: 0 },
+      { role: 'system', content: 'new rule', timestamp: 0 },
+    ] }
+    expect(toPiContext(options, undefined, undefined, true)).toEqual(expected)
+    await expect(toPiContext(options, imageContext(attachments), undefined, true)).resolves.toEqual(expected)
+  })
+
+  const lookupTool = { name: 'lookup', description: 'initial', parameters: { type: 'object' } }
+  it('keeps a leading prompt in history when a declaration is missing from the baseline', async () => {
+    const options: GenerateOptions = {
+      ...base, tools: [lookupTool], messages: [leading, question], toolHistory: { tools: [], updates: [] },
+    }
+    const expected = { tools: [lookupTool], messages: [
+      { role: 'user', content: '<system-reminder>\nlead rule\n</system-reminder>', timestamp: 0 },
+      { role: 'user', content: 'hi', timestamp: 0 },
+    ] }
+    const supported = toPiContext(options, undefined, undefined, true) as { systemPrompt?: string; messages: { role: string }[] }
+    console.error('DIAG', JSON.stringify(supported.systemPrompt), JSON.stringify(supported.messages.map(m => m.role)), JSON.stringify(Object.keys(options)))
+    expect(supported).toEqual(expected)
+    // Undeclared support drops the prompt rather than reading it out of place.
+    expect(toPiContext(options)).toMatchObject({ messages: [{ role: 'user', content: 'hi' }] })
+  })
+
+  it('drops the previous prompt when a declaration rebuild leads the request', () => {
+    const options: GenerateOptions = {
+      ...base,
+      tools: [lookupTool],
+      messages: [createDeveloperMessage({ source: { kind: 'test' }, content: [{ type: 'tool-addition', toolName: 'lookup' }] }), question],
+    }
+    const converted = toPiContext(options, undefined, undefined, true)
+    expect(converted.systemPrompt).toBeUndefined()
+    expect(converted.messages.map(message => message.role)).toEqual(['system', 'user'])
   })
 
   it.each<{ content: ContentBlock[]; error: string }>([

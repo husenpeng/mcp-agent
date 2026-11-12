@@ -45,6 +45,7 @@ const RENAMED_PRODUCERS: Readonly<Record<string, string>> = Object.freeze({
   // The same producer after the rename to the tomato scope.
   '@tomato/system-prompt': 'runtime-context',
   'dsh-session-title-llm': '@tomato/session-title-llm',
+  '@tomato/session-title-llm': '@tomato/session-title-llm',
 })
 
 /** First-party V3 plugin identities that intentionally keep their current kind. */

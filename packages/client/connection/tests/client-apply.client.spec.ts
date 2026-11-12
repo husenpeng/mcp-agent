@@ -67,7 +67,7 @@ function installGeneration(handle: ConnectionHandle): GenerationProbe {
 async function mount(): Promise<ConnectionHandle> {
   const ctx = new Context()
   await ctx.plugin({ apply, inject: [] })
-  const handle = ctx.get('connection') as ConnectionHandle | undefined
+  const handle = ctx.get('connection')
   if (handle === undefined) throw new Error('ctx.connection not provided')
   return handle
 }

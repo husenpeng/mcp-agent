@@ -21,7 +21,8 @@ import {
 import type {
   DeliveryRetentionBounds, ScheduleCatalogEntry, ScheduleCreateRequest, ScheduleDeleteInactiveResult,
   ScheduleDeleteRequest, ScheduleDeleteResult, ScheduleDeliveryHistoryRequest, ScheduleDeliveryHistoryResult,
-  ScheduleListRequest, ScheduleRecord, ScheduleUpdateRequest, ScheduleUpdateResult, SubagentSessionError,
+  ScheduleListRequest, SchedulePauseRequest, SchedulePauseResult, ScheduleRecord, ScheduleRemoteCreateRequest,
+  ScheduleUpdateRequest, ScheduleUpdateResult, SubagentSessionError,
 } from './types.ts'
 
 export type * from './types.ts'
@@ -254,6 +255,11 @@ export class ScheduleService extends TypertRemoteService {
    * @returns The durably stored schedule. Cancellation does not roll back an in-flight write.
    */
   async create(sessionId: SessionId, request: ScheduleCreateRequest, signal?: AbortSignal): Promise<ScheduleRecord> {
+    return this.createTask(sessionId, request, signal)
+  }
+
+  /** Shared body of the tool and Remote create paths. */
+  private async createTask(sessionId: SessionId, request: ScheduleCreateRequest, signal?: AbortSignal): Promise<ScheduleRecord> {
     if (Number(request.at !== undefined) + Number(request.after_seconds !== undefined)
       + Number(request.every_seconds !== undefined) + Number(request.daily !== undefined)
       + Number(request.weekly !== undefined) + Number(request.cron !== undefined) > 1) {
@@ -315,6 +321,8 @@ export class ScheduleService extends TypertRemoteService {
     return [...domain.table('tasks').entries()]
       .map(([, task]) => ({
         ...task.record, sessionId: task.sessionId, status: task.status,
+        paused: task.pausedAt !== undefined,
+        ...(task.pausedAt === undefined ? {} : { pausedAt: task.pausedAt }),
         ...(task.lastDelivery === undefined ? {} : { lastDelivery: task.lastDelivery }),
       }))
       .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt) || a.id.localeCompare(b.id))
@@ -349,6 +357,122 @@ export class ScheduleService extends TypertRemoteService {
    * @param request - Session and exact task identity.
    * @param signal - Optional cancellation checked before persistence begins, including after FIFO waits.
    * @returns Whether that Session owned a deleted task. Cancellation does not roll back an in-flight write.
+   */
+  /**
+   * Create one reminder for a phone, bound to its Session without activating it.
+   *
+   * The Remote face differs from the tool only in where the Session comes from:
+   * a phone names it in the request. Every selector and refusal is the same, so
+   * a task created here behaves exactly like one the Agent created.
+   * @param request - Session binding, title, prompt, and one selector.
+   * @param signal - optional cancellation, forwarded to storage.
+   * @returns the stored task as the catalog reports it.
+   */
+  @Remote('create')
+  async createReminder(request: ScheduleRemoteCreateRequest, signal?: AbortSignal): Promise<ScheduleCatalogEntry> {
+    const record = await this.createTask(request.sessionId, request, signal)
+    return {
+      ...record, sessionId: request.sessionId, status: 'active', paused: false,
+    }
+  }
+
+  /**
+   * Pause one task, keeping its rule for a later resume.
+   *
+   * A paused task stays visible in the catalog and never schedules a delivery
+   * while paused; unlike deletion its recurrence survives.
+   * @param request - Session binding and the task to pause.
+   * @param signal - optional cancellation, forwarded to storage.
+   * @returns the resulting state, or the refusal that kept it unchanged.
+   */
+  @Remote('pause')
+  async pause(request: SchedulePauseRequest, signal?: AbortSignal): Promise<SchedulePauseResult> {
+    return this.setPaused(request, true, signal)
+  }
+
+  /**
+   * Resume a paused task, returning it to the schedule its rule describes.
+   *
+   * A recurring task whose occurrence passed while paused returns at its next
+   * occurrence after now, not one in the past; a one-shot task already past is
+   * delivered on the next drive rather than skipped.
+   * @param request - Session binding and the task to resume.
+   * @param signal - optional cancellation, forwarded to storage.
+   * @returns the resulting state, or the refusal that kept it unchanged.
+   */
+  @Remote('resume')
+  async resume(request: SchedulePauseRequest, signal?: AbortSignal): Promise<SchedulePauseResult> {
+    return this.setPaused(request, false, signal)
+  }
+
+  /**
+   * The reminder a paused task returns to on resume.
+   *
+   * A recurring rule moves to its next occurrence after `now` so resuming never
+   * fires a backlog of missed runs; a one-shot rule keeps its instant, which may
+   * already be past and therefore delivers on the next drive.
+   * @param record - the stored reminder.
+   * @param now - epoch milliseconds of the resume.
+   * @returns the record to store.
+   */
+  private nextOccurrenceOf(record: ScheduleRecord, now: number): ScheduleRecord {
+    // The creators anchor a rule at a decision instant, which is exactly what a
+    // resume needs; a dispatch helper would instead require a due occurrence.
+    switch (record.kind) {
+      case 'every':
+        return createEveryScheduleRecord(record.id, record.prompt, record.everySeconds, now, record.title)
+      case 'daily':
+        return createDailyScheduleRecord(record.id, record.prompt, { time: record.time, time_zone: record.timeZone }, now, record.title)
+      case 'weekly':
+        return createWeeklyScheduleRecord(
+          record.id, record.prompt, { time: record.time, time_zone: record.timeZone, weekdays: [...record.weekdays] }, now, record.title,
+        )
+      case 'cron':
+        return createCronScheduleRecord(
+          record.id, record.prompt, { expression: record.expression, time_zone: record.timeZone }, now, record.title,
+        )
+      case 'after':
+      case 'at':
+        return record
+    }
+  }
+
+  /** Apply one pause or resume to the stored task row. */
+  private async setPaused(request: SchedulePauseRequest, paused: boolean, signal?: AbortSignal): Promise<SchedulePauseResult> {
+    return this.serialize<SchedulePauseResult>(async () => {
+      const refusal = this.reminderTargetRefusal(request.sessionId)
+      if (refusal !== undefined) {
+        return { id: request.id, updated: false, paused: false, code: refusal.code }
+      }
+      const tasks = (await this.getDomain()).table('tasks')
+      signal?.throwIfAborted()
+      const current = tasks.get(request.id)
+      if (current === undefined || current.sessionId !== request.sessionId) {
+        return { id: request.id, updated: false, paused, code: 'schedule_not_found' }
+      }
+      if (current.status === 'inactive') {
+        return { id: request.id, updated: false, paused, code: 'schedule_ended' }
+      }
+      const already = (current.pausedAt !== undefined) === paused
+      if (already) return { id: request.id, updated: false, paused }
+      const now = Date.now()
+      const record = paused ? current.record : this.nextOccurrenceOf(current.record, now)
+      await tasks.put(request.id, {
+        ...current,
+        record,
+        ...(paused ? { pausedAt: new Date(now).toISOString() } : { pausedAt: undefined }),
+      })
+      this.emitChanged()
+      this.runtime?.requestDrive()
+      return { id: request.id, updated: true, paused }
+    })
+  }
+
+  /**
+   * Delete one task from its owning Session.
+   * @param request - Session binding and the task to delete.
+   * @param signal - optional cancellation, forwarded to storage.
+   * @returns the delete outcome, or the refusal that kept the task.
    */
   @Remote('delete')
   async delete(request: ScheduleDeleteRequest, signal?: AbortSignal): Promise<ScheduleDeleteResult> {

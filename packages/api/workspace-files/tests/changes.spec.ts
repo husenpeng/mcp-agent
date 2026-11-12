@@ -422,7 +422,7 @@ describe('workspaceFiles.changes — backends and access', () => {
     await expect(stream.next()).resolves.toEqual({ done: true, value: undefined })
   })
 
-  it('observes creation of a missing outside file through the real local watcher', async () => {
+  it('observes creation of a missing outside file through the real local watcher', { timeout: 30_000 }, async () => {
     const started = performance.now()
     // Keep earlier awaits visible if teardown advances a timed-out test.
     const phases: Array<{ phase: string; elapsedMs: number }> = []

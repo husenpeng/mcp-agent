@@ -204,13 +204,13 @@ describe('TomatoMark', () => {
 
 describe('BrandWordmark', () => {
   it('renders the name with or without its leading mark', () => {
-    const view = render(<primitives.BrandWordmark />)
+    const view = render(<primitives.BrandWordmark label="Tomato" />)
     let svg = view.container.querySelector('svg')!
     expect(svg.getAttribute('width')).toBe('104')
     expect(svg.getAttribute('viewBox')).toBe('0 0 104 24')
     expect(svg.querySelector('text')?.textContent).toBe('Tomato')
 
-    view.rerender(<primitives.BrandWordmark includeMark={false} />)
+    view.rerender(<primitives.BrandWordmark label="Tomato" includeMark={false} />)
     svg = view.container.querySelector('svg')!
     expect(svg.getAttribute('width')).toBe('74')
     expect(svg.getAttribute('viewBox')).toBe('30 0 74 24')

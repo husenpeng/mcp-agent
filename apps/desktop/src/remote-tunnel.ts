@@ -3,7 +3,8 @@
  *
  * The tunnel is opt-in through `remote.tunnel` in the shell settings. It targets
  * the Host's own loopback listener, which the connection fence already trusts, so
- * no `--trusted-host` value is needed here; a tunnel that stops on its own is
+ * cloudflared is started with `--http-host-header` naming that authority and no
+ * `--trusted-host` value is needed here; a tunnel that stops on its own is
  * restarted after a short delay while the user still has it enabled.
  */
 import { spawn, type SpawnOptions } from 'node:child_process'
@@ -91,9 +92,10 @@ export class RemoteTunnel {
     return this.current
   }
 
-  /** Enable the tunnel and start the first attempt. */
+  /** Enable the tunnel and start the first attempt; a second call changes nothing. */
   start(): void {
     this.enabled = true
+    if (this.child !== undefined || this.restart !== undefined) return
     this.begin()
   }
 
@@ -107,6 +109,9 @@ export class RemoteTunnel {
   }
 
   private begin(): void {
+    // One quick tunnel at a time: a restart timer or a duplicate start must not
+    // hand out a second public hostname while the first is still serving.
+    if (this.child !== undefined) return
     const target = this.options.target()
     if (target === undefined) {
       this.publish({ phase: 'failed', message: 'the Desktop Host is not running yet' })
@@ -120,12 +125,17 @@ export class RemoteTunnel {
       this.fail('no cloudflared location is configured')
       return
     }
+    const authority = `${target.host}:${String(target.port)}`
     const child = spawnProcess(binary, [
-      'tunnel', '--no-autoupdate', '--url', `http://${target.host}:${String(target.port)}`,
+      'tunnel', '--no-autoupdate', '--url', `http://${authority}`,
+      // cloudflared forwards its own public hostname as the Host header, which
+      // the Connection fence refuses; the loopback authority is the one it trusts.
+      '--http-host-header', authority,
     ], { stdio: ['ignore', 'pipe', 'pipe'] })
     this.child = child
     child.once('error', (error: NodeJS.ErrnoException) => {
-      if (this.child === child) this.child = undefined
+      if (this.child !== child) return
+      this.child = undefined
       if (error.code === 'ENOENT' && this.candidate < this.options.binaries.length - 1) {
         this.candidate += 1
         this.begin()
@@ -136,7 +146,8 @@ export class RemoteTunnel {
         : `the tunnel could not start: ${error.message}`)
     })
     child.once('exit', (code, signal) => {
-      if (this.child === child) this.child = undefined
+      if (this.child !== child) return
+      this.child = undefined
       if (!this.enabled) return
       this.fail(signal === null
         ? `cloudflared exited with code ${String(code)}`

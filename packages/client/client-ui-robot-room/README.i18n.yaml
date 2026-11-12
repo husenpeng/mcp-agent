@@ -1,0 +1,40 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/client/client-ui-robot-room/README.md
+/:
+  en: 8f86c1b9158d32fa
+  zh: 141c446008b68edd
+/robot-room-ui:
+  en: 7265a416722a15ac
+  zh: 9455a56b3fb2b0fd
+/robot-room-ui/summary:
+  en: 3921630d2c2b81b2
+  zh: 0c8d7a2271f7b635
+/robot-room-ui/table-of-contents:
+  en: 4e53164159b5ce41
+  zh: bd61ce1bef78579b
+/robot-room-ui/use-this-package:
+  en: 04c2d77d7f0ff4a3
+  zh: 0f3ade8bc793d4aa
+/robot-room-ui/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/robot-room-ui/model-experience/room-page:
+  en: 0e3d94126e315072
+  zh: 88e103b1eca7ed41
+/robot-room-ui/model-experience/room-page/what-the-model-sees:
+  en: 7bb1c9932430f3d9
+  zh: 94f1ac9e6d830293
+/robot-room-ui/model-experience/room-page/token-effect:
+  en: cde696eb0d69461a
+  zh: 2824e0af1e872031
+/robot-room-ui/model-experience/room-page/kv-cache-effect:
+  en: 2e1b3c512d066aad
+  zh: ff8d2bfa83525a9e
+/robot-room-ui/known-limitations-and-deferred-work:
+  en: 0aa350052ef3a138
+  zh: bd8bd8b2076b6044
+/robot-room-ui/known-limitations-and-deferred-work/dev-note:
+  en: bf4d1fd7ec637e3a
+  zh: 351340f93632245f

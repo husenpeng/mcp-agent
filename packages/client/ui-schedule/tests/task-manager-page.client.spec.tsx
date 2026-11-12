@@ -54,31 +54,31 @@ function installStyles(selectors: Record<string, string | undefined>): void {
 }
 
 const at: ScheduleCatalogEntry = {
-  id: 'task-at' as ScheduleId, sessionId: 'session-alpha' as SessionId, kind: 'at', status: 'active',
+  id: 'task-at' as ScheduleId, sessionId: 'session-alpha' as SessionId, kind: 'at', status: 'active', paused: false,
   title: 'Review release',
   prompt: 'Review release\nCheck risks and <img src=x onerror=alert(1)>',
   scheduledAt: '2026-10-01T09:00:00.000Z',
 }
 const after: ScheduleCatalogEntry = {
-  id: 'task-after' as ScheduleId, sessionId: 'session-beta' as SessionId, kind: 'after', status: 'active',
+  id: 'task-after' as ScheduleId, sessionId: 'session-beta' as SessionId, kind: 'after', status: 'active', paused: false,
   title: 'Send summary', prompt: 'Send summary', afterSeconds: 90, scheduledAt: '2026-10-01T08:00:00.000Z',
 }
 const every: ScheduleCatalogEntry = {
-  id: 'task-every' as ScheduleId, sessionId: 'session-gamma' as SessionId, kind: 'every', status: 'active',
+  id: 'task-every' as ScheduleId, sessionId: 'session-gamma' as SessionId, kind: 'every', status: 'active', paused: false,
   title: 'Check metrics', prompt: 'Check metrics', everySeconds: 301, scheduledAt: '2026-10-01T09:30:00.000Z',
 }
 const daily: ScheduleCatalogEntry = {
-  id: 'task-daily' as ScheduleId, sessionId: 'session-weather' as SessionId, kind: 'daily', status: 'active',
+  id: 'task-daily' as ScheduleId, sessionId: 'session-weather' as SessionId, kind: 'daily', status: 'active', paused: false,
   title: 'Daily weather', prompt: 'Daily weather', time: '23:00:00.000', timeZone: 'Asia/Shanghai',
   scheduledAt: '2026-10-01T15:00:00.000Z',
 }
 const weekly = {
-  id: 'task-weekly' as ScheduleId, sessionId: 'session-standup' as SessionId, kind: 'weekly', status: 'active',
+  id: 'task-weekly' as ScheduleId, sessionId: 'session-standup' as SessionId, kind: 'weekly', status: 'active', paused: false,
   title: 'Weekly review', prompt: 'Weekly review', time: '09:30:00.000', timeZone: 'Asia/Shanghai', weekdays: [1, 3],
   scheduledAt: '2026-10-05T01:30:00.000Z',
 } satisfies ScheduleCatalogEntry
 const cron = {
-  id: 'task-cron' as ScheduleId, sessionId: 'session-report' as SessionId, kind: 'cron', status: 'active',
+  id: 'task-cron' as ScheduleId, sessionId: 'session-report' as SessionId, kind: 'cron', status: 'active', paused: false,
   title: 'Cron report', prompt: 'Cron report', expression: '0 9 * * 1-5', timeZone: 'Asia/Shanghai',
   scheduledAt: '2026-10-05T01:00:00.000Z',
 } satisfies ScheduleCatalogEntry
@@ -87,7 +87,7 @@ const delivery: NonNullable<ScheduleCatalogEntry['lastDelivery']> = {
   deliveredAt: '2026-10-01T09:00:03.000Z',
   messageId: 'message-release-delivery' as NonNullable<ScheduleCatalogEntry['lastDelivery']>['messageId'],
 }
-const ended: ScheduleCatalogEntry = { ...at, status: 'inactive', lastDelivery: delivery }
+const ended: ScheduleCatalogEntry = { ...at, status: 'inactive', paused: false, lastDelivery: delivery }
 const records = [at, every, after]
 const sessions: SessionListState = {
   ids: [...records, daily, weekly].map(record => record.sessionId),
@@ -2262,7 +2262,7 @@ describe('Task detail rule header and run-time card', () => {
   ] as const)('commits a %s Time zone edit as an interpreted absolute target', async (_kind, task, row, change) => {
     const h = mount({ records: [task] })
     const savedAt: ScheduleCatalogEntry = {
-      id: task.id, sessionId: task.sessionId, kind: 'at', status: 'active', title: task.title, prompt: task.prompt,
+      id: task.id, sessionId: task.sessionId, kind: 'at', status: 'active', paused: false, title: task.title, prompt: task.prompt,
       scheduledAt: '2026-10-01T09:00:00.000Z',
     }
     h.updateTiming.mockResolvedValue({ ok: true, value: { id: task.id, updated: true, record: savedAt } })
@@ -2690,7 +2690,7 @@ describe('Task detail rule header and run-time card', () => {
     // The delivered record both moves the target and ends the task, so the draft
     // has no stored rule left to differ from and the panel shows the new values.
     const endedAt: ScheduleCatalogEntry = {
-      ...at, status: 'inactive', prompt: 'Revised instruction', scheduledAt: '2026-10-02T08:00:00.000Z',
+      ...at, status: 'inactive', paused: false, prompt: 'Revised instruction', scheduledAt: '2026-10-02T08:00:00.000Z',
     }
     h.update({ records: [endedAt] })
     const detail = screen.getByRole('complementary', { name: en['detail.label'] })
@@ -2870,7 +2870,7 @@ describe('Task detail rule header and run-time card', () => {
   it('carries the shown clock into a weekly choice and shows its Weekday row', async () => {
     const h = mount({ records: [daily] })
     const seeded: ScheduleCatalogEntry = {
-      id: daily.id, sessionId: daily.sessionId, kind: 'weekly', status: 'active', title: daily.title,
+      id: daily.id, sessionId: daily.sessionId, kind: 'weekly', status: 'active', paused: false, title: daily.title,
       prompt: daily.prompt, time: '23:00:00.000', timeZone: 'Asia/Shanghai', weekdays: [4], scheduledAt: daily.scheduledAt,
     }
     h.updateTiming.mockResolvedValue({ ok: true, value: { id: daily.id, updated: true, record: seeded } })

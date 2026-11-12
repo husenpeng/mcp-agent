@@ -56,6 +56,7 @@ function record(
     id: ScheduleId(id),
     sessionId,
     status,
+    paused: false,
     kind: 'every',
     title: title ?? prompt,
     prompt,

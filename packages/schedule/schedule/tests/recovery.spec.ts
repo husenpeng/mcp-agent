@@ -60,7 +60,7 @@ const repairedTask = {
 
 it.each([
   ['{broken json', 'malformed-medium'],
-  [encoded({ 'a-good': oldTask, 'z-broken': repairedTask }, 2), 'version-mismatch'],
+  [encoded({ 'a-good': oldTask, 'z-broken': repairedTask }, 3), 'version-mismatch'],
   [encoded({ 'a-good': oldTask, 'z-broken': { invalid: true } }), 'invalid-record'],
 ])('rejects the complete task domain on invalid stored data and recovers after repair', async (broken, code) => {
   const { root, path } = await rootWith({}, broken)
@@ -294,7 +294,7 @@ it('retains a hand-authored v1 daily alias, pinned target, and receipt without r
   const { root, path } = await rootWith({}, bytes)
   const test = await harness({ backend: new JsonStorageBackend(root), onContext: ctx => contexts.push(ctx) })
   const expected = [{
-    ...daily.record, sessionId: daily.sessionId, status: daily.status, lastDelivery: daily.lastDelivery,
+    ...daily.record, sessionId: daily.sessionId, status: daily.status, paused: false, lastDelivery: daily.lastDelivery,
   }]
   expect(await test.service.catalog()).toEqual(expected)
   expect(test.resolve).not.toHaveBeenCalled()

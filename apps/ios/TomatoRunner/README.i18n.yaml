@@ -1,0 +1,25 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write apps/ios/TomatoRunner/README.md
+/tomatorunner:
+  en: a476c39e12e3d561
+  zh: cd56ea5e052ebf2b
+/tomatorunner/why-a-test-bundle:
+  en: 6aee3276904eb23b
+  zh: 839090351c4024c9
+/tomatorunner/task-loop:
+  en: 150c548bc446ba8f
+  zh: dff6e83c61b9bf35
+/tomatorunner/wire-contract:
+  en: 17b00d2b3685f98f
+  zh: 125d2071cf23d297
+/tomatorunner/device-findings-that-shaped-this-design:
+  en: dd411161c90420e5
+  zh: 7404c2906bdd3563
+/tomatorunner/running-it:
+  en: 45e122ce32fec7d1
+  zh: 949374e96ae24b7e
+/tomatorunner/known-limits:
+  en: 645c3961a0facd5a
+  zh: 36ed9ff48ea42d61

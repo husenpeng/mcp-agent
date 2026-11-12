@@ -17,6 +17,8 @@ Read a file before editing it (the default fs-observation-policy requires it), u
 
 Use the glob tool — not shell find — to discover files by path pattern.
 
+Use list_dir to see what a directory contains before searching. Prefer a shallow depth with excludes over a broad glob; glob returns file paths, not directories.
+
 Use the grep tool — not shell grep or rg — to search file contents. Use read on a matched file when you need surrounding context.
 
 Track every background job id you start. You are notified in-session when a job finishes — do not busy-poll or sleep on one; keep working on independent steps and do not duplicate a running job's work. Before giving a final answer, collect every still-relevant job with job_output (set wait: true only when you are genuinely blocked on it), and job_kill jobs that stopped mattering.
@@ -177,6 +179,12 @@ class GlobArgs(TypedDict):
     pattern: str
     # Directory to search in. Defaults to the session workspace; a relative path resolves against it.
     path: NotRequired[str]
+    # Limit traversal depth, from 1 to 16. Omit for the whole tree; prefer a shallow depth or a narrower path for a quick look.
+    depth: NotRequired[float]
+    # Path globs to exclude, at most 20; for example ["dist/**", "**/*.snap"].
+    exclude: NotRequired[list[str]]
+    # Search ignored and dot files. Defaults to true; set false to respect .gitignore and skip hidden names.
+    hidden: NotRequired[bool]
     # Additional keys beyond those declared are allowed.
 
 class GlobOutput(TypedDict):
@@ -278,6 +286,29 @@ class ListAgentsOutput2(TypedDict):
     reason: Literal["corrupt", "unsupported", "unavailable"]
     parent: NotRequired[str]
     depth: NotRequired[float]
+
+class ListDirArgs(TypedDict):
+    # Directory to list. Defaults to the session workspace.
+    path: NotRequired[str]
+    # Levels to show, from 1 to 4. Defaults to 1.
+    depth: NotRequired[float]
+    # Include hidden names and dot directories. Defaults to false.
+    all: NotRequired[bool]
+    # Extra basenames or simple globs to skip, for example "dist" or "*.snap".
+    exclude: NotRequired[list[str]]
+    # Maximum entries returned, from 1 to 200.
+    limit: NotRequired[float]
+    # Additional keys beyond those declared are allowed.
+
+class ListDirOutputEntries(TypedDict):
+    path: str
+    type: Literal["file", "directory", "other"]
+    size: NotRequired[float]
+
+class ListDirOutput(TypedDict):
+    root: str
+    entries: list[ListDirOutputEntries]
+    truncated: bool
 
 class ReadArgs(TypedDict):
     # Path to read, resolved by the filesystem backend.
@@ -526,6 +557,8 @@ class Tools(Protocol):
         """Read a background job: output since the previous read for stream jobs, or the result of a finished final-output job."""
     async def list_agents(self, args: ListAgentsArgs) -> list[ListAgentsOutput1 | ListAgentsOutput2]:
         """List subagents you started, with their ids, labels, and status. running means it is working; inactive means it is not currently working. You will be notified when a subagent finishes; there is no need to keep checking its status. Use send_message to continue the conversation."""
+    async def list_dir(self, args: ListDirArgs) -> ListDirOutput:
+        """List a directory tree to answer \"what is here\" before searching. Returns at most 200 entries by default, skips hidden names and common build directories unless all is set, and stops at the requested depth."""
     async def read(self, args: ReadArgs) -> ReadOutput:
         """Read a UTF-8 text file and return line-numbered content."""
     async def read_image(self, args: ReadImageArgs) -> ReadImageOutput:

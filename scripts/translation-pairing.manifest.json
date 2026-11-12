@@ -11,6 +11,7 @@
     "docs/i18n/translation-prompt.md",
     "docs/tomato/",
     "plugins/",
+    "packages/experimental/robot-templates-knowledge-work/plugins/",
     "prototypes/"
   ]
 }

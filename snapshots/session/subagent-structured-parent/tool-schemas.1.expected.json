@@ -128,6 +128,21 @@
           "path": {
             "type": "string",
             "description": "Directory to search in. Defaults to the session workspace; a relative path resolves against it."
+          },
+          "depth": {
+            "type": "number",
+            "description": "Limit traversal depth, from 1 to 16. Omit for the whole tree; prefer a shallow depth or a narrower path for a quick look."
+          },
+          "exclude": {
+            "type": "array",
+            "description": "Path globs to exclude, at most 20; for example [\"dist/**\", \"**/*.snap\"].",
+            "items": {
+              "type": "string"
+            }
+          },
+          "hidden": {
+            "type": "boolean",
+            "description": "Search ignored and dot files. Defaults to true; set false to respect .gitignore and skip hidden names."
           }
         },
         "required": [
@@ -240,6 +255,38 @@
               "children",
               "descendants"
             ]
+          }
+        }
+      }
+    },
+    {
+      "name": "list_dir",
+      "description": "List a directory tree to answer \"what is here\" before searching. Returns at most 200 entries by default, skips hidden names and common build directories unless all is set, and stops at the requested depth.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Directory to list. Defaults to the session workspace."
+          },
+          "depth": {
+            "type": "number",
+            "description": "Levels to show, from 1 to 4. Defaults to 1."
+          },
+          "all": {
+            "type": "boolean",
+            "description": "Include hidden names and dot directories. Defaults to false."
+          },
+          "exclude": {
+            "type": "array",
+            "description": "Extra basenames or simple globs to skip, for example \"dist\" or \"*.snap\".",
+            "items": {
+              "type": "string"
+            }
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum entries returned, from 1 to 200."
           }
         }
       }

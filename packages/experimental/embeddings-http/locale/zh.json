@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "HTTP 向量服务提供方",
+    "description": "通过一次批量 HTTP 请求为 ctx.embeddings 提供 OpenAI 兼容的向量服务。"
+  }
+}

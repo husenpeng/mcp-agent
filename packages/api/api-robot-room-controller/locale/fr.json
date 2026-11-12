@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Contrôleur de salles de robots",
+    "description": "Flux Remote des salles, publication, envoi de messages, approbations et lecture des messages pour les clients navigateur."
+  }
+}

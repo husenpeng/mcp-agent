@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Context } from '@tomato/cordis'
 import AgentRegistry from '@tomato/agent'
-import type { Agent, AgentStatus, Inbox } from '@tomato/agent'
+import type { Agent, Inbox } from '@tomato/agent'
 import Robots, {
   RobotSpecValidationError,
 } from '@tomato/experimental-robot'
@@ -25,6 +25,9 @@ import { executeToolFixture } from '@tomato/tool-testkit'
 import { createInboxStub, unsupportedModel } from '@tomato/agent-loop-testkit'
 import * as toolRobot from '../src/index.ts'
 
+/* oxlint-disable typescript/no-unsafe-assignment -- Vitest asymmetric matchers are typed as any. */
+
+
 const testToolSignal = new AbortController().signal
 
 /** In-memory robot provider that records the published specification and revision binding. */
@@ -32,11 +35,20 @@ class FakeRobots extends Robots {
   published: RobotSpec | undefined
   instantiated: RobotSpecRef | undefined
   rejection: readonly RobotSpecIssue[] | undefined
+  revisions: RobotSpecRevision[] = []
+  robotsList: readonly Robot[] = []
+  rebound: { readonly robot: RobotId; readonly ref: RobotSpecRef } | undefined
 
-  override async publish(spec: RobotSpec): Promise<RobotSpecRevision> {
+  override async publish(spec: RobotSpec, previous?: RobotSpecRef): Promise<RobotSpecRevision> {
     if (this.rejection !== undefined) throw new RobotSpecValidationError(this.rejection)
     this.published = spec
-    return { ref: { spec: 'spec-1' as RobotSpecId, revision: 1 }, spec, publishedAt: 0 }
+    const ref = {
+      spec: previous?.spec ?? 'spec-1' as RobotSpecId,
+      revision: previous === undefined ? 1 : previous.revision + 1,
+    }
+    const revision: RobotSpecRevision = { ref, spec, publishedAt: 0 }
+    this.revisions.push(revision)
+    return revision
   }
 
   override async instantiate(ref: RobotSpecRef): Promise<Robot> {
@@ -44,17 +56,32 @@ class FakeRobots extends Robots {
     return { id: 'robot-1' as RobotId, name: this.published?.name ?? '', spec: ref, state: 'idle', createdAt: 0 }
   }
 
-  override async revision(): Promise<RobotSpecRevision | undefined> { return undefined }
+  override async revision(ref: RobotSpecRef): Promise<RobotSpecRevision | undefined> {
+    return this.revisions.find(revision => revision.ref.spec === ref.spec && revision.ref.revision === ref.revision)
+  }
 
-  override async specs(): Promise<readonly RobotSpecRevision[]> { return [] }
+  override async specs(): Promise<readonly RobotSpecRevision[]> {
+    const latest = new Map<RobotSpecId, RobotSpecRevision>()
+    for (const revision of this.revisions) latest.set(revision.ref.spec, revision)
+    return [...latest.values()]
+  }
 
   override async rebind(robot: RobotId, ref: RobotSpecRef): Promise<Robot> {
+    this.rebound = { robot, ref }
     return { id: robot, name: '', spec: ref, state: 'idle', createdAt: 0 }
   }
 
-  override async robot(): Promise<Robot | undefined> { return undefined }
+  override async robot(id: RobotId): Promise<Robot | undefined> {
+    return this.robotsList.find(robot => robot.id === id)
+  }
 
-  override async robots(): Promise<readonly Robot[]> { return [] }
+  override async robots(): Promise<readonly Robot[]> { return this.robotsList }
+
+  override async install(robot: RobotId): Promise<Robot> {
+    return { id: robot, name: '', spec: { spec: 'spec-1' as RobotSpecId, revision: 1 }, state: 'idle', createdAt: 0 }
+  }
+
+  override async remove(): Promise<void> {}
 
   override async start(robot: RobotId): Promise<Run> {
     return {
@@ -92,7 +119,7 @@ async function stubAgent(ctx: Context, rawId: string, cwd?: string): Promise<Stu
     session,
     model: unsupportedModel(),
     inbox,
-    status: 'running' as AgentStatus,
+    status: 'running',
     ctx,
     send: () => {},
     followup: () => {},
@@ -146,11 +173,16 @@ async function harness(options: { readonly cwd?: string } = {}) {
   return { ctx, root, fiber }
 }
 
-async function execute(ctx: Context, args: Record<string, unknown>, agent: Agent): Promise<ToolExecutionResult> {
+async function execute(
+  ctx: Context,
+  args: Record<string, unknown>,
+  agent: Agent,
+  name = 'robot_create',
+): Promise<ToolExecutionResult> {
   return ctx.agents.withInitiator(agent, () => executeToolFixture(ctx, {
     signal: testToolSignal,
     callId: ToolCallId(`call-${String(Math.random())}`),
-    name: 'robot_create',
+    name,
     arguments: args,
     agent,
   }))
@@ -163,11 +195,13 @@ function resultJson(result: ToolExecutionResult): Record<string, unknown> {
 }
 
 describe('robot_create registration and defaults', () => {
-  it('registers one tool and disposes it with the mounting fiber', async () => {
+  it('registers both tools and disposes them with the mounting fiber', async () => {
     const { ctx, fiber } = await harness()
     expect(ctx.tools.get('robot_create')?.name).toBe('robot_create')
+    expect(ctx.tools.get('robot_update')?.name).toBe('robot_update')
     await fiber.dispose()
     expect(ctx.tools.get('robot_create')).toBeUndefined()
+    expect(ctx.tools.get('robot_update')).toBeUndefined()
   })
 
   it('publishes the four basic fields over the shared defaults and instantiates the revision', async () => {
@@ -249,6 +283,126 @@ describe('robot_create registration and defaults', () => {
     expect(result.isError).toBe(true)
     expect(result.content[0]).toMatchObject({ type: 'text', text: expect.stringContaining('name: must be unique') })
     expect(robots.instantiated).toBeUndefined()
+  })
+})
+
+describe('robot_create capabilities', () => {
+  it('publishes the capability lists the user named and drops blanks', async () => {
+    const { ctx, root } = await harness()
+    openHumanTurn(root)
+    const robots = ctx.get('robots') as FakeRobots
+    await execute(ctx, {
+      name: 'Digest',
+      mission: 'Summarize the week',
+      skills: ['brand-insight', ' ', 'brand-insight'],
+      plugins: ['@tomato/experimental-robot-app'],
+      mcpServers: ['web'],
+    }, root.agent)
+    expect(robots.published).toMatchObject({
+      capability: {
+        skills: ['brand-insight'],
+        plugins: ['@tomato/experimental-robot-app'],
+        mcpServers: ['web'],
+      },
+    })
+  })
+})
+
+describe('robot_update', () => {
+  function seedRobot(robots: FakeRobots): Robot {
+    const spec: RobotSpec = {
+      name: 'Reviewer',
+      position: { owner: 'me', callers: [], callees: [], escalation: [], visibility: 'team' },
+      goal: {
+        mission: 'Review changes',
+        successCriteria: [],
+        triggers: [{ kind: 'manual' }],
+        strategy: 'plan',
+        stopConditions: [],
+        failurePolicy: 'fail',
+        budget: { tokens: 1000, millis: 1000, cost: 0, toolCalls: 10 },
+        maxConcurrentRuns: 1,
+      },
+      capability: {
+        tools: { allow: [], deny: [] },
+        mcpServers: ['web'],
+        plugins: [],
+        skills: [],
+        workspaceRoots: [],
+        dataClasses: [],
+        credentials: [],
+        sandbox: 'workspace',
+        permissionPreset: 'workspace-write',
+        network: 'none',
+      },
+      io: {
+        input: { schema: 'robot.request', version: 1 },
+        output: { schema: 'robot.result', format: 'markdown', delivery: 'chat' },
+        acceptance: [],
+      },
+      memory: { read: [], write: [], recall: 'none' },
+      a2a: { intents: [], peers: [] },
+    }
+    const revision: RobotSpecRevision = { ref: { spec: 'spec-1' as RobotSpecId, revision: 1 }, spec, publishedAt: 0 }
+    robots.revisions = [revision]
+    const robot: Robot = { id: 'robot-1' as RobotId, name: 'Reviewer', spec: revision.ref, state: 'idle', createdAt: 0 }
+    robots.robotsList = [robot]
+    return robot
+  }
+
+  it('republishes only the lists the call changes and rebinds the robot', async () => {
+    const { ctx, root } = await harness()
+    openHumanTurn(root)
+    const robots = ctx.get('robots') as FakeRobots
+    const robot = seedRobot(robots)
+    const result = await execute(ctx, {
+      robot: 'Reviewer',
+      skills: ['brand-insight'],
+      plugins: ['@tomato/experimental-robot-app'],
+    }, root.agent, 'robot_update')
+    const value = resultJson(result)
+    if (result.isError) throw new Error('expected robot update success')
+    expect(value).toMatchObject({ robotId: 'robot-1', name: 'Reviewer', specId: 'spec-1', revision: 2 })
+    expect(robots.published?.capability).toMatchObject({
+      skills: ['brand-insight'],
+      plugins: ['@tomato/experimental-robot-app'],
+      mcpServers: ['web'],
+    })
+    expect(robots.rebound).toEqual({ robot: robot.id, ref: { spec: 'spec-1', revision: 2 } })
+  })
+
+  it('resolves a robot by id and refuses a call that changes no list', async () => {
+    const { ctx, root } = await harness()
+    openHumanTurn(root, 'change my robot')
+    const robots = ctx.get('robots') as FakeRobots
+    seedRobot(robots)
+    const empty = await execute(ctx, { robot: 'robot-1' }, root.agent, 'robot_update')
+    expect(empty.error?.info?.code).toBe('ROBOT_UPDATE_EMPTY')
+    const byId = await execute(ctx, { robot: 'robot-1', mcpServers: [] }, root.agent, 'robot_update')
+    expect(byId.isError).toBe(false)
+    expect(robots.published?.capability.mcpServers).toEqual([])
+  })
+
+  it('reports an unknown or ambiguous robot instead of publishing', async () => {
+    const { ctx, root } = await harness()
+    openHumanTurn(root, 'change my robot')
+    const robots = ctx.get('robots') as FakeRobots
+    const robot = seedRobot(robots)
+    const missing = await execute(ctx, { robot: 'Nobody', skills: ['x'] }, root.agent, 'robot_update')
+    expect(missing.error?.info?.code).toBe('ROBOT_NOT_FOUND')
+    robots.robotsList = [robot, { ...robot, id: 'robot-2' as RobotId }]
+    const ambiguous = await execute(ctx, { robot: 'Reviewer', skills: ['x'] }, root.agent, 'robot_update')
+    expect(ambiguous.error?.info?.code).toBe('ROBOT_AMBIGUOUS')
+    expect(robots.published).toBeUndefined()
+  })
+
+  it('requires a direct human turn like creation', async () => {
+    const { ctx, root } = await harness()
+    openUnattendedTurn(root, { kind: 'test' })
+    const robots = ctx.get('robots') as FakeRobots
+    seedRobot(robots)
+    const result = await execute(ctx, { robot: 'Reviewer', skills: ['x'] }, root.agent, 'robot_update')
+    expect(result.error?.info?.code).toBe('ROBOT_TOOL_AUTHORITY_REQUIRED')
   })
 })
 

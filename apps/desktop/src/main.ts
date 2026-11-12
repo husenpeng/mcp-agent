@@ -454,6 +454,7 @@ async function main(): Promise<void> {
    */
   let sessionEnding = false
   const isQuitting = (): boolean => quitting
+  const isRecovering = (): boolean => recovery.active
   const currentMainWindow = (): BrowserWindow | undefined => mainWindow
   const ordinaryDialogs = new Set<AbortController>()
   const currentDialogWindow = (): BrowserWindow | undefined => welcomeWindow ?? mainWindow
@@ -573,6 +574,12 @@ async function main(): Promise<void> {
         TOMATO_DESKTOP_LISTEN_PORT: String(desktopSettings.remote.listenPort),
         // Newline-separated so an authority can never be confused with a separator.
         TOMATO_DESKTOP_TRUSTED_HOSTS: desktopSettings.remote.trustedHosts.join('\n'),
+        // Read-only posture for the paired device's Desktop page; the shell owns
+        // these values and the Host only reports what this process runs with.
+        TOMATO_DESKTOP_TUNNEL: desktopSettings.remote.tunnel ? '1' : '0',
+        TOMATO_DESKTOP_KEEP_AWAKE: desktopSettings.remote.keepAwake ? '1' : '0',
+        TOMATO_DESKTOP_LAUNCH_AT_LOGIN: desktopSettings.remote.launchAtLogin ? '1' : '0',
+        TOMATO_DESKTOP_VERSION: desktopClientVersion(),
         ...(resources.releaseOverlay === undefined ? {} : {
           TOMATO_DESKTOP_RELEASE_OVERLAY: resources.releaseOverlay,
           TOMATO_PROTECTED_READ_ROOTS: JSON.stringify([app.getAppPath()]),
@@ -1305,10 +1312,10 @@ async function main(): Promise<void> {
     if (quitting) return
     const window = mainWindow ?? createMainWindow()
     await navigateMain(applicationUrl)
-    if (isQuitting() || recovery.active || window.isDestroyed()) return
+    if (isQuitting() || isRecovering() || window.isDestroyed()) return
     // The client wakes only after the splash reaches its final frame; showing it earlier cuts the reveal.
     await startupSplash?.waitForAnimation()
-    if (isQuitting() || recovery.active || window.isDestroyed()) return
+    if (isQuitting() || isRecovering() || window.isDestroyed()) return
     if (activate) window.show()
     else window.showInactive()
     startupSplash?.release()
@@ -1352,7 +1359,7 @@ async function main(): Promise<void> {
     openingWelcome ??= (async () => {
       // The welcome window is the first application window: reveal it only after the brand animation ends.
       await startupSplash?.waitForAnimation()
-      if (quitting || recovery.active) return
+      if (isQuitting() || isRecovering()) return
       welcomeWindow = await openWelcomeWindow(locale, {
         analytics: track,
         analyticsEnabled: () => Promise.resolve(analyticsEnabled),
@@ -1418,13 +1425,13 @@ async function main(): Promise<void> {
         const closedFromWorkspace = welcomeFromWorkspace
         welcomeFromWorkspace = false
         if (closedFromWorkspace) { mainWindow?.show(); return }
-        if (enteredWorkspace || recovery.active) return
+        if (enteredWorkspace || isRecovering()) return
         // Nothing runs before the workspace opens. macOS keeps the Dock convention and drops the
         // unused main window so the next activation rebuilds the welcome; elsewhere the close quits.
         if (process.platform === 'darwin') mainWindow?.destroy()
         else app.quit()
       })
-      if (isQuitting() || recovery.active) window.close()
+      if (isQuitting() || isRecovering()) window.close()
       else if (!welcomeFromWorkspace && enteredWorkspace) window.close()
       else if (!welcomeFromWorkspace) mainWindow?.hide()
     })().finally(() => { openingWelcome = undefined })
@@ -1439,7 +1446,7 @@ async function main(): Promise<void> {
     await signOut()
   })
   const openInitialWindow = async (): Promise<void> => {
-    if (quitting || recovery.active) return
+    if (isQuitting() || isRecovering()) return
     const state = await readWelcomeState()
     if (isQuitting() || backend.state.phase !== 'ready') return
     locale = resolveDesktopStartupLocale(state.localePreference, systemLanguages)
@@ -1523,7 +1530,7 @@ async function main(): Promise<void> {
       if (quitting || shellInstallerOwnsQuit) return
       if (approved) { finishQuit(); return }
       // A quit that started from closing the welcome window destroyed it; a cancelled quit needs it back.
-      if (!enteredWorkspace && !recovery.active) void showWelcome().catch((error: unknown) => { reportFatal(error, 'main') })
+      if (!enteredWorkspace && !isRecovering()) void showWelcome().catch((error: unknown) => { reportFatal(error, 'main') })
     }).catch((error: unknown) => { console.error(error); if (!quitting && !shellInstallerOwnsQuit) finishQuit() })
   })
 

@@ -111,7 +111,7 @@ pi-ai 未提供的路由会先把网关前缀、点号版本和日期/版本后�
 
 ### 用允许清单限制模型
 
-`modelPolicy` 把本适配器的路由集合变成默认拒绝的允许清单。`local` 点名部署本地列表中已有的模型；`releaseDates` 以 `provider/model` 为键记录 ISO 发布日期，任何日期不早于 `recentSince` 的模型无需出现在任一列表中即可放行。`recent` 保留给没有清单条目的显式日期补充，早于 `recentSince` 的条目不被允许。模型列举返回所有已配置模型，但用 `blockedReason` 标记被拒绝的组合，因此选择器显示为带原因的禁用行且不能被选中；`prepareCall`/`stream` 会在任何提供方 I/O 之前以 `MODEL_NOT_ALLOWED` 拒绝未允许的组合。之后修改 provider 配置不会扩大清单：未列出且没有日期的模型在加入这里之前一直保持拦截。
+`modelPolicy` 把本适配器的路由集合变成默认拒绝的允许清单。`local` 点名部署本地列表中已有的模型；`releaseDates` 以 `provider/model` 为键记录 ISO 发布日期，任何日期不早于 `recentSince` 的模型无需出现在任一列表中即可放行。`recent` 保留给没有清单条目的显式日期补充，早于 `recentSince` 的条目不被允许。模型列举返回所有已配置模型，但用 `blockedReason` 标记被拒绝的组合，因此选择器显示为带原因的禁用行且不能被选中；`prepareCall`/`stream` 会在任何提供方 I/O 之前以 `MODEL_NOT_ALLOWED` 拒绝未允许的组合。之后适配器侧的配置修改不会扩大清单：未列出且没有日期的模型在加入这里之前一直保持拦截。Web Models 页创建自定义提供商时，会在写入 provider profile 的同一次设置写入中把该路由的模型对加入这里。
 
 ```yaml
 - name: '@tomato/llm-pi-ai'

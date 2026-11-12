@@ -38,6 +38,7 @@ function makeSpec(triggers: readonly Trigger[]): RobotSpec {
     capability: {
       tools: { allow: [], deny: [] },
       mcpServers: [],
+      plugins: [],
       skills: [],
       workspaceRoots: [],
       dataClasses: ['internal'],

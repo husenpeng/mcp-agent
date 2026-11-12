@@ -38,6 +38,38 @@ declare module '@tomato/cordis' {
   interface Context {
     /** The account the latest browser session names; provided only when auth_service is configured. */
     tomatoAccount: TomatoAccount
+    /** Desktop shell identity, published only when the Desktop Host runs. */
+    desktopSession?: {
+      sessionId(): string | undefined
+    }
+  }
+}
+
+/**
+ * Read the Desktop shell's account session id when a Desktop Host published it.
+ * The service is provided after the profile boots — the shell publishes the
+ * session when it signs in — so the read stays lazy instead of capturing the
+ * service at apply time.
+ * @param ctx - Host context carrying the optional service.
+ * @returns a reader that resolves the current service on every call.
+ */
+function desktopSessionId(ctx: Context): () => string | undefined {
+  return () => ctx.get('desktopSession')?.sessionId()
+}
+
+/**
+ * Desktop settings the shell passed at launch, for the paired device's status page.
+ * @returns the values this process runs with; absent fields stay out of the JSON.
+ */
+function desktopStatus(): Record<string, unknown> {
+  const port = Number(process.env.TOMATO_DESKTOP_LISTEN_PORT ?? '')
+  return {
+    ...Number.isSafeInteger(port) && port > 0 ? { listenPort: port } : {},
+    trustedHosts: (process.env.TOMATO_DESKTOP_TRUSTED_HOSTS ?? '').split('\n').filter(host => host !== ''),
+    tunnel: process.env.TOMATO_DESKTOP_TUNNEL === '1',
+    keepAwake: process.env.TOMATO_DESKTOP_KEEP_AWAKE === '1',
+    launchAtLogin: process.env.TOMATO_DESKTOP_LAUNCH_AT_LOGIN === '1',
+    ...process.env.TOMATO_DESKTOP_VERSION === undefined ? {} : { version: process.env.TOMATO_DESKTOP_VERSION },
   }
 }
 
@@ -68,7 +100,14 @@ export function apply(ctx: Context, config: Config): void {
   const auth = new AuthService(config.authServiceUrl, config.verifyTimeoutMs, config.requestTimeoutMs, (outcome) => {
     account.observe(outcome)
   })
-  const routes = new AuthRoutes(config, auth, origin, secure, () => { account.signOut() })
+  const routes = new AuthRoutes(
+    config,
+    auth,
+    origin,
+    secure,
+    () => { account.signOut() },
+    desktopSessionId(ctx),
+  )
   // A browser that reaches this Host through a forwarding host presents that
   // host's authority, so the sign-in return leg must name the advertised root
   // instead of the loopback origin the listener happens to bind.
@@ -116,6 +155,21 @@ export function apply(ctx: Context, config: Config): void {
           const rejected = admit(ctx, request)
           if (rejected !== undefined) { response.writeHead(rejected === 'unauthorized' ? 401 : 403); response.end(rejected); return }
           await routes.logout(request, response)
+        },
+      }),
+      ctx.webServer.register({
+        kind: 'exact',
+        path: '/api/desktop/status',
+        handler: (request, response) => {
+          if (request.method !== 'GET' && request.method !== 'HEAD') { methodNotAllowed(response, 'GET, HEAD'); return }
+          const rejected = admit(ctx, request)
+          if (rejected !== undefined) {
+            response.writeHead(rejected === 'unauthorized' ? 401 : 403)
+            response.end(rejected)
+            return
+          }
+          response.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' })
+          response.end(JSON.stringify(desktopStatus()))
         },
       }),
       ctx.webServer.register({

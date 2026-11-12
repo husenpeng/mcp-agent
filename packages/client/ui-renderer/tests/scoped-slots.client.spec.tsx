@@ -24,6 +24,7 @@ import type {
   StandardSourceBinding, StoreInstanceLike,
 } from '@tomato/client-ui-renderer/client'
 import { createSlotRenderer } from '../src/client/scoped-slots.tsx'
+import { PageSyncProvider } from '../src/client/page-sync.tsx'
 
 type AnyProps = Record<string, unknown>
 type RenderSlotFn = (key: string, owner: object, opts?: RenderOpts) => ReactNode
@@ -123,7 +124,7 @@ function makeHost() {
       : <>{children}</>,
   }
   const scopeRevision = observable(0)
-  let activeScopeAdapter = sessionAdapter
+  let activeScopeAdapter: SlotScopeAdapter | undefined = sessionAdapter
 
   const bump = (key: string) => {
     versions.set(key, (versions.get(key) ?? 0) + 1)
@@ -242,7 +243,7 @@ function makeHost() {
       if (source === undefined) throw new Error(`unknown test session: ${id}`)
       source.set(snapshot)
     },
-    replaceScope: (adapter: SlotScopeAdapter) => {
+    replaceScope: (adapter: SlotScopeAdapter | undefined) => {
       activeScopeAdapter = adapter
       scopeRevision.set(scopeRevision.getSnapshot() + 1)
     },
@@ -321,6 +322,78 @@ describe('root outlet', () => {
     h.add('root', { component: ({ tag }: { tag?: string }) => <b>{tag}</b> })
     const view = render(<>{createSlotRenderer().renderRoot(h.host, { tag: 'OWNER' })}</>)
     expect(view.container.textContent).toBe('OWNER')
+  })
+})
+
+describe('page synchronization', () => {
+  const swap = () => observable({ syncing: false })
+
+  it('holds the committed root tree and skips the root render while a swap is in flight', () => {
+    const h = makeHost()
+    h.add('root', { component: () => <b>shell</b> })
+    const sync = swap()
+    const renderer = createSlotRenderer()
+    let renders = 0
+    const tree = () => (
+      <PageSyncProvider
+        source={sync}
+        render={() => { renders += 1; return <>{renderer.renderRoot(h.host, {})}</> }}
+      />
+    )
+    const view = render(tree())
+    expect(view.container.textContent).toBe('shell')
+    expect(renders).toBe(1)
+
+    act(() => { sync.set({ syncing: true }) })
+    view.rerender(tree())
+    // The swap holds the last committed tree: the root slot is not rendered again.
+    expect(renders).toBe(1)
+    expect(view.container.textContent).toBe('shell')
+
+    act(() => { sync.set({ syncing: false }) })
+    expect(renders).toBe(2)
+    expect(view.container.textContent).toBe('shell')
+  })
+
+  it('renders nothing instead of failing assembly when the scope adapter is momentarily absent', () => {
+    const h = makeHost()
+    h.add('root', { component: () => <b>shell</b> })
+    const sync = swap()
+    const renderer = createSlotRenderer()
+    const tree = () => <PageSyncProvider source={sync} render={() => <>{renderer.renderRoot(h.host, {})}</>} />
+    const view = render(tree())
+    expect(view.container.textContent).toBe('shell')
+
+    // A code swap disposes the entry that installs the session adapter.
+    act(() => { sync.set({ syncing: true }); h.replaceScope(undefined) })
+    expect(view.container.textContent).toBe('')
+  })
+
+  it('renders the root tree unchanged without a module system', () => {
+    const h = makeHost()
+    h.add('root', { component: () => <b>shell</b> })
+    const renderer = createSlotRenderer()
+    const view = render(<PageSyncProvider render={() => <>{renderer.renderRoot(h.host, {})}</>} />)
+    expect(view.container.textContent).toBe('shell')
+  })
+
+  it('renders the first tree even when the swap started before mount', () => {
+    const h = makeHost()
+    h.add('root', { component: () => <b>shell</b> })
+    const renderer = createSlotRenderer()
+    const view = render(<PageSyncProvider source={swap()} render={() => <>{renderer.renderRoot(h.host, {})}</>} />)
+    // No tree is committed yet, so the first render still shows the root slot.
+    expect(view.container.textContent).toBe('shell')
+  })
+
+  it('still fails loud when the scope adapter is missing outside a swap', () => {
+    const h = makeHost()
+    h.add('root', { component: () => <b>shell</b> })
+    h.replaceScope(undefined)
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect(() => render(<>{createSlotRenderer().renderRoot(h.host, {})}</>))
+      .toThrow(/scope 'session-maybe' rendered without an installed adapter/)
+    spy.mockRestore()
   })
 })
 

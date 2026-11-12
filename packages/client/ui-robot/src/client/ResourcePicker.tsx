@@ -1,9 +1,9 @@
-/** Folder-style resource picker: skills, MCP servers, and Workspace folders in one modal. */
+/** Folder-style resource picker: skills, plugins, MCP servers, and Workspace folders in one modal. */
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 import {
-  Button, IconCheckOutlineRegular, IconCordisPluginOutlineRegular, IconFolderCloseRegular, IconSearchOutlineRegular,
-  IconSkillOutlineRegular, Input, Modal,
+  Button, IconCheckOutlineRegular, IconCordisPluginOutlineRegular, IconFolderCloseRegular, IconPluginPinwheelOutlineRegular,
+  IconSearchOutlineRegular, IconSkillOutlineRegular, Input, Modal,
 } from '@tomato/client-ui-primitives'
 import type { PropsLocale } from '@tomato/client-ui-slots'
 import { NS } from './locales.ts'
@@ -16,7 +16,7 @@ const CONTENT_CLASS = css.content as string
 const DIALOG_CLASS = css.dialog as string
 
 /** Glyph family the picker rows use. */
-export type ResourceKind = 'skill' | 'server' | 'folder'
+export type ResourceKind = 'skill' | 'plugin' | 'server' | 'folder'
 
 /** Props of the resource picker modal. */
 export interface ResourcePickerProps extends PropsLocale<typeof NS> {
@@ -42,6 +42,7 @@ export interface ResourcePickerProps extends PropsLocale<typeof NS> {
 function ResourceIcon({ kind }: { readonly kind: ResourceKind }): ReactNode {
   switch (kind) {
     case 'skill': return <IconSkillOutlineRegular size={14} />
+    case 'plugin': return <IconPluginPinwheelOutlineRegular size={14} />
     case 'server': return <IconCordisPluginOutlineRegular size={14} />
     case 'folder': return <IconFolderCloseRegular size={14} />
   }

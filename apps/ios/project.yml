@@ -48,10 +48,45 @@ targets:
         SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
         SWIFT_EMIT_LOC_STRINGS: YES
         DEVELOPMENT_ASSET_PATHS: ""
+    dependencies:
+      - target: TomatoRemoteWidgets
+        embed: true
     scheme:
       testTargets:
         - TomatoRemoteUITests
       gatherCoverageData: false
+
+  TomatoRemoteWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: TomatoRemoteWidgets
+      # The activity attributes are compiled into both faces so one declaration
+      # defines what the app writes and what the island reads.
+      - path: TomatoRemote/Shared/TomatoRunAttributes.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ai.tomato.remote.widgets
+        PRODUCT_NAME: TomatoRemoteWidgets
+        GENERATE_INFOPLIST_FILE: YES
+        SKIP_INSTALL: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+        CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]: NO
+        CODE_SIGNING_REQUIRED[sdk=iphonesimulator*]: NO
+        CODE_SIGN_IDENTITY[sdk=iphonesimulator*]: ""
+        INFOPLIST_KEY_CFBundleDisplayName: Tomato
+        INFOPLIST_KEY_NSExtension: ""
+    info:
+      path: TomatoRemoteWidgets/Info.plist
+      properties:
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    dependencies:
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+      - sdk: ActivityKit.framework
 
   TomatoRemoteUITests:
     type: bundle.ui-testing
@@ -65,3 +100,51 @@ targets:
         TEST_TARGET_NAME: TomatoRemote
         PRODUCT_BUNDLE_IDENTIFIER: ai.tomato.remote.uitests
         GENERATE_INFOPLIST_FILE: YES
+
+  # Long-lived UI-test runner that exposes the device over loopback. It is a
+  # separate scheme on purpose: running the application's own test scheme must
+  # not start a server that never finishes.
+  TomatoRunner:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: TomatoRunner
+        excludes:
+          - "Resources/Info.plist"
+          - "Resources/RiskRules.json"
+      # One wire contract, compiled into both the application and the runner.
+      - path: TomatoRemote/Shared/PhoneProtocol.swift
+      - path: TomatoRunner/Resources/RiskRules.json
+        buildPhase: resources
+    settings:
+      base:
+        # Standalone runner: no host application. A hosted runner dies with the
+        # host app whenever the device owner leaves it, which is exactly what
+        # this process must survive.
+        TEST_TARGET_NAME: ""
+        TEST_HOST: ""
+        PRODUCT_BUNDLE_IDENTIFIER: ai.tomato.remote.runner
+        PRODUCT_NAME: TomatoRunner
+        # The generated Info.plist has no ATS exceptions, and iOS refuses
+        # cleartext to the Host without them.
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: TomatoRunner/Resources/Info.plist
+        # Synthesized-event classes live outside XCTest's public headers.
+        SWIFT_OBJC_BRIDGING_HEADER: TomatoRunner/Support/XCTestPrivate.h
+        TARGETED_DEVICE_FAMILY: "1"
+        SUPPORTS_MACCATALYST: NO
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: "Tomato Runner 连接这台 Mac 上的 Tomato Host，接收并执行操作手机的指令。"
+
+schemes:
+  TomatoRunner:
+    build:
+      targets:
+        TomatoRunner: [test]
+    test:
+      targets:
+        - TomatoRunner
+      # The runner is one test that runs for hours and ends killed; XCTest's
+      # default screen recording would leave gigabytes behind on the device.
+      captureScreenshotsAutomatically: false
+      preferredScreenCaptureFormat: screenshots

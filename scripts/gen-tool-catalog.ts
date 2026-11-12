@@ -581,10 +581,11 @@ const TOOL_PACKAGES: ToolPackage[] = [
       await ctx.plugin(ToolRobot)
     },
     note:
-      'Shipped by the optional Tomato Rbot bundle beside the robot-creation skill. The tool collects only the '
-      + 'four basic fields and starts every other block from emptyRobotSpec(); publication and instantiation '
-      + 'happen in one call. Direct-human root authority is required, so delegated and unattended turns cannot '
-      + 'create robots.',
+      'Shipped by the optional Tomato Rbot bundle beside the robot-creation and grilling skills. robot_create '
+      + 'collects the four basic fields and the skill, plugin, and MCP lists, then publishes and instantiates in '
+      + 'one call; robot_update replaces only the capability lists a call names and rebinds the robot to the new '
+      + 'revision. Both start every other block from emptyRobotSpec() and require direct-human root authority, so '
+      + 'delegated and unattended turns cannot create or change robots.',
   },
   {
     pkg: '@tomato/experimental-tool-subagent-oar',

@@ -35,15 +35,25 @@
 # `tomato.client` rows are the browser roster the modules node half scans into
 # window.__TOMATO_BOOT__; the modules row is simultaneously a host row.
 - insert:
-    # Tomato AI reports through its own relay plugin; the DeepSeek product
-    # telemetry and the client-side product analytics rows stay off.
+    # Desktop launches the bounded product telemetry and analytics pair; Web
+    # keeps both rows disabled.
     - id: desktop-product-telemetry
       name: '@tomato/host-product-telemetry-otel'
-      disabled: true
+      disabled: !!js "ctx.get('profileContext')?.name !== 'desktop'"
+      config:
+        endpoint: !!js "process.env.TOMATO_PRODUCT_ANALYTICS_OTLP_URL ?? 'https://tomato-otel-collector.deepseeksvc.com/v1/logs'"
+        serviceName: tomato-desktop
+        serviceVersion: !!js process.env.TOMATO_CLIENT_VERSION
+        scheduledDelayMillis: 30000
+        timeoutMillis: 15000
+        exportTimeoutMillis: 20000
+        shutdownTimeoutMillis: 2000
 
     - id: product-analytics
       name: '@tomato/client-product-analytics'
-      disabled: true
+      disabled: !!js "ctx.get('profileContext')?.name !== 'desktop'"
+      config:
+        appVersion: !!js process.env.TOMATO_CLIENT_VERSION
 
     # Host-owned authorization sampled at Agent creation. The Plugins page
     # edits this settings namespace independently of the selected preset.

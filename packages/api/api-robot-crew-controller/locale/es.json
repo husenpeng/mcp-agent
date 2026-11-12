@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Controlador de equipos de robots",
+    "description": "Flujo Remote de equipos, publicación de especificaciones, inicio de ejecuciones y lectura del registro de flujo para clientes del navegador."
+  }
+}

@@ -19,7 +19,7 @@ const SESSION = 'session-alpha' as SessionId
 /** The persisted layout record of the tab under test: its id, kind, and content identity. */
 const TAB: TaskTabPage = { id: 'tab1', kind: 'scheduleTask', contentId: 'sidebar://scheduleTask' }
 const at: ScheduleCatalogEntry = {
-  id: 'task-detail' as ScheduleId, sessionId: SESSION, kind: 'every', status: 'active',
+  id: 'task-detail' as ScheduleId, sessionId: SESSION, kind: 'every', status: 'active', paused: false,
   title: 'Check metrics', prompt: 'Check metrics\nSecond line of the instruction', everySeconds: 301,
   scheduledAt: '2026-10-01T09:30:00.000Z',
 }

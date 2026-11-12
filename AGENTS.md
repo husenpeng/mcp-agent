@@ -120,6 +120,10 @@ Before pushing, follow [dsh-pre-push-checks](.agents/skills/dsh-pre-push-checks/
 - Develop with `build:artifacts`; before claiming completion, run `build:check` after the latest `build:artifacts`, or `build` ([layout](docs/development.md#typescript-project-layout)).
 - **Web browser automation and GIF recording:** launch with `pnpm tomato web --patch apps/web/tests/pin-browse-picker.overlay.yml` to use the [in-page directory picker](apps/web/tests/pin-browse-picker.overlay.yml); omit this override only when testing native picker behavior explicitly.
 
+### Finish every task with its review pass
+
+Before reporting a task complete, review its own diff against the standards here and against the request itself: fix every `P0`/`P1` finding, re-run the checks the touched surface needs, and report what was left. The procedure and checklist live in [RULE.md](RULE.md#every-finished-task-runs-the-review-pass) and [dsh-post-task-review](.agents/skills/dsh-post-task-review/SKILL.md).
+
 ## Secrets / .env
 
 Windows packaging/signing: [required reading](apps/desktop/windows-signing/README.md).

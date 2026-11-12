@@ -195,6 +195,32 @@ async reconcileProfile(requiredIds: readonly string[] = []): Promise<ProfileReco
 
 Source: [`packages/boot/hmr/src/index.ts`](../../packages/boot/hmr/src/index.ts)
 
+<a id="ctxplugininventory--plugininventorygateway"></a>
+
+### `ctx.pluginInventory` — `PluginInventoryGateway`
+
+Remote-only service exposing the Loader's current non-group entry state.
+
+```ts cordis-catalog
+/**
+ * Read the Loader directly on every call. Cordis's internal plugin/status
+ * events already maintain Entry.fiber and Fiber.state, so a second cache
+ * would only add another lifecycle truth to keep synchronized.
+ *
+ * When an agent-preset roster is composed, the snapshot also carries each
+ * preset's composition rows, because those rows — not the Loader's own
+ * entries — are where a deployment that mounts the roster runs its
+ * model-facing plugins.
+ * @returns Current non-group Loader entries in Loader order, with optional display metadata
+ * and per-preset compositions when a roster is composed.
+ */
+@Remote('list') async list(): Promise<PluginInventorySnapshot>
+```
+
+Types: [PluginInventorySnapshot](../../packages/host/plugin-inventory/README.md)
+
+Source: [`packages/host/plugin-inventory/src/index.ts`](../../packages/host/plugin-inventory/src/index.ts)
+
 <a id="ctxpluginmanager--pluginmanager"></a>
 
 ### `ctx.pluginManager` — `PluginManager`

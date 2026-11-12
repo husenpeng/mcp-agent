@@ -98,6 +98,14 @@ export class SessionManager {
    * holder, because it can arrive from a replaced or already-dropped Session.
    */
   private readonly engagedSessions = new Set<SessionId>()
+  /**
+   * Identities a live event named while the list held no row. A missed
+   * `api-session/added` (a dropped event stream, a reconnect gap, or a listing
+   * that predates the creation) would otherwise hide the Session until the
+   * next full read; each identity asks for at most one repair per Host
+   * generation.
+   */
+  private readonly repairedUnknown = new Set<SessionId>()
   private disposed = false
   /** Per-session projection value stores, retained independently of instance arrival (the
    *  title-snapshot precedent, generalized): push frames land here whether or not the Session
@@ -669,10 +677,38 @@ export class SessionManager {
    * @param summary - current Host summary for the added Session.
    */
   handleSessionAdded(summary: SessionSummary): void {
-    this.mergeSummary(summary)
     if (!this.disposed && summary.running) this.engagedSessions.add(summary.sessionId)
-    this.sessions.get(summary.sessionId)?.handleBlank(this.effectiveBlank(summary))
+    // A Session announced while its Agent already runs is a conversation, not a
+    // draft: the row merges with the same presentation the list path applies.
+    const blank = this.effectiveBlank(summary)
+    this.repairedUnknown.delete(summary.sessionId)
+    this.mergeSummary({ ...summary, blank })
+    this.sessions.get(summary.sessionId)?.handleBlank(blank)
     if (summary.projections !== undefined) this.applyListBlock(summary.sessionId, summary.projections)
+  }
+
+  /**
+   * Re-read the list after a live event named a Session it does not hold.
+   *
+   * Collection membership travels on `api-session/added` alone; every later
+   * notification for an unknown identity is otherwise dropped, so a lost
+   * addition keeps the Session invisible until the next reload. A pull already
+   * in flight may predate the notification, so it is followed by one more read;
+   * each identity asks at most once per Host generation.
+   * @param sessionId - identity the live event named.
+   */
+  private repairUnknownSession(sessionId: SessionId): void {
+    if (this.disposed) return
+    if (this.summaries.some(summary => summary.sessionId === sessionId)) return
+    if (this.sessions.has(sessionId) || this.addresses.has(sessionId)) return
+    if (this.repairedUnknown.has(sessionId)) return
+    this.repairedUnknown.add(sessionId)
+    const settled = (): void => {
+      if (this.disposed || this.summaries.some(summary => summary.sessionId === sessionId)) return
+      void this.refreshList()
+    }
+    if (this.listInflight === null) void this.refreshList()
+    else void this.listInflight.then(settled, settled)
   }
 
   /**
@@ -716,6 +752,7 @@ export class SessionManager {
       this.projectionStores.delete(sessionId)
     }
     this.pruneEngagement(sessionId, this.retainedIds(this.summaries))
+    this.repairedUnknown.delete(sessionId)
     this.projectionInflight.get(sessionId)?.controller.abort()
     this.projectionInflight.delete(sessionId)
     this.projectionLoads.delete(sessionId)
@@ -733,6 +770,7 @@ export class SessionManager {
    */
   handleSessionStatus(sessionId: SessionId, running: boolean): void {
     if (!this.disposed && running) this.engagedSessions.add(sessionId)
+    this.repairUnknownSession(sessionId)
     this.recordMutation({ kind: 'status', sessionId, running, agentAvailable: true })
     this.updateParentAvailability()
     this.sessions.get(sessionId)?.handleRunning(running)
@@ -740,10 +778,15 @@ export class SessionManager {
 
   /**
    * Advance Session-list activity from one user-authored durable message.
+   * A durable user message ends the draft presentation: the row must show even
+   * when another client wrote it and this client missed the running frame.
    * @param sessionId - Session whose activity changed.
    * @param updatedAt - durable message timestamp.
    */
   handleSessionActivity(sessionId: SessionId, updatedAt: number): void {
+    this.repairUnknownSession(sessionId)
+    if (!this.disposed) this.engagedSessions.add(sessionId)
+    this.recordMutation({ kind: 'engaged', sessionId })
     this.recordMutation({ kind: 'activity', sessionId, updatedAt })
   }
 
@@ -753,6 +796,7 @@ export class SessionManager {
    * @param message - caller-visible failure description.
    */
   handleSessionError(sessionId: SessionId, message: string): void {
+    this.repairUnknownSession(sessionId)
     this.sessions.get(sessionId)?.handleAgentError(message)
   }
 
@@ -766,6 +810,7 @@ export class SessionManager {
     for (const store of this.projectionStores.values()) store.clear()
     this.listMutations = null
     this.listInflight = null
+    this.repairedUnknown.clear()
     void this.refreshList()
     const parents = new Set(this.projectionLoads.keys())
     for (const id of this.sessions.keys()) {

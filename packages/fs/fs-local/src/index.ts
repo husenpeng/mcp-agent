@@ -70,11 +70,17 @@ export class LocalFileSystem extends FileSystem {
   override async watch(target: FsTarget, changed: (error?: Error) => void, signal: AbortSignal): Promise<() => Promise<void>> {
     signal.throwIfAborted()
     const path = resolve(this.processPath(target))
-    const directory = (await this.stat(target, signal))?.type === 'directory'
+    const info = await this.stat(target, signal)
+    const directory = info?.type === 'directory'
+    // A watcher armed before its target exists sees no inode to attach native
+    // events to; under many concurrent watchers FSEvents can drop the creation
+    // entirely. Poll the parent only for that missing-target window.
+    const missing = info === undefined
     signal.throwIfAborted()
     const root = directory ? path : dirname(path)
     const watcher = watch(root, {
       ignoreInitial: true, depth: 0,
+      ...missing ? { usePolling: true, interval: 100 } : {},
       ignored: entry => !directory && resolve(entry) !== root && resolve(entry) !== path,
     })
     watcher.on('all', (_event, entry) => {

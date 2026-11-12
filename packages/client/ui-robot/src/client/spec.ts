@@ -8,7 +8,31 @@
  * @module @tomato/client-ui-robot
  */
 
-import type { RobotSpec } from '@tomato/api-robot-controller/client'
+import type { Robot, RobotSpec } from '@tomato/api-robot-controller/client'
+
+/**
+ * Whether this specification declares dependencies a run must resolve before it
+ * can start. A robot that declares none needs no installation step.
+ * @param spec - specification bound to the robot.
+ * @returns whether it declares a skill, plugin, or MCP server.
+ */
+export function needsInstallation(spec: RobotSpec): boolean {
+  return spec.capability.skills.length > 0
+    || spec.capability.plugins.length > 0
+    || spec.capability.mcpServers.length > 0
+}
+
+/**
+ * Whether the robot's recorded installation covers the revision it now runs.
+ * @param robot - robot whose installation to read.
+ * @returns whether this exact revision was verified.
+ */
+export function isInstalled(robot: Robot): boolean {
+  const installed = robot.installation
+  return installed !== undefined
+    && installed.ref.spec === robot.spec.spec
+    && installed.ref.revision === robot.spec.revision
+}
 
 /**
  * Mission text `emptyRobotSpec()` fills when no real answer was collected.
@@ -25,6 +49,8 @@ export const NAME_STUB = 'New robot'
 
 /**
  * Build a complete specification with every advanced block at its general default.
+ * The default names no model; every run uses the deployment default until the
+ * advanced configuration selects a route.
  * @param basic - optional basic fields to fill; omitted fields keep the neutral placeholder.
  * @returns a new mutable specification value.
  */
@@ -51,6 +77,7 @@ export function emptyRobotSpec(basic: {
     capability: {
       tools: { allow: [], deny: [] },
       mcpServers: [],
+      plugins: [],
       skills: [],
       workspaceRoots: [],
       dataClasses: [],

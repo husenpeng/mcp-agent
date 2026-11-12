@@ -72,6 +72,22 @@ describe('Session Controller Client apply', () => {
     await vi.waitFor(() => { expect(connected).toHaveBeenCalledTimes(2) })
   }, COLD_BOOT_TIMEOUT_MS)
 
+  it('recovers a Session whose addition frame was lost when a later frame names it', async ({ mock, start }) => {
+    const { sessions } = await bench(start)
+    const sessionId = sid('session-lost-addition')
+    // The Host knows the Session, but this client never received its addition:
+    // the listing that follows a later notification is the only source left.
+    mock.remote.session.list.mockResolvedValue(ok({
+      items: [{ sessionId, updatedAt: 3, running: true, blank: false, agentAvailable: true }],
+    }))
+
+    await emit(mock, 'api-session/status', sessionId, true)
+
+    await vi.waitFor(() => {
+      expect(sessions.list.getSnapshot().byId[sessionId]).toMatchObject({ running: true, blank: false })
+    })
+  }, COLD_BOOT_TIMEOUT_MS)
+
   it('runs handleConnected at apply when the Host is already connected, as a reload of the row does', async ({ start }) => {
     const connected = vi.spyOn(ClientSessions.prototype, 'handleConnected')
     const { client } = await bench(start)

@@ -32,7 +32,6 @@
         "@tomato/api-remote-access",
         "@tomato/api-remotes",
         "@tomato/api-session-controller",
-        "@tomato/api-robot-controller",
         "@tomato/api-workspace-controller",
         "@tomato/client-connection",
         "@tomato/client-locale",

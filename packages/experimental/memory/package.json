@@ -40,6 +40,7 @@
     "@tomato/llm": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/storage-domain": "workspace:*",
+    "@tomato/workspace": "workspace:*",
     "@tomato/cordis": "workspace:~"
   },
   "peerDependenciesMeta": {
@@ -48,10 +49,14 @@
     },
     "@tomato/gateway": {
       "optional": true
+    },
+    "@tomato/workspace": {
+      "optional": true
     }
   },
   "dependencies": {
     "@tomato/schemastery": "workspace:~",
+    "sqlite-vec": "0.1.9",
     "zod": "4.4.3"
   },
   "devDependencies": {
@@ -63,6 +68,8 @@
     "@tomato/session": "workspace:*",
     "@tomato/settings": "workspace:*",
     "@tomato/storage": "workspace:*",
-    "@tomato/storage-domain": "workspace:*"
+    "@tomato/storage-domain": "workspace:*",
+    "@tomato/storage-json": "workspace:*",
+    "@tomato/workspace": "workspace:*"
   }
 }

@@ -59,6 +59,7 @@ const SAFE_HOST_DEPENDENCY_EXPORTS = {
   '@tomato/computer-use/brand': ['ComputerUseProviderName'],
   '@tomato/credentials': ['credentialKey'],
   '@tomato/deque': ['Deque'],
+  '@tomato/experimental-embeddings-http': ['probeEmbeddingsEndpoint'],
   '@tomato/llm': ['callConfigEquals'],
   '@tomato/session-format': ['sessionFormatLogFilename'],
   '@tomato/timeout': ['MAX_TIMER_DELAY_MS'],

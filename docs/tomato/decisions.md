@@ -26,7 +26,7 @@
 
 - **前端**：复用上游的客户端插件与全部入口，不隐藏 Trajectory、Workflow、插件市场、Agent Preset、终端或文件侧栏。
 - **工作区**：保留原生多工作区语义。
-- **模型**：基础 `llm-pi-ai` 不预置路由。用户在「设置 → 模型」的 **自定义模型 API** 中声明第三方 OpenAI 或 Anthropic 兼容端点与模型清单；路由写入当前 profile 的 `cordis.patch.yml`，API Key 经 `credentials.set` 只写入 `$TOMATO_HOME/.credentials.yaml` 的 `<ROUTE>_API_KEY`。`agent-default-model` 初始为空，用户在模型选择器中选定后写回 profile。基础组合不再包含 mock 模型路由或占位模型。
+- **模型**：基础 `llm-pi-ai` 预置一条公司中转路由 `blueai-anthropic`（原生 `anthropic-messages`，端点 `https://bmc-llm-relay.bluemediagroup.cn`）。模型条目只写 id，容量、推理档位与提示缓存行为由内置 catalog 提供；原生协议自带缓存断点，OpenAI 兼容路由会失去它们。安装包只写凭据引用 `BLUEAI_API_KEY`，不含密钥；每人首次在「设置 → 模型」填入自己的 key，只落到本人的 `$TOMATO_HOME/.credentials.yaml`。`agent-default-model` 指向该路由的 `claude-opus-5-5`；key 存入前该路由不列出模型，模型请求以 `MISSING_CREDENTIAL` 失败。用户仍可在**自定义模型 API** 中声明其他第三方端点。profile 的 `llm-pi-ai` 配置整段替换而非按字段合并 bundle 配置，因此在模型页保存会把当时生效的配置连同这条路由一起写进 profile。
 - **业务**：MCP 网关，沿用 tomatoAgent 已定的 `kol_capabilities` / `kol_search` / `kol_detail` / `kol_summary` 契约，`streamable-http` 传输，`Authorization: Bearer <每人令牌>`。
 - **hiCreator（可选）**：web 补丁层的 `mcp-hicreator` 行接 hiCreator 远程 MCP，提供达人发现、详情、邮箱与收藏夹工具；未设置 `HICREATOR_API_KEY` 时整行停用，仅作公司网关落地前的验证数据源（[ADR 0007](adr/0007-hicreator-mcp.md)）。
 - **浏览器**：Playwright MCP 随安装分发并在 Web/桌面新建 profile 默认启用：组合包挂载 `@tomato/browser-use` 与固定 `launch`/`headless` 提供方，插件页可随时关闭，桌面安装包自带 Chromium headless shell；`tomato web` 的非桌面部署仍用本机 Playwright 缓存。同一 profile 只能有一个 browser-use 提供方（[ADR 0016](adr/0016-default-playwright-bundle.md)）。

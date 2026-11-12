@@ -81,6 +81,7 @@ describe('hired marketing template', () => {
     try {
       const robot = await ctx.robotController.hire({ templateId: brandString<RobotTemplateId>('youtube-data-insight'), locale: 'zh' })
       expect(robot.name).toBe('YouTube 数据洞察师')
+      await ctx.robotController.install({ robotId: robot.id })
       const run = await ctx.robotController.start({ robotId: robot.id, message: '分析 @mkbhd 最近 30 个视频' })
       const settled = await waitForRun(ctx.robots, run.id)
       expect(settled).toMatchObject({ state: 'succeeded', output: 'report written' })

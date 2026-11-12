@@ -27,7 +27,7 @@
  * @module @tomato/storage-json/src/per-record-unit
  */
 
-import { mkdir, readFile, readdir, rename, rm } from 'node:fs/promises'
+import { mkdir, readFile, readdir, rename, rm, stat } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import type { Dirent } from 'node:fs'
 import { StorageError } from '@tomato/storage'
@@ -155,6 +155,15 @@ async function bootstrapLegacyUnit(descriptor: KvUnitDescriptor, dir: string, st
       target.set(key, value)
     }
   }
+  // One-way migration marker: an older build reads only the untouched legacy
+  // file and cannot see records written here, so operators get a durable
+  // signal that a downgrade would hide them.
+  await writeAtomic(join(dirname(dir), `${descriptor.name}.migrated.json`), `${JSON.stringify({
+    unit: descriptor.name,
+    from: `${descriptor.name}.json`,
+    version: descriptor.version,
+    migratedAt: new Date().toISOString(),
+  }, null, 2)}\n`)
 }
 
 /**
@@ -215,6 +224,25 @@ export class PerRecordJsonUnit implements KvUnit {
       tables[table] = Object.fromEntries(records)
     }
     return { tables, global: state.global }
+  }
+
+  /**
+   * Newest modification time across the unit directory and every table
+   * directory: a publish atomically replaces one document inside a table
+   * directory, which moves that directory's timestamp.
+   */
+  async changeStamp(): Promise<number> {
+    this.assertOpen()
+    let stamp = 0
+    for (const dir of [this.dir, ...this.descriptor.tables.map(table => join(this.dir, table))]) {
+      try {
+        stamp = Math.max(stamp, (await stat(dir)).mtimeMs)
+      } catch (error) {
+        /* v8 ignore next 2 -- a missing table directory is the empty tree; other failures are environmental */
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+      }
+    }
+    return stamp
   }
 
   /** Durably replace one record: its own document, atomically. */

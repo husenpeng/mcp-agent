@@ -22,6 +22,10 @@ const HERO_HOLE = 'conversation.hero.brand.mark'
 async function bench(declare = true) {
   const ctx = new Context()
   await ctx.plugin(SlotRegistry).await()
+  ctx.provide('locale', {
+    bind: () => (key: string) => key === 'name' ? 'Tomato' : key,
+    register: () => () => {},
+  } as never)
   const slots = ctx.get('slots') as SlotRegistry
   const declareHoles = () => slots.register({
     name: 'root',
@@ -36,8 +40,8 @@ describe('official browser-brand plugin', () => {
     expect(hostApply).not.toThrow()
   })
 
-  it('declares only the slot service it uses', () => {
-    expect(inject).toEqual(['slots'])
+  it('declares only the services it uses', () => {
+    expect(inject).toEqual(['slots', 'locale'])
   })
 
   it('leaves every slot empty outside the official build profile', async () => {
@@ -79,7 +83,7 @@ describe('official browser-brand plugin', () => {
   })
 
   it('renders the official name independently from both requested mark sizes', () => {
-    const name = render(<OfficialBrandName />)
+    const name = render(<OfficialBrandName t={((key: string) => key)} />)
     expect(name.container.querySelector('svg')?.getAttribute('viewBox')).toBe('30 0 74 24')
     name.unmount()
 

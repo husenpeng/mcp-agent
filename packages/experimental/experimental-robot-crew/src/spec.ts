@@ -220,9 +220,12 @@ export function validateCrewSpec(spec: CrewSpec): readonly CrewSpecIssue[] {
     const key = `${edge.from}>${edge.to}`
     if (pairs.has(key)) issue(path, 'duplicate handoff between the same two nodes')
     pairs.add(key)
+    // Tool and stored JSON can violate the declared union at runtime.
+    // oxlint-disable-next-line typescript/no-unnecessary-condition -- validation runs on untrusted crew JSON.
     if (edge.kind !== 'handoff' && edge.kind !== 'delegate' && edge.kind !== 'review') {
       issue(`${path}.kind`, 'must be handoff, delegate, or review')
     }
+    // oxlint-disable-next-line typescript/no-unnecessary-condition -- validation runs on untrusted crew JSON.
     if (edge.when !== 'always' && edge.when !== 'onSuccess') issue(`${path}.when`, 'must be always or onSuccess')
   }
   // An edge naming an unknown node is already reported above; ordering such a
@@ -247,6 +250,7 @@ export function validateCrewSpec(spec: CrewSpec): readonly CrewSpecIssue[] {
     issue('memory.artifactChars', 'must be between 100 and 10000')
   }
   for (const intent of spec.a2a.intents) {
+    // oxlint-disable-next-line typescript/no-unnecessary-condition -- validation runs on untrusted crew JSON.
     if (intent !== 'request' && intent !== 'delegate' && intent !== 'event') issue('a2a.intents', `unknown intent "${String(intent)}"`)
   }
   for (const peer of spec.a2a.peers) {
@@ -254,6 +258,7 @@ export function validateCrewSpec(spec: CrewSpec): readonly CrewSpecIssue[] {
   }
   if (spec.workspaceRoot !== undefined && spec.workspaceRoot.trim() === '') issue('workspaceRoot', 'must not be blank when present')
   if (spec.input.prompt.trim() === '') issue('input.prompt', 'must not be blank')
+  // oxlint-disable-next-line typescript/no-unnecessary-condition -- validation runs on untrusted crew JSON.
   if (spec.input.delivery !== 'chat' && spec.input.delivery !== 'artifact') issue('input.delivery', 'must be chat or artifact')
   return issues
 }

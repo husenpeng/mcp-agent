@@ -131,7 +131,7 @@ async function setup(options: SetupOptions = {}) {
       { provider: 'visual', id: 'legacy-model', name: 'Legacy' },
     ], options.resolvedModels))
   }
-  await ctx.plugin(ToolFs, { list: false, ...options.toolFs })
+  await ctx.plugin(ToolFs, Object.assign({ list: false }, options.toolFs))
   return ctx
 }
 

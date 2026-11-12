@@ -957,6 +957,15 @@ workspaceDesktop(): { name: string; available: boolean; fileManager: 'finder' | 
 @Remote('fork') async fork(request: SessionForkRequest): Promise<SessionForkValue>
 
 /**
+ * Retract the Session's trailing human exchange from model history. Only the
+ * turn-opening prompt of the last turn can be retracted; a running turn is
+ * cancelled and settled first.
+ * @param request - Session identity and the human prompt seq to retract.
+ * @returns the committed removal range.
+ */
+@Remote('retract') retract(request: SessionRetractRequest): Promise<SessionRetractValue>
+
+/**
  * Admit one prompt after explicitly resuming its Session.
  * @param request - Session identity, prompt content, source metadata, and delivery mode.
  * @param signal - caller cancellation before prompt admission begins.

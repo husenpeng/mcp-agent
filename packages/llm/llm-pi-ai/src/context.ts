@@ -144,8 +144,32 @@ interface SystemPromptSplit {
   messages: readonly RequestMessage[]
 }
 
-/** Combine request-level text and leading system history into the initial prompt. */
-function splitSystemPrompt(options: GenerateOptions): SystemPromptSplit {
+/**
+ * Decide where the prompt goes. Request-level text, a leading system message,
+ * or a leading message that rebuilds the tool declarations (which a prompt
+ * series start always produces) becomes the initial prompt. So does a leading
+ * system message while the declarations match the history baseline, the
+ * prefix-preserving case Anthropic reads natively: every declaration it sends
+ * is already in the history baseline. Every other size system message the model reads
+ * mid-conversation stays in history, because the protocols that keep the
+ * prompt at the front reject a message list that begins with a system message.
+ * @param options - the request being converted.
+ * @param supportsMidConvoSystemMessages - whether the model accepts native mid-conversation system messages.
+ * @returns the initial prompt text and the remaining history.
+ */
+function splitSystemPrompt(options: GenerateOptions, supportsMidConvoSystemMessages: boolean): SystemPromptSplit {
+  const first = options.messages[0]
+  const leading = first?.role === 'system' ? first : undefined
+  const declared = new Set(options.toolHistory?.tools.map(tool => tool.name))
+  const current = (options.tools ?? []).map(tool => tool.name)
+  const afterNativePrefix = leading !== undefined
+    && supportsMidConvoSystemMessages
+    && options.system === undefined
+    && !leading.content.some(block => block.type === 'tool-addition' || block.type === 'tool-removal')
+    && current.every(name => declared.has(name))
+  //#region SPLIT
+  if (!afterNativePrefix) return { systemPrompt: options.system, messages: options.messages }
+  //#endregion SPLIT
   const text = [options.system]
   let end = 0
   for (const message of options.messages) {
@@ -229,6 +253,10 @@ function appendSharedHistory(
   if (message.role === 'system') {
     const content = flattenText(message)
     if (content.length > 0) {
+      // Declared support alone is not enough: pi-ai reaches its collapse with no
+      // `systemPrompt` once the prompt survives only in history (compaction, a
+      // route switch, a changed tool set), and then only Anthropic accepts a
+      // message list that begins with a system message.
       if (supportsMidConvoSystemMessages) {
         messages.push({ role: 'system', content, timestamp: 0 })
       } else {
@@ -251,7 +279,7 @@ function textOnlyContext(
   onReplayDegrade?: (reason: string) => void,
 ): PiContext {
   assertSupportedHistory(options.messages)
-  const split = splitSystemPrompt(options)
+  const split = splitSystemPrompt(options, supportsMidConvoSystemMessages)
   const toolNames = new Map<ToolCallId, string>()
   const messages: PiMessage[] = []
   for (const message of split.messages) {
@@ -304,7 +332,9 @@ export function requestImageTarget(ref: ImageAttachmentRef, budget: PiImageReque
  * @param options - projected request; one-shot system text precedes the leading history prompt.
  * @param images - absent; selects the synchronous conversion.
  * @param onReplayDegrade - forwarded to {@link toPiAssistant} for each assistant message.
- * @param supportsMidConvoSystemMessages - native model capability; otherwise later system text becomes a user-role system-reminder.
+ * @param supportsMidConvoSystemMessages - native model capability for later system text, which also keeps a
+ *   leading system message out of the initial prompt when declarations changed; otherwise
+ *   every size system message becomes a user-role system-reminder.
  * @returns the pi-ai context; `tools` is omitted when the request declares none.
  * @throws {LlmError} `UNSUPPORTED_CONTENT` for images in any history role, including a leading system message.
  */
@@ -324,7 +354,9 @@ export function toPiContext(
  * @param options - projected request; one-shot system text precedes the leading history prompt.
  * @param images - attachment provider, current path resolver, and request limits.
  * @param onReplayDegrade - forwarded to {@link toPiAssistant} for each assistant message.
- * @param supportsMidConvoSystemMessages - native model capability; otherwise later system text becomes a user-role system-reminder.
+ * @param supportsMidConvoSystemMessages - native model capability for later system text, which also keeps a
+ *   leading system message out of the initial prompt when declarations changed; otherwise
+ *   every size system message becomes a user-role system-reminder.
  * @returns the asynchronously resolved pi-ai context.
  */
 export function toPiContext(
@@ -356,7 +388,7 @@ async function toPiContextWithImages(
     maxBytes: DEFAULT_REQUEST_IMAGE_MAX_BYTES,
   }
   assertSupportedHistory(options.messages)
-  const split = splitSystemPrompt(options)
+  const split = splitSystemPrompt(options, supportsMidConvoSystemMessages)
   const requestImages = await prepareRequestImages(split.messages, attachments, requestImagePolicy, options.signal)
   if (maxRequestImageBytes !== undefined) {
     const offloadImages = requiredImageOffload(

@@ -45,7 +45,9 @@ final class BiometricLock: ObservableObject {
     ///   opens the gate and reports `unavailable`, because it offers nothing to
     ///   verify against. Pass false to keep the gate shut regardless.
     func unlock(allowUnavailable: Bool = true) async {
-        if unlocked || checking { return }
+        if unlocked || checking {
+            return
+        }
         checking = true
         defer { checking = false }
 

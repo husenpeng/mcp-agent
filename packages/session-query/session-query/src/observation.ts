@@ -12,6 +12,7 @@ import type { ProjectionSnapshot } from '@tomato/session-projection'
 import type {} from '@tomato/session-projection-cache'
 import { SESSION_QUERY_DEFAULT_PREPARED_SESSION_CACHE_SIZE, SessionQueryError } from './config.ts'
 import { readColdSessionLog, type ColdSessionLog } from './cold-read.ts'
+import { assertSessionHeadersCompatible } from './sources.ts'
 
 /** One exact immutable Session cut retained for the caller's read lifetime. */
 export interface SessionObservation extends Disposable {
@@ -116,6 +117,9 @@ export class SessionObservationReader {
         throwIfObservationAborted(signal)
         const attached = this.ctx.sessions.get(sessionId)
         if (attached !== undefined) return this.live(attached, projectionMode)
+        // The stat snapshot and the opened handle describe one source; a
+        // backend that reports different immutable headers is unservable.
+        assertSessionHeadersCompatible(loaded.header, snapshot.header)
         // The handle marks persisted events as adoptable; synthetic closers
         // are owned by this read, so the combined seed needs no copy.
         const seed = loaded.events

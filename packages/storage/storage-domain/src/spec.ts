@@ -35,7 +35,7 @@ export interface DomainTableSpec<K extends string = string, V = unknown> {
 export interface DomainSpec {
   /** Domain name; must match `UNIT_NAME_RE` (doubles as the backend unit name). */
   readonly name: string
-  /** Current domain format version; reads enforce it according to the selected layout. */
+  /** Current domain format version; reads accept it or a declared {@link compatibleVersions} entry. */
   readonly version: number
   /**
    * Medium layout for the backend unit: `single` (the default) stores the
@@ -48,10 +48,12 @@ export interface DomainSpec {
   /**
    * Older domain versions whose stored records the current record schemas
    * also accept (the declaring owner vouches for that, typically by
-   * declaring the fields older records lack as optional). `per-record` backends
-   * read documents stamped with a listed version instead of discarding them,
-   * and accept a legacy whole-unit file so stamped for the one-time
-   * bootstrap; writes always stamp {@link version}.
+   * declaring the fields older records lack as optional). A unit stamped
+   * with a listed version opens instead of rejecting: `per-record` backends
+   * read such record documents and accept a legacy whole-unit file for the
+   * one-time bootstrap, `single` backends read the whole document, and the
+   * next write stamps {@link version}. Records that fail the current schemas
+   * still follow {@link invalidRecords}.
    */
   readonly compatibleVersions?: readonly number[]
   /**

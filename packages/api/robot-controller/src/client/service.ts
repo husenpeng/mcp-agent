@@ -10,8 +10,8 @@ import { RemoteStreamCarrierError, type ClientRemote } from '@tomato/api-gateway
 import type { RemoteResult } from '@tomato/typert-protocol'
 import type {
   Robot, RobotCancelRequest, RobotCapabilitiesRequest, RobotCapabilityCatalog, RobotCorrectRequest, RobotHireRequest,
-  RobotInstantiateRequest, RobotInterruptRequest, RobotPublishRequest, RobotRebindRequest, RobotRunsRequest, RobotSnapshotFrame,
-  RobotSpecRevision, RobotStartRequest, Run,
+  RobotInstallRequest, RobotInstantiateRequest, RobotInterruptRequest, RobotPublishRequest, RobotRebindRequest,
+  RobotRemoveRequest, RobotRunsRequest, RobotSnapshotFrame, RobotSpecRevision, RobotStartRequest, Run,
 } from '../types.ts'
 import type { RobotRunsModel, RobotRunsSource } from './model.ts'
 
@@ -47,6 +47,18 @@ export interface RobotRemote {
    * @returns the rebound robot, or the business/transport failure.
    */
   rebind(request: RobotRebindRequest): Promise<RemoteResult<Robot>>
+  /**
+   * Verify the robot's declared dependencies and record its installation.
+   * @param request - robot to install.
+   * @returns the installed robot, or the business/transport failure.
+   */
+  installRobot(request: RobotInstallRequest): Promise<RemoteResult<Robot>>
+  /**
+   * Delete one robot instance.
+   * @param request - robot to delete.
+   * @returns settlement, or the business/transport failure.
+   */
+  removeRobot(request: RobotRemoveRequest): Promise<RemoteResult<void>>
   /**
    * Accept one manual run.
    * @param request - robot and the input message.
@@ -119,6 +131,18 @@ export interface IRobotRuns {
    * @returns the rebound robot, or the business/transport failure.
    */
   rebind(request: RobotRebindRequest): Promise<RemoteResult<Robot>>
+  /**
+   * Verify the robot's declared dependencies and record its installation.
+   * @param request - robot to install.
+   * @returns the installed robot, or the business/transport failure.
+   */
+  install(request: RobotInstallRequest): Promise<RemoteResult<Robot>>
+  /**
+   * Delete one robot instance.
+   * @param request - robot to delete.
+   * @returns settlement, or the business/transport failure.
+   */
+  remove(request: RobotRemoveRequest): Promise<RemoteResult<void>>
   /**
    * Accept one manual run.
    * @param request - robot and the input message.
@@ -215,6 +239,24 @@ export class ClientRobotRuns extends Service implements IRobotRuns {
 
   rebind(request: RobotRebindRequest): Promise<RemoteResult<Robot>> {
     return this.remote.robot.rebind(request)
+  }
+
+  /**
+   * Verify the robot's declared dependencies and record its installation.
+   * @param request - robot to install.
+   * @returns the installed robot, or the business/transport failure.
+   */
+  install(request: RobotInstallRequest): Promise<RemoteResult<Robot>> {
+    return this.remote.robot.installRobot(request)
+  }
+
+  /**
+   * Delete one robot instance while keeping its specifications and runs.
+   * @param request - robot to delete.
+   * @returns settlement, or the business/transport failure.
+   */
+  remove(request: RobotRemoveRequest): Promise<RemoteResult<void>> {
+    return this.remote.robot.removeRobot(request)
   }
 
   hire(request: RobotHireRequest): Promise<RemoteResult<Robot>> {

@@ -73,8 +73,9 @@ export function createCrewLedgerTracker(
     if (!unchanged) notifySubscribers([...listeners], 'crew ledger changed')
   }
 
+  const isDisposed = (): boolean => disposed
   const read = async (): Promise<void> => {
-    if (disposed || current === undefined) return
+    if (isDisposed() || current === undefined) return
     if (inFlight) {
       pendingRead = true
       return
@@ -82,7 +83,7 @@ export function createCrewLedgerTracker(
     inFlight = true
     try {
       const result = await load(current)
-      if (disposed || result === undefined) return
+      if (isDisposed()) return
       if (result.ok) publish({ runId: current, entries: result.value })
       else publish({ ...snapshot, runId: current, error: result.error.message })
     } catch (error: unknown) {

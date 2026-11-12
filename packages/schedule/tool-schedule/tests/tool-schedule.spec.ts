@@ -101,7 +101,7 @@ describe('Schedule model tools', () => {
     expect(listed.isError).toBe(false)
     expect(listed.value).toEqual([created.value])
     expect(listed.content).toEqual([{ type: 'text', text: JSON.stringify([created.value]) }])
-    expect(await test.service.catalog()).toEqual([{ ...records[0], sessionId: test.agent.session.id, status: 'active' }])
+    expect(await test.service.catalog()).toEqual([{ ...records[0], sessionId: test.agent.session.id, status: 'active', paused: false }])
     expect(test.resolve).not.toHaveBeenCalled()
   })
 
@@ -122,7 +122,7 @@ describe('Schedule model tools', () => {
     expect(created.content).toEqual([{ type: 'text', text: JSON.stringify(created.value) }])
     const listed = await execute(test, 'schedule_list', {})
     expect(listed.value).toEqual([created.value])
-    expect(await test.service.catalog()).toEqual([{ ...records[0], sessionId: test.agent.session.id, status: 'active' }])
+    expect(await test.service.catalog()).toEqual([{ ...records[0], sessionId: test.agent.session.id, status: 'active', paused: false }])
     expect(test.resolve).not.toHaveBeenCalled()
   })
 
@@ -220,7 +220,7 @@ describe('Schedule model tools', () => {
     })
     expect(created.content).toEqual([{ type: 'text', text: JSON.stringify(created.value) }])
     expect((await execute(test, 'schedule_list', {})).value).toEqual([created.value])
-    expect(await test.service.catalog()).toEqual([{ ...records[0], sessionId: test.agent.session.id, status: 'active' }])
+    expect(await test.service.catalog()).toEqual([{ ...records[0], sessionId: test.agent.session.id, status: 'active', paused: false }])
     expect(test.resolve).not.toHaveBeenCalled()
   })
 

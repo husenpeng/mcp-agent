@@ -8,7 +8,7 @@ import {
 import type { TimingDraft } from '../src/client/task-timing.ts'
 
 const at: ScheduleCatalogEntry = {
-  id: 'at' as ScheduleId, sessionId: 'original' as SessionId, status: 'active', kind: 'at',
+  id: 'at' as ScheduleId, sessionId: 'original' as SessionId, status: 'active', paused: false, kind: 'at',
   title: 'One-time instruction', prompt: 'One-time instruction', scheduledAt: '2099-10-01T09:12:34.567Z',
 }
 const after: ScheduleCatalogEntry = { ...at, id: 'after' as ScheduleId, kind: 'after', afterSeconds: 90 }

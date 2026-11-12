@@ -1,6 +1,6 @@
 {
   "name": "@tomato/experimental-tool-memory",
-  "description": "Model-facing memory tools, the /memory command, and profile and pinned-memory injection over ctx.memory",
+  "description": "Model-facing memory tools, the /memory command, and profile, pinned, and request-relevant memory injection over ctx.memory",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -20,12 +20,29 @@
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json",
-    "./locale/*.json": "./locale/*.json"
+    "./locale/*.json": "./locale/*.json",
+    "./typert": {
+      "types": "./lib/typert.host.d.ts",
+      "default": "./lib/typert.host.js"
+    },
+    "./remote": {
+      "types": "./lib/typert.remote-client.d.ts",
+      "default": "./lib/typert.remote-client.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    }
   },
   "files": [
     "locale/*.json",
     "lib/index.js",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/typert.host.js",
+    "lib/typert.host.d.ts",
+    "lib/typert.remote-client.js",
+    "lib/typert.remote-client.d.ts"
   ],
   "license": "MIT",
   "peerDependencies": {
@@ -38,7 +55,8 @@
     "@tomato/session-projection": "workspace:*",
     "@tomato/session-query": "workspace:*",
     "@tomato/timeout": "workspace:*",
-    "@tomato/tools": "workspace:*"
+    "@tomato/tools": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*"
   },
   "dependencies": {
     "@tomato/schemastery": "workspace:~",
@@ -63,6 +81,7 @@
     "@tomato/timeout": "workspace:*",
     "@tomato/tool-executor-native": "workspace:*",
     "@tomato/tool-testkit": "workspace:*",
-    "@tomato/tools": "workspace:*"
+    "@tomato/tools": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*"
   }
 }

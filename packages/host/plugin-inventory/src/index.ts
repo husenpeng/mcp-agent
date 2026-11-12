@@ -47,6 +47,13 @@ const FIBER_PHASE = {
   [FIBER_STATE.UNLOADING]: 'unloading',
 } as const satisfies Record<FiberState, PluginFiberPhase>
 
+declare module '@tomato/cordis' {
+  interface Context {
+    /** Read-only projection of the current Loader plugin entries. */
+    pluginInventory: PluginInventoryGateway
+  }
+}
+
 /** Remote-only service exposing the Loader's current non-group entry state. */
 export class PluginInventoryGateway extends TypertRemoteService {
   static inject = ['loader']

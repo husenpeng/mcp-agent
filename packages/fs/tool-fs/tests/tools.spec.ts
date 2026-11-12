@@ -119,7 +119,7 @@ async function setup(config: ToolFs.Config = {}) {
   await ctx.plugin(NativeToolExecutor)
   await ctx.plugin(FakeFs)
   await ctx.plugin(FsPolicy)
-  await ctx.plugin(ToolFs, { list: false, ...config })
+  await ctx.plugin(ToolFs, Object.assign({ list: false }, config))
   const fs = ctx.fs as FakeFs
   return { ctx, fs }
 }

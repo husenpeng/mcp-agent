@@ -17,7 +17,6 @@
     { "path": "../ui-primitives" },
     { "path": "../ui-slots" },
     { "path": "../ui-renderer" },
-    { "path": "../ui-sidebar" },
     { "path": "../ui-workspace" },
     { "path": "../../experimental/experimental-robot-crew" }
   ]

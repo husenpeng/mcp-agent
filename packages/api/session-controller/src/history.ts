@@ -265,7 +265,9 @@ export class SessionHistoryController {
       return observation
     } catch (error: unknown) {
       if (error instanceof SessionQueryError
-        && error.code === 'SESSION_QUERY_SESSION_NOT_FOUND') rejectNotFound(address)
+        && (error.code === 'SESSION_QUERY_SESSION_NOT_FOUND' || error.code === 'SESSION_QUERY_SOURCE_CONFLICT')) {
+        rejectNotFound(address)
+      }
       throw error
     }
   }

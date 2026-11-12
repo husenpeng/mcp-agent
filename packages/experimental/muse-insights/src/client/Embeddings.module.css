@@ -6,7 +6,7 @@
 .field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .label { color: var(--dsw-alias-label-primary); font-size: 12px; }
 .input {
-  padding: 6px 8px; border: 1px solid var(--dsw-alias-border-l2); border-radius: var(--dsw-radius-sm);
+  padding: 6px 8px; border: 0.5px solid var(--dsw-alias-border-l2); border-radius: var(--dsw-radius-sm);
   background: var(--dsw-alias-bg-layer-1); color: var(--dsw-alias-label-primary); font-size: 12px;
 }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }

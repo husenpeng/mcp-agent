@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v0.2.1-rc.4/robot-capabilities-install/guide.md
+/:
+  en: 9fcdf1f061546b55
+  zh: cd702768555a9dc9
+/robot-capabilities-installation-and-deletion:
+  en: a43b2b58d5cf2c81
+  zh: 2a32a78ef9c08ceb
+/robot-capabilities-installation-and-deletion/change:
+  en: 7dd299ff6c43cf16
+  zh: ec654274cc48c83a
+/robot-capabilities-installation-and-deletion/migration:
+  en: 91a0b9f4489cb8ed
+  zh: f66164c79137304a

@@ -25,9 +25,25 @@
 
 .toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+}
+
+/* The narrow rail wraps between controls rather than inside a label. */
+.toolbar button {
+  flex: none;
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
 }
 
 .robotRow {

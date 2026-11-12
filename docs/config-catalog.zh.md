@@ -17,7 +17,7 @@
 ## `@tomato/account-gateway`
 
 - `inject`: `tomatoAccount`
-- `source`: [`packages/tomato/account-gateway/src/index.ts:19`](../packages/tomato/account-gateway/src/index.ts)
+- `source`: [`packages/tomato/account-gateway/src/index.ts:20`](../packages/tomato/account-gateway/src/index.ts)
 
 ```ts config-catalog
 /** Provider configuration. */
@@ -1179,7 +1179,7 @@ export interface InspectorOptions {
 
 - `inject`: `storageDomain`
 - `refs`: `Volatile` (`@tomato/cordis`)
-- `source`: [`packages/experimental/memory/src/index.ts:80`](../packages/experimental/memory/src/index.ts)
+- `source`: [`packages/experimental/memory/src/index.ts:102`](../packages/experimental/memory/src/index.ts)
 
 ```ts config-catalog
 /** Deployment limits for stored and recalled memory; Loader publishes each as a live reference. */
@@ -1212,6 +1212,30 @@ export interface Config {
   historyEpisodes?: number | Volatile<number>
   /** Cached embedding vectors retained across owners and projects; `0` disables persistence. */
   maxEmbeddingVectors?: number | Volatile<number>
+  /** Days a superseded record version is retained; `0` keeps every version. */
+  versionRetentionDays?: number | Volatile<number>
+  /** Most superseded versions retained per identity; the current version does not count. */
+  maxVersionsPerRecord?: number | Volatile<number>
+  /** Days a summary episode is retained; observations use `episodeRetentionDays`. */
+  summaryRetentionDays?: number | Volatile<number>
+  /** Minimum milliseconds between medium change checks; `0` never re-reads another process's writes. */
+  refreshIntervalMs?: number | Volatile<number>
+  /** Milliseconds a write waits for another Host process's memory write lock. */
+  writeLockTimeoutMs?: number | Volatile<number>
+  /** Milliseconds after which an abandoned write lock file is stolen. */
+  writeLockStaleMs?: number | Volatile<number>
+  /** SQLite sidecar path for FTS5 retrieval; absent keeps the in-memory scan. */
+  indexPath?: string
+  /** Embeddings one outbox drain submits; defaults to 32. */
+  indexEmbedBatch?: number
+  /** Delay before retrying a failed outbox batch; defaults to 5000 ms. */
+  indexEmbedRetryMs?: number
+  /** Optional sqlite-vec extension path, without the platform suffix. */
+  vecExtensionPath?: string
+  /** Directory that receives pruned records as monthly JSONL; absent deletes them. */
+  coldArchivePath?: string
+  /** Months of monthly cold-archive files retained; defaults to 6. */
+  coldArchiveRetentionMonths?: number
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-memory -->
@@ -1259,6 +1283,68 @@ export interface Config {
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-muse-insights -->
+
+<!-- BEGIN GENERATED config-catalog:@tomato/experimental-phone-use -->
+<a id="tomatoexperimental-phone-use"></a>
+
+## `@tomato/experimental-phone-use`
+
+- `inject`: `tools`
+- `source`: [`packages/experimental/phone-use/src/index.ts:31`](../packages/experimental/phone-use/src/index.ts)
+
+```ts config-catalog
+/** Plugin configuration. */
+export interface Config {
+  /** Deadline for one engine command; the Host cancels and fails it after this. */
+  commandTimeoutMs: number
+  /** Most elements one observation asks for. */
+  observeMaxElements: number
+  /** Most element lines either tool renders back to the model. */
+  maxRenderElements: number
+}
+```
+<!-- END GENERATED config-catalog:@tomato/experimental-phone-use -->
+
+<!-- BEGIN GENERATED config-catalog:@tomato/experimental-phone-use-macos -->
+<a id="tomatoexperimental-phone-use-macos"></a>
+
+## `@tomato/experimental-phone-use-macos`
+
+- `inject`: `subprocess`
+- `source`: [`packages/experimental/phone-use-macos/src/index.ts:31`](../packages/experimental/phone-use-macos/src/index.ts)
+
+```ts config-catalog
+/** Plugin configuration. */
+export interface Config {
+  /** Absolute path to `apps/ios`; the packaged Desktop ships no sources, so it must be set explicitly there. */
+  iosProjectDir: string
+  /** Device to manage; omitted when exactly one phone is attached. */
+  udid?: string
+  /** Derived data directory for the runner build. */
+  derivedDataDir?: string
+  /** Renew when the provisioning profile has less than this many hours left. */
+  renewBeforeHours: number
+  /** Watch interval in milliseconds; 0 disables the loop. */
+  checkIntervalMs: number
+  /** Launch backoff stages in milliseconds. */
+  launchBackoffMs: number[]
+  /** Deadline for one xcodebuild invocation. */
+  xcodebuildTimeoutMs: number
+  /** How the Host reaches the runner: `usb` owns a usbmuxd relay, `vpn` dials out. */
+  transport: 'usb' | 'vpn'
+  /** Loopback port the USB relay listens on. */
+  relayPort: number
+  /** The repository's usbmuxd relay script; defaults to `<iosProjectDir>/tests/usbmux-relay.mjs`. */
+  relayScript?: string
+  /** Host base URL injected into the runner environment; `vpn` transport only. */
+  hostBase?: string
+  /** Host-side environment variable holding the runner credential. */
+  credentialEnv: string
+  /** This device's Host identity; `vpn` transport only. */
+  deviceId?: string
+}
+```
+<!-- END GENERATED config-catalog:@tomato/experimental-phone-use-macos -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-ptc-runtime-python -->
 <a id="tomatoexperimental-ptc-runtime-python"></a>
@@ -1329,6 +1415,23 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-ptc-runtime-python -->
 
+<!-- BEGIN GENERATED config-catalog:@tomato/experimental-robot-room-local -->
+<a id="tomatoexperimental-robot-room-local"></a>
+
+## `@tomato/experimental-robot-room-local`
+
+- `inject`: `storageDomain`
+- `source`: [`packages/experimental/experimental-robot-room-local/src/index.ts:36`](../packages/experimental/experimental-robot-room-local/src/index.ts)
+
+```ts config-catalog
+/** Deployment limits for room execution. */
+export interface Config {
+  /** Most members one room may run at the same time. */
+  readonly maxConcurrentMembers?: number
+}
+```
+<!-- END GENERATED config-catalog:@tomato/experimental-robot-room-local -->
+
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-robot-runtime -->
 <a id="tomatoexperimental-robot-runtime"></a>
 
@@ -1336,7 +1439,7 @@ export interface Config {
 
 - `inject`: `agentDefaultModel` · `agents` · `robots` · `sessionProjections` · `sessions`
 - `refs`: `z` (`zod`)
-- `source`: [`packages/experimental/robot-runtime/src/index.ts:47`](../packages/experimental/robot-runtime/src/index.ts)
+- `source`: [`packages/experimental/robot-runtime/src/index.ts:49`](../packages/experimental/robot-runtime/src/index.ts)
 
 ```ts config-catalog
 /** Validated run-execution limits. */
@@ -1481,13 +1584,17 @@ export interface Config {
 
 - `inject`: `memory` · `tools` · `agents` · `commands` · `sessionProjections` · `llm`
 - `refs`: `Volatile` (`@tomato/cordis`)
-- `source`: [`packages/experimental/tool-memory/src/index.ts:112`](../packages/experimental/tool-memory/src/index.ts)
+- `source`: [`packages/experimental/tool-memory/src/index.ts:127`](../packages/experimental/tool-memory/src/index.ts)
 
 ```ts config-catalog
 /** Snapshot, write-justification, and query-expansion policy; each field is live-editable. */
 export interface Config {
   /** Maximum UTF-8 bytes of one rendered memory snapshot. */
   maxSnapshotBytes?: number | Volatile<number | undefined>
+  /** Most active workspace memories the snapshot adds for relevance to the request; 0 disables the block. */
+  maxRelevantRecords?: number | Volatile<number | undefined>
+  /** Lowest lexical match a saved memory needs to join the relevant block, from 0 to 1. */
+  minRelevantScore?: number | Volatile<number | undefined>
   /** Whether the snapshot adds a subject index of this workspace's memories. */
   projectIndex?: boolean | Volatile<boolean | undefined>
   /** Minimum user-perceived characters of a `user_quote` that can activate a write. */
@@ -1506,6 +1613,10 @@ export interface Config {
   maxAlternatives?: number | Volatile<number | undefined>
   /** Whether one bounded request captures durable statements from each finished turn as candidates. */
   capture?: boolean | Volatile<boolean | undefined>
+  /** Whether a quote-verified profile statement from capture becomes active immediately. */
+  captureProfileActive?: boolean | Volatile<boolean | undefined>
+  /** Maximum UTF-8 bytes of the tool activity sent to one capture request. */
+  captureMaxToolBytes?: number | Volatile<number | undefined>
   /** Maximum UTF-8 bytes of the person messages sent to one capture request. */
   captureMaxInputBytes?: number | Volatile<number | undefined>
   /** Output-token cap of one capture request. */
@@ -1524,8 +1635,14 @@ export interface Config {
   episodeMaxTokens?: number | Volatile<number | undefined>
   /** End-to-end deadline of one episode capture in milliseconds. */
   episodeTimeoutMs?: number | Volatile<number | undefined>
+  /** Share of eligible tool calls that start one episode capture, from 0 to 1. */
+  episodeSampleRate?: number | Volatile<number | undefined>
+  /** Most episode captures one Session starts; `0` means unlimited. */
+  episodeSampleBudget?: number | Volatile<number | undefined>
   /** Maximum UTF-8 bytes of the injected project-history block. */
   maxHistoryBytes?: number | Volatile<number | undefined>
+  /** Lowest lexical match a project episode needs to enter the history or index block, from 0 to 1. */
+  minHistoryScore?: number | Volatile<number | undefined>
   /** Whether a broad glob is recorded as a deterministic project lesson. */
   lessonCapture?: boolean | Volatile<boolean | undefined>
   /** Path count at which a glob becomes a lesson. */
@@ -3228,7 +3345,7 @@ export interface Config {
 ## `@tomato/schedule`
 
 - `inject`: `agents` · `sessions` · `storageDomain` · `sessionPersistence`
-- `source`: [`packages/schedule/schedule/src/index.ts:83`](../packages/schedule/schedule/src/index.ts)
+- `source`: [`packages/schedule/schedule/src/index.ts:84`](../packages/schedule/schedule/src/index.ts)
 
 ```ts config-catalog
 /** Configuration for the Host Schedule domain. */
@@ -5308,6 +5425,7 @@ export interface Config {
 | `@tomato/api-remotes` | `typertGateway` | [`packages/api/remotes/src/index.ts`](../packages/api/remotes/src/index.ts) |
 | `@tomato/api-robot-controller` | `robots` · `typert` | [`packages/api/robot-controller/src/index.ts`](../packages/api/robot-controller/src/index.ts) |
 | `@tomato/api-robot-crew-controller` | `crews` · `typert` | [`packages/api/api-robot-crew-controller/src/index.ts`](../packages/api/api-robot-crew-controller/src/index.ts) |
+| `@tomato/api-robot-room-controller` | `rooms` · `typert` | [`packages/api/api-robot-room-controller/src/index.ts`](../packages/api/api-robot-room-controller/src/index.ts) |
 | `@tomato/authorization` | `credentials` | [`packages/credentials/authorization/src/index.ts`](../packages/credentials/authorization/src/index.ts) |
 | `@tomato/brand` | — | [`packages/tomato/brand/src/index.ts`](../packages/tomato/brand/src/index.ts) |
 | `@tomato/browser-use` | — | [`packages/browser-use/browser-use/src/index.ts`](../packages/browser-use/browser-use/src/index.ts) |
@@ -5348,6 +5466,7 @@ export interface Config {
 | `@tomato/client-ui-renderer` | — | [`packages/client/ui-renderer/src/index.ts`](../packages/client/ui-renderer/src/index.ts) |
 | `@tomato/client-ui-robot` | — | [`packages/client/ui-robot/src/index.ts`](../packages/client/ui-robot/src/index.ts) |
 | `@tomato/client-ui-robot-crew` | — | [`packages/client/client-ui-robot-crew/src/index.ts`](../packages/client/client-ui-robot-crew/src/index.ts) |
+| `@tomato/client-ui-robot-room` | — | [`packages/client/client-ui-robot-room/src/index.ts`](../packages/client/client-ui-robot-room/src/index.ts) |
 | `@tomato/client-ui-schedule` | — | [`packages/client/ui-schedule/src/index.ts`](../packages/client/ui-schedule/src/index.ts) |
 | `@tomato/client-ui-secret-mask` | — | [`packages/client/ui-secret-mask/src/index.ts`](../packages/client/ui-secret-mask/src/index.ts) |
 | `@tomato/client-ui-session` | — | [`packages/client/ui-session/src/index.ts`](../packages/client/ui-session/src/index.ts) |
@@ -5399,6 +5518,8 @@ export interface Config {
 | `@tomato/experimental-robot-crew-remote` | — | [`packages/experimental/experimental-robot-crew-remote/src/index.ts`](../packages/experimental/experimental-robot-crew-remote/src/index.ts) |
 | `@tomato/experimental-robot-local` | `storageDomain` | [`packages/experimental/robot-local/src/index.ts`](../packages/experimental/robot-local/src/index.ts) |
 | `@tomato/experimental-robot-remote` | — | [`packages/experimental/robot-remote/src/index.ts`](../packages/experimental/robot-remote/src/index.ts) |
+| `@tomato/experimental-robot-room-remote` | — | [`packages/experimental/experimental-robot-room-remote/src/index.ts`](../packages/experimental/experimental-robot-room-remote/src/index.ts) |
+| `@tomato/experimental-robot-templates-knowledge-work` | `robotTemplates` · `skills` | [`packages/experimental/robot-templates-knowledge-work/src/index.ts`](../packages/experimental/robot-templates-knowledge-work/src/index.ts) |
 | `@tomato/experimental-robot-templates-marketing` | `robotTemplates` · `skills` | [`packages/experimental/robot-templates-marketing/src/index.ts`](../packages/experimental/robot-templates-marketing/src/index.ts) |
 | `@tomato/experimental-robot-triggers` | `robots` | [`packages/experimental/robot-triggers/src/index.ts`](../packages/experimental/robot-triggers/src/index.ts) |
 | `@tomato/experimental-session-inspector` | — | [`packages/experimental/session-inspector/src/index.ts`](../packages/experimental/session-inspector/src/index.ts) |
@@ -5499,9 +5620,11 @@ export interface Config {
 | `@tomato/experimental-inspector-profile` | — | [`packages/experimental/inspector-profile/src/index.ts`](../packages/experimental/inspector-profile/src/index.ts) |
 | `@tomato/experimental-liveshare-protocol` | — | [`packages/experimental/liveshare-protocol/src/index.ts`](../packages/experimental/liveshare-protocol/src/index.ts) |
 | `@tomato/experimental-muse-bundle` | — | [`packages/experimental/muse-bundle/src/index.ts`](../packages/experimental/muse-bundle/src/index.ts) |
+| `@tomato/experimental-phone-use-bundle` | — | [`packages/experimental/phone-use-bundle/src/index.ts`](../packages/experimental/phone-use-bundle/src/index.ts) |
 | `@tomato/experimental-plugin-market-bundle` | — | [`packages/experimental/plugin-market-bundle/src/index.ts`](../packages/experimental/plugin-market-bundle/src/index.ts) |
 | `@tomato/experimental-ralph-bundle` | — | [`packages/experimental/ralph-bundle/src/index.ts`](../packages/experimental/ralph-bundle/src/index.ts) |
 | `@tomato/experimental-robot-crew` | — | [`packages/experimental/experimental-robot-crew/src/index.ts`](../packages/experimental/experimental-robot-crew/src/index.ts) |
+| `@tomato/experimental-robot-room` | — | [`packages/experimental/experimental-robot-room/src/index.ts`](../packages/experimental/experimental-robot-room/src/index.ts) |
 | `@tomato/experimental-session-search` | — | [`packages/experimental/session-search/src/index.ts`](../packages/experimental/session-search/src/index.ts) |
 | `@tomato/experimental-session-titles-bundle` | — | [`packages/experimental/session-titles-bundle/src/index.ts`](../packages/experimental/session-titles-bundle/src/index.ts) |
 | `@tomato/experimental-terminal-bundle` | — | [`packages/experimental/terminal-bundle/src/index.ts`](../packages/experimental/terminal-bundle/src/index.ts) |

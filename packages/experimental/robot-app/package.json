@@ -49,10 +49,16 @@
     "@tomato/experimental-robot-local": "workspace:*",
     "@tomato/experimental-robot-remote": "workspace:*",
     "@tomato/experimental-robot-runtime": "workspace:*",
+    "@tomato/experimental-robot-templates-knowledge-work": "workspace:*",
     "@tomato/experimental-robot-templates-marketing": "workspace:*",
     "@tomato/experimental-robot-triggers": "workspace:*",
     "@tomato/experimental-tool-robot": "workspace:*",
-    "@tomato/experimental-tool-robot-crew": "workspace:*"
+    "@tomato/experimental-tool-robot-crew": "workspace:*",
+    "@tomato/api-robot-room-controller": "workspace:*",
+    "@tomato/client-ui-robot-room": "workspace:*",
+    "@tomato/experimental-robot-room": "workspace:*",
+    "@tomato/experimental-robot-room-local": "workspace:*",
+    "@tomato/experimental-robot-room-remote": "workspace:*"
   },
   "devDependencies": {
     "@tomato/cordis": "workspace:~",

@@ -90,7 +90,8 @@ export class ScheduleRuntime {
     const failed = new Set<string>()
     const handled = new Set<string>()
     const scanNow = Date.now()
-    const due = this.tasks().filter(task => task.status === 'active' && Date.parse(task.record.scheduledAt) <= scanNow)
+    const due = this.tasks().filter(task => task.status === 'active' && task.pausedAt === undefined
+      && Date.parse(task.record.scheduledAt) <= scanNow)
     for (const task of due) {
       if (this.stopping) return
       if (handled.has(task.record.id)) continue
@@ -155,7 +156,8 @@ export class ScheduleRuntime {
       }
     }
     if (this.stopping) return
-    const next = this.tasks().filter(task => task.status === 'active' && !failed.has(task.record.id))
+    const next = this.tasks().filter(task => task.status === 'active' && task.pausedAt === undefined
+      && !failed.has(task.record.id))
       .reduce<number | undefined>((at, task) => {
         const target = Date.parse(task.record.scheduledAt)
         return at === undefined ? target : Math.min(at, target)
