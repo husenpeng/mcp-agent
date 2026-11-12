@@ -100,7 +100,7 @@ function PanelRow({
           )}
         </button>
       </Tooltip>
-      {renderSlot('sidebar.panellist.subnav', { id, active, wide }, { only: id })}
+      {active && wide && renderSlot('sidebar.panellist.subnav', { id, active, wide }, { only: id })}
       {wide && canUnpin && <Tooltip label={unpinTooltip} side="bottom" align="end" delayMs={500} portal>
         <button type="button" className={css.panelUnpin} aria-label={unpinLabel} onClick={(event) => {
           // Unpin is rendered only while this navigation also renders More.

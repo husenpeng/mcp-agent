@@ -319,13 +319,6 @@
       config:
         outputDirectory: !!js tomatoHomePath('office-kit', 'outputs')
 
-    # Packaged Office skills plus their Python environment. Desktop names the
-    # primary runtime; other profiles use the user environment.
-    - id: skill-office
-      name: '@tomato/skill-office'
-      config:
-        pythonEnvironment: !!js "ctx.get('profileContext')?.name === 'desktop' && process.env.TOMATO_PRIMARY_RUNTIME ? 'workspace-dependencies' : 'user'"
-
     # Installs the packaged primary runtime's workspace dependencies for the
     # desktop profile; disabled everywhere else.
     - id: workspace-dependencies
@@ -334,6 +327,13 @@
       config:
         source: !!js process.env.TOMATO_PRIMARY_RUNTIME
         root: !!js tomatoHomePath('tomato-runtimes', 'tomato-primary-runtime')
+
+    # Packaged Office skills plus their Python environment. Desktop names the
+    # primary runtime; other profiles use the user environment.
+    - id: skill-office
+      name: '@tomato/skill-office'
+      config:
+        pythonEnvironment: !!js "ctx.get('profileContext')?.name === 'desktop' && process.env.TOMATO_PRIMARY_RUNTIME ? 'workspace-dependencies' : 'user'"
 
     # The right Sidebar's document tab: bounded file reads with selectable
     # Markdown, code, HTML, PDF, Office, and plain-text renderers.
