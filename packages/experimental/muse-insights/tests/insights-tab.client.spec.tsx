@@ -19,7 +19,7 @@ const standard: GlobalStandardProps & SessionStandardProps = {
   useSession: unused, useProjection: unused, useConversation: unused, useInput: unused,
   useChat: unused, useTrajectory: unused,
   usePanelInfo: unused, useSessions: unused, useSessionStatus: unused,
-  useSessionRetainInfo: unused, useResource: unused, useWorkspaces: unused,
+  useSessionRetainInfo: unused, useResource: unused, useContextMenu: unused, useWorkspaces: unused,
   ...allowAllAccess,
   inputActions: {
     insertQuote: () => false, captureInsertion: unused, insertText: unused, setDraft: unused,

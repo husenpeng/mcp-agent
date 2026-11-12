@@ -2,7 +2,7 @@ import { existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, 
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { cleanStagedTomatoDocs, publishedDocuments, stageTomatoDocs } from './stage-tomato-docs.ts'
+import { cleanStagedTomatoDocs, publishedDocuments, stageTomatoDocs } from './stage-dsh-docs.ts'
 
 const roots: string[] = []
 

@@ -92,7 +92,10 @@ async function bench() {
   const mountContent = () => runtime.mount({ inject: ['slots'], apply: (ctx) => {
     ctx.slots.registerFactory({
       name: 'conversation.chat.user.content', scope: 'session', locale: NS,
-      children: { 'conversation.chat.user.images': { kind: 'single', scope: 'session' } },
+      children: {
+        'conversation.chat.user.images': { kind: 'single', scope: 'session' },
+        'conversation.chat.user.image-meta': { kind: 'list', scope: 'session' },
+      },
     }, UserContent)
   } })
   const owner = await mountContent()

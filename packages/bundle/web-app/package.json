@@ -241,6 +241,7 @@
     "@tomato/tool-testkit": "workspace:*",
     "@tomato/tools": "workspace:*",
     "@tomato/typert-registry": "workspace:*",
-    "@tomato/otel": "workspace:*"
+    "@tomato/otel": "workspace:*",
+    "@deepseek-ai/libreoffice-kit": "0.2.3"
   }
 }

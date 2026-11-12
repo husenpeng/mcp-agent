@@ -62,6 +62,7 @@ function renderCard(state: Partial<MarketingCardState> = {}) {
   const actions = cardActions()
   const props = {
     ...allowAllAccess, useResource, usePanelInfo, useSessions, useSessionStatus, useSessionRetainInfo, useWorkspaces,
+    useContextMenu: () => ({ getTriggerProps: () => ({}) }),
     ...actions, view: 'page', t, useMarketingCard: bindSnapshotSelector(store),
   } as MarketingCardProps
   render(<MarketingCard {...props} />)
@@ -73,6 +74,7 @@ describe('MarketingCard', () => {
     const store = createSnapshotStore<MarketingCardState>({ ...settled, providers: providers() })
     const props = {
       ...allowAllAccess, useResource, usePanelInfo, useSessions, useSessionStatus, useSessionRetainInfo, useWorkspaces,
+    useContextMenu: () => ({ getTriggerProps: () => ({}) }),
       ...cardActions(), view: 'summary', t, useMarketingCard: bindSnapshotSelector(store),
     } as MarketingCardProps
     render(<MarketingCard {...props} />)

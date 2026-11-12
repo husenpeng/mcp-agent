@@ -19,6 +19,15 @@
   padding-top: 4px;
 }
 
+/* The docked composer reserves one statistics row before its readings
+   arrive, so the projections landing never change the composer height. The
+   row height matches the readings: a 20px secondary line plus 1px block
+   padding (ui-chat StatsPills `.pill`, ContextMeter `.trigger`). A minimum,
+   not a fixed height, so taller readings still size the row. */
+.root:not(.hero) > .dock {
+  min-height: calc(22px + var(--tomato-content-font-delta-secondary, 0px));
+}
+
 .hero .dock:empty {
   display: none;
 }
@@ -74,14 +83,6 @@
      (see ui-theme styles/scrollbar.css for the rebinding contract). */
   --tomato-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
   --tomato-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
-}
-
-/* Client hero composer: 142px minimum with 18px top and 12px bottom padding,
-   inside the shared 24px panel radius. */
-.hero .card {
-  min-height: 142px;
-  padding-top: 18px;
-  padding-bottom: 12px;
 }
 
 @media (pointer: coarse) {
@@ -391,11 +392,9 @@
   cursor: default;
 }
 
-/* Primary send, matching the client-monorepo strategy composer action
-   (BriefChainlitView's send Button): the brand CTA gradient on the figma
-   34px circle, white glyph, disabled 40%. Hover keeps the fill unchanged;
-   a press shrinks it slightly. The hero variant takes the reference's
-   larger 38px seat. */
+/* Primary send (figma IconButton 34:10465): 34px circle, #3964FE light /
+   #679EFE dark — the info-fill pair (500→400), NOT button-primary (ink);
+   white glyph; empty text = 0.4 opacity. */
 .primary {
   display: grid;
   place-items: center;
@@ -405,50 +404,53 @@
   border: none;
   border-radius: 999px;
   corner-shape: round;
-  background-color: var(--dsw-alias-button-primary-fill);
-  background-image: var(--dsw-brand-gradient-cta);
-  /* Static white, not the foreground token: the arrow stays white on the
-     gradient fill in both themes. */
-  color: #fff;
+  background: var(--dsw-alias-button-info-fill);
+  /* On-color ink, not the foreground token: the arrow stays white on the blue
+     fill in both themes (design 34:10465). */
+  color: var(--dsw-alias-label-on-color);
   cursor: pointer;
-  transition:
-    transform var(--ds-transition-duration-fast) var(--ds-ease-in-out),
-    opacity var(--ds-transition-duration-fast) var(--ds-ease-in-out);
+  transition: background-color 100ms ease;
   /* Opts out of the row's 2px downward shift (.row top pad): the send circle
      keeps its original seat while the smaller chips sit lower. Transform, not
      margin, so flex centering math is untouched. */
   transform: translateY(-2px);
 }
 
-.hero .primary {
-  width: 38px;
-  height: 38px;
+/* Solid artwork uses a smaller footprint than the thin send arrow. */
+.continueIcon {
+  transform: scale(1.5);
 }
 
-.primary:active:not(:disabled) {
-  transform: translateY(-2px) scale(0.97);
+@media (hover: hover) {
+  .primary:hover:not(:disabled) {
+    background: var(--dsw-alias-button-info-hover);
+  }
 }
 
 .primary:disabled {
   opacity: 0.4;
-  cursor: not-allowed;
+  cursor: default;
 }
 
-/* Running Stop renders the reference's loading glyph instead of the square. */
-.spinner {
-  animation: input-send-spin 1s linear infinite;
+/* Sending: the message waits for the Host to accept it. The circle keeps its
+   full fill rather than the disabled fade, and an arc turns where the arrow was. */
+.primary[data-sending]:disabled {
+  opacity: 1;
+  cursor: progress;
+}
+
+.sendingSpinner {
+  animation: input-sending 800ms linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .spinner {
-    animation: none;
+  .sendingSpinner {
+    animation-duration: 2400ms;
   }
 }
 
-@keyframes input-send-spin {
-  to {
-    transform: rotate(360deg);
-  }
+@keyframes input-sending {
+  to { transform: rotate(360deg); }
 }
 
 .retry {

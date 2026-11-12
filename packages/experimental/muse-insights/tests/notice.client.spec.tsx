@@ -14,7 +14,7 @@ afterEach(() => { cleanup() })
 const unused = (): never => { throw new Error('This isolated notice does not read that framework hook') }
 const standard: GlobalStandardProps = {
   usePanelInfo: unused, useSessions: unused, useSessionStatus: unused,
-  useSessionRetainInfo: unused, useResource: unused, useWorkspaces: unused,
+  useSessionRetainInfo: unused, useResource: unused, useContextMenu: unused, useWorkspaces: unused,
   ...allowAllAccess,
 }
 

@@ -370,8 +370,7 @@ function panelProps(data: WorkflowRunChatData, sessions = listState(), openSessi
     openFile: () => {},
     inspectCall: () => {},
     forkAt: () => {},
-    retractAt: async () => {},
-    loadImage: () => Promise.reject(new Error('not used')),
+        loadImage: () => Promise.reject(new Error('not used')),
     openSession,
     t: makeTranslate(zh),
   }

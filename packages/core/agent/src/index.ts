@@ -471,7 +471,7 @@ export class AgentRegistry extends Service {
    *   `agent/created` listener, removal and disposal wait until the serial
    *   creation dispatch settles.
    */
-  enter(agent: Agent): () => void {
+  enter(agent: Agent, _owner?: Agent): () => void {
     const id = agent.id
     if (id !== agent.session.id) {
       throw new Error(`agent id "${id}" does not match session id "${agent.session.id}"`)

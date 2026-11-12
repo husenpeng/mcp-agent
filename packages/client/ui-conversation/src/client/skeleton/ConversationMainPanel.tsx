@@ -1,7 +1,6 @@
 import type { ConversationSlotProps } from '../contract/slots.ts'
 import { conversationPhase } from '../contract/snapshot.ts'
 import { ConversationWidthControls } from './ConversationWidthControls.tsx'
-import { DotField } from './DotField.tsx'
 import css from './ConversationRoot.module.css'
 
 const CONTENT_SLOTS = { widthControls: ConversationWidthControls }
@@ -37,7 +36,6 @@ export function ConversationMainPanel(props: ConversationSlotProps) {
 
   return (
     <div className={css.root} data-phase={phase}>
-      {phase === 'hero' ? <DotField /> : null}
       {renderSlot('conversation.header', {})}
       {renderFactorySlot('conversation.content', {
         variant: 'main',

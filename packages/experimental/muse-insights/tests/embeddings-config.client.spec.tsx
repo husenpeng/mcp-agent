@@ -14,7 +14,7 @@ afterEach(cleanup)
 
 const unused = (): never => { throw new Error('This isolated page does not read that framework hook') }
 const standard: GlobalStandardProps = {
-  usePanelInfo: unused, useSessions: unused, useSessionStatus: unused, useSessionRetainInfo: unused,
+  usePanelInfo: unused, useSessions: unused, useSessionStatus: unused, useSessionRetainInfo: unused, useContextMenu: unused,
   useResource: unused, useWorkspaces: unused, ...allowAllAccess,
 }
 const t = makeTranslate(en)

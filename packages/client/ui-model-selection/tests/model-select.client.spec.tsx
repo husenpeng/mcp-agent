@@ -320,6 +320,7 @@ describe('ModelSelect reasoning effort', () => {
       directory={directory}
       load={vi.fn()}
       select={select}
+      resolveText={(text) => typeof text === 'string' ? text : text.en}
       t={t}
     />)
 

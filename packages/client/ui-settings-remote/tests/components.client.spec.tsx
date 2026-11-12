@@ -23,7 +23,7 @@ function renderPage(state: RemotePageState, actions: Partial<Pick<RemoteSectionP
   // The slot renderer supplies every standard seat; this page reads only its own
   // inject face, so the unused seats stay explicit and never-typed.
   const unusedSeats = {
-    useAccess: undefined as never, useConversation: undefined as never, useInput: undefined as never,
+    useAccess: undefined as never, useConversation: undefined as never, useContextMenu: undefined as never, useInput: undefined as never,
     usePanelInfo: undefined as never, useProjection: undefined as never, useRemoteAccess: undefined as never,
     useResource: undefined as never,
     useSession: undefined as never, useSessionAccess: undefined as never, useSessionRetainInfo: undefined as never,

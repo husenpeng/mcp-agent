@@ -62,6 +62,7 @@ function mount(snapshot: RobotRunsSnapshot, hire: Hire, options: MountOptions = 
     useSessions: unusedStandardHook,
     useSessionStatus: unusedStandardHook,
     useSessionRetainInfo: unusedStandardHook,
+    useContextMenu: unusedStandardHook,
     useResource: unusedStandardHook,
     ...allowAllAccess,
     t,

@@ -148,11 +148,11 @@ it('shares settings card materials and control sizes in both palettes', async ()
       status: 'ready', value: [{ currency: 'CNY', balance: '128.50' }],
       bonusWallets: [{ currency: 'CNY', balance: '12.00' }],
     }),
-    vi.spyOn(account, 'watch').mockImplementation(async function* (signal) {
+    vi.spyOn(account, 'watch').mockImplementation((async function* (signal: AbortSignal) {
       yield { type: 'snapshot', state }
       if (signal.aborted) return
       await new Promise<void>((resolve) => { signal.addEventListener('abort', () => { resolve() }, { once: true }) })
-    }),
+    }) as typeof account.watch),
   ]
   onTestFinished(() => { mocks.forEach((mock) => { mock.mockRestore() }) })
   const browser = await chromium.launch()

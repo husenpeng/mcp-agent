@@ -20,7 +20,7 @@ it('claims onboarding while loading, offers API key fallback, and completes afte
   let account: AccountSnapshot = { view: undefined, details: undefined, avatar: undefined, failed: false }
   const unused = (): never => { throw new Error('AccountOnboarding does not consume global hooks') }
   const globals: GlobalStandardProps = {
-    usePanelInfo: unused, useSessions: unused, useSessionStatus: unused,
+    usePanelInfo: unused, useSessions: unused, useSessionStatus: unused, useContextMenu: unused,
     useSessionRetainInfo: unused, useResource: unused, useWorkspaces: unused,
     ...allowAllAccess,
   }

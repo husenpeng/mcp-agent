@@ -206,7 +206,7 @@ describe('packageRoot', () => {
 
   it('uses the resolver search paths when none are supplied', () => {
     expect(packageRoot('@tomato/experimental-client-ui-forge'))
-      .toMatch(/@tomato/experimental-client-ui-forge$/u)
+      .toMatch(/@tomato\/experimental-client-ui-forge$/u)
     expect(packageRoot('fs')).toBeUndefined()
   })
 })

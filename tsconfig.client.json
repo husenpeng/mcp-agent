@@ -316,9 +316,6 @@
       "path": "./packages/client/ui-deepseek-model-label-1017"
     },
     {
-      "path": "./packages/client/ui-trajectory"
-    },
-    {
       "path": "./packages/experimental/muse-insights/tsconfig.client.json"
     },
     {
