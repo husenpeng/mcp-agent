@@ -52,29 +52,12 @@ Add one entry per server; nothing else is required. After the harness starts, th
       Authorization: !!js '`Bearer ${process.env.MCP_TOKEN}`'
 ```
 
-When a header must carry identity that changes between calls, give `requestHeaders` an expression instead of a static value. It runs once per `tools/call` inside that call's own async scope, so concurrent calls never share headers:
-
-```yaml
-- id: mcp-im
-  name: '@tomato/mcp-client'
-  config:
-    serverName: im
-    transport: streamable-http
-    url: http://127.0.0.1:8013/mcp/im
-    requestHeaders: !!js >
-      () => {
-        const account = ctx.tomatoAccount.current()
-        return account.status === 'signed-in' ? { 'x-user-id': account.user.userId } : {}
-      }
-```
-
 | Field | Default | Meaning |
 |---|---|---|
 | `transport` | required | `stdio` or `streamable-http` |
 | `serverName` | required | Namespace for the server's tool names; `[A-Za-z0-9_-]{1,32}`, unique inside one registration scope |
 | `command` / `args` / `env` / `cwd` | — | stdio: executable, arguments, extra env merged over scrubbed ambient env, working directory |
 | `url` / `headers` | — | streamable-http: endpoint URL and extra request headers |
-| `requestHeaders` | — | streamable-http only: `(execution) => Record<string, string>` evaluated for one `tools/call`, merged over `headers`; connection-time requests use only `headers` |
 | `toolCallTimeoutMs` | `60,000` | Timeout per `tools/call` or resource request |
 | `startupTimeoutMs` | unset | Optional budget for template resolution, negotiation, connection, and the initial tool sync |
 | `closeTimeoutMs` | `5,000` | Budget for transport closure and pending local work to settle |
@@ -86,7 +69,7 @@ When a header must carry identity that changes between calls, give `requestHeade
 | `reconnect.maxDelayMs` | `30,000` | Backoff ceiling; also the uptime after which the attempt budget resets |
 | `reconnect.maxAttempts` | `10` | Consecutive failed attempts per outage before giving up |
 
-The generated [configuration catalog](../../../docs/config-catalog.md#tomatomcp-client) is the exhaustive source for every accepted field.
+The generated [configuration catalog](../../../docs/config-catalog.md#deepseek-aitomato-mcp-client) is the exhaustive source for every accepted field.
 
 After startup, the server's tools appear as `mcp__<serverName>__<tool>` — try a prompt that uses one. If the initial connection fails, the harness still starts but no tools from that server appear, and an error is logged. Setting `failOnStartupError: true` rejects plugin activation; [app-boot's startup policy](../../boot/app-boot/README.md) still permits an optional MCP entry to fail without aborting the harness.
 
@@ -190,7 +173,7 @@ Read these pages when the package-level contract is not enough. They move from t
 - [historical MCP client plugin Agent Note](../../../.agents/notes/archived/feature/2026-07-07-mcp-client-plugin.md) — the naming invariants, discovery and execution design, alternatives, and consequences.
 - [Canonical tool output contract reference](../../core/tools/README.md) — how MCP results map into the canonical tool-output contract.
 - [Third-party memory MCP guide](../../../docs/user/guide/mcp-memory.md) — three memory-server overlays using this package.
-- [Generated configuration catalog](../../../docs/config-catalog.md#tomatomcp-client) — every accepted config field and its source declaration.
+- [Generated configuration catalog](../../../docs/config-catalog.md#deepseek-aitomato-mcp-client) — every accepted config field and its source declaration.
 
 -----
 

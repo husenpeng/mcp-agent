@@ -10,7 +10,6 @@ import type { Transport } from '@modelcontextprotocol/client'
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/client'
 import { scrubbedParentEnv } from '@tomato/subprocess'
-import { headersApplyingFetch } from './request-headers.ts'
 import type { Config } from './index.ts'
 
 /**
@@ -41,12 +40,7 @@ export function createTransport(config: Config): Transport {
     case 'streamable-http':
       return new StreamableHTTPClientTransport(
         new URL(config.url),
-        {
-          requestInit: { headers: config.headers },
-          // Per-call identity travels through an async scope the tool bridge
-          // opens around one `tools/call`; connection-time requests see none.
-          ...config.requestHeaders === undefined ? {} : { fetch: headersApplyingFetch() },
-        },
+        { requestInit: { headers: config.headers } },
       )
   }
 }

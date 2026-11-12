@@ -52,29 +52,12 @@ kind: "package-reference"
       Authorization: !!js '`Bearer ${process.env.MCP_TOKEN}`'
 ```
 
-当标头需要在调用之间携带会变化的身份时，给 `requestHeaders` 一个表达式而不是静态值。它在每次 `tools/call` 中、该调用自己的异步作用域内运行一次，因此并发调用不会共享标头：
-
-```yaml
-- id: mcp-im
-  name: '@tomato/mcp-client'
-  config:
-    serverName: im
-    transport: streamable-http
-    url: http://127.0.0.1:8013/mcp/im
-    requestHeaders: !!js >
-      () => {
-        const account = ctx.tomatoAccount.current()
-        return account.status === 'signed-in' ? { 'x-user-id': account.user.userId } : {}
-      }
-```
-
 | 字段 | 默认值 | 含义 |
 |---|---|---|
 | `transport` | 必填 | `stdio` 或 `streamable-http` |
 | `serverName` | 必填 | 服务器工具名称的 namespace；`[A-Za-z0-9_-]{1,32}`，在一个注册作用域内唯一 |
 | `command` / `args` / `env` / `cwd` | — | stdio：可执行文件、参数、合并到清洗过的环境之上的额外环境变量、工作目录 |
 | `url` / `headers` | — | streamable-http：端点 URL 与额外请求标头 |
-| `requestHeaders` | — | 仅 streamable-http：`(execution) => Record<string, string>`，在单次 `tools/call` 求值并合并到 `headers` 之上；连接期请求只使用 `headers` |
 | `toolCallTimeoutMs` | `60,000` | 每次 `tools/call` 或资源请求的超时 |
 | `startupTimeoutMs` | 未设置 | 模板解析、协商、连接及初次工具同步的可选预算 |
 | `closeTimeoutMs` | `5,000` | 传输关闭与待处理本地工作完全结算的预算 |
@@ -86,7 +69,7 @@ kind: "package-reference"
 | `reconnect.maxDelayMs` | `30,000` | 退避上限；同时是重置尝试预算所需的正常运行时长 |
 | `reconnect.maxAttempts` | `10` | 每次中断内连续失败尝试次数上限，超出后放弃 |
 
-生成的[配置目录](../../../docs/config-catalog.zh.md#tomatomcp-client)是每个受支持字段的穷尽式真源。
+生成的[配置目录](../../../docs/config-catalog.zh.md#deepseek-aitomato-mcp-client)是每个受支持字段的穷尽式真源。
 
 启动后，服务器的工具会以 `mcp__<serverName>__<tool>` 形式出现——试着用一条提示词调用其中一个。如果初始连接失败，harness 仍会启动，但该服务器的工具不会出现，并会记录一条错误。设置 `failOnStartupError: true` 会拒绝插件激活；[app-boot 的启动策略](../../boot/app-boot/README.zh.md)仍允许可选 MCP 配置项失败，而不中止 harness。
 
@@ -190,7 +173,7 @@ SDK 通过旧版通知或现代协议订阅接收工具列表变化。监督器�
 - [历史MCP 客户端插件 Agent Note](../../../.agents/notes/archived/feature/2026-07-07-mcp-client-plugin.md)——命名不变式、发现与执行设计、备选方案与后果。
 - [规范工具输出约定 reference](../../core/tools/README.zh.md)——MCP 结果如何映射进规范工具输出约定。
 - [第三方记忆 MCP 指南](../../../docs/user/guide/mcp-memory.zh.md)——使用本包的三份记忆服务器 overlay。
-- [生成配置目录](../../../docs/config-catalog.zh.md#tomatomcp-client)——每个受支持配置字段及其源声明。
+- [生成配置目录](../../../docs/config-catalog.zh.md#deepseek-aitomato-mcp-client)——每个受支持配置字段及其源声明。
 
 -----
 
