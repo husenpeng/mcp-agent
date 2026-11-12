@@ -22,7 +22,6 @@
     "@tomato/host-webserver": "workspace:*",
     "@tomato/jobs": "workspace:*",
     "@tomato/schedule": "workspace:*",
-    "@tomato/deepseek-account": "workspace:*",
     "@tomato/workspace": "workspace:*",
     "@tomato/plugin-manager": "workspace:*",
     "@tomato/tool-workspace-dependencies": "workspace:*",

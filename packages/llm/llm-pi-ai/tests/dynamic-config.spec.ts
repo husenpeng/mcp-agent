@@ -9,7 +9,6 @@ import { credentialRef } from '@tomato/credentials'
 import { LocalCredentialProvider } from '@tomato/credentials-local'
 import { liveConfig } from '../../../settings/settings/tests/live-config.ts'
 import * as LlmPiAi from '@tomato/llm-pi-ai'
-import { recordKeyFor } from '../src/auth.ts'
 import AuthorizationService from '@tomato/authorization'
 import { assemble } from './assemble.ts'
 import { closeMockServers, mockServer, textEvents } from './mock-server.ts'
@@ -62,7 +61,7 @@ describe('login flows in a real composition', () => {
 
     // Zero routes configured: signing in is what makes a route worth adding,
     // so the offer cannot wait for a profile to name the provider.
-    const codex = ctx.authorization.describe(recordKeyFor('openai-codex'))
+    const codex = ctx.authorization.describe(LlmPiAi.recordKeyFor('openai-codex'))
     expect(codex?.methods.map(method => method.id)).toEqual(['oauth'])
   })
 

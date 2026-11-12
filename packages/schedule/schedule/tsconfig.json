@@ -42,6 +42,9 @@
       "path": "../../session/session-title"
     },
     {
+      "path": "../../api/session-controller/tsconfig.host.json"
+    },
+    {
       "path": "../../storage/storage-domain"
     },
     {
@@ -52,10 +55,6 @@
     },
     {
       "path": "../../workspace/workspace"
-    },
-    {
-      "path": "../../api/session-controller/tsconfig.host.json"
     }
-  ],
-  "files": []
+  ]
 }

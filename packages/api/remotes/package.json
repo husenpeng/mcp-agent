@@ -100,7 +100,6 @@
     "@tomato/plugin-market": "workspace:*",
     "@tomato/client-ui-plugin-manager": "workspace:*",
     "@tomato/office-kit": "workspace:*",
-    "@tomato/deepseek-account": "workspace:*",
     "@tomato/client-product-analytics": "workspace:*",
     "@tomato/agent-team": "workspace:*",
     "@tomato/client-ui-trajectory": "workspace:*",

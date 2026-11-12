@@ -62,7 +62,6 @@
     "@tomato/session": "workspace:*"
   },
   "dependencies": {
-    "@deepseek-ai/libreoffice-kit": "0.2.3",
     "@tomato/schemastery": "workspace:~",
     "@tomato/branded": "workspace:*",
     "@tomato/typert-protocol": "workspace:*",

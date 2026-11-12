@@ -20,3 +20,6 @@
     reasoningEffort: high
     maxTokens: 256000
     streamIdleTimeoutMs: 300000
+- name: '@tomato/llm-deepseek-account'
+  config:
+    baseURL: {{endpoint}}

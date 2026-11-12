@@ -51,7 +51,6 @@
     "@tomato/client-test-runtime": "workspace:*",
     "@tomato/client-ui-primitives": "workspace:*",
     "@tomato/client-ui-slots": "workspace:*",
-    "@tomato/deepseek-account": "workspace:*",
     "@testing-library/react": "^16.3.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

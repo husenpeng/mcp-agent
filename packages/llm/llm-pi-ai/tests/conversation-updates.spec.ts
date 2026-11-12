@@ -289,7 +289,7 @@ describe('historical tool availability on the wire', () => {
     ] })
   })
 
-  it('rebuilds the Responses baseline after its immediate tool is removed', async () => {
+  it('anchors additions in Responses without emitting removal updates', async () => {
     const update = addition()
     const remove = createDeveloperMessage({ source: { kind: 'tool-registry' }, content: [{ type: 'tool-removal', toolName: 'read' }] })
     const { requests } = await send('openai', 'gpt-5.4', {
@@ -299,11 +299,9 @@ describe('historical tool availability on the wire', () => {
       ] },
     })
     expect(requests).toHaveLength(1)
-    expect(requests[0]).toHaveProperty('tools', [expect.objectContaining({ name: 'search' })])
-    expect(requests[0]).toHaveProperty('input', [
-      { role: 'user', content: [{ type: 'input_text', text: 'first' }] },
-      { role: 'developer', content: 'Instruction one.\nInstruction two.' },
-    ])
+    expect(requests[0]).toHaveProperty('input', expect.arrayContaining([
+      expect.objectContaining({ type: 'additional_tools', tools: [expect.objectContaining({ name: 'search' })] }),
+    ]))
     expect(JSON.stringify(requests[0])).not.toContain('tool_removal')
     expect(JSON.stringify(requests[0])).not.toContain('Read a file')
   })

@@ -79,7 +79,6 @@
     "@tomato/tools": "workspace:*",
     "@tomato/credentials-local": "workspace:*",
     "@tomato/settings": "workspace:*",
-    "@tomato/account-service": "workspace:*",
     "@types/semver": "^7.8.0"
   },
   "peerDependenciesMeta": {
