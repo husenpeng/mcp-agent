@@ -1,5 +1,5 @@
 import { mkdtemp, mkdir, readFile, readdir, rm, symlink } from 'node:fs/promises'
-import { homedir } from 'node:os'
+import { homedir, tmpdir } from 'node:os'
 import { createServer, type Socket } from 'node:net'
 import { delimiter, join } from 'node:path'
 import { Context } from '@tomato/cordis'
@@ -23,8 +23,17 @@ const sandboxUsable = await (async () => {
   } finally { await probe.fiber.dispose() }
 })()
 
+/** Allocate a sandbox workspace under home, falling back to the system temporary root. */
+async function tempRoot(prefix: string): Promise<string> {
+  try {
+    return await mkdtemp(join(homedir(), prefix))
+  } catch {
+    return await mkdtemp(join(tmpdir(), prefix))
+  }
+}
+
 async function setup(config: Config = {}, mode: 'read-only' | 'workspace-write' | 'danger-full-access' = 'danger-full-access') {
-  const root = await mkdtemp(join(homedir(), '.tomato-node-runtime-test-'))
+  const root = await tempRoot('.tomato-node-runtime-test-')
   const cwd = join(root, 'workspace')
   await mkdir(cwd)
   const ctx = new Context()

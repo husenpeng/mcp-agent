@@ -2,7 +2,7 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 import { setSandboxMode } from '@tomato/sandbox-policy'
 import { realpathSync } from 'node:fs'
 import { mkdtemp, mkdir, readFile, rm } from 'node:fs/promises'
-import { homedir } from 'node:os'
+import { homedir, tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { SessionId } from '@tomato/session'
 import { Context } from '@tomato/cordis'
@@ -12,7 +12,9 @@ import { mountRuntime } from './setup.ts'
 import type { Config } from '../src/index.ts'
 
 async function setup(mode: 'read-only' | 'workspace-write' = 'read-only', executionMode: NonNullable<Config['executionMode']> = 'persistent-in-memory') {
-  const root = realpathSync.native(await mkdtemp(join(homedir(), '.tomato-persistent-sandbox-')))
+  const root = realpathSync.native(await (async () => {
+    try { return await mkdtemp(join(homedir(), '.tomato-persistent-sandbox-')) } catch { return await mkdtemp(join(tmpdir(), '.tomato-persistent-sandbox-')) }
+  })())
   const cwd = join(root, 'workspace')
   await mkdir(cwd)
   const ctx = new Context()

@@ -50,8 +50,6 @@ describe('release families', () => {
       .filter(member => member.directory.startsWith('packages/experimental/'))
       .map(member => member.name)).toEqual([
       '@tomato/action-cards',
-      '@tomato/experimental-agent-team-profile',
-      '@tomato/experimental-agent-team',
       '@tomato/experimental-api-speech-to-text',
       '@tomato/experimental-auto-review',
       '@tomato/experimental-badge-skill-bundle',
@@ -61,11 +59,12 @@ describe('release families', () => {
       '@tomato/experimental-browser-use-stagehand-native',
       '@tomato/experimental-claude-code-mods',
       '@tomato/client-ui-action-cards',
-      '@tomato/experimental-client-ui-agent-team',
       '@tomato/experimental-client-ui-claude-code-mods',
       '@tomato/experimental-client-ui-cot-translation',
       '@tomato/client-ui-creation-recommendations',
+      '@tomato/experimental-client-ui-forge',
       '@tomato/client-ui-plugin-recommendations',
+      '@tomato/experimental-client-ui-stats',
       '@tomato/experimental-client-ui-voice-input',
       '@tomato/experimental-computer-use-cua-driver-mcp',
       '@tomato/experimental-computer-use-cua-driver-native',
@@ -73,6 +72,7 @@ describe('release families', () => {
       '@tomato/creation-recommendations',
       '@tomato/cua-bundle',
       '@tomato/experimental-cua-macos',
+      '@tomato/cua-windows',
       '@tomato/cua',
       '@tomato/experimental-focus',
       '@tomato/hook-protocol',
@@ -261,7 +261,7 @@ describe('release families', () => {
     const tomato = member('apps/cli', '@tomato/cli')
     const providers = ON_DEMAND_BUNDLES.map(name => member(`packages/subagent/${name}`, name))
     const plan = releaseFamily('tomato').publishOrder([tomato, ...providers])
-    expect(plan.order.map(entry => entry.name)).toEqual([...ON_DEMAND_BUNDLES, tomato.name])
+    expect(plan.order.map(entry => entry.name)).toEqual([...ON_DEMAND_BUNDLES.toSorted(), tomato.name])
     expect(tomato.manifest).toEqual({})
     expect(plan.droppedPeerEdges).toEqual([])
   })
@@ -277,8 +277,8 @@ describe('release families', () => {
       peerDependencies: { '@tomato/cli': 'workspace:*' },
     }))
     const plan = releaseFamily('tomato').publishOrder([tomato, ...providers])
-    expect(plan.order.map(entry => entry.name)).toEqual([...ON_DEMAND_BUNDLES, tomato.name])
-    expect(plan.droppedPeerEdges).toEqual(ON_DEMAND_BUNDLES.map(name => ({ consumer: name, peer: tomato.name })))
+    expect(plan.order.map(entry => entry.name)).toEqual([...ON_DEMAND_BUNDLES.toSorted(), tomato.name])
+    expect(plan.droppedPeerEdges).toEqual(ON_DEMAND_BUNDLES.toSorted().map(name => ({ consumer: name, peer: tomato.name })))
   })
 
   it.each(['dependencies', 'optionalDependencies', 'peerDependencies'])(
@@ -399,16 +399,30 @@ describe('release families', () => {
     ])
   })
 
-  it('applies the harness payload policy to tomato and keeps upstream payloads for vendored packages', () => {
+  it('accepts the harness payload and keeps upstream payloads for vendored packages', () => {
     const tomato = releaseFamily('tomato')
     const vendor = releaseFamily('vendor')
     const harness = member('packages/a/library', '@tomato/library')
     const vendored = member('vendor/cordis', '@tomato/cordis')
 
-    expect(() => { tomato.validatePayload(harness, ['package/lib/index.js', 'package/src/index.ts']) })
-      .toThrow(/publishes source file/)
+    expect(() => { tomato.validatePayload(harness, ['package/lib/index.js', 'package/lib/index.js.map', 'package/src/index.ts']) }).not.toThrow()
     expect(() => { vendor.validatePayload(vendored, ['package/lib/index.js', 'package/src/index.ts']) }).not.toThrow()
     expect(() => { vendor.validatePayload(vendored, []) }).toThrow(/empty tarball/)
+  })
+
+  it('requires the installed package payload the staging hook supplies', () => {
+    const tomato = releaseFamily('tomato')
+    const installed = member('apps/cli', '@tomato/cli')
+
+    expect(() => { tomato.validatePayload(installed, ['package/lib/index.js', 'package/src/bin.ts']) })
+      .toThrow(/@tomato\/tomato packed no documentation/)
+    expect(() => { tomato.validatePayload(installed, ['package/lib/index.js', 'package/docs/guide.md', 'package/src/bin.ts']) })
+      .toThrow(/@tomato\/tomato packed no upgrade guide index/)
+    const docs = ['package/docs/guide.md', 'package/docs/upgrade-guide/README.md']
+    expect(() => { tomato.validatePayload(installed, ['package/lib/index.js', ...docs]) })
+      .toThrow(/@tomato\/tomato packed no source/)
+    expect(() => { tomato.validatePayload(installed, ['package/lib/index.js', ...docs, 'package/src/bin.ts']) })
+      .not.toThrow()
   })
 
   it('drives the installed entry only for the family that publishes one', () => {

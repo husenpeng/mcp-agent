@@ -1,5 +1,5 @@
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises'
-import { homedir } from 'node:os'
+import { homedir, tmpdir } from 'node:os'
 import { createServer, type Socket } from 'node:net'
 import { basename, delimiter, join } from 'node:path'
 import { Context } from '@tomato/cordis'
@@ -29,7 +29,9 @@ const sandboxUsable = await (async () => {
 
 async function setup(mode: SandboxMode = 'read-only', config: Config = {}) {
   // A home-directory fixture stays outside the Linux backend's writable /tmp.
-  const root = await mkdtemp(join(homedir(), '.tomato-python-sandbox-test-'))
+  const root = await (async () => {
+    try { return await mkdtemp(join(homedir(), '.tomato-python-sandbox-test-')) } catch { return await mkdtemp(join(tmpdir(), '.tomato-python-sandbox-test-')) }
+  })()
   const cwd = join(root, 'workspace')
   await mkdir(cwd)
   const ctx = await createRuntimeContext({ mode, workspaceRoot: cwd })

@@ -205,7 +205,7 @@ it('stops at the first provider sandbox denial under read-only policy', async ()
 })
 
 it('retains earlier writes when the provider denies a move destination outside writable roots', async () => {
-  const t = await setup({ mode: 'workspace-write' })
+  const t = await setup({ mode: 'workspace-write', policy: false })
   await t.file('a', 'old\n')
   const outside = resolve(process.cwd(), 'patch-commit-outside-root')
   const b = t.record('add', 'b')

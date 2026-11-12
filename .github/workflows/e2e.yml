@@ -122,6 +122,6 @@ jobs:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY_EXTERNAL }}
           DEEPSEEK_BASE_URL: https://api.deepseek.com/anthropic
           TOMATO_PRIMARY_RUNTIME: ${{ github.workspace }}/.cache/e2e-office/primary-runtime
-          TOMATO_E2E_MAX_WORKERS: 4
+          TOMATO_E2E_MAX_WORKERS: 6
           TOMATO_EXAMPLE_MODE: lib
         run: pnpm run test:e2e

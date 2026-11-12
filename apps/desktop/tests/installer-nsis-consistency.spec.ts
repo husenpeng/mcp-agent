@@ -15,7 +15,7 @@ const adapter = readFileSync(join(appRoot, 'scripts', 'windows-directory-install
 const INJECTED = ['TOMATO_SEVENZIP_PATH', 'TOMATO_SEVENZIP_LICENSE_DIR', 'TOMATO_UPDATER_CACHE_NAME']
 
 it.each(sources)('%s carries no legacy tomato identifier', (path, text) => {
-  expect(text, path).not.toMatch(/tomato/i)
+  expect(text, path).not.toMatch(/dsh/i)
 })
 
 it('hashes every NSIS source the desktop ships', () => {

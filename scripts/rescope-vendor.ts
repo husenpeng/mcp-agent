@@ -10,7 +10,7 @@
  * scalar. A match needs a quote (or `name: `) immediately left and the matching
  * quote — optionally after a `/subpath` — immediately right, which excludes
  * `cordis.yml`, the Loader's `cordis:` builtin prefix, `cordis-config-entry`,
- * `@tomato/tool-cordis`, and `cordiverse/cordis`, and makes the
+ * `@tomato/dsh-tool-cordis`, and `cordiverse/cordis`, and makes the
  * rewrite idempotent because the scoped name's `cordis` is preceded by `/`.
  * Markdown follows the token rule in fences and `docs/` prose. Audited product
  * names stay intact; their source module references and YAML plugin names still
@@ -109,8 +109,11 @@ const GENERIC_SKIPS: readonly GenericSkip[] = [
   { file: 'apps/cli/tests/optional-bundle-transitions.e2e.ts', upstream: ['cordis'] },
   { file: 'apps/web/tests/agent-preset-selection.e2e.ts', upstream: ['cordis'] },
   { file: 'apps/web/tests/developer-tools-settings.e2e.ts', upstream: ['cordis'] },
-  { file: 'docs/subsystems/schedule.md', upstream: ['cordis'] },
-  { file: 'docs/subsystems/schedule.zh.md', upstream: ['cordis'] },
+  { file: 'docs/tool-catalog.md', upstream: ['cordis'] },
+  { file: 'docs/tool-catalog.zh.md', upstream: ['cordis'] },
+  { file: 'docs/upgrade-guide/v0.2.2-alpha.2/fs-observation-policy-default-off/guide.md', upstream: ['cordis'] },
+  { file: 'docs/upgrade-guide/v0.2.2-alpha.2/fs-observation-policy-default-off/guide.zh.md', upstream: ['cordis'] },
+  { file: 'scripts/gen-tool-catalog.ts', upstream: ['cordis'] },
   { file: 'docs/upgrade-guide/v0.2.0-rc.2/schedule-bundle-retired/guide.md', upstream: ['cordis'] },
   { file: 'docs/upgrade-guide/v0.2.0-rc.2/schedule-bundle-retired/guide.zh.md', upstream: ['cordis'] },
   { file: 'docs/upgrade-guide/v0.2.1-alpha.1/subagent-preset-composition/guide.md', upstream: ['cordis'] },
@@ -192,7 +195,7 @@ const POSTCONDITIONS: readonly PostCondition[] = [
   { file: 'packages/boot/app-boot/tsdown.config.ts', text: '[\'@tomato/cordis-plugin-include\']', count: 1 },
   { file: 'tsconfig.base.json', text: '"@tomato/cordis-plugin-loader": ["./vendor/loader/src"]', count: 1 },
   // The vendored README owns this required entry; reject its deletion or duplication.
-  { file: 'vendor/README.md', text: '17. **`@tomato` rescope**', count: 1 },
+  { file: 'vendor/README.md', text: '`@tomato` rescope**', count: 1 },
   { file: 'pnpm-workspace.yaml', text: 'cordis@4.0.0-rc.7', count: 0 },
   // The preset ids in this table are product data, not package names.
   { file: 'packages/client/ui-agent-preset/tests/locales.client.spec.ts', text: '[\'cordis\', \'presetCordisName\'', count: 1 },
@@ -660,6 +663,18 @@ export function exactEditState(text: string, find: string, replace: string, expe
   }
   if (hits === 0 && landed === expect) return 'applied'
   return hits === expect && landed === 0 ? 'pending' : 'invalid'
+}
+
+/**
+ * List tracked paths that the rescope checks or rewrites.
+ * @param repoRoot - Git working directory.
+ * @param env - Git's environment; omitted, Git inherits this process's environment.
+ * @returns eligible repository-relative paths, including large tracked corpora.
+ */
+export function listRescopeFiles(repoRoot: string, env?: NodeJS.ProcessEnv): string[] {
+  return execFileSync('git', ['ls-files', '-z'], { cwd: repoRoot, env, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 })
+    .split('\0')
+    .filter(file => file !== '' && !isRescopeExcluded(file))
 }
 
 function main(): void {
