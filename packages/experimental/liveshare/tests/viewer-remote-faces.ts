@@ -32,7 +32,7 @@ export function generateViewerRemoteFaces(workspaceRoot: string, dir: string): R
     if (artifact.remote === undefined) continue
     const file = join(dir, `${artifact.package.replaceAll('/', '__')}.js`)
     const source = artifact.remote.js.replace(
-      /from (['"])@tomato\/@tomato/typert-protocol\/remote-info\1/g,
+      /from (['"])@tomato\/typert-protocol\/remote-info\1/g,
       `from ${JSON.stringify(factorySpecifier)}`,
     )
     writeFileSync(file, source)

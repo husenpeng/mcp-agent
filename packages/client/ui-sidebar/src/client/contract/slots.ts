@@ -48,14 +48,6 @@ declare module '@tomato/client-ui-slots' {
     /** Rows of the panel list's More menu; the sidebar shows More only while this list has registrations. */
     'sidebar.panellist.actions': { kind: 'list'; scope: 'root'; owner: SidebarPanelActionsOwnerProps }
     /**
-     * Rows nested under one global panel launcher, rendered directly beneath
-     * that panel's row. Declared by this package's 'sidebar' entry; a panel
-     * whose content carries its own roster registers under its panel id and
-     * owns the rows' chrome and their show/hide rule. Absent contribution
-     * renders nothing.
-     */
-    'sidebar.panellist.subnav': { kind: 'list'; scope: 'root'; owner: SidebarPanelSubnavOwnerProps }
-    /**
      * The workspace/session browsing region: section header, search, the
      * grouped/flat session list, and every workspace dialog. Declared by this
      * package's 'sidebar' entry (declaring is claiming); ui-workspace
@@ -102,19 +94,6 @@ export interface SidebarPanelIconOwnerProps {
   size: number
   /** Whether this panel is selected in the main column. */
   active: boolean
-}
-
-/**
- * Owner share of one panel row's nested launcher rows: the panel the rows
- * belong to, its selected state, and the column fold state.
- */
-export interface SidebarPanelSubnavOwnerProps {
-  /** Panel id of the launcher these rows sit under. */
-  id: MainPanelId
-  /** Whether this panel is selected in the main column. */
-  active: boolean
-  /** Whether the column renders wide content; the rail renders no nested rows. */
-  wide: boolean
 }
 
 /** Serializable metadata for one active global panel list registration. */
@@ -256,7 +235,6 @@ export type SidebarRootComponentProps =
     | 'sidebar.brand.name'
     | 'sidebar.toggle.badge'
     | 'sidebar.panellist.actions'
-    | 'sidebar.panellist.subnav'
     | 'sidebar.workspaces'
     | 'sidebar.settings'
     | 'sidebar.footer.action'

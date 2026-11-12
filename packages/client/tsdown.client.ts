@@ -82,7 +82,7 @@ function styleInjectionModule(
  * Everything else under @tomato/* is either a module-table entry
  * (external) or a leak the purity gate rejects.
  */
-export const INLINE_SAFE = /^(?:@tomato\/tomato-(?:file-reference|fs-patch|session|llm|tools|brand|official-bundles|deque|output-retention|typert-protocol|util-crypto|util-time|util-values|util-workspace-path)(?:\/|$)|@tomato\/@tomato/util-file-drag$|@tomato\/@tomato/token-meter\/client$|@tomato\/@tomato/commands\/builtin$|@tomato\/@tomato/native-command\/types$|@tomato\/@tomato/host-open-in-app\/shared$|@tomato\/@tomato/plugin-manager\/registry$|@tomato\/@tomato/agent-preset-registry\/display$|@tomato\/@tomato/api-workspace-controller\/default-workspace$|@tomato\/@tomato/spill-policy\/notice$)/
+export const INLINE_SAFE = /^(?:@tomato\/(?:file-reference|fs-patch|session|llm|tools|brand|official-bundles|deque|output-retention|typert-protocol|util-crypto|util-time|util-values|util-workspace-path)(?:\/|$)|@tomato\/util-file-drag$|@tomato\/token-meter\/client$|@tomato\/commands\/builtin$|@tomato\/native-command\/types$|@tomato\/host-open-in-app\/shared$|@tomato\/plugin-manager\/registry$|@tomato\/agent-preset-registry\/display$|@tomato\/api-workspace-controller\/default-workspace$|@tomato\/spill-policy\/notice$)/
 
 /**
  * Vendored framework libraries: rescoped into @tomato, so the gate below
@@ -93,7 +93,7 @@ export const INLINE_SAFE = /^(?:@tomato\/tomato-(?:file-reference|fs-patch|sessi
 const VENDORED_LIBRARY = /^@tomato\/(?:(?:cosmokit|schemastery)(?:\/|$)|cordis-plugin-timer$)/
 
 /** Generated descriptor/codec contribution with no shared runtime identity. */
-const GENERATED_REMOTE = /^@tomato\/tomato-[a-z0-9]+(?:-[a-z0-9]+)*\/remote$/
+const GENERATED_REMOTE = /^@tomato\/[a-z0-9]+(?:-[a-z0-9]+)*\/remote$/
 
 /**
  * Workspace mode replaces an empty config array with the root defaults. A

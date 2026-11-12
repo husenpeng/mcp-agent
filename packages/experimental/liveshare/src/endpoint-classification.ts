@@ -54,6 +54,8 @@ export const VIEWER_ENDPOINT_CLASSES = {
   'session/page': 'reader-session-read', // the page reads a visible Session page
   'session/projections': 'reader-session-read', // the page reads visible Session projections
   'skills/list': 'reader-session-read', // the page lists the skills of a visible Session
+  'skills/get': 'reader-session-read', // the page reads one skill's body for a visible Session
+  'skills/save': 'owner-only', // rewriting a personal skill changes the owner's files
   'session/events': 'reader-session-read', // the page reads the event history of a visible Session
   'session/observeEvent': 'reader-session-read', // the page follows one visible Session's events
   'session/observeProjections': 'reader-session-read', // the page follows visible Session projections
@@ -88,9 +90,6 @@ export const VIEWER_ENDPOINT_CLASSES = {
   'account/getBalance': 'owner-only', // owner account and sign-in; the served page never reads it
   'account/getProfile': 'owner-only', // owner account and sign-in; the served page never reads it
   'account/getState': 'owner-only', // owner account and sign-in; the served page never reads it
-  'account/getNotificationContent': 'owner-only', // owner account and sign-in; the served page never reads it
-  'account/getNotifications': 'owner-only', // owner account and sign-in; the served page never reads it
-  'account/reportNotificationEvent': 'owner-only', // owner account and sign-in; the served page never reads it
   'account/hasRunningAccountTasks': 'owner-only', // owner account and sign-in; the served page never reads it
   'account/signOut': 'owner-only', // owner account and sign-in; the served page never reads it
   'account/startSignIn': 'owner-only', // owner account and sign-in; the served page never reads it

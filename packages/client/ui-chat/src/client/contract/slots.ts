@@ -3,7 +3,7 @@ import type { RefObject } from 'react'
 import type { MessageId } from '@tomato/llm/brand'
 import type { SessionId, SessionSeq } from '@tomato/session/types'
 import type { PendingSubmission } from '@tomato/api-session-controller/client'
-import type { FileAttachmentRef } from '@tomato/attachment'
+import type { FileAttachmentRef, ImageAttachmentRef } from '@tomato/attachment'
 import type { InboxState } from '@tomato/agent/types'
 import type {
   CommandNode, CompactionSummaryNode, ConversationLocationDataStore, ConversationTurnDataMap,
@@ -253,6 +253,16 @@ export type UserContentAttachment =
   | { readonly type: 'image'; readonly image: MessageImageSource }
   | { readonly type: 'file'; readonly file: FileAttachmentRef }
 
+/**
+ * Owner facts for one user-message image's metadata list. The owner passes the
+ * admitted image reference the message carried; with no registrants nothing
+ * appears beside the image.
+ */
+export interface UserImageMetaOwnerProps {
+  /** Admitted image reference the message carried. */
+  readonly image: ImageAttachmentRef
+}
+
 /** Prepared user contents without row identity, admission state, time, or actions. */
 export interface UserContentData {
   readonly text: string
@@ -416,7 +426,10 @@ declare module '@tomato/client-ui-slots' {
       scope: 'session'
       props: UserContentInput
       locale: 'chat'
-      children: { 'conversation.chat.user.images': { kind: 'single'; scope: 'session' } }
+      children: {
+        'conversation.chat.user.images': { kind: 'single'; scope: 'session' }
+        'conversation.chat.user.image-meta': { kind: 'list'; scope: 'session' }
+      }
     }
     /** Session-independent reasoning Markdown with Chat labels and compact typography. */
     'conversation.chat.reasoning.content': {
@@ -472,6 +485,7 @@ declare module '@tomato/client-ui-slots' {
     'conversation.chat.message.images': { kind: 'single'; scope: 'session'; owner: MessageImagesOwnerProps }
     /** User-message images, including pending and local-echo previews, independently replaceable from output images. */
     'conversation.chat.user.images': { kind: 'single'; scope: 'session'; owner: MessageImagesOwnerProps }
+    'conversation.chat.user.image-meta': { kind: 'list'; scope: 'session'; owner: UserImageMetaOwnerProps }
     /**
      * Command row keyed by the command name. The component receives the folded
      * command lifecycle and linked compaction when present. Reusing a key

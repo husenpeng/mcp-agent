@@ -28,6 +28,9 @@ FactoryComponentPropsOf<'conversation.chat.user.content'>) {
                 {renderSlot('conversation.chat.user.images', {
                   images: [attachment.image], loadImage, align: 'end', compact: compactImages,
                 })}
+                {'attachment' in attachment.image
+                  ? renderSlot('conversation.chat.user.image-meta', { image: attachment.image.attachment })
+                  : null}
               </Fragment>
             )
             : (

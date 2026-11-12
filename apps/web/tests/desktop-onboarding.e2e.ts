@@ -21,7 +21,7 @@ const MODE = webSnapshotMode()
 const EXPECTED = fileURLToPath(new URL('./expected/desktop-onboarding', import.meta.url))
 const NS = 'ui-settings-account'
 const INITIAL = { version: 1, step: 'welcome', purpose: null, process: null, completion: null, usage: 'compact', developerTools: false }
-const ACCOUNT_ASSET = /\/plugins\/@tomato\/@tomato/client-ui-settings-account\/assets\/onboarding-[a-z-]+-[0-9a-f]{12}\.(?:svg|webp)$/
+const ACCOUNT_ASSET = /\/plugins\/@tomato\/client-ui-settings-account\/assets\/onboarding-[a-z-]+-[0-9a-f]{12}\.(?:svg|webp)$/
 
 describe.skipIf(MODE === 'record')('web e2e: App-only desktop onboarding', () => {
   let root: string
@@ -441,7 +441,7 @@ describe.skipIf(MODE === 'record')('web e2e: App-only desktop onboarding', () =>
       .evaluate(element => getComputedStyle(element).backgroundColor)).toBe('rgb(72, 73, 76)')
     await snapshot('credit-en-dark')
     expect(await page.locator('[class*="backIcon"]').evaluate(element => getComputedStyle(element).maskImage))
-      .toMatch(/^url\("[^"]*\/plugins\/@tomato\/@tomato/client-ui-settings-account\/assets\/onboarding-back-[0-9a-f]{12}\.svg"\)$/)
+      .toMatch(/^url\("[^"]*\/plugins\/@tomato\/client-ui-settings-account\/assets\/onboarding-back-[0-9a-f]{12}\.svg"\)$/)
     await page.getByRole('button', { name: 'Next', exact: true }).click()
     await page.getByRole('button', { name: 'Got it', exact: true }).click()
     await page.getByRole('checkbox', { name: 'Coding & development', exact: true }).locator('..').click()

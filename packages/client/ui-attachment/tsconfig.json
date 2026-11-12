@@ -36,9 +36,6 @@
       "path": "../ui-context-menu"
     },
     {
-      "path": "../ui-trajectory"
-    },
-    {
       "path": "../ui-chat/tsconfig.client.json"
     },
     {

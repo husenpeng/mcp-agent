@@ -3,9 +3,11 @@
 import { delimiter, join } from 'node:path'
 import { afterEach, expect, it, vi } from 'vitest'
 import { runCli } from '@tomato/cli/lib/bin.js'
-import { runDesktopCli, runtimeArchivePath } from '../../desktop-host/src/cli.ts'
+import { runDesktopCli } from '../../desktop-host/src/cli.ts'
+import { installOfficeEngineResolution } from '../../desktop-host/src/office-engine.ts'
 
 vi.mock('@tomato/cli/lib/bin.js', () => ({ runCli: vi.fn() }))
+vi.mock('../../desktop-host/src/office-engine.ts', () => ({ installOfficeEngineResolution: vi.fn() }))
 
 afterEach(() => {
   vi.unstubAllEnvs()
@@ -14,10 +16,12 @@ afterEach(() => {
 
 it.each(['system-bin', undefined])('dispatches with bundled pnpm when PATH is %s', async (path) => {
   vi.stubEnv('PATH', path)
+  const runtime = join('Application 中文 with spaces', 'resources', 'app.asar', 'tomato')
   const support = join('Application 中文 with spaces', 'resources', 'runtime')
 
-  await runDesktopCli(support)
+  await runDesktopCli(runtime, support)
 
+  expect(installOfficeEngineResolution).toHaveBeenCalledExactlyOnceWith(runtime)
   expect(runCli).toHaveBeenCalledExactlyOnceWith({
     manageDesktopProfile: true,
     packageManager: {
@@ -30,11 +34,4 @@ it.each(['system-bin', undefined])('dispatches with bundled pnpm when PATH is %s
       },
     },
   })
-})
-
-it('locates the archive of an ASAR-contained runtime and leaves a prepared runtime without one', () => {
-  const resources = join('Application 中文', 'resources')
-  expect(runtimeArchivePath(join(resources, 'app.asar', 'tomato'))).toBe(join(resources, 'app.asar'))
-  expect(runtimeArchivePath(join(resources, 'app.asar.unpacked', 'tomato'))).toBeUndefined()
-  expect(runtimeArchivePath(join(resources, 'tomato'))).toBeUndefined()
 })
