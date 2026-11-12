@@ -38,12 +38,6 @@ import {
 
 const GATE = 'verify-package-dependencies'
 const CORDIS = '@tomato/cordis'
-/**
- * Type packages declared only in the root devDependencies. Each package-local pnpm link is one more
- * location that TypeScript scans when it computes module specifiers for every JSX file.
- */
-const ROOT_TYPE_PACKAGES: ReadonlySet<string> = new Set(['@types/react', '@types/react-dom'])
-
 function workspaceRange(name: string): 'workspace:*' | 'workspace:~' {
   const tomato = name === '@tomato/cli' || (name.startsWith('@tomato/') && !INDEPENDENT_RELEASE_PACKAGE.test(name))
   return tomato ? 'workspace:*' : 'workspace:~'

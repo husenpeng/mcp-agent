@@ -16,7 +16,6 @@ import {
   readClientBuildRecord,
 } from '../client-build-environment.ts'
 import { INDEPENDENT_RELEASE_PACKAGE } from '../package-dependency-policy.ts'
-import { validateTarballPayload } from '../publication-payload.ts'
 import { ON_DEMAND_BUNDLES } from '../../packages/util/official-bundles/src/bundles.ts'
 
 /**
