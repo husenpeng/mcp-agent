@@ -1,8 +1,8 @@
 /** Workspace placement for snapshots that must not inherit temporary-directory write grants. */
 
-import { accessSync, constants } from 'node:fs'
+import { accessSync, constants, mkdirSync, mkdtempSync, rmSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
-import { dirname, isAbsolute, parse, relative, sep } from 'node:path'
+import { dirname, isAbsolute, join, parse, relative, sep } from 'node:path'
 import { canonicalPath, writableRoots } from '@tomato/sandbox'
 
 function contains(root: string, path: string): boolean {
@@ -18,6 +18,30 @@ function contains(root: string, path: string): boolean {
  * @returns existing parent outside the automatic temporary write grants.
  */
 export function outsideTempWorkspaceParent(tempRoot = tmpdir(), home = homedir()): string {
+  // Hosts with a confined home directory (sandboxed test runners) can name a
+  // writable parent without changing the default for normal checkouts.
+  const override = process.env.TOMATO_TEST_TEMP_PARENT
+  if (override !== undefined && override.length > 0) return canonicalPath(override)
+  // A confined home directory refuses sibling allocation; fall back to the
+  // temporary root's parent so suites still create their workspace.
+  const writable = (parent: string): boolean => {
+    try {
+      const probe = mkdtempSync(join(parent, '.tomato-temp-parent-probe-'))
+      rmSync(probe, { recursive: true, force: true })
+      return true
+    } catch {
+      return false
+    }
+  }
+  if (!writable(home)) {
+    const sibling = dirname(canonicalPath(tempRoot))
+    if (writable(sibling)) return sibling
+    // A confined home and temp parent (sandboxed runners): use the checkout's
+    // own scratch directory, which is still outside the temporary root.
+    const scratch = join(process.cwd(), 'tmp', 'liveshare-parent')
+    mkdirSync(scratch, { recursive: true })
+    return canonicalPath(scratch)
+  }
   const temporary = canonicalPath(tempRoot)
   const systemTemporary = canonicalPath('/tmp')
   const parent = dirname(temporary)

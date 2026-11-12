@@ -82,6 +82,8 @@ describe('SessionSkillCatalog', () => {
         whenToUse: 'Before publishing.',
         path: '/cold/project/.agents/skills/review/SKILL.md',
         modelInvocable: true,
+        userInvocable: true,
+        editable: false,
       }],
     })
     expect(observeSession).toHaveBeenCalledWith(sessionId)
@@ -148,6 +150,8 @@ describe('SessionSkillCatalog', () => {
         name: 'preset-owned',
         description: 'Composed for this Agent.',
         modelInvocable: false,
+        userInvocable: true,
+        editable: false,
       }],
     })
     expect(scopedList).toHaveBeenCalledWith({ cwd: '/live/current', scope: agent })

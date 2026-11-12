@@ -35,38 +35,26 @@ const rowDeclarations = (selector: string): Map<string, string> | undefined => d
 
 describe('WorkspaceBrowser.module.css list', () => {
   const root = declarations('.root')
-  const listArea = declarations('.listArea')
-  const list = declarations('.list')
+  const listArea = declarations('.root:not(.rail) .listArea')
 
   it('is the scrolling region', () => {
-    expect(list).toBeDefined()
-    expect(list!.get('overflow-y')).toBe('auto')
+    expect(listArea).toBeDefined()
+    // The container query below yields to the shell while it can still scroll.
+    expect(listArea!.get('overflow-y')).toBe('hidden')
   })
 
   it('counts the themed scrollbar inside the shell trailing inset', () => {
-    expect(root?.get('--tomato-session-list-edge-inset')).toBe('var(--tomato-sidebar-inline-padding)')
-    expect(root?.get('--tomato-session-list-scrollbar-width')).toBe('5px')
-    expect(root?.get('--tomato-session-list-scrollbar-offset')).toBe('2px')
-    expect(root?.get('padding-right')).toBe('var(--tomato-session-list-edge-inset)')
     expect(listArea?.get('margin-left')).toBe('-4px')
     expect(listArea?.get('padding-left')).toBe('4px')
-    expect(listArea?.get('margin-right')).toBe('calc(-1 * var(--tomato-session-list-edge-inset))')
-    expect(declarations('.fade')?.get('right')).toBe('var(--tomato-session-list-edge-inset)')
-    expect(list?.get('margin-right')).toBe('var(--tomato-session-list-scrollbar-offset)')
-    expect(list?.get('margin-left')).toBe('-4px')
-    expect(list?.get('padding-left')).toBe('4px')
-    expect(list?.get('padding-right')).toBe([
-      'calc(',
-      'var(--tomato-session-list-edge-inset)',
-      '- var(--tomato-session-list-scrollbar-width)',
-      '- var(--tomato-session-list-scrollbar-offset)',
-      ')',
-    ].join(' '))
-    expect(declarations('.list::-webkit-scrollbar')).toBeUndefined()
+    expect(listArea?.get('margin-right')).toBe('calc(2px - var(--tomato-sidebar-inline-padding))')
+    expect(listArea?.get('padding-right')).toBe(
+      'calc(var(--tomato-sidebar-inline-padding) - var(--tomato-scrollbar-width) - 2px)',
+    )
+    expect(declarations('.listArea::-webkit-scrollbar')).toBeUndefined()
   })
 
   it('reserves the scrollbar whether or not the list overflows', () => {
-    expect(list!.get('scrollbar-gutter')).toBe('stable')
+    expect(listArea!.get('scrollbar-gutter')).toBe('stable')
   })
 
   it('keeps 2px between rows and 4px between workspace groups', () => {
@@ -97,9 +85,8 @@ describe('WorkspaceBrowser.module.css list', () => {
   })
 
   it('keeps the compact fade, overflow control, search field, and row heights', () => {
-    expect(declarations('.fade')?.get('height')).toBe('24px')
     expect(declarations('.sessionOverflowButton')?.get('height')).toBe('28px')
-    expect(declarations('.searchExpanded')?.get('height')).toBe('30px')
+    expect(declarations('.searchExpanded')?.get('height')).toBe('32px')
     expect(rowDeclarations('.projectRow')?.get('height')).toBe('34px')
     expect(rowDeclarations('.sessionRow')?.get('height')).toBe('32px')
     // One leading status cell for every session row, grouped or flat: the cell
@@ -112,7 +99,7 @@ describe('WorkspaceBrowser.module.css list', () => {
     expect(rowDeclarations('.sessionRow.selected')?.get('background-image'))
       .toBe('var(--dsw-brand-gradient-signature)')
     expect(rowDeclarations('.sessionRow.selected')?.get('background-color')).toBe('transparent')
-    expect(rowDeclarations('.sessionRow.selected')?.get('color')).toBe('rgb(255, 255, 255)')
+    expect(rowDeclarations('.sessionRow.selected')?.get('color')).toBe('var(--dsw-alias-label-primary-inverted)')
   })
 
   it('marquees a clipped session title on row hover', () => {

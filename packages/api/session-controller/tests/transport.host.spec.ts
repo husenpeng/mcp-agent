@@ -690,7 +690,7 @@ describe('Session history and Web follow', () => {
       }),
     }) as never)
     await expect(second.history.events({ address, throughSeq: -1 }, signal()))
-      .rejects.toMatchObject({ code: 'session/not-found' })
+      .rejects.toMatchObject({ code: 'SESSION_QUERY_SOURCE_CONFLICT' })
   })
 
   it('serves cold ordinary history and validates every durable subagent descriptor state', async () => {

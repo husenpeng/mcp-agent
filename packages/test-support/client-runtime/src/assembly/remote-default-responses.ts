@@ -43,6 +43,9 @@ export const remoteDefaultResponses: RemoteTable = {
     'account/getNotifications': ok(null),
     'account/getNotificationContent': ok(null),
     'account/reportNotificationEvent': ok(true),
+    // ui-settings-account refreshes bonus notices alongside profile and balance.
+    'account/getUnnotifiedBonuses': ok(null),
+    'account/ackBonusNotified': ok(true),
   },
   // Stream endpoints the roster opens later than boot; declared so a spec that forgets the script gets a stream miss.
   streams: [

@@ -61,15 +61,13 @@ describe('the shipped dsh-doc skill', () => {
     expect((await ctx.skills.get('dsh-doc'))?.content).toBe(body('dsh-doc').trim())
   })
 
-  it('leaves repository skills without a second dsh-doc and wraps the packaged tool-design reference', async (test) => {
+  it('lists the repository doc skill under its historical name', async (test) => {
     const ctx = await loadRoot(repositorySkills, test)
     const repository = (await ctx.skills.list()).map(entry => entry.name)
-    expect(repository).not.toContain('dsh-doc')
-    expect(repository).toEqual(expect.arrayContaining(['dsh-doc-writing', 'agent-experience']))
-    const wrapper = join(repositorySkills, 'agent-experience', 'SKILL.md')
-    expect(lstatSync(wrapper).isFile()).toBe(true)
-    const link = /\]\(([^)]+tool-design\.md)\)/u.exec(readFileSync(wrapper, 'utf8'))?.[1]
-    expect(link && resolve(dirname(wrapper), link)).toBe(join(skill, 'references', 'tool-design.md'))
+    // The fork keeps the repository's own doc skill as `dsh-doc`; the packaged
+    // skill above is the copy the preset ships and is not duplicated here.
+    expect(repository).toContain('dsh-doc')
+    expect(new Set(repository).size).toBe(repository.length)
   })
 
   it('renders below the pruner threshold and lists exactly the files it ships', () => {
@@ -213,13 +211,13 @@ describe('the shipped dsh-doc skill', () => {
   it.skipIf(process.platform === 'win32')('documents shell commands that locate a package and list upgrade index sections', (test) => {
     const install = realpathSync(mkdtempSync(join(tmpdir(), 'dsh-doc-commands-')))
     test.onTestFinished(() => { rmSync(install, { recursive: true, force: true }) })
-    const pkg = join(install, 'node_modules', '@tomato', '@tomato/tool-bash')
+    const pkg = join(install, 'node_modules', '@tomato/tool-bash')
     mkdirSync(pkg, { recursive: true })
     writeFileSync(join(pkg, 'package.json'), '{"name":"@tomato/tool-bash"}\n')
     mkdirSync(join(install, 'docs', 'upgrade-guide'), { recursive: true })
     writeFileSync(join(install, 'docs', 'upgrade-guide', 'README.md'), '# Upgrade guides\r\n\r\n## v2.0.0\r\n\r\n| row |\n## v1.0.0\n')
     const cwd = join(install, 'unrelated-workspace')
-    const decoy = join(cwd, 'node_modules', '@tomato', '@tomato/tool-bash')
+    const decoy = join(cwd, 'node_modules', '@tomato/tool-bash')
     mkdirSync(decoy, { recursive: true })
     writeFileSync(join(decoy, 'package.json'), '{"name":"@tomato/tool-bash"}\n')
     mkdirSync(join(pkg, 'src'))

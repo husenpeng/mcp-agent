@@ -13,6 +13,12 @@ const EXEMPT_FILES: Record<string, string> = {
   'packages/client/ui-primitives/src/ansi.ts': 'ANSI SGR palette mapping',
   'packages/client/web/src/boot-page.module.css': 'boot page paints before ui-theme loads',
   'packages/client/web/src/base.css': 'shell fallbacks before ui-theme loads',
+  'packages/client/client-ui-robot-room/src/client/RoomPage.module.css': 'robot room brand artwork palette',
+  'packages/client/ui-image-evidence/src/client/ImageEvidenceBadge.module.css': 'evidence badge artwork ink',
+  'packages/experimental/muse-insights/src/client/Insights.module.css': 'muse insight artwork palette',
+  'packages/experimental/muse-insights/src/client/Memory.module.css': 'muse memory artwork palette',
+  'packages/tomato/brand/src/client/Brand.module.css': 'brand artwork palette',
+  'packages/client/ui-layout/src/client/AppFrame.module.css': 'macOS vibrancy washes mixed with the sidebar fill',
 }
 
 /** Alpha masks and box-shadow ink are geometry, not themed surface or label colors. */

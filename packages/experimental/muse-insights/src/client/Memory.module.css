@@ -41,6 +41,7 @@
 .filter {
   border: 0.5px solid var(--dsw-alias-border-l2);
   border-radius: 999px;
+  corner-shape: round;
   background: transparent;
   padding: 3px 10px;
   color: var(--dsw-alias-label-secondary);
@@ -49,9 +50,11 @@
   cursor: pointer;
 }
 
-.filter:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
-  color: var(--dsw-alias-label-primary);
+@media (hover: hover) {
+  .filter:hover {
+    background: var(--dsw-alias-interactive-bg-hover);
+    color: var(--dsw-alias-label-primary);
+  }
 }
 
 .filter[data-active='true'] {
@@ -95,7 +98,7 @@
   gap: 8px;
   padding: 10px 12px 10px 12px;
   border: 0.5px solid var(--dsw-alias-border-l2);
-  border-left: 3px solid var(--dsw-alias-border-l3);
+  border-left: 0.5px solid var(--dsw-alias-border-l3);
   border-radius: var(--dsw-radius-md);
   background: var(--dsw-alias-bg-layer-2);
 }
@@ -174,6 +177,7 @@
 .counts > span {
   padding: 1px 7px;
   border-radius: 999px;
+  corner-shape: round;
   background: var(--dsw-alias-bg-layer-3);
   color: var(--dsw-alias-label-secondary);
   font-size: 11px;
@@ -216,8 +220,10 @@
   list-style-position: inside;
 }
 
-.raw summary:hover {
-  color: var(--dsw-alias-label-secondary);
+@media (hover: hover) {
+  .raw summary:hover {
+    color: var(--dsw-alias-label-secondary);
+  }
 }
 
 .raw summary:focus-visible {

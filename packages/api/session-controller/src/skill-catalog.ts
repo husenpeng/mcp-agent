@@ -205,7 +205,7 @@ export class SessionSkillCatalog extends TypertRemoteService {
       ...skill.whenToUse === undefined ? {} : { whenToUse: skill.whenToUse },
       modelInvocable: skill.invocation.modelInvocable,
       userInvocable: skill.invocation.userInvocable,
-      source: skill.source,
+      ...skill.source === undefined ? {} : { source: skill.source },
       editable: this.editable(skill),
     }
   }

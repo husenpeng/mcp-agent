@@ -9,6 +9,7 @@ import type { SessionEvent, SessionId } from '@tomato/session'
 import type { SandboxExecutionPolicy, SandboxMode } from '@tomato/sandbox'
 import { SubprocessExecutableNotFoundError, type SubprocessRuntime, type SubprocessSpawnSpec, type SubprocessTerminalEnvironment, type SubprocessTerminalHandle } from '@tomato/subprocess'
 import LocalSubprocessRuntime from '@tomato/subprocess-local'
+import { execFileSync } from 'node:child_process'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { TerminalController, type Config } from '../src/index.ts'
 import { inputChannel } from './input.ts'
@@ -68,6 +69,16 @@ function fixture(overrides: Partial<Config> = {}) {
   }
   return { ctx, agent: owner(ctx), controller, subprocess, handle, sandboxPolicy, workingDirectory, disposeEffect }
 }
+
+/** Whether this sandbox permits a pseudo-terminal; the interactive suites need one. */
+const ptyAvailable = ((): boolean => {
+  try {
+    execFileSync('python3', ['-c', 'import os; os.openpty()'], { stdio: 'ignore' })
+    return true
+  } catch {
+    return false
+  }
+})()
 
 describe('TerminalController', () => {
   it('resolves execution services from an Agent plugin context without consumer injections', async () => {
@@ -579,7 +590,7 @@ describe('shell resolution', () => {
   })
 })
 
-it.skipIf(process.platform === 'win32')('runs a real interactive shell with completion, TERM and live window dimensions', async () => {
+it.skipIf(process.platform === 'win32' || !ptyAvailable)('runs a real interactive shell with completion, TERM and live window dimensions', async () => {
   const cwd = await mkdtemp(join(tmpdir(), 'tomato-web-terminal-'))
   const ctx = new Context()
   const runtime = await ctx.plugin(LocalSubprocessRuntime)
@@ -1015,7 +1026,7 @@ it('wakes a waiting roster consumer and keeps other watchers when one stops', as
   expect(await a.next()).toEqual({ done: true, value: undefined })
 })
 
-it.skipIf(process.platform === 'win32')('runs a command typed by the agent in a real shell and renders its output', async () => {
+it.skipIf(process.platform === 'win32' || !ptyAvailable)('runs a command typed by the agent in a real shell and renders its output', async () => {
   const cwd = await mkdtemp(join(tmpdir(), 'tomato-agent-terminal-'))
   const ctx = new Context()
   await ctx.plugin(LocalSubprocessRuntime)

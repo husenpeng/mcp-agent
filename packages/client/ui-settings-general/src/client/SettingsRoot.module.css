@@ -180,7 +180,7 @@
 .navCell.active {
   background-image: var(--dsw-brand-gradient-signature);
   box-shadow: var(--dsw-specific-shadow-nav-active);
-  color: rgb(255, 255, 255);
+  color: var(--dsw-alias-label-primary-inverted);
 }
 
 .navIcon {
