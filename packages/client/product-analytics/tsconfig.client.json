@@ -14,13 +14,13 @@
       "path": "../../../vendor/cordis"
     },
     {
-      "path": "../../api/gateway/tsconfig.client.json"
-    },
-    {
       "path": "../../core/session"
     },
     {
       "path": "../../llm/llm"
+    },
+    {
+      "path": "../../api/gateway/tsconfig.client.json"
     }
   ]
 }

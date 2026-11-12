@@ -12,9 +12,6 @@
   ],
   "references": [
     {
-      "path": "../../api/session-controller/tsconfig.host.json"
-    },
-    {
       "path": "../../../vendor/cordis"
     },
     {
@@ -31,6 +28,9 @@
     },
     {
       "path": "../../core/session"
+    },
+    {
+      "path": "../../api/session-controller/tsconfig.host.json"
     }
   ]
 }

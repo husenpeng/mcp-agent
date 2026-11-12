@@ -26,7 +26,7 @@ Cordis 框架及其基础库以源码形式 vendored 在 [`vendor/`](../vendor/R
 - **依赖 range。** 改名只修改依赖键，不改变范围。Workspace 清单使用 `workspace:` 协议；[仓库规则](../AGENTS.md#conventions)区分精确的 DSH 引用与 vendor/native tilde 范围。
 - **Loader 的 `cordis:` 内建前缀。** `cordis:include`、`cordis:group` 是协议前缀，不是包名。
 - **`cordis.yml` 配置文件家族**，包括 `*.cordis.yml`、`*.cordis.snapshot.yml`、`cordis.patch.yml`。
-- **名字里带这个词的 harness 包**，例如 `@tomato/dsh-tool-cordis`。
+- **名字里带这个词的 harness 包**，例如 `@tomato/tool-cordis`。
 - **上游运行时标识符**，例如 Schemastery 的 `Symbol.for('schemastery')` 及其 `vendor:` 元数据字段。
 - **产品标识符。** `GENERIC_SKIPS` 列出的文件保留所列上游名称对应的 preset ID、事件名、目录分组名，以及 locale 或输入来源键。同一文件中的 import、export、模块声明和 JSDoc import 类型仍会双向改名，JavaScript/TypeScript 围栏内也如此。YAML 插件的 `name:` 值同样改名。所列名称的其他字符串用法保持不变，其他库名仍受检查。
 - **改名测试夹具。** `scripts/rescope-vendor.spec.ts` 和 `scripts/gen-third-party-notices.spec.ts` 保留两种包名拼写作为测试数据。

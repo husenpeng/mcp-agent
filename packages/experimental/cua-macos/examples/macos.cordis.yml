@@ -5,4 +5,5 @@
       name: '../src/index.ts'
       config:
         agentPreset: false
+        # TOMATO_CUA_HELPER must name TOMATO Computer Use.app/Contents/MacOS/tomato-cua-native.
         helperPath: !!js process.env.TOMATO_CUA_HELPER

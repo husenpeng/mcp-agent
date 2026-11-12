@@ -9,22 +9,10 @@
   ],
   "references": [
     {
-      "path": "../../api/remotes/tsconfig.client.json"
-    },
-    {
-      "path": "../../api/session-controller/tsconfig.client.json"
-    },
-    {
       "path": "../../../vendor/cordis"
     },
     {
-      "path": "../locale/tsconfig.client.json"
-    },
-    {
       "path": "../store"
-    },
-    {
-      "path": "../ui-conversation/tsconfig.client.json"
     },
     {
       "path": "../ui-primitives"
@@ -49,6 +37,19 @@
     },
     {
       "path": "../../util/values"
+    },
+    {
+      "path": "../../api/remotes/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/session-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-conversation/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

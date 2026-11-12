@@ -28,7 +28,10 @@
     "plugins",
     "THIRD_PARTY_NOTICES.md",
     "LICENSE-APACHE-2.0",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/**/*.js.map",
+    "lib/types/**/*.d.ts.map",
+    "src"
   ],
   "license": "MIT",
   "dependencies": {

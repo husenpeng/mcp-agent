@@ -260,9 +260,10 @@ describe('client bundle package asset imports', () => {
       })
       const output = builds.flatMap(bundle => bundle.chunks).find(chunk => chunk.type === 'chunk' && chunk.fileName === 'client.js')
       const code = output?.type === 'chunk' ? output.code : ''
-      expect(code).toContain(`require.asset(${JSON.stringify(WHALE_URL)})`)
+      // The minifier may print either string quote.
+      expect(code).toMatch(new RegExp(`require\\.asset\\(["\`]${WHALE_URL.replaceAll('.', '\\.')}["\`]\\)`))
       expect(code).not.toContain('__tomatoPackageAsset_')
-      expect(code).toContain('"__tomatoPackageAsset("')
+      expect(code).toMatch(/["`]__tomatoPackageAsset\(["`]/)
     } finally {
       for (const bundle of builds) await bundle[Symbol.asyncDispose]()
     }

@@ -6,6 +6,7 @@
 
 import type { Branded } from '@tomato/branded'
 import type { FileAttachmentRef, ImageAttachmentRef } from '@tomato/attachment'
+import type { LocalizedText } from '@tomato/package-manifest'
 import type { MessageId, ToolCallId, ProviderRequestId, ReasoningEffortId } from './brand.ts'
 import type { Message, UserMessage } from './message.ts'
 
@@ -344,6 +345,20 @@ export interface LlmDiscoveredModel {
   inputModalities?: readonly ModelModality[]
 }
 
+/**
+ * Emphasis of a model badge: `neutral` states a plain fact, `info` highlights
+ * the model, `success` marks a benefit, and `warning` asks for attention.
+ */
+export type LlmModelBadgeTone = 'neutral' | 'info' | 'success' | 'warning'
+
+/** Short provider-authored label a selector shows beside one advertised model name. */
+export interface LlmModelBadge {
+  /** One literal, or translations keyed by lowercase language id with a required English entry. */
+  text: LocalizedText
+  /** Emphasis of the label. */
+  tone: LlmModelBadgeTone
+}
+
 /** One adapter-discovered model; catalog membership is advisory, not request validation. */
 export interface LlmModelInfo {
   /** Provider route that owns this model entry. */
@@ -362,6 +377,8 @@ export interface LlmModelInfo {
    * disabled row while {@link LlmRuntime.stream} refuses to call it.
    */
   blockedReason?: string
+  /** Provider-authored label shown beside the name; display data only. */
+  badge?: LlmModelBadge
 }
 
 /** Provider-owned context capacity for one exact provider/model route. */

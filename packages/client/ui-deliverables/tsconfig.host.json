@@ -16,9 +16,6 @@
       "path": "../../../vendor/cordis"
     },
     {
-      "path": "../connection/tsconfig.host.json"
-    },
-    {
       "path": "../../core/session"
     },
     {
@@ -37,12 +34,6 @@
       "path": "../../deliverables/workspace-changes"
     },
     {
-      "path": "../../api/session-controller/tsconfig.host.json"
-    },
-    {
-      "path": "../../api/workspace-files/tsconfig.host.json"
-    },
-    {
       "path": "../../fs/fs"
     },
     {
@@ -50,6 +41,15 @@
     },
     {
       "path": "../../sandbox/sandbox-policy"
+    },
+    {
+      "path": "../connection/tsconfig.host.json"
+    },
+    {
+      "path": "../../api/session-controller/tsconfig.host.json"
+    },
+    {
+      "path": "../../api/workspace-files/tsconfig.host.json"
     }
   ]
 }

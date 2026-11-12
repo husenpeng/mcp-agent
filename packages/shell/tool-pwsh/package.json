@@ -1,7 +1,7 @@
 {
   "name": "@tomato/tool-pwsh",
   "description": "Model-facing pwsh tool over the bash executor seam",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -25,7 +25,10 @@
   "files": [
     "locale/*.json",
     "lib/index.js",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
   ],
   "license": "MIT",
   "peerDependencies": {
@@ -40,7 +43,8 @@
     "@tomato/system-prompt": "workspace:*",
     "@tomato/tools": "workspace:*",
     "@tomato/user-approval": "workspace:*",
-    "@tomato/working-directory": "workspace:*"
+    "@tomato/working-directory": "workspace:*",
+    "@tomato/subprocess": "workspace:*"
   },
   "dependencies": {
     "@tomato/schemastery": "workspace:~"
@@ -69,6 +73,7 @@
     "@tomato/tools": "workspace:*",
     "@tomato/user-approval": "workspace:*",
     "@tomato/working-directory": "workspace:*",
-    "@tomato/fs-local": "workspace:*"
+    "@tomato/fs-local": "workspace:*",
+    "@tomato/subprocess": "workspace:*"
   }
 }

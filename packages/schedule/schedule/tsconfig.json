@@ -39,7 +39,7 @@
       "path": "../../session/session-persistence-jsonl"
     },
     {
-      "path": "../../api/session-controller/tsconfig.host.json"
+      "path": "../../session/session-title"
     },
     {
       "path": "../../storage/storage-domain"
@@ -52,6 +52,10 @@
     },
     {
       "path": "../../workspace/workspace"
+    },
+    {
+      "path": "../../api/session-controller/tsconfig.host.json"
     }
-  ]
+  ],
+  "files": []
 }

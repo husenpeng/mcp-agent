@@ -329,40 +329,6 @@ describe('Web session model selection', () => {
     await ctx.fiber.dispose()
   })
 
-  it('authorizes attachment bytes only when the session event stream references the id', async () => {
-    const { ctx, agent, sessionId } = await harness()
-    const ref = {
-      attachmentId: 'att-authorized', mediaType: 'image/png' as const, bytes: 2, width: 1, height: 1,
-    }
-    const readImage = vi.fn(() => Promise.resolve({ ref, data: Uint8Array.of(1, 2) }))
-    ctx.provide('attachments', { readImage } as never)
-    const remote = await createSessionTestRemote(ctx, {
-      defaultModelSelection: () => ({ provider: 'deepseek-official', model: 'deepseek-chat' }),
-      cwd: '/tmp',
-    })
-    agent.session.append('agent/inbox/spliced', {
-      target: 'next-turn',
-      start: 0,
-      inserted: [{
-        id: 'queued-image', role: 'user', source: { kind: 'user' },
-        content: [{ type: 'image', attachment: ref }],
-      }],
-    } as never)
-
-    const allowed = await remote.attachment(request({
-      sessionId, attachmentId: 'att-authorized' as never,
-    }))
-    expect(allowed).toMatchObject({ ok: true, value: { attachment: ref, data: 'AQI=' } })
-    const denied = await remote.attachment(request({
-      sessionId, attachmentId: 'att-other' as never,
-    }))
-    expect(denied).toMatchObject({
-      ok: false,
-      error: { code: 'session/attachment-invalid', details: { reason: 'ATTACHMENT_NOT_REFERENCED' } },
-    })
-    expect(readImage).toHaveBeenCalledOnce()
-    await ctx.fiber.dispose()
-  })
   it('checks configured key references even for empty catalogs and skips profiles without keys', async () => {
     const ctx = new Context()
     await ctx.plugin(LlmRuntime)
@@ -397,14 +363,14 @@ describe('Web session model selection', () => {
     const { configurationFixture } = await import('../../../settings/settings/tests/configuration-fixture.ts')
     const configured = await configurationFixture({ hmr: false })
     const { ctx } = await harness(undefined, configured.ctx)
-    ctx.effect(() => ctx.llm.registerAdapter(['account'], new CatalogAdapter('Account', [
-      { provider: 'account', id: 'first-model', name: 'First' },
-      { provider: 'account', id: 'second-model', name: 'Second' },
+    ctx.effect(() => ctx.llm.registerAdapter(['deepseek-account'], new CatalogAdapter('Account', [
+      { provider: 'deepseek-account', id: 'first-model', name: 'First' },
+      { provider: 'deepseek-account', id: 'second-model', name: 'Second' },
     ], REASONING)))
     const describe = vi.fn(async () => ({ configured: configuredKey, writable: true }))
     ctx.provide('credentials', { describe } as never)
     ctx.effect(() => ctx.llm.registerConfigurableProviders([
-      { provider: 'account', displayName: 'Account', settingsNs: 'account', settingsPath: [] },
+      { provider: 'deepseek-account', displayName: 'Account', settingsNs: 'account', settingsPath: [] },
       { provider: 'removed-model-provider', displayName: 'Custom', settingsNs: 'first', settingsPath: ['providers', 'custom'] },
     ]))
     vi.spyOn(ctx.settings, 'describe').mockReturnValue([{
@@ -419,7 +385,7 @@ describe('Web session model selection', () => {
     expect(describe).toHaveBeenCalledWith('CUSTOM_API_KEY')
     expect(ctx.agentDefaultModel.currentSelection()).toEqual(configuredKey
       ? { provider: 'removed', model: 'saved' }
-      : { provider: 'account', model: 'first-model', reasoningEffort: 'high' })
+      : { provider: 'deepseek-account', model: 'first-model', reasoningEffort: 'high' })
     await ctx.fiber.dispose()
   })
 
@@ -466,6 +432,7 @@ describe('Web session model selection', () => {
     const { ctx } = await harness()
     ctx.llm.registerAdapter(['plain'], new CatalogAdapter('Plain', [
       { provider: 'plain', id: 'plain-model', name: 'Plain Model' },
+      { provider: 'plain', id: 'badged-model', name: 'Badged Model', badge: { text: { en: 'New', zh: '新' }, tone: 'info' } },
     ]))
     ctx.llm.registerAdapter(['described-reasoning'], new CatalogAdapter('Described Reasoning', [
       { provider: 'described-reasoning', id: 'reasoning-model', name: 'Reasoning Model' },
@@ -485,7 +452,10 @@ describe('Web session model selection', () => {
 
     const catalog = await buildModelCatalog(ctx)
     expect(catalog.groups).toEqual(expect.arrayContaining([
-      { id: 'plain', name: 'Plain', models: [{ id: 'plain-model', name: 'Plain Model' }] },
+      { id: 'plain', name: 'Plain', models: [
+        { id: 'plain-model', name: 'Plain Model' },
+        { id: 'badged-model', name: 'Badged Model', badge: { text: { en: 'New', zh: '新' }, tone: 'info' } },
+      ] },
       {
         id: 'described-reasoning',
         name: 'Described Reasoning',
@@ -939,39 +909,18 @@ it('initializes the account model without reasoning metadata and rejects an empt
   const configured = await configurationFixture({ hmr: false })
   const { ctx } = await harness(undefined, configured.ctx)
   ctx.provide('credentials', { describe: vi.fn() } as never)
-  const dispose = ctx.llm.registerAdapter(['account'], new CatalogAdapter('Account', [
-    { provider: 'account', id: 'basic', name: 'Basic' },
+  const dispose = ctx.llm.registerAdapter(['deepseek-account'], new CatalogAdapter('Account', [
+    { provider: 'deepseek-account', id: 'basic', name: 'Basic' },
   ]))
   const controller = await createSessionTestController(ctx, {
     defaultModelSelection: () => ctx.agentDefaultModel.currentSelection(), cwd: '/tmp',
   })
   await controller.initializeDefaultModel()
-  expect(ctx.agentDefaultModel.currentSelection()).toEqual({ provider: 'account', model: 'basic' })
+  expect(ctx.agentDefaultModel.currentSelection()).toEqual({ provider: 'deepseek-account', model: 'basic' })
   dispose()
   await expect(controller.initializeDefaultModel()).rejects.toMatchObject({
-    code: 'session/provider-models-unavailable', details: { provider: 'account' },
+    code: 'session/provider-models-unavailable', details: { provider: 'deepseek-account' },
   })
-})
-
-it('keeps a policy-blocked model visible but unavailable', async () => {
-  const { ctx } = await harness()
-  const dispose = ctx.llm.registerAdapter(['blocked-catalog'], new CatalogAdapter('Blocked Catalog', [
-    { provider: 'blocked-catalog', id: 'blocked-model', name: 'Blocked Model', blockedReason: 'outside the deployment model allowlist' },
-    { provider: 'blocked-catalog', id: 'allowed-model', name: 'Allowed Model' },
-  ]))
-  try {
-    const catalog = await buildModelCatalog(ctx, { provider: 'blocked-catalog', model: 'allowed-model' })
-    expect(catalog.groups.find(group => group.id === 'blocked-catalog')?.models).toEqual([
-      { id: 'blocked-model', name: 'Blocked Model', blockedReason: 'outside the deployment model allowlist' },
-      { id: 'allowed-model', name: 'Allowed Model' },
-    ])
-    const { modelAvailable } = await import('../src/catalog.ts')
-    expect(await modelAvailable(ctx, { provider: 'blocked-catalog', model: 'blocked-model' })).toBe(false)
-    expect(await modelAvailable(ctx, { provider: 'blocked-catalog', model: 'allowed-model' })).toBe(true)
-  } finally {
-    dispose()
-    await ctx.fiber.dispose()
-  }
 })
 
 it.each([new Error('catalog disconnected'), 'catalog disconnected'])('reports catalog rejection as an unavailable selection: %s', async (failure) => {

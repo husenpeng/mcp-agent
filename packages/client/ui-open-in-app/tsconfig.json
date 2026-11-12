@@ -12,25 +12,10 @@
       "path": "../../../vendor/cordis"
     },
     {
-      "path": "../../api/gateway/tsconfig.client.json"
-    },
-    {
-      "path": "../../api/remotes/tsconfig.client.json"
-    },
-    {
-      "path": "../../api/session-controller/tsconfig.client.json"
-    },
-    {
       "path": "../../host/open-in-app"
     },
     {
-      "path": "../locale/tsconfig.client.json"
-    },
-    {
       "path": "../store"
-    },
-    {
-      "path": "../ui-conversation/tsconfig.client.json"
     },
     {
       "path": "../ui-layout"
@@ -45,22 +30,56 @@
       "path": "../ui-session"
     },
     {
-      "path": "../ui-sidebar-documentpreview/tsconfig.client.json"
-    },
-    {
       "path": "../ui-sidebar-files"
     },
     {
       "path": "../ui-slots"
     },
     {
-      "path": "../ui-deliverables/tsconfig.client.json"
-    },
-    {
       "path": "../../util/native-command"
     },
     {
+      "path": "../ui-context-menu"
+    },
+    {
+      "path": "../../util/workspace-path"
+    },
+    {
+      "path": "../ui-sidebar-right"
+    },
+    {
+      "path": "../ui-workspace"
+    },
+    {
+      "path": "../../api/gateway/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/remotes/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/session-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-conversation/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-sidebar-documentpreview/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-deliverables/tsconfig.client.json"
+    },
+    {
       "path": "../shortcuts/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/workspace-files/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-sidebar-browser/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

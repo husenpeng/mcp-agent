@@ -14,6 +14,7 @@ import type {} from '@tomato/plugin-manager/types'
 import type {} from '@tomato/plugin-market/types'
 import type {} from '@tomato/schedule/client'
 import type { TypertForwardableEventEntry } from '@tomato/typert-protocol'
+import type {} from '@tomato/web/types'
 
 /**
  * Host events this application forwards without renaming. The explicit mode is
@@ -44,6 +45,7 @@ export const API_REMOTE_FORWARDED_EVENTS = [
   { event: 'cordis/inspect-query', mode: 'emit' },
   { event: 'cordis/inspect-query-resolved', mode: 'emit' },
   { event: 'llm/adapters-updated', mode: 'emit' },
+  { event: 'llm/models-updated', mode: 'emit' },
   { event: 'permission-presets/catalog-changed', mode: 'emit' },
   { event: 'plugin-manager/changed', mode: 'emit' },
   { event: 'plugin-manager/install-log', mode: 'emit' },
@@ -53,4 +55,5 @@ export const API_REMOTE_FORWARDED_EVENTS = [
   { event: 'settings/document-updated', mode: 'emit' },
   { event: 'schedule/changed', mode: 'emit' },
   { event: 'user-questions/request', mode: 'waterfall' },
+  { event: 'web/providers-changed', mode: 'emit' },
 ] as const satisfies readonly TypertForwardableEventEntry[]

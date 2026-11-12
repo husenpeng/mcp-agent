@@ -13,15 +13,6 @@
       "path": "../../../vendor/schemastery"
     },
     {
-      "path": "../../api/remotes/tsconfig.client.json"
-    },
-    {
-      "path": "../../api/session-controller/tsconfig.client.json"
-    },
-    {
-      "path": "../../api/workspace-controller/tsconfig.client.json"
-    },
-    {
       "path": "../../attachment/attachment"
     },
     {
@@ -79,12 +70,6 @@
       "path": "../../todo/tool-todo"
     },
     {
-      "path": "../locale/tsconfig.client.json"
-    },
-    {
-      "path": "../ui-settings/tsconfig.client.json"
-    },
-    {
       "path": "../../util/crypto"
     },
     {
@@ -100,6 +85,24 @@
       "path": "../../context/file-reference"
     },
     {
+      "path": "../ui-context-menu"
+    },
+    {
+      "path": "../../api/remotes/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/session-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/workspace-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-settings/tsconfig.client.json"
+    },
+    {
       "path": "../shortcuts/tsconfig.client.json"
     },
     {
@@ -107,6 +110,8 @@
     }
   ],
   "exclude": [
-    "src/index.ts"
-  ]
+    "src/index.ts",
+    "src/host"
+  ],
+  "files": []
 }

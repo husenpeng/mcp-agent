@@ -82,7 +82,7 @@ function styleInjectionModule(
  * Everything else under @tomato/* is either a module-table entry
  * (external) or a leak the purity gate rejects.
  */
-export const INLINE_SAFE = /^(?:@tomato\/(?:file-reference|session|llm|tools|branded|official-bundles|deque|output-retention|typert-protocol|util-crypto|util-values|util-workspace-path)(?:\/|$)|@tomato\/util-file-drag$|@tomato\/token-meter\/client$|@tomato\/native-command\/types$|@tomato\/host-open-in-app\/shared$|@tomato\/plugin-manager\/registry$|@tomato\/agent-preset-registry\/display$|@tomato\/api-workspace-controller\/default-workspace$|@tomato\/spill-policy\/notice$)/
+export const INLINE_SAFE = /^(?:@tomato\/tomato-(?:file-reference|fs-patch|session|llm|tools|brand|official-bundles|deque|output-retention|typert-protocol|util-crypto|util-time|util-values|util-workspace-path)(?:\/|$)|@tomato\/@tomato/util-file-drag$|@tomato\/@tomato/token-meter\/client$|@tomato\/@tomato/commands\/builtin$|@tomato\/@tomato/native-command\/types$|@tomato\/@tomato/host-open-in-app\/shared$|@tomato\/@tomato/plugin-manager\/registry$|@tomato\/@tomato/agent-preset-registry\/display$|@tomato\/@tomato/api-workspace-controller\/default-workspace$|@tomato\/@tomato/spill-policy\/notice$)/
 
 /**
  * Vendored framework libraries: rescoped into @tomato, so the gate below
@@ -93,7 +93,7 @@ export const INLINE_SAFE = /^(?:@tomato\/(?:file-reference|session|llm|tools|bra
 const VENDORED_LIBRARY = /^@tomato\/(?:(?:cosmokit|schemastery)(?:\/|$)|cordis-plugin-timer$)/
 
 /** Generated descriptor/codec contribution with no shared runtime identity. */
-const GENERATED_REMOTE = /^@tomato\/[a-z0-9]+(?:-[a-z0-9]+)*\/remote$/
+const GENERATED_REMOTE = /^@tomato\/tomato-[a-z0-9]+(?:-[a-z0-9]+)*\/remote$/
 
 /**
  * Workspace mode replaces an empty config array with the root defaults. A
@@ -239,7 +239,10 @@ interface ClientBundleOptions {
   readonly companions?: readonly UserConfig[]
   /** Overrides for the package's primary Node-side library config. */
   readonly lib?: UserConfig
-  /** Optional legal or attribution text selected by emitted client filename. */
+  /**
+   * Optional legal or attribution text selected by emitted client filename. The preset prepends it after
+   * minification, so its comment lines reach the artifact byte for byte.
+   */
   readonly clientBanner?: (fileName: string) => string | undefined
 }
 
@@ -310,6 +313,8 @@ function staticLinkedConfig(id: string, entry: string, outputName = basename(ent
     format: ['esm'],
     platform: 'browser',
     target: 'es2024',
+    // Resolve the mode before this intermediate bundle removes conditional branches.
+    define: { 'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV ?? 'production') },
     fixedExtension: false,
     dts: false,
     clean: false,
@@ -795,6 +800,12 @@ function clientConfig(
     // Plugin code is fetched outside Vite's module graph, so its own bundle
     // must carry the TS/TSX mapping consumed by browser profiling tools.
     sourcemap: true,
+    // Compress the browser bundle's text while identifier names stay readable
+    // and the source map still resolves through the published `src`. The
+    // compressor stays off: the browser worker image lowers `yield*` only as a
+    // whole statement, and a compressor that folds statements into expressions
+    // hides it.
+    minify: { compress: false, mangle: false },
     clean: false,
     deps: {
       neverBundle: isRequested,
@@ -927,10 +938,10 @@ function clientConfig(
         isolation.sourcePath(source, mapPath)
         return browserSourcePath(source, mapPath)
       },
-      banner: (chunk) => {
-        const registration = `window.__ModuleLoader__.load({ id: ${JSON.stringify(id)}, ${chunk.isEntry ? '' : `chunk: ${JSON.stringify(chunk.fileName)}, `}factory: (require) => {`
+      banner: chunk => `window.__ModuleLoader__.load({ id: ${JSON.stringify(id)}, ${chunk.isEntry ? '' : `chunk: ${JSON.stringify(chunk.fileName)}, `}factory: (require) => {`,
+      postBanner: (chunk) => {
         const prefix = clientBanner?.(chunk.fileName)
-        return prefix === undefined ? registration : `${prefix}\n${registration}`
+        return prefix === undefined ? '' : `${prefix}\n`
       },
       footer: 'return module.exports; } });',
       intro: 'var module = { exports: {} }; var exports = module.exports;',

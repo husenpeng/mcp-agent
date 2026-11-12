@@ -18,9 +18,6 @@
       "path": "../../../vendor/timer"
     },
     {
-      "path": "../../api/remotes/tsconfig.client.json"
-    },
-    {
       "path": "../../client/modules"
     },
     {
@@ -30,7 +27,11 @@
       "path": "../../client/ui-slots"
     },
     {
+      "path": "../../api/remotes/tsconfig.client.json"
+    },
+    {
       "path": "../../client/ui-theme/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

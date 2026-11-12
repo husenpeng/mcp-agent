@@ -1,0 +1,83 @@
+{
+  "name": "@tomato/experimental-client-ui-stats",
+  "description": "Per-turn and per-step context, timing, cache, and tool-cost table contributed as an experimental conversation View",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/experimental/client-ui-stats"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "tomato": {
+    "client": {
+      "inject": [
+        "@tomato/api-session-controller",
+        "@tomato/client-locale",
+        "@tomato/client-ui-conversation",
+        "@tomato/client-ui-renderer"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@tomato/cordis": "workspace:~"
+  },
+  "devDependencies": {
+    "@tomato/cordis": "workspace:~",
+    "@tomato/agent-team": "workspace:*",
+    "@tomato/api-session-controller": "workspace:*",
+    "@tomato/attachment": "workspace:*",
+    "@tomato/client-locale": "workspace:*",
+    "@tomato/client-store": "workspace:*",
+    "@tomato/client-test-runtime": "workspace:*",
+    "@tomato/client-ui-conversation": "workspace:*",
+    "@tomato/client-ui-primitives": "workspace:*",
+    "@tomato/client-ui-renderer": "workspace:*",
+    "@tomato/client-ui-session": "workspace:*",
+    "@tomato/client-ui-slots": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/llm-retry": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/tool-executor-ptc": "workspace:*",
+    "@tomato/tools": "workspace:*",
+    "@testing-library/react": "^16.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@tomato/compaction": "workspace:*",
+    "@tomato/session-stats": "workspace:*",
+    "@tomato/token-meter": "workspace:*",
+    "@tomato/user-approval": "workspace:*"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ]
+}

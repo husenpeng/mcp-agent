@@ -30,9 +30,6 @@
       "path": "../../session/session-projection"
     },
     {
-      "path": "../../core/scope"
-    },
-    {
       "path": "../../llm/llm"
     },
     {
@@ -43,6 +40,10 @@
     },
     {
       "path": "../subagent"
+    },
+    {
+      "path": "../../core/scope"
     }
-  ]
+  ],
+  "files": []
 }

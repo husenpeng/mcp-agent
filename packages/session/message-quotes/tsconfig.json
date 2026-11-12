@@ -12,6 +12,15 @@
       "path": "../../../vendor/cordis"
     },
     {
+      "path": "../../client/ui-renderer"
+    },
+    {
+      "path": "../../client/ui-slots"
+    },
+    {
+      "path": "../../client/ui-primitives"
+    },
+    {
       "path": "../../api/session-controller/tsconfig.client.json"
     },
     {
@@ -22,15 +31,7 @@
     },
     {
       "path": "../../client/ui-conversation/tsconfig.client.json"
-    },
-    {
-      "path": "../../client/ui-renderer"
-    },
-    {
-      "path": "../../client/ui-slots"
-    },
-    {
-      "path": "../../client/ui-primitives"
     }
-  ]
+  ],
+  "files": []
 }

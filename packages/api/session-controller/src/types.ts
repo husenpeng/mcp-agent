@@ -3,12 +3,12 @@
 import type {} from '@tomato/agent/types'
 import type { NativeFileApplication } from '@tomato/native-command/types'
 import type {
-  AttachmentIdType, ImageAttachmentLimits, ImageAttachmentRef, ImageMediaType,
+  ImageAttachmentLimits, ImageAttachmentRef, ImageMediaType,
 } from '@tomato/attachment'
 import type { Branded } from '@tomato/branded'
 import type { LlmAttemptId, MessageId } from '@tomato/llm/brand'
-import type { TextBlock } from '@tomato/llm'
-import type { SessionId, SessionSeqCursor } from '@tomato/session/types'
+import type { LlmModelBadge, TextBlock } from '@tomato/llm'
+import type { SessionId, SessionSeq, SessionSeqCursor } from '@tomato/session/types'
 import type { SessionProjectionMap, SessionProjectionSummaryExcluded, SessionProjectionSummaryValues } from '@tomato/session-projection/types'
 import type { Principal } from '@tomato/typert-protocol'
 import type { JsonValue } from '@tomato/util-values'
@@ -16,6 +16,8 @@ import type { WorkspaceId } from '@tomato/workspace/types'
 
 declare module '@tomato/session-projection/types' {
   interface SessionProjectionMap {
+    /** Eligible latest failed turn/end for an empty prompt, or null. */
+    conversationContinuation: SessionSeq | null
     /** Persisted facts used to summarize a Session without activating it. */
     sessionListMetadata: SessionListMetadata
     /**
@@ -36,9 +38,10 @@ export interface SessionListMetadata {
 }
 
 /**
- * Every available summary wire value a Session-list row carries as partial,
- * possibly stale hints. The block omits the keys whose unit declares
- * `summary: false`. `kind` and `asOfSeq` are independent facts: `kind` says
+ * Summary wire values a Session-list row carries. A `sequenced` block carries
+ * every summary key computed at its `asOfSeq`; a `cached` block carries the
+ * values the persisted cache holds and may omit keys or trail the Session.
+ * The block omits the keys whose unit declares `summary: false`. `kind` and `asOfSeq` are independent facts: `kind` says
  * which sequence space `asOfSeq` belongs to, and therefore how a client may
  * merge the block; `asOfSeq` is the producer's watermark in that space.
  */
@@ -110,8 +113,8 @@ export interface ModelCatalogModel {
   readonly name: string
   readonly description?: string
   readonly reasoning?: ModelReasoning
-  /** Why a deployment policy refuses this model; absent when it may be selected. */
-  readonly blockedReason?: string
+  /** Provider-authored label shown beside the name; display data only. */
+  readonly badge?: LlmModelBadge
 }
 
 /** One provider and its successfully loaded model catalog. */
@@ -177,6 +180,10 @@ export const SESSION_SEARCH_SNIPPET_MAX_CODE_POINTS = 240
 
 declare module '@tomato/typert-protocol' {
   interface RemoteErrorDetailsMap {
+    /** A wait observation ended before a stopping state; the caller should reread. */
+    'session/observation-ended': Record<string, never>
+    /** No state arrived before the deadline; a timeout after a state returns its value instead. */
+    'session/wait-timeout': Record<string, never>
     'session/provider-credentials-unavailable': Record<string, never>
     'session/provider-models-unavailable': { readonly provider: string }
     'session/model-unavailable': { readonly provider: string; readonly model: string }
@@ -199,10 +206,6 @@ declare module '@tomato/typert-protocol' {
     'session/steer-unavailable': { readonly itemId: MessageId }
     'session/title-invalid': { readonly sessionId: SessionId }
     'session/fork-unavailable': { readonly sessionId: SessionId }
-    'session/retract-unavailable': {
-      readonly sessionId: SessionId
-      readonly reason: 'not-leaf' | 'queued-input' | 'busy'
-    }
     'session/migration-required': { readonly sessionId: SessionId }
     'subagent/not-found': {
       readonly parentSessionId: SessionId
@@ -213,85 +216,32 @@ declare module '@tomato/typert-protocol' {
       readonly childSessionId: SessionId
       readonly reason: 'corrupt' | 'unsupported' | 'unavailable'
     }
-    'skill/not-found': { readonly name: string }
-    'skill/not-editable': { readonly name: string }
-    'skill/invalid': { readonly reason?: string }
   }
 }
 
 /** Session-addressed request for the human-invocable skill catalog. */
 export interface SkillListRequest {
   readonly sessionId: SessionId
-  /**
-   * Include skills the composer hides because they are model-only. The `/`
-   * skill source omits this flag and keeps its user-invocable-only view; the
-   * Skills browser passes `true` to show the complete catalog.
-   */
-  readonly includeModelOnly?: boolean
-  /**
-   * Omit each entry's routing description. The Skills browser lists names
-   * first and reads one skill's description with `skills/get` when it is
-   * selected; the `/` menu omits this flag because its rows show the text.
-   */
-  readonly brief?: boolean
 }
 
-/** One skill available to the Session's skill surfaces. */
+/** One skill available to the Session's human-facing composer. */
 export interface SkillEntry {
   /** Absolute SKILL.md path when supplied by a filesystem provider. */
   readonly path?: string
   /** Kebab-case identifier referenced as `/name`. */
   readonly name: string
-  /** Short routing description; absent from a `brief` catalog read. */
-  readonly description?: string
+  /** Short routing description. */
+  readonly description: string
   /** Optional extra routing guidance. */
   readonly whenToUse?: string
   /** Whether the same skill is also advertised to the model. */
   readonly modelInvocable: boolean
-  /** Whether the skill can be invoked from the human-facing composer. */
-  readonly userInvocable: boolean
-  /** Discovery source label that produced this winning skill (for example `user-agents`). */
-  readonly source: string
-  /**
-   * Whether this Host accepts an edit through `skills/save`: the winning
-   * provider supports updates, the skill has a file, and its source is a
-   * personal directory. The Host enforces this; the client only renders it.
-   */
-  readonly editable: boolean
 }
 
 /** Human-invocable skills visible through one Session's composition. */
 export interface SkillListValue {
   readonly skills: readonly SkillEntry[]
 }
-
-/** Session-addressed request for one skill's full definition. */
-export interface SkillGetRequest {
-  readonly sessionId: SessionId
-  readonly name: string
-}
-
-/** One skill's display metadata plus its Markdown instruction body. */
-export interface SkillGetValue extends SkillEntry {
-  /** Short routing description, always present in a detail read. */
-  readonly description: string
-  /** Markdown instruction body without frontmatter. */
-  readonly content: string
-}
-
-/** Session-addressed request to rewrite one editable skill. */
-export interface SkillSaveRequest {
-  readonly sessionId: SessionId
-  readonly name: string
-  readonly description: string
-  /** Replacement extra routing guidance, or `null` to remove it. */
-  readonly whenToUse?: string | null
-  /** Replacement Markdown instruction body without frontmatter. */
-  readonly content: string
-}
-
-/** The saved skill as the Host reads it back. */
-export type SkillSaveValue = SkillGetValue
 
 /** Session list request. */
 export interface SessionListRequest {
@@ -370,33 +320,13 @@ export interface SessionForkValue {
   readonly sessionId: SessionId
 }
 
-/**
- * Session retraction request. The Host verifies that `atSeq` opens the Session's
- * last turn, cancels that turn when it is still running, and removes it from
- * model history from `atSeq` through the current surface tail.
- */
-export interface SessionRetractRequest {
-  readonly sessionId: SessionId
-  /** Seq of the trailing human `user/message` to retract. */
-  readonly atSeq: number
-}
-
-/** Receipt after one retraction reached durable model history. */
-export interface SessionRetractValue {
-  readonly accepted: true
-  /** Inclusive first removed surface seq (the named human message). */
-  readonly startSeq: number
-  /** Inclusive last removed surface seq. */
-  readonly endSeq: number
-}
-
 /** Session prompt request. */
 export interface SessionPromptRequest {
-  /** Client-minted identity persisted on the exact accepted user message. */
+  /** Client-minted identity persisted on the accepted inbox input, including empty continuation. */
   readonly requestId: SessionRequestId
   readonly sessionId: SessionId
   readonly mode: 'queue' | 'steer'
-  /** At least one non-whitespace text part or attachment. */
+  /** Non-whitespace text or attachments; an empty array continues an eligible failed idle Session. */
   readonly content: readonly PromptContentPart[]
   readonly clientTimeZone?: string
 }
@@ -408,12 +338,14 @@ export interface SessionPromptValue {
 
 /** Durable image read request. */
 export interface SessionAttachmentRequest {
+  /** Gateway permission scope only; neither Session existence nor its image references are checked. */
   readonly sessionId: SessionId
-  readonly attachmentId: AttachmentIdType
+  readonly attachment: ImageAttachmentRef
 }
 
 /** Durable image read response value. */
 export interface SessionAttachmentValue {
+  /** Supplied reference after ID, format, byte length, and dimensions verification; display fields are preserved. */
   readonly attachment: ImageAttachmentRef
   readonly data: string
 }
@@ -466,6 +398,8 @@ declare module '@tomato/llm' {
      * caller other than the owner, so an absent `principal` means the owner.
      */
     'user-rpc': { kind: 'user'; rpcId: SessionRequestId; clientTimeZone?: string; principal?: Principal }
+    /** Empty retry user message with browser prompt correlation and caller metadata. */
+    'retry-rpc': { kind: 'retry'; rpcId: SessionRequestId; clientTimeZone?: string; principal?: Principal }
   }
 }
 
@@ -538,8 +472,11 @@ export interface SessionWireEvent {
 /** One message-aligned backwards-history request. */
 export interface SessionPageRequest {
   readonly address: SessionAddress
-  /** Inclusive log cut obtained from the corresponding follow opening frame. */
-  readonly throughSeq: number
+  /**
+   * Inclusive log cut; omission selects the observed log end. A follow opening
+   * reports the cut it covered so a caller can pin the same point.
+   */
+  readonly throughSeq?: number
   readonly beforeSeq?: number
   readonly maxMessages?: number
   /** Stop at a Turn start after both minima, unless maxMessages or history exhaustion wins. */
@@ -554,6 +491,8 @@ export interface SessionPageRequest {
 /** One live event request for a durable Session address. */
 export interface SessionFollowRequest extends Pick<SessionPageRequest, 'maxMessages' | 'turnWindow'> {
   readonly address: SessionAddress
+  /** Request background activation; omission leaves the read passive. */
+  readonly activate?: boolean
   /** Include process-local assistant presentation frames for the Web client. */
   readonly assistantStream?: true
 }
@@ -635,18 +574,105 @@ export interface SessionControlBaseline {
   readonly projections: Readonly<Record<SessionId, SessionProjectionBaseline>>
 }
 
-/** One finished projection value and its durable watermark. */
+/**
+ * Projection changes caused by one committed Session event; the Host emits one
+ * update per event that changed at least one client-visible projection view.
+ */
 export interface SessionProjectionUpdate {
   readonly sessionId: SessionId
-  readonly key: string
-  readonly value: JsonValue
+  /** Seq of the committed event that caused every listed change. */
   readonly seq: number
+  /**
+   * One entry per client-visible key whose view the event changed, in
+   * registration order without duplicate keys, with the key's new value as
+   * `val`. A key absent from `changes` is unchanged; unlike a baseline, absence
+   * does not mean an absent capability.
+   */
+  readonly changes: readonly { readonly key: string; readonly val: SessionProjectionValue }[]
 }
 
 /** Host-wide live state stream. Each generation starts with exactly one baseline. */
 export type SessionControlFrame =
   | { readonly type: 'baseline'; readonly value: SessionControlBaseline }
   | ({ readonly type: 'projection' } & SessionProjectionUpdate)
+
+/** One pending live-Agent inbox item, preserving placement and content order. */
+export interface SessionQueuedItem {
+  readonly id: MessageId
+  readonly placement: 'queued' | 'steering' | 'context'
+  readonly rpcId?: SessionRequestId
+  readonly content: readonly JsonValue[]
+}
+
+/** State-owned classification of pending forwarded Remote events. */
+export type SessionPendingInput = 'approval' | 'question' | 'other'
+
+/** Passive Session state; a missing live Agent has no readable queue. */
+export interface SessionState {
+  readonly cursor: number
+  readonly active: boolean
+  readonly running: boolean
+  readonly queue: readonly SessionQueuedItem[] | null
+  /**
+   * Pending Remote requests sampled when this state was read. A pending change alone does not
+   * trigger `observeState`; `wait` refreshes on its own interval.
+   */
+  readonly pendingInput: readonly SessionPendingInput[]
+}
+
+/** Session identity for a passive state read or subscription. */
+export interface SessionStateRequest {
+  readonly sessionId: SessionId
+}
+
+/** Wait bounds and assistant output window; timeout omission uses the fixed 30-second default. */
+export interface SessionWaitRequest extends SessionStateRequest {
+  readonly timeoutMs?: number
+  /** Exclusive output cursor; omission includes all available assistant records. */
+  readonly afterSeq?: number
+  /** Positive assistant-record limit; omission uses the history message budget. */
+  readonly maxMessages?: number
+}
+
+/** Assistant messages after afterSeq through the stopping state's cursor, newest first. */
+export interface SessionWaitOutput {
+  readonly records: readonly SessionHistoryRecord[]
+  /** More eligible assistant messages exist in the selected interval. */
+  readonly truncated: boolean
+}
+
+/** A stopping condition, the last complete passive state and its bounded assistant output. */
+export interface SessionWaitValue {
+  readonly reason: 'idle' | 'input-required' | 'timeout'
+  readonly state: SessionState
+  readonly output: SessionWaitOutput
+}
+
+/**
+ * One `session.events` page (or its deprecated `page` alias) with its inclusive cut:
+ * the supplied `throughSeq`, otherwise the log end it was read at.
+ */
+export interface SessionEventsPage extends SessionPage {
+  readonly cursor: number
+}
+
+/** Address for a passive event subscription. */
+export interface SessionObserveEventRequest {
+  readonly address: SessionAddress
+}
+
+/** Readiness confirms subscription only; event continuity starts with the first delivered event. */
+export type SessionEventFrame =
+  | { readonly type: 'ready' }
+  | SessionEventEntry
+
+/** Projection changes caused by one committed event of the observed Session. */
+export type SessionProjectionChange = { readonly type: 'projection' } & Omit<SessionProjectionUpdate, 'sessionId'>
+
+/** Subscription readiness without a baseline, followed by one change frame per committed event. */
+export type SessionProjectionFrame =
+  | { readonly type: 'ready' }
+  | SessionProjectionChange
 
 declare module '@tomato/cordis' {
   interface Events {

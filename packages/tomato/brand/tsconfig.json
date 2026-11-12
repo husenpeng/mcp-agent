@@ -23,5 +23,6 @@
     {
       "path": "../../client/ui-conversation/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

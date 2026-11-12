@@ -9,9 +9,6 @@
   ],
   "references": [
     {
-      "path": "../../api/workspace-controller/tsconfig.client.json"
-    },
-    {
       "path": "../../../vendor/cordis"
     },
     {
@@ -24,9 +21,6 @@
       "path": "../ui-primitives"
     },
     {
-      "path": "../ui-conversation/tsconfig.client.json"
-    },
-    {
       "path": "../ui-renderer"
     },
     {
@@ -34,6 +28,12 @@
     },
     {
       "path": "../ui-layout"
+    },
+    {
+      "path": "../../api/workspace-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-conversation/tsconfig.client.json"
     },
     {
       "path": "../locale/tsconfig.client.json"
@@ -44,5 +44,6 @@
     {
       "path": "../product-analytics/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

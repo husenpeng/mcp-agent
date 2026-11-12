@@ -151,8 +151,6 @@
     "@tomato/web": "workspace:*",
     "@tomato/web-fetch-http": "workspace:*",
     "@tomato/web-search-deepseek": "workspace:*",
-    "@tomato/web-search-exa": "workspace:*",
-    "@tomato/web-search-perplexity": "workspace:*",
     "@tomato/workflow": "workspace:*",
     "@tomato/workflow-ptc": "workspace:*",
     "@tomato/otel": "workspace:*",

@@ -9,7 +9,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { Context } from '@tomato/cordis'
 import { ToolCallId } from '@tomato/llm'
-import type { ToolExecution } from '@tomato/tools'
+import type { ToolExecution, ToolExecutionToken } from '@tomato/tools'
 import { resolveRgPath, runRipgrep } from '@tomato/tool-fs-search'
 
 // Any access to the mocked module's surface throws — the shape a missing
@@ -24,7 +24,15 @@ describe('lazy packaged-ripgrep resolution', () => {
   it('fails the first search call with SEARCH_FAILED instead of failing module load', async () => {
     // The resolution rejects before any spawn, so no subprocess service is needed.
     const controller = new AbortController()
-    const exec = { signal: controller.signal, name: 'glob', callId: ToolCallId('missing-platform-package') } as unknown as ToolExecution
+    const callId = ToolCallId('missing-platform-package')
+    const exec: ToolExecution = {
+      signal: controller.signal,
+      name: 'glob',
+      arguments: {},
+      callId,
+      rootCallId: callId,
+      token: Symbol('missing-platform-package') as ToolExecutionToken,
+    }
 
     await expect(runRipgrep(new Context(), exec, 'glob', ['--files'], 1_000_000, 3_000, 64 * 1024))
       .rejects.toMatchObject({ name: 'SearchError', code: 'SEARCH_FAILED' })

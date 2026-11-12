@@ -1,7 +1,7 @@
 {
   "name": "@tomato/experimental-cua-macos",
   "description": "macOS native provider for shared Computer Use application and window objects",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -26,16 +26,24 @@
     "locale/*.json",
     "lib/index.js",
     "native/bin",
+    "cua-helper.json",
     "native/Package.swift",
+    "native/Info.plist",
+    "native/TOMATOComputerUse.icns",
+    "native/build_app.py",
     "native/Sources",
     "native/tests/swift",
     "native/tests/test_swift.py",
     "native/LICENSE.cua-driver",
+    "native/LICENSE.computer-use-icon",
     "native/upstream.json",
     "native/README.md",
     "native/README.zh.md",
     "native/protocol.schema.json",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
   ],
   "license": "MIT",
   "peerDependencies": {
@@ -48,11 +56,12 @@
     "@tomato/user-questions": "workspace:*"
   },
   "dependencies": {
-    "zod": "^4.4.3",
-    "@tomato/atomic-write": "workspace:*",
+    "@tomato/schemastery": "workspace:~",
+    "zod": "4.6.6",
     "@tomato/cua": "workspace:*"
   },
   "devDependencies": {
+    "ajv": "^8.20.0",
     "@tomato/working-directory": "workspace:*",
     "@tomato/cordis": "workspace:~",
     "@tomato/cordis-plugin-include": "workspace:~",
@@ -85,10 +94,14 @@
     "@tomato/app-boot": "workspace:*",
     "@tomato/config-editor": "workspace:*",
     "@tomato/hmr": "workspace:*",
-    "@tomato/cordis-plugin-timer": "workspace:~"
+    "@tomato/cordis-plugin-timer": "workspace:~",
+    "@tomato/storage": "workspace:*",
+    "@tomato/storage-json": "workspace:*",
+    "@tomato/storage-domain": "workspace:*"
   },
   "scripts": {
-    "build:native": "swift build --package-path native --configuration release"
+    "build:native": "xcrun python3 native/build_app.py",
+    "build:icon": "node native/generate_icon.mjs"
   },
   "os": [
     "darwin"

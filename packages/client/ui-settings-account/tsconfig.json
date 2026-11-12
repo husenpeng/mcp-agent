@@ -12,16 +12,7 @@
       "path": "../../../vendor/cordis"
     },
     {
-      "path": "../../api/remotes/tsconfig.client.json"
-    },
-    {
-      "path": "../locale/tsconfig.client.json"
-    },
-    {
       "path": "../store"
-    },
-    {
-      "path": "../ui-settings/tsconfig.client.json"
     },
     {
       "path": "../ui-primitives"
@@ -31,9 +22,6 @@
     },
     {
       "path": "../ui-slots"
-    },
-    {
-      "path": "../ui-theme/tsconfig.client.json"
     },
     {
       "path": "../../credentials/account-service"
@@ -48,16 +36,32 @@
       "path": "../../../vendor/schemastery"
     },
     {
-      "path": "../ui-chat/tsconfig.client.json"
-    },
-    {
       "path": "../ui-layout"
     },
     {
       "path": "../../settings/settings"
     },
     {
+      "path": "../../credentials/deepseek-account"
+    },
+    {
+      "path": "../../api/remotes/tsconfig.client.json"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-settings/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-theme/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-chat/tsconfig.client.json"
+    },
+    {
       "path": "../product-analytics/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

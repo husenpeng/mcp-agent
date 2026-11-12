@@ -247,6 +247,14 @@ describe('package dependency scope', () => {
     expect(PACKAGE_DEPENDENCY_POLICY.peerRequiredHostExports['@tomato/typert-protocol']).toBeUndefined()
     expect(PACKAGE_DEPENDENCY_POLICY.peerRequiredHostExports['@tomato/experimental-translator'])
       .toEqual(['TranslationError'])
+    expect(PACKAGE_DEPENDENCY_POLICY.peerRequiredHostExports['@tomato/experimental-forge'])
+      .toEqual(['changeRequestKey'])
+    expect(PACKAGE_DEPENDENCY_POLICY.peerRequiredHostExports['@tomato/experimental-worktree'])
+      .toEqual(['generatedWorktreeName', 'CREATED_RECORD', 'createdWorktreeSchema'])
+    expect(PACKAGE_DEPENDENCY_POLICY.peerRequiredHostExports['@tomato/fs']).toEqual(['FsError'])
+    expect(PACKAGE_DEPENDENCY_POLICY.peerRequiredHostExports['@tomato/session'])
+      .toEqual(['SESSION_FORMAT_VERSION', 'appendPluginRecord', 'pluginRecordOf'])
+    expect(PACKAGE_DEPENDENCY_POLICY.peerRequiredHostExports['@tomato/timeout']).toEqual(['deadline'])
   })
 
   it('discovers the Client directory, tomato.client declarations, and configured Host packages', () => {

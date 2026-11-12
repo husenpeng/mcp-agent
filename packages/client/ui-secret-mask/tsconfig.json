@@ -12,16 +12,17 @@
       "path": "../../../vendor/cordis"
     },
     {
-      "path": "../locale/tsconfig.client.json"
-    },
-    {
-      "path": "../ui-conversation/tsconfig.client.json"
-    },
-    {
       "path": "../ui-renderer"
     },
     {
       "path": "../ui-slots"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-conversation/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

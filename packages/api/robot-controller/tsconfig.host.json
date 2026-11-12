@@ -38,10 +38,10 @@
       "path": "../../core/agent"
     },
     {
-      "path": "../session-controller/tsconfig.host.json"
+      "path": "../../host/plugin-inventory"
     },
     {
-      "path": "../../host/plugin-inventory"
+      "path": "../session-controller/tsconfig.host.json"
     }
   ]
 }

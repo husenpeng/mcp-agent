@@ -47,6 +47,9 @@
     },
     {
       "path": "../../../vendor/loader"
+    },
+    {
+      "path": "../../credentials/deepseek-account"
     }
   ]
 }

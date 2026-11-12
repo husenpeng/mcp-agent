@@ -9,13 +9,30 @@
     "src"
   ],
   "references": [
-    { "path": "../../../vendor/cordis" },
-    { "path": "../ui-slots" },
-    { "path": "../ui-primitives" },
-    { "path": "../ui-renderer" },
-    { "path": "../ui-settings/tsconfig.client.json" },
-    { "path": "../locale/tsconfig.client.json" },
-    { "path": "../store" },
-    { "path": "../../test-support/client-runtime" }
-  ]
+    {
+      "path": "../../../vendor/cordis"
+    },
+    {
+      "path": "../ui-slots"
+    },
+    {
+      "path": "../ui-primitives"
+    },
+    {
+      "path": "../ui-renderer"
+    },
+    {
+      "path": "../store"
+    },
+    {
+      "path": "../../test-support/client-runtime"
+    },
+    {
+      "path": "../ui-settings/tsconfig.client.json"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    }
+  ],
+  "files": []
 }

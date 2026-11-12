@@ -1,0 +1,89 @@
+{
+  "name": "@tomato/agent-team",
+  "description": "Shared task DAG and change waits for subagent trees",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/team/agent-team"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client.d.ts",
+      "default": "./lib/types/client.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./locale/*.json": "./locale/*.json",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./typert": {
+      "types": "./lib/typert.host.d.ts",
+      "default": "./lib/typert.host.js"
+    },
+    "./remote": {
+      "types": "./lib/typert.remote-client.d.ts",
+      "default": "./lib/typert.remote-client.js"
+    }
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "lib/typert.host.js",
+    "lib/typert.host.d.ts",
+    "lib/typert.remote-client.js",
+    "lib/typert.remote-client.d.ts",
+    "lib/typert.remote-client.d.ts.map",
+    "src",
+    "lib/typert.host.d.ts.map"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@tomato/branded": "workspace:*",
+    "@tomato/schemastery": "workspace:~",
+    "zod": "4.6.6"
+  },
+  "peerDependencies": {
+    "@tomato/cordis": "workspace:~",
+    "@tomato/agent": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-persistence": "workspace:*",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/subagent": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "@tomato/cordis": "workspace:~",
+    "@tomato/agent": "workspace:*",
+    "@tomato/agent-loop": "workspace:*",
+    "@tomato/agent-loop-testkit": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-persistence": "workspace:*",
+    "@tomato/session-persistence-jsonl": "workspace:*",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/session-query": "workspace:*",
+    "@tomato/subagent": "workspace:*",
+    "@tomato/subagent-fork-in-process": "workspace:*",
+    "@tomato/subagent-spawn-in-process": "workspace:*",
+    "@tomato/commands": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*"
+  }
+}

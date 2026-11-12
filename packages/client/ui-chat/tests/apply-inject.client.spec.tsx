@@ -1,4 +1,6 @@
+import type { AssistantNodeInjected } from '../src/client/chat/AssistantNodeView.tsx'
 import { MessageId } from '@tomato/llm/brand'
+import { apply as applyMenus, inject as injectMenus } from '@tomato/client-ui-context-menu/client'
 // @vitest-environment jsdom
 /** Chat inject factories exercised over independently mounted Conversation and Chat plugins. */
 import { createSnapshotStore } from '@tomato/client-store'
@@ -104,6 +106,8 @@ async function bench(initialSettings?: ChatSettings, withBrowserRegistry = true,
   const locale = new LocaleRuntime(runtime.ctx)
   runtime.ctx.provide('locale', locale)
   runtime.slots.installLocale(locale)
+  runtime.ctx.provide('shortcuts', { catalog: createSnapshotStore([]) })
+  await runtime.mount({ inject: [...injectMenus], apply: applyMenus })
   await runtime.root.declare({
     'main': { kind: 'keyed', scope: 'root' },
     'settings.general.item': { kind: 'list', scope: 'root' },
@@ -253,7 +257,7 @@ describe('Chat inject API', () => {
     const b = await bench()
     const { injected } = b.chatViewApi(b.rootReference)
     injected.loadOlder()
-    expect(b.session.loadOlder).toHaveBeenCalledOnce()
+    expect(b.session.loadOlder).toHaveBeenCalledExactlyOnceWith({ deferConsumption: true })
 
     void injected.loadThrough(SessionSeq(42))
     expect(b.session.loadThrough).toHaveBeenCalledWith(42)
@@ -387,9 +391,15 @@ describe('Chat inject API', () => {
   it('resolves relative file paths against the Session\'s current working directory', async () => {
     const b = await bench()
     const { injected } = b.chatViewApi(b.rootReference)
+    vi.spyOn(b.runtime.ctx.contextMenus, 'open')
     await b.runtime.sessions.setProjection(ROOT, 'workingDirectory', '/proj/.agents/worktrees/w')
     await injected.openFile('src/a.ts')
     expect(b.sidebarRight.openResource).toHaveBeenLastCalledWith('tomato-resource://file/session/root-1/.agents/worktrees/w/src/a.ts')
+    expect(injected.resolveFilePath('src/a.ts')).toBe('/proj/.agents/worktrees/w/src/a.ts')
+    await b.runtime.sessions.setProjection(ROOT, 'workingDirectory', null)
+    expect(injected.resolveFilePath('file.ts')).toBe('/proj/file.ts')
+    await b.runtime.sessions.setProjection(ROOT, 'workingDirectory', '/proj/.agents/worktrees/w')
+
     // A leading `./` names the same file, so the Sidebar reuses its tab.
     await injected.openFile('./src/a.ts')
     expect(b.sidebarRight.openResource).toHaveBeenLastCalledWith('tomato-resource://file/session/root-1/.agents/worktrees/w/src/a.ts')
@@ -588,12 +598,16 @@ describe('Chat inject API', () => {
     expect(flow.injected.hooks.connectionState).toBe(b.runtime.ctx.get('connection')!.state)
     expect(flow.injected.hooks.presentation).toBe(injected.hooks.presentation)
 
-    expect(injected.fileMentions(owner)).toBeUndefined()
+    const entry = b.runtime.slots.entries('conversation.chat.node').find(entry => entry.options.key === 'assistant-step')!
+    const assistant = entry.inject!(ROOT as never)
+    const fileMentions = assistant.fileMentions as AssistantNodeInjected['fileMentions']
+    const getFileTriggerProps = vi.fn(() => ({}))
+    expect(fileMentions(owner, getFileTriggerProps)).toBeUndefined()
     const mentions = { resolve: vi.fn() } as never
     const forClosing = vi.fn(() => mentions)
     b.runtime.ctx.provide('chatFileMentions', { forClosing } as never)
-    expect(injected.fileMentions(owner)).toBe(mentions)
-    expect(forClosing).toHaveBeenCalledWith(owner, ROOT)
+    expect(fileMentions(owner, getFileTriggerProps)).toBe(mentions)
+    expect(forClosing).toHaveBeenCalledWith(owner, ROOT, getFileTriggerProps)
 
     expect(injected.chatScroll.read()).toBeNull()
     const position = { anchorKey: 'node-1', anchorTop: 4, scrollTop: 12 }
@@ -604,7 +618,7 @@ describe('Chat inject API', () => {
 
     const loaded = await injected.loadImage(ATTACHMENT)
     expect(loaded).toEqual(expect.any(String))
-    expect(b.session.readAttachment).toHaveBeenCalledWith(ATTACHMENT.attachmentId)
+    expect(b.session.readAttachment).toHaveBeenCalledWith(ATTACHMENT)
     expect(injected.loadImage.peek?.(ATTACHMENT)).toBe(loaded)
     await b.runtime.dispose()
   })

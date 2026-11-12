@@ -14,7 +14,8 @@ import SystemPrompt, { renderPrompt } from '@tomato/system-prompt'
 import ToolRegistry from '@tomato/tools'
 import { defineContentToolFixture } from '@tomato/tool-testkit'
 import { FILE_REFERENCE_PROMPT } from '@tomato/file-reference'
-import LocalFileReferenceService, { WorkspaceFileSearch } from '../src/index.ts'
+import LocalFileReferenceService from '../src/index.ts'
+import { WorkspaceFileSearch } from '../src/search.ts'
 
 const roots: string[] = []
 

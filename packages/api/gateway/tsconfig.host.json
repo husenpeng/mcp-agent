@@ -27,12 +27,6 @@
       "path": "../../../vendor/schemastery"
     },
     {
-      "path": "../../client/connection/tsconfig.host.json"
-    },
-    {
-      "path": "../remote-access/tsconfig.host.json"
-    },
-    {
       "path": "../../host/webserver"
     },
     {
@@ -43,6 +37,12 @@
     },
     {
       "path": "../../util/timeout"
+    },
+    {
+      "path": "../../client/connection/tsconfig.host.json"
+    },
+    {
+      "path": "../remote-access/tsconfig.host.json"
     }
   ]
 }

@@ -1,7 +1,7 @@
 {
   "name": "@tomato/creation-recommendations",
   "description": "Create persistent removable interface plugins from explicit conversation needs",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -54,7 +54,7 @@
   "dependencies": {
     "yaml": "^2.9.0",
     "resolve.exports": "^2.0.3",
-    "zod": "4.4.3",
+    "zod": "4.6.6",
     "@tomato/client-ui-creation-recommendations": "workspace:*",
     "@tomato/action-cards": "workspace:*",
     "@tomato/client-ui-action-cards": "workspace:*"
@@ -66,7 +66,10 @@
     "references/*.md",
     "skills/*.md",
     "lib/types/**/*.js",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
   ],
   "icon": "./icon.svg"
 }

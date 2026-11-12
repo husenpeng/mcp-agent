@@ -9,25 +9,10 @@
   ],
   "references": [
     {
-      "path": "../../api/session-controller/tsconfig.client.json"
-    },
-    {
       "path": "../../../vendor/cordis"
     },
     {
-      "path": "../connection/tsconfig.client.json"
-    },
-    {
-      "path": "../locale/tsconfig.client.json"
-    },
-    {
       "path": "../resources"
-    },
-    {
-      "path": "../ui-chat/tsconfig.client.json"
-    },
-    {
-      "path": "../ui-conversation/tsconfig.client.json"
     },
     {
       "path": "../ui-input-trigger"
@@ -58,6 +43,25 @@
     },
     {
       "path": "../../subagent/subagent"
+    },
+    {
+      "path": "../../team/agent-team"
+    },
+    {
+      "path": "../../api/session-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../connection/tsconfig.client.json"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-chat/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-conversation/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

@@ -9,15 +9,6 @@
   ],
   "references": [
     {
-      "path": "../../api/robot-controller/tsconfig.client.json"
-    },
-    {
-      "path": "../../api/remotes/tsconfig.client.json"
-    },
-    {
-      "path": "../../api/session-controller/tsconfig.client.json"
-    },
-    {
       "path": "../../../vendor/cordis"
     },
     {
@@ -27,13 +18,7 @@
       "path": "../../util/values"
     },
     {
-      "path": "../locale/tsconfig.client.json"
-    },
-    {
       "path": "../store"
-    },
-    {
-      "path": "../ui-conversation/tsconfig.client.json"
     },
     {
       "path": "../ui-layout"
@@ -57,13 +42,29 @@
       "path": "../ui-tool"
     },
     {
-      "path": "../../api/remote-access/tsconfig.client.json"
+      "path": "../ui-workspace"
     },
     {
-      "path": "../ui-workspace"
+      "path": "../../api/robot-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/remotes/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/session-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-conversation/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/remote-access/tsconfig.client.json"
     },
     {
       "path": "../ui-chat/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

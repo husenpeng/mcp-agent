@@ -7,7 +7,7 @@
  */
 import type { CommandDescriptor } from '@tomato/commands/types'
 import type { SessionId } from '@tomato/session/types'
-import { resolveCommand } from './resolution.ts'
+import { resolveCommand } from '@tomato/commands/builtin'
 
 export type { CommandDescriptor } from '@tomato/commands/types'
 

@@ -43,6 +43,10 @@
     },
     {
       "path": "../../util/launch-environment"
+    },
+    {
+      "path": "../../llm/llm-deepseek-account"
     }
-  ]
+  ],
+  "files": []
 }

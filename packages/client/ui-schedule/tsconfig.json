@@ -9,19 +9,10 @@
   ],
   "references": [
     {
-      "path": "../../api/session-controller/tsconfig.client.json"
-    },
-    {
       "path": "../../../vendor/cordis"
     },
     {
       "path": "../../schedule/schedule"
-    },
-    {
-      "path": "../locale/tsconfig.client.json"
-    },
-    {
-      "path": "../ui-conversation/tsconfig.client.json"
     },
     {
       "path": "../ui-primitives"
@@ -51,13 +42,23 @@
       "path": "../ui-slots"
     },
     {
+      "path": "../../util/values"
+    },
+    {
+      "path": "../../api/session-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-conversation/tsconfig.client.json"
+    },
+    {
       "path": "../../api/remotes/tsconfig.client.json"
     },
     {
       "path": "../connection/tsconfig.client.json"
-    },
-    {
-      "path": "../../util/values"
     }
-  ]
+  ],
+  "files": []
 }

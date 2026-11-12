@@ -22,15 +22,6 @@
       "path": "../../../vendor/schemastery"
     },
     {
-      "path": "../../api/remotes/tsconfig.client.json"
-    },
-    {
-      "path": "../../api/session-controller/tsconfig.client.json"
-    },
-    {
-      "path": "../../api/workspace-controller/tsconfig.client.json"
-    },
-    {
       "path": "../../attachment/attachment"
     },
     {
@@ -67,19 +58,10 @@
       "path": "../../subagent/subagent"
     },
     {
-      "path": "../connection/tsconfig.client.json"
-    },
-    {
-      "path": "../locale/tsconfig.client.json"
-    },
-    {
       "path": "../store"
     },
     {
       "path": "../ui-approval"
-    },
-    {
-      "path": "../ui-conversation/tsconfig.client.json"
     },
     {
       "path": "../ui-layout"
@@ -94,13 +76,7 @@
       "path": "../ui-session"
     },
     {
-      "path": "../ui-sidebar-browser/tsconfig.client.json"
-    },
-    {
       "path": "../ui-sidebar-right"
-    },
-    {
-      "path": "../ui-settings/tsconfig.client.json"
     },
     {
       "path": "../ui-slots"
@@ -109,22 +85,50 @@
       "path": "../ui-workspace"
     },
     {
-      "path": "../ui-sidebar-documentpreview/tsconfig.client.json"
-    },
-    {
       "path": "../ui-input-trigger"
-    },
-    {
-      "path": "../product-analytics/tsconfig.client.json"
     },
     {
       "path": "../ui-file-drag"
     },
     {
       "path": "../../core/tool-executor-ptc"
+    },
+    {
+      "path": "../ui-context-menu"
+    },
+    {
+      "path": "../../api/remotes/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/session-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/workspace-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../connection/tsconfig.client.json"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-conversation/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-sidebar-browser/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-settings/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-sidebar-documentpreview/tsconfig.client.json"
+    },
+    {
+      "path": "../product-analytics/tsconfig.client.json"
     }
   ],
   "exclude": [
     "src/index.ts"
-  ]
+  ],
+  "files": []
 }

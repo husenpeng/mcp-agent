@@ -1,7 +1,7 @@
 {
   "name": "@tomato/cli",
   "description": "tomato CLI: profile launch, plugin management, and configuration inspection",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -16,8 +16,16 @@
   },
   "files": [
     "lib/*.js",
-    "lib/types/*.d.ts"
+    "lib/*.js.map",
+    "lib/types/*.d.ts",
+    "lib/types/*.d.ts.map",
+    "docs",
+    "src"
   ],
+  "scripts": {
+    "prepack": "tsx ../../scripts/stage-tomato-docs.ts",
+    "postpack": "tsx ../../scripts/stage-tomato-docs.ts --clean"
+  },
   "license": "MIT",
   "dependencies": {
     "@tomato/cordis": "workspace:~",
@@ -38,7 +46,6 @@
     "@tomato/compaction-basic": "workspace:*",
     "@tomato/compaction-tool-result-pruner": "workspace:*",
     "@tomato/cordis-client-runner": "workspace:*",
-    "@tomato/experimental-agent-team-profile": "workspace:*",
     "@tomato/experimental-inspector-profile": "workspace:*",
     "@tomato/fs-local": "workspace:*",
     "@tomato/goal": "workspace:*",
@@ -105,11 +112,13 @@
     "@tomato/experimental-ralph-bundle": "workspace:*",
     "@tomato/experimental-session-titles-bundle": "workspace:*",
     "@tomato/experimental-terminal-bundle": "workspace:*",
+    "@tomato/experimental-liveshare": "workspace:*",
     "@tomato/experimental-session-search": "workspace:*",
     "@tomato/experimental-tool-worktree": "workspace:*",
     "@tomato/cua-bundle": "workspace:*",
     "@tomato/experimental-plugin-market-bundle": "workspace:*",
     "@tomato/personalized-recommendations": "workspace:*",
+    "@tomato/experimental-forge-bundle": "workspace:*",
     "@tomato/experimental-muse-bundle": "workspace:*",
     "@tomato/experimental-browser-use-playwright-bundle": "workspace:*"
   },
@@ -129,9 +138,9 @@
     "@tomato/bash-local": "workspace:*",
     "@tomato/credentials-local": "workspace:*",
     "@tomato/deepseek-llm-api-extensions": "workspace:*",
-    "@tomato/experimental-agent-team": "workspace:*",
+    "@tomato/agent-team": "workspace:*",
     "@tomato/experimental-ptc-runtime-python": "workspace:*",
-    "@tomato/experimental-tool-agent-team": "workspace:*",
+    "@tomato/tool-agent-team": "workspace:*",
     "@tomato/fs-observation-policy": "workspace:*",
     "@tomato/fs-sandbox": "workspace:*",
     "@tomato/host-frontend-static": "workspace:*",

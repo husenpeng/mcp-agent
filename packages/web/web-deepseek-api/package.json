@@ -1,7 +1,7 @@
 {
   "name": "@tomato/web-deepseek-api",
   "description": "DeepSeek Search and Fetch API providers for the Tomato Harness web capability seam (ctx.web)",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -25,16 +25,24 @@
   "files": [
     "locale/*.json",
     "lib/index.js",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
   ],
   "license": "MIT",
   "peerDependencies": {
     "@tomato/agent": "workspace:*",
     "@tomato/credentials": "workspace:*",
     "@tomato/launch-environment": "workspace:*",
+    "@tomato/llm-deepseek": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/web": "workspace:*",
-    "@tomato/cordis": "workspace:~"
+    "@tomato/cordis": "workspace:~",
+    "@tomato/cordis-plugin-loader": "workspace:~",
+    "@tomato/llm": "workspace:*",
+    "@tomato/llm-deepseek-api-key": "workspace:*",
+    "@tomato/llm-deepseek-account": "workspace:*"
   },
   "dependencies": {
     "@tomato/schemastery": "workspace:~"
@@ -44,11 +52,17 @@
     "@tomato/credentials": "workspace:*",
     "@tomato/credentials-local": "workspace:*",
     "@tomato/launch-environment": "workspace:*",
+    "@tomato/llm-deepseek": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/session-projection": "workspace:*",
     "@tomato/web": "workspace:*",
     "@tomato/cordis": "workspace:~",
-    "@tomato/http-proxy": "workspace:*"
+    "@tomato/http-proxy": "workspace:*",
+    "@tomato/cordis-plugin-loader": "workspace:~",
+    "@tomato/llm": "workspace:*",
+    "@tomato/llm-deepseek-api-key": "workspace:*",
+    "@tomato/llm-deepseek-account": "workspace:*",
+    "@tomato/app-boot": "workspace:*"
   },
   "peerDependenciesMeta": {
     "@tomato/account-service": {

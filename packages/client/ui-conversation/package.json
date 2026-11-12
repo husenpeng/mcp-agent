@@ -1,7 +1,7 @@
 {
   "name": "@tomato/client-ui-conversation",
   "description": "Target-neutral Conversation assembly, shell, composer, queue, and view navigation",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -36,7 +36,8 @@
         "@tomato/client-ui-renderer",
         "@tomato/client-ui-session",
         "@tomato/client-ui-settings",
-        "@tomato/client-ui-workspace"
+        "@tomato/client-ui-workspace",
+        "@tomato/client-ui-context-menu"
       ],
       "platform": "web"
     }
@@ -58,7 +59,6 @@
     "@tomato/api-session-controller": "workspace:*",
     "@tomato/api-workspace-controller": "workspace:*",
     "@tomato/attachment": "workspace:*",
-    "@tomato/branded": "workspace:*",
     "@tomato/client-locale": "workspace:*",
     "@tomato/client-file-upload": "workspace:*",
     "@tomato/client-store": "workspace:*",
@@ -86,7 +86,6 @@
     "react": "^18.2.0",
     "@lexical/headless": "^0.49.0",
     "react-dom": "^18.2.0",
-    "zod": "4.4.3",
     "lexical": "^0.49.0",
     "clsx": "^2.0.0",
     "@lexical/utils": "^0.49.0",
@@ -97,12 +96,19 @@
     "@tomato/settings": "workspace:*",
     "@tomato/client-shortcuts": "workspace:*",
     "@tomato/client-product-analytics": "workspace:*",
-    "@tomato/message-quotes": "workspace:*"
+    "@tomato/message-quotes": "workspace:*",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/branded": "workspace:*",
+    "zod": "4.6.6",
+    "@tomato/client-ui-context-menu": "workspace:*"
   },
   "files": [
     "locale/*.json",
     "lib/index.js",
     "lib/client.js",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
   ]
 }

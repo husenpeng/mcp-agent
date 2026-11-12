@@ -8,7 +8,7 @@ import Loader from '@tomato/cordis-plugin-loader'
 import Include, { applyEntryPatches } from '@tomato/cordis-plugin-include'
 import { loadOverlayPatches } from '@tomato/app-boot'
 import WorkspaceFiles, { type WorkspaceFileScope } from '@tomato/api-workspace-files'
-import OfficeToPdf from '@tomato/office-to-pdf'
+import OfficeKit from '@tomato/office-kit'
 import * as DocumentPreview from '@tomato/client-ui-sidebar-documentpreview'
 import type { IndexInjection, WebServer } from '@tomato/host-webserver'
 import SessionStore, { SessionId } from '@tomato/session'
@@ -28,23 +28,28 @@ vi.mock('@deepseek-ai/libreoffice-kit', () => ({ createConverter: kit.create }))
 
 it('loads the shipped Office rows with separately patched settings and authorized PDF output', async () => {
   const directory = await realpath(await mkdtemp(join(tmpdir(), 'tomato-web-office-')))
+  const outputDirectory = await mkdtemp(join(tmpdir(), 'tomato-web-office-outputs-'))
   const ctx = new Context()
   onTestFinished(async () => {
     try { await ctx.fiber.dispose() }
-    finally { vi.restoreAllMocks(); await rm(directory, { recursive: true, force: true }) }
+    finally {
+      vi.restoreAllMocks()
+      await rm(directory, { recursive: true, force: true })
+      await rm(outputDirectory, { recursive: true, force: true })
+    }
   })
   const configPath = join(directory, 'cordis.yml')
   const expectedRows = {
-    'office-to-pdf': '@tomato/office-to-pdf',
+    'office-kit': '@tomato/office-kit',
     'ui-sidebar-documentpreview': '@tomato/client-ui-sidebar-documentpreview',
   }
   const rows = loadOverlayPatches('web-office-test', fileURLToPath(new URL('../cordis.patch.yml', import.meta.url)))
     .flatMap(patch => patch.insert ?? []).filter(row => row.id !== undefined && Object.hasOwn(expectedRows, row.id))
   expect(rows.map(row => [row.id, row.name])).toEqual(Object.entries(expectedRows))
-  const providerConfig = { maxInputBytes: 4096, maxConcurrentConversions: 1, fontFallbacks: [['Missing Serif', 'Available Serif']] }
+  const providerConfig = { maxInputBytes: 4096, maxConcurrentConversions: 1, fontFallbacks: [['Missing Serif', 'Available Serif']], outputDirectory }
   const clientConfig = DocumentPreview.Config({ office: { maxCachedEntries: 3, maxCachedBytes: 8192 } })
   const configured = applyEntryPatches(rows, [
-    { id: 'office-to-pdf', config: providerConfig },
+    { id: 'office-kit', config: providerConfig },
     { id: 'ui-sidebar-documentpreview', config: clientConfig },
   ], (message) => { throw new Error(message) })
   expect(configured.find(row => row.id === 'ui-sidebar-documentpreview')!.config).toEqual(clientConfig)
@@ -80,7 +85,7 @@ it('loads the shipped Office rows with separately patched settings and authorize
     ['@tomato/fs-local', LocalFileSystem],
     ['@tomato/typert-registry', TypertRegistry],
     ['@tomato/api-workspace-files', WorkspaceFiles],
-    ['@tomato/office-to-pdf', OfficeToPdf],
+    ['@tomato/office-kit', OfficeKit],
     ['@tomato/client-ui-sidebar-documentpreview', DocumentPreview],
   ])
   ctx.loader.internal = {
@@ -94,6 +99,7 @@ it('loads the shipped Office rows with separately patched settings and authorize
   await ctx.loader.await()
   const entries = new Map([...ctx.loader.entries()].map(entry => [entry.options.id, entry]))
   for (const row of configured) await entries.get(row.id)!.fiber!.await()
+  expect(ctx.officeKit.outputDirectory).toBe(outputDirectory)
   const injections: IndexInjection[] = []
   ctx.emit('webserver/index-inject', injections, PAGE_PEER)
   expect(injections).toEqual([
@@ -111,25 +117,25 @@ it('loads the shipped Office rows with separately patched settings and authorize
   const signal = new AbortController().signal
   const version = (await ctx.workspaceFiles.stat(scope, 'report.docx', signal)).version
   const before = session.seq
-  const result = await ctx.officeToPdf.render(scope, 'report.docx', 'foreground', signal)
+  const result = await ctx.officeKit.render(scope, 'report.docx', 'foreground', signal)
   expect(result).toEqual({ absolutePath: sourcePath, version, offset: 0, eof: true, bytes: pdf.length,
-    data: Uint8Array.from(pdf), missingFonts: ['Missing Serif'], generation: ctx.officeToPdf.generation })
+    data: Uint8Array.from(pdf), missingFonts: ['Missing Serif'], generation: ctx.officeKit.generation })
   const readAgain = vi.spyOn(ctx.fs, 'readBytes')
-  expect(await ctx.officeToPdf.render(scope, 'report.docx', 'foreground', signal)).toEqual(result)
+  expect(await ctx.officeKit.render(scope, 'report.docx', 'foreground', signal)).toEqual(result)
   expect(readAgain).not.toHaveBeenCalled()
   expect(await readFile(sourcePath, 'utf8')).toBe('authorized OOXML')
   expect(session.seq).toBe(before)
   expect(ctx.get('agents')).toBeUndefined()
-  const { maxConcurrentConversions: _count, ...kitOptions } = providerConfig
+  const { maxConcurrentConversions: _count, outputDirectory: _outputs, ...kitOptions } = providerConfig
   expect(kit.create).toHaveBeenCalledWith(expect.objectContaining(kitOptions))
-  await expect(ctx.officeToPdf.render(scope, 'missing.docx', 'foreground', signal))
+  await expect(ctx.officeKit.render(scope, 'missing.docx', 'foreground', signal))
     .rejects.toMatchObject({ code: 'workspace-file/not-found' })
   const refusal = new FsError('read refused', 'FS_SANDBOX_DENIED')
   vi.spyOn(ctx.fs, 'stat').mockRejectedValueOnce(refusal)
-  await expect(ctx.officeToPdf.render(scope, 'report.docx', 'foreground', signal)).rejects.toBe(refusal)
+  await expect(ctx.officeKit.render(scope, 'report.docx', 'foreground', signal)).rejects.toBe(refusal)
   if (process.platform !== 'win32') {
     await symlink(sourcePath, join(directory, 'link.docx'))
-    await expect(ctx.officeToPdf.render(scope, 'link.docx', 'foreground', signal))
+    await expect(ctx.officeKit.render(scope, 'link.docx', 'foreground', signal))
       .rejects.toMatchObject({ code: 'workspace-file/not-regular-file' })
   }
   expect(render).toHaveBeenCalledOnce()

@@ -1,5 +1,8 @@
+import type { DesktopFileActions } from '@tomato/client-ui-file-actions/types'
 /** Typed preload operations exposed only by the Electron shell. */
 
+export type { DesktopChannelState, DesktopChannelChangeResult } from '@tomato/client-ui-settings-general/types'
+import type { DesktopChannelBridge, DesktopChannelState } from '@tomato/client-ui-settings-general/types'
 import type { DesktopKeyboardApi, DesktopShortcutsApi } from '@tomato/client-shortcuts/protocol'
 import type { IpcMainInvokeEvent } from 'electron'
 import type { DesktopBrowserBridge } from '@tomato/client-ui-sidebar-browser/types'
@@ -7,6 +10,8 @@ import type { DesktopFileDrag } from '@tomato/util-file-drag'
 
 /** IPC channel names kept private to the desktop application bundle. */
 export const DESKTOP_IPC = {
+  fileSave: 'tomato-desktop:file-save',
+  clipboardImageRead: 'tomato-desktop:clipboard-image-read',
   shortcutsInput: 'tomato-desktop:shortcuts-input',
   shortcutsCloseWindow: 'tomato-desktop:shortcuts-close-window',
   shortcutsGet: 'tomato-desktop:shortcuts-get',
@@ -32,6 +37,9 @@ export const DESKTOP_IPC = {
   deviceInfo: 'tomato-desktop:device-info',
   localeBootstrap: 'tomato-desktop:locale-bootstrap',
   localeChanged: 'tomato-desktop:locale-changed',
+  updatesChannelGet: 'tomato-desktop:updates-channel-get',
+  updatesChannelSet: 'tomato-desktop:updates-channel-set',
+  updatesChannelChanged: 'tomato-desktop:updates-channel-changed',
   updatesStatus: 'tomato-desktop:updates-status',
   updatesOpen: 'tomato-desktop:updates-open',
   updatesPresentation: 'tomato-desktop:updates-presentation',
@@ -55,17 +63,23 @@ export interface DesktopUpdateState {
   /** Main-owned diagnostics without subprocess output or credentials; hidden until expanded. */
   readonly technicalDetails?: string
   readonly percent?: number
-  readonly failedOperation?: 'check' | 'download' | 'install'
+  readonly failedOperation?: 'check' | 'download' | 'install' | 'configuration'
   /** Main-owned preparation cause; UI wording is selected by the active locale. */
   readonly preparationFailure?: DesktopUpdatePreparationFailureKind
+  /** Current filesystem failure, independent of previous cache cleanup attempts. */
+  readonly downloadFailure?: 'space' | 'permission' | 'busy'
 }
 
 /** Classified failure copy selected by the Web locale without exposing raw updater diagnostics. */
 export type DesktopUpdateFailureKind =
+  | 'configuration'
   | 'check'
   | 'check-network'
   | 'download'
   | 'download-network'
+  | 'download-space'
+  | 'download-permission'
+  | 'download-busy'
   | 'install'
   | 'install-network'
   | 'stop-failed'
@@ -79,6 +93,7 @@ export interface DesktopUpdatePresentation {
   readonly version?: string
   readonly percent?: number
   readonly failure?: DesktopUpdateFailureKind
+  readonly configurationError?: DesktopChannelState['error']
 }
 
 /** Tunnel lifecycle the remote-access page renders. */
@@ -124,6 +139,7 @@ export interface DesktopAccountApi {
 
 /** Product documents cannot supply update versions, package URLs, or installation authorization. */
 export interface TomatoDesktopProductApi {
+  readonly fileActions: DesktopFileActions
   readonly protocolVersion: 1
   /** Whether this shell is the unpackaged development launcher. */
   readonly development: boolean
@@ -139,6 +155,7 @@ export interface TomatoDesktopProductApi {
    */
   deviceInfo(): Promise<string>
   readonly updates: {
+    readonly channels: DesktopChannelBridge
     status(): Promise<DesktopUpdatePresentation>
     open(): Promise<void>
     subscribe(listener: (state: DesktopUpdatePresentation) => void): () => void

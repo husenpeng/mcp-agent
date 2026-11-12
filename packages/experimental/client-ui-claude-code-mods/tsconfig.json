@@ -12,18 +12,6 @@
       "path": "../../../vendor/cordis"
     },
     {
-      "path": "../../api/remotes/tsconfig.client.json"
-    },
-    {
-      "path": "../../api/session-controller/tsconfig.client.json"
-    },
-    {
-      "path": "../../client/locale/tsconfig.client.json"
-    },
-    {
-      "path": "../../client/ui-conversation/tsconfig.client.json"
-    },
-    {
       "path": "../../client/ui-primitives"
     },
     {
@@ -43,6 +31,19 @@
     },
     {
       "path": "../claude-code-mods"
+    },
+    {
+      "path": "../../api/remotes/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/session-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../../client/locale/tsconfig.client.json"
+    },
+    {
+      "path": "../../client/ui-conversation/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

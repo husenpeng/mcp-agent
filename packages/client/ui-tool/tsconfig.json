@@ -12,28 +12,13 @@
       "path": "../../spill/spill-policy"
     },
     {
+      "path": "../../fs/fs-patch"
+    },
+    {
       "path": "../../attachment/attachment"
     },
     {
-      "path": "../../api/remotes/tsconfig.client.json"
-    },
-    {
-      "path": "../../api/workspace-controller/tsconfig.client.json"
-    },
-    {
       "path": "../../../vendor/cordis"
-    },
-    {
-      "path": "../connection/tsconfig.client.json"
-    },
-    {
-      "path": "../locale/tsconfig.client.json"
-    },
-    {
-      "path": "../ui-chat/tsconfig.client.json"
-    },
-    {
-      "path": "../ui-conversation/tsconfig.client.json"
     },
     {
       "path": "../ui-primitives"
@@ -58,6 +43,25 @@
     },
     {
       "path": "../../core/tool-executor-ptc"
+    },
+    {
+      "path": "../../api/remotes/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/workspace-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../connection/tsconfig.client.json"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-chat/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-conversation/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

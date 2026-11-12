@@ -1,0 +1,40 @@
+{
+  "extends": "../../../tsconfig.base.client.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib/types"
+  },
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "../ui-primitives"
+    },
+    {
+      "path": "../../../vendor/cordis"
+    },
+    {
+      "path": "../../util/file-drag"
+    },
+    {
+      "path": "../ui-context-menu"
+    },
+    {
+      "path": "../../core/session"
+    },
+    {
+      "path": "../../util/workspace-path"
+    },
+    {
+      "path": "../../api/session-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/workspace-files/tsconfig.client.json"
+    }
+  ],
+  "files": []
+}

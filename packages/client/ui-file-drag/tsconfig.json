@@ -35,5 +35,6 @@
     {
       "path": "../locale/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

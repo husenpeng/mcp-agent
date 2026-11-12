@@ -18,12 +18,6 @@
       "path": "../../llm/image-evidence"
     },
     {
-      "path": "../locale/tsconfig.client.json"
-    },
-    {
-      "path": "../ui-chat/tsconfig.client.json"
-    },
-    {
       "path": "../ui-primitives"
     },
     {
@@ -34,6 +28,13 @@
     },
     {
       "path": "../ui-slots"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-chat/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

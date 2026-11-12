@@ -1,7 +1,7 @@
 {
   "name": "@tomato/cordis-plugin-logger-console",
   "description": "Console logger exporter for cordis",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "publishConfig": {
     "access": "public"
   },
@@ -27,7 +27,8 @@
     "lib/browser.js",
     "lib/types/**/*.d.ts",
     "lib/types/**/*.d.ts.map",
-    "src"
+    "src",
+    "lib/**/*.js.map"
   ],
   "author": "Shigma <shigma10826@gmail.com>",
   "license": "MIT",

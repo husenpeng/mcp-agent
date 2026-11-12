@@ -1,7 +1,7 @@
 {
   "name": "@tomato/client-ui-open-in-app",
-  "description": "Web \"Open In...\" controls: the Session-header split button opening the workspace directory in an installed application, and the document preview's default-application controls for one file",
-  "version": "0.2.1-rc.3",
+  "description": "Session application submenus and native opening controls for directories and previewed files",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -30,7 +30,10 @@
     "locale/*.json",
     "lib/index.js",
     "lib/client.js",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
   ],
   "scripts": {
     "bundle": "tsdown",
@@ -49,7 +52,11 @@
         "@tomato/client-ui-layout",
         "@tomato/client-ui-renderer",
         "@tomato/client-ui-session",
-        "@tomato/client-ui-sidebar-documentpreview"
+        "@tomato/client-ui-sidebar-documentpreview",
+        "@tomato/client-ui-context-menu",
+        "@tomato/client-ui-sidebar-right",
+        "@tomato/api-workspace-files",
+        "@tomato/client-ui-workspace"
       ],
       "platform": "web"
     }
@@ -78,6 +85,13 @@
     "react": "^18.2.0",
     "@tomato/client-ui-deliverables": "workspace:*",
     "@tomato/native-command": "workspace:*",
-    "@tomato/client-shortcuts": "workspace:*"
+    "@tomato/client-shortcuts": "workspace:*",
+    "@tomato/client-ui-context-menu": "workspace:*",
+    "@tomato/client-ui-file-actions": "workspace:*",
+    "@tomato/util-workspace-path": "workspace:*",
+    "@tomato/client-ui-sidebar-right": "workspace:*",
+    "@tomato/api-workspace-files": "workspace:*",
+    "@tomato/client-ui-sidebar-browser": "workspace:*",
+    "@tomato/client-ui-workspace": "workspace:*"
   }
 }

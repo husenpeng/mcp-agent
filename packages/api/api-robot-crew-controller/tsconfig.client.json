@@ -12,11 +12,23 @@
     "src/types.ts"
   ],
   "references": [
-    { "path": "../../../vendor/cordis" },
-    { "path": "../gateway/tsconfig.client.json" },
-    { "path": "../../client/connection/tsconfig.client.json" },
-    { "path": "../../client/store" },
-    { "path": "../../experimental/experimental-robot-crew" },
-    { "path": "../../typert/protocol" }
+    {
+      "path": "../../../vendor/cordis"
+    },
+    {
+      "path": "../../client/store"
+    },
+    {
+      "path": "../../experimental/experimental-robot-crew"
+    },
+    {
+      "path": "../../typert/protocol"
+    },
+    {
+      "path": "../gateway/tsconfig.client.json"
+    },
+    {
+      "path": "../../client/connection/tsconfig.client.json"
+    }
   ]
 }

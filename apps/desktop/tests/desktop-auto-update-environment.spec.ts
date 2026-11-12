@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   desktopBuildRecordFilename,
+  desktopWebsiteInstallerUrl,
   desktopUpdateMetadataFilename,
   resolveDesktopAutoUpdateConfig,
   resolveDesktopAutoUpdateEnvironment,
@@ -118,4 +119,22 @@ describe('desktop auto-update environment', () => {
     expect(() => desktopUpdateMetadataFilename('not-semver', 'darwin')).toThrow(/invalid Desktop version/u)
     expect(() => desktopUpdateMetadataFilename('1.2.3', 'linux')).toThrow(/unsupported metadata platform/u)
   })
+})
+
+it.each([
+  ['mac-arm64', 'tomato-latest-macos-arm64.dmg'],
+  ['mac-x64', 'tomato-latest-macos-x64.dmg'],
+  ['win-x64', 'tomato-latest-windows-x64.exe'],
+] as const)('uses the production origin for website target %s', (target, filename) => {
+  expect(desktopWebsiteInstallerUrl(target)).toBe(`https://download.deepseek.com/desktop/${filename}`)
+})
+
+it.each([['darwin', 'arm64', 'mac-arm64', 'stable-mac.yml'], ['darwin', 'x64', 'mac-x64', 'stable-mac.yml'], ['win32', 'x64', 'win-x64', 'stable.yml']] as const)
+('routes stable metadata and binaries separately for %s %s', (platform, arch, target, filename) => {
+  const config = resolveDesktopAutoUpdateConfig({ TOMATO_DESKTOP_AUTO_UPDATE_ENV: 'production', TOMATO_DESKTOP_UPDATE_CHANNEL: 'stable' }, platform, arch)
+  expect(config.channel).toBe('stable')
+  expect(config.keyPrefix).toBe(`tomato-desk/feeds/${target}`)
+  expect(config.binaryKeyPrefix).toBe(`tomato-desk/bin/${target}/stable`)
+  expect(desktopUpdateMetadataFilename('1.0.0', platform, config.channel)).toBe(filename)
+  expect(() => resolveDesktopAutoUpdateConfig({ TOMATO_DESKTOP_UPDATE_CHANNEL: 'latest' }, platform, arch)).toThrow(/channel/u)
 })

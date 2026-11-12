@@ -1,7 +1,7 @@
 {
   "name": "@tomato/client-ui-schedule",
   "description": "Host task management page and Session reminder catalog",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
@@ -60,6 +60,7 @@
     "@tomato/api-workspace-controller": "workspace:*",
     "@tomato/client-connection": "workspace:*",
     "@tomato/client-locale": "workspace:*",
+    "@tomato/client-store": "workspace:*",
     "@tomato/client-test-runtime": "workspace:*",
     "@tomato/client-ui-conversation": "workspace:*",
     "@tomato/client-ui-layout": "workspace:*",
@@ -73,6 +74,7 @@
     "@tomato/client-ui-workspace": "workspace:*",
     "@tomato/schedule": "workspace:*",
     "@tomato/session": "workspace:*",
+    "@tomato/util-time": "workspace:*",
     "@tomato/util-values": "workspace:*",
     "@testing-library/react": "^16.3.3",
     "clsx": "^2.1.1",
@@ -84,6 +86,9 @@
     "locale/*.json",
     "lib/index.js",
     "lib/client.js",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
   ]
 }

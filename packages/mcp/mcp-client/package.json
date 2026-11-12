@@ -1,7 +1,7 @@
 {
   "name": "@tomato/mcp-client",
   "description": "MCP client bridge: connects to MCP servers and registers their tools on ctx.tools",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -18,6 +18,10 @@
       "types": "./lib/types/index.d.ts",
       "default": "./lib/index.js"
     },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
     "./src/*": "./src/*",
     "./locale/*.json": "./locale/*.json",
     "./package.json": "./package.json"
@@ -25,7 +29,11 @@
   "files": [
     "locale/*.json",
     "lib/index.js",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
   ],
   "license": "MIT",
   "peerDependencies": {
@@ -37,7 +45,8 @@
     "@tomato/tools": "workspace:*",
     "@tomato/cordis": "workspace:~",
     "@tomato/mcp-resources": "workspace:*",
-    "@tomato/system-prompt": "workspace:*"
+    "@tomato/system-prompt": "workspace:*",
+    "@tomato/credentials": "workspace:*"
   },
   "dependencies": {
     "@tomato/schemastery": "workspace:~",
@@ -60,15 +69,19 @@
     "@tomato/http-proxy": "workspace:*",
     "@modelcontextprotocol/server": "2.2.0",
     "@modelcontextprotocol/node": "2.0.0",
-    "zod": "4.4.3",
+    "zod": "4.6.6",
     "@tomato/mcp-resources": "workspace:*",
-    "@tomato/system-prompt": "workspace:*"
+    "@tomato/system-prompt": "workspace:*",
+    "@tomato/credentials": "workspace:*"
   },
   "peerDependenciesMeta": {
     "@tomato/mcp-resources": {
       "optional": true
     },
     "@tomato/system-prompt": {
+      "optional": true
+    },
+    "@tomato/credentials": {
       "optional": true
     }
   }

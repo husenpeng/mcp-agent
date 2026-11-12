@@ -18,16 +18,17 @@
       "path": "../ui-primitives"
     },
     {
-      "path": "../../api/remotes/tsconfig.client.json"
-    },
-    {
-      "path": "../locale/tsconfig.client.json"
-    },
-    {
       "path": "../ui-renderer"
     },
     {
       "path": "../ui-workspace"
+    },
+    {
+      "path": "../../api/remotes/tsconfig.client.json"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

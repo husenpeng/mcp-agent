@@ -9,16 +9,20 @@
   ],
   "references": [
     {
-      "path": "../../../vendor/cordis"
+      "path": "../../../vendor/schemastery"
     },
     {
-      "path": "../cua/tsconfig.host.json"
+      "path": "../../../vendor/cordis"
     },
     {
       "path": "../../subprocess/subprocess"
     },
     {
       "path": "../../util/atomic-write"
+    },
+    {
+      "path": "../cua/tsconfig.host.json"
     }
-  ]
+  ],
+  "files": []
 }

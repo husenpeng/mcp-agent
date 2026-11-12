@@ -6,14 +6,18 @@ export type {} from '@tomato/client-product-analytics/remote'
 import agentPresetsRemote from '@tomato/agent-preset-registry/remote'
 import userQuestionsRemote from '@tomato/user-questions/remote'
 import commandsRemote from '@tomato/commands/remote'
-import accountRemote from '@tomato/api-account-controller/remote'
+import agentTeamsRemote from '@tomato/agent-team/remote'
+export type {} from '@tomato/agent-team/remote'
+import accountRemote from '@tomato/deepseek-account/remote'
 import settingsControllerRemote from '@tomato/api-settings-controller/remote'
-import officeToPdfRemote from '@tomato/office-to-pdf/remote'
+import officeKitRemote from '@tomato/office-kit/remote'
 import goalsRemote from '@tomato/goal/remote'
 import scheduleRemote from '@tomato/schedule/remote'
 import llmRemote from '@tomato/llm/remote'
 import dynamicRemote from '@tomato/cordis-host-runner/remote'
 import pluginManagerRemote from '@tomato/plugin-manager/remote'
+import mcpManagerRemote from '@tomato/mcp-manager/remote'
+import toolResultsRemote from '@tomato/client-ui-trajectory/remote'
 import pluginRegistryProbeRemote from '@tomato/client-ui-plugin-manager/remote'
 import pluginMarketRemote from '@tomato/plugin-market/remote'
 import pluginInventoryRemote from '@tomato/host-plugin-inventory/remote'
@@ -28,6 +32,7 @@ import jobRemote from '@tomato/api-job-controller/remote'
 import workspaceRemote from '@tomato/api-workspace-controller/remote'
 import terminalRemote from '@tomato/api-terminal-controller/remote'
 import workspaceFilesRemote from '@tomato/api-workspace-files/remote'
+import webRemote from '@tomato/web/remote'
 import type { ClientRemote } from '@tomato/api-gateway/client'
 
 export type { ClientRemote } from '@tomato/api-gateway/client'
@@ -39,8 +44,11 @@ export type {
   PluginUpdateProgress, PluginUpdateResult, PluginUpdateStep, PluginVersion, PluginVersionList, RegistryAttempt,
   ReadOnlyReason, Registry, RestartReason,
 } from '@tomato/plugin-manager/types'
+export type { McpManagedServerStatus, McpManagedServerView } from '@tomato/mcp-manager/types'
 export type {} from '@tomato/plugin-manager/remote'
+export type {} from '@tomato/mcp-manager/remote'
 export type {} from '@tomato/client-ui-plugin-manager/remote'
+export type {} from '@tomato/client-ui-trajectory/remote'
 export type {} from '@tomato/plugin-market/remote'
 export type {
   MarketCompatibility, MarketIndexSummary, MarketInstallation, MarketInstallationStatus, MarketListingEntry, MarketListingVersion,
@@ -50,11 +58,12 @@ export type { PluginInventorySnapshot } from '@tomato/host-plugin-inventory/type
 export type {} from '@tomato/agent-preset-registry/remote'
 export type {} from '@tomato/user-questions/remote'
 export type {} from '@tomato/commands/remote'
+export type {} from '@tomato/web/remote'
 export type {} from '@tomato/api-settings-controller/remote'
-export type {} from '@tomato/api-account-controller/remote'
+export type {} from '@tomato/deepseek-account/remote'
 export type {} from '@tomato/goal/remote'
 export type {} from '@tomato/schedule/remote'
-export type {} from '@tomato/office-to-pdf/remote'
+export type {} from '@tomato/office-kit/remote'
 export type {} from '@tomato/llm/remote'
 export type {} from '@tomato/host-plugin-inventory/remote'
 export type {} from '@tomato/message-feedback/remote'
@@ -81,6 +90,7 @@ export type { ApiRemoteForwardedEvent } from '../types.ts'
 // signatures `$on` hands to a listener, so a consumer reads the very
 // declaration the Host emits rather than a flattened restatement of it.
 export type {} from '@tomato/commands/types'
+export type {} from '@tomato/web/types'
 export type {} from '@tomato/cordis-host-runner/types'
 export type {} from '@tomato/credentials/types'
 export type {} from '@tomato/llm/types'
@@ -187,13 +197,14 @@ export async function apply(ctx: Context): Promise<() => Promise<void>> {
   const disposers: Array<() => Promise<void>> = []
   try {
     for (const contribution of [
-      productAnalyticsRemote, agentPresetsRemote, commandsRemote, settingsControllerRemote, accountRemote,
+      productAnalyticsRemote, agentPresetsRemote, commandsRemote, agentTeamsRemote, settingsControllerRemote, accountRemote,
       goalsRemote, llmRemote, dynamicRemote, scheduleRemote,
-      pluginInventoryRemote, pluginManagerRemote, pluginMarketRemote, pluginRegistryProbeRemote,
+      pluginInventoryRemote, pluginManagerRemote, mcpManagerRemote, pluginMarketRemote, pluginRegistryProbeRemote,
+      toolResultsRemote,
       messageFeedbackRemote, sessionFeedbackRemote,
       fileUploadsRemote, sessionReferencesRemote,
       permissionPresetsRemote, subagentsRemote, sessionRemote, jobRemote, workspaceRemote, workspaceFilesRemote, terminalRemote,
-      officeToPdfRemote, userQuestionsRemote,
+      officeKitRemote, userQuestionsRemote, webRemote,
     ]) {
       disposers.push(await ctx.remote.$mount(contribution))
     }

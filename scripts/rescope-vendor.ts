@@ -10,7 +10,7 @@
  * scalar. A match needs a quote (or `name: `) immediately left and the matching
  * quote — optionally after a `/subpath` — immediately right, which excludes
  * `cordis.yml`, the Loader's `cordis:` builtin prefix, `cordis-config-entry`,
- * `@tomato/dsh-tool-cordis`, and `cordiverse/cordis`, and makes the
+ * `@tomato/tool-cordis`, and `cordiverse/cordis`, and makes the
  * rewrite idempotent because the scoped name's `cordis` is preceded by `/`.
  * Markdown follows the token rule in fences and `docs/` prose. Audited product
  * names stay intact; their source module references and YAML plugin names still

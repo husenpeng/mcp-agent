@@ -31,6 +31,7 @@ const MANIFEST_BIN_ALLOWLIST = new Map<string, ManifestBin>([
 
 /** Every JavaScript executable in an application or packaging workspace has one explicit role. */
 const EXECUTABLE_SOURCE_ALLOWLIST = new Map<string, string>([
+  ['apps/cli/src/installed-bin.ts', 'installed tomato command entry'],
   ['apps/cli/src/bin.ts', 'supported tomato application launcher'],
   ['apps/desktop/scripts/logged-notarytool.mjs', 'build-only notarization logging wrapper'],
   ['apps/desktop/scripts/watchdog.mjs', 'launchd process keeper for the desktop application'],

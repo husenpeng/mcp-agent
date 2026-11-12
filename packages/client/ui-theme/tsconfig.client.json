@@ -13,12 +13,6 @@
       "path": "../../../vendor/schemastery"
     },
     {
-      "path": "../locale/tsconfig.client.json"
-    },
-    {
-      "path": "../shortcuts/tsconfig.client.json"
-    },
-    {
       "path": "../store"
     },
     {
@@ -37,10 +31,17 @@
       "path": "../../../vendor/cordis"
     },
     {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
+      "path": "../shortcuts/tsconfig.client.json"
+    },
+    {
       "path": "../ui-settings/tsconfig.client.json"
     }
   ],
   "exclude": [
     "src/index.ts"
-  ]
+  ],
+  "files": []
 }

@@ -9,12 +9,6 @@
   ],
   "references": [
     {
-      "path": "../product-analytics/tsconfig.client.json"
-    },
-    {
-      "path": "../locale/tsconfig.client.json"
-    },
-    {
       "path": "../../../vendor/cordis"
     },
     {
@@ -24,13 +18,7 @@
       "path": "../../test-support/client-runtime"
     },
     {
-      "path": "../ui-conversation/tsconfig.client.json"
-    },
-    {
       "path": "../ui-primitives"
-    },
-    {
-      "path": "../ui-plugin-manager/tsconfig.client.json"
     },
     {
       "path": "../ui-renderer"
@@ -42,16 +30,7 @@
       "path": "../ui-workspace"
     },
     {
-      "path": "../ui-settings/tsconfig.client.json"
-    },
-    {
       "path": "../ui-slots"
-    },
-    {
-      "path": "../../api/remotes/tsconfig.client.json"
-    },
-    {
-      "path": "../../api/session-controller/tsconfig.client.json"
     },
     {
       "path": "../../preset/agent-preset-registry"
@@ -61,6 +40,28 @@
     },
     {
       "path": "../../util/values"
+    },
+    {
+      "path": "../product-analytics/tsconfig.client.json"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-conversation/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-plugin-manager/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-settings/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/remotes/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/session-controller/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

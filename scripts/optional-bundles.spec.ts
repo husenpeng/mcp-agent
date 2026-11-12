@@ -94,6 +94,9 @@ describe.each(['web', 'desktop'] as const)('%s optional bundle overrides', (surf
 })
 
 describe('optional bundles', () => {
+  it('admits Computer Use on macOS and native Windows Hosts', () => {
+    expect(bundles.get('@tomato/cua-bundle')?.manifest.tomato?.bundle?.platforms).toEqual(['darwin', 'win32'])
+  })
   const shipped = ['@tomato/base', '@tomato/web-app'].map(name => bundle(name).patches)
 
   it('ships at least one bundle switched off', () => {
@@ -132,7 +135,7 @@ describe('optional bundles', () => {
     }
   })
 
-  it('offers Git Worktrees as one disabled bundle with its runtime and tool', () => {
+  it('retains the standalone worktree bundle for explicit profiles', () => {
     const name = '@tomato/experimental-tool-worktree'
     expect(OPTIONAL_BUNDLES).toContain(name)
     for (const template of Object.values(PROFILE_TEMPLATES)) expect(template.bundles).not.toContain(name)
@@ -141,6 +144,39 @@ describe('optional bundles', () => {
       expect(composeEntries(shipped).some(row => row.name === moduleName)).toBe(false)
       expect(rows.filter(row => row.name === moduleName && row.disabled !== true)).toHaveLength(1)
     }
+  })
+
+  it('offers the forge panel and model worktree tool together over one worktree service', () => {
+    const name = '@tomato/experimental-forge-bundle'
+    expect(OPTIONAL_BUNDLES).toContain(name)
+    for (const template of Object.values(PROFILE_TEMPLATES)) expect(template.bundles).not.toContain(name)
+    const rows = flattenRows(composeEntries([...shipped, bundle(name).patches]))
+    for (const moduleName of [
+      '@tomato/experimental-forge',
+      '@tomato/experimental-forge-github',
+      '@tomato/experimental-forge-session',
+      '@tomato/experimental-client-ui-forge',
+      '@tomato/experimental-tool-worktree',
+    ]) {
+      expect(flattenRows(composeEntries(shipped)).some(row => row.name === moduleName)).toBe(false)
+      expect(rows.filter(row => row.name === moduleName && row.disabled !== true)).toHaveLength(1)
+    }
+    expect(composeEntries([...shipped, bundle(name).patches]).some(row => row.name === 'cordis:group' && row.id === 'optional-forge-panel')).toBe(false)
+    expect(rows.filter(row => row.name === '@tomato/experimental-worktree')).toHaveLength(1)
+  })
+
+  it('keeps the existing tool and panel row overrides addressable in the unified bundle', () => {
+    const config = { directory: '.agents/custom-worktrees' }
+    const warnings: string[] = []
+    const composed = composeEntries([...shipped, bundle('@tomato/experimental-forge-bundle').patches, [
+      { id: 'worktree', config },
+      { id: 'tool-worktree', disabled: true },
+      { id: 'forge-panel', disabled: true },
+    ]], message => warnings.push(message))
+    expect(warnings).toEqual([])
+    expect(composed.find(row => row.id === 'worktree')?.config).toEqual(config)
+    expect(composed.find(row => row.id === 'tool-worktree')?.disabled).toBe(true)
+    expect(composed.find(row => row.id === 'forge-panel')?.disabled).toBe(true)
   })
 
   it('ships all five lightweight bundles without selecting them in a default template', () => {

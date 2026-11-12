@@ -1,5 +1,8 @@
 /** Session commands whose activation policy is explicit at each Remote method. */
 
+import type { ProjectionHandle } from '@tomato/session-projection'
+import { continuationProjectionDefinition, type ContinuationState } from './continuation.ts'
+
 import { modelAvailable } from './catalog.ts'
 import { randomUUID } from 'node:crypto'
 import type { Context } from '@tomato/cordis'
@@ -7,18 +10,17 @@ import { brandString } from '@tomato/branded'
 import type { Agent, ModelSelection as AgentModelSelection } from '@tomato/agent'
 import { AttachmentError } from '@tomato/attachment'
 import type {
-  AttachmentAdmissionPart, ImageAttachmentRef,
+  AttachmentAdmissionPart,
 } from '@tomato/attachment'
 import type { FileUploadReceiptId, StagedAttachment } from '@tomato/client-file-upload/types'
 import type {} from '@tomato/client-file-upload'
 import {
-  ReasoningEffortId, assistantStreamChunks, createUserMessage, freezeMessage,
+  ReasoningEffortId, createUserMessage, freezeMessage,
 } from '@tomato/llm'
-import type { MessageSource } from '@tomato/llm'
+import type { MessageId, MessageSource } from '@tomato/llm'
 import { buildForkSeed } from '@tomato/session/fork'
-import { foldSurface } from '@tomato/session/surface'
 import { SessionLogOffset, SessionSeq } from '@tomato/session'
-import type { SessionEvent, SessionHeader, SessionId, UserMessage } from '@tomato/session'
+import type { Session, SessionEvent, SessionHeader, SessionId, UserMessage } from '@tomato/session'
 import { SessionQueryError, type SessionObservation } from '@tomato/session-query'
 import { SessionTitleInvalidError } from '@tomato/session-title'
 import { assertNever } from '@tomato/util-values'
@@ -27,7 +29,6 @@ import type { Workspace } from '@tomato/workspace'
 import {
   ApiSessionAgentController,
   ApiSessionCwdConflict,
-  ApiSessionNotFound,
   ApiSessionPresetConflict,
   ApiSessionSubagentOwnership,
   apiSessionSubagentOwnershipError,
@@ -47,27 +48,12 @@ import type {
   SessionPromptValue,
   SessionRenameRequest,
   SessionRenameValue,
-  SessionRetractRequest,
-  SessionRetractValue,
   SessionSelectModelRequest,
   SessionSelectModelValue,
   SessionUpdateQueueRequest,
   SessionUpdateQueueValue,
   SessionRequestId,
 } from './types.ts'
-
-/**
- * Structural view of the optional image-evidence bridge. The bridge owns the
- * full contract; admission only needs the "can it read for this model" verdict.
- */
-interface ImageEvidenceGate {
-  /**
-   * Whether a configured engine can read images for this model.
-   * @param model - resolved conversation model.
-   * @returns true only when the model is positively text-only and an engine exists.
-   */
-  canRead(model: { readonly inputModalities?: readonly string[] }): boolean
-}
 
 type PromptContentCandidate =
   | SessionPromptRequest['content'][number]
@@ -76,29 +62,10 @@ type PromptContentCandidate =
 /**
  * Whether prompt content carries non-whitespace text or an attachment.
  * @param content - submitted or edited prompt parts.
- * @returns false for content the Agent must not receive.
+ * @returns whether any part supplies ordinary prompt content.
  */
 export function hasPromptContent(content: readonly PromptContentCandidate[]): boolean {
   return content.some(part => part.type !== 'text' || part.text.trim().length > 0)
-}
-
-/**
- * Build one structured retraction refusal.
- * @param sessionId - Session whose retraction was refused.
- * @param reason - stable refusal category.
- * @param detail - diagnostic explaining the concrete failed condition.
- * @returns the Remote error to throw.
- */
-function retractUnavailable(
-  sessionId: SessionId,
-  reason: 'not-leaf' | 'queued-input' | 'busy',
-  detail: string,
-): RemoteError<'session/retract-unavailable'> {
-  return new RemoteError(
-    'session/retract-unavailable',
-    `retraction is unavailable: ${detail}`,
-    { sessionId, reason },
-  )
 }
 
 /**
@@ -119,6 +86,20 @@ function latestCompletedPrefixBoundary(events: readonly SessionEvent[]): Session
 
 /** Implements Session business commands delegated by the Session Controller Remote service. */
 export class SessionCommandController {
+  /** First-insertion facts cached per exact Session; the log remains the recovery source. */
+  private readonly promptReceipts = new WeakMap<Session, {
+    offset: SessionLogOffset
+    messages: Set<MessageId>
+    requests: Set<SessionRequestId>
+  }>()
+
+  private continuation!: ProjectionHandle<ContinuationState>
+
+  /** Register complete-history empty-prompt eligibility. @returns when command admission is ready. */
+  async initialize(): Promise<void> {
+    this.continuation = await this.ctx.sessionProjections.register(continuationProjectionDefinition)
+  }
+
   /**
    * @param ctx - Host context carrying Agent, model, attachment, title, and Workspace services.
    * @param agents - sole owner of create, resume, and Agent composition.
@@ -280,17 +261,6 @@ export class SessionCommandController {
         { sessionId: request.sessionId },
       )
     }
-    // A boundary at or after a retracted prompt but before its retraction event
-    // would inherit the removed exchange without the decision that removed it.
-    const retracted = foldSurface(source.events, this.ctx.sessions.messageProjections).retractions
-      .find(retraction => boundary >= retraction.start && boundary < retraction.seq)
-    if (retracted !== undefined) {
-      throw new RemoteError(
-        'session/fork-unavailable',
-        `event ${String(boundary)} belongs to a retracted exchange; fork before it or after the retraction`,
-        { sessionId: request.sessionId },
-      )
-    }
     const seed = buildForkSeed(source.events, boundary)
     let workspace: Workspace | undefined
     try {
@@ -342,91 +312,31 @@ export class SessionCommandController {
   }
 
   /**
-   * Retract the trailing human exchange from model history. The target must be
-   * the turn-opening human prompt of the Session's last turn, and the range from
-   * that prompt to the current surface tail must consist of appended surface
-   * nodes. A running turn is cancelled and settled first; queued next-turn input
-   * makes retraction unavailable instead of being discarded.
-   * @param request - Session identity and the human message seq to retract.
-   * @returns the committed removal range.
-   */
-  async retract(request: SessionRetractRequest): Promise<SessionRetractValue> {
-    let atSeq: SessionSeq
-    try {
-      atSeq = SessionSeq(request.atSeq)
-    } catch {
-      throw new RemoteError('gateway/bad-request', 'atSeq must be a non-negative safe integer', {})
-    }
-    const agent = await this.resolveAgent(request.sessionId)
-    if (hasApiSessionSubagentOwner(this.ctx, agent.session, agent)) {
-      throw apiSessionSubagentOwnershipError(request.sessionId)
-    }
-    if (agent.inbox.nextTurn.length > 0) {
-      throw retractUnavailable(request.sessionId, 'queued-input', 'remove queued messages before retracting the last turn')
-    }
-    if (agent.status === 'running') {
-      agent.cancel({ kind: 'user' })
-    }
-    // Resume may start background maintenance (title generation, for example)
-    // whose claim would reject runMaintenance.
-    await agent.whenIdle()
-    try {
-      return await agent.runMaintenance(async () => {
-        using observation = await this.ctx.sessionQuery.observeSession(request.sessionId, { projectionMode: 'none' })
-        const events = observation.events
-        const target = events[atSeq]
-        if (target?.seq !== atSeq || target.type !== 'user/message'
-          || target.surfaceOp !== 'append' || target.data.source.kind !== 'user') {
-          throw retractUnavailable(request.sessionId, 'not-leaf', `event ${atSeq} is not a human user/message`)
-        }
-        const turnStart = events.findLast(event => event.seq < atSeq && event.type === 'turn/start')
-        if (turnStart === undefined
-          || events.some(event => event.seq > atSeq && event.type === 'turn/start')
-          || events.some(event => event.seq > turnStart.seq && event.seq < atSeq
-            && event.type === 'user/message' && event.surfaceOp === 'append'
-            && event.data.source.kind === 'user')) {
-          throw retractUnavailable(request.sessionId, 'not-leaf', 'the target prompt does not open the last turn')
-        }
-        const surface = foldSurface(events, this.ctx.sessions.messageProjections)
-        const endSeq = surface.nodes.at(-1)
-        if (endSeq === undefined || atSeq > endSeq || !surface.nodes.includes(atSeq)
-          || surface.nodes.some(seq => seq > atSeq && events[seq]?.surfaceOp !== 'append')) {
-          throw retractUnavailable(request.sessionId, 'not-leaf', 'the target prompt is not the current leaf')
-        }
-        const retracted = agent.session.append('conversation/retraction', {
-          messageId: target.data.id,
-          startSeq: atSeq,
-          endSeq,
-        })
-        return { accepted: true, startSeq: atSeq, endSeq: retracted.data.endSeq }
-      })
-    } catch (error) {
-      if (error instanceof RemoteError) throw error
-      if (error instanceof SessionQueryError) {
-        throw new RemoteError(
-          'session/retract-unavailable',
-          `retraction could not read the Session: ${error.message}`,
-          { sessionId: request.sessionId, reason: 'busy' },
-        )
-      }
-      throw new RemoteError(
-        'session/retract-unavailable',
-        error instanceof Error ? error.message : 'retraction is unavailable',
-        { sessionId: request.sessionId, reason: 'busy' },
-      )
-    }
-  }
-
-  /**
    * Admit one prompt after Agent and attachment validation; the Remote method
    * has already validated the content and built the durable message source.
    * @param request - Session identity, prompt content, and delivery mode.
-   * @param source - the `user-rpc` source recorded on the accepted message.
+   * @param source - caller metadata recorded on the accepted ordinary or retry user message.
    * @returns acknowledgement that the Agent accepted the prompt.
    */
   async prompt(request: SessionPromptRequest, source: MessageSource): Promise<SessionPromptValue> {
     const agent = await this.resolveAgent(request.sessionId)
-    if (hasPromptRequest(agent, request.requestId)) return { accepted: true }
+    if (this.hasPromptRequest(agent.session, request.requestId)) return { accepted: true }
+    if (request.content.length === 0) {
+      try {
+        return await agent.runMaintenance(() => {
+          const inbox = agent.inbox
+          if (request.mode !== 'queue' || this.continuation.stateOf(agent.session).ending === null
+            || inbox.nextTurn.length > 0 || inbox.nextStep.some(message => message.source.kind === 'user')) {
+            throw new RemoteError('session/agent-busy', 'generation continuation is unavailable', { reason: 'NO_CONTINUABLE_FAILURE_OR_PENDING_INPUT' })
+          }
+          agent.followup(createUserMessage({ content: [], source }))
+          return Promise.resolve({ accepted: true as const })
+        })
+      } catch (error: unknown) {
+        if (remoteErrorOf(error) !== undefined) throw error
+        throw new RemoteError('session/agent-busy', 'generation continuation was not accepted', { reason: String(error) })
+      }
+    }
     const admission = resolvePromptFileReceipts(
       request.content,
       receiptId => this.ctx.fileUploads.resolve(agent, receiptId),
@@ -435,25 +345,22 @@ export class SessionCommandController {
     const hasImage = admission.content.some(part => part.type === 'image')
     const admit = async (): Promise<SessionPromptValue> => {
       try {
+        if (this.hasPromptRequest(agent.session, request.requestId)) return { accepted: true }
         if (hasImage) {
           const current = agent.model.current()
           if (current !== undefined) {
             const model = await this.ctx.llm.resolveModelInfo(current.provider, current.model)
             if (model.inputModalities !== undefined && !model.inputModalities.includes('image')) {
-              // A vision bridge can stand in for the missing modality; without
-              // one, image prompts stay refused exactly as before.
-              const evidence = this.ctx.get('imageEvidence') as ImageEvidenceGate | undefined
-              if (evidence?.canRead(model) !== true) {
-                throw new RemoteError(
-                  'session/attachment-invalid',
-                  `Model "${current.model}" does not support image input.`,
-                  { reason: 'MODEL_DOES_NOT_SUPPORT_IMAGES' },
-                )
-              }
+              throw new RemoteError(
+                'session/attachment-invalid',
+                `Model "${current.model}" does not support image input.`,
+                { reason: 'MODEL_DOES_NOT_SUPPORT_IMAGES' },
+              )
             }
           }
         }
         const content = await this.ctx.attachments.admitPromptContent(admission.content)
+        if (this.hasPromptRequest(agent.session, request.requestId)) return { accepted: true }
         const message: UserMessage = createUserMessage({ content, source })
         if (this.ctx.agents.get(agent.id) !== agent) {
           throw new RemoteError(
@@ -467,6 +374,7 @@ export class SessionCommandController {
         else agent.followup(message)
         binding.commit()
       } catch (error) {
+        if (this.hasPromptRequest(agent.session, request.requestId)) return { accepted: true }
         if (remoteErrorOf(error) !== undefined) throw error
         if (error instanceof AttachmentError) {
           throw new RemoteError('session/attachment-invalid', error.message, { reason: error.code })
@@ -478,6 +386,32 @@ export class SessionCommandController {
     return hasImage ? this.agents.serializeImageAdmission(agent, admit) : admit()
   }
 
+  /** Recover first input acceptance, including claimed or removed messages, from unseen log entries. */
+  private hasPromptRequest(session: Session, requestId: SessionRequestId): boolean {
+    let receipts = this.promptReceipts.get(session)
+    if (receipts === undefined) {
+      receipts = { offset: SessionLogOffset(0), messages: new Set(), requests: new Set() }
+      this.promptReceipts.set(session, receipts)
+    }
+    if (receipts.offset !== session.seq) {
+      // oxlint-disable-next-line typescript/no-deprecated -- Existing prompt retry history read, retained for acceptance recovery.
+      for (const event of session.snapshotEvents(receipts.offset)) {
+        if (event.type !== 'agent/inbox/spliced' && event.type !== 'user/message') continue
+        const messages = event.type === 'agent/inbox/spliced' ? event.data.inserted : [event.data]
+        for (const message of messages) {
+          if (receipts.messages.has(message.id)) continue
+          receipts.messages.add(message.id)
+          // A copied input is not a new request in the child, even if later reinserted there.
+          if (event.seq < session.inheritedEventCount) continue
+          const source = message.source
+          if ((source.kind === 'user' || source.kind === 'retry') && 'rpcId' in source) receipts.requests.add(source.rpcId)
+        }
+      }
+      receipts.offset = session.seq
+    }
+    return receipts.requests.has(requestId)
+  }
+
   private async requireModel(selection: Pick<AgentModelSelection, 'provider' | 'model'>): Promise<void> {
     if (!await modelAvailable(this.ctx, selection)) {
       throw new RemoteError('session/model-unavailable', 'Select an available model before sending a message.',
@@ -486,38 +420,13 @@ export class SessionCommandController {
   }
 
   /**
-   * Read one durable image after proving the Session log references it.
-   * @param request - Session and attachment identities used for authorization.
+   * Read one durable image using the supplied reference without consulting Session history.
+   * @param request - image reference and gateway permission scope; Session existence is not checked.
    * @returns the durable attachment reference and base64-encoded bytes.
    */
   async attachment(request: SessionAttachmentRequest): Promise<SessionAttachmentValue> {
-    let ref: ImageAttachmentRef | undefined
     try {
-      using observation = await this.ctx.sessionQuery.observeSession(request.sessionId, { projectionMode: 'none' })
-      if (observation.source === 'prepared' && observation.header.cwd === undefined) {
-        throw new ApiSessionNotFound(`session "${request.sessionId}" not found`)
-      }
-      ref = referencedImage(observation.events, String(request.attachmentId))
-    } catch (error) {
-      if (error instanceof ApiSessionNotFound
-        || (error instanceof SessionQueryError && error.code === 'SESSION_QUERY_SESSION_NOT_FOUND')) {
-        throw new RemoteError('session/not-found', error.message, { sessionId: request.sessionId })
-      }
-      throw new RemoteError(
-        'gateway/internal',
-        `attachment authorization unavailable for session "${request.sessionId}": ${String(error)}`,
-        {},
-      )
-    }
-    if (ref === undefined) {
-      throw new RemoteError(
-        'session/attachment-invalid',
-        'Image is not referenced by this session.',
-        { reason: 'ATTACHMENT_NOT_REFERENCED' },
-      )
-    }
-    try {
-      const stored = await this.ctx.attachments.readImage(ref)
+      const stored = await this.ctx.attachments.readImage(request.attachment)
       return {
         attachment: stored.ref,
         data: Buffer.from(stored.data).toString('base64'),
@@ -562,7 +471,7 @@ export class SessionCommandController {
       }
       agent = found.agent
     }
-    if (hasApiSessionSubagentOwner(this.ctx, agent.session, agent)) {
+    if (hasApiSessionSubagentOwner(agent.session)) {
       const identity = this.ctx.sessionProjections
         .snapshot(agent.session, ['subagent'])
         .values.subagent
@@ -623,7 +532,7 @@ export class SessionCommandController {
         { sessionId: request.sessionId },
       )
     }
-    if (hasApiSessionSubagentOwner(this.ctx, agent.session, agent)) {
+    if (hasApiSessionSubagentOwner(agent.session)) {
       throw apiSessionSubagentOwnershipError(request.sessionId)
     }
     agent.cancel({ kind: 'user' }, { keepInbox: true })
@@ -690,95 +599,4 @@ function resolvePromptFileReceipts(
     return attachment
   })
   return { content: resolved, receiptIds: [...receiptIds] }
-}
-
-function hasPromptRequest(agent: Agent, requestId: SessionRequestId): boolean {
-  const matches = (message: UserMessage): boolean => {
-    const source = message.source
-    return source.kind === 'user' && 'rpcId' in source && source.rpcId === requestId
-  }
-  if (agent.inbox.nextTurn.some(matches) || agent.inbox.nextStep.some(matches)) return true
-  // oxlint-disable-next-line typescript/no-deprecated -- Existing Session history read; migration deferred.
-  return agent.session.snapshotEvents().some((event) => {
-    if (event.type !== 'user/message') return false
-    const source = event.data.source
-    return source.kind === 'user' && 'rpcId' in source && source.rpcId === requestId
-  })
-}
-function imageBlockIn(
-  content: unknown,
-  match: (ref: ImageAttachmentRef) => boolean,
-): ImageAttachmentRef | undefined {
-  if (!Array.isArray(content)) return undefined
-  for (const value of content) {
-    if (typeof value !== 'object' || value === null || Array.isArray(value)) continue
-    const block = value as { readonly type?: unknown; readonly attachment?: unknown }
-    if (block.type === 'image' && typeof block.attachment === 'object' && block.attachment !== null) {
-      const ref = block.attachment as ImageAttachmentRef
-      if (match(ref)) return ref
-    }
-  }
-  return undefined
-}
-
-/** Read only first-party declared content fields; unknown event payloads stay opaque. */
-function imageInEvent(
-  event: SessionEvent,
-  match: (ref: ImageAttachmentRef) => boolean,
-): ImageAttachmentRef | undefined {
-  const data = event.data as {
-    readonly content?: unknown
-    readonly message?: { readonly content?: unknown }
-    readonly inserted?: unknown
-    readonly summary?: unknown
-    readonly rawOutput?: unknown
-  }
-  // First-party event payloads can be present without their producer plugin mounted.
-  const type: string = event.type
-  switch (type) {
-    case 'user/message':
-    case 'tool/ptc-dispatch':
-      return imageBlockIn(data.content, match)
-    case 'system/message':
-    case 'developer/message':
-    case 'tool/result':
-    case 'team/message/queued':
-      return imageBlockIn(data.message?.content, match)
-    case 'agent/inbox/spliced': {
-      const messages = data.inserted
-      if (!Array.isArray(messages)) return undefined
-      for (const message of messages as readonly unknown[]) {
-        if (typeof message !== 'object' || message === null || Array.isArray(message)) continue
-        const found = imageBlockIn((message as { readonly content?: unknown }).content, match)
-        if (found !== undefined) return found
-      }
-      return undefined
-    }
-    case 'compaction/summary':
-      return imageBlockIn(data.summary, match) ?? imageBlockIn(data.rawOutput, match)
-    case 'assistant/message': {
-      const found = imageBlockIn(data.message?.content, match)
-      if (found !== undefined) return found
-      break
-    }
-    case 'assistant/attempt': break
-    default: return undefined
-  }
-  const assistant = event as SessionEvent<'assistant/message' | 'assistant/attempt'>
-  for (const chunk of assistantStreamChunks(assistant.data.stream, 'block-end')) {
-    const found = imageBlockIn([chunk.block], match)
-    if (found !== undefined) return found
-  }
-  return undefined
-}
-
-function referencedImage(
-  events: readonly SessionEvent[],
-  attachmentId: string,
-): ImageAttachmentRef | undefined {
-  for (const event of events) {
-    const found = imageInEvent(event, ref => String(ref.attachmentId) === attachmentId)
-    if (found !== undefined) return found
-  }
-  return undefined
 }

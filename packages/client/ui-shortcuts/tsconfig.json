@@ -15,12 +15,6 @@
       "path": "../../util/branded"
     },
     {
-      "path": "../shortcuts/tsconfig.client.json"
-    },
-    {
-      "path": "../locale/tsconfig.client.json"
-    },
-    {
       "path": "../store"
     },
     {
@@ -36,7 +30,14 @@
       "path": "../ui-layout"
     },
     {
+      "path": "../shortcuts/tsconfig.client.json"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
       "path": "../ui-settings/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

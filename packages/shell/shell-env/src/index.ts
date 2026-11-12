@@ -8,14 +8,18 @@
  * @module @tomato/shell-env
  */
 
+import { dirname } from 'node:path'
 import { Service, type Context } from '@tomato/cordis'
 import z from '@tomato/schemastery'
 import { TOMATO_ENV_PREFIX } from '@tomato/shell'
 import type { TomatoEnvironment, TomatoEnvironmentKey } from '@tomato/shell'
 import { TOMATO_HOME_ENV, resolveTomatoHome } from '@tomato/home-paths'
+import { ShellEnvError } from './error.ts'
 import type { ToolExecution } from '@tomato/tools'
 // Declares `Context.profileContext`, the launcher-provided profile the built-ins read.
 import type {} from '@tomato/app-boot'
+
+export { ShellEnvError, type ShellEnvErrorCode } from './error.ts'
 
 declare module '@tomato/cordis' {
   interface Context {
@@ -73,12 +77,16 @@ const TOMATO_SHELL_KEY = `${TOMATO_ENV_PREFIX}SHELL` as const
 const TOMATO_SESSION_ID_KEY = `${TOMATO_ENV_PREFIX}SESSION_ID` as const
 const TOMATO_PROFILE_KEY = `${TOMATO_ENV_PREFIX}PROFILE` as const
 const TOMATO_PROFILE_DIR_KEY = `${TOMATO_ENV_PREFIX}PROFILE_DIR` as const
+const TOMATO_INSTALL_DIR_KEY = `${TOMATO_ENV_PREFIX}INSTALL_DIR` as const
+const TOMATO_NODE_EXECUTABLE_KEY = `${TOMATO_ENV_PREFIX}NODE_EXECUTABLE` as const
 const RESERVED_BASH_ENV_KEYS = new Set<TomatoEnvironmentKey>([
   TOMATO_HOME_ENV,
   TOMATO_SHELL_KEY,
   TOMATO_SESSION_ID_KEY,
   TOMATO_PROFILE_KEY,
   TOMATO_PROFILE_DIR_KEY,
+  TOMATO_INSTALL_DIR_KEY,
+  TOMATO_NODE_EXECUTABLE_KEY,
 ])
 const BASH_ENV_KEY_SUFFIX = /^[A-Z][A-Z0-9_]*$/
 
@@ -158,6 +166,10 @@ export class ShellEnvRegistry extends Service {
       [TOMATO_HOME_ENV]: this.tomatoHome,
       [TOMATO_SHELL_KEY]: '1',
     }
+    // A single-executable application runs its embedded entry instead of a script argument. The
+    // browser worker image answers no `node:sea`, so the module is looked up at run time.
+    const sea = process.getBuiltinModule('node:sea') as typeof import('node:sea') | undefined
+    if (sea === undefined || !sea.isSea()) values[TOMATO_NODE_EXECUTABLE_KEY] = process.execPath
     if (execution.agent !== undefined) {
       values[TOMATO_SESSION_ID_KEY] = execution.agent.session.header.id
     }
@@ -165,6 +177,7 @@ export class ShellEnvRegistry extends Service {
     if (profile !== undefined) {
       values[TOMATO_PROFILE_KEY] = profile.name
       values[TOMATO_PROFILE_DIR_KEY] = profile.dir
+      values[TOMATO_INSTALL_DIR_KEY] = dirname(profile.installAnchor)
     }
 
     for (const contributor of [...this.contributors.values()].sort((left, right) => left.name.localeCompare(right.name))) {
@@ -172,10 +185,13 @@ export class ShellEnvRegistry extends Service {
       for (const [rawKey, value] of Object.entries(resolved)) {
         const key = rawKey as TomatoEnvironmentKey
         if (!Object.hasOwn(contributor.variables, key)) {
-          throw new Error(`bash env contributor "${contributor.name}" returned undeclared key "${key}"`)
+          throw new ShellEnvError(`bash env contributor "${contributor.name}" returned undeclared key "${key}"`, 'SHELL_ENV_CONTRIBUTION_INVALID')
         }
         if (typeof value !== 'string') {
-          throw new Error(`bash env contributor "${contributor.name}" returned a non-string value for "${key}"`)
+          throw new ShellEnvError(
+            `bash env contributor "${contributor.name}" returned a non-string value for "${key}"`,
+            'SHELL_ENV_CONTRIBUTION_INVALID',
+          )
         }
         values[key] = value
       }

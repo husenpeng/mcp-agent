@@ -9,9 +9,6 @@
   ],
   "references": [
     {
-      "path": "../locale/tsconfig.client.json"
-    },
-    {
       "path": "../../../vendor/cordis"
     },
     {
@@ -21,13 +18,17 @@
       "path": "../ui-renderer"
     },
     {
-      "path": "../ui-settings/tsconfig.client.json"
-    },
-    {
       "path": "../ui-slots"
     },
     {
       "path": "../../util/values"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-settings/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

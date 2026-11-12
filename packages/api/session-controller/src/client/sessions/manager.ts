@@ -98,14 +98,6 @@ export class SessionManager {
    * holder, because it can arrive from a replaced or already-dropped Session.
    */
   private readonly engagedSessions = new Set<SessionId>()
-  /**
-   * Identities a live event named while the list held no row. A missed
-   * `api-session/added` (a dropped event stream, a reconnect gap, or a listing
-   * that predates the creation) would otherwise hide the Session until the
-   * next full read; each identity asks for at most one repair per Host
-   * generation.
-   */
-  private readonly repairedUnknown = new Set<SessionId>()
   private disposed = false
   /** Per-session projection value stores, retained independently of instance arrival (the
    *  title-snapshot precedent, generalized): push frames land here whether or not the Session
@@ -155,12 +147,7 @@ export class SessionManager {
       throw new Error(`sessions.retain: unknown session ${id}`)
     }
     if (address !== undefined) this.addresses.set(id, address)
-    this.sessions.get(id)?.configureSubagent(
-      address,
-      address === undefined
-        ? undefined
-        : this.agentAvailable(address.parentSessionId),
-    )
+    this.sessions.get(id)?.configureSubagent(address)
     return id
   }
 
@@ -284,14 +271,8 @@ export class SessionManager {
 
   private createSession(sessionId: SessionId): Session {
     const address = this.addresses.get(sessionId)
-    const parentAvailable = address === undefined
-      ? undefined
-      : this.agentAvailable(address.parentSessionId)
     return new Session(sessionId, this.remote, {
-      ...(address === undefined ? {} : {
-        address,
-        ...parentAvailable === undefined ? {} : { parentAvailable },
-      }),
+      ...(address === undefined ? {} : { address }),
       // The sender's local first-send flip mirrors into the list row so the
       // session surfaces (lists filter on blank) before any host frame lands.
       onEngaged: (engaged) => {
@@ -408,18 +389,6 @@ export class SessionManager {
     return operation
   }
 
-  private agentAvailable(sessionId: SessionId): boolean | undefined {
-    return this.summaries.find(summary => summary.sessionId === sessionId)?.agentAvailable
-      ?? (this.listPhase === 'ready' ? false : undefined)
-  }
-
-  private updateParentAvailability(): void {
-    for (const [childId, address] of this.addresses) {
-      const available = this.agentAvailable(address.parentSessionId)
-      if (available !== undefined) this.sessions.get(childId)?.handleSubagentParentAvailable(available)
-    }
-  }
-
   // ---- List API ----
 
   /** Full refresh via session.list (single-flight within one Host generation). */
@@ -454,7 +423,7 @@ export class SessionManager {
           for (const sessionId of this.engagedSessions) this.pruneEngagement(sessionId, retained)
           this.listState = 'idle'
           this.listPhase = 'ready'
-          this.updateParentAvailability()
+
           // Resident Sessions and list rows share one display blank, reconciled with the metadata projection.
           for (const s of this.summaries) {
             const session = this.sessions.get(s.sessionId)
@@ -607,7 +576,6 @@ export class SessionManager {
    */
   private mergeSummary(summary: SessionSummary): void {
     this.recordMutation({ kind: 'upsert', summary })
-    this.updateParentAvailability()
   }
 
   /** Apply immediately and retain for replay when a list response is in flight. */
@@ -650,15 +618,17 @@ export class SessionManager {
   // ---- Live control and Host-event sinks ----
 
   /**
-   * Apply a complete control baseline or one later replacement frame.
-   * @param frame - baseline or live control replacement from Session Controller.
+   * Apply a complete control baseline or one later per-event projection frame.
+   * @param frame - baseline or live per-event projection change from Session Controller.
    */
   handleControlFrame(frame: SessionControlFrame): void {
     if (frame.type === 'baseline') {
       this.replaceControlBaseline(frame.value)
       return
     }
-    this.projectionStore(frame.sessionId).apply(frame.key, frame.value, SessionSeq(frame.seq))
+    const store = this.projectionStore(frame.sessionId)
+    const seq = SessionSeq(frame.seq)
+    for (const change of frame.changes) store.apply(change.key, change.val, seq)
     this.notifier.markDirty()
   }
 
@@ -677,38 +647,10 @@ export class SessionManager {
    * @param summary - current Host summary for the added Session.
    */
   handleSessionAdded(summary: SessionSummary): void {
+    this.mergeSummary(summary)
     if (!this.disposed && summary.running) this.engagedSessions.add(summary.sessionId)
-    // A Session announced while its Agent already runs is a conversation, not a
-    // draft: the row merges with the same presentation the list path applies.
-    const blank = this.effectiveBlank(summary)
-    this.repairedUnknown.delete(summary.sessionId)
-    this.mergeSummary({ ...summary, blank })
-    this.sessions.get(summary.sessionId)?.handleBlank(blank)
+    this.sessions.get(summary.sessionId)?.handleBlank(this.effectiveBlank(summary))
     if (summary.projections !== undefined) this.applyListBlock(summary.sessionId, summary.projections)
-  }
-
-  /**
-   * Re-read the list after a live event named a Session it does not hold.
-   *
-   * Collection membership travels on `api-session/added` alone; every later
-   * notification for an unknown identity is otherwise dropped, so a lost
-   * addition keeps the Session invisible until the next reload. A pull already
-   * in flight may predate the notification, so it is followed by one more read;
-   * each identity asks at most once per Host generation.
-   * @param sessionId - identity the live event named.
-   */
-  private repairUnknownSession(sessionId: SessionId): void {
-    if (this.disposed) return
-    if (this.summaries.some(summary => summary.sessionId === sessionId)) return
-    if (this.sessions.has(sessionId) || this.addresses.has(sessionId)) return
-    if (this.repairedUnknown.has(sessionId)) return
-    this.repairedUnknown.add(sessionId)
-    const settled = (): void => {
-      if (this.disposed || this.summaries.some(summary => summary.sessionId === sessionId)) return
-      void this.refreshList()
-    }
-    if (this.listInflight === null) void this.refreshList()
-    else void this.listInflight.then(settled, settled)
   }
 
   /**
@@ -752,15 +694,9 @@ export class SessionManager {
       this.projectionStores.delete(sessionId)
     }
     this.pruneEngagement(sessionId, this.retainedIds(this.summaries))
-    this.repairedUnknown.delete(sessionId)
     this.projectionInflight.get(sessionId)?.controller.abort()
     this.projectionInflight.delete(sessionId)
     this.projectionLoads.delete(sessionId)
-    for (const [childId, address] of this.addresses) {
-      if (address.parentSessionId === sessionId) {
-        this.sessions.get(childId)?.handleSubagentParentAvailable(false)
-      }
-    }
   }
 
   /**
@@ -770,23 +706,16 @@ export class SessionManager {
    */
   handleSessionStatus(sessionId: SessionId, running: boolean): void {
     if (!this.disposed && running) this.engagedSessions.add(sessionId)
-    this.repairUnknownSession(sessionId)
     this.recordMutation({ kind: 'status', sessionId, running, agentAvailable: true })
-    this.updateParentAvailability()
     this.sessions.get(sessionId)?.handleRunning(running)
   }
 
   /**
    * Advance Session-list activity from one user-authored durable message.
-   * A durable user message ends the draft presentation: the row must show even
-   * when another client wrote it and this client missed the running frame.
    * @param sessionId - Session whose activity changed.
    * @param updatedAt - durable message timestamp.
    */
   handleSessionActivity(sessionId: SessionId, updatedAt: number): void {
-    this.repairUnknownSession(sessionId)
-    if (!this.disposed) this.engagedSessions.add(sessionId)
-    this.recordMutation({ kind: 'engaged', sessionId })
     this.recordMutation({ kind: 'activity', sessionId, updatedAt })
   }
 
@@ -796,7 +725,6 @@ export class SessionManager {
    * @param message - caller-visible failure description.
    */
   handleSessionError(sessionId: SessionId, message: string): void {
-    this.repairUnknownSession(sessionId)
     this.sessions.get(sessionId)?.handleAgentError(message)
   }
 
@@ -810,7 +738,6 @@ export class SessionManager {
     for (const store of this.projectionStores.values()) store.clear()
     this.listMutations = null
     this.listInflight = null
-    this.repairedUnknown.clear()
     void this.refreshList()
     const parents = new Set(this.projectionLoads.keys())
     for (const id of this.sessions.keys()) {

@@ -6,7 +6,7 @@ import { entryListSchema } from '@tomato/cordis-plugin-include'
 import * as yaml from 'js-yaml'
 
 describe('Inspector profile bundle', () => {
-  it('publishes one layer containing both inspectors', () => {
+  it('publishes one layer containing both inspectors and the Statistics view', () => {
     const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
       publishConfig: { access: string }
       tomato: { bundle: { patch: string } }
@@ -15,6 +15,7 @@ describe('Inspector profile bundle', () => {
     expect(manifest.publishConfig.access).toBe('public')
     expect(manifest.tomato.bundle.patch).toBe('./cordis.patch.yml')
     expect(manifest.dependencies).toEqual({
+      '@tomato/experimental-client-ui-stats': 'workspace:*',
       '@tomato/experimental-inspector': 'workspace:*',
       '@tomato/experimental-session-inspector': 'workspace:*',
     })
@@ -26,6 +27,7 @@ describe('Inspector profile bundle', () => {
         disabled: false, config: { captureFetch: true },
       },
       { id: 'session-inspector', name: '@tomato/experimental-session-inspector' },
+      { id: 'client-ui-stats', name: '@tomato/experimental-client-ui-stats' },
     ] }])
   })
 })

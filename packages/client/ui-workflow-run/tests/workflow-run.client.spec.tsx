@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { contextMenuHook } from '@tomato/client-test-runtime'
 import { createSnapshotStore } from '@tomato/client-store'
 import type { GlobalStandardProps } from '@tomato/client-ui-slots'
 import { Context } from '@tomato/cordis'
@@ -362,6 +363,7 @@ function panelProps(data: WorkflowRunChatData, sessions = listState(), openSessi
     },
     useWorkspaces: selector => selector(panelWorkspace),
     ...allowAllAccess,
+    useContextMenu: contextMenuHook(),
     useTurnData: () => undefined,
     useDisclosure: () => { throw new Error('unused') },
     useGroupAction: () => { throw new Error('unused') },
@@ -370,7 +372,6 @@ function panelProps(data: WorkflowRunChatData, sessions = listState(), openSessi
     forkAt: () => {},
     retractAt: async () => {},
     loadImage: () => Promise.reject(new Error('not used')),
-    fileMentions: () => undefined,
     openSession,
     t: makeTranslate(zh),
   }

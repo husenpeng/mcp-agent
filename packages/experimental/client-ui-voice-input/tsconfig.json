@@ -12,18 +12,6 @@
       "path": "../../../vendor/cordis"
     },
     {
-      "path": "../../api/remotes/tsconfig.client.json"
-    },
-    {
-      "path": "../../api/session-controller/tsconfig.client.json"
-    },
-    {
-      "path": "../../client/locale/tsconfig.client.json"
-    },
-    {
-      "path": "../../client/ui-conversation/tsconfig.client.json"
-    },
-    {
       "path": "../../client/ui-primitives"
     },
     {
@@ -48,13 +36,26 @@
       "path": "../speech-to-text"
     },
     {
-      "path": "../../api/gateway/tsconfig.client.json"
+      "path": "../../client/store"
     },
     {
-      "path": "../../client/store"
+      "path": "../../api/remotes/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/session-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../../client/locale/tsconfig.client.json"
+    },
+    {
+      "path": "../../client/ui-conversation/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/gateway/tsconfig.client.json"
     },
     {
       "path": "../../client/ui-plugin-manager/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

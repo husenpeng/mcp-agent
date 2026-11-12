@@ -1,7 +1,7 @@
 {
   "name": "@tomato/web-frontend",
   "description": "Web application entry: vite build over the @tomato/client-web shell library; dist/ served by apps/cli's tomato web",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -17,9 +17,9 @@
   },
   "files": [
     "dist",
-    "!dist/**/*.map",
     "!dist/preview.html",
-    "!dist/preview"
+    "!dist/preview",
+    "src"
   ],
   "scripts": {
     "build": "vite build",
@@ -43,7 +43,7 @@
     "@tomato/client-web": "workspace:*",
     "@tomato/cmdline": "workspace:*",
     "@tomato/pwsh-local": "workspace:*",
-    "@tomato/experimental-agent-team": "workspace:*",
+    "@tomato/agent-team": "workspace:*",
     "@tomato/experimental-webworker-packer": "workspace:*",
     "@tomato/experimental-webworker-runtime": "workspace:*",
     "@tomato/remote-mock": "workspace:*",
@@ -72,7 +72,8 @@
     "@tomato/experimental-voice-input-bundle": "workspace:*",
     "@tomato/experimental-cot-translation-bundle": "workspace:*",
     "@tomato/experimental-worktree": "workspace:*",
-    "@tomato/experimental-plugin-market-bundle": "workspace:*"
+    "@tomato/experimental-plugin-market-bundle": "workspace:*",
+    "@tomato/experimental-forge-bundle": "workspace:*"
   },
   "dependencies": {
     "@tomato/message-quotes": "workspace:*"
