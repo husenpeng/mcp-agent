@@ -31,6 +31,8 @@ interface TestConfig {
   batchSize?: number
   maxInputChars?: number
   enabled?: boolean
+  failureThreshold?: number
+  cooldownMs?: number
 }
 
 /** Mount a provider over a private credential store. */
@@ -40,7 +42,7 @@ async function harness(config: TestConfig = {}, credentials = true) {
   const directory = await mkdtemp(join(tmpdir(), 'tomato-embeddings-'))
   directories.push(directory)
   if (credentials) await ctx.plugin(LocalCredentialProvider, { path: join(directory, 'credentials.yaml'), tomatoHome: directory, watch: false })
-  await ctx.plugin(HttpEmbeddings, { baseUrl: 'https://api.example.test/v1', model: 'embed-small', ...config })
+  await ctx.plugin(HttpEmbeddings, { baseUrl: 'https://api.example.test/v1', model: 'embed-small', failureThreshold: 99, ...config })
   return { ctx, embeddings: ctx.embeddings }
 }
 
@@ -143,6 +145,23 @@ it('stays mounted but is ignored while disabled, including a live switch', async
   expect(new HttpEmbeddings(plainOffCtx, { baseUrl: 'http://127.0.0.1:11434/v1', model: 'nomic-embed-text', enabled: false }).enabled).toBe(false)
 })
 
+it('pauses after consecutive failures and retries after the cooldown', async () => {
+  const { embeddings } = await harness({ failureThreshold: 2, cooldownMs: 120 })
+  respond({ error: 'down' }, 500)
+  await expect(embeddings.embed({ texts: ['a'] })).rejects.toMatchObject({ code: 'provider' })
+  await expect(embeddings.embed({ texts: ['a'] })).rejects.toMatchObject({ code: 'provider' })
+  const paused = await embeddings.embed({ texts: ['a'] }).catch((error: unknown) => error)
+  expect(paused).toMatchObject({ code: 'provider' })
+  expect(String(paused)).toContain('paused after 2 consecutive failures')
+  expect(embeddings.usage).toMatchObject({ consecutiveFailures: 2 })
+  expect(embeddings.usage.retryInMs).toBeGreaterThan(0)
+  await new Promise(resolve => setTimeout(resolve, 160))
+  respond({ data: [{ index: 0, embedding: [1] }] })
+  await expect(embeddings.embed({ texts: ['a'] })).resolves.toHaveLength(1)
+  expect(embeddings.usage.consecutiveFailures).toBeUndefined()
+  expect(embeddings.usage.retryInMs).toBeUndefined()
+})
+
 it('serves its configuration to a mounted settings server', async () => {
   const ctx = new Context()
   contexts.push(ctx)
@@ -185,6 +204,9 @@ describe('configuration', () => {
       timeoutMs: 15_000,
       batchSize: 32,
       maxInputChars: 4000,
+      failureThreshold: 3,
+      cooldownMs: 30_000,
+      maxCooldownMs: 300_000,
     })
     expect(resolveEmbeddingsConfig({ baseUrl: 'http://127.0.0.1:11434/v1', model: 'm' }).baseUrl)
       .toBe('http://127.0.0.1:11434/v1')

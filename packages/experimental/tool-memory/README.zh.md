@@ -50,8 +50,10 @@ kind: "package-reference"
 | `expansionTimeoutMs` | `8000` | 一次扩展请求的截止时间 |
 | `expansionMaxTokens` | `120` | 一次扩展请求的输出 token 上限 |
 | `maxAlternatives` | `8` | 从一次扩展回复中保留的说法数 |
-| `capture` | `false` | 是否为每个结束的回合发一次有界请求，把持久陈述捕捉下来 |
+| `capture` | `false` | 是否为每个结束的回合发一次有界请求，把持久陈述捕捉为候选 |
 | `captureProfileActive` | `true` | 带原话验证的画像陈述是否立即生效 |
+| `captureProvider` | 当前回合 | 捕捉请求的显式 provider；与 `captureModel` 一起设置可避免用昂贵的对话模型做回顾 |
+| `captureModel` | 当前回合 | 显式捕捉模型；必须与 `captureProvider` 配对 |
 | `captureMaxInputBytes` | `6000` | 一次捕捉请求发送的人的消息的 UTF-8 字节数 |
 | `captureMaxToolBytes` | `1200` | 一次捕捉请求发送的工具活动的 UTF-8 字节数 |
 | `captureMaxTokens` | `400` | 一次捕捉请求的输出 token 上限 |

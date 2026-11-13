@@ -173,7 +173,8 @@ describe('plugin exports and configuration', () => {
     expect('default' in focus).toBe(false)
     expect(focus.name).toBe('experimental-focus')
     expect(plainConfig(focus.Config({}))).toEqual({
-      repeatedFailureThreshold: 2, maxLedgerEntries: 5, maxMessageChars: 200, approvalTools: [],
+      repeatedFailureThreshold: 2,
+      sessions: 'goal', maxLedgerEntries: 5, maxMessageChars: 200, approvalTools: [],
     })
   })
 

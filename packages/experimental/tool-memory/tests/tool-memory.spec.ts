@@ -1124,7 +1124,7 @@ describe('post-turn capture', () => {
     endTurn(session)
     await new Promise(resolve => setTimeout(resolve, 10))
     expect(signedOut.model.requests).toEqual([])
-    expect(captures(session)).toEqual([])
+    expect(captures(session)).toMatchObject([{ outcome: { status: 'skipped', reason: 'sign-in-required' } }])
   })
 
   it('logs a thrown non-Error failure and ignores non-text reply blocks', async () => {

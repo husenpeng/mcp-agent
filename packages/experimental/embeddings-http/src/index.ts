@@ -32,6 +32,12 @@ export interface Config {
   batchSize?: number | Volatile<number>
   /** Characters kept from one text before it is sent. */
   maxInputChars?: number | Volatile<number>
+  /** Consecutive failed calls that open the retry breaker. */
+  failureThreshold?: number | Volatile<number>
+  /** First breaker cooldown in milliseconds; later trips double it. */
+  cooldownMs?: number | Volatile<number>
+  /** Ceiling of the doubled breaker cooldown. */
+  maxCooldownMs?: number | Volatile<number>
 }
 
 /** Fully resolved provider configuration. */
@@ -50,6 +56,12 @@ export interface ResolvedEmbeddingsConfig {
   readonly batchSize: number
   /** Characters kept from one text before it is sent. */
   readonly maxInputChars: number
+  /** Consecutive failed calls that open the retry breaker. */
+  readonly failureThreshold: number
+  /** First breaker cooldown in milliseconds. */
+  readonly cooldownMs: number
+  /** Ceiling of the doubled breaker cooldown. */
+  readonly maxCooldownMs: number
 }
 
 /** Resolve the bearer key from the credential store, else the launch environment. */
@@ -96,6 +108,9 @@ export function resolveEmbeddingsConfig(config: Config): ResolvedEmbeddingsConfi
     timeoutMs: now(config.timeoutMs, 15_000),
     batchSize: now(config.batchSize, 32),
     maxInputChars: now(config.maxInputChars, 4000),
+    failureThreshold: now(config.failureThreshold, 3),
+    cooldownMs: now(config.cooldownMs, 30_000),
+    maxCooldownMs: now(config.maxCooldownMs, 300_000),
   }
   for (const [field, value] of Object.entries(limits)) {
     if (!Number.isSafeInteger(value) || value < 1) {
@@ -215,6 +230,9 @@ export default class HttpEmbeddings extends Embeddings {
     timeoutMs: z.number().step(1).min(1).max(120_000).default(15_000).volatile(),
     batchSize: z.number().step(1).min(1).max(256).default(32).volatile(),
     maxInputChars: z.number().step(1).min(1).max(100_000).default(4000).volatile(),
+    failureThreshold: z.number().step(1).min(1).max(100).default(3).volatile(),
+    cooldownMs: z.number().step(1).min(100).max(600_000).default(30_000).volatile(),
+    maxCooldownMs: z.number().step(1).min(100).max(3_600_000).default(300_000).volatile(),
   })
 
   /** Embedding model id sent with every request. */
@@ -222,6 +240,11 @@ export default class HttpEmbeddings extends Embeddings {
 
   /** Configured vector length, or `0` while the first response defines it. */
   readonly dimensions: number
+
+  /** Normalized endpoint base the provider calls. */
+  override get baseUrl(): string {
+    return this.resolvedBaseUrl
+  }
 
   /** Whether memory search may use this provider now; the Plugins page toggles it. */
   override get enabled(): boolean {
@@ -233,11 +256,21 @@ export default class HttpEmbeddings extends Embeddings {
 
   override get usage(): EmbeddingsUsage {
     const { requests, texts, failures, totalMs, lastError } = this.counters
-    return { requests, texts, failures, totalMs, ...lastError === undefined ? {} : { lastError } }
+    const retryInMs = this.pausedUntil > Date.now() ? this.pausedUntil - Date.now() : 0
+    return {
+      requests, texts, failures, totalMs,
+      ...lastError === undefined ? {} : { lastError },
+      ...this.consecutiveFailures === 0 ? {} : { consecutiveFailures: this.consecutiveFailures },
+      ...retryInMs === 0 ? {} : { retryInMs },
+    }
   }
 
+  private readonly resolvedBaseUrl: string
   private readonly endpoint: string
   private readonly counters = { requests: 0, texts: 0, failures: 0, totalMs: 0, lastError: undefined as string | undefined }
+  private consecutiveFailures = 0
+  private trips = 0
+  private pausedUntil = 0
 
   /**
    * @param ctx - Host context owning the provider.
@@ -250,6 +283,7 @@ export default class HttpEmbeddings extends Embeddings {
     const resolved = resolveEmbeddingsConfig(config)
     this.model = resolved.model
     this.dimensions = resolved.dimensions
+    this.resolvedBaseUrl = resolved.baseUrl
     this.endpoint = `${resolved.baseUrl}/embeddings`
   }
 
@@ -262,6 +296,12 @@ export default class HttpEmbeddings extends Embeddings {
   async embed(request: EmbedRequest): Promise<readonly Float32Array[]> {
     if (request.texts.length === 0) return []
     const settings = resolveEmbeddingsConfig(this.config)
+    if (this.pausedUntil > Date.now()) {
+      throw new EmbeddingsError(
+        `embedding provider paused after ${this.consecutiveFailures} consecutive failures; retrying in ${Math.ceil((this.pausedUntil - Date.now()) / 1000)} s`,
+        'provider',
+      )
+    }
     const vectors: Float32Array[] = []
     const started = Date.now()
     this.counters.requests += 1
@@ -272,11 +312,20 @@ export default class HttpEmbeddings extends Embeddings {
           .map(text => text.slice(0, settings.maxInputChars))
         vectors.push(...await this.request(batch, settings, request.signal))
       }
+      this.consecutiveFailures = 0
+      this.trips = 0
+      this.pausedUntil = 0
       return vectors
     } catch (error: unknown) {
       this.counters.failures += 1
       /* v8 ignore next -- embed failures are EmbeddingsError instances */
       this.counters.lastError = error instanceof Error ? error.message : String(error)
+      this.consecutiveFailures += 1
+      if (this.consecutiveFailures >= settings.failureThreshold) {
+        this.trips += 1
+        const cooldown = Math.min(settings.cooldownMs * 2 ** (this.trips - 1), settings.maxCooldownMs)
+        this.pausedUntil = Date.now() + cooldown
+      }
       throw error
     } finally {
       this.counters.totalMs += Date.now() - started

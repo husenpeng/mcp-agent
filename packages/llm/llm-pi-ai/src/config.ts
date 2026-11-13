@@ -274,10 +274,15 @@ export interface Options {
 
 /** Mutable allowlist input the schema accepts. */
 export interface ModelPolicyOptions {
+  /** Whether the allowlist is in force; `false` leaves the adapter unrestricted. */
   enabled: boolean
+  /** Models already present in the deployment's local model list. */
   local: ModelPolicyRef[]
+  /** Models released inside the deployment's recent-release window. */
   recent: ModelPolicyRef[]
+  /** ISO release dates keyed by `provider/model`. */
   releaseDates: Record<string, string>
+  /** ISO date describing the recent window's lower bound. */
   recentSince?: string
   [key: string]: unknown
 }

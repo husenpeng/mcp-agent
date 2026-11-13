@@ -35,6 +35,10 @@ export interface EmbeddingsUsage {
   readonly totalMs: number
   /** Message of the most recent failure, when one occurred. */
   readonly lastError?: string
+  /** Consecutive failures since the last successful call. */
+  readonly consecutiveFailures?: number
+  /** Milliseconds until the breaker retries, present while it is open. */
+  readonly retryInMs?: number
 }
 
 /** One batched embedding request. */
@@ -62,6 +66,11 @@ export abstract class Embeddings extends Service {
 
   /** Vector length every result carries; `0` when the provider cannot know it before its first request. */
   abstract readonly dimensions: number
+
+  /** Endpoint the provider calls, when it can name one. */
+  get baseUrl(): string | undefined {
+    return undefined
+  }
 
   /** Whether consumers may use this provider now; a disabled provider stays mounted and is ignored. */
   get enabled(): boolean {

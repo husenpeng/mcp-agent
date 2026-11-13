@@ -40,7 +40,7 @@ interface Row {
   readonly name: string
   /** A disabled row stays declared in the patch without mounting a fiber. */
   readonly disabled?: boolean
-  readonly config?: Record<string, unknown>
+  readonly config?: Readonly<Record<string, unknown>>
 }
 
 const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
@@ -56,8 +56,8 @@ const rows = patch[0]?.insert ?? []
 /** Source modules standing in for the row packages, which the Loader would otherwise import from their built lib. */
 const MODULES: Readonly<Record<string, object>> = {
   '@tomato/experimental-memory': Memory,
-  '@tomato/experimental-tool-memory': MemoryTools,
   '@tomato/experimental-embeddings-http': EmbeddingsHttp,
+  '@tomato/experimental-tool-memory': MemoryTools,
   '@tomato/experimental-focus': Focus,
   '@tomato/experimental-muse-insights': MuseInsights,
 }
@@ -146,9 +146,16 @@ async function bootBundle(toolMemoryConfig: Record<string, unknown> = {}): Promi
     id: row.id,
     name: `cordis:${row.id}`,
     ...row.disabled === true ? { disabled: true } : {},
-    ...row.config === undefined ? {} : { config: row.config },
-    ...row.id === 'optional-focus' ? { config: focusConfig } : {},
-    ...row.id === 'optional-tool-memory' && Object.keys(toolMemoryConfig).length > 0 ? { config: toolMemoryConfig } : {},
+    ...row.config === undefined && row.id !== 'optional-focus' ? {} : {
+      config: {
+        ...row.config,
+        // Capture defaults to on in the shipped layer; keep scripted-model tests
+        // deterministic unless a test opts in with its own capture script.
+        ...row.id === 'optional-tool-memory' ? { capture: false } : {},
+        ...row.id === 'optional-focus' ? focusConfig : {},
+        ...row.id === 'optional-tool-memory' ? toolMemoryConfig : {},
+      },
+    },
   })))
   await writeFile(join(dir, 'cordis.yml'), '[]\n')
   const profile: ProfileContext = {
@@ -167,7 +174,7 @@ async function bootBundle(toolMemoryConfig: Record<string, unknown> = {}): Promi
     })
   })
   for (const row of rows.filter(row => row.disabled !== true)) {
-    expect([...ctx.loader.entries()].filter(entry => entry.options.id === row.id && entry.fiber !== undefined)).toHaveLength(1)
+    expect([...ctx.loader.entries()].filter(entry => entry.options.id === row.id && entry.fiber !== undefined), row.id).toHaveLength(1)
   }
 
   return { ctx, home, workspace }

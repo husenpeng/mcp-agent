@@ -1744,22 +1744,31 @@ export class MemoryService extends Service {
       if (group.length === 0) continue
       const members = [episode, ...group]
       for (const member of members) claimed.add(member.id)
-      const key = promotionKey(fact, episode)
+      // Three Sessions repeating one failure/lesson signature is a pitfall the
+      // workspace has proven, not a one-off candidate.
+      const pitfall = members.length >= 3
+        && new Set(members.map(member => member.source.sessionId)).size >= 3
+        && members.every(member => member.type === 'failure' || member.type === 'lesson')
+      const key = pitfall ? `pitfall-${createHash('sha256').update(fact).digest('hex').slice(0, 8)}` : promotionKey(fact, episode)
       const scope = { kind: 'workspace', workspaceId: view.workspace.id, path: view.workspace.path } as const
+      const entity = pitfall ? 'pitfall' : 'project'
+      const kind = pitfall ? 'constraint' : 'fact'
+      const status = pitfall ? 'active' : 'candidate'
+      const value = pitfall ? `${fact} (repeated in ${members.length} sessions)` : fact
       const existing = this.all().find(record => record.owner === view.owner && sameScope(record.scope, scope)
-        && isCurrent(record) && record.entity === 'project' && record.key === key)
+        && isCurrent(record) && record.entity === entity && record.key === key)
       const duplicate = existing ?? this.duplicates({
-        owner: view.owner, scope, kind: 'fact', entity: 'project', key, value: fact,
+        owner: view.owner, scope, kind, entity, key, value,
       })[0]?.record
       const recordId = duplicate === undefined
         ? (await this.remember({
           owner: view.owner,
           scope,
-          kind: 'fact',
-          entity: 'project',
+          kind,
+          entity,
           key,
-          value: fact,
-          status: 'candidate',
+          value,
+          status,
           pinned: false,
           source: { sessionId: episode.source.sessionId, episodeId: episode.id },
         })).id
@@ -1767,7 +1776,7 @@ export class MemoryService extends Service {
       for (const member of members) {
         await this.episodes.update(member.id, record => ({ ...record, promotedTo: recordId }))
       }
-      outcomes.push({ recordId, episodeIds: members.map(member => member.id), entity: 'project', key, value: fact })
+      outcomes.push({ recordId, episodeIds: members.map(member => member.id), entity, key, value })
     }
     return outcomes
   }

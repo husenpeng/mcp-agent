@@ -50,8 +50,10 @@ Choose it whenever the memory service is mounted: the service alone has no model
 | `expansionTimeoutMs` | `8000` | Deadline of one expansion request |
 | `expansionMaxTokens` | `120` | Output-token cap of one expansion request |
 | `maxAlternatives` | `8` | Wordings kept from one expansion reply |
-| `capture` | `false` | Whether one bounded request captures durable statements from each finished turn |
+| `capture` | `false` | Whether one bounded request captures durable statements from each finished turn as candidates |
 | `captureProfileActive` | `true` | Whether a quote-verified profile statement becomes active immediately |
+| `captureProvider` | current turn | Explicit provider of the capture request; set it with `captureModel` to keep review off an expensive conversation model |
+| `captureModel` | current turn | Explicit capture model; must be paired with `captureProvider` |
 | `captureMaxInputBytes` | `6000` | UTF-8 bytes of the person messages sent to one capture request |
 | `captureMaxToolBytes` | `1200` | UTF-8 bytes of the tool activity sent to one capture request |
 | `captureMaxTokens` | `400` | Output-token cap of one capture request |

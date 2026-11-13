@@ -77,15 +77,21 @@ describe('embeddings configuration', () => {
     expect(configOf({ ...section, enabled: false }).enabled).toBe(false)
     expect(configOf(null)).toEqual({ baseUrl: '', model: '', dimensions: '', apiKeyEnv: '', enabled: true })
     expect(configOf({ baseUrl: 1, model: 2 })).toMatchObject({ baseUrl: '1', model: '2' })
-    expect(endpointDraftOf(section)).toEqual({ baseUrl: section.baseUrl, apiKeyEnv: 'CLAUDE_SONNET_5_5_API_KEY' })
-    expect(endpointWrites({ baseUrl: ' http://x ', apiKeyEnv: ' ' })).toEqual([
+    expect(endpointDraftOf(section)).toEqual({
+      baseUrl: section.baseUrl, apiKeyEnv: 'CLAUDE_SONNET_5_5_API_KEY', model: 'text-embedding-v4', dimensions: '1024',
+    })
+    expect(endpointWrites({ baseUrl: ' http://x ', apiKeyEnv: ' ', model: ' text-embedding-v4 ', dimensions: '1024' })).toEqual([
       { op: 'set', path: ['baseUrl'], value: 'http://x' },
       { op: 'unset', path: ['apiKeyEnv'] },
+      { op: 'set', path: ['model'], value: 'text-embedding-v4' },
+      { op: 'set', path: ['dimensions'], value: 1024 },
     ])
     expect(enabledWrite(false)).toEqual([{ op: 'set', path: ['enabled'], value: false }])
-    expect(endpointWrites({ baseUrl: '', apiKeyEnv: 'KEY' })).toEqual([
+    expect(endpointWrites({ baseUrl: '', apiKeyEnv: 'KEY', model: '', dimensions: '' })).toEqual([
       { op: 'unset', path: ['baseUrl'] },
       { op: 'set', path: ['apiKeyEnv'], value: 'KEY' },
+      { op: 'unset', path: ['model'] },
+      { op: 'unset', path: ['dimensions'] },
     ])
   })
 })

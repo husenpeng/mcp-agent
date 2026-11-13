@@ -90,6 +90,7 @@ function sectionCount(
  */
 export function MemoryView({ flow, t }: MemoryViewInjected & PropsLocale<'museMemory'>) {
   const rows = useSyncExternalStore(flow.subscribe, flow.getSnapshot)
+  const paused = rows.some(row => row.kind === 'capture' && row.detail.includes('"reason":"sign-in-required"'))
   const [filter, setFilter] = useState<Filter>('all')
   const counts = useMemo(() => ({
     snapshots: rows.filter(row => row.kind === 'snapshot').length,
@@ -102,6 +103,7 @@ export function MemoryView({ flow, t }: MemoryViewInjected & PropsLocale<'museMe
     <section className={css.view} aria-label={t('tab')}>
       <header className={css.header}>
         <p className={css.note}>{t('note')}</p>
+        {paused ? <p className={css.bad} role="status">{t('pausedSignIn')}</p> : null}
         <div className={css.toolbar}>
           <div className={css.filters} role="group" aria-label={t('filter.group')}>
             {FILTERS.map(choice => (

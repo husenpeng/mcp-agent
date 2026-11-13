@@ -45,6 +45,9 @@ Mount it as a Host row. It needs no other service for a loopback endpoint withou
 | `timeoutMs` | `15000` | Deadline of one HTTP request |
 | `batchSize` | `32` | Texts per HTTP request |
 | `maxInputChars` | `4000` | Characters kept from one text before sending |
+| `failureThreshold` | `3` | Consecutive failed calls that pause the provider |
+| `cooldownMs` | `30000` | First pause after the threshold; every later trip doubles it |
+| `maxCooldownMs` | `300000` | Ceiling of the doubled pause |
 
 The generated [configuration catalog](../../../docs/config-catalog.md#tomatoexperimental-embeddings-http) is the exhaustive source for every accepted field.
 
@@ -58,7 +61,7 @@ A remote endpoint must use HTTPS; plain HTTP is accepted only for `localhost`, `
 <details>
 <summary>Implementation internals — click to expand</summary>
 
-`embed` returns early for an empty batch and otherwise sends one request per `batchSize` slice, preserving caller order. Each request replaces the abort signal with `AbortSignal.any` over the caller's signal and a timeout, sends `{ model, input }`, and accepts only a `data` array of `{ index, embedding }` entries whose count and vector lengths match the request; an explicit `dimensions` must match too. Failures are classified as `provider` (HTTP error, network, missing credential), `timeout`, or `invalid-response` (non-JSON body, count or length mismatch, malformed or duplicate index). A caller cancellation is rethrown unchanged. The provider never retries.
+`embed` returns early for an empty batch and otherwise sends one request per `batchSize` slice, preserving caller order. Each request replaces the abort signal with `AbortSignal.any` over the caller's signal and a timeout, sends `{ model, input }`, and accepts only a `data` array of `{ index, embedding }` entries whose count and vector lengths match the request; an explicit `dimensions` must match too. Failures are classified as `provider` (HTTP error, network, missing credential), `timeout`, or `invalid-response` (non-JSON body, count or length mismatch, malformed or duplicate index). A caller cancellation is rethrown unchanged. The provider never retries a failed request, but after `failureThreshold` consecutive failures it pauses: calls fail immediately with a provider error naming the retry delay, and the next call after the cooldown probes the endpoint again. `usage` reports `consecutiveFailures` and `retryInMs` while the breaker is open.
 
 </details>
 

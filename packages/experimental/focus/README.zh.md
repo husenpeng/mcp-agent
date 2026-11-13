@@ -46,6 +46,7 @@ kind: "package-reference"
 | `maxLedgerEntries` | `5` | 失败记录中列出的不同失败数 |
 | `maxMessageChars` | `200` | 失败记录中引用的失败消息字符数 |
 | `approvalTools` | `[]` | 每次调用前需要审批的工具名（支持 `*` 通配） |
+| `sessions` | `goal` | `goal` 只在 goal 回合内维护台账；`all` 也会在普通会话回合追加台账 |
 
 生成的[配置目录](../../../docs/config-catalog.zh.md#tomatoexperimental-focus)是所有可接受字段的完整来源。
 

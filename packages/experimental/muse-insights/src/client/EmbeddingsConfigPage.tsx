@@ -9,8 +9,8 @@ import { Button } from '@tomato/client-ui-primitives'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@tomato/client-ui-slots'
 import type { SettingsFormPathOp } from '@tomato/client-ui-primitives'
 import {
-  configOf, endpointDraftOf, endpointWrites, enabledWrite, modelOption,
-  type EmbeddingsConfigView, type EmbeddingsProbeInput, type EmbeddingsProbeResult,
+  configOf, effectiveConfig, endpointDraftOf, endpointWrites, enabledWrite, modelOption,
+  EMBEDDING_MODELS, type EmbeddingsConfigView, type EmbeddingsProbeInput, type EmbeddingsProbeResult,
   type EmbeddingsStatusView, type EndpointDraft,
 } from './embeddings-config.ts'
 import css from './Embeddings.module.css'
@@ -78,6 +78,7 @@ export function EmbeddingsConfigPage({ scope, probe, status, t, view }: Embeddin
   const [probing, setProbing] = useState(false)
   const [result, setResult] = useState<EmbeddingsProbeResult | undefined>()
   const [usage, setUsage] = useState<EmbeddingsStatusView | undefined>()
+  const effective = effectiveConfig(config, usage)
 
   useEffect(() => {
     if (!dirty) setDraft(endpointDraftOf(snapshot.value))
@@ -103,9 +104,10 @@ export function EmbeddingsConfigPage({ scope, probe, status, t, view }: Embeddin
         {snapshot.writable ? null : <p className={css.note}>{t('embeddings.readOnly')}</p>}
       </header>
       <dl className={css.facts}>
-        <Fact label={t('embeddings.model')} value={config.model === '' ? t('embeddings.empty') : config.model}
+        <Fact label={t('embeddings.model')} value={effective.model === '' ? t('embeddings.empty') : effective.model}
           hint={known === undefined ? undefined : t(known.description)} />
-        <Fact label={t('embeddings.dimensions')} value={config.dimensions === '' || config.dimensions === '0' ? t('embeddings.anyLength') : config.dimensions} />
+        <Fact label={t('embeddings.dimensions')} value={effective.dimensions === '' || effective.dimensions === '0' ? t('embeddings.anyLength') : effective.dimensions} />
+        {effective.baseUrl === '' ? null : <Fact label={t('embeddings.effectiveEndpoint')} value={effective.baseUrl} />}
       </dl>
       <div className={css.grid}>
         <label className={css.field} htmlFor="muse-embeddings-baseUrl">
@@ -136,13 +138,43 @@ export function EmbeddingsConfigPage({ scope, probe, status, t, view }: Embeddin
           <span className={css.hint}>{t('embeddings.apiKeyEnvHint')}</span>
         </label>
       </div>
+      <div className={css.grid}>
+        <label className={css.field} htmlFor="muse-embeddings-model">
+          <span className={css.label}>{t('embeddings.model')}</span>
+          <input
+            id="muse-embeddings-model" aria-label={t('embeddings.model')} className={css.input}
+            list="muse-embeddings-models" value={draft.model} disabled={disabled}
+            onChange={(event) => {
+              const value = event.currentTarget.value
+              setDraft(current => ({ ...current, model: value }))
+              setDirty(true); setSaveState('idle')
+            }}
+          />
+          <datalist id="muse-embeddings-models">
+            {EMBEDDING_MODELS.map(option => <option key={option.id} value={option.id} />)}
+          </datalist>
+        </label>
+        <label className={css.field} htmlFor="muse-embeddings-dimensions">
+          <span className={css.label}>{t('embeddings.dimensions')}</span>
+          <input
+            id="muse-embeddings-dimensions" aria-label={t('embeddings.dimensions')} className={css.input}
+            inputMode="numeric" value={draft.dimensions} disabled={disabled}
+            onChange={(event) => {
+              const value = event.currentTarget.value
+              setDraft(current => ({ ...current, dimensions: value }))
+              setDirty(true); setSaveState('idle')
+            }}
+          />
+          <span className={css.hint}>{t('embeddings.modelHint')}</span>
+        </label>
+      </div>
       <div className={css.actions}>
         <Button
           variant="primary"
           disabled={disabled || !dirty || draft.baseUrl.trim() === ''}
           onClick={() => {
             setSaving(true)
-            void scope.mutate(endpointWrites(draft), snapshot.revision).then((accepted) => {
+            void scope.mutate(endpointWrites(draft, config), snapshot.revision).then((accepted) => {
               setSaving(false)
               setSaveState(accepted ? 'saved' : 'failed')
               if (accepted) { setDirty(false); refreshUsage() }
@@ -168,8 +200,8 @@ export function EmbeddingsConfigPage({ scope, probe, status, t, view }: Embeddin
           onClick={() => {
             setProbing(true); setResult(undefined)
             void probe({
-              baseUrl: draft.baseUrl, model: config.model,
-              dimensions: Number(config.dimensions) || 0,
+              baseUrl: draft.baseUrl, model: draft.model,
+              dimensions: Number(draft.dimensions) || 0,
               ...draft.apiKeyEnv.trim() === '' ? {} : { apiKeyEnv: draft.apiKeyEnv.trim() },
             }).then((next) => {
               setProbing(false); setResult(next); refreshUsage()
@@ -208,6 +240,14 @@ export function EmbeddingsConfigPage({ scope, probe, status, t, view }: Embeddin
               failures: String(usage.usage?.failures ?? 0), seconds: ((usage.usage?.totalMs ?? 0) / 1000).toFixed(1),
             })}
           </p>
+          {usage.usage?.retryInMs === undefined ? null : (
+            <p className={css.bad}>
+              {t('embeddings.paused', {
+                failures: String(usage.usage.consecutiveFailures ?? 0),
+                seconds: String(Math.ceil(usage.usage.retryInMs / 1000)),
+              })}
+            </p>
+          )}
           {usage.usage?.lastError === undefined ? null : <p className={css.bad}>{usage.usage.lastError}</p>}
         </section>
       )}

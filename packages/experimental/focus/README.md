@@ -46,6 +46,7 @@ Choose it when goals run unattended across many rounds and tools can fail repeat
 | `maxLedgerEntries` | `5` | Distinct failures listed in the ledger |
 | `maxMessageChars` | `200` | Characters of a failure message quoted in the ledger |
 | `approvalTools` | `[]` | `*`-wildcard tool names that ask for approval before each call |
+| `sessions` | `goal` | `goal` keeps the ledger inside goal rounds; `all` also appends it to ordinary Session turns |
 
 The generated [configuration catalog](../../../docs/config-catalog.md#tomatoexperimental-focus) is the exhaustive source for every accepted field.
 
