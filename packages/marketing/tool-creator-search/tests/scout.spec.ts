@@ -18,6 +18,7 @@ import {
   scoreCandidate,
 } from '@tomato/tool-creator-search'
 import * as MemoryStorage from './helpers/memory-storage.ts'
+import * as CreatorFeedback from '@tomato/tool-creator-search/host'
 
 async function mount() {
   const ctx = new Context()
@@ -26,6 +27,8 @@ async function mount() {
   await storage.await()
   const domains = await ctx.plugin(MemoryStorage)
   await domains.await()
+  const feedback = await ctx.plugin(CreatorFeedback)
+  await feedback.await()
   ctx.provide('desktopSession', { sessionId: () => 'session-1' })
   const fiber = await ctx.plugin(CreatorSearch, {
     baseURL: 'https://bff.test',

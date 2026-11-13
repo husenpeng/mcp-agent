@@ -15,12 +15,11 @@
 import type { Context } from '@tomato/cordis'
 import { launchEnvironmentOf } from '@tomato/launch-environment'
 import z from '@tomato/schemastery'
-import type {} from '@tomato/storage-domain'
 import type {} from '@tomato/web'
 import type {} from '@tomato/system-prompt'
 import type {} from '@tomato/tools'
+import type {} from './host.ts'
 import { CreatorSearchClient, CREATOR_SEARCH_DEFAULT_TIMEOUT_MS } from './bff.ts'
-import { creatorFeedbackDomainSpec, CreatorFeedbackStore } from './feedback.ts'
 import {
   applyCreatorSearchTools,
   CREATOR_SEARCH_DEFAULT_MAX_OUTPUT_CHARS,
@@ -125,8 +124,11 @@ export type {
 /** Cordis plugin name used by loader diagnostics. */
 export const name = 'tool-creator-search'
 
-/** The registries and durable storage this plugin contributes through. */
-export const inject = ['tools', 'storageDomain', 'systemPrompt']
+/**
+ * The registries this plugin contributes through, and the Host-owned feedback
+ * store that `@tomato/tool-creator-search/host` publishes once per process.
+ */
+export const inject = ['tools', 'creatorFeedback', 'systemPrompt']
 
 /** Environment variable naming the BFF origin when the composition omits `baseURL`. */
 export const CREATOR_SEARCH_GATEWAY_ENV = 'TOMATO_SEARCH_GATEWAY_URL'
@@ -289,18 +291,16 @@ export const Config: z<Config> = z.object({
 type ResolvedConfig = Config & Required<Omit<Config, 'baseURL' | 'depthFast' | 'depthStandard' | 'depthBroad'>>
 
 /**
- * Register the enabled creator tools, the scout, and its durable feedback store.
- * The tools stay registered when the origin or the session is missing; each
- * call then fails with the guidance that fixes it, instead of the model seeing
- * an empty toolset whose absence it cannot explain.
- * @param ctx - plugin context; the Host publishes `desktopSession` on it.
+ * Register the enabled creator tools and the scout over the Host feedback store.
+ * Several presets may mount this row in one process; they share the one store
+ * the Host row owns. The tools stay registered when the origin or the session
+ * is missing; each call then fails with the guidance that fixes it, instead of
+ * the model seeing an empty toolset whose absence it cannot explain.
+ * @param ctx - plugin context; the Host publishes `desktopSession` and `creatorFeedback` on it.
  * @param config - loader-validated plugin configuration.
  */
-export async function apply(ctx: Context, config: Config): Promise<void> {
+export function apply(ctx: Context, config: Config): void {
   const resolved = config as ResolvedConfig
-  const domain = await ctx.storageDomain.open(creatorFeedbackDomainSpec)
-  ctx.effect(() => () => domain.close(), 'tool-creator-search.feedbackDomain')
-
   const weights = {
     followers: resolved.weightFollowers,
     engagement: resolved.weightEngagement,
@@ -322,7 +322,7 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
       timeoutMs: resolved.timeoutMs,
       sessionId: () => publishedSessionId(ctx),
     }),
-    feedback: new CreatorFeedbackStore(domain.table('feedback')),
+    feedback: ctx.creatorFeedback,
     defaults: {
       followersMin: resolved.defaultFollowersMin,
       followersMax: resolved.defaultFollowersMax,

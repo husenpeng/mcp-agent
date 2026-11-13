@@ -83,6 +83,7 @@ import TeamService from '@tomato/agent-team'
 import * as ToolTeam from '@tomato/tool-agent-team'
 import * as ToolTodo from '@tomato/tool-todo'
 import * as CreatorSearch from '@tomato/tool-creator-search'
+import * as CreatorFeedback from '@tomato/tool-creator-search/host'
 import Storage from '@tomato/storage'
 import { DomainFacility } from '@tomato/storage-domain'
 import { MemoryMediaPool, MemoryStorageBackend } from '../packages/storage/storage-domain/tests/helpers/memory-backend.ts'
@@ -751,7 +752,7 @@ const TOOL_PACKAGES: ToolPackage[] = [
     pkg: '@tomato/tool-creator-search',
     dir: 'tool-creator-search',
     source: 'packages/marketing/tool-creator-search/src/tools.ts',
-    requires: ['ctx.tools', 'ctx.desktopSession', 'ctx.storageDomain'],
+    requires: ['ctx.tools', 'ctx.desktopSession', 'ctx.creatorFeedback'],
     writes: ['tool/call', 'tool/result'],
     async mount(ctx) {
       // Schema harvest never contacts the BFF or writes feedback: an in-memory
@@ -767,6 +768,7 @@ const TOOL_PACKAGES: ToolPackage[] = [
         ctx.provide('storageDomain', facility)
         return async () => { await facility.closeAll(); unmount() }
       })
+      await ctx.plugin(CreatorFeedback)
       await ctx.plugin(CreatorSearch, { baseURL: 'https://creator-search.invalid' })
     },
     note: 'Each tool forwards the signed-in Desktop session as the BFF `session_id` cookie; a profile without that session answers every call with sign-in guidance. `creator_search` and `creator_detail` spend one unit of the monthly group-API quota per call, `youtube_channel` spends none.',

@@ -24,7 +24,7 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
-把本包挂到需要访问公司 BFF 的 preset，并用 `TOMATO_SEARCH_GATEWAY_URL`（或 `TOMATO_WEB_URL`）指明源站。随产品发布的 Web `standard` 与 `cordis` preset 已挂载它；`minimal` 不挂载。
+在组合根挂载一次 Host 行 `@tomato/tool-creator-search/host`，再把工具行挂到需要访问公司 BFF 的 preset，并用 `TOMATO_SEARCH_GATEWAY_URL`（或 `TOMATO_WEB_URL`）指明源站。storage-domain 设施对每个域名只允许一个打开的句柄，因此由 Host 行打开一次 `creator_search_feedback`，各 preset 的工具行通过 `ctx.creatorFeedback` 读取同一份存储；只挂工具行、不挂 Host 行的 preset 不会激活。随产品发布的 Web `standard` 与 `cordis` preset 已挂载工具行，Web 组合根已挂载 Host 行；`minimal` 两者都不挂载。
 
 ### 何时选用
 
@@ -33,6 +33,11 @@ kind: "package-reference"
 ### 最小配置
 
 ```yaml
+# Once per composition: owns the durable `creator_search_feedback` domain.
+- id: creator-feedback
+  name: '@tomato/tool-creator-search/host'
+
+# In each preset: the model-facing tools over the shared store.
 - id: tool-creator-search
   name: '@tomato/tool-creator-search'
   config:
@@ -87,6 +92,8 @@ kind: "package-reference"
 | 文件 | 职责 |
 |---|---|
 | [`src/index.ts`](src/index.ts) | 插件名、注入、配置 schema、源站解析与 Desktop 会话读取 |
+| [`src/host.ts`](src/host.ts) | Host 行：打开一次 `creator_search_feedback` 域并发布 `ctx.creatorFeedback` |
+| [`src/feedback.ts`](src/feedback.ts) | 反馈域声明、记录 schema、存储键与工具读取的存储实现 |
 | [`src/bff.ts`](src/bff.ts) | 端点路径、会话 cookie、带 `redirect: "error"` 的 fetch、请求预算与错误映射 |
 | [`src/tools.ts`](src/tools.ts) | 工具 schema、BFF 的入参上界、渲染文本与待办卡片标题 |
 | [`src/types.ts`](src/types.ts) | 信封与额度类型；无运行时代码 |

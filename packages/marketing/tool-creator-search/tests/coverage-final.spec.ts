@@ -20,6 +20,7 @@ import {
 } from '@tomato/tool-creator-search'
 import type { CreatorSearchClient as Client } from '@tomato/tool-creator-search'
 import * as MemoryStorage from './helpers/memory-storage.ts'
+import * as CreatorFeedback from '@tomato/tool-creator-search/host'
 
 const defaults = { followersMin: 1_000, followersMax: 100_000, minEngagementRate: 0.01, targetCount: 10 }
 const weights = { followers: 25, engagement: 25, keywords: 20, market: 15, recency: 10, contactability: 5 }
@@ -31,6 +32,8 @@ async function mount(config: Record<string, unknown> = {}) {
   await storage.await()
   const domains = await ctx.plugin(MemoryStorage)
   await domains.await()
+  const feedback = await ctx.plugin(CreatorFeedback)
+  await feedback.await()
   ctx.provide('desktopSession', { sessionId: () => 'session-1' })
   const fiber = await ctx.plugin(CreatorSearch, { baseURL: 'https://bff.test', ...config })
   await fiber.await()

@@ -9,6 +9,7 @@ import Storage from '@tomato/storage'
 import WebRuntime from '@tomato/web'
 import * as CreatorSearch from '@tomato/tool-creator-search'
 import * as MemoryStorage from './helpers/memory-storage.ts'
+import * as CreatorFeedback from '@tomato/tool-creator-search/host'
 import {
   contactQueries,
   crawlContact,
@@ -163,6 +164,8 @@ describe('plugin wiring with the web seam', () => {
     await storage.await()
     const domains = await ctx.plugin(MemoryStorage)
     await domains.await()
+    const feedback = await ctx.plugin(CreatorFeedback)
+    await feedback.await()
     await ctx.plugin(WebRuntime)
     ctx.provide('desktopSession', { sessionId: () => 's' })
     const fiber = await ctx.plugin(CreatorSearch, { baseURL: 'https://bff.test' })

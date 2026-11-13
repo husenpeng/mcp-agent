@@ -9,6 +9,7 @@ import type { ToolExecutionResult } from '@tomato/tools'
 import Storage from '@tomato/storage'
 import * as CreatorSearch from '@tomato/tool-creator-search'
 import * as MemoryStorage from './helpers/memory-storage.ts'
+import * as CreatorFeedback from '@tomato/tool-creator-search/host'
 import {
   CreatorSearchClient,
   CREATOR_DETAIL_TOOL,
@@ -44,6 +45,8 @@ async function mount(config: Record<string, unknown> = {}, sessionId: string | u
   await storage.await()
   const domains = await ctx.plugin(MemoryStorage)
   await domains.await()
+  const feedback = await ctx.plugin(CreatorFeedback)
+  await feedback.await()
   ctx.provide('desktopSession', { sessionId: () => sessionId })
   const fiber = await ctx.plugin(CreatorSearch, config)
   await fiber.await()

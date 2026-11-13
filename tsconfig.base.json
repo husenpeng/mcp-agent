@@ -243,6 +243,9 @@
       "@tomato/tool-creator-search": [
         "./packages/marketing/tool-creator-search/src"
       ],
+      "@tomato/tool-creator-search/host": [
+        "./packages/marketing/tool-creator-search/src/host.ts"
+      ],
       "@tomato/client-ui-creation-recommendations": [
         "./packages/experimental/client-ui-creation-recommendations/src/index.ts"
       ],

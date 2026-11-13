@@ -191,6 +191,12 @@
     - id: cordis-inspect-providers
       name: '@tomato/tool-cordis/host'
 
+    # The remembered creator decisions are process-global: the domain facility
+    # admits one open handle per domain name, so the store opens here once and
+    # every preset's `tool-creator-search` row reads it.
+    - id: creator-feedback
+      name: '@tomato/tool-creator-search/host'
+
     # Ordinary provider for the parsed Web flags. Its plugin-level injection
     # waits for cmdlineArgs; no launcher metadata or special row kind is needed.
     - id: web-startup

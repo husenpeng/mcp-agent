@@ -17,6 +17,7 @@ import ToolRuntime from '@tomato/tools'
 import * as NativeToolExecutor from '@tomato/tool-executor-native'
 import SessionProjectionRegistry from '@tomato/session-projection'
 import * as CreatorSearch from '@tomato/tool-creator-search'
+import * as CreatorFeedback from '@tomato/tool-creator-search/host'
 import Storage from '@tomato/storage'
 import * as MemoryStorage from './helpers/memory-storage.ts'
 import {
@@ -55,6 +56,7 @@ async function boot(configLines: readonly string[]): Promise<Context> {
     "- name: '@tomato/session-projection'",
     "- name: '@tomato/storage'",
     "- name: 'test-memory-storage'",
+    "- name: '@tomato/tool-creator-search/host'",
     "- name: '@tomato/tool-creator-search'",
     ...configLines.length > 0 ? ['  config:', ...configLines] : [],
     '',
@@ -72,6 +74,7 @@ async function boot(configLines: readonly string[]): Promise<Context> {
     ['@tomato/tool-executor-native', NativeToolExecutor],
     ['@tomato/session-projection', SessionProjectionRegistry],
     ['@tomato/tool-creator-search', CreatorSearch],
+    ['@tomato/tool-creator-search/host', CreatorFeedback],
     ['@tomato/storage', Storage],
     ['test-memory-storage', MemoryStorage],
   ])
@@ -122,5 +125,34 @@ describe('tool-creator-search real Loader composition through cordis.yml', () =>
 
   it('fails loading on a non-absolute BFF origin', async () => {
     await expect(boot(['    baseURL: bff.test'])).rejects.toThrow('must be an absolute URL')
+  }, 30_000)
+
+  it('mounts a second tool row over the Host feedback domain instead of failing on already-open', async () => {
+    // The regression this pins: each row opened `creator_search_feedback` for
+    // itself, so the second preset in a process failed to mount and Creator mode
+    // disappeared from the roster. Two rows with disjoint tool selections stand
+    // in for two presets; the second mount only succeeds because the store now
+    // belongs to the Host row.
+    const ctx = await boot(['    baseURL: https://bff.test', '    scout: false', '    ingest: false', '    feedback: false'])
+    const second = await ctx.plugin(CreatorSearch, {
+      baseURL: 'https://bff.test', search: false, detail: false, channel: false,
+    })
+    await second.await()
+
+    const names = ctx.tools.schemas().map(schema => schema.name)
+    expect(names).toEqual(expect.arrayContaining([CREATOR_SEARCH_TOOL, CREATOR_SCOUT_TOOL, CREATOR_INGEST_TOOL]))
+
+    await ctx.tools.execute({
+      calls: [{
+        type: 'tool-call', name: CREATOR_FEEDBACK_TOOL, id: ToolCallId('loader-2'),
+        arguments: '{"entries":[{"platform":"TIKTOK","creatorId":"pinned.one","decision":"watch"}]}',
+      }],
+      signal: new AbortController().signal,
+    })
+    const read = await ctx.tools.execute({
+      calls: [{ type: 'tool-call', name: CREATOR_FEEDBACK_TOOL, id: ToolCallId('loader-3'), arguments: '{}' }],
+      signal: new AbortController().signal,
+    })
+    expect(read.results[0]?.result.value).toMatchObject({ total: 1 })
   }, 30_000)
 })

@@ -142,6 +142,14 @@ const SERVICE_ROLES: ServiceRole[] = [
     note: 'A provider turns text into vectors; memory owns the cache and semantic blend, and a missing provider keeps lexical retrieval only.',
   },
   {
+    key: 'creatorFeedback',
+    pkg: 'tool-creator-search',
+    title: 'Remembered creator decisions',
+    mode: 'service',
+    consumers: ['tool-creator-search'],
+    note: 'The Host row opens the creator_search_feedback storage domain once per process; every preset that mounts the creator tools reads and writes the same accept, reject, and watch records.',
+  },
+  {
     key: 'memory',
     pkg: 'experimental-memory',
     title: 'Profile and workspace memory records',
@@ -609,7 +617,7 @@ const SERVICE_ROLES: ServiceRole[] = [
     pkg: 'storage-domain',
     title: 'Domain data facility',
     mode: 'core',
-    consumers: ['workspace'],
+    consumers: ['workspace', 'tool-creator-search'],
     note: 'Waits for every configured backend, then publishes the domain form as one lifecycle-bound service for typed durable state.',
   },
   {

@@ -6,6 +6,7 @@ import { mountAgentLoopTestDependencies } from '@tomato/agent-loop-testkit'
 import Storage from '@tomato/storage'
 import * as CreatorSearch from '@tomato/tool-creator-search'
 import * as MemoryStorage from './helpers/memory-storage.ts'
+import * as CreatorFeedback from '@tomato/tool-creator-search/host'
 import {
   CREATOR_DETAIL_TOOL,
   CREATOR_FEEDBACK_TOOL,
@@ -28,6 +29,8 @@ async function mount(config: Record<string, unknown> = {}) {
   await storage.await()
   const domains = await ctx.plugin(MemoryStorage)
   await domains.await()
+  const feedback = await ctx.plugin(CreatorFeedback)
+  await feedback.await()
   ctx.provide('desktopSession', { sessionId: () => 'session-1' })
   const fiber = await ctx.plugin(CreatorSearch, { baseURL: 'https://bff.test', ...config })
   await fiber.await()

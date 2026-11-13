@@ -20,6 +20,7 @@ import type { Candidate, CreatorSearchClient } from '@tomato/tool-creator-search
 import { CreatorSearchClient as Client, CreatorSearchError } from '@tomato/tool-creator-search'
 import * as CreatorSearch from '@tomato/tool-creator-search'
 import * as MemoryStorage from './helpers/memory-storage.ts'
+import * as CreatorFeedback from '@tomato/tool-creator-search/host'
 
 const defaults = { followersMin: 1_000, followersMax: 100_000, minEngagementRate: 0.01, targetCount: 10 }
 const baseCandidate: Candidate = { platform: 'TIKTOK', creatorId: 'a', queries: ['beauty'], traces: ['t'] }
@@ -429,11 +430,15 @@ describe('configuration guards', () => {
     await storage.await()
     const domains = await ctx.plugin(MemoryStorage)
     await domains.await()
-    await expect(CreatorSearch.apply(ctx, {
-      baseURL: 'https://bff.test',
-      weightFollowers: 0, weightEngagement: 0, weightKeywords: 0,
-      weightMarket: 0, weightRecency: 0, weightContactability: 0,
-    })).rejects.toThrow('at least one score weight')
+    const feedback = await ctx.plugin(CreatorFeedback)
+    await feedback.await()
+    expect(() => {
+      CreatorSearch.apply(ctx, {
+        baseURL: 'https://bff.test',
+        weightFollowers: 0, weightEngagement: 0, weightKeywords: 0,
+        weightMarket: 0, weightRecency: 0, weightContactability: 0,
+      })
+    }).toThrow('at least one score weight')
     await ctx.fiber.dispose()
   })
 })

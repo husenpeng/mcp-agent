@@ -24,7 +24,7 @@ English | [中文](README.zh.md)
 <a id="use-this-package"></a>
 ## Use this package
 
-Mount the package in a preset whose agent should reach the company BFF, with `TOMATO_SEARCH_GATEWAY_URL` (or `TOMATO_WEB_URL`) naming the origin. The shipped Web `standard` and `cordis` presets mount it; `minimal` does not.
+Mount the Host row `@tomato/tool-creator-search/host` once in the composition, and the tool row in each preset whose agent should reach the company BFF, with `TOMATO_SEARCH_GATEWAY_URL` (or `TOMATO_WEB_URL`) naming the origin. The storage-domain facility admits one open handle per domain name, so the Host row opens `creator_search_feedback` once and every preset's tool row reads that store through `ctx.creatorFeedback`; a preset that mounts the tool row without the Host row never activates. The shipped Web `standard` and `cordis` presets mount the tool row, and the Web composition mounts the Host row; `minimal` mounts neither.
 
 ### When to choose it
 
@@ -33,6 +33,11 @@ Choose this package when an agent works on creator discovery or creator vetting:
 ### Minimal configuration
 
 ```yaml
+# Once per composition: owns the durable `creator_search_feedback` domain.
+- id: creator-feedback
+  name: '@tomato/tool-creator-search/host'
+
+# In each preset: the model-facing tools over the shared store.
 - id: tool-creator-search
   name: '@tomato/tool-creator-search'
   config:
@@ -87,6 +92,8 @@ Each tool returns the canonical value `{source, traceId, data, quota?}`: `data` 
 | File | Owns |
 |---|---|
 | [`src/index.ts`](src/index.ts) | Plugin name, injection, config schema, origin resolution, and the Desktop-session read |
+| [`src/host.ts`](src/host.ts) | Host row: opens the `creator_search_feedback` domain once and publishes `ctx.creatorFeedback` |
+| [`src/feedback.ts`](src/feedback.ts) | The feedback domain spec, record schema, storage keys, and the store the tools read |
 | [`src/bff.ts`](src/bff.ts) | Endpoint paths, the session cookie, fetch with `redirect: "error"`, the request budget, and the error mapping |
 | [`src/tools.ts`](src/tools.ts) | Tool schemas, the BFF's input limits, rendered text, and pending-call titles |
 | [`src/types.ts`](src/types.ts) | Envelope and quota types; no runtime code |
