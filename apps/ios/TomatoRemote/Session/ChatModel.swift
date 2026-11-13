@@ -259,8 +259,8 @@ final class ChatModel: ObservableObject {
         // The Host records this identity on the durable message, so the echo
         // below can recognize the log's own copy of the prompt and stand down.
         let requestId = UUID().uuidString
-        // The photos are already on the phone, so the echo draws them instead of
-        // a placeholder; the durable message adopts these bytes once it arrives.
+        // The photos are already on the phone, so the echo draws them at once;
+        // the durable message adopts these bytes when it arrives.
         let imageKeys = images.indices.map { index in "pending:\(requestId):\(index)" }
         for (key, data) in zip(imageKeys, images) {
             photos.seed(data, for: key)

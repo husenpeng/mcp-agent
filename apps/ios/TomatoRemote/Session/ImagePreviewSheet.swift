@@ -39,7 +39,9 @@ struct ImagePreviewSheet: View {
             .accessibilityLabel("关闭")
             .accessibilityIdentifier("image.preview.close")
         }
+        // The sheet is a container so the close control keeps its own identity;
+        // a bare identifier here would rename it too.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("image.preview")
-        .accessibilityAddTraits(.isImage)
     }
 }

@@ -80,7 +80,7 @@ final class ImageMessageTests: XCTestCase {
         XCTAssertTrue(photo.waitForExistence(timeout: 30), "the photo prompt never drew a picture")
         attach(app, "01-photo-in-message")
 
-        // The placeholder this change removed must be gone from the transcript.
+        // A photo is never worded as a placeholder line inside the message.
         XCTAssertFalse(
             app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "［图片］")).firstMatch.exists,
             "the transcript still words the photo as a placeholder"

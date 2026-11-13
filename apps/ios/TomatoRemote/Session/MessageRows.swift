@@ -92,9 +92,8 @@ struct UserRow: View {
         }
         .padding(.leading, 56)
         .frame(maxWidth: .infinity, alignment: .trailing)
-        // A container identifier replaces its children's, which hid the photo's
-        // own identity; `contain` keeps the row addressable and the children
-        // addressable on their own.
+        // A container identifier replaces its children's, so `contain` is what
+        // keeps the photos addressable next to the row they belong to.
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("chat.row.user")
     }
@@ -127,7 +126,7 @@ struct UserRow: View {
 /// One photo keeps its own proportions; several become square tiles, the way a
 /// gallery reads on a phone. A photo that is still loading, or that the Host no
 /// longer holds, stays a picture-shaped placeholder — never a line of words
-/// inside the message, which is what a placeholder used to be.
+/// inside the message.
 struct UserImageRow: View {
     let images: [ChatImageRef]
     @ObservedObject var photos: ChatImages
