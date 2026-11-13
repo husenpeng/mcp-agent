@@ -142,6 +142,17 @@ export class LlmError extends HarnessError {
       ...options?.offloadImages === undefined ? {} : { offloadImages: options.offloadImages },
     })
   }
+
+  /**
+   * Raise an observed failure again with its own code, which any provider may have chosen.
+   * @param failure - the serializable failure, typically from a stream's terminal chunk.
+   * @param options - optional cause.
+   * @returns an error carrying the failure's message, code, and provider facts.
+   */
+  static fromFailure(failure: LlmFailure, options?: ErrorOptions): LlmError {
+    // The constructor validates the code at runtime; the built-in type constrains only codes raised here.
+    return new LlmError(failure.message, failure.code as string, { ...failure, ...options })
+  }
 }
 
 /**
@@ -750,6 +761,7 @@ export class LlmRuntime extends TypertRemoteService {
       }
       seen.add(model.id)
       const inputModalities = this.detachedModalities(model.inputModalities)
+      const badge = model.badge
       return {
         provider: model.provider,
         id: model.id,
@@ -757,6 +769,9 @@ export class LlmRuntime extends TypertRemoteService {
         ...model.description === undefined ? {} : { description: model.description },
         ...inputModalities === undefined ? {} : { inputModalities },
         ...model.blockedReason === undefined ? {} : { blockedReason: model.blockedReason },
+        ...badge === undefined ? {} : {
+          badge: { text: typeof badge.text === 'string' ? badge.text : { ...badge.text }, tone: badge.tone },
+        },
       }
     })
   }

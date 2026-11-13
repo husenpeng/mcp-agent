@@ -21,7 +21,11 @@
       "path": "../../packages/credentials/account-service"
     },
     {
+      "path": "../../packages/client/ui-file-actions"
+    },
+    {
       "path": "../../packages/client/product-analytics/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

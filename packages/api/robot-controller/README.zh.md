@@ -1,5 +1,5 @@
 ---
-description: "Host robot Remote controller：把整份注册表快照、规格发布、实例化、重新绑定与 run 控制镜像到浏览器。"
+description: "Host robot Remote controller：把整份注册表快照、规格发布、安装与删除、运行控制镜像到浏览器。"
 kind: "package-reference"
 ---
 # Robot Controller
@@ -8,7 +8,7 @@ kind: "package-reference"
 
 ## 概述
 
-`@tomato/api-robot-controller` 持有 Host 的 `ctx.robotController` 服务，以及建立在 `@tomato/experimental-robot` seam 之上的生成 Client `ctx.remote.robot` 命名空间。`robot.watch` 推送整份注册表帧——每个规格的最新修订、全部 robot、全部 run、全部已注册模板——打开时一次，此后每次 `robot/changed` 事件再一次。`publish`、`instantiate`、`rebind`、`start`、`cancel`、`interrupt`、`correct`、`hire`、`capabilities` 镜像 seam 的操作：被拒绝的规格以 `robot/spec-invalid` 返回并携带 provider 的字段问题，缺失记录返回 `robot/not-found`，状态拒绝返回 `robot/conflict`。Client 半边安装 `ctx.robotRuns`，即 robot 页面渲染所用的快照与控制服务。
+`@tomato/api-robot-controller` 持有 Host 的 `ctx.robotController` 服务，以及建立在 `@tomato/experimental-robot` seam 之上的生成 Client `ctx.remote.robot` 命名空间。`robot.watch` 推送整份注册表帧——每个规格的最新修订、全部 robot、全部 run、全部已注册模板——打开时一次，此后每次 `robot/changed` 事件再一次。`publish`、`instantiate`、`rebind`、`installRobot`、`removeRobot`、`start`、`cancel`、`interrupt`、`correct`、`hire`、`capabilities` 镜像 seam 的操作：被拒绝的规格以 `robot/spec-invalid` 返回并携带 provider 的字段问题，缺失记录返回 `robot/not-found`，状态拒绝返回 `robot/conflict`。Client 半边安装 `ctx.robotRuns`，即 robot 页面渲染所用的快照与控制服务。
 
 ## 目录
 
@@ -26,7 +26,9 @@ Host controller 必须在 `@tomato/experimental-robot` provider 之后挂载：�
 
 `hire` 从可选的 `robotTemplates` 注册表读取模板，按请求的语言填入文案，并以本地化的模板名命名 robot；重名时依次追加 ` 2`、` 3` 等后缀。显式传入的 `name` 原样使用，重名时与普通发布一样报冲突。模板不存在、或部署中没有注册表时返回 `robot/not-found`，此时帧中的 `templates` 为空列表。
 
-`capabilities` 把本地可选项投影给规格编辑器：请求工作区可见的技能、已注册的工具名、已配置的 MCP 服务器名，以及工作区目录。技能选项在 `path` 里带上来源文件夹（虚拟技能省略），工作区选项在 `path` 里重复其目录；MCP 服务器只有名称，因此省略该字段。每个来源都是可选的，缺失时贡献空列表而不是让读取失败；Client 会传入当前查看 Session 的目录，以便包含项目级技能。
+`installRobot` 按当前部署解析机器人声明的技能、插件、MCP 服务器与权限预设，只有全部可用时才记录安装；否则以 `robot/capabilities-missing` 失败并列出每个缺失依赖。插件只有在插件清单中处于启用且活跃状态才算可用。`removeRobot` 只删除机器人实例，规格与运行记录仍可读取；仍有未终态 run 的机器人返回 `robot/conflict`。`start` 对声明了技能、插件或 MCP 服务器的规格，在绑定 revision 安装前拒绝手动运行；触发器或其他 Host 代码通过 `ctx.robots` 启动的 run 仍按自身规则接受。
+
+`capabilities` 把本地可选项投影给规格编辑器：请求工作区可见的技能、活跃插件模块名、已注册的工具名、已配置的 MCP 服务器名，以及工作区目录。技能选项在 `path` 里带上来源文件夹（虚拟技能省略），工作区选项在 `path` 里重复其目录；MCP 服务器只有名称，因此省略该字段。每个来源都是可选的，缺失时贡献空列表而不是让读取失败；Client 会传入当前查看 Session 的目录，以便包含项目级技能。
 
 Client 入口只在装配选择了 `remote.robot` 的地方挂载；它为应用生命周期开启一条可重连的快照流，并把 RPC 透传暴露为 `RemoteResult` 值。服务名为 `robotRuns`，为浏览器上下文保留未来的 `ctx.robots` 槽位给客户端领域服务。
 

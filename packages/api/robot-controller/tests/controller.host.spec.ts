@@ -34,6 +34,7 @@ const BASE = {
   capability: {
     tools: { allow: ['read'], deny: [] },
     mcpServers: [],
+    plugins: [],
     skills: [],
     workspaceRoots: ['/tmp/workspace'],
     dataClasses: ['internal'],
@@ -160,6 +161,107 @@ describe('robot Remote controller', () => {
     }
   })
 
+
+  it('installs a dependent robot, refuses a missing dependency, and clears installation on rebind', async () => {
+    const ctx = await bench()
+    try {
+      ctx.provide('skills', { list: async () => [{ name: 'review', description: 'Review' }] } as never)
+      ctx.provide('mcpResources', { list: () => ['github'] } as never)
+      ctx.provide('pluginInventory', {
+        list: async () => ({ entries: [{ moduleName: '@tomato/active-plugin', enabled: true, fiberPhase: 'active' }] }),
+      } as never)
+      const dependent: RobotSpec = {
+        ...structuredClone(BASE),
+        capability: {
+          ...BASE.capability,
+          skills: ['review'],
+          plugins: ['@tomato/active-plugin'],
+          mcpServers: ['github'],
+        },
+      }
+      const published = await ctx.robotController.publish({ spec: dependent })
+      const robot = await ctx.robotController.instantiate({ ref: published.ref })
+
+      await expect(ctx.robotController.start({ robotId: robot.id, message: 'review' })).rejects.toMatchObject({
+        code: 'robot/conflict',
+        details: { message: 'not-installed' },
+      })
+      const installed = await ctx.robotController.install({ robotId: robot.id })
+      expect(installed.installation).toMatchObject({ ref: published.ref })
+      await expect(ctx.robotController.start({ robotId: robot.id, message: 'review' }))
+        .resolves.toMatchObject({ robot: robot.id })
+
+      const next = await ctx.robotController.publish({ spec: { ...dependent, description: 'Changed' }, previous: published.ref })
+      const rebound = await ctx.robotController.rebind({ robotId: robot.id, ref: next.ref })
+      expect(rebound.installation).toBeUndefined()
+      await expect(ctx.robotController.start({ robotId: robot.id, message: 'again' })).rejects.toMatchObject({
+        code: 'robot/conflict',
+        details: { message: 'not-installed' },
+      })
+    } finally {
+      await ctx.fiber.dispose()
+    }
+  })
+
+  it('reports every dependency a deployment does not offer', async () => {
+    const ctx = await bench()
+    try {
+      const published = await ctx.robotController.publish({
+        spec: {
+          ...structuredClone(BASE),
+          capability: {
+            ...structuredClone(BASE).capability,
+            skills: ['missing-skill'],
+            plugins: ['@tomato/missing-plugin'],
+            mcpServers: ['missing-server'],
+          },
+        },
+      })
+      const robot = await ctx.robotController.instantiate({ ref: published.ref })
+      // A preset this catalog does not register is one more dependency gap;
+      // publish already accepted the name because no catalog was mounted then.
+      ctx.provide('permissionPresets', {
+        resolve: () => { throw new Error('unknown preset') },
+      } as never)
+      await expect(ctx.robotController.install({ robotId: robot.id })).rejects.toMatchObject({
+        code: 'robot/capabilities-missing',
+        details: {
+          missing: [
+            { kind: 'skill', name: 'missing-skill' },
+            { kind: 'plugin', name: '@tomato/missing-plugin' },
+            { kind: 'mcpServer', name: 'missing-server' },
+            { kind: 'permissionPreset', name: 'workspace' },
+          ],
+        },
+      })
+      const [stored] = await ctx.robotController.robots()
+      expect(stored?.installation).toBeUndefined()
+    } finally {
+      await ctx.fiber.dispose()
+    }
+  })
+
+  it('removes only the robot instance and keeps its specification and runs', async () => {
+    const ctx = await bench()
+    try {
+      const published = await ctx.robotController.publish({ spec: structuredClone(BASE) })
+      const robot = await ctx.robotController.instantiate({ ref: published.ref })
+      const run = await ctx.robotController.start({ robotId: robot.id, message: 'review' })
+
+      await expect(ctx.robotController.remove({ robotId: robot.id })).rejects.toMatchObject({ code: 'robot/conflict' })
+      await ctx.robotController.cancel({ runId: run.id })
+      await ctx.robotController.remove({ robotId: robot.id })
+
+      await expect(ctx.robotController.robots()).resolves.toEqual([])
+      await expect(ctx.robotController.specs()).resolves.toMatchObject([{ ref: published.ref }])
+      // The run record survives the robot and remains readable through the namespace.
+      await expect(ctx.robotController.runs({ robotId: robot.id })).resolves.toMatchObject([{ state: 'cancelled' }])
+      await expect(ctx.robotController.remove({ robotId: robot.id })).rejects.toMatchObject({ code: 'robot/not-found' })
+    } finally {
+      await ctx.fiber.dispose()
+    }
+  })
+
   it('opens with the whole registry and re-reads after a change', async () => {
     const ctx = await bench()
     const abort = new AbortController()
@@ -199,6 +301,14 @@ describe('robot Remote controller', () => {
         ],
       } as never)
       ctx.provide('mcpResources', { list: () => ['web', 'github'] } as never)
+      ctx.provide('pluginInventory', {
+        list: async () => ({
+          entries: [
+            { moduleName: '@tomato/active-plugin', enabled: true, fiberPhase: 'active' },
+            { moduleName: '@tomato/disabled-plugin', enabled: false, fiberPhase: 'active' },
+          ],
+        }),
+      } as never)
       ctx.provide('workspaceRegistry', {
         list: () => [{ path: '/work/alpha', title: 'Alpha' }],
       } as never)
@@ -213,6 +323,7 @@ describe('robot Remote controller', () => {
           },
           { value: 'quiet-skill', label: 'quiet-skill' },
         ],
+        plugins: [{ value: '@tomato/active-plugin', label: '@tomato/active-plugin' }],
         tools: [
           { value: 'bash', label: 'bash' },
           { value: 'read', label: 'read', description: 'Read a file' },
@@ -234,7 +345,7 @@ describe('robot Remote controller', () => {
     const ctx = await bench()
     try {
       await expect(ctx.robotController.capabilities({})).resolves.toEqual({
-        skills: [], tools: [], mcpServers: [], workspaceRoots: [],
+        skills: [], plugins: [], tools: [], mcpServers: [], workspaceRoots: [],
       })
     } finally {
       await ctx.fiber.dispose()

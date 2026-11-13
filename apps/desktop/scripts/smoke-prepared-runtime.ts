@@ -42,6 +42,11 @@ export async function smokePreparedRuntime(
       throw error
     })
     process.stdout.write(stdout)
+    const vec = await promisify(execFile)(node, [
+      resolve(import.meta.dirname, '../tests/fixtures/sqlite-vec-smoke.mjs'), root,
+    ], { timeout: 120_000, windowsHide: true,
+      env: desktopNodeEnvironment(node, join(resourcesRuntime, 'bin'), environment) })
+    process.stdout.write(vec.stdout)
     await smokeDesktopRuntime(root, node, descriptor, environment, resourcesRuntime)
   } finally {
     await rm(cache, { recursive: true, force: true })

@@ -11,18 +11,11 @@
     "src/types.ts"
   ],
   "references": [
-    { "path": "../../client/product-analytics/tsconfig.client.json" },
+    {
+      "path": "../../team/agent-team"
+    },
     {
       "path": "../../../vendor/cordis"
-    },
-    {
-      "path": "../gateway/tsconfig.client.json"
-    },
-    {
-      "path": "../../client/connection/tsconfig.client.json"
-    },
-    {
-      "path": "../../client/file-upload/tsconfig.client.json"
     },
     {
       "path": "../../credentials/credentials"
@@ -76,6 +69,51 @@
       "path": "../../interaction/user-questions"
     },
     {
+      "path": "../settings-controller"
+    },
+    {
+      "path": "../../typert/protocol"
+    },
+    {
+      "path": "../../feedback/command-feedback"
+    },
+    {
+      "path": "../../boot/plugin-manager"
+    },
+    {
+      "path": "../../mcp/mcp-manager"
+    },
+    {
+      "path": "../../boot/plugin-market"
+    },
+    {
+      "path": "../../document/office-kit"
+    },
+    {
+      "path": "../../credentials/account-service"
+    },
+    {
+      "path": "../../web/web"
+    },
+    {
+      "path": "../../document/office-to-pdf"
+    },
+    {
+      "path": "../account-controller"
+    },
+    {
+      "path": "../../client/product-analytics/tsconfig.client.json"
+    },
+    {
+      "path": "../gateway/tsconfig.client.json"
+    },
+    {
+      "path": "../../client/connection/tsconfig.client.json"
+    },
+    {
+      "path": "../../client/file-upload/tsconfig.client.json"
+    },
+    {
       "path": "../job-controller/tsconfig.client.json"
     },
     {
@@ -85,34 +123,10 @@
       "path": "../workspace-files/tsconfig.client.json"
     },
     {
-      "path": "../settings-controller"
-    },
-    {
       "path": "../workspace-controller/tsconfig.client.json"
     },
     {
-      "path": "../../typert/protocol"
-    },
-    {
-      "path": "../../feedback/command-feedback"
-    },
-    {
       "path": "../terminal-controller/tsconfig.client.json"
-    },
-    {
-      "path": "../../boot/plugin-manager"
-    },
-    {
-      "path": "../../boot/plugin-market"
-    },
-    {
-      "path": "../../document/office-to-pdf"
-    },
-    {
-      "path": "../account-controller"
-    },
-    {
-      "path": "../../credentials/account-service"
     }
   ]
 }

@@ -1,7 +1,7 @@
 {
   "name": "@tomato/cua-bundle",
-  "description": "Optional macOS Computer Use and permission setup",
-  "version": "0.2.1-rc.3",
+  "description": "Optional Computer Use for macOS and Windows",
+  "version": "0.2.2-rc.2",
   "icon": "./icon.svg",
   "publishConfig": {
     "access": "public"
@@ -30,12 +30,19 @@
     "docs",
     "lib/index.js",
     "cordis.patch.yml",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
   ],
   "license": "MIT",
   "tomato": {
     "bundle": {
-      "patch": "./cordis.patch.yml"
+      "patch": "./cordis.patch.yml",
+      "platforms": [
+        "darwin",
+        "win32"
+      ]
     }
   },
   "dependencies": {
@@ -52,6 +59,7 @@
     "@tomato/cordis-plugin-loader": "workspace:~"
   },
   "optionalDependencies": {
-    "@tomato/experimental-cua-macos": "workspace:*"
+    "@tomato/experimental-cua-macos": "workspace:*",
+    "@tomato/cua-windows": "workspace:*"
   }
 }

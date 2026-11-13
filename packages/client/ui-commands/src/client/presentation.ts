@@ -2,15 +2,15 @@
 import type { ComponentType } from 'react'
 import type { InputTriggerCandidate } from '@tomato/client-ui-input-trigger/client'
 import {
-  IconCompactOutlineRegular, IconDownloadOutlineRegular, IconGoalOutlineRegular, IconPaperPlaneOutlineRegular, IconPlanOutlineRegular,
+  IconCompactOutlineRegular, IconDownloadOutlineRegular,
+  IconGoalOutlineRegular, IconPaperPlaneOutlineRegular, IconPlanOutlineRegular,
   PermissionIconFullAccessRegular,
 } from '@tomato/client-ui-primitives'
 import type { IconProps } from '@tomato/client-ui-primitives'
 import type { TranslateNS } from '@tomato/client-locale/client'
 import type { CommandDescriptor } from '@tomato/commands/types'
 import type { CommandKey } from './locales.ts'
-import { builtinCommandName } from './resolution.ts'
-import type { BuiltinCommandName } from './resolution.ts'
+import { builtinCommandName, type BuiltinCommandName } from '@tomato/commands/builtin'
 
 /** The menu's two sections. */
 export type MenuSection = 'add' | 'commands'

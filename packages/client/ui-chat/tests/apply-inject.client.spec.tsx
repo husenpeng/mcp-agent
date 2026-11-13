@@ -1,8 +1,9 @@
+import type { AssistantNodeInjected } from '../src/client/chat/AssistantNodeView.tsx'
 import { MessageId } from '@tomato/llm/brand'
+import { apply as applyMenus, inject as injectMenus } from '@tomato/client-ui-context-menu/client'
 // @vitest-environment jsdom
 /** Chat inject factories exercised over independently mounted Conversation and Chat plugins. */
 import { createSnapshotStore } from '@tomato/client-store'
-import { RemoteError } from '@tomato/typert-protocol'
 import { describe, expect, it, vi } from 'vitest'
 import { AttachmentId } from '@tomato/attachment'
 import type { ISession, SessionReference } from '@tomato/api-session-controller/client'
@@ -50,9 +51,6 @@ function sessionFakeFor() {
     })),
     prompt: vi.fn<ISession['prompt']>(() => Promise.resolve({ ok: true, value: { accepted: true } })),
     cancel: vi.fn<ISession['cancel']>(() => Promise.resolve({ ok: true, value: { accepted: true } })),
-    retract: vi.fn<ISession['retract']>(() => Promise.resolve({
-      ok: true, value: { accepted: true, startSeq: 0, endSeq: 0 },
-    })),
   } satisfies SessionBehaviorOverrides
 }
 
@@ -104,6 +102,8 @@ async function bench(initialSettings?: ChatSettings, withBrowserRegistry = true,
   const locale = new LocaleRuntime(runtime.ctx)
   runtime.ctx.provide('locale', locale)
   runtime.slots.installLocale(locale)
+  runtime.ctx.provide('shortcuts', { catalog: createSnapshotStore([]) })
+  await runtime.mount({ inject: [...injectMenus], apply: applyMenus })
   await runtime.root.declare({
     'main': { kind: 'keyed', scope: 'root' },
     'settings.general.item': { kind: 'list', scope: 'root' },
@@ -253,7 +253,7 @@ describe('Chat inject API', () => {
     const b = await bench()
     const { injected } = b.chatViewApi(b.rootReference)
     injected.loadOlder()
-    expect(b.session.loadOlder).toHaveBeenCalledOnce()
+    expect(b.session.loadOlder).toHaveBeenCalledExactlyOnceWith({ deferConsumption: true })
 
     void injected.loadThrough(SessionSeq(42))
     expect(b.session.loadThrough).toHaveBeenCalledWith(42)
@@ -292,75 +292,6 @@ describe('Chat inject API', () => {
     await b.runtime.dispose()
   })
 
-  it('retracts the trailing exchange and restores its text through the composer facade', async () => {
-    const b = await bench()
-    try {
-      const { injected } = b.chatViewApi(b.rootReference)
-      const retract = vi.spyOn(b.session, 'retract').mockResolvedValue({
-        ok: true, value: { accepted: true, startSeq: 7, endSeq: 9 },
-      })
-      const input = b.runtime.ctx.conversation.input
-      const restore = vi.spyOn(input, 'requestDraftInitialization').mockReturnValue('applied')
-      const notify = vi.fn()
-      vi.spyOn(input, 'for').mockReturnValue({ notify } as never)
-
-      await injected.retractAt(7, 'typed by mistake')
-
-      expect(retract).toHaveBeenCalledExactlyOnceWith(7)
-      expect(restore).toHaveBeenCalledExactlyOnceWith(
-        expect.objectContaining({ sessionId: ROOT }),
-        { prompt: 'typed by mistake', whenDraftExists: 'append' },
-      )
-      expect(notify).toHaveBeenCalledWith('info', expect.stringContaining('已撤回'))
-    } finally {
-      await b.runtime.dispose()
-    }
-  })
-
-  it('does not restore text when the Host refuses the retraction', async () => {
-    const b = await bench()
-    try {
-      const { injected } = b.chatViewApi(b.rootReference)
-      vi.spyOn(b.session, 'retract').mockResolvedValue({
-        ok: false,
-        error: new RemoteError('session/retract-unavailable', 'not the leaf', {
-          sessionId: ROOT, reason: 'not-leaf',
-        }),
-      })
-      const input = b.runtime.ctx.conversation.input
-      const restore = vi.spyOn(input, 'requestDraftInitialization')
-      await injected.retractAt(7, 'typed by mistake')
-      expect(restore).not.toHaveBeenCalled()
-    } finally {
-      await b.runtime.dispose()
-    }
-  })
-
-  it('reports a blocked restore and restores nothing for an attachment-only prompt', async () => {
-    const b = await bench()
-    try {
-      const { injected } = b.chatViewApi(b.rootReference)
-      vi.spyOn(b.session, 'retract').mockResolvedValue({
-        ok: true, value: { accepted: true, startSeq: 7, endSeq: 9 },
-      })
-      const input = b.runtime.ctx.conversation.input
-      const restore = vi.spyOn(input, 'requestDraftInitialization').mockReturnValue('blocked')
-      const notify = vi.fn()
-      vi.spyOn(input, 'for').mockReturnValue({ notify } as never)
-
-      await injected.retractAt(7, 'typed by mistake')
-      expect(notify).toHaveBeenCalledWith('error', expect.stringContaining('输入框正忙'))
-
-      restore.mockClear()
-      notify.mockClear()
-      await injected.retractAt(7, '')
-      expect(restore).not.toHaveBeenCalled()
-      expect(notify).toHaveBeenCalledWith('info', expect.stringContaining('没有可回填的文本'))
-    } finally {
-      await b.runtime.dispose()
-    }
-  })
-
   it('addresses file paths under the Session\'s scope and opens them in the right Sidebar', async () => {
     const b = await bench()
     const { injected } = b.chatViewApi(b.rootReference)
@@ -387,9 +318,15 @@ describe('Chat inject API', () => {
   it('resolves relative file paths against the Session\'s current working directory', async () => {
     const b = await bench()
     const { injected } = b.chatViewApi(b.rootReference)
+    vi.spyOn(b.runtime.ctx.contextMenus, 'open')
     await b.runtime.sessions.setProjection(ROOT, 'workingDirectory', '/proj/.agents/worktrees/w')
     await injected.openFile('src/a.ts')
     expect(b.sidebarRight.openResource).toHaveBeenLastCalledWith('tomato-resource://file/session/root-1/.agents/worktrees/w/src/a.ts')
+    expect(injected.resolveFilePath('src/a.ts')).toBe('/proj/.agents/worktrees/w/src/a.ts')
+    await b.runtime.sessions.setProjection(ROOT, 'workingDirectory', null)
+    expect(injected.resolveFilePath('file.ts')).toBe('/proj/file.ts')
+    await b.runtime.sessions.setProjection(ROOT, 'workingDirectory', '/proj/.agents/worktrees/w')
+
     // A leading `./` names the same file, so the Sidebar reuses its tab.
     await injected.openFile('./src/a.ts')
     expect(b.sidebarRight.openResource).toHaveBeenLastCalledWith('tomato-resource://file/session/root-1/.agents/worktrees/w/src/a.ts')
@@ -588,12 +525,16 @@ describe('Chat inject API', () => {
     expect(flow.injected.hooks.connectionState).toBe(b.runtime.ctx.get('connection')!.state)
     expect(flow.injected.hooks.presentation).toBe(injected.hooks.presentation)
 
-    expect(injected.fileMentions(owner)).toBeUndefined()
+    const entry = b.runtime.slots.entries('conversation.chat.node').find(entry => entry.options.key === 'assistant-step')!
+    const assistant = entry.inject!(ROOT as never)
+    const fileMentions = assistant.fileMentions as AssistantNodeInjected['fileMentions']
+    const getFileTriggerProps = vi.fn(() => ({}))
+    expect(fileMentions(owner, getFileTriggerProps)).toBeUndefined()
     const mentions = { resolve: vi.fn() } as never
     const forClosing = vi.fn(() => mentions)
     b.runtime.ctx.provide('chatFileMentions', { forClosing } as never)
-    expect(injected.fileMentions(owner)).toBe(mentions)
-    expect(forClosing).toHaveBeenCalledWith(owner, ROOT)
+    expect(fileMentions(owner, getFileTriggerProps)).toBe(mentions)
+    expect(forClosing).toHaveBeenCalledWith(owner, ROOT, getFileTriggerProps)
 
     expect(injected.chatScroll.read()).toBeNull()
     const position = { anchorKey: 'node-1', anchorTop: 4, scrollTop: 12 }
@@ -604,7 +545,7 @@ describe('Chat inject API', () => {
 
     const loaded = await injected.loadImage(ATTACHMENT)
     expect(loaded).toEqual(expect.any(String))
-    expect(b.session.readAttachment).toHaveBeenCalledWith(ATTACHMENT.attachmentId)
+    expect(b.session.readAttachment).toHaveBeenCalledWith(ATTACHMENT)
     expect(injected.loadImage.peek?.(ATTACHMENT)).toBe(loaded)
     await b.runtime.dispose()
   })

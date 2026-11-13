@@ -1,43 +1,40 @@
 {
   "name": "@tomato/desktop-host",
   "description": "Private Node-mode host process for the Electron desktop application",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "private": true,
   "license": "MIT",
   "type": "module",
   "main": "lib/index.js",
   "files": [
     "lib/index.js",
-    "lib/cli.js"
+    "lib/cli.js",
+    "lib/**/*.js.map",
+    "src"
   ],
   "dependencies": {
     "koffi": "3.1.1",
-    "@deepseek-ai/libreoffice-kit": "^0.1.5",
     "@tomato/cordis": "workspace:~",
     "@tomato/cli": "workspace:*",
     "@tomato/agent": "workspace:*",
     "@tomato/app-boot": "workspace:*",
     "@tomato/client-connection": "workspace:*",
     "@tomato/host-webserver": "workspace:*",
-    "@tomato/home-paths": "workspace:*",
     "@tomato/jobs": "workspace:*",
     "@tomato/schedule": "workspace:*",
+    "@tomato/workspace": "workspace:*",
+    "@tomato/plugin-manager": "workspace:*",
     "@tomato/tool-workspace-dependencies": "workspace:*",
     "@tomato/skill-office": "workspace:*",
-    "@tomato/account-service": "workspace:*",
-    "@tomato/workspace": "workspace:*"
+    "@tomato/account-service": "workspace:*"
   },
   "devDependencies": {
-    "@tomato/cordis-plugin-loader": "workspace:~",
-    "@tomato/cordis-plugin-include": "workspace:~",
-    "@tomato/skill": "workspace:*",
     "@tomato/fs": "workspace:*",
     "@tomato/fs-local": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/session-persistence": "workspace:*",
     "@tomato/sandbox-policy": "workspace:*",
     "@tomato/util-workspace-path": "workspace:*",
-    "@tomato/branded": "workspace:*",
-    "@tomato/tool-executor-native": "workspace:*"
+    "@tomato/branded": "workspace:*"
   }
 }

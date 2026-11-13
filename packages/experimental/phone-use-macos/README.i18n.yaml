@@ -1,0 +1,43 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/phone-use-macos/README.md
+/:
+  en: 1c51fc4149c66a1c
+  zh: 52ead5b58dc9753c
+/tomato-experimental-phone-use-macos:
+  en: a119151a602b42b6
+  zh: 09a8062d8a33d562
+/tomato-experimental-phone-use-macos/summary:
+  en: 9c3f75fc81e2c4bb
+  zh: 535cda4d55de90d1
+/tomato-experimental-phone-use-macos/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 1db86285abf6c499
+/tomato-experimental-phone-use-macos/use-this-package:
+  en: ba610c80055c4d2e
+  zh: a8a18790952aec6e
+/tomato-experimental-phone-use-macos/use-this-package/when-to-choose-it:
+  en: 829af4ad8ddfd28f
+  zh: 73f0a612e16db080
+/tomato-experimental-phone-use-macos/use-this-package/minimal-configuration:
+  en: 8aa9d31dd7968055
+  zh: 1d292d6cefa9ca70
+/tomato-experimental-phone-use-macos/understand-the-implementation:
+  en: 2233070ed34a6bbb
+  zh: d1d2ed7c5a456371
+/tomato-experimental-phone-use-macos/further-exploration:
+  en: b9f10a11820b99a4
+  zh: 9d2dc8cfd7251a94
+/tomato-experimental-phone-use-macos/model-experience:
+  en: b784117ae9a5869f
+  zh: e43273ed77485030
+/tomato-experimental-phone-use-macos/model-experience/kv-cache-effect:
+  en: 4f0eadf94828e66e
+  zh: 4f0eadf94828e66e
+/tomato-experimental-phone-use-macos/known-limitations-and-deferred-work:
+  en: 95967c8f5dde0e8e
+  zh: 45fbe208ea94da70
+/tomato-experimental-phone-use-macos/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 68f566a0cec50eb4

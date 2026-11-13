@@ -126,6 +126,22 @@ export interface Domain<S extends DomainSpec> {
   table<N extends keyof S['tables'] & string>(name: N): KvTable<TableKeyOf<S, N>, TableValueOf<S, N>>
 
   /**
+   * Report the backend medium's change token. A caller compares two readings
+   * to decide whether another process published since its mirror was loaded.
+   * @returns the token, or `undefined` when the backend reports none.
+   */
+  changeStamp(): Promise<number | undefined>
+
+  /**
+   * Re-read the unit and replace this domain's in-memory mirror with the
+   * stored state, after draining queued writes. Records are re-validated on
+   * the way in, and no `domain/changed` event is emitted: the mirror caught up
+   * with the medium instead of accepting a write.
+   * @throws when the medium is unreadable or a stored record fails its schema.
+   */
+  reload(): Promise<void>
+
+  /**
    * Close this domain: reject new writes immediately, drain already-queued
    * writes (their events still emit), release the backend unit, then free
    * the domain name for a later open. Idempotent — repeated calls share one
@@ -184,6 +200,8 @@ export class DomainImpl {
    * when the medium held none; `undefined` when the spec declares no global.
    * @param onClosed - Facility hook run once after teardown completes; frees
    * the domain name for a later open.
+   * @param loadSnapshot - Facility-owned reader that re-reads the unit and
+   *   re-validates every stored record; {@link DomainImpl.reload} runs it.
    */
   constructor(
     private readonly ctx: Context,
@@ -192,6 +210,7 @@ export class DomainImpl {
     records: Map<string, Map<string, unknown>>,
     globalValue: unknown,
     private readonly onClosed: () => void,
+    private readonly loadSnapshot: () => Promise<{ tables: Map<string, Map<string, unknown>>; global: unknown }>,
   ) {
     this.name = spec.name
     const host: TableHost = {
@@ -240,6 +259,22 @@ export class DomainImpl {
       throw new Error(`domain '${this.name}' declares no table '${name}'`)
     }
     return table
+  }
+
+  async changeStamp(): Promise<number | undefined> {
+    this.assertReadable()
+    return await this.unit.changeStamp?.()
+  }
+
+  async reload(): Promise<void> {
+    this.assertReadable()
+    await this.enqueue(async () => {
+      const snapshot = await this.loadSnapshot()
+      for (const [table, records] of snapshot.tables) {
+        this.tables.get(table)?.replace(records)
+      }
+      if (this.globalHandle !== undefined) this.globalValue = snapshot.global
+    })
   }
 
   /**
@@ -337,6 +372,12 @@ class KvTableImpl<K extends string, V> implements KvTable<K, V> {
     return this.records.size
   }
 
+  /** Replace every mirrored record with a freshly loaded table. */
+  replace(records: Map<string, unknown>): void {
+    this.records.clear()
+    for (const [key, value] of records) this.records.set(key, value)
+  }
+
   put(key: K, value: V): Promise<void> {
     return this.host.enqueue(async () => {
       await this.host.unit.putRecord(this.tableName, key, value)
@@ -352,12 +393,7 @@ class KvTableImpl<K extends string, V> implements KvTable<K, V> {
       if (!this.records.has(key)) return false
       await this.host.unit.deleteRecord(this.tableName, key)
       this.records.delete(key)
-      this.host.emitChanged({
-        domain: this.host.domainName,
-        table: this.tableName,
-        key,
-        operation: 'deleted',
-      })
+      this.emitDeleted(key)
       return true
     })
   }
@@ -372,14 +408,7 @@ class KvTableImpl<K extends string, V> implements KvTable<K, V> {
       // Memory reaches the committed batch state before the first listener runs,
       // so every `domain/changed` observes the same removed set as the medium.
       for (const key of present) this.records.delete(key)
-      for (const key of present) {
-        this.host.emitChanged({
-          domain: this.host.domainName,
-          table: this.tableName,
-          key,
-          operation: 'deleted',
-        })
-      }
+      for (const key of present) this.emitDeleted(key)
       return present.length
     })
   }
@@ -407,6 +436,15 @@ class KvTableImpl<K extends string, V> implements KvTable<K, V> {
       key,
       operation: 'put',
       value,
+    })
+  }
+
+  private emitDeleted(key: K): void {
+    this.host.emitChanged({
+      domain: this.host.domainName,
+      table: this.tableName,
+      key,
+      operation: 'deleted',
     })
   }
 }

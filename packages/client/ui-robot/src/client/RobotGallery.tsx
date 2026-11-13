@@ -6,6 +6,7 @@ import type { TranslateNS } from '@tomato/client-ui-slots'
 import { Button, IconPlusOutlineRegular, IconSearchOutlineRegular, Input, Pill, StateDot, Tag } from '@tomato/client-ui-primitives'
 import type { NS } from './locales.ts'
 import type { RobotStatusFilter } from './store.ts'
+import { isInstalled, needsInstallation } from './spec.ts'
 import { RobotAvatar } from './RobotAvatar.tsx'
 import css from './RobotGallery.module.css'
 
@@ -90,20 +91,25 @@ export function RobotGallery({
           ? <p className={css.empty}>{robots.length === 0 ? t('roster.empty') : t('gallery.noMatch')}</p>
           : (
             <ul className={css.grid}>
-              {shownRobots.map(robot => (
-                <li key={robot.id} className={css.card}>
-                  <div className={css.head}>
-                    <RobotAvatar name={robot.name} skills={specOf.get(robot.spec.spec)?.capability.skills ?? []} />
-                    <button type="button" className={css.open} onClick={() => { onOpen(robot) }}>{robot.name}</button>
-                    <span className={css.state}>
-                      <StateDot state={robot.state === 'running' ? 'ongoing' : robot.state === 'failed' ? 'error' : 'idle'} />
-                      {robot.state === 'running' ? t('roster.running') : t('roster.idle')}
-                    </span>
-                  </div>
-                  <p className={css.description}>{specOf.get(robot.spec.spec)?.description ?? ''}</p>
-                  <span className={css.meta}>{t('gallery.runCount', { count: runCount.get(robot.id) ?? 0 })}</span>
-                </li>
-              ))}
+              {shownRobots.map((robot) => {
+                const spec = specOf.get(robot.spec.spec)
+                const installRequired = spec !== undefined && needsInstallation(spec) && !isInstalled(robot)
+                return (
+                  <li key={robot.id} className={css.card}>
+                    <div className={css.head}>
+                      <RobotAvatar name={robot.name} skills={spec?.capability.skills ?? []} />
+                      <button type="button" className={css.open} onClick={() => { onOpen(robot) }}>{robot.name}</button>
+                      <span className={css.state}>
+                        <StateDot state={robot.state === 'running' ? 'ongoing' : robot.state === 'failed' ? 'error' : 'idle'} />
+                        {robot.state === 'running' ? t('roster.running') : t('roster.idle')}
+                      </span>
+                    </div>
+                    <p className={css.description}>{spec?.description ?? ''}</p>
+                    <span className={css.meta}>{t('gallery.runCount', { count: runCount.get(robot.id) ?? 0 })}</span>
+                    {installRequired ? <Tag tone="warning">{t('gallery.notInstalled')}</Tag> : null}
+                  </li>
+                )
+              })}
             </ul>
           )}
       </section>

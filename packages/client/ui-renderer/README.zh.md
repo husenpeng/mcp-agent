@@ -25,7 +25,7 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
-本包属于基础设施：Web 外壳与启动内核是它仅有的直接消费方。只要组合需要 React 渲染的 GUI，就需要它——`@tomato/client-web` 加载名册，等待每个 entry 激活，然后调用 `ctx.uiRenderer.mount(container)`。
+本包属于基础设施：Web 外壳与启动内核是它仅有的直接消费方。只要组合需要 React 渲染的 GUI，就需要它——`@tomato/client-web` 加载名册，等待名册稳定且启动审计通过，然后调用 `ctx.uiRenderer.mount(container)`。
 
 ### 挂载做什么
 
@@ -52,6 +52,8 @@ kind: "package-reference"
 ### Slot 绑定
 
 `createSlotRenderer` 把 slot 注册表连接到 React：普通 entry list 与 Factory definition 成为响应式 source，每个 outlet 或 occurrence 经已安装的渲染器渲染。业务插件通过带类型的 `hooks` 传递裸 observable source；渲染器经 uSES 适配器在渲染位置完成绑定。Factory Store factory 保持 lazy，直到 occurrence 首次物化时才创建 handle；其 exclusive handle 拒绝持久化，渲染期记录保持弱引用，幂等 effect 仅强引用 mounted occurrences，同时在 effect replay 期间保留 identity。Factory 错误使用普通监督通道且不会 abdicate 共享 definition：definition 及其 fallback 局部 Component 的失败归属 definition，调用方所选局部 Component 的失败归属调用方 registration，每个边界随自身 scope incarnation 重置。
+
+页面替换某个客户端 entry 期间，`PageSyncProvider` 读取模块系统的同步 source，保留上一次提交的根树并向树发布该状态；被拆除 entry 安装的 scope adapter 缺失时，该窗口渲染为空而不是抛 `SlotAssemblyError`——非交换期间该错误仍然抛出。没有模块系统时，provider 原样渲染根树。
 
 ### 身份
 
@@ -91,7 +93,7 @@ React、React DOM、Cordis、ui-slots 与 ui-primitives 通过 Web 外壳的静�
 
 这些限制说明应用首帧何时出现、按区域就绪能走多远；它们是当前包约束。
 
-- **应用首帧会等待全部客户端 entry**：启动内核只在 loader 名册稳定后交出挂载点；按区域就绪仍属暂缓事项。
+- **应用首帧会等待整个客户端名册**：启动内核只在 loader 名册稳定且启动审计通过后交出挂载点；按区域就绪仍属暂缓事项。
 - **slot 渲染没有 Suspense 集成或逐 entry 惰性加载**：完整插件名册稳定后，渲染器才挂载根节点。
 
 <a id="dev-note"></a>

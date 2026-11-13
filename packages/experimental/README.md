@@ -100,6 +100,9 @@ Promotion requires a named product role, documented public behavior and limitati
 | [`inspector-profile`](inspector-profile/README.md) | Optional Web bundle for Session log and Chat node inspection | — |
 | [`robot`](robot/README.md) | Service definition for versioned robots, runs, and agent-to-agent contracts | `ctx.robots` |
 | [`robot-local`](robot-local/README.md) | Storage-backed robot specification registry, instantiation, and run control | `ctx.robots` |
+| [`experimental-robot-room`](experimental-robot-room/README.md) | Robot Room specification, A2A v2, admission, loop guard, budgets, and member context | `ctx.rooms` |
+| [`experimental-robot-room-local`](experimental-robot-room-local/README.md) | Storage-backed Robot Room provider with a bounded wake scheduler and persistent member Sessions | `ctx.rooms` |
+| [`experimental-robot-room-remote`](experimental-robot-room-remote/README.md) | Mounts the generated room Remote contribution in an optional client assembly | — |
 | [`robot-runtime`](robot-runtime/README.md) | Executes queued robot runs through a composed Agent and records outcomes | — |
 | [`robot-triggers`](robot-triggers/README.md) | Starts robot runs from cron schedules and robot event topics | — |
 | [`tool-agent-team`](tool-agent-team/README.md) | Nine tools that let the model create, message, and coordinate teammates | registers scoped tools on `ctx.tools` |

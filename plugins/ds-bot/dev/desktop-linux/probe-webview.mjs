@@ -1,9 +1,9 @@
 // Feasibility probe for the Desktop Bot browser: a plugin-side webview per Bot, read through
-// executeJavaScript. Runs inside the dsh Desktop renderer through the debugging port.
+// executeJavaScript. Runs inside the tomato Desktop renderer through the debugging port.
 export default async function (page) {
   const result = await page.evaluate(async () => {
-    const bridge = globalThis.dshDesktop?.browser
-    if (bridge === undefined) return { error: 'dshDesktop.browser is unavailable' }
+    const bridge = globalThis.tomatoDesktop?.browser
+    if (bridge === undefined) return { error: 'tomatoDesktop.browser is unavailable' }
     const open = async (botId, url, box) => {
       const { lease, partition } = await bridge.acquire(`bot:${botId}`)
       const view = document.createElement('webview')

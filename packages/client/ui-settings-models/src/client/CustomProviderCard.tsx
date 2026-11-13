@@ -1,7 +1,6 @@
 /**
- * The card that declares a provider pi-ai does not ship — an OpenAI-compatible
- * gateway, a self-hosted server, or a provider newer than the installed
- * catalog.
+ * The card that declares a provider pi-ai does not ship — a gateway, a
+ * self-hosted server, or a provider newer than the installed catalog.
  *
  * This is a create, not an edit, which is why it is its own form rather than
  * the provider editor with extra fields: the route id is being *chosen* here,
@@ -9,9 +8,11 @@
  * custom-API panel of the section's add card; the card's mode switch names it
  * when both modes are offered, and with the custom mode alone the card shows
  * this form directly. One `settings.mutate` sets the whole profile at
- * `providers.<route>`; the key travels separately through `credentials/set`
- * under the reference the profile records, exactly as an existing provider's
- * key does.
+ * `providers.<route>`; when the deployment enforces a model allowlist, the
+ * same mutate also appends this route's models to `modelPolicy.local`, since a
+ * provider missing from that list is born blocked. The key travels separately
+ * through `credentials/set` under the reference the profile records, exactly
+ * as an existing provider's key does.
  *
  * The three fields a hand-declared route cannot default — endpoint, protocol,
  * and at least one model — are required here rather than at load, so the
@@ -28,6 +29,7 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { JsonValue } from '@tomato/util-values'
+import type { SettingsPathOpView } from '@tomato/api-remotes/client'
 import { apiKeyFailure } from './apiKey.ts'
 import { ApiKeyInput } from './ApiKeyInput.tsx'
 import { EditorFooter } from './EditorFooter.tsx'
@@ -35,10 +37,12 @@ import { validateDeepSeekModels } from './DeepSeekModelsEditor.tsx'
 import { ModelListEditor } from './ModelListEditor.tsx'
 import type { ModelDraft } from './ModelListEditor.tsx'
 import { validateReasoningEfforts } from './ModelReasoningEfforts.tsx'
+import { allowlistOps, type ModelPolicyView } from './policy.ts'
 import { deriveKeyRef } from './store.ts'
 import { protocolLabel } from './protocol-label.ts'
+import { protocolNeedsKey, protocolReasoningLevels } from './protocol-rules.ts'
 import type { ModelsOperations } from './operations.ts'
-import type { en } from './locales.ts'
+import type { en, ModelsKey } from './locales.ts'
 import styles from './ModelsSection.module.css'
 
 /** The settings namespace a hand-declared provider is written into. */
@@ -53,6 +57,16 @@ const NS = 'llm-pi-ai'
  * credential seam with a raw regular expression the user cannot act on.
  */
 const ROUTE_PATTERN = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/
+
+/**
+ * Endpoint examples for protocols whose SDK expects a different base than an
+ * OpenAI-compatible `/v1`: Anthropic's SDK appends `/v1/messages`, and the
+ * Gemini protocol expects the API version in the base URL.
+ */
+const BASE_URL_PLACEHOLDERS: Readonly<Record<string, ModelsKey>> = {
+  'anthropic-messages': 'customAnthropicBaseUrlPlaceholder',
+  'google-generative-ai': 'customGeminiBaseUrlPlaceholder',
+}
 
 function isHttpUrl(value: string): boolean {
   try {
@@ -77,6 +91,11 @@ export interface CustomProviderCardProps {
    * than a silent overwrite of its whole profile.
    */
   revision: number
+  /**
+   * Deployment model allowlist, when one is enforced. The create appends this
+   * route's models to it so the new provider is selectable immediately.
+   */
+  policy?: ModelPolicyView | undefined
   /** The Host operations this card writes and interrogates through. */
   operations: ModelsOperations
   /** Section copy. */
@@ -129,8 +148,12 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
   // bad row is named by its position here too. Capacities have route-level
   // fallbacks; what a route cannot default is at least one model. Every row of
   // this hand-declared route edits its reasoning levels, so they are checked too.
-  const modelFailure = validateDeepSeekModels(models) ?? validateReasoningEfforts(models)
-  const keyFailure = apiKeyFailure(keyDraft)
+  const reasoning = protocolReasoningLevels(protocol, reasoningLevels)
+  const modelFailure = validateDeepSeekModels(models)
+    ?? validateReasoningEfforts(models, reasoning.levelsOnly ? reasoning.levels : undefined)
+  // A blank key is a legal choice only where the protocol can authenticate without one.
+  const keyMissing = protocolNeedsKey(protocol) && keyDraft.trim().length === 0
+  const keyFailure = keyMissing ? 'keyRequired' as const : apiKeyFailure(keyDraft)
   // The typed key with paste whitespace removed. A blank field yields an empty
   // string, which the create path reads as "no key supplied" — a route may
   // legitimately authenticate through the provider's own ambient discovery.
@@ -175,11 +198,20 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
       // `taken` is a snapshot too, so the id check alone cannot see a route
       // declared after this card opened; the revision makes that race a
       // `settings-conflict` instead of a write over the other profile.
-      const written = await operations.writeSettings(
-        NS,
-        [{ op: 'set', path: ['providers', route], value: profile as JsonValue }],
-        openedAt,
-      )
+      const ops: SettingsPathOpView[] = [
+        { op: 'set', path: ['providers', route], value: profile as JsonValue },
+      ]
+      // The deployment's allowlist matches exact (provider, model) pairs, and
+      // the page cannot edit `modelPolicy`; a route missing from it would be
+      // born blocked. Keep the profile and its allowlist entries in one mutate.
+      if (props.policy !== undefined) {
+        const ids = models.flatMap((model) => {
+          /* v8 ignore next -- validateDeepSeekModels rejects a missing or empty id before submit */
+          return typeof model.id === 'string' && model.id.length > 0 ? [model.id] : []
+        })
+        ops.push(...allowlistOps(props.policy, route, ids))
+      }
+      const written = await operations.writeSettings(NS, ops, openedAt)
       if (written.kind !== 'written') {
         return written.kind === 'conflict' ? t('conflict') : written.message
       }
@@ -250,9 +282,7 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
           className={styles['input']}
           type="text"
           value={baseURL}
-          placeholder={t(protocol === 'anthropic-messages'
-            ? 'customAnthropicBaseUrlPlaceholder'
-            : 'customBaseUrlPlaceholder')}
+          placeholder={t(BASE_URL_PLACEHOLDERS[protocol] ?? 'customBaseUrlPlaceholder')}
           aria-label={t('baseUrl')}
           aria-invalid={baseUrlInvalid}
           disabled={profileDisabled}
@@ -279,20 +309,23 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
           value={keyDraft}
           placeholder={t('keyPlaceholder')}
           aria-label={t('keyInput')}
+          required={protocolNeedsKey(protocol)}
           disabled={disabled}
           onChange={(event) => { setKeyDraft(event.target.value) }}
         />
         {/* A create card has no stored key to keep, so the blank case says
             what a blank field means here instead: this route may authenticate
-            through the provider's own ambient discovery or OAuth. */}
+            through the provider's own ambient discovery or OAuth. A key the
+            protocol requires is a requirement still to meet, not a fault. */}
         {keyFailure === undefined
           ? null
-          : <p className={styles['error']}>{t(keyFailure === 'keyBlank' ? 'keyBlankNew' : keyFailure)}</p>}
+          : <p className={styles[keyMissing ? 'advancedHint' : 'error']}>{t(keyFailure === 'keyBlank' ? 'keyBlankNew' : keyFailure)}</p>}
       </div>
       <ModelListEditor
         models={models}
         onChange={setModels}
-        reasoningLevels={reasoningLevels}
+        reasoningLevels={reasoning.levels}
+        reasoningLevelsOnly={reasoning.levelsOnly}
         probe={{
           settingsNs: NS,
           baseURL: normalizedBaseURL,

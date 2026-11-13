@@ -540,4 +540,53 @@ describe('close and lifecycle', () => {
     // The chain is unpoisoned: subsequent writes proceed normally.
     await expect(table.delete('a')).resolves.toBe(true)
   })
+
+  it('exposes open domains by name and reloads a mirror from the medium', async () => {
+    const pool = new MemoryMediaPool()
+    const first = await harness({ pool })
+    const stored = await first.facility.open(spec)
+    const second = await harness({ pool })
+    const mirror = await second.facility.open(spec)
+    // The backend reports no change token, so the caller cannot compare one.
+    expect(await mirror.changeStamp()).toBeUndefined()
+    await stored.table('items').put('k', { label: 'x', count: 1 })
+    await stored.global.set({ theme: 'dark' })
+    expect(mirror.table('items').size).toBe(0)
+    await mirror.reload()
+    expect(mirror.table('items').get('k')).toEqual({ label: 'x', count: 1 })
+    expect(mirror.global.get()).toEqual({ theme: 'dark' })
+    expect(first.facility.get('demo')).toBe(stored)
+    expect(first.facility.get('missing')).toBeUndefined()
+  })
+
+  it('backs up and skips a record the spec declares disposable', async () => {
+    const { ctx, facility } = await harness({ config: { backend: 'salvageable' } })
+    const backups: string[] = []
+    ctx.storage.backend.register('salvageable', {
+      kv: {
+        open: async (): Promise<KvUnit> => ({
+          loadAll: async () => ({ tables: { items: { bad: { label: 'x', count: 'NaN' } } }, global: null }),
+          putRecord: async () => {},
+          deleteRecord: async () => {},
+          deleteRecords: async () => {},
+          backupRecord: async (table: string, key: string) => {
+            backups.push(`${table}/${key}`)
+            return `/quarantine/${table}/${key}`
+          },
+          setGlobal: async () => {},
+          close: async () => {},
+        }),
+      },
+      close: async () => {},
+    })
+    const salvageSpec = defineDomain({
+      name: 'salvage',
+      version: 1,
+      invalidRecords: 'backup-and-skip',
+      tables: { items: domainTable<string, Item>(itemSchema) },
+    })
+    const domain = await facility.open(salvageSpec)
+    expect(domain.table('items').size).toBe(0)
+    expect(backups).toEqual(['items/bad'])
+  })
 })

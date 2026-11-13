@@ -132,4 +132,83 @@ Browser controls for provider-owned native permission and application decisions.
 ```
 
 Source: [`packages/experimental/cua/src/access.ts`](../../packages/experimental/cua/src/access.ts)
+
+<a id="ctxphonedeviceremote--phonedeviceremote"></a>
+
+### `ctx.phoneDeviceRemote` — `PhoneDeviceRemote`
+
+Owner of the `phoneDevice` namespace.
+
+```ts cordis-catalog
+/**
+ * Read the last known device state without touching the phone.
+ * @returns the status the watch loop last recorded.
+ */
+@Remote('status') status(): DeviceStatus
+
+/**
+ * Check the toolchain and the attached phones now.
+ * @returns the refreshed status.
+ * @throws RemoteError `phoneDevice/*` when the toolchain or device is missing.
+ */
+@Remote('doctor') async doctor(): Promise<DeviceStatus>
+
+/**
+ * Rebuild, reinstall, and relaunch the runner.
+ * @returns the refreshed status.
+ * @throws RemoteError `phoneDevice/command-failed` when a tool fails.
+ */
+@Remote('renew') async renew(): Promise<DeviceStatus>
+
+/**
+ * Launch the runner with the current credentials.
+ * @returns the refreshed status.
+ * @throws RemoteError `phoneDevice/command-failed` when the launch fails.
+ */
+@Remote('relaunch') async relaunch(): Promise<DeviceStatus>
+```
+
+Types: [DeviceStatus](../../packages/experimental/phone-use-macos/README.md)
+
+Source: [`packages/experimental/phone-use-macos/src/remote.ts`](../../packages/experimental/phone-use-macos/src/remote.ts)
+
+<a id="ctxphoneremote--phoneremote"></a>
+
+### `ctx.phoneRemote` — `PhoneRemote`
+
+Owner of the `phone` namespace.
+
+```ts cordis-catalog
+/**
+ * Attach one runner. The stream carries ready, command, cancel, and ping
+ * frames; the runner answers each command through `result`.
+ * @param request - runner identity and capabilities.
+ * @param signal - cancellation owned by the Remote stream carrier.
+ * @returns frames for this attachment.
+ * @throws RemoteError `phone/refused` when the protocol version disagrees.
+ */
+@Remote({ mode: 'stream' }) attach(request: PhoneAttachRequest, signal: AbortSignal): AsyncIterable<PhoneDownFrame>
+
+/**
+ * Settle one command with the outcome the runner reported.
+ * @param request - attach, command, and either value or failure.
+ */
+@Remote('result') result(request: PhoneCommandResult): void
+
+/**
+ * Record one out-of-band event from a runner.
+ * @param request - attach identity and event kind.
+ */
+@Remote('event') event(request: PhoneDeviceEvent): void
+
+/**
+ * List every attached device.
+ * @returns device summaries in attach order.
+ */
+@Remote('devices') devices(): PhoneDeviceSummary[]
+```
+
+Types: [PhoneAttachRequest](../../packages/experimental/phone-use/README.md) · [PhoneCommandResult](../../packages/experimental/phone-use/README.md) · [PhoneDeviceEvent](../../packages/experimental/phone-use/README.md) · [PhoneDeviceSummary](../../packages/experimental/phone-use/README.md) · [PhoneDownFrame](../../packages/experimental/phone-use/README.md)
+
+Source: [`packages/experimental/phone-use/src/remote.ts`](../../packages/experimental/phone-use/src/remote.ts)
 <!-- END GENERATED cordis-surface -->

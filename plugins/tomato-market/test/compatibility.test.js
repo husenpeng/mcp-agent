@@ -11,8 +11,8 @@ test('an engines.tomato range decides alone', () => {
   assert.deepEqual(unmet, { status: 'incompatible', requirements: { 'engines.tomato': '>=0.2.2-rc.1' } })
 })
 
-test('engines.dsh reads as the same runtime selection', () => {
-  assert.deepEqual(evaluateCompatibility({ engines: { dsh: '>=0.2.1-rc.1 <0.3.0' } }, RUNTIME), { status: 'compatible' })
+test('engines.tomato reads as the same runtime selection', () => {
+  assert.deepEqual(evaluateCompatibility({ engines: { tomato: '>=0.2.1-rc.1 <0.3.0' } }, RUNTIME), { status: 'compatible' })
 })
 
 test('TOMATO peers must match the runtime version', () => {
@@ -23,13 +23,13 @@ test('TOMATO peers must match the runtime version', () => {
   })
 })
 
-test('published DeepSeek Harness peers are judged under their Tomato names', () => {
+test('published Tomato Harness peers are judged under their Tomato names', () => {
   const manifest = {
     peerDependencies: {
-      '@deepseek-ai/cordis': '^4.0.5',
-      '@deepseek-ai/schemastery': '~3.18.5',
-      '@deepseek-ai/dsh-agent': '^0.2.2-rc.1',
-      '@huanlin/dsh-plugin-better-locale': '^0.1.0',
+      '@tomato/cordis': '^4.0.5',
+      '@tomato/schemastery': '~3.18.5',
+      '@tomato/agent': '^0.2.2-rc.1',
+      '@huanlin/tomato-plugin-better-locale': '^0.1.0',
       react: '^18.2.0',
     },
   }
@@ -37,7 +37,7 @@ test('published DeepSeek Harness peers are judged under their Tomato names', () 
     status: 'incompatible',
     requirements: { '@tomato/agent': '^0.2.2-rc.1' },
   })
-  assert.deepEqual(evaluateCompatibility({ peerDependencies: { '@deepseek-ai/dsh-agent': '^0.2.1-rc.1' } }, '0.2.2-rc.1'), { status: 'compatible' })
+  assert.deepEqual(evaluateCompatibility({ peerDependencies: { '@tomato/agent': '^0.2.1-rc.1' } }, '0.2.2-rc.1'), { status: 'compatible' })
 })
 
 test('workspace ranges mean the running runtime', () => {

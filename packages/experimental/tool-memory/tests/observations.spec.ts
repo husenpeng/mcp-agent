@@ -8,10 +8,25 @@ describe('buildObservationCard', () => {
       tool: 'bash', arguments: { command: 'pnpm test --watch' }, failed: false, output: 'ok', value: { exitCode: 0 },
     })
     expect(card).toMatchObject({
-      tool: 'bash', type: 'command', title: 'bash: pnpm test --watch', narrative: 'The bash call completed.',
+      tool: 'bash', type: 'command', title: 'bash: pnpm test --watch', narrative: 'Ran `pnpm test --watch`, exit 0.',
       facts: ['exit 0'], concepts: ['bash', 'pnpm'], filesRead: [], filesModified: [],
     })
     expect(card.fingerprint).toHaveLength(64)
+  })
+
+  it('names the work after a leading directory change and indexes path names', () => {
+    const card = buildObservationCard({
+      tool: 'bash',
+      arguments: { command: 'cd /repo && pnpm exec vitest run tests/service.spec.ts' },
+      failed: false,
+      output: 'ok',
+      value: { exitCode: 0 },
+    })
+    expect(card.title).toBe('bash: pnpm exec vitest run tests/service.spec.ts')
+    expect(card.narrative).toBe('Ran `pnpm exec vitest run tests/service.spec.ts`, exit 0.')
+    expect(card.concepts).toContain('pnpm')
+    expect(card.concepts).toContain('service.spec')
+    expect(card.concepts).not.toContain('cd')
   })
 
   it('marks a failure, trims its reason, and omits an empty exit code', () => {
@@ -48,6 +63,16 @@ describe('buildObservationCard', () => {
     expect(edit.concepts).toEqual(['edit', 'noext'])
     const trailing = buildObservationCard({ tool: 'edit', arguments: { path: '/repo/' }, failed: false, output: '' })
     expect(trailing.concepts).toEqual(['edit'])
+  })
+
+  it('ignores path words without a name and segments that are only dots', () => {
+    const root = buildObservationCard({ tool: 'edit', arguments: { path: '/' }, failed: false, output: '' })
+    expect(root.concepts).toEqual(['edit'])
+    const unnamed = buildObservationCard({ tool: 'bash', arguments: { command: 'cat ///' }, failed: false, output: '' })
+    expect(unnamed.concepts).toEqual(['bash', 'cat'])
+    const dots = buildObservationCard({ tool: 'bash', arguments: { command: 'cat a/.. b.ts' }, failed: false, output: '' })
+    expect(dots.concepts).not.toContain('..')
+    expect(dots.concepts).toContain('b')
   })
 
   it('falls back to a generic tool call and de-duplicates concepts', () => {

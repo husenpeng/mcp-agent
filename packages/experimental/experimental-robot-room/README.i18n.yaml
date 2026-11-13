@@ -1,0 +1,55 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/experimental-robot-room/README.md
+/:
+  en: 92ff1f5a67bdd23d
+  zh: 28c93052fb5511b4
+/robot-room:
+  en: bcb9688681511a85
+  zh: 91ee029111a9bb9d
+/robot-room/summary:
+  en: d38f165b65221a53
+  zh: 66bad1b1f62f3203
+/robot-room/table-of-contents:
+  en: 4e53164159b5ce41
+  zh: bd61ce1bef78579b
+/robot-room/use-this-package:
+  en: 3030f6694529edaa
+  zh: 3dce95535ff5822f
+/robot-room/use-this-package/room-specification:
+  en: 9cab3402d8e8fa87
+  zh: ddd87eb0e700c165
+/robot-room/use-this-package/a2a-v2:
+  en: 3ec9639e7d82eaeb
+  zh: ae090eb9611d551b
+/robot-room/use-this-package/admission-and-guard:
+  en: fdda7f9518c8e3ea
+  zh: 57e300e3d582a0b8
+/robot-room/use-this-package/budgets-and-grants:
+  en: 9f955f2c4251dc3d
+  zh: 0d0362ee6caebf1b
+/robot-room/use-this-package/member-context:
+  en: 59315b6da331bcee
+  zh: 02d8cc8f14b5471c
+/robot-room/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/robot-room/model-experience/member-input:
+  en: 6b202b65980b6e50
+  zh: e65ce8f603c18777
+/robot-room/model-experience/member-input/what-the-model-sees:
+  en: 61402a7030a1eaea
+  zh: e7df61d8a11bd415
+/robot-room/model-experience/member-input/token-effect:
+  en: 173cd6921bb095b0
+  zh: 3a1c7a380580d985
+/robot-room/model-experience/member-input/kv-cache-effect:
+  en: 2db98f2206b17740
+  zh: 4631113231d39c8d
+/robot-room/known-limitations-and-deferred-work:
+  en: b895a196d4194560
+  zh: 377fe70ec36e9da8
+/robot-room/known-limitations-and-deferred-work/dev-note:
+  en: ac544a01acb5e69e
+  zh: 2ff24515b76b41ac

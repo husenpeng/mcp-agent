@@ -29,6 +29,7 @@ import type { RobotIdentity, RunDetailActions } from './RunDetail.tsx'
 import { RobotPanelIcon } from './RobotPanelIcon.tsx'
 import { RobotSubnav } from './RobotSubnav.tsx'
 import { retainRunSession } from './run-session.ts'
+import { robotModelCatalog, type RobotModelCatalog } from './model-catalog.ts'
 import { createRobotPageStore } from './store.ts'
 import { templateTextFor } from './template-text.ts'
 import { en, NS, zh } from './locales.ts'
@@ -51,10 +52,17 @@ declare module '@tomato/client-ui-slots' {
   }
 }
 
-/** Required services: the robot registry and control, Session retention, the permission catalog, layout, slots, and copy. */
+/**
+ * Required services: the robot registry and control, Session retention, the
+ * gateway and the permission and model catalogs it carries, layout, slots, and
+ * copy. `remote` is required alongside its namespaces because the editor reads
+ * them through the gateway service; injecting only `remote.permissionPresets`
+ * leaves `ctx.remote` unreachable, so every catalog read failed and the
+ * skill, plugin, and MCP pickers opened empty.
+ */
 export const inject = [
   'slots', 'locale', 'layout', 'robotRuns', 'sessions', 'uiWorkspace', 'uiConversation',
-  'remote.permissionPresets',
+  'remote', 'remote.permissionPresets', 'remote.session',
 ]
 
 /**
@@ -91,11 +99,25 @@ export function apply(ctx: ClientContext): void {
       const cwd = Object.values(ctx.sessions.list.getSnapshot().byId)
         .find(row => (row.retainedBy.mainView ?? 0) > 0)?.cwd
       const local = await ctx.robotRuns.capabilities(cwd === undefined ? {} : { cwd })
+      // The same catalog the composer model selector reads: it lists the
+      // providers this deployment can route, including third-party API
+      // providers configured in Settings. A failed read leaves the editor
+      // usable with the deployment default as its only choice.
+      let models: RobotModelCatalog | undefined
+      try {
+        const catalog = await ctx.remote.session.modelCatalog()
+        if (catalog.ok) models = robotModelCatalog(catalog.value)
+      } catch (error: unknown) {
+        // A transport failure must not discard the capability and preset lists
+        // that already loaded; the model field falls back to the deployment default.
+        ctx.logger.warn(`ui-robot: model catalog read failed: ${String(error)}`)
+      }
       return {
         presets,
         capabilities: local.ok
           ? local.value
-          : { skills: [], tools: [], mcpServers: [], workspaceRoots: [] },
+          : { skills: [], plugins: [], tools: [], mcpServers: [], workspaceRoots: [] },
+        ...models === undefined ? {} : { models },
         ...(cwd === undefined ? {} : { defaultWorkspaceRoot: cwd }),
       }
     },
@@ -103,6 +125,8 @@ export function apply(ctx: ClientContext): void {
       publish: ctx.robotRuns.publish.bind(ctx.robotRuns),
       instantiate: ctx.robotRuns.instantiate.bind(ctx.robotRuns),
       rebind: ctx.robotRuns.rebind.bind(ctx.robotRuns),
+      install: ctx.robotRuns.install.bind(ctx.robotRuns),
+      remove: ctx.robotRuns.remove.bind(ctx.robotRuns),
       hire: ctx.robotRuns.hire.bind(ctx.robotRuns),
       start: ctx.robotRuns.start.bind(ctx.robotRuns),
       cancel: ctx.robotRuns.cancel.bind(ctx.robotRuns),

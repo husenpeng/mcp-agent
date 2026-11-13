@@ -21,8 +21,10 @@ export type { NotificationSubscription } from './client.ts'
 export { JsonRpcResponseError } from '@tomato/sdk-protocol'
 export type {
   ContentBlock,
+  SdkEncodedImageBlock,
   SdkPromptContentBlock,
   SdkUserQuestionAnswer,
+  SdkUserQuestionResult,
   SdkUserQuestionRequest,
   DeepSeekHarnessOptions,
   HarnessClientOptions,

@@ -47,6 +47,13 @@ const FIBER_PHASE = {
   [FIBER_STATE.UNLOADING]: 'unloading',
 } as const satisfies Record<FiberState, PluginFiberPhase>
 
+declare module '@tomato/cordis' {
+  interface Context {
+    /** Read-only projection of the current Loader plugin entries. */
+    pluginInventory: PluginInventoryGateway
+  }
+}
+
 /** Remote-only service exposing the Loader's current non-group entry state. */
 export class PluginInventoryGateway extends TypertRemoteService {
   static inject = ['loader']
@@ -86,11 +93,18 @@ export async function readPluginInventory(ctx: Context): Promise<PluginInventory
     if (entry.options.group) continue
     const base = entry.parent.tree.ctx.baseUrl
     const meta = base === undefined ? undefined : packages?.metaOf(entry.options.name, base)
+    const fiber = entry.fiber
+    const fiberPhase = fiber === undefined ? null : FIBER_PHASE[fiber.state]
+    let diagnostic: string | undefined
+    if (fiber !== undefined && fiberPhase === 'failed') {
+      try { await fiber.await() } catch (error) { diagnostic = error instanceof Error ? error.message : String(error) }
+    }
     entries.push({
       entryId: pluginEntryId(entry.id),
       moduleName: entry.options.name,
       enabled: !entry.disabled,
-      fiberPhase: entry.fiber === undefined ? null : FIBER_PHASE[entry.fiber.state],
+      fiberPhase,
+      ...diagnostic === undefined ? {} : { diagnostic },
       ...meta === undefined ? {} : { meta },
     })
   }

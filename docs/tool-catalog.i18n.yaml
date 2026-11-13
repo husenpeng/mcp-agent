@@ -9,8 +9,8 @@
   en: 8ee041b7af9505f3
   zh: 02a768b7dbbc6425
 /tool-schema-catalog/tool-package-map:
-  en: 2d35ee57a447c7e4
-  zh: e4d9b4bc20625975
+  en: 6b92e0eb11558ad7
+  zh: c9bc04760b824191
 /tool-schema-catalog/tomato-plugin-manager:
   en: c8e088f02e59c8b3
   zh: c8e088f02e59c8b3
@@ -258,8 +258,11 @@
   en: 4512c84944105471
   zh: 4512c84944105471
 /tool-schema-catalog/tomato-experimental-tool-robot/robot-create:
-  en: 70c4f72c9c68056d
-  zh: 01bc7e81c720e08c
+  en: bc67b577878f0f9b
+  zh: 2b04cdf653117b3b
+/tool-schema-catalog/tomato-experimental-tool-robot/robot-update:
+  en: dee2a8fafeb5ee92
+  zh: 3d7d1af582f5cf5f
 /tool-schema-catalog/tomato-experimental-tool-subagent-oar:
   en: af512ef50d34e11f
   zh: af512ef50d34e11f

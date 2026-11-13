@@ -79,6 +79,14 @@ export interface PositionSpec {
   readonly visibility: 'private' | 'team' | 'organization'
 }
 
+/** Model route one robot's runs use. */
+export interface RobotModel {
+  /** Registered provider route; a user-configured third-party API provider is a normal value. */
+  readonly provider: string
+  /** Provider-owned model id. */
+  readonly model: string
+}
+
 /** What the robot is for and how a run starts and stops. */
 export interface GoalSpec {
   /** One-sentence purpose. */
@@ -87,6 +95,12 @@ export interface GoalSpec {
   readonly successCriteria: readonly string[]
   /** Conditions that start a run. */
   readonly triggers: readonly Trigger[]
+  /**
+   * Model every run uses; omitted keeps the deployment default model. The
+   * route must be one the executing deployment advertises, so a robot
+   * republished elsewhere may name a model that deployment cannot reach.
+   */
+  readonly model?: RobotModel
   /** Execution strategy for one run. */
   readonly strategy: 'plan' | 'loop' | { readonly workflow: string }
   /** Conditions that end a run before success. */
@@ -105,6 +119,8 @@ export interface CapabilitySpec {
   readonly tools: { readonly allow: readonly string[]; readonly deny: readonly string[] }
   /** MCP servers mounted for the robot. */
   readonly mcpServers: readonly string[]
+  /** Plugins the robot depends on, by the module name the deployment loads. */
+  readonly plugins: readonly string[]
   /** Skills available to the robot. */
   readonly skills: readonly string[]
   /** Folders the robot may read or write, after normalization. */
@@ -258,6 +274,25 @@ export interface RobotSpecRevision {
   readonly supersedes?: number
 }
 
+/** Dependency kinds a specification declares and the executing deployment resolves. */
+export type RobotDependencyKind = 'skill' | 'plugin' | 'mcpServer' | 'permissionPreset'
+
+/** One declared dependency that a run cannot do without. */
+export interface RobotDependency {
+  /** Family the name belongs to. */
+  readonly kind: RobotDependencyKind
+  /** Name exactly as the specification declares it. */
+  readonly name: string
+}
+
+/** Verification of one exact specification revision in the executing deployment. */
+export interface RobotInstallation {
+  /** Revision whose declared dependencies were verified. */
+  readonly ref: RobotSpecRef
+  /** Unix epoch milliseconds of the successful installation. */
+  readonly installedAt: number
+}
+
 /** One robot instance bound to a published revision. */
 export interface Robot {
   /** Stable robot identity. */
@@ -270,6 +305,12 @@ export interface Robot {
   readonly state: RobotState
   /** Unix epoch milliseconds when the robot was instantiated. */
   readonly createdAt: number
+  /**
+   * Installation of the bound revision, once the deployment verified its
+   * skills, plugins, MCP servers, and permission preset. Omitted until then,
+   * and reset when {@link Robot.spec} moves to another revision.
+   */
+  readonly installation?: RobotInstallation
 }
 
 /** Input passed to one run. */

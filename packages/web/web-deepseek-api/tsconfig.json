@@ -37,6 +37,19 @@
     },
     {
       "path": "../../util/http-proxy"
+    },
+    {
+      "path": "../../llm/llm-deepseek"
+    },
+    {
+      "path": "../../../vendor/loader"
+    },
+    {
+      "path": "../../llm/llm"
+    },
+    {
+      "path": "../../llm/llm-deepseek-api-key"
     }
-  ]
+  ],
+  "files": []
 }

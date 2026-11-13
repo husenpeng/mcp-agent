@@ -1,7 +1,7 @@
 {
   "name": "@tomato/experimental-terminal-bundle",
-  "description": "Keep shell processes alive across tool calls.",
-  "version": "0.2.1-rc.3",
+  "description": "Let the agent run long-lived commands in terminals you can watch in the sidebar.",
+  "version": "0.2.2-rc.2",
   "icon": "./icon.svg",
   "publishConfig": {
     "access": "public"
@@ -30,7 +30,10 @@
     "docs",
     "lib/index.js",
     "cordis.patch.yml",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
   ],
   "license": "MIT",
   "tomato": {
@@ -41,7 +44,7 @@
   "dependencies": {
     "@tomato/tool-terminal": "workspace:*",
     "@tomato/terminal": "workspace:*",
-    "@tomato/terminal-bash": "workspace:*"
+    "@tomato/terminal-panel": "workspace:*"
   },
   "peerDependencies": {
     "@tomato/cordis": "workspace:~"

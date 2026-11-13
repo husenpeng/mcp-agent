@@ -139,7 +139,7 @@ describe('installer.sh', () => {
     expect((await readdir(destination)).sort()).toEqual(['Tomato AI.app'])
     // Fixture applications are unsigned, so codesign verification succeeds only with an ad-hoc seal.
     await execute('/usr/bin/codesign', ['--force', '--deep', '--sign', '-', installed])
-    const attributes = await execute('/usr/bin/xattr', [installed]).catch(error => error)
+    const attributes = await execute('/usr/bin/xattr', [installed]).catch(() => ({ stdout: '' }))
     expect(attributes.stdout ?? '').not.toContain('com.apple.quarantine')
     // The source folder survives installation.
     expect((await stat(join(staging, 'Tomato AI.app'))).isDirectory()).toBe(true)
@@ -164,7 +164,7 @@ describe('installer.sh', () => {
     await execute('/bin/cp', [join(import.meta.dirname, '..', 'packaging', 'installer.sh'), installer])
     const error = await execute('/bin/bash', [installer], {
       env: { ...process.env, TOMATO_INSTALL_DIR: join(root, 'Applications') },
-    }).then(() => undefined, reason => reason as { code: number; stderr: string })
+    }).then(() => undefined, (reason: unknown) => reason as { code: number; stderr: string })
     expect(error).toMatchObject({ code: 1 })
     expect(error?.stderr).toContain('找不到应用')
   })

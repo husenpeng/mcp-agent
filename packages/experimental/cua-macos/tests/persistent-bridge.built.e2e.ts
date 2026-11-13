@@ -13,6 +13,7 @@ import ComputerUseRegistry from '@tomato/computer-use'
 import FileSystem from '@tomato/fs-local'
 import { LlmAdapter, ToolCallId, type LlmResolvedModelInfo, type StreamChunk } from '@tomato/llm'
 import NodeRuntime from '@tomato/ptc-runtime-node'
+import { PtcImage } from '@tomato/ptc-runtime'
 import Sandbox from '@tomato/sandbox-local'
 import SandboxPolicy from '@tomato/sandbox-policy'
 import { SessionId } from '@tomato/session'
@@ -66,17 +67,34 @@ it.skipIf(process.platform === 'win32' || !existsSync(bridge) || !existsSync(boo
           calls.push({ phase, method: operation.method })
           const result = await executeToolFixture(ctx, { agent: handle.agent, signal: new AbortController().signal,
             callId: ToolCallId(`external-cua-${++count}`), name: 'cua', arguments: operation })
+          if (result.isError) throw new Error(result.error.message)
           images += result.content.filter(block => block.type === 'image').length
-          return result.value ?? null
+          const image = result.content.find(block => block.type === 'image')
+          if (image !== undefined) {
+            const path = ctx.attachments.imageHostPath(image.attachment)
+            if (path === undefined) throw new Error('Fixture image path is unavailable')
+            return new PtcImage(path, image.attachment)
+          }
+          return result.value
         } } }],
       }))
       expect((await run('await import("@tomato/cua/bridge")', 'unresolved')).error?.message).toContain('Cannot find package')
       const section = (await ctx.systemPrompt.assemble()).sections.find(value => value.name === 'computer-use:@tomato/cua')
-      const initialization = section?.text.split('Persistent PTC initialization:\n')[1]
+      const initialization = section?.text.match(/Persistent PTC initialization:\n\n```ts\n([\s\S]*?)\n```/u)?.[1]
       expect(initialization).toContain('/lib/bridge.js')
-      const first = await run(`${initialization}\nvar app = await cua.getApp("test.fixture"); var win = await app.getWindow(7); await win.click(0); var shot = await win.getScreenshot(); ({ mimeType: shot.mimeType, pixelWidth: shot.pixelWidth, pixelHeight: shot.pixelHeight, windowId: shot.windowId, byteLength: shot.bytes.length });`, 'first')
+      const first = await run(`${initialization}
+        var app = await cua.getApp("test.fixture");
+        var win = await app.getWindow('7');
+        await win.getAccessibilityTree();
+        await win.click("0");
+        var shot = await win.getScreenshot();
+        var { readFile } = await import("node:fs/promises");
+        ({ isImage: shot instanceof Image, width: shot.width, height: shot.height,
+          windowId: win.windowId, byteLength: (await readFile(shot.path)).byteLength });
+      `, 'first')
       expect(first.error).toBeUndefined()
-      expect(first.value).toEqual({ mimeType: 'image/png', pixelWidth: 1, pixelHeight: 1, windowId: 7, byteLength: 90 })
+      expect(first.output).toEqual([])
+      expect(first.value).toEqual({ isImage: true, width: 1, height: 1, windowId: '7', byteLength: 90 })
       expect(images).toBe(1)
       expect(JSON.stringify(first)).not.toContain('iVBORw0KGgo')
       const invalid = await run('await cua.findApps("");', 'invalid')
@@ -84,10 +102,15 @@ it.skipIf(process.platform === 'win32' || !existsSync(bridge) || !existsSync(boo
       expect(invalid.error?.message).not.toContain('ZodError')
       expect(invalid.error?.message).not.toContain('"origin"')
       expect(calls.filter(call => call.phase === 'invalid')).toEqual([])
-      const second = await run('await win.getAXState({emit:false}); await win.click(0); await win.getAXState({emit:false});', 'second')
+      const second = await run(`
+        await win.getAccessibilityTree();
+        await win.click("0");
+        const tree = await win.getAccessibilityTree();
+        inspect(tree.includes("Count: 2"), (await cua.getCapabilities()).platform);
+      `, 'second')
       expect(second.error).toBeUndefined()
-      expect(second.value).toContain('Count: 2')
-      expect(calls.filter(call => call.phase === 'second').map(call => call.method)).toEqual(['getState', 'click', 'getState'])
+      expect(second.output).toEqual([{ type: 'text', text: 'true macos\n' }])
+      expect(calls.filter(call => call.phase === 'second').map(call => call.method)).toEqual(['getState', 'click', 'getState', 'getCapabilities'])
     } finally {
       try { await ctx.fiber.dispose() } finally {
         try { await closeFixture?.() } finally { await rm(cwd, { recursive: true, force: true }) }

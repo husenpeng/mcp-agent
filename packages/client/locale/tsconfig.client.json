@@ -36,5 +36,6 @@
   ],
   "exclude": [
     "src/index.ts"
-  ]
+  ],
+  "files": []
 }

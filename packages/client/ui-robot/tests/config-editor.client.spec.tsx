@@ -67,6 +67,7 @@ function mountWithFolder(capabilities: NonNullable<EditorProps['capabilities']> 
 }
 
 const CATALOG: NonNullable<EditorProps['capabilities']> = {
+  plugins: [],
   skills: [
     { value: 'office-docx', label: 'office-docx', description: 'Create Word documents' },
     { value: 'instagram-creator-scout', label: 'instagram-creator-scout' },
@@ -74,6 +75,22 @@ const CATALOG: NonNullable<EditorProps['capabilities']> = {
   tools: [{ value: 'read', label: 'read' }, { value: 'bash', label: 'bash', description: 'Run a command' }],
   mcpServers: [{ value: 'github', label: 'github' }],
   workspaceRoots: [{ value: '/work/alpha', label: 'Alpha' }],
+}
+
+const MODELS: NonNullable<EditorProps['models']> = {
+  groups: [
+    {
+      provider: 'acme',
+      label: 'Acme Gateway',
+      models: [
+        { model: 'acme-large', label: 'Acme Large', description: '128k context' },
+        { model: 'acme-blocked', label: 'Acme Blocked', blockedReason: 'Deployment policy' },
+      ],
+    },
+    { provider: 'openrouter', label: 'OpenRouter', models: [{ model: 'qwen3', label: 'Qwen 3' }] },
+  ],
+  defaultLabel: 'DeepSeek / DeepSeek V4 Flash',
+  partial: false,
 }
 
 describe('robot configuration scope', () => {
@@ -100,6 +117,12 @@ describe('robot configuration scope', () => {
   it('switches to the advanced tab when a rejected field lives there', () => {
     mount([{ path: 'capability.tools', message: 'tools overlap' }])
     screen.getByRole('tabpanel', { name: '高级配置' })
+  })
+
+  it('shows a nested model field issue on the advanced tab', () => {
+    mount([{ path: 'goal.model.provider', message: 'model unavailable' }])
+    const advanced = screen.getByRole('tabpanel', { name: '高级配置' })
+    within(advanced).getByText('model unavailable')
   })
 
   it('starts a rootless draft in the Workspace the page views', () => {
@@ -162,6 +185,36 @@ describe('robot advanced pickers', () => {
     fireEvent.click(screen.getByRole('tab', { name: '高级配置' }))
     return screen.getByRole('tabpanel', { name: '高级配置' })
   }
+
+  it('selects a model from the personal provider catalog and saves the route', () => {
+    const onSubmit = vi.fn<EditorProps['onSubmit']>()
+    render(<RobotConfigEditor t={t} models={MODELS} onSubmit={onSubmit} onCancel={vi.fn()} />)
+    fillBasics()
+    advanced()
+    const trigger = screen.getByRole('button', { name: '选择模型 模型' })
+    // An unspecified route runs on the deployment default, named in the trigger.
+    expect(trigger.textContent).toContain('部署默认（DeepSeek / DeepSeek V4 Flash）')
+    fireEvent.click(trigger)
+    const blocked = screen.getByRole('menuitem', { name: /Acme Blocked/ })
+    expect((blocked as HTMLButtonElement).disabled).toBe(true)
+    fireEvent.click(screen.getByRole('menuitem', { name: /Acme Large/ }))
+    expect(trigger.textContent).toContain('Acme Gateway / Acme Large')
+    fireEvent.click(trigger)
+    fireEvent.click(screen.getByRole('menuitem', { name: /部署默认/ }))
+    expect(trigger.textContent).toContain('部署默认（DeepSeek / DeepSeek V4 Flash）')
+    fireEvent.click(trigger)
+    fireEvent.click(screen.getByRole('menuitem', { name: /Acme Large/ }))
+    fireEvent.click(screen.getByRole('button', { name: '保存修改' }))
+    expect(onSubmit.mock.calls[0]![0].goal.model).toEqual({ provider: 'acme', model: 'acme-large' })
+  })
+
+  it('keeps the editor usable when the model catalog could not be read', () => {
+    mount()
+    fillBasics()
+    advanced()
+    screen.getByRole('button', { name: '选择模型 模型' })
+    screen.getByText('暂时没有读取到可用模型；请确认已在设置中配置提供商与模型，然后重新打开。')
+  })
 
   it('offers the local skills in a folder picker and adds one', () => {
     const { onSubmit } = mount(undefined, CATALOG)

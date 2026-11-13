@@ -198,8 +198,8 @@ export async function probeEmbeddingsEndpoint(
     if (!response.ok) return { ok: false, detail: `endpoint answered HTTP ${response.status}`, latencyMs: latency() }
     const body: unknown = await response.json()
     const record = typeof body === 'object' && body !== null ? body as Record<string, unknown> : undefined
-    const data = Array.isArray(record?.data) ? record.data : undefined
-    const first = data?.[0]
+    const data: readonly unknown[] | undefined = Array.isArray(record?.data) ? record.data : undefined
+    const first: unknown = data?.[0]
     const vector = typeof first === 'object' && first !== null && Array.isArray((first as { embedding?: unknown }).embedding)
       ? (first as { embedding: number[] }).embedding
       : undefined

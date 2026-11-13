@@ -44,7 +44,11 @@
               - id: deepseek-v4-flash
               - id: deepseek-v4-pro
 
+- id: web-deepseek-api
+  name: '@tomato/web-deepseek-api'
+  config:
+    searchApiKeyEnv: TOMATO_SNAPSHOT_UNSET_SEARCH_KEY
+
 - id: web-search-deepseek
-  name: '@tomato/web-search-deepseek'
   config:
     apiKeyEnv: TOMATO_SNAPSHOT_UNSET_SEARCH_KEY

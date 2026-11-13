@@ -33,8 +33,7 @@
         "@tomato/api-session-controller",
         "@tomato/client-locale",
         "@tomato/client-ui-renderer",
-        "@tomato/client-ui-sidebar-right",
-        "@tomato/plugin-manager"
+        "@tomato/client-ui-sidebar-right"
       ],
       "platform": "web"
     }
@@ -71,6 +70,9 @@
     "locale/*.json",
     "lib/index.js",
     "lib/client.js",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/**/*.js.map",
+    "lib/types/**/*.d.ts.map",
+    "src"
   ]
 }

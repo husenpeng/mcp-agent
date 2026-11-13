@@ -1,7 +1,7 @@
 {
   "name": "@tomato/client-ui-attachment",
   "description": "Dynamic attachment presentation plugin for conversation input, message-image, and trajectory image slots",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -35,7 +35,8 @@
         "@tomato/client-ui-renderer",
         "@tomato/client-ui-trajectory",
         "@tomato/client-ui-tool",
-        "@tomato/client-ui-file-drag"
+        "@tomato/client-ui-file-drag",
+        "@tomato/client-ui-context-menu"
       ],
       "platform": "web"
     }
@@ -60,13 +61,17 @@
     "@tomato/client-ui-tool": "workspace:*",
     "clsx": "^2.0.0",
     "@tomato/client-ui-file-drag": "workspace:*",
-    "@tomato/util-file-drag": "workspace:*"
+    "@tomato/util-file-drag": "workspace:*",
+    "@tomato/client-ui-context-menu": "workspace:*"
   },
   "files": [
     "locale/*.json",
     "lib/index.js",
     "lib/client.js",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
   ],
   "peerDependencies": {
     "@tomato/cordis": "workspace:~"

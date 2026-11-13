@@ -1,7 +1,7 @@
 {
   "name": "@tomato/tool-web",
   "description": "Model-facing web tools (web_search, web_fetch) over the Tomato Harness web capability seam (ctx.web)",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -25,7 +25,10 @@
   "files": [
     "locale/*.json",
     "lib/index.js",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
   ],
   "license": "MIT",
   "peerDependencies": {
@@ -55,10 +58,11 @@
     "@tomato/tool-testkit": "workspace:*",
     "@tomato/tools": "workspace:*",
     "@tomato/web": "workspace:*",
+    "@tomato/web-deepseek-api": "workspace:*",
     "@tomato/web-fetch-http": "workspace:*",
-    "@tomato/web-search-exa": "workspace:*",
     "@types/turndown": "^5.0.6",
     "@tomato/scope": "workspace:*",
-    "@tomato/token-meter": "workspace:*"
+    "@tomato/token-meter": "workspace:*",
+    "@tomato/launch-environment": "workspace:*"
   }
 }

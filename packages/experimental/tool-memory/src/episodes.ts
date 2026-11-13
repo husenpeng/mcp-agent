@@ -15,7 +15,8 @@ import type { Session } from '@tomato/session'
 import { BlockAssembler, createUserMessage } from '@tomato/llm'
 import type { Message } from '@tomato/llm'
 import { deadline } from '@tomato/timeout'
-import type { MemoryView, RememberEpisodeRequest } from '@tomato/experimental-memory'
+import { normalizeIdentifier, normalizeStatement } from '@tomato/experimental-memory'
+import type { MemoryView, MemoryWorkspace, RememberEpisodeRequest } from '@tomato/experimental-memory'
 
 declare module '@tomato/session/types' {
   interface PluginRecordMap {
@@ -146,17 +147,20 @@ export function parseEpisodeReply(reply: string): EpisodeDraft | undefined {
   const parsed = draftSchema.safeParse(jsonObjectOf(reply))
   if (!parsed.success) return undefined
   const value = parsed.data
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(value.type)) return undefined
-  const subtitle = value.subtitle.trim()
+  const type = normalizeIdentifier(value.type)
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(type)) return undefined
+  const title = normalizeStatement(value.title)
+  if (title === '') return undefined
+  const subtitle = normalizeStatement(value.subtitle)
   return {
-    type: value.type,
-    title: value.title.trim(),
+    type,
+    title,
     ...subtitle === '' ? {} : { subtitle },
-    narrative: value.narrative,
-    facts: value.facts.filter(item => item.trim() !== ''),
-    concepts: value.concepts.filter(item => item.trim() !== ''),
-    filesRead: value.filesRead.filter(item => item.trim() !== ''),
-    filesModified: value.filesModified.filter(item => item.trim() !== ''),
+    narrative: normalizeStatement(value.narrative),
+    facts: value.facts.map(normalizeStatement).filter(item => item !== ''),
+    concepts: value.concepts.map(normalizeStatement).filter(item => item !== ''),
+    filesRead: value.filesRead.map(normalizeStatement).filter(item => item !== ''),
+    filesModified: value.filesModified.map(normalizeStatement).filter(item => item !== ''),
   }
 }
 
@@ -181,11 +185,13 @@ export interface EpisodeCaptureRequest {
   /** Agent whose Session owns the request and receives the plugin record. */
   readonly agent: Agent
   /** View of the owning Session. */
-  readonly view: MemoryView & { readonly workspace: string }
+  readonly view: MemoryView & { readonly workspace: MemoryWorkspace }
   /** The finished tool call. */
   readonly input: EpisodeCaptureInput
   /** Model call identity of the observed tool execution. */
   readonly toolCallId: string
+  /** Content fingerprint the caller already computed for sampling; absent computes it from the call. */
+  readonly fingerprint?: string
   /** Provider route to call. */
   readonly route: { readonly provider: string; readonly model: string }
   /** Request limits. */
@@ -203,7 +209,7 @@ export interface EpisodeCaptureRequest {
 export async function captureEpisode(ctx: Context, request: EpisodeCaptureRequest): Promise<EpisodeCaptureOutcome> {
   const { agent, input, route, limits, signal } = request
   const session: Session = agent.session
-  const fingerprint = fingerprintOf(input)
+  const fingerprint = request.fingerprint ?? fingerprintOf(input)
   const text = renderEpisodeInput(input)
   const record = (outcome: EpisodeCaptureOutcome): void => {
     appendPluginRecord(session, 'plugin:tool-memory/episode-capture', {
@@ -244,7 +250,7 @@ export async function captureEpisode(ctx: Context, request: EpisodeCaptureReques
   }
   const write: RememberEpisodeRequest = {
     owner: request.view.owner,
-    scope: { kind: 'project', path: request.view.workspace },
+    scope: { kind: 'project', workspaceId: request.view.workspace.id, path: request.view.workspace.path },
     kind: 'observation',
     type: draft.type,
     title: draft.title,

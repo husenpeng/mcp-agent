@@ -1,4 +1,4 @@
-// Tomato Market host half: reads the open DeepSeek Harness plugin catalog, its
+// Tomato Market host half: reads the open Tomato Harness plugin catalog, its
 // star counts, and one listed version's registry facts and README; serves the
 // bundled marketing catalog and installs its MCP and Skill entries. The browser
 // half reaches both over the authenticated `api/tomato-market` route and names
@@ -353,7 +353,7 @@ export function createMarket(config = {}, host = {}) {
       }
       return { status: 'none', runtimeVersion: runtime, requested: version, rejected }
     },
-    /** Convert one listed DeepSeek Harness version into a Tomato-installable tarball. */
+    /** Convert one listed Tomato Harness version into a Tomato-installable tarball. */
     async adapt(name, version) {
       const listed = await listedVersion(name, version)
       if (listed.source.type !== 'npm') throw new Error('only npm-published versions can be adapted')

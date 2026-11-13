@@ -21,6 +21,7 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@tomato/api-remotes` | no | Remote BFF assembly for application-selected Host capabilities |
 | `@tomato/api-robot-controller` | no | Robot Remote roster stream, specification publication, and run control for browser clients |
 | `@tomato/api-robot-crew-controller` | no | Crew Remote roster stream, specification publication, run start, and flow-ledger reads for browser clients |
+| `@tomato/api-robot-room-controller` | no | Robot Room Remote stream, publication, posting, approval, and message reads for browser clients |
 | `@tomato/api-session-controller` | yes | Session Remote commands, cold reads, and live control transport |
 | `@tomato/api-settings-controller` | yes | Remote owner for the configuration surfaces over the settings-domain seams |
 | `@tomato/api-terminal-controller` | yes | Session-owned interactive terminals with shell discovery, screen recovery and typed Remote control |
@@ -96,8 +97,9 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@tomato/client-ui-plugin-market` | no | Discover tab of the tomato web Plugins page: browse configured plugin market indexes and install their bundles |
 | `@tomato/client-ui-reference` | no | Unified Web @file and @session reference source |
 | `@tomato/client-ui-renderer` | no | Browser UI renderer: React slot bindings, ctx.uiRenderer, and the assembled application root |
-| `@tomato/client-ui-robot` | no | Tomato Rbot page: the robot roster in the sidebar, the robot specification editor, and a robot conversation surface separate from workspaces |
+| `@tomato/client-ui-robot` | no | Tomato Rbot page: the robot roster in the sidebar, the guided creation flow, the robot specification editor, and a robot conversation surface separate from workspaces |
 | `@tomato/client-ui-robot-crew` | no | Tomato Rbot crew studio: a multi-agent workflow canvas, node inspector, loop-guard settings, and live flow ledger |
+| `@tomato/client-ui-robot-room` | no | Robot Room page: durable group chat, member configuration, monitor, approvals, and loop-guard recovery |
 | `@tomato/client-ui-schedule` | no | Host task management page and Session reminder catalog |
 | `@tomato/client-ui-secret-mask` | no | Web display masking for recognized credentials in sent user text |
 | `@tomato/client-ui-session` | no | Session Controller adapter for React and session-scoped slots |
@@ -110,6 +112,7 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@tomato/client-ui-settings-models` | yes | Models settings and shared product-onboarding dialogs over existing settings and credential joins |
 | `@tomato/client-ui-settings-plugin-inventory` | no | Read-only Cordis Loader inventory tab in Web Plugins settings |
 | `@tomato/client-ui-settings-plugins` | no | Built-in plugins settings section for the tomato web client: the Settings navigation entry and the tab chrome feature-owned tabs register into |
+| `@tomato/client-ui-settings-remote` | no | Settings page that supervises the Desktop Host's phone tunnel and shows its pairing link and QR code |
 | `@tomato/client-ui-settings-session-log` | no | General settings control for Session-log upload with DeepSeek API requests |
 | `@tomato/client-ui-settings-shell` | no | Settings page of the shell executor on the tomato web client's Plugins page: the command timeout and the per-stream output cap of the shell namespace |
 | `@tomato/client-ui-settings-subagent` | no | Settings page of Subagent delegation on the tomato web client's Plugins page: recursion depth, parallel capacity, and the models agents may choose for subagents |
@@ -227,6 +230,8 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@tomato/experimental-robot-crew-remote` | no | Mounts the generated crew Remote contribution in an optional client assembly |
 | `@tomato/experimental-robot-local` | no | Storage-backed robot specification registry, instantiation, and run control |
 | `@tomato/experimental-robot-remote` | no | Mounts the generated robot Remote contribution in an optional client assembly |
+| `@tomato/experimental-robot-room-local` | yes | Storage-backed Robot Room provider: durable log, bounded wake scheduler, persistent member Sessions, and room tools |
+| `@tomato/experimental-robot-room-remote` | no | Mounts the generated room Remote contribution in an optional client assembly |
 | `@tomato/experimental-robot-runtime` | yes | Executes queued robot runs through a composed Agent and records their outcomes |
 | `@tomato/experimental-robot-templates-marketing` | no | Eleven creator-marketing robot templates and the skills they run: brand insight, influencer marketing, creative and competitor intelligence, and product selection and data insight for TikTok, Instagram, X, and YouTube |
 | `@tomato/experimental-robot-triggers` | no | Starts robot runs from cron schedules and robot event topics |

@@ -29,7 +29,7 @@ class MockDelegatingAdapter extends LlmAdapter {
       : ''
 
     if (!options.messages.some(message => message.role === 'tool')) {
-      const selectedRoute = process.env.TOMATO_TEST_CHILD_DEFAULT_ROUTE === '1'
+      const selectedRoute = process.env.TOMATO_TEST_CHILD_EFFORT_ONLY === '1'
         ? { reasoning_effort: 'max' }
         : { provider: 'mock', model: 'mock-routed', reasoning_effort: 'max' }
       const args = JSON.stringify({

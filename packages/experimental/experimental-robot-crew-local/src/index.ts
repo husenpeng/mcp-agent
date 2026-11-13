@@ -4,6 +4,7 @@
  * driven here, one Agent per node, until it settles or its guard trips.
  * @module @tomato/experimental-robot-crew-local
  */
+/* oxlint-disable typescript/require-await -- Reads answer synchronously from the storage domain; the crew interface returns promises. */
 
 import { randomUUID } from 'node:crypto'
 import { brandString } from '@tomato/branded'
@@ -74,7 +75,7 @@ export default class LocalCrews extends Crews {
     const issues = validateCrewSpec(spec)
     if (issues.length > 0) throw new CrewSpecValidationError(issues)
     return await this.serialized(async () => {
-      const frozen = deepFreeze(structuredClone(spec)) as CrewSpec
+      const frozen = deepFreeze(structuredClone(spec))
       const specId: CrewSpecId = previous === undefined ? brandString<CrewSpecId>(randomUUID()) : previous.spec
       let revision = 1
       if (previous !== undefined) {

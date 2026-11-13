@@ -16,6 +16,8 @@ import { describe, expect, it } from 'vitest'
 import { MemoryMediaPool, MemoryStorageBackend } from '../../../storage/storage-domain/tests/helpers/memory-backend.ts'
 import { apply, inject, name } from '../src/index.ts'
 
+
+
 const BASE = {
   name: 'Reviewer',
   description: 'Reviews changes',
@@ -40,6 +42,7 @@ const BASE = {
   capability: {
     tools: { allow: ['read'], deny: ['bash'] },
     mcpServers: [] as string[],
+    plugins: [] as string[],
     skills: [] as string[],
     workspaceRoots: ['/tmp/workspace'],
     dataClasses: ['internal'],
@@ -62,6 +65,12 @@ type TurnEndReason = SessionEvent<'turn/end'>['data']['reason']
 
 const copy = (): MutableSpec => structuredClone(BASE)
 
+/** A copy of the base specification that selects one model route. */
+const withModel = (provider: string, model: string): RobotSpec => ({
+  ...copy(),
+  goal: { ...copy().goal, model: { provider, model } },
+})
+
 type Script = (session: Session, message: UserMessage, agent: Agent) => void
 
 interface BenchOptions {
@@ -79,6 +88,10 @@ interface BenchOptions {
   skillRegistry?: boolean
   /** MCP servers the deployment has configured. */
   mcpServers?: readonly string[]
+  /** Fake LLM catalog; absent leaves the deployment with no LLM registry. */
+  llmModels?: readonly { readonly provider: string; readonly id: string; readonly blockedReason?: string }[]
+  /** Make the fake LLM catalog lookup fail with this message. */
+  llmError?: string
   /** Keep the first turn's Agent idle promise pending until its turn is cancelled. */
   hangAfterFirstTurn?: boolean
   /** Pause wait budget the composition configures, in milliseconds. */
@@ -167,6 +180,16 @@ async function bench(script: Script, options: BenchOptions = {}) {
       list: (scope?: unknown) => {
         expect(scope).toBeUndefined()
         return options.mcpServers
+      },
+    } as never)
+  }
+  if (options.llmModels !== undefined || options.llmError !== undefined) {
+    ctx.provide('llm', {
+      listModels: async (provider: string) => {
+        if (options.llmError !== undefined) throw new Error(options.llmError)
+        return (options.llmModels ?? [])
+          .filter(model => model.provider === provider)
+          .map(model => ({ ...model, name: model.id }))
       },
     } as never)
   }
@@ -336,6 +359,47 @@ describe('robot runtime', () => {
     }
   })
 
+
+  it('fails a run whose declared plugin is not active instead of running without it', async () => {
+    const spec = copy()
+    spec.capability.plugins = ['@tomato/active-plugin', '@tomato/disabled-plugin']
+    const test = await bench(completedText('unused'))
+    test.ctx.provide('pluginInventory', {
+      list: async () => ({
+        entries: [
+          { moduleName: '@tomato/active-plugin', enabled: true, fiberPhase: 'active' },
+          { moduleName: '@tomato/disabled-plugin', enabled: false, fiberPhase: 'active' },
+        ],
+      }),
+    } as never)
+    try {
+      const run = await startRun(test.ctx.robots, spec)
+      await expect(waitForRun(test.ctx.robots, run.id)).resolves.toMatchObject({
+        state: 'failed',
+        error: 'unavailable plugin: @tomato/disabled-plugin',
+      })
+      expect(test.created).toEqual([])
+    } finally {
+      await test.ctx.fiber.dispose()
+    }
+  })
+
+  it('fails a run that names a plugin when this deployment mounts no plugin inventory', async () => {
+    const spec = copy()
+    spec.capability.plugins = ['@tomato/active-plugin']
+    const test = await bench(completedText('unused'))
+    try {
+      const run = await startRun(test.ctx.robots, spec)
+      await expect(waitForRun(test.ctx.robots, run.id)).resolves.toMatchObject({
+        state: 'failed',
+        error: 'this deployment mounts no plugin inventory, so the selected plugins cannot be verified',
+      })
+      expect(test.created).toEqual([])
+    } finally {
+      await test.ctx.fiber.dispose()
+    }
+  })
+
   it('fails a run that names an MCP server when this deployment mounts no MCP registry', async () => {
     const spec = copy()
     spec.capability.mcpServers = ['github']
@@ -434,6 +498,88 @@ describe('robot runtime', () => {
       expect(test.filters).toEqual([{ allow: ['read'], deny: ['bash'] }])
       expect(test.presets).toEqual([])
       expect(test.created[0]?.meta).toEqual({ cwd: '/tmp/workspace' })
+      // A specification without a model override keeps the deployment default.
+      expect(test.created[0]?.agentOptions).toMatchObject({ provider: 'test-provider', model: 'test-model' })
+    } finally {
+      await test.ctx.fiber.dispose()
+    }
+  })
+
+  it('runs with the model the specification selects', async () => {
+    const spec = withModel('acme', 'acme-large')
+    const test = await bench(completedText('reviewed'), {
+      llmModels: [
+        { provider: 'acme', id: 'acme-large' },
+        { provider: 'acme', id: 'acme-policy', blockedReason: 'deployment policy' },
+      ],
+    })
+    try {
+      const run = await startRun(test.ctx.robots, spec)
+      await expect(waitForRun(test.ctx.robots, run.id)).resolves.toMatchObject({ state: 'succeeded' })
+      expect(test.created[0]?.agentOptions).toMatchObject({ provider: 'acme', model: 'acme-large' })
+    } finally {
+      await test.ctx.fiber.dispose()
+    }
+  })
+
+  it('fails a run whose selected model route is unavailable', async () => {
+    const spec = withModel('acme', 'withdrawn')
+    const test = await bench(completedText('unused'), { llmModels: [{ provider: 'acme', id: 'acme-large' }] })
+    try {
+      const run = await startRun(test.ctx.robots, spec)
+      await expect(waitForRun(test.ctx.robots, run.id)).resolves.toMatchObject({
+        state: 'failed',
+        error: 'robot model "acme/withdrawn" is unavailable in this deployment.'
+          + ' Republish the robot specification with a model this deployment advertises.',
+      })
+      expect(test.created).toEqual([])
+    } finally {
+      await test.ctx.fiber.dispose()
+    }
+  })
+
+  it('fails a run whose selected provider is unavailable', async () => {
+    const spec = withModel('retired', 'gone')
+    const test = await bench(completedText('unused'), { llmError: 'no adapter for retired' })
+    try {
+      const run = await startRun(test.ctx.robots, spec)
+      await expect(waitForRun(test.ctx.robots, run.id)).resolves.toMatchObject({
+        state: 'failed',
+        error: 'robot model provider "retired" is unavailable: no adapter for retired',
+      })
+      expect(test.created).toEqual([])
+    } finally {
+      await test.ctx.fiber.dispose()
+    }
+  })
+
+  it('fails a run whose selected model the deployment blocks', async () => {
+    const spec = withModel('acme', 'acme-policy')
+    const test = await bench(completedText('unused'), {
+      llmModels: [{ provider: 'acme', id: 'acme-policy', blockedReason: 'deployment policy' }],
+    })
+    try {
+      const run = await startRun(test.ctx.robots, spec)
+      await expect(waitForRun(test.ctx.robots, run.id)).resolves.toMatchObject({
+        state: 'failed',
+        error: 'robot model "acme/acme-policy" is blocked: deployment policy',
+      })
+      expect(test.created).toEqual([])
+    } finally {
+      await test.ctx.fiber.dispose()
+    }
+  })
+
+  it('fails a run that selects a model without an LLM registry', async () => {
+    const spec = withModel('acme', 'acme-large')
+    const test = await bench(completedText('unused'))
+    try {
+      const run = await startRun(test.ctx.robots, spec)
+      await expect(waitForRun(test.ctx.robots, run.id)).resolves.toMatchObject({
+        state: 'failed',
+        error: 'this deployment mounts no LLM registry, so the robot\'s selected model cannot be resolved',
+      })
+      expect(test.created).toEqual([])
     } finally {
       await test.ctx.fiber.dispose()
     }

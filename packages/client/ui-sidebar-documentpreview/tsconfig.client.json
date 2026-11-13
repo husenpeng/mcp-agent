@@ -12,19 +12,10 @@
   ],
   "references": [
     {
-      "path": "../../api/gateway/tsconfig.client.json"
-    },
-    {
       "path": "../../../vendor/cordis"
     },
     {
-      "path": "../../api/remotes/tsconfig.client.json"
-    },
-    {
       "path": "../../core/session"
-    },
-    {
-      "path": "../locale/tsconfig.client.json"
     },
     {
       "path": "../resources"
@@ -45,31 +36,50 @@
       "path": "../ui-session"
     },
     {
+      "path": "../ui-sidebar-files"
+    },
+    {
       "path": "../ui-sidebar-right"
     },
     {
       "path": "../ui-slots"
     },
     {
-      "path": "../../api/workspace-files/tsconfig.client.json"
-    },
-    {
       "path": "../../util/workspace-path"
-    },
-    {
-      "path": "../connection/tsconfig.client.json"
     },
     {
       "path": "../../../vendor/schemastery"
     },
     {
-      "path": "../../document/office-to-pdf"
-    },
-    {
-      "path": "../ui-settings/tsconfig.client.json"
+      "path": "../../document/office-kit"
     },
     {
       "path": "../ui-file-drag"
+    },
+    {
+      "path": "../ui-context-menu"
+    },
+    {
+      "path": "../../document/office-to-pdf"
+    },
+    {
+      "path": "../../api/gateway/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/remotes/tsconfig.client.json"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/workspace-files/tsconfig.client.json"
+    },
+    {
+      "path": "../connection/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-settings/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

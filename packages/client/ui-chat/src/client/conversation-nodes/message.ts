@@ -38,7 +38,7 @@ declare module '../contract/chat-nodes.ts' {
     steering: ReferencedSteeringMessageNode
     /** Non-user context injected into model history. */
     context: ContextMessageNode
-    /** Non-human input that starts a Turn. */
+    /** Recorded notification or manual continuation that starts a Turn. */
     'turn-trigger': ContextMessageNode
   }
 }
@@ -88,9 +88,6 @@ export const messageDefinition: ConversationNodeDefinition<MessageNode> = {
         ? { id: String(event.data.id), role: 'start' }
         : null
     }
-    if (event.type === 'conversation/retraction') {
-      return { id: String(event.data.messageId), role: 'update' }
-    }
     return null
   },
   start: (_context, match, reader) => {
@@ -136,22 +133,19 @@ export const messageDefinition: ConversationNodeDefinition<MessageNode> = {
         source: event.data.source,
       }
   },
-  update: (context, match) => {
-    if (match.event.type !== 'conversation/retraction') return context.state
-    const start = context.start
-    if (start?.event.type !== 'user/message'
-      || context.state.kind !== 'user'
-      || start.event.seq !== match.event.data.startSeq) return context.state
-    return { ...context.state, retracted: true }
-  },
+  update: context => context.state,
   buildViewNode: (context) => {
     if (context.state === undefined) return null
+    const location = contextLocation(context)
+    if (context.state.kind === 'context' && context.start?.event.type === 'user/message'
+      && context.start.event.data.source.kind === 'retry' && context.start.event.data.content.length === 0) {
+      return chatNode(context, 'turn-trigger', context.state.seq, context.state, { location, groupTree: 'input' })
+    }
     const waking = context.state.kind === 'context'
       && context.start?.event.type === 'user/message'
       && context.state.waking === true
     // Human input claimed for Step 1 opens an exchange; Notice-woken Turns and
     // later steering stay in the current exchange, so they never fold earlier Turns.
-    const location = contextLocation(context)
     const human = context.state.kind === 'user' || context.state.kind === 'steering'
     const opensExchange = human && location.kind === 'step' && location.step.step === 1
     return chatNode(

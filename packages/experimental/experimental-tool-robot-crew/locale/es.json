@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Herramienta de equipos de robots",
+    "description": "Herramienta para el modelo que crea un grafo de equipo multiagente a partir de una conversación."
+  }
+}

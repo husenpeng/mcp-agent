@@ -52,6 +52,12 @@
     },
     {
       "path": "../../session/session-projection"
+    },
+    {
+      "path": "../../host/plugin-inventory"
+    },
+    {
+      "path": "../../preset/agent-preset-registry"
     }
   ]
 }

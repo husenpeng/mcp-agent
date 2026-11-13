@@ -29,7 +29,6 @@
 import type {
   Api,
   AuthContext,
-  CacheRetention,
   CredentialStore,
   Model,
   Models,
@@ -62,7 +61,10 @@ import { idleWatchdog, timeoutOf } from '@tomato/timeout'
 import type { ResolvedModelPolicy, ResolvedPiAiProviderProfile } from './config.ts'
 import { requestImageTarget, toPiContext } from './context.ts'
 import { conversationUpdates, createModels, getSupportedThinkingLevels } from './models.ts'
-import { toStreamChunks, toolsReasoningConflict } from './stream.ts'
+import { toStreamChunks } from './stream.ts'
+import { bindThinkingToPrefix } from './prefix-binding.ts'
+import type { PrefixDigests } from './prefix-binding.ts'
+import type { PiAiRequestHeaderContext } from './types.ts'
 
 /**
  * Initially active declaration added to an Anthropic request whose projected
@@ -111,6 +113,18 @@ export interface PiAiAdapterOptions {
    * every request no matter how often the human signed in.
    */
   auth: PiAiAuthInjection
+  /**
+   * Synchronously prepare this call's headers before SDK dispatch. The input
+   * contains a fresh copy of profile headers; attribution is enforced afterward.
+   * Omission preserves profile headers. Throws fail the call with REQUEST_HEADERS
+   * before inference I/O. Do not retain or mutate headers after returning.
+   * Non-TypeError messages become public diagnostics and must exclude secrets;
+   * TypeError details and non-Error values are replaced with safe guidance.
+   * @param request - immutable routing metadata from the prepared call.
+   * @param headers - request-owned headers initialized from the profile.
+   * @returns headers to pass to pi-ai after applying Harness attribution.
+   */
+  prepareHeaders?: (request: PiAiRequestHeaderContext, headers: Headers) => Headers
   /** Resolve the optional durable attachment service at request time. */
   resolveAttachments?: () => AttachmentStore | undefined
   /** Bridge one attachment reference into the current model-tool execution world. */
@@ -121,19 +135,12 @@ export interface PiAiAdapterOptions {
    */
   onReplayDegrade?: (detail: { provider: string; model: string; reason: string }) => void
   /**
-   * Observe one request that carried no reasoning effort because this route's
-   * endpoint refuses function tools beside one. `declared` means the profile
-   * said so; `learned` means a previous attempt was refused and the adapter
-   * remembers that for the rest of the process.
+   * Observe one request that sent replayed assistant messages without their
+   * signed Anthropic thinking because the request prefix changed or was never
+   * recorded. Stale messages stay omitted, so later requests of the
+   * conversation report them again.
    */
-  onCapabilityDegrade?: (detail: {
-    provider: string
-    model: string
-    capability: 'tools-with-reasoning'
-    requested?: string
-    applied: 'off'
-    reason: 'declared' | 'learned'
-  }) => void
+  onThinkingOmitted?: (detail: { provider: string; model: string; count: number }) => void
 }
 
 /** The two auth injectables a pi-ai collection is built with. */
@@ -149,14 +156,13 @@ function profileOptions(
   profile: ResolvedPiAiProviderProfile,
   reasoning: ModelThinkingLevel | undefined,
   apiKey: string | undefined,
-  cacheRetention: CacheRetention | undefined,
 ): SimpleStreamOptions {
   const enabledReasoning: ThinkingLevel | undefined = reasoning === 'off' ? undefined : reasoning
   return {
     ...apiKey === undefined ? {} : { apiKey },
     ...enabledReasoning === undefined ? {} : { reasoning: enabledReasoning },
     ...profile.thinkingBudgets === undefined ? {} : { thinkingBudgets: profile.thinkingBudgets },
-    ...cacheRetention === undefined ? {} : { cacheRetention },
+    ...profile.cacheRetention === undefined ? {} : { cacheRetention: profile.cacheRetention },
     ...profile.transport === undefined ? {} : { transport: profile.transport },
     ...profile.timeoutMs === undefined ? {} : { timeoutMs: profile.timeoutMs },
     ...profile.websocketConnectTimeoutMs === undefined ? {} : { websocketConnectTimeoutMs: profile.websocketConnectTimeoutMs },
@@ -235,13 +241,42 @@ function reasoningInfo(
   }
 }
 
-/** Merge deployment headers while removing case-insensitive attribution collisions. */
-function requestHeaders(headers: Readonly<Record<string, string>> | undefined): Record<string, string> {
-  const attribution = attributionHeaders()
-  const reserved = new Set(Object.keys(attribution).map(name => name.toLowerCase()))
-  return {
-    ...Object.fromEntries(Object.entries(headers ?? {}).filter(([name]) => !reserved.has(name.toLowerCase()))),
-    ...attribution,
+/** Native header TypeErrors can echo credentials; other plugin errors own their public message. */
+function requestHeaderDiagnostic(error: unknown): string {
+  if (error instanceof TypeError) {
+    return 'TypeError during header preparation; check the contributing plugin\'s header names, values, and configuration'
+  }
+  return error instanceof Error
+    ? error.message
+    : 'the contributing plugin threw a non-Error value; throw an Error with a safe diagnostic'
+}
+
+/** Prepare request-owned headers without allowing contributors to replace attribution. */
+function requestHeaders(
+  configured: Readonly<Record<string, string>> | undefined,
+  options: GenerateOptions<string>,
+  baseURL: string,
+  prepare: PiAiAdapterOptions['prepareHeaders'],
+): Record<string, string> {
+  try {
+    const initial = new Headers()
+    // Profile aliases overwrite case-insensitively; the Headers constructor appends them.
+    for (const [name, value] of Object.entries(configured ?? {})) initial.set(name, value)
+    const request: PiAiRequestHeaderContext = Object.freeze({
+      provider: options.provider,
+      model: options.model,
+      baseURL,
+      ...options.sessionId === undefined ? {} : { sessionId: options.sessionId },
+      ...options.purpose === undefined ? {} : { purpose: options.purpose },
+    })
+    const headers = prepare === undefined ? initial : prepare(request, initial)
+    for (const [name, value] of Object.entries(attributionHeaders())) headers.set(name, value)
+    return Object.fromEntries(headers)
+  } catch (error) {
+    throw new LlmError(
+      `pi-ai request header preparation failed for provider "${options.provider}": ${requestHeaderDiagnostic(error)}`,
+      'REQUEST_HEADERS', { cause: error },
+    )
   }
 }
 
@@ -252,14 +287,6 @@ function requestHeaders(headers: Readonly<Record<string, string>> | undefined): 
  */
 export class PiAiAdapter extends LlmAdapter {
   private snapshot: PiAiSnapshot | undefined
-  /**
-   * Route/model pairs whose endpoint refused function tools beside a reasoning
-   * effort in this process. Process-scoped because it is an observation about a
-   * running endpoint, not a durable fact: the next process probes it again.
-   */
-  private readonly learnedToolsReasoning = new Set<string>()
-  /** Degradations already reported, so a long session warns once per fact. */
-  private readonly reportedDegrades = new Set<string>()
 
   constructor(private readonly config: PiAiAdapterOptions) {
     super()
@@ -424,89 +451,12 @@ export class PiAiAdapter extends LlmAdapter {
     const request = needsPlaceholder
       ? { ...options, tools: [ANTHROPIC_TOOL_UPDATE_PLACEHOLDER, ...tools] }
       : options
-    const requestedReasoning = resolveReasoningLevel(model, options.reasoningEffort ?? profile.reasoning)
+    const reasoning = resolveReasoningLevel(
+      model,
+      options.reasoningEffort ?? profile.reasoning,
+    )
     const apiKey = await this.config.resolveApiKey(options.provider, profile)
-    const capabilityKey = `${options.provider}\u0000${options.model}`
-    const reason = this.capabilityReason(options.provider, options.model, profile)
-    // A prompt-cache retention the model declared wins over the route's, which
-    // is one value for the whole route and cannot describe a route mixing a
-    // cached native route with an uncached gateway model.
-    const cacheRetention = profile.configuredCacheRetention.get(options.model) ?? profile.cacheRetention
 
-    let reasoning = requestedReasoning
-    if (tools.length > 0 && reasoning !== undefined && reasoning !== 'off' && reason !== undefined) {
-      // The endpoint refused this pairing before, or the deployment declared it
-      // refused: sending the effort again would spend a billed request and a
-      // failed turn on an answer already known.
-      reasoning = 'off'
-      this.reportCapabilityDegrade(options, reason, requestedReasoning)
-    }
-
-    // One retry at most. A second failure is reported as the provider's own.
-    for (let attempt = 1; ; attempt += 1) {
-      let conflicted = false
-      let produced = false
-      for await (const chunk of this.streamAttempt(
-        options, snapshot, profile, model, request, updates, reasoning, apiKey, cacheRetention,
-      )) {
-        if (chunk.type === 'finish') {
-          // Only an attempt that produced nothing may be retried: replaying a
-          // stream whose text already reached the transcript would duplicate it.
-          if (attempt === 1 && !produced && toolsReasoningConflict(chunk.reason) !== undefined) {
-            conflicted = true
-            break
-          }
-        } else if (chunk.type !== 'usage') produced = true
-        yield chunk
-      }
-      if (!conflicted) return
-      this.learnedToolsReasoning.add(capabilityKey)
-      this.reportCapabilityDegrade(options, 'learned')
-      reasoning = 'off'
-    }
-  }
-
-  /** Why this model's tools cannot travel beside a reasoning effort, when they cannot. */
-  private capabilityReason(provider: string, model: string, profile: ResolvedPiAiProviderProfile): 'declared' | 'learned' | undefined {
-    if (profile.configuredToolsWithReasoning.get(model) === 'never') return 'declared'
-    return this.learnedToolsReasoning.has(`${provider}\u0000${model}`) ? 'learned' : undefined
-  }
-
-  /** Report one request that dropped its reasoning effort, once per route, model, and reason. */
-  private reportCapabilityDegrade(
-    options: GenerateOptions,
-    reason: 'declared' | 'learned',
-    requested?: string,
-  ): void {
-    const key = `${options.provider}\u0000${options.model}\u0000${reason}`
-    if (this.reportedDegrades.has(key)) return
-    this.reportedDegrades.add(key)
-    this.config.onCapabilityDegrade?.({
-      provider: options.provider,
-      model: options.model,
-      capability: 'tools-with-reasoning',
-      applied: 'off',
-      reason,
-      ...requested === undefined ? {} : { requested },
-    })
-  }
-
-  /**
-   * One provider attempt: convert the request, call pi-ai, and translate its
-   * stream. Every attempt owns its abort controller and idle watchdog, because
-   * a retry cannot reuse a signal a previous attempt already aborted.
-   */
-  private async * streamAttempt(
-    options: GenerateOptions,
-    snapshot: PiAiSnapshot,
-    profile: ResolvedPiAiProviderProfile,
-    model: Model<Api>,
-    request: GenerateOptions,
-    updates: ReturnType<typeof conversationUpdates>,
-    reasoning: ModelThinkingLevel | undefined,
-    apiKey: string | undefined,
-    cacheRetention: CacheRetention | undefined,
-  ): AsyncIterable<StreamChunk> {
     const consumer = new AbortController()
     const upstream = options.signal === undefined
       ? consumer.signal
@@ -526,28 +476,34 @@ export class PiAiAdapter extends LlmAdapter {
       const onReplayDegrade = (reason: string): void => {
         this.config.onReplayDegrade?.({ provider: options.provider, model: options.model, reason })
       }
-      const context = attachments === undefined
-        ? toPiContext(request, undefined, onReplayDegrade, updates.systemPromptUpdate === 'in-history')
+      const prefixDigests: PrefixDigests = new Map()
+      const converted = attachments === undefined
+        ? toPiContext(request, undefined, onReplayDegrade, updates.systemPromptUpdate === 'in-history', prefixDigests)
         : await toPiContext({ ...request, signal: watchdog.signal }, {
           attachments,
           resolveImageAccess: ref => this.config.resolveImageAccess?.(attachments, ref),
           maxRequestImageBytes: profile.maxRequestImageBytes,
+          maxRequestImages: profile.maxRequestImages,
+          imageOffloadCountQuantum: profile.imageOffloadCountQuantum,
           requestImagePolicy: {
             maxPixels: profile.requestImagePixelBudget,
             maxBytes: profile.requestImageMaxBytes,
           },
-        }, onReplayDegrade, updates.systemPromptUpdate === 'in-history')
+        }, onReplayDegrade, updates.systemPromptUpdate === 'in-history', prefixDigests)
+      const manualThinking = model.reasoning && reasoning !== undefined && reasoning !== 'off'
+        && (model as Model<'anthropic-messages'>).compat?.forceAdaptiveThinking !== true
+      const { context, digest } = bindThinkingToPrefix(converted, model.api, prefixDigests, manualThinking, (count) => {
+        this.config.onThinkingOmitted?.({ provider: options.provider, model: options.model, count })
+      })
       const events = snapshot.models.streamSimple(model, context, {
-        ...profileOptions(profile, reasoning, apiKey, cacheRetention),
+        ...profileOptions(profile, reasoning, apiKey),
         ...options.temperature === undefined ? {} : { temperature: options.temperature },
         ...options.maxTokens === undefined ? {} : { maxTokens: options.maxTokens },
         ...options.sessionId === undefined ? {} : { sessionId: String(options.sessionId) },
         signal: watchdog.signal,
-        // Profile headers are deployment-owned; attribution names are
-        // Harness-owned and therefore win collisions.
-        headers: requestHeaders(profile.headers),
+        headers: requestHeaders(profile.headers, options, model.baseUrl, this.config.prepareHeaders),
       })
-      const iterator = toStreamChunks(events, model.contextWindow, options.signal, model.id)[Symbol.asyncIterator]()
+      const iterator = toStreamChunks(events, model.contextWindow, options.signal, model.id, digest)[Symbol.asyncIterator]()
       let exhausted = false
       try {
         while (true) {

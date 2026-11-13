@@ -445,7 +445,7 @@ test('parseBing reads real result pages and decodes Bing redirect links', () => 
   assert.deepEqual(en.sources[1], {
     url: 'https://github.com/deepseek-ai/deepseek-harness/releases',
     title: 'Releases · deepseek-ai/deepseek-harness - GitHub',
-    snippet: 'DeepSeek Harness: Everything is a Plugin. Contribute to deepseek-ai/deepseek-harness development by creating an account on …',
+    snippet: 'Tomato Harness: Everything is a Plugin. Contribute to deepseek-ai/deepseek-harness development by creating an account on …',
   })
   const zh = parseBing(fixture('bing-zh.html'))
   assert.equal(zh.sources[0].title, '上海市 - 维基百科，自由的百科全书')
@@ -466,7 +466,7 @@ test('decodeBingUrl keeps direct links and drops undecodable Bing links', () => 
 test('parseDuckDuckGo skips ads and recognizes the bot check', () => {
   const { sources } = parseDuckDuckGo(fixture('duckduckgo.html'))
   assert.deepEqual(sources, [
-    { url: 'https://github.com/deepseek-ai/deepseek-harness', title: 'DeepSeek Harness · GitHub', snippet: 'Everything is a plugin: an agent harness & runtime.' },
+    { url: 'https://github.com/deepseek-ai/deepseek-harness', title: 'Tomato Harness · GitHub', snippet: 'Everything is a plugin: an agent harness & runtime.' },
     { url: 'https://api-docs.deepseek.com/zh-cn/', title: 'DeepSeek API 文档', snippet: 'DeepSeek API 使用与 OpenAI/Anthropic 兼容的格式…' },
   ])
   assert.deepEqual(parseDuckDuckGo('<p>Unfortunately, bots use DuckDuckGo too.</p>'), { error: 'bot check page' })

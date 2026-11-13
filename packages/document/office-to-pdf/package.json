@@ -43,7 +43,12 @@
     "lib/typert.host.js",
     "lib/typert.host.d.ts",
     "lib/typert.remote-client.js",
-    "lib/typert.remote-client.d.ts"
+    "lib/typert.remote-client.d.ts",
+    "lib/**/*.js.map",
+    "lib/types/**/*.d.ts.map",
+    "lib/typert.host.d.ts.map",
+    "lib/typert.remote-client.d.ts.map",
+    "src"
   ],
   "peerDependencies": {
     "@tomato/cordis": "workspace:~"
@@ -57,10 +62,10 @@
     "@tomato/session": "workspace:*"
   },
   "dependencies": {
-    "@deepseek-ai/libreoffice-kit": "^0.1.5",
     "@tomato/schemastery": "workspace:~",
     "@tomato/branded": "workspace:*",
     "@tomato/typert-protocol": "workspace:*",
-    "zod": "4.4.3"
+    "zod": "4.4.3",
+    "@deepseek-ai/libreoffice-kit": "0.2.3"
   }
 }

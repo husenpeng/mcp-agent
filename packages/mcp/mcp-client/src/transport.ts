@@ -10,7 +10,6 @@ import type { Transport } from '@modelcontextprotocol/client'
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/client'
 import { scrubbedParentEnv } from '@tomato/subprocess'
-import { headersApplyingFetch } from './request-headers.ts'
 import type { Config } from './index.ts'
 
 /**
@@ -27,7 +26,7 @@ function buildChildEnv(extra: Record<string, string>): Record<string, string> {
  * Create an MCP transport from the resolved plugin config.
  *
  * @param config - Resolved plugin config discriminated on `transport`.
- * @returns A connected-ready MCP Transport (stdio or Streamable HTTP).
+ * @returns an unstarted MCP transport (stdio or Streamable HTTP).
  */
 export function createTransport(config: Config): Transport {
   switch (config.transport) {
@@ -41,12 +40,7 @@ export function createTransport(config: Config): Transport {
     case 'streamable-http':
       return new StreamableHTTPClientTransport(
         new URL(config.url),
-        {
-          requestInit: { headers: config.headers },
-          // Per-call identity travels through an async scope the tool bridge
-          // opens around one `tools/call`; connection-time requests see none.
-          ...config.requestHeaders === undefined ? {} : { fetch: headersApplyingFetch() },
-        },
+        { requestInit: { headers: config.headers } },
       )
   }
 }

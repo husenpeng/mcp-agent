@@ -1,7 +1,7 @@
 {
   "name": "@tomato/terminal",
   "description": "Persistent PTY session seam for the Tomato Harness — owner-scoped ids, backend registry, interactive sends, reads, signals, and awaited cleanup",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -25,18 +25,23 @@
   "files": [
     "locale/*.json",
     "lib/index.js",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
   ],
   "license": "MIT",
   "peerDependencies": {
     "@tomato/agent": "workspace:*",
     "@tomato/branded": "workspace:*",
+    "@tomato/error": "workspace:*",
     "@tomato/cordis": "workspace:~"
   },
   "devDependencies": {
     "@tomato/agent": "workspace:*",
     "@tomato/agent-loop-testkit": "workspace:*",
     "@tomato/branded": "workspace:*",
+    "@tomato/error": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/cordis": "workspace:~"
   }

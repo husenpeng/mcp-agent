@@ -37,6 +37,9 @@
     },
     {
       "path": "../../util/branded"
+    },
+    {
+      "path": "../../workspace/workspace"
     }
   ]
 }

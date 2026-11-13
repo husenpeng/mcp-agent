@@ -1,15 +1,15 @@
 #!/bin/sh
-# Mock test bench: the scripted mock model (dev/mock-llm.mjs) plus a dsh web whose profile
+# Mock test bench: the scripted mock model (dev/mock-llm.mjs) plus a tomato web whose profile
 # links the plugin to this checkout, so edits need no reinstall (host code needs a restart;
 # src/client needs `npm run build` and a page reload).
 #
 #   dev/bench.sh <name> <web-port> <mock-port> [start|stop|reset|status]
 #
-# Data lives in <checkout>/.dsh-test-<name>; `reset` wipes its Bot team and Sessions before
+# Data lives in <checkout>/.tomato-test-<name>; `reset` wipes its Bot team and Sessions before
 # starting. Processes are tracked by pid files and stopped by process group, never by name.
 # Environment: CONTEXT_WINDOW (the mock models' context window, in tokens, with an 8,000
 # token reply; default: the adapter's own), CHECK_RATIO (the plugin's checkRatio), MOCK_DELAY_MS,
-# DSH_HARNESS (the deepseek-harness checkout; default: beside this checkout, else at the
+# TOMATO_HARNESS (the deepseek-harness checkout; default: beside this checkout, else at the
 # same place in the main worktree).
 set -eu
 NAME=${1:?usage: bench.sh <name> <web-port> <mock-port> [start|stop|reset|status]}
@@ -21,20 +21,20 @@ if [ "$WEB_PORT" = 3080 ]; then echo "port 3080 belongs to the real service" >&2
 
 PLUGIN="$(cd "$(dirname "$0")/.." && pwd)"
 ROOT="$(dirname "$PLUGIN")"
-HOME_DIR="$ROOT/.dsh-test-$NAME"
-if [ -z "${DSH_HARNESS:-}" ]; then
-  DSH_HARNESS="$ROOT/deepseek-harness"
-  if [ ! -d "$DSH_HARNESS" ]; then
+HOME_DIR="$ROOT/.tomato-test-$NAME"
+if [ -z "${TOMATO_HARNESS:-}" ]; then
+  TOMATO_HARNESS="$ROOT/deepseek-harness"
+  if [ ! -d "$TOMATO_HARNESS" ]; then
     MAIN="$(dirname "$(git -C "$ROOT" rev-parse --path-format=absolute --git-common-dir)")/$(git -C "$ROOT" rev-parse --show-prefix)"
-    DSH_HARNESS="${MAIN%/}/deepseek-harness"
+    TOMATO_HARNESS="${MAIN%/}/deepseek-harness"
   fi
-  [ -d "$DSH_HARNESS" ] || DSH_HARNESS="$(dirname "$(git -C "$ROOT" rev-parse --path-format=absolute --git-common-dir)")/deepseek-harness"
+  [ -d "$TOMATO_HARNESS" ] || TOMATO_HARNESS="$(dirname "$(git -C "$ROOT" rev-parse --path-format=absolute --git-common-dir)")/deepseek-harness"
 fi
 
 alive() { [ -f "$HOME_DIR/$1.pid" ] && kill -0 "-$(cat "$HOME_DIR/$1.pid")" 2>/dev/null; }
 
 # Each process runs in its own session (setsid), so its pid is also its process group, which
-# outlives it: pnpm exits before the dsh it started. The process writes its own pid: the `$!`
+# outlives it: pnpm exits before the tomato it started. The process writes its own pid: the `$!`
 # of a background job is the subshell that runs setsid, not the session leader it forks, so
 # it cannot name the group to keep and stop. dash's kill takes no `--`.
 stop_one() {
@@ -54,14 +54,14 @@ ensure_profile() {
   mkdir -p "$profile"
   cat > "$profile/package.json" <<EOF
 {
-  "name": "dsh-profile-web",
+  "name": "tomato-profile-web",
   "private": true,
   "dependencies": { "ds-bot": "link:$PLUGIN" },
-  "dsh": { "profile": { "bundles": ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app", "ds-bot"] } }
+  "tomato": { "profile": { "bundles": ["@tomato/base", "@tomato/web-app", "ds-bot"] } }
 }
 EOF
   printf 'packages:\n  - .\n\nnodeLinker: hoisted\nautoInstallPeers: false\n' > "$profile/pnpm-workspace.yaml"
-  (cd "$profile" && DSH_HOME="$HOME_DIR" pnpm install >/dev/null)
+  (cd "$profile" && TOMATO_HOME="$HOME_DIR" pnpm install >/dev/null)
 }
 
 # Bench-only plugin config, layered over the profile with --patch.
@@ -98,18 +98,18 @@ start() {
   if ! alive web; then
     log="$HOME_DIR/web.log"
     rm -f "$log" "$HOME_DIR/web.pid"
-    (cd "$DSH_HARNESS" && DSH_HOME="$HOME_DIR" DEEPSEEK_BASE_URL="http://127.0.0.1:$MOCK_PORT/v1" DEEPSEEK_API_KEY=mock-key \
+    (cd "$TOMATO_HARNESS" && TOMATO_HOME="$HOME_DIR" DEEPSEEK_BASE_URL="http://127.0.0.1:$MOCK_PORT/v1" DEEPSEEK_API_KEY=mock-key \
       exec setsid sh -c 'set -eu; echo $$ >"$1"; shift; exec "$@"' sh "$HOME_DIR/web.pid" \
-      pnpm -s dsh --profile web --patch apps/web/tests/pin-browse-picker.overlay.yml --patch "$HOME_DIR/bench.patch.yml" \
+      pnpm -s tomato --profile web --patch apps/web/tests/pin-browse-picker.overlay.yml --patch "$HOME_DIR/bench.patch.yml" \
       --no-open --port "$WEB_PORT") </dev/null >"$log" 2>&1 &
-    # The process writes its own pid just before dsh starts; wait for that file so a
+    # The process writes its own pid just before tomato starts; wait for that file so a
     # start still in progress is not read as an exit.
     i=0
     while [ ! -f "$HOME_DIR/web.pid" ] && [ $i -lt 50 ]; do i=$((i + 1)); sleep 0.1; done
     i=0
-    until grep -q "dsh web: http" "$log" 2>/dev/null; do
+    until grep -q "tomato web: http" "$log" 2>/dev/null; do
       i=$((i + 1))
-      if [ $i -gt 120 ] || ! alive web; then echo "dsh web did not start; see $log" >&2; tail -20 "$log" | grep -v 'token=' >&2; exit 1; fi
+      if [ $i -gt 120 ] || ! alive web; then echo "tomato web did not start; see $log" >&2; tail -20 "$log" | grep -v 'token=' >&2; exit 1; fi
       sleep 1
     done
   fi

@@ -9,12 +9,6 @@
   ],
   "references": [
     {
-      "path": "../locale/tsconfig.client.json"
-    },
-    {
-      "path": "../connection/tsconfig.client.json"
-    },
-    {
       "path": "../../../vendor/cordis"
     },
     {
@@ -22,9 +16,6 @@
     },
     {
       "path": "../ui-commands"
-    },
-    {
-      "path": "../ui-conversation/tsconfig.client.json"
     },
     {
       "path": "../ui-primitives"
@@ -45,6 +36,15 @@
       "path": "../../interaction/permission-presets"
     },
     {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
+      "path": "../connection/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-conversation/tsconfig.client.json"
+    },
+    {
       "path": "../../api/remotes/tsconfig.client.json"
     },
     {
@@ -53,5 +53,6 @@
     {
       "path": "../ui-settings/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

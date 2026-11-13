@@ -6,6 +6,7 @@
 
 import type { Branded } from '@tomato/branded'
 import type { FileAttachmentRef, ImageAttachmentRef } from '@tomato/attachment'
+import type { LocalizedText } from '@tomato/package-manifest'
 import type { MessageId, ToolCallId, ProviderRequestId, ReasoningEffortId } from './brand.ts'
 import type { Message, UserMessage } from './message.ts'
 
@@ -21,6 +22,12 @@ declare module '@tomato/cordis' {
      * @mode emit
      */
     'llm/adapters-updated'(): void
+    /**
+     * A provider's advertised models or display metadata changed; consumers reload `listModels()`.
+     * @mode emit
+     * @param provider - route whose model catalog changed.
+     */
+    'llm/models-updated'(provider: string): void
   }
 }
 
@@ -344,6 +351,20 @@ export interface LlmDiscoveredModel {
   inputModalities?: readonly ModelModality[]
 }
 
+/**
+ * Emphasis of a model badge: `neutral` states a plain fact, `info` highlights
+ * the model, `success` marks a benefit, and `warning` asks for attention.
+ */
+export type LlmModelBadgeTone = 'neutral' | 'info' | 'success' | 'warning'
+
+/** Short provider-authored label a selector shows beside one advertised model name. */
+export interface LlmModelBadge {
+  /** One literal, or translations keyed by lowercase language id with a required English entry. */
+  text: LocalizedText
+  /** Emphasis of the label. */
+  tone: LlmModelBadgeTone
+}
+
 /** One adapter-discovered model; catalog membership is advisory, not request validation. */
 export interface LlmModelInfo {
   /** Provider route that owns this model entry. */
@@ -362,6 +383,8 @@ export interface LlmModelInfo {
    * disabled row while {@link LlmRuntime.stream} refuses to call it.
    */
   blockedReason?: string
+  /** Provider-authored label shown beside the name; display data only. */
+  badge?: LlmModelBadge
 }
 
 /** Provider-owned context capacity for one exact provider/model route. */
@@ -531,8 +554,14 @@ export interface ToolHistory {
   }[]
 }
 
+/** Auxiliary request purposes declared by their producer packages. */
+export interface LlmRequestPurposeMap {}
+
+/** Declared auxiliary request purpose; ordinary conversation requests leave it absent. */
+export type LlmRequestPurpose = Extract<keyof LlmRequestPurposeMap, string>
+
 /** A single model request, fully assembled. */
-export interface GenerateOptions {
+export interface GenerateOptions<Purpose extends string = LlmRequestPurpose> {
   /** Registered provider route selecting the adapter instance. */
   provider: string
   model: string
@@ -573,5 +602,5 @@ export interface GenerateOptions {
    * map the purpose to model-hidden transport metadata. Ordinary conversation
    * requests leave it unset.
    */
-  purpose?: 'compaction' | 'session-title'
+  purpose?: Purpose
 }

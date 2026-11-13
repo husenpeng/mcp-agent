@@ -1,0 +1,91 @@
+{
+  "name": "@tomato/experimental-forge-session",
+  "description": "Binds change requests to the Session that created, pushed, or tracked them",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts"
+    },
+    "./locale/*.json": "./locale/*.json",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/experimental/forge-session"
+  },
+  "dependencies": {
+    "@tomato/timeout": "workspace:*",
+    "@tomato/util-values": "workspace:*",
+    "@tomato/schemastery": "workspace:~",
+    "shell-quote": "^1.12.0",
+    "zod": "4.6.6"
+  },
+  "peerDependencies": {
+    "@tomato/cordis": "workspace:~",
+    "@tomato/experimental-forge": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/shell": "workspace:*",
+    "@tomato/shell-env": "workspace:*",
+    "@tomato/tools": "workspace:*",
+    "@tomato/sandbox-policy": "workspace:*"
+  },
+  "devDependencies": {
+    "@tomato/cordis": "workspace:~",
+    "@tomato/cordis-plugin-include": "workspace:~",
+    "@tomato/cordis-plugin-loader": "workspace:~",
+    "@tomato/agent": "workspace:*",
+    "@tomato/agent-loop": "workspace:*",
+    "@tomato/bash-local": "workspace:*",
+    "@tomato/experimental-forge": "workspace:*",
+    "@tomato/experimental-forge-github": "workspace:*",
+    "@tomato/fs-local": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/shell-env": "workspace:*",
+    "@tomato/subprocess-local": "workspace:*",
+    "@tomato/system-prompt": "workspace:*",
+    "@tomato/tool-bash": "workspace:*",
+    "@tomato/tool-executor-native": "workspace:*",
+    "@tomato/tools": "workspace:*",
+    "@tomato/working-directory": "workspace:*",
+    "@tomato/shell": "workspace:*",
+    "@tomato/sandbox-policy": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@tomato/shell": {
+      "optional": true
+    },
+    "@tomato/shell-env": {
+      "optional": true
+    },
+    "@tomato/tools": {
+      "optional": true
+    },
+    "@tomato/sandbox-policy": {
+      "optional": true
+    }
+  }
+}

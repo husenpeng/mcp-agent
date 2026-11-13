@@ -31,7 +31,6 @@ import * as ToolFsSearch from '@tomato/tool-fs-search'
 import {
   buildGlobCommand,
   buildGrepCommand,
-  parseGlobArgs,
   formatGrepMatches,
   parseGrepMatches,
   presentGlobCall,
@@ -260,6 +259,12 @@ describe('registration', () => {
     expect(glob?.description).toContain('sampled across top-level entries')
   })
 
+  it('declares glob and grep parallel-safe', async () => {
+    const { ctx } = await setup()
+    expect(ctx.tools.get('glob')?.isConcurrencySafe?.({ pattern: '*.ts' })).toBe(true)
+    expect(ctx.tools.get('grep')?.isConcurrencySafe?.({ pattern: 'x' })).toBe(true)
+  })
+
   it('stays pending until ctx.subprocess exists (inject)', async () => {
     const ctx = new Context()
     provideWorkingDirectoryFixture(ctx)
@@ -367,33 +372,6 @@ describe('command construction (plain argv)', () => {
       '--glob=!**/.jj', '--glob=!**/.jj/**',
       '--glob=!**/.sl', '--glob=!**/.sl/**',
       '--', 'docs dir'])
-  })
-
-  it('glob: narrows with max-depth, excludes, and an ignore-respecting mode', () => {
-    const args = buildGlobCommand({ pattern: '**/*.ts', depth: 2, exclude: ['dist/**', '**/*.snap'], hidden: false })
-    expect(args.slice(0, 3)).toEqual(['--files', '--glob=**/*.ts', '--sort=modified'])
-    expect(args).not.toContain('--no-ignore')
-    expect(args).not.toContain('--hidden')
-    expect(args).toContain('--max-depth=2')
-    expect(args.indexOf('--max-depth=2')).toBeLessThan(args.indexOf('--glob=!dist/**'))
-    expect(args.indexOf('--glob=!dist/**')).toBeLessThan(args.indexOf('--glob=!**/*.snap'))
-    expect(args).toContain('--glob=!**/.git')
-  })
-
-  it('glob: validates depth and exclude bounds against configured caps', () => {
-    const caps = {
-      sampleOverCapGlobResults: false, maxResults: 100, maxMetaBytes: 4096, rawOutputMaxBytes: 1024,
-      graceMs: 100, stderrMaxBytes: 1024, timeoutMs: 1000, maxDepth: 3, maxExcludes: 1,
-    }
-    expect(() => parseGlobArgs({ pattern: '*', depth: 4 }, caps)).toThrow('depth must be an integer from 1 to 3')
-    expect(() => parseGlobArgs({ pattern: '*', depth: 0 }, caps)).toThrow('depth must be an integer from 1 to 3')
-    expect(() => parseGlobArgs({ pattern: '*', exclude: ['a', 'b'] }, caps)).toThrow('exclude accepts at most 1')
-    expect(() => parseGlobArgs({ pattern: '*', exclude: [' '] }, caps)).toThrow('exclude patterns must not be empty')
-    expect(parseGlobArgs({ pattern: '*', depth: 2 })).toMatchObject({ depth: 2 })
-    expect(() => parseGlobArgs({ pattern: '*', exclude: Array.from({ length: 21 }, (_, index) => `x${index}`) })).toThrow('exclude accepts at most 20')
-    expect(parseGlobArgs({ pattern: '*', depth: 2, hidden: false, exclude: ['dist'] }, caps)).toMatchObject({
-      depth: 2, hidden: false, exclude: ['dist'],
-    })
   })
 
   it('grep: fixed rg --json argv with the pattern in --regexp= form', () => {
@@ -510,7 +488,11 @@ describe('workdir derivation and signal forwarding', () => {
     const { ctx } = await setup()
     const controller = new AbortController()
     controller.abort()
-    const exec = { signal: controller.signal, name: 'glob', callId: ToolCallId('direct-pre-abort') } as unknown as ToolExecution
+    const callId = ToolCallId('direct-pre-abort')
+    const exec: ToolExecution = {
+      signal: controller.signal, name: 'glob', callId, rootCallId: callId,
+      arguments: {}, token: Symbol('direct-pre-abort') as ToolExecutionToken,
+    }
     await expect(runRipgrep(ctx, exec, 'glob', ['--files'], 1_000_000, 3_000, 64 * 1024)).rejects
       .toMatchObject({ name: 'SearchError', code: 'SEARCH_ABORTED' })
   })
@@ -782,8 +764,14 @@ describe('glob results', () => {
 
   it('validates arguments (blank pattern, blank path)', async () => {
     const { ctx } = await setup()
-    expect(text(await call(ctx, 'glob', { pattern: '  ' }))).toContain('pattern must be a non-empty string')
-    expect(text(await call(ctx, 'glob', { pattern: '*', path: ' ' }))).toContain('path must be a non-empty string')
+    for (const [args, message] of [
+      [{ pattern: '  ' }, 'pattern must be a non-empty string'],
+      [{ pattern: '*', path: ' ' }, 'path must be a non-empty string'],
+    ] as const) {
+      const result = await call(ctx, 'glob', args)
+      expect(text(result)).toContain(message)
+      expect(result.error?.info).toEqual({ name: 'ToolArgsError', code: 'INVALID_ARGS' })
+    }
   })
 
   it('threads a valid path through to the spawn as the plain search root element', async () => {
@@ -1098,13 +1086,53 @@ describe('grep results', () => {
     expect(text(result)).toBe('Found 1 of 2 matches\n\na.ts\nLine 1: one\n\n(The complete result could not be saved; narrow pattern, path, or include to see more.)')
   })
 
+  it('treats an empty include as omitted without passing a glob filter', async () => {
+    const { ctx, subprocess } = await setup()
+    subprocess.handler = () => runResult(matchLine('notes.md', 1, 'alpha'))
+    const omitted = await call(ctx, 'grep', { pattern: 'alpha', path: '.' })
+    const empty = await call(ctx, 'grep', { pattern: 'alpha', path: '.', include: '' })
+    expect(empty.isError).toBe(false)
+    expect(text(empty)).toBe('Found 1 match\n\nnotes.md\nLine 1: alpha')
+    expect(empty.content).toEqual(omitted.content)
+    expect(subprocess.spawns.map(spec => spec.argv)).toEqual([
+      [rgPath, '--no-config', '--json', '--regexp=alpha', '--', '.'],
+      [rgPath, '--no-config', '--json', '--regexp=alpha', '--', '.'],
+    ])
+  })
+
+  it.each([
+    [{ include: '' }, 'pattern'],
+    [{ pattern: '', include: '' }, 'pattern must be a non-empty string'],
+    [{ pattern: 1, include: '' }, 'pattern'],
+    [{ pattern: 'x', path: '', include: '' }, 'path must be a non-empty string'],
+    [{ pattern: 'x', path: '  ', include: '' }, 'path must be a non-empty string'],
+    [{ pattern: 'x', path: 1, include: '' }, 'path'],
+    [{ pattern: 'x', include: null }, 'include'],
+    [{ pattern: 'x', include: false }, 'include'],
+    [{ pattern: 'x', include: 1 }, 'include'],
+    [{ pattern: 'x', include: [] }, 'include'],
+  ])('rejects malformed grep arguments %j before spawning', async (args, message) => {
+    const { ctx, subprocess } = await setup()
+    const result = await call(ctx, 'grep', args)
+    expect(result.isError).toBe(true)
+    expect(text(result)).toContain(message)
+    expect(result.error?.info).toEqual({ name: 'ToolArgsError', code: 'INVALID_ARGS' })
+    expect(subprocess.spawns).toHaveLength(0)
+  })
+
   it('validates arguments (empty pattern, blank path, bad include)', async () => {
     const { ctx } = await setup()
-    expect(text(await call(ctx, 'grep', { pattern: '' }))).toContain('pattern must be a non-empty string')
-    expect(text(await call(ctx, 'grep', { pattern: 'x', path: '  ' }))).toContain('path must be a non-empty string')
-    expect(text(await call(ctx, 'grep', { pattern: 'x', include: '  ' }))).toContain('include must be a non-empty glob')
-    expect(text(await call(ctx, 'grep', { pattern: 'x', include: '!*.ts' }))).toContain('negated patterns')
-    expect(text(await call(ctx, 'grep', { pattern: 'x', include: '*.ts,*.js' }))).toContain('comma-separated list')
+    for (const [args, message] of [
+      [{ pattern: '' }, 'pattern must be a non-empty string'],
+      [{ pattern: 'x', path: '  ' }, 'path must be a non-empty string'],
+      [{ pattern: 'x', include: '  ' }, 'include must be a non-empty glob'],
+      [{ pattern: 'x', include: '!*.ts' }, 'negated patterns'],
+      [{ pattern: 'x', include: '*.ts,*.js' }, 'comma-separated list'],
+    ] as const) {
+      const result = await call(ctx, 'grep', args)
+      expect(text(result)).toContain(message)
+      expect(result.error?.info).toEqual({ name: 'ToolArgsError', code: 'INVALID_ARGS' })
+    }
   })
 
   it('accepts a whitespace-only pattern (a legitimate regex) and brace alternation in include', async () => {
@@ -1156,6 +1184,8 @@ describe('presentation', () => {
 
   it('grep titles carry the pattern, target, and include filter', () => {
     expect(presentGrepCall({ pattern: 'todo' })).toMatchObject({ card: 'generic', title: 'Grep todo', kind: 'search' })
+    expect(presentGrepCall({ pattern: 'todo', include: '' })).toEqual(presentGrepCall({ pattern: 'todo' }))
+    expect(presentGrepCall({ pattern: 'todo', path: 'src', include: '' }).title).toBe('Grep todo in src')
     expect(presentGrepCall({ pattern: 'todo', path: 'src', include: '*.ts' }).title).toBe('Grep todo in src (*.ts)')
   })
 

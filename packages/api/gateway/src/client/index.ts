@@ -237,7 +237,7 @@ class ClientRemoteService extends Service implements ClientRemote {
     uplink?: AsyncIterable<unknown>,
     noConnection = `client api: ${endpoint} has no active Connection`,
   ): AsyncIterable<unknown> {
-    const connection = this.ownerCtx.get('connection') as ConnectionHandle | undefined
+    const connection = this.ownerCtx.get('connection')
     if (connection === undefined) throw new Error(noConnection)
     const local = connection.rpc.open?.('/api', endpoint, payload, signal, uplink)
     return local === undefined
@@ -452,7 +452,7 @@ class ClientRemoteService extends Service implements ClientRemote {
     const endpoint = endpointOf(descriptor)
     if (!token.active) return withdrawn(endpoint)
     const prepared = this.prepareInvocation(descriptor, projection, token, callerCtx, values, boundIdentity)
-    const connection = this.ownerCtx.get('connection') as ConnectionHandle | undefined
+    const connection = this.ownerCtx.get('connection')
     if (connection === undefined) throw new Error(`client api: ${endpoint} has no active Connection`)
     try {
       const result = await connection.rpc.call('/api', endpoint, { args: prepared.args }, prepared.signal)

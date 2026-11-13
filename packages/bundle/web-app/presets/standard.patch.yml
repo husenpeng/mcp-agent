@@ -34,6 +34,9 @@
             disabled: !!js process.platform !== 'win32'
           - id: tool-fs
             name: '@tomato/tool-fs'
+            config:
+              # Set false to drop the apply_patch tool beside edit.
+              applyPatch: false
           - id: tool-fs-search
             name: '@tomato/tool-fs-search'
             config:
@@ -44,6 +47,9 @@
             name: '@tomato/tool-schedule'
           - id: skill-filesystem
             name: '@tomato/skill-filesystem'
+            config:
+              customSkillDirs:
+                - !!js process.getBuiltinModule('node:path').join(process.getBuiltinModule('node:path').dirname(process.getBuiltinModule('node:module').createRequire(baseUrl).resolve('@tomato/agent-preset/package.json')), 'skills')
           - id: tool-skill
             name: '@tomato/tool-skill'
           - id: command-goal
@@ -96,6 +102,8 @@
             config:
               - id: tool-subagent-control
                 name: '@tomato/tool-subagent-control'
+                config:
+                  interrupt: false
               - id: tool-subagent
                 name: '@tomato/tool-subagent'
                 config:
@@ -133,6 +141,8 @@
               timeoutMs: 60000
           - id: present
             name: '@tomato/tool-present'
+          - id: tool-office
+            name: '@tomato/tool-office'
           - id: tool-plugin-manager
             name: '@tomato/plugin-manager/tools'
             disabled: !!js "!ctx.get('profileContext')"

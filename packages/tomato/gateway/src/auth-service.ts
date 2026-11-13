@@ -25,7 +25,7 @@ function userOf(value: unknown): SessionUser | undefined {
     name: typeof name === 'string' ? name : null,
     avatarUrl: typeof avatarUrl === 'string' ? avatarUrl : null,
     language: typeof language === 'string' ? language : null,
-    ...roles === undefined ? {} : { roles: roles as string[] },
+    ...roles === undefined ? {} : { roles: roles },
     ...quotas === undefined ? {} : { quotas: quotas as Record<string, number> },
   }
 }

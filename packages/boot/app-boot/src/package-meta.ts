@@ -125,6 +125,8 @@ function dictionariesOf(englishPath: string, specifier: string, parentURL: strin
   const dictionaries = new Map<string, DisplayFields>()
   for (const entry of readdirSync(dirname(englishPath), { withFileTypes: true })) {
     if (!entry.name.endsWith('.json')) continue
+    // macOS writes AppleDouble entries (`._name`) when a package directory is copied through a non-native volume.
+    if (entry.name.startsWith('._')) continue
     const resource = `${specifier}/locale/${entry.name}`
     const language = entry.name.slice(0, -5)
     if (!LANGUAGE_ID.test(language)) throw new Error(`${resource} must use a language id as its filename`)

@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v0.2.1-rc.4/memory-cross-process/guide.md
+/:
+  en: a3d4ecc4e0febba0
+  zh: 64ba15b2548300a9
+/memory-survives-concurrent-host-processes:
+  en: 3f4c5326278200f1
+  zh: 5f3b6ad10ffd15e8
+/memory-survives-concurrent-host-processes/change:
+  en: ec75f51e59789428
+  zh: 68285ab4be81ec4a
+/memory-survives-concurrent-host-processes/migration:
+  en: fb42e8d06e7a87cb
+  zh: fdaa90baa4401ffd

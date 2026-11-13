@@ -26,8 +26,6 @@ interface ChatNodeSeatProps extends ChatNodeOwnerProps {
   readonly useChatNodeBottom: ChatFlowSlotProps['useChatNodeBottom']
   readonly deferCollapse: boolean
   readonly useGroupAction: ChatFlowSlotProps['useGroupAction']
-  /** Key of the trailing human prompt the Host may retract, when one exists. */
-  readonly trailingInputKey: string | undefined
 }
 
 type RoutedChatNodeOwner = {
@@ -51,9 +49,8 @@ function turnOf(node: ChatNode | undefined): number | undefined {
  */
 export const ChatNodeSeat = memo(function ChatNodeSeat({
   nodeKey, groupPart, useChatNode, useChatNodeProcess, usePresentation,
-  cwd, openFile, inspectCall, forkAt, retractAt,
-  loadImage, fileMentions, useStore, actions, renderSlot, t, useChatNodeBottom, deferCollapse, useGroupAction,
-  trailingInputKey,
+  cwd, openFile, inspectCall, forkAt,
+  loadImage, useStore, actions, renderSlot, t, useChatNodeBottom, deferCollapse, useGroupAction,
 }: ChatNodeSeatProps) {
   const bottom = useChatNodeBottom(nodeKey)
   const node = useChatNode(nodeKey)
@@ -140,14 +137,11 @@ export const ChatNodeSeat = memo(function ChatNodeSeat({
       openFile,
       inspectCall,
       forkAt,
-      retractAt,
-      ...routedNode?.kind === 'user' && trailingInputKey === nodeKey ? { retractable: true } : {},
       loadImage,
-      fileMentions,
       turnProcess,
     }, [
-    node, nodeKey, routedNode, groupPart, cwd, openFile, inspectCall, forkAt, retractAt, trailingInputKey,
-    loadImage, fileMentions, turnProcess,
+    node, groupPart, cwd, openFile, inspectCall, forkAt,
+    loadImage, turnProcess,
   ])
   if (routedNode === undefined || owner === null) return null
   // Runtime dispatch owns the correlation: every Node's discriminant is the

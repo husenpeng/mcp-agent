@@ -1,0 +1,53 @@
+{
+  "name": "@tomato/experimental-robot-templates-knowledge-work",
+  "description": "Sixteen knowledge-work robot templates and the bundled skills adapted from Anthropic's knowledge-work-plugins repository",
+  "version": "0.2.1-rc.3",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/experimental/robot-templates-knowledge-work"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./locale/*.json": "./locale/*.json",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "plugins",
+    "THIRD_PARTY_NOTICES.md",
+    "LICENSE-APACHE-2.0",
+    "lib/types/**/*.d.ts",
+    "lib/**/*.js.map",
+    "lib/types/**/*.d.ts.map",
+    "src"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "yaml": "^2.9.0"
+  },
+  "peerDependencies": {
+    "@tomato/branded": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/experimental-robot": "workspace:*",
+    "@tomato/skill": "workspace:*"
+  },
+  "devDependencies": {
+    "@tomato/branded": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/experimental-robot": "workspace:*",
+    "@tomato/experimental-robot-local": "workspace:*",
+    "@tomato/skill": "workspace:*"
+  }
+}

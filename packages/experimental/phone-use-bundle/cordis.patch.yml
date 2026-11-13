@@ -1,0 +1,26 @@
+# The phone-use bundle: the `phone` Remote namespace and the two tools that
+# observe and operate an attached iPhone.
+#
+# The runner dials this Host, so no inbound port is needed on the device. Base
+# already provides `tools`, the Typert registry, and the Typert loader that
+# registers this package's generated `./typert` artifact.
+
+- insert:
+    - id: phone-use
+      name: '@tomato/experimental-phone-use'
+      config:
+        commandTimeoutMs: 15000
+        observeMaxElements: 80
+        maxRenderElements: 40
+
+    # Renewal, installation, and runner launch are macOS-only: the iPhone is
+    # driven through Xcode's own tools from the Mac that hosts this profile.
+    - id: phone-use-macos
+      name: '@tomato/experimental-phone-use-macos'
+      disabled: !!js process.platform !== 'darwin'
+      config:
+        # Packaged Desktops ship no sources, so pointing at apps/ios is a
+        # deployment decision rather than a constant.
+        iosProjectDir: ''
+        renewBeforeHours: 48
+        checkIntervalMs: 300000

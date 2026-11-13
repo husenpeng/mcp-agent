@@ -34,6 +34,9 @@
             disabled: !!js process.platform !== 'win32'
           - id: tool-fs
             name: '@tomato/tool-fs'
+            config:
+              # Set true to add the apply_patch tool beside edit.
+              applyPatch: false
           - id: tool-fs-search
             name: '@tomato/tool-fs-search'
             config:
@@ -96,6 +99,8 @@
             config:
               - id: tool-subagent-control
                 name: '@tomato/tool-subagent-control'
+                config:
+                  interrupt: false
               - id: tool-subagent
                 name: '@tomato/tool-subagent'
                 config:
@@ -133,6 +138,8 @@
             name: '@tomato/tool-executor-ptc'
           - id: present
             name: '@tomato/tool-present'
+          - id: tool-office
+            name: '@tomato/tool-office'
           - id: tool-plugin-manager
             name: '@tomato/plugin-manager/tools'
             disabled: true

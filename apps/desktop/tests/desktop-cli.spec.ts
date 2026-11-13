@@ -19,7 +19,7 @@ it.each(['system-bin', undefined])('dispatches with bundled pnpm when PATH is %s
   const runtime = join('Application 中文 with spaces', 'resources', 'app.asar', 'tomato')
   const support = join('Application 中文 with spaces', 'resources', 'runtime')
 
-  await runDesktopCli(runtime, support)
+  await runDesktopCli(runtime)
 
   expect(installOfficeEngineResolution).toHaveBeenCalledExactlyOnceWith(runtime)
   expect(runCli).toHaveBeenCalledExactlyOnceWith({

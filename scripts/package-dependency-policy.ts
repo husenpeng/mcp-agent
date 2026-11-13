@@ -55,26 +55,46 @@ const DUPLICATE_SAFE_PACKAGES: readonly string[] = [
  * prominent heading in the pull request description.
  */
 const SAFE_HOST_DEPENDENCY_EXPORTS = {
-  '@tomato/atomic-write': ['withFileLock'],
+  '@tomato/atomic-write': ['withFileLock', 'writeFileAtomic'],
   '@tomato/computer-use/brand': ['ComputerUseProviderName'],
   '@tomato/credentials': ['credentialKey'],
   '@tomato/deque': ['Deque'],
+  '@tomato/experimental-embeddings-http': ['probeEmbeddingsEndpoint'],
   '@tomato/llm': ['callConfigEquals'],
+  '@tomato/session': ['SessionId'],
   '@tomato/session-format': ['sessionFormatLogFilename'],
+  '@tomato/storage-domain': ['defineDomain'],
   '@tomato/timeout': ['MAX_TIMER_DELAY_MS'],
+  // Both operate only on the caller's subprocess service and handle; the module memoizes only the binary path.
+  '@tomato/util-ripgrep': ['readRipgrepLines', 'spawnRipgrep'],
   '@tomato/schemastery': ['default'],
 } as const satisfies HostDependencyExports
 
 /** Runtime exports that require every consumer to resolve the provider's shared peer instance. */
 const PEER_REQUIRED_HOST_EXPORTS = {
+  // Profile settings must match the installed Node provider's configuration schema.
+  '@tomato/ptc-runtime-node/configuration': ['resolvePersistentExecution'],
+  // CUA mounts the installed provider and shares executor error classes with PTC.
+  '@tomato/ptc-runtime-node': ['default'],
+  '@tomato/tool-executor-ptc/run-code': ['RunCodeConfig', 'createRunCodeTool'],
   // CUA checks UserQuestionError and preserves AttachmentError from image admission.
   '@tomato/attachment': ['admitEncodedImages'],
   '@tomato/user-questions': ['UserQuestionError'],
+  // The tool registry and every subclass rely on `instanceof` against one HarnessError class.
+  '@tomato/error': ['HarnessError'],
   // `instanceof` checks need the translator's own class instance.
   '@tomato/experimental-translator': ['TranslationError'],
+  // Stateless; a safe classification would turn the forge panel's forge and worktree peers into dependencies.
+  '@tomato/experimental-forge': ['changeRequestKey'],
+  '@tomato/experimental-worktree': ['generatedWorktreeName', 'CREATED_RECORD', 'createdWorktreeSchema'],
+  // The forge panel matches ctx.fs failures with `instanceof FsError`.
+  '@tomato/fs': ['FsError'],
   '@tomato/scope': ['carrierKeyOf', 'createScope', 'scopeOf', 'scopeTarget'],
-  '@tomato/session': ['SESSION_FORMAT_VERSION'],
+  // appendPluginRecord writes through the Session class's private log; pluginRecordOf is stateless.
+  '@tomato/session': ['SESSION_FORMAT_VERSION', 'appendPluginRecord', 'pluginRecordOf'],
   '@tomato/session-persistence': ['SessionPersistenceNotFoundError'],
+  // Readers recognize a deadline's TimeoutReason only by `instanceof` against their own copy.
+  '@tomato/timeout': ['deadline'],
 } as const satisfies HostDependencyExports
 
 /** Exact import specifier to reviewed runtime exports. */

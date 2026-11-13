@@ -4,22 +4,22 @@ import {
   classifyManifest, gitManifestCandidates, manifestCandidates, readManifest, readReadme, readmeCandidates, stripFrontMatter,
 } from '../src/host/registry.js'
 
-test('classifyManifest tells a Tomato bundle from a DeepSeek Harness one', () => {
+test('classifyManifest tells a Tomato bundle from a Tomato Harness one', () => {
   assert.equal(classifyManifest({
     tomato: { bundle: { patch: './cordis.patch.yml' } },
     peerDependencies: { '@tomato/cordis': '*' },
     engines: { tomato: '>=0.2.1-rc.3' },
   }).class, 'tomato')
-  const dsh = classifyManifest({
-    dsh: { bundle: { patch: './cordis.patch.yml' } },
-    peerDependencies: { '@deepseek-ai/cordis': '*', '@deepseek-ai/dsh-session': '*' },
-    engines: { dsh: '>=0.2.1-rc.2' },
+  const tomato = classifyManifest({
+    tomato: { bundle: { patch: './cordis.patch.yml' } },
+    peerDependencies: { '@tomato/cordis': '*', '@tomato/session': '*' },
+    engines: { tomato: '>=0.2.1-rc.2' },
   })
-  assert.equal(dsh.class, 'dsh')
-  assert.equal(dsh.dshRange, '>=0.2.1-rc.2')
-  assert.deepEqual(dsh.deepseekPeers, ['@deepseek-ai/cordis', '@deepseek-ai/dsh-session'])
+  assert.equal(tomato.class, 'tomato')
+  assert.equal(tomato.tomatoRange, '>=0.2.1-rc.2')
+  assert.deepEqual(tomato.deepseekPeers, ['@tomato/cordis', '@tomato/session'])
   assert.equal(classifyManifest({ name: 'plain' }).class, 'other')
-  assert.equal(classifyManifest({ peerDependencies: { '@deepseek-ai/cordis': '*' } }).class, 'dsh')
+  assert.equal(classifyManifest({ peerDependencies: { '@tomato/cordis': '*' } }).class, 'tomato')
   assert.equal(classifyManifest(undefined).class, 'unknown')
   assert.equal(classifyManifest({ deprecated: 'old' }).deprecated, 'old')
 })

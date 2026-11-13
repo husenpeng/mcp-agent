@@ -5,105 +5,96 @@
 /:
   en: 8a6ec0a589e6fd18
   zh: e85fc352c9cba373
-/tomato-llm-pi-ai:
-  en: 769e0e5904ab20df
-  zh: 06f29f91dba2803b
-/tomato-llm-pi-ai/summary:
-  en: 60022fa4fe172db3
-  zh: c7cd0208efbcdd05
-/tomato-llm-pi-ai/table-of-contents:
+/deepseek-ai-tomato-llm-pi-ai:
+  en: 33763dd0a848143d
+  zh: 82743942bc6df660
+/deepseek-ai-@tomato/llm-pi-ai/summary:
+  en: ee82d88fee1332d6
+  zh: 3e66b494e4844f97
+/deepseek-ai-@tomato/llm-pi-ai/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
-/tomato-llm-pi-ai/use-this-package:
-  en: f8dce5902980a67e
-  zh: e9a188045a187270
-/tomato-llm-pi-ai/use-this-package/when-to-choose-it:
-  en: 07b2aea3829cfab4
-  zh: b6b291af87257b9b
-/tomato-llm-pi-ai/use-this-package/configure-provider-routes:
-  en: 9204d543ab0dc036
-  zh: 3f51fb88dc6cbdd0
-/tomato-llm-pi-ai/use-this-package/sign-in-to-a-provider:
+/deepseek-ai-@tomato/llm-pi-ai/use-this-package:
+  en: 86cf1940fb8bb1dc
+  zh: 862c10b2ca45a893
+/deepseek-ai-@tomato/llm-pi-ai/use-this-package/when-to-choose-it:
+  en: f3b761c7c7ecb82f
+  zh: e10d999aa348ef86
+/deepseek-ai-@tomato/llm-pi-ai/use-this-package/configure-provider-routes:
+  en: 12d3d1506c72ac8b
+  zh: d966efb555110713
+/deepseek-ai-@tomato/llm-pi-ai/use-this-package/sign-in-to-a-provider:
   en: c36f66438638ae08
   zh: 066a2fc4cb97c86f
-/tomato-llm-pi-ai/use-this-package/resolve-the-model-catalog:
-  en: 89393157dd25cb98
-  zh: 546136dd67e884c3
-/tomato-llm-pi-ai/use-this-package/run-with-reasoning-and-wire-compatibility:
+/deepseek-ai-@tomato/llm-pi-ai/use-this-package/resolve-the-model-catalog:
+  en: 376f83206858b601
+  zh: 38bb6993609c96a6
+/deepseek-ai-@tomato/llm-pi-ai/use-this-package/run-with-reasoning-and-wire-compatibility:
   en: b58b917e7f250aee
   zh: aff599081bac08c3
-/tomato-llm-pi-ai/use-this-package/declare-prompt-caching-and-tool-pairing:
-  en: 896e813a1a179e73
-  zh: 79a7cdab41e4f96f
-/tomato-llm-pi-ai/use-this-package/restrict-models-with-an-allowlist:
-  en: be39333e6851e68c
-  zh: 2b29ff742d4f1fd3
-/tomato-llm-pi-ai/use-this-package/change-configuration-at-runtime:
+/deepseek-ai-@tomato/llm-pi-ai/use-this-package/change-configuration-at-runtime:
   en: 92f554e1718614ca
   zh: f17ed3ad3e5d28e2
-/tomato-llm-pi-ai/use-this-package/discover-models-from-endpoints:
-  en: 6619e8cfe7555c73
-  zh: b2f80c25acb81cf8
-/tomato-llm-pi-ai/use-this-package/probe-a-native-anthropic-endpoint:
-  en: 6f4b80848a809bec
-  zh: fcd976f65070cdf9
-/tomato-llm-pi-ai/use-this-package/probe-an-openai-style-endpoint:
-  en: a8116243104e7a03
-  zh: bfbfdcc26fef2d67
-/tomato-llm-pi-ai/use-this-package/failures-and-recovery:
+/deepseek-ai-@tomato/llm-pi-ai/use-this-package/discover-models-from-endpoints:
+  en: ac930f29006456cf
+  zh: 8d37c47f02761452
+/deepseek-ai-@tomato/llm-pi-ai/use-this-package/failures-and-recovery:
   en: 3c1edbc63de24a1a
   zh: 01592718c3a2c79f
-/tomato-llm-pi-ai/understand-the-implementation:
+/deepseek-ai-@tomato/llm-pi-ai/understand-the-implementation:
   en: 1598ac8a8bb9b6bf
   zh: fdd089c5ae7722cd
-/tomato-llm-pi-ai/understand-the-implementation/design-philosophy:
-  en: 8aba1113937b368a
-  zh: 804a4ca672a776df
-/tomato-llm-pi-ai/understand-the-implementation/source-map:
-  en: 193f378ae0c9896a
-  zh: 2ad31880ee706092
-/tomato-llm-pi-ai/understand-the-implementation/registration-and-directory:
+/deepseek-ai-@tomato/llm-pi-ai/understand-the-implementation/design-philosophy:
+  en: db1ac8ccca2d858b
+  zh: 1d7cd4153aad22b0
+/deepseek-ai-@tomato/llm-pi-ai/understand-the-implementation/request-headers:
+  en: 615ca9834bf6544f
+  zh: 2d70b548f99000d1
+/deepseek-ai-@tomato/llm-pi-ai/understand-the-implementation/source-map:
+  en: 01520c709ee2202c
+  zh: de919d3f2ff61046
+/deepseek-ai-@tomato/llm-pi-ai/understand-the-implementation/registration-and-directory:
   en: 0c6df3e8b6a75372
   zh: 476666a6f209542c
-/tomato-llm-pi-ai/understand-the-implementation/generated-provider-metadata:
+/deepseek-ai-@tomato/llm-pi-ai/understand-the-implementation/generated-provider-metadata:
   en: 477d277e9ac35c8f
   zh: 96870ca333fb6510
-/tomato-llm-pi-ai/understand-the-implementation/replay-and-vocabulary:
-  en: e64173763fdbcfae
-  zh: 73ed2c2af54b62f6
-/tomato-llm-pi-ai/further-exploration:
-  en: fb11ebd93051bd51
-  zh: 8e2bb910369fa6c0
-/tomato-llm-pi-ai/model-experience:
+/deepseek-ai-@tomato/llm-pi-ai/understand-the-implementation/replay-and-vocabulary:
+  en: e68f92d78150d341
+  zh: 45850c739a7329d3
+/deepseek-ai-@tomato/llm-pi-ai/further-exploration:
+  en: a2a2ccdeae59d408
+  zh: c47ee091aa90ad91
+/deepseek-ai-@tomato/llm-pi-ai/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
-/tomato-llm-pi-ai/model-experience/provider-request-through-pi-ai:
+/deepseek-ai-@tomato/llm-pi-ai/model-experience/provider-request-through-pi-ai:
   en: e7348db3f7115960
   zh: 5fd5fb09d7d09982
-/tomato-llm-pi-ai/model-experience/provider-request-through-pi-ai/what-the-model-sees:
-  en: 87cdd6bb04f10994
-  zh: 4f83a869a683b275
-/tomato-llm-pi-ai/model-experience/provider-request-through-pi-ai/token-effect:
+/deepseek-ai-@tomato/llm-pi-ai/model-experience/provider-request-through-pi-ai/what-the-model-sees:
+  en: f618a730aaa904ce
+  zh: 0b77a5b799b049e3
+/deepseek-ai-@tomato/llm-pi-ai/model-experience/provider-request-through-pi-ai/token-effect:
   en: 820221e8ae37aa61
   zh: 7e6ff4db10067fc0
-/tomato-llm-pi-ai/model-experience/provider-request-through-pi-ai/kv-cache-effect:
-  en: 5e33e8fef68afc6d
-  zh: 8fe808d2393d0264
-/tomato-llm-pi-ai/model-experience/provider-response:
+/deepseek-ai-@tomato/llm-pi-ai/model-experience/provider-request-through-pi-ai/kv-cache-effect:
+  en: 6613d52e459d86da
+  zh: 7d0627e7ff8299e8
+/deepseek-ai-@tomato/llm-pi-ai/model-experience/provider-response:
   en: 802d7ff60a1d03ff
   zh: c41c56e28f3e8680
-/tomato-llm-pi-ai/model-experience/provider-response/what-the-model-sees:
+/deepseek-ai-@tomato/llm-pi-ai/model-experience/provider-response/what-the-model-sees:
   en: 94ca496012c92fa9
   zh: 9539b08924b5022d
-/tomato-llm-pi-ai/model-experience/provider-response/token-effect:
+/deepseek-ai-@tomato/llm-pi-ai/model-experience/provider-response/token-effect:
   en: f002b21d0f4c3df0
   zh: 388c8ed4676ed1af
-/tomato-llm-pi-ai/model-experience/provider-response/kv-cache-effect:
+/deepseek-ai-@tomato/llm-pi-ai/model-experience/provider-response/kv-cache-effect:
   en: b6bd570c0159ba08
   zh: 7d2d91eea6a8d830
-/tomato-llm-pi-ai/known-limitations-and-deferred-work:
-  en: 41e2f3ae72b25cc2
-  zh: feed002616e109fd
-/tomato-llm-pi-ai/known-limitations-and-deferred-work/dev-note:
+/deepseek-ai-@tomato/llm-pi-ai/known-limitations-and-deferred-work:
+  en: fdbe8ce850250b66
+  zh: d8b9a06a996850c1
+/deepseek-ai-@tomato/llm-pi-ai/known-limitations-and-deferred-work/dev-note:
   en: 3678dd0f6642c2a5
   zh: 75cbdd064cc64282

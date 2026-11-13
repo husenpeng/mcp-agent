@@ -1,7 +1,7 @@
 {
   "name": "@tomato/client-ui-brand-official",
-  "description": "Official Tomato Harness brand occupants for the Web client's sidebar slots",
-  "version": "0.2.1-rc.3",
+  "description": "Official Tomato Harness brand artwork and click-triggered home background",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -24,13 +24,15 @@
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json",
-    "./locale/*.json": "./locale/*.json"
+    "./locale/*.json": "./locale/*.json",
+    "./assets/*": "./lib/assets/*"
   },
   "tomato": {
     "client": {
       "inject": [
         "@tomato/client-ui-renderer",
-        "@tomato/client-ui-sidebar"
+        "@tomato/client-ui-sidebar",
+        "@tomato/client-ui-conversation"
       ],
       "platform": "web"
     }
@@ -50,12 +52,19 @@
     "@tomato/cordis": "workspace:~",
     "@testing-library/react": "^16.3.3",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "@tomato/client-ui-conversation": "workspace:*",
+    "@tomato/client-ui-slots": "workspace:*",
+    "@tomato/client-locale": "workspace:*"
   },
   "files": [
     "locale/*.json",
     "lib/index.js",
     "lib/client.js",
-    "lib/types/**/*.d.ts"
+    "lib/assets",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
   ]
 }

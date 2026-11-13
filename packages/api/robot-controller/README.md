@@ -1,5 +1,5 @@
 ---
-description: "Host robot Remote controller: whole registry snapshots, specification publication, instantiation, rebinding, and run control mirrored to the browser."
+description: "Host robot Remote controller: whole registry snapshots, specification publication, installation and removal, and run control mirrored to the browser."
 kind: "package-reference"
 ---
 # Robot Controller
@@ -8,7 +8,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`@tomato/api-robot-controller` owns the Host `ctx.robotController` service and the generated Client `ctx.remote.robot` namespace over the `@tomato/experimental-robot` seam. `robot.watch` streams whole registry frames — the latest revision of every specification, every robot, every run, and every registered template — once on open and after each `robot/changed` event. `publish`, `instantiate`, `rebind`, `start`, `cancel`, `interrupt`, `correct`, `hire`, and `capabilities` mirror the seam's operations: a rejected specification arrives as `robot/spec-invalid` carrying the provider's field issues, a missing record as `robot/not-found`, and a refused state change as `robot/conflict`. The Client half installs `ctx.robotRuns`, the snapshot and control service a robot page renders.
+`@tomato/api-robot-controller` owns the Host `ctx.robotController` service and the generated Client `ctx.remote.robot` namespace over the `@tomato/experimental-robot` seam. `robot.watch` streams whole registry frames — the latest revision of every specification, every robot, every run, and every registered template — once on open and after each `robot/changed` event. `publish`, `instantiate`, `rebind`, `installRobot`, `removeRobot`, `start`, `cancel`, `interrupt`, `correct`, `hire`, and `capabilities` mirror the seam's operations: a rejected specification arrives as `robot/spec-invalid` carrying the provider's field issues, a missing record as `robot/not-found`, and a refused state change as `robot/conflict`. The Client half installs `ctx.robotRuns`, the snapshot and control service a robot page renders.
 
 ## Table of Contents
 
@@ -28,7 +28,9 @@ Mount the Host controller after a `@tomato/experimental-robot` provider: it inje
 
 `hire` reads the template from the optional `robotTemplates` registry, fills its copy for the requested locale, gives a template without Workspace roots the caller's `workspaceRoot` when supplied, and names the robot after the localized template name; when that name is taken it appends ` 2`, ` 3`, and so on. An explicit `name` is used as given and conflicts like any publication. An unknown template, or a deployment without the registry, is `robot/not-found`; frames then carry an empty `templates` list.
 
-`capabilities` projects the local choices the specification editor offers as options: skills visible to the requested Workspace, registered tool names, configured MCP server names, and Workspace directories. A skill option carries its source folder in `path` (omitted for virtual skills), and a Workspace option repeats its directory there; MCP servers exist only as names and omit it. Every source is optional, so a deployment without one contributes an empty list instead of failing the read; the Client passes the viewed Session's directory so project skills apply.
+`installRobot` resolves the robot's declared skills, plugins, MCP servers, and permission preset against the live deployment and records the installation only when every one is available; otherwise it fails with `robot/capabilities-missing` and lists each missing dependency. A plugin counts as available when the plugin inventory reports it enabled and active. `removeRobot` deletes the robot instance alone, so its specifications and run records stay readable; a robot that still owns a non-terminal run is `robot/conflict`. `start` refuses a specification that declares skills, plugins, or MCP servers until its bound revision is installed, while runs started through `ctx.robots` by triggers or other Host code keep their own acceptance rules.
+
+`capabilities` projects the local choices the specification editor offers as options: skills visible to the requested Workspace, active plugin module names, registered tool names, configured MCP server names, and Workspace directories. A skill option carries its source folder in `path` (omitted for virtual skills), and a Workspace option repeats its directory there; MCP servers exist only as names and omit it. Every source is optional, so a deployment without one contributes an empty list instead of failing the read; the Client passes the viewed Session's directory so project skills apply.
 
 The Client entry mounts only where the assembly selected `remote.robot`; it opens one reconnecting snapshot stream for the app lifetime and exposes the RPC passthroughs as `RemoteResult` values. The service is named `robotRuns` so the browser context keeps its future `ctx.robots` slot free for a client-side domain service.
 

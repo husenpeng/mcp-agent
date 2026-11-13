@@ -63,8 +63,10 @@ export interface RunDetailProps {
   /** Timeline lines folded from the run's Session. */
   readonly steps: readonly RunStep[]
   readonly actions: RunDetailActions
-  /** Whether another run of this robot still holds the execution slot. */
+  /** Whether another run, or an uninstalled revision, blocks a new run. */
   readonly startBlocked: boolean
+  /** Localized reason a new run is blocked; omitted uses the unfinished-run copy. */
+  readonly startBlockedHint?: string | undefined
   /** Whether the robot has any run to select. */
   readonly hasRuns: boolean
   /** Epoch milliseconds anchoring relative labels. */
@@ -244,7 +246,7 @@ function ProcessBlock({
  * @returns the conversation surface.
  */
 export function RunDetail({
-  run, robot, openState, openError, steps, actions, startBlocked, hasRuns, now, t,
+  run, robot, openState, openError, steps, actions, startBlocked, startBlockedHint, hasRuns, now, t,
 }: RunDetailProps): ReactNode {
   const [technical, setTechnical] = useState(readTechnicalDetail)
   const [draft, setDraft] = useState('')
@@ -295,7 +297,7 @@ export function RunDetail({
     : t('run.composerIdle')
   const hint = live
     ? t('run.hintLive')
-    : startBlocked ? t('run.newRunBlocked') : run === undefined ? t('run.composerIdleExample') : t('run.hintIdle')
+    : startBlocked ? startBlockedHint ?? t('run.newRunBlocked') : run === undefined ? t('run.composerIdleExample') : t('run.hintIdle')
   const sendLabel = live ? (paused ? t('run.resume') : t('run.send')) : t('roster.run')
 
   const header = (
@@ -356,7 +358,7 @@ export function RunDetail({
     const lastAnswer = [...blocks].reverse().find(block => block.kind === 'answer')
     const output = run.output?.trim()
     const duplicatesAnswer = output === undefined || output === ''
-      || (lastAnswer !== undefined && lastAnswer.kind === 'answer' && lastAnswer.text.trim() === output)
+      || (lastAnswer !== undefined && lastAnswer.text.trim() === output)
     const settled = run.endedAt !== undefined
     body = (
       <div className={css.thread}>
@@ -404,7 +406,7 @@ export function RunDetail({
           )
         })}
 
-        {duplicatesAnswer || output === undefined ? null : (
+        {duplicatesAnswer ? null : (
           <div className={css.answer}>
             <span className={css.answerAvatar}><RobotAvatar name={robot.name} skills={robot.skills} size={22} /></span>
             <div className={css.answerText}><MarkdownText text={output} labels={labels} /></div>

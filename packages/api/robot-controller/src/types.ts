@@ -6,7 +6,8 @@
  */
 
 import type {
-  Robot, RobotId, RobotSpec, RobotSpecIssue, RobotSpecRef, RobotSpecRevision, RobotTemplate, RobotTemplateId, Run, RunId,
+  Robot, RobotDependency, RobotId, RobotSpec, RobotSpecIssue, RobotSpecRef, RobotSpecRevision, RobotTemplate,
+  RobotTemplateId, Run, RunId,
 } from '@tomato/experimental-robot/types'
 // Type-only: carries the `robotRun` Session projection declaration this package's wire types assume.
 // The re-export keeps that module reachable through declaration emit, which drops a bare type import.
@@ -14,8 +15,8 @@ import type {} from '@tomato/experimental-robot/session'
 export type { RobotRunRecord } from '@tomato/experimental-robot/session'
 
 export type {
-  Robot, RobotId, RobotSpec, RobotSpecIssue, RobotSpecRef, RobotSpecRevision, RobotTemplate, RobotTemplateId,
-  RobotTemplateText, Run, RunId,
+  Robot, RobotDependency, RobotDependencyKind, RobotId, RobotInstallation, RobotSpec, RobotSpecIssue, RobotSpecRef,
+  RobotSpecRevision, RobotTemplate, RobotTemplateId, RobotTemplateText, Run, RunId,
 } from '@tomato/experimental-robot/types'
 
 /** One template hire: publish a user-owned copy and instantiate it. */
@@ -111,15 +112,27 @@ export interface RobotCapabilityOption {
 
 /**
  * Local values the specification editor offers as choices: skills visible in
- * this deployment or Workspace, registered tool names, live MCP server names,
- * and Workspace directories. A source that is not mounted contributes an empty
- * list rather than a failure, so the editor can still edit every other field.
+ * this deployment or Workspace, active plugins, registered tool names, live MCP
+ * server names, and Workspace directories. A source that is not mounted
+ * contributes an empty list rather than a failure, so the editor can still edit
+ * every other field.
  */
 export interface RobotCapabilityCatalog {
   readonly skills: readonly RobotCapabilityOption[]
+  readonly plugins: readonly RobotCapabilityOption[]
   readonly tools: readonly RobotCapabilityOption[]
   readonly mcpServers: readonly RobotCapabilityOption[]
   readonly workspaceRoots: readonly RobotCapabilityOption[]
+}
+
+/** One robot whose declared dependencies to install. */
+export interface RobotInstallRequest {
+  readonly robotId: RobotId
+}
+
+/** One robot instance to delete; its specifications and runs stay. */
+export interface RobotRemoveRequest {
+  readonly robotId: RobotId
 }
 
 /**
@@ -143,5 +156,7 @@ declare module '@tomato/typert-protocol' {
     'robot/not-found': { readonly id: string }
     /** The registry refused the operation in its current state. */
     'robot/conflict': { readonly message: string }
+    /** The robot's declared dependencies are not all available in this deployment. */
+    'robot/capabilities-missing': { readonly missing: readonly RobotDependency[] }
   }
 }

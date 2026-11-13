@@ -1,0 +1,37 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib/types",
+    "tsBuildInfoFile": "lib/tsconfig.tsbuildinfo"
+  },
+  "include": [
+    "src/*.ts"
+  ],
+  "references": [
+    {
+      "path": "../../../vendor/cordis"
+    },
+    {
+      "path": "../../../vendor/schemastery"
+    },
+    {
+      "path": "../../core/tools"
+    },
+    {
+      "path": "../../util/values"
+    },
+    {
+      "path": "../../util/branded"
+    },
+    {
+      "path": "../../typert/protocol"
+    },
+    {
+      "path": "../../interaction/user-questions"
+    },
+    {
+      "path": "../../core/agent"
+    }
+  ]
+}

@@ -23,6 +23,14 @@ class StubRobots extends Robots {
     return unreachable()
   }
 
+  override install(_robot: RobotId): Promise<Robot> {
+    return unreachable()
+  }
+
+  override remove(_robot: RobotId): Promise<void> {
+    return unreachable()
+  }
+
   override instantiate(_ref: RobotSpecRef): Promise<Robot> {
     return unreachable()
   }

@@ -14,7 +14,7 @@ afterEach(cleanup)
 
 const unused = (): never => { throw new Error('This isolated page does not read that framework hook') }
 const standard: GlobalStandardProps = {
-  usePanelInfo: unused, useSessions: unused, useSessionStatus: unused, useSessionRetainInfo: unused,
+  usePanelInfo: unused, useSessions: unused, useSessionStatus: unused, useSessionRetainInfo: unused, useContextMenu: unused,
   useResource: unused, useWorkspaces: unused, ...allowAllAccess,
 }
 const t = makeTranslate(en)
@@ -113,7 +113,7 @@ describe('EmbeddingsConfigPage', () => {
     const readOnly = scope(section, { writable: false })
     render(<EmbeddingsConfigPage {...standard} scope={readOnly.form} {...host()} t={t} view="page" />)
     expect(screen.getByText(en['embeddings.readOnly'])).toBeTruthy()
-    expect((screen.getByLabelText(en['embeddings.baseUrl']) as HTMLInputElement).disabled).toBe(true)
+    expect((screen.getByLabelText<HTMLInputElement>(en['embeddings.baseUrl'])).disabled).toBe(true)
   })
 
   it('shows fixed model facts, the editable endpoint, and the usage counters', async () => {
@@ -122,12 +122,12 @@ describe('EmbeddingsConfigPage', () => {
     expect(screen.getByText('text-embedding-v4')).toBeTruthy()
     expect(screen.getByText(en['model.v4'])).toBeTruthy()
     expect(screen.getByText('1024')).toBeTruthy()
-    expect((screen.getByLabelText(en['embeddings.baseUrl']) as HTMLInputElement).value).toBe(section.baseUrl)
-    expect((screen.getByLabelText(en['embeddings.apiKeyEnv']) as HTMLInputElement).value).toBe('CLAUDE_SONNET_5_5_API_KEY')
+    expect((screen.getByLabelText<HTMLInputElement>(en['embeddings.baseUrl'])).value).toBe(section.baseUrl)
+    expect((screen.getByLabelText<HTMLInputElement>(en['embeddings.apiKeyEnv'])).value).toBe('CLAUDE_SONNET_5_5_API_KEY')
     await screen.findByText(en['embeddings.usage'])
     expect(screen.getByText(t('embeddings.usageLine', { requests: '4', texts: '9', failures: '1', seconds: '2.5' }))).toBeTruthy()
     expect(screen.getByText('boom')).toBeTruthy()
-    expect((screen.getByRole('checkbox') as HTMLInputElement).checked).toBe(true)
+    expect((screen.getByRole<HTMLInputElement>('checkbox')).checked).toBe(true)
     expect(screen.getByText(en['embeddings.enabled'])).toBeTruthy()
   })
 
@@ -137,7 +137,7 @@ describe('EmbeddingsConfigPage', () => {
     expect(screen.getAllByText(en['embeddings.empty'])).toHaveLength(1)
     expect(screen.getByText(en['embeddings.anyLength'])).toBeTruthy()
     expect(screen.getByText(en['embeddings.disabled'])).toBeTruthy()
-    expect((screen.getByLabelText(en['embeddings.baseUrl']) as HTMLInputElement).value).toBe('')
+    expect((screen.getByLabelText<HTMLInputElement>(en['embeddings.baseUrl'])).value).toBe('')
     expect(screen.queryByText(en['embeddings.usage'])).toBeNull()
     await act(async () => Promise.resolve())
   })
@@ -146,8 +146,8 @@ describe('EmbeddingsConfigPage', () => {
     const page = scope(section)
     const injected = host()
     render(<EmbeddingsConfigPage {...standard} scope={page.form} {...injected} t={t} view="page" />)
-    fireEvent.change(screen.getByLabelText(en['embeddings.baseUrl']), { target: { value: 'http://127.0.0.1:11434/v1' } })
-    fireEvent.change(screen.getByLabelText(en['embeddings.apiKeyEnv']), { target: { value: '' } })
+    fireEvent.change(screen.getByLabelText<HTMLInputElement>(en['embeddings.baseUrl']), { target: { value: 'http://127.0.0.1:11434/v1' } })
+    fireEvent.change(screen.getByLabelText<HTMLInputElement>(en['embeddings.apiKeyEnv']), { target: { value: '' } })
     fireEvent.click(screen.getByText(en['embeddings.endpointSave']))
     await screen.findByText(en['embeddings.endpointSaved'])
     expect(page.mutate).toHaveBeenCalledWith([
@@ -157,7 +157,7 @@ describe('EmbeddingsConfigPage', () => {
     expect(injected.status).toHaveBeenCalledTimes(2)
 
     page.mutate.mockResolvedValueOnce(false)
-    fireEvent.change(screen.getByLabelText(en['embeddings.baseUrl']), { target: { value: 'http://127.0.0.1:1234/v1' } })
+    fireEvent.change(screen.getByLabelText<HTMLInputElement>(en['embeddings.baseUrl']), { target: { value: 'http://127.0.0.1:1234/v1' } })
     fireEvent.click(screen.getByText(en['embeddings.endpointSave']))
     await screen.findByText(en['embeddings.endpointFailed'])
   })
@@ -165,12 +165,12 @@ describe('EmbeddingsConfigPage', () => {
   it('toggles semantic search and reports acceptance or refusal', async () => {
     const page = scope(section)
     render(<EmbeddingsConfigPage {...standard} scope={page.form} {...host()} t={t} view="page" />)
-    fireEvent.click(screen.getByRole('checkbox'))
+    fireEvent.click(screen.getByRole<HTMLInputElement>('checkbox'))
     await screen.findByText(en['embeddings.toggleSaved'])
     expect(page.mutate).toHaveBeenCalledWith([{ op: 'set', path: ['enabled'], value: false }], 3)
 
     page.mutate.mockResolvedValueOnce(false)
-    fireEvent.click(screen.getByRole('checkbox'))
+    fireEvent.click(screen.getByRole<HTMLInputElement>('checkbox'))
     await screen.findByText(en['embeddings.toggleRefused'])
   })
 
@@ -178,7 +178,7 @@ describe('EmbeddingsConfigPage', () => {
     const page = scope(section)
     const injected = host()
     render(<EmbeddingsConfigPage {...standard} scope={page.form} {...injected} t={t} view="page" />)
-    fireEvent.change(screen.getByLabelText(en['embeddings.baseUrl']), { target: { value: 'http://127.0.0.1:11434/v1' } })
+    fireEvent.change(screen.getByLabelText<HTMLInputElement>(en['embeddings.baseUrl']), { target: { value: 'http://127.0.0.1:11434/v1' } })
     fireEvent.click(screen.getByText(en['embeddings.test']))
     await screen.findByText(content => content.includes(`${en['embeddings.testOk']}: returned a 3-value vector`))
     expect(injected.probe).toHaveBeenCalledWith(Object.assign({}, {
@@ -207,7 +207,7 @@ describe('EmbeddingsConfigPage', () => {
     const injected = host()
     injected.probe.mockResolvedValueOnce({ ok: true, detail: 'returned a vector', latencyMs: 7 })
     render(<EmbeddingsConfigPage {...standard} scope={page.form} {...injected} t={t} view="page" />)
-    fireEvent.change(screen.getByLabelText(en['embeddings.apiKeyEnv']), { target: { value: '' } })
+    fireEvent.change(screen.getByLabelText<HTMLInputElement>(en['embeddings.apiKeyEnv']), { target: { value: '' } })
     fireEvent.click(screen.getByText(en['embeddings.test']))
     await screen.findByText(content => content.includes(`${en['embeddings.testOk']}: returned a vector`))
     expect(injected.probe.mock.calls[0]?.[0]).not.toHaveProperty('apiKeyEnv')
@@ -229,7 +229,7 @@ describe('EmbeddingsConfigPage', () => {
     injected.status.mockResolvedValueOnce({ available: true, enabled: true, usage: { requests: 1, texts: 1, failures: 0, totalMs: 1 } })
     injected.status.mockRejectedValueOnce(new Error('boom'))
     render(<EmbeddingsConfigPage {...standard} scope={page.form} {...injected} t={t} view="page" />)
-    fireEvent.change(screen.getByLabelText(en['embeddings.baseUrl']), { target: { value: 'http://new/v1' } })
+    fireEvent.change(screen.getByLabelText<HTMLInputElement>(en['embeddings.baseUrl']), { target: { value: 'http://new/v1' } })
     fireEvent.click(screen.getByText(en['embeddings.endpointSave']))
     await screen.findByText(en['embeddings.endpointSaved'])
     expect(injected.status).toHaveBeenCalledTimes(2)
@@ -240,9 +240,9 @@ describe('EmbeddingsConfigPage', () => {
     const { rerender } = render(<EmbeddingsConfigPage {...standard} scope={page.form} {...host()} t={t} view="page" />)
     act(() => { page.set({ ...section, enabled: false }) })
     expect(screen.getByText(en['embeddings.disabled'])).toBeTruthy()
-    fireEvent.change(screen.getByLabelText(en['embeddings.baseUrl']), { target: { value: 'http://dirty/v1' } })
+    fireEvent.change(screen.getByLabelText<HTMLInputElement>(en['embeddings.baseUrl']), { target: { value: 'http://dirty/v1' } })
     act(() => { page.set({ ...section, baseUrl: 'https://new/v1' }) })
-    expect((screen.getByLabelText(en['embeddings.baseUrl']) as HTMLInputElement).value).toBe('http://dirty/v1')
+    expect((screen.getByLabelText<HTMLInputElement>(en['embeddings.baseUrl'])).value).toBe('http://dirty/v1')
     rerender(<EmbeddingsConfigPage {...standard} scope={page.form} {...host()} t={t} view="page" />)
   })
 })

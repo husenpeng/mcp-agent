@@ -1,18 +1,18 @@
-// Catalog reads: the open DeepSeek Harness plugin catalog (`index.json`, the
+// Catalog reads: the open Tomato Harness plugin catalog (`index.json`, the
 // format-1 plugin market index) and the star counts published beside it in
 // `plugins.json`. Both are compacted before they travel to the browser.
 
 /** Catalog mirrors in fallback order; the first that answers wins. */
 export const DEFAULT_INDEX_URLS = [
-  'https://cdn.jsdelivr.net/npm/dsh-plugin-catalog/index.json',
-  'https://awesome-dsh-plugin.com/index.json',
+  'https://cdn.jsdelivr.net/npm/tomato-plugin-catalog/index.json',
+  'https://awesome-tomato-plugin.com/index.json',
   'https://dshmarket.com/index.json',
 ]
 
 /** Star-count documents, in the same fallback order. */
 export const DEFAULT_STAR_URLS = [
-  'https://cdn.jsdelivr.net/npm/dsh-plugin-catalog/plugins.json',
-  'https://awesome-dsh-plugin.com/plugins.json',
+  'https://cdn.jsdelivr.net/npm/tomato-plugin-catalog/plugins.json',
+  'https://awesome-tomato-plugin.com/plugins.json',
 ]
 
 /** Longest description kept per plugin; cards show two lines and the page shows the README. */
@@ -142,7 +142,7 @@ export function compactCatalog(document, { indexUrl }) {
           ...version.source.commit === undefined ? {} : { commit: version.source.commit },
           ...version.source.path === undefined ? {} : { path: version.source.path },
         },
-        ...typeof version.engines?.dsh === 'string' ? { dsh: version.engines.dsh } : {},
+        ...typeof version.engines?.tomato === 'string' ? { tomato: version.engines.tomato } : {},
         ...typeof version.engines?.tomato === 'string' ? { tomato: version.engines.tomato } : {},
       }))
     if (versions.length === 0) continue

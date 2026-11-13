@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v0.2.1-rc.4/memory-injection/guide.md
+/:
+  en: e23dd048dde73c15
+  zh: a478e41dbb488ce2
+/memory-injection-follows-the-verified-account-and-the-turn:
+  en: b20ef3d035c3b16a
+  zh: 34d0cf475e65394c
+/memory-injection-follows-the-verified-account-and-the-turn/change:
+  en: 8726bb14da08d810
+  zh: 9fcac5cfea5e3591
+/memory-injection-follows-the-verified-account-and-the-turn/migration:
+  en: 0da950d87079b73d
+  zh: 2a99407498162bb9

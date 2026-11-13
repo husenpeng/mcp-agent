@@ -46,6 +46,14 @@
     },
     {
       "path": "../../util/timeout"
+    },
+    {
+      "path": "../../typert/protocol"
     }
+  ],
+  "files": [
+    "src/index.ts",
+    "src/types.ts",
+    "src/remote.ts"
   ]
 }

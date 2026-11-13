@@ -177,7 +177,7 @@ export function RowConfigPage(props: RowConfigPageProps & { readonly controller:
   const unpaired = pair !== undefined && (providerText === '') !== (modelText === '')
   const providerField = pair === undefined ? undefined : state.fields[pair.provider]
   const modelField = pair === undefined ? undefined : state.fields[pair.model]
-  const formState = unpaired && pair !== undefined && providerField !== undefined && modelField !== undefined
+  const formState = unpaired && providerField !== undefined && modelField !== undefined
     ? {
       ...state,
       invalid: true,

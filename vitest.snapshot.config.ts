@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import { availableParallelism } from 'node:os'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import { defineConfig } from 'vitest/config'
@@ -14,6 +15,14 @@ function positiveIntFromEnv(name: string, fallback: number): number {
     throw new Error(`${name} must be a positive integer, got ${JSON.stringify(raw)}`)
   }
   return value
+}
+
+// PTC replay needs CPython 3.10+; prefer a versioned interpreter over a host
+// `python3` that may still point at the system 3.9.
+if (process.env.TOMATO_SNAPSHOT_PYTHON_BIN === undefined || process.env.TOMATO_SNAPSHOT_PYTHON_BIN === '') {
+  const candidate = ['/opt/homebrew/bin/python3.12', '/usr/local/bin/python3.12', '/usr/bin/python3.12']
+    .find(path => existsSync(path))
+  if (candidate !== undefined) process.env.TOMATO_SNAPSHOT_PYTHON_BIN = candidate
 }
 
 const snapshotMaxConcurrency = positiveIntFromEnv(

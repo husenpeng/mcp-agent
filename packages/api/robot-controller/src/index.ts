@@ -15,6 +15,7 @@ import { brandString } from '@tomato/branded'
 import type { Context } from '@tomato/cordis'
 import type {} from '@tomato/experimental-robot'
 import type {} from '@tomato/experimental-robot/templates'
+import type { PluginInventorySnapshot } from '@tomato/host-plugin-inventory'
 import type {} from '@tomato/mcp-resources'
 import type {} from '@tomato/skill'
 import type {} from '@tomato/tools'
@@ -22,9 +23,9 @@ import type {} from '@tomato/workspace'
 import { Remote, RemoteError, TypertRemoteService } from '@tomato/typert-protocol'
 import type {
   Robot, RobotCancelRequest, RobotCapabilitiesRequest, RobotCapabilityCatalog, RobotCapabilityOption, RobotCorrectRequest,
-  RobotHireRequest, RobotInstantiateRequest, RobotInterruptRequest, RobotPublishRequest, RobotRebindRequest, RobotRevisionRequest,
-  RobotRunsRequest, RobotSnapshotFrame, RobotSpecIssue, RobotSpecRef, RobotSpecRevision, RobotStartRequest, RobotTemplate, Run,
-  RunId,
+  RobotDependency, RobotDependencyKind, RobotHireRequest, RobotInstallRequest, RobotInstantiateRequest, RobotInterruptRequest,
+  RobotPublishRequest, RobotRebindRequest, RobotRemoveRequest, RobotRevisionRequest, RobotRunsRequest, RobotSnapshotFrame,
+  RobotSpec, RobotSpecIssue, RobotSpecRef, RobotSpecRevision, RobotStartRequest, RobotTemplate, Run, RunId,
 } from './types.ts'
 
 export type * from './types.ts'
@@ -70,6 +71,49 @@ function specIssuesOf(error: unknown): readonly RobotSpecIssue[] | undefined {
   return Array.isArray(error.issues) ? error.issues : undefined
 }
 
+/**
+ * Project dependency names onto the pairs an installation report lists.
+ * @param kind - dependency family the names belong to.
+ * @param names - declared names that the deployment does not offer.
+ * @returns one dependency per name.
+ */
+function dependencies(kind: RobotDependencyKind, names: readonly string[]): RobotDependency[] {
+  return names.map(name => ({ kind, name }))
+}
+
+/**
+ * Whether one specification declares anything a run must resolve before it can
+ * start in this deployment.
+ * @param spec - specification bound to the robot.
+ * @returns whether the specification declares a skill, plugin, or MCP server.
+ */
+function declaresDependencies(spec: RobotSpec): boolean {
+  return spec.capability.skills.length > 0
+    || spec.capability.plugins.length > 0
+    || spec.capability.mcpServers.length > 0
+}
+
+/**
+ * Whether the recorded installation covers the robot's bound revision.
+ * @param robot - robot whose installation to read.
+ * @returns whether this exact revision was verified.
+ */
+function isInstalled(robot: Robot): boolean {
+  const installed = robot.installation
+  return installed !== undefined
+    && installed.ref.spec === robot.spec.spec
+    && installed.ref.revision === robot.spec.revision
+}
+
+/**
+ * Render missing dependencies for one failure message.
+ * @param missing - dependency pairs the deployment does not offer.
+ * @returns a comma-separated list naming each family.
+ */
+function describeMissing(missing: readonly RobotDependency[]): string {
+  return missing.map(entry => `${entry.kind} "${entry.name}"`).join(', ')
+}
+
 /** Host service backing the generated `ctx.remote.robot` namespace. */
 export class RobotController extends TypertRemoteService {
   static inject = ['robots', 'typert']
@@ -111,14 +155,13 @@ export class RobotController extends TypertRemoteService {
   }
 
   /**
-   * List the runs of one robot.
+   * List the runs of one robot. A deleted robot keeps its recorded runs, so an
+   * identity that no longer appears in the roster still answers with history.
    * @param request - robot whose runs to read.
-   * @returns runs in acceptance order.
-   * @throws RemoteError `robot/not-found` for an unknown robot.
+   * @returns runs in acceptance order; empty for an identity with no run.
    */
   @Remote('runs')
   async runs(request: RobotRunsRequest): Promise<readonly Run[]> {
-    await this.requireRobot(request.robotId)
     return this.ctx.robots.runs(request.robotId)
   }
 
@@ -168,6 +211,53 @@ export class RobotController extends TypertRemoteService {
   }
 
   /**
+   * Verify the robot's declared skills, plugins, MCP servers, and permission
+   * preset against this deployment and record the installation of its bound
+   * revision. A revision that declares nothing resolvable installs immediately.
+   * Installation does not start a run; the runtime still resolves every
+   * dependency when the run begins.
+   * @param request - robot to install.
+   * @returns the robot with an installation naming its bound revision.
+   * @throws RemoteError `robot/not-found` for an unknown robot or revision, or
+   *   `robot/capabilities-missing` with every dependency this deployment lacks.
+   */
+  @Remote('installRobot')
+  async install(request: RobotInstallRequest): Promise<Robot> {
+    const robot = await this.requireRobot(request.robotId)
+    const revision = await this.ctx.robots.revision(robot.spec)
+    if (revision === undefined) throw this.missing(refId(robot.spec))
+    const missing = await this.capabilityGaps(revision.spec)
+    if (missing.length > 0) {
+      throw new RemoteError(
+        'robot/capabilities-missing',
+        `${robot.name} cannot be installed; this deployment does not offer ${describeMissing(missing)}.`
+          + ' Install missing plugins under Settings → Plugins, or edit the specification, then retry.',
+        { missing },
+      )
+    }
+    return this.ctx.robots.install(robot.id)
+  }
+
+  /**
+   * Delete one robot instance. Its published specifications and recorded runs
+   * stay, so the history it produced remains readable; a robot that still owns
+   * a non-terminal run refuses removal.
+   * @param request - robot to delete.
+   * @returns nothing after the robot is deleted.
+   * @throws RemoteError `robot/not-found` for an unknown robot, or
+   *   `robot/conflict` while a run is still executing.
+   */
+  @Remote('removeRobot')
+  async remove(request: RobotRemoveRequest): Promise<void> {
+    await this.requireRobot(request.robotId)
+    try {
+      await this.ctx.robots.remove(request.robotId)
+    } catch (error: unknown) {
+      throw new RemoteError('robot/conflict', messageOf(error), { message: messageOf(error) })
+    }
+  }
+
+  /**
    * Publish a user-owned copy of one registered template and instantiate it.
    * The copy is an ordinary specification: later template changes never
    * modify it, and editing it never modifies the template.
@@ -194,15 +284,26 @@ export class RobotController extends TypertRemoteService {
   }
 
   /**
-   * Accept one run for a robot.
+   * Accept one run for a robot. A specification that declares skills, plugins,
+   * or MCP servers must be installed for its bound revision first; installing
+   * verifies the deployment can resolve what the run will need.
    * @param request - robot and the input message.
    * @returns the accepted run.
    * @throws RemoteError `robot/not-found` for an unknown robot, or
-   *   `robot/conflict` while the robot cannot accept a run.
+   *   `robot/conflict` while the robot cannot accept a run, including when its
+   *   declared dependencies were never installed.
    */
   @Remote('start')
   async start(request: RobotStartRequest): Promise<Run> {
-    await this.requireRobot(request.robotId)
+    const robot = await this.requireRobot(request.robotId)
+    const revision = await this.ctx.robots.revision(robot.spec)
+    if (revision !== undefined && declaresDependencies(revision.spec) && !isInstalled(robot)) {
+      throw new RemoteError(
+        'robot/conflict',
+        `${robot.name} is not installed; install it on the robot page before starting a run.`,
+        { message: 'not-installed' },
+      )
+    }
     try {
       return await this.ctx.robots.start(request.robotId, { message: request.message })
     } catch (error: unknown) {
@@ -305,10 +406,10 @@ export class RobotController extends TypertRemoteService {
 
   /**
    * List the local values the specification editor offers as choices. Each
-   * source is optional: a deployment without the skill, tool, MCP, or Workspace
-   * service contributes an empty list instead of failing the read.
+   * source is optional: a deployment without the skill, plugin, tool, MCP, or
+   * Workspace service contributes an empty list instead of failing the read.
    * @param request - Workspace whose project skills apply.
-   * @returns skill, tool, MCP-server, and Workspace-directory options.
+   * @returns skill, plugin, tool, MCP-server, and Workspace-directory options.
    */
   @Remote('capabilities')
   async capabilities(request: RobotCapabilitiesRequest): Promise<RobotCapabilityCatalog> {
@@ -319,6 +420,8 @@ export class RobotController extends TypertRemoteService {
     const tools = this.ctx.get('tools')?.definitions() ?? []
     const mcpServers = this.ctx.get('mcpResources')?.list() ?? []
     const workspaces = this.ctx.get('workspaceRegistry')?.list() ?? []
+    const plugins = [...this.activePluginNames(await this.ctx.get('pluginInventory')?.list())]
+      .sort((left, right) => left.localeCompare(right))
     return {
       skills: summaries.map(skill => option(
         skill.name,
@@ -328,12 +431,76 @@ export class RobotController extends TypertRemoteService {
         // virtual skills have no folder and keep the name-only option.
         skill.path === undefined || skill.path === '' ? undefined : dirname(skill.path),
       )),
+      plugins: plugins.map(name => option(name, name)),
       tools: tools
         .map(tool => option(tool.name, tool.name, tool.description))
         .sort((left, right) => left.value.localeCompare(right.value)),
       mcpServers: mcpServers.map(name => option(name, name)),
       workspaceRoots: workspaces.map(workspace => option(workspace.path, workspace.title, undefined, workspace.path)),
     }
+  }
+
+  /**
+   * Resolve the directory a run will work in, matching the runtime's order:
+   * the specification's first Workspace root, the deployment's first registered
+   * Workspace, then the Host process directory. Installation must inspect the
+   * skills the run will actually see.
+   * @param spec - specification bound to the robot being installed.
+   * @returns the absolute working directory.
+   */
+  private runCwd(spec: RobotSpec): string {
+    return spec.capability.workspaceRoots[0]
+      ?? this.ctx.get('workspaceRegistry')?.list()[0]?.path
+      ?? process.cwd()
+  }
+
+  /**
+   * Read the module names of plugins this deployment runs.
+   * @param snapshot - plugin inventory, or `undefined` when no inventory is mounted.
+   * @returns active plugin module names.
+   */
+  private activePluginNames(snapshot: PluginInventorySnapshot | undefined): Set<string> {
+    return new Set((snapshot?.entries ?? [])
+      .filter(entry => entry.enabled && entry.fiberPhase === 'active')
+      .map(entry => entry.moduleName))
+  }
+
+  /**
+   * Compare one specification's declared dependencies with the live deployment.
+   * Every dependency family is checked against its live source; a source that is
+   * not mounted supplies nothing, so a declared dependency it would own is missing.
+   * @param spec - specification bound to the robot being installed.
+   * @returns every dependency this deployment does not offer.
+   */
+  private async capabilityGaps(spec: RobotSpec): Promise<readonly RobotDependency[]> {
+    const missing: RobotDependency[] = []
+    const cwd = this.runCwd(spec)
+    if (spec.capability.skills.length > 0) {
+      const registry = this.ctx.get('skills')
+      const available = new Set(registry === undefined
+        ? []
+        : (await registry.list({ cwd })).map(skill => skill.name))
+      missing.push(...dependencies('skill', spec.capability.skills.filter(name => !available.has(name))))
+    }
+    if (spec.capability.plugins.length > 0) {
+      const active = this.activePluginNames(await this.ctx.get('pluginInventory')?.list())
+      missing.push(...dependencies('plugin', spec.capability.plugins.filter(name => !active.has(name))))
+    }
+    if (spec.capability.mcpServers.length > 0) {
+      const mounted = this.ctx.get('mcpResources')?.list() ?? []
+      missing.push(...dependencies('mcpServer', spec.capability.mcpServers.filter(name => !mounted.includes(name))))
+    }
+    const presets = this.ctx.get('permissionPresets')
+    if (presets !== undefined) {
+      try {
+        presets.resolve(spec.capability.permissionPreset)
+      } catch {
+        // An unregistered preset is a dependency this deployment cannot satisfy;
+        // the gap names it so the caller can republish with an offered preset.
+        missing.push({ kind: 'permissionPreset', name: spec.capability.permissionPreset })
+      }
+    }
+    return missing
   }
 
   /**

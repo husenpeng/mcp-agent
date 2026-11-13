@@ -1,7 +1,7 @@
 {
   "name": "@tomato/client-ui-workspace",
   "description": "Workspace picker plugin: one WorkspacePicker registered into the sidebar and empty-state workspace slots",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -32,7 +32,6 @@
         "@tomato/api-remote-access",
         "@tomato/api-remotes",
         "@tomato/api-session-controller",
-        "@tomato/api-robot-controller",
         "@tomato/api-workspace-controller",
         "@tomato/client-connection",
         "@tomato/client-locale",
@@ -41,7 +40,8 @@
         "@tomato/client-ui-layout",
         "@tomato/client-ui-renderer",
         "@tomato/client-ui-session",
-        "@tomato/client-ui-sidebar"
+        "@tomato/client-ui-sidebar",
+        "@tomato/client-ui-context-menu"
       ],
       "platform": "web"
     }
@@ -84,12 +84,16 @@
     "clsx": "^2.0.0",
     "react": "^18.2.0",
     "@tomato/client-shortcuts": "workspace:*",
-    "@tomato/client-product-analytics": "workspace:*"
+    "@tomato/client-product-analytics": "workspace:*",
+    "@tomato/client-ui-context-menu": "workspace:*"
   },
   "files": [
     "locale/*.json",
     "lib/index.js",
     "lib/client.js",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
   ]
 }

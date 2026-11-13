@@ -38,6 +38,9 @@
       "path": "../../core/agent"
     },
     {
+      "path": "../../host/plugin-inventory"
+    },
+    {
       "path": "../session-controller/tsconfig.host.json"
     }
   ]

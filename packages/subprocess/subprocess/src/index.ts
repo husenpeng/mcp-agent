@@ -15,6 +15,13 @@ import type { SubprocessHandle, SubprocessSpawnSpec } from './types.ts'
 import type { SubprocessTerminalEnvironment, SubprocessTerminalHandle, SubprocessTerminalSpawnSpec } from './types.ts'
 
 export { TOMATO_ENV_PREFIX } from './types.ts'
+export {
+  SUBPROCESS_ERROR_CODES,
+  SubprocessError,
+  SubprocessExecutableNotFoundError,
+  subprocessSpawnFailure,
+  type SubprocessErrorCode,
+} from './error.ts'
 export type {
   CollectedOutput,
   TomatoEnvironment,
@@ -66,7 +73,11 @@ export const SENSITIVE_ENV_PATTERN = /KEY|PASSWORD|SECRET|TOKEN/i
 export function scrubbedParentEnv(): Record<string, string> {
   const env: Record<string, string> = {}
   for (const [key, value] of Object.entries(process.env)) {
-    if (value !== undefined && !SENSITIVE_ENV_PATTERN.test(key) && !key.toUpperCase().startsWith(TOMATO_ENV_PREFIX)) env[key] = value
+    const upper = key.toUpperCase()
+    // The pre-rename TOMATO_ namespace is as binding as TOMATO_: a stale export
+    // must not reach a child that resolves one namespaced fact by name.
+    if (value !== undefined && !SENSITIVE_ENV_PATTERN.test(key)
+      && !upper.startsWith(TOMATO_ENV_PREFIX) && !upper.startsWith('TOMATO_')) env[key] = value
   }
   // A child Node ignores the inherited proxy variables unless the flag this adds is set, so an MCP
   // stdio server or subagent CLI would connect directly while its parent proxies. The same overlay
@@ -163,15 +174,3 @@ export abstract class SubprocessRuntime extends Service {
 }
 
 export default SubprocessRuntime
-
-/** Executable lookup completed without finding an executable file. */
-export class SubprocessExecutableNotFoundError extends Error {
-  /**
-   * @param message - provider-specific lookup diagnostic.
-   * @param options - original provider failure, when available.
-   */
-  constructor(message: string, options?: ErrorOptions) {
-    super(message, options)
-    this.name = 'SubprocessExecutableNotFoundError'
-  }
-}

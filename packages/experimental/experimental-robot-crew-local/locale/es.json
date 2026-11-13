@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Proveedor local de equipos de robots",
+    "description": "Proveedor basado en almacenamiento que ejecuta un Agent por miembro con mensajes A2A, resúmenes de memoria y protección de bucles."
+  }
+}

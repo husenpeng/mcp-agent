@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import { contextMenuHook } from '@tomato/client-test-runtime'
+// @vitest-environment jsdom
 import { useState, type ReactNode } from 'react'
 import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import { act, cleanup, fireEvent, type RenderResult, within } from '@testing-library/react'
@@ -51,10 +53,10 @@ async function bench() {
   locale.setLocale('en')
   runtime.slots.installLocale(locale)
   const imageCalls: PropsRuntime<'conversation.chat.user.images'>[] = []
-  const metaCalls: PropsRuntime<'conversation.chat.user.image-meta'>[] = []
   const openFile = vi.fn<(path: string) => void>()
   const openSkill = vi.fn<(name: string) => void>()
   await runtime.mount({ inject: ['slots'], apply: (ctx) => {
+    ctx.slots.provideRoot({ props: { useContextMenu: contextMenuHook() } })
     const userText = new UserTextRegistry(ctx)
     for (const rule of [
       sessionReferenceRule, fileReferenceRule, folderReferenceRule, skillReferenceRule,
@@ -76,7 +78,7 @@ async function bench() {
     ctx.slots.register({ name: 'conversation.user.text.node', key: 'text' }, PlainUserText)
     ctx.slots.register({ name: 'conversation.user.text.node', key: 'session' }, SessionReference)
     ctx.slots.register({ name: 'conversation.user.text.node', key: 'file', locale: 'reference',
-      inject: () => ({ openFile }) }, FileReference)
+      inject: () => ({ openFile, resolveFilePath: path => path }) }, FileReference)
     ctx.slots.register({ name: 'conversation.user.text.node', key: 'folder' }, FolderReference)
     ctx.slots.register({ name: 'conversation.user.text.node', key: 'skill', inject: () => ({ openSkill }) }, SkillReference)
     ctx.slots.inject('conversation.chat.user.images', () => ctx.slots.register({ name: 'conversation.chat.user.images' }, function ImageProbe(props) {
@@ -86,12 +88,6 @@ async function bench() {
       const name = 'attachment' in source ? source.attachment.name : source.preview.name
       return <span data-testid="image" data-session={props.sessionId}
         data-current-session={props.useSession(snapshot => snapshot.sessionId)}>{name}</span>
-    }))
-    ctx.slots.inject('conversation.chat.user.image-meta', () => ctx.slots.register({
-      name: 'conversation.chat.user.image-meta', id: 'meta-probe',
-    }, function MetaProbe(props) {
-      metaCalls.push(props)
-      return <span data-testid="image-meta" data-name={props.image.name} />
     }))
   } })
   const mountContent = () => runtime.mount({ inject: ['slots'], apply: (ctx) => {
@@ -128,10 +124,7 @@ async function bench() {
     return { ...view, rerender: update }
   }
   const loadImage = vi.fn<UserContentInput['loadImage']>(async () => 'blob:loaded')
-  return {
-    runtime, locale, owner, mountContent, factory, render, loadImage, imageCalls, metaCalls,
-    SessionProvider, openFile, openSkill,
-  }
+  return { runtime, locale, owner, mountContent, factory, render, loadImage, imageCalls, SessionProvider, openFile, openSkill }
 }
 
 describe('user Content Factory', () => {
@@ -172,15 +165,6 @@ describe('user Content Factory', () => {
       expect(call).toMatchObject({ align: 'end', compact: true, loadImage: b.loadImage })
     }
     expect(b.loadImage).not.toHaveBeenCalled()
-  })
-
-  it('offers each durable image its own meta entry and none for a local preview', async () => {
-    const b = await bench()
-    const content: UserContentData = { ...empty, attachments: [durable, preview, durable] }
-    const view = b.render(b.factory({ content, facts: {}, loadImage: b.loadImage }))
-    expect(b.metaCalls.map(call => call.image)).toEqual([image, image])
-    expect(view.getAllByTestId('image-meta').map(node => node.getAttribute('data-name')))
-      .toEqual(['history.png', 'history.png'])
   })
 
   it.each([

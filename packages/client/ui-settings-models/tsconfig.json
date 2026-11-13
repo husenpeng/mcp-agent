@@ -41,5 +41,6 @@
     {
       "path": "../product-analytics/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

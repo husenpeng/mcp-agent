@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Company fetch provider",
+    "description": "Company-gateway fetch provider for the Harness web capability seam."
+  }
+}

@@ -7,18 +7,6 @@
   gap: 6px;
 }
 
-/* A retracted exchange stays in the transcript; the bubble reads as withdrawn
-   without hiding text the user may still want to copy. */
-.userRow[data-retracted] [data-message-bubble] {
-  opacity: 0.55;
-}
-
-.retractedNote {
-  color: var(--dsw-alias-label-tertiary);
-  font-size: var(--tomato-content-font-size-secondary, 13px);
-  line-height: calc(18px + var(--tomato-content-font-delta-secondary, 0px));
-}
-
 .userStack {
   display: flex;
   flex-direction: column;
@@ -325,15 +313,6 @@
   gap: 8px;
 }
 
-/* One user-message image with the entries registered for it stacked underneath. */
-.imageCell {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  min-width: 0;
-  gap: 4px;
-}
-
 .fileCard {
   display: inline-flex;
   flex: 0 0 240px;
@@ -342,7 +321,7 @@
   width: 240px;
   min-height: 64px;
   padding: 8px 12px;
-  border: 0.5px solid var(--dsw-alias-border-l2, rgba(0, 0, 0, 0.12));
+  border: 0.5px solid var(--dsw-alias-border-l2);
   border-radius: var(--dsw-radius-lg);
   background: var(--dsw-specific-input-major, transparent);
   box-sizing: border-box;
@@ -375,7 +354,7 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  color: var(--dsw-alias-label-tertiary, rgba(0, 0, 0, 0.45));
+  color: var(--dsw-alias-label-tertiary);
   font-size: 12px;
   line-height: 15px;
 }

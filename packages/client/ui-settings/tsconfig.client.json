@@ -22,16 +22,17 @@
       "path": "../../../vendor/schemastery"
     },
     {
+      "path": "../../settings/settings"
+    },
+    {
       "path": "../../api/remotes/tsconfig.client.json"
     },
     {
       "path": "../connection/tsconfig.client.json"
-    },
-    {
-      "path": "../../settings/settings"
     }
   ],
   "exclude": [
     "src/index.ts"
-  ]
+  ],
+  "files": []
 }

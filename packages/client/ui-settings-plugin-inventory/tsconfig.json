@@ -15,15 +15,6 @@
       "path": "../../../vendor/cordis"
     },
     {
-      "path": "../../api/remotes/tsconfig.client.json"
-    },
-    {
-      "path": "../locale/tsconfig.client.json"
-    },
-    {
-      "path": "../ui-settings/tsconfig.client.json"
-    },
-    {
       "path": "../ui-agent-preset"
     },
     {
@@ -43,6 +34,16 @@
     },
     {
       "path": "../store"
+    },
+    {
+      "path": "../../api/remotes/tsconfig.client.json"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-settings/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

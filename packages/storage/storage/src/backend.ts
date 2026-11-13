@@ -32,10 +32,10 @@ export interface KvFacet {
    * Open one unit, creating it when the medium holds no trace of it yet
    * (materialization may defer to the first write, but {@link KvUnit.loadAll}
    * must immediately serve the empty shape). A version already stamped on the
-   * medium that differs from `descriptor.version` rejects with
-   * `version-mismatch`; a medium that cannot be parsed as this unit rejects
-   * with `malformed-medium`. Opening the same unit name twice without closing
-   * is a caller bug and rejects.
+   * medium that is neither `descriptor.version` nor one of its
+   * `compatibleVersions` rejects with `version-mismatch`; a medium that cannot
+   * be parsed as this unit rejects with `malformed-medium`. Opening the same
+   * unit name twice without closing is a caller bug and rejects.
    * @param descriptor - Static identity and shape of the unit to open.
    * @returns the opened unit.
    */
@@ -64,11 +64,12 @@ export interface KvUnitDescriptor {
   /**
    * Older unit versions whose stored records are also readable under the
    * declaring owner's current record schemas (the owner vouches for that —
-   * typically by declaring the fields old records lack as optional). Reads of
-   * a `per-record` unit accept documents stamped with any listed version, and
-   * the legacy whole-unit bootstrap accepts a legacy file stamped with one;
-   * writes always stamp {@link version}. `single`-layout reads stay
-   * exact-version.
+   * typically by declaring the fields old records lack as optional). A read
+   * accepts a medium stamped with any listed version: `per-record` units read
+   * such record documents and the legacy whole-unit bootstrap reads such a
+   * file, while `single` units read the whole document. Records then pass or
+   * fail the owner's schemas as usual, and the next write stamps
+   * {@link version}.
    */
   readonly compatibleVersions?: readonly number[]
 }
@@ -153,6 +154,14 @@ export interface KvUnit {
    * @returns resolution after durability.
    */
   setGlobal(value: unknown): Promise<void>
+
+  /**
+   * Report a cheap token that changes when another writer publishes to this
+   * unit. A caller uses it to skip a {@link loadAll} whose result it already
+   * holds. Backends whose medium cannot report one omit this member.
+   * @returns the medium's change token.
+   */
+  changeStamp?(): Promise<number>
 
   /**
    * Drain this unit's in-flight writes and release it. Idempotent.

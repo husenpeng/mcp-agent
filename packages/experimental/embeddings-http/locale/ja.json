@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "HTTP 埋め込みプロバイダー",
+    "description": "1 回のバッチ HTTP リクエストで ctx.embeddings に OpenAI 互換の埋め込みを提供します。"
+  }
+}

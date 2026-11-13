@@ -25,7 +25,10 @@
   "files": [
     "locale/*.json",
     "lib/index.js",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/**/*.js.map",
+    "lib/types/**/*.d.ts.map",
+    "src"
   ],
   "license": "MIT",
   "peerDependencies": {
@@ -54,6 +57,7 @@
     "@tomato/experimental-robot": "workspace:*",
     "@tomato/experimental-robot-local": "workspace:*",
     "@tomato/experimental-robot-triggers": "workspace:*",
+    "@tomato/host-plugin-inventory": "workspace:*",
     "@tomato/llm": "workspace:*",
     "@tomato/mcp-resources": "workspace:*",
     "@tomato/permission-presets": "workspace:*",
@@ -64,6 +68,7 @@
     "@tomato/storage-domain": "workspace:*",
     "@tomato/system-prompt": "workspace:*",
     "@tomato/tools": "workspace:*",
-    "@tomato/workspace": "workspace:*"
+    "@tomato/workspace": "workspace:*",
+    "@tomato/agent-preset-registry": "workspace:*"
   }
 }

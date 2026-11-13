@@ -4,6 +4,8 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+
+/* oxlint-disable typescript/no-unsafe-assignment -- Vitest asymmetric matchers are typed as any. */
 import { Context } from '@tomato/cordis'
 import { createVolatile } from '@tomato/cosmokit'
 import { credentialRef } from '@tomato/credentials'
@@ -250,15 +252,16 @@ describe('embedding requests', () => {
   it('splits by batch size and truncates each text', async () => {
     const { embeddings } = await harness({ batchSize: 2, maxInputChars: 3 })
     const fetch = vi.fn(async (_url: string, init?: RequestInit) => {
-      const body = JSON.parse(String(init?.body)) as { input: readonly string[] }
+      if (typeof init?.body !== 'string') throw new Error('fetch body must be a JSON string')
+      const body = JSON.parse(init.body) as { input: readonly string[] }
       return new Response(JSON.stringify(vectors(body.input.length)), { headers: { 'content-type': 'application/json' } })
     })
     vi.stubGlobal('fetch', fetch)
     const result = await embeddings.embed({ texts: ['abcdef', 'gh', 'ijkl'] })
     expect(result).toHaveLength(3)
     expect(fetch).toHaveBeenCalledTimes(2)
-    expect(JSON.parse(String((fetch.mock.calls[0]?.[1] as { body: string }).body))).toEqual({ model: 'embed-small', input: ['abc', 'gh'] })
-    expect(JSON.parse(String((fetch.mock.calls[1]?.[1] as { body: string }).body))).toEqual({ model: 'embed-small', input: ['ijk'] })
+    expect(JSON.parse((fetch.mock.calls[0]?.[1] as { body: string }).body)).toEqual({ model: 'embed-small', input: ['abc', 'gh'] })
+    expect(JSON.parse((fetch.mock.calls[1]?.[1] as { body: string }).body)).toEqual({ model: 'embed-small', input: ['ijk'] })
   })
 
   it('uses a stored credential before the launch environment and sends it as a bearer token', async () => {

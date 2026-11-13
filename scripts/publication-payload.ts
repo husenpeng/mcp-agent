@@ -1,4 +1,4 @@
-/** Publication payload policy shared by static manifests and packed tarballs. */
+/** Publication payload facts shared by static manifests and packed tarballs. */
 
 /**
  * Whether a package manifest exports generated Host-for-Client metadata.

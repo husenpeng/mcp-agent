@@ -1,7 +1,7 @@
 {
   "name": "@tomato/tool-fs",
   "description": "Model-facing filesystem tools (read, write, edit) over the Tomato Harness filesystem seam (ctx.fs)",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -25,16 +25,22 @@
   "files": [
     "locale/*.json",
     "lib/index.js",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
   ],
   "license": "MIT",
   "dependencies": {
     "diff": "^9.0.0",
     "@tomato/schemastery": "workspace:~",
-    "@tomato/util-code-language": "workspace:*"
+    "@tomato/util-code-language": "workspace:*",
+    "@tomato/fs-patch": "workspace:*",
+    "@tomato/util-values": "workspace:*"
   },
   "peerDependencies": {
     "@tomato/attachment": "workspace:*",
+    "@tomato/error": "workspace:*",
     "@tomato/fs": "workspace:*",
     "@tomato/llm": "workspace:*",
     "@tomato/sandbox": "workspace:*",
@@ -51,6 +57,7 @@
     "@tomato/agent-loop": "workspace:*",
     "@tomato/agent-loop-testkit": "workspace:*",
     "@tomato/attachment": "workspace:*",
+    "@tomato/error": "workspace:*",
     "@tomato/fs": "workspace:*",
     "@tomato/fs-local": "workspace:*",
     "@tomato/fs-observation-policy": "workspace:*",
@@ -70,6 +77,7 @@
     "@tomato/session-projection": "workspace:*",
     "@tomato/scope": "workspace:*",
     "@tomato/ptc-runtime": "workspace:*",
+    "@tomato/fs-sandbox": "workspace:*",
     "@tomato/working-directory": "workspace:*"
   }
 }

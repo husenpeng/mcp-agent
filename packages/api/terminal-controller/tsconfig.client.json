@@ -13,14 +13,12 @@
     "src/client/shell-preference.ts",
     "src/types.ts",
     "src/client/close-requests.ts",
-    "src/client/inventory.ts"
+    "src/client/inventory.ts",
+    "src/client/roster.ts"
   ],
   "references": [
     {
       "path": "../../../vendor/cordis"
-    },
-    {
-      "path": "../gateway/tsconfig.client.json"
     },
     {
       "path": "../../client/store"
@@ -39,6 +37,9 @@
     },
     {
       "path": "../../util/deque"
+    },
+    {
+      "path": "../gateway/tsconfig.client.json"
     },
     {
       "path": "../../client/connection/tsconfig.client.json"

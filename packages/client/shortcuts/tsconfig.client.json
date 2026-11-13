@@ -16,9 +16,6 @@
       "path": "../../util/branded"
     },
     {
-      "path": "../locale/tsconfig.client.json"
-    },
-    {
       "path": "../store"
     },
     {
@@ -32,9 +29,13 @@
     },
     {
       "path": "../../util/values"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
     }
   ],
   "exclude": [
     "src/index.ts"
-  ]
+  ],
+  "files": []
 }

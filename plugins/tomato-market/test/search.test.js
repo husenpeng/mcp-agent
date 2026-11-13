@@ -23,8 +23,8 @@ test('localized resolves the active language, then English, then a string', () =
 })
 
 test('starsOf matches a package name before a repository slug', () => {
-  const stars = { 'npm:dsh-context': 12, 'gh:owner/repo': 34 }
-  assert.equal(starsOf(plugin('dsh-context'), stars), 12)
+  const stars = { 'npm:tomato-context': 12, 'gh:owner/repo': 34 }
+  assert.equal(starsOf(plugin('tomato-context'), stars), 12)
   assert.equal(starsOf(plugin('other', { repo: 'https://github.com/Owner/Repo.git' }), stars), 34)
   assert.equal(starsOf(plugin('other'), stars), undefined)
 })
@@ -40,13 +40,13 @@ test('formatStars compacts large counts', () => {
 
 test('filterPlugins matches every search word across fields and honors the category', () => {
   const plugins = [
-    plugin('dsh-context', { title: { en: 'Context dashboard', zh: '上下文看板' }, description: { en: 'Inspect tokens', zh: '查看令牌' }, category: 'ui', keywords: ['memory'] }),
-    plugin('dsh-star', { title: { en: 'Star widget' }, category: 'ui' }),
+    plugin('tomato-context', { title: { en: 'Context dashboard', zh: '上下文看板' }, description: { en: 'Inspect tokens', zh: '查看令牌' }, category: 'ui', keywords: ['memory'] }),
+    plugin('tomato-star', { title: { en: 'Star widget' }, category: 'ui' }),
   ]
-  assert.deepEqual(filterPlugins(plugins, { query: 'context token', language: 'en' }).map(p => p.name), ['dsh-context'])
+  assert.deepEqual(filterPlugins(plugins, { query: 'context token', language: 'en' }).map(p => p.name), ['tomato-context'])
   assert.deepEqual(filterPlugins(plugins, { query: '星', language: 'zh' }).map(p => p.name), [])
-  assert.deepEqual(filterPlugins(plugins, { query: '看板', language: 'zh' }).map(p => p.name), ['dsh-context'])
-  assert.deepEqual(filterPlugins(plugins, { query: '', category: 'ui', language: 'en' }).map(p => p.name), ['dsh-context', 'dsh-star'])
+  assert.deepEqual(filterPlugins(plugins, { query: '看板', language: 'zh' }).map(p => p.name), ['tomato-context'])
+  assert.deepEqual(filterPlugins(plugins, { query: '', category: 'ui', language: 'en' }).map(p => p.name), ['tomato-context', 'tomato-star'])
   assert.equal(filterPlugins(plugins, { query: 'absent', language: 'en' }).length, 0)
 })
 
@@ -94,7 +94,7 @@ test('installTarget names the npm spec and registry, or the pinned commit', () =
 
 test('targetsDeepSeek and latestVersion read the catalog version facts', () => {
   const one = plugin('pkg', { versions: [
-    { version: '2.0.0', publishTimestamp: 2, source: { type: 'npm' }, dsh: '>=0.2.0' },
+    { version: '2.0.0', publishTimestamp: 2, source: { type: 'npm' }, tomato: '>=0.2.0' },
     { version: '1.0.0', publishTimestamp: 1, source: { type: 'npm' } },
   ] })
   assert.equal(latestVersion(one).version, '2.0.0')

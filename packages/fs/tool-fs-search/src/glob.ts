@@ -11,7 +11,7 @@
 
 import type { Context } from '@tomato/cordis'
 import { sep } from 'node:path'
-import { defineTool } from '@tomato/tools'
+import { ToolArgsError, defineTool } from '@tomato/tools'
 import type { GenericCallView, SearchResultView, ToolResult } from '@tomato/tools'
 import type { SpillRef } from '@tomato/spill'
 import { runRipgrep, toWorkdirRelative, trySaveFormattedResult } from './search-core.ts'
@@ -50,10 +50,6 @@ export interface GlobToolCaps {
   graceMs: number
   /** Cap on the retained stderr diagnostic tail. */
   stderrMaxBytes: number
-  /** Largest directory depth one `glob` call may request. */
-  maxDepth: number
-  /** Largest number of `exclude` patterns one call may add. */
-  maxExcludes: number
   /** Cooperative tool-call budget (ms) attached as `ToolDefinition.timeoutMs`. */
   timeoutMs: number
 }
@@ -62,47 +58,20 @@ export interface GlobToolCaps {
 export interface GlobInput {
   pattern: string
   path?: string
-  depth?: number
-  exclude?: readonly string[]
-  /** Whether ignored and dot files are searched; defaults to true. */
-  hidden?: boolean
 }
 
 /**
  * Validate value constraints the schema DSL can't express: a non-blank
- * `pattern`, and a non-blank `path` when given. Throws a plain `Error` (an
- * ordinary tool argument error) otherwise.
+ * `pattern`, and a non-blank `path` when given. Throws `ToolArgsError`
+ * (`INVALID_ARGS`) otherwise.
  *
  * @param args - the schema-validated `glob` arguments.
  * @returns the accepted input, unchanged.
  */
-export function parseGlobArgs(args: {
-  pattern: string
-  path?: string
-  depth?: number
-  exclude?: readonly string[]
-  hidden?: boolean
-}, caps?: GlobToolCaps): GlobInput {
-  if (args.pattern.trim().length === 0) throw new Error('pattern must be a non-empty string')
-  if (args.path !== undefined && args.path.trim().length === 0) throw new Error('path must be a non-empty string when given')
-  if (args.depth !== undefined) {
-    const maxDepth = caps?.maxDepth ?? Number.MAX_SAFE_INTEGER
-    if (!Number.isInteger(args.depth) || args.depth < 1 || args.depth > maxDepth) {
-      throw new Error(`depth must be an integer from 1 to ${maxDepth}`)
-    }
-  }
-  if (args.exclude !== undefined) {
-    const maxExcludes = caps?.maxExcludes ?? 20
-    if (args.exclude.length > maxExcludes) throw new Error(`exclude accepts at most ${maxExcludes} patterns`)
-    if (args.exclude.some(value => value.trim() === '')) throw new Error('exclude patterns must not be empty')
-  }
-  return {
-    pattern: args.pattern,
-    ...args.path !== undefined ? { path: args.path } : {},
-    ...args.depth !== undefined ? { depth: args.depth } : {},
-    ...args.exclude !== undefined ? { exclude: args.exclude } : {},
-    ...args.hidden === undefined ? {} : { hidden: args.hidden },
-  }
+export function parseGlobArgs(args: { pattern: string; path?: string }): GlobInput {
+  if (args.pattern.trim().length === 0) throw new ToolArgsError(['pattern must be a non-empty string'])
+  if (args.path !== undefined && args.path.trim().length === 0) throw new ToolArgsError(['path must be a non-empty string when given'])
+  return { pattern: args.pattern, ...args.path !== undefined ? { path: args.path } : {} }
 }
 
 /**
@@ -112,19 +81,33 @@ export function parseGlobArgs(args: {
  * search root rides behind `--` so a leading-dash path can never be parsed as
  * a flag. `--sort=modified` orders by modification time, `--no-ignore
  * --hidden` searches ignored and hidden files, and
- * {@link GLOB_VCS_EXCLUDES} keeps VCS metadata out.
+ * {@link GLOB_VCS_EXCLUDES} keeps VCS metadata out. Simple directory prefixes
+ * prune unrelated subtrees through directory-name globs without changing the
+ * search root, path separators, or symlink handling. The last matching glob
+ * wins. A fixed 8 KiB budget bounds added argv bytes; larger additions retain
+ * the original traversal, since even linear growth can exceed command-line limits.
  *
  * @param input - the validated arguments.
  * @returns the complete ripgrep argument vector (excluding the binary itself).
  */
 export function buildGlobCommand(input: GlobInput): string[] {
+  const directories = input.pattern.split('/').slice(0, -1)
+  const pruning: string[] = []
+  if (input.path === undefined && directories.length > 0
+    && directories.every(part => /^[\w .-]+$/.test(part) && part !== '.' && part !== '..' && !GLOB_VCS_EXCLUDES.includes(part))) {
+    // Trailing slashes admit directories only, never files with the same names.
+    const directoryGlob = `--glob={${[...new Set(directories)].join(',')}}/`
+    if (directoryGlob.length + '--glob=!**'.length + 2 <= 8 * 1024) {
+      pruning.push('--glob=!**', directoryGlob)
+    }
+  }
   const parts = [
     '--files',
+    ...pruning,
     `--glob=${input.pattern}`,
     '--sort=modified',
-    ...input.hidden === false ? [] : ['--no-ignore', '--hidden'],
-    ...input.depth === undefined ? [] : [`--max-depth=${input.depth}`],
-    ...(input.exclude ?? []).map(pattern => `--glob=!${pattern}`),
+    '--no-ignore',
+    '--hidden',
     // Two negated globs per VCS name: the bare form prunes the directory
     // during traversal; the /** form still excludes the contents when the
     // search root is AT or INSIDE the directory (where the bare form,
@@ -348,15 +331,10 @@ export function applyGlobTool(ctx: Context, caps: GlobToolCaps): void {
           + 'A pattern with no "/" matches the basename at any depth, so "*" and "*.ts" both search the whole tree; include a separator to anchor the depth.',
       },
       path: { type: 'string', description: 'Directory to search in. Defaults to the session workspace; a relative path resolves against it.' },
-      depth: { type: 'number', description: `Limit traversal depth, from 1 to ${caps.maxDepth}. Omit for the whole tree; prefer a shallow depth or a narrower path for a quick look.` },
-      exclude: {
-        type: 'array',
-        items: { type: 'string' },
-        description: `Path globs to exclude, at most ${caps.maxExcludes}; for example ["dist/**", "**/*.snap"].`,
-      },
-      hidden: { type: 'boolean', description: 'Search ignored and dot files. Defaults to true; set false to respect .gitignore and skip hidden names.' },
     },
     timeoutMs: caps.timeoutMs,
+    // Path listing records no file observation; over-cap spilling runs in model-ordered post-execute.
+    isConcurrencySafe: () => true,
     output: {
       schema: {
         type: 'object',
@@ -373,7 +351,7 @@ export function applyGlobTool(ctx: Context, caps: GlobToolCaps): void {
       },
     },
     async execute(args, exec) {
-      const input = parseGlobArgs(args, caps)
+      const input = parseGlobArgs(args)
       const run = await runRipgrep(ctx, exec, 'glob', buildGlobCommand(input), caps.rawOutputMaxBytes, caps.graceMs, caps.stderrMaxBytes)
       const root = input.path === undefined ? '.' : toWorkdirRelative(input.path, run.workdir)
       if (run.noMatches) return { root, paths: [] }

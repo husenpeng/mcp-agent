@@ -97,7 +97,7 @@ export function CrewCanvas({
             {edges.map((edge) => {
               const from = shown(edge.from)
               const to = shown(edge.to)
-              const active = selectedEdge?.from === edge.from && selectedEdge?.to === edge.to
+              const active = selectedEdge !== undefined && selectedEdge.from === edge.from && selectedEdge.to === edge.to
               const mid = edgeMidpoint(from, to)
               return (
                 <g key={`${edge.from}>${edge.to}`} className={css.edgeGroup} data-active={active}>

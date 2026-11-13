@@ -413,7 +413,7 @@ var ZH = {
   "Upload photo": "上传照片",
   "A Bot named {name} already exists": "已经有叫 {name} 的 Bot 了",
   "The Bot runs on this model. You can change it later in its details.": "Bot 会使用这个模型。以后可以在详情里修改。",
-  "Add a provider and a model in DeepSeek Harness first, or pick one in the Bot's chat later.": "请先在 DeepSeek Harness 里添加服务商和模型，或者稍后在 Bot 的对话里选择。",
+  "Add a provider and a model in Tomato Harness first, or pick one in the Bot's chat later.": "请先在 Tomato Harness 里添加服务商和模型，或者稍后在 Bot 的对话里选择。",
   "Creating…": "创建中…",
   Create: "创建",
   // Model menu
@@ -424,7 +424,7 @@ var ZH = {
   "Choose a model": "选择模型",
   "{provider} · not available": "{provider} · 不可用",
   "Model for {name}": "{name} 的模型",
-  "No models are set up in DeepSeek Harness yet.": "DeepSeek Harness 里还没有设置模型。",
+  "No models are set up in Tomato Harness yet.": "Tomato Harness 里还没有设置模型。",
   "Models and providers…": "模型和服务商…",
   Models: "模型",
   "Harness default": "Harness 默认",
@@ -509,7 +509,7 @@ var ZH = {
   "Back to group chats": "返回群聊列表",
   "DS Bot settings": "DS Bot 设置",
   "Settings pages": "设置页面",
-  "Models, providers, and the rest of DeepSeek Harness": "模型、服务商和 DeepSeek Harness 的其他设置",
+  "Models, providers, and the rest of Tomato Harness": "模型、服务商和 Tomato Harness 的其他设置",
   "Harness settings": "Harness 设置",
   "Back to Bots": "返回 Bot 列表",
   "Close settings": "关闭设置",
@@ -1124,7 +1124,7 @@ var HOST_ERRORS = [
   [/^The avatar image is too large: .+$/, "头像图片太大了"],
   [/^There is no folder at (.+)$/, "找不到文件夹 $1"],
   [/^(.+) is a file, not a folder$/, "$1 是文件，不是文件夹"],
-  [/^(.+) holds DeepSeek Harness data, so Bots cannot work there$/, "$1 里有 DeepSeek Harness 的数据，Bot 不能在这里工作"],
+  [/^(.+) holds Tomato Harness data, so Bots cannot work there$/, "$1 里有 Tomato Harness 的数据，Bot 不能在这里工作"],
   // Memory changes the memory panel asked for; the whole message is matched.
   [/^This looks like a key, token, or password[\s\S]*$/, "看起来像密钥、令牌或密码，记忆不会保存这类内容"],
   [/^An entry holds at most (\d+) characters; this one has (\d+)\.[\s\S]*$/, "一条记忆最多 $1 个字符，这条有 $2 个"],
@@ -1138,7 +1138,7 @@ var HOST_ERRORS = [
 ];
 var HOST_ZH = {
   "Request failed": "请求失败",
-  "Permissions are not available in this DeepSeek Harness": "这个 DeepSeek Harness 不支持权限设置",
+  "Permissions are not available in this Tomato Harness": "这个 Tomato Harness 不支持权限设置",
   "Avatar images must be PNG, JPEG, WebP, or GIF": "头像图片必须是 PNG、JPEG、WebP 或 GIF",
   "Avatar image is too large": "头像图片太大了",
   "A Bot needs a name": "Bot 需要一个名字",
@@ -1168,8 +1168,8 @@ var HOST_ZH = {
   "Memory is turned off on this host": "这台主机关闭了记忆功能",
   "The model wrote nothing": "模型没有输出内容",
   "Write the entry to save.": "请写下要保存的内容。",
-  "This DeepSeek Harness has no folder chooser": "这个 DeepSeek Harness 没有文件夹选择窗口",
-  "This DeepSeek Harness cannot list folders": "这个 DeepSeek Harness 不能列出文件夹",
+  "This Tomato Harness has no folder chooser": "这个 Tomato Harness 没有文件夹选择窗口",
+  "This Tomato Harness cannot list folders": "这个 Tomato Harness 不能列出文件夹",
   "Side chat is only available in a Bot's private chat.": "侧边对话只在 Bot 的私聊里可用。",
   "Write a question.": "写上问题。",
   "Write a question after /side.": "在 /side 后面写上问题。",
@@ -10898,7 +10898,7 @@ function ModelMenu({ bot, roster, actions, run: run2, wide = false, onPick, onPi
     shownPlace ? (0, import_react_dom6.createPortal)((0, import_react21.createElement)(
       "div",
       { ref: menu, className: `bt-menu bt-model-menu${shownPlace.bottom !== void 0 ? " bt-menu-up" : ""}`, role: "menu", "aria-label": t("Model for {name}", { name: bot.name }), style: shownPlace, "data-leaving": leaving || void 0 },
-      models.length > 0 ? (0, import_react21.createElement)(ModelRows, { roster, current, onPick: pick2 }) : (0, import_react21.createElement)("div", { className: "bt-model-none" }, t("No models are set up in DeepSeek Harness yet.")),
+      models.length > 0 ? (0, import_react21.createElement)(ModelRows, { roster, current, onPick: pick2 }) : (0, import_react21.createElement)("div", { className: "bt-model-none" }, t("No models are set up in Tomato Harness yet.")),
       effortRows(reasoning).length > 0 ? (0, import_react21.createElement)(EffortRows, { reasoning, current: picked, onPick: pickEffort }) : null,
       manage ? (0, import_react21.createElement)("div", { className: "bt-menu-sep", role: "separator" }) : null,
       manage ? (0, import_react21.createElement)("button", { type: "button", role: "menuitem", onClick: () => {
@@ -12866,7 +12866,7 @@ function CreateBot({ roster, actions, start, brief = "", onBack, canGoBack, onCr
         setModel(ref);
         setEffort(void 0);
       }, onPickEffort: (picked) => setEffort(picked ?? null) }),
-      (0, import_react28.createElement)("span", { className: "bt-note" }, (roster.models ?? []).length > 0 ? t("The Bot runs on this model. You can change it later in its details.") : t("Add a provider and a model in DeepSeek Harness first, or pick one in the Bot's chat later."))
+      (0, import_react28.createElement)("span", { className: "bt-note" }, (roster.models ?? []).length > 0 ? t("The Bot runs on this model. You can change it later in its details.") : t("Add a provider and a model in Tomato Harness first, or pick one in the Bot's chat later."))
     ),
     error ? (0, import_react28.createElement)("div", { className: "bt-error", role: "alert", style: { padding: 0 } }, error) : null,
     (0, import_react28.createElement)(
@@ -15442,7 +15442,7 @@ function AboutPage({ useUpdate, actions, run: run2, Section, Row: Row3 }) {
       Section,
       { key: "updates", title: t("Updates") },
       (0, import_react38.createElement)(Row3, { label: "DS Bot", hint: ownRow?.hint ?? botHint(update) }, botControl, update.available && update.notesUrl ? (0, import_react38.createElement)("a", linkProps(update.notesUrl), t("What's new")) : null),
-      tomato?.current ? (0, import_react38.createElement)(Row3, { label: "DeepSeek Harness", hint: tomatoHint(tomato, tomatoShown) }, tomatoControl) : null
+      tomato?.current ? (0, import_react38.createElement)(Row3, { label: "Tomato Harness", hint: tomatoHint(tomato, tomatoShown) }, tomatoControl) : null
     ),
     (0, import_react38.createElement)(
       Section,
@@ -16095,7 +16095,7 @@ function SettingsDialog({ page, id, roster, actions, useUpdate, leaving = false 
         actions.openHarnessSettings ? (0, import_react40.createElement)("button", {
           type: "button",
           className: "bt-settings-item bt-settings-shell",
-          title: t("Models, providers, and the rest of DeepSeek Harness"),
+          title: t("Models, providers, and the rest of Tomato Harness"),
           onClick: () => {
             close();
             actions.openHarnessSettings();

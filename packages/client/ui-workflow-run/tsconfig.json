@@ -12,19 +12,7 @@
       "path": "../../../vendor/cordis"
     },
     {
-      "path": "../locale/tsconfig.client.json"
-    },
-    {
-      "path": "../../api/session-controller/tsconfig.client.json"
-    },
-    {
       "path": "../store"
-    },
-    {
-      "path": "../ui-chat/tsconfig.client.json"
-    },
-    {
-      "path": "../ui-conversation/tsconfig.client.json"
     },
     {
       "path": "../ui-renderer"
@@ -49,6 +37,19 @@
     },
     {
       "path": "../../workflow/tool-workflow"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/session-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-chat/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-conversation/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

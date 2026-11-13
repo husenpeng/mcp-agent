@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
+import { globSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import { resolvePwshPath } from './packages/shell/pwsh-local/src/resolve.ts'
@@ -34,6 +35,37 @@ const workspaceAliases = ((): { find: RegExp; replacement: string }[] => {
       find: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}$`),
       replacement: fileURLToPath(new URL(target!, new URL('./tsconfig.base.json', import.meta.url))),
     }))
+})()
+
+/**
+ * Subpath aliases: package `exports` such as `./client` point at bundled `lib/`
+ * files that expect the browser boot, so a Node-environment spec importing one
+ * would execute browser-only code. Map each declared subpath to its `src/`
+ * counterpart when that source exists, matching the paths facade's intent.
+ */
+const subpathAliases = ((): { find: RegExp; replacement: string }[] => {
+  const root = fileURLToPath(new URL('.', import.meta.url))
+  const aliases: { find: RegExp; replacement: string }[] = []
+  const groups = globSync('packages/*/*', { cwd: root })
+  for (const group of groups) {
+    const manifestPath = `${group}/package.json`
+    if (!existsSync(manifestPath)) continue
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { name?: string; exports?: Record<string, unknown> }
+    const name = manifest.name
+    if (name === undefined || !name.startsWith('@tomato/') || manifest.exports === undefined) continue
+    for (const subpath of Object.keys(manifest.exports)) {
+      if (!subpath.startsWith('./') || subpath === './package.json' || subpath.includes('*')) continue
+      const leaf = subpath.slice(2)
+      const source = [`${root}${group}/src/${leaf}.ts`, `${root}${group}/src/${leaf}/index.ts`]
+        .find(file => existsSync(file))
+      if (source === undefined) continue
+      aliases.push({
+        find: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}/${leaf.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}$`),
+        replacement: source,
+      })
+    }
+  }
+  return aliases
 })()
 
 // Resolution facade shared by every plugin instance below: tsconfig.base.json
@@ -201,7 +233,7 @@ const claudeCodeTestingAliases = {
 
 export default defineConfig({
   plugins: [pathsPlugin(), standardDecoratorPlugin()],
-  resolve: { alias: [...workspaceAliases, ...Object.entries(claudeCodeTestingAliases).map(([find, replacement]) => ({ find, replacement }))] },
+  resolve: { alias: [...workspaceAliases, ...subpathAliases, ...Object.entries(claudeCodeTestingAliases).map(([find, replacement]) => ({ find, replacement }))] },
   test: {
     ...localWorkerBudget,
     setupFiles: [
@@ -215,7 +247,7 @@ export default defineConfig({
     projects: [
       {
         plugins: [pathsPlugin(), standardDecoratorPlugin()],
-        resolve: { alias: [...workspaceAliases, ...Object.entries(claudeCodeTestingAliases).map(([find, replacement]) => ({ find, replacement }))] },
+        resolve: { alias: [...workspaceAliases, ...subpathAliases, ...Object.entries(claudeCodeTestingAliases).map(([find, replacement]) => ({ find, replacement }))] },
         test: {
           name: 'thread-safe',
           execArgv: vitestExecArgv,
@@ -237,7 +269,7 @@ export default defineConfig({
       },
       {
         plugins: [pathsPlugin(), standardDecoratorPlugin()],
-        resolve: { alias: [...workspaceAliases, ...Object.entries(claudeCodeTestingAliases).map(([find, replacement]) => ({ find, replacement }))] },
+        resolve: { alias: [...workspaceAliases, ...subpathAliases, ...Object.entries(claudeCodeTestingAliases).map(([find, replacement]) => ({ find, replacement }))] },
         test: {
           name: 'process-bound',
           execArgv: vitestExecArgv,

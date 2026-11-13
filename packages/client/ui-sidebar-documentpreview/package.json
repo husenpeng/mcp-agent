@@ -1,7 +1,7 @@
 {
   "name": "@tomato/client-ui-sidebar-documentpreview",
   "description": "Extensible Sidebar previews for Office documents, spreadsheets, Markdown, code, images, PDF, HTML, and plain text",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -37,7 +37,8 @@
         "@tomato/api-remotes",
         "@tomato/client-locale",
         "@tomato/client-ui-settings",
-        "@tomato/client-ui-file-drag"
+        "@tomato/client-ui-file-drag",
+        "@tomato/client-ui-context-menu"
       ],
       "platform": "web"
     }
@@ -65,9 +66,10 @@
     "@tomato/client-ui-renderer": "workspace:*",
     "@tomato/client-ui-session": "workspace:*",
     "@tomato/client-ui-settings": "workspace:*",
+    "@tomato/client-ui-sidebar-files": "workspace:*",
     "@tomato/client-ui-sidebar-right": "workspace:*",
     "@tomato/client-ui-slots": "workspace:*",
-    "@tomato/office-to-pdf": "workspace:*",
+    "@tomato/office-kit": "workspace:*",
     "@tomato/host-webserver": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/util-workspace-path": "workspace:*",
@@ -86,14 +88,18 @@
     "react-dom": "^18.2.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "yaml": "^2.9.0",
-    "@tomato/client-ui-file-drag": "workspace:*"
+    "@tomato/client-ui-file-drag": "workspace:*",
+    "@tomato/client-ui-context-menu": "workspace:*"
   },
   "files": [
     "locale/*.json",
     "lib/index.js",
     "lib/client.js",
     "lib/client.*.js",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
   ],
   "dependencies": {
     "@tomato/schemastery": "workspace:~"

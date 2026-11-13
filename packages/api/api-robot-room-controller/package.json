@@ -1,0 +1,87 @@
+{
+  "name": "@tomato/api-robot-room-controller",
+  "description": "Robot Room Remote stream, publication, posting, approval, and message reads for browser clients",
+  "version": "0.2.1-rc.3",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/api/api-robot-room-controller"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./typert": {
+      "types": "./lib/typert.host.d.ts",
+      "default": "./lib/typert.host.js"
+    },
+    "./remote": {
+      "types": "./lib/typert.remote-client.d.ts",
+      "default": "./lib/typert.remote-client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "tomato": {
+    "client": {
+      "external": [
+        "@tomato/api-gateway/client"
+      ],
+      "inject": [
+        "@tomato/api-gateway",
+        "@tomato/client-connection"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts",
+    "lib/typert.host.js",
+    "lib/typert.host.d.ts",
+    "lib/typert.remote-client.js",
+    "lib/typert.remote-client.d.ts",
+    "lib/**/*.js.map",
+    "lib/types/**/*.d.ts.map",
+    "lib/typert.host.d.ts.map",
+    "lib/typert.remote-client.d.ts.map",
+    "src"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@tomato/typert-protocol": "workspace:*",
+    "zod": "4.4.3"
+  },
+  "peerDependencies": {
+    "@tomato/cordis": "workspace:~"
+  },
+  "devDependencies": {
+    "@tomato/api-gateway": "workspace:*",
+    "@tomato/client-connection": "workspace:*",
+    "@tomato/client-store": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/experimental-robot-room": "workspace:*",
+    "@tomato/typert-registry": "workspace:*"
+  }
+}

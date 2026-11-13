@@ -1,0 +1,13 @@
+- insert:
+    - id: worktree
+      name: '@tomato/experimental-worktree'
+    - id: tool-worktree
+      name: '@tomato/experimental-tool-worktree'
+    - id: forge
+      name: '@tomato/experimental-forge'
+    - id: forge-github
+      name: '@tomato/experimental-forge-github'
+    - id: forge-session
+      name: '@tomato/experimental-forge-session'
+    - id: forge-panel
+      name: '@tomato/experimental-client-ui-forge'

@@ -13,6 +13,8 @@ const guard = registerHooks({
 const { Context } = await import('@tomato/cordis')
 const host = await import('@tomato/cua')
 const { createCuaApi } = await import('@tomato/cua/api')
+const { CuaConfigFields } = await import('@tomato/cua/config')
+assert.equal(typeof CuaConfigFields.connectTimeoutMs.default, 'function')
 const { connectCua } = await import('@tomato/cua/bridge')
 const { NativeClient } = await import('@tomato/cua/native-client')
 const { Request } = await import('@tomato/cua/protocol')

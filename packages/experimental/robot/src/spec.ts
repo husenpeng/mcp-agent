@@ -15,7 +15,8 @@ import type { RobotSpec } from './types.ts'
 /**
  * Build a complete specification with every advanced block at its general default.
  *
- * Defaults: a manual trigger, plan strategy, fail-on-failure policy, a
+ * Defaults: a manual trigger, plan strategy, fail-on-failure policy, no model
+ * override (each run uses the deployment default model), a
  * 100k-token/600s/100-tool-call budget, one concurrent run, every tool
  * available (an empty allow list restricts nothing), workspace sandbox and the
  * `workspace-write` permission preset shipped by @tomato/base, no network, no
@@ -47,6 +48,7 @@ export function emptyRobotSpec(basic: {
     capability: {
       tools: { allow: [], deny: [] },
       mcpServers: [],
+      plugins: [],
       skills: [],
       workspaceRoots: [],
       dataClasses: [],

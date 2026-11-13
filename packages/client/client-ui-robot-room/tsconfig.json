@@ -1,0 +1,55 @@
+{
+  "extends": "../../../tsconfig.base.client.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib/types"
+  },
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "../../../vendor/cordis"
+    },
+    {
+      "path": "../store"
+    },
+    {
+      "path": "../ui-layout"
+    },
+    {
+      "path": "../ui-primitives"
+    },
+    {
+      "path": "../ui-slots"
+    },
+    {
+      "path": "../ui-renderer"
+    },
+    {
+      "path": "../ui-sidebar"
+    },
+    {
+      "path": "../ui-workspace"
+    },
+    {
+      "path": "../../core/session"
+    },
+    {
+      "path": "../../util/branded"
+    },
+    {
+      "path": "../../experimental/experimental-robot-room"
+    },
+    {
+      "path": "../../api/api-robot-room-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/robot-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    }
+  ],
+  "files": []
+}

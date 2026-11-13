@@ -61,7 +61,7 @@ import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const PORT = Number(process.env.MOCK_PORT ?? 8765)
-const LOG = process.env.MOCK_LOG ?? fileURLToPath(new URL('../../.dsh-test/mock.jsonl', import.meta.url))
+const LOG = process.env.MOCK_LOG ?? fileURLToPath(new URL('../../.tomato-test/mock.jsonl', import.meta.url))
 mkdirSync(dirname(LOG), { recursive: true })
 const DELAY = Number(process.env.MOCK_DELAY_MS ?? 600)
 // Random extra latency per call, to shake out ordering assumptions.
@@ -219,7 +219,7 @@ function decide(body) {
       const note = textBlocks(last.content).find(value => value.trim().startsWith('[Secret card]'))
       return note ? secretNote(note.trim(), tools) : [text('')]
     }
-    if ((used?.name === 'bash' || used?.name === 'pwsh') && /DSH_SECRET_/.test(used.input?.command ?? '')) {
+    if ((used?.name === 'bash' || used?.name === 'pwsh') && /TOMATO_SECRET_/.test(used.input?.command ?? '')) {
       return [text(`终端输出里我看到的是：${resultText.replace(/\s+/g, ' ').trim().slice(0, 200)}`)]
     }
     if (used?.input?.justification === ESCALATION) return [text(result.is_error ? `没跑成：${resultText.slice(0, 80)}` : '命令跑完了，文件已经写好。')]
@@ -286,7 +286,7 @@ function decide(body) {
   const userText = textOf(last?.content).trim()
   // "撑爆": the provider rejects the request as past its window.
   if (userText.startsWith('撑爆')) return 'overflow'
-  // A file in the message (a long Bot message, a file the user sent): DSH gives its saved
+  // A file in the message (a long Bot message, a file the user sent): TOMATO gives its saved
   // path, and the Bot reads it first.
   const saved = /verbatim read-only copy saved at ("(?:[^"\\]|\\.)*")/.exec(userText)
   if (saved) return [tool('read', { file_path: JSON.parse(saved[1]) })]
@@ -637,7 +637,7 @@ function secretNote(note, tools) {
 }
 // Prints a secret's variable in whichever shell the profile offers.
 function echoSecret(name, tools) {
-  const key = `DSH_SECRET_${String(name).toUpperCase()}`
+  const key = `TOMATO_SECRET_${String(name).toUpperCase()}`
   return tools.has('pwsh') && !tools.has('bash')
     ? tool('pwsh', { description: 'Print the secret variable', command: `Write-Output "value=$env:${key}"` })
     : tool('bash', { description: 'Print the secret variable', command: `echo "value=$${key}"` })

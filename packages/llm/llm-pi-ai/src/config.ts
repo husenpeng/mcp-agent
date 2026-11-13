@@ -24,7 +24,6 @@ import type { ResolvedRetryPolicy, RetryPolicyConfig } from '@tomato/llm'
 import { deepEqualJson } from '@tomato/util-values'
 import {
   CACHE_CONTROL_FORMATS,
-  CACHE_DIALECTS,
   CHAT_TEMPLATE_VARS,
   MAX_TOKENS_FIELDS,
   MODALITIES,
@@ -33,16 +32,13 @@ import {
   SUPPORTED_THINKING_FORMATS,
   THINKING_LEVELS,
   THINKING_TOKEN_BUDGET_FIELDS,
-  TOOLS_WITH_REASONING,
 } from './catalog.ts'
 import type {
-  PiAiCacheDefault,
   PiAiCompatProfile,
   PiAiModality,
   PiAiModelOverride,
   PiAiModelProfile,
   PiAiReasoningEfforts,
-  PiAiToolsWithReasoning,
   RouteCatalog,
 } from './catalog.ts'
 import { buildProvider, supportedProtocols } from './provider.ts'
@@ -60,6 +56,19 @@ export const DEFAULT_STREAM_IDLE_TIMEOUT_MS = 300_000
  * Deployments behind stricter gateways lower it per route.
  */
 export const DEFAULT_MAX_REQUEST_IMAGE_BYTES = 20 * 1024 * 1024
+/**
+ * Default request-level bound on retained image occurrences: Azure OpenAI's
+ * documented limit of 50 images per GPT-4o and GPT-4.1 request
+ * (https://learn.microsoft.com/azure/foundry/openai/quotas-limits). Routes
+ * whose provider accepts more images raise it.
+ */
+export const DEFAULT_MAX_REQUEST_IMAGES = 50
+/**
+ * Default number of oldest occurrences one count overflow offloads, so a
+ * saturated route rewrites its request prefix once per ten new images rather
+ * than once per image.
+ */
+export const DEFAULT_IMAGE_OFFLOAD_COUNT_QUANTUM = 10
 /** Default total-pixel budget preserves the complete 2048px normalized attachment. */
 export const DEFAULT_REQUEST_IMAGE_PIXEL_BUDGET = 2048 * 2048
 /** Default raw encoded-byte target before inline base64 expansion; the smallest quality-ladder output is used when no quality fits. */
@@ -160,10 +169,6 @@ export interface PiAiProviderProfile {
   thinkingBudgets?: ThinkingBudgets
   /** Prompt-cache retention preference. */
   cacheRetention?: CacheRetention
-  /** Prompt-cache dialect every model on this route starts from; an entry's own dialect wins. */
-  cache?: PiAiCacheDefault
-  /** Whether this route's endpoints accept tools beside a reasoning effort; an entry's own answer wins. */
-  toolsWithReasoning?: PiAiToolsWithReasoning
   /** Streaming transport preference. */
   transport?: Transport
   /** HTTP/provider SDK timeout in milliseconds. */
@@ -179,6 +184,18 @@ export interface PiAiProviderProfile {
    * requests instead of being rejected by a request-size cap.
    */
   maxRequestImageBytes?: number
+  /**
+   * Maximum retained image occurrences per request. A request carrying more
+   * fails with `IMAGE_OFFLOAD_REQUIRED` naming how many of the oldest
+   * occurrences to offload.
+   */
+  maxRequestImages?: number
+  /**
+   * Oldest occurrences offloaded per count overflow (default 10, capped at
+   * {@link maxRequestImages}); an explicit value must not exceed it. Larger
+   * steps rewrite the request prefix less often.
+   */
+  imageOffloadCountQuantum?: number
   /** Total-pixel budget for each deterministic inline request version. */
   requestImagePixelBudget?: number
   /**
@@ -203,6 +220,10 @@ export interface ResolvedPiAiProviderProfile
   streamIdleTimeoutMs: number
   /** Positive request-level base64 image payload bound after defaulting. */
   maxRequestImageBytes: number
+  /** Positive request-level retained image count bound after defaulting. */
+  maxRequestImages: number
+  /** Positive count-overflow offload step, at most {@link maxRequestImages}, after defaulting. */
+  imageOffloadCountQuantum: number
   /** Positive total-pixel request-version budget after defaulting. */
   requestImagePixelBudget: number
   /** Positive raw request-version byte target after defaulting; the smallest quality-ladder output is used when no quality fits. */
@@ -224,10 +245,6 @@ export interface ResolvedPiAiProviderProfile
    * own, so a catalog capability must not appear here.
    */
   configuredMaxTokens: ReadonlyMap<string, number>
-  /** Per-model prompt-cache retention this profile declared, by model id. */
-  configuredCacheRetention: ReadonlyMap<string, CacheRetention>
-  /** Per-model tools-with-reasoning answer this profile declared, by model id. */
-  configuredToolsWithReasoning: ReadonlyMap<string, PiAiToolsWithReasoning>
 }
 
 /** Plugin configuration: the provider routes this instance owns. */
@@ -243,7 +260,7 @@ export interface Config {
    * Omission leaves the adapter unrestricted; presence denies every unlisted
    * model, so a configuration edit cannot add one outside the policy.
    */
-  modelPolicy: Volatile<ModelPolicyConfig | null>
+  modelPolicy: ModelPolicyOptions
 }
 
 /** Plain options accepted by the provider resolver. */
@@ -251,16 +268,23 @@ export interface Options {
   /** Provider routes, as the schema receives them. */
   providers?: Record<string, PiAiProviderProfile>
   /** Allowlist input, as the schema receives it. */
-  modelPolicy?: ModelPolicyOptions
+  modelPolicy?: Partial<ModelPolicyOptions> | null
+  [key: string]: unknown
 }
 
 /** Mutable allowlist input the schema accepts. */
 export interface ModelPolicyOptions {
+  /** Whether the allowlist is in force; `false` leaves the adapter unrestricted. */
   enabled: boolean
+  /** Models already present in the deployment's local model list. */
   local: ModelPolicyRef[]
+  /** Models released inside the deployment's recent-release window. */
   recent: ModelPolicyRef[]
-  releaseDates?: Record<string, string>
+  /** ISO release dates keyed by `provider/model`. */
+  releaseDates: Record<string, string>
+  /** ISO date describing the recent window's lower bound. */
   recentSince?: string
+  [key: string]: unknown
 }
 
 /** One provider/model pair a deployment's model policy permits. */
@@ -271,6 +295,7 @@ export interface ModelPolicyRef {
   model: string
   /** ISO release date; required for a recent entry once `recentSince` is set. */
   releasedAt?: string
+  [key: string]: unknown
 }
 
 /**
@@ -334,8 +359,8 @@ const modelPolicy = z.object({
  * @returns the resolved allowlist, or `undefined` when none was configured.
  * @throws Error naming an empty entry or an unusable recent-window date.
  */
-export function resolveModelPolicy(config: ModelPolicyConfig | null | undefined): ResolvedModelPolicy | undefined {
-  if (config === undefined || config === null || !config.enabled) return undefined
+export function resolveModelPolicy(config: ModelPolicyOptions): ResolvedModelPolicy | undefined {
+  if (!config.enabled) return undefined
   const since = config.recentSince === undefined
     ? undefined
     : Date.parse(config.recentSince)
@@ -484,11 +509,6 @@ const modelFields = {
   // installed catalog's capability", while `false` disables reasoning.
   reasoningEfforts: z.union([z.const(false), reasoningEfforts]),
   compat: compatProfile,
-  cache: z.object({
-    dialect: z.union(CACHE_DIALECTS),
-    retention: z.union(['none', 'short', 'long']),
-  }),
-  toolsWithReasoning: z.union(TOOLS_WITH_REASONING),
 }
 
 const modelProfile: z<PiAiModelProfile> = z.object({
@@ -514,15 +534,13 @@ const profile = z.object({
   reasoning: z.union(THINKING_LEVELS),
   thinkingBudgets,
   cacheRetention: z.union(['none', 'short', 'long']),
-  cache: z.object({
-    dialect: z.union(CACHE_DIALECTS),
-  }),
-  toolsWithReasoning: z.union(TOOLS_WITH_REASONING),
   transport: z.union(['sse', 'websocket', 'websocket-cached', 'auto']),
   timeoutMs: z.natural(),
   websocketConnectTimeoutMs: z.natural(),
   streamIdleTimeoutMs: z.number().min(Number.MIN_VALUE).max(MAX_TIMER_DELAY_MS).default(DEFAULT_STREAM_IDLE_TIMEOUT_MS),
   maxRequestImageBytes: z.number().step(1).min(1).default(DEFAULT_MAX_REQUEST_IMAGE_BYTES),
+  maxRequestImages: z.number().step(1).min(1).default(DEFAULT_MAX_REQUEST_IMAGES),
+  imageOffloadCountQuantum: z.number().step(1).min(1),
   requestImagePixelBudget: z.number().step(1).min(1).default(DEFAULT_REQUEST_IMAGE_PIXEL_BUDGET),
   requestImageMaxBytes: z.number().step(1).min(1).default(DEFAULT_REQUEST_IMAGE_MAX_BYTES),
   retryPolicy: RetryPolicySchema,
@@ -531,7 +549,7 @@ const profile = z.object({
 /** Runtime schema for {@link Config}. */
 export const Config = z.object({
   providers: z.dict(profile).default({}).volatile(),
-  modelPolicy: modelPolicy.volatile(),
+  modelPolicy: modelPolicy.default({}),
 })
 
 /**
@@ -619,6 +637,14 @@ export function resolveProfiles(
     if (!Number.isInteger(maxRequestImageBytes) || maxRequestImageBytes <= 0) {
       throw new Error(`llm-pi-ai: provider "${provider}" maxRequestImageBytes must be a positive integer`)
     }
+    const maxRequestImages = source.maxRequestImages ?? DEFAULT_MAX_REQUEST_IMAGES
+    if (!Number.isSafeInteger(maxRequestImages) || maxRequestImages <= 0) {
+      throw new Error(`llm-pi-ai: provider "${provider}" maxRequestImages must be a positive safe integer`)
+    }
+    const imageOffloadCountQuantum = source.imageOffloadCountQuantum ?? Math.min(DEFAULT_IMAGE_OFFLOAD_COUNT_QUANTUM, maxRequestImages)
+    if (!Number.isSafeInteger(imageOffloadCountQuantum) || imageOffloadCountQuantum <= 0 || imageOffloadCountQuantum > maxRequestImages) {
+      throw new Error(`llm-pi-ai: provider "${provider}" imageOffloadCountQuantum must be a positive safe integer no greater than maxRequestImages`)
+    }
     const requestImagePixelBudget = source.requestImagePixelBudget ?? DEFAULT_REQUEST_IMAGE_PIXEL_BUDGET
     if (!Number.isSafeInteger(requestImagePixelBudget) || requestImagePixelBudget <= 0) {
       throw new Error(`llm-pi-ai: provider "${provider}" requestImagePixelBudget must be a positive safe integer`)
@@ -651,9 +677,6 @@ export function resolveProfiles(
         ...source.models === undefined ? {} : { models: source.models },
         ...source.modelOverrides === undefined ? {} : { modelOverrides: source.modelOverrides },
         ...source.compat === undefined ? {} : { compat: source.compat },
-        ...source.cache === undefined ? {} : { cache: source.cache },
-        ...source.cacheRetention === undefined ? {} : { cacheRetention: source.cacheRetention },
-        ...source.toolsWithReasoning === undefined ? {} : { toolsWithReasoning: source.toolsWithReasoning },
         defaultInput,
         defaultContextWindow: source.defaultContextWindow ?? DEFAULT_CONTEXT_WINDOW,
         defaultMaxTokens: source.defaultMaxTokens ?? DEFAULT_MAX_TOKENS,
@@ -679,14 +702,14 @@ export function resolveProfiles(
       ...apiKeyEnv === undefined ? {} : { apiKeyEnv: credentialRef(apiKeyEnv) },
       streamIdleTimeoutMs,
       maxRequestImageBytes,
+      maxRequestImages,
+      imageOffloadCountQuantum,
       requestImagePixelBudget,
       requestImageMaxBytes,
       retryPolicy: resolveRetryPolicy(retryPolicy, `llm-pi-ai: provider "${provider}" retryPolicy`),
       ...rest.headers === undefined ? {} : { headers: { ...rest.headers } },
       ...rest.thinkingBudgets === undefined ? {} : { thinkingBudgets: { ...rest.thinkingBudgets } },
       configuredMaxTokens: catalog?.configuredMaxTokens ?? new Map(),
-      configuredCacheRetention: catalog?.configuredCacheRetention ?? new Map(),
-      configuredToolsWithReasoning: catalog?.configuredToolsWithReasoning ?? new Map(),
       modelErrors: catalog?.modelErrors ?? new Map(),
       ...piProvider === undefined ? {} : { piProvider },
       ...catalogError === undefined ? {} : { catalogError },

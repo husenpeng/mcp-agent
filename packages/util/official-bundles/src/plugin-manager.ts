@@ -18,7 +18,7 @@ export const PROTECTED_PLUGINS: ReadonlySet<string> = new Set([
 ])
 
 /**
- * Built-in profile bundles and persistent terminals, which have no plugin manager page.
+ * Built-in profile bundles, persistent terminals, and the standalone worktree tool, which have no plugin manager page.
  * Their Host availability and activation stay intact.
  */
 export const HIDDEN_BUNDLES: ReadonlySet<string> = new Set([
@@ -29,6 +29,7 @@ export const HIDDEN_BUNDLES: ReadonlySet<string> = new Set([
   '@tomato/acp-app',
   '@tomato/sdk-minimal',
   '@tomato/experimental-terminal-bundle',
+  '@tomato/experimental-tool-worktree',
 ])
 
 /**
@@ -36,7 +37,6 @@ export const HIDDEN_BUNDLES: ReadonlySet<string> = new Set([
  * this list, decides whether a bundle appears on the main list.
  */
 export const EXTENSION_BUNDLES: readonly string[] = [
-  '@tomato/experimental-agent-team-profile',
   '@tomato/experimental-voice-input-bundle',
   '@tomato/experimental-plugin-market-bundle',
   '@tomato/experimental-auto-review',
@@ -50,10 +50,8 @@ export const MORE_BUNDLES: readonly string[] = [
   '@tomato/personalized-recommendations',
   '@tomato/experimental-inspector-profile',
   '@tomato/cua-bundle',
-  '@tomato/experimental-tool-worktree',
   '@tomato/experimental-cot-translation-bundle',
   '@tomato/experimental-session-search',
-  '@tomato/experimental-muse-bundle',
   '@tomato/experimental-session-titles-bundle',
   '@tomato/experimental-badge-skill-bundle',
   '@tomato/experimental-ralph-bundle',
@@ -65,17 +63,16 @@ export const MORE_BUNDLES: readonly string[] = [
 export const EXPERIMENTAL_BUNDLES: ReadonlySet<string> = new Set([
   '@tomato/personalized-recommendations',
   '@tomato/cua-bundle',
-  '@tomato/experimental-browser-use-playwright-bundle',
-  '@tomato/experimental-agent-team-profile',
   '@tomato/experimental-voice-input-bundle',
   '@tomato/experimental-auto-review',
   '@tomato/experimental-inspector-profile',
+  '@tomato/experimental-forge-bundle',
   '@tomato/experimental-tool-worktree',
   '@tomato/experimental-cot-translation-bundle',
   '@tomato/experimental-session-search',
-  '@tomato/experimental-muse-bundle',
   '@tomato/experimental-session-titles-bundle',
   '@tomato/experimental-badge-skill-bundle',
   '@tomato/experimental-ralph-bundle',
   '@tomato/experimental-plugin-market-bundle',
+  '@tomato/experimental-liveshare',
 ])

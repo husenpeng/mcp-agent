@@ -12,12 +12,6 @@
       "path": "../../../vendor/cordis"
     },
     {
-      "path": "../../api/remotes/tsconfig.client.json"
-    },
-    {
-      "path": "../../client/locale/tsconfig.client.json"
-    },
-    {
       "path": "../../client/ui-slots"
     },
     {
@@ -36,9 +30,6 @@
       "path": "../../client/store"
     },
     {
-      "path": "../../client/ui-plugin-manager/tsconfig.client.json"
-    },
-    {
       "path": "../../typert/protocol"
     },
     {
@@ -49,6 +40,16 @@
     },
     {
       "path": "../client-ui-action-cards"
+    },
+    {
+      "path": "../../api/remotes/tsconfig.client.json"
+    },
+    {
+      "path": "../../client/locale/tsconfig.client.json"
+    },
+    {
+      "path": "../../client/ui-plugin-manager/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

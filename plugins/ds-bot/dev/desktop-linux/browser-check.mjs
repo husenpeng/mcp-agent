@@ -1,7 +1,7 @@
 // Walk the Bot browser in a running Desktop window (launch.mts) and screenshot each step:
 // the empty panel, a page, per-Bot cookies (cookie-page.mjs on 8791), a Bot reading its
 // page through read_browser (the mock model answers "看网页"), and the Windows caption.
-// Usage: node browser-check.mjs <dsh-repo> <out-dir> [cdp-port=9422]
+// Usage: node browser-check.mjs <tomato-repo> <out-dir> [cdp-port=9422]
 // COOKIE_PORT is the cookie page's port (default 8791; desktop.sh starts one on 88n3).
 // Size the window first with window-size.mjs. A CDP screenshot of the app window draws
 // webview guests at a wrong offset, so with SHOT_DISPLAY (the Xvfb display, e.g. :99,
@@ -14,7 +14,7 @@ import simulateWindowsCaption from './simulate-windows-caption.mjs'
 
 const [repo, outDir, port = '9422'] = process.argv.slice(2)
 if (!repo || !outDir) {
-  console.error('usage: node browser-check.mjs <dsh-repo> <out-dir> [cdp-port]')
+  console.error('usage: node browser-check.mjs <tomato-repo> <out-dir> [cdp-port]')
   process.exit(2)
 }
 const require = createRequire(join(resolve(repo), 'package.json'))
@@ -23,7 +23,7 @@ mkdirSync(outDir, { recursive: true })
 const cookiePort = process.env.COOKIE_PORT ?? '8791'
 
 const browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`)
-const page = browser.contexts().flatMap(context => context.pages()).find(candidate => candidate.url().startsWith('dsh-app://app/'))
+const page = browser.contexts().flatMap(context => context.pages()).find(candidate => candidate.url().startsWith('tomato-app://app/'))
 if (!page) throw new Error('no Desktop app window')
 
 const failures = []
@@ -143,7 +143,7 @@ await page.waitForTimeout(500)
 check(await page.locator('.bt-panel:not([data-leaving])').count() === 0, 'Escape closes the panel')
 await page.evaluate(() => {
   delete document.documentElement.dataset.windowsTitlebar
-  document.documentElement.style.removeProperty('--dsh-windows-titlebar-height')
+  document.documentElement.style.removeProperty('--tomato-windows-titlebar-height')
   document.querySelector('[data-caption-sim]')?.remove()
 })
 

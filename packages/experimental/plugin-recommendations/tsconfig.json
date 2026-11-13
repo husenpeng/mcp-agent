@@ -27,13 +27,13 @@
       "path": "../../util/package-manifest"
     },
     {
-      "path": "../../api/remote-access/tsconfig.host.json"
-    },
-    {
       "path": "../../skill/skill"
     },
     {
       "path": "../action-cards"
+    },
+    {
+      "path": "../../api/remote-access/tsconfig.host.json"
     }
   ],
   "files": [

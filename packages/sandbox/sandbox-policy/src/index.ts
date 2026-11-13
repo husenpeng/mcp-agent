@@ -172,6 +172,8 @@ export class SandboxPolicyService extends Service {
   readonly additionalWritableRoots: readonly string[] | undefined
   /** The frozen installation roots every confined operation refuses to observe, or `undefined` for none. */
   readonly protectedReadRoots: readonly string[] | undefined
+  /** Per-Session runtime write grants; disposal removes only one registration. */
+  private readonly writableRootRegistrations = new WeakMap<Session, Map<symbol, string>>()
   private sandboxModeProjectionHandle!: ProjectionHandle<SandboxMode | null>
 
   constructor(ctx: Context, config: Config) {
@@ -220,13 +222,44 @@ export class SandboxPolicyService extends Service {
    */
   resolve(request: SandboxPolicyRequest = {}): SandboxExecutionPolicy {
     const { session } = request
+    const registrations = session === undefined ? undefined : this.writableRootRegistrations.get(session)
+    const additionalWritableRoots = registrations === undefined
+      ? this.additionalWritableRoots
+      : resolveAbsoluteRoots([...(this.additionalWritableRoots ?? []), ...registrations.values()], 'additionalWritableRoots')
     return {
       mode: request.mode ?? (session === undefined ? undefined : this.overrideOf(session)) ?? this.defaultMode,
       workspaceRoot: resolveWorkspaceRoot(session?.header.cwd ?? this.workspaceRoot),
-      ...this.additionalWritableRoots === undefined ? {} : { additionalWritableRoots: this.additionalWritableRoots },
+      ...additionalWritableRoots === undefined ? {} : { additionalWritableRoots },
       ...this.protectedReadRoots === undefined ? {} : { protectedReadRoots: this.protectedReadRoots },
       ...session === undefined ? {} : { sessionId: session.id },
     }
+  }
+
+  /**
+   * Permit writes under one directory in this Session's future workspace-write
+   * operations. The calling context owns the effect; disposal removes only this
+   * registration. Other grants to the directory remain effective. Existing
+   * operations and persistent processes retain their resolved permissions.
+   * Grants are runtime-only and must be registered again after resume or fork.
+   * @param session - exact live Session receiving the grant; other Sessions and agentless calls are unaffected.
+   * @param directory - absolute execution-world path; execution rejects missing, non-directory, or symlinked paths.
+   * @returns the exact Cordis effect disposer for this registration.
+   */
+  registerWritableRoot(session: Session, directory: string): () => void {
+    resolveAbsoluteRoots([directory], 'additionalWritableRoots')
+    return this.ctx.effect(() => {
+      let registrations = this.writableRootRegistrations.get(session)
+      if (registrations === undefined) {
+        registrations = new Map()
+        this.writableRootRegistrations.set(session, registrations)
+      }
+      const key = Symbol()
+      registrations.set(key, directory)
+      return () => {
+        registrations.delete(key)
+        if (registrations.size === 0) this.writableRootRegistrations.delete(session)
+      }
+    }, 'sandboxPolicy.registerWritableRoot()')
   }
 
   /**

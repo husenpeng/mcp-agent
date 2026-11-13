@@ -15,10 +15,8 @@ import type {} from '@tomato/client-locale/client'
 import type {} from '@tomato/client-ui-layout/client'
 import type {} from '@tomato/client-ui-renderer/client'
 import type {} from '@tomato/client-ui-workspace/client'
-import { CrewPanelIcon } from './CrewPanelIcon.tsx'
 import { CrewStudio } from './CrewStudio.tsx'
 import { GroupChat } from './GroupChat.tsx'
-import { GroupChatPanelIcon } from './GroupChatPanelIcon.tsx'
 import { NS, en, zh } from './locales.ts'
 import { createCrewLedgerTracker } from './ledger.ts'
 import type { CrewLedgerSource } from './ledger.ts'
@@ -26,7 +24,7 @@ import type {
   CrewStudioInjected, GroupChatInjected, RobotCatalogSnapshot, RobotCatalogSource, RobotOption,
 } from './types.ts'
 
-/** Crew canvas page key in the main keyed slot and the sidebar panel list. */
+/** Crew canvas page key in the main keyed slot. */
 export const PANEL_ID = 'crews' as MainPanelId
 
 /** Multi-agent collaboration page key; the tab that starts tasks and reads the transcript. */
@@ -71,7 +69,7 @@ class RobotCatalog implements RobotCatalogSource {
 }
 
 /**
- * Client plugin body: register dictionaries, the main page, and its panel icon.
+ * Client plugin body: register dictionaries and the two keyed main pages.
  * @param ctx - client root context.
  */
 export function apply(ctx: ClientContext): void {
@@ -79,10 +77,10 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-robot-crew: dictionaries')
   const ledger = createCrewLedgerTracker((runId: CrewRunId): Promise<RemoteResult<readonly CrewEntry[]>> =>
     ctx.crewRuns.entries({ runId }))
-  ctx.effect(() => () => ledger.dispose(), 'ui-robot-crew: ledger tracker')
+  ctx.effect(() => () => { ledger.dispose() }, 'ui-robot-crew: ledger tracker')
   const collabLedger = createCrewLedgerTracker((runId: CrewRunId): Promise<RemoteResult<readonly CrewEntry[]>> =>
     ctx.crewRuns.entries({ runId }))
-  ctx.effect(() => () => collabLedger.dispose(), 'ui-robot-crew: collaboration ledger tracker')
+  ctx.effect(() => () => { collabLedger.dispose() }, 'ui-robot-crew: collaboration ledger tracker')
   const robots = new RobotCatalog(ctx.robotRuns.state)
 
   const face: CrewStudioInjected = {
@@ -134,20 +132,4 @@ export function apply(ctx: ClientContext): void {
     locale: NS,
     inject: () => collabFace,
   }, GroupChat))
-
-  ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({
-    name: 'sidebar.panellist',
-    id: COLLAB_PANEL_ID,
-    order: 44,
-    locale: NS,
-    label: () => t('group.nav'),
-  }, GroupChatPanelIcon))
-
-  ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({
-    name: 'sidebar.panellist',
-    id: PANEL_ID,
-    order: 45,
-    locale: NS,
-    label: () => t('nav'),
-  }, CrewPanelIcon))
 }

@@ -2,7 +2,7 @@
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 import type {
-  Robot, RobotCapabilityCatalog, RobotHireRequest, RobotSpec, RobotSpecIssue, RobotSpecRef, RobotSpecRevision,
+  Robot, RobotCapabilityCatalog, RobotHireRequest, RobotId, RobotSpec, RobotSpecIssue, RobotSpecRef, RobotSpecRevision,
   RobotTemplate, RobotTemplateText, Run,
 } from '@tomato/api-robot-controller/client'
 import type { DirectoryListing } from '@tomato/api-remotes/client'
@@ -12,13 +12,15 @@ import type { SessionId } from '@tomato/session/types'
 import type { InjectFace, PropsLocale, PropsRenderSlots, PropsRuntime, PropsStore } from '@tomato/client-ui-slots'
 import type { RobotRunsSource } from '@tomato/api-robot-controller/client'
 import type { RobotPageInstance, RobotPageStore } from './store.ts'
-import { Button, StateDot, type StateDotState } from '@tomato/client-ui-primitives'
+import { Button, StateDot, Tag, type StateDotState } from '@tomato/client-ui-primitives'
 import { RobotAvatar } from './RobotAvatar.tsx'
 import { RobotConfigEditor } from './RobotConfigEditor.tsx'
 import { RobotCreateFlow } from './RobotCreateFlow.tsx'
 import { RobotGallery } from './RobotGallery.tsx'
+import type { RobotModelCatalog } from './model-catalog.ts'
 import { NS } from './locales.ts'
 import { RunDetail, STATE_KEYS, type RobotIdentity } from './RunDetail.tsx'
+import { isInstalled, needsInstallation } from './spec.ts'
 import type { RunStep } from './run-steps.ts'
 import { durationLabel, runElapsed } from './run-time.ts'
 import { useLiveNow } from './use-live-now.ts'
@@ -31,6 +33,16 @@ const TERMINAL_RUN_STATES: ReadonlySet<Run['state']> = new Set<Run['state']>([
 
 /** Progress rows of a run whose Session the Client cannot read. */
 const NO_STEPS: readonly RunStep[] = []
+
+/**
+ * Read a reportable message from a registry action that rejected instead of
+ * settling as a `RemoteResult`.
+ * @param error - rejection value.
+ * @returns the message the page shows.
+ */
+function rejectionMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
 
 /**
  * Map one run state to the shared status mark.
@@ -60,6 +72,10 @@ export interface RobotPageActions {
   readonly publish: (request: { spec: RobotSpec; previous?: RobotSpecRef }) => Promise<RemoteResult<RobotSpecRevision>>
   readonly instantiate: (request: { ref: RobotSpecRef }) => Promise<RemoteResult<Robot>>
   readonly rebind: (request: { robotId: Robot['id']; ref: RobotSpecRef }) => Promise<RemoteResult<Robot>>
+  /** Verify the declared dependencies of the robot's bound revision. */
+  readonly install: (request: { robotId: Robot['id'] }) => Promise<RemoteResult<Robot>>
+  /** Delete the robot instance, keeping its specifications and runs. */
+  readonly remove: (request: { robotId: Robot['id'] }) => Promise<RemoteResult<void>>
   /** Publish and instantiate a user-owned copy of one template. */
   readonly hire: (request: RobotHireRequest) => Promise<RemoteResult<Robot>>
   readonly start: (request: { robotId: Robot['id']; message: string }) => Promise<RemoteResult<Run>>
@@ -86,6 +102,12 @@ export interface RobotReferenceData {
   readonly presets: readonly RobotReferenceOption[]
   /** Local skills, tools, MCP servers, and Workspace directories. */
   readonly capabilities: RobotCapabilityCatalog
+  /**
+   * Model routes the deployment advertises, grouped by configured provider.
+   * Omitted when the catalog could not be read, so the editor still opens with
+   * the deployment default as its only choice.
+   */
+  readonly models?: RobotModelCatalog
   /**
    * Workspace directory the page is viewing. A new robot and a rootless
    * template hire start in it, and the editor fills an empty root list from it.
@@ -160,12 +182,19 @@ export function RobotPage({
   const reference = owned !== undefined && owned.sessionId === runSessionId ? owned.reference : undefined
   const sessionUnavailable = runSessionId !== undefined && unresolved === runSessionId
   const [busy, setBusy] = useState(false)
+  const [installing, setInstalling] = useState(false)
+  const [removing, setRemoving] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState<RobotId>()
   const [error, setError] = useState<string>()
   const [issues, setIssues] = useState<readonly RobotSpecIssue[]>()
   const [referenceOptions, setReferenceOptions] = useState<RobotReferenceData>({
     presets: [],
-    capabilities: { skills: [], tools: [], mcpServers: [], workspaceRoots: [] },
+    capabilities: { skills: [], plugins: [], tools: [], mcpServers: [], workspaceRoots: [] },
   })
+  // A confirmation belongs to the selection that opened it. Selection lives in
+  // the page store, so leaving that robot or the detail view drops the pending
+  // destructive action during render instead of reviving it on the next visit.
+  if (confirmingDelete !== undefined && confirmingDelete !== page.robotId) setConfirmingDelete(undefined)
 
   useEffect(() => {
     let live = true
@@ -299,6 +328,7 @@ export function RobotPage({
             issues={issues}
             presetOptions={referenceOptions.presets}
             capabilities={referenceOptions.capabilities}
+            models={referenceOptions.models}
             defaultWorkspaceRoot={referenceOptions.defaultWorkspaceRoot}
             listDirectory={listDirectory}
             pickDirectory={pickDirectory}
@@ -354,9 +384,55 @@ export function RobotPage({
     start: startRun,
   }
   const robotId = robot.id
+  // The pending confirmation names one robot: selecting a different robot must
+  // never inherit another's destructive action.
+  const confirmDelete = confirmingDelete === robotId
   const identity: RobotIdentity = {
     name: robot.name,
     skills: edition?.spec.capability.skills ?? [],
+  }
+  const installed = isInstalled(robot)
+  // A specification that declares nothing resolvable needs no install step;
+  // one that does must be verified before its first run can start.
+  const installRequired = edition !== undefined && needsInstallation(edition.spec) && !installed
+  const installRobot = (): void => {
+    if (installing) return
+    setInstalling(true)
+    setError(undefined)
+    void (async () => {
+      try {
+        const result = await registryActions.install({ robotId })
+        if (!result.ok) setError(`${t('roster.installFailed')}: ${result.error.message}`)
+      } catch (error: unknown) {
+        // A transport or assembly failure still ends the attempt; leaving the
+        // control in its pending label would report progress that is not there.
+        setError(`${t('roster.installFailed')}: ${rejectionMessage(error)}`)
+      } finally {
+        setInstalling(false)
+      }
+    })()
+  }
+  const removeRobot = (): void => {
+    if (removing) return
+    setRemoving(true)
+    setError(undefined)
+    void (async () => {
+      try {
+        const result = await registryActions.remove({ robotId })
+        if (!result.ok) {
+          setError(`${t('roster.deleteFailed')}: ${result.error.message}`)
+          return
+        }
+        setCreated(undefined)
+        setCreatedSpec(undefined)
+        setConfirmingDelete(undefined)
+        actions.back()
+      } catch (error: unknown) {
+        setError(`${t('roster.deleteFailed')}: ${rejectionMessage(error)}`)
+      } finally {
+        setRemoving(false)
+      }
+    })()
   }
 
   // The Session-bound occupant reads the run's Chat nodes; without a readable
@@ -371,7 +447,8 @@ export function RobotPage({
         openError={undefined}
         steps={NO_STEPS}
         actions={runActions}
-        startBlocked={runInProgress}
+        startBlocked={runInProgress || installRequired}
+        startBlockedHint={installRequired ? t('run.installFirst') : undefined}
         hasRuns={runs.length > 0}
         now={now}
         t={t}
@@ -386,7 +463,8 @@ export function RobotPage({
         openError={sessionUnavailable ? t('run.sessionUnavailable') : undefined}
         steps={NO_STEPS}
         actions={runActions}
-        startBlocked={runInProgress}
+        startBlocked={runInProgress || installRequired}
+        startBlockedHint={installRequired ? t('run.installFirst') : undefined}
         hasRuns
         now={now}
         t={t}
@@ -406,7 +484,44 @@ export function RobotPage({
         <div className={css.railHead}>
           <div className={css.toolbar}>
             <Button size="sm" variant="ghost" onClick={() => { actions.back() }}>{t('roster.back')}</Button>
-            <Button size="sm" variant="outline" onClick={() => { actions.configure(robot.id) }}>{t('roster.edit')}</Button>
+            <div className={css.actions}>
+              {installRequired
+                ? (
+                  <Button size="sm" variant="primary" disabled={installing} onClick={installRobot}>
+                    {installing ? t('roster.installing') : t('roster.install')}
+                  </Button>
+                )
+                : null}
+              {confirmDelete
+                ? null
+                : (
+                  <Button size="sm" variant="outline" onClick={() => { actions.configure(robot.id) }}>
+                    {t('roster.edit')}
+                  </Button>
+                )}
+              {confirmDelete
+                ? (
+                  <>
+                    <Button size="sm" variant="outline" disabled={removing} onClick={removeRobot}>
+                      {removing ? t('roster.deleting') : t('roster.deleteConfirm')}
+                    </Button>
+                    <Button size="sm" variant="ghost" disabled={removing} onClick={() => { setConfirmingDelete(undefined) }}>
+                      {t('roster.cancel')}
+                    </Button>
+                  </>
+                )
+                : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={runInProgress}
+                    title={runInProgress ? t('roster.deleteRunning') : t('roster.deleteKeep')}
+                    onClick={() => { setConfirmingDelete(robot.id) }}
+                  >
+                    {t('roster.delete')}
+                  </Button>
+                )}
+            </div>
           </div>
           <div className={css.robotRow}>
             <RobotAvatar name={robot.name} skills={identity.skills} />
@@ -415,6 +530,9 @@ export function RobotPage({
               <span className={css.robotState} data-running={runInProgress}>
                 <StateDot state={runInProgress ? 'ongoing' : 'idle'} />
                 {runInProgress ? t('roster.running') : t('roster.idle')}
+                {edition !== undefined && needsInstallation(edition.spec)
+                  ? <Tag tone={installed ? 'success' : 'warning'}>{installed ? t('roster.installed') : t('roster.notInstalled')}</Tag>
+                  : null}
               </span>
               {edition === undefined ? null : <p className={css.mission}>{edition.spec.goal.mission}</p>}
             </div>
@@ -450,7 +568,9 @@ export function RobotPage({
               </button>
             ))}
         </div>
-        {runInProgress ? <p className={css.railFoot}>{t('run.newRunBlocked')}</p> : null}
+        {installRequired
+          ? <p className={css.railFoot}>{t('run.installFirst')}</p>
+          : runInProgress ? <p className={css.railFoot}>{t('run.newRunBlocked')}</p> : null}
         {error === undefined ? null : <p className={css.railError} role="alert">{error}</p>}
       </aside>
       <div className={css.detail}>{detail}</div>

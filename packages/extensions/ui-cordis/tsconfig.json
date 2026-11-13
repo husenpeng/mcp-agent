@@ -12,13 +12,7 @@
       "path": "../../../vendor/cordis"
     },
     {
-      "path": "../../client/locale/tsconfig.client.json"
-    },
-    {
       "path": "../cordis-client-runner"
-    },
-    {
-      "path": "../../api/remotes/tsconfig.client.json"
     },
     {
       "path": "../../core/session"
@@ -40,6 +34,13 @@
     },
     {
       "path": "../../client/ui-tool"
+    },
+    {
+      "path": "../../client/locale/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/remotes/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

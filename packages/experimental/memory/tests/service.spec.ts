@@ -1,7 +1,7 @@
 /** Memory service storage, scoping, replacement, limits, and restart durability. */
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
-import { mkdtemp, realpath, rm, symlink } from 'node:fs/promises'
+import { mkdir, mkdtemp, readdir, readFile, realpath, rm, stat, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -13,20 +13,27 @@ import { AccountState } from '@tomato/gateway'
 import { Embeddings, EmbeddingsError } from '@tomato/experimental-embeddings'
 import type { EmbedRequest } from '@tomato/experimental-embeddings'
 import MemoryService, {
+  EpisodeId,
   LOCAL_MEMORY_OWNER,
   MemoryError,
   MemoryId,
   accountMemoryOwner,
   cosineSimilarity,
   isMemoryIdentifier,
+  memoryDomain,
   memoryEmbeddingText,
   memoryTokens,
+  normalizeIdentifier,
+  normalizeStatement,
+  provisionalProjectId,
+  ProjectId,
   rankMemories,
   resolveMemoryLimits,
+  resolveMemoryWorkspace,
   scoreMemories,
   tokenContainment,
 } from '@tomato/experimental-memory'
-import type { MemoryRecord, MemoryScope, MemoryView, RememberEpisodeRequest, RememberRequest } from '@tomato/experimental-memory'
+import type { EpisodeRecord, MemoryRecord, MemoryScope, MemoryView, RememberEpisodeRequest, RememberRequest } from '@tomato/experimental-memory'
 import { MemoryMediaPool, MemoryStorageBackend } from '../../../storage/storage-domain/tests/helpers/memory-backend.ts'
 
 const contexts: Context[] = []
@@ -39,7 +46,11 @@ afterEach(async () => {
 })
 
 /** Mount the service over an in-memory storage medium that survives across harnesses. */
-async function harness(options: { pool?: MemoryMediaPool; config?: Parameters<typeof MemoryService.Config>[0] } = {}) {
+async function harness(options: {
+  pool?: MemoryMediaPool
+  config?: Parameters<typeof MemoryService.Config>[0]
+  tomatoHomePath?: (...segments: string[]) => string
+} = {}) {
   const ctx = new Context()
   contexts.push(ctx)
   await ctx.plugin(SessionStore)
@@ -53,6 +64,7 @@ async function harness(options: { pool?: MemoryMediaPool; config?: Parameters<ty
     ctx.provide('storageDomain', facility)
     return async () => { await facility.closeAll(); unmount() }
   })
+  if (options.tomatoHomePath !== undefined) ctx.provide('tomatoHomePath', options.tomatoHomePath)
   const fiber = await ctx.plugin(MemoryService, options.config ?? {})
   return { ctx, pool, fiber, memory: ctx.memory }
 }
@@ -60,8 +72,8 @@ async function harness(options: { pool?: MemoryMediaPool; config?: Parameters<ty
 const OWNER = LOCAL_MEMORY_OWNER
 const WORKSPACE_A: MemoryScope = { kind: 'workspace', path: '/work/a' }
 const PROFILE: MemoryScope = { kind: 'profile' }
-const VIEW_A: MemoryView = { owner: OWNER, workspace: '/work/a' }
-const VIEW_B: MemoryView = { owner: OWNER, workspace: '/work/b' }
+const VIEW_A: MemoryView = { owner: OWNER, workspace: { id: provisionalProjectId('/work/a'), path: '/work/a' } }
+const VIEW_B: MemoryView = { owner: OWNER, workspace: { id: provisionalProjectId('/work/b'), path: '/work/b' } }
 
 function request(overrides: Partial<RememberRequest> = {}): RememberRequest {
   return {
@@ -99,6 +111,11 @@ class ScriptEmbeddings extends Embeddings {
   }
 }
 
+/** Provider mounted but switched off by its host. */
+class DisabledEmbeddings extends ScriptEmbeddings {
+  override get enabled(): boolean { return false }
+}
+
 async function tempDirectory(): Promise<string> {
   const directory = await mkdtemp(join(tmpdir(), 'tomato-memory-'))
   directories.push(directory)
@@ -117,6 +134,102 @@ describe('identifiers and tokens', () => {
   it('segments Chinese and Latin text into lowercased words', () => {
     expect(memoryTokens('邮件语气 Brand-X')).toEqual(['邮件', '语气', 'brand', 'x'])
     expect(memoryTokens('  ，。 ')).toEqual([])
+  })
+})
+
+describe('normalization', () => {
+  it('canonicalizes identifiers and statements', () => {
+    expect(normalizeIdentifier('  Client:Brand   X ')).toBe('client:brand-x')
+    expect(normalizeIdentifier('Email_Tone')).toBe('email-tone')
+    expect(normalizeIdentifier('Ａ：Ｂ')).toBe('a:b')
+    expect(normalizeIdentifier('a--b')).toBe('a-b')
+    expect(normalizeIdentifier(':a::b:')).toBe('a:b')
+    expect(normalizeIdentifier('用户')).toBe('用户')
+    expect(normalizeStatement('  Use\tEnglish\nnow  ')).toBe('Use English now')
+    expect(normalizeStatement('\u0000 短  ')).toBe('短')
+  })
+
+  it('stores the canonical identity and replaces a differently spelled write', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(1_000)
+    const { memory } = await harness()
+    const first = await memory.remember(request({ entity: ' User ', key: 'Email_Tone', value: '  Short   and direct  ' }))
+    expect(first.entity).toBe('user')
+    expect(first.key).toBe('email-tone')
+    expect(first.value).toBe('Short and direct')
+    vi.setSystemTime(2_000)
+    const second = await memory.remember(request({ entity: 'user', key: 'email-tone', value: 'Reply briefly' }))
+    expect(second.id).not.toBe(first.id)
+    const versions = memory.versions(VIEW_A, second.id)
+    expect(versions.map(version => version.id)).toEqual([second.id, first.id])
+    expect(versions[0]).toMatchObject({ validFrom: 2_000 })
+    expect(versions[0]?.validTo).toBeUndefined()
+    expect(versions[1]).toMatchObject({ validTo: 2_000, supersededBy: second.id })
+  })
+
+  it('rejects an identifier and an empty statement normalization cannot make valid', async () => {
+    const { memory } = await harness()
+    await expect(memory.remember(request({ entity: '用户' }))).rejects.toMatchObject({ code: 'invalid-identifier' })
+    await expect(memory.remember(request({ value: '   \n ' }))).rejects.toMatchObject({ code: 'empty-value' })
+  })
+
+  it('normalizes every stored episode text field', async () => {
+    const { memory } = await harness()
+    const episode = await memory.rememberEpisode({
+      owner: OWNER,
+      scope: { kind: 'project', path: '/work/a' },
+      kind: 'observation',
+      type: ' Bugfix ',
+      title: '  Fix   the bug ',
+      subtitle: '  ',
+      narrative: 'Line one\nline two',
+      facts: ['  did   x ', '   '],
+      concepts: [' UI '],
+      filesRead: ['  src/a.ts '],
+      filesModified: ['  src/b.ts '],
+      fingerprint: 'fingerprint',
+      source: { sessionId: SessionId('session-1') },
+    })
+    expect(episode.type).toBe('bugfix')
+    expect(episode.title).toBe('Fix the bug')
+    expect(episode.subtitle).toBeUndefined()
+    expect(episode.narrative).toBe('Line one line two')
+    expect(episode.facts).toEqual(['did x'])
+    expect(episode.concepts).toEqual(['UI'])
+    expect(episode.filesRead).toEqual(['src/a.ts'])
+    expect(episode.filesModified).toEqual(['src/b.ts'])
+  })
+
+  it('keeps a non-empty episode subtitle in canonical form', async () => {
+    const { memory } = await harness()
+    const episode = await memory.rememberEpisode({
+      owner: OWNER,
+      scope: { kind: 'project', path: '/work/a' },
+      kind: 'observation',
+      type: 'bugfix',
+      title: 'Fix the bug',
+      subtitle: '  Second   line ',
+      narrative: 'Body',
+      fingerprint: 'fingerprint-2',
+      source: { sessionId: SessionId('session-1') },
+    })
+    expect(episode.subtitle).toBe('Second line')
+  })
+
+  it('rejects an empty episode title and a type that is not one word', async () => {
+    const { memory } = await harness()
+    const base: RememberEpisodeRequest = {
+      owner: OWNER,
+      scope: { kind: 'project', path: '/work/a' },
+      kind: 'observation',
+      type: 'bugfix',
+      title: 'Fix the bug',
+      narrative: '',
+      fingerprint: 'fingerprint',
+      source: { sessionId: SessionId('session-1') },
+    }
+    await expect(memory.rememberEpisode({ ...base, title: '   ' })).rejects.toMatchObject({ code: 'empty-value' })
+    await expect(memory.rememberEpisode({ ...base, type: 'bug:fix' })).rejects.toMatchObject({ code: 'invalid-identifier' })
   })
 })
 
@@ -285,14 +398,22 @@ describe('limits', () => {
       semanticWeight: 0.35, maxSemanticCandidates: 50, semanticFloor: 0.35,
       maxEpisodesPerWorkspace: 500, maxEpisodeChars: 8000, episodeRetentionDays: 90,
       historySummaries: 1, historyEpisodes: 5, maxEmbeddingVectors: 2000,
+      versionRetentionDays: 90, maxVersionsPerRecord: 10, summaryRetentionDays: 365,
+      refreshIntervalMs: 1000, writeLockTimeoutMs: 2000, writeLockStaleMs: 30_000,
     })
     expect(() => resolveMemoryLimits({ maxRecallResults: 0 })).toThrow('maxRecallResults must be a positive safe integer')
     expect(() => resolveMemoryLimits({ maxValueBytes: 1.5 })).toThrow('maxValueBytes must be a positive safe integer')
     expect(() => resolveMemoryLimits({ maxProfileRecords: -1 })).toThrow('maxProfileRecords must be a positive safe integer')
     expect(() => resolveMemoryLimits({ maxSemanticCandidates: 0 })).toThrow('maxSemanticCandidates must be a positive safe integer')
+    expect(() => resolveMemoryLimits({ versionRetentionDays: -1 })).toThrow('versionRetentionDays must be a non-negative safe integer')
+    expect(() => resolveMemoryLimits({ maxVersionsPerRecord: 0 })).toThrow('maxVersionsPerRecord must be a positive safe integer')
+    expect(() => resolveMemoryLimits({ summaryRetentionDays: 0 })).toThrow('summaryRetentionDays must be a positive safe integer')
     expect(() => resolveMemoryLimits({ semanticWeight: 1.5 })).toThrow('semanticWeight must be a number from 0 to 1')
     expect(() => resolveMemoryLimits({ semanticFloor: Number.NaN })).toThrow('semanticFloor must be a number from 0 to 1')
     expect(() => resolveMemoryLimits({ historyEpisodes: -1 })).toThrow('historyEpisodes must be a non-negative safe integer')
+    expect(() => resolveMemoryLimits({ refreshIntervalMs: -1 })).toThrow('refreshIntervalMs must be a non-negative safe integer')
+    expect(() => resolveMemoryLimits({ writeLockTimeoutMs: 0 })).toThrow('writeLockTimeoutMs must be a positive safe integer')
+    expect(() => resolveMemoryLimits({ writeLockStaleMs: 0 })).toThrow('writeLockStaleMs must be a positive safe integer')
   })
 })
 
@@ -325,18 +446,36 @@ describe('MemoryService', () => {
     expect(ctx.get('settings')).toBeUndefined()
   })
 
-  it('stores, replaces by scope, entity, and key, and keeps the earlier id and creation time', async () => {
+  it('stores, replaces by scope, entity, and key, and closes the earlier version', async () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(1_000)
     const { memory } = await harness()
     const first = await memory.remember(request())
     vi.setSystemTime(2_000)
     const second = await memory.remember(request({ value: 'Warm and brief', pinned: true }))
-    expect(second).toMatchObject({ id: first.id, createdAt: 1_000, updatedAt: 2_000, value: 'Warm and brief', pinned: true })
+    expect(second).toMatchObject({ createdAt: 2_000, updatedAt: 2_000, validFrom: 2_000, value: 'Warm and brief', pinned: true })
+    expect(second.id).not.toBe(first.id)
+    const versions = memory.versions(VIEW_A, second.id)
+    expect(versions.map(version => version.id)).toEqual([second.id, first.id])
+    expect(versions[1]).toMatchObject({ validTo: 2_000, supersededBy: second.id })
     vi.setSystemTime(3_000)
     const profile = await memory.remember(request({ scope: PROFILE, value: 'Everywhere' }))
     expect(profile.id).not.toBe(first.id)
     expect(memory.list(VIEW_A)).toEqual([profile, second])
+  })
+
+  it('serializes concurrent writes to one identity', async () => {
+    const { memory } = await harness()
+    const [first, second] = await Promise.all([
+      memory.remember(request({ value: 'Short and direct' })),
+      memory.remember(request({ value: 'Warm and brief' })),
+    ])
+    expect(first.id).not.toBe(second.id)
+    // Both writes saw the earlier one: exactly one current version remains and
+    // the other is closed, instead of two active versions for one identity.
+    expect(memory.list(VIEW_A).map(record => record.id)).toEqual([second.id])
+    expect(memory.versions(VIEW_A, second.id).find(version => version.id === first.id))
+      .toMatchObject({ supersededBy: second.id })
   })
 
   it('isolates workspaces for recall, listing, the snapshot, pinning, confirming, and deletion', async () => {
@@ -358,7 +497,7 @@ describe('MemoryService', () => {
     vi.setSystemTime(1_000)
     const { memory } = await harness()
     const profile = await memory.remember(request({ scope: PROFILE, key: 'language', value: 'Reply in Chinese' }))
-    const bob: MemoryView = { owner: accountMemoryOwner('u-bob'), workspace: '/work/a' }
+    const bob: MemoryView = { owner: accountMemoryOwner('u-bob'), workspace: { id: provisionalProjectId('/work/a'), path: '/work/a' } }
     expect((await memory.recall({ view: VIEW_B, text: 'chinese' })).map(record => record.id)).toEqual([profile.id])
     expect((await memory.recall({ view: { owner: OWNER }, text: '' })).map(record => record.id)).toEqual([profile.id])
     expect(memory.list(bob)).toEqual([])
@@ -478,7 +617,7 @@ describe('MemoryService', () => {
     const { ctx, facility } = await bareContext(await mismatchedPool())
     await expect(new MemoryService(ctx, {})[Service.init]()).rejects.toThrow('stored key "memory-renamed" differs from record id')
     // The domain name is free again after the refused activation closed it.
-    const reopened = await facility.open({ name: 'tomato_memory', version: 1, tables: {} })
+    const reopened = await facility.open({ name: 'tomato_memory', version: memoryDomain.version, tables: {} })
     await reopened.close()
   })
 
@@ -517,7 +656,11 @@ describe('MemoryService', () => {
     const first = await memory.accessOf(linked)
     expect(await memory.accessOf(linked)).toEqual(first)
     expect(first).toEqual(await memory.accessOf(ctx.sessions.create(SessionId('direct'), { meta: { cwd: directory } })))
-    expect(first).toEqual({ kind: 'available', view: { owner: OWNER, workspace: await realpath(directory) } })
+    const canonical = await realpath(directory)
+    expect(first).toEqual({
+      kind: 'available',
+      view: { owner: OWNER, workspace: { id: provisionalProjectId(canonical), path: canonical } },
+    })
     expect(await memory.accessOf(ctx.sessions.create(SessionId('none')))).toEqual({ kind: 'available', view: { owner: OWNER } })
     const warn = vi.spyOn(ctx.logger, 'warn')
     const missing = ctx.sessions.create(SessionId('missing'), { meta: { cwd: join(directory, 'gone') } })
@@ -529,13 +672,15 @@ describe('MemoryService', () => {
     expect(await memory.accessFor(join(directory, 'gone'))).toEqual({ kind: 'available', view: { owner: OWNER } })
   })
 
-  it('serves the signed-in account where the Host names accounts and refuses while nobody is signed in', async () => {
+  it('serves the signed-in account, distinguishes a loading account from a sign-out, and refuses after one', async () => {
     const { ctx, memory } = await harness()
     const account = new AccountState()
     ctx.provide('tomatoAccount', account.view())
     const session = ctx.sessions.create(SessionId('account'))
-    expect(await memory.accessOf(session)).toEqual({ kind: 'sign-in-required' })
-    expect(await memory.accessFor('/tmp')).toEqual({ kind: 'sign-in-required' })
+    // A fresh gateway has not verified the browser yet; that is not a sign-out.
+    expect(await memory.accessOf(session)).toEqual({ kind: 'account-loading' })
+    expect(await memory.accessFor('/tmp')).toEqual({ kind: 'account-loading' })
+    expect(memory.accessProfile()).toEqual({ kind: 'account-loading' })
     const alice = { id: 'u-alice', email: 'alice@example.com', name: null, avatarUrl: null, language: null }
     account.observe({ kind: 'valid', user: alice })
     expect(await memory.accessOf(session)).toEqual({ kind: 'available', view: { owner: accountMemoryOwner('u-alice') } })
@@ -543,7 +688,738 @@ describe('MemoryService', () => {
     expect(await memory.accessOf(session)).toEqual({ kind: 'available', view: { owner: accountMemoryOwner('u-bob') } })
     account.signOut()
     expect(await memory.accessOf(session)).toEqual({ kind: 'sign-in-required' })
+    // A caller without a Session reads the same account state.
+    expect(memory.accessProfile()).toEqual({ kind: 'sign-in-required' })
   })
+  it('uses the workspace registry identity and keeps memory visible across a path change', async () => {
+    const { ctx, memory } = await harness()
+    const first = await realpath(await tempDirectory())
+    const second = await realpath(await tempDirectory())
+    ctx.provide('workspaceRegistry', {
+      resolveByPath: async (path: string) => ({ id: 'ws-shared', path }),
+    })
+    const firstAccess = await memory.accessFor(first)
+    const secondAccess = await memory.accessFor(second)
+    if (firstAccess.kind !== 'available' || firstAccess.view.workspace === undefined) throw new Error('expected a project view')
+    if (secondAccess.kind !== 'available' || secondAccess.view.workspace === undefined) throw new Error('expected a project view')
+    expect(firstAccess.view.workspace.id).toBe(ProjectId('ws-shared'))
+    expect(secondAccess.view.workspace.path).toBe(second)
+    const record = await memory.remember(request({ scope: { kind: 'workspace', path: first }, key: 'shared' }))
+    expect(record.scope).toMatchObject({ kind: 'workspace', workspaceId: ProjectId('ws-shared') })
+    expect(memory.list(firstAccess.view).map(entry => entry.id)).toEqual([record.id])
+    expect(memory.list(secondAccess.view).map(entry => entry.id)).toEqual([record.id])
+  })
+
+  it('maps a pre-v2 stored scope to a provisional project identity when the domain opens', async () => {
+    const pool = new MemoryMediaPool()
+    const legacy: MemoryRecord = {
+      id: MemoryId('memory-legacy'),
+      owner: OWNER,
+      scope: { kind: 'workspace', path: '/work/a' },
+      kind: 'fact',
+      entity: 'user',
+      key: 'legacy',
+      value: 'Legacy statement',
+      status: 'active',
+      pinned: false,
+      createdAt: 1,
+      updatedAt: 1,
+      source: { sessionId: SessionId('session-legacy') },
+    }
+    pool.versions.set('tomato_memory', 1)
+    pool.media.set('tomato_memory', {
+      tables: new Map<string, Map<string, unknown>>([['records', new Map<string, unknown>([[legacy.id, legacy]])]]),
+      global: null,
+    })
+    const legacyEpisode: EpisodeRecord = {
+      id: EpisodeId('episode-legacy'),
+      owner: OWNER,
+      scope: { kind: 'project', path: '/work/a' },
+      kind: 'observation',
+      type: 'task',
+      title: 'Legacy episode',
+      narrative: '',
+      facts: [],
+      concepts: [],
+      filesRead: [],
+      filesModified: [],
+      fingerprint: 'legacy-fingerprint',
+      source: { sessionId: SessionId('session-legacy') },
+      createdAt: 1,
+      updatedAt: 1,
+    }
+    pool.versions.set('tomato_memory_episodes', 1)
+    pool.media.set('tomato_memory_episodes', {
+      tables: new Map<string, Map<string, unknown>>([['records', new Map<string, unknown>([[legacyEpisode.id, legacyEpisode]])]]),
+      global: null,
+    })
+    const indexPath = join(await tempDirectory(), 'index.sqlite')
+    const { memory } = await harness({ pool, config: { indexPath } })
+    const [migrated] = memory.list(VIEW_A)
+    expect(migrated?.scope).toMatchObject({
+      kind: 'workspace',
+      workspaceId: provisionalProjectId('/work/a'),
+      path: '/work/a',
+    })
+    expect(migrated?.validFrom).toBe(1)
+    expect(memory.listEpisodes(VIEW_A)[0]?.scope).toMatchObject({
+      kind: 'project',
+      workspaceId: provisionalProjectId('/work/a'),
+      path: '/work/a',
+    })
+  })
+
+  it('re-maps a provisional identity when the workspace registry arrives later', async () => {
+    const { ctx, memory } = await harness()
+    const canonical = await realpath(await tempDirectory())
+    const record = await memory.remember(request({ scope: { kind: 'workspace', path: canonical }, key: 'reconciled' }))
+    expect(record.scope).toMatchObject({ kind: 'workspace', workspaceId: provisionalProjectId(canonical) })
+    ctx.provide('workspaceRegistry', {
+      resolveByPath: async (path: string) => ({ id: 'ws-late', path }),
+    })
+    await vi.waitFor(() => {
+      expect(memory.list({ owner: OWNER, workspace: { id: ProjectId('ws-late'), path: canonical } }).map(entry => entry.id))
+        .toEqual([record.id])
+    })
+  })
+
+  it('rejects a scope with neither a project identity nor a path', async () => {
+    const { memory } = await harness()
+    await expect(memory.remember(request({ scope: { kind: 'workspace' } }))).rejects.toMatchObject({ code: 'invalid-scope' })
+    await expect(memory.rememberEpisode({
+      owner: OWNER,
+      scope: { kind: 'project' },
+      kind: 'observation',
+      type: 'task',
+      title: 'A title',
+      narrative: '',
+      fingerprint: 'fingerprint',
+      source: { sessionId: SessionId('session-1') },
+    })).rejects.toMatchObject({ code: 'invalid-scope' })
+  })
+})
+
+describe('project identity', () => {
+  it('falls back to the deterministic provisional id without a registry or an answer', async () => {
+    const plain = new Context()
+    contexts.push(plain)
+    expect(await resolveMemoryWorkspace(plain, '/work/a')).toEqual({
+      id: provisionalProjectId('/work/a'), path: '/work/a',
+    })
+    const empty = new Context()
+    contexts.push(empty)
+    empty.provide('workspaceRegistry', { resolveByPath: async () => undefined })
+    expect(await resolveMemoryWorkspace(empty, '/work/a')).toEqual({
+      id: provisionalProjectId('/work/a'), path: '/work/a',
+    })
+  })
+
+  it('uses the registry id and falls back when the lookup throws', async () => {
+    const ctx = new Context()
+    contexts.push(ctx)
+    ctx.provide('workspaceRegistry', { resolveByPath: async (path: string) => ({ id: 'ws-1', path }) })
+    expect(await resolveMemoryWorkspace(ctx, '/work/a')).toEqual({ id: ProjectId('ws-1'), path: '/work/a' })
+    const failing = new Context()
+    contexts.push(failing)
+    const warn = vi.spyOn(failing.logger, 'warn')
+    failing.provide('workspaceRegistry', {
+      resolveByPath: async () => { throw new Error('registry down') },
+    })
+    expect((await resolveMemoryWorkspace(failing, '/work/b')).id).toBe(provisionalProjectId('/work/b'))
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('workspace lookup for "/work/b" failed'))
+  })
+
+  it('stores an explicit identity without a path and rejects an episode identity without one', async () => {
+    const { memory } = await harness()
+    const record = await memory.remember(request({
+      scope: { kind: 'workspace', workspaceId: ProjectId('ws-direct') }, key: 'direct',
+    }))
+    expect(record.scope).toEqual({ kind: 'workspace', workspaceId: ProjectId('ws-direct') })
+    expect(memory.list({ owner: OWNER, workspace: { id: ProjectId('ws-direct'), path: '/elsewhere' } }).map(entry => entry.id))
+      .toEqual([record.id])
+    const episode = await memory.rememberEpisode({
+      owner: OWNER,
+      scope: { kind: 'project', workspaceId: ProjectId('ws-direct'), path: '/work/a' },
+      kind: 'observation',
+      type: 'task',
+      title: 'Direct episode',
+      narrative: '',
+      fingerprint: 'direct',
+      source: { sessionId: SessionId('session-1') },
+    })
+    expect(episode.scope).toEqual({ kind: 'project', workspaceId: ProjectId('ws-direct'), path: '/work/a' })
+    await expect(memory.rememberEpisode({
+      owner: OWNER,
+      scope: { kind: 'project', workspaceId: ProjectId('ws-direct') },
+      kind: 'observation',
+      type: 'task',
+      title: 'No path',
+      narrative: '',
+      fingerprint: 'no-path',
+      source: { sessionId: SessionId('session-1') },
+    })).rejects.toMatchObject({ code: 'invalid-scope' })
+  })
+
+  it('leaves already-identified scopes untouched during migration', async () => {
+    const pool = new MemoryMediaPool()
+    const fixedId = ProjectId('ws-fixed')
+    const record: MemoryRecord = {
+      id: MemoryId('memory-fixed'),
+      owner: OWNER,
+      scope: { kind: 'workspace', workspaceId: fixedId, path: '/work/a' },
+      kind: 'fact',
+      entity: 'user',
+      key: 'fixed',
+      value: 'Fixed statement',
+      status: 'active',
+      pinned: false,
+      createdAt: 1,
+      updatedAt: 1,
+      source: { sessionId: SessionId('session-fixed') },
+    }
+    const profile: MemoryRecord = {
+      ...record,
+      id: MemoryId('memory-profile'),
+      scope: { kind: 'profile' },
+      key: 'profile',
+    }
+    const episode: EpisodeRecord = {
+      id: EpisodeId('episode-fixed'),
+      owner: OWNER,
+      scope: { kind: 'project', workspaceId: fixedId, path: '/work/a' },
+      kind: 'observation',
+      type: 'task',
+      title: 'Fixed episode',
+      narrative: '',
+      facts: [],
+      concepts: [],
+      filesRead: [],
+      filesModified: [],
+      fingerprint: 'fixed-episode',
+      source: { sessionId: SessionId('session-fixed') },
+      createdAt: 1,
+      updatedAt: 1,
+    }
+    pool.versions.set('tomato_memory', 1)
+    pool.media.set('tomato_memory', {
+      tables: new Map<string, Map<string, unknown>>([['records', new Map<string, unknown>([
+        [record.id, record],
+        [profile.id, profile],
+      ])]]),
+      global: null,
+    })
+    pool.versions.set('tomato_memory_episodes', 1)
+    pool.media.set('tomato_memory_episodes', {
+      tables: new Map<string, Map<string, unknown>>([['records', new Map<string, unknown>([[episode.id, episode]])]]),
+      global: null,
+    })
+    const { memory } = await harness({ pool })
+    expect(memory.list({ owner: OWNER, workspace: { id: fixedId, path: '/work/a' } }).map(entry => entry.id).sort())
+      .toEqual([profile.id, record.id].sort())
+    expect(memory.listEpisodes({ owner: OWNER, workspace: { id: fixedId, path: '/work/a' } }).map(entry => entry.id))
+      .toEqual([episode.id])
+  })
+
+  it('re-maps provisional identities and leaves fixed identities alone', async () => {
+    const pool = new MemoryMediaPool()
+    const withoutPath: EpisodeRecord = {
+      id: EpisodeId('episode-without-path'),
+      owner: OWNER,
+      scope: { kind: 'project', workspaceId: ProjectId('ws-hidden') },
+      kind: 'observation',
+      type: 'task',
+      title: 'No path',
+      narrative: '',
+      facts: [],
+      concepts: [],
+      filesRead: [],
+      filesModified: [],
+      fingerprint: 'without-path',
+      source: { sessionId: SessionId('session-1') },
+      createdAt: 1,
+      updatedAt: 1,
+    }
+    pool.media.set('tomato_memory_episodes', {
+      tables: new Map<string, Map<string, unknown>>([['records', new Map<string, unknown>([[withoutPath.id, withoutPath]])]]),
+      global: null,
+    })
+    const { ctx, memory } = await harness({ pool })
+    const canonical = await realpath(await tempDirectory())
+    const other = await realpath(await tempDirectory())
+    const late = await memory.remember(request({ scope: { kind: 'workspace', path: canonical }, key: 'late' }))
+    const fixed = await memory.remember(request({
+      scope: { kind: 'workspace', workspaceId: ProjectId('ws-fixed'), path: canonical }, key: 'fixed',
+    }))
+    const profile = await memory.remember(request({ scope: PROFILE, key: 'profile' }))
+    const unmapped = await memory.remember(request({ scope: { kind: 'workspace', path: other }, key: 'unmapped' }))
+    const lateEpisode = await memory.rememberEpisode({
+      owner: OWNER,
+      scope: { kind: 'project', path: canonical },
+      kind: 'observation', type: 'task', title: 'Late episode', narrative: '', fingerprint: 'late-episode',
+      source: { sessionId: SessionId('session-1') },
+    })
+    const fixedEpisode = await memory.rememberEpisode({
+      owner: OWNER,
+      scope: { kind: 'project', workspaceId: ProjectId('ws-fixed'), path: canonical },
+      kind: 'observation', type: 'task', title: 'Fixed episode', narrative: '', fingerprint: 'fixed-episode',
+      source: { sessionId: SessionId('session-1') },
+    })
+    const unmappedEpisode = await memory.rememberEpisode({
+      owner: OWNER,
+      scope: { kind: 'project', path: other },
+      kind: 'observation', type: 'task', title: 'Unmapped episode', narrative: '', fingerprint: 'unmapped-episode',
+      source: { sessionId: SessionId('session-1') },
+    })
+    ctx.provide('workspaceRegistry', {
+      resolveByPath: async (path: string) => path === canonical ? { id: 'ws-late', path } : undefined,
+    })
+    const lateView: MemoryView = { owner: OWNER, workspace: { id: ProjectId('ws-late'), path: canonical } }
+    await vi.waitFor(() => {
+      expect(memory.list(lateView).map(entry => entry.id).sort()).toEqual([late.id, profile.id].sort())
+    })
+    expect(memory.list(lateView).map(entry => entry.id)).not.toContain(fixed.id)
+    expect(memory.listEpisodes(lateView).map(entry => entry.id)).toEqual([lateEpisode.id])
+    const fixedView: MemoryView = { owner: OWNER, workspace: { id: ProjectId('ws-fixed'), path: canonical } }
+    expect(memory.list(fixedView).map(entry => entry.id).sort()).toEqual([fixed.id, profile.id].sort())
+    expect(memory.listEpisodes(fixedView).map(entry => entry.id)).toEqual([fixedEpisode.id])
+    const otherView: MemoryView = { owner: OWNER, workspace: { id: provisionalProjectId(other), path: other } }
+    expect(memory.list(otherView).map(entry => entry.id).sort()).toEqual([unmapped.id, profile.id].sort())
+    expect(memory.listEpisodes(otherView).map(entry => entry.id)).toEqual([unmappedEpisode.id])
+  })
+
+  it('warns when reconciliation cannot persist its rewrite', async () => {
+    const pool = new MemoryMediaPool()
+    const { ctx, memory } = await harness({ pool })
+    const canonical = await realpath(await tempDirectory())
+    await memory.remember(request({ scope: { kind: 'workspace', path: canonical }, key: 'late' }))
+    const warn = vi.spyOn(ctx.logger, 'warn')
+    pool.failNextWrites = 1
+    ctx.provide('workspaceRegistry', { resolveByPath: async (path: string) => ({ id: 'ws-late', path }) })
+    await vi.waitFor(() => {
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('reconciling project identities failed'))
+    })
+  })
+
+  it('does not rewrite scopes when every stored identity already matches', async () => {
+    const { ctx, memory } = await harness()
+    const fixed = await memory.remember(request({ scope: { kind: 'workspace', workspaceId: ProjectId('ws-fixed') }, key: 'fixed' }))
+    ctx.provide('workspaceRegistry', {
+      resolveByPath: async (path: string) => ({ id: 'ws-fixed', path }),
+    })
+    await new Promise(resolve => setTimeout(resolve, 20))
+    expect(memory.list({ owner: OWNER, workspace: { id: ProjectId('ws-fixed'), path: '/work/a' } }).map(entry => entry.id))
+      .toEqual([fixed.id])
+  })
+})
+
+describe('versioned facts', () => {
+  it('closes the previous version and keeps only the current one reachable', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(1_000)
+    const { memory } = await harness()
+    const first = await memory.remember(request({ key: 'tone', value: 'First tone' }))
+    vi.setSystemTime(2_000)
+    const second = await memory.remember(request({ key: 'tone', value: 'Second tone' }))
+    expect((await memory.recall({ view: VIEW_A, text: 'tone' })).map(record => record.id)).toEqual([second.id])
+    expect(memory.list(VIEW_A).map(record => record.id)).toEqual([second.id])
+    expect(await memory.confirm(VIEW_A, first.id)).toBeUndefined()
+    expect(await memory.setPinned(VIEW_A, first.id, true)).toBeUndefined()
+    expect(memory.stats(VIEW_A)).toMatchObject({ total: 1, versions: 2 })
+  })
+
+  it('lists versions by creation time and returns nothing for an unknown id', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(1_000)
+    const { memory } = await harness()
+    await memory.remember(request({ key: 'tone', value: 'First tone' }))
+    const second = await memory.remember(request({ key: 'tone', value: 'Second tone' }))
+    expect(memory.versions(VIEW_A, second.id)).toHaveLength(2)
+    expect(memory.versions(VIEW_A, MemoryId('memory-missing'))).toEqual([])
+  })
+
+  it('closes duplicate current versions left by an interrupted replacement', async () => {
+    const pool = new MemoryMediaPool()
+    const base: MemoryRecord = {
+      id: MemoryId('memory-a'),
+      owner: OWNER,
+      scope: { kind: 'workspace', path: '/work/a' },
+      kind: 'fact',
+      entity: 'user',
+      key: 'tone',
+      value: 'older',
+      status: 'active',
+      pinned: false,
+      validFrom: 2,
+      createdAt: 2,
+      updatedAt: 2,
+      source: { sessionId: SessionId('session-1') },
+    }
+    const first: MemoryRecord = { ...base, id: MemoryId('memory-b') }
+    const newest: MemoryRecord = { ...base, id: MemoryId('memory-c'), value: 'newer', createdAt: 3, updatedAt: 3 }
+    pool.media.set('tomato_memory', {
+      tables: new Map<string, Map<string, unknown>>([['records', new Map<string, unknown>([
+        [base.id, base], [first.id, first], [newest.id, newest],
+      ])]]),
+      global: null,
+    })
+    const { memory } = await harness({ pool })
+    expect(memory.list(VIEW_A).map(entry => entry.id)).toEqual([newest.id])
+    const versions = memory.versions(VIEW_A, newest.id)
+    expect(versions.map(version => version.id)).toEqual([newest.id, 'memory-a', 'memory-b'])
+    expect(versions[0]?.validTo).toBeUndefined()
+    expect(versions[1]).toMatchObject({ validTo: 2, supersededBy: newest.id })
+    expect(versions[2]).toMatchObject({ validTo: 2, supersededBy: newest.id })
+    expect(memory.stats(VIEW_A)).toMatchObject({ total: 1, versions: 3 })
+  })
+
+  it('keeps only the newest superseded versions per identity', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    const { memory } = await harness({ config: { maxVersionsPerRecord: 2, versionRetentionDays: 0 } })
+    for (const [index, value] of ['one', 'two', 'three', 'four'].entries()) {
+      vi.setSystemTime(1_000 + index * 1_000)
+      await memory.remember(request({ key: 'tone', value }))
+    }
+    const current = memory.list(VIEW_A)[0]
+    const versions = memory.versions(VIEW_A, current!.id)
+    expect(versions.map(version => version.value)).toEqual(['four', 'three', 'two'])
+    expect(memory.stats(VIEW_A)).toMatchObject({ total: 1, versions: 3 })
+  })
+
+  it('keeps a superseded version when the cold archive cannot be written', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(1_000_000)
+    const archive = join(await tempDirectory(), 'cold')
+    await writeFile(archive, 'not a directory')
+    const { memory } = await harness({ config: { versionRetentionDays: 1, coldArchivePath: archive } })
+    await memory.remember(request({ key: 'tone', value: 'old' }))
+    vi.setSystemTime(1_000_000 + 2 * 86_400_000)
+    const current = await memory.remember(request({ key: 'tone', value: 'new' }))
+    expect(memory.versions(VIEW_A, current.id).map(version => version.value)).toEqual(['new', 'old'])
+  })
+
+  it('archives a pruned superseded version before deleting it', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(1_000_000)
+    const archive = await tempDirectory()
+    const cold = join(archive, 'cold')
+    await mkdir(cold, { recursive: true })
+    await writeFile(join(cold, '1969-01.jsonl'), 'expired\n')
+    await writeFile(join(cold, 'README.txt'), 'not a month\n')
+    const { memory } = await harness({ config: {
+      versionRetentionDays: 1, maxVersionsPerRecord: 10, coldArchivePath: cold,
+    } })
+    const old = await memory.remember(request({ key: 'tone', value: 'old' }))
+    vi.setSystemTime(1_000_000 + 2 * 86_400_000)
+    const current = await memory.remember(request({ key: 'tone', value: 'new' }))
+    expect(memory.versions(VIEW_A, current.id).map(version => version.value)).toEqual(['new'])
+    const lines = (await readFile(join(archive, 'cold', `${new Date(old.createdAt).toISOString().slice(0, 7)}.jsonl`), 'utf8'))
+      .trim().split('\n').map(line => JSON.parse(line) as { kind: string; record: MemoryRecord })
+    expect(lines).toHaveLength(1)
+    expect(lines[0]).toMatchObject({ kind: 'record', record: { id: old.id, value: 'old' } })
+    const months = await readdir(cold)
+    expect(months).not.toContain('1969-01.jsonl')
+    expect(months).toContain(`${new Date(old.createdAt).toISOString().slice(0, 7)}.jsonl`)
+  })
+
+  it('drops superseded versions past the age window', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(1_000_000)
+    const { memory } = await harness({ config: { versionRetentionDays: 1, maxVersionsPerRecord: 10 } })
+    await memory.remember(request({ key: 'tone', value: 'old' }))
+    vi.setSystemTime(1_000_000 + 2 * 86_400_000)
+    const current = await memory.remember(request({ key: 'tone', value: 'new' }))
+    expect(memory.versions(VIEW_A, current.id).map(version => version.value)).toEqual(['new'])
+  })
+
+  it('forgets every version of one identity from any version id', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(1_000)
+    const { memory } = await harness()
+    const first = await memory.remember(request({ key: 'tone', value: 'First tone' }))
+    vi.setSystemTime(2_000)
+    await memory.remember(request({ key: 'tone', value: 'Second tone' }))
+    expect(await memory.forget(VIEW_A, first.id)).toBe(true)
+    expect(memory.list(VIEW_A)).toEqual([])
+    expect(memory.stats(VIEW_A)).toMatchObject({ total: 0, versions: 0 })
+  })
+
+  it('does not count superseded versions against workspace capacity', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(1_000)
+    const { memory } = await harness({ config: { maxRecordsPerWorkspace: 1 } })
+    const first = await memory.remember(request({ key: 'tone', value: 'First tone' }))
+    vi.setSystemTime(2_000)
+    await memory.remember(request({ key: 'tone', value: 'Second tone' }))
+    expect(memory.stats(VIEW_A)).toMatchObject({ total: 1, versions: 2 })
+    await expect(memory.remember(request({ key: 'other', value: 'Another' }))).rejects.toMatchObject({ code: 'workspace-full' })
+    expect(first.validFrom).toBe(1_000)
+  })
+})
+
+describe('episode retention', () => {
+  it('keeps a hot episode when the cold archive cannot be written', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(1_000_000)
+    const archive = join(await tempDirectory(), 'cold')
+    await writeFile(archive, 'not a directory')
+    const { memory } = await harness({ config: { episodeRetentionDays: 1, coldArchivePath: archive } })
+    const old = await memory.rememberEpisode({
+      owner: OWNER, scope: { kind: 'project', path: '/work/a' }, kind: 'observation',
+      type: 'task', title: 'Old observation', narrative: '', fingerprint: 'old-observation',
+      source: { sessionId: SessionId('session-1') },
+    })
+    vi.setSystemTime(1_000_000 + 2 * 86_400_000)
+    await memory.rememberEpisode({
+      owner: OWNER, scope: { kind: 'project', path: '/work/a' }, kind: 'observation',
+      type: 'task', title: 'New observation', narrative: '', fingerprint: 'new-observation',
+      source: { sessionId: SessionId('session-1') },
+    })
+    expect(memory.listEpisodes(VIEW_A).map(entry => entry.id)).toContain(old.id)
+  })
+
+  it('keeps summaries past the observation window and prunes them later', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(1_000_000)
+    const { memory } = await harness({ config: { episodeRetentionDays: 1, summaryRetentionDays: 10 } })
+    const observation = await memory.rememberEpisode({
+      owner: OWNER, scope: { kind: 'project', path: '/work/a' }, kind: 'observation',
+      type: 'task', title: 'Old observation', narrative: '', fingerprint: 'old-observation',
+      source: { sessionId: SessionId('session-1') },
+    })
+    const summary = await memory.rememberEpisode({
+      owner: OWNER, scope: { kind: 'project', path: '/work/a' }, kind: 'summary',
+      type: 'summary', title: 'Kept summary', narrative: '', fingerprint: 'kept-summary',
+      source: { sessionId: SessionId('session-1') },
+    })
+    vi.setSystemTime(1_000_000 + 2 * 86_400_000)
+    await memory.rememberEpisode({
+      owner: OWNER, scope: { kind: 'project', path: '/work/a' }, kind: 'observation',
+      type: 'task', title: 'New observation', narrative: '', fingerprint: 'new-observation',
+      source: { sessionId: SessionId('session-1') },
+    })
+    const kept = memory.listEpisodes(VIEW_A).map(entry => entry.id)
+    expect(kept).not.toContain(observation.id)
+    expect(kept).toContain(summary.id)
+    vi.setSystemTime(1_000_000 + 11 * 86_400_000)
+    await memory.rememberEpisode({
+      owner: OWNER, scope: { kind: 'project', path: '/work/a' }, kind: 'observation',
+      type: 'task', title: 'Later observation', narrative: '', fingerprint: 'later-observation',
+      source: { sessionId: SessionId('session-1') },
+    })
+    expect(memory.listEpisodes(VIEW_A).map(entry => entry.id)).not.toContain(summary.id)
+  })
+})
+
+describe('sidecar index', () => {
+  it('serves recall and episode search from the index and updates it on writes', async () => {
+    const directory = await tempDirectory()
+    const indexPath = join(directory, 'index.sqlite')
+    const pool = new MemoryMediaPool()
+    const { memory } = await harness({ pool, config: { indexPath } })
+    const record = await memory.remember(request({ key: 'tone', value: 'Reply briefly' }))
+    expect((await memory.recall({ view: VIEW_A, text: 'briefly' })).map(entry => entry.id)).toEqual([record.id])
+    const episode = await memory.rememberEpisode({
+      owner: OWNER,
+      scope: { kind: 'project', path: '/work/a' },
+      kind: 'observation',
+      type: 'task',
+      title: 'Sidebar layout',
+      narrative: 'The sidebar layout changed',
+      fingerprint: 'layout',
+      source: { sessionId: SessionId('session-1') },
+    })
+    expect((await memory.searchEpisodes({ view: VIEW_A, text: 'layout' })).map(entry => entry.id)).toEqual([episode.id])
+    await memory.forget(VIEW_A, record.id)
+    expect(await memory.recall({ view: VIEW_A, text: 'briefly' })).toEqual([])
+    await memory.forgetEpisode(VIEW_A, episode.id)
+    expect(await memory.searchEpisodes({ view: VIEW_A, text: 'layout' })).toEqual([])
+  })
+
+
+  it('precomputes vectors through the outbox and uses them for semantic candidates', async () => {
+    const directory = await tempDirectory()
+    const indexPath = join(directory, 'index.sqlite')
+    const harnessed = await harness({ config: { indexPath } })
+    await harnessed.ctx.plugin(ScriptEmbeddings)
+    const record = await harnessed.memory.remember(request({ key: 'tone', value: 'Reply briefly' }))
+    await vi.waitFor(() => {
+      expect(harnessed.memory.stats(VIEW_A).vectors).toBe(1)
+    }, { timeout: 5_000 })
+    expect((await harnessed.memory.recall({ view: VIEW_A, text: '语气' })).map(entry => entry.id)).toEqual([record.id])
+  })
+
+  it('keeps recall on the domain scan when the sidecar cannot open', async () => {
+    const directory = await tempDirectory()
+    // A directory at the sidecar path makes SQLite fail to open the file.
+    const indexPath = join(directory, 'index.sqlite')
+    await mkdir(indexPath)
+    const harnessed = await harness({ config: { indexPath } })
+    const record = await harnessed.memory.remember(request({ key: 'tone', value: 'Reply briefly' }))
+    expect((await harnessed.memory.recall({ view: VIEW_A, text: 'briefly' })).map(entry => entry.id)).toEqual([record.id])
+    expect(harnessed.memory.stats(VIEW_A).vectors).toBe(0)
+  })
+
+  it('fails loud when a configured sqlite-vec extension cannot load', async () => {
+    const directory = await tempDirectory()
+    await expect(harness({
+      config: { indexPath: join(directory, 'index.sqlite'), vecExtensionPath: join(directory, 'missing-vec') },
+    })).rejects.toThrow()
+  })
+
+  it('validates embedding worker limits', async () => {
+    const directory = await tempDirectory()
+    const indexPath = join(directory, 'index.sqlite')
+    await expect(harness({ config: { indexPath, indexEmbedBatch: 0 } })).rejects.toThrow(/indexEmbedBatch/u)
+    await expect(harness({ config: { indexPath, indexEmbedRetryMs: 0 } })).rejects.toThrow(/indexEmbedRetryMs/u)
+  })
+
+  it('leaves the queue untouched without an enabled provider or vector persistence', async () => {
+    const firstDirectory = await tempDirectory()
+    const disabled = await harness({ config: { indexPath: join(firstDirectory, 'index.sqlite') } })
+    await disabled.ctx.plugin(DisabledEmbeddings)
+    await disabled.memory.remember(request({ key: 'tone', value: 'Reply briefly' }))
+    await new Promise(resolve => setTimeout(resolve, 50))
+    expect(disabled.memory.stats(VIEW_A).vectors).toBe(0)
+    const secondDirectory = await tempDirectory()
+    const unpersisted = await harness({ config: { indexPath: join(secondDirectory, 'index.sqlite'), maxEmbeddingVectors: 0 } })
+    await unpersisted.ctx.plugin(ScriptEmbeddings)
+    await unpersisted.memory.remember(request({ key: 'tone', value: 'Reply briefly' }))
+    await new Promise(resolve => setTimeout(resolve, 50))
+    expect(unpersisted.memory.stats(VIEW_A).vectors).toBe(0)
+  })
+
+  it('drains the outbox in batches and retries after a provider failure', async () => {
+    const directory = await tempDirectory()
+    const indexPath = join(directory, 'index.sqlite')
+    const harnessed = await harness({ config: { indexPath, indexEmbedBatch: 1, indexEmbedRetryMs: 1_000 } })
+    const embeddings = await harnessed.ctx.plugin(ScriptEmbeddings)
+    const provider = harnessed.ctx.embeddings as ScriptEmbeddings
+    provider.failure = new Error('provider down')
+    await harnessed.memory.remember(request({ key: 'first', value: 'First tone' }))
+    await new Promise(resolve => setTimeout(resolve, 100))
+    expect(harnessed.memory.stats(VIEW_A).vectors).toBe(0)
+    provider.failure = undefined
+    await harnessed.memory.remember(request({ key: 'second', value: 'Second tone' }))
+    await vi.waitFor(() => {
+      expect(harnessed.memory.stats(VIEW_A).vectors).toBe(2)
+    }, { timeout: 5_000 })
+    expect(provider.batches.length).toBeGreaterThanOrEqual(2)
+    expect(embeddings).toBeDefined()
+  })
+
+  it('precomputes episode vectors and uses them for semantic episode search', async () => {
+    const directory = await tempDirectory()
+    const indexPath = join(directory, 'index.sqlite')
+    const harnessed = await harness({ config: { indexPath } })
+    await harnessed.ctx.plugin(ScriptEmbeddings)
+    const episode = await harnessed.memory.rememberEpisode({
+      owner: OWNER,
+      scope: { kind: 'project', path: '/work/a' },
+      kind: 'observation',
+      type: 'task',
+      title: 'Sidebar layout',
+      narrative: '',
+      fingerprint: 'layout',
+      source: { sessionId: SessionId('session-1') },
+    })
+    await vi.waitFor(() => {
+      expect(harnessed.memory.stats(VIEW_A).vectors).toBe(1)
+    }, { timeout: 5_000 })
+    expect((await harnessed.memory.searchEpisodes({ view: VIEW_A, text: '语气' })).map(entry => entry.id))
+      .toEqual([episode.id])
+  })
+
+  it('stores a vector computed during retrieval when the worker has not run', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout'] })
+    const directory = await tempDirectory()
+    const indexPath = join(directory, 'index.sqlite')
+    const harnessed = await harness({ config: { indexPath } })
+    const record = await harnessed.memory.remember(request({ key: 'tone', value: 'Reply briefly' }))
+    await harnessed.ctx.plugin(ScriptEmbeddings)
+    expect((await harnessed.memory.recall({ view: VIEW_A, text: 'briefly' })).map(entry => entry.id))
+      .toEqual([record.id])
+    expect(harnessed.memory.stats(VIEW_A).vectors).toBe(1)
+  })
+
+  it('opens the home-relative index when the host provides a home path', async () => {
+    const home = await tempDirectory()
+    const harnessed = await harness({ tomatoHomePath: (...segments) => join(home, ...segments) })
+    const record = await harnessed.memory.remember(request({ key: 'tone', value: 'Reply briefly' }))
+    expect((await stat(join(home, 'memory', 'index-v1.sqlite'))).isFile()).toBe(true)
+    expect((await harnessed.memory.recall({ view: VIEW_A, text: 'briefly' })).map(entry => entry.id)).toEqual([record.id])
+  })
+
+  it('reopens a valid sidecar without rebuilding it', async () => {
+    const directory = await tempDirectory()
+    const indexPath = join(directory, 'index.sqlite')
+    const pool = new MemoryMediaPool()
+    const first = await harness({ pool, config: { indexPath } })
+    const kept = await first.memory.remember(request({ key: 'kept', value: 'Keep this' }))
+    await first.fiber.dispose()
+    const second = await harness({ pool, config: { indexPath } })
+    expect((await second.memory.recall({ view: VIEW_A, text: 'keep' })).map(entry => entry.id)).toEqual([kept.id])
+  })
+
+  it('indexes a confirmed candidate and rebuilds from the domains after the file disappears', async () => {
+    const directory = await tempDirectory()
+    const indexPath = join(directory, 'index.sqlite')
+    const pool = new MemoryMediaPool()
+    const first = await harness({ pool, config: { indexPath } })
+    const candidate = await first.memory.remember(request({ key: 'tone', value: '邮件语气', status: 'candidate' }))
+    expect(await first.memory.recall({ view: VIEW_A, text: '邮件' })).toEqual([])
+    await first.memory.confirm(VIEW_A, candidate.id)
+    expect((await first.memory.recall({ view: VIEW_A, text: '邮件' })).map(entry => entry.id)).toEqual([candidate.id])
+    const kept = await first.memory.remember(request({ key: 'kept', value: 'Keep this' }))
+    await first.fiber.dispose()
+    await rm(indexPath, { force: true })
+    await rm(`${indexPath}-wal`, { force: true })
+    await rm(`${indexPath}-shm`, { force: true })
+    const second = await harness({ pool, config: { indexPath } })
+    expect((await second.memory.recall({ view: VIEW_A, text: 'keep' })).map(entry => entry.id)).toEqual([kept.id])
+    expect((await second.memory.recall({ view: VIEW_A, text: '邮件' })).map(entry => entry.id)).toEqual([candidate.id])
+  })
+
+  it('rejects an empty index path', async () => {
+    await expect(harness({ config: { indexPath: '   ' } })).rejects.toThrow('indexPath must not be empty')
+  })
+
+  it('serves alternatives, kind filters, and episode bounds from the index', async () => {
+    const directory = await tempDirectory()
+    const indexPath = join(directory, 'index.sqlite')
+    const { memory } = await harness({ config: { indexPath } })
+    const tone = await memory.remember(request({ key: 'tone', value: 'Email tone' }))
+    const decision = await memory.remember(request({ key: 'tone-decision', kind: 'decision', value: 'Email tone' }))
+    expect((await memory.recall({ view: VIEW_A, text: '语气', alternatives: ['email'], kind: 'decision' })).map(entry => entry.id))
+      .toEqual([decision.id])
+    expect((await memory.recall({ view: VIEW_A, text: 'tone', alternatives: ['语气'] })).map(entry => entry.id))
+      .toEqual(expect.arrayContaining([tone.id, decision.id]))
+    const late = await memory.rememberEpisode({
+      owner: OWNER, scope: { kind: 'project', path: '/work/a' }, kind: 'summary',
+      type: 'summary', title: 'Late layout', narrative: '', fingerprint: 'late',
+      source: { sessionId: SessionId('session-1') },
+    })
+    expect((await memory.searchEpisodes({
+      view: VIEW_A, text: 'layout', alternatives: ['sidebar'], kinds: ['summary'], since: 0, until: Date.now() + 1000, limit: 10,
+    })).map(entry => entry.id)).toEqual([late.id])
+  })
+
+  it('rebuilds the sidecar after re-mapping identities', async () => {
+    const directory = await tempDirectory()
+    const indexPath = join(directory, 'index.sqlite')
+    const { ctx, memory } = await harness({ config: { indexPath } })
+    const canonical = await realpath(await tempDirectory())
+    const late = await memory.remember(request({
+      scope: { kind: 'workspace', path: canonical }, key: 'late', value: 'late tone',
+    }))
+    ctx.provide('workspaceRegistry', {
+      resolveByPath: async (path: string) => ({ id: 'ws-late', path }),
+    })
+    const view: MemoryView = { owner: OWNER, workspace: { id: ProjectId('ws-late'), path: canonical } }
+    await vi.waitFor(async () => {
+      expect((await memory.recall({ view, text: 'late' })).map(entry => entry.id)).toEqual([late.id])
+    })
+  })
+
 })
 
 describe('relations and stats', () => {
@@ -602,6 +1478,7 @@ describe('relations and stats', () => {
       active: 3,
       candidates: 1,
       pinned: 1,
+      versions: 4,
       profile: { stored: 1, limit: 2 },
       workspace: { stored: 3, limit: 5 },
       oldestActiveUpdate: first.updatedAt,
@@ -612,6 +1489,7 @@ describe('relations and stats', () => {
       active: 1,
       candidates: 0,
       pinned: 0,
+      versions: 1,
       profile: { stored: 1, limit: 2 },
       workspace: null,
       oldestActiveUpdate: profile.updatedAt,
@@ -876,6 +1754,24 @@ describe('project history', () => {
     expect((await withoutObservations.memory.history(VIEW_A, '')).map(record => record.title)).toEqual(['Only summary'])
   })
 
+  it('excludes the asking Session and drops matches below the score floor', async () => {
+    const { memory } = await harness({ config: { historySummaries: 1, historyEpisodes: 5 } })
+    await memory.rememberEpisode(episodeRequest({
+      title: 'Own work', fingerprint: 'own', source: { sessionId: SessionId('session-1') },
+    }))
+    await memory.rememberEpisode(episodeRequest({
+      title: 'Chose FTS5 for search', fingerprint: 'strong', source: { sessionId: SessionId('session-2') },
+    }))
+    await memory.rememberEpisode(episodeRequest({
+      title: 'Weak match', fingerprint: 'weak', facts: ['FTS5 is one word of a much longer note about launching a product'],
+      source: { sessionId: SessionId('session-3') },
+    }))
+    const history = await memory.history(VIEW_A, 'FTS5 ranks whole tokens for the launch', {
+      excludeSession: SessionId('session-1'), minScore: 0.5,
+    })
+    expect(history.map(record => record.title)).toEqual(['Chose FTS5 for search'])
+  })
+
   it('refuses to activate over an episode whose key differs from its id', async () => {
     const pool = new MemoryMediaPool()
     const seed = await harness({ pool })
@@ -953,6 +1849,43 @@ describe('project history', () => {
     expect([first.id, second.id]).toContain(record?.source.episodeId)
     expect(memory.listEpisodes(VIEW_A).map(record => record.promotedTo)).toEqual([outcome?.recordId, outcome?.recordId])
     expect(await memory.promote(VIEW_A)).toEqual([])
+  })
+
+  it('never promotes a failure observation or a bare exit code', async () => {
+    const { memory } = await harness()
+    await memory.rememberEpisode(episodeRequest({
+      type: 'failure', fingerprint: 'failure-1', facts: ['edit was rejected'],
+      source: { sessionId: SessionId('s1') },
+    }))
+    await memory.rememberEpisode(episodeRequest({
+      type: 'failure', fingerprint: 'failure-2', facts: ['failed: cannot edit "src/a.ts"'],
+      source: { sessionId: SessionId('s2') },
+    }))
+    expect(memory.listEpisodes(VIEW_A).map(record => record.type)).toEqual(['failure', 'failure'])
+    expect(await memory.promote(VIEW_A)).toEqual([])
+    await memory.rememberEpisode(episodeRequest({
+      fingerprint: 'exit-1', facts: ['exit 0'], source: { sessionId: SessionId('s3') },
+    }))
+    await memory.rememberEpisode(episodeRequest({
+      fingerprint: 'exit-2', facts: ['exit 0'], source: { sessionId: SessionId('s4') },
+    }))
+    expect(await memory.promote(VIEW_A)).toEqual([])
+    expect(memory.list(VIEW_A)).toEqual([])
+  })
+
+  it('excludes a Session from indexed episode search', async () => {
+    const directory = await tempDirectory()
+    const { memory } = await harness({ config: { indexPath: join(directory, 'index.sqlite') } })
+    await memory.rememberEpisode(episodeRequest({
+      title: 'Own FTS5', fingerprint: 'own', source: { sessionId: SessionId('s1') },
+    }))
+    await memory.rememberEpisode(episodeRequest({
+      title: 'Other FTS5', fingerprint: 'other', source: { sessionId: SessionId('s2') },
+    }))
+    const found = await memory.searchEpisodes({
+      view: VIEW_A, text: 'FTS5', limit: 1, excludeSession: SessionId('s1'),
+    })
+    expect(found.map(record => record.title)).toEqual(['Other FTS5'])
   })
 
   it('derives the key from the episode type or a placeholder when no concept survives', async () => {

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Fournisseur local d’équipes de robots",
+    "description": "Fournisseur adossé au stockage qui exécute un Agent par membre avec messages A2A, briefs de mémoire et protection de boucle."
+  }
+}

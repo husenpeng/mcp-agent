@@ -28,6 +28,7 @@ import type {} from '@tomato/permission-presets/types'
 import type {} from '@tomato/settings/types'
 import type {} from '@tomato/user-approval'
 import type {} from '@tomato/user-questions'
+import type {} from '@tomato/web/types'
 export type {} from '@tomato/api-session-controller/types'
 
 export { API_REMOTE_FORWARDED_EVENTS } from './remote-events.ts'

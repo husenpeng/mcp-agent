@@ -15,9 +15,6 @@
       "path": "../../../vendor/cordis"
     },
     {
-      "path": "../gateway/tsconfig.host.json"
-    },
-    {
       "path": "../../core/session"
     },
     {
@@ -63,6 +60,33 @@
       "path": "../../interaction/user-questions"
     },
     {
+      "path": "../../typert/protocol"
+    },
+    {
+      "path": "../../boot/plugin-manager"
+    },
+    {
+      "path": "../../mcp/mcp-manager"
+    },
+    {
+      "path": "../../boot/plugin-market"
+    },
+    {
+      "path": "../../host/plugin-inventory"
+    },
+    {
+      "path": "../../credentials/account-service"
+    },
+    {
+      "path": "../../web/web"
+    },
+    {
+      "path": "../account-controller"
+    },
+    {
+      "path": "../gateway/tsconfig.host.json"
+    },
+    {
       "path": "../session-controller/tsconfig.host.json"
     },
     {
@@ -72,25 +96,7 @@
       "path": "../workspace-controller/tsconfig.host.json"
     },
     {
-      "path": "../../typert/protocol"
-    },
-    {
       "path": "../terminal-controller/tsconfig.host.json"
-    },
-    {
-      "path": "../../boot/plugin-manager"
-    },
-    {
-      "path": "../../boot/plugin-market"
-    },
-    {
-      "path": "../../host/plugin-inventory"
-    },
-    {
-      "path": "../account-controller"
-    },
-    {
-      "path": "../../credentials/account-service"
     }
   ]
 }

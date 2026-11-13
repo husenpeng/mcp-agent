@@ -26,7 +26,7 @@ Subpath exports keep their path: `@cordisjs/plugin-loader/repository` becomes `@
 - **Dependency ranges.** Renaming changes dependency keys without changing ranges. Workspace manifests use the `workspace:` protocol; [repository rules](../AGENTS.md#conventions) distinguish exact DSH references from vendor/native tilde ranges.
 - **The Loader's `cordis:` builtin prefix.** `cordis:include` and `cordis:group` are a protocol prefix, not a package name.
 - **The `cordis.yml` configuration family**, including `*.cordis.yml`, `*.cordis.snapshot.yml`, and `cordis.patch.yml`.
-- **Harness packages whose own names contain the word**, such as `@tomato/dsh-tool-cordis`.
+- **Harness packages whose own names contain the word**, such as `@tomato/tool-cordis`.
 - **Upstream runtime identifiers**, such as Schemastery's `Symbol.for('schemastery')` and its `vendor:` metadata field.
 - **Product identifiers.** Files in `GENERIC_SKIPS` keep preset IDs, event names, directory group names, and locale or input-source keys for the listed upstream name. Source imports, exports, module declarations and JSDoc import types still change in both directions, including in JavaScript/TypeScript fences. YAML plugin `name:` values also change. Other string uses of the listed name stay intact; other library names remain checked.
 - **Rewrite fixtures.** `scripts/rescope-vendor.spec.ts` and `scripts/gen-third-party-notices.spec.ts` keep both package spellings as test data.

@@ -18,6 +18,9 @@ import { Crews } from '@tomato/experimental-robot-crew'
 import LocalCrews from '../src/index.ts'
 import { A2A_TOOL_NAME } from '../src/execute.ts'
 
+/* oxlint-disable typescript/no-unsafe-assignment -- Vitest asymmetric matchers are typed as any. */
+
+
 /** Output per node id, keyed by the node slug. */
 type Scripts = Readonly<Record<string, string | ((session: Session) => Promise<string>)>>
 
@@ -156,7 +159,7 @@ async function bench(scripts: Scripts, memory?: MemoryStub) {
     },
   })
   await ctx.plugin(LocalCrews)
-  return { ctx, crews: ctx.crews as Crews, registered, disposed, sections }
+  return { ctx, crews: ctx.crews, registered, disposed, sections }
 }
 
 async function waitForRun(crews: Crews, id: CrewRunId): Promise<CrewRun> {

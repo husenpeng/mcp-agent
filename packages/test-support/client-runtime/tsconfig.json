@@ -3,7 +3,10 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "lib/types",
-    "types": ["client-build-environment", "node"]
+    "types": [
+      "client-build-environment",
+      "node"
+    ]
   },
   "include": [
     "src"
@@ -19,18 +22,6 @@
       "path": "../../../vendor/include"
     },
     {
-      "path": "../../api/gateway/tsconfig.client.json"
-    },
-    {
-      "path": "../../api/session-controller/tsconfig.client.json"
-    },
-    {
-      "path": "../../api/workspace-controller/tsconfig.client.json"
-    },
-    {
-      "path": "../../api/remote-access/tsconfig.client.json"
-    },
-    {
       "path": "../../attachment/attachment"
     },
     {
@@ -40,16 +31,7 @@
       "path": "../../typert/protocol"
     },
     {
-      "path": "../../client/connection/tsconfig.client.json"
-    },
-    {
       "path": "../../client/store"
-    },
-    {
-      "path": "../../client/ui-chat/tsconfig.client.json"
-    },
-    {
-      "path": "../../client/ui-conversation/tsconfig.client.json"
     },
     {
       "path": "../../client/ui-layout"
@@ -67,13 +49,7 @@
       "path": "../../client/ui-session"
     },
     {
-      "path": "../../client/ui-settings/tsconfig.client.json"
-    },
-    {
       "path": "../../subagent/subagent"
-    },
-    {
-      "path": "../../api/remotes/tsconfig.client.json"
     },
     {
       "path": "../../client/modules"
@@ -86,6 +62,37 @@
     },
     {
       "path": "../../client/hmr"
+    },
+    {
+      "path": "../../client/ui-context-menu"
+    },
+    {
+      "path": "../../api/gateway/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/session-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/workspace-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/remote-access/tsconfig.client.json"
+    },
+    {
+      "path": "../../client/connection/tsconfig.client.json"
+    },
+    {
+      "path": "../../client/ui-chat/tsconfig.client.json"
+    },
+    {
+      "path": "../../client/ui-conversation/tsconfig.client.json"
+    },
+    {
+      "path": "../../client/ui-settings/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/remotes/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

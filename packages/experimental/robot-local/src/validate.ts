@@ -38,10 +38,13 @@ const positionSchema = z.object({
   visibility: z.enum(['private', 'team', 'organization']),
 }).strict()
 
+const modelSchema = z.object({ provider: nonBlank, model: nonBlank }).strict()
+
 const goalSchema = z.object({
   mission: nonBlank,
   successCriteria: z.array(nonBlank),
   triggers: z.array(triggerSchema),
+  model: modelSchema.optional(),
   strategy: z.union([z.enum(['plan', 'loop']), z.object({ workflow: nonBlank }).strict()]),
   stopConditions: z.array(nonBlank),
   failurePolicy: z.enum(['retry', 'pause', 'fail', 'escalate']),
@@ -52,6 +55,7 @@ const goalSchema = z.object({
 const capabilitySchema = z.object({
   tools: z.object({ allow: z.array(nonBlank), deny: z.array(nonBlank) }).strict(),
   mcpServers: z.array(nonBlank),
+  plugins: z.array(nonBlank),
   skills: z.array(nonBlank),
   workspaceRoots: z.array(nonBlank),
   dataClasses: z.array(z.enum(['public', 'internal', 'confidential'])),
@@ -113,6 +117,7 @@ function invariantIssues(spec: RobotSpec): RobotSpecIssue[] {
     ['capability.tools.allow', spec.capability.tools.allow],
     ['capability.tools.deny', spec.capability.tools.deny],
     ['capability.mcpServers', spec.capability.mcpServers],
+    ['capability.plugins', spec.capability.plugins],
     ['capability.skills', spec.capability.skills],
     ['capability.workspaceRoots', spec.capability.workspaceRoots],
     ['capability.dataClasses', spec.capability.dataClasses],

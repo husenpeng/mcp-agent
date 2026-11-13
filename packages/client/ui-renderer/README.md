@@ -25,7 +25,7 @@ English | [中文](README.zh.md)
 <a id="use-this-package"></a>
 ## Use this package
 
-This package is infrastructure: the web shell and the boot kernel are its only direct consumers. A composition needs it whenever it wants a React-rendered GUI — `@tomato/client-web` loads the roster, waits for every entry to activate, then calls `ctx.uiRenderer.mount(container)`.
+This package is infrastructure: the web shell and the boot kernel are its only direct consumers. A composition needs it whenever it wants a React-rendered GUI — `@tomato/client-web` loads the roster, waits for it to settle and for the boot audit to accept it, then calls `ctx.uiRenderer.mount(container)`.
 
 ### What mounting does
 
@@ -52,6 +52,8 @@ The plugin activates after `slots`, `sessions`, and `layout`; it installs `creat
 ### Slot bindings
 
 `createSlotRenderer` connects the slot registry to React: ordinary entry lists and Factory definitions become reactive sources, and each outlet or occurrence renders through the installed renderer. Business plugins pass bare observable sources through typed `hooks`; the renderer binds them at the render position via the uSES adapter. A Factory Store factory stays lazy until an occurrence first materializes; its exclusive handle rejects persistence, render-time records stay weak, and an idempotent effect strongly retains only mounted occurrences while preserving identity across effect replay. Factory errors use the ordinary supervision channel without abdicating the shared definition: the definition and its fallback local Components report against the definition, caller-selected local Components report against the caller registration, and each boundary resets with its own scope incarnation.
+
+While the page replaces a client entry, `PageSyncProvider` reads the module system's synchronization source, holds the last committed root tree, and republishes that state to the tree; a scope whose adapter the disposed entry installed renders nothing for that window instead of raising `SlotAssemblyError`, which still fires outside a swap. Without a module system the provider renders the root tree unchanged.
 
 ### Identity
 
@@ -91,7 +93,7 @@ None; this package neither assembles nor sends a provider request.
 
 These limits define when the application frame appears and how far per-region readiness goes; they are current package constraints.
 
-- **The first application frame waits for every client entry** — the boot kernel hands over the mount point only after the loader roster settles; per-region readiness remains deferred.
+- **The first application frame waits for the whole client roster** — the boot kernel hands over the mount point only after the loader roster settles and the boot audit accepts it; per-region readiness remains deferred.
 - **Slot rendering has no Suspense integration or per-entry lazy loading** — the complete plugin roster settles before the renderer mounts the root.
 
 <a id="dev-note"></a>

@@ -1,0 +1,81 @@
+{
+  "name": "@tomato/client-ui-robot-room",
+  "description": "Robot Room page: durable group chat, member configuration, monitor, approvals, and loop-guard recovery",
+  "version": "0.2.1-rc.3",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/client/client-ui-robot-room"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@tomato/cordis": "workspace:~"
+  },
+  "devDependencies": {
+    "@tomato/api-robot-controller": "workspace:*",
+    "@tomato/api-robot-room-controller": "workspace:*",
+    "@tomato/branded": "workspace:*",
+    "@tomato/client-locale": "workspace:*",
+    "@tomato/client-store": "workspace:*",
+    "@tomato/client-ui-layout": "workspace:*",
+    "@tomato/client-ui-primitives": "workspace:*",
+    "@tomato/client-ui-renderer": "workspace:*",
+    "@tomato/client-ui-sidebar": "workspace:*",
+    "@tomato/client-ui-slots": "workspace:*",
+    "@tomato/client-ui-workspace": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/experimental-robot-room": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@testing-library/react": "^16.3.3",
+    "jsdom": "29.1.1",
+    "@tanstack/react-virtual": "3.14.10"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts",
+    "lib/**/*.js.map",
+    "lib/types/**/*.d.ts.map",
+    "src"
+  ],
+  "tomato": {
+    "client": {
+      "inject": [
+        "@tomato/api-robot-controller",
+        "@tomato/api-robot-room-controller",
+        "@tomato/client-locale",
+        "@tomato/client-ui-layout",
+        "@tomato/client-ui-primitives",
+        "@tomato/client-ui-workspace"
+      ],
+      "platform": "web"
+    }
+  }
+}

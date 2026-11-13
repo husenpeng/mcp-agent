@@ -1,7 +1,7 @@
 {
   "name": "@tomato/client-ui-deliverables",
   "description": "Changed-files card with per-file comparison tabs, delivery cards, and clickable final-response file references for Web",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -37,7 +37,8 @@
         "@tomato/client-ui-renderer",
         "@tomato/client-ui-sidebar-right",
         "@tomato/client-ui-tool",
-        "@tomato/client-ui-settings"
+        "@tomato/client-ui-settings",
+        "@tomato/client-ui-context-menu"
       ],
       "platform": "web"
     }
@@ -80,13 +81,17 @@
     "@tomato/fs-local": "workspace:*",
     "@tomato/agent": "workspace:*",
     "@tomato/sandbox-policy": "workspace:*",
-    "@tomato/client-ui-settings": "workspace:*"
+    "@tomato/client-ui-settings": "workspace:*",
+    "@tomato/client-ui-context-menu": "workspace:*"
   },
   "files": [
     "locale/*.json",
     "lib/index.js",
     "lib/client.js",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
   ],
   "dependencies": {
     "@tomato/typert-protocol": "workspace:*"

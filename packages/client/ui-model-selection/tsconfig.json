@@ -12,25 +12,13 @@
       "path": "../../core/agent"
     },
     {
-      "path": "../../api/remotes/tsconfig.client.json"
-    },
-    {
-      "path": "../connection/tsconfig.client.json"
-    },
-    {
       "path": "../../../vendor/cordis"
-    },
-    {
-      "path": "../locale/tsconfig.client.json"
     },
     {
       "path": "../store"
     },
     {
       "path": "../ui-commands"
-    },
-    {
-      "path": "../ui-conversation/tsconfig.client.json"
     },
     {
       "path": "../ui-primitives"
@@ -51,13 +39,26 @@
       "path": "../../core/session"
     },
     {
-      "path": "../../api/session-controller/tsconfig.client.json"
+      "path": "../../util/values"
     },
     {
-      "path": "../../util/values"
+      "path": "../../api/remotes/tsconfig.client.json"
+    },
+    {
+      "path": "../connection/tsconfig.client.json"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-conversation/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/session-controller/tsconfig.client.json"
     },
     {
       "path": "../product-analytics/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

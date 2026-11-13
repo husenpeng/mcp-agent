@@ -12,13 +12,7 @@
       "path": "../../../vendor/cordis"
     },
     {
-      "path": "../../api/remotes/tsconfig.client.json"
-    },
-    {
       "path": "../../core/session"
-    },
-    {
-      "path": "../locale/tsconfig.client.json"
     },
     {
       "path": "../store"
@@ -42,10 +36,20 @@
       "path": "../../util/workspace-path"
     },
     {
+      "path": "../ui-context-menu"
+    },
+    {
+      "path": "../../api/remotes/tsconfig.client.json"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
       "path": "../../api/workspace-files/tsconfig.client.json"
     },
     {
       "path": "../shortcuts/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

@@ -6,3 +6,5 @@
         captureFetch: true
     - id: session-inspector
       name: '@tomato/experimental-session-inspector'
+    - id: client-ui-stats
+      name: '@tomato/experimental-client-ui-stats'

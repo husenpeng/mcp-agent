@@ -224,7 +224,10 @@ export function EmbeddingsConfigPage({ scope, probe, status, t, view }: Embeddin
       {result === undefined ? null : (
         <p className={result.ok ? css.ok : css.bad}>
           {result.ok
-            ? `${t('embeddings.testOk')}: ${result.detail} · ${result.latencyMs} ms · ${result.dimensions ?? 0} ${t('embeddings.dimensionsUnit')}`
+            ? `${t('embeddings.testOk')}: ${t('embeddings.testDetail', {
+              detail: result.detail, latency: String(result.latencyMs),
+              dimensions: String(result.dimensions ?? 0), unit: t('embeddings.dimensionsUnit'),
+            })}`
             : `${t('embeddings.testFailed')}: ${result.detail}`}
         </p>
       )}

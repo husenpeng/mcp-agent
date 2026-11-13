@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Local robot crew provider",
+    "description": "Storage-backed crew provider that runs one Agent per member with A2A messages, memory briefs, and loop protection."
+  }
+}

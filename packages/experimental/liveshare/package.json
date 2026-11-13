@@ -1,0 +1,174 @@
+{
+  "name": "@tomato/experimental-liveshare",
+  "description": "Opt-in LiveShare host bundle: share a Session through a separate Relay at the view or bounded-write tier, with forking and attachment uploads as independent switches",
+  "version": "0.2.2-rc.2",
+  "icon": "./icon.svg",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/experimental/liveshare"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./typert": {
+      "types": "./lib/typert.host.d.ts",
+      "default": "./lib/typert.host.js"
+    },
+    "./remote": {
+      "types": "./lib/typert.remote-client.d.ts",
+      "default": "./lib/typert.remote-client.js"
+    },
+    "./types": {
+      "types": "./lib/types/share-api-types.d.ts"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./locale/*.json": "./locale/*.json",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "icon.svg",
+    "locale/*.json",
+    "lib/index.js",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "lib/owner-gateway/cli.js",
+    "lib/retry-backoff-*.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "lib/typert.host.js",
+    "lib/typert.host.d.ts",
+    "lib/typert.remote-client.js",
+    "lib/typert.remote-client.d.ts",
+    "lib/typert.remote-client.d.ts.map",
+    "src",
+    "lib/typert.host.d.ts.map"
+  ],
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@tomato/atomic-write": "workspace:*",
+    "@tomato/branded": "workspace:*",
+    "@tomato/experimental-liveshare-protocol": "workspace:*",
+    "@tomato/http-proxy": "workspace:*",
+    "@tomato/official-bundles": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*",
+    "@tomato/util-values": "workspace:*",
+    "undici": "8.11.2",
+    "ws": "^8.18.3",
+    "zod": "4.6.6"
+  },
+  "peerDependencies": {
+    "@tomato/cordis": "workspace:~",
+    "@tomato/scope": "workspace:*"
+  },
+  "devDependencies": {
+    "@tomato/cordis": "workspace:~",
+    "@tomato/cordis-plugin-loader": "workspace:~",
+    "@tomato/agent": "workspace:*",
+    "@tomato/agent-loop-testkit": "workspace:*",
+    "@tomato/api-gateway": "workspace:*",
+    "@tomato/api-remote-access": "workspace:*",
+    "@tomato/api-remotes": "workspace:*",
+    "@tomato/api-session-controller": "workspace:*",
+    "@tomato/api-settings-controller": "workspace:*",
+    "@tomato/api-workspace-controller": "workspace:*",
+    "@tomato/api-workspace-files": "workspace:*",
+    "@tomato/client-connection": "workspace:*",
+    "@tomato/client-file-upload": "workspace:*",
+    "@tomato/client-locale": "workspace:*",
+    "@tomato/client-modules": "workspace:*",
+    "@tomato/client-resources": "workspace:*",
+    "@tomato/client-shortcuts": "workspace:*",
+    "@tomato/client-store": "workspace:*",
+    "@tomato/client-test-runtime": "workspace:*",
+    "@tomato/client-ui-agent-preset": "workspace:*",
+    "@tomato/client-ui-approval": "workspace:*",
+    "@tomato/client-ui-attachment": "workspace:*",
+    "@tomato/client-ui-brand-official": "workspace:*",
+    "@tomato/client-ui-chat": "workspace:*",
+    "@tomato/client-ui-commands": "workspace:*",
+    "@tomato/client-ui-context-menu": "workspace:*",
+    "@tomato/client-ui-conversation": "workspace:*",
+    "@tomato/client-ui-deliverables": "workspace:*",
+    "@tomato/client-ui-input-trigger": "workspace:*",
+    "@tomato/client-ui-jobs": "workspace:*",
+    "@tomato/client-ui-layout": "workspace:*",
+    "@tomato/client-ui-plan": "workspace:*",
+    "@tomato/client-ui-primitives": "workspace:*",
+    "@tomato/client-ui-reference": "workspace:*",
+    "@tomato/client-ui-renderer": "workspace:*",
+    "@tomato/client-ui-session": "workspace:*",
+    "@tomato/client-ui-settings": "workspace:*",
+    "@tomato/client-ui-sidebar": "workspace:*",
+    "@tomato/client-ui-sidebar-right": "workspace:*",
+    "@tomato/client-ui-slots": "workspace:*",
+    "@tomato/client-ui-subagent": "workspace:*",
+    "@tomato/client-ui-theme": "workspace:*",
+    "@tomato/client-ui-tool": "workspace:*",
+    "@tomato/client-ui-trajectory": "workspace:*",
+    "@tomato/client-ui-user-questions": "workspace:*",
+    "@tomato/client-ui-workflow-run": "workspace:*",
+    "@tomato/client-ui-workspace": "workspace:*",
+    "@tomato/client-web": "workspace:*",
+    "@tomato/cua": "workspace:*",
+    "@tomato/experimental-api-speech-to-text": "workspace:*",
+    "@tomato/experimental-claude-code-mods": "workspace:*",
+    "@tomato/experimental-client-ui-cot-translation": "workspace:*",
+    "@tomato/fs": "workspace:*",
+    "@tomato/fs-local": "workspace:*",
+    "@tomato/fs-observation-policy": "workspace:*",
+    "@tomato/fs-sandbox": "workspace:*",
+    "@tomato/host-webserver": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/sandbox": "workspace:*",
+    "@tomato/sandbox-policy": "workspace:*",
+    "@tomato/scope": "workspace:*",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/settings": "workspace:*",
+    "@tomato/tool-executor-native": "workspace:*",
+    "@tomato/tool-fs": "workspace:*",
+    "@tomato/tools": "workspace:*",
+    "@tomato/typert-registry": "workspace:*",
+    "@tomato/workspace": "workspace:*",
+    "@types/ws": "^8.18.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "tomato": {
+    "bundle": {
+      "patch": "./cordis.patch.yml",
+      "listedByDefault": false
+    },
+    "client": {
+      "inject": [
+        "@tomato/api-remote-access",
+        "@tomato/api-remotes",
+        "@tomato/client-locale",
+        "@tomato/client-ui-conversation",
+        "@tomato/client-ui-primitives",
+        "@tomato/client-ui-renderer",
+        "@tomato/client-ui-session"
+      ],
+      "platform": "web"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,4 +1,4 @@
-// Resume: Bot work that DeepSeek Harness dropped when it closed or restarted. Tomato closes
+// Resume: Bot work that Tomato Harness dropped when it closed or restarted. Tomato closes
 // a turn it never finished as interrupted when the Session next opens, and a clean
 // shutdown also cancels the messages still waiting in a Session's inbox; nothing would
 // ever run either again, and whoever waited for them was not told. DS Bot notes each
@@ -24,7 +24,7 @@ const QUEUED_KEPT_MS = 24 * 60 * 60 * 1000
 const QUEUED_MAX = 50
 
 export const resumeText = record => [
-  'DeepSeek Harness restarted while you were working on this, so your last turn stopped before it finished.',
+  'Tomato Harness restarted while you were working on this, so your last turn stopped before it finished.',
   record.approval ? `You were waiting for the user's approval to run ${record.approval.tool || 'a tool'}${record.approval.reason ? ` (${record.approval.reason})` : ''}; that request is gone, so ask again if you still need it.` : '',
   'Check what is already done (files, commands, messages) before you repeat anything, then finish the task and give your reply.',
 ].filter(Boolean).join(' ')

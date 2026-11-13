@@ -12,7 +12,7 @@ export function playwright(repo) {
 
 export const sleep = ms => new Promise(done => setTimeout(done, ms))
 
-// The dsh Desktop app window over the renderer debugging port. Retries until `timeoutMs`,
+// The tomato Desktop app window over the renderer debugging port. Retries until `timeoutMs`,
 // since the port opens well before the app page loads.
 export async function connectApp(repo, port, timeoutMs = 0) {
   const { chromium } = playwright(repo)
@@ -21,7 +21,7 @@ export async function connectApp(repo, port, timeoutMs = 0) {
     let browser
     try {
       browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`)
-      const page = browser.contexts().flatMap(context => context.pages()).find(candidate => candidate.url().startsWith('dsh-app://app/'))
+      const page = browser.contexts().flatMap(context => context.pages()).find(candidate => candidate.url().startsWith('tomato-app://app/'))
       if (page) return { browser, page }
       await browser.close()
     } catch (error) {

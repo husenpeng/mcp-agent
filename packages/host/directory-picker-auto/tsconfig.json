@@ -18,13 +18,14 @@
       "path": "../../../vendor/loader"
     },
     {
-      "path": "../../client/connection/tsconfig.host.json"
-    },
-    {
       "path": "../webserver"
     },
     {
       "path": "../../util/launch-environment"
+    },
+    {
+      "path": "../../client/connection/tsconfig.host.json"
     }
-  ]
+  ],
+  "files": []
 }

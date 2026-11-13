@@ -2,7 +2,7 @@
 //
 // The rule is the installer's, in `packages/boot/app-boot/src/plugin-compatibility.ts`:
 // an own `engines.tomato` range decides alone, otherwise every TOMATO peer package must match the
-// runtime version. Published manifests still use DeepSeek Harness names, so peers are mapped the
+// runtime version. Published manifests still use Tomato Harness names, so peers are mapped the
 // same way {@link adaptManifest} maps them; a package under the old scope that TOMATO does not
 // rename stays a third-party peer and is left alone. Vendored packages carry their pinned upstream
 // versions instead of the runtime's, so their peers say nothing about the release.
@@ -45,8 +45,8 @@ function satisfies(runtimeVersion, range) {
 function declaredRanges(manifest) {
   const engines = manifest.engines === undefined ? {} : manifest.engines
   if (!isRecord(engines)) throw new Error('engines is not an object')
-  // Adaptation renames `engines.dsh` to `engines.tomato`; both select the same runtime.
-  const engine = Object.hasOwn(engines, 'tomato') ? engines.tomato : engines.dsh
+  // Adaptation renames `engines.tomato` to `engines.tomato`; both select the same runtime.
+  const engine = Object.hasOwn(engines, 'tomato') ? engines.tomato : engines.tomato
   if (engine !== undefined) {
     if (typeof engine !== 'string') throw new Error('engines.tomato is not a string')
     return { kind: 'engine', ranges: { 'engines.tomato': engine } }

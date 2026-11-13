@@ -1,7 +1,7 @@
 {
   "name": "@tomato/tool-schedule",
-  "description": "Model-facing reminder management tools (schedule_create, schedule_list, schedule_update, schedule_delete) over the Host ctx.schedule service",
-  "version": "0.2.1-rc.3",
+  "description": "Model-facing scheduled task tools (schedule_create, schedule_list, schedule_view, schedule_edit) over the Host ctx.schedule service",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -25,7 +25,10 @@
   "files": [
     "locale/*.json",
     "lib/index.js",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
   ],
   "license": "MIT",
   "peerDependencies": {
@@ -33,17 +36,22 @@
     "@tomato/llm": "workspace:*",
     "@tomato/schedule": "workspace:*",
     "@tomato/subagent": "workspace:*",
+    "@tomato/system-prompt": "workspace:*",
     "@tomato/tools": "workspace:*"
   },
   "devDependencies": {
     "@tomato/cordis": "workspace:~",
     "@tomato/agent": "workspace:*",
     "@tomato/llm": "workspace:*",
+    "@tomato/ptc-runtime": "workspace:*",
     "@tomato/schedule": "workspace:*",
     "@tomato/scope": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/subagent": "workspace:*",
+    "@tomato/system-prompt": "workspace:*",
+    "@tomato/tool-executor-ptc": "workspace:*",
     "@tomato/tool-testkit": "workspace:*",
-    "@tomato/tools": "workspace:*"
+    "@tomato/tools": "workspace:*",
+    "@tomato/agent-preset-registry": "workspace:*"
   }
 }

@@ -170,7 +170,7 @@ describe('LocalPtySession readiness and output', () => {
       await vi.advanceTimersByTimeAsync(20)
       await pending
       expect(snapshot).not.toHaveBeenCalled()
-      expect(session.read({})).toMatchObject({ text: 'x'.repeat(59) + 'tomato> ', truncated: true })
+      expect(session.read({})).toMatchObject({ text: 'x'.repeat(56) + 'tomato> ', truncated: true })
       expect(snapshot).toHaveBeenCalledTimes(1)
     } finally {
       snapshot.mockRestore()
@@ -195,7 +195,7 @@ describe('LocalPtySession readiness and output', () => {
     terminal.emitData('6n')
     await vi.advanceTimersByTimeAsync(20)
 
-    expect(terminal.writes).toContain('\x1b[1;6R')
+    expect(terminal.writes).toContain('\x1b[1;9R')
     expect(initialized).toBe(false)
     responseGate.resolve(undefined)
     await vi.advanceTimersByTimeAsync(10)
@@ -221,7 +221,7 @@ describe('LocalPtySession readiness and output', () => {
     const responseGate = Promise.withResolvers<undefined>()
     terminal.write = async (data) => {
       terminal.writes.push(data)
-      if (data === '\x1b[1;6R') await responseGate.promise
+      if (data === '\x1b[1;9R') await responseGate.promise
     }
 
     const operation = session.startSend({ text: 'caller input', submit: true })
@@ -231,7 +231,7 @@ describe('LocalPtySession readiness and output', () => {
     firstInspection.resolve({ processGroupId: 456, inputWaiting: true })
     await Promise.resolve()
 
-    expect(terminal.writes).toEqual(['\x1b[1;6R'])
+    expect(terminal.writes).toEqual(['\x1b[1;9R'])
     responseGate.resolve(undefined)
     await vi.advanceTimersByTimeAsync(0)
     expect(inspections).toBe(2)
@@ -240,7 +240,7 @@ describe('LocalPtySession readiness and output', () => {
     secondInspection.resolve({ processGroupId: 456, inputWaiting: true })
     await vi.advanceTimersByTimeAsync(0)
     expect(inspections).toBe(3)
-    expect(terminal.writes).toEqual(['\x1b[1;6R', '\x1b[1;6R', 'caller input\r'])
+    expect(terminal.writes).toEqual(['\x1b[1;9R', '\x1b[1;9R', 'caller input\r'])
 
     terminal.emitData('\x1b]133;D;0\x07tomato> ')
     await vi.advanceTimersByTimeAsync(10)
@@ -256,17 +256,17 @@ describe('LocalPtySession readiness and output', () => {
     const responseGate = Promise.withResolvers<undefined>()
     terminal.write = async (data) => {
       terminal.writes.push(data)
-      if (data === '\x1b[1;6R') await responseGate.promise
+      if (data === '\x1b[1;9R') await responseGate.promise
     }
     terminal.emitData('\x1b[6n')
     await vi.advanceTimersByTimeAsync(0)
 
     const operation = session.startSend({ text: 'caller input', submit: true })
     await Promise.resolve()
-    expect(terminal.writes).toEqual(['\x1b[1;6R'])
+    expect(terminal.writes).toEqual(['\x1b[1;9R'])
     responseGate.resolve(undefined)
     await vi.advanceTimersByTimeAsync(0)
-    expect(terminal.writes).toEqual(['\x1b[1;6R', 'caller input\r'])
+    expect(terminal.writes).toEqual(['\x1b[1;9R', 'caller input\r'])
 
     terminal.emitData('\x1b]133;D;0\x07tomato> ')
     await vi.advanceTimersByTimeAsync(10)
@@ -370,7 +370,7 @@ describe('LocalPtySession readiness and output', () => {
     expect(() => session.startSend({ text: 'successor', submit: true })).toThrow('active send')
     responseGate.resolve(undefined)
     await expect(operation.done).rejects.toThrow('pre-write inspection failed with reply pending')
-    expect(terminal.writes).toEqual(['\x1b[1;6R'])
+    expect(terminal.writes).toEqual(['\x1b[1;9R'])
   })
 
   it('retains a timed-out send until its terminal-protocol response settles', async () => {
@@ -645,6 +645,40 @@ describe('LocalPtySession readiness and output', () => {
     expect(operation.cancel()).toBe(false)
   })
 
+  it.each(['before', 'after'])('retains child output delivered %s exact stdin readiness', async (delivery) => {
+    vi.useFakeTimers()
+    const terminal = new FakeTerminal()
+    const inspector = new FakeInspector()
+    const session = makeSession(terminal, inspector, config())
+    try {
+      await initialize(session, terminal)
+      inspector.waiting = true
+      const written = Promise.withResolvers<undefined>()
+      terminal.write = async (data) => {
+        terminal.writes.push(data)
+        written.resolve(undefined)
+      }
+      const operation = session.startSend({ text: 'read-tty', submit: true })
+      await written.promise
+      expect(terminal.writes).toEqual(['read-tty\r'])
+      terminal.emitData('command echo\r\n')
+      inspector.pgid = 789
+
+      if (delivery === 'before') terminal.emitData('WAITING\r\n')
+      await vi.advanceTimersByTimeAsync(20)
+      expect(await operation.done).toMatchObject({
+        waitReason: 'stdin_read',
+        sessionStatus: { kind: 'running' },
+      })
+      if (delivery === 'after') terminal.emitData('WAITING\r\n')
+
+      expect(session.read({}).text).toMatch(/(?:^|\n)WAITING\n/)
+      expect(operation.cancel()).toBe(false)
+    } finally {
+      await session.close('delayed output cleanup')
+    }
+  })
+
   it('does not reuse a pre-write stdin wait as post-write readiness', async () => {
     vi.useFakeTimers()
     const terminal = new FakeTerminal()
@@ -718,6 +752,7 @@ describe('LocalPtySession readiness and output', () => {
     terminal.emitExit(7, 9)
     expect(await exiting.done).toMatchObject({ waitReason: 'session_exit', sessionStatus: { kind: 'exited', exitCode: null, signal: 'SIGKILL' } })
     expect(() => session.startSend({ text: '', submit: false })).toThrow('has exited')
+    expect(() => session.startSend({ text: '', submit: false })).toThrow(expect.objectContaining({ name: 'TerminalError', code: 'SESSION_EXITED' }))
   })
 
   it('cancels with foreground-group SIGINT, observes AbortSignal, and contains write failures', async () => {
@@ -742,6 +777,7 @@ describe('LocalPtySession readiness and output', () => {
     const aborted = new AbortController()
     aborted.abort()
     expect(() => session.startSend({ text: '', submit: false, signal: aborted.signal })).toThrow('aborted before write')
+    expect(() => session.startSend({ text: '', submit: false, signal: aborted.signal })).toThrow(expect.objectContaining({ name: 'AbortError' }))
 
     terminal.throwWrite = true
     const failed = session.startSend({ text: 'x', submit: false })
@@ -1132,6 +1168,7 @@ describe('LocalPtySession readiness and output', () => {
     const initializing = startup.initialize(new AbortController().signal)
     startupTerminal.emitExit(1)
     await expect(initializing).rejects.toThrow('exited during startup')
+    await expect(initializing).rejects.toEqual(expect.objectContaining({ name: 'TerminalError', code: 'STARTUP_EXITED' }))
     expect(startup.status()).toEqual({ kind: 'exited', exitCode: 1, signal: null })
 
     const terminal = new FakeTerminal()
@@ -1204,7 +1241,9 @@ describe('LocalPtySession readiness and output', () => {
 
     const timeoutTerminal = new FakeTerminal()
     const timeout = new LocalPtySession(timeoutTerminal, config())
-    const timedOut = expect(timeout.initialize()).rejects.toThrow('startup timeout')
+    const timedOut = expect(timeout.initialize()).rejects.toEqual(expect.objectContaining({
+      name: 'TerminalError', code: 'STARTUP_TIMEOUT', message: expect.stringContaining('startup timeout') as string,
+    }))
     await vi.advanceTimersByTimeAsync(100)
     await timedOut
   })
@@ -1606,8 +1645,8 @@ describe('LocalPtySession bounds, signals, and teardown', () => {
     const closing = session.close('test')
     expect(session.close('other')).toBe(closing)
     await expect(closing).rejects.toThrow('PTY cleanup failed (test)')
-    expect(() => session.startSend({ text: '', submit: false })).toThrow('closing')
-    await expect(session.signal('SIGTERM')).rejects.toThrow('closing')
+    expect(() => session.startSend({ text: '', submit: false })).toThrow(expect.objectContaining({ name: 'TerminalError', code: 'SESSION_CLOSING' }))
+    await expect(session.signal('SIGTERM')).rejects.toEqual(expect.objectContaining({ name: 'TerminalError', code: 'SESSION_CLOSING' }))
   })
 
   it('reports cleanup failure without waiting for top-level exit and permits retry', async () => {

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Local robot room provider",
+    "description": "Storage-backed room provider with a durable log, bounded wake scheduler, persistent member Sessions, and room tools."
+  }
+}

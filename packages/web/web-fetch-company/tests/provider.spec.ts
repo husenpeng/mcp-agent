@@ -1,3 +1,4 @@
+/* oxlint-disable typescript/no-unsafe-assignment -- Vitest asymmetric matchers are typed as any. */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { WebError } from '@tomato/web'
 import {

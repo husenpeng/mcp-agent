@@ -80,6 +80,22 @@ function commandOf(args: unknown): string | undefined {
   return parsed.success ? parsed.data.command.trim() : undefined
 }
 
+/**
+ * The command a shell call actually runs: a leading `cd <dir> &&` or `cd <dir>;`
+ * only positions the call and names no work, so a title built from it describes
+ * every call in the same project with the same words.
+ * @param command - complete shell command.
+ * @returns the command after its leading directory changes.
+ */
+function effectiveCommand(command: string): string {
+  let rest = command.trim()
+  for (;;) {
+    const next = rest.replace(/^cd\s+[^&;]+?\s*(?:&&|;)\s*/u, '')
+    if (next === rest) return rest === '' ? command.trim() : rest
+    rest = next
+  }
+}
+
 /** The file path of a read, write, or edit call. */
 function pathOf(args: unknown): string | undefined {
   const explicit = filePathArguments.safeParse(args)
@@ -94,11 +110,29 @@ function exitCodeOf(value: unknown): number | undefined {
   return parsed.success && parsed.data.exitCode !== null ? parsed.data.exitCode : undefined
 }
 
-/** Searchable concepts of one call: the tool, the command's first word, and the file name. */
+/** Path-like words of one command, shortened to their base names. */
+function commandConcepts(command: string): string[] {
+  const words = command.split(/\s+/u)
+  const concepts: string[] = []
+  for (const word of words) {
+    const cleaned = word.replace(/^["'(]+|["'),:]+$/gu, '')
+    if (!cleaned.includes('/') && !/\.[a-z0-9]{1,6}$/iu.test(cleaned)) continue
+    const name = cleaned.split('/').filter(part => part !== '').pop()
+    if (name === undefined) continue
+    const stem = name.replace(/\.[^.]+$/u, '').toLowerCase()
+    if (stem !== '' && stem !== '.' && stem !== '..') concepts.push(stem)
+  }
+  return concepts
+}
+
+/** Searchable concepts of one call: the tool, the command's real words, and the file name. */
 function conceptsOf(tool: string, command: string | undefined, path: string | undefined): string[] {
   const concepts = [tool]
-  const word = command?.split(/\s+/u)[0]
-  if (word !== undefined && word !== '') concepts.push(word)
+  if (command !== undefined) {
+    const [word] = effectiveCommand(command).split(/\s+/u)
+    if (word !== undefined && word !== '') concepts.push(word)
+    concepts.push(...commandConcepts(command))
+  }
   if (path !== undefined) {
     const name = path.split('/').pop()
     if (name !== undefined && name !== '') concepts.push(name.replace(/\.[^.]+$/u, ''))
@@ -114,6 +148,7 @@ function conceptsOf(tool: string, command: string | undefined, path: string | un
 export function buildObservationCard(call: ObservationCall): ObservationCard {
   const failed = call.failed
   const command = commandOf(call.arguments)
+  const effective = command === undefined ? undefined : effectiveCommand(command)
   const path = pathOf(call.arguments)
   const exitCode = exitCodeOf(call.value)
   const outputLine = failed ? normalizeFailure(call.output) : firstLine(call.output, 200)
@@ -124,13 +159,20 @@ export function buildObservationCard(call: ObservationCall): ObservationCard {
           : 'tool-call'
   const title = failed
     ? `${call.tool} failed: ${firstLine(call.output, Math.max(1, 80 - call.tool.length - 9))}`.trim()
-    : command !== undefined && call.tool === 'bash' ? `bash: ${firstLine(command, 74)}`
+    : effective !== undefined && call.tool === 'bash' ? `bash: ${firstLine(effective, 74)}`
       : path !== undefined && (call.tool === 'write' || call.tool === 'edit') ? `${call.tool}: ${firstLine(path, 76)}`
         : `${call.tool}: done`
   const titleText = title.trimEnd()
   const facts: string[] = []
   if (failed) facts.push(outputLine === '' ? 'failed without output' : `failed: ${outputLine}`)
-  if (exitCode !== undefined) facts.push(`exit ${exitCode}`)
+  else if (exitCode !== undefined) facts.push(`exit ${exitCode}`)
+  const narrative = failed
+    ? `The ${call.tool} call failed: ${outputLine === '' ? 'no output' : outputLine}`
+    : effective !== undefined && call.tool === 'bash'
+      ? `Ran \`${firstLine(effective, 200)}\`${exitCode === undefined ? '' : `, exit ${exitCode}`}.`
+      : path !== undefined && (call.tool === 'write' || call.tool === 'edit')
+        ? `Changed ${path}.`
+        : `The ${call.tool} call completed.`
   const signature = createHash('sha256')
     .update(`${call.tool}\u0000${JSON.stringify(call.arguments ?? null)}\u0000${failed ? 'failed' : 'ok'}\u0000${exitCode ?? ''}\u0000${failed ? outputLine : ''}`)
     .digest('hex')
@@ -138,9 +180,9 @@ export function buildObservationCard(call: ObservationCall): ObservationCard {
     tool: call.tool,
     type,
     title: titleText,
-    narrative: failed ? `The ${call.tool} call failed.` : `The ${call.tool} call completed.`,
+    narrative,
     facts,
-    concepts: conceptsOf(call.tool, command, path),
+    concepts: conceptsOf(call.tool, effective, path),
     filesRead: call.tool === 'read' && path !== undefined ? [path] : [],
     filesModified: (call.tool === 'write' || call.tool === 'edit') && path !== undefined ? [path] : [],
     fingerprint: signature,

@@ -10,9 +10,6 @@
   ],
   "references": [
     {
-      "path": "../../util/branded"
-    },
-    {
       "path": "../../util/values"
     },
     {
@@ -122,6 +119,9 @@
     },
     {
       "path": "../../core/tool-executor-ptc"
+    },
+    {
+      "path": "../ui-context-menu"
     }
   ],
   "exclude": [

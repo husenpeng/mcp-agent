@@ -74,3 +74,6 @@ scratch/
 *.scratch.*
 *.png
 .scratch/*
+
+# macOS AppleDouble resource-fork files from copies through non-native volumes
+._*

@@ -823,6 +823,29 @@ describe('Typert Remote streams', () => {
     expect(service.windows).toEqual([undefined, window])
   })
 
+  it('keeps a browser-session cookie admitted across sequential and concurrent sockets', async () => {
+    const { ctx } = await setup(true)
+    const cookie = browserCookie(ctx)
+    const url = `ws://127.0.0.1:${String(ctx.webServer.port)}/api/remote.mux`
+    // A paired phone presents the browser-session Cookie rather than an API
+    // operator: that Peer owns no socket, so reconnecting and a second screen
+    // stay admitted where an operator Cookie would answer 409, then 401 once
+    // its one socket had closed.
+    const first = new WebSocket(url, { headers: { cookie } })
+    await once(first, 'open')
+    const firstClosed = once(first, 'close')
+    first.close()
+    await firstClosed
+
+    const second = new WebSocket(url, { headers: { cookie } })
+    const third = new WebSocket(url, { headers: { cookie } })
+    await Promise.all([once(second, 'open'), once(third, 'open')])
+    const closed = [once(second, 'close'), once(third, 'close')]
+    second.close()
+    third.close()
+    await Promise.all(closed)
+  })
+
   it('reports configured frame capacity and the encoded envelope size for the current stream id', async () => {
     const { ctx, service } = await setup(true, { streamInboxBytes: 512 })
     const socket = new WebSocket(`ws://127.0.0.1:${String(ctx.webServer.port)}/api/remote.mux`, { headers: { cookie: browserCookie(ctx) } })

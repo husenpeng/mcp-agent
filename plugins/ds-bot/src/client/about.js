@@ -123,7 +123,7 @@ export function AboutPage({ useUpdate, actions, run, Section, Row }) {
     repo ? h('p', { key: 'ask', className: 'bt-about-ask' }, t('If DS Bot helps you, a star on GitHub helps more people find it.')) : null,
     h(Section, { key: 'updates', title: t('Updates') },
       h(Row, { label: 'DS Bot', hint: ownRow?.hint ?? botHint(update) }, botControl, update.available && update.notesUrl ? h('a', linkProps(update.notesUrl), t("What's new")) : null),
-      tomato?.current ? h(Row, { label: 'DeepSeek Harness', hint: tomatoHint(tomato, tomatoShown) }, tomatoControl) : null),
+      tomato?.current ? h(Row, { label: 'Tomato Harness', hint: tomatoHint(tomato, tomatoShown) }, tomatoControl) : null),
     h(Section, { key: 'links', title: t('Links') },
       repo ? h(Row, { label: t('Source code'), hint: repo.replace(/^https:\/\//, '') }, h('a', linkProps(repo), h(GitHubMark), t('Open'))) : null,
       update.notesUrl ? h(Row, { label: t('Release notes') }, h('a', linkProps(update.notesUrl), t('Open'))) : null,

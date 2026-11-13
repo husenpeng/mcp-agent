@@ -28,7 +28,7 @@ describe('SettingsSelectField', () => {
     const onEdit = vi.fn()
     render(<SettingsSelectField {...frame} text="blueai" options={choices} onEdit={onEdit} onReset={vi.fn()} />)
 
-    const select = screen.getByLabelText('Command timeout') as HTMLSelectElement
+    const select = screen.getByLabelText<HTMLSelectElement>('Command timeout')
     expect(select.value).toBe('blueai')
     expect([...select.options].map(option => option.value)).toEqual(['blueai', 'local'])
     fireEvent.change(select, { target: { value: 'local' } })
@@ -39,11 +39,11 @@ describe('SettingsSelectField', () => {
     const { rerender } = render(
       <SettingsSelectField {...frame} text="custom" options={choices} onEdit={vi.fn()} onReset={vi.fn()} />,
     )
-    expect([...(screen.getByLabelText('Command timeout') as HTMLSelectElement).options].map(option => option.value))
+    expect([...(screen.getByLabelText<HTMLSelectElement>('Command timeout')).options].map(option => option.value))
       .toEqual(['custom', 'blueai', 'local'])
 
     rerender(<SettingsSelectField {...frame} text="" options={choices} onEdit={vi.fn()} onReset={vi.fn()} />)
-    expect([...(screen.getByLabelText('Command timeout') as HTMLSelectElement).options].map(option => option.value))
+    expect([...(screen.getByLabelText<HTMLSelectElement>('Command timeout')).options].map(option => option.value))
       .toEqual(['blueai', 'local'])
   })
 
@@ -59,7 +59,7 @@ describe('SettingsSelectField', () => {
     expect(onReset).toHaveBeenCalledOnce()
 
     rerender(<SettingsSelectField {...frame} overridden disabled text="blueai" options={choices} onEdit={vi.fn()} onReset={onReset} />)
-    expect(screen.getByLabelText('Command timeout')).toHaveProperty('disabled', true)
+    expect(screen.getByLabelText<HTMLSelectElement>('Command timeout')).toHaveProperty('disabled', true)
     expect(screen.getByRole('button', { name: 'Reset to default' })).toHaveProperty('disabled', true)
   })
 
@@ -69,7 +69,7 @@ describe('SettingsSelectField', () => {
     )
     expect(screen.getByText('Enter a number.')).toBeTruthy()
     expect(screen.queryByText('How long one command may run.')).toBeNull()
-    expect(screen.getByLabelText('Command timeout').getAttribute('aria-invalid')).toBe('true')
+    expect(screen.getByLabelText<HTMLSelectElement>('Command timeout').getAttribute('aria-invalid')).toBe('true')
 
     const bare = {
       id: 'field', label: 'Command timeout', overriddenLabel: 'Overridden', resetLabel: 'Reset to default',
@@ -86,18 +86,18 @@ describe('SettingsValueField', () => {
     const onEdit = vi.fn()
     render(<SettingsValueField {...frame} text="60000" onEdit={onEdit} onReset={vi.fn()} />)
 
-    fireEvent.change(screen.getByLabelText('Command timeout'), { target: { value: '9000' } })
+    fireEvent.change(screen.getByLabelText<HTMLSelectElement>('Command timeout'), { target: { value: '9000' } })
 
     expect(onEdit).toHaveBeenCalledWith('9000')
   })
 
   it('renders the staged text it is given rather than a draft of its own', () => {
     const { rerender } = render(<SettingsValueField {...frame} text="60000" onEdit={vi.fn()} onReset={vi.fn()} />)
-    expect(screen.getByLabelText('Command timeout')).toHaveProperty('value', '60000')
+    expect(screen.getByLabelText<HTMLSelectElement>('Command timeout')).toHaveProperty('value', '60000')
 
     rerender(<SettingsValueField {...frame} text="9000" onEdit={vi.fn()} onReset={vi.fn()} />)
 
-    expect(screen.getByLabelText('Command timeout')).toHaveProperty('value', '9000')
+    expect(screen.getByLabelText<HTMLSelectElement>('Command timeout')).toHaveProperty('value', '9000')
   })
 
   it('offers the reset only while an override would stand', () => {
@@ -117,7 +117,7 @@ describe('SettingsValueField', () => {
 
     expect(screen.getByText('Enter a number.')).toBeTruthy()
     expect(screen.queryByText('How long one command may run.')).toBeNull()
-    expect(screen.getByLabelText('Command timeout').getAttribute('aria-invalid')).toBe('true')
+    expect(screen.getByLabelText<HTMLSelectElement>('Command timeout').getAttribute('aria-invalid')).toBe('true')
   })
 
   it('hints a numeric keypad and renders a placeholder when asked', () => {
@@ -131,7 +131,7 @@ describe('SettingsValueField', () => {
         onReset={vi.fn()}
       />,
     )
-    const input = screen.getByLabelText('Command timeout')
+    const input = screen.getByLabelText<HTMLSelectElement>('Command timeout')
 
     expect(input.getAttribute('inputmode')).toBe('numeric')
     expect(input).toHaveProperty('placeholder', 'https://api.deepseek.com')
@@ -140,7 +140,7 @@ describe('SettingsValueField', () => {
   it('disables the control and its reset while the document is read-only', () => {
     render(<SettingsValueField {...frame} disabled overridden text="9000" onEdit={vi.fn()} onReset={vi.fn()} />)
 
-    expect(screen.getByLabelText('Command timeout')).toHaveProperty('disabled', true)
+    expect(screen.getByLabelText<HTMLSelectElement>('Command timeout')).toHaveProperty('disabled', true)
     expect(screen.getByRole('button', { name: 'Reset to default' })).toHaveProperty('disabled', true)
   })
 })

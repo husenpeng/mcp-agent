@@ -101,13 +101,13 @@ describe('company provider availability', () => {
 
 describe('company search request', () => {
   it('sends query, bound, session cookie, and refuses redirects', async () => {
-    const fetchStub = vi.fn(async () => jsonResponse({ data: { results: [{ url: 'https://a.test', snippet: 'one' }] } }))
+    const fetchStub = vi.fn(async (_input: URL, _init: RequestInit) => jsonResponse({ data: { results: [{ url: 'https://a.test', snippet: 'one' }] } }))
     vi.stubGlobal('fetch', fetchStub)
 
     const result = await provider().search({ query: 'creator marketing', maxResults: 7 })
 
     expect(result).toEqual({ sources: [{ url: 'https://a.test', snippet: 'one' }], truncated: false })
-    const [url, init] = fetchStub.mock.calls[0] as unknown as [URL, RequestInit]
+    const [url, init] = fetchStub.mock.calls[0]!
     expect(String(url)).toBe('https://bff.test/api/v1/search/web')
     expect(init.method).toBe('POST')
     expect(init.redirect).toBe('error')
@@ -116,7 +116,7 @@ describe('company search request', () => {
   })
 
   it('forwards the configured excerpt budgets', async () => {
-    const fetchStub = vi.fn(async () => jsonResponse({ data: { results: [] } }))
+    const fetchStub = vi.fn(async (_input: URL, _init: RequestInit) => jsonResponse({ data: { results: [] } }))
     vi.stubGlobal('fetch', fetchStub)
     const bounded = new CompanySearchProvider({
       baseURL: 'https://bff.test',
@@ -128,12 +128,12 @@ describe('company search request', () => {
 
     await bounded.search({ query: 'q' })
 
-    const [, init] = fetchStub.mock.calls[0] as unknown as [URL, RequestInit]
+    const [, init] = fetchStub.mock.calls[0]!
     expect(bodyOf(init)).toEqual({ query: 'q', maxCharsPerResult: 400, maxChars: 1500 })
   })
 
   it('maps a gateway answer to the result content', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
+    vi.stubGlobal('fetch', vi.fn(async (_input: URL, _init: RequestInit) => jsonResponse({
       data: { results: [{ url: 'https://a.test' }], truncated: false, answer: '  a synthesized answer  ' },
     })))
 
@@ -142,7 +142,7 @@ describe('company search request', () => {
   })
 
   it('omits content for an empty answer', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
+    vi.stubGlobal('fetch', vi.fn(async (_input: URL, _init: RequestInit) => jsonResponse({
       data: { results: [{ url: 'https://a.test' }], answer: '   ' },
     })))
 
@@ -151,7 +151,7 @@ describe('company search request', () => {
   })
 
   it('propagates the gateway truncation flag', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
+    vi.stubGlobal('fetch', vi.fn(async (_input: URL, _init: RequestInit) => jsonResponse({
       data: { results: [{ url: 'https://a.test' }], truncated: true },
     })))
 
@@ -159,12 +159,12 @@ describe('company search request', () => {
   })
 
   it('caps the request bound at the gateway maximum and reports the cut', async () => {
-    const fetchStub = vi.fn(async () => jsonResponse({ data: { results: [] } }))
+    const fetchStub = vi.fn(async (_input: URL, _init: RequestInit) => jsonResponse({ data: { results: [] } }))
     vi.stubGlobal('fetch', fetchStub)
 
     const result = await provider().search({ query: 'q', maxResults: COMPANY_MAX_RESULTS + 10 })
 
-    const [, init] = fetchStub.mock.calls[0] as unknown as [URL, RequestInit]
+    const [, init] = fetchStub.mock.calls[0]!
     expect(bodyOf(init)).toEqual({ query: 'q', maxResults: COMPANY_MAX_RESULTS })
     expect(result.truncated).toBe(true)
   })
@@ -179,12 +179,12 @@ describe('company search request', () => {
   })
 
   it('omits maxResults when neither the request nor the config bounds it', async () => {
-    const fetchStub = vi.fn(async () => jsonResponse({ data: { results: [] } }))
+    const fetchStub = vi.fn(async (_input: URL, _init: RequestInit) => jsonResponse({ data: { results: [] } }))
     vi.stubGlobal('fetch', fetchStub)
 
     await provider().search({ query: 'q' })
 
-    const [, init] = fetchStub.mock.calls[0] as unknown as [URL, RequestInit]
+    const [, init] = fetchStub.mock.calls[0]!
     expect(bodyOf(init)).toEqual({ query: 'q' })
   })
 
@@ -198,14 +198,14 @@ describe('company search request', () => {
   })
 
   it('reports an expired session as a missing credential', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ error: { code: 'UNAUTHENTICATED' } }, 401)))
+    vi.stubGlobal('fetch', vi.fn(async (_input: URL, _init: RequestInit) => jsonResponse({ error: { code: 'UNAUTHENTICATED' } }, 401)))
 
     await expect(provider().search({ query: 'q' }))
       .rejects.toMatchObject({ code: 'WEB_PROVIDER_CREDENTIAL_MISSING' })
   })
 
   it('maps a rate-limited upstream to a retryable provider error', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
+    vi.stubGlobal('fetch', vi.fn(async (_input: URL, _init: RequestInit) => jsonResponse({
       error: { code: 'RATE_LIMITED', message: 'Search upstream is rate limited', retryable: true },
       meta: { traceId: 'trace-1' },
     }, 429)))
@@ -218,7 +218,7 @@ describe('company search request', () => {
   })
 
   it('maps a disabled search endpoint to its own code', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
+    vi.stubGlobal('fetch', vi.fn(async (_input: URL, _init: RequestInit) => jsonResponse({
       error: { code: 'SEARCH_DISABLED', message: 'Web search is not enabled', retryable: false },
       meta: { traceId: 'trace-2' },
     }, 503)))
@@ -228,7 +228,7 @@ describe('company search request', () => {
   })
 
   it('maps an upstream timeout to a retryable provider error', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
+    vi.stubGlobal('fetch', vi.fn(async (_input: URL, _init: RequestInit) => jsonResponse({
       error: { code: 'UPSTREAM_TIMEOUT', message: 'Search upstream timed out', retryable: true },
     }, 504)))
 
@@ -240,7 +240,7 @@ describe('company search request', () => {
   })
 
   it('surfaces the gateway message and retry hint for an unavailable upstream', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
+    vi.stubGlobal('fetch', vi.fn(async (_input: URL, _init: RequestInit) => jsonResponse({
       error: { code: 'UPSTREAM_UNAVAILABLE', message: 'upstream unavailable', retryable: true },
       meta: { traceId: 'trace-3' },
     }, 502)))
@@ -253,7 +253,7 @@ describe('company search request', () => {
   })
 
   it('keeps the gateway validation message without a retry hint', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
+    vi.stubGlobal('fetch', vi.fn(async (_input: URL, _init: RequestInit) => jsonResponse({
       error: { code: 'INVALID_QUERY', message: 'query must be 1–400 characters', retryable: false },
       meta: { traceId: 'trace-4' },
     }, 400)))
@@ -263,7 +263,7 @@ describe('company search request', () => {
   })
 
   it('falls back to the status when the failure envelope omits usable fields', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({
+    vi.stubGlobal('fetch', vi.fn(async (_input: URL, _init: RequestInit) => jsonResponse({
       error: { code: '', message: '', retryable: 'yes' },
       meta: { traceId: '' },
     }, 500)))
@@ -273,7 +273,7 @@ describe('company search request', () => {
   })
 
   it('tolerates an empty failure envelope', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({}, 500)))
+    vi.stubGlobal('fetch', vi.fn(async (_input: URL, _init: RequestInit) => jsonResponse({}, 500)))
 
     await expect(provider().search({ query: 'q' }))
       .rejects.toMatchObject({ code: 'WEB_PROVIDER_ERROR', message: 'company search failed (HTTP 500)' })
@@ -316,13 +316,13 @@ describe('company search request', () => {
   })
 
   it('combines the caller signal with the configured budget', async () => {
-    const fetchStub = vi.fn(async () => jsonResponse({ data: { results: [] } }))
+    const fetchStub = vi.fn(async (_input: URL, _init: RequestInit) => jsonResponse({ data: { results: [] } }))
     vi.stubGlobal('fetch', fetchStub)
     const controller = new AbortController()
 
     await provider().search({ query: 'q' }, controller.signal)
 
-    const [, init] = fetchStub.mock.calls[0] as unknown as [URL, RequestInit]
+    const [, init] = fetchStub.mock.calls[0]!
     expect(init.signal).toBeInstanceOf(AbortSignal)
   })
 

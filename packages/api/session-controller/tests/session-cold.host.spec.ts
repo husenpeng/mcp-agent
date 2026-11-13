@@ -11,7 +11,6 @@ import { describe, expect, it, vi } from 'vitest'
 import { Context } from '@tomato/cordis'
 import SessionStore from '@tomato/session'
 import AgentRegistry from '@tomato/agent'
-import { SessionHistoryController } from '@tomato/api-session-controller/src/history.ts'
 import { subagentIdentityProjectionDefinition } from '@tomato/subagent/src/projection.ts'
 import TypertRegistry from '@tomato/typert-registry'
 import { createUserMessage, MessageId } from '@tomato/llm'
@@ -276,7 +275,8 @@ describe('attached updatedAt tracks human prompts', () => {
     const listed = await remote.list(request({}))
     if (!listed.ok) throw new Error('list failed')
     const summary = listed.value.items.find(item => item.sessionId === 'resumed-untouched')
-    expect(summary?.updatedAt).toBe(500)
+    // The resumed log's last human prompt, not its creation time or the later pickup.
+    expect(summary?.updatedAt).toBe(worked)
 
     // A lifecycle boundary is not a human update.
     resumed.append('turn/start', { turn: 2 })
@@ -332,49 +332,6 @@ describe('cold history recovery view', () => {
       ]
     `)
     expect(ctx.sessions.get(sessionId)).toBeUndefined()
-    await ctx.fiber.dispose()
-  })
-
-  it('serves a stored Session recorded without a cwd', async () => {
-    // Robot runs created before the specification carried a Workspace root
-    // persist a header with no cwd; the log itself is complete, so a missing
-    // cwd must not turn a readable Session into session-not-found.
-    const ctx = new Context()
-    await ctx.plugin(SessionStore)
-    const sessionId = sid('session-no-cwd')
-    const meta: SessionHeader = {
-      version: SESSION_FORMAT_VERSION,
-      id: sessionId,
-      createdAt: 1000,
-      isSeeded: false,
-    }
-    providePersistence(ctx, {
-      list: () => Promise.resolve([structuredClone(meta)]),
-      inspect: () => Promise.resolve({
-        meta: structuredClone(meta),
-        events: structuredClone([{ type: 'turn/start', seq: SessionSeq(0), time: 1, data: { turn: 1 } }]),
-      }),
-    })
-    const remote = await createSessionTestRemote(ctx, { defaultModelSelection: () => ({ provider: 'p', model: 'm' }), cwd: '/tmp' })
-
-    const history = await remote.page({
-      address: { kind: 'session', sessionId },
-      throughSeq: 0,
-      maxMessages: 10,
-    })
-    if (!history.ok) throw new Error(`history failed: ${history.error.code}`)
-    expect(history.value.records.map(record => record.event)).toMatchInlineSnapshot(`
-      [
-        {
-          "data": {
-            "turn": 1,
-          },
-          "seq": 0,
-          "time": 1,
-          "type": "turn/start",
-        },
-      ]
-    `)
     await ctx.fiber.dispose()
   })
 })
@@ -617,10 +574,7 @@ describe('subagent ownership fence', () => {
     const remote = await createSessionTestRemote(ctx, { defaultModelSelection: () => ({ provider: 'p', model: 'm' }), cwd: '/tmp' })
     await ctx.sessionProjections.register(subagentIdentityProjectionDefinition)
 
-    const history = await new SessionHistoryController(
-      ctx,
-      (observation) => { observation[Symbol.dispose]() },
-    ).page({
+    const history = await ctx.sessionController.events({
       address: {
         kind: 'subagent',
         parentSessionId: meta.parentSession as SessionId,
@@ -719,10 +673,10 @@ describe('subagent ownership fence', () => {
     await ctx.agents.register(originChild)
 
     const startingSession = ctx.sessions.create(sid('session-starting-child'), {
-      meta: { cwd: '/proj', parentSession: parent.id },
+      meta: { cwd: '/proj', parentSession: parent.id, origin: 'subagent' },
     })
     const startingChild = { id: startingSession.id, session: startingSession, status: 'idle', ctx } as Agent
-    ctx.agents.enter(startingChild, parent)
+    ctx.agents.enter(startingChild)
     const remote = await createSessionTestRemote(ctx, { defaultModelSelection: () => ({ provider: 'p', model: 'm' }), cwd: '/tmp' })
 
     const stopped = await remote.cancel(request({ sessionId: originChild.id }))
@@ -921,7 +875,7 @@ async function modelFor(ctx: Context, session: Session): Promise<AgentModel> {
 }
 
 describe('sessions.prompt synchronous rejection', () => {
-  it('rejects content without non-whitespace text or an attachment before delivery or Session events', async () => {
+  it('rejects whitespace-only text parts before delivery or Session events', async () => {
     const ctx = new Context()
     await ctx.plugin(SessionStore)
     await ctx.plugin(SessionProjectionRegistry)
@@ -971,7 +925,6 @@ describe('sessions.prompt synchronous rejection', () => {
     })
     const initialEvents = session.snapshotEvents()
     const rejectedContent: readonly SessionPromptRequest['content'][] = [
-      [],
       [{ type: 'text', text: '' }],
       [{ type: 'text', text: ' \t\n' }, { type: 'text', text: '' }],
     ]

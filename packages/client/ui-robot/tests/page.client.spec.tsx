@@ -51,6 +51,8 @@ interface MountOptions {
 
 function mount(snapshot: RobotRunsSnapshot, hire: Hire, options: MountOptions = {}) {
   const { defaultWorkspaceRoot, retainSession = unused, SessionProvider, actions: overrides = {}, referencesFail = false } = options
+  // The session-scope seat is required; this fixture renders the page outside a Session.
+  const SessionProviderSeat: SessionProviderComponent = SessionProvider ?? (({ children }) => <>{children}</>)
   const page = createRobotPageStore().create()
   const registry = createSnapshotStore(snapshot, { flush: 'sync' })
   const unusedStandardHook = (): never => { throw new Error('robot page fixture does not provide global state') }
@@ -60,6 +62,7 @@ function mount(snapshot: RobotRunsSnapshot, hire: Hire, options: MountOptions = 
     useSessions: unusedStandardHook,
     useSessionStatus: unusedStandardHook,
     useSessionRetainInfo: unusedStandardHook,
+    useContextMenu: unusedStandardHook,
     useResource: unusedStandardHook,
     ...allowAllAccess,
     t,
@@ -68,13 +71,13 @@ function mount(snapshot: RobotRunsSnapshot, hire: Hire, options: MountOptions = 
     useRegistry: bindSnapshotSelector(registry),
     actions: page.actions,
     registryActions: {
-      publish: unused, instantiate: unused, rebind: unused, start: unused, cancel: unused, interrupt: unused,
-      correct: unused, retainSession, hire, ...overrides,
+      publish: unused, instantiate: unused, rebind: unused, install: unused, remove: unused, start: unused,
+      cancel: unused, interrupt: unused, correct: unused, retainSession, hire, ...overrides,
     },
     createWithConversation: vi.fn(),
     references: () => referencesFail ? Promise.reject(new Error('catalog unavailable')) : Promise.resolve({
       presets: [],
-      capabilities: { skills: [], tools: [], mcpServers: [], workspaceRoots: [] },
+      capabilities: { skills: [], plugins: [], tools: [], mcpServers: [], workspaceRoots: [] },
       ...(defaultWorkspaceRoot === undefined ? {} : { defaultWorkspaceRoot }),
     }),
     locale: () => 'zh',
@@ -88,7 +91,7 @@ function mount(snapshot: RobotRunsSnapshot, hire: Hire, options: MountOptions = 
     }),
     pickDirectory: async () => null,
     renderSlot: () => null,
-    ...(SessionProvider === undefined ? {} : { SessionProvider }),
+    SessionProvider: SessionProviderSeat,
   }
   const view = render(<RobotPage {...props} />)
   const rerender = (): void => { view.rerender(<RobotPage {...props} />) }
@@ -96,6 +99,150 @@ function mount(snapshot: RobotRunsSnapshot, hire: Hire, options: MountOptions = 
 }
 
 describe('robot page', () => {
+
+  it('installs a robot whose specification declares skills before a run can start', async () => {
+    const base = emptyRobotSpec({ name: 'Insight', mission: 'Report insight', successCriteria: [] })
+    const spec: RobotSpecRevision = {
+      ref: { spec: brandString<RobotSpecId>('spec-insight'), revision: 1 },
+      spec: { ...base, capability: { ...base.capability, skills: ['brand-insight'] } },
+      publishedAt: 0,
+    }
+    const robot: Robot = { ...HIRED, id: brandString<RobotId>('uninstalled'), name: 'Insight', spec: spec.ref }
+    const install = vi.fn<RobotPageProps['registryActions']['install']>(() => Promise.resolve({ ok: true, value: robot }))
+    const { page, rerender } = mount(
+      { specs: [spec], robots: [robot], runs: [], templates: [] },
+      unused,
+      { actions: { install } },
+    )
+    page.actions.selectRobot(robot.id)
+    rerender()
+    expect(screen.getByText('未安装')).toBeDefined()
+    expect(screen.getAllByText('先安装这个机器人，再开始运行。').length).toBeGreaterThan(0)
+    fireEvent.click(screen.getByRole('button', { name: '安装' }))
+    await waitFor(() => { expect(install).toHaveBeenCalledWith({ robotId: robot.id }) })
+  })
+
+  it('reports missing dependencies and then shows the installed state', async () => {
+    const base = emptyRobotSpec({ name: 'Insight', mission: 'Report insight', successCriteria: [] })
+    const spec: RobotSpecRevision = {
+      ref: { spec: brandString<RobotSpecId>('spec-missing'), revision: 1 },
+      spec: { ...base, capability: { ...base.capability, plugins: ['@tomato/missing'] } },
+      publishedAt: 0,
+    }
+    const robot: Robot = { ...HIRED, id: brandString<RobotId>('missing-deps'), name: 'Insight', spec: spec.ref }
+    const failure: RemoteResult<Robot> = {
+      ok: false,
+      error: new RemoteError('robot/capabilities-missing', 'plugin "@tomato/missing" is unavailable', {
+        missing: [{ kind: 'plugin', name: '@tomato/missing' }],
+      }),
+    }
+    const install = vi.fn<RobotPageProps['registryActions']['install']>(() => Promise.resolve(failure))
+    const { page, registry, rerender } = mount(
+      { specs: [spec], robots: [robot], runs: [], templates: [] },
+      unused,
+      { actions: { install } },
+    )
+    page.actions.selectRobot(robot.id)
+    rerender()
+    fireEvent.click(screen.getByRole('button', { name: '安装' }))
+    await waitFor(() => {
+      expect(screen.getByRole('alert').textContent).toBe('安装失败: plugin "@tomato/missing" is unavailable')
+    })
+
+    registry.set({
+      specs: [spec],
+      robots: [{ ...robot, installation: { ref: spec.ref, installedAt: 1 } }],
+      runs: [],
+      templates: [],
+    })
+    rerender()
+    expect(screen.getByText('已安装')).toBeDefined()
+    expect(screen.queryByRole('button', { name: '安装' })).toBeNull()
+  })
+
+  it('reports a rejected install and restores the install control', async () => {
+    const base = emptyRobotSpec({ name: 'Insight', mission: 'Report insight', successCriteria: [] })
+    const spec: RobotSpecRevision = {
+      ref: { spec: brandString<RobotSpecId>('spec-rejected'), revision: 1 },
+      spec: { ...base, capability: { ...base.capability, skills: ['brand-insight'] } },
+      publishedAt: 0,
+    }
+    const robot: Robot = { ...HIRED, id: brandString<RobotId>('rejected'), name: 'Insight', spec: spec.ref }
+    const install = vi.fn<RobotPageProps['registryActions']['install']>(() => Promise.reject(new Error('connection reset')))
+    const { page, rerender } = mount(
+      { specs: [spec], robots: [robot], runs: [], templates: [] },
+      unused,
+      { actions: { install } },
+    )
+    page.actions.selectRobot(robot.id)
+    rerender()
+    fireEvent.click(screen.getByRole('button', { name: '安装' }))
+    await waitFor(() => {
+      expect(screen.getByRole('alert').textContent).toBe('安装失败: connection reset')
+    })
+    // The pending label is a progress claim; a rejected attempt must not leave it.
+    expect(screen.getByRole('button', { name: '安装' })).toBeDefined()
+  })
+
+  it('reports a rejected delete and keeps the confirmation open', async () => {
+    const remove = vi.fn<RobotPageProps['registryActions']['remove']>(() => Promise.reject(new Error('robot is running')))
+    const { page, rerender } = mount(
+      { specs: [], robots: [HIRED], runs: [], templates: [] },
+      unused,
+      { actions: { remove } },
+    )
+    page.actions.selectRobot(HIRED.id)
+    rerender()
+    fireEvent.click(screen.getByRole('button', { name: '删除' }))
+    fireEvent.click(screen.getByRole('button', { name: '确认删除' }))
+    await waitFor(() => {
+      expect(screen.getByRole('alert').textContent).toBe('删除失败: robot is running')
+    })
+    expect(screen.getByRole('button', { name: '确认删除' })).toBeDefined()
+    expect(page.getSnapshot().robotId).toBe(HIRED.id)
+  })
+
+  it('does not carry a pending delete confirmation to another robot', () => {
+    const other: Robot = {
+      ...HIRED,
+      id: brandString<RobotId>('other'),
+      name: 'Other',
+      spec: { spec: brandString<RobotSpecId>('spec-other'), revision: 1 },
+    }
+    const { page, rerender } = mount(
+      { specs: [], robots: [HIRED, other], runs: [], templates: [] },
+      unused,
+    )
+    page.actions.selectRobot(HIRED.id)
+    rerender()
+    fireEvent.click(screen.getByRole('button', { name: '删除' }))
+    expect(screen.getByRole('button', { name: '确认删除' })).toBeDefined()
+    page.actions.selectRobot(other.id)
+    rerender()
+    expect(screen.queryByRole('button', { name: '确认删除' })).toBeNull()
+    expect(screen.getByRole('button', { name: '删除' })).toBeDefined()
+    page.actions.selectRobot(HIRED.id)
+    rerender()
+    expect(screen.queryByRole('button', { name: '确认删除' })).toBeNull()
+    expect(screen.getByRole('button', { name: '删除' })).toBeDefined()
+  })
+
+  it('deletes the robot after one confirmation and keeps the roster', async () => {
+    const remove = vi.fn<RobotPageProps['registryActions']['remove']>(() => Promise.resolve({ ok: true, value: undefined }))
+    const { page, rerender } = mount(
+      { specs: [], robots: [HIRED], runs: [], templates: [] },
+      unused,
+      { actions: { remove } },
+    )
+    page.actions.selectRobot(HIRED.id)
+    rerender()
+    fireEvent.click(screen.getByRole('button', { name: '删除' }))
+    fireEvent.click(screen.getByRole('button', { name: '确认删除' }))
+    await waitFor(() => { expect(remove).toHaveBeenCalledWith({ robotId: HIRED.id }) })
+    await waitFor(() => { expect(page.getSnapshot().robotId).toBeUndefined() })
+    expect(page.getSnapshot().view).toBe('roster')
+  })
+
   it('opens on the gallery and opens the robot a hire creates', async () => {
     const hire = vi.fn<Hire>(() => Promise.resolve({ ok: true, value: HIRED }))
     const { page, registry, rerender } = mount({ specs: [], robots: [], runs: [], templates: [TEMPLATE] }, hire)

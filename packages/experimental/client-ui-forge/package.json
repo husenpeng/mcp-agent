@@ -1,0 +1,137 @@
+{
+  "name": "@tomato/experimental-client-ui-forge",
+  "description": "Sidebar panel for a Session's change requests, with a worktree option for new Sessions and its Host Remote",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/experimental/client-ui-forge"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./remote": {
+      "types": "./lib/typert.remote-client.d.ts",
+      "default": "./lib/typert.remote-client.js"
+    },
+    "./typert": {
+      "types": "./lib/typert.host.d.ts",
+      "default": "./lib/typert.host.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json",
+    "./types": {
+      "types": "./lib/types/types.d.ts"
+    }
+  },
+  "tomato": {
+    "client": {
+      "inject": [
+        "@tomato/api-remotes",
+        "@tomato/client-locale",
+        "@tomato/client-ui-conversation",
+        "@tomato/client-ui-layout",
+        "@tomato/client-ui-plugin-manager",
+        "@tomato/client-ui-settings",
+        "@tomato/client-ui-sidebar-right",
+        "@tomato/client-ui-workspace"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@tomato/cordis": "workspace:~",
+    "@tomato/experimental-worktree": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/timeout": "workspace:*",
+    "@tomato/experimental-forge": "workspace:*",
+    "@tomato/fs": "workspace:*"
+  },
+  "dependencies": {
+    "@tomato/schemastery": "workspace:~",
+    "@tomato/util-values": "workspace:*",
+    "diff": "^9.0.0",
+    "zod": "4.6.6",
+    "@tomato/typert-protocol": "workspace:*",
+    "@tomato/storage-domain": "workspace:*",
+    "picomatch": "^4.0.7"
+  },
+  "devDependencies": {
+    "@tomato/cordis": "workspace:~",
+    "@tomato/agent": "workspace:*",
+    "@tomato/agent-loop-testkit": "workspace:*",
+    "@tomato/api-remotes": "workspace:*",
+    "@tomato/api-session-controller": "workspace:*",
+    "@tomato/client-locale": "workspace:*",
+    "@tomato/client-store": "workspace:*",
+    "@tomato/client-test-runtime": "workspace:*",
+    "@tomato/client-ui-conversation": "workspace:*",
+    "@tomato/client-ui-layout": "workspace:*",
+    "@tomato/client-ui-plugin-manager": "workspace:*",
+    "@tomato/client-ui-primitives": "workspace:*",
+    "@tomato/client-ui-renderer": "workspace:*",
+    "@tomato/client-ui-session": "workspace:*",
+    "@tomato/client-ui-settings": "workspace:*",
+    "@tomato/client-ui-sidebar-right": "workspace:*",
+    "@tomato/client-ui-slots": "workspace:*",
+    "@tomato/client-ui-workspace": "workspace:*",
+    "@tomato/experimental-forge": "workspace:*",
+    "@tomato/experimental-forge-session": "workspace:*",
+    "@tomato/experimental-worktree": "workspace:*",
+    "@tomato/fs": "workspace:*",
+    "@tomato/fs-local": "workspace:*",
+    "@tomato/llm": "workspace:*",
+    "@tomato/sandbox": "workspace:*",
+    "@tomato/sandbox-local": "workspace:*",
+    "@tomato/sandbox-policy": "workspace:*",
+    "@tomato/session": "workspace:*",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/subprocess": "workspace:*",
+    "@tomato/subprocess-local": "workspace:*",
+    "@tomato/system-prompt": "workspace:*",
+    "@tomato/util-workspace-path": "workspace:*",
+    "@tomato/working-directory": "workspace:*",
+    "@testing-library/react": "^16.3.3",
+    "clsx": "^2.1.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@tomato/timeout": "workspace:*",
+    "@tomato/session-projection-cache": "workspace:*",
+    "@tomato/session-query": "workspace:*",
+    "@tomato/api-remote-access": "workspace:*",
+    "@types/picomatch": "^4.0.3"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "lib/typert.host.js",
+    "lib/typert.host.d.ts",
+    "lib/typert.remote-client.js",
+    "lib/typert.remote-client.d.ts",
+    "lib/typert.remote-client.d.ts.map",
+    "src",
+    "lib/typert.host.d.ts.map"
+  ]
+}

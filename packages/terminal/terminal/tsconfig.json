@@ -19,6 +19,10 @@
     },
     {
       "path": "../../util/branded"
+    },
+    {
+      "path": "../../util/error"
     }
-  ]
+  ],
+  "files": []
 }

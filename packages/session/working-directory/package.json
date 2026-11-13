@@ -1,7 +1,7 @@
 {
   "name": "@tomato/working-directory",
   "description": "Session working directories with durable changes and model context",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -25,7 +25,10 @@
   "files": [
     "locale/*.json",
     "lib/index.js",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
   ],
   "license": "MIT",
   "peerDependencies": {
@@ -35,7 +38,8 @@
     "@tomato/llm": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/session-projection": "workspace:*",
-    "@tomato/system-prompt": "workspace:*"
+    "@tomato/system-prompt": "workspace:*",
+    "@tomato/error": "workspace:*"
   },
   "devDependencies": {
     "@tomato/sandbox-policy": "workspace:*",
@@ -51,10 +55,11 @@
     "@tomato/fs-local": "workspace:*",
     "@tomato/tool-testkit": "workspace:*",
     "@tomato/tool-working-directory": "workspace:*",
-    "@tomato/tools": "workspace:*"
+    "@tomato/tools": "workspace:*",
+    "@tomato/error": "workspace:*"
   },
   "dependencies": {
     "@tomato/schemastery": "workspace:~",
-    "zod": "^4.4.3"
+    "zod": "4.6.6"
   }
 }

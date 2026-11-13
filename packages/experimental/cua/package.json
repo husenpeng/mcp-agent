@@ -1,7 +1,7 @@
 {
   "name": "@tomato/cua",
   "description": "Shared Computer Use application objects, authorization, and logged tool execution",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -52,6 +52,22 @@
     "./client": {
       "types": "./lib/types/client/index.d.ts",
       "default": "./lib/client.js"
+    },
+    "./config": {
+      "types": "./lib/types/config.d.ts",
+      "default": "./lib/config.js"
+    },
+    "./native-schema": {
+      "types": "./lib/types/native-schema.d.ts",
+      "default": "./lib/native-schema.js"
+    },
+    "./native-build": {
+      "types": "./lib/types/native-build.d.ts",
+      "default": "./lib/native-build.js"
+    },
+    "./guidance": {
+      "types": "./lib/types/guidance.d.ts",
+      "default": "./lib/guidance.js"
     }
   },
   "files": [
@@ -63,28 +79,43 @@
     "lib/bridge.js",
     "lib/native-client.js",
     "lib/protocol.js",
+    "lib/config.js",
+    "lib/native-schema.js",
+    "lib/native-build.js",
+    "lib/guidance.js",
     "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
     "lib/typert.host.js",
     "lib/typert.host.d.ts",
     "lib/typert.remote-client.js",
-    "lib/typert.remote-client.d.ts"
+    "lib/typert.remote-client.d.ts",
+    "lib/typert.remote-client.d.ts.map",
+    "src",
+    "lib/typert.host.d.ts.map"
   ],
   "license": "MIT",
   "peerDependencies": {
     "@tomato/cordis": "workspace:~",
+    "@tomato/error": "workspace:*",
     "@tomato/user-questions": "workspace:*",
     "@tomato/attachment": "workspace:*",
-    "@tomato/scope": "workspace:*"
+    "@tomato/scope": "workspace:*",
+    "@tomato/ptc-runtime-node": "workspace:*",
+    "@tomato/tool-executor-ptc": "workspace:*"
   },
   "dependencies": {
     "@tomato/schemastery": "workspace:~",
-    "zod": "^4.4.3",
+    "zod": "4.6.6",
     "@tomato/atomic-write": "workspace:*",
     "@tomato/typert-protocol": "workspace:*",
-    "@tomato/computer-use": "workspace:*"
+    "@tomato/computer-use": "workspace:*",
+    "@tomato/storage-domain": "workspace:*"
   },
   "devDependencies": {
     "@tomato/working-directory": "workspace:*",
+    "@tomato/tool-executor-native": "workspace:*",
+    "@tomato/tool-executor-ptc": "workspace:*",
     "@tomato/cordis": "workspace:~",
     "@tomato/cordis-plugin-include": "workspace:~",
     "@tomato/cordis-plugin-loader": "workspace:~",
@@ -93,6 +124,7 @@
     "@tomato/agent-loop-testkit": "workspace:*",
     "@tomato/attachment": "workspace:*",
     "@tomato/attachment-local": "workspace:*",
+    "@tomato/error": "workspace:*",
     "@tomato/llm": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/session-projection": "workspace:*",
@@ -107,7 +139,6 @@
     "@tomato/sandbox-policy": "workspace:*",
     "sharp": "^0.35.3",
     "@tomato/ptc-runtime": "workspace:*",
-    "@tomato/settings": "workspace:*",
     "@tomato/user-questions": "workspace:*",
     "@tomato/app-boot": "workspace:*",
     "@tomato/config-editor": "workspace:*",
@@ -132,6 +163,8 @@
     "@tomato/loader-smoke": "workspace:*",
     "@tomato/util-values": "workspace:*",
     "@tomato/branded": "workspace:*",
+    "@tomato/storage": "workspace:*",
+    "@tomato/storage-json": "workspace:*",
     "@tomato/client-ui-user-questions": "workspace:*",
     "@tomato/client-ui-approval": "workspace:*",
     "@tomato/client-ui-conversation": "workspace:*"

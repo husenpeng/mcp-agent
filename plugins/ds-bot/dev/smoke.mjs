@@ -20,7 +20,7 @@ if (!name || !port) {
 }
 const outFile = rest[0] === '--out' ? rest[1] : undefined
 const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))))
-const HOME = join(ROOT, `.dsh-test-${name}`)
+const HOME = join(ROOT, `.tomato-test-${name}`)
 const BASE = `http://127.0.0.1:${port}`
 const QUIET_MS = 2500
 const STEP_TIMEOUT_MS = 120_000
@@ -191,8 +191,8 @@ await step('Chief creates Writer, who replies', () => send(chief().id, '创建�
     ?? expect(kinds.includes('request') && kinds.includes('reply'), `expected a request and a reply, got ${kinds}`)
 })
 
-// The mock calls dsh's ask_user_question for 阻塞提问 whenever the request offers it.
-await step('a Bot is not offered dsh\'s blocking question tool', () => send(botNamed('Writer').id, '阻塞提问'), (_value, calls) => {
+// The mock calls tomato's ask_user_question for 阻塞提问 whenever the request offers it.
+await step('a Bot is not offered tomato\'s blocking question tool', () => send(botNamed('Writer').id, '阻塞提问'), (_value, calls) => {
   const asked = calls.some(call => (call.out ?? []).some(block => block.type === 'tool_use' && block.name === 'ask_user_question'))
   return expect(!asked, 'Writer called ask_user_question')
     ?? expect(saidText(calls, /^收到：阻塞提问/), 'expected Writer to answer in its reply')
@@ -217,7 +217,7 @@ await step('the view answer reaches Writer and clears the card', () => {
 }, (_value, calls) => {
   const chat = botNamed('Writer').sessionId ?? botNamed('Writer').id
   return expect(state().views?.[chat] === undefined, 'the view is still open')
-    // DSH may prepend whitespace to the reply payload.
+    // TOMATO may prepend whitespace to the reply payload.
     ?? expect(calls.some(call => call.last?.trimStart().startsWith('{"kind":"answer_to_pending_view"')), 'the answer did not arrive as the Bot\'s next message')
 })
 
@@ -363,7 +363,7 @@ await step('update Writer', () => api('update-bot', { id: botNamed('Writer').id,
   return expect(writer.role === 'Copywriter' && writer.instructions === 'Write the copy.', 'update not saved')
 })
 
-// dsh keeps each Session under a folder named after its cwd. A change of working folder
+// tomato keeps each Session under a folder named after its cwd. A change of working folder
 // moves the Bot's own chat on to a fresh part made there; the fresh part then stays put.
 // The native realpath is the one DS Bot saves; on Windows the JS one keeps 8.3 short names.
 const project = realpathSync.native(mkdtempSync(join(tmpdir(), 'ds-bot-smoke-folder-')))

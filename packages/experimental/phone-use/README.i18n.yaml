@@ -1,0 +1,64 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/phone-use/README.md
+/:
+  en: 4fc7be2b98f02d9f
+  zh: de1c78afd59a9448
+/tomato-experimental-phone-use:
+  en: 991890b0b82fa3b4
+  zh: db1f2dba1c6acba5
+/tomato-experimental-phone-use/summary:
+  en: aaf2d8107c30a3af
+  zh: 4e8693d7b344bf14
+/tomato-experimental-phone-use/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 1db86285abf6c499
+/tomato-experimental-phone-use/use-this-package:
+  en: 979243b62356f24f
+  zh: 65eba388bd65e881
+/tomato-experimental-phone-use/use-this-package/when-to-choose-it:
+  en: 605bd828be457dc4
+  zh: 27278a3a3c8fd8ce
+/tomato-experimental-phone-use/use-this-package/minimal-configuration:
+  en: 1c5779394a3ccdbe
+  zh: 73751e9dce931e1e
+/tomato-experimental-phone-use/understand-the-implementation:
+  en: aa19371769032b9e
+  zh: 73700ff2d191235f
+/tomato-experimental-phone-use/further-exploration:
+  en: 5cb1705629b22c94
+  zh: d1f10308ff0113ba
+/tomato-experimental-phone-use/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/tomato-experimental-phone-use/model-experience/phone-observe:
+  en: 5922bf72435b6ad0
+  zh: 5922bf72435b6ad0
+/tomato-experimental-phone-use/model-experience/phone-observe/what-the-model-sees:
+  en: b0c08697bb10e19d
+  zh: b8f7ce7ad41f3a56
+/tomato-experimental-phone-use/model-experience/phone-observe/token-effect:
+  en: 1d814d8de0986753
+  zh: b925a9f56fffba91
+/tomato-experimental-phone-use/model-experience/phone-observe/kv-cache-effect:
+  en: edc1d026a69c58a2
+  zh: 225a64b1c17f95fd
+/tomato-experimental-phone-use/model-experience/phone-act:
+  en: 0a40d6e82c2ceb4b
+  zh: 0a40d6e82c2ceb4b
+/tomato-experimental-phone-use/model-experience/phone-act/what-the-model-sees:
+  en: 5576faea5c6c26d7
+  zh: 85ca28561b126f17
+/tomato-experimental-phone-use/model-experience/phone-act/token-effect:
+  en: e463ededbd5ca902
+  zh: 4d9a3b187a881600
+/tomato-experimental-phone-use/model-experience/phone-act/kv-cache-effect:
+  en: e6589817cc7c7213
+  zh: d4e05690ab551870
+/tomato-experimental-phone-use/known-limitations-and-deferred-work:
+  en: ffd86a9a507f7b6a
+  zh: c7ebb0e0fb67c5f3
+/tomato-experimental-phone-use/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 68f566a0cec50eb4

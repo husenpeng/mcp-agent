@@ -100,6 +100,9 @@ kind: "package-group"
 | [`inspector-profile`](inspector-profile/README.zh.md) | 用于 Session 日志与 Chat 节点检查的可选 Web 组合包 | — |
 | [`robot`](robot/README.zh.md) | 有版本机器人、run 与 agent-to-agent 契约的服务定义 | `ctx.robots` |
 | [`robot-local`](robot-local/README.zh.md) | 存储支持的机器人规格注册、实例化与 run 控制 | `ctx.robots` |
+| [`experimental-robot-room`](experimental-robot-room/README.zh.md) | Robot Room 规格、A2A v2、准入、循环守卫、预算与成员上下文 | `ctx.rooms` |
+| [`experimental-robot-room-local`](experimental-robot-room-local/README.zh.md) | 持久化的 Robot Room provider，带有界唤醒调度与持久成员 Session | `ctx.rooms` |
+| [`experimental-robot-room-remote`](experimental-robot-room-remote/README.zh.md) | 在可选客户端装配中挂载生成的 room Remote 贡献 | — |
 | [`robot-runtime`](robot-runtime/README.zh.md) | 通过组合的 Agent 执行排队的机器人 run 并记录结果 | — |
 | [`robot-triggers`](robot-triggers/README.zh.md) | 从 cron 调度与机器人事件主题启动机器人 run | — |
 | [`tool-agent-team`](tool-agent-team/README.zh.md) | 让模型创建、发消息与协调 teammate 的九个工具 | 按作用域注册工具到 `ctx.tools` |

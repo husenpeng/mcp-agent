@@ -15,7 +15,7 @@ Each package entry labels its data with three identifiers: `inject` lists the se
 ## `@tomato/account-gateway`
 
 - `inject`: `tomatoAccount`
-- `source`: [`packages/tomato/account-gateway/src/index.ts:19`](../packages/tomato/account-gateway/src/index.ts)
+- `source`: [`packages/tomato/account-gateway/src/index.ts:20`](../packages/tomato/account-gateway/src/index.ts)
 
 ```ts config-catalog
 /** Provider configuration. */
@@ -132,7 +132,7 @@ export interface Config {
 
 - `inject`: `agents` · `sessions` · `llm` · `tools` · `systemPrompt` · `sessionProjections`
 - `refs`: [`AgentOptions`](subsystems/core.md) · [`SessionId`](subsystems/core.md) · `Volatile` (`@tomato/cosmokit`)
-- `source`: [`packages/core/agent-loop/src/index.ts:253`](../packages/core/agent-loop/src/index.ts)
+- `source`: [`packages/core/agent-loop/src/index.ts:252`](../packages/core/agent-loop/src/index.ts)
 
 ```ts config-catalog
 /** Agent-loop plugin configuration. */
@@ -192,6 +192,25 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@tomato/agent-preset-registry -->
 
+<!-- BEGIN GENERATED config-catalog:@tomato/agent-team -->
+<a id="tomatoagent-team"></a>
+
+## `@tomato/agent-team`
+
+- `inject`: `agents` · `sessions` · `sessionPersistence` · `sessionProjections` · `subagents`
+- `source`: [`packages/team/agent-team/src/types.ts:136`](../packages/team/agent-team/src/types.ts)
+
+```ts config-catalog
+/** Team-service defaults and deployment limits. */
+export interface Config {
+  /** Enable new roots without a saved selection before their first step; defaults to false. Resumes retain saved mode. */
+  readonly defaultEnabled?: boolean
+  /** Maximum non-deleted tasks retained by one Team. */
+  readonly maxTasks?: number
+}
+```
+<!-- END GENERATED config-catalog:@tomato/agent-team -->
+
 <!-- BEGIN GENERATED config-catalog:@tomato/agent-tool-presentation -->
 <a id="tomatoagent-tool-presentation"></a>
 
@@ -224,7 +243,7 @@ export interface Config {
 ## `@tomato/api-gateway`
 
 - `inject`: `typert` · `remoteAccess`
-- `source`: [`packages/api/gateway/src/index.ts:156`](../packages/api/gateway/src/index.ts)
+- `source`: [`packages/api/gateway/src/index.ts:158`](../packages/api/gateway/src/index.ts)
 
 ```ts config-catalog
 /** Gateway transport configuration. */
@@ -263,8 +282,8 @@ export interface Config {
 
 ## `@tomato/api-session-controller`
 
-- `inject`: `agentDefaultModel` · `agents` · `attachments` · `fileUploads` · `fs` · `llm` · `remoteAccess` · `sessions` · `sessionProjections` · `sessionQuery` · `typert` · `workspaceRegistry`
-- `source`: [`packages/api/session-controller/src/index.ts:111`](../packages/api/session-controller/src/index.ts)
+- `inject`: `agentDefaultModel` · `agents` · `attachments` · `fileUploads` · `fs` · `llm` · `remoteAccess` · `sessions` · `sessionProjections` · `sessionQuery` · `typert` · `typertGateway` · `workspaceRegistry`
+- `source`: [`packages/api/session-controller/src/index.ts:110`](../packages/api/session-controller/src/index.ts)
 
 ```ts config-catalog
 /** Session Controller deployment policy. */
@@ -299,7 +318,7 @@ export interface SettingsControllerInternals {
 ## `@tomato/api-terminal-controller`
 
 - `inject`: `subprocess` · `sandboxPolicy` · `workingDirectory` · `typert`
-- `source`: [`packages/api/terminal-controller/src/index.ts:27`](../packages/api/terminal-controller/src/index.ts)
+- `source`: [`packages/api/terminal-controller/src/index.ts:32`](../packages/api/terminal-controller/src/index.ts)
 
 ```ts config-catalog
 /** Deployment limits and an optional shell profile. */
@@ -317,6 +336,11 @@ export interface Config {
   readonly shellCandidates: string[]
   /** Maximum retained terminals and pending allocations per Session. */
   readonly maxTerminals: number
+  /**
+   * Maximum running Agent-controlled terminals and pending Agent allocations per Session; `maxTerminals` still bounds
+   * every terminal, including exited ones and failed allocations awaiting cleanup.
+   */
+  readonly maxAgentTerminals: number
   /** Maximum terminal width in columns. */
   readonly maxCols: number
   /** Maximum terminal height in rows. */
@@ -364,10 +388,10 @@ export interface Config {
 ## `@tomato/api-workspace-files`
 
 - `inject`: `fs` · `sandboxPolicy` · `sessions` · `typert`
-- `source`: [`packages/api/workspace-files/src/index.ts:70`](../packages/api/workspace-files/src/index.ts)
+- `source`: [`packages/api/workspace-files/src/index.ts:74`](../packages/api/workspace-files/src/index.ts)
 
 ```ts config-catalog
-/** Deployment caps on one page or one listing. */
+/** Deployment caps on one page, one listing, or one search. */
 export interface Config {
   /**
    * Inclusive byte cap on one page's text and on one byte window.
@@ -383,6 +407,22 @@ export interface Config {
   readonly maxLines: number
   /** Cap on returned directory entries; the rest is dropped and reported cut. */
   readonly maxEntries: number
+  /** Budgets on one search's matches, listed files, deadline and ripgrep process. */
+  readonly search: SearchLimits
+}
+
+/** Deployment budgets on one search's results, listed files and process. */
+export interface SearchLimits {
+  /** Cap on returned matches; additional matches report truncation after the bounded scan. */
+  readonly maxResults: number
+  /** Cap on files considered from rg output; an extra file terminates rg and reports the search incomplete. */
+  readonly maxEntries: number
+  /** Search process termination grace in milliseconds. */
+  readonly graceMs: number
+  /** Search deadline in milliseconds; expiry rejects rather than returning partial results. */
+  readonly timeoutMs: number
+  /** Byte cap on retained search-process stderr diagnostics. */
+  readonly stderrMaxBytes: number
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/api-workspace-files -->
@@ -727,13 +767,30 @@ export type ThemePreference = typeof THEME_PREFERENCES[number]
 ```
 <!-- END GENERATED config-catalog:@tomato/client-ui-theme -->
 
+<!-- BEGIN GENERATED config-catalog:@tomato/client-ui-trajectory -->
+<a id="tomatoclient-ui-trajectory"></a>
+
+## `@tomato/client-ui-trajectory`
+
+- `inject`: `sessions` · `typert`
+- `source`: [`packages/client/ui-trajectory/src/index.ts:25`](../packages/client/ui-trajectory/src/index.ts)
+
+```ts config-catalog
+/** Count limit for each live Session's transient tool results. */
+export interface Config {
+  /** Maximum retained results per Session, including values awaiting a result event. */
+  maxResultsPerSession: number
+}
+```
+<!-- END GENERATED config-catalog:@tomato/client-ui-trajectory -->
+
 <!-- BEGIN GENERATED config-catalog:@tomato/compaction-basic -->
 <a id="tomatocompaction-basic"></a>
 
 ## `@tomato/compaction-basic`
 
 - `inject`: `llm` · `tokenMeter` · `sessions`
-- `source`: [`packages/compaction/compaction-basic/src/types.ts:40`](../packages/compaction/compaction-basic/src/types.ts)
+- `source`: [`packages/compaction/compaction-basic/src/types.ts:46`](../packages/compaction/compaction-basic/src/types.ts)
 
 ```ts config-catalog
 /** Basic compaction configuration with an optional exact-target policy table. */
@@ -838,28 +895,25 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@tomato/credentials-local -->
 
-<!-- BEGIN GENERATED config-catalog:@tomato/experimental-agent-team -->
-<a id="tomatoexperimental-agent-team"></a>
+<!-- BEGIN GENERATED config-catalog:@tomato/cua-windows -->
+<a id="tomatocua-windows"></a>
 
-## `@tomato/experimental-agent-team`
+## `@tomato/cua-windows`
 
-- `inject`: `agents` · `sessions` · `sessionPersistence` · `sessionProjections` · `subagents`
-- `source`: [`packages/experimental/agent-team/src/types.ts:153`](../packages/experimental/agent-team/src/types.ts)
+- `inject`: `computerUse` · `tools` · `systemPrompt` · `subprocess` · `agents`
+- `refs`: [`CuaConfig`](../packages/experimental/cua/src/index.ts)
+- `source`: [`packages/experimental/cua-windows/src/index.ts:32`](../packages/experimental/cua-windows/src/index.ts)
 
 ```ts config-catalog
-/** Team-service deployment limits. */
-export interface Config {
-  /** Maximum immutable teammate names retained by one Team. */
-  readonly maxMembers?: number
-  /** Maximum non-deleted tasks retained by one Team. */
-  readonly maxTasks?: number
-  /** Maximum UTF-8 bytes in one complete sender-framed delivery. */
-  readonly maxMessageBytes?: number
-  /** Maximum milliseconds for shared operation settlement and for each Team child drain. */
-  readonly disposalTimeoutMs?: number
+/** Windows native waiting policy, alongside shared CUA resource limits. */
+export interface Config extends CuaConfig {
+  /** Windows PowerShell executable used to query WSL interoperation and the Windows architecture. */
+  windowsPowerShellPath: string
+  /** Milliseconds between application-readiness and clipboard-release observations. */
+  pollIntervalMs: number
 }
 ```
-<!-- END GENERATED config-catalog:@tomato/experimental-agent-team -->
+<!-- END GENERATED config-catalog:@tomato/cua-windows -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-api-speech-to-text -->
 <a id="tomatoexperimental-api-speech-to-text"></a>
@@ -928,8 +982,6 @@ export interface Config {
   mode: 'launch' | 'attach'
   /** CDP HTTP or WebSocket endpoint, required only for attach mode. */
   cdpEndpoint?: string
-  /** Optional Stagehand extension id for an existing browser. */
-  extensionId?: string
   /** Installed Chrome/Chromium executable used in launch mode. */
   executablePath?: string
   /** Hide an owned browser's window. */
@@ -1007,6 +1059,63 @@ export interface CotTranslationPreferences {
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-client-ui-cot-translation -->
 
+<!-- BEGIN GENERATED config-catalog:@tomato/experimental-client-ui-forge -->
+<a id="tomatoexperimental-client-ui-forge"></a>
+
+## `@tomato/experimental-client-ui-forge`
+
+- `inject`: `forge` · `forgeSession` · `sessionProjections` · `workingDirectory` · `fs` · `subprocess` · `sandbox` · `sandboxPolicy` · `agents`
+- `source`: [`packages/experimental/client-ui-forge/src/types.ts:381`](../packages/experimental/client-ui-forge/src/types.ts)
+
+```ts config-catalog
+/** Host settings of the forge panel Remote. */
+export interface Config {
+  /** Git executable name or absolute path in the Session's execution world. */
+  gitCommand?: string
+  /** Deadline in milliseconds for one Git command, including confinement. */
+  gitTimeoutMs?: number
+  /** Termination grace period in milliseconds for each Git process. */
+  graceMs?: number
+  /** Maximum captured bytes per Git output stream. */
+  maxOutputBytes?: number
+  /** Deadline in milliseconds for one provider sign-in probe. */
+  readinessTimeoutMs?: number
+  /** Most local branches listed as worktree bases, and most branches in each group of base branches listed for the `branch` scope. */
+  maxBranches?: number
+  /**
+   * Prefix of the branch and checkout directory created for a Session worktree; the first eight
+   * hexadecimal digits of the Session id's UUID, a hyphen, and four random hexadecimal digits follow it.
+   */
+  worktreePrefix?: string
+  /** Largest diff, file read to show unchanged lines, or list of base branch refs, in bytes. */
+  maxDiffBytes?: number
+  /** Most untracked files a local diff or the local changes card includes. */
+  maxUntrackedFiles?: number
+  /** Most UTF-8 bytes of change request diffs kept in memory for later reads at the same head commit and base branch. */
+  maxCachedDiffBytes?: number
+  /** Most commits of the `branch` scope listed; a longer branch lists its newest ones. */
+  maxCommits?: number
+  /**
+   * Globs of files in the `test` layer, which the changes view can hide, beside the built-in rules and checked before
+   * them; matched against repository-relative paths with dot files included. A repository's `.gitattributes` overrides both.
+   */
+  testPaths?: string[]
+  /**
+   * Globs of files in the `interface` layer beside the built-in rules, matched like `testPaths`; checked after
+   * `testPaths` and before the built-in rules.
+   */
+  interfacePaths?: string[]
+  /** Most UTF-8 bytes, as JSON, of change request review threads kept in memory for later reads at the same head commit and update time. */
+  maxCachedReviewBytes?: number
+  /**
+   * Age in milliseconds at which review threads kept in memory are read from the code host again; a GitHub pull
+   * request's update time does not change when a thread is resolved.
+   */
+  reviewRefreshMs?: number
+}
+```
+<!-- END GENERATED config-catalog:@tomato/experimental-client-ui-forge -->
+
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-computer-use-cua-driver-mcp -->
 <a id="tomatoexperimental-computer-use-cua-driver-mcp"></a>
 
@@ -1038,11 +1147,28 @@ export interface Config {
 
 - `inject`: `computerUse` · `tools` · `systemPrompt` · `subprocess` · `agents`
 - `refs`: [`CuaConfig`](../packages/experimental/cua/src/index.ts)
-- `source`: [`packages/experimental/cua-macos/src/index.ts:16`](../packages/experimental/cua-macos/src/index.ts)
+- `source`: [`packages/experimental/cua-macos/src/index.ts:34`](../packages/experimental/cua-macos/src/index.ts)
 
 ```ts config-catalog
-/** Native preparation, operation bounds, and profile-local application grants. */
-export type Config = CuaConfig
+/** Native preparation, source-build signing, operation bounds, and profile-local application grants. */
+export interface Config extends CuaConfig {
+  /** Interval in milliseconds between permission and position checks while the native guide is open. */
+  permissionPollIntervalMs: number
+  /**
+   * Source-build signing: `ad-hoc` (default) binds grants to the code hash;
+   * an object selects an existing certificate in an explicitly configured keychain.
+   * Installed packages and `helperPath` keep their own signature.
+   */
+  sourceSigning: SourceSigning
+}
+
+/** Signature selected for source builds; certificates are created and unlocked by the developer. */
+export type SourceSigning = 'ad-hoc' | {
+  /** Existing codesign certificate name or SHA-1 fingerprint, without a leading dash or whitespace. */
+  identity: string
+  /** Absolute keychain path. */
+  keychain: string
+}
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-cua-macos -->
 
@@ -1104,10 +1230,81 @@ export interface Config {
   /** `*`-wildcard tool-name patterns that require approval before each call. */
   approvalTools?: string[] | Volatile<string[] | undefined>
   /** Ledger scope: goal rounds only, or every turn of the Session. */
-  sessions?: 'goal' | 'all' | Volatile<'goal' | 'all' | undefined>
+  sessions?: string | Volatile<string | undefined>
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-focus -->
+
+<!-- BEGIN GENERATED config-catalog:@tomato/experimental-forge -->
+<a id="tomatoexperimental-forge"></a>
+
+## `@tomato/experimental-forge`
+
+- `source`: [`packages/experimental/forge/src/types.ts:588`](../packages/experimental/forge/src/types.ts)
+
+```ts config-catalog
+/** Poll cadence and fetch deadline for watched change requests. */
+export interface Config {
+  /** Poll interval in milliseconds while checks run or mergeability is unknown. */
+  activeIntervalMs?: number
+  /** Poll interval in milliseconds for a closed request or an open request whose checks have settled. */
+  idleIntervalMs?: number
+  /** Largest delay in milliseconds between polls after consecutive failures. */
+  maxBackoffMs?: number
+  /** Deadline in milliseconds for one provider fetch. */
+  fetchTimeoutMs?: number
+}
+```
+<!-- END GENERATED config-catalog:@tomato/experimental-forge -->
+
+<!-- BEGIN GENERATED config-catalog:@tomato/experimental-forge-github -->
+<a id="tomatoexperimental-forge-github"></a>
+
+## `@tomato/experimental-forge-github`
+
+- `inject`: `forge`
+- `source`: [`packages/experimental/forge-github/src/index.ts:14`](../packages/experimental/forge-github/src/index.ts)
+
+```ts config-catalog
+/** GitHub CLI executable, served hosts, and invocation limits. */
+export interface Config {
+  /** GitHub CLI executable name or absolute host path. */
+  ghCommand?: string
+  /** Host names this provider serves; list GitHub Enterprise hosts explicitly. */
+  hosts?: string[]
+  /** Deadline in milliseconds for one `gh` invocation. */
+  timeoutMs?: number
+  /** Maximum captured bytes per `gh` output stream and combined JSON bytes of one complete check read or review read. */
+  maxOutputBytes?: number
+  /**
+   * Most review threads counted per pull request in one status read, which reports a lower bound past it, and read in
+   * one review read, which reports itself truncated past it.
+   */
+  maxReviewThreads?: number
+  /** Most commits one pull request commit listing returns; GitHub lists at most 250 commits of a pull request. */
+  maxCommits?: number
+  /** Most files whose viewed marks one read lists; GitHub lists at most 3,000 files of a pull request. */
+  maxViewedFiles?: number
+}
+```
+<!-- END GENERATED config-catalog:@tomato/experimental-forge-github -->
+
+<!-- BEGIN GENERATED config-catalog:@tomato/experimental-forge-session -->
+<a id="tomatoexperimental-forge-session"></a>
+
+## `@tomato/experimental-forge-session`
+
+- `inject`: `forge` · `sessions` · `sessionProjections`
+- `source`: [`packages/experimental/forge-session/src/types.ts:91`](../packages/experimental/forge-session/src/types.ts)
+
+```ts config-catalog
+/** Deployment settings of `forgeSession`. */
+export interface Config {
+  /** Deadline in milliseconds for one change request lookup after a push. */
+  discoveryTimeoutMs?: number
+}
+```
+<!-- END GENERATED config-catalog:@tomato/experimental-forge-session -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-inspector -->
 <a id="tomatoexperimental-inspector"></a>
@@ -1144,7 +1341,7 @@ export interface InspectorOptions {
   readonly maxJournalBytes?: number
   /** Maximum active and completed fetch requests retained by the Worker. */
   readonly maxRetainedRequests?: number
-  /** Maximum encoded bytes accepted in one source transport frame. */
+  /** Maximum encoded bytes accepted in one source transport frame; values below 5121 leave no Cordis snapshot budget and fail. */
   readonly maxSourceFrameBytes?: number
   /** Maximum observation records accepted in one source batch. */
   readonly maxSourceRecordsPerFrame?: number
@@ -1185,7 +1382,7 @@ export interface InspectorOptions {
 
 - `inject`: `storageDomain`
 - `refs`: `Volatile` (`@tomato/cordis`)
-- `source`: [`packages/experimental/memory/src/index.ts:81`](../packages/experimental/memory/src/index.ts)
+- `source`: [`packages/experimental/memory/src/index.ts:102`](../packages/experimental/memory/src/index.ts)
 
 ```ts config-catalog
 /** Deployment limits for stored and recalled memory; Loader publishes each as a live reference. */
@@ -1218,6 +1415,30 @@ export interface Config {
   historyEpisodes?: number | Volatile<number>
   /** Cached embedding vectors retained across owners and projects; `0` disables persistence. */
   maxEmbeddingVectors?: number | Volatile<number>
+  /** Days a superseded record version is retained; `0` keeps every version. */
+  versionRetentionDays?: number | Volatile<number>
+  /** Most superseded versions retained per identity; the current version does not count. */
+  maxVersionsPerRecord?: number | Volatile<number>
+  /** Days a summary episode is retained; observations use `episodeRetentionDays`. */
+  summaryRetentionDays?: number | Volatile<number>
+  /** Minimum milliseconds between medium change checks; `0` never re-reads another process's writes. */
+  refreshIntervalMs?: number | Volatile<number>
+  /** Milliseconds a write waits for another Host process's memory write lock. */
+  writeLockTimeoutMs?: number | Volatile<number>
+  /** Milliseconds after which an abandoned write lock file is stolen. */
+  writeLockStaleMs?: number | Volatile<number>
+  /** SQLite sidecar path for FTS5 retrieval; absent keeps the in-memory scan. */
+  indexPath?: string
+  /** Embeddings one outbox drain submits; defaults to 32. */
+  indexEmbedBatch?: number
+  /** Delay before retrying a failed outbox batch; defaults to 5000 ms. */
+  indexEmbedRetryMs?: number
+  /** Optional sqlite-vec extension path, without the platform suffix. */
+  vecExtensionPath?: string
+  /** Directory that receives pruned records as monthly JSONL; absent deletes them. */
+  coldArchivePath?: string
+  /** Months of monthly cold-archive files retained; defaults to 6. */
+  coldArchiveRetentionMonths?: number
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-memory -->
@@ -1265,6 +1486,68 @@ export interface Config {
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-muse-insights -->
+
+<!-- BEGIN GENERATED config-catalog:@tomato/experimental-phone-use -->
+<a id="tomatoexperimental-phone-use"></a>
+
+## `@tomato/experimental-phone-use`
+
+- `inject`: `tools`
+- `source`: [`packages/experimental/phone-use/src/index.ts:31`](../packages/experimental/phone-use/src/index.ts)
+
+```ts config-catalog
+/** Plugin configuration. */
+export interface Config {
+  /** Deadline for one engine command; the Host cancels and fails it after this. */
+  commandTimeoutMs: number
+  /** Most elements one observation asks for. */
+  observeMaxElements: number
+  /** Most element lines either tool renders back to the model. */
+  maxRenderElements: number
+}
+```
+<!-- END GENERATED config-catalog:@tomato/experimental-phone-use -->
+
+<!-- BEGIN GENERATED config-catalog:@tomato/experimental-phone-use-macos -->
+<a id="tomatoexperimental-phone-use-macos"></a>
+
+## `@tomato/experimental-phone-use-macos`
+
+- `inject`: `subprocess`
+- `source`: [`packages/experimental/phone-use-macos/src/index.ts:31`](../packages/experimental/phone-use-macos/src/index.ts)
+
+```ts config-catalog
+/** Plugin configuration. */
+export interface Config {
+  /** Absolute path to `apps/ios`; the packaged Desktop ships no sources, so it must be set explicitly there. */
+  iosProjectDir: string
+  /** Device to manage; omitted when exactly one phone is attached. */
+  udid?: string
+  /** Derived data directory for the runner build. */
+  derivedDataDir?: string
+  /** Renew when the provisioning profile has less than this many hours left. */
+  renewBeforeHours: number
+  /** Watch interval in milliseconds; 0 disables the loop. */
+  checkIntervalMs: number
+  /** Launch backoff stages in milliseconds. */
+  launchBackoffMs: number[]
+  /** Deadline for one xcodebuild invocation. */
+  xcodebuildTimeoutMs: number
+  /** How the Host reaches the runner: `usb` owns a usbmuxd relay, `vpn` dials out. */
+  transport: 'usb' | 'vpn'
+  /** Loopback port the USB relay listens on. */
+  relayPort: number
+  /** The repository's usbmuxd relay script; defaults to `<iosProjectDir>/tests/usbmux-relay.mjs`. */
+  relayScript?: string
+  /** Host base URL injected into the runner environment; `vpn` transport only. */
+  hostBase?: string
+  /** Host-side environment variable holding the runner credential. */
+  credentialEnv: string
+  /** This device's Host identity; `vpn` transport only. */
+  deviceId?: string
+}
+```
+<!-- END GENERATED config-catalog:@tomato/experimental-phone-use-macos -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-ptc-runtime-python -->
 <a id="tomatoexperimental-ptc-runtime-python"></a>
@@ -1335,6 +1618,23 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-ptc-runtime-python -->
 
+<!-- BEGIN GENERATED config-catalog:@tomato/experimental-robot-room-local -->
+<a id="tomatoexperimental-robot-room-local"></a>
+
+## `@tomato/experimental-robot-room-local`
+
+- `inject`: `storageDomain`
+- `source`: [`packages/experimental/experimental-robot-room-local/src/index.ts:36`](../packages/experimental/experimental-robot-room-local/src/index.ts)
+
+```ts config-catalog
+/** Deployment limits for room execution. */
+export interface Config {
+  /** Most members one room may run at the same time. */
+  readonly maxConcurrentMembers?: number
+}
+```
+<!-- END GENERATED config-catalog:@tomato/experimental-robot-room-local -->
+
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-robot-runtime -->
 <a id="tomatoexperimental-robot-runtime"></a>
 
@@ -1342,7 +1642,7 @@ export interface Config {
 
 - `inject`: `agentDefaultModel` · `agents` · `robots` · `sessionProjections` · `sessions`
 - `refs`: `z` (`zod`)
-- `source`: [`packages/experimental/robot-runtime/src/index.ts:47`](../packages/experimental/robot-runtime/src/index.ts)
+- `source`: [`packages/experimental/robot-runtime/src/index.ts:49`](../packages/experimental/robot-runtime/src/index.ts)
 
 ```ts config-catalog
 /** Validated run-execution limits. */
@@ -1459,27 +1759,6 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@tomato/experimental-subagent-oar -->
 
-<!-- BEGIN GENERATED config-catalog:@tomato/experimental-tool-agent-team -->
-<a id="tomatoexperimental-tool-agent-team"></a>
-
-## `@tomato/experimental-tool-agent-team`
-
-- `inject`: `agents` · `agentTeams` · `tools` · `systemPrompt`
-- `source`: [`packages/experimental/tool-agent-team/src/index.ts:17`](../packages/experimental/tool-agent-team/src/index.ts)
-
-```ts config-catalog
-/** Tool routing configuration. */
-export interface Config {
-  /** Register `interrupt_agent` and its policy guidance. Defaults to true; false leaves the domain API available. */
-  readonly interrupt?: boolean
-  /** Continuable-subagent provider used for fresh teammates. */
-  readonly freshProvider?: string
-  /** Continuable-subagent provider used for completed-prefix fork teammates. */
-  readonly forkProvider?: string
-}
-```
-<!-- END GENERATED config-catalog:@tomato/experimental-tool-agent-team -->
-
 <!-- BEGIN GENERATED config-catalog:@tomato/experimental-tool-memory -->
 <a id="tomatoexperimental-tool-memory"></a>
 
@@ -1487,13 +1766,17 @@ export interface Config {
 
 - `inject`: `memory` · `tools` · `agents` · `commands` · `sessionProjections` · `llm`
 - `refs`: `Volatile` (`@tomato/cordis`)
-- `source`: [`packages/experimental/tool-memory/src/index.ts:113`](../packages/experimental/tool-memory/src/index.ts)
+- `source`: [`packages/experimental/tool-memory/src/index.ts:128`](../packages/experimental/tool-memory/src/index.ts)
 
 ```ts config-catalog
 /** Snapshot, write-justification, and query-expansion policy; each field is live-editable. */
 export interface Config {
   /** Maximum UTF-8 bytes of one rendered memory snapshot. */
   maxSnapshotBytes?: number | Volatile<number | undefined>
+  /** Most active workspace memories the snapshot adds for relevance to the request; 0 disables the block. */
+  maxRelevantRecords?: number | Volatile<number | undefined>
+  /** Lowest lexical match a saved memory needs to join the relevant block, from 0 to 1. */
+  minRelevantScore?: number | Volatile<number | undefined>
   /** Whether the snapshot adds a subject index of this workspace's memories. */
   projectIndex?: boolean | Volatile<boolean | undefined>
   /** Minimum user-perceived characters of a `user_quote` that can activate a write. */
@@ -1512,10 +1795,16 @@ export interface Config {
   maxAlternatives?: number | Volatile<number | undefined>
   /** Whether one bounded request captures durable statements from each finished turn as candidates. */
   capture?: boolean | Volatile<boolean | undefined>
+
+  /** Whether a quote-verified profile statement from capture becomes active immediately. */
+  captureProfileActive?: boolean | Volatile<boolean | undefined>
+  /** Maximum UTF-8 bytes of the tool activity sent to one capture request. */
+  captureMaxToolBytes?: number | Volatile<number | undefined>
   /** Explicit capture provider; omitted with `captureModel` uses the finished turn's model. */
   captureProvider?: string | Volatile<string | undefined>
   /** Explicit capture model; must be paired with `captureProvider`. */
   captureModel?: string | Volatile<string | undefined>
+
   /** Maximum UTF-8 bytes of the person messages sent to one capture request. */
   captureMaxInputBytes?: number | Volatile<number | undefined>
   /** Output-token cap of one capture request. */
@@ -1534,8 +1823,14 @@ export interface Config {
   episodeMaxTokens?: number | Volatile<number | undefined>
   /** End-to-end deadline of one episode capture in milliseconds. */
   episodeTimeoutMs?: number | Volatile<number | undefined>
+  /** Share of eligible tool calls that start one episode capture, from 0 to 1. */
+  episodeSampleRate?: number | Volatile<number | undefined>
+  /** Most episode captures one Session starts; `0` means unlimited. */
+  episodeSampleBudget?: number | Volatile<number | undefined>
   /** Maximum UTF-8 bytes of the injected project-history block. */
   maxHistoryBytes?: number | Volatile<number | undefined>
+  /** Lowest lexical match a project episode needs to enter the history or index block, from 0 to 1. */
+  minHistoryScore?: number | Volatile<number | undefined>
   /** Whether a broad glob is recorded as a deterministic project lesson. */
   lessonCapture?: boolean | Volatile<boolean | undefined>
   /** Path count at which a glob becomes a lesson. */
@@ -1623,12 +1918,15 @@ export type PaidTranslationProvider = 'deepseek-official'
 
 ## `@tomato/experimental-worktree`
 
-- `inject`: `workingDirectory` · `fs` · `subprocess` · `sandbox` · `sandboxPolicy`
-- `source`: [`packages/experimental/worktree/src/index.ts:19`](../packages/experimental/worktree/src/index.ts)
+- `inject`: `workingDirectory` · `fs` · `subprocess` · `sandbox` · `sandboxPolicy` · `sessionProjections`
+- `refs`: `Volatile` (`@tomato/cordis`)
+- `source`: [`packages/experimental/worktree/src/index.ts:36`](../packages/experimental/worktree/src/index.ts)
 
 ```ts config-catalog
-/** Worktree location, generated names, executables, and subprocess resource limits. */
+/** Worktree location, generated names, executables, subprocess resource limits, and the archive cleanup switch. */
 export interface Config {
+  /** Keep every checkout when its Session is archived; editable live from the Plugins page. */
+  retainOnArchive: Volatile<boolean>
   /** Relative checkout pool inside the source repository. */
   directory?: string
   /** Prefix for automatically generated branch and checkout names. */
@@ -1641,7 +1939,11 @@ export interface Config {
   timeoutMs?: number
   /** Subprocess termination grace in milliseconds. */
   graceMs?: number
-  /** Maximum captured bytes per subprocess output stream. */
+  /**
+   * Maximum captured bytes per subprocess output stream; archive inspection
+   * streams `git status`, and inspection and restoration stream the worktree
+   * listing, so it bounds only their stderr.
+   */
   maxOutputBytes?: number
 }
 ```
@@ -1653,7 +1955,7 @@ export interface Config {
 ## `@tomato/file-reference-local`
 
 - `inject`: `agents` · `workingDirectory`
-- `source`: [`packages/context/file-reference-local/src/index.ts:35`](../packages/context/file-reference-local/src/index.ts)
+- `source`: [`packages/context/file-reference-local/src/index.ts:27`](../packages/context/file-reference-local/src/index.ts)
 
 ```ts config-catalog
 /** Local file-reference discovery configuration. */
@@ -1673,7 +1975,7 @@ export interface Config {
 
 ## `@tomato/fs-local`
 
-- `source`: [`packages/fs/fs-local/src/index.ts:46`](../packages/fs/fs-local/src/index.ts)
+- `source`: [`packages/fs/fs-local/src/index.ts:51`](../packages/fs/fs-local/src/index.ts)
 
 ```ts config-catalog
 /** Configuration for the local filesystem backend. */
@@ -1696,7 +1998,7 @@ export interface Config {
 
 - `inject`: `sandboxPolicy`
 - `refs`: [`LocalConfig`](#tomatofs-local)
-- `source`: [`packages/fs/fs-sandbox/src/index.ts:50`](../packages/fs/fs-sandbox/src/index.ts)
+- `source`: [`packages/fs/fs-sandbox/src/index.ts:45`](../packages/fs/fs-sandbox/src/index.ts)
 
 ```ts config-catalog
 /**
@@ -2169,7 +2471,7 @@ export interface Config extends ProtocolConfig, ModelListingConfig {
 
 - `inject`: `llm`
 - `refs`: `Api` (`@earendil-works/pi-ai`) · `CacheRetention` (`@earendil-works/pi-ai`) · `Model` (`@earendil-works/pi-ai`) · `ModelThinkingLevel` (`@earendil-works/pi-ai`) · `OpenAICompletionsCompat` (`@earendil-works/pi-ai`) · [`RetryPolicyConfig`](../packages/llm/llm/src/index.ts) · `ThinkingBudgets` (`@earendil-works/pi-ai`) · `Transport` (`@earendil-works/pi-ai`) · `Volatile` (`@tomato/cordis`)
-- `source`: [`packages/llm/llm-pi-ai/src/config.ts:234`](../packages/llm/llm-pi-ai/src/config.ts)
+- `source`: [`packages/llm/llm-pi-ai/src/config.ts:251`](../packages/llm/llm-pi-ai/src/config.ts)
 
 ```ts config-catalog
 /** Plugin configuration: the provider routes this instance owns. */
@@ -2185,7 +2487,7 @@ export interface Config {
    * Omission leaves the adapter unrestricted; presence denies every unlisted
    * model, so a configuration edit cannot add one outside the policy.
    */
-  modelPolicy: Volatile<ModelPolicyConfig | null>
+  modelPolicy: ModelPolicyOptions
 }
 
 /** Configuration for one pi-ai provider route; the `providers` dict key IS the route. */
@@ -2256,10 +2558,6 @@ export interface PiAiProviderProfile {
   thinkingBudgets?: ThinkingBudgets
   /** Prompt-cache retention preference. */
   cacheRetention?: CacheRetention
-  /** Prompt-cache dialect every model on this route starts from; an entry's own dialect wins. */
-  cache?: PiAiCacheDefault
-  /** Whether this route's endpoints accept tools beside a reasoning effort; an entry's own answer wins. */
-  toolsWithReasoning?: PiAiToolsWithReasoning
   /** Streaming transport preference. */
   transport?: Transport
   /** HTTP/provider SDK timeout in milliseconds. */
@@ -2275,6 +2573,18 @@ export interface PiAiProviderProfile {
    * requests instead of being rejected by a request-size cap.
    */
   maxRequestImageBytes?: number
+  /**
+   * Maximum retained image occurrences per request. A request carrying more
+   * fails with `IMAGE_OFFLOAD_REQUIRED` naming how many of the oldest
+   * occurrences to offload.
+   */
+  maxRequestImages?: number
+  /**
+   * Oldest occurrences offloaded per count overflow (default 10, capped at
+   * {@link maxRequestImages}); an explicit value must not exceed it. Larger
+   * steps rewrite the request prefix less often.
+   */
+  imageOffloadCountQuantum?: number
   /** Total-pixel budget for each deterministic inline request version. */
   requestImagePixelBudget?: number
   /**
@@ -2286,26 +2596,19 @@ export interface PiAiProviderProfile {
   retryPolicy?: RetryPolicyConfig
 }
 
-/**
- * Allowlist for the models this adapter may list and call. Omission leaves the
- * adapter unrestricted; presence turns every unlisted pair into a denied
- * model, including one a later configuration edit adds.
- */
-export interface ModelPolicyConfig {
+/** Mutable allowlist input the schema accepts. */
+export interface ModelPolicyOptions {
   /** Whether the allowlist is in force; `false` leaves the adapter unrestricted. */
   enabled: boolean
   /** Models already present in the deployment's local model list. */
-  local: readonly ModelPolicyRef[]
+  local: ModelPolicyRef[]
   /** Models released inside the deployment's recent-release window. */
-  recent: readonly ModelPolicyRef[]
-  /**
-   * ISO release dates keyed by `provider/model`; a model with a date on or after
-   * `recentSince` is permitted even when it is in neither list. Requires
-   * `recentSince`, and an unknown key is refused rather than ignored.
-   */
-  releaseDates?: Readonly<Record<string, string>>
-  /** ISO date describing the recent window's lower bound, and the recent-date cutoff. */
+  recent: ModelPolicyRef[]
+  /** ISO release dates keyed by `provider/model`. */
+  releaseDates: Record<string, string>
+  /** ISO date describing the recent window's lower bound. */
   recentSince?: string
+  [key: string]: unknown
 }
 
 /** One configured model entry: an id plus the catalog fields it overrides. */
@@ -2345,10 +2648,6 @@ export interface PiAiModelProfile {
   reasoningEfforts?: false | PiAiReasoningEfforts
   /** pi-ai wire-compatibility switches for this model, winning over the route's per field; one its protocol does not declare is refused. */
   compat?: PiAiCompatProfile
-  /** Prompt-cache handling for this model, winning over the route's dialect and retention. */
-  cache?: PiAiCacheProfile
-  /** Whether this model's endpoint accepts tools beside a reasoning effort; absent applies the route's value. */
-  toolsWithReasoning?: PiAiToolsWithReasoning
 }
 
 /**
@@ -2455,25 +2754,6 @@ export interface PiAiCompatProfile {
 /** One request modality a pi-ai model may accept. */
 export type PiAiModality = Model<Api>['input'][number]
 
-/** Prompt-cache declaration every model on a route starts from. */
-export interface PiAiCacheDefault {
-  /** Marker the route's models honor; an entry's own dialect wins. */
-  dialect?: PiAiCacheDialect
-}
-
-/**
- * Whether the endpoint accepts function tools together with a reasoning
- * effort.
- *
- * Some OpenAI-compatible endpoints reject the pair for models whose tool
- * requests are otherwise fine — "Function tools with reasoning_effort are not
- * supported … use /v1/responses" — while accepting either feature alone. An
- * agent turn always declares tools, so `never` means this model cannot think
- * on this route; declaring it turns a mid-turn 400 into a request that carries
- * no effort, which the adapter reports as a capability degradation.
- */
-export type PiAiToolsWithReasoning = 'allowed' | 'never'
-
 /** One provider/model pair a deployment's model policy permits. */
 export interface ModelPolicyRef {
   /** Provider route the model belongs to. */
@@ -2482,6 +2762,7 @@ export interface ModelPolicyRef {
   model: string
   /** ISO release date; required for a recent entry once `recentSince` is set. */
   releasedAt?: string
+  [key: string]: unknown
 }
 
 /**
@@ -2494,37 +2775,11 @@ export interface ModelPolicyRef {
  */
 export type PiAiReasoningEfforts = Partial<Record<ModelThinkingLevel, string | null>>
 
-/** Prompt-cache declaration for one model entry. */
-export interface PiAiCacheProfile {
-  /** Marker the endpoint honors; absent applies the route's dialect, then the adapter's fallback. */
-  dialect?: PiAiCacheDialect
-  /** How long the endpoint keeps a cached prefix; overrides the route's `cacheRetention` for this model. */
-  retention?: CacheRetention
-}
-
 /** One reasoning-dispatch wire format a profile may name. */
 export type PiAiThinkingFormat = NonNullable<OpenAICompletionsCompat['thinkingFormat']>
 
 /** The reasoning-budget field spellings pi-ai accepts. */
 export type PiAiThinkingTokenBudgetField = NonNullable<OpenAICompletionsCompat['thinkingTokenBudgetField']>
-
-/**
- * How one endpoint reuses a prompt prefix.
- *
- * Declaring the dialect is what makes caching a property of the route rather
- * than of a model family: the marker a gateway honors is a fact about the
- * endpoint, and a deployment that names it here stops depending on the
- * adapter's Anthropic-shaped fallback.
- *
- * - `anthropic`: Anthropic `cache_control` breakpoints; `openai-completions`
- *   only, because the native protocol carries them itself.
- * - `key`: OpenAI `prompt_cache_key` routing; both OpenAI protocols.
- * - `implicit`: nothing is sent; the endpoint caches a repeated stable prefix
- *   on its own, which the probe proved by observing cache reads.
- * - `none`: caching is off for this model; request retention becomes `none`, so
- *   no marker or key is emitted.
- */
-export type PiAiCacheDialect = 'anthropic' | 'key' | 'implicit' | 'none'
 ```
 <!-- END GENERATED config-catalog:@tomato/llm-pi-ai -->
 
@@ -2534,8 +2789,8 @@ export type PiAiCacheDialect = 'anthropic' | 'key' | 'implicit' | 'none'
 ## `@tomato/llm-replay`
 
 - `inject`: `llm`
-- `refs`: [`ModelModality`](../packages/llm/llm/src/index.ts) · [`RetryPolicyConfig`](../packages/llm/llm/src/index.ts) · [`SystemPromptUpdate`](../packages/llm/llm/src/index.ts) · [`ToolUpdate`](../packages/llm/llm/src/index.ts)
-- `source`: [`packages/test-support/llm-replay/src/index.ts:1129`](../packages/test-support/llm-replay/src/index.ts)
+- `refs`: [`LlmModelBadge`](../packages/llm/llm/src/index.ts) · [`ModelModality`](../packages/llm/llm/src/index.ts) · [`RetryPolicyConfig`](../packages/llm/llm/src/index.ts) · [`SystemPromptUpdate`](../packages/llm/llm/src/index.ts) · [`ToolUpdate`](../packages/llm/llm/src/index.ts)
+- `source`: [`packages/test-support/llm-replay/src/index.ts:1115`](../packages/test-support/llm-replay/src/index.ts)
 
 ```ts config-catalog
 /** Plugin config: the {@link ReplayConfig} inputs, each defaulting to its `TOMATO_SNAPSHOT_*` env var in `apply`. */
@@ -2605,6 +2860,8 @@ export interface ReplayModelConfig {
   systemPromptUpdate?: SystemPromptUpdate
   /** Optional mid-conversation tool declaration mode for a keyless replay route. */
   toolUpdate?: ToolUpdate
+  /** Optional selector badge the replay catalog advertises, so keyless Web scenarios render one. */
+  badge?: LlmModelBadge
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/llm-replay -->
@@ -2629,7 +2886,7 @@ export type Config = Readonly<Record<string, never>>
 ## `@tomato/lsp-stdio`
 
 - `inject`: `fs` · `lsp` · `subprocess`
-- `source`: [`packages/lsp/lsp-stdio/src/index.ts:82`](../packages/lsp/lsp-stdio/src/index.ts)
+- `source`: [`packages/lsp/lsp-stdio/src/index.ts:70`](../packages/lsp/lsp-stdio/src/index.ts)
 
 ```ts config-catalog
 /** Plugin configuration: provider id → local language-server configuration. */
@@ -2718,8 +2975,7 @@ export interface Config {
 ## `@tomato/mcp-client`
 
 - `inject`: `tools`
-- `refs`: [`ToolExecution`](subsystems/tools.md)
-- `source`: [`packages/mcp/mcp-client/src/index.ts:112`](../packages/mcp/mcp-client/src/index.ts)
+- `source`: [`packages/mcp/mcp-client/src/index.ts:138`](../packages/mcp/mcp-client/src/index.ts)
 
 ```ts config-catalog
 /** Configuration for one stdio or Streamable HTTP MCP server. */
@@ -2732,7 +2988,7 @@ export interface StdioConfig {
   /**
    * Stable local namespace for this server's model-facing tool names
    * (`mcp__<serverName>__<rawName>`). Must match `[A-Za-z0-9_-]{1,32}` and be
-   * unique across live mcp-client instances.
+   * unique among live mcp-client instances in the same registration scope.
    */
   serverName: string
   /** Executable used to start the server. */
@@ -2745,6 +3001,12 @@ export interface StdioConfig {
   cwd: string
   /** Timeout per tool call or resource request in milliseconds. */
   toolCallTimeoutMs: number
+  /** Optional budget for one connection attempt plus its initial tool sync, in milliseconds. */
+  startupTimeoutMs?: number
+  /** Budget for transport closure and local cleanup, in milliseconds (default 5000). */
+  closeTimeoutMs: number
+  /** Resolve `${credential:…}` in transport strings at runtime and redact resolved values from diagnostics (default false). */
+  expandTemplates: boolean
   /** Fail plugin activation when the initial connection or tool synchronization fails. */
   failOnStartupError: boolean
   /** Maximum UTF-8 bytes of attributed server instructions (default 32768). */
@@ -2760,22 +3022,21 @@ export interface StreamableHttpConfig {
   /**
    * Stable local namespace for this server's model-facing tool names
    * (`mcp__<serverName>__<rawName>`). Must match `[A-Za-z0-9_-]{1,32}` and be
-   * unique across live mcp-client instances.
+   * unique among live mcp-client instances in the same registration scope.
    */
   serverName: string
   /** MCP endpoint URL. */
   url: string
   /** Additional headers attached to MCP requests. */
   headers: Record<string, string>
-  /**
-   * Resolve headers for one outbound `tools/call`, merged over {@link headers}.
-   * Supply it from `cordis.yml` as a `!!js` function when a header must carry
-   * per-call identity that static configuration cannot (for example the
-   * signed-in company account). Connection-time requests use only `headers`.
-   */
-  requestHeaders?: (execution: ToolExecution) => Record<string, string>
   /** Timeout per tool call or resource request in milliseconds. */
   toolCallTimeoutMs: number
+  /** Optional budget for one connection attempt plus its initial tool sync, in milliseconds. */
+  startupTimeoutMs?: number
+  /** Budget for transport closure and local cleanup, in milliseconds (default 5000). */
+  closeTimeoutMs: number
+  /** Resolve `${credential:…}` in transport strings at runtime and redact resolved values from diagnostics (default false). */
+  expandTemplates: boolean
   /** Fail plugin activation when the initial connection or tool synchronization fails. */
   failOnStartupError: boolean
   /** Maximum UTF-8 bytes of attributed server instructions (default 32768). */
@@ -2798,6 +3059,57 @@ export interface ReconnectConfig {
 ```
 <!-- END GENERATED config-catalog:@tomato/mcp-client -->
 
+<!-- BEGIN GENERATED config-catalog:@tomato/mcp-manager -->
+<a id="tomatomcp-manager"></a>
+
+## `@tomato/mcp-manager`
+
+- `inject`: `tools`
+- `refs`: [`ReconnectConfig`](../packages/mcp/mcp-client/src/index.ts) · `Volatile` (`@tomato/cordis`)
+- `source`: [`packages/mcp/mcp-manager/src/index.ts:71`](../packages/mcp/mcp-manager/src/index.ts)
+
+```ts config-catalog
+/** Manager configuration with live server entries. */
+export interface Config {
+  /** Managed servers keyed by `serverName`. */
+  servers: Volatile<Record<string, McpManagedServerEntry>>
+}
+
+/**
+ * One managed server entry. Deliberately flat rather than a per-transport
+ * union: {@link validateEntries} owns the per-transport field rules, and its
+ * write-time refusals name the offending field where a union's shape error
+ * would not.
+ */
+export interface McpManagedServerEntry {
+  /** Which transport the instance uses. */
+  transport: 'stdio' | 'streamable-http'
+  /** stdio: executable used to start the server; `''` while unset. */
+  command: string
+  /** stdio: arguments passed without shell interpolation. */
+  args: string[]
+  /** stdio: extra child environment; values may use `${credential:…}` templates. */
+  env: Record<string, string>
+  /** stdio: working directory for the child process. */
+  cwd: string
+  /** streamable-http: MCP endpoint URL; `''` while unset. */
+  url: string
+  /** streamable-http: extra request headers; values may use templates. */
+  headers: Record<string, string>
+  /** Durable intent: whether the entry asks for a running instance. */
+  enabled: boolean
+  /** Per-tool-call timeout override in milliseconds; omission uses the mcp-client default. */
+  toolCallTimeoutMs?: number
+  /** Per-attempt startup budget in milliseconds; the manager schema defaults to 30000. */
+  startupTimeoutMs: number
+  /** Cleanup budget override in milliseconds; omission uses the mcp-client default. */
+  closeTimeoutMs?: number
+  /** Reconnect policy; the schema fills the mcp-client defaults. */
+  reconnect: ReconnectConfig
+}
+```
+<!-- END GENERATED config-catalog:@tomato/mcp-manager -->
+
 <!-- BEGIN GENERATED config-catalog:@tomato/message-feedback -->
 <a id="tomatomessage-feedback"></a>
 
@@ -2814,6 +3126,64 @@ export interface Config {
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/message-feedback -->
+
+<!-- BEGIN GENERATED config-catalog:@tomato/office-kit -->
+<a id="tomatooffice-kit"></a>
+
+## `@tomato/office-kit`
+
+- `source`: [`packages/document/office-kit/src/index.ts:38`](../packages/document/office-kit/src/index.ts)
+
+```ts config-catalog
+/** Provider concurrency and kit rendering/font configuration. */
+export interface Config {
+  /** Maximum simultaneous conversions; queued callers remain cancellable. */
+  maxConcurrentConversions: number
+  /** Maximum metadata-only jobs awaiting source admission. */
+  maxQueuedJobs: number
+  /** Maximum outstanding conversion readers. */
+  maxReaders: number
+  /** Maximum reserved bytes across admitted source reads and conversions. */
+  maxSourceBytes: number
+  /** Maximum concurrent background jobs; zero refuses speculative work. */
+  maxBackgroundConversions: number
+  /** Maximum retained content-addressed outputs. */
+  maxCachedEntries: number
+  /** Maximum retained output bytes. */
+  maxCachedBytes: number
+  /** Maximum retained source-version aliases to cached content. */
+  maxSourceEntries: number
+  /** Absolute directory for converted and recalculated files, with one subdirectory per Session. */
+  outputDirectory: string
+  /** Milliseconds a converted or recalculated file is kept. */
+  outputRetentionMs: number
+  /** Maximum bytes across retained converted and recalculated files; the oldest leave first. */
+  maxOutputStoreBytes: number
+  /** Conversion deadline in milliseconds; excludes the TOMATO queue. */
+  timeoutMs: number
+  /** Maximum authorized source bytes. */
+  maxInputBytes: number
+  /** Maximum complete PDF, converted, or recalculated file bytes. */
+  maxOutputBytes: number
+  /** Image resolution in DPI of PDF exports; `renderImages()` takes its resolution from each request's `dpi`. */
+  maxImageResolution: number
+  /** Maximum OOXML ZIP entries. */
+  maxArchiveEntries: number
+  /** Maximum total declared uncompressed OOXML bytes. */
+  maxUncompressedBytes: number
+  /** Absolute font roots; omission uses the kit's platform defaults. */
+  fontDirectories?: string[]
+  /** Ordered font-family preference groups; omission retains the kit defaults. */
+  fontFallbacks?: string[][]
+  /** Maximum physical font files indexed by each converter. */
+  maxFontFiles: number
+  /** Maximum individual font-file bytes. */
+  maxFontFileBytes: number
+  /** Maximum original font bytes loaded for a conversion. */
+  maxLoadedFontBytes: number
+}
+```
+<!-- END GENERATED config-catalog:@tomato/office-kit -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/office-to-pdf -->
 <a id="tomatooffice-to-pdf"></a>
@@ -2961,7 +3331,7 @@ export interface PlanModeConfig {
 
 - `inject`: `loader` · `profileContext`
 - `refs`: [`NpmFileSource`](subsystems/boot.md)
-- `source`: [`packages/boot/plugin-manager/src/index.ts:53`](../packages/boot/plugin-manager/src/index.ts)
+- `source`: [`packages/boot/plugin-manager/src/index.ts:54`](../packages/boot/plugin-manager/src/index.ts)
 
 ```ts config-catalog
 /** The pnpm executable, registries, and limits for diagnostics, lookups and connection checks. */
@@ -3067,15 +3437,22 @@ export interface Config {
 ## `@tomato/ptc-runtime-node`
 
 - `inject`: `fs` · `subprocess` · `sandbox` · `sandboxPolicy`
-- `source`: [`packages/ptc-runtime/ptc-runtime-node/src/config.ts:7`](../packages/ptc-runtime/ptc-runtime-node/src/config.ts)
+- `source`: [`packages/ptc-runtime/ptc-runtime-node/src/config.ts:8`](../packages/ptc-runtime/ptc-runtime-node/src/config.ts)
 
 ```ts config-catalog
 /** Deployment-varying runtime bounds and launch choices. */
 export interface Config {
   /** Worker invocation in the subprocess world; omitted selects the local carrier. */
   launch?: LaunchConfig
-  /** per-call starts fresh processes; persistent-in-memory retains a REPL per owner under the same file policy. */
-  executionMode?: 'per-call' | 'persistent-in-memory'
+  /** per-call uses fresh async function bodies; vm-script uses VM contexts; persistent-in-memory retains a REPL per owner. */
+  executionMode?: 'per-call' | 'persistent-in-memory' | 'vm-script'
+  /** Retain a Script process and context per stateOwner; only supported with executionMode: vm-script. */
+  scriptPersistence?: boolean
+  /**
+   * Run persistent-in-memory programs as scoped REPL statements whose later calls receive copies of earlier top-level bindings;
+   * omitted, it is `SCOPED_REPL_BY_DEFAULT` from configuration.ts, currently true, with persistent-in-memory and false otherwise.
+   */
+  replScoped?: boolean
   /** Default elapsed deadline, including nested tool and approval waits. */
   timeoutMs?: number
   /** Maximum numeric elapsed budget accepted by resolve. */
@@ -3088,6 +3465,8 @@ export interface Config {
   maxMessageBytes?: number
   /** Maximum simultaneous host binding calls accepted from a program. */
   maxPendingCalls?: number
+  /** Time to wait for cooperative stop acknowledgment before terminating the process. */
+  stopGraceMs?: number
   /** Managed process termination and output-drain grace in milliseconds. */
   graceMs?: number
 }
@@ -3207,7 +3586,7 @@ export interface Config {
 
 ## `@tomato/sandbox-local`
 
-- `source`: [`packages/sandbox/sandbox-local/src/index.ts:45`](../packages/sandbox/sandbox-local/src/index.ts)
+- `source`: [`packages/sandbox/sandbox-local/src/index.ts:63`](../packages/sandbox/sandbox-local/src/index.ts)
 
 ```ts config-catalog
 /** Plugin config. All optional — `static Config` supplies the defaults. */
@@ -3291,7 +3670,7 @@ export interface Config {
 ## `@tomato/schedule`
 
 - `inject`: `agents` · `sessions` · `storageDomain` · `sessionPersistence`
-- `source`: [`packages/schedule/schedule/src/index.ts:83`](../packages/schedule/schedule/src/index.ts)
+- `source`: [`packages/schedule/schedule/src/index.ts:81`](../packages/schedule/schedule/src/index.ts)
 
 ```ts config-catalog
 /** Configuration for the Host Schedule domain. */
@@ -3306,6 +3685,11 @@ export interface Config {
    * cap and the window wins, and the newest records survive.
    */
   deliveryHistoryRecords?: number
+  /**
+   * Shortest spacing, in seconds, from the occurrence of one delivery to the next delivery of one task whose target
+   * creates a Session at every delivery; omission defaults to 60. Timed and manual deliveries both wait for it.
+   */
+  newSessionIntervalSeconds?: number
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/schedule -->
@@ -3358,7 +3742,7 @@ export interface JsonRpcConfig {
 
 - `inject`: `deepseekLlmApiExtensions` · `sessions`
 - `refs`: `Volatile` (`@tomato/cordis`)
-- `source`: [`packages/session/session-log-deepseek/src/index.ts:39`](../packages/session/session-log-deepseek/src/index.ts)
+- `source`: [`packages/session/session-log-deepseek/src/index.ts:47`](../packages/session/session-log-deepseek/src/index.ts)
 
 ```ts config-catalog
 /** Session-log request contribution configuration. */
@@ -3637,7 +4021,7 @@ export interface Config extends SessionTitleLlmConfig {
 
 ## `@tomato/shell-env`
 
-- `source`: [`packages/shell/shell-env/src/index.ts:30`](../packages/shell/shell-env/src/index.ts)
+- `source`: [`packages/shell/shell-env/src/index.ts:34`](../packages/shell/shell-env/src/index.ts)
 
 ```ts config-catalog
 /** Plugin config (all optional — the built-in facts resolve without defaults). */
@@ -3709,18 +4093,28 @@ export interface Config {
 ## `@tomato/skill-office`
 
 - `inject`: `skills`
-- `source`: [`packages/skill/skill-office/src/index.ts:16`](../packages/skill/skill-office/src/index.ts)
+- `source`: [`packages/skill/skill-office/src/index.ts:34`](../packages/skill/skill-office/src/index.ts)
 
 ```ts config-catalog
-/** Office skill resource location. */
+/** Configuration after schema defaults apply. */
+export interface ResolvedConfig extends Config {
+  /** Python environment named in the Python authoring and verification skills. */
+  pythonEnvironment: PythonEnvironment
+}
+
+/** Office skill resources and Python environment. */
 export interface Config {
   /** Absolute assets directory containing skill folders; defaults to packaged assets. */
   assetRoot?: string
-  /** Standalone Node executable; defaults to the current executable outside Electron and SEA. */
-  node?: string
-  /** Absolute LibreOffice Kit CLI entry; false explicitly disables CLI access. */
-  cli?: string | false
+  /** Python environment named in the Python authoring and verification skills. @default 'workspace-dependencies' */
+  pythonEnvironment?: PythonEnvironment
 }
+
+/**
+ * Python source for Office scripts: `'workspace-dependencies'` directs the model to the bundled interpreter and libraries
+ * returned by `load_workspace_dependencies`; `'user'` directs it to an existing project or user Python.
+ */
+export type PythonEnvironment = 'workspace-dependencies' | 'user'
 ```
 <!-- END GENERATED config-catalog:@tomato/skill-office -->
 
@@ -4129,7 +4523,7 @@ export interface Config {
 
 ## `@tomato/system-prompt`
 
-- `source`: [`packages/core/system-prompt/src/index.ts:264`](../packages/core/system-prompt/src/index.ts)
+- `source`: [`packages/core/system-prompt/src/index.ts:266`](../packages/core/system-prompt/src/index.ts)
 
 ```ts config-catalog
 /** Plugin config: the deployment-authored fragment of the system prompt (see {@link Config.personaPrefix} for its contract). */
@@ -4247,6 +4641,47 @@ export type ShellDialect = 'bash' | 'pwsh'
 ```
 <!-- END GENERATED config-catalog:@tomato/terminal-bash -->
 
+<!-- BEGIN GENERATED config-catalog:@tomato/terminal-panel -->
+<a id="tomatoterminal-panel"></a>
+
+## `@tomato/terminal-panel`
+
+- `inject`: `terminals` · `terminalController` · `sandboxPolicy` · `tools` · `systemPrompt`
+- `source`: [`packages/experimental/terminal-panel/src/config.ts:6`](../packages/experimental/terminal-panel/src/config.ts)
+
+```ts config-catalog
+/** Public plugin configuration. */
+export interface Config {
+  /** Terminal registry type served by sidebar terminals. */
+  backendType: string
+  /** Initial terminal width; an attached sidebar view resizes it to its panel. */
+  cols: number
+  /** Initial terminal height; an attached sidebar view resizes it to its panel. */
+  rows: number
+  /** Executable names tried among the discovered shells before the execution environment's default shell. */
+  preferredShells: string[]
+  /** Variables added to Agent terminal environments, such as pagers that would otherwise wait for input. */
+  environment: Record<string, string>
+  /** Output silence that ends shell startup once the shell owns the foreground. */
+  startupSilenceMs: number
+  /** Bound on shell startup, including the person's startup files. */
+  startupTimeoutMs: number
+  /** Output silence after which a send checks whether the shell or a reading program waits for input. */
+  promptSilenceMs: number
+  /** Minimum interval between foreground process inspections, each of which may start `ps` twice. */
+  probeIntervalMs: number
+  /** Output silence that ends a send as `inferred_idle`. */
+  idleSilenceMs: number
+  /** Bound on one send. */
+  timeoutMs: number
+  /** Maximum UTF-8 bytes in one screen read, send output or startup screen. */
+  maxReadBytes: number
+  /** Register `user_terminal_list` and `user_terminal_read`, whose screen text enters the Session log and model requests. */
+  readUserTerminals: boolean
+}
+```
+<!-- END GENERATED config-catalog:@tomato/terminal-panel -->
+
 <!-- BEGIN GENERATED config-catalog:@tomato/time-context -->
 <a id="tomatotime-context"></a>
 
@@ -4297,6 +4732,20 @@ export type TokenMeterConfig = Record<string, never>
 ```
 <!-- END GENERATED config-catalog:@tomato/token-meter -->
 
+<!-- BEGIN GENERATED config-catalog:@tomato/tool-agent-team -->
+<a id="tomatotool-agent-team"></a>
+
+## `@tomato/tool-agent-team`
+
+- `inject`: `agentTeams` · `subagents` · `tools` · `systemPrompt`
+- `source`: [`packages/team/tool-agent-team/src/index.ts:18`](../packages/team/tool-agent-team/src/index.ts)
+
+```ts config-catalog
+/** The Team tool plugin takes no configuration. */
+export type Config = Record<never, never>
+```
+<!-- END GENERATED config-catalog:@tomato/tool-agent-team -->
+
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-ask-user -->
 <a id="tomatotool-ask-user"></a>
 
@@ -4322,7 +4771,7 @@ export interface Config {
 ## `@tomato/tool-bash`
 
 - `inject`: `tools` · `shell` · `systemPrompt` · `shellEnv` · `workingDirectory`
-- `source`: [`packages/shell/tool-bash/src/index.ts:37`](../packages/shell/tool-bash/src/index.ts)
+- `source`: [`packages/shell/tool-bash/src/index.ts:40`](../packages/shell/tool-bash/src/index.ts)
 
 ```ts config-catalog
 /** Configuration for the bash tool. */
@@ -4352,7 +4801,7 @@ export interface Config {
 ## `@tomato/tool-bash-persistent`
 
 - `inject`: `tools` · `terminals` · `workingDirectory`
-- `source`: [`packages/shell/tool-bash-persistent/src/index.ts:447`](../packages/shell/tool-bash-persistent/src/index.ts)
+- `source`: [`packages/shell/tool-bash-persistent/src/index.ts:448`](../packages/shell/tool-bash-persistent/src/index.ts)
 
 ```ts config-catalog
 /** Configuration for the persistent Bash tool. */
@@ -4475,6 +4924,8 @@ export interface DepthLimitConfig {
 ```ts config-catalog
 /** Program execution limits. */
 export interface Config {
+  /** Nested tool-call attempts per minute of resolved runtime timeout, including failed calls. */
+  maxSubCallsPerMinute: number
   /** Maximum overlapping concurrency-safe program subcalls. */
   maxParallelSubCalls: number
 }
@@ -4500,16 +4951,8 @@ export interface Config {
   write?: boolean
   /** Register `edit` and its guidance. Defaults to true. */
   edit?: boolean
-  /** Register `list_dir` and its guidance. Defaults to true. */
-  list?: boolean
-  /** Directory levels `list_dir` returns by default. */
-  listDepth?: number
-  /** Largest depth one `list_dir` call may request. */
-  listMaxDepth?: number
-  /** Most entries one `list_dir` call returns. */
-  listMaxEntries?: number
-  /** Basenames `list_dir` skips by default. */
-  listExcludes?: string[]
+  /** Register `apply_patch` and its guidance beside `edit`. Defaults to false; shipped compositions set it on their `tool-fs` rows. */
+  applyPatch?: boolean
   /** Default and maximum number of lines returned by one `read` call. */
   readLimit?: number
   /** Maximum characters returned for a single line before truncation. */
@@ -4537,10 +4980,6 @@ export interface Config {
   sampleOverCapGlobResults: boolean
   /** Max paths one `glob` call retains inline; later paths go to the formatted spill file. */
   globMaxResults?: number
-  /** Largest traversal depth one `glob` call may request. */
-  globMaxDepth?: number
-  /** Largest number of `exclude` patterns one `glob` call may add. */
-  globMaxExcludes?: number
   /** Max flat matches one `grep` call retains inline; later matches go to the formatted spill file. */
   grepMaxMatches?: number
   /** Max bytes retained for one matched-line preview (the cut preserves UTF-8 boundaries). */
@@ -4644,6 +5083,31 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@tomato/tool-lsp -->
 
+<!-- BEGIN GENERATED config-catalog:@tomato/tool-office -->
+<a id="tomatotool-office"></a>
+
+## `@tomato/tool-office`
+
+- `inject`: `tools` · `fs` · `workingDirectory` · `agents`
+- `source`: [`packages/document/tool-office/src/index.ts:38`](../packages/document/tool-office/src/index.ts)
+
+```ts config-catalog
+/** Activation skills and render bounds; lower deployment attachment limits take precedence. */
+export interface Config {
+  /** Skill names whose successful loading admits all three tools from the following step. */
+  activationSkills: string[]
+  /** Maximum images one render returns, including worksheet fragments. */
+  maxImages: number
+  /** Maximum pixels of each image. */
+  maxImagePixels: number
+  /** Maximum width and height of each image in pixels. */
+  maxImageDimension: number
+  /** Maximum PNG bytes across all images of one render. */
+  maxImageBytes: number
+}
+```
+<!-- END GENERATED config-catalog:@tomato/tool-office -->
+
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-present -->
 <a id="tomatotool-present"></a>
 
@@ -4667,7 +5131,7 @@ export interface Config {
 ## `@tomato/tool-pwsh`
 
 - `inject`: `tools` · `shell` · `systemPrompt` · `shellEnv` · `workingDirectory`
-- `source`: [`packages/shell/tool-pwsh/src/index.ts:54`](../packages/shell/tool-pwsh/src/index.ts)
+- `source`: [`packages/shell/tool-pwsh/src/index.ts:57`](../packages/shell/tool-pwsh/src/index.ts)
 
 ```ts config-catalog
 /** Configuration for the pwsh tool. */
@@ -4762,7 +5226,7 @@ export interface Config {
 ## `@tomato/tool-skill`
 
 - `inject`: `agents` · `tools` · `skills` · `workingDirectory`
-- `source`: [`packages/skill/tool-skill/src/index.ts:62`](../packages/skill/tool-skill/src/index.ts)
+- `source`: [`packages/skill/tool-skill/src/index.ts:64`](../packages/skill/tool-skill/src/index.ts)
 
 ```ts config-catalog
 /** Model-facing skill catalog configuration. */
@@ -4779,7 +5243,7 @@ export interface Config {
 ## `@tomato/tool-str-replace-editor`
 
 - `inject`: `tools` · `fs`
-- `source`: [`packages/fs/tool-str-replace-editor/src/index.ts:506`](../packages/fs/tool-str-replace-editor/src/index.ts)
+- `source`: [`packages/fs/tool-str-replace-editor/src/index.ts:511`](../packages/fs/tool-str-replace-editor/src/index.ts)
 
 ```ts config-catalog
 /** Configuration for the string-replacement editor tool. */
@@ -4799,7 +5263,7 @@ export interface Config {
 
 - `inject`: `tools` · `subagents` · `systemPrompt` · `sessionProjections`
 - `refs`: [`AgentOptions`](subsystems/core.md)
-- `source`: [`packages/subagent/tool-subagent/src/index.ts:46`](../packages/subagent/tool-subagent/src/index.ts)
+- `source`: [`packages/subagent/tool-subagent/src/index.ts:45`](../packages/subagent/tool-subagent/src/index.ts)
 
 ```ts config-catalog
 /** Config: which registered provider this tool delegates to, plus child defaults. */
@@ -4849,6 +5313,23 @@ export interface PresetSelectionConfig {
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/tool-subagent -->
+
+<!-- BEGIN GENERATED config-catalog:@tomato/tool-subagent-control -->
+<a id="tomatotool-subagent-control"></a>
+
+## `@tomato/tool-subagent-control`
+
+- `inject`: `tools` · `subagents` · `agents` · `systemPrompt`
+- `source`: [`packages/subagent/tool-subagent-control/src/index.ts:24`](../packages/subagent/tool-subagent-control/src/index.ts)
+
+```ts config-catalog
+/** Optional subagent control tools. */
+export interface Config {
+  /** Register `interrupt_agent`. Defaults to true; false leaves the service API available. */
+  interrupt?: boolean
+}
+```
+<!-- END GENERATED config-catalog:@tomato/tool-subagent-control -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-terminal -->
 <a id="tomatotool-terminal"></a>
@@ -4907,9 +5388,9 @@ export interface Config {
   search?: boolean
   /** Register `web_fetch`. Defaults to true. */
   fetch?: boolean
-  /** Upper bound on sources returned by one `web_search` call. */
+  /** Upper bound on sources returned by one `web_search` call. Defaults to 10. */
   searchMaxResults?: number
-  /** Upper bound on queries accepted by one `web_search` call. */
+  /** Upper bound on queries accepted by one `web_search` call. Defaults to 10. */
   searchMaxQueries?: number
   /** Cap on each source summary or snippet in `web_search` output, in characters. Defaults to 800. */
   searchSummaryMaxChars?: number
@@ -5036,7 +5517,7 @@ export type ApprovalPolicy = 'ask' | 'never'
 ## `@tomato/web`
 
 - `refs`: `Volatile` (`@tomato/cordis`)
-- `source`: [`packages/web/web/src/index.ts:57`](../packages/web/web/src/index.ts)
+- `source`: [`packages/web/web/src/index.ts:62`](../packages/web/web/src/index.ts)
 
 ```ts config-catalog
 /**
@@ -5317,7 +5798,7 @@ export interface Config {
 ## `@tomato/working-directory`
 
 - `inject`: `fs` · `sessionProjections` · `systemPrompt`
-- `source`: [`packages/session/working-directory/src/index.ts:51`](../packages/session/working-directory/src/index.ts)
+- `source`: [`packages/session/working-directory/src/index.ts:70`](../packages/session/working-directory/src/index.ts)
 
 ```ts config-catalog
 /** Deployment default for Sessions without an original project directory. */
@@ -5371,6 +5852,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@tomato/api-remotes` | `typertGateway` | [`packages/api/remotes/src/index.ts`](../packages/api/remotes/src/index.ts) |
 | `@tomato/api-robot-controller` | `robots` · `typert` | [`packages/api/robot-controller/src/index.ts`](../packages/api/robot-controller/src/index.ts) |
 | `@tomato/api-robot-crew-controller` | `crews` · `typert` | [`packages/api/api-robot-crew-controller/src/index.ts`](../packages/api/api-robot-crew-controller/src/index.ts) |
+| `@tomato/api-robot-room-controller` | `rooms` · `typert` | [`packages/api/api-robot-room-controller/src/index.ts`](../packages/api/api-robot-room-controller/src/index.ts) |
 | `@tomato/authorization` | `credentials` | [`packages/credentials/authorization/src/index.ts`](../packages/credentials/authorization/src/index.ts) |
 | `@tomato/brand` | — | [`packages/tomato/brand/src/index.ts`](../packages/tomato/brand/src/index.ts) |
 | `@tomato/browser-use` | — | [`packages/browser-use/browser-use/src/index.ts`](../packages/browser-use/browser-use/src/index.ts) |
@@ -5381,11 +5863,13 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@tomato/client-ui-account-access` | — | [`packages/tomato/account-access/src/index.ts`](../packages/tomato/account-access/src/index.ts) |
 | `@tomato/client-ui-action-cards` | — | [`packages/experimental/client-ui-action-cards/src/index.ts`](../packages/experimental/client-ui-action-cards/src/index.ts) |
 | `@tomato/client-ui-agent-preset` | — | [`packages/client/ui-agent-preset/src/index.ts`](../packages/client/ui-agent-preset/src/index.ts) |
+| `@tomato/client-ui-agent-team` | — | [`packages/client/ui-agent-team/src/index.ts`](../packages/client/ui-agent-team/src/index.ts) |
 | `@tomato/client-ui-approval` | — | [`packages/client/ui-approval/src/index.ts`](../packages/client/ui-approval/src/index.ts) |
 | `@tomato/client-ui-attachment` | — | [`packages/client/ui-attachment/src/index.ts`](../packages/client/ui-attachment/src/index.ts) |
 | `@tomato/client-ui-brand-official` | — | [`packages/client/ui-brand-official/src/index.ts`](../packages/client/ui-brand-official/src/index.ts) |
 | `@tomato/client-ui-chat` | — | [`packages/client/ui-chat/src/index.ts`](../packages/client/ui-chat/src/index.ts) |
 | `@tomato/client-ui-commands` | — | [`packages/client/ui-commands/src/index.ts`](../packages/client/ui-commands/src/index.ts) |
+| `@tomato/client-ui-context-menu` | — | [`packages/client/ui-context-menu/src/index.ts`](../packages/client/ui-context-menu/src/index.ts) |
 | `@tomato/client-ui-conversation` | — | [`packages/client/ui-conversation/src/index.ts`](../packages/client/ui-conversation/src/index.ts) |
 | `@tomato/client-ui-cordis` | — | [`packages/extensions/ui-cordis/src/index.ts`](../packages/extensions/ui-cordis/src/index.ts) |
 | `@tomato/client-ui-creation-recommendations` | — | [`packages/experimental/client-ui-creation-recommendations/src/index.ts`](../packages/experimental/client-ui-creation-recommendations/src/index.ts) |
@@ -5394,6 +5878,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@tomato/client-ui-directory-picker-browse` | — | [`packages/client/ui-directory-picker-browse/src/index.ts`](../packages/client/ui-directory-picker-browse/src/index.ts) |
 | `@tomato/client-ui-directory-picker-native` | — | [`packages/client/ui-directory-picker-native/src/index.ts`](../packages/client/ui-directory-picker-native/src/index.ts) |
 | `@tomato/client-ui-entry-customization` | — | [`packages/client/ui-entry-customization/src/index.ts`](../packages/client/ui-entry-customization/src/index.ts) |
+| `@tomato/client-ui-file-actions` | — | [`packages/client/ui-file-actions/src/index.ts`](../packages/client/ui-file-actions/src/index.ts) |
 | `@tomato/client-ui-file-drag` | — | [`packages/client/ui-file-drag/src/index.ts`](../packages/client/ui-file-drag/src/index.ts) |
 | `@tomato/client-ui-goal` | — | [`packages/client/ui-goal/src/index.ts`](../packages/client/ui-goal/src/index.ts) |
 | `@tomato/client-ui-image-evidence` | — | [`packages/client/ui-image-evidence/src/index.ts`](../packages/client/ui-image-evidence/src/index.ts) |
@@ -5411,6 +5896,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@tomato/client-ui-renderer` | — | [`packages/client/ui-renderer/src/index.ts`](../packages/client/ui-renderer/src/index.ts) |
 | `@tomato/client-ui-robot` | — | [`packages/client/ui-robot/src/index.ts`](../packages/client/ui-robot/src/index.ts) |
 | `@tomato/client-ui-robot-crew` | — | [`packages/client/client-ui-robot-crew/src/index.ts`](../packages/client/client-ui-robot-crew/src/index.ts) |
+| `@tomato/client-ui-robot-room` | — | [`packages/client/client-ui-robot-room/src/index.ts`](../packages/client/client-ui-robot-room/src/index.ts) |
 | `@tomato/client-ui-schedule` | — | [`packages/client/ui-schedule/src/index.ts`](../packages/client/ui-schedule/src/index.ts) |
 | `@tomato/client-ui-secret-mask` | — | [`packages/client/ui-secret-mask/src/index.ts`](../packages/client/ui-secret-mask/src/index.ts) |
 | `@tomato/client-ui-session` | — | [`packages/client/ui-session/src/index.ts`](../packages/client/ui-session/src/index.ts) |
@@ -5436,7 +5922,6 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@tomato/client-ui-skill-browser` | — | [`packages/client/ui-skill-browser/src/index.ts`](../packages/client/ui-skill-browser/src/index.ts) |
 | `@tomato/client-ui-subagent` | — | [`packages/client/ui-subagent/src/index.ts`](../packages/client/ui-subagent/src/index.ts) |
 | `@tomato/client-ui-tool` | — | [`packages/client/ui-tool/src/index.ts`](../packages/client/ui-tool/src/index.ts) |
-| `@tomato/client-ui-trajectory` | — | [`packages/client/ui-trajectory/src/index.ts`](../packages/client/ui-trajectory/src/index.ts) |
 | `@tomato/client-ui-user-questions` | — | [`packages/client/ui-user-questions/src/index.ts`](../packages/client/ui-user-questions/src/index.ts) |
 | `@tomato/client-ui-workflow-run` | — | [`packages/client/ui-workflow-run/src/index.ts`](../packages/client/ui-workflow-run/src/index.ts) |
 | `@tomato/client-ui-workspace` | — | [`packages/client/ui-workspace/src/index.ts`](../packages/client/ui-workspace/src/index.ts) |
@@ -5453,8 +5938,8 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@tomato/deepseek-llm-api-extensions` | — | [`packages/llm/deepseek-llm-api-extensions/src/index.ts`](../packages/llm/deepseek-llm-api-extensions/src/index.ts) |
 | `@tomato/deliverable-file-references` | `systemPrompt` | [`packages/deliverables/deliverable-file-references/src/index.ts`](../packages/deliverables/deliverable-file-references/src/index.ts) |
 | `@tomato/experimental-auto-review` | `approval` · `llm` · `permissionPresets` · `sessions` · `tools` · `workingDirectory` | [`packages/experimental/auto-review/src/index.ts`](../packages/experimental/auto-review/src/index.ts) |
-| `@tomato/experimental-client-ui-agent-team` | — | [`packages/experimental/client-ui-agent-team/src/index.ts`](../packages/experimental/client-ui-agent-team/src/index.ts) |
 | `@tomato/experimental-client-ui-claude-code-mods` | — | [`packages/experimental/client-ui-claude-code-mods/src/index.ts`](../packages/experimental/client-ui-claude-code-mods/src/index.ts) |
+| `@tomato/experimental-client-ui-stats` | — | [`packages/experimental/client-ui-stats/src/index.ts`](../packages/experimental/client-ui-stats/src/index.ts) |
 | `@tomato/experimental-client-ui-voice-input` | — | [`packages/experimental/client-ui-voice-input/src/index.ts`](../packages/experimental/client-ui-voice-input/src/index.ts) |
 | `@tomato/experimental-computer-use-cua-driver-native` | `computerUse` · `tools` · `systemPrompt` | [`packages/experimental/computer-use-cua-driver-native/src/index.ts`](../packages/experimental/computer-use-cua-driver-native/src/index.ts) |
 | `@tomato/experimental-robot-app` | `skills` | [`packages/experimental/robot-app/src/index.ts`](../packages/experimental/robot-app/src/index.ts) |
@@ -5462,6 +5947,8 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@tomato/experimental-robot-crew-remote` | — | [`packages/experimental/experimental-robot-crew-remote/src/index.ts`](../packages/experimental/experimental-robot-crew-remote/src/index.ts) |
 | `@tomato/experimental-robot-local` | `storageDomain` | [`packages/experimental/robot-local/src/index.ts`](../packages/experimental/robot-local/src/index.ts) |
 | `@tomato/experimental-robot-remote` | — | [`packages/experimental/robot-remote/src/index.ts`](../packages/experimental/robot-remote/src/index.ts) |
+| `@tomato/experimental-robot-room-remote` | — | [`packages/experimental/experimental-robot-room-remote/src/index.ts`](../packages/experimental/experimental-robot-room-remote/src/index.ts) |
+| `@tomato/experimental-robot-templates-knowledge-work` | `robotTemplates` · `skills` | [`packages/experimental/robot-templates-knowledge-work/src/index.ts`](../packages/experimental/robot-templates-knowledge-work/src/index.ts) |
 | `@tomato/experimental-robot-templates-marketing` | `robotTemplates` · `skills` | [`packages/experimental/robot-templates-marketing/src/index.ts`](../packages/experimental/robot-templates-marketing/src/index.ts) |
 | `@tomato/experimental-robot-triggers` | `robots` | [`packages/experimental/robot-triggers/src/index.ts`](../packages/experimental/robot-triggers/src/index.ts) |
 | `@tomato/experimental-session-inspector` | — | [`packages/experimental/session-inspector/src/index.ts`](../packages/experimental/session-inspector/src/index.ts) |
@@ -5495,8 +5982,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@tomato/tool-call-timeout-policy` | `tools` | [`packages/guard/timeout-policy/src/index.ts`](../packages/guard/timeout-policy/src/index.ts) |
 | `@tomato/tool-cordis` | `tools` · `cordisInspect` | [`packages/extensions/tool-cordis/src/index.ts`](../packages/extensions/tool-cordis/src/index.ts) |
 | `@tomato/tool-executor-native` | `tools` | [`packages/core/tool-executor-native/src/index.ts`](../packages/core/tool-executor-native/src/index.ts) |
-| `@tomato/tool-schedule` | `tools` | [`packages/schedule/tool-schedule/src/index.ts`](../packages/schedule/tool-schedule/src/index.ts) |
-| `@tomato/tool-subagent-control` | `tools` · `subagents` · `agents` | [`packages/subagent/tool-subagent-control/src/index.ts`](../packages/subagent/tool-subagent-control/src/index.ts) |
+| `@tomato/tool-schedule` | `tools` · `systemPrompt` | [`packages/schedule/tool-schedule/src/index.ts`](../packages/schedule/tool-schedule/src/index.ts) |
 | `@tomato/tool-working-directory` | `tools` · `workingDirectory` | [`packages/session/tool-working-directory/src/index.ts`](../packages/session/tool-working-directory/src/index.ts) |
 | `@tomato/tools` | `systemPrompt` | [`packages/core/tools/src/index.ts`](../packages/core/tools/src/index.ts) |
 | `@tomato/user-questions` | — | [`packages/interaction/user-questions/src/index.ts`](../packages/interaction/user-questions/src/index.ts) |
@@ -5554,23 +6040,28 @@ Imported as libraries by other packages; a `cordis.yml` cannot load them.
 | `@tomato/cmdline` | — | [`packages/boot/cmdline/src/index.ts`](../packages/boot/cmdline/src/index.ts) |
 | `@tomato/cua-bundle` | — | [`packages/experimental/cua-bundle/src/index.ts`](../packages/experimental/cua-bundle/src/index.ts) |
 | `@tomato/deque` | — | [`packages/util/deque/src/index.ts`](../packages/util/deque/src/index.ts) |
-| `@tomato/experimental-agent-team-profile` | — | [`packages/experimental/agent-team-profile/src/index.ts`](../packages/experimental/agent-team-profile/src/index.ts) |
+| `@tomato/error` | — | [`packages/util/error/src/index.ts`](../packages/util/error/src/index.ts) |
 | `@tomato/experimental-badge-skill-bundle` | — | [`packages/experimental/badge-skill-bundle/src/index.ts`](../packages/experimental/badge-skill-bundle/src/index.ts) |
 | `@tomato/experimental-browser-use-playwright-bundle` | — | [`packages/experimental/browser-use-playwright-bundle/src/index.ts`](../packages/experimental/browser-use-playwright-bundle/src/index.ts) |
 | `@tomato/experimental-browser-use-runtime` | — | [`packages/experimental/browser-use-runtime/src/index.ts`](../packages/experimental/browser-use-runtime/src/index.ts) |
 | `@tomato/experimental-cot-translation-bundle` | — | [`packages/experimental/cot-translation-bundle/src/index.ts`](../packages/experimental/cot-translation-bundle/src/index.ts) |
+| `@tomato/experimental-forge-bundle` | — | [`packages/experimental/forge-bundle/src/index.ts`](../packages/experimental/forge-bundle/src/index.ts) |
 | `@tomato/experimental-inspector-profile` | — | [`packages/experimental/inspector-profile/src/index.ts`](../packages/experimental/inspector-profile/src/index.ts) |
+| `@tomato/experimental-liveshare` | — | [`packages/experimental/liveshare/src/index.ts`](../packages/experimental/liveshare/src/index.ts) |
 | `@tomato/experimental-liveshare-protocol` | — | [`packages/experimental/liveshare-protocol/src/index.ts`](../packages/experimental/liveshare-protocol/src/index.ts) |
 | `@tomato/experimental-muse-bundle` | — | [`packages/experimental/muse-bundle/src/index.ts`](../packages/experimental/muse-bundle/src/index.ts) |
+| `@tomato/experimental-phone-use-bundle` | — | [`packages/experimental/phone-use-bundle/src/index.ts`](../packages/experimental/phone-use-bundle/src/index.ts) |
 | `@tomato/experimental-plugin-market-bundle` | — | [`packages/experimental/plugin-market-bundle/src/index.ts`](../packages/experimental/plugin-market-bundle/src/index.ts) |
 | `@tomato/experimental-ralph-bundle` | — | [`packages/experimental/ralph-bundle/src/index.ts`](../packages/experimental/ralph-bundle/src/index.ts) |
 | `@tomato/experimental-robot-crew` | — | [`packages/experimental/experimental-robot-crew/src/index.ts`](../packages/experimental/experimental-robot-crew/src/index.ts) |
+| `@tomato/experimental-robot-room` | — | [`packages/experimental/experimental-robot-room/src/index.ts`](../packages/experimental/experimental-robot-room/src/index.ts) |
 | `@tomato/experimental-session-search` | — | [`packages/experimental/session-search/src/index.ts`](../packages/experimental/session-search/src/index.ts) |
 | `@tomato/experimental-session-titles-bundle` | — | [`packages/experimental/session-titles-bundle/src/index.ts`](../packages/experimental/session-titles-bundle/src/index.ts) |
 | `@tomato/experimental-terminal-bundle` | — | [`packages/experimental/terminal-bundle/src/index.ts`](../packages/experimental/terminal-bundle/src/index.ts) |
 | `@tomato/experimental-voice-input-bundle` | — | [`packages/experimental/voice-input-bundle/src/index.ts`](../packages/experimental/voice-input-bundle/src/index.ts) |
 | `@tomato/experimental-webworker-packer` | — | [`packages/experimental/webworker-packer/src/index.ts`](../packages/experimental/webworker-packer/src/index.ts) |
 | `@tomato/experimental-webworker-runtime` | — | [`packages/experimental/webworker-runtime/src/index.ts`](../packages/experimental/webworker-runtime/src/index.ts) |
+| `@tomato/fs-patch` | — | [`packages/fs/fs-patch/src/index.ts`](../packages/fs/fs-patch/src/index.ts) |
 | `@tomato/home-paths` | — | [`packages/util/home-paths/src/index.ts`](../packages/util/home-paths/src/index.ts) |
 | `@tomato/hook-protocol` | — | [`packages/experimental/hook-protocol/src/index.ts`](../packages/experimental/hook-protocol/src/index.ts) |
 | `@tomato/http-proxy` | — | [`packages/util/http-proxy/src/index.ts`](../packages/util/http-proxy/src/index.ts) |
@@ -5611,6 +6102,7 @@ Imported as libraries by other packages; a `cordis.yml` cannot load them.
 | `@tomato/util-code-language` | — | [`packages/util/code-language/src/index.ts`](../packages/util/code-language/src/index.ts) |
 | `@tomato/util-crypto` | — | [`packages/util/crypto/src/index.ts`](../packages/util/crypto/src/index.ts) |
 | `@tomato/util-file-drag` | — | [`packages/util/file-drag/src/index.ts`](../packages/util/file-drag/src/index.ts) |
+| `@tomato/util-ripgrep` | — | [`packages/util/ripgrep/src/index.ts`](../packages/util/ripgrep/src/index.ts) |
 | `@tomato/util-time` | — | [`packages/util/time/src/index.ts`](../packages/util/time/src/index.ts) |
 | `@tomato/util-values` | — | [`packages/util/values/src/index.ts`](../packages/util/values/src/index.ts) |
 | `@tomato/util-workspace-path` | — | [`packages/util/workspace-path/src/index.ts`](../packages/util/workspace-path/src/index.ts) |

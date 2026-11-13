@@ -21,15 +21,7 @@ import {
   type FileSearchConfig,
 } from './search.ts'
 
-export {
-  DEFAULT_FILE_SEARCH_EXCLUDED_DIRECTORIES,
-  DEFAULT_FILE_SEARCH_MAX_ENTRIES,
-  DEFAULT_FILE_SEARCH_MAX_RESULTS,
-  WorkspaceFileSearch,
-} from './search.ts'
 export type { FileSearchConfig } from './search.ts'
-export { FILE_REFERENCE_PROMPT } from '@tomato/file-reference'
-export { activeAtToken, formatFileMention } from '@tomato/file-reference/grammar'
 
 /** Local file-reference discovery configuration. */
 export interface Config {

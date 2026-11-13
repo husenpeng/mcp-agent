@@ -172,6 +172,40 @@ function install(dir: string, name: string) {
   writeFileSync(join(dir, 'package.json'), JSON.stringify(manifest))
 }
 
+it.each(['service', 'cli'] as const)('reports unsupported activation through %s diagnostics without saving any selection changes', async (execution) => {
+  const { dir, context, pnpm } = fixture()
+  pnpm.mutate = (target) => {
+    install(target, 'supported')
+    install(target, 'restricted')
+    writeFileSync(join(target, 'node_modules/restricted/package.json'), JSON.stringify({ name: 'restricted', version: '1',
+      tomato: { bundle: { patch: './cordis.patch.yml', platforms: [process.platform === 'darwin' ? 'win32' : 'darwin'] } } }))
+  }
+  const messages: string[] = []
+  const result = await runPluginCommand(context, ['add', 'restricted'], {
+    execution, outputBytes: 8192, onOutput: (text) => { messages.push(text) },
+  })
+  expect(result.exitCode).toBe(1)
+  expect(result.output).toContain('restricted: Bundle supports Host platforms')
+  expect(result.output).toContain('installed dependencies remain; bundle selection is unchanged')
+  expect(result.output).toContain('tomato plugin remove <package>')
+  expect(readFileSync(result.logPath, 'utf8')).toContain(result.output)
+  expect(messages.join('')).toContain(result.output)
+  expect(readProfileManifest('test', dir).dependencies).toMatchObject({ supported: '1', restricted: '1' })
+  expect(readProfileManifest('test', dir).tomato?.profile?.bundles).toEqual([])
+})
+
+it('preserves malformed platform metadata errors without selecting the installed bundle', async () => {
+  const { dir, context, pnpm } = fixture()
+  pnpm.mutate = (target) => {
+    install(target, 'malformed')
+    writeFileSync(join(target, 'node_modules/malformed/package.json'), JSON.stringify({ name: 'malformed', version: '1',
+      tomato: { bundle: { patch: './cordis.patch.yml', platforms: ['macos'] } } }))
+  }
+  await expect(runProfilePnpm(context, ['add', 'malformed'], { execution: 'service', outputBytes: 8192 }))
+    .rejects.toThrow('tomato.bundle.platforms must be a nonempty list of Node platform names')
+  expect(readProfileManifest('test', dir).tomato?.profile?.bundles).toEqual([])
+})
+
 function installGuarded(dir: string, dependency: string, name = dependency, version = '1.0.0', peer = '>=999.0.0') {
   install(dir, dependency)
   writeFileSync(join(dir, 'node_modules', dependency, 'package.json'), JSON.stringify({
@@ -230,10 +264,10 @@ it.each(['plugin@1.0.0', '@scope/plugin@1.0.0'])('rejects the registry spec %s t
   expect(outcome.output).toContain('installation rejected')
   expect(outcome.output).toContain(`${name}@1.0.0`)
   expect(outcome.output).toContain('nothing was installed')
-  // The refused spec never reached an install: the lookups are the only pnpm invocations.
-  expect(pnpm.views[0]).toBe(spec)
+  // The lookup is the only pnpm invocation: the refused spec never reached an install.
+  expect(pnpm.views).toEqual([spec])
+  expect(command.run).toHaveBeenCalledTimes(1)
   expect(command.run.mock.calls[0]?.[1] as readonly string[]).toContain('view')
-  expect(command.run.mock.calls.filter(call => (call[1] as readonly string[]).includes('add'))).toHaveLength(0)
   expect(existsSync(join(dir, 'node_modules'))).toBe(false)
   expect(readFileSync(join(dir, 'package.json'), 'utf8')).toBe(manifestBefore)
 })
@@ -248,7 +282,7 @@ it('rejects a registry spec whose engines.tomato the pre-install lookup denies, 
   expect(outcome).toMatchObject({ exitCode: 1 })
   expect(outcome.incompatible).toMatchObject([{ name: 'plugin', version: '1.0.0', requirements: { 'engines.tomato': '999.0.0' } }])
   expect(command.run.mock.calls[0]?.[1] as readonly string[]).toEqual(expect.arrayContaining(['view', 'engines', 'peerDependencies']))
-  expect(command.run.mock.calls.filter(call => (call[1] as readonly string[]).includes('add'))).toHaveLength(0)
+  expect(command.run).toHaveBeenCalledTimes(1)
 })
 
 it('reads the last match when the registry lookup answers with several versions', async () => {
@@ -265,42 +299,10 @@ it('reads the last match when the registry lookup answers with several versions'
   })
   expect(outcome).toMatchObject({ exitCode: 1 })
   expect(outcome.output).toContain('plugin@2.0.0')
-  expect(pnpm.views[0]).toBe('plugin@^2')
+  expect(pnpm.views).toEqual(['plugin@^2'])
   // The lookup asks the registry the installation would use.
   expect(command.run.mock.calls[0]?.[1] as readonly string[]).toContain('--registry=https://registry.example')
-  expect(command.run.mock.calls.filter(call => (call[1] as readonly string[]).includes('add'))).toHaveLength(0)
-})
-
-it('installs the newest version the running runtime admits when the newest release needs a newer one', async () => {
-  const { dir, context, pnpm } = fixture()
-  pnpm.view = (spec) => {
-    if (spec === 'plugin') return { exitCode: 0, stdout: JSON.stringify(['0.9.0', '1.0.0']) }
-    if (spec === 'plugin@1.0.0') {
-      return { exitCode: 0, stdout: JSON.stringify({ name: 'plugin', version: '1.0.0', peerDependencies: { '@tomato/cli': '999.0.0' } }) }
-    }
-    if (spec === 'plugin@0.9.0') {
-      return { exitCode: 0, stdout: JSON.stringify({ name: 'plugin', version: '0.9.0', peerDependencies: { '@tomato/cli': '*' } }) }
-    }
-    return { exitCode: 1, stdout: '' }
-  }
-  pnpm.mutate = (target) => {
-    install(target, 'plugin')
-    writeFileSync(join(target, 'node_modules', 'plugin', 'package.json'), JSON.stringify({
-      name: 'plugin', version: '0.9.0', peerDependencies: { '@tomato/cli': '*' },
-      tomato: { bundle: { patch: './cordis.patch.yml' } },
-    }))
-  }
-  const messages: string[] = []
-  const outcome = await runProfilePnpm(context, ['add', 'plugin@1.0.0'], {
-    execution: 'service', outputBytes: 8192, onOutput: (text) => { messages.push(text) },
-  })
-  expect(outcome).toMatchObject({ exitCode: 0 })
-  expect(outcome.substituted).toEqual([{ requested: 'plugin@1.0.0', selected: 'plugin@0.9.0', requirements: '@tomato/cli 999.0.0' }])
-  expect(outcome.output).toContain('installing plugin@0.9.0 instead')
-  expect(messages.join('')).toContain('plugin@0.9.0')
-  const added = command.run.mock.calls.find(call => (call[1] as readonly string[]).includes('add'))
-  expect(added?.[1] as readonly string[]).toEqual(expect.arrayContaining(['add', 'plugin@0.9.0']))
-  expect(readProfileManifest('test', dir).tomato?.profile?.bundles).toEqual(['plugin'])
+  expect(command.run).toHaveBeenCalledTimes(1)
 })
 
 it('runs an invocation that names no command without a registry lookup', async () => {
@@ -408,6 +410,102 @@ it.each([true, false])('rejects incompatible installed manifests before activati
   // The refused run replaced the installed tree, so the restored lockfile is reinstalled.
   expect(command.run).toHaveBeenLastCalledWith(expect.anything(), ['install', '--frozen-lockfile'], expect.anything())
   expect(outcome.output).toContain('and node_modules')
+})
+
+it.each([
+  ['another package', 'other', '1.1.0'],
+  ['another version', 'extra', '1.0.5'],
+] as const)('undoes a run that installs %s than the caller expects, with its modules', async (_name, name, version) => {
+  const { dir, context, pnpm } = fixture()
+  const manifestBefore = readFileSync(join(dir, 'package.json'), 'utf8')
+  writeFileSync(join(dir, 'pnpm-lock.yaml'), 'original-lock\n')
+  pnpm.mutate = (target) => {
+    installGuarded(target, name, name, version, '*')
+    writeFileSync(join(target, 'pnpm-lock.yaml'), 'changed-lock\n')
+  }
+  const outcome = await runProfilePnpm(context, ['add', `git+https://host.example/g/r.git#${'b'.repeat(40)}`], {
+    execution: 'service', outputBytes: 8192, activateNewBundles: false, expected: { name: 'extra', version: '1.1.0' },
+  })
+  expect(outcome.exitCode).toBe(1)
+  expect(outcome.incompatible).toBeUndefined()
+  expect(outcome.unmet).toBe('unexpected-package')
+  expect(outcome.output).toContain(`${name}@${version} is installed where extra@1.1.0 was expected`)
+  expect(readFileSync(join(dir, 'package.json'), 'utf8')).toBe(manifestBefore)
+  expect(readFileSync(join(dir, 'pnpm-lock.yaml'), 'utf8')).toBe('original-lock\n')
+  expect(command.run).toHaveBeenLastCalledWith(expect.anything(), ['install', '--frozen-lockfile'], expect.anything())
+})
+
+it('undoes a run that leaves the expected package at another version without changing it', async () => {
+  const { dir, context, pnpm } = fixture()
+  // Adding the saved spec again leaves the dependency as it was.
+  installGuarded(dir, 'extra', 'extra', '1.0.0', '*')
+  pnpm.mutate = () => {}
+  const outcome = await runProfilePnpm(context, ['add', 'extra@1'], {
+    execution: 'service', outputBytes: 8192, activateNewBundles: false, expected: { name: 'extra', version: '1.1.0' },
+  })
+  expect(outcome).toMatchObject({ exitCode: 1, unmet: 'unexpected-package' })
+  expect(outcome.output).toContain('extra@1.0.0 is installed where extra@1.1.0 was expected')
+})
+
+it('undoes a run whose expected package declares no bundle, with its modules', async () => {
+  const { dir, context, pnpm } = fixture()
+  const manifestBefore = readFileSync(join(dir, 'package.json'), 'utf8')
+  writeFileSync(join(dir, 'pnpm-lock.yaml'), 'original-lock\n')
+  pnpm.mutate = (target) => {
+    install(target, 'extra')
+    writeFileSync(join(target, 'node_modules', 'extra', 'package.json'), JSON.stringify({ name: 'extra', version: '1.1.0' }))
+  }
+  const outcome = await runProfilePnpm(context, ['add', `git+https://host.example/g/r.git#${'b'.repeat(40)}`], {
+    execution: 'service', outputBytes: 8192, activateNewBundles: false, expected: { name: 'extra', version: '1.1.0' },
+  })
+  expect(outcome).toMatchObject({ exitCode: 1, unmet: 'not-bundle' })
+  expect(outcome.output).toContain('extra@1.1.0 declares no bundle')
+  expect(readFileSync(join(dir, 'package.json'), 'utf8')).toBe(manifestBefore)
+  expect(command.run).toHaveBeenLastCalledWith(expect.anything(), ['install', '--frozen-lockfile'], expect.anything())
+})
+
+it('undoes a run whose expected bundle patch cannot load, with its modules', async () => {
+  const { dir, context, pnpm } = fixture()
+  const manifestBefore = readFileSync(join(dir, 'package.json'), 'utf8')
+  writeFileSync(join(dir, 'pnpm-lock.yaml'), 'original-lock\n')
+  pnpm.mutate = (target) => {
+    install(target, 'extra')
+    writeFileSync(join(target, 'node_modules', 'extra', 'package.json'), JSON.stringify({ name: 'extra', version: '1.1.0', tomato: { bundle: { patch: './cordis.patch.yml' } } }))
+    writeFileSync(join(target, 'node_modules', 'extra', 'cordis.patch.yml'), 'insert: [\n')
+  }
+  const outcome = await runProfilePnpm(context, ['add', `git+https://host.example/g/r.git#${'b'.repeat(40)}`], {
+    execution: 'service', outputBytes: 8192, activateNewBundles: false, expected: { name: 'extra', version: '1.1.0' },
+  })
+  expect(outcome.exitCode).toBe(1)
+  expect(outcome.unmet).toBeUndefined()
+  expect(outcome.output).toContain('Cannot validate installed package extra')
+  expect(readFileSync(join(dir, 'package.json'), 'utf8')).toBe(manifestBefore)
+  expect(command.run).toHaveBeenLastCalledWith(expect.anything(), ['install', '--frozen-lockfile'], expect.anything())
+})
+
+it('reports another package over a missing bundle declaration, and a run that installs nothing as unexpected', async () => {
+  const { context, pnpm } = fixture()
+  const options = { execution: 'service', outputBytes: 8192, activateNewBundles: false, expected: { name: 'extra', version: '1.1.0' } } as const
+  pnpm.mutate = (target) => {
+    install(target, 'other')
+    install(target, 'extra')
+    writeFileSync(join(target, 'node_modules', 'extra', 'package.json'), JSON.stringify({ name: 'extra', version: '1.1.0' }))
+  }
+  expect(await runProfilePnpm(context, ['add', 'extra@1.1.0'], options)).toMatchObject({ exitCode: 1, unmet: 'unexpected-package' })
+  pnpm.mutate = () => {}
+  const empty = await runProfilePnpm(context, ['add', 'extra@1.1.0'], options)
+  expect(empty).toMatchObject({ exitCode: 1, unmet: 'unexpected-package' })
+  expect(empty.output).toContain('extra@1.1.0 is not installed')
+})
+
+it('accepts a run that installs the package the caller expects', async () => {
+  const { context, pnpm } = fixture()
+  pnpm.mutate = (target) => { installGuarded(target, 'extra', 'extra', '1.1.0', '*') }
+  const outcome = await runProfilePnpm(context, ['add', `git+https://host.example/g/r.git#${'b'.repeat(40)}`], {
+    execution: 'service', outputBytes: 8192, activateNewBundles: false, expected: { name: 'extra', version: '1.1.0' },
+  })
+  expect(outcome).toMatchObject({ exitCode: 0 })
+  expect(command.run).toHaveBeenCalledOnce()
 })
 
 it('repairs a profile that had no lockfile without creating one', async () => {
@@ -872,10 +970,16 @@ it.each([
 ])('reports launch failures with a complete log: $code', async ({ code, shortMessage, expected }) => {
   const { context } = fixture()
   command.run.mockImplementationOnce(() => result(undefined, '', () => {}, { code, ...shortMessage === undefined ? {} : { shortMessage } }))
-  const outcome = await runProfilePnpm(context, ['root'], { execution: 'service', outputBytes: 4, signal: new AbortController().signal })
+  const messages: string[] = []
+  const outcome = await runProfilePnpm(context, ['root'], {
+    execution: 'service', outputBytes: 4, signal: new AbortController().signal,
+    onOutput: (text) => { messages.push(text) },
+  })
   expect(outcome.exitCode).toBe(expected)
   expect(outcome.truncated).toBe(true)
   expect(readFileSync(outcome.logPath, 'utf8')).toBe(shortMessage ?? 'pnpm failed')
+  // A run that printed nothing still streams the diagnostic its log carries.
+  expect(messages).toEqual([shortMessage ?? 'pnpm failed'])
 })
 
 it('cancels and settles package output when the output consumer fails', async () => {

@@ -1,22 +1,22 @@
 /**
- * DeepSeek Harness → Tomato package adaptation.
+ * Tomato Harness → Tomato package adaptation.
  *
- * Tomato is a renamed fork of DeepSeek Harness: every `@deepseek-ai/dsh-<leaf>`
+ * Tomato is a renamed fork of Tomato Harness: every `@tomato/<leaf>`
  * package is `@tomato/<leaf>`, the vendored Cordis packages live under
- * `@tomato/cordis-*`, and `dsh` manifest metadata is `tomato` metadata. The
- * market converts a published DSH plugin into that naming so Tomato's own
+ * `@tomato/cordis-*`, and `tomato` manifest metadata is `tomato` metadata. The
+ * market converts a published TOMATO plugin into that naming so Tomato's own
  * installer and resolver can load it. The rules mirror
  * `scripts/rescope-to-tomato.ts`; real third-party packages under the old
  * scope, such as `@deepseek-ai/libreoffice-kit`, are left alone.
  */
 
-/** Leaves whose Tomato name is not the plain `dsh-` prefix removed. */
+/** Leaves whose Tomato name is not the plain `tomato-` prefix removed. */
 const SPECIAL_LEAVES = {
-  'dsh': 'cli',
+  'tomato': 'cli',
   'dshx': 'x',
-  'dsh-brand': 'branded',
-  'dsh-root': 'harness',
-  'dsh-subagent-dsh-sdk': 'subagent-sdk',
+  '@tomato/branded': 'branded',
+  '@tomato/harness': 'harness',
+  '@tomato/subagent-sdk': 'subagent-sdk',
   'cordis': 'cordis',
   'schemastery': 'schemastery',
   'cosmokit': 'cosmokit',
@@ -29,20 +29,20 @@ const SPECIAL_LEAVES = {
 }
 
 /** Real third-party packages under the old scope that Tomato does not rename. */
-const EXTERNAL = /^@deepseek-ai\/libreoffice-kit(?:[-.][A-Za-z0-9._-]+)?$/
+const EXTERNAL = /^@tomato\/libreoffice-kit(?:[-.][A-Za-z0-9._-]+)?$/
 
 /**
- * Map one package name from DeepSeek Harness to Tomato.
+ * Map one package name from Tomato Harness to Tomato.
  * @param {string} name - package name without a subpath.
  * @returns {string} the Tomato name, or the input when it is not a renamed package.
  */
 export function mapPackageName(name) {
   if (EXTERNAL.test(name)) return name
-  if (name.startsWith('@deepseek-ai/')) {
-    const leaf = name.slice('@deepseek-ai/'.length)
+  if (name.startsWith('@tomato/')) {
+    const leaf = name.slice('@tomato/'.length)
     const special = SPECIAL_LEAVES[leaf]
     if (special !== undefined) return `@tomato/${special}`
-    if (leaf.startsWith('dsh-')) return `@tomato/${leaf.slice('dsh-'.length)}`
+    if (leaf.startsWith('tomato-')) return `@tomato/${leaf.slice('tomato-'.length)}`
     return `@tomato/${leaf}`
   }
   if (name.startsWith('@cordisjs/plugin-')) {
@@ -55,7 +55,7 @@ export function mapPackageName(name) {
 
 /**
  * Map a full specifier, keeping its subpath.
- * @param {string} specifier - package specifier such as `@deepseek-ai/dsh-session/types`.
+ * @param {string} specifier - package specifier such as `@tomato/session/types`.
  * @returns {string} the Tomato specifier; unchanged when it names no renamed package.
  */
 export function mapSpecifier(specifier) {
@@ -68,7 +68,7 @@ export function mapSpecifier(specifier) {
 const TOKEN = /@(?:deepseek-ai|cordisjs)\/[A-Za-z0-9._*-]+(?:\/[A-Za-z0-9._*-]+)*/g
 
 /**
- * Rewrite every DeepSeek Harness package reference in one text.
+ * Rewrite every Tomato Harness package reference in one text.
  * @param {string} text - source, patch, or JSON text.
  * @returns {string} the text with Tomato package names.
  */
@@ -88,7 +88,7 @@ function strings(value) {
 
 /**
  * Rename the package references of one harness metadata block.
- * @param {Record<string, unknown>} source - `dsh` metadata.
+ * @param {Record<string, unknown>} source - `tomato` metadata.
  * @returns {Record<string, unknown>} the same declaration under Tomato names.
  */
 export function normalizeHarnessMetadata(source) {
@@ -104,18 +104,18 @@ export function normalizeHarnessMetadata(source) {
 }
 
 /**
- * Build a Tomato package manifest from a DeepSeek Harness one.
+ * Build a Tomato package manifest from a Tomato Harness one.
  * @param {unknown} input - the published `package.json`.
  * @returns {{ manifest: Record<string, unknown>, adapted: boolean }} the installable manifest.
  * @throws {Error} when the package declares no harness metadata or no bundle patch.
  */
 export function adaptManifest(input) {
   if (!isRecord(input)) throw new Error('package.json is not a JSON object')
-  const source = isRecord(input.dsh) ? input.dsh : isRecord(input.tomato) ? input.tomato : undefined
-  if (source === undefined) throw new Error('package declares neither dsh nor tomato metadata')
+  const source = isRecord(input.tomato) ? input.tomato : isRecord(input.tomato) ? input.tomato : undefined
+  if (source === undefined) throw new Error('package declares neither tomato nor tomato metadata')
   const tomato = normalizeHarnessMetadata(source)
   const manifest = { ...input, tomato }
-  delete manifest.dsh
+  delete manifest.tomato
   if (isRecord(manifest.peerDependencies)) {
     const peers = {}
     for (const [name, range] of Object.entries(manifest.peerDependencies)) peers[mapPackageName(name)] = range
@@ -136,14 +136,14 @@ export function adaptManifest(input) {
     }
     manifest.dependencies = dependencies
   }
-  if (isRecord(manifest.engines) && typeof manifest.engines.dsh === 'string') {
-    manifest.engines = { ...manifest.engines, tomato: typeof manifest.engines.tomato === 'string' ? manifest.engines.tomato : manifest.engines.dsh }
-    delete manifest.engines.dsh
+  if (isRecord(manifest.engines) && typeof manifest.engines.tomato === 'string') {
+    manifest.engines = { ...manifest.engines, tomato: typeof manifest.engines.tomato === 'string' ? manifest.engines.tomato : manifest.engines.tomato }
+    delete manifest.engines.tomato
   }
   if (!isRecord(manifest.tomato.bundle) || typeof manifest.tomato.bundle.patch !== 'string') {
     throw new Error('the package declares no bundle patch, so Tomato cannot load it as a plugin')
   }
-  return { manifest, adapted: isRecord(input.dsh) }
+  return { manifest, adapted: isRecord(input.tomato) }
 }
 
 /** Text files whose package references are rewritten during adaptation. */

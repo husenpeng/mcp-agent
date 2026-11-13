@@ -20,7 +20,7 @@ const t = (key: keyof typeof en) => en[key]
 const unused = (): never => { throw new Error('This isolated page does not read that framework hook') }
 /** Framework standard props the row page never reads. */
 const standard: GlobalStandardProps = {
-  usePanelInfo: unused, useSessions: unused, useSessionStatus: unused, useSessionRetainInfo: unused,
+  usePanelInfo: unused, useSessions: unused, useSessionStatus: unused, useSessionRetainInfo: unused, useContextMenu: unused,
   useResource: unused, useWorkspaces: unused,
   ...allowAllAccess,
 }

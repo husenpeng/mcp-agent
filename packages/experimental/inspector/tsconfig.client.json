@@ -93,14 +93,21 @@
     "src/shared/web.ts"
   ],
   "references": [
-    { "path": "../../client/ui-renderer" },
-    { "path": "../../client/ui-layout" },
-    { "path": "../../client/shortcuts/tsconfig.client.json" },
-    { "path": "../../client/store" },
-    { "path": "../../client/ui-slots" },
-    { "path": "../../client/ui-primitives" },
-    { "path": "../../client/locale/tsconfig.client.json" },
-    { "path": "../../client/connection/tsconfig.client.json" },
+    {
+      "path": "../../client/ui-renderer"
+    },
+    {
+      "path": "../../client/ui-layout"
+    },
+    {
+      "path": "../../client/store"
+    },
+    {
+      "path": "../../client/ui-slots"
+    },
+    {
+      "path": "../../client/ui-primitives"
+    },
     {
       "path": "../../util/branded"
     },
@@ -109,6 +116,15 @@
     },
     {
       "path": "../../util/crypto"
+    },
+    {
+      "path": "../../client/shortcuts/tsconfig.client.json"
+    },
+    {
+      "path": "../../client/locale/tsconfig.client.json"
+    },
+    {
+      "path": "../../client/connection/tsconfig.client.json"
     }
   ]
 }

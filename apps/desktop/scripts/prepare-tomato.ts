@@ -4,7 +4,7 @@ import { resolveMacOSSignatureCacheDirectory } from './macos-signature-cache-dir
 import { packagingStep } from './packaging-step.mjs'
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { delimiter, join, relative, resolve } from 'node:path'
 import { desktopNodeEnvironment } from '../src/node-environment.ts'
@@ -69,6 +69,23 @@ function desktopRelease(): DesktopRelease {
     nodeVersion: runtime.node,
     pnpmVersion: runtime.pnpm,
   })
+}
+
+/**
+ * Remove macOS AppleDouble sidecars (`._name`) from a materialized tree. The
+ * package import introduces them for packages whose stored files carry
+ * extended attributes, and every one lands inside the shipped runtime.
+ * @param root - directory to clean recursively.
+ */
+function stripAppleDouble(root: string): void {
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    const path = join(root, entry.name)
+    if (entry.name.startsWith('._')) {
+      rmSync(path, { recursive: true, force: true })
+      continue
+    }
+    if (entry.isDirectory()) stripAppleDouble(path)
+  }
 }
 
 function runPnpm(args: readonly string[]): Promise<void> {
@@ -148,10 +165,12 @@ async function main(): Promise<void> {
     const officeEngine = selectOfficeEngine(officeManifest, target)
     mkdirSync(TOMATO_OUTPUT_ROOT, { recursive: true })
     await packagingStep(process.env.TOMATO_DESKTOP_PACKAGING_RUN_DIR, 'runtime:materialize-modules', async () => {
-      cpSync(modules, join(TOMATO_OUTPUT_ROOT, 'node_modules'), {
+      const runtimeModules = join(TOMATO_OUTPUT_ROOT, 'node_modules')
+      cpSync(modules, runtimeModules, {
         recursive: true, dereference: true,
         filter: source => desktopRuntimeFileExclusion(relative(modules, source), target, officeEngine) === undefined,
       })
+      stripAppleDouble(runtimeModules)
     })
     writeFileSync(join(TOMATO_OUTPUT_ROOT, 'package.json'), `${JSON.stringify({
       name: '@tomato/desktop-runtime', private: true, version: release.version, type: 'module',
@@ -162,7 +181,7 @@ async function main(): Promise<void> {
         throw new Error(`desktop runtime: missing private Host file ${file}`)
       }
     }
-    if (!existsSync(join(TOMATO_OUTPUT_ROOT, 'node_modules', '@deepseek-ai', `libreoffice-kit-${officeEngine}`, 'prebuilds.json'))) {
+    if (!existsSync(join(TOMATO_OUTPUT_ROOT, 'node_modules', '@tomato', `libreoffice-kit-${officeEngine}`, 'prebuilds.json'))) {
       throw new Error(`desktop runtime: missing required LibreOffice engine ${officeEngine}`)
     }
     if (process.platform === 'darwin' && process.env.TOMATO_DESKTOP_UNSIGNED !== '1') {

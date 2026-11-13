@@ -1,7 +1,7 @@
 {
   "name": "@tomato/base",
   "description": "The shared tomato core as a profile bundle: the first patch layer of base-backed profiles, inserting core rows over the empty profile root",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -25,7 +25,10 @@
   "files": [
     "lib/index.js",
     "cordis.patch.yml",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
   ],
   "license": "MIT",
   "tomato": {
@@ -34,10 +37,12 @@
     }
   },
   "dependencies": {
+    "@tomato/cordis-plugin-timer": "workspace:~",
     "@tomato/agent": "workspace:*",
     "@tomato/agent-default-model": "workspace:*",
     "@tomato/agent-instructions": "workspace:*",
     "@tomato/agent-loop": "workspace:*",
+    "@tomato/agent-team": "workspace:*",
     "@tomato/api-gateway": "workspace:*",
     "@tomato/api-remote-access": "workspace:*",
     "@tomato/attachment-local": "workspace:*",
@@ -51,7 +56,6 @@
     "@tomato/compaction-image-offload": "workspace:*",
     "@tomato/compaction-tool-result-pruner": "workspace:*",
     "@tomato/config-editor": "workspace:*",
-    "@tomato/cordis-plugin-timer": "workspace:~",
     "@tomato/credentials-local": "workspace:*",
     "@tomato/deepseek-llm-api-extensions": "workspace:*",
     "@tomato/fs-local": "workspace:*",
@@ -100,8 +104,8 @@
     "@tomato/subagent-spawn-in-process": "workspace:*",
     "@tomato/subprocess-local": "workspace:*",
     "@tomato/system-prompt": "workspace:*",
-    "@tomato/telemetry": "workspace:*",
     "@tomato/token-meter": "workspace:*",
+    "@tomato/tool-agent-team": "workspace:*",
     "@tomato/tool-bash": "workspace:*",
     "@tomato/tool-call-timeout-policy": "workspace:*",
     "@tomato/tool-executor-native": "workspace:*",
@@ -126,12 +130,13 @@
     "@tomato/user-questions": "workspace:*",
     "@tomato/web": "workspace:*",
     "@tomato/web-deepseek-api": "workspace:*",
-    "@tomato/web-fetch-company": "workspace:*",
     "@tomato/web-fetch-http": "workspace:*",
     "@tomato/web-search-company": "workspace:*",
     "@tomato/web-search-deepseek": "workspace:*",
     "@tomato/workflow-ptc": "workspace:*",
-    "@tomato/working-directory": "workspace:*"
+    "@tomato/working-directory": "workspace:*",
+    "@tomato/telemetry": "workspace:*",
+    "@tomato/web-fetch-company": "workspace:*"
   },
   "peerDependencies": {
     "@tomato/cordis": "workspace:~"

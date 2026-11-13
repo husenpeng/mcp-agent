@@ -1,6 +1,6 @@
 ---
 name: robot-creation
-description: Use when the user wants to create, set up, or add a Tomato Rbot (机器人), including a robot creation session started from the robot page. Interview one question at a time, confirm a concrete draft, then create the robot with robot_create.
+description: Use when the user wants to create, set up, or add a Tomato Rbot (机器人), including a robot creation session started from the robot page. Interview one question at a time in the style of the grilling skill, confirm a concrete draft, then create the robot with robot_create.
 ---
 
 # Create a robot
@@ -8,6 +8,13 @@ description: Use when the user wants to create, set up, or add a Tomato Rbot (�
 Turn a vague wish into one runnable robot by interviewing the user **one
 question at a time**. A robot created from guessed or placeholder text looks
 ready but runs the wrong task, so asking is cheaper than recreating it.
+
+## Interview like a grilling session
+
+When the `grilling` skill is available, load it and follow its discipline for
+the interview below: put one question at a time with your recommended answer,
+look facts up in the environment instead of asking for them, and leave every
+decision to the user. This skill keeps its own question order and robot fields.
 
 ## Ask one question, then wait
 
@@ -68,13 +75,19 @@ After the tool returns, reply with:
 3. One concrete first instruction they can send, written for this robot's
    mission.
 4. That **运行方式、工具与权限、预算、触发器等高级项使用通用默认值，可在机器人页的
-   「高级配置」里修改**.
+   「高级配置」里修改**; a robot with skills, plugins, or MCP servers also needs
+   one **安装** on its page before it can run.
 
 Do not start a run yourself; runs start from the robot page.
 
-## Out of scope
+## Capabilities
 
 Do not interview about tools, permissions, budgets, schedules, memory, or
-agent-to-agent settings. If the user asks for them now, create the robot from
-the basic answers first, then say where to change them. Create one robot per
-request, in the user's language.
+agent-to-agent settings. Skills, plugins, and MCP servers are different: when
+the user names one, pass it to `robot_create` as `skills`, `plugins`, or
+`mcpServers`, and say the robot must be installed on its page before the first
+run. To change one of those lists for an existing robot later, call
+`robot_update` with only the list that changes; the other advanced settings stay
+under the robot page's 高级配置.
+
+Create one robot per request, in the user's language.

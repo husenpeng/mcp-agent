@@ -13,7 +13,7 @@ import {
   statSync,
   writeFileSync,
 } from 'node:fs'
-import { basename, join, resolve } from 'node:path'
+import { basename, dirname, join, resolve } from 'node:path'
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { execFileSync } from 'node:child_process'
@@ -51,16 +51,44 @@ const PRIVATE_RUNTIME_PACKAGES = [
   'packages/tomato/gateway',
   'packages/tomato/telemetry',
 ] as const
+
+/**
+ * Packages the Desktop payload omits, grouped by the bundle that composes them.
+ * The workspace keeps them for the Web and CLI installations. Only the named
+ * bundle may lose the dependencies and composition rows that point at them: its
+ * patch is the single place that mounts them, and the packaged copy drops those
+ * rows instead of composing absent modules.
+ */
+const EXCLUDED_PACKAGES_BY_BUNDLE: Readonly<Record<string, readonly string[]>> = {
+  '@tomato/experimental-robot-app': [
+    '@tomato/api-robot-crew-controller',
+    '@tomato/client-ui-robot-crew',
+    '@tomato/experimental-robot-crew-local',
+    '@tomato/experimental-robot-crew-remote',
+    '@tomato/experimental-tool-robot-crew',
+  ],
+}
+const EXCLUDED_PACKAGES: ReadonlySet<string> = new Set(Object.values(EXCLUDED_PACKAGES_BY_BUNDLE).flat())
 const APP_ROOT = resolve(import.meta.dirname, '..')
 const REPOSITORY_ROOT = resolve(APP_ROOT, '..', '..')
 
 const REQUIRED_DEPENDENCY_SECTIONS = ['dependencies', 'peerDependencies'] as const
 const OPTIONAL_DEPENDENCY_SECTION = 'optionalDependencies'
+const DEPENDENCY_SECTIONS = [...REQUIRED_DEPENDENCY_SECTIONS, OPTIONAL_DEPENDENCY_SECTION] as const
 
 /** Packed package information needed to form the local Desktop closure. */
 export interface PackedDesktopPackage {
   readonly tarball: string
   readonly manifest: Readonly<Record<string, unknown>>
+}
+
+/** One selected payload package: its packed tarball and the manifest the payload installs. */
+export interface SelectedDesktopPackage {
+  readonly tarball: string
+  /** Manifest as the payload installs it; declarations of excluded packages are removed. */
+  readonly manifest: Readonly<Record<string, unknown>>
+  /** Dependency names the payload manifest drops because their package is excluded. */
+  readonly dropped: readonly string[]
 }
 
 function supportsTarget(manifest: Readonly<Record<string, unknown>>, field: 'os' | 'cpu', target: string): boolean {
@@ -74,26 +102,72 @@ function supportsTarget(manifest: Readonly<Record<string, unknown>>, field: 'os'
     || values.every(value => value.startsWith('!'))
 }
 
-function dependencyNames(manifest: Readonly<Record<string, unknown>>, section: string): string[] {
+/**
+ * Read one dependency section, rejecting a packed manifest that declares anything but string ranges.
+ * @param manifest - Packed manifest.
+ * @param section - Dependency section name.
+ * @returns The declared names and ranges, or undefined when the section is absent.
+ */
+function dependencyRecord(
+  manifest: Readonly<Record<string, unknown>>,
+  section: string,
+): Record<string, string> | undefined {
   const value = manifest[section]
-  if (value === undefined) return []
+  if (value === undefined) return undefined
   if (value === null || typeof value !== 'object' || Array.isArray(value)) {
     throw new Error(`desktop package set: ${String(manifest.name)} has invalid ${section}`)
   }
-  return Object.keys(value).sort()
+  const declared: [string, string][] = []
+  for (const [name, range] of Object.entries(value)) {
+    if (typeof range !== 'string') throw new Error(`desktop package set: ${String(manifest.name)} has invalid ${section}.${name}`)
+    declared.push([name, range])
+  }
+  return Object.fromEntries(declared)
+}
+
+function dependencyNames(manifest: Readonly<Record<string, unknown>>, section: string): string[] {
+  return Object.keys(dependencyRecord(manifest, section) ?? {}).sort()
+}
+
+/**
+ * Drop every dependency declaration on an excluded package.
+ * The payload cannot leave the declaration in place: nothing ships that resolves
+ * it, and a registry copy would reintroduce the omitted implementation.
+ * @param manifest - Packed manifest.
+ * @param excluded - Package names the payload omits.
+ * @returns The manifest the payload installs and the dependency names it drops.
+ */
+function pruneManifest(
+  manifest: Readonly<Record<string, unknown>>,
+  excluded: ReadonlySet<string>,
+): { manifest: Record<string, unknown>; dropped: string[] } {
+  const next: Record<string, unknown> = { ...manifest }
+  const dropped: string[] = []
+  for (const section of DEPENDENCY_SECTIONS) {
+    const declared = dependencyRecord(manifest, section)
+    if (declared === undefined) continue
+    const removed = Object.keys(declared).filter(name => excluded.has(name))
+    if (removed.length === 0) continue
+    dropped.push(...removed)
+    next[section] = Object.fromEntries(Object.entries(declared).filter(([name]) => !excluded.has(name)))
+  }
+  return { manifest: next, dropped }
 }
 
 /**
  * Select workspace dependencies rooted at tomato and its private Host; npm resolves external packages.
  * Reads the repository workspace manifest and package manifests to distinguish required local packages from npm-resolved externals.
+ * Packages named in `excluded` stay out of the payload, and the selected manifests stop declaring them.
  * @param available - Packed packages indexed by package name.
  * @param target - Platform and architecture of the installer payload.
+ * @param excluded - Package names the payload omits; defaults to the Desktop omissions.
  * @returns Selected packages sorted by name.
  */
 export function selectDesktopPackageClosure(
   available: ReadonlyMap<string, PackedDesktopPackage>,
   target: ReturnType<typeof desktopTargetPlatform>,
-): PackedDesktopPackage[] {
+  excluded: ReadonlySet<string> = EXCLUDED_PACKAGES,
+): SelectedDesktopPackage[] {
   const workspace = yaml.load(readFileSync(join(REPOSITORY_ROOT, 'pnpm-workspace.yaml'), 'utf8')) as { packages: string[] }
   const workspaceManifests = new Map<string, Record<string, unknown>>()
   for (const path of globSync(workspace.packages.map(pattern => `${pattern}/package.json`), { cwd: REPOSITORY_ROOT })) {
@@ -101,21 +175,29 @@ export function selectDesktopPackageClosure(
     const name = manifest.name
     if (typeof name === 'string' && name !== '') workspaceManifests.set(name, manifest)
   }
-  const selected = new Map<string, PackedDesktopPackage>()
+  for (const name of [...ROOT_PACKAGES, ...EXTRA_PACKAGES]) {
+    if (excluded.has(name)) throw new Error(`desktop package set: ${name} is a payload root and cannot be excluded`)
+  }
+  const selected = new Map<string, SelectedDesktopPackage>()
   const visit = (name: string): void => {
-    if (selected.has(name)) return
+    if (selected.has(name) || excluded.has(name)) return
     const packed = available.get(name)
     if (packed === undefined) throw new Error(`desktop package set: packed inputs omit required package ${name}`)
-    selected.set(name, packed)
+    const pruned = pruneManifest(packed.manifest, excluded)
+    if (pruned.dropped.length > 0 && !Object.hasOwn(EXCLUDED_PACKAGES_BY_BUNDLE, name)) {
+      // Dropping the declaration here would hide an import whose module the payload omits.
+      throw new Error(`desktop package set: ${name} requires excluded package ${pruned.dropped.join(', ')}`)
+    }
+    selected.set(name, { tarball: packed.tarball, manifest: pruned.manifest, dropped: pruned.dropped })
     for (const section of REQUIRED_DEPENDENCY_SECTIONS) {
-      for (const dependency of dependencyNames(packed.manifest, section)) {
+      for (const dependency of dependencyNames(pruned.manifest, section)) {
         if (available.has(dependency)) visit(dependency)
         else if (workspaceManifests.has(dependency)) {
           throw new Error(`desktop package set: ${name} requires unpacked package ${dependency}`)
         }
       }
     }
-    for (const dependency of dependencyNames(packed.manifest, OPTIONAL_DEPENDENCY_SECTION)) {
+    for (const dependency of dependencyNames(pruned.manifest, OPTIONAL_DEPENDENCY_SECTION)) {
       const optional = available.get(dependency)
       if (optional !== undefined) {
         if (supportsTarget(optional.manifest, 'os', target.platform)
@@ -184,41 +266,119 @@ export function assertDesktopHostPackageFiles(files: readonly string[]): void {
 }
 
 /**
+ * Remove composition rows that name an excluded package from a bundle patch file.
+ * A payload that omits a package must not compose it, so the packaged bundle
+ * keeps every row it still ships and loses the rows whose module is absent.
+ * @param text - Patch file bytes.
+ * @param excluded - Package names the payload omits.
+ * @returns Pruned bytes, or undefined when the file composes none of them.
+ */
+function pruneBundlePatch(text: string, excluded: ReadonlySet<string>): string | undefined {
+  const lines = text.split('\n')
+  let boundary = 0
+  for (const line of lines) {
+    if (line.trim() !== '' && !line.startsWith('#')) break
+    boundary += 1
+  }
+  const value: unknown = yaml.load(lines.slice(boundary).join('\n'))
+  if (value === undefined || value === null) return undefined
+  if (!Array.isArray(value)) throw new Error('desktop package set: bundle patch is not a patch list')
+  let pruned = false
+  const entries: unknown[] = []
+  for (const entry of value) {
+    const insert = entry === null || typeof entry !== 'object' || Array.isArray(entry) ? undefined : Reflect.get(entry, 'insert')
+    if (!Array.isArray(insert)) {
+      entries.push(entry)
+      continue
+    }
+    const kept = insert.filter((row: unknown) => {
+      const name = row !== null && typeof row === 'object' && !Array.isArray(row) ? Reflect.get(row, 'name') : undefined
+      return typeof name !== 'string' || !excluded.has(name)
+    })
+    if (kept.length === insert.length) {
+      entries.push(entry)
+      continue
+    }
+    pruned = true
+    const rest = Object.entries(entry).filter(([key]) => key !== 'insert')
+    if (kept.length > 0) entries.push({ ...Object.fromEntries(rest), insert: kept })
+    else if (rest.length > 0) entries.push(Object.fromEntries(rest))
+  }
+  if (!pruned) return undefined
+  return `${lines.slice(0, boundary).join('\n')}\n${yaml.dump(entries, { lineWidth: -1 })}`
+}
+
+/**
+ * Write the tarball the payload installs for one selected package whose manifest drops excluded dependencies.
+ * The archive keeps the packed file name so the package set stays a byte-for-byte payload record.
+ * @param packed - Selected package whose manifest differs from the packed one.
+ * @param excluded - Package names the payload omits.
+ * @param staging - Empty directory that receives the rewritten archive.
+ * @returns Absolute path of the rewritten tarball.
+ */
+function rewritePayloadTarball(packed: SelectedDesktopPackage, excluded: ReadonlySet<string>, staging: string): string {
+  const directory = mkdtempSync(join(staging, 'payload-'))
+  execFileSync('tar', ['-xzf', basename(packed.tarball), '-C', directory], { cwd: dirname(packed.tarball) })
+  writeFileSync(join(directory, 'package', 'package.json'), `${JSON.stringify(packed.manifest, undefined, 2)}\n`)
+  const patchPath = join(directory, 'package', 'cordis.patch.yml')
+  if (existsSync(patchPath)) {
+    const pruned = pruneBundlePatch(readFileSync(patchPath, 'utf8'), excluded)
+    if (pruned !== undefined) writeFileSync(patchPath, pruned)
+  }
+  const output = join(staging, basename(packed.tarball))
+  execFileSync('tar', ['-czf', output, '-C', directory, 'package'])
+  return output
+}
+
+/**
  * Prepare a package set from release tarball directories.
  * @param inputs - Release tarball directories.
  * @param output - Destination package-set directory.
  * @param target - Platform and architecture of the installer payload.
+ * @param excluded - Package names the payload omits; defaults to the Desktop omissions.
  */
 export function prepareDesktopPackageSet(
-  inputs: readonly string[], output: string, target: ReturnType<typeof desktopTargetPlatform>,
+  inputs: readonly string[],
+  output: string,
+  target: ReturnType<typeof desktopTargetPlatform>,
+  excluded: ReadonlySet<string> = EXCLUDED_PACKAGES,
 ): void {
-  const selected = selectDesktopPackageClosure(packedPackages(inputs), target)
+  const selected = selectDesktopPackageClosure(packedPackages(inputs), target, excluded)
   const host = selected.find(packed => packed.manifest.name === DESKTOP_HOST_PACKAGE)
   if (host === undefined) throw new Error(`desktop package set: selected closure omits ${DESKTOP_HOST_PACKAGE}`)
   assertDesktopHostPackageFiles(tarballFiles(host.tarball))
   rmSync(output, { recursive: true, force: true })
   const packageDir = join(output, DESKTOP_PACKAGES_DIR)
   mkdirSync(packageDir, { recursive: true })
-  const records: DesktopCorePackageRecord[] = selected.map((packed) => {
-    const name = packed.manifest.name
-    const version = packed.manifest.version
-    if (typeof name !== 'string' || typeof version !== 'string') {
-      throw new Error(`desktop package set: ${packed.tarball} has no package identity`)
-    }
-    const file = basename(packed.tarball)
-    const destination = join(packageDir, file)
-    copyFileSync(packed.tarball, destination, constants.COPYFILE_EXCL)
-    const body = readFileSync(destination)
-    return {
-      name,
-      version,
-      file,
-      bytes: statSync(destination).size,
-      integrity: `sha512-${createHash('sha512').update(body).digest('base64')}`,
-    }
-  })
-  const packageSet = parseDesktopCorePackageSet({ schemaVersion: 1, packages: records })
-  writeFileSync(join(output, DESKTOP_PACKAGE_SET_FILE), `${JSON.stringify(packageSet, undefined, 2)}\n`, { mode: 0o600 })
+  const staging = mkdtempSync(join(tmpdir(), 'tomato-desktop-payload-'))
+  try {
+    const records: DesktopCorePackageRecord[] = selected.map((packed) => {
+      const name = packed.manifest.name
+      const version = packed.manifest.version
+      if (typeof name !== 'string' || typeof version !== 'string') {
+        throw new Error(`desktop package set: ${packed.tarball} has no package identity`)
+      }
+      if (packed.dropped.length > 0) {
+        console.log(`desktop package set: ${name} omits ${packed.dropped.join(', ')}`)
+      }
+      const file = basename(packed.tarball)
+      const source = packed.dropped.length > 0 ? rewritePayloadTarball(packed, excluded, staging) : packed.tarball
+      const destination = join(packageDir, file)
+      copyFileSync(source, destination, constants.COPYFILE_EXCL)
+      const body = readFileSync(destination)
+      return {
+        name,
+        version,
+        file,
+        bytes: statSync(destination).size,
+        integrity: `sha512-${createHash('sha512').update(body).digest('base64')}`,
+      }
+    })
+    const packageSet = parseDesktopCorePackageSet({ schemaVersion: 1, packages: records })
+    writeFileSync(join(output, DESKTOP_PACKAGE_SET_FILE), `${JSON.stringify(packageSet, undefined, 2)}\n`, { mode: 0o600 })
+  } finally {
+    rmSync(staging, { recursive: true, force: true })
+  }
 }
 
 function main(): void {

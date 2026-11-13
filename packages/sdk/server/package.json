@@ -1,7 +1,7 @@
 {
   "name": "@tomato/sdk-jsonrpc-server",
   "description": "Stdio JSON-RPC server plugin for out-of-process Tomato Harness SDK clients",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -25,7 +25,10 @@
   "files": [
     "locale/*.json",
     "lib/index.js",
-    "lib/types/**/*.d.ts"
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
   ],
   "license": "MIT",
   "dependencies": {
@@ -36,6 +39,8 @@
     "@tomato/cordis": "workspace:~",
     "@tomato/agent": "workspace:*",
     "@tomato/attachment": "workspace:*",
+    "@tomato/commands": "workspace:*",
+    "@tomato/goal": "workspace:*",
     "@tomato/llm": "workspace:*",
     "@tomato/llm-deepseek-api-key": "workspace:*",
     "@tomato/schedule": "workspace:*",
@@ -54,15 +59,28 @@
     "@tomato/agent-loop": "workspace:*",
     "@tomato/agent-loop-testkit": "workspace:*",
     "@tomato/attachment": "workspace:*",
+    "@tomato/command-compact": "workspace:*",
+    "@tomato/command-goal": "workspace:*",
+    "@tomato/commands": "workspace:*",
+    "@tomato/compaction-basic": "workspace:*",
+    "@tomato/goal": "workspace:*",
+    "@tomato/goal-round-driver": "workspace:*",
     "@tomato/llm": "workspace:*",
     "@tomato/llm-deepseek-api-key": "workspace:*",
+    "@tomato/permission-presets": "workspace:*",
+    "@tomato/plan-mode": "workspace:*",
+    "@tomato/sandbox-policy": "workspace:*",
     "@tomato/schedule": "workspace:*",
     "@tomato/scope": "workspace:*",
     "@tomato/sdk-protocol": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/session-persistence-jsonl": "workspace:*",
     "@tomato/session-projection": "workspace:*",
+    "@tomato/shell": "workspace:*",
     "@tomato/subagent": "workspace:*",
+    "@tomato/token-meter": "workspace:*",
+    "@tomato/tool-goal": "workspace:*",
+    "@tomato/tools": "workspace:*",
     "@tomato/user-approval": "workspace:*",
     "@tomato/user-questions": "workspace:*",
     "@tomato/working-directory": "workspace:*"

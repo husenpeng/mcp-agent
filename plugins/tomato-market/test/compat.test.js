@@ -10,14 +10,14 @@ import {
 import { adaptedFileName, createAdapter, safeArchiveEntry } from '../src/host/adapt.js'
 
 test('mapPackageName follows the Tomato rescope table', () => {
-  assert.equal(mapPackageName('@deepseek-ai/dsh'), '@tomato/cli')
-  assert.equal(mapPackageName('@deepseek-ai/dsh-brand'), '@tomato/branded')
-  assert.equal(mapPackageName('@deepseek-ai/dsh-root'), '@tomato/harness')
-  assert.equal(mapPackageName('@deepseek-ai/dsh-subagent-dsh-sdk'), '@tomato/subagent-sdk')
-  assert.equal(mapPackageName('@deepseek-ai/dshx'), '@tomato/x')
-  assert.equal(mapPackageName('@deepseek-ai/dsh-client-ui-primitives'), '@tomato/client-ui-primitives')
-  assert.equal(mapPackageName('@deepseek-ai/cordis'), '@tomato/cordis')
-  assert.equal(mapPackageName('@deepseek-ai/schemastery'), '@tomato/schemastery')
+  assert.equal(mapPackageName('@tomato/cli'), '@tomato/cli')
+  assert.equal(mapPackageName('@tomato/branded'), '@tomato/branded')
+  assert.equal(mapPackageName('@tomato/harness'), '@tomato/harness')
+  assert.equal(mapPackageName('@tomato/subagent-sdk'), '@tomato/subagent-sdk')
+  assert.equal(mapPackageName('@tomato/x'), '@tomato/x')
+  assert.equal(mapPackageName('@tomato/client-ui-primitives'), '@tomato/client-ui-primitives')
+  assert.equal(mapPackageName('@tomato/cordis'), '@tomato/cordis')
+  assert.equal(mapPackageName('@tomato/schemastery'), '@tomato/schemastery')
   assert.equal(mapPackageName('@cordisjs/plugin-loader'), '@tomato/cordis-plugin-loader')
   assert.equal(mapPackageName('@cordisjs/plugin-custom'), '@tomato/cordis-plugin-custom')
   assert.equal(mapPackageName('@deepseek-ai/libreoffice-kit'), '@deepseek-ai/libreoffice-kit')
@@ -26,8 +26,8 @@ test('mapPackageName follows the Tomato rescope table', () => {
 })
 
 test('mapSpecifier keeps subpaths and leaves unknown packages alone', () => {
-  assert.equal(mapSpecifier('@deepseek-ai/dsh-session/types'), '@tomato/session/types')
-  assert.equal(mapSpecifier('@deepseek-ai/dsh-client-ui-primitives'), '@tomato/client-ui-primitives')
+  assert.equal(mapSpecifier('@tomato/session/types'), '@tomato/session/types')
+  assert.equal(mapSpecifier('@tomato/client-ui-primitives'), '@tomato/client-ui-primitives')
   assert.equal(mapSpecifier('@deepseek-ai/libreoffice-kit/style.css'), '@deepseek-ai/libreoffice-kit/style.css')
   assert.equal(mapSpecifier('node:fs'), 'node:fs')
   assert.equal(mapSpecifier('./local.js'), './local.js')
@@ -35,10 +35,10 @@ test('mapSpecifier keeps subpaths and leaves unknown packages alone', () => {
 
 test('rewriteText changes imports, YAML rows, and JSON, but not repository URLs', () => {
   const text = [
-    "import { Context } from '@deepseek-ai/cordis'",
-    "const schema = require('@deepseek-ai/schemastery')",
-    "    - name: '@deepseek-ai/dsh-session'",
-    '{"peer": "@deepseek-ai/dsh-client-locale"}',
+    "import { Context } from '@tomato/cordis'",
+    "const schema = require('@tomato/schemastery')",
+    "    - name: '@tomato/session'",
+    '{"peer": "@tomato/client-locale"}',
     'https://github.com/deepseek-ai/deepseek-harness',
   ].join('\n')
   const rewritten = rewriteText(text)
@@ -53,8 +53,8 @@ test('rewriteText changes imports, YAML rows, and JSON, but not repository URLs'
 test('normalizeHarnessMetadata maps client injects and profile bundles', () => {
   const normalized = normalizeHarnessMetadata({
     bundle: { patch: './cordis.patch.yml' },
-    client: { platform: 'web', inject: ['@deepseek-ai/dsh-client-locale'], external: ['@deepseek-ai/dsh-api-remotes'] },
-    profile: { bundles: ['@deepseek-ai/dsh-x', '@tomato/base'] },
+    client: { platform: 'web', inject: ['@tomato/client-locale'], external: ['@tomato/api-remotes'] },
+    profile: { bundles: ['@tomato/x', '@tomato/base'] },
   })
   assert.deepEqual(normalized.client.inject, ['@tomato/client-locale'])
   assert.deepEqual(normalized.client.external, ['@tomato/api-remotes'])
@@ -63,15 +63,15 @@ test('normalizeHarnessMetadata maps client injects and profile bundles', () => {
 
 test('adaptManifest produces an installable Tomato manifest', () => {
   const { manifest, adapted } = adaptManifest({
-    name: 'dsh-demo',
+    name: 'tomato-demo',
     version: '1.0.0',
-    engines: { dsh: '>=0.2.1-rc.2', node: '>=22' },
-    peerDependencies: { '@deepseek-ai/cordis': '*', react: '^18' },
-    dependencies: { '@deepseek-ai/dsh-session': '^0.2.0', 'left-pad': '^1' },
-    dsh: { bundle: { patch: './cordis.patch.yml' }, client: { platform: 'web', inject: ['@deepseek-ai/dsh-client-locale'] } },
+    engines: { tomato: '>=0.2.1-rc.2', node: '>=22' },
+    peerDependencies: { '@tomato/cordis': '*', react: '^18' },
+    dependencies: { '@tomato/session': '^0.2.0', 'left-pad': '^1' },
+    tomato: { bundle: { patch: './cordis.patch.yml' }, client: { platform: 'web', inject: ['@tomato/client-locale'] } },
   })
   assert.equal(adapted, true)
-  assert.equal(manifest.dsh, undefined)
+  assert.equal(manifest.tomato, undefined)
   assert.deepEqual(manifest.tomato.client.inject, ['@tomato/client-locale'])
   assert.deepEqual(manifest.peerDependencies, {
     '@tomato/cordis': '*',
@@ -80,14 +80,14 @@ test('adaptManifest produces an installable Tomato manifest', () => {
   })
   assert.deepEqual(manifest.dependencies, { 'left-pad': '^1' })
   assert.equal(manifest.engines.tomato, '>=0.2.1-rc.2')
-  assert.equal(manifest.engines.dsh, undefined)
+  assert.equal(manifest.engines.tomato, undefined)
 })
 
 test('adaptManifest keeps an existing Tomato manifest and refuses what cannot load', () => {
   const already = adaptManifest({ name: 'demo', tomato: { bundle: { patch: './p.yml' } } })
   assert.equal(already.adapted, false)
-  assert.throws(() => adaptManifest({ name: 'demo' }), /neither dsh nor tomato/)
-  assert.throws(() => adaptManifest({ name: 'demo', dsh: { client: { platform: 'web' } } }), /no bundle patch/)
+  assert.throws(() => adaptManifest({ name: 'demo' }), /neither tomato nor tomato/)
+  assert.throws(() => adaptManifest({ name: 'demo', tomato: { client: { platform: 'web' } } }), /no bundle patch/)
   assert.throws(() => adaptManifest(null), /not a JSON object/)
 })
 
@@ -99,7 +99,7 @@ test('safeArchiveEntry refuses absolute and parent paths', () => {
 })
 
 test('adaptedFileName is filesystem safe for scoped names', () => {
-  assert.equal(adaptedFileName('dsh-status-rotator', '0.38.0'), 'dsh-status-rotator-0.38.0-tomato.tgz')
+  assert.equal(adaptedFileName('tomato-status-rotator', '0.38.0'), 'tomato-status-rotator-0.38.0-tomato.tgz')
   assert.equal(adaptedFileName('@scope/pkg', '1.0.0'), 'scope-pkg-1.0.0-tomato.tgz')
 })
 
@@ -117,17 +117,17 @@ test('createAdapter builds a Tomato tarball without executing package code', asy
     const packageDir = join(source, 'package')
     await mkdir(join(packageDir, 'lib'), { recursive: true })
     await writeFile(join(packageDir, 'package.json'), JSON.stringify({
-      name: 'dsh-demo',
+      name: 'tomato-demo',
       version: '1.2.3',
       type: 'module',
       main: 'lib/index.js',
       exports: { '.': './lib/index.js', './client': './lib/client.js' },
-      peerDependencies: { '@deepseek-ai/cordis': '*' },
-      dsh: { bundle: { patch: './cordis.patch.yml' }, client: { platform: 'web', inject: ['@deepseek-ai/dsh-client-locale'] } },
+      peerDependencies: { '@tomato/cordis': '*' },
+      tomato: { bundle: { patch: './cordis.patch.yml' }, client: { platform: 'web', inject: ['@tomato/client-locale'] } },
     }))
-    await writeFile(join(packageDir, 'cordis.patch.yml'), "- insert:\n    - name: '@deepseek-ai/dsh-session'\n")
-    await writeFile(join(packageDir, 'lib', 'index.js'), "export * from '@deepseek-ai/schemastery'\n")
-    await writeFile(join(packageDir, 'lib', 'client.js'), "module.exports = require('@deepseek-ai/dsh-client-ui-primitives')\n")
+    await writeFile(join(packageDir, 'cordis.patch.yml'), "- insert:\n    - name: '@tomato/session'\n")
+    await writeFile(join(packageDir, 'lib', 'index.js'), "export * from '@tomato/schemastery'\n")
+    await writeFile(join(packageDir, 'lib', 'client.js'), "module.exports = require('@tomato/client-ui-primitives')\n")
     const archive = join(workspace, 'source.tgz')
     await tar.c({ gzip: true, file: archive, cwd: source }, ['package'])
 
@@ -135,15 +135,15 @@ test('createAdapter builds a Tomato tarball without executing package code', asy
       cacheDir: join(workspace, 'out'),
       fetchBytes: async () => ({ bytes: new Uint8Array(await readFile(archive)) }),
     })
-    const first = await adapter.adapt('dsh-demo', '1.2.3', 'https://registry.example/dsh-demo.tgz')
-    assert.match(first.file, /dsh-demo-1\.2\.3-tomato\.tgz$/)
+    const first = await adapter.adapt('tomato-demo', '1.2.3', 'https://registry.example/tomato-demo.tgz')
+    assert.match(first.file, /tomato-demo-1\.2\.3-tomato\.tgz$/)
     assert.equal(first.changed, 3)
 
     const extracted = join(workspace, 'check')
     await mkdir(extracted)
     await tar.x({ file: first.file, cwd: extracted })
     const manifest = JSON.parse(await readFile(join(extracted, 'package', 'package.json'), 'utf8'))
-    assert.equal(manifest.dsh, undefined)
+    assert.equal(manifest.tomato, undefined)
     assert.deepEqual(manifest.tomato.client.inject, ['@tomato/client-locale'])
     assert.deepEqual(manifest.peerDependencies, { '@tomato/cordis': '*' })
     assert.match(await readFile(join(extracted, 'package', 'lib', 'index.js'), 'utf8'), /@tomato\/schemastery/)
@@ -156,7 +156,7 @@ test('createAdapter builds a Tomato tarball without executing package code', asy
       cacheDir: join(workspace, 'out'),
       fetchBytes: async () => { downloads += 1; return { bytes: new Uint8Array() } },
     })
-    const second = await cached.adapt('dsh-demo', '1.2.3', 'https://registry.example/dsh-demo.tgz')
+    const second = await cached.adapt('tomato-demo', '1.2.3', 'https://registry.example/tomato-demo.tgz')
     assert.equal(second.file, first.file)
     assert.equal(downloads, 0)
   } finally {

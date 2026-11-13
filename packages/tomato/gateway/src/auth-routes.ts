@@ -5,7 +5,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import { AuthService } from './auth-service.ts'
 import type { Config } from './config.ts'
 import { clearSessionCookie, requestSessionId, sessionCookie } from './cookies.ts'
-import type { LoginAttempt, LoginFailure } from './types.ts'
+import type { LoginAttempt, LoginFailure, SessionUser } from './types.ts'
 
 /** One active login attempt. */
 interface Attempt extends LoginAttempt {
@@ -78,6 +78,9 @@ export class AuthRoutes {
   private readonly attempts = new Map<string, Attempt>()
   private readonly secure: boolean
   private advertisedRoot: (() => string) | undefined
+  /** Verified Desktop account view, reused briefly for paired devices. */
+  private shared: { id: string; user: SessionUser; at: number } | undefined
+  private static readonly SHARED_TTL_MS = 60_000
 
   /**
    * @param config - validated gateway configuration.
@@ -86,6 +89,8 @@ export class AuthRoutes {
    * @param secure - whether the listener serves TLS.
    * @param onSignedOut - called when the browser has no session: on a logout before the remote revoke, and on a
    *   session request without a session id.
+   * @param desktopSessionId - reads the account session the Desktop shell signed in with; its view is projected to
+   *   paired devices, which hold the pairing cookie but not the browser's session cookie.
    */
   constructor(
     private readonly config: Config,
@@ -93,6 +98,7 @@ export class AuthRoutes {
     private readonly origin: string,
     secure: boolean,
     private readonly onSignedOut: () => void = () => {},
+    private readonly desktopSessionId: () => string | undefined = () => undefined,
   ) {
     this.secure = secure
   }
@@ -235,12 +241,18 @@ export class AuthRoutes {
     }
     const sessionId = requestSessionId(request)
     if (sessionId === undefined) {
-      this.onSignedOut()
-      sendJson(response, 200, { status: 'signed-out' })
+      const shared = await this.sharedSession()
+      if (shared === undefined) {
+        this.onSignedOut()
+        sendJson(response, 200, { status: 'signed-out' })
+        return
+      }
+      sendJson(response, 200, { status: 'signed-in', user: shared, shared: true })
       return
     }
     const verified = await this.auth.verify(sessionId)
     if (verified.kind === 'valid') {
+      this.shared = { id: sessionId, user: verified.user, at: Date.now() }
       sendJson(response, 200, { status: 'signed-in', user: verified.user })
       return
     }
@@ -249,6 +261,28 @@ export class AuthRoutes {
       return
     }
     sendJson(response, 503, { status: 'unavailable' })
+  }
+
+  /**
+   * The account the Desktop shell is signed in with, for paired devices.
+   * @returns the verified user, or undefined when no desktop session verifies.
+   */
+  private async sharedSession(): Promise<SessionUser | undefined> {
+    if (!this.auth.configured()) return undefined
+    // Without a Desktop shell there is nothing to project: a plain browser or a
+    // test Host still reports a missing cookie as signed-out.
+    const id = this.desktopSessionId()
+    if (id === undefined || id === '') return undefined
+    if (this.shared?.id === id && Date.now() - this.shared.at < AuthRoutes.SHARED_TTL_MS) {
+      return this.shared.user
+    }
+    const verified = await this.auth.verify(id)
+    if (verified.kind !== 'valid') {
+      this.shared = undefined
+      return undefined
+    }
+    this.shared = { id, user: verified.user, at: Date.now() }
+    return verified.user
   }
 
   /**

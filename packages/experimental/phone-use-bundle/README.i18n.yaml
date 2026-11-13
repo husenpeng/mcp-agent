@@ -1,0 +1,43 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/phone-use-bundle/README.md
+/:
+  en: fa76e0d569fcf47e
+  zh: 75bb97d175ba2352
+/tomato-experimental-phone-use-bundle:
+  en: 91ea446cd5ee6bbc
+  zh: adcda92dc9b356f9
+/tomato-experimental-phone-use-bundle/summary:
+  en: e8edc28466bda655
+  zh: 5368b3506cc0a8be
+/tomato-experimental-phone-use-bundle/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 1db86285abf6c499
+/tomato-experimental-phone-use-bundle/use-this-package:
+  en: 9dd954024503292c
+  zh: bf203d58e8e33735
+/tomato-experimental-phone-use-bundle/use-this-package/install-into-a-profile:
+  en: a0f0325b71f360dd
+  zh: 953219abe25228f2
+/tomato-experimental-phone-use-bundle/use-this-package/what-you-get:
+  en: cf7d222f50815a44
+  zh: 3987811f92ae53cb
+/tomato-experimental-phone-use-bundle/understand-the-implementation:
+  en: 51c7fe7a7ea5ddf4
+  zh: 67a31d1f3051aaa9
+/tomato-experimental-phone-use-bundle/further-exploration:
+  en: 88dda846eb7bf7af
+  zh: 19bd516eaa6f9a7e
+/tomato-experimental-phone-use-bundle/model-experience:
+  en: a725f18f2dcf21dd
+  zh: 97ccd0fe66d81371
+/tomato-experimental-phone-use-bundle/model-experience/kv-cache-effect:
+  en: 4f0eadf94828e66e
+  zh: 4f0eadf94828e66e
+/tomato-experimental-phone-use-bundle/known-limitations-and-deferred-work:
+  en: 0b947ec48609a6a2
+  zh: 1983ee374d7fc8ac
+/tomato-experimental-phone-use-bundle/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 68f566a0cec50eb4

@@ -34,7 +34,8 @@
       "default": "./lib/typert.remote-client.js"
     },
     "./src/*": "./src/*",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
   },
   "tomato": {
     "client": {
@@ -53,13 +54,19 @@
     "watch": "tsdown --watch"
   },
   "files": [
+    "locale/*.json",
     "lib/index.js",
     "lib/client.js",
     "lib/types/**/*.d.ts",
     "lib/typert.host.js",
     "lib/typert.host.d.ts",
     "lib/typert.remote-client.js",
-    "lib/typert.remote-client.d.ts"
+    "lib/typert.remote-client.d.ts",
+    "lib/**/*.js.map",
+    "lib/types/**/*.d.ts.map",
+    "lib/typert.host.d.ts.map",
+    "lib/typert.remote-client.d.ts.map",
+    "src"
   ],
   "license": "MIT",
   "dependencies": {

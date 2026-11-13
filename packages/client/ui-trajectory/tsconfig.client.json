@@ -1,0 +1,64 @@
+{
+  "extends": "../../../tsconfig.base.client.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib/types",
+    "tsBuildInfoFile": "lib/tsconfig.client.tsbuildinfo"
+  },
+  "references": [
+    {
+      "path": "../../../vendor/cordis"
+    },
+    {
+      "path": "../store"
+    },
+    {
+      "path": "../../util/values"
+    },
+    {
+      "path": "../ui-renderer"
+    },
+    {
+      "path": "../ui-session"
+    },
+    {
+      "path": "../ui-slots"
+    },
+    {
+      "path": "../../core/agent"
+    },
+    {
+      "path": "../../core/session"
+    },
+    {
+      "path": "../../compaction/compaction"
+    },
+    {
+      "path": "../../llm/llm"
+    },
+    {
+      "path": "../../attachment/attachment"
+    },
+    {
+      "path": "../../core/tool-executor-ptc"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-conversation/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/session-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/gateway/tsconfig.client.json"
+    }
+  ],
+  "include": [
+    "src/client",
+    "src/css-modules.d.ts",
+    "src/types.ts"
+  ],
+  "files": []
+}

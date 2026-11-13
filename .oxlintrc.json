@@ -26,6 +26,7 @@
     "packages/experimental/claude-code-mods/examples/*/{hooks,tests,types}/**", // Claude Code's published example mods and their tests keep the upstream style; see the headers.
     "native/**", // The imported landlock-run subtree has its own gates; see native/README.md.
     "**/*.js",
+    "plugins/", // Third-party plugin sources sit outside the workspace, TypeScript, and quality gates (plugins/README.md).
     "**/*.mjs",
     "**/*.config.ts", // Tool and app configs are outside the repository TypeScript programs.
     "packages/client/tsdown.client.ts" // Shared client build preset, also outside a TypeScript program.

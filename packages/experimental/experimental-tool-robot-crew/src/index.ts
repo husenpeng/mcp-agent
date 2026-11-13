@@ -191,7 +191,7 @@ export function apply(ctx: Context): void {
     presentCall: args => presentCall(args),
     async execute(args, exec): Promise<CrewCreateValue> {
       requireDirectHuman(ctx, crewToolExecution(ctx, exec))
-      const input = args as unknown as CreateArgs
+      const input = args as CreateArgs
       let revision
       try {
         revision = await ctx.crews.publish(specOf(input))

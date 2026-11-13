@@ -30,14 +30,15 @@ import * as NativeToolExecutor from '@tomato/tool-executor-native'
 import Approval from '@tomato/user-approval'
 import * as Memory from '@tomato/experimental-memory'
 import * as MemoryTools from '@tomato/experimental-tool-memory'
-import * as Focus from '@tomato/experimental-focus'
 import * as EmbeddingsHttp from '@tomato/experimental-embeddings-http'
+import * as Focus from '@tomato/experimental-focus'
 import MuseInsights from '@tomato/experimental-muse-insights'
 import SessionQuerySqlite from '@tomato/session-query-sqlite'
 
 interface Row {
   readonly id: string
   readonly name: string
+  /** A disabled row stays declared in the patch without mounting a fiber. */
   readonly disabled?: boolean
   readonly config?: Readonly<Record<string, unknown>>
 }
@@ -102,8 +103,15 @@ function sourceTexts(session: Session, kind: string): string[] {
 /** Boot the shipped bundle rows over the fixture base in a temporary profile. */
 async function bootBundle(toolMemoryConfig: Record<string, unknown> = {}): Promise<{ ctx: Context; home: string; workspace: string }> {
   const home = await mkdtemp(join(tmpdir(), 'tomato-muse-bundle-'))
+  const previousTomatoHome = process.env.TOMATO_HOME
+  process.env.TOMATO_HOME = home
   let owner: Context | undefined
-  onTestFinished(async () => { await owner?.fiber.dispose(); await rm(home, { recursive: true, force: true }) })
+  onTestFinished(async () => {
+    await owner?.fiber.dispose()
+    await rm(home, { recursive: true, force: true })
+    if (previousTomatoHome === undefined) delete process.env.TOMATO_HOME
+    else process.env.TOMATO_HOME = previousTomatoHome
+  })
   const workspace = await realpath(await mkdtemp(join(home, 'workspace-')))
   const dir = join(home, 'profiles', 'test')
   const anchor = join(home, 'package.json')
@@ -137,6 +145,7 @@ async function bootBundle(toolMemoryConfig: Record<string, unknown> = {}): Promi
   await bundle(home, manifest.name, rows.map(row => ({
     id: row.id,
     name: `cordis:${row.id}`,
+    ...row.disabled === true ? { disabled: true } : {},
     ...row.config === undefined && row.id !== 'optional-focus' ? {} : {
       config: {
         ...row.config,
@@ -164,7 +173,7 @@ async function bootBundle(toolMemoryConfig: Record<string, unknown> = {}): Promi
       ...Object.fromEntries(rows.map(row => [row.id, MODULES[row.name]])),
     })
   })
-  for (const row of rows) {
+  for (const row of rows.filter(row => row.disabled !== true)) {
     expect([...ctx.loader.entries()].filter(entry => entry.options.id === row.id && entry.fiber !== undefined), row.id).toHaveLength(1)
   }
 
@@ -176,7 +185,9 @@ it('publishes one default-off layer whose rows are its only runtime dependencies
   expect(rows).toEqual([
     { id: 'optional-memory', name: '@tomato/experimental-memory' },
     {
-      id: 'optional-embeddings-http', name: '@tomato/experimental-embeddings-http', disabled: true,
+      id: 'optional-embeddings-http',
+      name: '@tomato/experimental-embeddings-http',
+      disabled: true,
       config: { baseUrl: 'http://127.0.0.1:11434/v1', model: 'nomic-embed-text', dimensions: 768 },
     },
     { id: 'optional-tool-memory', name: '@tomato/experimental-tool-memory', config: { capture: true } },
@@ -186,7 +197,7 @@ it('publishes one default-off layer whose rows are its only runtime dependencies
   expect(Object.keys(manifest.dependencies).sort())
     .toEqual([
       '@tomato/experimental-embeddings-http',
-    '@tomato/experimental-focus',
+      '@tomato/experimental-focus',
       '@tomato/experimental-memory',
       '@tomato/experimental-muse-insights',
       '@tomato/experimental-tool-memory',
@@ -211,7 +222,9 @@ it('remembers a quoted preference in its workspace and a profile fact everywhere
   await one.whenIdle()
   expect(requestText(first.requests[1])).toMatch(/Saved memory-[0-9a-f-]+\./u)
   expect(requestText(first.requests[2])).toMatch(/Saved memory-[0-9a-f-]+\./u)
-  const view = { owner: Memory.LOCAL_MEMORY_OWNER, workspace }
+  const access = await ctx.memory.accessFor(workspace)
+  if (access.kind !== 'available' || access.view.workspace === undefined) throw new Error('expected a project view')
+  const view = access.view
   const saved = ctx.memory.list(view).find(record => record.key === 'email-tone')
   const aboutRecord = ctx.memory.list(view).find(record => record.key === 'role')
   expect(saved).toMatchObject({ status: 'active', pinned: true, value: '邮件简短直接，不用 emoji', source: { sessionId: one.session.id } })
@@ -296,7 +309,9 @@ it('captures a finished turn as a candidate through the shipped rows', async () 
   const agent = await ctx.agentLoop.create(SessionId('muse-capture'), { provider: 'capture', model: 'm' }, { cwd: workspace })
   agent.followup(createUserMessage({ content: [{ type: 'text', text: '以后回复都简短直接，不要用 emoji' }], source: { kind: 'user' } }))
   await agent.whenIdle()
-  const view = { owner: Memory.LOCAL_MEMORY_OWNER, workspace }
+  const access = await ctx.memory.accessFor(workspace)
+  if (access.kind !== 'available' || access.view.workspace === undefined) throw new Error('expected a project view')
+  const view = access.view
   await vi.waitFor(() => {
     expect(ctx.memory.list(view).some(record => record.key === 'reply-style')).toBe(true)
   }, { timeout: 5000 })

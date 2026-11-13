@@ -46,6 +46,10 @@ declare module '@tomato/cordis' {
  *   move an existing robot unless {@link rebind} names the new revision explicitly.
  * - {@link rebind} changes the revision later runs use; a run keeps the revision
  *   it was accepted with.
+ * - {@link install} records that the bound revision's declared dependencies were
+ *   verified; {@link rebind} clears an installation that named another revision.
+ * - {@link remove} deletes the robot instance only; published revisions and runs
+ *   stay readable, and a robot with a non-terminal run refuses removal.
  * - {@link attachSession} records the Session an executor drives for one run;
  *   the link is write-once and a later different Session is refused.
  * - {@link start} accepts a run only from `idle` and rejects while the robot is
@@ -101,6 +105,27 @@ export abstract class Robots extends Service {
    * @throws when the robot or the revision does not exist.
    */
   abstract rebind(robot: RobotId, ref: RobotSpecRef): Promise<Robot>
+
+  /**
+   * Record that the robot's bound revision was verified in this deployment.
+   * The caller resolves the revision's declared skills, plugins, MCP servers,
+   * and permission preset and calls this only after every one is available;
+   * the provider owns the durable installation record, not the verification.
+   * Installing twice keeps the latest successful time.
+   * @param robot - robot identity.
+   * @returns the robot with an installation naming its bound revision.
+   * @throws when the robot does not exist.
+   */
+  abstract install(robot: RobotId): Promise<Robot>
+
+  /**
+   * Delete one robot instance. Published revisions and recorded runs stay, so
+   * run history remains readable after the robot leaves the roster.
+   * @param robot - robot identity.
+   * @returns nothing after the robot is deleted.
+   * @throws when the robot does not exist or a run it owns is not terminal.
+   */
+  abstract remove(robot: RobotId): Promise<void>
 
   /**
    * Read one robot.

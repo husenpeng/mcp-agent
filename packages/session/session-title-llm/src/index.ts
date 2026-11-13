@@ -6,6 +6,12 @@
  * @module @tomato/session-title-llm
  */
 
+declare module '@tomato/llm/types' {
+  interface LlmRequestPurposeMap {
+    'session-title': true
+  }
+}
+
 import type { Context } from '@tomato/cordis'
 import z from '@tomato/schemastery'
 import { createUserMessage, BlockAssembler } from '@tomato/llm'

@@ -1,6 +1,6 @@
 import { brandString } from '@tomato/branded'
 import { Context } from '@tomato/cordis'
-import type { RobotId, RobotSpec, RobotSpecId, Robots, RunId } from '@tomato/experimental-robot'
+import type { RobotId, RobotSpec, RobotSpecId, RobotSpecRef, Robots, RunId } from '@tomato/experimental-robot'
 import type { SessionId } from '@tomato/session'
 import SessionStore from '@tomato/session'
 import Storage from '@tomato/storage'
@@ -33,6 +33,7 @@ const BASE = {
   capability: {
     tools: { allow: ['read'], deny: ['bash'] },
     mcpServers: ['github'],
+    plugins: [],
     skills: ['review'],
     workspaceRoots: ['/tmp/workspace'],
     dataClasses: ['internal'],
@@ -137,6 +138,30 @@ describe('robot-local specification registry', () => {
         issues: [{ path: 'goal.budget.tokens' }],
       })
       await expect(robots.publish(invalid)).rejects.toBeInstanceOf(RobotSpecValidationError)
+    })
+  })
+
+  it('publishes a specification that selects a model', async () => {
+    await withRobots(async (robots) => {
+      const selected = {
+        ...copy(),
+        goal: { ...copy().goal, model: { provider: 'acme', model: 'acme-large' } },
+      }
+      await expect(robots.publish(selected)).resolves.toMatchObject({
+        spec: { goal: { model: { provider: 'acme', model: 'acme-large' } } },
+      })
+    })
+  })
+
+  it('rejects a blank model route field', async () => {
+    await withRobots(async (robots) => {
+      const invalid = {
+        ...copy(),
+        goal: { ...copy().goal, model: { provider: ' ', model: 'acme-large' } },
+      }
+      await expect(robots.publish(invalid)).rejects.toMatchObject({
+        issues: [{ path: 'goal.model.provider' }],
+      })
     })
   })
 
@@ -364,6 +389,94 @@ describe('robot-local instantiation and runs', () => {
       await expect(robots.rebind(brandString<RobotId>('missing-robot'), second.ref)).rejects.toThrow('unknown robot')
       await expect(robots.rebind(robot.id, { spec: first.ref.spec, revision: 99 })).rejects.toThrow('unknown robot specification revision')
     })
+  })
+
+
+  it('installs the bound revision, keeps it on a same-revision rebind, and clears it on a move', async () => {
+    await withRobots(async (robots) => {
+      const revision = await robots.publish(copy())
+      const robot = await robots.instantiate(revision.ref)
+      expect(robot.installation).toBeUndefined()
+
+      const installed = await robots.install(robot.id)
+      expect(installed.installation).toMatchObject({ ref: revision.ref })
+      await expect(robots.robot(robot.id)).resolves.toMatchObject({ installation: { ref: revision.ref } })
+      await expect(robots.install(brandString<RobotId>('missing-robot'))).rejects.toThrow('unknown robot')
+
+      await expect(robots.rebind(robot.id, revision.ref)).resolves.toMatchObject({ installation: { ref: revision.ref } })
+      const renamed = structuredClone(BASE)
+      renamed.name = 'Reviewer Two'
+      const second = await robots.publish(renamed, revision.ref)
+      const moved = await robots.rebind(robot.id, second.ref)
+      expect(moved.installation).toBeUndefined()
+    })
+  })
+
+  it('removes the robot instance while keeping its specifications and runs', async () => {
+    await withRobots(async (robots) => {
+      const revision = await robots.publish(copy())
+      const robot = await robots.instantiate(revision.ref)
+      const run = await robots.start(robot.id, { message: 'review' })
+      await expect(robots.remove(robot.id)).rejects.toThrow('is running; stop its run before removing it')
+
+      await robots.cancel(run.id)
+      await robots.remove(robot.id)
+      await expect(robots.robot(robot.id)).resolves.toBeUndefined()
+      await expect(robots.robots()).resolves.toEqual([])
+      await expect(robots.revision(revision.ref)).resolves.toMatchObject({ ref: revision.ref })
+      await expect(robots.runs(robot.id)).resolves.toMatchObject([{ id: run.id, state: 'cancelled' }])
+      await expect(robots.remove(robot.id)).rejects.toThrow('unknown robot')
+      await expect(robots.remove(brandString<RobotId>('missing-robot'))).rejects.toThrow('unknown robot')
+    })
+  })
+
+  it('installs and removes without changing the other registries', async () => {
+    const ctx = await createContext(new MemoryMediaPool())
+    const kinds: string[] = []
+    ctx.effect(() => ctx.on('robot/changed', kind => kinds.push(kind)))
+    try {
+      const revision = await ctx.robots.publish(copy())
+      const robot = await ctx.robots.instantiate(revision.ref)
+      await ctx.robots.install(robot.id)
+      await ctx.robots.remove(robot.id)
+      expect(kinds).toEqual(['specs', 'robots', 'robots', 'robots'])
+    } finally {
+      await ctx.fiber.dispose()
+    }
+  })
+
+  it('opens a version-2 medium and fills the plugin list its revisions predate', async () => {
+    const pool = new MemoryMediaPool()
+    const { revision, run } = await seed(pool)
+    const medium = pool.media.get('tomato_robot')
+    const revisions = medium?.tables.get('revisions')
+    const entry = [...(revisions ?? new Map<string, unknown>()).entries()][0]
+    if (entry === undefined) throw new Error('seed wrote no specification revision')
+    const [key, raw] = entry
+    const row = raw as { spec: RobotSpec; publishedAt: number; ref: RobotSpecRef }
+    const { plugins: _plugins, ...legacyCapability } = row.spec.capability
+    revisions?.set(key, { ...row, spec: { ...row.spec, capability: legacyCapability } })
+    pool.versions.set('tomato_robot', 2)
+
+    const ctx = await createContext(pool)
+    try {
+      await expect(ctx.robots.revision(revision.ref)).resolves.toMatchObject({
+        spec: { capability: { plugins: [] } },
+      })
+      await ctx.robots.cancel(run.id)
+    } finally {
+      await ctx.fiber.dispose()
+    }
+    // The upgraded records survive the next restart without another upgrade.
+    const restarted = await createContext(pool)
+    try {
+      await expect(restarted.robots.revision(revision.ref)).resolves.toMatchObject({
+        spec: { capability: { plugins: [] } },
+      })
+      await expect(restarted.robots.run(run.id)).resolves.toMatchObject({ state: 'cancelled' })
+    } finally {
+      await restarted.fiber.dispose()
+    }
   })
 
   it('announces registry changes', async () => {

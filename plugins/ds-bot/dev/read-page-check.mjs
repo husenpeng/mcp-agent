@@ -2,14 +2,14 @@
 // the time it took, the sizes, and the first lines of the text, as read_browser would get
 // them. Quicker than the Desktop for working on the reader and for timing real sites.
 //   node dev/read-page-check.mjs [--lines 40] [--out dir] [--chrome path] <url>...
-// playwright-core comes from the deepseek-harness checkout next to ds-bot (DSH_HARNESS).
+// playwright-core comes from the deepseek-harness checkout next to ds-bot (TOMATO_HARNESS).
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { join, resolve } from 'node:path'
 import '../test/harness-resolve.mjs'
 import { READ_PAGE_SCRIPT } from '../src/client/read-page.js'
 
-// After the resolve hook above: browser.js imports @deepseek-ai/dsh-tools.
+// After the resolve hook above: browser.js imports @tomato/tools.
 const { pageText } = await import('../src/host/browser.js')
 
 const args = process.argv.slice(2)
@@ -27,7 +27,7 @@ if (args.length === 0) {
   process.exit(2)
 }
 
-const harness = resolve(process.env.DSH_HARNESS ?? join(import.meta.dirname, '..', '..', 'deepseek-harness'))
+const harness = resolve(process.env.TOMATO_HARNESS ?? join(import.meta.dirname, '..', '..', 'deepseek-harness'))
 const require = createRequire(join(harness, 'package.json'))
 const { chromium } = require(require.resolve('playwright-core', { paths: [join(harness, 'node_modules', '.pnpm', 'node_modules')] }))
 if (outDir) mkdirSync(outDir, { recursive: true })

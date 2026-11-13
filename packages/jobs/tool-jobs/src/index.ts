@@ -15,7 +15,7 @@ import z from '@tomato/schemastery'
 import { boundContextSummary, createUserMessage, type ContentBlock } from '@tomato/llm'
 import type { ContextFormed, MessageId } from '@tomato/llm'
 import { TextRetainer } from '@tomato/output-retention'
-import { defineTool } from '@tomato/tools'
+import { defineTool, ToolArgsError } from '@tomato/tools'
 import type { GenericCallView, ToolDefinition, ToolExecution } from '@tomato/tools'
 import { JobId } from '@tomato/jobs'
 import type { JobEvent, JobView, JobRead } from '@tomato/jobs'
@@ -208,7 +208,7 @@ function visibleOutputLimit(ctx: Context, exec: ToolExecution): number | undefin
 /** Validate the non-empty constraint that ParameterSchemaSpec cannot express. */
 function validateJobId(value: string): JobId {
   if (value.length === 0) {
-    throw new Error(`invalid job_id: expected a non-empty string, got ${JSON.stringify(value)}`)
+    throw new ToolArgsError([`invalid job_id: expected a non-empty string, got ${JSON.stringify(value)}`])
   }
   return JobId(value)
 }
@@ -457,6 +457,9 @@ export function apply(ctx: Context, config: Config): void {
     },
     async execute(args, exec) {
       const id = validateJobId(args.job_id)
+      if (args.timeout_ms !== undefined && (!Number.isFinite(args.timeout_ms) || args.timeout_ms <= 0)) {
+        throw new ToolArgsError([`invalid timeout_ms: expected a positive number of milliseconds, got ${JSON.stringify(args.timeout_ms)}`])
+      }
       const jobs = ctx.jobs
       const agent = exec.agent
       // A wait this execution ends on next-step input claims the read that
@@ -509,7 +512,11 @@ export function apply(ctx: Context, config: Config): void {
             // An input released this wait, so the read below carries the
             // current state; a cancellation leaves no consumer for that read,
             // and the claim's release delivers the settlement it withheld.
-            if (exec.signal.aborted) throw new Error('wait aborted')
+            if (exec.signal.aborted) {
+              const aborted = new Error('wait aborted')
+              aborted.name = 'AbortError'
+              throw aborted
+            }
           } finally {
             unsubscribe()
           }
@@ -541,6 +548,8 @@ export function apply(ctx: Context, config: Config): void {
     name: 'job_list',
     description: 'List your background jobs (running and finished) with their ids, kinds, and statuses.',
     parameters: {},
+    // Listing reads a status snapshot and consumes no output cursor or completion notice.
+    isConcurrencySafe: () => true,
     output: {
       schema: { type: 'array', items: PUBLIC_JOB_SCHEMA },
       render: (_args, jobs) => [{

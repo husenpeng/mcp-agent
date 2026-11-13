@@ -67,31 +67,22 @@
     "lib/typert.host.js",
     "lib/typert.host.d.ts",
     "lib/typert.remote-client.js",
-    "lib/typert.remote-client.d.ts"
+    "lib/typert.remote-client.d.ts",
+    "lib/**/*.js.map",
+    "lib/types/**/*.d.ts.map",
+    "lib/typert.host.d.ts.map",
+    "lib/typert.remote-client.d.ts.map",
+    "src"
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@tomato/cordis": "workspace:~",
-    "@tomato/cordis-plugin-loader": "workspace:~",
-    "@tomato/gateway": "workspace:*",
-    "@tomato/llm": "workspace:*",
-    "@tomato/session": "workspace:*",
-    "@tomato/session-query": "workspace:*",
-    "@tomato/storage-domain": "workspace:*",
-    "@tomato/typert-protocol": "workspace:*"
-  },
-  "peerDependenciesMeta": {
-    "@tomato/cordis-plugin-loader": {
-      "optional": true
-    },
-    "@tomato/gateway": {
-      "optional": true
-    }
+    "@tomato/cordis": "workspace:~"
   },
   "dependencies": {
     "@tomato/experimental-embeddings-http": "workspace:*",
     "@tomato/schemastery": "workspace:~",
-    "zod": "4.4.3"
+    "zod": "4.4.3",
+    "@tomato/typert-protocol": "workspace:*"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.3",
@@ -124,7 +115,6 @@
     "@tomato/storage-domain": "workspace:*",
     "@tomato/storage-json": "workspace:*",
     "@tomato/tool-todo": "workspace:*",
-    "@tomato/typert-protocol": "workspace:*",
     "@tomato/util-values": "workspace:*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

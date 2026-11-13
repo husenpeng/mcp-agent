@@ -1,0 +1,40 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/experimental-robot-room-remote/README.md
+/:
+  en: 26702e57c9953c19
+  zh: f187179c94658fc8
+/robot-room-remote:
+  en: 52ffa97f28e1d183
+  zh: 2e9b03bf80109467
+/robot-room-remote/summary:
+  en: 889f057176a3d3a1
+  zh: 3b9faab6e17800c9
+/robot-room-remote/table-of-contents:
+  en: 4e53164159b5ce41
+  zh: bd61ce1bef78579b
+/robot-room-remote/use-this-package:
+  en: 013e4d3bf9f83c50
+  zh: 199b07df427dae24
+/robot-room-remote/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/robot-room-remote/model-experience/remote-mount:
+  en: 81b34b4c90aca273
+  zh: 3ad4cdbd57a3d3a0
+/robot-room-remote/model-experience/remote-mount/what-the-model-sees:
+  en: f790bd5cb92b0775
+  zh: d2c8a5b1ba11d22b
+/robot-room-remote/model-experience/remote-mount/token-effect:
+  en: 8a2ba8c5bdf73d44
+  zh: 5a02d195e902807e
+/robot-room-remote/model-experience/remote-mount/kv-cache-effect:
+  en: 7a9753f6b618e895
+  zh: c9438def7c5b9e03
+/robot-room-remote/known-limitations-and-deferred-work:
+  en: dc1f187752e2d97d
+  zh: 086f4d531bcdd2a3
+/robot-room-remote/known-limitations-and-deferred-work/dev-note:
+  en: 46b06bf6d0e92673
+  zh: 76d89dd130c9d309

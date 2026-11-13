@@ -27,7 +27,9 @@ kind: "package-reference"
 
 本包是服务定义，不是提供者。加载一个由插件继承 `Robots` 的包；该子类注册为 `ctx.robots` 并实现每个抽象操作。
 
-- 消费者注入 `robots`，调用 `publish`、`revision`、`specs`、`instantiate`、`robot`、`robots`、`start`、`cancel`、`finish`、`run` 和 `runs`。
+- 消费者注入 `robots`，调用 `publish`、`revision`、`specs`、`instantiate`、`rebind`、`install`、`remove`、`robot`、`robots`、`start`、`cancel`、`advance`、`finish`、`attachSession`、`run` 和 `runs`。
+- 规格在 `capability` 中声明可解析依赖：技能、插件（按部署加载的模块名）和 MCP 服务器。`install` 记录某次部署已在精确 revision 上校验通过；`remove` 只删除机器人实例。
+- 规格可在 `goal.model` 中以 provider 与模型 id 指定每个 run 使用的模型；省略时沿用执行该规格的部署默认模型。解析并校验该路由由执行 provider 负责，因为只有它知道当前部署提供哪些 provider 与模型。
 - 服务没有配置字段。
 - `isTerminalRunState` 是纯谓词，任何进程无需该服务即可调用。
 - 将 `@tomato/experimental-robot/templates` 作为单独一行挂载，即可提供 `ctx.robotTemplates`。模板包在 `ctx.effect` 中调用 `register(template)`；id 重复时抛错，每次变更都会发出携带 `templates` 的 `robot/changed`。
@@ -48,6 +50,7 @@ kind: "package-reference"
 - 已发布的 revision 只追加。revision `n + 1` 取代 `n`，已有 revision 永不改变。
 - `instantiate` 把一个机器人绑定到一个精确 revision。发布更新的 revision 不会移动已有机器人。
 - `start` 只从 `idle` 接受 run；机器人在 `provisioning`、`paused`、`failed` 或 `stopped` 时拒绝。
+- `install` 记录调用方已校验当前绑定 revision 的声明依赖可用；`rebind` 在 revision 变化时清除安装记录，`remove` 只删除实例，保留规格与运行记录。
 - `cancel` 是协作式的。已经到达终态的 run 保持该状态。
 
 身份是编译期品牌，因此 `RobotId` 不能用在期望 `RunId` 的位置。本包没有运行时身份、存储或 I/O。[源码](src/index.ts)与[类型](src/types.ts)就是完整契约。

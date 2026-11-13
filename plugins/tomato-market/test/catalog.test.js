@@ -5,13 +5,13 @@ import { compactCatalog, parseStars, pluginStarKeys, readCatalog, resolveIcon } 
 test('parseStars keys npm names and repository slugs', () => {
   const stars = parseStars({
     plugins: [
-      { npm: 'dsh-context', url: 'https://github.com/owner/repo', stars: 120 },
+      { npm: 'tomato-context', url: 'https://github.com/owner/repo', stars: 120 },
       { npm: null, url: 'https://github.com/Other/Project.git', stars: 7 },
       { url: 'https://gitlab.com/team/project', stars: 3 },
       { npm: 'no-stars' },
     ],
   })
-  assert.deepEqual(stars, { 'npm:dsh-context': 120, 'gh:owner/repo': 120, 'gh:other/project': 7 })
+  assert.deepEqual(stars, { 'npm:tomato-context': 120, 'gh:owner/repo': 120, 'gh:other/project': 7 })
 })
 
 test('pluginStarKeys prefers the package name and then the repository', () => {
@@ -48,7 +48,7 @@ test('compactCatalog keeps display fields, trims versions, and drops unknown mem
           version: `1.0.${index}`,
           publishTimestamp: index,
           source: { type: 'npm', registry: 'https://registry.example' },
-          engines: { dsh: '>=0.2.0', tomato: '>=0.1.0' },
+          engines: { tomato: '>=0.2.0', tomato: '>=0.1.0' },
         })),
         unknown: 'dropped',
       },
@@ -67,7 +67,7 @@ test('compactCatalog keeps display fields, trims versions, and drops unknown mem
   assert.equal(kept.icon, 'https://market.example/icons/pkg.svg')
   assert.equal(kept.repository.directory, 'packages/pkg')
   assert.equal(kept.versions.length, 24)
-  assert.equal(kept.versions[0].dsh, '>=0.2.0')
+  assert.equal(kept.versions[0].tomato, '>=0.2.0')
   assert.equal(kept.versions[0].tomato, '>=0.1.0')
   assert.deepEqual(kept.keywords, ['a', 'b'])
   assert.ok(kept.description.en.length <= 400)

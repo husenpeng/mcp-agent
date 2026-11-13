@@ -7,12 +7,12 @@
 // Writer is pinned, so the sidebar shows its pin. Missing Bots and the group are created
 // through POST api/bot, and each chat gets one message for the mock model to answer.
 //
-//   node dev/ui-shots.mjs desktop <dsh-repo> <out-dir> <renderer-port>
-//   node dev/ui-shots.mjs web <dsh-repo> <out-dir> <bench-name> <web-port>
+//   node dev/ui-shots.mjs desktop <tomato-repo> <out-dir> <renderer-port>
+//   node dev/ui-shots.mjs web <tomato-repo> <out-dir> <bench-name> <web-port>
 //
 // Desktop attaches to a running window (desktop.sh); set SHOT_DISPLAY and XAUTHORITY to
 // grab the screen instead of a CDP screenshot. Web starts a headless Chrome or Chromium
-// through dsh's playwright-core: CHROME_BIN, else google-chrome, chromium or
+// through tomato's playwright-core: CHROME_BIN, else google-chrome, chromium or
 // chromium-browser on PATH, else playwright's own download, and logs in with the token
 // URL in the bench's web.log (dev/bench.sh), which it never prints.
 import { execFileSync } from 'node:child_process'
@@ -23,7 +23,7 @@ import { capture, connectApp, playwright, waitTeam } from './desktop-linux/lib.m
 
 const [mode, repo, outDir, target, webPort] = process.argv.slice(2)
 if (!['desktop', 'web'].includes(mode) || !repo || !outDir || !target || (mode === 'web' && !webPort)) {
-  console.error('usage: node dev/ui-shots.mjs desktop <dsh-repo> <out-dir> <renderer-port>\n       node dev/ui-shots.mjs web <dsh-repo> <out-dir> <bench-name> <web-port>')
+  console.error('usage: node dev/ui-shots.mjs desktop <tomato-repo> <out-dir> <renderer-port>\n       node dev/ui-shots.mjs web <tomato-repo> <out-dir> <bench-name> <web-port>')
   process.exit(2)
 }
 mkdirSync(outDir, { recursive: true })
@@ -45,12 +45,12 @@ if (mode === 'desktop') {
   browser = await chromium.launch({ executablePath: findChrome(), headless: true })
   page = await browser.newPage({ viewport: { width: 1400, height: 860 } })
   const root = dirname(dirname(dirname(fileURLToPath(import.meta.url))))
-  const log = readFileSync(join(root, `.dsh-test-${target}`, 'web.log'), 'utf8')
+  const log = readFileSync(join(root, `.tomato-test-${target}`, 'web.log'), 'utf8')
   const login = log.match(new RegExp(`http://127\\.0\\.0\\.1:${webPort}/\\?token=[^\\s]+`))?.[0]
-  if (!login) throw new Error(`no login URL in .dsh-test-${target}/web.log`)
+  if (!login) throw new Error(`no login URL in .tomato-test-${target}/web.log`)
   await page.goto(login)
 }
-// dsh shows a preview notice until it is dismissed once per profile, and it can open a
+// tomato shows a preview notice until it is dismissed once per profile, and it can open a
 // little after the page; the handler clears it before any click, `shot` before a capture.
 const notice = page.getByRole('dialog').getByRole('button', { name: 'Continue' })
 await page.addLocatorHandler(notice, () => notice.click())
@@ -289,7 +289,7 @@ check(await page.locator('.bt-us-profile').waitFor({ state: 'detached', timeout:
 // On the Desktop its account menu holds the shell's settings seat; the link goes through it.
 await page.locator('.bt-settings-nav .bt-settings-shell').click()
 const harness = page.locator('[data-shortcut-modal="settings"]')
-check(await harness.waitFor({ timeout: 10_000 }).then(() => true, () => false), 'Harness settings opens DeepSeek Harness settings')
+check(await harness.waitFor({ timeout: 10_000 }).then(() => true, () => false), 'Harness settings opens Tomato Harness settings')
 await page.waitForTimeout(800)
 await shot('harness-settings')
 await page.keyboard.press('Escape')
@@ -300,7 +300,7 @@ await openRow(writerRow)
 await page.getByRole('button', { name: 'View conversation details' }).first().click()
 await page.locator('.bt-panel .bt-model-trigger').click()
 await page.locator('.bt-model-menu').getByRole('menuitem', { name: 'Models and providers…' }).click()
-check(await harness.waitFor({ timeout: 10_000 }).then(() => true, () => false), 'Models and providers… opens DeepSeek Harness settings')
+check(await harness.waitFor({ timeout: 10_000 }).then(() => true, () => false), 'Models and providers… opens Tomato Harness settings')
 await page.keyboard.press('Escape')
 
 await browser.close()

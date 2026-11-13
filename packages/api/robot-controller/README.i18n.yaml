@@ -3,20 +3,20 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/api/robot-controller/README.md
 /:
-  en: 00fed25212b506be
-  zh: bf96413c4f30842e
+  en: ca3ec6760bf23a5c
+  zh: 15f62727bd6f9472
 /robot-controller:
   en: a117701c01c1435f
   zh: 38d7a797c8dc41a4
 /robot-controller/summary:
-  en: 4545338aa8ba6e2a
-  zh: defe20d01eda683b
+  en: 0ec7e2856702dd33
+  zh: c3183d6c3521e809
 /robot-controller/table-of-contents:
   en: 134c9b5c374e0e8e
   zh: f79065d96be7863e
 /robot-controller/use-this-package:
-  en: 0b10000e4e3d2497
-  zh: d4f0219e9b67f145
+  en: 72f76981c43fafeb
+  zh: ac219c82ff05f298
 /robot-controller/dev-note:
   en: f153303d60b9b7cc
   zh: d895d7c50bbdeff7

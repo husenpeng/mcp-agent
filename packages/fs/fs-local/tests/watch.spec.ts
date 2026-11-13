@@ -41,7 +41,10 @@ describe('local filesystem watch', () => {
     await h.started
     const ignored = h.watch.mock.calls[0]![1]!.ignored
     if (typeof ignored !== 'function') throw new Error('Expected a target filter')
-    expect(h.watch).toHaveBeenCalledExactlyOnceWith(dirname(h.path), { ignoreInitial: true, depth: 0, ignored })
+    // A missing target arms the parent watch with polling so creation is not
+    // lost when native events for the absent inode never fire.
+    const polling = kind === 'missing' ? { usePolling: true, interval: 100 } : {}
+    expect(h.watch).toHaveBeenCalledExactlyOnceWith(dirname(h.path), { ignoreInitial: true, depth: 0, ...polling, ignored })
     expect(ignored(dirname(h.path))).toBe(false)
     expect(ignored(h.path)).toBe(false)
     expect(ignored(join(dirname(h.path), 'unrelated.txt'))).toBe(true)

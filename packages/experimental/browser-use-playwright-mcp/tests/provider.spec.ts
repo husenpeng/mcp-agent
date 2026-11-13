@@ -50,9 +50,9 @@ it('seeds an isolated launch from an existing storage-state file', () => {
   Provider.apply(new Context(), Provider.Config({ mode: 'launch', storageState }))
   expect(vi.mocked(mountSessionMcp).mock.calls[0]![1].args.slice(1)).toEqual(
     ['--browser', 'chromium', '--isolated', '--headless', '--storage-state', storageState])
-  expect(() => Provider.apply(new Context(), Provider.Config({ mode: 'launch', storageState: 'relative.json' })))
+  expect(() => { Provider.apply(new Context(), Provider.Config({ mode: 'launch', storageState: 'relative.json' })) })
     .toThrow('existing absolute file')
-  expect(() => Provider.apply(new Context(), Provider.Config({ mode: 'launch', storageState: resolve('missing-state.json') })))
+  expect(() => { Provider.apply(new Context(), Provider.Config({ mode: 'launch', storageState: resolve('missing-state.json') })) })
     .toThrow('existing absolute file')
 })
 

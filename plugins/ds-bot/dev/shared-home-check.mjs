@@ -1,10 +1,10 @@
-// Web and Desktop on one DSH_HOME: does either dsh lose the other's team changes?
+// Web and Desktop on one TOMATO_HOME: does either tomato lose the other's team changes?
 // Start both on the same data first (desktop.sh's files are named desktop*, so they sit
 // next to a Web bench), Web first, as a user would:
 //
 //   dev/bench.sh desktop-share 3160 8860 reset
 //   SLOT=6 dev/desktop-linux/desktop.sh share reset
-//   node dev/shared-home-check.mjs share 3160 <dsh-repo> 9560
+//   node dev/shared-home-check.mjs share 3160 <tomato-repo> 9560
 //
 // Both ends load the team, then each creates a Bot and messages it, in turns. The check
 // passes when every Bot an end reported as created is still in state.json, the team has
@@ -16,11 +16,11 @@ import { connectApp, sleep } from './desktop-linux/lib.mjs'
 
 const [name, webPort, repo, rendererPort] = process.argv.slice(2)
 if (!name || !webPort || !repo || !rendererPort) {
-  console.error('usage: node dev/shared-home-check.mjs <desktop-name> <web-port> <dsh-repo> <renderer-port>')
+  console.error('usage: node dev/shared-home-check.mjs <desktop-name> <web-port> <tomato-repo> <renderer-port>')
   process.exit(2)
 }
 const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))))
-const HOME = join(ROOT, `.dsh-test-desktop-${name}`)
+const HOME = join(ROOT, `.tomato-test-desktop-${name}`)
 const saved = () => JSON.parse(readFileSync(join(HOME, 'bot', 'state.json'), 'utf8'))
 const names = team => Object.values(team.bots).map(bot => bot.name).sort()
 const mainNames = team => team.mainBotIds.map(id => team.bots[id]?.name ?? id)

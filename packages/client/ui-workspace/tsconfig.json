@@ -9,22 +9,7 @@
   ],
   "references": [
     {
-      "path": "../../api/session-controller/tsconfig.client.json"
-    },
-    {
-      "path": "../../api/robot-controller/tsconfig.client.json"
-    },
-    {
       "path": "../../preset/agent-preset-registry"
-    },
-    {
-      "path": "../../api/workspace-controller/tsconfig.client.json"
-    },
-    {
-      "path": "../../api/remote-access/tsconfig.client.json"
-    },
-    {
-      "path": "../locale/tsconfig.client.json"
     },
     {
       "path": "../../../vendor/cordis"
@@ -34,12 +19,6 @@
     },
     {
       "path": "../ui-primitives"
-    },
-    {
-      "path": "../connection/tsconfig.client.json"
-    },
-    {
-      "path": "../../api/remotes/tsconfig.client.json"
     },
     {
       "path": "../store"
@@ -63,9 +42,6 @@
       "path": "../ui-sidebar"
     },
     {
-      "path": "../ui-conversation/tsconfig.client.json"
-    },
-    {
       "path": "../ui-layout"
     },
     {
@@ -81,10 +57,38 @@
       "path": "../../util/workspace-path"
     },
     {
+      "path": "../ui-context-menu"
+    },
+    {
+      "path": "../../api/session-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/robot-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/workspace-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/remote-access/tsconfig.client.json"
+    },
+    {
+      "path": "../locale/tsconfig.client.json"
+    },
+    {
+      "path": "../connection/tsconfig.client.json"
+    },
+    {
+      "path": "../../api/remotes/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-conversation/tsconfig.client.json"
+    },
+    {
       "path": "../shortcuts/tsconfig.client.json"
     },
     {
       "path": "../product-analytics/tsconfig.client.json"
     }
-  ]
+  ],
+  "files": []
 }

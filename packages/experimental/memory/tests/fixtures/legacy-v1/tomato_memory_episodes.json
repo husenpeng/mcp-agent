@@ -1,0 +1,37 @@
+{
+  "unit": {
+    "name": "tomato_memory_episodes",
+    "version": 1
+  },
+  "global": null,
+  "tables": {
+    "records": {
+      "episode-2b91c7d4-8a3e-4f06-b7d5-1c9a6e2f4d38": {
+        "id": "episode-2b91c7d4-8a3e-4f06-b7d5-1c9a6e2f4d38",
+        "owner": "account:0f5c1a0b2d3e4f60718293a4b5c6d7e8",
+        "scope": {
+          "kind": "project",
+          "path": "/work/legacy-project"
+        },
+        "kind": "observation",
+        "type": "build",
+        "title": "xcodebuild: workspace build failed",
+        "narrative": "The build reported a missing simulator runtime.",
+        "facts": [],
+        "concepts": [
+          "build",
+          "sdk=/applications/xcode.app/contents/developer/platforms/iphoneos.platform/developer/sdks/iphoneos27.0.sdk;"
+        ],
+        "filesRead": [],
+        "filesModified": [],
+        "tool": "bash",
+        "fingerprint": "sha256-1f0c0b2c5d6e7f8091a2b3c4d5e6f7a8",
+        "source": {
+          "sessionId": "session-legacy-1"
+        },
+        "createdAt": 1793000000000,
+        "updatedAt": 1793000000000
+      }
+    }
+  }
+}

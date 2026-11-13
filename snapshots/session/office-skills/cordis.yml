@@ -1,10 +1,22 @@
 - insert:
+    - id: office-kit
+      name: '@tomato/office-kit'
+      config:
+        outputDirectory: !!js tomatoHomePath('office-kit', 'outputs')
+
+    - id: tool-office
+      name: '@tomato/tool-office'
+
+    - id: workspace-dependencies
+      name: '@tomato/tool-workspace-dependencies'
+      config:
+        source: !!js process.cwd() + '/runtime-source'
+        root: !!js process.cwd() + '/runtime-installed'
+
     - id: skill-office
       name: '@tomato/skill-office'
       config:
         assetRoot: !!js process.cwd() + '/office-skills'
-        node: !!js process.cwd() + '/office-node'
-        cli: !!js process.cwd() + '/office-cli.js'
 
 - id: tool-bash
   disabled: true

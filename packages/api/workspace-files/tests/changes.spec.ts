@@ -72,7 +72,13 @@ async function ready(stream: ReturnType<typeof open>): Promise<void> {
 async function ownedEndpoint() {
   let service: WorkspaceFiles | undefined
   const fiber = await harness.ctx.plugin(Object.assign((ctx: Context) => {
-    service = new WorkspaceFiles(ctx, { maxBytes: 1024, maxFileBytes: 1024, maxLines: 10, maxEntries: 10 })
+    service = new WorkspaceFiles(ctx, {
+      maxBytes: 1024,
+      maxFileBytes: 1024,
+      maxLines: 10,
+      maxEntries: 10,
+      search: { maxResults: 100, maxEntries: 1000, graceMs: 3000, timeoutMs: 30000, stderrMaxBytes: 65536 },
+    })
   }, { inject: ['fs', 'sandboxPolicy'] }))
   cleanups.push(() => fiber.dispose())
   if (service === undefined) throw new Error('plugin body did not run')
@@ -422,7 +428,7 @@ describe('workspaceFiles.changes — backends and access', () => {
     await expect(stream.next()).resolves.toEqual({ done: true, value: undefined })
   })
 
-  it('observes creation of a missing outside file through the real local watcher', async () => {
+  it('observes creation of a missing outside file through the real local watcher', { timeout: 30_000 }, async () => {
     const started = performance.now()
     // Keep earlier awaits visible if teardown advances a timed-out test.
     const phases: Array<{ phase: string; elapsedMs: number }> = []

@@ -43,6 +43,10 @@ const testToolSignal = new AbortController().signal
 
 /** An in-memory fake provider; a test can arm a rejection on any primitive. */
 class FakeFs extends FileSystem {
+  override async patchText(): Promise<never> { throw new FsError('patch unsupported by test provider', 'FS_IO_ERROR') }
+  override async deleteFile(): Promise<never> { throw new FsError('delete unsupported by test provider', 'FS_IO_ERROR') }
+  override async moveFile(): Promise<never> { throw new FsError('move unsupported by test provider', 'FS_IO_ERROR') }
+
   override watch(): never { throw new Error('Fixture does not support watching') }
   files = new Map<string, string>()
   rejectWith?: FsError
@@ -63,7 +67,6 @@ class FakeFs extends FileSystem {
   }
   override async stat(target: FsTarget): Promise<FsInfo | undefined> {
     this.throwIfArmed()
-    if (this.directories.has(target.targetKey)) return { version: FsVersion('v1'), type: 'directory' }
     const content = this.files.get(target.targetKey)
     if (content === undefined) return undefined
     return { version: FsVersion('v1'), type: 'file', size: content.length }
@@ -90,9 +93,8 @@ class FakeFs extends FileSystem {
   override async readByteRange(target: FsTarget, range: { offset: number; length: number }): Promise<Uint8Array> {
     return new TextEncoder().encode(this.files.get(target.targetKey) ?? '').subarray(range.offset, range.offset + range.length)
   }
-  directories = new Map<string, FsDirEntry[]>()
-  override async listDir(target: FsTarget): Promise<FsDirEntry[]> {
-    return this.directories.get(target.targetKey) ?? []
+  override async listDir(_target: FsTarget): Promise<FsDirEntry[]> {
+    return []
   }
   override async writeText(target: FsTarget, content: string, expected?: FsWriteIntent): Promise<FsWriteOutcome> {
     this.throwIfArmed()
@@ -119,7 +121,7 @@ async function setup(config: ToolFs.Config = {}) {
   await ctx.plugin(NativeToolExecutor)
   await ctx.plugin(FakeFs)
   await ctx.plugin(FsPolicy)
-  await ctx.plugin(ToolFs, { list: false, ...config })
+  await ctx.plugin(ToolFs, config)
   const fs = ctx.fs as FakeFs
   return { ctx, fs }
 }
@@ -159,6 +161,7 @@ describe('registration', () => {
     { config: { read: false }, tools: ['edit', 'write'], sections: ['tool:edit', 'tool:write'] },
     { config: { write: false }, tools: ['edit', 'read'], sections: ['tool:edit', 'tool:read'] },
     { config: { edit: false }, tools: ['read', 'write'], sections: ['tool:read', 'tool:write'] },
+    { config: { write: false, applyPatch: true }, tools: ['apply_patch', 'edit', 'read'], sections: ['tool:apply_patch', 'tool:edit', 'tool:read'] },
     { config: { read: false, readImage: false, write: false, edit: false }, tools: [], sections: [] },
   ])('omits disabled tools and their guidance: $config', async ({ config, tools, sections }) => {
     const { ctx } = await setup(config)
@@ -166,14 +169,14 @@ describe('registration', () => {
       expect(ctx.tools.schemas().map(tool => tool.name).sort()).toEqual(tools)
       expect((await ctx.systemPrompt.assemble()).sections.map(section => section.name)
         .filter(name => name.startsWith('tool:')).sort()).toEqual(sections)
-      const excluded = ['read', 'write', 'edit'].find(name => !tools.some(tool => tool === name))!
+      const excluded = ['read', 'write', 'edit', 'apply_patch'].find(name => !tools.some(tool => tool === name))!
       expect((await call(ctx, excluded, { file_path: 'a.txt' })).isError).toBe(true)
     } finally {
       await ctx.fiber.dispose()
     }
   })
 
-  it.each([{ read: 'false' }, { readImage: 1 }, { write: [] }, { edit: {} }])('rejects non-boolean switches at configuration parsing: %j', async (config) => {
+  it.each([{ read: 'false' }, { readImage: 1 }, { write: [] }, { edit: {} }, { applyPatch: 'true' }])('rejects non-boolean switches at configuration parsing: %j', async (config) => {
     expect((await ToolFs.Config['~standard'].validate(config)).issues).toBeDefined()
   })
 
@@ -234,7 +237,7 @@ describe('registration', () => {
     await ctx.plugin(NativeToolExecutor)
     await ctx.plugin(FakeFs)
     await ctx.plugin(FsPolicy)
-    const fiber = await ctx.plugin(ToolFs, { list: false })
+    const fiber = await ctx.plugin(ToolFs)
     // Each tool contributes BOTH a schema and a prompt section; disposal must
     // withdraw both, not just the schemas.
     expect(ctx.tools.schemas()).toHaveLength(3)
@@ -284,6 +287,7 @@ describe('read tool', () => {
     const result = await call(ctx, 'read', { file_path: 'a.txt', offset: 0 })
     expect(result.isError).toBe(true)
     expect(text(result)).toContain('offset must be a positive integer')
+    expect(result.error?.info).toEqual({ name: 'ToolArgsError', code: 'INVALID_ARGS' })
   })
 
   it('rejects a fractional offset and a zero/negative limit', async () => {
@@ -296,6 +300,7 @@ describe('read tool', () => {
       const result = await call(ctx, 'read', args)
       expect(result.isError, JSON.stringify(args)).toBe(true)
       expect(text(result)).toMatch(/must be a positive integer/)
+      expect(result.error?.info).toEqual({ name: 'ToolArgsError', code: 'INVALID_ARGS' })
     }
   })
 
@@ -311,6 +316,7 @@ describe('read tool', () => {
     const result = await call(ctx, 'read', { file_path: 'a.txt', limit: 99999 })
     expect(result.isError).toBe(true)
     expect(text(result)).toContain('less than or equal to 2000')
+    expect(result.error?.info).toEqual({ name: 'ToolArgsError', code: 'INVALID_ARGS' })
   })
 
   it('rejects a blank file_path', async () => {
@@ -318,6 +324,7 @@ describe('read tool', () => {
     const result = await call(ctx, 'read', { file_path: '   ' })
     expect(result.isError).toBe(true)
     expect(text(result)).toContain('file_path must be a non-empty string')
+    expect(result.error?.info).toEqual({ name: 'ToolArgsError', code: 'INVALID_ARGS' })
   })
 
   it('records observed state so a follow-up edit by the same session is authorized', async () => {
@@ -453,6 +460,7 @@ describe('write tool', () => {
     const result = await call(ctx, 'write', { file_path: '   ', content: 'hi' })
     expect(result.isError).toBe(true)
     expect(text(result)).toContain('file_path must be a non-empty string')
+    expect(result.error?.info).toEqual({ name: 'ToolArgsError', code: 'INVALID_ARGS' })
   })
 
   it('propagates a backend FsError as an isError result carrying its code and remedy', async () => {
@@ -491,6 +499,7 @@ describe('edit tool', () => {
     const result = await call(ctx, 'edit', { file_path: 'a.txt', old_string: 'x', new_string: 'x' })
     expect(result.isError).toBe(true)
     expect(text(result)).toContain('must differ')
+    expect(result.error?.info).toEqual({ name: 'ToolArgsError', code: 'INVALID_ARGS' })
   })
 
   it('rejects an empty old_string', async () => {
@@ -498,6 +507,7 @@ describe('edit tool', () => {
     const result = await call(ctx, 'edit', { file_path: 'a.txt', old_string: '', new_string: 'x' })
     expect(result.isError).toBe(true)
     expect(text(result)).toContain('old_string must be a non-empty string')
+    expect(result.error?.info).toEqual({ name: 'ToolArgsError', code: 'INVALID_ARGS' })
   })
 
   it('rejects a blank file_path', async () => {
@@ -505,6 +515,7 @@ describe('edit tool', () => {
     const result = await call(ctx, 'edit', { file_path: '  ', old_string: 'a', new_string: 'b' })
     expect(result.isError).toBe(true)
     expect(text(result)).toContain('file_path must be a non-empty string')
+    expect(result.error?.info).toEqual({ name: 'ToolArgsError', code: 'INVALID_ARGS' })
   })
 
   it('propagates FS_NOT_OBSERVED when the file was never read (the gate decides)', async () => {
@@ -785,6 +796,7 @@ describe('read caps are plugin config', () => {
     const overCap = await call(ctx, 'read', { file_path: 'a.txt', limit: 3 })
     expect(overCap.isError).toBe(true)
     expect(text(overCap)).toContain('less than or equal to 2')
+    expect(overCap.error?.info).toEqual({ name: 'ToolArgsError', code: 'INVALID_ARGS' })
     const readSchema = ctx.tools.schemas().find(s => s.name === 'read')
     expect(JSON.stringify(readSchema)).toContain('Defaults to 2.')
   })
@@ -992,6 +1004,24 @@ describe('sandbox escalation API (write/edit)', () => {
     expect(text(result)).toContain('retry this exact operation once with sandbox_permissions')
   })
 
+  it('keeps read-only denials when an ordinary write includes a blank reason', async () => {
+    const { ctx, fs } = await setupConfining({ approval: true })
+    try {
+      const approval = vi.fn(() => Promise.resolve('allowed-once' as const))
+      ctx.on('approval/request', approval)
+      fs.rejectWith = new FsError('denied', 'FS_SANDBOX_DENIED')
+      const result = await call(ctx, 'write', { file_path: 'a.txt', content: 'x', justification: '' },
+        escalationAgent([{ type: 'sandbox/mode', data: { mode: 'read-only' } }]))
+      expect(result.isError).toBe(true)
+      expect(text(result)).toContain('[sandbox: file access denied under read-only mode]')
+      expect(fs.stamped[0]?.mode).toBe('read-only')
+      expect(fs.files.size).toBe(0)
+      expect(approval).not.toHaveBeenCalled()
+    } finally {
+      await ctx.fiber.dispose()
+    }
+  })
+
   it('a non-FS_SANDBOX_DENIED provider error passes through unchanged', async () => {
     const { ctx, fs } = await setupConfining()
     fs.rejectWith = new FsError('boom', 'FS_IO_ERROR')
@@ -1031,6 +1061,57 @@ describe('sandbox escalation API (write/edit)', () => {
     }])
   })
 
+  it.each(['workspace-write', 'danger-full-access'] as const)('writes and edits under %s with absent or blank unused reasons', async (mode) => {
+    const { ctx, fs } = await setupConfining({ approval: true })
+    try {
+      const approval = vi.fn(() => Promise.resolve('allowed-once' as const))
+      ctx.on('approval/request', approval)
+      const agent = escalationAgent([{ type: 'sandbox/mode', data: { mode } }])
+      for (const [index, justification] of ['', undefined, ' \t\n'].entries()) {
+        for (const repeatMode of [true, false]) {
+          const file_path = `unused-reason-${index}-${repeatMode}.txt`
+          const args = {
+            file_path,
+            ...repeatMode ? { sandbox_permissions: mode } : {},
+            ...justification === undefined ? {} : { justification },
+          }
+          const written = await call(ctx, 'write', { ...args, content: 'before' }, agent)
+          expect(written.isError, text(written)).toBe(false)
+          const edited = await call(ctx, 'edit', { ...args, old_string: 'before', new_string: 'after' }, agent)
+          expect(edited.isError, text(edited)).toBe(false)
+          expect(fs.files.get(`key:${file_path}`)).toBe('after')
+        }
+      }
+      expect(fs.stamped).toHaveLength(12)
+      expect(fs.stamped.every(policy => policy?.mode === mode && policy.workspaceRoot === '/session-project')).toBe(true)
+      expect(approval).not.toHaveBeenCalled()
+    } finally {
+      await ctx.fiber.dispose()
+    }
+  })
+
+  it.each(['write', 'edit'] as const)('rejects missing or blank widening reasons before %s mutates or requests approval', async (tool) => {
+    const { ctx, fs } = await setupConfining({ approval: true })
+    try {
+      const approval = vi.fn(() => Promise.resolve('allowed-once' as const))
+      ctx.on('approval/request', approval)
+      for (const justification of [undefined, '', ' \t\n']) {
+        const result = await call(ctx, tool, {
+          file_path: 'denied.txt', content: 'x', old_string: 'x', new_string: 'y',
+          sandbox_permissions: 'workspace-write',
+          ...justification === undefined ? {} : { justification },
+        }, escalationAgent([{ type: 'sandbox/mode', data: { mode: 'read-only' } }]))
+        expect(result.isError).toBe(true)
+        expect(text(result)).toContain(justification === undefined ? 'requires a justification' : 'expected a non-empty sentence')
+      }
+      expect(fs.stamped).toEqual([])
+      expect(fs.files.size).toBe(0)
+      expect(approval).not.toHaveBeenCalled()
+    } finally {
+      await ctx.fiber.dispose()
+    }
+  })
+
   it('a rejected escalation fails closed with its own text and never mutates', async () => {
     const { ctx, fs } = await setupConfining({ approval: true })
     ctx.on('approval/request', () => Promise.resolve('rejected' as const))
@@ -1056,9 +1137,12 @@ describe('sandbox escalation API (write/edit)', () => {
 
   it('rejects the escalation argument pairing (one field without the other)', async () => {
     const { ctx } = await setupConfining()
-    const missing = await call(ctx, 'write', { file_path: 'a.txt', content: 'x', sandbox_permissions: 'workspace-write' }, escalationAgent())
+    const missing = await call(ctx, 'write', { file_path: 'a.txt', content: 'x', sandbox_permissions: 'danger-full-access' }, escalationAgent())
     expect(missing.isError).toBe(true)
     expect(text(missing)).toContain('sandbox_permissions requires a justification')
+    const orphan = await call(ctx, 'write', { file_path: 'a.txt', content: 'x', justification: 'why' }, escalationAgent())
+    expect(orphan.isError).toBe(true)
+    expect(text(orphan)).toContain('justification is only valid together with sandbox_permissions')
   })
 
   it('sandbox_permissions under a non-confining backend fails closed (unadvertised field still reaches execute)', async () => {
@@ -1066,6 +1150,7 @@ describe('sandbox escalation API (write/edit)', () => {
     const result = await call(ctx, 'write', { file_path: 'a.txt', content: 'x', sandbox_permissions: 'workspace-write', justification: 'why' }, escalationAgent())
     expect(result.isError).toBe(true)
     expect(text(result)).toContain('not available in this composition')
+    expect(result.error?.info).toEqual({ name: 'ToolArgsError', code: 'INVALID_ARGS' })
   })
 })
 
@@ -1079,9 +1164,9 @@ async function guidanceScope(ctx: Context) {
 }
 
 const originalGuidance = {
-  read: 'Use the read tool — not shell commands like cat — to inspect text files. Use offset and limit to continue reading large files.',
-  write: 'Read an existing file before overwriting it with write (the default fs-observation-policy requires it) and prefer edit for targeted changes.',
-  edit: 'Read a file before editing it (the default fs-observation-policy requires it), unless you just created or edited it in this session.',
+  read: 'Use the read tool — not shell commands like cat, sed, head, or tail — to inspect text files. Use offset and limit to read a line range or continue a large file.',
+  write: 'Read an existing file before overwriting it with write and prefer edit for targeted changes.',
+  edit: 'Read a file before editing it unless you just created or edited it in this session.',
 }
 
 describe('scope-aware filesystem guidance', () => {
@@ -1140,7 +1225,7 @@ class GuidancePtcRuntime extends PtcRuntime {
 
   readonly language = 'typescript'
   readonly isolation = 'fake'
-  run() { return Promise.resolve({ logs: [] }) }
+  run() { return Promise.resolve({ output: [] }) }
 }
 
 describe('scope-aware PTC guidance', () => {
@@ -1170,105 +1255,5 @@ describe('scope-aware PTC guidance', () => {
     } finally {
       await scope.dispose()
     }
-  })
-})
-
-describe('list_dir', () => {
-  /** Seed one small tree: a source directory, a skipped directory, a hidden directory, and a file. */
-  function seedTree(fs: FakeFs): void {
-    const entry = (name: string, type: FsDirEntry['type'], size?: number): FsDirEntry => ({
-      name,
-      type,
-      target: { targetKey: FsTargetKey(`key:${name}`), displayPath: `/abs/${name}` },
-      ...size === undefined ? {} : { size },
-    })
-    fs.directories.set('key:.', [
-      entry('node_modules', 'directory'),
-      entry('.hidden', 'directory'),
-      entry('README.md', 'file', 12),
-      entry('src', 'directory'),
-    ])
-    fs.directories.set('key:src', [
-      entry('index.ts', 'file', 34),
-      entry('nested', 'directory'),
-    ])
-    fs.directories.set('key:nested', [entry('deep.ts', 'file', 56)])
-  }
-
-  it('lists one level by default, skipping hidden names and configured excludes', async () => {
-    const { ctx, fs } = await setup({ list: true })
-    seedTree(fs)
-    const result = await call(ctx, 'list_dir', {})
-    expect(result.isError).toBe(false)
-    expect(text(result)).toBe([
-      '<path>/abs/.</path>',
-      '<type>directory</type>',
-      '<entries>',
-      'README.md (12 bytes)',
-      'src/',
-      '</entries>',
-    ].join('\n'))
-  })
-
-  it('honors depth, all, extra excludes, and the entry limit', async () => {
-    const { ctx, fs } = await setup({ list: true, listMaxEntries: 4 })
-    seedTree(fs)
-    expect(text(await call(ctx, 'list_dir', { depth: 2 }))).toContain('src/index.ts (34 bytes)')
-    expect(text(await call(ctx, 'list_dir', { depth: 2 }))).not.toContain('deep.ts')
-    expect(text(await call(ctx, 'list_dir', { all: true }))).toContain('.hidden/')
-    expect(text(await call(ctx, 'list_dir', { path: 'src', depth: 3 }))).toContain('nested/deep.ts (56 bytes)')
-    expect(text(await call(ctx, 'list_dir', { exclude: ['src'] }))).not.toContain('src/')
-    const capped = await call(ctx, 'list_dir', { depth: 3, all: true })
-    expect(text(capped)).toContain('listing truncated')
-    expect(capped.isError).toBe(false)
-  })
-
-  it('rejects a missing directory, a file, and an out-of-range depth', async () => {
-    const { ctx, fs } = await setup({ list: true })
-    seedTree(fs)
-    fs.files.set('key:a.txt', 'text')
-    expect(text(await call(ctx, 'list_dir', { path: 'missing' }))).toContain('not found')
-    expect(text(await call(ctx, 'list_dir', { path: 'a.txt' }))).toContain('not a directory')
-    expect(text(await call(ctx, 'list_dir', { depth: 9 }))).toContain('depth must be an integer')
-  })
-
-  it('adds its prompt guidance and can be disabled', async () => {
-    const enabled = await setup({ list: true })
-    expect(renderPrompt(await enabled.ctx.systemPrompt.assemble())).toContain('Use list_dir to see what a directory contains')
-    const disabled = await setup({ list: false })
-    expect(disabled.ctx.tools.schemas().map(schema => schema.name)).not.toContain('list_dir')
-  })
-})
-
-describe('list_dir validation and presentation', () => {
-  it('rejects an empty path, unusable limits, empty excludes, and invalid configured caps', async () => {
-    const { ctx } = await setup({ list: true })
-    expect(text(await call(ctx, 'list_dir', { path: '   ' }))).toContain('path must not be empty')
-    expect(text(await call(ctx, 'list_dir', { limit: 0 }))).toContain('limit must be an integer')
-    expect(text(await call(ctx, 'list_dir', { limit: 201 }))).toContain('limit must be an integer')
-    expect(text(await call(ctx, 'list_dir', { exclude: [''] }))).toContain('exclude entries must not be empty')
-    await expect(setup({ list: true, listDepth: 5, listMaxDepth: 4 })).rejects.toThrow('listDepth must not exceed listMaxDepth')
-    await expect(setup({ list: true, listExcludes: [''] })).rejects.toThrow('listExcludes entries must not be empty')
-  })
-
-  it('reports other entries, supports wildcard excludes and a presenter', async () => {
-    const { ctx, fs } = await setup({ list: true })
-    const entry = (name: string, type: FsDirEntry['type'], size?: number): FsDirEntry => ({
-      name, type, target: { targetKey: FsTargetKey(`key:${name}`), displayPath: `/abs/${name}` },
-      ...size === undefined ? {} : { size },
-    })
-    fs.directories.set('key:.', [
-      entry('socket', 'other'),
-      entry('note.snap', 'file', 4),
-      entry('.hidden', 'file'),
-    ])
-    const output = text(await call(ctx, 'list_dir', { exclude: ['*.snap'] }))
-    expect(output).toContain('socket')
-    expect(output).not.toContain('note.snap')
-    expect(output).not.toContain('.hidden')
-    const view = ctx.tools.get('list_dir')?.presentCall?.({})
-    expect(view).toMatchObject({ card: 'generic', title: 'List .', kind: 'read' })
-    expect(new ToolExecutionPipeline(ctx).executionMode({ signal: testToolSignal, callId: ToolCallId('list-safe'), name: 'list_dir', arguments: {} }))
-      .toEqual({ kind: 'parallel' })
   })
 })

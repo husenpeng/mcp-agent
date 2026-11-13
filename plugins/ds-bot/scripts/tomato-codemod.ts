@@ -58,11 +58,11 @@ for (const file of ['index.js', 'web-search.js', 'cordis.patch.yml', 'package.js
 
 // The codemod renames import specifiers; the files they name must move with them.
 for (const [from, to] of [
-  ['src/host/dsh-update.js', 'src/host/tomato-update.js'],
-  ['src/client/dsh-primitives.js', 'src/client/tomato-primitives.js'],
-  ['src/client/dsh-offer.js', 'src/client/tomato-offer.js'],
-  ['test/dsh-update.test.js', 'test/tomato-update.test.js'],
-  ['test/dsh-offer.test.js', 'test/tomato-offer.test.js'],
+  ['src/host/tomato-update.js', 'src/host/tomato-update.js'],
+  ['src/client/tomato-primitives.js', 'src/client/tomato-primitives.js'],
+  ['src/client/tomato-offer.js', 'src/client/tomato-offer.js'],
+  ['test/tomato-update.test.js', 'test/tomato-update.test.js'],
+  ['test/tomato-offer.test.js', 'test/tomato-offer.test.js'],
 ]) {
   const source = join(pluginDir, from)
   try {

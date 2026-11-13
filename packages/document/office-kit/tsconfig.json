@@ -1,0 +1,37 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib/types"
+  },
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "../../../vendor/cordis"
+    },
+    {
+      "path": "../../../vendor/schemastery"
+    },
+    {
+      "path": "../../typert/protocol"
+    },
+    {
+      "path": "../../fs/fs"
+    },
+    {
+      "path": "../../util/home-paths"
+    },
+    {
+      "path": "../../core/session"
+    },
+    {
+      "path": "../../util/branded"
+    },
+    {
+      "path": "../../api/workspace-files/tsconfig.host.json"
+    }
+  ],
+  "files": []
+}

@@ -35,15 +35,25 @@
 # `tomato.client` rows are the browser roster the modules node half scans into
 # window.__TOMATO_BOOT__; the modules row is simultaneously a host row.
 - insert:
-    # Tomato AI reports through its own relay plugin; the DeepSeek product
-    # telemetry and the client-side product analytics rows stay off.
+    # Desktop launches the bounded product telemetry and analytics pair; Web
+    # keeps both rows disabled.
     - id: desktop-product-telemetry
       name: '@tomato/host-product-telemetry-otel'
-      disabled: true
+      disabled: !!js "ctx.get('profileContext')?.name !== 'desktop'"
+      config:
+        endpoint: !!js "process.env.TOMATO_PRODUCT_ANALYTICS_OTLP_URL ?? 'https://tomato-otel-collector.deepseeksvc.com/v1/logs'"
+        serviceName: tomato-desktop
+        serviceVersion: !!js process.env.TOMATO_CLIENT_VERSION
+        scheduledDelayMillis: 30000
+        timeoutMillis: 15000
+        exportTimeoutMillis: 20000
+        shutdownTimeoutMillis: 2000
 
     - id: product-analytics
       name: '@tomato/client-product-analytics'
-      disabled: true
+      disabled: !!js "ctx.get('profileContext')?.name !== 'desktop'"
+      config:
+        appVersion: !!js process.env.TOMATO_CLIENT_VERSION
 
     # Host-owned authorization sampled at Agent creation. The Plugins page
     # edits this settings namespace independently of the selected preset.
@@ -302,8 +312,28 @@
       name: '@tomato/client-ui-sidebar-right'
 
 
-    - id: office-to-pdf
-      name: '@tomato/office-to-pdf'
+    # Bounded LibreOffice conversions owned by the Office kit; the desktop
+    # Office composition supplies the packaged engine at runtime.
+    - id: office-kit
+      name: '@tomato/office-kit'
+      config:
+        outputDirectory: !!js tomatoHomePath('office-kit', 'outputs')
+
+    # Installs the packaged primary runtime's workspace dependencies for the
+    # desktop profile; disabled everywhere else.
+    - id: workspace-dependencies
+      name: '@tomato/tool-workspace-dependencies'
+      disabled: !!js "ctx.get('profileContext')?.name !== 'desktop' || !process.env.TOMATO_PRIMARY_RUNTIME"
+      config:
+        source: !!js process.env.TOMATO_PRIMARY_RUNTIME
+        root: !!js tomatoHomePath('tomato-runtimes', 'tomato-primary-runtime')
+
+    # Packaged Office skills plus their Python environment. Desktop names the
+    # primary runtime; other profiles use the user environment.
+    - id: skill-office
+      name: '@tomato/skill-office'
+      config:
+        pythonEnvironment: !!js "ctx.get('profileContext')?.name === 'desktop' && process.env.TOMATO_PRIMARY_RUNTIME ? 'workspace-dependencies' : 'user'"
 
     # The right Sidebar's document tab: bounded file reads with selectable
     # Markdown, code, HTML, PDF, Office, and plain-text renderers.
@@ -407,6 +437,25 @@
 
     - id: deliverable-file-references
       name: '@tomato/deliverable-file-references'
+
+    # Pointer and keyboard context menus owned by one provider; every client
+    # plugin reaches them through the contextMenus service.
+    - id: ui-context-menu
+      name: '@tomato/client-ui-context-menu'
+
+    # File-level actions (reveal, open in app, drag) for transcript rows.
+    - id: ui-file-actions
+      name: '@tomato/client-ui-file-actions'
+    # MCP server management: config entries, live instance reconciliation and
+    # the restart/probe/watch operations behind the plugin manager surface.
+    - id: mcp-manager
+      name: '@tomato/mcp-manager'
+      inject: [credentials]
+
+    # Team roster and task surfaces over the agent-team service.
+    - id: ui-agent-team
+      name: '@tomato/client-ui-agent-team'
+
 
     # Turn tail: the changed-files card and delivery cards under each closing
     # assistant message. Remove this entry to turn the surface off; the tail

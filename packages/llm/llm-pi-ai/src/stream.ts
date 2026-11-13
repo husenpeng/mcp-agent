@@ -10,7 +10,7 @@
 
 import { brandString } from '@tomato/branded'
 import { CONTEXT_WINDOW_EXCEEDED_CODE, EMPTY_RESPONSE_CODE, isContextWindowExceededError, isQuotaExceededError, LlmError, QUOTA_EXCEEDED_CODE } from '@tomato/llm'
-import type { FinishReason, StreamChunk, TokenUsage, ToolCallId } from '@tomato/llm'
+import type { BuiltinLlmFailureCode, FinishReason, StreamChunk, TokenUsage, ToolCallId } from '@tomato/llm'
 import { isContextOverflow } from '@earendil-works/pi-ai/utils/overflow'
 import type { AssistantMessage, AssistantMessageEvent, Usage as PiUsage } from '@earendil-works/pi-ai'
 import { toPiReplayState } from './replay.ts'
@@ -31,6 +31,13 @@ export function mapUsage(usage: PiUsage): TokenUsage {
   }
 }
 
+// pi-ai's SDK-backed providers render an HTTP failure as `<status> <body>`
+// (Anthropic and OpenAI SDK `APIError`, pi-messages `<status> <statusText>: …`).
+// The body can quote another hop's status, such as a gateway 500 that embeds its
+// upstream's 401, so when a message leads with a status the status rules read
+// only that status; other wordings scan the whole message.
+const LEADING_HTTP_STATUS = /^[45]\d\d\b/
+
 // XXX(pi-ai upstream): pi-ai flattens the caught error to `error.message`
 // (api/anthropic-messages.js: `errorMessage = error instanceof Error ?
 // error.message : JSON.stringify(error)`), discarding the original Error and its
@@ -39,15 +46,16 @@ export function mapUsage(usage: PiUsage): TokenUsage {
 // wrapper a bare `terminated`, so we are left pattern-matching terse words here.
 // If pi-ai ever forwards the original Error (or a fetch/dispatcher hook that lets
 // us capture the cause ourselves), classify on `code`/`cause` instead of text.
-function classifyPiAiError(message: string): string {
-  if (/\b(?:401|403)\b/.test(message)) return 'AUTH'
+function classifyPiAiError(message: string): BuiltinLlmFailureCode {
+  const statusSource = LEADING_HTTP_STATUS.exec(message)?.[0] ?? message
+  if (/\b(?:401|403)\b/.test(statusSource)) return 'AUTH'
   if (isQuotaExceededError(message)) return QUOTA_EXCEEDED_CODE
-  if (/\b429\b|rate.?limit/i.test(message)) return 'RATE_LIMIT'
+  if (/\b429\b/.test(statusSource) || /rate.?limit/i.test(message)) return 'RATE_LIMIT'
   // A rejected request body (gateway or provider size cap): resending the
   // same request cannot succeed, so it is invalid, not transient.
-  if (/\b413\b|failed to buffer the request body:\s*length limit exceeded|payload too large|request body too large/i.test(message)) return 'INVALID_REQUEST'
-  if (/\b400\b|invalid.?request/i.test(message)) return 'INVALID_REQUEST'
-  if (/\b5\d\d\b/.test(message)) return 'SERVER'
+  if (/\b413\b/.test(statusSource) || /failed to buffer the request body:\s*length limit exceeded|payload too large|request body too large/i.test(message)) return 'INVALID_REQUEST'
+  if (/\b400\b/.test(statusSource) || /invalid.?request/i.test(message)) return 'INVALID_REQUEST'
+  if (/\b5\d\d\b/.test(statusSource)) return 'SERVER'
   if (/\btime(?:d)?\s*out\b|timeout/i.test(message)) return 'TIMEOUT'
   // A stream truncated before the provider's terminal event: each pi-ai provider
   // throws its own wording when the wire closes mid-response without a terminal
@@ -110,51 +118,21 @@ export function mapStopReason(message: AssistantMessage, contextWindow?: number)
     case 'toolUse': return { kind: 'tool-calls' }
     case 'pending': return {
       kind: 'error',
-      failure: { message: `pi-ai stream for model "${message.model}" ended pending`, code: 'PI_AI_ERROR' },
+      failure: { message: `pi-ai stream for model "${message.model}" ended pending`, code: 'PI_AI_ERROR' satisfies BuiltinLlmFailureCode },
     }
     case 'deferred': return {
       kind: 'error',
-      failure: { message: `pi-ai deferred response for model "${message.model}" is not supported`, code: 'PI_AI_ERROR' },
+      failure: { message: `pi-ai deferred response for model "${message.model}" is not supported`, code: 'PI_AI_ERROR' satisfies BuiltinLlmFailureCode },
     }
     case 'aborted': return {
       kind: 'aborted',
-      failure: { message: message.errorMessage ?? 'pi-ai stream aborted', code: 'ABORTED' },
+      failure: { message: message.errorMessage ?? 'pi-ai stream aborted', code: 'ABORTED' satisfies BuiltinLlmFailureCode },
     }
     case 'error': {
       const text = message.errorMessage ?? 'pi-ai stream error'
       return { kind: 'error', failure: { message: text, code: classifyPiAiError(text) } }
     }
   }
-}
-
-/**
- * The wording endpoints use for the refusal, in the orders they have been seen:
- * the pair named first, `reasoning_effort` first, or tools first.
- */
-const TOOLS_REASONING_CONFLICT = new RegExp([
-  'function tools?\\s+(?:with|and)\\s+reasoning[_ ]?effort',
-  'reasoning[_ ]effort[^.]{0,160}(?:not supported|unsupported)[^.]{0,160}\\btools?\\b',
-  '\\btools?\\b[^.]{0,160}(?:not supported|unsupported)[^.]{0,160}reasoning[_ ]effort',
-].join('|'), 'iu')
-
-/**
- * Whether a failed finish is the endpoint's "function tools with
- * `reasoning_effort` are not supported" refusal.
- *
- * The refusal is not a malformed request: the same request without an effort
- * succeeds, and an agent turn cannot drop its tools. Recognizing it lets one
- * retry recover the turn instead of ending it, and reading the message is the
- * only way, because pi-ai flattens the provider's structured error into text
- * before it reaches the harness.
- * @param reason - a finished attempt's reason.
- * @returns the provider message when it states that conflict, otherwise `undefined`.
- */
-export function toolsReasoningConflict(reason: FinishReason): string | undefined {
-  if (reason.kind !== 'error') return undefined
-  const message = reason.failure.message
-  return TOOLS_REASONING_CONFLICT.test(message)
-    ? message
-    : undefined
 }
 
 /**
@@ -166,6 +144,7 @@ export function toolsReasoningConflict(reason: FinishReason): string | undefined
  * @param callerSignal - caller cancellation state; an aborted caller makes any
  *   in-band terminal error an aborted finish.
  * @param requestedModel - request model identity recorded for durable replay.
+ * @param prefixDigest - request-context digest recorded for durable replay.
  * @returns the harness chunks, ending with `usage` then `finish`; throws
  *   `LlmError` (`STREAM_CLOSED`) if the source ends without a terminal event, or
  *   `MALFORMED_RESPONSE` when completed tool arguments are invalid. Length-limited
@@ -176,6 +155,7 @@ export async function* toStreamChunks(
   contextWindow?: number,
   callerSignal?: AbortSignal,
   requestedModel?: string,
+  prefixDigest?: string,
 ): AsyncGenerator<StreamChunk> {
   // pi-ai contentIndex ↔ our block index map 1:1 (both count blocks from 0
   // in stream order), but we track ids per index for tool calls.
@@ -250,7 +230,7 @@ export async function* toStreamChunks(
         yield {
           type: 'finish',
           reason: mapStopReason(event.message, contextWindow),
-          replayState: toPiReplayState(event.message, requestedModel),
+          replayState: toPiReplayState(event.message, requestedModel, prefixDigest),
         }
         return
       case 'error':

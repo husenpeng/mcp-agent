@@ -8,7 +8,7 @@ const STORAGE_KEY = 'tomato.robot.run.technical'
  */
 export function readTechnicalDetail(): boolean {
   try {
-    return globalThis.localStorage?.getItem(STORAGE_KEY) === '1'
+    return globalThis.localStorage.getItem(STORAGE_KEY) === '1'
   } catch {
     // Storage can be unavailable (sandboxed frame or disabled cookies); the
     // choice then stays in memory for this page.
@@ -22,7 +22,7 @@ export function readTechnicalDetail(): boolean {
  */
 export function writeTechnicalDetail(value: boolean): void {
   try {
-    globalThis.localStorage?.setItem(STORAGE_KEY, value ? '1' : '0')
+    globalThis.localStorage.setItem(STORAGE_KEY, value ? '1' : '0')
   } catch {
     // Same unavailable-storage case as the read; the current page still honors the choice.
   }

@@ -7,6 +7,7 @@ import { createElement, useLayoutEffect, useState, type ReactNode } from 'react'
 import { flushSync } from 'react-dom'
 import { createRoot, hydrateRoot, type Root } from 'react-dom/client'
 import type { Context } from '@tomato/cordis'
+import type {} from '@tomato/client-modules/client'
 import { createSlotRenderer } from './scoped-slots.tsx'
 import { buildRenderApp } from './app.tsx'
 import { SlotRegistry } from './registry.ts'
@@ -91,7 +92,10 @@ export function apply(ctx: Context): void {
   slots.install(createSlotRenderer())
   ctx.reflect.provide('uiRenderer', {
     mount: (container: HTMLElement): (() => void) => {
-      const root = mountApp(container, buildRenderApp({ ctx }))
+      const root = mountApp(container, buildRenderApp({
+        ctx,
+        pageSync: () => ctx.get('modules')?.entries.state,
+      }))
       return () => { root.unmount() }
     },
   })

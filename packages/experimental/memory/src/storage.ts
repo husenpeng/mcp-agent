@@ -6,6 +6,7 @@ import type {
   EpisodeId as EpisodeIdType, EpisodeKind as EpisodeKindType, MemoryId as MemoryIdType, MemoryKind,
   MemoryOwner as MemoryOwnerType, MemoryStatus, VectorId as VectorIdType,
 } from './types.ts'
+import { ProjectId } from './project.ts'
 
 /** Every record kind, in display order. */
 export const MEMORY_KINDS: readonly MemoryKind[] = ['preference', 'constraint', 'decision', 'fact']
@@ -60,19 +61,34 @@ export function isMemoryIdentifier(value: string): boolean {
 
 const identifierSchema = z.string().refine(isMemoryIdentifier, { message: 'Expected a lower-kebab-case identifier' })
 
+/** One stable project identity: a workspace-registry id or a provisional `pw:` id. */
+const projectIdSchema = z.string().min(1).max(128).transform(ProjectId)
+
+/**
+ * One workspace scope. `workspaceId` is absent only in records written before
+ * domain v2, which carried the canonical path alone.
+ */
+const workspaceScopeSchema = z.object({
+  kind: z.literal('workspace'),
+  workspaceId: projectIdSchema.optional(),
+  path: z.string().min(1).optional(),
+}).strict().refine(scope => scope.workspaceId !== undefined || scope.path !== undefined, {
+  message: 'A workspace scope needs a workspaceId or a canonical path',
+})
+
 /**
  * Durable record. `owner` names whose record it is; `scope` is `profile` for
- * statements about the person in every workspace, or the canonical original
- * project directory that scopes a workspace record. `source.userMessageSeq`
- * names the quoted person message and is absent for candidates and command
- * writes. Only active workspace records may be pinned.
+ * statements about the person in every workspace, or one workspace record's
+ * stable project identity plus its canonical directory snapshot.
+ * `source.userMessageSeq` names the quoted person message and is absent for
+ * candidates and command writes. Only active workspace records may be pinned.
  */
 export const memoryRecordSchema = z.object({
   id: z.string().min(1).transform(MemoryId),
   owner: z.string().min(1).transform(MemoryOwner),
-  scope: z.discriminatedUnion('kind', [
+  scope: z.union([
     z.object({ kind: z.literal('profile') }).strict(),
-    z.object({ kind: z.literal('workspace'), path: z.string().min(1) }).strict(),
+    workspaceScopeSchema,
   ]),
   kind: z.enum(['preference', 'constraint', 'decision', 'fact']),
   entity: identifierSchema,
@@ -80,6 +96,12 @@ export const memoryRecordSchema = z.object({
   value: z.string().min(1),
   status: z.enum(['candidate', 'active']),
   pinned: z.boolean(),
+  /** Start of this version's validity; absent only in records written before domain v3. */
+  validFrom: z.number().int().nonnegative().optional(),
+  /** End of this version's validity; absent while this version is current. */
+  validTo: z.number().int().nonnegative().optional(),
+  /** Version that replaced this one, when it has been superseded. */
+  supersededBy: z.string().min(1).transform(MemoryId).optional(),
   createdAt: z.number().int().nonnegative(),
   updatedAt: z.number().int().nonnegative(),
   source: z.object({
@@ -120,17 +142,29 @@ export const vectorRecordSchema = z.object({
 /** One cached vector, inferred from {@link vectorRecordSchema}. */
 export type VectorRecord = z.infer<typeof vectorRecordSchema>
 
-/** Derived embedding vectors stored beside the records they describe. */
+/**
+ * Derived embedding vectors stored beside the records they describe. The
+ * domain keeps the `single` layout: its keys join a target and a record id
+ * (`record:memory-…`), so they are not path-safe, and losing a cached vector
+ * only costs one recomputation.
+ */
 export const vectorDomain = defineDomain({
   name: 'tomato_memory_vectors',
   version: 1,
   tables: { vectors: domainTable<VectorIdType, VectorRecord>(vectorRecordSchema) },
 })
 
-/** Authoritative memory storage; a malformed record rejects opening the domain. */
+/**
+ * Authoritative memory storage; a malformed record rejects opening the domain.
+ * `per-record` keeps every record in its own document: Host processes sharing
+ * one tomato home write at the same time, and a whole-unit rewrite publishes
+ * this process's snapshot over every record another process wrote since it opened.
+ */
 export const memoryDomain = defineDomain({
   name: 'tomato_memory',
-  version: 1,
+  version: 3,
+  layout: 'per-record',
+  compatibleVersions: [1, 2],
   tables: { records: domainTable<MemoryIdType, MemoryRecord>(memoryRecordSchema) },
 })
 
@@ -145,13 +179,17 @@ export const EPISODE_KINDS: readonly EpisodeKindType[] = ['observation', 'summar
 /** Maximum length of one episode type. */
 export const MAX_EPISODE_TYPE_LENGTH = 32
 
-/** Bounds of every stored episode field. */
+/**
+ * Bounds of every stored episode field. `concept` covers the path-shaped
+ * concepts early extraction stored verbatim (up to 165 characters), so those
+ * records stay readable; extraction keeps new concepts to label length.
+ */
 export const EPISODE_BOUNDS = {
   title: 200,
   subtitle: 300,
   narrative: 4096,
   fact: 300,
-  concept: 80,
+  concept: 256,
   file: 512,
   tool: 64,
   fingerprint: 128,
@@ -167,7 +205,13 @@ const episodeTypeSchema = z.string().min(1).max(MAX_EPISODE_TYPE_LENGTH)
 export const episodeRecordSchema = z.object({
   id: z.string().min(1).transform(EpisodeId),
   owner: z.string().min(1).transform(MemoryOwner),
-  scope: z.object({ kind: z.literal('project'), path: z.string().min(1) }).strict(),
+  scope: z.object({
+    kind: z.literal('project'),
+    workspaceId: projectIdSchema.optional(),
+    path: z.string().min(1).optional(),
+  }).strict().refine(scope => scope.workspaceId !== undefined || scope.path !== undefined, {
+    message: 'A project scope needs a workspaceId or a canonical path',
+  }),
   kind: z.enum(['observation', 'summary']),
   type: episodeTypeSchema,
   title: z.string().min(1).max(EPISODE_BOUNDS.title),
@@ -193,9 +237,14 @@ export const episodeRecordSchema = z.object({
 /** One stored episode, inferred from {@link episodeRecordSchema}. */
 export type EpisodeRecord = z.infer<typeof episodeRecordSchema>
 
-/** Project history storage; a malformed record rejects opening the domain. */
+/**
+ * Project history storage; a malformed record rejects opening the domain.
+ * `per-record` for the same reason as {@link memoryDomain}.
+ */
 export const episodeDomain = defineDomain({
   name: 'tomato_memory_episodes',
-  version: 1,
+  version: 2,
+  layout: 'per-record',
+  compatibleVersions: [1],
   tables: { records: domainTable<EpisodeIdType, EpisodeRecord>(episodeRecordSchema) },
 })

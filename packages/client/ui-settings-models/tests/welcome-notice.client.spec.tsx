@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { contextMenuHook } from '@tomato/client-test-runtime'
 import type { GlobalStandardProps } from '@tomato/client-ui-slots'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -96,6 +97,7 @@ function mount(
     usePanelInfo, useSessionRetainInfo: () => undefined, useResource,
     useWorkspaces: unusedHook,
     ...allowAllAccess,
+    useContextMenu: contextMenuHook(),
     controller,
     useWelcome: bindSnapshotSelector(controller.store),
     t: key => zh[key],

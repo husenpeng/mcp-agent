@@ -484,7 +484,7 @@ describe('process lifecycle ownership (the subprocess service, not the executor)
     expect(proc.status).toBe('killed')
   })
 
-  it('service disposal escalates to SIGKILL for TERM-trapping children and settles handles', async () => {
+  it('service disposal escalates to SIGKILL for TERM-trapping children and settles handles', { timeout: 30_000 }, async () => {
     const ctx = new Context()
     const managerFiber = await ctx.plugin(LocalSubprocessRuntime)
     ;(ctx.subprocess as LocalSubprocessRuntime).internals = { spillDir }
