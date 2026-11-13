@@ -461,94 +461,93 @@ Generated from source by `scripts/gen-cordis-catalog.ts` (verified fresh by `pnp
 
 ### `ctx.schedule` — `ScheduleService`
 
-Shared management service; reads, deletion, and timing edits never activate a Session.
+Shared management service; reads and management writes never activate a Session, and only delivery creates or resumes one.
 
-`sessionPersistence` is a load-order requirement rather than a directly called service: a delivery commits only when `ctx.sessions.flush()` reports that a `session/flush` listener participated, and the persistence backend providing this service is the plugin that registers that listener.
+`sessionPersistence` supplies header-only target validation and the `session/flush` listener that acknowledges durable inbox delivery through `ctx.sessions.flush()`.
 
 ```ts cordis-catalog
+/** Read effective delivery limits without loading or activating a task.
+ * @returns The configured minimum spacing between deliveries that each create a Session, in seconds.
+ */
+@Remote('deliveryLimits') deliveryLimits(): { readonly newSessionIntervalSeconds: number }
+
 /**
- * Create a reminder bound to the caller-selected Session without activating it.
+ * Create one task with a Host-generated identity for a human Remote caller.
+ * @param request - Title, prompt, recurrence, and delivery destination.
+ * @param signal - Cancellation checked before the durable write begins, including after FIFO waits.
+ * @returns The stored task. Cancellation does not roll back an in-flight write.
+ */
+@Remote('create') async remoteCreate(request: ScheduleCreateRequest, signal?: AbortSignal): Promise<ScheduleCatalogEntry>
+
+/**
+ * Create one task and record the acting Agent's Session as involved; the Remote form omits that Session.
  *
- * The request must supply a title; a missing, blank-after-trim, or over-long
- * title rejects with `invalid_prompt` instead of deriving one from the prompt.
- * A Session a delegated child owns rejects with `subagent_session`, because delivery
- * can never reach it: the child is one whose delegation depth is above zero.
- * The record is built from the clock reading taken before the request joins the
- * serialized queue, so a create that waits behind a longer operation keeps its
- * request-time anchor and may already be due when the queue reaches it.
- * @param sessionId - Original Session receiving the reminder.
- * @param request - Validated tool selector, required title, and reminder content.
- * @param signal - Optional cancellation checked before persistence begins, including after FIFO waits.
- * @returns The durably stored schedule. Cancellation does not roll back an in-flight write.
+ * The record is built from the clock reading taken before the request joins the serialized queue. A `session`
+ * target must exist and must not belong to a delegated child; a `new_once` target reserves its Session identity.
+ * @param request - Title, prompt, recurrence, and delivery destination.
+ * @param actorSessionId - Session of the acting Agent, or undefined for a human caller.
+ * @param signal - Cancellation checked before the durable write begins, including after FIFO waits.
+ * @returns The stored task. Cancellation does not roll back an in-flight write.
  */
-async create(sessionId: SessionId, request: ScheduleCreateRequest, signal?: AbortSignal): Promise<ScheduleRecord>
+async create( request: ScheduleCreateRequest, actorSessionId?: SessionId, signal?: AbortSignal, ): Promise<ScheduleCatalogEntry>
 
 /**
- * Read the selected Session's active tasks without resuming its Agent.
- * @param request - Session whose task list is requested.
- * @returns Persisted reminders in storage order.
+ * Read one page of Host tasks without activating target Sessions.
+ * @param request - Optional activity filter, page size, and offset.
+ * @returns The requested page and total matching task count.
  */
-@Remote('list') async list(request: ScheduleListRequest): Promise<ScheduleRecord[]>
+async list(request: ScheduleListRequest = {}): Promise<ScheduleListResult>
 
 /**
- * Read all active and inactive Host reminders with their original Session bindings.
- * A deleted reminder has no row, so it is absent here.
- * Does not activate Sessions or read Session history.
- * @returns Reminders ordered by scheduledAt ascending, then lexicographically by id.
+ * Remote form of the shared Host-wide list.
+ * @param request - Optional activity filter, page size, and offset.
+ * @returns The requested page and total matching task count.
  */
-@Remote('catalog') async catalog(): Promise<ScheduleCatalogEntry[]>
+@Remote('list') async remoteList(request: ScheduleListRequest): Promise<ScheduleListResult>
 
 /**
- * Read saved inbox deliveries without activating or reading the original Session.
- * The task's own row supplies its binding, so its records stay readable through this lookup.
- * @param request - Session binding, task identity, explicit limit, and optional exclusive message cursor.
+ * Read every Host task without a page bound or Session activation.
+ * @returns All tasks, active first, with target and execution metadata.
+ */
+@Remote('catalog') async remoteCatalog(): Promise<ScheduleCatalogEntry[]>
+
+/**
+ * Read every Host task for in-process callers, without the phone-facing extras.
+ * @returns all stored tasks in catalog order.
+ */
+async catalog(): Promise<ScheduleCatalogEntry[]>
+
+/**
+ * Read one task without activating its target Sessions.
+ * @param request - Task identity.
+ * @returns The task, or a non-mutating miss.
+ */
+@Remote('view') async view(request: ScheduleViewRequest): Promise<ScheduleViewResult>
+
+/**
+ * Read one page of saved deliveries without activating or reading a target Session.
+ * @param request - Task identity, explicit page size, and optional exclusive cursor.
+ * @returns Newest-first saved deliveries, or a task/cursor lookup failure.
+ */
+async history(request: ScheduleDeliveryHistoryRequest): Promise<ScheduleDeliveryHistoryResult>
+
+/**
+ * Remote form of the target-based {@link ScheduleService.history}; an invalid limit rejects with
+ * `schedule/input-invalid`.
+ * @param request - Task identity, explicit limit, and optional exclusive message cursor.
  * @returns Newest-first deliveries in append order, or a task/cursor lookup failure.
- * @throws ScheduleInputError when limit is not a safe integer from 1 through 100.
  */
-@Remote('history') async history(request: ScheduleDeliveryHistoryRequest): Promise<ScheduleDeliveryHistoryResult>
+@Remote('history') async remoteHistory(request: ScheduleDeliveryHistoryRequest): Promise<ScheduleDeliveryHistoryResult>
 
 /**
- * Create one reminder for a phone, bound to its Session without activating it.
- *
- * The Remote face differs from the tool only in where the Session comes from:
- * a phone names it in the request. Every selector and refusal is the same, so
- * a task created here behaves exactly like one the Agent created.
- * @param request - Session binding, title, prompt, and one selector.
- * @param signal - optional cancellation, forwarded to storage.
- * @returns the stored task as the catalog reports it.
+ * Deliver one task now without consuming or moving its scheduled occurrence; an archived destination Session rejects
+ * with `schedule/target-archived`.
+ * @param request - Task identity.
+ * @param signal - Cancellation checked after entering the delivery transaction and before delivery.
+ * @returns Task state after Session persistence acknowledged the delivery, `schedule_execution_pending` while
+ * another execution of the task is queued, running, or inside its delivery floor, or a non-mutating miss.
  */
-@Remote('create') async createReminder(request: ScheduleRemoteCreateRequest, signal?: AbortSignal): Promise<ScheduleCatalogEntry>
-
-/**
- * Pause one task, keeping its rule for a later resume.
- *
- * A paused task stays visible in the catalog and never schedules a delivery
- * while paused; unlike deletion its recurrence survives.
- * @param request - Session binding and the task to pause.
- * @param signal - optional cancellation, forwarded to storage.
- * @returns the resulting state, or the refusal that kept it unchanged.
- */
-@Remote('pause') async pause(request: SchedulePauseRequest, signal?: AbortSignal): Promise<SchedulePauseResult>
-
-/**
- * Resume a paused task, returning it to the schedule its rule describes.
- *
- * A recurring task whose occurrence passed while paused returns at its next
- * occurrence after now, not one in the past; a one-shot task already past is
- * delivered on the next drive rather than skipped.
- * @param request - Session binding and the task to resume.
- * @param signal - optional cancellation, forwarded to storage.
- * @returns the resulting state, or the refusal that kept it unchanged.
- */
-@Remote('resume') async resume(request: SchedulePauseRequest, signal?: AbortSignal): Promise<SchedulePauseResult>
-
-/**
- * Delete one task from its owning Session.
- * @param request - Session binding and the task to delete.
- * @param signal - optional cancellation, forwarded to storage.
- * @returns the delete outcome, or the refusal that kept the task.
- */
-@Remote('delete') async delete(request: ScheduleDeleteRequest, signal?: AbortSignal): Promise<ScheduleDeleteResult>
+@Remote('run') async run(request: ScheduleRunRequest, signal?: AbortSignal): Promise<ScheduleRunResult>
 
 /**
  * Delete every ended Host task, leaving active tasks armed.
@@ -560,30 +559,56 @@ async create(sessionId: SessionId, request: ScheduleCreateRequest, signal?: Abor
  * failure rejects with every listed row still stored, while a backend
  * `unknown-state` failure may have removed rows and quarantines the Host
  * domain, so later schedule operations reject until the domain is reopened.
- * Every rejection announces `schedule/changed` because it does not establish
+ * A successful nonempty batch emits `schedule/changed` without Agent notices.
+ * A rejected batch announces `schedule/changed` because it does not establish
  * which rows landed, and clients then re-read the catalog.
  * @returns Count of removed rows; zero when the Host held no ended task.
  */
 @Remote('deleteInactive') async deleteInactive(): Promise<ScheduleDeleteInactiveResult>
 
 /**
- * Update the name, instruction, and timing of an active task within the original Session
- * binding without activating the Session or changing saved deliveries.
- *
- * Each supplied field replaces its stored value; an omitted field keeps it. A name or
- * instruction change alone does not reset the committed target. A Session a delegated
- * child owns returns the non-mutating `subagent_session` result, so an edit cannot
- * re-arm a task bound to a Session delivery can never reach, and the Web editor can
- * explain the refusal through the ordinary result it already renders.
- * @param request - Task binding, complete observed record, and any combination of timing, name, and instruction.
- * @param signal - Cancellation checked after domain readiness and FIFO waits, before persistence begins.
- * @returns The committed record, unchanged record for a no-op, or a non-mutating input/lookup/conflict/refusal result.
- * Storage and lifecycle failures reject; cancellation after a write starts does not roll it back.
+ * Update or delete one task for a human Remote caller; an invalid patch rejects with `schedule/input-invalid`.
+ * @param request - Task identity and one update or delete operation.
+ * @param signal - Cancellation checked before the durable write begins, including after FIFO waits.
+ * @returns The updated task, the deletion outcome, or a non-mutating miss or conflict.
  */
-@Remote('update') async update(request: ScheduleUpdateRequest, signal?: AbortSignal): Promise<ScheduleUpdateResult>
+@Remote('edit') async remoteEdit(request: ScheduleEditRequest, signal?: AbortSignal): Promise<ScheduleEditResult>
+
+/**
+ * Pause one task for a phone client; the rule survives and resumes later.
+ * @param request - Filed Session and task identity.
+ * @returns the resulting state, or a refusal code when the task is gone.
+ */
+@Remote('pause') async pause(request: ScheduleSessionTaskRequest): Promise<SchedulePauseReply>
+
+/**
+ * Resume one paused task for a phone client from its next future occurrence.
+ * @param request - Filed Session and task identity.
+ * @returns the resulting state, or a refusal code when the task is gone.
+ */
+@Remote('resume') async resume(request: ScheduleSessionTaskRequest): Promise<SchedulePauseReply>
+
+/**
+ * Remove one task for a phone client.
+ * @param request - Filed Session and task identity.
+ * @returns whether a stored task was removed.
+ */
+@Remote('delete') async remoteDelete(request: ScheduleSessionTaskRequest): Promise<ScheduleDeletionReply>
+
+/**
+ * Update or delete one task and record the acting Agent's Session as involved; the Remote form omits that Session.
+ *
+ * An update applies every patch field in one write and recomputes the next occurrence when the rule changes or
+ * the task resumes. A supplied `expectedUpdatedAt` that differs from the stored value returns `schedule_conflict`.
+ * @param request - Task identity and one update or delete operation.
+ * @param actorSessionId - Session of the acting Agent, or undefined for a human caller.
+ * @param signal - Cancellation checked before the durable write begins, including after FIFO waits.
+ * @returns The updated task, the deletion outcome, or a non-mutating miss or conflict.
+ */
+async edit( request: ScheduleEditRequest, actorSessionId?: SessionId, signal?: AbortSignal, ): Promise<ScheduleEditResult>
 ```
 
-Types: [SchedulePauseRequest](../../packages/schedule/schedule/README.md) · [SchedulePauseResult](../../packages/schedule/schedule/README.md) · [ScheduleRemoteCreateRequest](../../packages/schedule/schedule/README.md) · [SessionId](core.md)
+Types: [SessionId](core.md)
 
 Source: [`packages/schedule/schedule/src/index.ts`](../../packages/schedule/schedule/src/index.ts)
 

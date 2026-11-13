@@ -665,6 +665,12 @@ Resolve strict generated definitions or conservative SRC markers against current
 hasLiveClient(): boolean
 
 /**
+ * Inspect unsettled forwarded events without changing their lifetime.
+ * @returns detached event names and Agent identities.
+ */
+getPendingRemoteEvents(): readonly PendingRemoteEventInfo[]
+
+/**
  * Register the sole application-selected forwarded-event source.
  * @param source - stream factory installed by the Remote assembly.
  * @param host - stable Host facts included in each Client generation's opening frame.

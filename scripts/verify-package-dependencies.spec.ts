@@ -837,7 +837,9 @@ describe('face-aware source classification', () => {
       'void defaultValue; void local; void namespace',
     ].join('\n')
     const uses = collectRuntimeSourceExportUses('probe.ts', source)
-    expect(uses.map(({ specifier, exportName }) => ({ specifier, exportName }))).toEqual([
+    const byName = (left: { specifier: string; exportName: string }, right: { specifier: string; exportName: string }) =>
+      `${left.specifier}\u0000${left.exportName}`.localeCompare(`${right.specifier}\u0000${right.exportName}`)
+    expect(uses.map(({ specifier, exportName }) => ({ specifier, exportName })).sort(byName)).toEqual([
       { specifier: '@tomato/lazy-require', exportName: '*' },
       { specifier: '@tomato/lazy-require', exportName: 'createLazyRequire' },
       { specifier: '@f/dynamic', exportName: '*' },
@@ -850,7 +852,7 @@ describe('face-aware source classification', () => {
       { specifier: '@f/root', exportName: 'default' },
       { specifier: '@f/root', exportName: 'value' },
       { specifier: '@f/star', exportName: '*' },
-    ])
+    ].sort(byName))
     expect(uses.find(use => use.specifier === '@f/root' && use.exportName === 'value')).toMatchObject({
       line: 1,
       column: 24,

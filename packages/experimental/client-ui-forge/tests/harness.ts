@@ -93,7 +93,7 @@ export async function commitAt(repo: string, file: string, date: string): Promis
  * @returns short branch names in ref name order.
  */
 export async function branches(repo: string): Promise<string[]> {
-  return (await git(repo, 'for-each-ref', '--format=%(refname:short)', 'refs/heads/')).split('\n')
+  return (await git(repo, 'for-each-ref', '--format=%(refname:short)', 'refs/heads/')).split('\n').filter(Boolean).sort()
 }
 
 /**

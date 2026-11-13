@@ -733,9 +733,9 @@ guard(guard: ToolGuard): () => void
 /**
  * Check global and inherited guards after pre-execute policy and approval resolve.
  * @param exec - invocation whose guards are checked before dispatch.
- * @returns the first denial reason, or undefined when no guard denies.
+ * @returns the first denial with its optional structured identity, or undefined when no guard denies.
  */
-checkGuards(exec: ToolExecution): string | undefined
+checkGuards(exec: ToolExecution): ToolGuardDenial | undefined
 ```
 
 Types: [ScopeKey](scope.md)

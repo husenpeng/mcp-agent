@@ -382,7 +382,7 @@ describe('creating a requested worktree', () => {
     expect(opened.changes.map(change => change?.phase ?? null)).toEqual(['prepare', 'prepare', 'checkout', null])
     expect(opened.records).toEqual([{ action: 'request', from: null }])
     expect(opened.ctx.workingDirectory.get(opened.session)).toBe(repo)
-    expect(await branches(repo)).toEqual([branch, 'main'])
+    expect(await branches(repo)).toEqual([branch, 'main'].sort())
   })
 
   it('reports a failure that is not an Error by its text', async () => {
@@ -456,7 +456,7 @@ describe('worktree creation at the first step proposal', () => {
     expect(opened.agent.inbox.nextStep).toEqual([notice(path)])
     expect(opened.records).toEqual([{ action: 'request', from: null }])
     expect(opened.created).toHaveLength(1)
-    expect(await branches(repo)).toEqual([worktreeOf(opened)?.branch, 'main'])
+    expect(await branches(repo)).toEqual([worktreeOf(opened)?.branch, 'main'].sort())
   })
 
   it('enters the worktree and keeps the proposal when the directory notice cannot be queued', async () => {
@@ -507,7 +507,7 @@ describe('worktree creation at the first step proposal', () => {
     expect(opened.records).toEqual([{ action: 'request', from: null }])
     expect(opened.created).toHaveLength(1)
     expect(opened.ctx.workingDirectory.get(opened.session)).toBe(created.path)
-    expect(await branches(repo)).toEqual([created.branch, 'main'])
+    expect(await branches(repo)).toEqual([created.branch, 'main'].sort())
   })
 
   it('ends the turn with the failure and keeps the request open for the next turn', async () => {

@@ -10,6 +10,8 @@ const ROOT = resolve(import.meta.dirname, '..')
 const TOMATO_PACKAGE_NAME = /^@tomato\//
 /** Published native packages retain their upstream BSD-3-Clause license. */
 const UPSTREAM_LICENSED = /^@tomato\/node-addon-system(?:-|$)/
+/** Vendored framework copies keep the license of the upstream package they pin. */
+const VENDOR_PREFIX = 'vendor/'
 
 /** Result of checking every TOMATO package reachable through the root workspace list. */
 export interface TomatoPackageLicenseReport {
@@ -61,6 +63,7 @@ export function inspectTomatoPackageLicenses(root: string): TomatoPackageLicense
   const failures: string[] = []
 
   for (const file of workspaceManifestPaths(root)) {
+    if (file.split(sep).join('/').startsWith(VENDOR_PREFIX)) continue
     const manifest = readManifest(root, file)
     const name = manifest.name
     if (typeof name !== 'string' || !TOMATO_PACKAGE_NAME.test(name) || UPSTREAM_LICENSED.test(name)) continue

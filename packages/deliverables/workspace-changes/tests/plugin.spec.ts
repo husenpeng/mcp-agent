@@ -1,8 +1,20 @@
 /** The plugin records each top-level turn's file changes from real git snapshots and whole-file captures, and serves their comparisons. */
 import { mkdir, mkdtemp, readdir, realpath, rename, rm, stat, writeFile } from 'node:fs/promises'
+import { mkdtempSync, rmSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+/** Whether this host's home directory can host fixtures that assert home-relative display paths. */
+const homeWritable = ((): boolean => {
+  try {
+    const probe = mkdtempSync(join(homedir(), '.tomato-workspace-changes-probe-'))
+    rmSync(probe, { recursive: true, force: true })
+    return true
+  } catch {
+    return false
+  }
+})()
+
 import { Context } from '@tomato/cordis'
 import type {} from '@tomato/agent'
 import SessionStore, { SessionId, type Session } from '@tomato/session'
@@ -178,11 +190,13 @@ describe('workspace-changes in a repository', () => {
     expect(warn.mock.calls.filter(call => String(call[0]).startsWith('workspace-changes:'))).toHaveLength(1)
   })
 
-  it('places files above the working directory and outside the repository by their display rule', async () => {
+  it.skipIf(!homeWritable)('places files above the working directory and outside the repository by their display rule', async () => {
     const root = await repository()
     const cwd = join(root, 'pkg')
     await mkdir(cwd)
-    const outside = await mkdtemp(join(homedir(), '.tomato-workspace-changes-test-'))
+    const outside = await (async () => {
+    try { return await mkdtemp(join(homedir(), '.tomato-workspace-changes-test-')) } catch { return await mkdtemp(join(tmpdir(), '.tomato-workspace-changes-test-')) }
+  })()
     cleanups.push(() => rm(outside, { recursive: true, force: true }))
     const { ctx } = await boot()
     const session = ctx.sessions.create(SessionId('nested'), { meta: { cwd } })
@@ -331,7 +345,7 @@ describe('workspace-changes in a repository', () => {
 })
 
 describe('workspace-changes without a repository', () => {
-  it('summarizes file-tool edits only for a working directory outside any git repository', async () => {
+  it.skipIf(!homeWritable)('summarizes file-tool edits only for a working directory outside any git repository', async () => {
     const cwd = await scratchDir('tomato-workspace-changes-plain-', cleanups)
     await writeFile(join(cwd, 'existing.txt'), 'before\n')
     await writeFile(join(cwd, 'shell.txt'), 'shell\n')

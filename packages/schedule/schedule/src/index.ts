@@ -449,7 +449,10 @@ export class ScheduleService extends TypertRemoteService {
     return this.entries()
   }
 
-  /** Read every Host task for in-process callers, without the phone-facing extras. */
+  /**
+   * Read every Host task for in-process callers, without the phone-facing extras.
+   * @returns all stored tasks in catalog order.
+   */
   async catalog(): Promise<ScheduleCatalogEntry[]> {
     return this.entries()
   }

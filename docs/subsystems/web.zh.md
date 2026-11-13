@@ -155,7 +155,7 @@ Generated from source by `scripts/gen-cordis-catalog.ts` (verified fresh by `pnp
 
 ### `ctx.web` — `WebRuntime`
 
-The web access service. Registered as `ctx.web` (one instance per context).
+The web access service. Registered as `ctx.web` (one instance per context) and exposed to Clients as the `web` Remote namespace (`listProviders`).
 
 Selection semantics (resolved at execution time, never order-dependent):
 
@@ -168,22 +168,31 @@ Selection semantics (resolved at execution time, never order-dependent):
 
 ```ts cordis-catalog
 /**
- * Register a search provider. Throws {@link WebError} `WEB_DUPLICATE_PROVIDER`
- * if its id is already registered for search. Returns a disposer; disposed
- * with the calling fiber.
+ * Register a search provider. `listProviders()` lists it until the
+ * registration is disposed, which happens with the calling fiber or through
+ * the returned disposer; registration and disposal each emit
+ * `web/providers-changed`. Throws {@link WebError} `WEB_DUPLICATE_PROVIDER`
+ * if its id is already registered for search.
  * @param provider - the provider; its `id` is the registry key.
  * @returns the disposer that unregisters the provider.
  */
 registerSearchProvider(provider: WebSearchProvider): () => void
 
 /**
- * Register a fetch provider. Throws {@link WebError} `WEB_DUPLICATE_PROVIDER`
- * if its id is already registered for fetch. Returns a disposer; disposed
- * with the calling fiber.
+ * Register a fetch provider, with the listing, disposal, and event behavior
+ * of {@link WebRuntime.registerSearchProvider}. Throws {@link WebError}
+ * `WEB_DUPLICATE_PROVIDER` if its id is already registered for fetch.
  * @param provider - the provider; its `id` is the registry key.
  * @returns the disposer that unregisters the provider.
  */
 registerFetchProvider(provider: WebFetchProvider): () => void
+
+/**
+ * List every registered search and fetch provider for provider pickers.
+ * Availability does not filter the lists.
+ * @returns detached `{ id, title, description }` entries per capability, in registration order.
+ */
+@Remote listProviders(): WebProviderList
 
 /**
  * Run one search through the selected provider. Resolves the provider at call
@@ -228,4 +237,28 @@ async fetchReady(llmProvider?: string): Promise<boolean>
 ```
 
 Source: [`packages/web/web/src/index.ts`](../../packages/web/web/src/index.ts)
+
+<a id="web-events"></a>
+
+### `web/*` events
+
+<a id="webproviders-changed--emit"></a>
+
+#### `web/providers-changed` — emit
+
+The set of registered search or fetch providers changed: one provider registered, or its registration was disposed. Payload-free; consumers re-read `ctx.web.listProviders()` (Remote `web/listProviders`) for the new list. Fires after each committed registry mutation. Observer failures are contained and cannot veto the mutation.
+
+```ts cordis-catalog
+/**
+ * The set of registered search or fetch providers changed: one provider
+ * registered, or its registration was disposed. Payload-free; consumers
+ * re-read `ctx.web.listProviders()` (Remote `web/listProviders`) for the
+ * new list. Fires after each committed registry mutation. Observer failures
+ * are contained and cannot veto the mutation.
+ * @mode emit
+ */
+'web/providers-changed'(): void
+```
+
+Source: [`packages/web/web/src/types.ts`](../../packages/web/web/src/types.ts)
 <!-- END GENERATED cordis-surface -->

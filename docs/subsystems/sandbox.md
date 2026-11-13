@@ -224,6 +224,18 @@ The sandbox-policy service (`ctx.sandboxPolicy`). Owns the deployment default mo
 resolve(request: SandboxPolicyRequest = {}): SandboxExecutionPolicy
 
 /**
+ * Permit writes under one directory in this Session's future workspace-write
+ * operations. The calling context owns the effect; disposal removes only this
+ * registration. Other grants to the directory remain effective. Existing
+ * operations and persistent processes retain their resolved permissions.
+ * Grants are runtime-only and must be registered again after resume or fork.
+ * @param session - exact live Session receiving the grant; other Sessions and agentless calls are unaffected.
+ * @param directory - absolute execution-world path; execution rejects missing, non-directory, or symlinked paths.
+ * @returns the exact Cordis effect disposer for this registration.
+ */
+registerWritableRoot(session: Session, directory: string): () => void
+
+/**
  * Read the session override without applying the deployment default.
  * @param session - session whose log supplies the override.
  * @returns the last logged mode, or `undefined` without one.

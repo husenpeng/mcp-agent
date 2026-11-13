@@ -9,9 +9,9 @@ import { resolveKitModule } from '../src/locate.ts'
 function kitTree() {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'tomato-kit-lookup-')))
   onTestFinished(() => { rmSync(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 10 }) })
-  const kitDirectory = join(root, 'node_modules', '@tomato', 'libreoffice-kit')
+  const kitDirectory = join(root, 'node_modules', '@deepseek-ai', 'libreoffice-kit')
   const entry = join(kitDirectory, 'lib', 'index.js')
-  const engine = join(kitDirectory, 'node_modules', '@tomato', 'libreoffice-kit-wasm', 'package.json')
+  const engine = join(kitDirectory, 'node_modules', '@deepseek-ai', 'libreoffice-kit-wasm', 'package.json')
   mkdirSync(dirname(engine), { recursive: true })
   mkdirSync(dirname(entry), { recursive: true })
   writeFileSync(join(kitDirectory, 'package.json'), JSON.stringify({

@@ -1,6 +1,6 @@
 import { externalTestParent } from '../../../subagent/subagent/tests/external-activation-helpers.ts'
 import { mkdtemp, mkdir, rm } from 'node:fs/promises'
-import { homedir } from 'node:os'
+import { homedir, tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { Context } from '@tomato/cordis'
 import type { Agent } from '@tomato/agent'
@@ -19,7 +19,12 @@ import { onTestFinished } from 'vitest'
 
 /** Mount real Node execution services with a private working directory and awaited cleanup. */
 export async function mountPtcRuntime(ctx: Context, mode: SandboxMode = 'danger-full-access', executionMode: NodeRuntimeConfig['executionMode'] = 'per-call') {
-  const root = await mkdtemp(join(homedir(), '.tomato-workflow-test-'))
+  let root: string
+  try {
+    root = await mkdtemp(join(homedir(), '.tomato-workflow-test-'))
+  } catch {
+    root = await mkdtemp(join(tmpdir(), '.tomato-workflow-test-'))
+  }
   onTestFinished(async () => {
     await ctx.fiber.dispose()
     await rm(root, { recursive: true, force: true })

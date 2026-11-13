@@ -445,7 +445,9 @@ export function unrelatedRead(): void {
 
       expect(result.error).toBeUndefined()
       expect(result.status, normalizedOutput(result)).toBe(0)
-      expect(result.stdout).toContain('Unused oxlint-disable directive')
+      // The staged config allows unused directives without type information;
+      // the full lint run judges every directive against the real programs.
+      expect(result.stdout).toBe('')
       expect(result.stderr).toBe('')
     } finally {
       await rm(path, { force: true })

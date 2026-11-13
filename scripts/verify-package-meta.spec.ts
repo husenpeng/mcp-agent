@@ -110,10 +110,19 @@ it.each(['png', 'jpg', 'jpeg', 'webp'].flatMap(extension => ['manifest', 'export
   },
 )
 
-it.each(['@local/demo', '@tomato/other'])('keeps nonofficial %s SVGs outside official artwork conventions', (name) => {
+it.each(['@local/demo'])('keeps nonofficial %s SVGs outside official artwork conventions', (name) => {
   manifest({ name, icon: './icon.svg', files: ['icon.svg'] })
   file('icon.svg', '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"/>')
   expect(packageMetaProblems(root)).toEqual([])
+})
+
+it('checks every @tomato package as official artwork', () => {
+  manifest({ name: '@tomato/other', icon: './icon.svg', files: ['icon.svg'] })
+  file('icon.svg', '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"/>')
+  expect(packageMetaProblems(root)).toEqual(expect.arrayContaining([
+    expect.stringContaining('SVG icon must use width="36" height="36" viewBox="0 0 36 36"'),
+    expect.stringContaining('SVG icon must contain geometry'),
+  ]))
 })
 
 it('checks official artwork in named nested packages', () => {

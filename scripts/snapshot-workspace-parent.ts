@@ -18,32 +18,29 @@ function contains(root: string, path: string): boolean {
  * @returns existing parent outside the automatic temporary write grants.
  */
 export function outsideTempWorkspaceParent(tempRoot = tmpdir(), home = homedir()): string {
-  // A sandboxed runner can confine the home directory; use a checkout-local
-  // scratch parent then, still outside the automatic temporary write grants.
-  const writable = (parent: string): boolean => {
+  const resolveHome = (): string => {
+    // A confined home cannot host the workspace; use the checkout's scratch
+    // directory, which still lies outside the automatic temporary grants.
     try {
-      const probe = mkdtempSync(join(parent, '.tomato-temp-parent-probe-'))
+      const probe = mkdtempSync(join(home, '.tomato-temp-probe-'))
       rmSync(probe, { recursive: true, force: true })
-      return true
+      return home
     } catch {
-      return false
+      const scratch = join(process.cwd(), 'tmp', 'workspace-parent')
+      mkdirSync(scratch, { recursive: true })
+      return canonicalPath(scratch)
     }
-  }
-  if (!writable(home)) {
-    const scratch = join(process.cwd(), 'tmp', 'workspace-parent')
-    mkdirSync(scratch, { recursive: true })
-    return canonicalPath(scratch)
   }
   const temporary = canonicalPath(tempRoot)
   const systemTemporary = canonicalPath('/tmp')
   const parent = dirname(temporary)
-  if (temporary === systemTemporary || parent === parse(parent).root || contains(systemTemporary, parent)) return home
+  if (temporary === systemTemporary || parent === parse(parent).root || contains(systemTemporary, parent)) return resolveHome()
   try {
     accessSync(parent, constants.W_OK)
   } catch (error) {
     // A non-writable parent cannot host siblings; allocation failures still propagate from mkdtemp.
     const code = (error as NodeJS.ErrnoException).code
-    if (code === 'EACCES' || code === 'EPERM' || code === 'EROFS') return home
+    if (code === 'EACCES' || code === 'EPERM' || code === 'EROFS') return resolveHome()
     throw error
   }
   return parent

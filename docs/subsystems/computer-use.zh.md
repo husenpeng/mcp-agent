@@ -85,36 +85,38 @@ Browser controls for provider-owned native permission and application decisions.
 @Remote async enablePersistentPtc(): Promise<void>
 
 /**
- * Read application decisions without waiting for the native helper.
- * @returns Saved grants and refused applications with their persistence owner.
+ * Read fresh stored application decisions without issuing a native request.
+ * @returns Saved grants, refused applications and durable-storage availability.
  */
-@Remote applications(): CuaApplicationState
+@Remote applications(): Promise<CuaApplicationState>
 
 /**
  * Inspect system privileges independently of application decisions and icons.
- * @returns Fresh native preflight and launch metadata.
+ * @returns Platform-tagged access observations and native process metadata.
  */
 @Remote async systemStatus(): Promise<CuaSystemPermissionState>
 
 /**
  * Load presentation icons separately from application decisions.
- * @returns Optional native PNG icons keyed by executable path for saved and blocked applications.
+ * @returns Optional native PNG icons keyed by executable path; applications without paths are skipped.
  */
 @Remote async applicationIcons(): Promise<Record<string, string>>
 
 /**
- * Request a system privilege explicitly selected by the user.
+ * Request the selected system privilege through the native provider.
  * @param permission macOS privilege to request.
- * @returns Preflight state after requesting; a false value never implies consent.
+ * @param locale Current Client language for provider-owned permission UI.
+ * @returns Current permission observations; requesting does not establish consent.
  */
-@Remote async requestPermission(permission: CuaSystemPermission): Promise<CuaSystemPermissionState>
+@Remote async requestPermission(permission: CuaSystemPermission, locale: string): Promise<CuaSystemPermissionState>
 
 /**
  * Open the macOS privacy pane selected by the user.
  * @param permission Corresponding system privilege.
+ * @param locale Current Client language for provider-owned recovery instructions.
  * @returns Completion after macOS accepted the open request.
  */
-@Remote async openSettings(permission: CuaSystemPermission): Promise<void>
+@Remote async openSettings(permission: CuaSystemPermission, locale: string): Promise<void>
 
 /**
  * Remove saved and session access and join affected operations.

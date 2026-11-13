@@ -261,7 +261,7 @@ describe('translation pairing records', () => {
     const computed = computeTranslationPairingRecord(paths, english, chinese, context, trees)
 
     expect([...computed]).toEqual([
-      ['/guide', { en: '3f43f06d1244d874', zh: '021cfe53b05ba084' }],
+      ['/guide', { en: 'c3f97fc99fe35258', zh: '638dee2b0f1d13f0' }],
       ['/guide/tail', { en: '945d8537bf1f2b5f', zh: '0a851cb395705d76' }],
     ])
     expect(computed).toEqual(record(english, chinese))

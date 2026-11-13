@@ -65,7 +65,7 @@ export const OPTIONAL_BUNDLES: readonly string[] = [
   '@tomato/experimental-terminal-bundle',
   '@tomato/experimental-badge-skill-bundle',
   '@tomato/experimental-session-titles-bundle',
-  '@tomato/experimental-agent-team-profile',
+  '@tomato/experimental-forge-bundle',
   '@tomato/experimental-voice-input-bundle',
   '@tomato/experimental-cot-translation-bundle',
   '@tomato/experimental-auto-review',

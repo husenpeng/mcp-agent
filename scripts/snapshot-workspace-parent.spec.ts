@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs'
+import { existsSync, mkdtempSync, rmSync } from 'node:fs'
 import { chmod, mkdir, mkdtemp, readFile, rm, stat, symlink } from 'node:fs/promises'
 import { homedir, tmpdir } from 'node:os'
 import { dirname, join, parse } from 'node:path'
@@ -10,10 +10,21 @@ import SessionProjectionRegistry from '@tomato/session-projection'
 import { describe, expect, it } from 'vitest'
 import { assertWorkspaceOutsideTemp, outsideTempWorkspaceParent } from './snapshot-workspace-parent.ts'
 
+/** Whether this host's home directory can host the fallback the same test asserts. */
+const homeWritable = ((): boolean => {
+  try {
+    const probe = mkdtempSync(join(homedir(), '.tomato-snapshot-probe-'))
+    rmSync(probe, { recursive: true, force: true })
+    return true
+  } catch {
+    return false
+  }
+})()
+
 // Host disk exhaustion is not simulated: placement and the real write fence are the regression oracles.
 describe('snapshot workspace parent', () => {
   // Windows directory permissions and root bypass do not enforce POSIX write bits.
-  it.skipIf(process.platform === 'win32' || process.getuid?.() === 0)('uses home when the temp parent is not writable', async () => {
+  it.skipIf(process.platform === 'win32' || process.getuid?.() === 0 || !homeWritable)('uses home when the temp parent is not writable', async () => {
     const base = await mkdtemp(join(outsideTempWorkspaceParent(), '.tomato-snapshot-readonly-'))
     try {
       const temporary = join(base, '_temp')
@@ -26,7 +37,7 @@ describe('snapshot workspace parent', () => {
     }
   })
 
-  it('uses home when a temp sibling would require a system directory or inherit its grant', () => {
+  it.skipIf(!homeWritable)('uses home when a temp sibling would require a system directory or inherit its grant', () => {
     expect(outsideTempWorkspaceParent('/tmp')).toBe(homedir())
     expect(outsideTempWorkspaceParent(parse(tmpdir()).root)).toBe(homedir())
     expect(outsideTempWorkspaceParent(join(canonicalPath('/tmp'), 'runner', '_temp'))).toBe(homedir())

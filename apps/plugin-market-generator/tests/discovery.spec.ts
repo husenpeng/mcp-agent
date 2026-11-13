@@ -109,7 +109,7 @@ describe('findBundlePackages', () => {
       'other/package.json': bundle('other'),
     })
     const warnings: string[] = []
-    expect(await findBundlePackages(files, (message) => { warnings.push(message) })).toEqual(['tomato-x', 'packages/core/c', 'plugins/a', 'single', 'tools/group/b'])
+    expect(await findBundlePackages(files, (message) => { warnings.push(message) })).toEqual(['tomato-x', 'packages/core/c', 'plugins/a', 'single', 'tools/group/b'].sort())
     expect(warnings).toEqual(['workspace glob "missing" matches no directory'])
   })
 
@@ -127,7 +127,7 @@ describe('findBundlePackages', () => {
       'broken/package.json': '{',
       'array/package.json': '[]',
     })
-    expect(await findBundlePackages(files)).toEqual(['a/b/c', 'tomato-pet', 'plugins/tomato'])
+    expect(await findBundlePackages(files)).toEqual(['a/b/c', 'tomato-pet', 'plugins/tomato'].sort())
     expect(await readManifest(files, 'broken')).toBeUndefined()
     expect(await readManifest(files, 'array')).toBeUndefined()
   })

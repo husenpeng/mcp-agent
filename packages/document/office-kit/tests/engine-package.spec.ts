@@ -22,7 +22,7 @@ afterEach(() => { vi.resetAllMocks() })
 function engineTree() {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'tomato-engine-package-')))
   onTestFinished(() => { rmSync(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 10 }) })
-  const kitDirectory = join(root, 'node_modules', '@tomato', 'libreoffice-kit')
+  const kitDirectory = join(root, 'node_modules', '@deepseek-ai', 'libreoffice-kit')
   const kitSource = join(kitDirectory, 'lib', 'index.js')
   mkdirSync(dirname(kitSource), { recursive: true })
   writeFileSync(join(kitDirectory, 'package.json'), JSON.stringify({ main: 'lib/index.js' }))

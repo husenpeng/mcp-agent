@@ -49,68 +49,36 @@ describe('release families', () => {
     expect(members
       .filter(member => member.directory.startsWith('packages/experimental/'))
       .map(member => member.name)).toEqual([
-      '@tomato/action-cards',
-      '@tomato/experimental-api-speech-to-text',
-      '@tomato/experimental-auto-review',
-      '@tomato/experimental-badge-skill-bundle',
-      '@tomato/experimental-browser-use-chrome-devtools-mcp',
-      '@tomato/experimental-browser-use-playwright-mcp',
-      '@tomato/experimental-browser-use-runtime',
-      '@tomato/experimental-browser-use-stagehand-native',
-      '@tomato/experimental-claude-code-mods',
-      '@tomato/client-ui-action-cards',
-      '@tomato/experimental-client-ui-claude-code-mods',
-      '@tomato/experimental-client-ui-cot-translation',
-      '@tomato/client-ui-creation-recommendations',
-      '@tomato/experimental-client-ui-forge',
-      '@tomato/client-ui-plugin-recommendations',
-      '@tomato/experimental-client-ui-stats',
-      '@tomato/experimental-client-ui-voice-input',
-      '@tomato/experimental-computer-use-cua-driver-mcp',
-      '@tomato/experimental-computer-use-cua-driver-native',
-      '@tomato/experimental-cot-translation-bundle',
-      '@tomato/creation-recommendations',
-      '@tomato/cua-bundle',
-      '@tomato/experimental-cua-macos',
-      '@tomato/cua-windows',
-      '@tomato/cua',
-      '@tomato/experimental-focus',
-      '@tomato/hook-protocol',
-      '@tomato/hooks-claude-code',
-      '@tomato/hooks-codex',
-      '@tomato/experimental-inspector-profile',
-      '@tomato/experimental-inspector',
-      '@tomato/experimental-liveshare-protocol',
-      '@tomato/experimental-memory',
-      '@tomato/experimental-muse-bundle',
-      '@tomato/personalized-recommendations',
-      '@tomato/experimental-plugin-market-bundle',
-      '@tomato/plugin-recommendations',
-      '@tomato/experimental-ptc-runtime-python',
-      '@tomato/experimental-ralph-bundle',
-      '@tomato/experimental-session-inspector',
-      '@tomato/experimental-session-search',
-      '@tomato/session-title-all-prompts-llm',
-      '@tomato/experimental-session-titles-bundle',
-      '@tomato/skill-badge',
-      '@tomato/experimental-speech-to-text-sensevoice',
-      '@tomato/experimental-speech-to-text',
-      '@tomato/experimental-subagent-oar',
-      '@tomato/experimental-terminal-bundle',
-      '@tomato/experimental-tool-agent-team',
-      '@tomato/experimental-tool-memory',
-      '@tomato/tool-ralph',
-      '@tomato/tool-session-query',
-      '@tomato/experimental-tool-subagent-oar',
-      '@tomato/tool-terminal',
-      '@tomato/experimental-tool-worktree',
-      '@tomato/experimental-translator',
-      '@tomato/experimental-voice-input-bundle',
-      '@tomato/webhook-github',
-      '@tomato/webhook',
-      '@tomato/experimental-webworker-packer',
-      '@tomato/experimental-webworker-runtime',
-      '@tomato/experimental-worktree',
+      '@tomato/action-cards', '@tomato/experimental-api-speech-to-text', '@tomato/experimental-auto-review',
+      '@tomato/experimental-badge-skill-bundle', '@tomato/experimental-browser-use-chrome-devtools-mcp', '@tomato/experimental-browser-use-playwright-bundle',
+      '@tomato/experimental-browser-use-playwright-mcp', '@tomato/experimental-browser-use-runtime', '@tomato/experimental-browser-use-stagehand-native',
+      '@tomato/experimental-claude-code-mods', '@tomato/client-ui-action-cards', '@tomato/experimental-client-ui-claude-code-mods',
+      '@tomato/experimental-client-ui-cot-translation', '@tomato/client-ui-creation-recommendations', '@tomato/experimental-client-ui-forge',
+      '@tomato/client-ui-plugin-recommendations', '@tomato/experimental-client-ui-stats', '@tomato/experimental-client-ui-voice-input',
+      '@tomato/experimental-computer-use-cua-driver-mcp', '@tomato/experimental-computer-use-cua-driver-native', '@tomato/experimental-cot-translation-bundle',
+      '@tomato/creation-recommendations', '@tomato/cua-bundle', '@tomato/experimental-cua-macos',
+      '@tomato/cua-windows', '@tomato/cua', '@tomato/experimental-embeddings-http',
+      '@tomato/experimental-embeddings', '@tomato/experimental-robot-crew-local', '@tomato/experimental-robot-crew-remote',
+      '@tomato/experimental-robot-crew', '@tomato/experimental-robot-room-local', '@tomato/experimental-robot-room-remote',
+      '@tomato/experimental-robot-room', '@tomato/experimental-tool-robot-crew', '@tomato/experimental-focus',
+      '@tomato/experimental-forge-bundle', '@tomato/experimental-forge-github', '@tomato/experimental-forge-session',
+      '@tomato/experimental-forge', '@tomato/hook-protocol', '@tomato/hooks-claude-code',
+      '@tomato/hooks-codex', '@tomato/experimental-inspector-profile', '@tomato/experimental-inspector',
+      '@tomato/experimental-liveshare-protocol', '@tomato/experimental-liveshare', '@tomato/experimental-memory',
+      '@tomato/experimental-muse-bundle', '@tomato/experimental-muse-insights', '@tomato/personalized-recommendations',
+      '@tomato/experimental-phone-use-bundle', '@tomato/experimental-phone-use-macos', '@tomato/experimental-phone-use',
+      '@tomato/experimental-plugin-market-bundle', '@tomato/plugin-recommendations', '@tomato/experimental-ptc-runtime-python',
+      '@tomato/experimental-ralph-bundle', '@tomato/experimental-robot-app', '@tomato/experimental-robot-local',
+      '@tomato/experimental-robot-remote', '@tomato/experimental-robot-runtime', '@tomato/experimental-robot-templates-knowledge-work',
+      '@tomato/experimental-robot-templates-marketing', '@tomato/experimental-robot-triggers', '@tomato/experimental-robot',
+      '@tomato/experimental-session-inspector', '@tomato/experimental-session-search', '@tomato/session-title-all-prompts-llm',
+      '@tomato/experimental-session-titles-bundle', '@tomato/skill-badge', '@tomato/experimental-speech-to-text-sensevoice',
+      '@tomato/experimental-speech-to-text', '@tomato/experimental-subagent-oar', '@tomato/experimental-terminal-bundle',
+      '@tomato/terminal-panel', '@tomato/experimental-tool-memory', '@tomato/tool-ralph',
+      '@tomato/experimental-tool-robot', '@tomato/tool-session-query', '@tomato/experimental-tool-subagent-oar',
+      '@tomato/tool-terminal', '@tomato/experimental-tool-worktree', '@tomato/experimental-translator',
+      '@tomato/experimental-voice-input-bundle', '@tomato/webhook-github', '@tomato/webhook',
+      '@tomato/experimental-webworker-packer', '@tomato/experimental-webworker-runtime', '@tomato/experimental-worktree',
     ])
   })
 
@@ -415,12 +383,12 @@ describe('release families', () => {
     const installed = member('apps/cli', '@tomato/cli')
 
     expect(() => { tomato.validatePayload(installed, ['package/lib/index.js', 'package/src/bin.ts']) })
-      .toThrow(/@tomato\/tomato packed no documentation/)
+      .toThrow(/@tomato\/cli packed no documentation/)
     expect(() => { tomato.validatePayload(installed, ['package/lib/index.js', 'package/docs/guide.md', 'package/src/bin.ts']) })
-      .toThrow(/@tomato\/tomato packed no upgrade guide index/)
+      .toThrow(/@tomato\/cli packed no upgrade guide index/)
     const docs = ['package/docs/guide.md', 'package/docs/upgrade-guide/README.md']
     expect(() => { tomato.validatePayload(installed, ['package/lib/index.js', ...docs]) })
-      .toThrow(/@tomato\/tomato packed no source/)
+      .toThrow(/@tomato\/cli packed no source/)
     expect(() => { tomato.validatePayload(installed, ['package/lib/index.js', ...docs, 'package/src/bin.ts']) })
       .not.toThrow()
   })
