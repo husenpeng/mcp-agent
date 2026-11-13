@@ -7,8 +7,6 @@ import { runProfile } from '@tomato/cli/profile-boot'
 import type {} from '@tomato/client-connection'
 import type {} from '@tomato/host-webserver'
 import type {} from '@tomato/account-service'
-import { resolveTomatoHome } from '@tomato/home-paths'
-import * as desktopOffice from './office.ts'
 import { localDragResource } from './file-drag.ts'
 import { releasePatchFiles } from './release-overlay.ts'
 
@@ -142,11 +140,6 @@ async function main(): Promise<void> {
   const { ctx } = await application
   control.updateTasks = installDesktopUpdateTaskControl(ctx)
   control.quitInspection = installDesktopQuitInspection(ctx)
-  await ctx.plugin(desktopOffice, {
-    runtimeDir,
-    source: process.argv[4] ?? join(runtimeDir, '..', 'runtime', 'primary-runtime'),
-    root: join(resolveTomatoHome(), 'tomato-runtimes', 'tomato-primary-runtime'),
-  })
   installPlatformSessionPublisher(ctx, (session) => {
     if (process.connected) process.send?.({ type: 'platform-session', session })
   })
