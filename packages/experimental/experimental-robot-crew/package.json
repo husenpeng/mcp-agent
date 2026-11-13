@@ -1,6 +1,6 @@
 {
   "name": "@tomato/experimental-robot-crew",
-  "description": "Versioned multi-agent crew specifications with an A2A protocol, a bounded flow ledger, and loop protection",
+  "description": "Crew vocabulary for published Rbot agents: specification, A2A envelope, loop guard, and execution-time memory briefs",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"

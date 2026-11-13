@@ -24,6 +24,8 @@ import { A2A_TOOL_NAME } from '../src/execute.ts'
 /** Output per node id, keyed by the node slug. */
 type Scripts = Readonly<Record<string, string | ((session: Session) => Promise<string>)>>
 
+const ROBOT = { spec: 'rbot-agent', revision: 1 }
+
 const GRAPH = (): CrewSpec => {
   const spec = emptyCrewSpec({ name: 'Campaign crew', mission: 'Ship a campaign brief' })
   return {
@@ -32,15 +34,15 @@ const GRAPH = (): CrewSpec => {
     nodes: [
       {
         id: 'research', label: 'Research', role: 'Find the facts', instruction: 'Collect facts',
-        kind: 'worker', maxTurns: 1, budgetTokens: 10_000,
+        kind: 'worker', maxTurns: 1, budgetTokens: 10_000, robot: ROBOT,
       },
       {
         id: 'draft', label: 'Draft', role: 'Write the brief', instruction: 'Write the brief',
-        kind: 'worker', maxTurns: 1, budgetTokens: 10_000,
+        kind: 'worker', maxTurns: 1, budgetTokens: 10_000, robot: ROBOT,
       },
       {
         id: 'review', label: 'Review', role: 'Check the brief', instruction: 'Review the brief',
-        kind: 'reviewer', maxTurns: 1, budgetTokens: 10_000,
+        kind: 'reviewer', maxTurns: 1, budgetTokens: 10_000, robot: ROBOT,
       },
     ],
     edges: [
@@ -91,6 +93,20 @@ async function bench(scripts: Scripts, memory?: MemoryStub) {
     },
   } as never)
   if (memory !== undefined) ctx.provide('memory', memory as never)
+  ctx.provide('robots', {
+    revision: async () => ({
+      ref: ROBOT,
+      spec: {
+        capability: {
+          tools: { allow: [], deny: [] },
+          skills: [],
+          permissionPreset: 'default',
+        },
+        goal: { mission: 'Act as the bound Rbot.', successCriteria: [] },
+      },
+      publishedAt: 0,
+    }),
+  } as never)
   const registered: ToolDefinition[] = []
   ctx.provide('tools', {
     register: (definition: ToolDefinition) => {

@@ -8,7 +8,7 @@ kind: "package-reference"
 
 ## 概述
 
-`@tomato/experimental-robot-crew` 拥有 crew 的词汇与纯策略：Agent 成员的版本化无环图、Agent 之间交换的 `tomato-a2a/1` 信封、每次运行一个循环保护，以及把已完成步骤抽取为决策、约束与开放问题的逻辑。它不持有传输或执行；`@tomato/experimental-robot-crew-local` 同时提供两者。
+`@tomato/experimental-robot-crew` 拥有 crew 的词汇与纯策略：已发布 Rbot 智能体成员的版本化无环图、Agent 之间交换的 `tomato-a2a/1` 信封、每次运行一个循环保护，以及把已完成步骤抽取为决策、约束与开放问题的逻辑。它不持有传输或执行；`@tomato/experimental-robot-crew-local` 同时提供两者。
 
 crew 规格声明任务、成功标准、停止条件、成员、交接、循环上限、记忆预算、A2A 准入和工作区。每次运行携带持久化流程账本：完整的流程记忆，下一个成员只能通过有界简报读取。
 
@@ -24,7 +24,11 @@ crew 规格声明任务、成功标准、停止条件、成员、交接、循环
 <a id="use-this-package"></a>
 ## 使用本包
 
-使用规格辅助函数（`emptyCrewSpec`、`starterCrewSpec`、`validateCrewSpec`、`topologicalOrder`）、A2A 协议（`createEnvelope`、`a2aSignature`、`normalizeA2aText`）、循环保护（`CrewLoopGuard`）、记忆函数（`extractMemory`、`composeBrief`）和长程记忆函数（`carryTaskMemory`、`carriedCount`、`renderProjectHistory`）。`Crews` 服务定义是 provider 实现的 seam；通过 `@tomato/experimental-robot-crew-local` 挂载。
+使用规格辅助函数（`emptyCrewSpec`、`starterCrewSpec`、`validateCrewSpec`、`requireRobotMembers`、`topologicalOrder`）、A2A 协议（`createEnvelope`、`a2aSignature`、`normalizeA2aText`）、循环保护（`CrewLoopGuard`）、记忆函数（`extractMemory`、`composeBrief`）和长程记忆函数（`carryTaskMemory`、`carriedCount`、`renderProjectHistory`）。`Crews` 服务定义是 provider 实现的 seam；通过 `@tomato/experimental-robot-crew-local` 挂载。
+
+### Rbot 成员
+
+每个成员都声明它作为哪个已发布 Rbot revision 运行。`validateCrewSpec` 只做结构校验，因此在该规则之前发布的已存 revision 仍可读取；`requireRobotMembers` 是 provider 在发布时额外施加的规则，为每个未声明 Rbot 的成员报告一条问题。未绑定 Rbot 的旧 revision 仍可沿 provider 的兼容路径运行，但要重新发布就必须为每个成员绑定 Rbot。
 
 ### 循环保护
 

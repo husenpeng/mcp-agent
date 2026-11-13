@@ -10,7 +10,7 @@ import { randomUUID } from 'node:crypto'
 import { brandString } from '@tomato/branded'
 import { Service } from '@tomato/cordis'
 import {
-  Crews, CrewSpecValidationError, carryTaskMemory, isTerminalCrewRunState, validateCrewSpec,
+  Crews, CrewSpecValidationError, carryTaskMemory, isTerminalCrewRunState, requireRobotMembers, validateCrewSpec,
 } from '@tomato/experimental-robot-crew'
 import type {
   BriefMemory, CarriedRun, CrewEntry, CrewRun, CrewRunId, CrewSpec, CrewSpecId, CrewSpecRevision, CrewSpecRef,
@@ -70,9 +70,9 @@ export default class LocalCrews extends Crews {
     }
   }
 
-  /** Publish one validated specification revision. */
+  /** Publish one specification revision after structural validation and the Rbot-member rule. */
   async publish(spec: CrewSpec, previous?: CrewSpecRef): Promise<CrewSpecRevision> {
-    const issues = validateCrewSpec(spec)
+    const issues = [...validateCrewSpec(spec), ...requireRobotMembers(spec)]
     if (issues.length > 0) throw new CrewSpecValidationError(issues)
     return await this.serialized(async () => {
       const frozen = deepFreeze(structuredClone(spec))

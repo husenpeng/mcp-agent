@@ -8,7 +8,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`@tomato/experimental-robot-crew` owns the vocabulary and pure policy of a crew: a versioned acyclic graph of agent members, the `tomato-a2a/1` envelope agents exchange, one loop guard per run, and the extraction that turns a finished step into decisions, constraints, and open questions. It holds no transport or execution; `@tomato/experimental-robot-crew-local` provides both.
+`@tomato/experimental-robot-crew` owns the vocabulary and pure policy of a crew: a versioned acyclic graph of published Rbot agent members, the `tomato-a2a/1` envelope agents exchange, one loop guard per run, and the extraction that turns a finished step into decisions, constraints, and open questions. It holds no transport or execution; `@tomato/experimental-robot-crew-local` provides both.
 
 A crew specification names its mission, success criteria, stop conditions, members, handoffs, loop limits, memory budget, A2A admission, and workspace. Every run carries a durable flow ledger: the complete process memory that each next member reads only through a bounded brief.
 
@@ -24,7 +24,11 @@ A crew specification names its mission, success criteria, stop conditions, membe
 <a id="use-this-package"></a>
 ## Use this package
 
-Use the specification helpers (`emptyCrewSpec`, `starterCrewSpec`, `validateCrewSpec`, `topologicalOrder`), the A2A protocol (`createEnvelope`, `a2aSignature`, `normalizeA2aText`), the loop guard (`CrewLoopGuard`), the memory functions (`extractMemory`, `composeBrief`), and the long-task memory functions (`carryTaskMemory`, `carriedCount`, `renderProjectHistory`). The `Crews` service definition is the seam the provider implements; mount it through `@tomato/experimental-robot-crew-local`.
+Use the specification helpers (`emptyCrewSpec`, `starterCrewSpec`, `validateCrewSpec`, `requireRobotMembers`, `topologicalOrder`), the A2A protocol (`createEnvelope`, `a2aSignature`, `normalizeA2aText`), the loop guard (`CrewLoopGuard`), the memory functions (`extractMemory`, `composeBrief`), and the long-task memory functions (`carryTaskMemory`, `carriedCount`, `renderProjectHistory`). The `Crews` service definition is the seam the provider implements; mount it through `@tomato/experimental-robot-crew-local`.
+
+### Rbot members
+
+Every member names the published Rbot revision it runs as. `validateCrewSpec` stays structural so stored revisions published before this rule remain readable; `requireRobotMembers` is the publication rule providers apply in addition, and it reports one issue per member that names no Rbot. A stored revision without Rbot members still runs under the provider's compatibility path, but republishing it requires binding every member.
 
 ### Loop protection
 

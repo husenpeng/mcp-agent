@@ -20,9 +20,13 @@ const runIdSchema = nonBlank.transform(value => brandString<CrewRunId>(value))
 const specRefSchema = z.object({ spec: specIdSchema, revision: z.number().int().positive() }).strict()
 
 /**
- * Validate one stored specification with the same rules publication used.
+ * Validate one stored specification structurally.
+ *
+ * Publication additionally requires every member to bind an Rbot. Stored
+ * revisions published before that rule keep opening, so the provider's
+ * recovery is not blocked by older collaborations.
  * @param value - stored value.
- * @returns whether the value is a publishable crew specification.
+ * @returns whether the value is a structurally valid crew specification.
  */
 function isStoredSpec(value: unknown): boolean {
   try {

@@ -11128,9 +11128,15 @@ importers:
       '@tomato/agent':
         specifier: workspace:*
         version: link:../../core/agent
+      '@tomato/agent-loop-testkit':
+        specifier: workspace:*
+        version: link:../../test-support/agent-loop-testkit
       '@tomato/cordis':
         specifier: workspace:~
         version: link:../../../vendor/cordis
+      '@tomato/experimental-robot':
+        specifier: workspace:*
+        version: link:../robot
       '@tomato/experimental-robot-crew':
         specifier: workspace:*
         version: link:../experimental-robot-crew
@@ -11140,6 +11146,18 @@ importers:
       '@tomato/session':
         specifier: workspace:*
         version: link:../../core/session
+      '@tomato/session-projection':
+        specifier: workspace:*
+        version: link:../../session/session-projection
+      '@tomato/system-prompt':
+        specifier: workspace:*
+        version: link:../../core/system-prompt
+      '@tomato/tool-executor-native':
+        specifier: workspace:*
+        version: link:../../core/tool-executor-native
+      '@tomato/tool-testkit':
+        specifier: workspace:*
+        version: link:../../test-support/tool-testkit
       '@tomato/tools':
         specifier: workspace:*
         version: link:../../core/tools

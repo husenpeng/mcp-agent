@@ -169,9 +169,14 @@ export function entryNodes(nodes: readonly CrewNode[], edges: readonly CrewEdge[
 }
 
 /**
- * Validate one complete specification.
+ * Validate one complete specification structurally.
+ *
+ * Structural validation also runs when the provider opens its storage, so it
+ * must accept revisions published before members were Rbot agents. Publication
+ * additionally applies {@link requireRobotMembers}; that rule is not part of
+ * this function.
  * @param spec - untrusted specification.
- * @returns every field problem; empty means publishable.
+ * @returns every field problem; empty means structurally valid.
  */
 export function validateCrewSpec(spec: CrewSpec): readonly CrewSpecIssue[] {
   const issues: CrewSpecIssue[] = []
@@ -201,11 +206,8 @@ export function validateCrewSpec(spec: CrewSpec): readonly CrewSpecIssue[] {
     if (!Number.isFinite(node.budgetTokens) || node.budgetTokens < 1000) {
       issue(`${path}.budgetTokens`, 'must be at least 1000')
     }
-    if (node.at !== undefined && (!Number.isFinite(node.at.x) || !Number.isFinite(node.at.y))) {
-      issue(`${path}.at`, 'must carry finite canvas coordinates')
-    }
     if (node.robot !== undefined && (node.robot.spec.trim() === '' || !Number.isInteger(node.robot.revision) || node.robot.revision < 1)) {
-      issue(`${path}.robot`, 'must name a published robot revision')
+      issue(`${path}.robot`, 'must name a published Rbot revision')
     }
   }
   if (spec.nodes.length === 0) issue('nodes', 'a crew needs at least one node')
@@ -261,4 +263,20 @@ export function validateCrewSpec(spec: CrewSpec): readonly CrewSpecIssue[] {
   // oxlint-disable-next-line typescript/no-unnecessary-condition -- validation runs on untrusted crew JSON.
   if (spec.input.delivery !== 'chat' && spec.input.delivery !== 'artifact') issue('input.delivery', 'must be chat or artifact')
   return issues
+}
+
+/**
+ * Publication rule: every member runs as a published Rbot agent.
+ *
+ * Each member names the exact Rbot revision its capabilities and mission come
+ * from. Providers apply this rule in `publish` in addition to
+ * {@link validateCrewSpec}, so a collaboration cannot be created with blank
+ * agent roles while revisions published before this rule stay readable.
+ * @param spec - structurally valid specification.
+ * @returns one issue per member that names no Rbot revision.
+ */
+export function requireRobotMembers(spec: CrewSpec): readonly CrewSpecIssue[] {
+  return spec.nodes.flatMap((node, index) => node.robot === undefined
+    ? [{ path: `nodes.${index}.robot`, message: 'must name the published Rbot this member runs as' }]
+    : [])
 }

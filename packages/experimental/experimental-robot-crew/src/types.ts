@@ -38,7 +38,7 @@ export interface CrewNodePosition {
   readonly y: number
 }
 
-/** Reference to one published robot revision; the provider resolves it at run time. */
+/** Reference to one published Rbot revision; the provider resolves it at run time. */
 export interface CrewRobotRef {
   /** Robot specification identity. */
   readonly spec: string
@@ -46,17 +46,21 @@ export interface CrewRobotRef {
   readonly revision: number
 }
 
-/** One agent in the crew. */
+/** One member: one published Rbot agent, plus the part it plays in this collaboration. */
 export interface CrewNode {
   /** Lowercase slug unique inside the crew; also the A2A address. */
   readonly id: string
-  /** Short display name. */
+  /** Short display name; the editor starts it from the Rbot's name. */
   readonly label: string
-  /** One sentence naming what this node is responsible for. */
+  /** One sentence naming what this member is responsible for. */
   readonly role: string
-  /** Task text this node receives, after the shared brief. */
+  /** Task text this member receives, after the shared brief. */
   readonly instruction: string
-  /** Published robot whose specification supplies capabilities; absent runs a bare agent. */
+  /**
+   * Published Rbot this member runs as. Publication requires it; it stays
+   * optional in the type so revisions published before members were Rbot
+   * agents remain readable and runnable.
+   */
   readonly robot?: CrewRobotRef
   /** Canvas position used by the editor. */
   readonly at?: CrewNodePosition

@@ -26,8 +26,8 @@ export {
 } from './brief.ts'
 export type { BriefArtifact, BriefMemory, BriefOptions, ExtractedMemory } from './brief.ts'
 export {
-  DEFAULT_GUARD, DEFAULT_MEMORY, MAX_NODES, emptyCrewSpec, entryNodes, starterCrewSpec, starterGraph,
-  topologicalOrder, validateCrewSpec,
+  DEFAULT_GUARD, DEFAULT_MEMORY, MAX_NODES, emptyCrewSpec, entryNodes, requireRobotMembers,
+  starterCrewSpec, starterGraph, topologicalOrder, validateCrewSpec,
 } from './spec.ts'
 export type { EmptyCrewInput } from './spec.ts'
 export { renderProjectHistory } from './project-history.ts'
@@ -62,8 +62,9 @@ export interface CrewRunInput {
  * load the subclass as the provider; it registers as `ctx.crews`.
  *
  * Implementations must honor these semantics:
- * - {@link publish} validates the complete specification and returns an
- *   immutable revision; a rejected publication allocates no identity.
+ * - {@link publish} validates the complete specification, requires every
+ *   member to name a published Rbot revision, and returns an immutable
+ *   revision; a rejected publication allocates no identity.
  * - Revisions are append-only and never change after publication.
  * - {@link start} accepts a run only for a published revision and returns
  *   before the run executes; observers follow {@link run} and the ledger.

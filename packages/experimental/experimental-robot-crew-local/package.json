@@ -1,6 +1,6 @@
 {
   "name": "@tomato/experimental-robot-crew-local",
-  "description": "Storage-backed crew provider that orchestrates crew runs through one Agent per node with A2A messages, memory briefs, and loop protection",
+  "description": "Storage-backed crew provider: one Agent per Rbot member, a durable flow ledger, A2A delivery, and loop protection",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"

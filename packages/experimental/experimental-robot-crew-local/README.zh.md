@@ -28,9 +28,9 @@ kind: "package-reference"
 - name: '@tomato/experimental-robot-crew-local'
 ```
 
-发布时校验完整规格并保存不可变 revision。`start` 接受某个已发布 revision 的运行并立即返回；执行在 Host 上继续。`append` 在 provider 序列下记录一条账本条目，`entries` 按顺序返回，`cancel` 中止活动 Agent。启动时发现的非终态运行会以失败结算，因为其 Agent 无法跨进程重启存活。
+发布时校验完整规格、要求每个成员绑定已发布 Rbot revision，并保存不可变 revision。该规则之前发布的 revision 仍可加载和运行；重新发布时必须为每个成员绑定 Rbot。`start` 接受某个已发布 revision 的运行并立即返回；执行在 Host 上继续。`append` 在 provider 序列下记录一条账本条目，`entries` 按顺序返回，`cancel` 中止活动 Agent。启动时发现的非终态运行会以失败结算，因为其 Agent 无法跨进程重启存活。
 
-每个成员可以借用已发布机器人的能力规格；provider 在创建 Agent 前解析该 revision，并应用其工具限制、技能选择、权限预设和任务。成员可以在一个轮次内通过 `crew_a2a_send` 工具向 peer 请求工作；该工具让信封经过同一循环保护，并同步返回 peer 回答。
+每个成员声明一个已发布 Rbot revision；provider 在创建 Agent 前解析它，并应用该 Rbot 的工具限制、技能选择、权限预设和任务。成员可以在一个轮次内通过 `crew_a2a_send` 工具向 peer 请求工作；该工具让信封经过同一循环保护，并同步返回 peer 回答。
 
 `start` 执行前读取同一 crew 最近 5 个已结束运行的流程账本，把成员写下的 `DECISION:`/`CONSTRAINT:`/`OPEN:` 条目按新到旧去重、每种最多 12 条灌进该次运行的记忆，并记录一条 `data.carried` 账本条目；下一次运行的第一份简报因此带着上一轮的决定与约束。窗口之外的更早结论不再携带。
 

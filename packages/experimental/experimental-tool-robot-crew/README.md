@@ -1,5 +1,5 @@
 ---
-description: "Model-facing robot_crew_create tool that publishes a multi-agent crew graph from a conversation."
+description: "Model-facing robot_crew_create tool that orchestrates published Tomato Rbot agents into a crew from a conversation."
 kind: "package-reference"
 ---
 # Tool: Robot Crew Create
@@ -8,7 +8,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`@tomato/experimental-tool-robot-crew` registers `robot_crew_create`, which publishes a crew specification from a name, mission, success criteria, two to six members, and their handoffs. It requires a direct human turn on a top-level agent, so a delegated or unattended turn cannot publish a crew. Chat orchestration and the canvas therefore produce the same versioned specification.
+`@tomato/experimental-tool-robot-crew` registers `robot_crew_create`, which orchestrates published Tomato Rbot agents into a crew specification from a name, mission, success criteria, two to six members, and their handoffs. Every member names the existing Rbot it runs as, resolved by name or specification id from the deployment's Rbot registry; the tool never creates an agent. It requires a direct human turn on a top-level agent, so a delegated or unattended turn cannot publish a crew. Chat orchestration and the collaboration editor therefore produce the same versioned specification.
 
 ## Table of Contents
 
@@ -22,7 +22,7 @@ English | [中文](README.zh.md)
 <a id="use-this-package"></a>
 ## Use this package
 
-Mount it where a crew provider is available (`ctx.crews`) and the model should be able to compose a crew from a conversation. Member ids are lowercase slugs; edges must stay acyclic. A member may name a published robot specification and revision to borrow that robot's capabilities.
+Mount it where a crew provider (`ctx.crews`) and an Rbot registry (`ctx.robots`) are available and the model should be able to orchestrate agents from a conversation. Member ids are lowercase slugs; edges must stay acyclic. Each member's `robot` names a published Rbot by name or specification id, and an optional `robotRevision` pins one revision; an unknown Rbot is rejected with the published names.
 
 ## Model Experience
 
@@ -30,7 +30,7 @@ Mount it where a crew provider is available (`ctx.crews`) and the model should b
 
 #### What the model sees
 
-The tool description asks for a small graph of agents and states that every member shares the mission and extracted memory. Parameters are `name`, `mission`, `description`, `successCriteria`, `nodes` (`id`, `label`, `role`, `instruction`, `kind`, optional `robotSpec`/`robotRevision`), and `edges` (`from`, `to`, `kind`). The result names the specification id, revision, crew name, and member count; a rejected specification reports each field path.
+The tool description asks for a small graph of published Rbot agents and states that every member shares the mission and extracted memory. Parameters are `name`, `mission`, `description`, `successCriteria`, `nodes` (`id`, `label`, `role`, `instruction`, `kind`, required `robot`, optional `robotRevision`), and `edges` (`from`, `to`, `kind`). The result names the specification id, revision, crew name, and member count; a rejected specification reports each field path, and an unknown Rbot reports the published names.
 
 #### Token effect
 
@@ -43,6 +43,8 @@ The tool schema is a stable prefix; only the append-only result invalidates cach
 ## Known Limitations and Deferred Work
 
 - **No run start** — the tool publishes a crew; starting it remains a page action.
+- **No agent creation** — every member must already exist in Tomato Rbot; the tool cannot author a new agent's mission, capabilities, or permissions.
+- **One revision per member** — a member pins one Rbot revision at publication; later Rbot revisions do not move it.
 - **One-turn members** — the tool fixes every member at one turn and the recommended token ceiling.
 
 <a id="dev-note"></a>

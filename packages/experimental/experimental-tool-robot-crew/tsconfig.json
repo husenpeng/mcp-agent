@@ -13,6 +13,7 @@
     { "path": "../../llm/llm" },
     { "path": "../../core/session" },
     { "path": "../../core/tools" },
-    { "path": "../experimental-robot-crew" }
+    { "path": "../experimental-robot-crew" },
+    { "path": "../robot" }
   ]
 }

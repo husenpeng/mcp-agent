@@ -1,5 +1,5 @@
 ---
-description: "从对话发布多 Agent crew 图的模型工具 robot_crew_create。"
+description: "把已发布 Tomato Rbot 智能体从对话编排成 crew 的模型工具 robot_crew_create。"
 kind: "package-reference"
 ---
 # Tool: Robot Crew Create
@@ -8,7 +8,7 @@ kind: "package-reference"
 
 ## 概述
 
-`@tomato/experimental-tool-robot-crew` 注册 `robot_crew_create`，从名称、任务、成功标准、2–6 个成员及其交接发布 crew 规格。它要求顶层 Agent 的直接人类轮次，因此委派或无人值守轮次不能发布 crew。聊天编排与画布因此产出版本一致的规格。
+`@tomato/experimental-tool-robot-crew` 注册 `robot_crew_create`，从名称、任务、成功标准、2–6 个成员及其交接把已发布 Tomato Rbot 智能体编排成 crew 规格。每个成员都声明它作为哪个已有 Rbot 运行，工具按名称或规格 id 从部署的 Rbot registry 解析；工具绝不会新建智能体。它要求顶层 Agent 的直接人类轮次，因此委派或无人值守轮次不能发布 crew。聊天编排与协作编辑器因此产出版本一致的规格。
 
 ## 目录
 
@@ -22,7 +22,7 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
-在 crew provider 可用（`ctx.crews`）且模型应能从对话组合 crew 的位置挂载。成员 id 是小写 slug；边必须无环。成员可以命名已发布机器人规格与 revision，以借用其能力。
+在 crew provider（`ctx.crews`）与 Rbot registry（`ctx.robots`）都可用、且模型应能从对话编排智能体的位置挂载。成员 id 是小写 slug；边必须无环。每个成员的 `robot` 按名称或规格 id 指定一个已发布 Rbot，可选的 `robotRevision` 固定某个 revision；未知 Rbot 会被拒绝并列出已发布名称。
 
 <a id="model-experience"></a>
 ## 模型体验
@@ -31,7 +31,7 @@ kind: "package-reference"
 
 #### 模型看到什么
 
-工具描述要求一个小型 Agent 图，并说明每个成员共享任务与抽取记忆。参数为 `name`、`mission`、`description`、`successCriteria`、`nodes`（`id`、`label`、`role`、`instruction`、`kind`，可选 `robotSpec`/`robotRevision`）和 `edges`（`from`、`to`、`kind`）。结果给出规格 id、revision、crew 名称和成员数；被拒绝的规格报告每个字段路径。
+工具描述要求一个小型已发布 Rbot 智能体图，并说明每个成员共享任务与抽取记忆。参数为 `name`、`mission`、`description`、`successCriteria`、`nodes`（`id`、`label`、`role`、`instruction`、`kind`，必填 `robot`，可选 `robotRevision`）和 `edges`（`from`、`to`、`kind`）。结果给出规格 id、revision、crew 名称和成员数；被拒绝的规格报告每个字段路径，未知 Rbot 会报告已发布名称。
 
 #### Token 影响
 
@@ -45,6 +45,8 @@ kind: "package-reference"
 ## 已知限制与延期工作
 
 - **不启动运行**：工具只发布 crew；启动仍是页面操作。
+- **不创建智能体**：每个成员都必须已在 Tomato Rbot 中存在；工具不能替它写任务、能力或权限。
+- **每个成员固定一个 revision**：成员在发布时固定一个 Rbot revision；后续新 revision 不会移动它。
 - **成员单轮**：工具把每个成员固定为一轮，并使用推荐的 token 上限。
 
 <a id="dev-note"></a>

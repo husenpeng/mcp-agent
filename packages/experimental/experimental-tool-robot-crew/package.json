@@ -1,6 +1,6 @@
 {
   "name": "@tomato/experimental-tool-robot-crew",
-  "description": "Model-facing robot_crew_create tool that publishes a multi-agent crew graph from a conversation",
+  "description": "Model-facing robot_crew_create tool that orchestrates published Tomato Rbot agents into a crew from a conversation",
   "version": "0.2.1-rc.3",
   "publishConfig": {
     "access": "public"
@@ -36,10 +36,16 @@
   },
   "devDependencies": {
     "@tomato/agent": "workspace:*",
+    "@tomato/agent-loop-testkit": "workspace:*",
     "@tomato/cordis": "workspace:~",
+    "@tomato/experimental-robot": "workspace:*",
     "@tomato/experimental-robot-crew": "workspace:*",
     "@tomato/llm": "workspace:*",
     "@tomato/session": "workspace:*",
+    "@tomato/session-projection": "workspace:*",
+    "@tomato/system-prompt": "workspace:*",
+    "@tomato/tool-executor-native": "workspace:*",
+    "@tomato/tool-testkit": "workspace:*",
     "@tomato/tools": "workspace:*"
   }
 }
