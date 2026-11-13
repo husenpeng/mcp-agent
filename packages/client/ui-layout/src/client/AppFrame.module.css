@@ -72,6 +72,15 @@
   overflow: hidden;
 }
 
+/* The center occupant fills the column, whether it is the built-in main panel
+   or a plugin-owned wrapper in the main slot. Without the growth, a conversation
+   in the hero phase measures its content height and centers the hero near the
+   top instead of the column center. */
+.centerCol > * {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 /* macOS desktop: the frame goes transparent so window vibrancy reaches the
    sidebar column, which keeps only a translucent tint; the centre paints the
    base background itself to stay opaque. The sidebar/centre separator moves
