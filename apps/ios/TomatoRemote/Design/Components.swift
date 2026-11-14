@@ -8,6 +8,21 @@
 
 import SwiftUI
 
+/// Pressed acknowledgement for the app's custom controls.
+///
+/// Every bespoke control here uses `.plain`, which draws no pressed state at
+/// all: a tap on the tab ball, a session row, or the send button looked dead
+/// until navigation or the network answered. One shared style gives them all a
+/// brief dim and settle so the touch is acknowledged immediately.
+struct TomatoPressableStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(configuration.isPressed ? 0.72 : 1)
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
 /// Grouped surface: the shape iOS uses for a block of related facts.
 ///
 /// The fill plus one hairline is enough separation on a page whose content is
@@ -63,7 +78,7 @@ struct TomatoPrimaryButton: View {
             .foregroundStyle(isEnabled && !isBusy ? Color.white : TomatoToken.labelDimmed)
             .clipShape(RoundedRectangle(cornerRadius: TomatoRadius.md, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TomatoPressableStyle())
         .disabled(!isEnabled || isBusy)
     }
 }
@@ -95,7 +110,7 @@ struct TomatoSecondaryButton: View {
                     .strokeBorder(TomatoToken.borderL2, lineWidth: 1)
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TomatoPressableStyle())
         .disabled(!isEnabled)
         .opacity(isEnabled ? 1 : 0.5)
     }
@@ -118,6 +133,10 @@ struct ErrorBanner: View {
                 Button("重试", action: retry)
                     .font(.footnote.weight(.medium))
                     .foregroundStyle(TomatoToken.brandPrimary)
+                    // A text glyph alone is a ~24 pt target; the retry on a
+                    // failure banner deserves the 44 pt minimum.
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
             }
         }
         .padding(12)
@@ -328,6 +347,23 @@ struct CaptionFallback: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 4)
         }
+    }
+}
+
+/// The explanatory line of a page whose title stays in an inline navigation bar.
+///
+/// On iOS 26 `navigationSubtitle` grows the bar, and a plain `List` under it drew
+/// its first row over the caption. The caption lives in the content instead, so
+/// the bar keeps its standard height and the list keeps a correct top inset.
+struct PageCaption: View {
+    let caption: String
+
+    var body: some View {
+        Text(caption)
+            .font(.footnote)
+            .foregroundStyle(TomatoToken.labelCaption)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

@@ -34,14 +34,14 @@ final class RemoteLiveTests: XCTestCase {
     /// A robot-run Session stays out of 会话 and appears under 智能体 instead.
     func testRobotRunSessionsStayOutOfTheSessionList() throws {
         let app = try launch()
-        app.tabBars.buttons["会话"].tap()
+        app.openTab(.sessions)
         XCTAssertTrue(app.staticTexts["普通会话"].waitForExistence(timeout: 20), "ordinary Session did not list")
         XCTAssertFalse(
             app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "周报助手运行")).firstMatch.exists,
             "robot-run Session leaked into 会话"
         )
 
-        app.tabBars.buttons["智能体"].tap()
+        app.openTab(.robots)
         XCTAssertTrue(app.buttons["robot.row.robot-weekly"].waitForExistence(timeout: 10), "robot roster did not arrive")
         app.buttons["robot.row.robot-weekly"].tap()
         XCTAssertTrue(app.staticTexts["历史对话"].waitForExistence(timeout: 10), "conversation history is missing")

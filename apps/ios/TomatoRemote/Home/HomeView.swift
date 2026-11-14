@@ -18,7 +18,7 @@ struct HomeView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    CaptionFallback(caption: "Agent 记得的你，以及今天还剩什么。")
+                    header
 
                     NavigationLink {
                         MemoryView()
@@ -47,7 +47,6 @@ struct HomeView: View {
                         pendingCard
                     }
 
-
                     if let goal = home.goal {
                         goalCard(goal)
                     }
@@ -57,12 +56,17 @@ struct HomeView: View {
                     schedulesCard
                 }
                 .padding(.horizontal, 20)
-                .padding(.bottom, 28)
+                .padding(.bottom, 88)
             }
             .background(TomatoToken.bgBase)
-            .tomatoPageTitle("记忆", caption: "Agent 记得的你，以及今天还剩什么。")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationTitle("记忆")
+            .navigationBarTitleDisplayMode(.inline)
+            // The page owns its header: a compact left-aligned title starts the
+            // content instead of a large navigation title with dead space above
+            // it.
+            .toolbar(.hidden, for: .navigationBar)
             .tomatoScrollEdge()
+            .tomatoFloatingTabs()
             .refreshable {
                 await model.refreshSessions()
                 home.follow(model.sessions)
@@ -82,6 +86,29 @@ struct HomeView: View {
                 home.start(hub: model.hub, sessions: model.sessions)
             }
         }
+    }
+
+    // MARK: Header
+
+    /// The page title and its one line of context, at the top of the page.
+    ///
+    /// The navigation bar is hidden here. A large system title spent the first
+    /// screenful on blank space; this header starts the content immediately and
+    /// matches the compact header Tomato Phone already uses.
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("记忆")
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(TomatoToken.labelPrimary)
+            Text("Agent 记得的你，以及今天还剩什么。")
+                .font(.caption)
+                .foregroundStyle(TomatoToken.labelCaption)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.top, 2)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
+        .accessibilityIdentifier("home.header")
     }
 
     // MARK: Cards

@@ -166,6 +166,7 @@ struct InteractionCard: View {
             )
             .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TomatoPressableStyle())
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }

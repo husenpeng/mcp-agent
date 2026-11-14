@@ -29,10 +29,10 @@ struct ChatView: View {
     @EnvironmentObject private var models: ModelCatalogStore
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var chat: ChatModel
-    @State private var draft = ""
     @State private var detail: ChatItem?
     @State private var showsAgent = false
     @State private var showsProgress = false
+    @State private var showsWorkScope = false
     @State private var showsPendings = false
     /// Which model picker the dock is showing, if any. The two are separate
     /// sheets: a model is one choice, its reasoning level is another.
@@ -92,7 +92,8 @@ struct ChatView: View {
             cursor: summary.projections?.asOfSeq,
             blockedReason: blocked,
             preloaded: preloaded,
-            selection: hinted.flatMap { $0.next ?? $0.lastUsed }
+            selection: hinted.flatMap { $0.next ?? $0.lastUsed },
+            workingDirectory: summary.projections?.values?["workingDirectory"]?.stringValue ?? summary.cwd
         ))
         _progress = StateObject(wrappedValue: ProgressModel(sessionId: summary.sessionId))
         title = summary.displayTitle
@@ -133,6 +134,9 @@ struct ChatView: View {
     var body: some View {
         VStack(spacing: 0) {
             statusBar
+            if chat.allowsWorkingDirectoryChange {
+                workScopeBar
+            }
             if let error = chat.errorMessage {
                 ErrorBanner(message: error) {
                     chat.errorMessage = nil
@@ -165,13 +169,14 @@ struct ChatView: View {
                         if chat.isLoadingInitial, chat.rows.isEmpty {
                             ChatSkeleton()
                         } else {
-                            ForEach(displayRows) { entry in
+                            ForEach(chat.entries) { entry in
                                 Group {
                                     switch entry {
                                     case let .single(item):
                                         row(item)
                                     case let .process(steps, running):
                                         ProcessGroup(steps: steps, running: running) { detail = $0 }
+                                            .equatable()
                                     }
                                 }
                                 .id(entry.id)
@@ -179,6 +184,13 @@ struct ChatView: View {
                             if !chat.streamingText.isEmpty {
                                 AssistantRow(text: chat.streamingText, pending: true)
                                     .id("streaming")
+                            }
+                            // A turn that has produced neither words nor a visible
+                            // tool card yet still needs a living line where its
+                            // answer will land.
+                            if activity.showsInTranscript, chat.streamingText.isEmpty {
+                                ChatLiveRow(activity: activity, startedAt: activityStartedAt)
+                                    .id("live")
                             }
                             if chat.rows.isEmpty, chat.streamingText.isEmpty {
                                 EmptyPlaceholder(
@@ -215,7 +227,10 @@ struct ChatView: View {
                 )
                 .scrollDismissesKeyboard(.immediately)
                 .scrollBounceBehavior(.basedOnSize, axes: .vertical)
-                .simultaneousGesture(TapGesture().onEnded { composerFocused = false })
+                // Taps inside the transcript belong to the text, whose links open
+                // files and pages; a tap gesture layered over it competed with
+                // those links. A drag and the keyboard's own 收起 still dismiss
+                // the keyboard.
                 .simultaneousGesture(
                     DragGesture(minimumDistance: 12)
                         .onChanged { _ in
@@ -241,6 +256,16 @@ struct ChatView: View {
                 }
                 .onChange(of: chat.rows.count) { _, _ in scheduleScroll(proxy) }
                 .onChange(of: chat.streamingText) { _, _ in scheduleScroll(proxy) }
+                // The keyboard and the growing dock take height out of the
+                // viewport. A transcript that was following the newest message
+                // must keep it on screen instead of leaving blank space above
+                // the dock.
+                .onChange(of: composerFocused) { _, focused in
+                    if focused {
+                        reanchorToBottom(proxy)
+                    }
+                }
+                .onChange(of: viewportHeight) { _, _ in reanchorToBottom(proxy) }
                 .onPreferenceChange(TranscriptHeightKey.self) { transcriptHeight = $0 }
                 .onPreferenceChange(ViewportHeightKey.self) { viewportHeight = $0 }
                 .task { await anchorNewestTurn(proxy) }
@@ -255,18 +280,30 @@ struct ChatView: View {
                 }
                 .task { await autoscrollTranscriptIfAsked(proxy) }
                 .task { stageDebugSampleIfAsked() }
-                // The composer floats over the conversation instead of sitting
-                // under a divider, so the last message scrolls beneath the dock.
-                .tomatoBottomBar {
-                    composer
-                }
             }
+            // The composer is a sibling of the transcript, not a safe-area inset.
+            // On iOS 26 a keyboard dismissal could leave an inset bar at the
+            // keyboard's old height and draw the conversation beneath it.
+            composer
+                .background {
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .ignoresSafeArea(edges: .bottom)
+                }
+                .overlay(alignment: .top) {
+                    Rectangle()
+                        .fill(TomatoToken.borderL1)
+                        .frame(height: 0.5)
+                }
         }
         .background(TomatoToken.bgBase)
+        // Messages carry Markdown links. A path on the Mac, or a tomato://
+        // address, is this app's business; everything else belongs to the system.
+        .environment(\.openURL, OpenURLAction { openLink($0) })
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         // A conversation is a focused task: the composer owns the bottom edge,
-        // so the tab bar steps away while it is open.
+        // and the destination control stays on the root list behind it.
         .toolbar(.hidden, for: .tabBar)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
@@ -301,6 +338,7 @@ struct ChatView: View {
             ProgressSheet(progress: progress)
                 .tomatoSheet([.large])
         }
+        .workScopeSheet(chat: chat, folders: model.scopeFolders, isPresented: $showsWorkScope)
         .sheet(item: $previewFile) { file in
             FilePreviewSheet(file: file)
                 .tomatoFullSheet()
@@ -327,9 +365,20 @@ struct ChatView: View {
         // The list follows the Host's own notifications, so the conversation
         // takes its liveness from there: a turn that starts after this screen
         // opened, or before it in a page that begins mid-turn, is the same fact.
-        .onChange(of: liveness) { _, next in
-            guard let next else { return }
-            chat.adopt(running: next.running, agentAttached: next.agentAttached)
+        // The read lives in a zero-size bridge so a status change in any Session
+        // does not re-render this transcript.
+        .background(LivenessBridge(sessionId: chat.sessionId, chat: chat))
+        // The transcript is long enough that a finished turn can end off screen.
+        // A short haptic plus a spoken notice is how the reader learns about it
+        // without watching the header.
+        .onChange(of: chat.isRunning) { was, running in
+            guard was, !running else { return }
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            UIAccessibility.post(notification: .announcement, argument: "Tomato 已完成回答")
+        }
+        .onChange(of: pendingHere.count) { before, after in
+            guard after > before else { return }
+            UINotificationFeedbackGenerator().notificationOccurred(.warning)
         }
         .onDisappear {
             chat.stop()
@@ -341,6 +390,32 @@ struct ChatView: View {
         // One catalog read for the whole Host; the composer's chips read names
         // and levels from it, and a failure stays in the sheet.
         .task { await models.load(hub: model.hub) }
+    }
+
+    /// Open one link a message carried.
+    ///
+    /// An absolute path names a file on the Mac, which the phone cannot open
+    /// locally; the Host's download route serves it, so the tap opens the same
+    /// preview the deliverables card uses. A relative path resolves against the
+    /// Session's working directory when one is known; with none, the app does
+    /// not guess one.
+    /// - Parameter url: destination the Markdown renderer produced.
+    /// - Returns: whether this app handled the link.
+    private func openLink(_ url: URL) -> OpenURLAction.Result {
+        switch ChatLink(url, base: chat.workingDirectory) {
+        case let .hostFile(path):
+            composerFocused = false
+            previewFile = DeliveredFile(path: path, description: nil, seq: nil)
+            return .handled
+        case let .appRoute(route):
+            composerFocused = false
+            model.handle(route)
+            return .handled
+        case .external:
+            return .systemAction
+        case .unresolved:
+            return .discarded
+        }
     }
 }
 
@@ -355,50 +430,106 @@ extension ChatView {
         let agentAttached: Bool
     }
 
-    /// What the Host last said about this Session, while the list still holds it.
+    /// Forwards the list's liveness facts into the conversation model.
     ///
-    /// A child Session and a just-created one may have no row; this screen then
-    /// keeps what it opened with and follows its own events.
-    private var liveness: Liveness? {
-        guard let summary = model.sessions.first(where: { $0.sessionId == chat.sessionId }) else { return nil }
-        return Liveness(running: summary.running, agentAttached: summary.agentAvailable)
+    /// Reading `AppModel.sessions` subscribes whichever view's body reads it, and
+    /// every Host list event republishes that array. Keeping the read in this
+    /// empty bridge stops a status change in any Session from re-rendering the
+    /// whole transcript.
+    private struct LivenessBridge: View {
+        @EnvironmentObject private var model: AppModel
+        let sessionId: String
+        let chat: ChatModel
+
+        var body: some View {
+            Color.clear
+                .frame(width: 0, height: 0)
+                .allowsHitTesting(false)
+                .onChange(of: current) { _, next in
+                    guard let next else { return }
+                    chat.adopt(running: next.running, agentAttached: next.agentAttached)
+                }
+        }
+
+        /// What the Host last said about this Session, while the list still holds
+        /// it.
+        ///
+        /// A child Session and a just-created one may have no row; this screen then
+        /// keeps what it opened with and follows its own events.
+        private var current: Liveness? {
+            guard let summary = model.sessions.first(where: { $0.sessionId == sessionId })
+            else { return nil }
+            return Liveness(running: summary.running, agentAttached: summary.agentAvailable)
+        }
     }
 
     /// One line that says what the conversation is doing: whether it is live,
     /// ended, or reconnecting. The composer never depends on it, because a
     /// prompt travels over HTTP and the stream only delivers the answer.
     private var statusBar: some View {
-        HStack(spacing: 8) {
-            SessionStateBadge(state: chat.state)
-            if let note = linkNote {
-                Text(note)
-                    .font(.caption)
-                    .foregroundStyle(TomatoToken.labelCaption)
-                    .lineLimit(1)
-            }
-            Spacer(minLength: 0)
-            if case .offline = chat.link {
-                Button("重试") { chat.resume(hub: model.hub) }
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(TomatoToken.brandPrimary)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 20)
-        .padding(.vertical, 6)
-        .background(TomatoToken.bgBase)
+        ChatStatusStrip(
+            activity: activity,
+            startedAt: activityStartedAt,
+            note: restingNote,
+            onAnswer: { showsPendings = true },
+            onRetry: { chat.resume(hub: model.hub) }
+        )
     }
 
-    private var linkNote: String? {
+    /// The Session's folder on the Mac, one tap from changing it.
+    private var workScopeBar: some View {
+        HStack(spacing: 8) {
+            WorkScopeChip(path: chat.workingDirectory, fallback: project) {
+                showsWorkScope = true
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 20)
+        .padding(.bottom, 4)
+    }
+
+    /// The phase this conversation is in, in the order a reader would notice:
+    /// a blocked request outranks a running turn, a dropped stream outranks
+    /// both, and the turn's own work is read from the newest rows.
+    private var activity: ChatActivity {
+        switch chat.link {
+        case let .retrying(attempt):
+            return .reconnecting(attempt: attempt)
+        case let .offline(reason):
+            return .offline(reason)
+        case .connecting, .live:
+            break
+        }
+        if !pendingHere.isEmpty {
+            return .waiting(count: pendingHere.count)
+        }
+        guard chat.isRunning else {
+            return .idle(chat.state)
+        }
+        if !chat.streamingText.isEmpty {
+            return .writing
+        }
+        if let running = chat.runningTool {
+            return .tool(name: running.name)
+        }
+        return chat.awaitingTurn ? .sending : .thinking
+    }
+
+    /// When the phase began, in the Host's milliseconds.
+    private var activityStartedAt: Double? {
+        chat.runningTool?.startedAt ?? chat.turnStartedAt
+    }
+
+    private var restingNote: String? {
         switch chat.link {
         case .connecting:
             chat.isLoadingInitial ? "正在加载对话…" : "正在连接 Host…"
         case .live:
             chat.state == .ended ? "发送消息可重新开始" : nil
-        case let .retrying(attempt):
-            "连接中断，正在重连（\(attempt)）…"
-        case let .offline(reason):
-            reason ?? "连接已断开"
+        case .retrying, .offline:
+            // The activity pill already names the reconnect; a second note would
+            // say the same thing twice.
+            nil
         }
     }
 
@@ -444,70 +575,6 @@ extension ChatView {
 
     // MARK: - Content
 
-    /// One turn's work folds as a unit: its tool calls, the notes the Agent
-    /// wrote between them, and the context the harness injected all sit under
-    /// one disclosure. The last answer with no tool call after it stays in the
-    /// stream as the answer, so a long turn reads as
-    /// "message → 已完成 · N 次工具调用 → 回答".
-    private var displayRows: [TranscriptEntry] {
-        var entries: [TranscriptEntry] = []
-        var pending: [ChatItem] = []
-        for (index, item) in chat.rows.enumerated() {
-            switch item.kind {
-            case .user, .notice:
-                flushTools(&pending, into: &entries)
-                entries.append(.single(item))
-            case .assistant where isAnswer(at: index):
-                flushTools(&pending, into: &entries)
-                entries.append(.single(item))
-            default:
-                pending.append(item)
-            }
-        }
-        flushTools(&pending, into: &entries)
-        return entries
-    }
-
-    /// Whether one assistant row is the turn's answer rather than a note the
-    /// Agent wrote on its way to a tool call.
-    ///
-    /// A step that only narrates its next call ends with a tool call right
-    /// after it, so the final text of a turn — the one no call follows — is the
-    /// answer. Everything before it belongs to the folded work.
-    /// - Parameter index: position in `chat.rows`.
-    private func isAnswer(at index: Int) -> Bool {
-        let item = chat.rows[index]
-        var cursor = index + 1
-        while cursor < chat.rows.count {
-            let next = chat.rows[cursor]
-            if next.kind == .user || next.kind == .notice || next.turn != item.turn {
-                return true
-            }
-            if next.kind == .tool || next.kind == .assistant {
-                return false
-            }
-            cursor += 1
-        }
-        return true
-    }
-
-    /// Fold the rows collected since the last message.
-    ///
-    /// Context rows alone are not work: a turn that only injected notices
-    /// keeps its disclosures visible instead of hiding them under a "过程"
-    /// header with nothing behind it.
-    private func flushTools(_ pending: inout [ChatItem], into entries: inout [TranscriptEntry]) {
-        defer { pending.removeAll() }
-        guard !pending.isEmpty else { return }
-        guard pending.contains(where: { $0.kind == .tool || $0.kind == .assistant }) else {
-            entries.append(contentsOf: pending.map { .single($0) })
-            return
-        }
-        let lastId = chat.rows.last?.id
-        let running = chat.isRunning && pending.contains { $0.id == lastId }
-        entries.append(.process(steps: pending, running: running))
-    }
-
     @ViewBuilder
     private func row(_ item: ChatItem) -> some View {
         switch item.kind {
@@ -519,12 +586,15 @@ extension ChatView {
                 open: { previewPhoto = $0 },
                 needs: { chat.loadImage($0.id) }
             )
+            .equatable()
             .opacity(item.pending ? 0.7 : 1)
         case .assistant:
             AssistantRow(text: item.text, pending: item.pending)
+                .equatable()
         case .tool:
             if let tool = item.tool {
                 ToolCard(tool: tool) { detail = item }
+                    .equatable()
             }
         case .context:
             ContextRow(label: item.label ?? "上下文注入", text: item.text)
@@ -553,7 +623,7 @@ extension ChatView {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(TomatoPressableStyle())
             .foregroundStyle(TomatoToken.labelCaption)
             .accessibilityIdentifier("chat.loadEarlier")
             if let error = chat.earlierError {
@@ -567,16 +637,16 @@ extension ChatView {
 
     /// What the island would show, as one comparable value.
     private var islandState: String {
-        "\(chat.isRunning)-\(pendingHere.count)-\(chat.streamingText.isEmpty ? "idle" : "streaming")"
+        "\(chat.isRunning)-\(pendingHere.count)-\(chat.streamingText.isEmpty ? "idle" : "streaming")-\(activity.title)"
     }
 
     /// Push the current state into the Live Activity, starting it on the first
     /// running turn and ending it when everything settles.
     private func syncIsland() async {
         let pending = pendingHere.count
-        // The island renders the pending count itself, so this line only says
-        // what the turn is writing; repeating the count here duplicated it.
-        let detail = chat.streamingText.isEmpty ? "" : "正在写回答…"
+        // The island carries the same phase the header names, so the Lock Screen
+        // and the conversation never describe the turn differently.
+        let detail = activity.showsElapsed ? activity.title : ""
         if chat.isRunning || pending > 0 {
             if await live.isActive {
                 await live.update(running: chat.isRunning, detail: detail, pending: pending)
@@ -612,15 +682,12 @@ extension ChatView {
         // above it.
         VStack(spacing: 0) {
             ComposerView(
-                text: $draft,
                 isFocused: $composerFocused,
                 isRunning: chat.isRunning,
                 canSend: model.hub != nil,
                 hub: model.hub,
-                onSend: { images in
-                    let outgoing = draft
+                onSend: { outgoing, images in
                     let receipt = staged?.receiptId
-                    draft = ""
                     staged = nil
                     followsBottom = true
                     journal.recordPrompt(outgoing, project: project, carriedPhoto: !images.isEmpty)
@@ -707,8 +774,10 @@ extension ChatView {
                 .foregroundStyle(TomatoToken.labelPrimary)
                 .frame(width: 36, height: 36)
                 .tomatoGlass(in: Circle())
+                // The glass circle stays 36 pt; the touch target meets 44 pt.
+                .contentShape(Circle().inset(by: -4))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TomatoPressableStyle())
         .padding(.trailing, 14)
         .padding(.bottom, 10)
         .accessibilityLabel("回到最新")
@@ -727,7 +796,7 @@ extension ChatView {
 
             var ids: [String] = []
             for _ in 0 ..< 30 {
-                ids = displayRows.map(\.id)
+                ids = chat.entries.map(\.id)
                 if ids.count > 10 {
                     break
                 }
@@ -787,6 +856,22 @@ extension ChatView {
         }
     }
 
+    /// Put a followed transcript back on its newest line after a layout change.
+    ///
+    /// The keyboard appearing or the dock growing changes the viewport after
+    /// the scroll position was already clamped, and a lazy stack keeps drawing
+    /// nothing where the rows no longer reach. Waiting one runloop lets the new
+    /// height settle before the anchor is applied.
+    /// - Parameter proxy: the transcript's scroll proxy.
+    private func reanchorToBottom(_ proxy: ScrollViewProxy) {
+        guard followsBottom else { return }
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 120_000_000)
+            guard followsBottom else { return }
+            proxy.scrollTo("bottom", anchor: .bottom)
+        }
+    }
+
     /// Scroll once per burst: streaming text changes many times per second and
     /// a `scrollTo` per chunk makes the thread stutter.
     private func scheduleScroll(_ proxy: ScrollViewProxy) {
@@ -831,6 +916,14 @@ extension ChatView {
 /// A bubble around a full-width answer wastes the phone's narrowest margin and
 /// makes long technical text harder to scan; mainstream assistants put the
 /// answer directly on the page and let the person's own message carry the tint.
+/// Equality is the tool payload alone: the closure only forwards the tap, so an
+/// append at the tail must not re-render every visible card.
+extension ToolCard: Equatable {
+    static func == (lhs: ToolCard, rhs: ToolCard) -> Bool {
+        lhs.tool == rhs.tool
+    }
+}
+
 struct ToolCard: View {
     let tool: ToolDetail
     let open: () -> Void
@@ -861,7 +954,7 @@ struct ToolCard: View {
             .background(TomatoToken.bgLayer2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TomatoPressableStyle())
         .accessibilityHint("查看工具参数与结果")
     }
 
@@ -939,7 +1032,9 @@ private struct ToolDetailSheet: View {
             }
             .background(TomatoToken.bgBase)
         }
-        .overlay(alignment: .top) {
+        // safeAreaInset reserves the header's height: as an overlay its opaque
+        // background hid the first card at scroll-top and ate its touches.
+        .safeAreaInset(edge: .top, spacing: 0) {
             SheetHeader(title: tool.name, caption: "工具调用", onClose: { dismiss() })
                 .background(TomatoToken.bgBase)
         }
@@ -957,7 +1052,7 @@ private struct ToolDetailSheet: View {
                         .font(.footnote)
                         .foregroundStyle(TomatoToken.labelCaption)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(TomatoPressableStyle())
                 .accessibilityLabel("复制\(title)")
             }
             Text(text.isEmpty ? "（空）" : text)
@@ -1029,7 +1124,9 @@ private struct AgentSheet: View {
             }
             .background(TomatoToken.bgBase)
         }
-        .overlay(alignment: .top) {
+        // Same reason as the tool sheet: the header must reserve its height
+        // instead of covering the first row of facts.
+        .safeAreaInset(edge: .top, spacing: 0) {
             SheetHeader(title: "Agent", caption: "这个会话当前的运行事实。", onClose: { dismiss() })
                 .background(TomatoToken.bgBase)
         }

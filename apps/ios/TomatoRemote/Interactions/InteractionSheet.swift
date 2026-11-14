@@ -38,6 +38,10 @@ struct InteractionSheet: View {
                 .padding(.bottom, 24)
             }
             .background(TomatoToken.bgBase)
+            // A typed custom answer puts the keyboard over the cards below;
+            // dragging the sheet down would discard the draft instead of the
+            // keyboard, so the scroll itself dismisses.
+            .scrollDismissesKeyboard(.interactively)
         }
         .onAppear { prefill() }
     }

@@ -65,8 +65,13 @@ struct SheetHeader: View {
                         .foregroundStyle(TomatoToken.labelCaption)
                         .frame(width: 28, height: 28)
                         .background(TomatoToken.bgLayer2, in: Circle())
+                        // The visible circle stays 28 pt; the touch target meets
+                        // the 44 pt minimum this sheet's only close affordance
+                        // deserves.
+                        .frame(width: 44, height: 44)
+                        .contentShape(Circle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(TomatoPressableStyle())
                 .accessibilityLabel("关闭")
             }
         }
@@ -99,7 +104,7 @@ struct SheetPrimaryButton: View {
             }
             .frame(height: 48)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TomatoPressableStyle())
         .disabled(!isEnabled || isBusy)
         .padding(.horizontal, 20)
     }

@@ -53,8 +53,8 @@ final class DeviceE2ETests: XCTestCase {
     /// The Host list arrives from the real Mac, not a fixture.
     func testPairingReachesTheHost() throws {
         let app = try launch(stage: false)
-        XCTAssertTrue(app.tabBars.buttons["会话"].waitForExistence(timeout: 30), "tab bar did not appear")
-        app.tabBars.buttons["会话"].tap()
+        XCTAssertTrue(app.waitForTabBall(timeout: 30), "the floating destination control did not appear")
+        app.openTab(.sessions)
         // Any row proves `session/list` answered; the Host always holds at least
         // the Session a pairing run just created.
         let anyRow = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "session.folder.")).firstMatch
@@ -85,8 +85,8 @@ final class DeviceE2ETests: XCTestCase {
     /// A task created and paused from the phone is accepted by the real Host.
     func testCreateThenPauseASchedule() throws {
         let app = try launch(stage: false)
-        XCTAssertTrue(app.tabBars.buttons["今天"].waitForExistence(timeout: 30))
-        app.tabBars.buttons["今天"].tap()
+        XCTAssertTrue(app.waitForTabBall(timeout: 30), "the floating destination control did not appear")
+        app.openTab(.home)
         let all = app.buttons["全部"]
         XCTAssertTrue(all.waitForExistence(timeout: 30), "schedule card missing")
         all.tap()
@@ -140,7 +140,7 @@ extension DeviceE2ETests {
     func testVoiceInputStartsDictation() throws {
         let app = try launch(stage: false)
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-        app.tabBars.buttons["会话"].tap()
+        app.openTab(.sessions)
         let row = app.staticTexts["tomatoHarness"].firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 30), "no Session to open")
         row.tap()

@@ -19,6 +19,55 @@
 import AVFoundation
 import Speech
 
+/// The parts of a dictation that change while the owner is speaking.
+///
+/// Keeping them off the session object means a new hypothesis or level
+/// re-renders the capture panel alone, not every control around the composer.
+@MainActor
+final class VoiceLiveCapture: ObservableObject {
+    /// Best hypothesis so far, replaced on every update.
+    @Published private(set) var transcript = ""
+    /// Rolling input level, newest last.
+    @Published private(set) var meter: [Double] = Array(repeating: 0, count: VoiceDictation.meterLength)
+
+    /// Adopt the recognizer's newest hypothesis for the panel and the commit.
+    ///
+    /// A hypothesis that follows a long pause may cover only the words spoken
+    /// after it, so it continues the shown sentence instead of replacing it.
+    /// - Parameter text: the recognizer's current best sentence.
+    func hear(_ text: String) {
+        transcript = VoiceTranscription.adopted(text, after: transcript)
+    }
+
+    /// Append one measured level, dropping the oldest.
+    /// - Parameter level: normalized input level from 0 to 1.
+    func append(level: Double) {
+        var next = meter
+        next.removeFirst()
+        next.append(level)
+        meter = next
+    }
+
+    /// Take the hypothesis for finishing, leaving an empty slate.
+    /// - Returns: the raw transcript.
+    func takeTranscript() -> String {
+        let text = transcript
+        transcript = ""
+        return text
+    }
+
+    /// Clear the sentence and the meter.
+    func reset() {
+        transcript = ""
+        clearMeter()
+    }
+
+    /// Clear only the meter, keeping the hypothesis a caller still has to collect.
+    func clearMeter() {
+        meter = Array(repeating: 0, count: VoiceDictation.meterLength)
+    }
+}
+
 /// One dictation session: microphone in, transcript out, nothing else.
 @MainActor
 final class VoiceDictation: ObservableObject {
@@ -60,10 +109,9 @@ final class VoiceDictation: ObservableObject {
     @Published private(set) var isAuthorized = false
     /// Whether the microphone stays open after the finger leaves the bar.
     @Published private(set) var isHandsFree = false
-    /// The best hypothesis so far, replaced on every update.
-    @Published private(set) var transcript = ""
-    /// Rolling input level, newest last.
-    @Published private(set) var meter: [Double] = Array(repeating: 0, count: VoiceDictation.meterLength)
+    /// Whatever changes while the owner speaks; the panel observes this
+    /// object instead of the whole session.
+    let live = VoiceLiveCapture()
     @Published private(set) var startedAt: Date?
     /// Whether Apple's on-device model is producing the live transcript. When
     /// the phone has no model for this language the recording still runs, and
@@ -148,9 +196,8 @@ final class VoiceDictation: ObservableObject {
         }
         failure = nil
         hint = nil
-        transcript = ""
+        live.reset()
         sawFinal = false
-        meter = Array(repeating: 0, count: Self.meterLength)
         isHandsFree = false
         recording = nil
 
@@ -240,7 +287,7 @@ final class VoiceDictation: ObservableObject {
         }
         let gate = CaptureGate()
         self.gate = gate
-        let relay = MeterRelay(interval: 0.08) { [weak self] level in
+        let relay = MeterRelay(interval: 0.1) { [weak self] level in
             Task { @MainActor [weak self] in
                 self?.append(level: level)
             }
@@ -354,7 +401,7 @@ extension VoiceDictation {
     func cancel() {
         recording = nil
         guard phase != .idle else {
-            transcript = ""
+            live.reset()
             return
         }
         endSession(keepingTranscript: false)
@@ -374,8 +421,8 @@ extension VoiceDictation {
             }
             // Partials arrive faster than the panel needs to re-render, and a
             // final hypothesis must always land.
-            if !text.isEmpty, result.isFinal || now.timeIntervalSince(lastPartialAt) >= 0.1 {
-                transcript = text
+            if !text.isEmpty, result.isFinal || now.timeIntervalSince(lastPartialAt) >= 0.15 {
+                live.hear(text)
                 lastPartialAt = now
             }
         }
@@ -405,7 +452,7 @@ extension VoiceDictation {
     /// model's failure so the next sentence starts on the device model.
     private func noteFailure(_ error: Error) {
         AppLog.warning(.ui, "语音识别中断", detail: error.localizedDescription)
-        let heard = !transcript.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let heard = !live.transcript.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         failure = heard
             ? "实时识别中断，已保留听到的文字"
             : "实时识别中断，松手后仍会尝试转写"
@@ -415,10 +462,7 @@ extension VoiceDictation {
         guard phase == .listening else {
             return
         }
-        var next = meter
-        next.removeFirst()
-        next.append(level)
-        meter = next
+        live.append(level: level)
     }
 
     private func deliverAutomatically() {
@@ -430,8 +474,7 @@ extension VoiceDictation {
     }
 
     private func takeTranscript() -> String? {
-        let text = VoiceTranscription.normalized(transcript)
-        transcript = ""
+        let text = VoiceTranscription.normalized(live.takeTranscript())
         return text.isEmpty ? nil : text
     }
 }
@@ -471,10 +514,11 @@ extension VoiceDictation {
         isPreviewing = false
         startedAt = nil
         isHandsFree = false
-        meter = Array(repeating: 0, count: Self.meterLength)
         resumeFinalWaiter()
         if !keepingTranscript {
-            transcript = ""
+            live.reset()
+        } else {
+            live.clearMeter()
         }
         deactivateAudioSession()
     }

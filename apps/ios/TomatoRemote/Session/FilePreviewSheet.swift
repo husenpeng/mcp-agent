@@ -47,6 +47,13 @@ final class FilePreviewModel: ObservableObject {
             state = .failed(describe(error))
         }
     }
+
+    /// Report why bytes cannot arrive, in place of the loading spinner.
+    /// - Parameter message: reason the sheet shows.
+    func fail(_ message: String) {
+        guard case .loading = state else { return }
+        state = .failed(message)
+    }
 }
 
 struct FilePreviewSheet: View {
@@ -82,7 +89,10 @@ struct FilePreviewSheet: View {
             }
         }
         .task {
-            guard let hub = model.hub else { return }
+            guard let hub = model.hub else {
+                preview.fail("未连接 Mac，无法读取这个文件。")
+                return
+            }
             await preview.load(hub: hub)
         }
     }

@@ -19,7 +19,9 @@ import SwiftUI
 import UIKit
 
 struct ComposerView: View {
-    @Binding var text: String
+    /// The draft lives here, not on the conversation screen: a keystroke must
+    /// only redraw the dock, never the transcript behind it.
+    @State private var text = ""
     /// Focus is owned by the conversation screen, which drops it when the
     /// reader scrolls, taps the transcript, or presses 完成.
     let isFocused: FocusState<Bool>.Binding
@@ -31,9 +33,10 @@ struct ComposerView: View {
     /// The paired Host, which re-recognizes a finished sentence with its own
     /// model. Nil while unpaired; the phone's live transcript then stands.
     let hub: HubClient?
-    /// Receives the staged photo, if any. A document is uploaded by the
-    /// conversation screen before sending and travels by receipt instead.
-    let onSend: ([Data]) -> Void
+    /// Receives the text to send and the staged photos, if any. A document is
+    /// uploaded by the conversation screen before sending and travels by
+    /// receipt instead.
+    let onSend: (String, [Data]) -> Void
     let onCancel: () -> Void
     /// Called with a document the owner chose and whether its security scope
     /// was opened; the screen stages it and closes the scope when done.
@@ -67,18 +70,15 @@ struct ComposerView: View {
     }
 
     @State private var pickerItems: [PhotosPickerItem] = []
-    @State private var pickedImages: [Data] = []
+    /// Staged photos carry a stable identity: removing one by its row offset
+    /// deleted the next photo, or trapped once the array had shrunk.
+    @State private var pickedImages: [StagedPhoto] = []
     @State private var attachError: String?
     @State private var showsImporter = false
     @State private var showsCamera = false
     @StateObject private var dictation = VoiceDictation()
     @Environment(\.scenePhase) private var scenePhase
     @State private var mode: InputMode = .typing
-    /// When the current touch on the voice bar began, so a tap can be told
-    /// from a hold.
-    @State private var touchStartedAt: Date?
-    /// Whether the session was already hands-free when this touch began.
-    @State private var touchBeganHandsFree = false
     /// Upward travel of the finger on the voice bar; negative is up.
     @State private var dragUp: CGFloat = 0
     /// Whether the Host is re-recognizing the sentence just spoken.
@@ -87,11 +87,20 @@ struct ComposerView: View {
     @State private var refinementTask: Task<Void, Never>?
     /// Bumped whenever a pending refinement no longer belongs to the field.
     @State private var sentenceToken = 0
+    /// Recognizer the Host advertised for mixed speech, when it has one ready.
+    @State private var speechChoice: SpeechProviderChoice?
 
     /// Longest edge kept from a picked photo. Vision input loses nothing useful
     /// beyond this, and the Host counts the encoded bytes.
     private static let maximumEdge: CGFloat = 1568
     private static let jpegQuality: CGFloat = 0.8
+    /// How many lines the field shows before it scrolls internally.
+    ///
+    /// The field grows into the conversation's height, and with the keyboard up
+    /// the chips and toolbar already take room. Four lines keeps a phone-sized
+    /// transcript on screen; a longer draft scrolls inside the field instead of
+    /// pushing the conversation away.
+    private static let maximumInputLines = 4
 
     private var isReadyToSend: Bool {
         let hasText = !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -118,9 +127,9 @@ struct ComposerView: View {
             }
             if !pickedImages.isEmpty {
                 HStack(spacing: 8) {
-                    ForEach(Array(pickedImages.enumerated()), id: \.offset) { index, data in
-                        attachmentChip(data) {
-                            pickedImages.remove(at: index)
+                    ForEach(pickedImages) { photo in
+                        attachmentChip(photo) {
+                            pickedImages.removeAll { $0.id == photo.id }
                         }
                     }
                     Spacer(minLength: 0)
@@ -152,9 +161,8 @@ struct ComposerView: View {
             }
             if dictation.isActive, dictation.phase != .preparing {
                 VoiceCapturePanel(
+                    live: dictation.live,
                     phase: dictation.phase,
-                    transcript: dictation.transcript,
-                    meter: dictation.meter,
                     startedAt: dictation.startedAt,
                     isCancelling: isCancelling,
                     isHandsFree: dictation.isHandsFree,
@@ -168,11 +176,16 @@ struct ComposerView: View {
             // assistants draw their input: the whole capsule reads as the place
             // to type, and the send action sits inside it at the trailing edge.
             VStack(alignment: .leading, spacing: 6) {
-                modelRow
                 if mode == .typing {
                     inputField
                 } else {
-                    holdToTalkBar
+                    VoiceInputBar(
+                        dictation: dictation,
+                        dragUp: $dragUp,
+                        onBegin: invalidateRefinement,
+                        onFinish: finishDictation,
+                        onCancel: { dictation.cancel() }
+                    )
                 }
                 toolbar
             }
@@ -261,33 +274,53 @@ struct ComposerView: View {
 // MARK: - Dock surfaces
 
 extension ComposerView {
-    /// The model and reasoning chips above the field: each chips opens its own
-    /// sheet, because a model and its reasoning level are two separate choices.
+    /// Two small icons where the composer used to carry a chip row: one for the
+    /// model, one for its reasoning level. The row cost a whole line of the
+    /// conversation; an icon keeps both choices one tap away at toolbar size.
     @ViewBuilder
-    private var modelRow: some View {
-        if let modelTitle, onOpenModel != nil {
-            HStack(spacing: 6) {
-                ModelChoiceChip(title: modelTitle, isBusy: isSwitchingModel) {
-                    onOpenModel?()
-                }
-                .layoutPriority(1)
-                if let effortTitle {
-                    EffortChoiceChip(title: effortTitle, isActive: effortIsActive) {
-                        onOpenReasoning?()
+    private var modelIcons: some View {
+        if let modelTitle, let onOpenModel {
+            Button(action: onOpenModel) {
+                Image(systemName: "cpu")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(TomatoToken.labelSecondary)
+                    .frame(width: 30, height: 30)
+                    .contentShape(Circle().inset(by: -7))
+                    .overlay(alignment: .topTrailing) {
+                        if isSwitchingModel {
+                            ProgressView()
+                                .controlSize(.mini)
+                                .offset(x: 2, y: -2)
+                        }
                     }
-                    .fixedSize()
-                }
-                Spacer(minLength: 0)
             }
-            .padding(.horizontal, 2)
-            .padding(.top, 2)
+            .buttonStyle(TomatoPressableStyle())
+            .accessibilityIdentifier("composer.model")
+            .accessibilityLabel("选择模型")
+            .accessibilityValue(modelTitle)
+        }
+        if let effortTitle, let onOpenReasoning {
+            Button(action: onOpenReasoning) {
+                Image(systemName: "brain")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(effortIsActive ? TomatoToken.brandPrimary : TomatoToken.labelSecondary)
+                    .frame(width: 30, height: 30)
+                    .contentShape(Circle().inset(by: -7))
+            }
+            .buttonStyle(TomatoPressableStyle())
+            .accessibilityIdentifier("composer.effort")
+            .accessibilityLabel("推理等级")
+            .accessibilityValue(effortTitle)
         }
     }
 
     /// The typed prompt; hidden while the voice bar takes its place.
     private var inputField: some View {
         TextField("给 Tomato 发消息", text: $text, axis: .vertical)
-            .lineLimit(1 ... 6)
+            // An empty field is pinned to one line rather than remembering the
+            // height its last draft needed: clearing the text while the field
+            // stays focused otherwise leaves an empty multi-line box.
+            .lineLimit(1 ... (text.isEmpty ? 1 : Self.maximumInputLines))
             .focused(isFocused)
             .font(.body)
             .submitLabel(.send)
@@ -295,6 +328,15 @@ extension ComposerView {
                 if isReadyToSend {
                     send()
                 }
+            }
+            // A vertical-axis TextField inserts a newline on the software
+            // keyboard's return key and never fires onSubmit, so the key this
+            // field labels 发送 did nothing at all. Intercept it: send when
+            // there is something to send, otherwise fall through to a newline.
+            .onKeyPress(.return) {
+                guard isReadyToSend else { return .ignored }
+                send()
+                return .handled
             }
             .padding(.horizontal, 6)
             .padding(.top, 4)
@@ -304,14 +346,15 @@ extension ComposerView {
     /// Photo, document, mode switch, and send, under whichever surface is up.
     private var toolbar: some View {
         HStack(spacing: 8) {
+            modelIcons
             PhotosPicker(selection: $pickerItems, maxSelectionCount: 6, matching: .images) {
                 Image(systemName: "photo.on.rectangle")
                     .font(.body)
                     .foregroundStyle(TomatoToken.labelSecondary)
                     .frame(width: 34, height: 34)
-                    .contentShape(Circle())
+                    .contentShape(Circle().inset(by: -5))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(TomatoPressableStyle())
             .disabled(pickedImages.count >= 6)
             .accessibilityLabel("附加照片")
 
@@ -320,9 +363,9 @@ extension ComposerView {
                     .font(.body)
                     .foregroundStyle(TomatoToken.labelSecondary)
                     .frame(width: 34, height: 34)
-                    .contentShape(Circle())
+                    .contentShape(Circle().inset(by: -5))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(TomatoPressableStyle())
             .accessibilityLabel("拍照")
             .accessibilityIdentifier("composer.camera")
 
@@ -333,9 +376,9 @@ extension ComposerView {
                     .font(.body)
                     .foregroundStyle(TomatoToken.labelSecondary)
                     .frame(width: 34, height: 34)
-                    .contentShape(Circle())
+                    .contentShape(Circle().inset(by: -5))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(TomatoPressableStyle())
             .accessibilityLabel("附加文档")
 
             if mode == .typing {
@@ -344,9 +387,9 @@ extension ComposerView {
                         .font(.body)
                         .foregroundStyle(TomatoToken.labelSecondary)
                         .frame(width: 34, height: 34)
-                        .contentShape(Circle())
+                        .contentShape(Circle().inset(by: -5))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(TomatoPressableStyle())
                 .accessibilityLabel("语音输入")
                 .accessibilityIdentifier("composer.mic")
             } else {
@@ -355,9 +398,9 @@ extension ComposerView {
                         .font(.body)
                         .foregroundStyle(TomatoToken.labelSecondary)
                         .frame(width: 34, height: 34)
-                        .contentShape(Circle())
+                        .contentShape(Circle().inset(by: -5))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(TomatoPressableStyle())
                 .accessibilityLabel("切回键盘")
                 .accessibilityIdentifier("composer.keyboard")
             }
@@ -370,9 +413,9 @@ extension ComposerView {
                         .font(.body)
                         .foregroundStyle(TomatoToken.labelSecondary)
                         .frame(width: 34, height: 34)
-                        .contentShape(Circle())
+                        .contentShape(Circle().inset(by: -5))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(TomatoPressableStyle())
                 .accessibilityLabel("收起输入框")
                 .accessibilityIdentifier("composer.collapse")
             }
@@ -380,131 +423,6 @@ extension ComposerView {
             Spacer(minLength: 0)
             actionButton
         }
-    }
-
-    /// WeChat's hold-to-talk surface: press and speak, release to convert.
-    private var holdToTalkBar: some View {
-        HStack(spacing: 8) {
-            Image(systemName: barSymbol)
-                .font(.subheadline)
-            Text(barLabel)
-                .font(.subheadline.weight(.medium))
-        }
-        .foregroundStyle(barForeground)
-        .frame(maxWidth: .infinity, minHeight: 36)
-        .background(barBackground, in: RoundedRectangle(cornerRadius: TomatoRadius.sm, style: .continuous))
-        .contentShape(Rectangle())
-        .gesture(holdGesture)
-        // VoiceOver cannot hold a finger down; its representation is a button
-        // that toggles the same session hands-free.
-        .accessibilityRepresentation {
-            Button(action: toggleHandsFree) {
-                Text(barLabel)
-            }
-            .accessibilityIdentifier("composer.holdToTalk")
-            .accessibilityHint("按住说话，松手转成文字；手指上滑取消。轻点则由麦克风持续收音。")
-        }
-    }
-
-    private var barLabel: String {
-        if !dictation.isAuthorized, dictation.phase == .preparing {
-            return "正在请求麦克风权限…"
-        }
-        if dictation.isHandsFree {
-            return "正在听写 · 轻点完成"
-        }
-        switch dictation.phase {
-        case .listening:
-            return isCancelling ? "松开 取消" : "松开 转文字"
-        case .finishing:
-            return "正在转文字…"
-        case .preparing:
-            return "正在准备麦克风…"
-        case .idle:
-            return dictation.isAuthorized ? "按住 说话" : "需要麦克风权限"
-        }
-    }
-
-    private var barSymbol: String {
-        if dictation.isHandsFree {
-            return "waveform.circle.fill"
-        }
-        return dictation.phase == .listening ? "waveform" : "mic"
-    }
-
-    private var barForeground: Color {
-        if isCancelling {
-            return TomatoToken.stateErrorPrimary
-        }
-        if dictation.phase == .listening || dictation.isHandsFree {
-            return TomatoToken.brandPrimary
-        }
-        return dictation.isAuthorized ? TomatoToken.labelSecondary : TomatoToken.labelDimmed
-    }
-
-    private var barBackground: Color {
-        if isCancelling {
-            return TomatoToken.stateErrorPrimary.opacity(0.12)
-        }
-        return dictation.phase == .listening ? TomatoToken.brandPrimary.opacity(0.1) : TomatoToken.bgLayer3
-    }
-
-    /// Press to talk, drag up to abandon, release to convert. A short press
-    /// keeps the session open hands-free.
-    private var holdGesture: some Gesture {
-        DragGesture(minimumDistance: 0, coordinateSpace: .local)
-            .onChanged { value in
-                // A gesture the system cancelled may not have delivered its
-                // end; a stale start would then swallow the next sentence.
-                if let started = touchStartedAt,
-                   !dictation.isActive,
-                   Date.now.timeIntervalSince(started) > VoiceDictation.tapDuration
-                {
-                    touchStartedAt = nil
-                    dragUp = 0
-                }
-                if touchStartedAt == nil {
-                    touchStartedAt = .now
-                    touchBeganHandsFree = dictation.isHandsFree
-                    dragUp = 0
-                    if !touchBeganHandsFree {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        invalidateRefinement()
-                        if dictation.isAuthorized {
-                            dictation.start()
-                        } else {
-                            // Permission may have been granted in Settings since
-                            // the last attempt.
-                            Task { await dictation.prepare() }
-                        }
-                    }
-                }
-                dragUp = min(0, value.translation.height)
-            }
-            .onEnded { value in
-                guard let started = touchStartedAt else {
-                    return
-                }
-                let held = Date.now.timeIntervalSince(started)
-                let travelled = value.translation.height
-                let wasHandsFree = touchBeganHandsFree
-                touchStartedAt = nil
-                dragUp = 0
-                if wasHandsFree {
-                    finishDictation()
-                    return
-                }
-                if travelled <= -VoiceDictation.cancelDistance {
-                    dictation.cancel()
-                    UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
-                    return
-                }
-                if held < VoiceDictation.tapDuration {
-                    dictation.enterHandsFree()
-                    return
-                }
-                finishDictation()
-            }
     }
 
     /// Send while idle, stop while a turn runs.
@@ -518,7 +436,7 @@ extension ComposerView {
                     .frame(width: 34, height: 34)
                     .background(TomatoToken.labelPrimary, in: Circle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(TomatoPressableStyle())
             .accessibilityLabel("停止")
             .accessibilityIdentifier("composer.stop")
         } else {
@@ -529,7 +447,7 @@ extension ComposerView {
                     .frame(width: 34, height: 34)
                     .background(isReadyToSend ? TomatoToken.buttonPrimaryFill : TomatoToken.bgLayer3, in: Circle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(TomatoPressableStyle())
             .disabled(!isReadyToSend)
             .accessibilityLabel("发送")
             .accessibilityIdentifier("composer.send")
@@ -551,6 +469,11 @@ extension ComposerView {
         Task {
             await dictation.prepare()
         }
+        // Ask once per entry: a Whisper provider handles mixed Chinese-English
+        // better than whatever the Host selected earlier.
+        Task { @MainActor in
+            speechChoice = await hub?.preferredSpeechProvider()
+        }
     }
 
     /// Return to typing without committing anything the microphone heard.
@@ -559,26 +482,6 @@ extension ComposerView {
         dictation.cancel()
         mode = .typing
         isFocused.wrappedValue = true
-    }
-
-    /// Start or end a hands-free sentence: the accessible equivalent of hold
-    /// and release, and what a tap on the bar does.
-    private func toggleHandsFree() {
-        if dictation.isHandsFree {
-            finishDictation()
-            return
-        }
-        if dictation.isActive {
-            dictation.enterHandsFree()
-            return
-        }
-        guard dictation.isAuthorized else {
-            Task { await dictation.prepare() }
-            return
-        }
-        invalidateRefinement()
-        dictation.start()
-        dictation.enterHandsFree()
     }
 
     /// Convert what was heard, then put it in the field for review. When the
@@ -600,7 +503,6 @@ extension ComposerView {
             text = VoiceTranscription.merged(into: prefix, live)
             mode = .typing
             dragUp = 0
-            touchStartedAt = nil
             focusField()
         }
         // A second finish for the same sentence carries neither text nor audio;
@@ -614,7 +516,7 @@ extension ComposerView {
             }
             return
         }
-        refine(audio, using: hub, prefix: prefix, live: live)
+        refine(audio, using: hub, choice: speechChoice, prefix: prefix, live: live)
     }
 
     /// Send the recording to the Host and adopt its sentence when it arrives
@@ -624,13 +526,13 @@ extension ComposerView {
     ///   - hub: paired Host.
     ///   - prefix: field contents before this sentence.
     ///   - live: Apple's live transcript, empty when it heard nothing.
-    private func refine(_ audio: Data, using hub: HubClient, prefix: String, live: String) {
+    private func refine(_ audio: Data, using hub: HubClient, choice: SpeechProviderChoice?, prefix: String, live: String) {
         let token = sentenceToken
         let committed = live.isEmpty ? prefix : VoiceTranscription.merged(into: prefix, live)
         refinementTask?.cancel()
         isRefining = true
         refinementTask = Task { @MainActor in
-            let refined = await Self.transcribe(audio, using: hub)
+            let refined = await Self.transcribe(audio, using: hub, choice: choice)
             guard !Task.isCancelled else {
                 return
             }
@@ -663,13 +565,21 @@ extension ComposerView {
     ///   - audio: canonical WAV of the sentence.
     ///   - hub: paired Host.
     /// - Returns: the Host's transcript, or nil on failure or deadline.
-    private static func transcribe(_ audio: Data, using hub: HubClient) async -> String? {
+    private static func transcribe(_ audio: Data, using hub: HubClient, choice: SpeechProviderChoice?) async -> String? {
         let deadline = Self.refinementDeadline(for: audio)
         return await withTaskGroup(of: String?.self) { group in
             group.addTask {
                 do {
-                    let transcript = try await hub.transcribeSpeech(wav: audio)
-                    AppLog.info(.ui, "Mac 精修完成", detail: "\(transcript.audioSeconds ?? 0) 秒音频")
+                    let transcript = try await hub.transcribeSpeech(
+                        wav: audio,
+                        providerId: choice?.id,
+                        language: choice?.language
+                    )
+                    AppLog.info(
+                        .ui,
+                        "Mac 精修完成",
+                        detail: "\(choice?.id ?? "Host 默认") · \(transcript.audioSeconds ?? 0) 秒音频"
+                    )
                     return transcript.text
                 } catch {
                     AppLog.warning(.ui, "Mac 精修失败", detail: describe(error))
@@ -718,11 +628,17 @@ extension ComposerView {
         invalidateRefinement()
         dictation.cancel()
         mode = .typing
-        let images = pickedImages
+        let images = pickedImages.map(\.data)
+        let outgoing = text
+        text = ""
         pickedImages = []
         pickerItems = []
         attachError = nil
-        onSend(images)
+        // Sending ends the edit: retract the keyboard and the field, so the
+        // conversation gets its screen back instead of keeping an empty dock
+        // open over it.
+        isFocused.wrappedValue = false
+        onSend(outgoing, images)
     }
 }
 
@@ -746,25 +662,25 @@ extension ComposerView {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundStyle(TomatoToken.labelDimmed)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(TomatoPressableStyle())
             .accessibilityLabel("移除文档")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     /// Staged-photo preview with its size and a way to drop it.
-    /// @param data - JPEG bytes of one staged photo.
+    /// @param photo - one staged photo; its image was decoded once at staging.
     /// @param remove - drops this photo from the staged set.
-    private func attachmentChip(_ data: Data, remove: @escaping () -> Void) -> some View {
+    private func attachmentChip(_ photo: StagedPhoto, remove: @escaping () -> Void) -> some View {
         HStack(spacing: 10) {
-            if let image = UIImage(data: data) {
+            if let image = photo.image {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
                     .frame(width: 44, height: 44)
                     .clipShape(RoundedRectangle(cornerRadius: TomatoRadius.sm, style: .continuous))
             }
-            Text("照片 · \(byteCount(data.count))")
+            Text("照片 · \(byteCount(photo.data.count))")
                 .font(.caption)
                 .foregroundStyle(TomatoToken.labelCaption)
             Spacer()
@@ -772,7 +688,7 @@ extension ComposerView {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundStyle(TomatoToken.labelDimmed)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(TomatoPressableStyle())
             .accessibilityLabel("移除照片")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -801,7 +717,7 @@ extension ComposerView {
             return
         }
         attachError = nil
-        pickedImages.append(encoded)
+        pickedImages.append(StagedPhoto(data: encoded))
     }
 
     /// Load, downscale, and re-encode one picked photo.
@@ -819,7 +735,7 @@ extension ComposerView {
                 attachError = "无法压缩这张照片"
                 return
             }
-            pickedImages.append(encoded)
+            pickedImages.append(StagedPhoto(data: encoded))
         } catch {
             attachError = describe(error)
         }
@@ -829,6 +745,9 @@ extension ComposerView {
     /// @param image - the decoded photo.
     /// @returns JPEG bytes, or nil when encoding fails.
     static func prepare(_ image: UIImage) -> Data? {
+        // A decode can yield a zero-size image; a zero renderer size is not a
+        // photo the composer can stage.
+        guard image.size.width > 0, image.size.height > 0 else { return nil }
         let longest = max(image.size.width, image.size.height)
         let scale = longest > maximumEdge ? maximumEdge / longest : 1
         let target = CGSize(width: image.size.width * scale, height: image.size.height * scale)
@@ -842,5 +761,23 @@ extension ComposerView {
 
     private func byteCount(_ bytes: Int) -> String {
         ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)
+    }
+}
+
+/// One staged photo, identified across a removal.
+private struct StagedPhoto: Identifiable, Equatable {
+    let id = UUID()
+    let data: Data
+    /// Decoded once at staging so the chip and the send path never re-decode
+    /// the full-resolution JPEG on every keystroke.
+    let image: UIImage?
+
+    init(data: Data) {
+        self.data = data
+        self.image = UIImage(data: data)
+    }
+
+    static func == (lhs: StagedPhoto, rhs: StagedPhoto) -> Bool {
+        lhs.id == rhs.id && lhs.data == rhs.data
     }
 }

@@ -290,6 +290,8 @@ struct RoomsView: View {
     @ObservedObject var roomModel: RoomListModel
     /// Published robots a new room can seat; the composer needs at least two.
     let availableRobots: [Robot]
+    /// One line of context under the page title.
+    private static let caption = "一个群聊一条日志：成员、委派、回复和熔断都在这里。"
     @State private var path = NavigationPath()
     @State private var showsCompose = false
 
@@ -297,8 +299,9 @@ struct RoomsView: View {
         NavigationStack(path: $path) {
             content
                 .background(TomatoToken.bgBase)
-                .tomatoPageTitle("群聊", caption: "一个群聊一条日志：成员、委派、回复和熔断都在这里。")
-                .navigationBarTitleDisplayMode(.large)
+                .navigationTitle("群聊")
+                .navigationBarTitleDisplayMode(.inline)
+                .tomatoFloatingTabs()
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
@@ -352,7 +355,7 @@ struct RoomsView: View {
         if let error = roomModel.errorMessage, roomModel.rooms.isEmpty {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    CaptionFallback(caption: "一个群聊一条日志：成员、委派、回复和熔断都在这里。")
+                    PageCaption(caption: Self.caption)
                     ErrorBanner(message: error) {
                         roomModel.retry()
                     }
@@ -369,7 +372,7 @@ struct RoomsView: View {
         } else if roomModel.rooms.isEmpty {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    CaptionFallback(caption: "一个群聊一条日志：成员、委派、回复和熔断都在这里。")
+                    PageCaption(caption: Self.caption)
                     EmptyPlaceholder(
                         systemImage: "person.3",
                         title: "还没有群聊",
@@ -392,15 +395,21 @@ struct RoomsView: View {
                         .listRowInsets(EdgeInsets(top: 2, leading: 12, bottom: 2, trailing: 12))
                     }
                 } header: {
-                    Text("群聊")
-                        .font(.footnote.weight(.medium))
-                        .foregroundStyle(TomatoToken.labelCaption)
-                        .textCase(nil)
-                        .padding(.leading, 4)
+                    VStack(alignment: .leading, spacing: 6) {
+                        PageCaption(caption: Self.caption)
+                        Text("群聊")
+                            .font(.footnote.weight(.medium))
+                            .foregroundStyle(TomatoToken.labelCaption)
+                            .textCase(nil)
+                    }
+                    .textCase(nil)
+                    .padding(.leading, 4)
+                    .padding(.bottom, 2)
                 }
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
+            .contentMargins(.bottom, 76, for: .scrollContent)
             .tomatoScrollEdge()
             .refreshable { roomModel.retry() }
         }

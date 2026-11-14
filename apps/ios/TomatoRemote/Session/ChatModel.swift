@@ -39,10 +39,25 @@ final class ChatModel: ObservableObject {
     /// Rows the transcript draws: the folded history plus any prompt this phone
     /// sent that the Host has not echoed back yet.
     @Published private(set) var rows: [ChatItem] = []
+    /// The rows grouped for display: one turn's tool work folds under a single
+    /// disclosure. Recomputed on each publish rather than in the view body,
+    /// which used to regroup the whole transcript on every evaluation.
+    @Published private(set) var entries: [TranscriptEntry] = []
+    /// The tool call still running, if any. The status pill reads this instead
+    /// of scanning the rows on every body evaluation.
+    @Published private(set) var runningTool: ToolDetail?
     @Published private(set) var streamingText = ""
     @Published private(set) var isRunning: Bool
     @Published private(set) var link: Link = .connecting
     @Published private(set) var state: SessionState
+    /// Host milliseconds when the running turn opened, so the header can count
+    /// without guessing from a local clock. Nil while no turn runs.
+    @Published private(set) var turnStartedAt: Double?
+    /// Whether a prompt has left this phone and the Host has not opened its turn
+    /// yet. Distinguishes "sent, waiting for the Host" from "thinking".
+    @Published private(set) var awaitingTurn = false
+    /// How long the last settled turn took, in milliseconds.
+    @Published private(set) var lastTurnDuration: Double?
     @Published private(set) var usage = TokenTotals()
     @Published private(set) var agentPreset: String?
     /// Model the next message uses, as the Host recorded it. Nil until the Host
@@ -53,6 +68,12 @@ final class ChatModel: ObservableObject {
     /// Why the last switch failed. The model sheet shows it in place instead of
     /// the transcript's error banner, which belongs to the conversation itself.
     @Published var modelError: String?
+    /// Directory this Session works in on the Mac, as the Host projects it.
+    @Published private(set) var workingDirectory: String?
+    /// Whether a scope change is already on its way to the Host.
+    @Published private(set) var isChangingWorkingDirectory = false
+    /// Why the last scope change failed; the scope sheet shows it in place.
+    @Published var workingDirectoryError: String?
     /// Photos this transcript draws, keyed by what the Host recorded. The rows
     /// carry references rather than pixels, so the fold stays cheap to replay.
     let photos = ChatImages()
@@ -75,6 +96,10 @@ final class ChatModel: ObservableObject {
     private var folded = Fold()
     /// Set while a publish is pending; bursts of events share one UI update.
     private var flushScheduled = false
+    /// Stream chunks held until the next publish; publishing every delta would
+    /// re-diff the whole transcript once per token.
+    private var pendingStreamText = ""
+    private var streamFlushScheduled = false
     /// Prompts sent from this phone, shown until their Host event arrives.
     private var echo: [ChatItem] = []
     /// Running flag the list reported, used until a turn event is seen.
@@ -104,6 +129,8 @@ final class ChatModel: ObservableObject {
     /// Sequence of the newest model fact already applied. A history page from
     /// before a switch must not put the old choice back on screen.
     private var modelWatermark: Double = -1
+    /// Sequence of the newest directory fact already applied.
+    private var workingDirectoryWatermark: Double = -1
     private var loadedEarlier = false
 
     private let blockedReason: String?
@@ -119,6 +146,10 @@ final class ChatModel: ObservableObject {
         var totals = TokenTotals()
         var running = false
         var sawTurn = false
+        /// Host milliseconds when the current turn opened, cleared on its end.
+        var turnStartedAt: Double?
+        /// Duration of the last settled turn, in milliseconds.
+        var lastTurnDuration: Double?
         /// Turn the log is currently recording; a prompt and every step it
         /// causes inherit it so the transcript can fold one turn's work as a
         /// unit instead of one group per run of tool calls.
@@ -149,12 +180,14 @@ final class ChatModel: ObservableObject {
         preloaded: [JSONValue] = [],
         parentSessionId: String? = nil,
         subagentMode: String? = nil,
-        selection: ModelRoute? = nil
+        selection: ModelRoute? = nil,
+        workingDirectory: String? = nil
     ) {
         self.sessionId = sessionId
         self.parentSessionId = parentSessionId
         self.subagentMode = subagentMode
         modelSelection = selection
+        self.workingDirectory = workingDirectory
         seededRunning = running
         seededBlank = blank
         isRunning = running
@@ -236,6 +269,16 @@ final class ChatModel: ObservableObject {
         isRunning = running
         folded.running = running
         folded.sawTurn = true
+        // A turn the Host started before this screen opened has no start time in
+        // the log; count from now rather than showing a stalled header.
+        if running {
+            if turnStartedAt == nil {
+                turnStartedAt = Date().timeIntervalSince1970 * 1000
+            }
+        } else {
+            turnStartedAt = nil
+            awaitingTurn = false
+        }
         refreshState()
     }
 
@@ -276,9 +319,13 @@ final class ChatModel: ObservableObject {
             pending: true,
             requestId: requestId
         ))
-        rows = folded.rows + liveEcho
         isRunning = true
         agentAttached = true
+        publishRows(folded.rows + liveEcho)
+        // The prompt counts as a running turn from the tap, so the header counts
+        // the wait instead of freezing until the Host's first frame lands.
+        turnStartedAt = Date().timeIntervalSince1970 * 1000
+        awaitingTurn = true
         refreshState()
         do {
             try await hub.sendPrompt(
@@ -300,11 +347,13 @@ final class ChatModel: ObservableObject {
             // reader last saw instead of claiming an Agent that never woke.
             isRunning = false
             agentAttached = wasAttached
+            turnStartedAt = nil
+            awaitingTurn = false
             echo.removeAll { $0.id == localId }
             if let keys = echoImages.removeValue(forKey: requestId) {
                 photos.forget(keys)
             }
-            rows = folded.rows + liveEcho
+            publishRows(folded.rows + liveEcho)
             // A Session another client holds open is not over: its history is
             // current and the next prompt works once that writer lets go. The
             // Host says so with `session/writer-held`, and the header must not
@@ -566,6 +615,7 @@ extension ChatModel {
             snapshotCursor = frame["cursor"]?.doubleValue
             let page = (frame["records"]?.arrayValue ?? []).compactMap { $0["event"] }
             mergeHistory(page, hasMore: frame["hasMore"]?.boolValue ?? false)
+            pendingStreamText = ""
             streamingText = ""
             agentPreset = frame["header"]?["agentPreset"]?.stringValue
             adoptProjection(frame["projections"])
@@ -587,13 +637,16 @@ extension ChatModel {
         guard let frame else { return }
         switch frame["type"]?.stringValue {
         case "start":
+            pendingStreamText = ""
             streamingText = ""
         case "chunk":
             guard let chunk = frame["chunk"] else { return }
             if chunk["type"]?.stringValue == "text-delta", let text = chunk["text"]?.stringValue {
-                streamingText += text
+                pendingStreamText += text
+                scheduleStreamFlush()
             }
         case "end":
+            pendingStreamText = ""
             streamingText = ""
         default:
             // Presentation frames grow additively; an unknown one is not an answer.
@@ -613,12 +666,38 @@ extension ChatModel {
     /// the route the Session used before it.
     /// - Parameter projections: the snapshot's projection baseline, or nil.
     private func adoptProjection(_ projections: JSONValue?) {
-        guard let projections,
-              let cut = projections["asOfSeq"]?.doubleValue, cut >= modelWatermark,
-              let value = projections["values"]?["modelSelection"]?.decoded(ModelSelectionProjection.self)
+        guard let projections, let cut = projections["asOfSeq"]?.doubleValue else { return }
+        if cut >= modelWatermark,
+           let value = projections["values"]?["modelSelection"]?.decoded(ModelSelectionProjection.self)
+        {
+            modelWatermark = cut
+            updateSelection(value.next ?? value.lastUsed)
+        }
+        if cut >= workingDirectoryWatermark,
+           let directory = projections["values"]?["workingDirectory"]?.stringValue
+        {
+            workingDirectoryWatermark = cut
+            updateWorkingDirectory(directory)
+        }
+    }
+
+    /// Adopt one durable directory change younger than the applied facts.
+    /// - Parameter event: one `working-directory/change` wire event.
+    private func adoptWorkingDirectoryEvent(_ event: JSONValue) {
+        guard event["type"]?.stringValue == "working-directory/change",
+              let seq = event["seq"]?.doubleValue, seq > workingDirectoryWatermark,
+              let directory = event["data"]?["cwd"]?.stringValue
         else { return }
-        modelWatermark = cut
-        updateSelection(value.next ?? value.lastUsed)
+        workingDirectoryWatermark = seq
+        updateWorkingDirectory(directory)
+    }
+
+    /// Publish a directory without redrawing for the one already on screen.
+    /// - Parameter directory: absolute directory, or nil when the Host reported none.
+    private func updateWorkingDirectory(_ directory: String?) {
+        if workingDirectory != directory {
+            workingDirectory = directory
+        }
     }
 
     /// Adopt one durable `model/selection` event younger than the applied facts.
@@ -643,6 +722,7 @@ extension ChatModel {
     /// Add one live event unless its sequence is already part of the log.
     private func merge(_ event: JSONValue) {
         adoptModelEvent(event)
+        adoptWorkingDirectoryEvent(event)
         guard let seq = event["seq"]?.doubleValue else {
             events.append(event)
             apply(event, to: &folded)
@@ -662,6 +742,7 @@ extension ChatModel {
             scheduleFlush()
         }
         if event["type"]?.stringValue == "assistant/message" {
+            pendingStreamText = ""
             streamingText = ""
         }
     }
@@ -809,11 +890,18 @@ extension ChatModel {
             settleToolResult(data, time: time, to: &fold)
         case "turn/start":
             if let turn = data?["turn"]?.doubleValue {
-                fold.turn = Int(turn)
+                fold.turn = finiteInt(turn)
             }
             fold.running = true
             fold.sawTurn = true
+            // The Host's own clock is the only start both screens agree on; a
+            // frame without one still leaves the phase countable.
+            fold.turnStartedAt = time ?? Date().timeIntervalSince1970 * 1000
         case "turn/end":
+            if let start = fold.turnStartedAt, let time, time >= start {
+                fold.lastTurnDuration = time - start
+            }
+            fold.turnStartedAt = nil
             fold.running = false
             fold.sawTurn = true
         case "deliverables/presented":
@@ -965,15 +1053,133 @@ extension ChatModel {
         }
     }
 
+    /// Coalesce stream chunks the way `scheduleFlush` coalesces events: a fast
+    /// Host sends tens of deltas a second and each published delta re-diffs the
+    /// whole transcript, so the pending row repaints at a fixed cadence instead
+    /// of once per token.
+    private func scheduleStreamFlush() {
+        guard !streamFlushScheduled else { return }
+        streamFlushScheduled = true
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 80_000_000)
+            guard let self else { return }
+            streamFlushScheduled = false
+            if streamingText != pendingStreamText {
+                streamingText = pendingStreamText
+            }
+        }
+    }
+
     /// Publish the accumulated rows, totals, and running flag once.
     private func flush() {
-        rows = folded.rows + liveEcho
+        publishRows(folded.rows + liveEcho)
         usage = folded.totals
-        // Until a turn event arrives, an optimistic send keeps the composer in
-        // its stop state instead of flipping back to send.
-        let running = folded.sawTurn ? folded.running : (isRunning || seededRunning)
+        // A prompt this phone sent keeps the turn running until the Host opens it,
+        // even when history already holds a settled turn: `sawTurn` alone would
+        // flip the composer back to Send during the HTTP round trip.
+        let running = folded.running || awaitingTurn || (!folded.sawTurn && (isRunning || seededRunning))
         isRunning = running
+        // The Host's turn start replaces the optimistic clock; a settled turn
+        // clears both, so the header never counts a turn that already ended.
+        if let started = folded.turnStartedAt {
+            if turnStartedAt != started {
+                turnStartedAt = started
+            }
+            awaitingTurn = false
+        } else if !running {
+            turnStartedAt = nil
+            awaitingTurn = false
+        }
+        if lastTurnDuration != folded.lastTurnDuration {
+            lastTurnDuration = folded.lastTurnDuration
+        }
         refreshState()
+    }
+
+    /// Publish one transcript snapshot: the rows, their display grouping, and the
+    /// still-running tool.
+    ///
+    /// Grouping and the running-tool scan used to live in the view body, which
+    /// regrouped and rescanned the whole transcript on every evaluation — once
+    /// per streamed chunk while a turn writes.
+    /// - Parameter value: the rows the transcript draws.
+    private func publishRows(_ value: [ChatItem]) {
+        rows = value
+        entries = group(value)
+        runningTool = value.last(where: { $0.tool?.status == .running })?.tool
+    }
+
+    /// Group rows for display: one turn's tool calls, the notes the Agent wrote
+    /// between them, and the context the harness injected all sit under one
+    /// disclosure. The last answer with no tool call after it stays in the
+    /// stream as the answer, so a long turn reads as
+    /// "message → 已完成 · N 次工具调用 → 回答".
+    /// - Parameter rows: the rows to group.
+    /// - Returns: the transcript entries, in display order.
+    private func group(_ rows: [ChatItem]) -> [TranscriptEntry] {
+        var entries: [TranscriptEntry] = []
+        var pending: [ChatItem] = []
+        for (index, item) in rows.enumerated() {
+            switch item.kind {
+            case .user, .notice:
+                flushTools(&pending, into: &entries, rows: rows)
+                entries.append(.single(item))
+            case .assistant where isAnswer(at: index, in: rows):
+                flushTools(&pending, into: &entries, rows: rows)
+                entries.append(.single(item))
+            default:
+                pending.append(item)
+            }
+        }
+        flushTools(&pending, into: &entries, rows: rows)
+        return entries
+    }
+
+    /// Whether one assistant row is the turn's answer rather than a note the
+    /// Agent wrote on its way to a tool call.
+    ///
+    /// A step that only narrates its next call ends with a tool call right
+    /// after it, so the final text of a turn — the one no call follows — is the
+    /// answer. Everything before it belongs to the folded work.
+    /// - Parameters:
+    ///   - index: position in `rows`.
+    ///   - rows: the rows being grouped.
+    /// - Returns: whether the row is the turn's answer.
+    private func isAnswer(at index: Int, in rows: [ChatItem]) -> Bool {
+        let item = rows[index]
+        var cursor = index + 1
+        while cursor < rows.count {
+            let next = rows[cursor]
+            if next.kind == .user || next.kind == .notice || next.turn != item.turn {
+                return true
+            }
+            if next.kind == .tool || next.kind == .assistant {
+                return false
+            }
+            cursor += 1
+        }
+        return true
+    }
+
+    /// Fold the rows collected since the last message.
+    ///
+    /// Context rows alone are not work: a turn that only injected notices
+    /// keeps its disclosures visible instead of hiding them under a "过程"
+    /// header with nothing behind it.
+    /// - Parameters:
+    ///   - pending: rows accumulated since the last flush point; emptied here.
+    ///   - entries: the entry list being built.
+    ///   - rows: the full row list, for the running-turn check.
+    private func flushTools(_ pending: inout [ChatItem], into entries: inout [TranscriptEntry], rows: [ChatItem]) {
+        defer { pending.removeAll() }
+        guard !pending.isEmpty else { return }
+        guard pending.contains(where: { $0.kind == .tool || $0.kind == .assistant }) else {
+            entries.append(contentsOf: pending.map { .single($0) })
+            return
+        }
+        let lastId = rows.last?.id
+        let running = isRunning && pending.contains { $0.id == lastId }
+        entries.append(.process(steps: pending, running: running))
     }
 
     /// Prompts this phone sent that the durable log does not hold yet.
@@ -1026,6 +1232,39 @@ extension ChatModel {
     /// that and the screen does not offer it.
     var allowsModelSwitch: Bool {
         parentSessionId == nil && blockedReason == nil
+    }
+
+    /// Whether this screen may change the Session's directory. A child Session
+    /// is served through its parent and refuses direct commands, so the scope
+    /// chip is not offered there.
+    var allowsWorkingDirectoryChange: Bool {
+        parentSessionId == nil && blockedReason == nil
+    }
+
+    /// Change this Session's working directory on the Mac.
+    ///
+    /// The Host commits the change to the Session log, so later work starts in
+    /// the new directory; shells and processes already running keep their own.
+    /// - Parameter path: absolute directory, or a path relative to the current one.
+    func setWorkingDirectory(_ path: String) async {
+        guard allowsWorkingDirectoryChange, let hub, !isChangingWorkingDirectory else { return }
+        let trimmed = path.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            workingDirectoryError = "目录不能为空"
+            return
+        }
+        isChangingWorkingDirectory = true
+        workingDirectoryError = nil
+        defer { isChangingWorkingDirectory = false }
+        do {
+            let directory = try await hub.setWorkingDirectory(sessionId: sessionId, path: trimmed)
+            workingDirectoryWatermark = max(workingDirectoryWatermark, newestSeq)
+            updateWorkingDirectory(directory)
+            AppLog.info(.session, "会话 \(sessionId.prefix(8)) 工作范围已切换", detail: directory)
+        } catch {
+            workingDirectoryError = describe(error)
+            AppLog.error(.session, "切换工作范围失败", detail: describe(error))
+        }
     }
 
     /// Record one model choice for this Session.

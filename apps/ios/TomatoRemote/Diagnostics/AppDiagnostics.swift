@@ -38,12 +38,18 @@ enum AppDiagnostics {
         started = true
         lock.unlock()
 
+        // Read the synchronous breadcrumb before this run overwrites it. The
+        // asynchronous log cannot survive a watchdog kill.
+        let previousActivity = LastActivity.begin()
         CrashGuard.install()
         HangWatchdog.shared.start()
         MetricKitMonitor.shared.start()
         MemoryWatch.shared.start()
         observeApplication()
         DispatchQueue.main.async {
+            if let previousActivity {
+                AppLog.notice(.diagnostics, "上次最后操作", detail: previousActivity)
+            }
             if let crash = CrashGuard.previousRecord() {
                 AppLog.shared.notePreviousCrash(crash)
             }
@@ -76,6 +82,11 @@ enum AppDiagnostics {
             queue: .main
         ) { _ in
             AppLog.warning(.diagnostics, "系统内存警告", detail: "占用 \(MemoryFootprint.text())")
+            // The shared diagram cache outlives every conversation it served;
+            // releasing it is the one large allocation the warning can recover.
+            Task { @MainActor in
+                MermaidRenderer.shared.releaseSnapshots()
+            }
         })
         observers.append(center.addObserver(
             forName: UIApplication.willTerminateNotification,

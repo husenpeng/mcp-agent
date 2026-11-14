@@ -86,6 +86,10 @@ struct ToolDetail: Equatable {
     var status: Status
     var startedAt: Double?
     var finishedAt: Double?
+    /// One line that tells apart two calls of the same tool. Arguments are
+    /// immutable after the call event, so this is derived once at construction
+    /// instead of re-parsing the payload on every card body evaluation.
+    let summary: String
 
     /// Defaults keep the two construction sites (call, then result) short.
     init(
@@ -104,11 +108,16 @@ struct ToolDetail: Equatable {
         self.status = status
         self.startedAt = startedAt
         self.finishedAt = finishedAt
+        self.summary = Self.summarize(name: name, arguments: arguments)
     }
 
     /// One line that tells apart two calls of the same tool.
-    var summary: String {
-        if let parsed = Self.json(arguments) as? [String: Any] {
+    /// - Parameters:
+    ///   - name: tool name, the fallback when the payload names nothing.
+    ///   - arguments: raw JSON payload the call carried.
+    /// - Returns: the first identifying string the payload holds.
+    static func summarize(name: String, arguments: String) -> String {
+        if let parsed = json(arguments) as? [String: Any] {
             for key in ["command", "path", "pattern", "url", "query", "prompt", "description"] {
                 if let value = parsed[key] as? String, !value.isEmpty {
                     return value.replacingOccurrences(of: "\n", with: " ")
@@ -153,9 +162,9 @@ struct TokenTotals: Equatable {
 
     mutating func add(usage: JSONValue?) {
         guard let usage else { return }
-        input += Int(usage["inputTokens"]?.doubleValue ?? 0)
-        output += Int(usage["outputTokens"]?.doubleValue ?? 0)
-        cacheRead += Int(usage["cacheReadTokens"]?.doubleValue ?? 0)
-        cacheWrite += Int(usage["cacheWriteTokens"]?.doubleValue ?? 0)
+        input += finiteInt(usage["inputTokens"]?.doubleValue)
+        output += finiteInt(usage["outputTokens"]?.doubleValue)
+        cacheRead += finiteInt(usage["cacheReadTokens"]?.doubleValue)
+        cacheWrite += finiteInt(usage["cacheWriteTokens"]?.doubleValue)
     }
 }

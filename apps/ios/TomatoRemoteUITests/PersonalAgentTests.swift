@@ -27,7 +27,10 @@ final class PersonalAgentTests: XCTestCase {
     /// The home tab opens first and reports what the Host worked on today.
     func testHomeShowsRecapAndOpenTasks() throws {
         let app = try launch()
-        XCTAssertTrue(app.navigationBars["今天"].waitForExistence(timeout: 20), "home did not open")
+        XCTAssertTrue(
+            app.descendants(matching: .any)["home.header"].firstMatch.waitForExistence(timeout: 20),
+            "home did not open"
+        )
         XCTAssertTrue(app.staticTexts["今日回顾"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["未完成"].exists)
         XCTAssertTrue(app.staticTexts["定时任务"].exists)
@@ -50,7 +53,7 @@ final class PersonalAgentTests: XCTestCase {
     /// The composer offers dictation and a document, next to the photo picker.
     func testComposerOffersVoiceAndDocument() throws {
         let app = try launch()
-        app.tabBars.buttons["会话"].tap()
+        app.openTab(.sessions)
         let row = app.staticTexts["整理本周发布说明"].firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 20), "session row did not appear")
         row.tap()
@@ -66,7 +69,7 @@ extension PersonalAgentTests {
     /// preview sheet when tapped.
     func testDeliveredFileIsListedAndOpens() throws {
         let app = try launch()
-        app.tabBars.buttons["会话"].tap()
+        app.openTab(.sessions)
         let row = app.staticTexts["整理本周发布说明"].firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 20))
         row.tap()

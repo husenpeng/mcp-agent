@@ -21,6 +21,7 @@ enum MarkdownBlock: Identifiable, Equatable {
     case quote(String)
     case bullet([String])
     case numbered([String])
+    case table(header: [String], rows: [[String]], alignments: [MarkdownTableAlignment])
     case rule
 
     var id: String {
@@ -32,9 +33,18 @@ enum MarkdownBlock: Identifiable, Equatable {
         case let .quote(text): "q-\(text)"
         case let .bullet(items): "b-\(items.joined(separator: "|"))"
         case let .numbered(items): "n-\(items.joined(separator: "|"))"
+        case let .table(header, rows, _):
+            "t-\(header.joined(separator: "|"))-\(rows.map { $0.joined(separator: "|") }.joined(separator: "/"))"
         case .rule: "r"
         }
     }
+}
+
+/// How one table column aligns its text.
+enum MarkdownTableAlignment: Equatable {
+    case leading
+    case center
+    case trailing
 }
 
 /// Parse one message's Markdown into blocks.
@@ -64,7 +74,7 @@ enum MarkdownParser {
     static func needsFullWidth(_ text: String) -> Bool {
         blocks(of: text).contains { block in
             switch block {
-            case .code, .mermaid: true
+            case .code, .mermaid, .table: true
             default: false
             }
         }
@@ -96,6 +106,9 @@ enum MarkdownParser {
                     continue
                 }
                 if consumeRule(trimmed) {
+                    continue
+                }
+                if consumeTable(trimmed) {
                     continue
                 }
                 if consumeQuote(trimmed) {
@@ -170,6 +183,50 @@ enum MarkdownParser {
             return true
         }
 
+        /// A pipe table: a header row, a dash separator, then its rows.
+        ///
+        /// The separator row is what makes the block a table; a paragraph that
+        /// merely contains pipes stays a paragraph. A short or long row is padded
+        /// or cut to the header's column count so it still draws one grid.
+        /// - Parameter trimmed: first candidate line.
+        /// - Returns: whether a table was consumed.
+        private mutating func consumeTable(_ trimmed: String) -> Bool {
+            guard trimmed.contains("|"), index + 1 < lines.count else { return false }
+            let header = MarkdownParser.tableCells(trimmed)
+            guard header.count >= 2 else { return false }
+            let separator = MarkdownParser.tableCells(lines[index + 1].trimmingCharacters(in: .whitespaces))
+            guard separator.count == header.count,
+                  separator.allSatisfy(MarkdownParser.isTableSeparator)
+            else { return false }
+
+            flushParagraph()
+            var rows: [[String]] = []
+            index += 2
+            while index < lines.count {
+                let candidate = lines[index].trimmingCharacters(in: .whitespaces)
+                guard !candidate.isEmpty, candidate.contains("|") else { break }
+                if candidate.hasPrefix("```") || candidate.hasPrefix("#") || candidate.hasPrefix(">")
+                    || MarkdownParser.isBullet(candidate) || MarkdownParser.numberedItem(candidate) != nil
+                {
+                    break
+                }
+                var cells = MarkdownParser.tableCells(candidate)
+                if cells.count < header.count {
+                    cells += Array(repeating: "", count: header.count - cells.count)
+                } else if cells.count > header.count {
+                    cells = Array(cells.prefix(header.count))
+                }
+                rows.append(cells)
+                index += 1
+            }
+            blocks.append(.table(
+                header: header,
+                rows: rows,
+                alignments: separator.map(MarkdownParser.tableAlignment)
+            ))
+            return true
+        }
+
         private mutating func consumeBullets(_ trimmed: String) -> Bool {
             guard MarkdownParser.isBullet(trimmed) else { return false }
             flushParagraph()
@@ -217,6 +274,61 @@ enum MarkdownParser {
 
     private static func isBullet(_ trimmed: String) -> Bool {
         trimmed.hasPrefix("- ") || trimmed.hasPrefix("* ") || trimmed.hasPrefix("+ ")
+    }
+
+    /// Split one pipe-table row into cells, honoring `\|` escapes.
+    /// - Parameter line: one header, separator, or row line.
+    /// - Returns: trimmed cell text in column order.
+    static func tableCells(_ line: String) -> [String] {
+        var text = line.trimmingCharacters(in: .whitespaces)
+        if text.hasPrefix("|") {
+            text.removeFirst()
+        }
+        if text.hasSuffix("|") {
+            text.removeLast()
+        }
+        var cells: [String] = []
+        var current = ""
+        var escaped = false
+        for character in text {
+            if escaped {
+                current.append(character)
+                escaped = false
+            } else if character == "\\" {
+                escaped = true
+            } else if character == "|" {
+                cells.append(current.trimmingCharacters(in: .whitespaces))
+                current = ""
+            } else {
+                current.append(character)
+            }
+        }
+        cells.append(current.trimmingCharacters(in: .whitespaces))
+        return cells
+    }
+
+    /// Whether one cell is the dashed separator that makes a pipe block a table.
+    /// - Parameter cell: one cell of the candidate separator row.
+    /// - Returns: true for a cell of dashes with optional alignment colons.
+    static func isTableSeparator(_ cell: String) -> Bool {
+        let trimmed = cell.trimmingCharacters(in: .whitespaces)
+        return trimmed.range(of: "^:?-{1,}:?$", options: .regularExpression) != nil
+    }
+
+    /// Alignment a separator cell names.
+    /// - Parameter cell: one cell of the separator row.
+    /// - Returns: left unless a leading or trailing colon says otherwise.
+    static func tableAlignment(_ cell: String) -> MarkdownTableAlignment {
+        let trimmed = cell.trimmingCharacters(in: .whitespaces)
+        let leading = trimmed.hasPrefix(":")
+        let trailing = trimmed.hasSuffix(":")
+        if leading, trailing {
+            return .center
+        }
+        if trailing {
+            return .trailing
+        }
+        return .leading
     }
 
     /// The item text of a `1.`-style line, if this one is numbered.

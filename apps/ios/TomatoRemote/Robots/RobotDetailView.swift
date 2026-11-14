@@ -70,6 +70,7 @@ struct RobotDetailView: View {
         .background(TomatoToken.bgBase)
         .navigationTitle(robot?.name ?? "智能体")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .tabBar)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button { showsInfo = true } label: {

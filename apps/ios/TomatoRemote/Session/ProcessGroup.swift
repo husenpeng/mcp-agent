@@ -22,6 +22,14 @@ enum TranscriptEntry: Identifiable {
     }
 }
 
+/// Equality is the step list and the running flag; the reader's own fold choice
+/// lives in `@State` and invalidates the view on its own.
+extension ProcessGroup: Equatable {
+    static func == (lhs: ProcessGroup, rhs: ProcessGroup) -> Bool {
+        lhs.steps == rhs.steps && lhs.running == rhs.running
+    }
+}
+
 struct ProcessGroup: View {
     let steps: [ChatItem]
     /// Whether the turn behind this group is still working.
@@ -74,9 +82,11 @@ struct ProcessGroup: View {
             .padding(.horizontal, 10)
             .padding(.vertical, 7)
             .background(TomatoToken.bgLayer2, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-            .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            // The caption row is ~30 pt tall; the fold it toggles is the main way
+            // into a turn's work, so the touch area grows past the capsule.
+            .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous).inset(by: -7))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TomatoPressableStyle())
         .accessibilityIdentifier("chat.row.process")
     }
 

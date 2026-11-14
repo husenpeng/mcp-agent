@@ -22,9 +22,17 @@ final class MemoryModel: ObservableObject {
     @Published private(set) var unavailable = false
     @Published private(set) var syncSummary: String?
     @Published var errorMessage: String?
+    /// Which row action is in flight, and whether the list is still settling.
+    /// The view reads it to disable every row while one request travels.
+    @Published private(set) var gate = MemoryActionGate()
 
     private var hub: HubClient?
     private var sessionId: String?
+    /// Bumped by every read; a slower earlier response must not replace a newer
+    /// list, or a refresh that started before a mutation can undo it.
+    private var refreshGeneration = 0
+    /// Unlocks row actions a moment after the list has been replaced.
+    private var settleTask: Task<Void, Never>?
 
     /// Point the model at the Host and the Session that scopes workspace records.
     /// - Parameters:
@@ -39,19 +47,26 @@ final class MemoryModel: ObservableObject {
     /// Re-read the Host's records.
     func refresh() async {
         guard let hub, let sessionId else { return }
+        refreshGeneration += 1
+        let generation = refreshGeneration
         isLoading = true
-        defer { isLoading = false }
         do {
             let list = try await hub.listMemories(sessionId: sessionId)
+            guard generation == refreshGeneration, !Task.isCancelled else { return }
             records = list.records
             signedIn = list.signedIn
             unavailable = false
             errorMessage = nil
         } catch HubError.notFound {
+            guard generation == refreshGeneration, !Task.isCancelled else { return }
             unavailable = true
             records = []
         } catch {
+            guard generation == refreshGeneration, !Task.isCancelled else { return }
             errorMessage = describe(error)
+        }
+        if generation == refreshGeneration {
+            isLoading = false
         }
     }
 
@@ -71,26 +86,71 @@ final class MemoryModel: ObservableObject {
     }
 
     /// Promote one candidate.
+    ///
+    /// The gate refuses a second tap while this request travels, and keeps
+    /// every row inert for a moment after the list reflows, so a tap aimed at
+    /// the row that just moved cannot hit its neighbour.
     /// - Parameter record: the record to confirm.
     func confirm(_ record: HostMemory) async {
-        guard let hub, let sessionId else { return }
-        do {
-            _ = try await hub.confirmMemory(sessionId: sessionId, id: record.id)
-            await refresh()
-        } catch {
-            errorMessage = describe(error)
-        }
+        await mutate(record, action: .confirm)
     }
 
     /// Delete one record.
     /// - Parameter record: the record to forget.
     func forget(_ record: HostMemory) async {
-        guard let hub, let sessionId else { return }
+        await mutate(record, action: .forget)
+    }
+
+    /// Which action of one row is in flight, when it is the given row.
+    /// - Parameter record: row the view is drawing.
+    /// - Returns: the action, or nil when this row is not busy.
+    func busyAction(for record: HostMemory) -> MemoryActionGate.Action? {
+        gate.busyId == record.id ? gate.busyAction : nil
+    }
+
+    /// Run one row mutation under the gate.
+    /// - Parameters:
+    ///   - record: row the action targets.
+    ///   - action: confirm or delete.
+    private func mutate(_ record: HostMemory, action: MemoryActionGate.Action) async {
+        guard let hub, let sessionId, gate.begin(record.id, action) else { return }
         do {
-            _ = try await hub.forgetMemory(sessionId: sessionId, id: record.id)
+            switch action {
+            case .confirm:
+                let confirmation = try await hub.confirmMemory(sessionId: sessionId, id: record.id)
+                apply(confirmation, to: record)
+            case .forget:
+                _ = try await hub.forgetMemory(sessionId: sessionId, id: record.id)
+                records.removeAll { $0.id == record.id }
+            }
             await refresh()
         } catch {
             errorMessage = describe(error)
+        }
+        finishMutation()
+    }
+
+    /// Put the Host's answer on screen before the follow-up read lands.
+    /// - Parameters:
+    ///   - confirmation: the promoted record, or a `not_found` answer.
+    ///   - record: the row that was confirmed.
+    private func apply(_ confirmation: HostMemoryConfirmation, to record: HostMemory) {
+        guard let promoted = confirmation.record,
+              let index = records.firstIndex(where: { $0.id == record.id })
+        else {
+            records.removeAll { $0.id == record.id }
+            return
+        }
+        records[index] = promoted
+    }
+
+    /// Release the row gate once the reflowed list has been on screen briefly.
+    private func finishMutation() {
+        gate.finish()
+        settleTask?.cancel()
+        settleTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            self?.gate.settle()
         }
     }
 
@@ -126,6 +186,9 @@ struct MemoryView: View {
     @StateObject private var memories = MemoryModel()
 
     @State private var confirmsClear = false
+    /// Record the owner is about to delete. Deleting from the list directly
+    /// let a stray second tap remove whatever row replaced the one that moved.
+    @State private var pendingDelete: HostMemory?
 
     /// Facts the phone derives from its own journal right now.
     private var derived: PersonalMemory {
@@ -166,6 +229,7 @@ struct MemoryView: View {
         .navigationTitle("记忆")
         .navigationBarTitleDisplayMode(.large)
         .tomatoScrollEdge()
+        .toolbar(.hidden, for: .tabBar)
         .refreshable { await memories.refresh() }
         .task {
             // Workspace records need a Session; a cold launch may not have the
@@ -188,8 +252,33 @@ struct MemoryView: View {
         ) {
             journal.clear()
         }
+        .confirmationDialog(
+            "删除这条记忆？",
+            isPresented: Binding(
+                get: { pendingDelete != nil },
+                set: {
+                    if !$0 {
+                        pendingDelete = nil
+                    }
+                }
+            ),
+            titleVisibility: .visible,
+            presenting: pendingDelete
+        ) { record in
+            Button("删除", role: .destructive) {
+                pendingDelete = nil
+                Task { await memories.forget(record) }
+            }
+            Button("取消", role: .cancel) {
+                pendingDelete = nil
+            }
+        } message: { record in
+            Text(record.value)
+        }
     }
+}
 
+extension MemoryView {
     private var intro: some View {
         Text("记忆只有一份，存在 Mac 上，每次对话都会带上。这台 iPhone 只把观察到的习惯提交成「待确认」，你确认后才会生效；也可以直接在 Mac 上用 /memory confirm。")
             .font(.footnote)
@@ -319,8 +408,15 @@ struct MemoryView: View {
     }
 
     /// One memory: its statement, then the action that changes its state.
+    ///
+    /// While one request travels every row's action is disabled, and the row
+    /// that is waiting shows its own progress instead of its buttons. Deleting
+    /// asks for confirmation, so a tap whose row moved cannot remove its
+    /// neighbour.
     private func memoryRow(_ record: HostMemory, pending: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        let busy = memories.busyAction(for: record)
+        let blocked = memories.gate.blocksInput
+        return VStack(alignment: .leading, spacing: 6) {
             Text("\(record.entity) / \(record.key)")
                 .font(.caption2.monospaced())
                 .foregroundStyle(TomatoToken.labelDimmed)
@@ -329,18 +425,33 @@ struct MemoryView: View {
                 .foregroundStyle(TomatoToken.labelPrimary)
                 .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 12) {
-                if pending {
-                    Button("确认") {
-                        Task { await memories.confirm(record) }
+                if let busy {
+                    ProgressView()
+                        .controlSize(.mini)
+                    Text(busy == .confirm ? "正在确认…" : "正在删除…")
+                        .font(.caption)
+                        .foregroundStyle(TomatoToken.labelCaption)
+                        .accessibilityIdentifier("memory.busy.\(record.id)")
+                } else {
+                    if pending {
+                        Button("确认") {
+                            Task { await memories.confirm(record) }
+                        }
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(TomatoToken.brandPrimary)
+                        .disabled(blocked)
+                        .opacity(blocked ? 0.4 : 1)
+                        .accessibilityIdentifier("memory.confirm.\(record.id)")
                     }
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(TomatoToken.brandPrimary)
+                    Button("删除", role: .destructive) {
+                        pendingDelete = record
+                    }
+                    .font(.caption)
+                    .foregroundStyle(TomatoToken.stateErrorPrimary)
+                    .disabled(blocked)
+                    .opacity(blocked ? 0.4 : 1)
+                    .accessibilityIdentifier("memory.delete.\(record.id)")
                 }
-                Button("删除", role: .destructive) {
-                    Task { await memories.forget(record) }
-                }
-                .font(.caption)
-                .foregroundStyle(TomatoToken.stateErrorPrimary)
                 Spacer(minLength: 0)
                 Text(record.scope == .profile ? "全部项目" : "当前项目")
                     .font(.caption2)

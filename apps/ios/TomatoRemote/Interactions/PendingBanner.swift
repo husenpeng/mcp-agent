@@ -42,7 +42,7 @@ struct PendingBanner: View {
             )
             .contentShape(RoundedRectangle(cornerRadius: TomatoRadius.md, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TomatoPressableStyle())
         .padding(.horizontal, 16)
         .accessibilityIdentifier("composer.pending")
     }

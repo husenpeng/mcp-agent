@@ -13,6 +13,9 @@ struct TomatoRemoteApp: App {
     @StateObject private var model = AppModel()
     @StateObject private var journal = UsageJournal()
     @StateObject private var interactions = InteractionCenter()
+    /// Shared by the bottom ball and composer triggers, so one palette state
+    /// serves every root.
+    @StateObject private var tabMenu = FloatingTabMenuState()
 
     init() {
         // Installed before the first view builds, so a launch that hangs leaves
@@ -34,6 +37,7 @@ struct TomatoRemoteApp: App {
                 .environmentObject(model.modelCatalog)
                 .environmentObject(journal)
                 .environmentObject(interactions)
+                .environmentObject(tabMenu)
         }
     }
 }
@@ -199,11 +203,14 @@ struct RootView: View {
     }
 }
 
-/// Five destinations; a Session's conversation is pushed from its list.
+/// Six destinations in five tab slots; a Session's conversation is pushed from
+/// its list.
 ///
-/// The tab bar is the app's whole navigation layer, so it takes the release's
-/// own glass treatment and shrinks while a list scrolls. Personal memory is not
-/// a tab: it is a property of the account, reached from there.
+/// iOS moves a sixth child into its own More stack, which adds a system list and
+/// a back button this app does not use. The floating ball is the real navigation,
+/// so the last slot hosts both destinations the system would move there and
+/// swaps between them. Personal memory is not a destination of its own: it is a
+/// property of the account, reached from there.
 struct MainTabs: View {
     @EnvironmentObject private var model: AppModel
     @EnvironmentObject private var interactions: InteractionCenter
@@ -214,28 +221,31 @@ struct MainTabs: View {
     @StateObject private var rooms = RoomListModel()
 
     var body: some View {
-        TabView(selection: $model.tab) {
+        TabView(selection: tabSelection) {
             HomeView()
-                .tabItem { Label("记忆", systemImage: "brain") }
-                .badge(interactions.pending.count)
+                .tabItem { Label(AppModel.Tab.home.title, systemImage: AppModel.Tab.home.systemImage) }
                 .tag(AppModel.Tab.home)
             SessionListView()
-                .tabItem { Label("会话", systemImage: "bubble.left.and.bubble.right") }
+                .tabItem { Label(AppModel.Tab.sessions.title, systemImage: AppModel.Tab.sessions.systemImage) }
                 .tag(AppModel.Tab.sessions)
             PhoneAgentView()
-                .tabItem { Label("Tomato Phone", systemImage: "iphone.gen3") }
+                .tabItem { Label(AppModel.Tab.phoneAgent.title, systemImage: AppModel.Tab.phoneAgent.systemImage) }
                 .tag(AppModel.Tab.phoneAgent)
             RobotsView(robotModel: robots)
-                .tabItem { Label("智能体", systemImage: "brain.head.profile") }
+                .tabItem { Label(AppModel.Tab.robots.title, systemImage: AppModel.Tab.robots.systemImage) }
                 .tag(AppModel.Tab.robots)
-            RoomsView(roomModel: rooms, availableRobots: robots.ordered)
-                .tabItem { Label("群聊", systemImage: "person.3") }
+            extraTab
+                .tabItem {
+                    let tab: AppModel.Tab = model.tab == .account ? .account : .rooms
+                    Label(tab.title, systemImage: tab.systemImage)
+                }
                 .tag(AppModel.Tab.rooms)
-            AccountView()
-                .tabItem { Label("账号", systemImage: "person.crop.circle") }
-                .tag(AppModel.Tab.account)
         }
-        .modifier(TabBarBehavior())
+        // The floating ball is the only destination control in this app. Hide
+        // the system bar on the container itself: a hidden bar on each root
+        // still left iOS's own More list reachable, and that list spoke English
+        // and used none of this app's surfaces.
+        .toolbar(.hidden, for: .tabBar)
         .task {
             interactions.start(hub: model.hub)
             robots.start(hub: model.hub)
@@ -244,15 +254,28 @@ struct MainTabs: View {
             #if DEBUG
                 autotourIfAsked()
             #endif
-            // A returning diagram reader warms the 3.4 MB runtime while the
-            // list settles, so opening a chat does not start that compile.
+            // A returning diagram reader warms the 3.4 MB runtime so opening a
+            // chat does not start that compile. Warming builds a WKWebView on
+            // the main thread, and landing that inside a scroll or a tab switch
+            // is a several-hundred-millisecond dropped frame, so it waits for
+            // the reader to go quiet instead of firing on a blind timer.
             Task {
-                try? await Task.sleep(nanoseconds: 3_000_000_000)
+                // The first seconds hold the launch burst: session list, today's
+                // cards, and the account read all land before the reader touches
+                // anything, so "no tab change yet" is not idle. Give that burst a
+                // window of its own before looking for quiet.
+                try? await Task.sleep(nanoseconds: 6_000_000_000)
+                let deadline = Date().addingTimeInterval(20)
+                while Date() < deadline {
+                    try? await Task.sleep(nanoseconds: 1_000_000_000)
+                    if Date().timeIntervalSince(model.lastNavigation) > 2 { break }
+                }
                 await MermaidRenderer.shared.warmIfUsedBefore()
             }
         }
         // Attribute a dropped frame to the tab that was on screen.
         .onChange(of: model.tab) { _, tab in
+            model.lastNavigation = Date()
             AppLog.screen(Self.label(for: tab))
             AppLog.info(.ui, "切换到 \(Self.label(for: tab))", detail: "占用 \(MemoryFootprint.text())")
         }
@@ -277,6 +300,28 @@ struct MainTabs: View {
             rooms.stop()
             interactions.stop()
         }
+    }
+
+    /// The fifth slot hosts the two destinations iOS would move into its own
+    /// More stack.
+    @ViewBuilder
+    private var extraTab: some View {
+        if model.tab == .account {
+            AccountView()
+        } else {
+            RoomsView(roomModel: rooms, availableRobots: robots.ordered)
+        }
+    }
+
+    /// Selection for the five-slot container.
+    ///
+    /// Account shares the rooms slot, so the fifth child stays selected and the
+    /// destination never lands inside a system More stack.
+    private var tabSelection: Binding<AppModel.Tab> {
+        Binding(
+            get: { model.tab == .account ? .rooms : model.tab },
+            set: { model.tab = $0 }
+        )
     }
 
     #if DEBUG
@@ -321,23 +366,6 @@ struct MainTabs: View {
     }
 }
 
-/// Collapse the tab bar while content scrolls, where the release supports it.
-private struct TabBarBehavior: ViewModifier {
-    /// `-TOMATO_NO_TAB_MINIMIZE` turns the collapse off so a test can tell
-    /// whether its animation is responsible for dropped scroll frames.
-    private var enabled: Bool {
-        !ProcessInfo.processInfo.arguments.contains("-TOMATO_NO_TAB_MINIMIZE")
-    }
-
-    func body(content: Content) -> some View {
-        if #available(iOS 26.0, *), enabled {
-            content.tabBarMinimizeBehavior(.onScrollDown)
-        } else {
-            content
-        }
-    }
-}
-
 /// Renders any thrown error the way every screen should.
 func describe(_ error: Error) -> String {
     if let localized = error as? LocalizedError, let description = localized.errorDescription {
@@ -356,7 +384,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var phase: Phase
     @Published private(set) var profile: PairingProfile?
 
-    /// Destinations, addressed by a deep link as well as by the tab bar.
+    /// Destinations, addressed by a deep link as well as by the floating palette.
     enum Tab: Hashable {
         case home
         case sessions
@@ -367,6 +395,10 @@ final class AppModel: ObservableObject {
     }
 
     @Published var tab: Tab = .home
+    /// When the reader last switched destination. Deliberately not published:
+    /// it only gates the diagram-runtime warm-up, and publishing it would
+    /// re-render the whole container on every tab change for no consumer.
+    var lastNavigation = Date()
     /// Whether the account tab shows the personal-memory page; a
     /// `tomato://memory` link sets it.
     @Published var showsMemory = false
@@ -423,6 +455,20 @@ final class AppModel: ObservableObject {
         interactions?.isConnected == true
     }
 
+    /// Why the Session rows may lag the Host: the last read failed and the event
+    /// stream is down, so nothing is correcting them.
+    var staleSessionsWarning: String? {
+        guard !isFollowingEvents, let sessionsError else { return nil }
+        return "状态可能已过期：\(sessionsError)"
+    }
+
+    /// Folders the Host's Sessions already work in, each once, for the
+    /// conversation's work-scope sheet.
+    var scopeFolders: [String] {
+        var seen = Set<String>()
+        return sessions.compactMap(\.cwd).filter { seen.insert($0).inserted }
+    }
+
     /// Session a `tomato://session/<id>` link asked to open, consumed by the list
     /// once it can resolve the row.
     @Published var pendingSessionId: String?
@@ -446,6 +492,11 @@ final class AppModel: ObservableObject {
         } else {
             profile = nil
             phase = .pairing
+        }
+        // The previous answer paints the list before this launch's first read
+        // returns; the read below still replaces it.
+        if let base = profile?.base {
+            sessions = HostSnapshots.read([SessionSummary].self, key: Self.sessionsKey(base)) ?? []
         }
         #if DEBUG
             let arguments = ProcessInfo.processInfo.arguments
@@ -659,10 +710,14 @@ final class AppModel: ObservableObject {
             RemoteSocket.forgetCookie(for: url)
         }
         KeychainStore.clear()
-        AccountAuthStore.shared.clear()
+        // The phone's own Feishu session belongs to this device, not to the Mac;
+        // unpairing removes the Host credential and leaves the person signed in.
         profile = nil
         sessions = []
         sessionsError = nil
+        // A buffered list belongs to the Host just forgotten; keeping it would
+        // paint another Host's conversations at the next pairing.
+        HostSnapshots.removeAll()
         phase = .pairing
         AppLog.shared.recordEnvironment(host: "未配对")
     }
@@ -699,6 +754,7 @@ final class AppModel: ObservableObject {
         do {
             let items = try await hub.listSessions()
             let sorted = items.sorted { $0.updatedAt > $1.updatedAt }
+            HostSnapshots.write(sorted, key: Self.sessionsKey(hub.base.absoluteString))
             if sorted != sessions {
                 sessions = sorted
             }
@@ -717,6 +773,13 @@ final class AppModel: ObservableObject {
 
     /// Seconds a read stays fresh for a plain appearance-driven refresh.
     private static let sessionFreshness: TimeInterval = 15
+
+    /// Snapshot key of one Host's Session list.
+    /// - Parameter base: the paired Host's base address.
+    /// - Returns: the key the buffer is read and written under.
+    private static func sessionsKey(_ base: String) -> String {
+        "sessions-\(base)"
+    }
 
     /// Elapsed milliseconds, rounded, for a log detail.
     /// - Parameter start: `CFAbsoluteTimeGetCurrent()` the work began at.
@@ -746,6 +809,9 @@ final class AppModel: ObservableObject {
     /// - Parameter cwd: absolute folder the new Session joins; nil lets the Host choose.
     func createSession(cwd: String? = nil) async -> String? {
         guard let hub else { return nil }
+        // Two taps inside one frame queue two Tasks before the busy flag can
+        // repaint the button; the second would create a duplicate Session.
+        guard !isCreatingSession else { return nil }
         isCreatingSession = true
         defer { isCreatingSession = false }
         do {

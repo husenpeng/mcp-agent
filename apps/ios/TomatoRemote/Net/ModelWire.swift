@@ -27,9 +27,9 @@ struct ModelRoute: Codable, Hashable, Sendable {
 }
 
 /// One model a Host can route right now.
-struct ModelCatalogModel: Decodable, Hashable, Sendable {
+struct ModelCatalogModel: Codable, Hashable, Sendable {
     /// One reasoning level the model's adapter accepts.
-    struct Effort: Decodable, Hashable, Sendable {
+    struct Effort: Codable, Hashable, Sendable {
         let id: String
         let name: String
         let description: String?
@@ -37,7 +37,7 @@ struct ModelCatalogModel: Decodable, Hashable, Sendable {
 
     /// The reasoning levels this exact model accepts, and the one its adapter
     /// defaults to.
-    struct Reasoning: Decodable, Hashable, Sendable {
+    struct Reasoning: Codable, Hashable, Sendable {
         let efforts: [Effort]
         let defaultEffort: String?
     }
@@ -52,16 +52,16 @@ struct ModelCatalogModel: Decodable, Hashable, Sendable {
 
 /// `session/modelCatalog` value: routes grouped by provider, the deployment
 /// default, and the providers whose catalogs failed to load.
-struct ModelCatalog: Decodable, Sendable {
+struct ModelCatalog: Codable, Sendable {
     /// One provider and the models it successfully advertised.
-    struct Provider: Decodable, Hashable, Sendable {
+    struct Provider: Codable, Hashable, Sendable {
         let id: String
         let name: String
         let models: [ModelCatalogModel]
     }
 
     /// One provider whose catalog lookup failed; usable providers stay usable.
-    struct Failure: Decodable, Hashable, Sendable {
+    struct Failure: Codable, Hashable, Sendable {
         let id: String
         let name: String
         let message: String

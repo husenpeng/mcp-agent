@@ -322,8 +322,8 @@ enum SessionPageLimit {
 /// `updatedAt`, `running`, `blank` and `agentAvailable` are the facts the Host
 /// also forwards as notifications, so the list replaces them in place instead of
 /// waiting for the next read.
-struct SessionSummary: Decodable, Identifiable, Hashable, Sendable {
-    struct Projections: Decodable, Hashable, Sendable {
+struct SessionSummary: Codable, Identifiable, Hashable, Sendable {
+    struct Projections: Codable, Hashable, Sendable {
         let kind: String?
         let asOfSeq: Double?
         let values: [String: JSONValue]?
@@ -366,6 +366,15 @@ struct SessionSummary: Decodable, Identifiable, Hashable, Sendable {
             ?? String(sessionId.prefix(8))
     }
 
+    /// The second line a row shows, when it says more than the title or the
+    /// folder already on that row.
+    var rowPreview: String? {
+        let text = displaySubtitle
+        let fallbacks = [cwd, String(sessionId.prefix(8)), displayTitle]
+        guard !fallbacks.contains(text) else { return nil }
+        return text.replacingOccurrences(of: "\n", with: " ")
+    }
+
     /// How the conversation currently stands, as the list and the conversation
     /// header both report it.
     ///
@@ -397,6 +406,11 @@ struct SessionSummary: Decodable, Identifiable, Hashable, Sendable {
 /// `session/list` value.
 struct SessionListValue: Decodable, Sendable {
     let items: [SessionSummary]
+}
+
+/// `session/setWorkingDirectory` value.
+struct SessionSetWorkingDirectoryValue: Decodable, Sendable {
+    let workingDirectory: String
 }
 
 /// `session/create` value.
@@ -450,6 +464,7 @@ struct SessionPage: Decodable, Sendable {
 struct SessionListRequest: Encodable { let cursor: String? }
 struct SessionCreateRequest: Encodable { let cwd: String?; let agentPreset: String? }
 struct SessionRenameRequest: Encodable { let sessionId: String; let title: String }
+struct SessionSetWorkingDirectoryRequest: Encodable { let sessionId: String; let path: String }
 struct SessionCancelRequest: Encodable { let sessionId: String }
 struct SessionProjectionsRequest: Encodable { let sessionId: String }
 struct SessionPageRequest: Encodable {
@@ -564,6 +579,26 @@ struct AccountProfile: Decodable, Sendable {
 // The launch token travels in the printed `tomato web:` URL; the Host
 // exchanges it at its root route for a persistent signed browser cookie,
 // which stays valid across reconnections for its whole lifetime.
+
+// MARK: - Wire numbers
+
+/// One wire number as an `Int`, refusing values an `Int` cannot represent.
+///
+/// Turn numbers, tool-call indexes, and token totals are written by a Host or a
+/// model; `Int(_:)` traps on a non-finite or out-of-range value, which read as
+/// an unexplained crash in a feed this app does not control.
+/// - Parameters:
+///   - value: decoded number, when the producer sent one.
+///   - fallback: value used when the number is missing or not representable.
+/// - Returns: a representable integer.
+func finiteInt(_ value: Double?, or fallback: Int = 0) -> Int {
+    guard let value,
+          value.isFinite,
+          value > -9_000_000_000_000_000_000,
+          value < 9_000_000_000_000_000_000
+    else { return fallback }
+    return Int(value)
+}
 
 // MARK: - Watchdog wire types
 

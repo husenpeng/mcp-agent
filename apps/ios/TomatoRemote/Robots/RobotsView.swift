@@ -226,14 +226,17 @@ final class RobotListModel: ObservableObject {
 
 struct RobotsView: View {
     @ObservedObject var robotModel: RobotListModel
+    /// One line of context under the page title.
+    private static let caption = "桌面端配置的机器人；这里启动、中断，并查看它们的对话记录。"
     @State private var showsHire = false
 
     var body: some View {
         NavigationStack {
             content
                 .background(TomatoToken.bgBase)
-                .tomatoPageTitle("智能体", caption: "桌面端配置的机器人；这里启动、中断，并查看它们的对话记录。")
-                .navigationBarTitleDisplayMode(.large)
+                .navigationTitle("智能体")
+                .navigationBarTitleDisplayMode(.inline)
+                .tomatoFloatingTabs()
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
@@ -280,7 +283,7 @@ struct RobotsView: View {
         if let error = robotModel.errorMessage, robotModel.robots.isEmpty {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    CaptionFallback(caption: "桌面端配置的机器人；这里启动、中断，并查看它们的对话记录。")
+                    PageCaption(caption: Self.caption)
                     ErrorBanner(message: error) {
                         robotModel.retry()
                     }
@@ -297,7 +300,7 @@ struct RobotsView: View {
         } else if robotModel.robots.isEmpty {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    CaptionFallback(caption: "桌面端配置的机器人；这里启动、中断，并查看它们的对话记录。")
+                    PageCaption(caption: Self.caption)
                     EmptyPlaceholder(
                         systemImage: "brain.head.profile",
                         title: "还没有智能体",
@@ -325,15 +328,21 @@ struct RobotsView: View {
                         .listRowInsets(EdgeInsets(top: 2, leading: 12, bottom: 2, trailing: 12))
                     }
                 } header: {
-                    Text("已发布")
-                        .font(.footnote.weight(.medium))
-                        .foregroundStyle(TomatoToken.labelCaption)
-                        .textCase(nil)
-                        .padding(.leading, 4)
+                    VStack(alignment: .leading, spacing: 6) {
+                        PageCaption(caption: Self.caption)
+                        Text("已发布")
+                            .font(.footnote.weight(.medium))
+                            .foregroundStyle(TomatoToken.labelCaption)
+                            .textCase(nil)
+                    }
+                    .textCase(nil)
+                    .padding(.leading, 4)
+                    .padding(.bottom, 2)
                 }
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
+            .contentMargins(.bottom, 76, for: .scrollContent)
             .tomatoScrollEdge()
             .refreshable { robotModel.retry() }
         }

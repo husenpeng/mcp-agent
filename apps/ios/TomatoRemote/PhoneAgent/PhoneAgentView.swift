@@ -20,10 +20,16 @@ import UniformTypeIdentifiers
 struct PhoneAgentView: View {
     @ObservedObject private var agent = PhoneAgentModel.shared
     @ObservedObject private var store = AgentCapabilityStore.shared
+    @ObservedObject private var auth = AccountAuthStore.shared
+    @EnvironmentObject private var tabMenu: FloatingTabMenuState
     @State private var segment = ProcessInfo.processInfo.arguments.contains("-TOMATO_PHONE_MARKET") ? 1 : 0
     @State private var showsSettings = false
+    /// The history sheet; the header's title control opens it.
+    @State private var showsConversations = false
     @State private var showsMCP = false
     @State private var showsSkill = false
+    /// Company Feishu sign-in, offered in place when search needs it.
+    @State private var showsLogin = false
     @State private var marketKind: AgentCapabilityKind = .mcp
     /// The endpoint, model, and depth the next turn uses.
     @State private var config = AgentConfigStore.load()
@@ -38,6 +44,22 @@ struct PhoneAgentView: View {
     @State private var showsImporter = false
     @State private var showsCamera = false
     @FocusState private var composerFocused: Bool
+    /// Voice capture for this composer; it becomes the draft text.
+    @StateObject private var dictation = VoiceDictation()
+    @State private var inputMode: InputMode = .typing
+    /// Upward travel of the finger on the voice bar; negative is up.
+    @State private var dragUp: CGFloat = 0
+    /// Coalesces streamed scroll animations.
+    @State private var scrollTask: Task<Void, Never>?
+    @State private var scrollWanted = false
+    /// When the local agent's current turn opened, for the header's clock.
+    @State private var turnStartedAt: Date?
+
+    /// Which surface the composer shows: the text field or the voice bar.
+    private enum InputMode {
+        case typing
+        case voice
+    }
 
     var body: some View {
         NavigationStack {
@@ -45,6 +67,7 @@ struct PhoneAgentView: View {
                 header
                 segmented
                 if segment == 0 {
+                    turnStatus
                     chat
                 } else {
                     market
@@ -52,24 +75,34 @@ struct PhoneAgentView: View {
             }
             .background(AgentTheme.canvas.ignoresSafeArea())
             .navigationBarHidden(true)
-            .toolbar {
-                // The keyboard's own way out, next to the composer's chevron:
-                // the deck stays one tap away on a long phone.
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("收起") { composerFocused = false }
-                        .accessibilityIdentifier("phone.keyboard.dismiss")
-                }
-            }
-            .sheet(isPresented: $showsSettings) {
-                AgentModelSettingsView()
-                    .tint(AgentTheme.accent)
+            // The composer owns the bottom edge here; the destination palette is
+            // opened from a button inside it, so no strip is reserved under the
+            // input for a floating ball.
+            .tomatoFloatingTabs(showsBall: false)
+            .sheet(
+                isPresented: $showsSettings,
+                onDismiss: {
+                    // The settings sheet edits the same stored model configuration;
+                    // the composer's chips must not keep a snapshot taken before it.
+                    config = AgentConfigStore.load()
+                },
+                content: { AgentModelSettingsView().tint(AgentTheme.accent) }
+            )
+            .sheet(isPresented: $showsConversations) {
+                PhoneConversationListSheet(agent: agent)
+                    .tomatoSheet([.large])
             }
             .sheet(isPresented: $showsMCP) {
                 MCPInstallSheet(store: store)
             }
             .sheet(isPresented: $showsSkill) {
                 SkillInstallSheet(store: store)
+            }
+            .sheet(isPresented: $showsLogin) {
+                FeishuLoginSheet(base: CompanyAuth.baseURL) { session, _ in
+                    auth.save(sessionId: session, searchBaseURL: CompanyAuth.baseURL.absoluteString)
+                }
+                .tomatoSheet([.large])
             }
             .sheet(item: $picker) { which in
                 switch which {
@@ -101,24 +134,69 @@ struct PhoneAgentView: View {
             .onChange(of: config) { _, next in
                 AgentConfigStore.save(next)
             }
+            // The local turn is the screen's own work; count from its first
+            // running frame and let the finished turn announce itself.
+            .onAppear {
+                if agent.isRunning, turnStartedAt == nil {
+                    turnStartedAt = .now
+                }
+            }
+            .onChange(of: agent.isRunning) { was, running in
+                if running {
+                    turnStartedAt = .now
+                } else {
+                    turnStartedAt = nil
+                    if was {
+                        UINotificationFeedbackGenerator().notificationOccurred(.success)
+                        UIAccessibility.post(notification: .announcement, argument: "Tomato 已完成回答")
+                    }
+                }
+            }
+            .onChange(of: agent.activeConversationId) { _, _ in
+                // Staged files and spoken text belong to the conversation they
+                // were prepared in; a switch must not carry them across.
+                draft = ""
+                photos = []
+                pickerItems = []
+                document = nil
+                attachError = nil
+                dictation.cancel()
+                inputMode = .typing
+                composerFocused = false
+            }
             .onChange(of: pickerItems) { _, items in
                 guard !items.isEmpty else { return }
                 let picked = items
                 pickerItems = []
                 loadPickedPhotos(picked)
             }
-            .task { stageDebugStateIfAsked() }
+            .task {
+                stageDebugStateIfAsked()
+                // The history read is off the launch path; the tab starts it
+                // when the person actually opens Tomato Phone.
+                await agent.loadHistoryIfNeeded()
+            }
+            .onDisappear {
+                dictation.cancel()
+                scrollTask?.cancel()
+                scrollTask = nil
+            }
         }
     }
 
     /// Stage the sample attachment or open a picker a test launch asked for.
     ///
-    /// Present only with `-TOMATO_PHONE_SAMPLE_PHOTO` and
-    /// `-TOMATO_PHONE_SHEET <model|reasoning>`; a release build never stages a
-    /// photo or opens a sheet on its own.
+    /// Present only with `-TOMATO_PHONE_SAMPLE_PHOTO`,
+    /// `-TOMATO_PHONE_SHEET <model|reasoning>`, and
+    /// `-TOMATO_PHONE_HISTORY`; a release build never stages a photo or opens a
+    /// sheet on its own.
     private func stageDebugStateIfAsked() {
         #if DEBUG
             let arguments = ProcessInfo.processInfo.arguments
+            agent.seedSampleHistoryIfAsked()
+            if arguments.contains("-TOMATO_PHONE_HISTORY") {
+                showsConversations = true
+            }
             if arguments.contains("-TOMATO_PHONE_SAMPLE_PHOTO"), photos.isEmpty {
                 let size = CGSize(width: 900, height: 600)
                 let image = UIGraphicsImageRenderer(size: size).image { context in
@@ -159,13 +237,36 @@ struct PhoneAgentView: View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Tomato Phone")
-                    .font(.title3.weight(.semibold))
+                    .font(.title2.weight(.semibold))
                     .foregroundStyle(AgentTheme.ink)
-                Text("手机上的 agent · 能力经 MCP 获取")
-                    .font(.caption)
-                    .foregroundStyle(AgentTheme.inkSecondary)
+                // The current conversation's name, and the way into the history:
+                // with more than one conversation, the header must say which one
+                // the composer writes into.
+                Button {
+                    composerFocused = false
+                    showsConversations = true
+                } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: "clock.arrow.circlepath")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(AgentTheme.accent.opacity(0.85))
+                        Text(agent.currentTitle)
+                            .font(.caption)
+                            .lineLimit(1)
+                            .foregroundStyle(AgentTheme.inkSecondary)
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundStyle(AgentTheme.inkSecondary)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("会话列表")
+                .accessibilityValue(agent.currentTitle)
+                .accessibilityHint("打开这台手机上的历史会话")
+                .accessibilityIdentifier("phone.conversations")
             }
-            Spacer()
+            Spacer(minLength: 8)
             Button {
                 showsSettings = true
             } label: {
@@ -213,6 +314,94 @@ struct PhoneAgentView: View {
         .buttonStyle(.plain)
     }
 
+    // MARK: Phase
+
+    /// What the local agent is doing while a turn runs.
+    private enum PhonePhase: Equatable {
+        case thinking
+        case writing
+        case tool(String)
+
+        var title: String {
+            switch self {
+            case .thinking: "Tomato 正在思考…"
+            case .writing: "正在写回答…"
+            case let .tool(name): "正在处理 \(name)…"
+            }
+        }
+    }
+
+    /// The live phase, or nil when the agent is idle.
+    private var phase: PhonePhase? {
+        guard agent.isRunning else { return nil }
+        if !agent.streamingText.isEmpty {
+            return .writing
+        }
+        if let last = agent.messages.last,
+           last.role == .tool,
+           let name = last.toolName,
+           !name.isEmpty
+        {
+            return .tool(name)
+        }
+        return .thinking
+    }
+
+    /// The clock under the segmented control: without it a thinking turn looks
+    /// like a stalled transcript between the last tool card and the composer.
+    @ViewBuilder
+    private var turnStatus: some View {
+        if let phase {
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .controlSize(.mini)
+                        .tint(AgentTheme.accent)
+                    Text(phase.title)
+                        .font(.caption)
+                        .foregroundStyle(AgentTheme.inkSecondary)
+                        .lineLimit(1)
+                    Spacer(minLength: 6)
+                    if let elapsed = elapsedText(now: context.date) {
+                        Text(elapsed)
+                            .font(.caption2.monospacedDigit())
+                            .foregroundStyle(AgentTheme.accent.opacity(0.8))
+                            .contentTransition(.numericText())
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 6)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(statusLabel(phase, now: context.date))
+            }
+            .accessibilityIdentifier("phone.status")
+        }
+    }
+
+    /// Seconds the current local turn has lasted.
+    /// - Parameter now: current time from the timeline.
+    /// - Returns: compact text, or nil before the turn has a start.
+    private func elapsedText(now: Date) -> String? {
+        guard let turnStartedAt else { return nil }
+        let seconds = max(0, now.timeIntervalSince(turnStartedAt))
+        let whole = Int(seconds.rounded())
+        if whole < 60 {
+            return "\(whole)s"
+        }
+        return String(format: "%dm %02ds", whole / 60, whole % 60)
+    }
+
+    /// One spoken sentence for the status row.
+    /// - Parameters:
+    ///   - phase: current phase.
+    ///   - now: current time.
+    /// - Returns: the VoiceOver label.
+    private func statusLabel(_ phase: PhonePhase, now: Date) -> String {
+        guard let turnStartedAt else { return phase.title }
+        let seconds = Int(max(0, now.timeIntervalSince(turnStartedAt)).rounded())
+        return "\(phase.title)，已用 \(seconds) 秒"
+    }
+
     // MARK: Chat
 
     private var chat: some View {
@@ -221,11 +410,21 @@ struct PhoneAgentView: View {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 10) {
                         if agent.messages.isEmpty {
-                            greeting
+                            if agent.isLoadingHistory {
+                                historyLoading
+                            } else {
+                                greeting
+                            }
                         }
-                        ForEach(agent.messages) { message in
-                            row(message)
-                                .id(message.id)
+                        ForEach(displayEntries) { entry in
+                            switch entry {
+                            case let .message(message):
+                                row(message)
+                                    .id(entry.id)
+                            case let .process(id, items, running):
+                                PhoneProcessGroup(items: items, running: running)
+                                    .id(id)
+                            }
                         }
                         if !agent.streamingText.isEmpty {
                             streamingRow
@@ -242,19 +441,65 @@ struct PhoneAgentView: View {
                     .padding(.top, 4)
                     .padding(.bottom, 16)
                 }
-                .onChange(of: agent.messages.count) { _, _ in
-                    guard let last = agent.messages.last else { return }
-                    withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo(last.id, anchor: .bottom) }
-                }
-                .onChange(of: agent.streamingText) { _, text in
-                    guard !text.isEmpty else { return }
-                    withAnimation(.easeOut(duration: 0.15)) { proxy.scrollTo("streaming", anchor: .bottom) }
-                }
+                .onChange(of: agent.messages.count) { _, _ in scheduleScroll(proxy) }
+                // Two conversations can hold the same number of messages, so a
+                // switch scrolls on its own identity rather than on the count.
+                .onChange(of: agent.activeConversationId) { _, _ in scheduleScroll(proxy) }
+                .onChange(of: agent.streamingText) { _, _ in scheduleScroll(proxy) }
+                .onChange(of: agent.streamingReasoning) { _, _ in scheduleScroll(proxy) }
                 .scrollDismissesKeyboard(.immediately)
-                .simultaneousGesture(TapGesture().onEnded { composerFocused = false })
+                // A tap on the transcript belongs to the text; its links open
+                // pages. The composer's collapse control and a drag still put
+                // the keyboard away.
+            }
+            if !auth.isSignedIn {
+                loginNotice
             }
             composer
         }
+    }
+
+    /// The transcript's rows: messages together with each turn's folded work.
+    private var displayEntries: [PhoneTranscriptEntry] {
+        PhoneTranscript.entries(
+            from: agent.messages,
+            liveReasoning: agent.streamingReasoning,
+            isRunning: agent.isRunning
+        )
+    }
+
+    /// Search needs a Feishu session, so the tab offers the sign-in in place
+    /// instead of sending the owner to another page to discover the gap.
+    private var loginNotice: some View {
+        HStack(spacing: 10) {
+            Image("FeishuLogo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 22, height: 22)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("联网搜索需要飞书登录")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(AgentTheme.ink)
+                Text("登录由公司飞书完成，不经过配对的 Mac。")
+                    .font(.caption2)
+                    .foregroundStyle(AgentTheme.inkSecondary)
+            }
+            Spacer(minLength: 8)
+            Button("登录") { showsLogin = true }
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(AgentTheme.accent)
+                .accessibilityIdentifier("phone.login")
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(AgentTheme.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(AgentTheme.border, lineWidth: 1)
+        )
+        .padding(.horizontal, 16)
+        .padding(.bottom, 8)
     }
 
     private var greeting: some View {
@@ -281,6 +526,27 @@ struct PhoneAgentView: View {
         .padding(.bottom, 4)
     }
 
+    /// Shown while the on-disk history is being read. The greeting would claim
+    /// an empty history the read has not confirmed yet.
+    private var historyLoading: some View {
+        HStack(spacing: 8) {
+            ProgressView()
+                .controlSize(.small)
+            Text("正在载入本机会话…")
+                .font(.subheadline)
+                .foregroundStyle(AgentTheme.inkSecondary)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AgentTheme.surface, in: RoundedRectangle(cornerRadius: AgentTheme.cardRadius, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: AgentTheme.cardRadius, style: .continuous)
+                .strokeBorder(AgentTheme.border, lineWidth: 1)
+        )
+        .accessibilityIdentifier("phone.history.loading")
+        .padding(.bottom, 4)
+    }
+
     private func chip(_ title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
@@ -299,24 +565,58 @@ struct PhoneAgentView: View {
         case .user:
             userRow(message)
         case .assistant:
-            if !message.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                assistantBubble(message.text)
-            }
+            assistantRow(message)
         case .tool:
-            toolCard(message)
+            // Tool results are folded into the turn's process row.
+            EmptyView()
         case .proposal:
             proposalCard(message)
         }
     }
 
+    /// One assistant answer. Its thinking and tool work live in the turn's folded
+    /// process row, built by `PhoneTranscript`.
+    /// - Parameter message: the assistant message.
+    @ViewBuilder
+    private func assistantRow(_ message: AgentMessage) -> some View {
+        if !message.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            assistantBubble(message.text)
+        }
+    }
+
     /// One answer bubble. The font is the transcript size, so a long turn scans
     /// like a conversation instead of a document.
+    ///
+    /// The local agent writes the same Markdown the Host one does, including
+    /// fenced diagrams; drawing it through `MarkdownView` gives the phone the
+    /// same headings, code, and Mermaid rendering instead of one text run.
     /// - Parameter text: Markdown the model wrote.
     private func assistantBubble(_ text: String) -> some View {
-        markdown(text)
-            .font(AgentTheme.messageFont)
-            .lineSpacing(2)
-            .foregroundStyle(AgentTheme.ink)
+        phoneBubble {
+            MarkdownView(text: text)
+        }
+    }
+
+    /// The answer while it arrives, before the final Markdown pass.
+    ///
+    /// A partial fence would make the diagram renderer work on every chunk, so
+    /// the live text stays one inline run and becomes the richer bubble once the
+    /// message settles.
+    /// - Parameter text: text streamed so far.
+    private func streamingBubble(_ text: String) -> some View {
+        phoneBubble {
+            markdown(text)
+                .font(AgentTheme.messageFont)
+                .lineSpacing(2)
+                .foregroundStyle(AgentTheme.ink)
+        }
+    }
+
+    /// Surface shared by the finished and streaming answer bubbles.
+    /// - Parameter content: what the bubble draws.
+    /// - Returns: the content on the phone's card surface.
+    private func phoneBubble(@ViewBuilder content: () -> some View) -> some View {
+        content()
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(AgentTheme.surface, in: RoundedRectangle(cornerRadius: AgentTheme.bubbleRadius, style: .continuous))
@@ -330,7 +630,7 @@ struct PhoneAgentView: View {
     /// will, with a cursor-like dot so a slow first token still shows activity.
     private var streamingRow: some View {
         HStack(alignment: .bottom, spacing: 6) {
-            assistantBubble(agent.streamingText)
+            streamingBubble(agent.streamingText)
             Circle()
                 .fill(AgentTheme.accent)
                 .frame(width: 5, height: 5)
@@ -351,20 +651,7 @@ struct PhoneAgentView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
                         ForEach(images) { attachment in
-                            if let data = agent.imageData(for: attachment),
-                               let image = UIImage(data: data)
-                            {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 156, height: 156)
-                                    .clipShape(RoundedRectangle(cornerRadius: AgentTheme.bubbleRadius, style: .continuous))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: AgentTheme.bubbleRadius, style: .continuous)
-                                            .strokeBorder(AgentTheme.border, lineWidth: 1)
-                                    )
-                                    .accessibilityLabel("附带的照片")
-                            }
+                            AgentPhotoTile(attachment: attachment, agent: agent)
                         }
                     }
                 }
@@ -407,28 +694,6 @@ struct PhoneAgentView: View {
             return Text(attributed)
         }
         return Text(text)
-    }
-
-    private func toolCard(_ message: AgentMessage) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "wrench.and.screwdriver.fill")
-                .font(.caption)
-                .foregroundStyle(AgentTheme.accent)
-                .padding(8)
-                .background(AgentTheme.accent.opacity(0.10), in: Circle())
-            VStack(alignment: .leading, spacing: 4) {
-                Text(message.toolName ?? "工具")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(AgentTheme.ink)
-                Text(message.text)
-                    .font(.caption)
-                    .foregroundStyle(AgentTheme.inkSecondary)
-                    .lineLimit(6)
-            }
-        }
-        .padding(10)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AgentTheme.surfaceMuted, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private func proposalCard(_ message: AgentMessage) -> some View {
@@ -480,10 +745,43 @@ struct PhoneAgentView: View {
             if let document {
                 documentChip(document)
             }
+            if let failure = dictation.failure {
+                Text(failure)
+                    .font(.caption)
+                    .foregroundStyle(AgentTheme.danger)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else if let hint = dictation.hint {
+                Text(hint)
+                    .font(.caption)
+                    .foregroundStyle(AgentTheme.inkSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            if dictation.isActive, dictation.phase != .preparing {
+                VoiceCapturePanel(
+                    live: dictation.live,
+                    phase: dictation.phase,
+                    startedAt: dictation.startedAt,
+                    isCancelling: dragUp <= -VoiceDictation.cancelDistance,
+                    isHandsFree: dictation.isHandsFree,
+                    isPreviewing: dictation.isPreviewing,
+                    onCancel: { dictation.cancel() },
+                    onFinish: { finishVoice() }
+                )
+            }
             VStack(alignment: .leading, spacing: 6) {
                 modelRow
                 HStack(alignment: .bottom, spacing: 8) {
-                    inputField
+                    if inputMode == .typing {
+                        inputField
+                    } else {
+                        VoiceInputBar(
+                            dictation: dictation,
+                            dragUp: $dragUp,
+                            identifier: "phone.composer.holdToTalk",
+                            onFinish: finishVoice,
+                            onCancel: { dictation.cancel() }
+                        )
+                    }
                     sendButton
                 }
                 toolbar
@@ -527,6 +825,24 @@ struct PhoneAgentView: View {
             }
             .fixedSize()
             Spacer(minLength: 0)
+            Button {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) {
+                    tabMenu.expanded = true
+                }
+            } label: {
+                Image(systemName: "square.grid.2x2")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(AgentTheme.accent)
+                    .frame(width: 30, height: 30)
+                    .background(AgentTheme.surfaceMuted, in: Circle())
+                    .frame(width: 44, height: 32)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("切换页面")
+            .accessibilityHint("打开页面列表")
+            .accessibilityIdentifier("phone.tabMenu")
         }
         .padding(.horizontal, 2)
         .padding(.top, 2)
@@ -574,9 +890,25 @@ struct PhoneAgentView: View {
             .accessibilityLabel("附加文档")
             .accessibilityIdentifier("phone.composer.document")
 
+            if inputMode == .typing {
+                Button(action: enterVoiceMode) {
+                    composerIcon("mic")
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("语音输入")
+                .accessibilityIdentifier("phone.composer.mic")
+            } else {
+                Button(action: leaveVoiceMode) {
+                    composerIcon("keyboard")
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("切回键盘")
+                .accessibilityIdentifier("phone.composer.keyboard")
+            }
+
             Spacer(minLength: 0)
 
-            if composerFocused {
+            if composerFocused, inputMode == .typing {
                 Button {
                     composerFocused = false
                 } label: {
@@ -706,6 +1038,58 @@ struct PhoneAgentView: View {
 
     /// Hand the staged prompt to the agent, then put the dock back in its
     /// one-line state with the keyboard down.
+    /// Replace the field with the hold-to-talk bar and ask for permission.
+    private func enterVoiceMode() {
+        guard inputMode == .typing else { return }
+        inputMode = .voice
+        composerFocused = false
+        Task { await dictation.prepare() }
+    }
+
+    /// Return to typing without committing anything the microphone heard.
+    private func leaveVoiceMode() {
+        dictation.cancel()
+        inputMode = .typing
+        composerFocused = true
+    }
+
+    /// Put the spoken sentence at the end of the draft for review.
+    private func finishVoice() {
+        Task { @MainActor in
+            let capture = await dictation.finish()
+            guard capture.text != nil || capture.audio != nil else { return }
+            guard let spoken = capture.text, !spoken.isEmpty else {
+                dictation.note("没有听清，请再说一次")
+                return
+            }
+            draft = VoiceTranscription.merged(into: draft, spoken)
+            inputMode = .typing
+            composerFocused = true
+        }
+    }
+
+    /// Scroll once per burst: streaming text changes many times per second and
+    /// an animation per token makes the transcript stutter.
+    /// - Parameter proxy: the transcript's scroll proxy.
+    private func scheduleScroll(_ proxy: ScrollViewProxy) {
+        scrollWanted = true
+        guard scrollTask == nil else { return }
+        scrollTask = Task { @MainActor in
+            while scrollWanted {
+                scrollWanted = false
+                try? await Task.sleep(nanoseconds: 100_000_000)
+                let target: AnyHashable? = agent.streamingText.isEmpty
+                    ? displayEntries.last.map { AnyHashable($0.id) }
+                    : AnyHashable("streaming")
+                guard let target else { continue }
+                withAnimation(.easeOut(duration: 0.12)) {
+                    proxy.scrollTo(target, anchor: .bottom)
+                }
+            }
+            scrollTask = nil
+        }
+    }
+
     private func send() {
         let text = draft
         let images = photos.map(\.data)
@@ -715,6 +1099,8 @@ struct PhoneAgentView: View {
             || file != nil
         else { return }
         UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+        dictation.cancel()
+        inputMode = .typing
         draft = ""
         photos = []
         pickerItems = []
@@ -1074,7 +1460,7 @@ struct AgentModelSettingsView: View {
                 } header: {
                     Text("推理")
                 } footer: {
-                    Text("「自动」交给模型决定；低、中、高会作为 reasoning_effort 随每次请求发送。")
+                    Text("「自动」交给模型决定；低、中、高会作为 reasoning_effort 随每次请求发送。模型返回的思考内容会显示在回答上方，用来核对这次档位是否真的起了作用。")
                 }
 
                 Section {
@@ -1117,6 +1503,9 @@ struct AgentModelSettingsView: View {
             .onChange(of: config) { _, next in
                 AgentConfigStore.save(next)
             }
+            // The composer's sheets write the same stored configuration, so a
+            // snapshot taken before they ran must not be edited as current.
+            .onAppear { config = AgentConfigStore.load() }
             .onDisappear { saveIfNeeded() }
             .presentationDragIndicator(.visible)
         }
@@ -1255,9 +1644,94 @@ struct SkillInstallSheet: View {
 private struct StagedPhoto: Identifiable, Equatable {
     let id = UUID()
     let data: Data
+    /// Decoded once at staging: the strip and the send path both reuse it, so a
+    /// keystroke no longer re-decodes every staged photo.
+    let image: UIImage?
 
-    /// The decoded image, or nil when the bytes are not a JPEG.
-    var image: UIImage? {
-        UIImage(data: data)
+    init(data: Data) {
+        self.data = data
+        self.image = UIImage(data: data)
+    }
+
+    static func == (lhs: StagedPhoto, rhs: StagedPhoto) -> Bool {
+        lhs.id == rhs.id && lhs.data == rhs.data
+    }
+}
+
+/// One attached photo in a transcript row, decoded off the main thread at the
+/// size it is drawn.
+///
+/// The row used to read the file and decode the full-resolution JPEG inside
+/// `body`, once per photo per evaluation; a 12 MP pick is tens of milliseconds
+/// of main-thread work for a 156 pt tile. Decoded tiles are shared through one
+/// cache keyed by the attachment's identity.
+private struct AgentPhotoTile: View {
+    let attachment: AgentAttachment
+    let agent: PhoneAgentModel
+
+    @State private var image: UIImage?
+
+    /// Decoded tiles shared by every row; the transcript holds few distinct
+    /// photos and each is immutable once attached. Bounded so a photo-heavy
+    /// history cannot grow without limit between memory warnings.
+    private static let cache: NSCache<NSString, UIImage> = {
+        let cache = NSCache<NSString, UIImage>()
+        cache.countLimit = 24
+        return cache
+    }()
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                Color.clear
+            }
+        }
+        .frame(width: 156, height: 156)
+        .clipShape(RoundedRectangle(cornerRadius: AgentTheme.bubbleRadius, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: AgentTheme.bubbleRadius, style: .continuous)
+                .strokeBorder(AgentTheme.border, lineWidth: 1)
+        )
+        .accessibilityLabel("附带的照片")
+        .task(id: attachment.id) {
+            let key = attachment.id as NSString
+            if let hit = Self.cache.object(forKey: key) {
+                image = hit
+                return
+            }
+            let decoded = await Task.detached(priority: .userInitiated) { [agent, attachment] () -> UIImage? in
+                guard let data = agent.imageData(for: attachment) else { return nil }
+                return Self.downsampled(data, to: 312)
+            }.value
+            guard let decoded else { return }
+            Self.cache.setObject(decoded, forKey: key)
+            image = decoded
+        }
+    }
+
+    /// Decode straight to the tile size instead of materializing the original.
+    /// - Parameters:
+    ///   - data: encoded image bytes.
+    ///   - edge: longest edge in pixels the tile needs.
+    /// - Returns: the downsampled image, or a full decode when ImageIO refuses.
+    private static func downsampled(_ data: Data, to edge: CGFloat) -> UIImage? {
+        let options = [kCGImageSourceShouldCache: false] as CFDictionary
+        guard let source = CGImageSourceCreateWithData(data as CFData, options) else {
+            return UIImage(data: data)
+        }
+        let request = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: edge,
+        ] as [CFString: Any] as CFDictionary
+        guard let cg = CGImageSourceCreateThumbnailAtIndex(source, 0, request) else {
+            return UIImage(data: data)
+        }
+        return UIImage(cgImage: cg)
     }
 }

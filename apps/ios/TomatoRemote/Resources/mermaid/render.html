@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body { margin: 0; padding: 8px; background: transparent; font-family: -apple-system, 'PingFang SC', sans-serif; }
+  #out { width: 100%; }
+  #out svg { max-width: 100%; height: auto; display: block; }
+</style>
+<!--
+  The Mermaid runtime is a 3.4 MB script. Injecting it as a WKUserScript copied
+  the whole file into the app's main thread on every page load; referencing it
+  from this page lets WebKit read and compile it in its own process instead.
+-->
+<script src="mermaid.min.js"></script>
+<script>
+  window.tomatoRender = async function (id, source, config) {
+    const out = document.getElementById('out');
+    out.innerHTML = '';
+    try {
+      mermaid.initialize(config);
+      const rendered = await mermaid.render(id, source);
+      out.innerHTML = rendered.svg;
+      const svg = out.querySelector('svg');
+      if (svg) {
+        // Mermaid fixes the SVG's pixel height from its own viewport; that
+        // height no longer matches once the width is the phone's, so let the
+        // aspect ratio drive it before measuring.
+        svg.removeAttribute('height');
+        svg.setAttribute('width', '100%');
+        svg.style.height = 'auto';
+        svg.style.maxWidth = '100%';
+      }
+      if (document.fonts && document.fonts.ready) { await document.fonts.ready; }
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const rect = out.getBoundingClientRect();
+      return { height: Math.ceil(rect.height), svg: rendered.svg };
+    } catch (error) {
+      return { height: -1, svg: '', error: String(error) };
+    }
+  };
+</script>
+</head>
+<body><div id="out"></div></body>
+</html>

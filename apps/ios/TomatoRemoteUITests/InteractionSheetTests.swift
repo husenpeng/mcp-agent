@@ -33,14 +33,19 @@ final class InteractionSheetTests: XCTestCase {
         XCTAssertTrue(pending.waitForExistence(timeout: 25), "pending approval did not reach the phone")
         pending.tap()
 
-        XCTAssertTrue(app.navigationBars["待处理"].waitForExistence(timeout: 5), "approval sheet did not open")
+        // The sheet draws its own header instead of a navigation bar, and the
+        // title carries the pending count.
+        let header = app.staticTexts
+            .matching(NSPredicate(format: "label BEGINSWITH %@", "待处理"))
+            .firstMatch
+        XCTAssertTrue(header.waitForExistence(timeout: 5), "approval sheet did not open")
         XCTAssertTrue(app.staticTexts["请求执行 bash"].exists, "approval card did not name the tool")
 
-        app.buttons["完成"].tap()
+        app.buttons["关闭"].tap()
         let gone = XCTNSPredicateExpectation(
             predicate: NSPredicate(format: "exists == false"),
-            object: app.navigationBars["待处理"]
+            object: header
         )
-        XCTAssertEqual(XCTWaiter().wait(for: [gone], timeout: 5), .completed, "完成 did not close the sheet")
+        XCTAssertEqual(XCTWaiter().wait(for: [gone], timeout: 5), .completed, "关闭 did not close the sheet")
     }
 }

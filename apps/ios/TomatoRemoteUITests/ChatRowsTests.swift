@@ -33,7 +33,7 @@ final class ChatRowsTests: XCTestCase {
     private func launchRich() -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = [
-            "-TOMATO_NO_LOCK", "-TOMATO_PREVIEW_PAIRING", (try? host()) ?? "http://127.0.0.1:43199",
+            "-TOMATO_NO_LOCK", "-TOMATO_PREVIEW_PAIRING", (try? host()) ?? "http://127.0.0.1:43201",
             "-TOMATO_OPEN_URL", "tomato://session/s3",
         ]
         app.launch()
@@ -86,6 +86,15 @@ final class ChatRowsTests: XCTestCase {
         )
     }
 
+    /// A conversation is a focused surface: the destination control belongs to
+    /// the list behind it and must not float over the composer.
+    func testFloatingControlLeavesConversationAlone() throws {
+        let app = try launch()
+        XCTAssertTrue(answer(in: app).waitForExistence(timeout: 20), "the conversation did not open")
+        let ball = app.buttons["app.tabBall"].firstMatch
+        XCTAssertFalse(ball.isHittable, "the destination control stayed over the conversation")
+    }
+
     /// The two speakers carry different row identities, so a reader can tell
     /// them apart and so this test can assert both are present.
     func testBothSpeakersRenderDistinctRows() throws {
@@ -119,9 +128,35 @@ final class ChatRowsTests: XCTestCase {
         // the copy action is addressed by its label because SwiftUI drops the
         // identifier inside a horizontally scrolling code block.
         XCTAssertTrue(
-            app.otherElements["流程图"].waitForExistence(timeout: 15),
+            diagram(in: app).waitForExistence(timeout: 15),
             "the diagram did not render"
         )
         XCTAssertTrue(app.buttons["复制代码"].exists, "the code block has no copy action")
+    }
+
+    /// The diagram opens at full size, where it can be zoomed, fitted, and have
+    /// its source copied; closing returns to the transcript.
+    func testDiagramOpensFullScreen() {
+        let app = launchRich()
+        let diagram = diagram(in: app)
+        XCTAssertTrue(diagram.waitForExistence(timeout: 20), "the diagram did not render")
+        diagram.tap()
+        let close = app.buttons["mermaid.close"]
+        XCTAssertTrue(close.waitForExistence(timeout: 10), "the full-screen reader did not open")
+        XCTAssertTrue(app.buttons["mermaid.fit"].exists, "no fit control")
+        XCTAssertTrue(app.buttons["mermaid.copy"].exists, "no copy control")
+        close.tap()
+        XCTAssertFalse(close.waitForExistence(timeout: 3), "the reader stayed open")
+    }
+
+    /// The rendered diagram.
+    ///
+    /// The assistant row owns the accessibility identifier of every child, so
+    /// the diagram is addressed by the label it sets itself rather than by an
+    /// identifier that SwiftUI would overwrite.
+    /// - Parameter app: the running application.
+    /// - Returns: the diagram element.
+    private func diagram(in app: XCUIApplication) -> XCUIElement {
+        app.otherElements["流程图"].firstMatch
     }
 }

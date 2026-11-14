@@ -341,8 +341,15 @@ enum PhoneJSON: Codable, Equatable, Sendable {
         }
     }
 
+    /// Whole number a runner reported, when it fits an `Int`. A malformed value
+    /// must not trap while the app reads a device event.
     var intValue: Int? {
-        doubleValue.map { Int($0) }
+        guard let value = doubleValue,
+              value.isFinite,
+              value > -9_000_000_000_000_000_000,
+              value < 9_000_000_000_000_000_000
+        else { return nil }
+        return Int(value)
     }
 
     var boolValue: Bool? {

@@ -129,5 +129,7 @@
 			</array>
 		</dict>
 	</array>
+	<key>TomatoCompanyAuthBase</key>
+	<string>https://test.tomatoai.vip</string>
 </dict>
 </plist>

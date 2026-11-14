@@ -586,6 +586,38 @@ USB 通道 + `provider.kind = script` 的任务在设备上跑通：
 
 调试入口（均在 `#if DEBUG`）：`DebugModelSeed`（读 `Documents/model-seed.json`，写完即删）、`DebugPhoneRun`（配对/代理/轮询/写结果）、`DebugModelProxy`（`127.0.0.1:8201` 转发）、`DebugKeepAlive`（静音音频）。
 
+### 9.2e 2026-11-13 续做：Tomato Phone 会话列表
+
+| 改动 | 说明 |
+|---|---|
+| `TomatoRemote/PhoneAgent/PhoneConversations.swift` | 一次会话一个 JSON 文件，位置为 `Application Support/TomatoRemotePhone/conversations/<id>.json`；列表行从标题、最新一条人与 agent 的发言、时间与条数投影，tool 输出不进预览 |
+| 会话命名 | 首条消息取前 18 字（空白折成一行）；只有附件时按「照片对话 / 文档对话 / 文档名」命名；未发送的空白会话不进入列表 |
+| `TomatoRemote/PhoneAgent/PhoneConversationListSheet.swift` | 头部标题改为「当前会话」入口，打开历史面板；面板内可新建、搜索、切换、滑动重命名与删除；当前会话有标记，回答中显示运行点 |
+| `TomatoRemote/PhoneAgent/AgentCore.swift` | `PhoneAgentModel` 持有当前会话与历史行；发送即落盘并刷新标题/预览；切换或停止时回合 token 递增，旧回合不再写入，避免回答串进新会话 |
+| 旧数据 | 旧版单个 `thread.json` 首次启动导入为一个会话，原文件归档为 `thread.json.migrated`；之后删光会话不会让它复活 |
+| 删除 | 删除当前会话后打开剩余最新会话，没有则回到空白会话；只属于该会话的附件一并删除，别的会话仍引用时不删 |
+| 调试入口 | `-TOMATO_PHONE_HISTORY`（打开面板）、`-TOMATO_PHONE_SAMPLE_HISTORY`（空历史时放两条示例）、`-TOMATO_CLEAR_PHONE_HISTORY`（清空本机历史），均在 `#if DEBUG` |
+| 截图 | `screenshots/2026-11-13-phone-history.png`、`screenshots/2026-11-13-phone-history-empty.png`、`screenshots/2026-11-13-phone-conversation.png` |
+| 测试 | `TomatoRemoteTests/PhoneConversationsTests.swift`（10 项：命名、预览、落盘、迁移、删除附件）；`TomatoRemoteUITests/PhoneHistoryTests.swift`（3 项：切换、新会话、滑动重命名）；单元与 UI 测试在 iOS 27 模拟器通过，真机未验 |
+
+### 9.2f 2026-11-13 修复对话内链接点击
+
+消息里的 Markdown 链接原先全部交给系统打开：绝对路径在手机上并不存在，点击没有反应；消息滚动的 `TapGesture` 还可能与链接竞争。现在 `TomatoRemote/Session/ChatLinks.swift` 把绝对路径和 `file://` 识别为 Host 文件，`ChatView` 的 `openURL` 处理器用 `FilePreviewSheet` 打开 Host 的 `/api/file` 预览；`tomato://` 走 App 路由，其余 URL 仍交给系统。预览没有配对 Host 时直接报「未连接 Mac」，不再停在加载中。`PhoneAgentView` 的同类点击手势一并移除，键盘仍可由拖拽与输入框的收起按钮关闭。`TomatoRemoteTests/ChatLinkTests.swift` 覆盖路径分类与预览失败；Mock Host 探针实测「点文件链接 → 打开预览」通过。
+
+### 9.2g 2026-11-13 续做：正文表格与过程折叠
+
+正文里的表格不是 Mermaid，而是 Markdown pipe table；旧解析器只认标题、段落、代码、列表和 Mermaid，所以竖线原样显示。`Session/MarkdownBlocks.swift` 现在识别表头、分隔行、列对齐，补齐或截断不齐的列，并处理 `\|`；`Session/MarkdownTable.swift` 对短单元格用可横向滚动的网格，对长中文用每行一张带列名的卡片。Mermaid 仍由内置 v11.17.2 渲染，本轮没有新增 Mermaid 语法清理器。
+
+Tomato Phone 的过程：`PhoneAgent/PhoneTranscript.swift` 把一轮里的思考、工具前说明、工具结果折成一个 `PhoneProcessGroup`；默认一行「处理过程 · 思考 N · 工具 M」，展开后一项一行；思考行再点开全文，工具行点开执行结果。回答只保留正文，思考不再在回答上方重复；流式思考加入最后一组并显示运行状态。
+
+测试：`MarkdownParserTests`（表格解析、对齐、补齐、转义、全宽）与 `PhoneTranscriptTests`（折叠、分组、提案、实时）共 11 项；截图见 `screenshots/2026-11-13-phone-process.png`、`screenshots/2026-11-13-phone-table.png`。
+
+### 9.2h 2026-11-13 真机会话列表 watchdog 卡死与修复
+
+18:38:56 的 iPhone 15 Pro 崩溃是 `0x8BADF00D` scene-update watchdog：主线程 10.05 秒都在 SwiftUICore 布局里，不是异常，也不是内存不足。18:25–18:30 的几份是 DEBUG `tomato://crash` 自测。崩溃发生在会话列表页；旧实现把每个文件夹的全部会话放进一个 `DisclosureGroup` 行，285 条会话时这一行会整批参与布局。`SessionListView` 改为 `Section(isExpanded:)`，每个会话保持独立 List 行并按需实例化；文件夹头保留运行数、总数和展开箭头。[修复后的真机列表](screenshots/2026-11-13-session-list-fix.png)。
+
+新增 `Diagnostics/LastActivity.swift`：`AppLog.mark` / `screen` 同步写 `last-activity.txt`（异步日志在 SIGKILL 时会丢），下次启动读取上一轮并写「上次最后操作」；SIGKILL 无法被 CrashGuard 捕获，仍需系统 `.ips` / MetricKit 对照。验证：285 条 mock 会话的模拟器滚动 probe（12 上 / 12 下）通过；`LastActivityTests` 3 项通过；最新 DEBUG 包已装到 iPhone 15 Pro，真机 285 条列表加载 425ms、无新增 `.ips`。
+
 ### 9.3 未验证
 
 - **真实模型调用**：已由 §9.2d 验证（App 代理 + 静音保活）；runner 进程直连外网仍不可用，属平台限制。

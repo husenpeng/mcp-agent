@@ -42,9 +42,11 @@ extension View {
     func tomatoScrollEdge() -> some View {
         if #available(iOS 26.0, *) {
             // A soft effect on every edge washed out the transcript far above
-            // the dock. The bottom edge keeps a crisp fade; the top edge stays
-            // legible under the navigation bar.
+            // the dock. Both edges keep a crisp fade: without it, list rows
+            // stayed legible through the search field and the title while the
+            // page scrolled under them.
             scrollEdgeEffectStyle(.hard, for: .bottom)
+                .scrollEdgeEffectStyle(.hard, for: .top)
         } else {
             self
         }

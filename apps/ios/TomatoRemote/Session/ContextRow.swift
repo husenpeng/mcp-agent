@@ -37,9 +37,11 @@ struct ContextRow: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 7)
                 .background(TomatoToken.bgLayer2, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                // Same treatment as the process fold: a ~30 pt caption row whose
+                // disclosure is worth a 44 pt touch area.
+                .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous).inset(by: -7))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(TomatoPressableStyle())
             .accessibilityIdentifier("chat.row.context")
 
             if expanded {

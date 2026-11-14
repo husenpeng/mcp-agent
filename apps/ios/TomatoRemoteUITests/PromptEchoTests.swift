@@ -23,7 +23,7 @@ final class PromptEchoTests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = try ["-TOMATO_NO_LOCK", "-TOMATO_PREVIEW_PAIRING", host()]
         app.launch()
-        app.tabBars.buttons["会话"].tap()
+        app.openTab(.sessions)
         let row = app.staticTexts["历史三种用户消息"].firstMatch
         // The conversation this test types into belongs to the fixture Host; a
         // Host without it has nothing this test may safely send a prompt to.
@@ -57,5 +57,64 @@ final class PromptEchoTests: XCTestCase {
         // aside instead of staying beside it.
         Thread.sleep(forTimeInterval: 6)
         XCTAssertEqual(promptRows(in: app).count, 1, "the acknowledged prompt is drawn twice")
+    }
+
+    /// Typing into the composer must not blank the conversation behind it.
+    func testTypingKeepsTranscriptVisible() throws {
+        let app = XCUIApplication()
+        app.launchArguments = try ["-TOMATO_NO_LOCK", "-TOMATO_PREVIEW_PAIRING", host()]
+        app.launch()
+        app.openTab(.sessions)
+        let row = app.staticTexts["修 CI 的 flaky 测试"].firstMatch
+        guard row.waitForExistence(timeout: 20) else {
+            throw XCTSkip("the Host lists no long transcript to type into")
+        }
+        row.tap()
+
+        let answer = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "第 22 轮回答")).firstMatch
+        XCTAssertTrue(answer.waitForExistence(timeout: 10), "long transcript did not load")
+
+        let field = app.descendants(matching: .any)["composer.input"]
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "the composer did not open")
+        field.tap()
+        field.typeText("测试输入过程中是否白屏")
+
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "typing"
+        shot.lifetime = .keepAlways
+        add(shot)
+        XCTAssertTrue(answer.isHittable, "the transcript went blank while typing")
+    }
+
+    /// Typing after scrolling up must keep the rows the reader left on screen.
+    func testTypingAfterScrollingKeepsTranscriptVisible() throws {
+        let app = XCUIApplication()
+        app.launchArguments = try ["-TOMATO_NO_LOCK", "-TOMATO_PREVIEW_PAIRING", host()]
+        app.launch()
+        app.openTab(.sessions)
+        let row = app.staticTexts["修 CI 的 flaky 测试"].firstMatch
+        guard row.waitForExistence(timeout: 20) else {
+            throw XCTSkip("the Host lists no long transcript to type into")
+        }
+        row.tap()
+
+        let answer = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "第 22 轮回答")).firstMatch
+        XCTAssertTrue(answer.waitForExistence(timeout: 10))
+
+        app.swipeDown()
+        app.swipeDown()
+
+        let field = app.descendants(matching: .any)["composer.input"]
+        XCTAssertTrue(field.waitForExistence(timeout: 10))
+        field.tap()
+        field.typeText("往上翻之后再输入")
+
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "typing-after-scroll"
+        shot.lifetime = .keepAlways
+        add(shot)
+        let visible = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "轮回答")).allElementsBoundByIndex
+            .filter(\.isHittable)
+        XCTAssertFalse(visible.isEmpty, "the transcript went blank after typing while scrolled up")
     }
 }

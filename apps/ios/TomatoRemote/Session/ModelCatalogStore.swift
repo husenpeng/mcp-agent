@@ -53,8 +53,10 @@ final class ModelCatalogStore: ObservableObject {
         let hostId = hub.base.absoluteString
         if host != hostId {
             host = hostId
-            catalog = nil
-            status = .idle
+            // The previous answer for this Host paints the picker at once; the
+            // read below still revalidates it.
+            catalog = HostSnapshots.read(ModelCatalog.self, key: Self.snapshotKey(hostId))
+            status = catalog == nil ? .idle : .ready
             error = nil
             inflight = nil
             loadedAt = nil
@@ -86,6 +88,7 @@ final class ModelCatalogStore: ObservableObject {
             catalog = value
             status = .ready
             loadedAt = Date()
+            HostSnapshots.write(value, key: Self.snapshotKey(hostId))
             let models = value.groups.reduce(0) { $0 + $1.models.count }
             AppLog.info(
                 .model,
@@ -115,5 +118,12 @@ final class ModelCatalogStore: ObservableObject {
     /// The model a deployment routes when a Session has recorded no choice yet.
     var defaultRoute: ModelRoute? {
         catalog?.defaultRoute
+    }
+
+    /// Snapshot key of one Host's catalog.
+    /// - Parameter base: the paired Host's base address.
+    /// - Returns: the key the buffer is read and written under.
+    private static func snapshotKey(_ base: String) -> String {
+        "modelCatalog-\(base)"
     }
 }

@@ -4,6 +4,7 @@ TomatoRemote.xcodeproj/
 # Build output. The sandbox cannot write to ~/Library/Developer/Xcode/DerivedData,
 # so builds pass `-derivedDataPath .derived` inside this directory.
 .derived/
+.derived-device/
 
 *.xcuserstate
 xcuserdata/

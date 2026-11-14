@@ -50,71 +50,38 @@ enum MemoryFootprint {
 /// Append-only log file with a size cap and one previous generation.
 ///
 /// Writes are serialized on a utility queue, so a network callback never waits
-/// for the disk and two threads never interleave a line.
-final class LogFileWriter: @unchecked Sendable {
-    static let shared = LogFileWriter()
-
-    let directory: URL
-    private(set) var currentURL: URL
-    private(set) var previousURL: URL
-
+/// for the disk and two threads never interleave a line. Every stored value is
+/// static and first touched inside the queue: a singleton initialized on the
+/// first log call made launch create the directory and open the file on the
+/// main thread.
+enum LogFileWriter {
+    private static let queue = DispatchQueue(label: "ai.tomato.remote.log.file", qos: .utility)
     /// Bytes allowed before the run rotates its own file.
-    private let limit: UInt64 = 2 * 1024 * 1024
+    private static let limit: UInt64 = 2 * 1024 * 1024
 
-    private let queue = DispatchQueue(label: "ai.tomato.remote.log.file", qos: .utility)
-    private var handle: FileHandle?
-    private var bytes: UInt64 = 0
+    // Queue-only state.
+    private static var handle: FileHandle?
+    private static var bytes: UInt64 = 0
+    private static var prepared = false
 
-    private init() {
-        directory = DiagnosticsStorage.directory
-        currentURL = directory.appendingPathComponent("tomato-remote.log")
-        previousURL = directory.appendingPathComponent("tomato-remote.previous.log")
-        // A new run starts a new file; the tail from the run that just ended is
-        // exactly what a crash report needs. The move happens on the writer
-        // queue so the app's first frame never waits for the disk.
-        queue.async { [weak self] in
-            self?.archivePreviousRun()
-        }
-    }
-
-    /// Move the run that just ended into the previous-run slot.
-    private func archivePreviousRun() {
-        try? FileManager.default.removeItem(at: previousURL)
-        if FileManager.default.fileExists(atPath: currentURL.path) {
-            try? FileManager.default.moveItem(at: currentURL, to: previousURL)
-        }
-    }
-
-    /// Append one already-formatted line.
-    /// @param line: text without the trailing newline.
-    func append(_ line: String) {
-        guard let data = (line + "\n").data(using: .utf8) else { return }
-        queue.async { [weak self] in
-            guard let self else { return }
-            if self.handle == nil {
-                open()
-            }
-            guard let handle else { return }
-            do {
-                _ = try handle.seekToEnd()
-                try handle.write(contentsOf: data)
-                bytes += UInt64(data.count)
-            } catch {
-                self.handle = nil
-                return
-            }
-            if bytes > limit {
-                rotate()
-            }
+    /// Append one record. The line, including its timestamp, is formatted on
+    /// the writer queue rather than on the caller's thread.
+    /// @param entry: record to write.
+    static func append(_ entry: AppLogEntry) {
+        queue.async {
+            prepareIfNeeded()
+            guard let data = (entry.line + "\n").data(using: .utf8) else { return }
+            write(data)
         }
     }
 
     /// Tail of the previous run.
     /// @param limit: maximum lines returned, oldest first.
     /// @returns the lines, or an empty string when the previous run wrote none.
-    func tailText(limit: Int) -> String {
+    static func tailText(limit: Int) -> String {
         queue.sync {
-            guard let data = try? Data(contentsOf: previousURL), !data.isEmpty else { return "" }
+            let (_, previous) = urls()
+            guard let data = try? Data(contentsOf: previous), !data.isEmpty else { return "" }
             let text = String(data: data, encoding: .utf8) ?? ""
             let lines = text.split(separator: "\n", omittingEmptySubsequences: true)
             return lines.suffix(max(1, limit)).joined(separator: "\n")
@@ -122,32 +89,77 @@ final class LogFileWriter: @unchecked Sendable {
     }
 
     /// Remove this run's file and start a fresh one.
-    func clearCurrent() {
-        queue.async { [weak self] in
-            guard let self else { return }
+    static func clearCurrent() {
+        queue.async {
+            prepareIfNeeded()
             try? handle?.close()
             handle = nil
             bytes = 0
-            try? FileManager.default.removeItem(at: currentURL)
+            let (current, _) = urls()
+            try? FileManager.default.removeItem(at: current)
             open()
         }
     }
 
     // MARK: Queue-only helpers
 
-    private func open() {
-        if !FileManager.default.fileExists(atPath: currentURL.path) {
-            FileManager.default.createFile(atPath: currentURL.path, contents: nil)
+    /// Paths for this run and the previous one, created on first use.
+    /// - Returns: the current and previous log files.
+    private static func urls() -> (current: URL, previous: URL) {
+        let directory = DiagnosticsStorage.directory
+        return (
+            directory.appendingPathComponent("tomato-remote.log"),
+            directory.appendingPathComponent("tomato-remote.previous.log")
+        )
+    }
+
+    /// Archive the run that just ended, then open this run's file. Runs once.
+    private static func prepareIfNeeded() {
+        guard !prepared else {
+            if handle == nil {
+                open()
+            }
+            return
         }
-        handle = try? FileHandle(forWritingTo: currentURL)
+        prepared = true
+        let (current, previous) = urls()
+        try? FileManager.default.removeItem(at: previous)
+        if FileManager.default.fileExists(atPath: current.path) {
+            try? FileManager.default.moveItem(at: current, to: previous)
+        }
+        open()
+    }
+
+    private static func write(_ data: Data) {
+        guard let handle else { return }
+        do {
+            _ = try handle.seekToEnd()
+            try handle.write(contentsOf: data)
+            bytes += UInt64(data.count)
+        } catch {
+            self.handle = nil
+            return
+        }
+        if bytes > limit {
+            rotate()
+        }
+    }
+
+    private static func open() {
+        let (current, _) = urls()
+        if !FileManager.default.fileExists(atPath: current.path) {
+            FileManager.default.createFile(atPath: current.path, contents: nil)
+        }
+        handle = try? FileHandle(forWritingTo: current)
         bytes = (try? handle?.seekToEnd()) ?? 0
     }
 
-    private func rotate() {
+    private static func rotate() {
+        let (current, previous) = urls()
         try? handle?.close()
         handle = nil
-        try? FileManager.default.removeItem(at: previousURL)
-        try? FileManager.default.moveItem(at: currentURL, to: previousURL)
+        try? FileManager.default.removeItem(at: previous)
+        try? FileManager.default.moveItem(at: current, to: previous)
         bytes = 0
         open()
     }

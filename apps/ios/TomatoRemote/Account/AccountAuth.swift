@@ -2,13 +2,14 @@
 //  AccountAuth.swift
 //  Tomato Remote
 //
-//  The Host gateway account session this phone obtained by Feishu sign-in.
+//  The Feishu account session this phone obtained from the company BFF.
 //
 //  Pairing authenticates the device; the account session authenticates the
-//  person. The gateway keeps the person in `tomato_session`, which the sign-in
-//  page writes as an HttpOnly cookie. This store keeps only that value in the
-//  Keychain and appends it to every Host request beside the pairing cookie, so
-//  the account screen and the phone's web tools can act as the signed-in person.
+//  person. The BFF keeps the person in `session_id`, which its Feishu callback
+//  writes as an HttpOnly cookie. This store keeps only that value in the
+//  Keychain, presents it to the company search route as `session_id`, and adds
+//  it to Host requests as `tomato_session` so the paired gateway can verify the
+//  same auth_service session.
 //
 
 import Foundation
@@ -36,7 +37,10 @@ final class AccountAuthStore: ObservableObject {
         load()
     }
 
-    /// Cookie header for the gateway account session, or nil when signed out.
+    /// Cookie header for the Host gateway, or nil when signed out.
+    ///
+    /// The gateway owns a cookie of a different name but the same auth_service
+    /// session value, so a paired Host verifies the phone's account with it.
     var accountCookie: String? {
         guard let sessionId, !sessionId.isEmpty else { return nil }
         return "tomato_session=\(sessionId)"
@@ -60,8 +64,8 @@ final class AccountAuthStore: ObservableObject {
 
     /// Record one completed sign-in.
     /// - Parameters:
-    ///   - sessionId: value of the gateway's `tomato_session` cookie.
-    ///   - searchBaseURL: company origin the sign-in passed through, when seen.
+    ///   - sessionId: value of the BFF's `session_id` cookie.
+    ///   - searchBaseURL: company origin the sign-in ran against.
     func save(sessionId: String, searchBaseURL: String?) {
         let clean = sessionId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty else { return }

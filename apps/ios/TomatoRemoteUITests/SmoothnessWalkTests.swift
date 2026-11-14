@@ -24,8 +24,8 @@ final class SmoothnessWalkTests: XCTestCase {
         app.launchArguments = ["-TOMATO_NO_LOCK", "-TOMATO_FRAME_LOG", "-TOMATO_PREVIEW_PAIRING", host]
         app.launch()
 
-        XCTAssertTrue(app.tabBars.buttons["会话"].waitForExistence(timeout: 30), "tab bar did not appear")
-        app.tabBars.buttons["会话"].tap()
+        XCTAssertTrue(app.waitForTabBall(timeout: 30), "the floating destination control did not appear")
+        app.openTab(.sessions)
         XCTAssertTrue(app.navigationBars["会话"].waitForExistence(timeout: 10), "会话 tab did not open")
 
         // Session list: two full swipes exercise folder grouping and row layout.
@@ -70,11 +70,11 @@ final class SmoothnessWalkTests: XCTestCase {
             app.navigationBars.buttons.element(boundBy: 0).tap()
         }
 
-        walkTab(app, label: "今天", title: "今天")
-        walkTab(app, label: "智能体", title: "智能体")
-        walkTab(app, label: "群聊", title: "群聊")
+        walkTab(app, tab: .home, title: "记忆")
+        walkTab(app, tab: .robots, title: "智能体")
+        walkTab(app, tab: .rooms, title: "群聊")
 
-        app.tabBars.buttons["账号"].tap()
+        app.openTab(.account)
         XCTAssertTrue(app.navigationBars["账号"].waitForExistence(timeout: 10), "账号 tab did not open")
 
         let logs = app.buttons["account.logs"]
@@ -88,9 +88,9 @@ final class SmoothnessWalkTests: XCTestCase {
         }
 
         // A second pass separates first-render cost from steady-state cost.
-        app.tabBars.buttons["会话"].tap()
-        for label in ["今天", "智能体", "群聊", "账号", "会话"] {
-            app.tabBars.buttons[label].tap()
+        app.openTab(.sessions)
+        for tab in [TomatoTab.home, .robots, .rooms, .account, .sessions] {
+            app.openTab(tab)
         }
     }
 
@@ -107,27 +107,19 @@ final class SmoothnessWalkTests: XCTestCase {
         app.navigationBars.buttons.element(boundBy: 0).tap()
     }
 
-    /// Isolate the Session list: no tab tour, no chat, only repeated swipes.
+    /// Isolate the Session list: no destination tour, no chat, only repeated swipes.
     /// The frame log then answers whether the list itself drops frames.
     func testSessionListScrollOnly() throws {
-        try scrollSessionList(extraArguments: [])
-    }
-
-    /// The same scroll with the tab bar's collapse animation disabled, so the
-    /// log shows whether that animation owns the dropped frames.
-    func testSessionListScrollWithoutTabMinimize() throws {
-        try scrollSessionList(extraArguments: ["-TOMATO_NO_TAB_MINIMIZE"])
+        try scrollSessionList()
     }
 
     /// Launch, open the Session list, and swipe it three times each way.
-    /// - Parameter extraArguments: flags appended to the standard launch.
-    private func scrollSessionList(extraArguments: [String]) throws {
+    private func scrollSessionList() throws {
         let app = XCUIApplication()
         app.launchArguments = ["-TOMATO_NO_LOCK", "-TOMATO_FRAME_LOG", "-TOMATO_PREVIEW_PAIRING", host]
-            + extraArguments
         app.launch()
-        XCTAssertTrue(app.tabBars.buttons["会话"].waitForExistence(timeout: 30), "tab bar did not appear")
-        app.tabBars.buttons["会话"].tap()
+        XCTAssertTrue(app.waitForTabBall(timeout: 30), "the floating destination control did not appear")
+        app.openTab(.sessions)
         XCTAssertTrue(app.navigationBars["会话"].waitForExistence(timeout: 10), "会话 tab did not open")
 
         let list = app.collectionViews.firstMatch
@@ -140,8 +132,19 @@ final class SmoothnessWalkTests: XCTestCase {
         sleep(2)
     }
 
-    private func walkTab(_ app: XCUIApplication, label: String, title: String) {
-        app.tabBars.buttons[label].tap()
-        XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: 10), "\(label) tab did not open")
+    private func walkTab(_ app: XCUIApplication, tab: TomatoTab, title: String) {
+        app.openTab(tab)
+        if tab == .home {
+            // The dashboard owns its compact header; it has no navigation bar.
+            XCTAssertTrue(
+                app.descendants(matching: .any)["home.header"].firstMatch.waitForExistence(timeout: 10),
+                "\(tab.rawValue) destination did not open"
+            )
+        } else {
+            XCTAssertTrue(
+                app.navigationBars[title].waitForExistence(timeout: 10),
+                "\(tab.rawValue) destination did not open"
+            )
+        }
     }
 }

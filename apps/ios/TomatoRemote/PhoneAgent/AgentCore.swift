@@ -673,11 +673,11 @@ final class AgentCapabilityStore: ObservableObject {
             return "已向主人发出添加提议。"
         case "web_search":
             let query = arguments["query"]?.stringValue ?? ""
-            let limit = arguments["maxResults"]?.doubleValue.map { Int($0) }
+            let limit = arguments["maxResults"]?.doubleValue.map { finiteInt($0) }
             return try await PhoneWebTools.search(query: query, maxResults: limit)
         case "web_fetch":
             let url = arguments["url"]?.stringValue ?? ""
-            let limit = arguments["maxChars"]?.doubleValue.map { Int($0) }
+            let limit = arguments["maxChars"]?.doubleValue.map { finiteInt($0) }
             return try await PhoneWebTools.fetch(url: url, maxChars: limit)
         default:
             guard let item = items.first(where: { $0.enabled && $0.tools.contains { $0.name == name } }) else {
@@ -781,6 +781,9 @@ struct AgentMessage: Codable, Identifiable, Equatable {
     var toolName: String?
     var toolCallId: String?
     var toolCalls: [AgentToolCall]?
+    /// Thinking the endpoint streamed before this message's text, when it sends
+    /// any. Optional so a thread persisted before this was kept still decodes.
+    var reasoning: String?
     var proposal: AgentProposal?
     /// Files that rode with a user message. Optional so a thread persisted
     /// before attachments existed still decodes.
@@ -802,35 +805,127 @@ struct AgentToolCall: Codable, Equatable {
 
 // MARK: - Agent
 
-/// The local agent loop and its transcript.
+/// The local agent loop and the conversation on screen.
 @MainActor
 final class PhoneAgentModel: ObservableObject {
-    /// One transcript per app: the UI and the debug seed must observe the same turn.
+    /// One agent per app: the UI and the debug seed must observe the same turn.
     static let shared = PhoneAgentModel()
 
-    @Published private(set) var messages: [AgentMessage] = []
+    /// The conversation the transcript, header, and composer act on.
+    @Published private(set) var activeConversation: PhoneConversation
+    /// The history rows, newest first. A blank conversation is not a row until
+    /// its first message has been sent.
+    @Published private(set) var conversations: [PhoneConversationSummary] = []
     @Published private(set) var isRunning = false
     /// The answer as the endpoint streams it. The screen draws this in place of
-    /// a pending row; the finished text moves into `messages`.
+    /// a pending row; the finished text moves into the transcript.
     @Published private(set) var streamingText = ""
+    /// Thinking the endpoint is streaming for the running step, kept beside the
+    /// answer so the selected reasoning depth shows what it produced.
+    @Published private(set) var streamingReasoning = ""
+    /// Whether the history is being read from disk. The first read happens when
+    /// the phone tab appears instead of inside `init`, so launch never decodes a
+    /// long transcript on the main thread.
+    @Published private(set) var isLoadingHistory = false
     @Published var errorMessage: String?
 
     private var task: Task<Void, Never>?
-    private let file: URL
-    /// Staged photos and extracted document text live beside the thread, so a
-    /// persisted message carries file names instead of megabytes of bytes.
-    private let attachments: URL
+    /// The one history read; every caller waits on it.
+    private var historyTask: Task<Void, Never>?
+    /// Whether the on-disk history has been read. A prompt sent before the read
+    /// finished waits for it instead of writing into a conversation that the
+    /// loaded history would then replace.
+    private var historyLoaded = false
+    /// A prompt waiting for the history read; a second tap is ignored rather
+    /// than sent twice.
+    private var waitingForHistory = false
+    /// Conversations and the files their messages carry live on disk, so a
+    /// persisted message refers to a file name instead of megabytes of bytes.
+    private let conversationStore: PhoneConversationStore
     private let store = AgentCapabilityStore.shared
+    /// Identifies the turn allowed to write the transcript. A stopped turn may
+    /// still be unwinding; its writes must not land in another conversation.
+    private var turn = 0
+
+    /// The transcript of the conversation on screen.
+    var messages: [AgentMessage] {
+        activeConversation.messages
+    }
+
+    /// Identity of the conversation on screen; the composer clears its staged
+    /// draft when this changes.
+    var activeConversationId: String {
+        activeConversation.id
+    }
+
+    /// Title the header shows for the conversation on screen.
+    var currentTitle: String {
+        activeConversation.title
+    }
 
     init() {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSTemporaryDirectory())
         let folder = base.appendingPathComponent("TomatoRemotePhone", isDirectory: true)
-        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        file = folder.appendingPathComponent("thread.json")
-        attachments = folder.appendingPathComponent("attachments", isDirectory: true)
-        try? FileManager.default.createDirectory(at: attachments, withIntermediateDirectories: true)
-        messages = (try? JSONDecoder().decode([AgentMessage].self, from: Data(contentsOf: file))) ?? []
+        #if DEBUG
+            // A UI test or a design check starts from an empty history; a release
+            // build never removes the owner's conversations.
+            if ProcessInfo.processInfo.arguments.contains("-TOMATO_CLEAR_PHONE_HISTORY") {
+                try? FileManager.default.removeItem(at: folder.appendingPathComponent("conversations", isDirectory: true))
+                try? FileManager.default.removeItem(at: folder.appendingPathComponent("thread.json"))
+                try? FileManager.default.removeItem(at: folder.appendingPathComponent("thread.json.migrated"))
+            }
+        #endif
+        conversationStore = PhoneConversationStore(
+            folder: folder.appendingPathComponent("conversations", isDirectory: true),
+            attachments: folder.appendingPathComponent("attachments", isDirectory: true),
+            legacyThread: folder.appendingPathComponent("thread.json")
+        )
+        activeConversation = PhoneConversation()
+    }
+
+    /// Read the conversations this phone kept, once, off the main thread.
+    ///
+    /// The read decodes every stored transcript, so it scales with the history
+    /// a person has built; doing it in `init` made launch wait for the whole
+    /// history. A second caller waits on the same read instead of starting one.
+    func loadHistoryIfNeeded() async {
+        if historyLoaded {
+            return
+        }
+        if let historyTask {
+            await historyTask.value
+            return
+        }
+        let store = conversationStore
+        let started = CFAbsoluteTimeGetCurrent()
+        isLoadingHistory = true
+        let task = Task { @MainActor [weak self] in
+            let loaded = await Task.detached(priority: .utility) {
+                store.migrateLegacyThread()
+            }.value
+            guard let self else { return }
+            isLoadingHistory = false
+            historyLoaded = true
+            AppLog.info(
+                .session,
+                "Phone 历史已载入",
+                detail: "\(loaded.count) 个会话 · \(Int(((CFAbsoluteTimeGetCurrent() - started) * 1000).rounded())) ms"
+            )
+            conversations = loaded.map(\.summary)
+            if activeConversation.isEmpty {
+                activeConversation = loaded.first ?? PhoneConversation()
+                return
+            }
+            // A prompt sent while the read was in flight owns the screen; keep
+            // its row and take the rest of the history behind it.
+            if !conversations.contains(where: { $0.id == activeConversation.id }) {
+                conversations.append(activeConversation.summary)
+                conversations.sort { $0.updatedAt > $1.updatedAt }
+            }
+        }
+        historyTask = task
+        await task.value
     }
 
     /// Send one message, with photos and a document, and let the agent answer.
@@ -839,16 +934,117 @@ final class PhoneAgentModel: ObservableObject {
     ///   - images: downscaled JPEG bytes from the library or camera.
     ///   - document: a file already read to text.
     func send(_ text: String, images: [Data] = [], document: AgentDocument? = nil) {
-        guard !isRunning else { return }
+        guard !isRunning, !waitingForHistory else { return }
+        guard historyLoaded else {
+            // The tab opens during the read; hold the one prompt the person
+            // typed instead of writing into a conversation the history would
+            // replace a moment later.
+            waitingForHistory = true
+            Task { [weak self] in
+                guard let self else { return }
+                await loadHistoryIfNeeded()
+                waitingForHistory = false
+                send(text, images: images, document: document)
+            }
+            return
+        }
+        errorMessage = nil
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         let files = stage(images: images, document: document)
         guard !trimmed.isEmpty || !files.isEmpty else { return }
-        messages.append(AgentMessage(role: .user, text: trimmed, attachments: files.isEmpty ? nil : files))
+        let message = AgentMessage(role: .user, text: trimmed, attachments: files.isEmpty ? nil : files)
+        if activeConversation.isEmpty {
+            activeConversation.title = PhoneConversation.title(for: message)
+            activeConversation.createdAt = .now
+        }
+        append(message)
         persist()
-        task = Task { await run() }
+        let token = beginTurn()
+        task = Task { await run(token: token) }
     }
 
-    /// Write the staged files beside the thread and describe them.
+    /// Start a blank conversation; the one on screen stays in the history.
+    func startNewConversation() {
+        stop()
+        errorMessage = nil
+        activeConversation = PhoneConversation()
+    }
+
+    /// Show one stored conversation.
+    ///
+    /// A running turn belongs to the conversation it started in, so changing
+    /// conversations stops it before the transcript is replaced.
+    /// - Parameter id: identity from the history list.
+    func selectConversation(_ id: String) {
+        guard id != activeConversation.id else { return }
+        guard let conversation = conversationStore.load(id) else {
+            AppLog.error(.session, "Phone 会话读取失败", detail: String(id.prefix(8)))
+            errorMessage = "会话读取失败，可能已经被删除。"
+            return
+        }
+        stop()
+        errorMessage = nil
+        activeConversation = conversation
+    }
+
+    /// Rename one stored conversation.
+    /// - Parameters:
+    ///   - id: identity from the history list.
+    ///   - title: the name the list should show.
+    func rename(_ id: String, to title: String) {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty,
+              var conversation = id == activeConversation.id
+              ? activeConversation
+              : conversationStore.load(id)
+        else { return }
+        conversation.title = trimmed
+        do {
+            try conversationStore.save(conversation)
+        } catch {
+            AppLog.error(.session, "Phone 会话重命名失败", detail: error.localizedDescription)
+            errorMessage = "会话没能保存：\(error.localizedDescription)"
+            return
+        }
+        if id == activeConversation.id {
+            activeConversation.title = trimmed
+        }
+        if let index = conversations.firstIndex(where: { $0.id == id }) {
+            conversations[index].title = trimmed
+        }
+    }
+
+    /// Delete one stored conversation and the files only it carried.
+    ///
+    /// Deleting the conversation on screen opens the newest one that remains, or
+    /// a blank conversation when none does.
+    /// - Parameter summary: the history row to remove.
+    func delete(_ summary: PhoneConversationSummary) {
+        let isActive = summary.id == activeConversation.id
+        guard let conversation = conversationStore.load(summary.id) else {
+            conversations.removeAll { $0.id == summary.id }
+            if isActive {
+                startNewConversation()
+            }
+            return
+        }
+        if isActive {
+            stop()
+        }
+        do {
+            try conversationStore.delete(conversation)
+        } catch {
+            AppLog.error(.session, "Phone 会话删除失败", detail: error.localizedDescription)
+            errorMessage = "会话没能删除：\(error.localizedDescription)"
+            return
+        }
+        conversations.removeAll { $0.id == summary.id }
+        guard isActive else { return }
+        errorMessage = nil
+        activeConversation = conversations.first.flatMap { conversationStore.load($0.id) } ?? PhoneConversation()
+    }
+
+    /// Write the staged files beside the conversation and describe them.
     /// - Parameters:
     ///   - images: JPEG bytes to store.
     ///   - document: extracted text to store.
@@ -856,13 +1052,12 @@ final class PhoneAgentModel: ObservableObject {
     private func stage(images: [Data], document: AgentDocument?) -> [AgentAttachment] {
         var records: [AgentAttachment] = []
         for data in images.prefix(4) {
-            let name = "\(UUID().uuidString).jpg"
             do {
-                try data.write(to: attachments.appendingPathComponent(name), options: .atomic)
+                let file = try conversationStore.write(data, fileExtension: "jpg")
                 records.append(AgentAttachment(
                     kind: .image,
                     name: "照片",
-                    file: name,
+                    file: file,
                     byteCount: data.count
                 ))
             } catch {
@@ -872,9 +1067,8 @@ final class PhoneAgentModel: ObservableObject {
         if let document, !document.text.isEmpty {
             let original = document.name.trimmingCharacters(in: .whitespacesAndNewlines)
             let name = original.isEmpty ? "附件.txt" : original
-            let file = "\(UUID().uuidString).txt"
             do {
-                try Data(document.text.utf8).write(to: attachments.appendingPathComponent(file), options: .atomic)
+                let file = try conversationStore.write(Data(document.text.utf8), fileExtension: "txt")
                 records.append(AgentAttachment(
                     kind: .document,
                     name: name,
@@ -892,21 +1086,122 @@ final class PhoneAgentModel: ObservableObject {
     /// - Parameter attachment: image record on a message.
     func imageData(for attachment: AgentAttachment) -> Data? {
         guard attachment.kind == .image else { return nil }
-        return try? Data(contentsOf: attachments.appendingPathComponent(attachment.file))
+        return conversationStore.data(named: attachment.file)
     }
 
     /// Extracted text of one stored document, for the model request.
     /// - Parameter attachment: document record on a message.
     private func documentText(for attachment: AgentAttachment) -> String? {
         guard attachment.kind == .document else { return nil }
-        return try? String(contentsOf: attachments.appendingPathComponent(attachment.file), encoding: .utf8)
+        return conversationStore.text(named: attachment.file)
     }
 
     /// Cancel the current turn.
+    ///
+    /// The transcript keeps what the turn already wrote; anything it would write
+    /// after this call is ignored, so a new turn or another conversation cannot
+    /// inherit its answer.
     func stop() {
+        turn &+= 1
         task?.cancel()
         task = nil
         isRunning = false
+        streamingText = ""
+        streamingReasoning = ""
+    }
+
+    /// Add one message to the conversation on screen and mark it current.
+    /// - Parameter message: the transcript entry to append.
+    private func append(_ message: AgentMessage) {
+        activeConversation.messages.append(message)
+        activeConversation.updatedAt = .now
+    }
+
+    /// Write the conversation on screen and refresh its history row.
+    ///
+    /// Encoding and the atomic write run off the main actor: a tool-dense turn
+    /// persists once per message, and doing a full JSON encode plus rename on
+    /// the main thread hitched every one of them. Writes are serialized and only
+    /// the newest snapshot is kept, so a slow write can never land an older
+    /// transcript over a newer one.
+    ///
+    /// A failed write leaves the transcript readable but reports that it will not
+    /// survive a relaunch.
+    private func persist() {
+        activeConversation.updatedAt = .now
+        refreshSummary()
+        queueWrite(activeConversation)
+    }
+
+    /// The snapshot waiting for the single serialized writer, if any.
+    private var pendingWrite: PhoneConversation?
+    private var writeInFlight = false
+
+    /// Hand one snapshot to the off-main writer, replacing any older queued one.
+    /// - Parameter conversation: value copy of the transcript to store.
+    private func queueWrite(_ conversation: PhoneConversation) {
+        pendingWrite = conversation
+        guard !writeInFlight else { return }
+        drainWrites()
+    }
+
+    /// Encode and write the newest queued snapshot off the main actor.
+    private func drainWrites() {
+        guard let conversation = pendingWrite else { return }
+        pendingWrite = nil
+        writeInFlight = true
+        let store = conversationStore
+        Task.detached(priority: .utility) {
+            let result = Result { try store.save(conversation) }
+            await MainActor.run { [weak self] in
+                guard let self else { return }
+                self.writeInFlight = false
+                if case .failure(let error) = result {
+                    AppLog.error(.session, "Phone 会话保存失败", detail: error.localizedDescription)
+                    self.errorMessage = "会话没能保存：\(error.localizedDescription)"
+                }
+                // A snapshot queued while this one was writing is newer; write it
+                // now instead of leaving the file one message behind.
+                if self.pendingWrite != nil {
+                    self.drainWrites()
+                }
+            }
+        }
+    }
+
+    /// Put the conversation on screen at its place in the history.
+    private func refreshSummary() {
+        guard !activeConversation.isEmpty else { return }
+        let summary = activeConversation.summary
+        if let index = conversations.firstIndex(where: { $0.id == summary.id }) {
+            conversations[index] = summary
+        } else {
+            conversations.append(summary)
+        }
+        conversations.sort { $0.updatedAt > $1.updatedAt }
+    }
+
+    /// Open a turn and return the token its writes must carry.
+    /// - Returns: the identity of the new turn.
+    private func beginTurn() -> Int {
+        turn &+= 1
+        isRunning = true
+        streamingText = ""
+        streamingReasoning = ""
+        return turn
+    }
+
+    /// Append one message only while its turn still owns the transcript.
+    /// - Parameters:
+    ///   - message: the transcript entry to append.
+    ///   - token: identity the turn was opened with.
+    /// - Returns: whether the transcript took the message.
+    @discardableResult
+    private func appendDuringTurn(_ message: AgentMessage, token: Int) -> Bool {
+        guard token == turn else { return false }
+        append(message)
+        persist()
+        return true
     }
 
     /// Install a capability the agent proposed.
@@ -937,20 +1232,78 @@ final class PhoneAgentModel: ObservableObject {
     /// @param prompt - message to send.
     /// @returns the transcript after the turn.
     func runForTesting(_ prompt: String) async -> [AgentMessage] {
-        messages.append(AgentMessage(role: .user, text: prompt))
+        guard !isRunning else { return messages }
+        await loadHistoryIfNeeded()
+        guard !isRunning else { return messages }
+        errorMessage = nil
+        let message = AgentMessage(role: .user, text: prompt)
+        if activeConversation.isEmpty {
+            activeConversation.title = PhoneConversation.title(for: message)
+            activeConversation.createdAt = .now
+        }
+        append(message)
         persist()
-        await run()
+        let token = beginTurn()
+        await run(token: token)
         return messages
     }
 
-    private func run() async {
-        isRunning = true
-        errorMessage = nil
-        streamingText = ""
-        defer {
-            isRunning = false
-            streamingText = ""
+    #if DEBUG
+        /// Put two sample conversations in an empty history for a UI test or a
+        /// design check; present only with `-TOMATO_PHONE_SAMPLE_HISTORY`.
+        func seedSampleHistoryIfAsked() {
+            let arguments = ProcessInfo.processInfo.arguments
+            guard arguments.contains("-TOMATO_PHONE_SAMPLE_HISTORY"), conversations.isEmpty else { return }
+            let now = Date.now
+            let samples = [
+                PhoneConversation(
+                    id: "sample-release-notes",
+                    title: "整理这周的发布说明",
+                    createdAt: now.addingTimeInterval(-600),
+                    updatedAt: now.addingTimeInterval(-60),
+                    messages: [
+                        AgentMessage(role: .user, text: "帮我把这周的发布说明整理成三条要点。", time: now.addingTimeInterval(-600)),
+                        AgentMessage(role: .assistant, text: "三条要点：会话历史、语音输入优化、飞书登录。", time: now.addingTimeInterval(-60)),
+                    ]
+                ),
+                PhoneConversation(
+                    id: "sample-coffee",
+                    title: "咖啡店记一杯",
+                    createdAt: now.addingTimeInterval(-3600),
+                    updatedAt: now.addingTimeInterval(-3000),
+                    messages: [
+                        AgentMessage(role: .user, text: "帮我记住：我常喝美式。", time: now.addingTimeInterval(-3600)),
+                        AgentMessage(role: .assistant, text: "记住了：你常喝美式。", time: now.addingTimeInterval(-3000)),
+                    ]
+                ),
+            ]
+            do {
+                for sample in samples {
+                    try conversationStore.save(sample)
+                }
+            } catch {
+                AppLog.error(.session, "Phone 示例会话写入失败", detail: error.localizedDescription)
+                return
+            }
+            conversations = samples.map(\.summary).sorted { $0.updatedAt > $1.updatedAt }
+            activeConversation = samples[0]
         }
+    #endif
+
+    /// Run the agent loop for the conversation on screen.
+    ///
+    /// Every write checks the token first: a turn that was stopped or replaced
+    /// must not append into what the reader is looking at now.
+    /// - Parameter token: identity the turn was opened with.
+    private func run(token: Int) async {
+        defer {
+            if token == turn {
+                isRunning = false
+                streamingText = ""
+                streamingReasoning = ""
+            }
+        }
+        guard token == turn else { return }
         let config = AgentConfigStore.load()
         guard let key = AgentConfigStore.apiKey, !key.isEmpty else {
             errorMessage = AgentError.missingKey.errorDescription
@@ -958,23 +1311,26 @@ final class PhoneAgentModel: ObservableObject {
         }
         do {
             for _ in 0 ..< max(1, config.maxSteps) {
-                if Task.isCancelled {
-                    return
-                }
-                let answer = try await turn(config: config, key: key)
+                guard token == turn, !Task.isCancelled else { return }
+                let answer = try await turn(config: config, key: key, token: token)
+                guard token == turn else { return }
                 if let calls = answer.toolCalls, !calls.isEmpty {
                     // The narration before a tool call belongs to this step, so a
                     // turn that explains what it is about to do keeps that text.
-                    messages.append(AgentMessage(role: .assistant, text: answer.text, toolCalls: calls))
+                    appendDuringTurn(AgentMessage(
+                        role: .assistant, text: answer.text, toolCalls: calls, reasoning: answer.reasoning
+                    ), token: token)
                     streamingText = ""
-                    persist()
+                    streamingReasoning = ""
                     for call in calls {
+                        guard token == turn else { return }
                         var result = ""
                         do {
                             result = try await store.execute(name: call.name, arguments: call.arguments)
                         } catch {
                             result = "工具失败：\((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)"
                         }
+                        guard token == turn else { return }
                         if call.name == "capability_propose" {
                             let proposal = AgentProposal(
                                 kind: AgentCapabilityKind(rawValue: call.arguments["kind"]?.stringValue ?? "mcp") ?? .mcp,
@@ -982,28 +1338,31 @@ final class PhoneAgentModel: ObservableObject {
                                 url: call.arguments["url"]?.stringValue,
                                 summary: call.arguments["summary"]?.stringValue ?? ""
                             )
-                            messages.append(AgentMessage(role: .proposal, text: proposal.summary, proposal: proposal))
+                            appendDuringTurn(AgentMessage(role: .proposal, text: proposal.summary, proposal: proposal), token: token)
                         }
-                        messages.append(AgentMessage(
+                        appendDuringTurn(AgentMessage(
                             role: .tool, text: result, toolName: call.name, toolCallId: call.id
-                        ))
-                        persist()
+                        ), token: token)
                     }
                     continue
                 }
-                messages.append(AgentMessage(role: .assistant, text: answer.text))
-                persist()
+                appendDuringTurn(AgentMessage(role: .assistant, text: answer.text, reasoning: answer.reasoning), token: token)
                 return
             }
-            messages.append(AgentMessage(role: .assistant, text: "达到步数上限，先停在这里。"))
-            persist()
+            appendDuringTurn(AgentMessage(role: .assistant, text: "达到步数上限，先停在这里。"), token: token)
         } catch {
+            guard token == turn else { return }
+            if error is CancellationError {
+                return
+            }
             errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
     }
 
     private struct Answer {
         let text: String
+        /// Reasoning the endpoint streamed for this step, or nil when it sent none.
+        let reasoning: String?
         let toolCalls: [AgentToolCall]?
     }
 
@@ -1021,8 +1380,9 @@ final class PhoneAgentModel: ObservableObject {
     /// - Parameters:
     ///   - config: endpoint, model, and reasoning depth.
     ///   - key: bearer credential.
-    /// - Returns: the step's text and any tool calls it asked for.
-    private func turn(config: AgentModelConfig, key: String) async throws -> Answer {
+    ///   - token: identity of the turn this step belongs to.
+    /// - Returns: the step's text, its reasoning, and any tool calls it asked for.
+    private func turn(config: AgentModelConfig, key: String, token: Int) async throws -> Answer {
         guard let url = URL(string: config.baseURL.trimmingCharacters(in: CharacterSet(charactersIn: "/")) + "/chat/completions") else {
             throw AgentError.transport("模型地址不合法")
         }
@@ -1088,6 +1448,7 @@ final class PhoneAgentModel: ObservableObject {
         } catch {
             throw AgentError.transport(error.localizedDescription)
         }
+        guard token == turn else { throw CancellationError() }
         guard let http = response as? HTTPURLResponse, (200 ..< 300).contains(http.statusCode) else {
             let status = (response as? HTTPURLResponse)?.statusCode ?? 0
             throw AgentError.transport("模型返回 HTTP \(status)")
@@ -1097,13 +1458,15 @@ final class PhoneAgentModel: ObservableObject {
             for try await byte in bytes {
                 data.append(byte)
             }
+            guard token == turn else { throw CancellationError() }
             return try Self.answer(from: data)
         }
         var text = ""
+        var reasoning = ""
         var partials: [Int: PartialCall] = [:]
         var lastFlush = Date.distantPast
         for try await line in bytes.lines {
-            if Task.isCancelled {
+            if Task.isCancelled || token != turn {
                 throw CancellationError()
             }
             guard line.hasPrefix("data:") else { continue }
@@ -1115,6 +1478,18 @@ final class PhoneAgentModel: ObservableObject {
                   let choice = chunk["choices"]?.arrayValue?.first
             else { continue }
             let delta = choice["delta"] ?? choice["message"]
+            // OpenAI-compatible relays stream thinking as `reasoning_content`;
+            // some spell the same field `reasoning`. Both belong to this step.
+            if let piece = delta?["reasoning_content"]?.stringValue ?? delta?["reasoning"]?.stringValue,
+               !piece.isEmpty
+            {
+                reasoning += piece
+                let now = Date.now
+                if now.timeIntervalSince(lastFlush) > 0.05 {
+                    streamingReasoning = reasoning
+                    lastFlush = now
+                }
+            }
             if let content = delta?["content"]?.stringValue, !content.isEmpty {
                 text += content
                 let now = Date.now
@@ -1124,7 +1499,7 @@ final class PhoneAgentModel: ObservableObject {
                 }
             }
             for entry in delta?["tool_calls"]?.arrayValue ?? [] {
-                let index = Int(entry["index"]?.doubleValue ?? 0)
+                let index = finiteInt(entry["index"]?.doubleValue)
                 var partial = partials[index] ?? PartialCall()
                 if let id = entry["id"]?.stringValue, !id.isEmpty {
                     partial.id = id
@@ -1138,7 +1513,9 @@ final class PhoneAgentModel: ObservableObject {
                 partials[index] = partial
             }
         }
+        guard token == turn else { throw CancellationError() }
         streamingText = text
+        streamingReasoning = reasoning
         let calls = partials.keys.sorted().compactMap { index -> AgentToolCall? in
             guard let partial = partials[index], !partial.name.isEmpty else { return nil }
             let raw = partial.arguments.isEmpty ? "{}" : partial.arguments
@@ -1149,12 +1526,16 @@ final class PhoneAgentModel: ObservableObject {
                 arguments: arguments
             )
         }
-        return Answer(text: text, toolCalls: calls.isEmpty ? nil : calls)
+        return Answer(
+            text: text,
+            reasoning: reasoning.isEmpty ? nil : reasoning,
+            toolCalls: calls.isEmpty ? nil : calls
+        )
     }
 
     /// Decode one non-streaming completion body.
     /// - Parameter data: the response body.
-    /// - Returns: the message's text and tool calls.
+    /// - Returns: the message's text, its reasoning, and its tool calls.
     private static func answer(from data: Data) throws -> Answer {
         guard let root = try? JSONDecoder().decode(JSONValue.self, from: data),
               let message = root["choices"]?.arrayValue?.first?["message"]
@@ -1162,6 +1543,7 @@ final class PhoneAgentModel: ObservableObject {
             throw AgentError.transport("模型回应无法解析")
         }
         let text = message["content"]?.stringValue ?? ""
+        let reasoning = message["reasoning_content"]?.stringValue ?? message["reasoning"]?.stringValue
         let calls = (message["tool_calls"]?.arrayValue ?? []).compactMap { entry -> AgentToolCall? in
             guard let id = entry["id"]?.stringValue,
                   let name = entry["function"]?["name"]?.stringValue
@@ -1170,7 +1552,11 @@ final class PhoneAgentModel: ObservableObject {
             let arguments = (try? JSONDecoder().decode(JSONValue.self, from: Data(raw.utf8))) ?? .object([:])
             return AgentToolCall(id: id, name: name, arguments: arguments)
         }
-        return Answer(text: text, toolCalls: calls.isEmpty ? nil : calls)
+        return Answer(
+            text: text,
+            reasoning: reasoning.flatMap { $0.isEmpty ? nil : $0 },
+            toolCalls: calls.isEmpty ? nil : calls
+        )
     }
 
     /// The content of one user turn: its text, documents as text, and photos as
@@ -1231,10 +1617,5 @@ final class PhoneAgentModel: ObservableObject {
               let text = String(data: data, encoding: .utf8)
         else { return "{}" }
         return text
-    }
-
-    private func persist() {
-        guard let data = try? JSONEncoder().encode(messages) else { return }
-        try? data.write(to: file, options: .atomic)
     }
 }

@@ -96,12 +96,35 @@ final class HomeModel: ObservableObject {
     /// Read the goal of the newest active Session, if any.
     private func readGoal(hub: HubClient) async {
         goal = nil
-        for summary in summaries.prefix(5) where summary.origin != "subagent" && !summary.isRobotRun {
-            guard let value = try? await hub.projections(sessionId: summary.sessionId) else { continue }
-            if let parsed = GoalProgress(projection: value["values"]?["goal"]) {
+        let candidates = summaries.prefix(5).filter { $0.origin != "subagent" && !$0.isRobotRun }
+        // The list already carries a projection hint block; a goal inside it
+        // costs no round trip at all.
+        for summary in candidates {
+            if let parsed = GoalProgress(projection: summary.projections?.values?["goal"]) {
                 goal = parsed
                 return
             }
+        }
+        // Hints can predate the goal write. Ask the Host for the Sessions whose
+        // hint lacks one, in parallel: five sequential round trips here were the
+        // single largest cost of a 今天 refresh.
+        goal = await withTaskGroup(of: (Int, GoalProgress?).self) { group in
+            for (index, summary) in candidates.enumerated() {
+                group.addTask {
+                    guard let value = try? await hub.projections(sessionId: summary.sessionId) else {
+                        return (index, nil)
+                    }
+                    return (index, GoalProgress(projection: value["values"]?["goal"]))
+                }
+            }
+            var best: (Int, GoalProgress)?
+            for await (index, parsed) in group {
+                guard let parsed else { continue }
+                if best.map({ index < $0.0 }) ?? true {
+                    best = (index, parsed)
+                }
+            }
+            return best?.1
         }
     }
 

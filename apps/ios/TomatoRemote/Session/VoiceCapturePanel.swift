@@ -13,9 +13,10 @@ import SwiftUI
 
 /// Recording state, level, and the words heard so far, above the composer.
 struct VoiceCapturePanel: View {
+    /// The hypothesis and level, observed here so only this card re-renders
+    /// while the recognizer keeps updating them.
+    @ObservedObject var live: VoiceLiveCapture
     let phase: VoiceDictation.Phase
-    let transcript: String
-    let meter: [Double]
     let startedAt: Date?
     let isCancelling: Bool
     let isHandsFree: Bool
@@ -27,22 +28,26 @@ struct VoiceCapturePanel: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             header
-            if !transcript.isEmpty {
-                Text(transcript)
-                    .font(.callout)
-                    .foregroundStyle(phase == .finishing ? TomatoToken.labelCaption : TomatoToken.labelPrimary)
-                    .lineLimit(2)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .transition(.opacity)
-            }
+            // Two lines always reserved: a hypothesis that grows from one word
+            // to two lines would otherwise resize the whole card per update.
+            Text(live.transcript)
+                .font(.callout)
+                .foregroundStyle(phase == .finishing ? TomatoToken.labelCaption : TomatoToken.labelPrimary)
+                .lineLimit(2)
+                .frame(maxWidth: .infinity, minHeight: 40, alignment: .topLeading)
             waveform
             footer
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .tomatoGlass(in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .animation(.easeOut(duration: 0.15), value: transcript)
+        // An opaque card: the glass material would re-composite on every
+        // hypothesis update, which is the one thing a live meter cannot afford.
+        .background(TomatoToken.bgLayer1, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(TomatoToken.borderL2, lineWidth: 0.5)
+        )
         .accessibilityElement(children: .contain)
         .accessibilityLabel("语音输入")
         .accessibilityIdentifier("composer.dictationPanel")
@@ -54,12 +59,11 @@ struct VoiceCapturePanel: View {
             Image(systemName: "waveform")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(accent)
-                .symbolEffect(.variableColor.iterative, isActive: isListening)
             clock
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(TomatoToken.labelCaption)
             Spacer(minLength: 8)
-            Text(isPreviewing ? "本机实时" : "Mac 转写")
+            Text(isPreviewing ? "本机实时" : "录音中")
                 .font(.caption2)
                 .foregroundStyle(TomatoToken.labelDimmed)
         }
@@ -77,18 +81,28 @@ struct VoiceCapturePanel: View {
     }
 
     /// Newest level at the trailing edge, like a level meter running left to
-    /// right.
+    /// right. One canvas draws all bars, so a level update does not rebuild a
+    /// view per bar ten times a second.
     private var waveform: some View {
-        HStack(alignment: .center, spacing: 2) {
-            ForEach(Array(meter.enumerated()), id: \.offset) { _, value in
-                Capsule()
-                    .fill(accent.opacity(isListening ? 0.85 : 0.3))
-                    .frame(width: 2.5, height: max(2, 22 * CGFloat(value)))
+        Canvas { context, size in
+            let bars = live.meter
+            guard !bars.isEmpty else { return }
+            let slot = size.width / CGFloat(bars.count)
+            let width = max(1.5, slot * 0.55)
+            let color = accent.opacity(isListening ? 0.85 : 0.3)
+            for (index, value) in bars.enumerated() {
+                let height = max(2, size.height * CGFloat(value))
+                let rect = CGRect(
+                    x: slot * CGFloat(index) + (slot - width) / 2,
+                    y: (size.height - height) / 2,
+                    width: width,
+                    height: height
+                )
+                context.fill(Path(roundedRect: rect, cornerRadius: width / 2), with: .color(color))
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity)
         .frame(height: 22)
-        .animation(.linear(duration: 0.1), value: meter)
         .accessibilityHidden(true)
     }
 
@@ -132,7 +146,7 @@ struct VoiceCapturePanel: View {
             if !isPreviewing {
                 return "正在录音，松手后转写"
             }
-            return transcript.isEmpty ? "请说话" : "松开转文字 · 上滑取消"
+            return live.transcript.isEmpty ? "请说话" : "松开转文字 · 上滑取消"
         case .idle:
             return ""
         }

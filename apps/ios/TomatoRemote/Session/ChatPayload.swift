@@ -109,8 +109,7 @@ extension ChatModel {
     /// @param data - an `assistant/message`, `tool/call`, or `tool/result` payload.
     /// @returns the turn number, or nil when the producer wrote none.
     static func turn(of data: JSONValue?) -> Int? {
-        guard let value = data?["turn"]?.doubleValue else { return nil }
-        return Int(value)
+        data?["turn"]?.doubleValue.map { finiteInt($0) }
     }
 
     /// Extracts text blocks from a `{ role, content: [...] }` message payload.

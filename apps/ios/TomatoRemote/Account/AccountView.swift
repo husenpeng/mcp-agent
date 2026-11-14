@@ -2,8 +2,9 @@
 //  AccountView.swift
 //  Tomato Remote
 //
-//  Account state as the Host projects it. Pairing signs the device in; Feishu
-//  sign-in signs the person in and stores the gateway session on this phone.
+//  The phone's own Feishu account, plus the account a paired Host projects.
+//  Pairing authenticates the device; Feishu sign-in authenticates the person
+//  and works with no Mac.
 //
 
 import SwiftUI
@@ -11,8 +12,12 @@ import SwiftUI
 struct AccountView: View {
     @EnvironmentObject private var model: AppModel
     @StateObject private var auth = AccountAuthStore.shared
+    /// One line of context under the page title.
+    private static let caption = "用飞书账号登录这台手机；配对凭据和登录会话分开保存。"
 
     @State private var session: AccountSession?
+    /// Account the phone's own Feishu session names, when it has one.
+    @State private var localUser: CompanyUser?
     @State private var errorMessage: String?
     @State private var isLoading = false
     @State private var isSigningOut = false
@@ -31,17 +36,17 @@ struct AccountView: View {
         NavigationStack(path: $path) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    // The title lives in the bar on every release; iOS 26 also
-                    // carries the caption there, so the page starts with its
-                    // first section instead of a second heading.
-                    CaptionFallback(caption: "用飞书账号登录这台手机；配对凭据和登录会话分开保存。")
+                    // The caption sits in the content: a navigation subtitle
+                    // grows the iOS 26 bar, and the auto-inset of the first
+                    // block under it was unreliable.
+                    PageCaption(caption: Self.caption)
 
                     if let errorMessage {
                         ErrorBanner(message: errorMessage) { Task { await load() } }
                     }
 
                     profileCard
-                    if !auth.isSignedIn {
+                    if !isSignedIn {
                         loginButton
                     }
                     NavigationLink(value: Self.memoryRoute) {
@@ -71,12 +76,13 @@ struct AccountView: View {
                     actions
                 }
                 .padding(.horizontal, 20)
-                .padding(.bottom, 28)
+                .padding(.bottom, 88)
             }
             .background(TomatoToken.bgBase)
-            .tomatoPageTitle("账号", caption: "用飞书账号登录这台手机；配对凭据和登录会话分开保存。")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationTitle("账号")
+            .navigationBarTitleDisplayMode(.inline)
             .tomatoScrollEdge()
+            .tomatoFloatingTabs()
             .navigationDestination(for: String.self) { route in
                 switch route {
                 case Self.memoryRoute: MemoryView()
@@ -114,19 +120,18 @@ struct AccountView: View {
                 #if DEBUG
                     // A sign-in check can open the flow without a tap; a release
                     // build never reaches this branch.
-                    if ProcessInfo.processInfo.arguments.contains("-TOMATO_OPEN_LOGIN"), !auth.isSignedIn {
+                    if ProcessInfo.processInfo.arguments.contains("-TOMATO_OPEN_LOGIN"), !isSignedIn {
                         showsLogin = true
                     }
                 #endif
             }
             .sheet(isPresented: $showsLogin) {
-                if let profile = model.profile, let base = profile.url {
-                    FeishuLoginSheet(base: base, pairingCookie: profile.cookie) { session, origin in
-                        auth.save(sessionId: session, searchBaseURL: origin)
-                        Task { await load() }
-                    }
-                    .tomatoSheet([.large])
+                FeishuLoginSheet(base: CompanyAuth.baseURL) { session, user in
+                    auth.save(sessionId: session, searchBaseURL: CompanyAuth.baseURL.absoluteString)
+                    localUser = user
+                    Task { await load() }
                 }
+                .tomatoSheet([.large])
             }
             .onChange(of: auth.isSignedIn) { _, signedIn in
                 // The web view's own dismiss can race the cookie hand-off; the
@@ -216,10 +221,10 @@ struct AccountView: View {
                 Divider().overlay(TomatoToken.borderL1)
 
                 InfoRow(label: "状态", value: isLoading ? "读取中…" : statusText)
-                if let name = session?.user?.displayName {
+                if let name = displayName {
                     InfoRow(label: "昵称", value: name)
                 }
-                if let email = session?.user?.email {
+                if let email {
                     InfoRow(label: "邮箱", value: email)
                 }
             }
@@ -245,10 +250,10 @@ struct AccountView: View {
     /// The one account action a signed-out phone needs, kept beside the profile
     /// card instead of at the bottom of the page.
     private var loginButton: some View {
-        TomatoPrimaryButton(
-            title: session?.isSignedIn == true ? "在此手机登录" : "用飞书登录",
-            systemImage: "person.badge.key",
-            isEnabled: !isLoading && model.profile != nil
+        FeishuLoginButton(
+            title: "用飞书登录",
+            isEnabled: !isLoading,
+            isBusy: isLoading
         ) {
             showsLogin = true
         }
@@ -257,7 +262,7 @@ struct AccountView: View {
 
     private var actions: some View {
         VStack(spacing: 12) {
-            if session?.isSignedIn == true {
+            if isSignedIn {
                 TomatoSecondaryButton(
                     title: "退出登录",
                     systemImage: "rectangle.portrait.and.arrow.right",
@@ -268,10 +273,9 @@ struct AccountView: View {
                 }
             }
             TomatoSecondaryButton(title: "解除配对", systemImage: "link.badge.plus", isDestructive: true) {
-                auth.clear()
                 model.unpair()
             }
-            Text("登录由公司飞书完成；会话保存在这台手机的钥匙串。解除配对会同时清除配对 cookie 与登录会话。")
+            Text("登录由公司飞书完成，会话保存在这台手机的钥匙串；没有配对 Mac 也能登录。解除配对只清除这台 Mac 的配对凭据。")
                 .font(.caption)
                 .foregroundStyle(TomatoToken.labelDimmed)
                 .fixedSize(horizontal: false, vertical: true)
@@ -281,9 +285,9 @@ struct AccountView: View {
     private var monogram: some View {
         ZStack {
             Circle()
-                .fill(TomatoToken.brandPrimary.opacity(session?.isSignedIn == true ? 0.16 : 0.08))
+                .fill(TomatoToken.brandPrimary.opacity(isSignedIn ? 0.16 : 0.08))
                 .frame(width: 52, height: 52)
-            if let initial = (session?.user?.displayName ?? "").first {
+            if let initial = displayName?.first {
                 Text(String(initial))
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(TomatoToken.brandPrimary)
@@ -297,19 +301,34 @@ struct AccountView: View {
 
     // MARK: - State
 
+    /// Whether this phone holds a session of its own or inherits the Host's.
+    private var isSignedIn: Bool {
+        auth.isSignedIn || session?.isSignedIn == true
+    }
+
+    /// Display name from whichever account the phone can see.
+    private var displayName: String? {
+        localUser?.displayName ?? session?.user?.displayName
+    }
+
+    /// Email from whichever account the phone can see.
+    private var email: String? {
+        localUser?.email ?? session?.user?.email
+    }
+
     private var title: String {
-        if let name = session?.user?.displayName {
-            return name
+        if let displayName {
+            return displayName
         }
-        return session?.isSignedIn == true ? "已登录" : "未登录"
+        return isSignedIn ? "已登录" : "未登录"
     }
 
     private var subtitle: String {
-        if session?.isUnavailable == true {
-            return "Host 没有配置登录服务"
-        }
         if auth.isSignedIn {
             return "本机飞书登录"
+        }
+        if session?.isUnavailable == true {
+            return "Host 没有配置登录服务"
         }
         if session?.isShared == true {
             return "来自这台 Mac 的登录"
@@ -321,46 +340,104 @@ struct AccountView: View {
         if isLoading {
             return "读取中"
         }
+        if isSignedIn {
+            return "已登录"
+        }
         if session?.isUnavailable == true {
             return "未启用"
         }
-        return session?.isSignedIn == true ? "已登录" : "未登录"
+        return "未登录"
     }
 
     private var statusTone: StatusPill.Tone {
+        if isSignedIn {
+            return .ok
+        }
         if session?.isUnavailable == true {
             return .warn
         }
-        return session?.isSignedIn == true ? .ok : .idle
+        return .idle
     }
 
     // MARK: - Actions
 
     private func load() async {
-        guard let hub = model.hub else { return }
         AppLog.screen("账号")
         isLoading = true
         defer { isLoading = false }
+        // A session without an origin cannot verify or search; keep none.
+        if auth.isSignedIn, auth.searchContext == nil {
+            auth.clear()
+        }
+        if let context = auth.searchContext {
+            do {
+                localUser = try await CompanyAuth.verify(base: context.base, sessionId: context.sessionId)
+                session = nil
+                errorMessage = nil
+                return
+            } catch {
+                guard let authError = error as? CompanyAuthError, case .expired = authError else {
+                    // The session came from a completed Feishu exchange; a
+                    // profile read that fails does not make it invalid. The
+                    // Host projection, when this phone is paired, still names
+                    // the person.
+                    AppLog.warning(.app, "飞书账号读取失败", detail: describe(error))
+                    await loadHostProjection()
+                    return
+                }
+                // The stored session no longer verifies; forget it and fall
+                // back to the Host's projection, which may still be signed in.
+                AppLog.warning(.app, "飞书会话失效", detail: describe(error))
+                auth.clear()
+                localUser = nil
+            }
+        }
+        await loadHostProjection()
+    }
+
+    /// Read the account a paired Host projects, or leave the phone's own signed
+    /// state visible when no Host is reachable.
+    private func loadHostProjection() async {
+        guard let hub = model.hub else {
+            session = nil
+            if !auth.isSignedIn {
+                localUser = nil
+            }
+            errorMessage = nil
+            return
+        }
         do {
             session = try await hub.accountSession()
             errorMessage = nil
         } catch {
-            errorMessage = describe(error)
+            // The phone's own session is still valid; a Host that is asleep is
+            // not a reason to show a sign-in failure on this card.
+            if auth.isSignedIn {
+                session = nil
+                errorMessage = nil
+            } else {
+                errorMessage = describe(error)
+            }
         }
     }
 
     private func signOut() async {
-        guard let hub = model.hub else { return }
         isSigningOut = true
         defer { isSigningOut = false }
-        do {
-            try await hub.signOutAccount()
-        } catch {
-            errorMessage = describe(error)
+        if let context = auth.searchContext {
+            await CompanyAuth.logout(base: context.base, sessionId: context.sessionId)
         }
-        // The local session is cleared even when the Host could not be told; a
+        if let hub = model.hub {
+            do {
+                try await hub.signOutAccount()
+            } catch {
+                errorMessage = describe(error)
+            }
+        }
+        // The local session is cleared even when a service could not be told; a
         // phone that keeps a revoked cookie would look signed in forever.
         auth.clear()
+        localUser = nil
         await load()
     }
 }

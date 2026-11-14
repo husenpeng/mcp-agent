@@ -22,7 +22,7 @@ struct MarkdownText: View {
     }
 }
 
-struct AssistantRow: View {
+struct AssistantRow: View, Equatable {
     let text: String
     let pending: Bool
 
@@ -45,7 +45,7 @@ struct AssistantRow: View {
                         RunningDot()
                     }
                 }
-                MarkdownText(text: text, lineSpacing: 5)
+                answer
                     .foregroundStyle(TomatoToken.labelPrimary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contextMenu {
@@ -58,6 +58,26 @@ struct AssistantRow: View {
         }
         .background(TomatoToken.bgLayer2, in: RoundedRectangle(cornerRadius: TomatoRadius.md, style: .continuous))
         .accessibilityIdentifier("chat.row.assistant")
+    }
+
+    /// The answer body: one text run while it is still arriving, the block
+    /// renderer once it has settled.
+    ///
+    /// Re-parsing partial Markdown for every streamed chunk — and asking Mermaid
+    /// to draw half-written fences — cost more than the one final render. The
+    /// streaming row only has to read, so it draws inline text and keeps the
+    /// transcript smooth until the durable message replaces it.
+    @ViewBuilder
+    private var answer: some View {
+        if pending {
+            Text(inlineMarkdown(text))
+                .font(.subheadline)
+                .lineSpacing(5)
+                .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
+        } else {
+            MarkdownText(text: text, lineSpacing: 5)
+        }
     }
 }
 
@@ -180,7 +200,7 @@ struct UserImageRow: View {
                 )
                 .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TomatoPressableStyle())
         .disabled(photos.image(for: image.id) == nil)
         .accessibilityIdentifier("chat.row.user.image")
         .accessibilityLabel("图片")
@@ -217,21 +237,28 @@ struct UserImageRow: View {
             )
             .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TomatoPressableStyle())
         .disabled(photos.image(for: image.id) == nil)
     }
 
-    /// Photos past the tiles, stated rather than drawn.
+    /// Photos past the tiles, stated rather than drawn. Tapping opens the first
+    /// hidden one full screen, where the reader can swipe through the rest; a
+    /// tile-shaped label that did nothing read as a broken tap.
     private var overflow: some View {
-        ZStack {
-            TomatoToken.bgLayer3
-            Text("+\(images.count - Self.visibleTiles)")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(TomatoToken.labelSecondary)
+        Button {
+            open(images[Self.visibleTiles])
+        } label: {
+            ZStack {
+                TomatoToken.bgLayer3
+                Text("+\(images.count - Self.visibleTiles)")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(TomatoToken.labelSecondary)
+            }
+            .frame(width: 96, height: 96)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
-        .frame(width: 96, height: 96)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .accessibilityLabel("还有 \(images.count - Self.visibleTiles) 张")
+        .buttonStyle(TomatoPressableStyle())
+        .accessibilityLabel("还有 \(images.count - Self.visibleTiles) 张，打开查看")
     }
 
     /// The photo itself, or the placeholder that stands in for it.
@@ -288,5 +315,24 @@ private struct UserBubble: ViewModifier {
             .contextMenu {
                 Button("复制") { UIPasteboard.general.string = text }
             }
+    }
+}
+
+// MARK: - Row equality
+
+// SwiftUI can only skip a row's body when the row value compares equal, and it
+// compares what the view declares. Closures forward taps and the photo store is
+// shared by identity, so equality is the message content alone: an append at the
+// tail must not re-render every realized row above it.
+
+extension UserRow: Equatable {
+    static func == (lhs: UserRow, rhs: UserRow) -> Bool {
+        lhs.text == rhs.text && lhs.images == rhs.images && lhs.photos === rhs.photos
+    }
+}
+
+extension UserImageRow: Equatable {
+    static func == (lhs: UserImageRow, rhs: UserImageRow) -> Bool {
+        lhs.images == rhs.images && lhs.photos === rhs.photos
     }
 }

@@ -51,7 +51,7 @@ struct ConfirmCard: View {
                         .frame(height: 48)
                         .background(TomatoToken.bgLayer2, in: Capsule(style: .continuous))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(TomatoPressableStyle())
                 Button {
                     dismiss()
                     confirm()
@@ -66,7 +66,7 @@ struct ConfirmCard: View {
                             in: Capsule(style: .continuous)
                         )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(TomatoPressableStyle())
                 .accessibilityIdentifier("confirm.primary")
             }
             .padding(.horizontal, 20)

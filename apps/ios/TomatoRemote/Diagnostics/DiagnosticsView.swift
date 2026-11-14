@@ -48,6 +48,7 @@ struct DiagnosticsView: View {
         .tomatoPageTitle("运行日志", caption: "崩溃、卡顿与网络记录；导出后可以发给开发者。")
         .navigationBarTitleDisplayMode(.large)
         .tomatoScrollEdge()
+        .toolbar(.hidden, for: .tabBar)
         .task {
             AppLog.screen("运行日志")
             previousText = log.previousRunText()
@@ -98,11 +99,15 @@ struct DiagnosticsView: View {
                     .textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Button(expanded == 0 ? "收起调用栈" : "查看调用栈") {
-                expanded = expanded == 0 ? nil : 0
+            // A signal record names the signal and time only; its stack comes
+            // from MetricKit, so there is nothing to expand here.
+            if !crash.stack.isEmpty {
+                Button(expanded == 0 ? "收起调用栈" : "查看调用栈") {
+                    expanded = expanded == 0 ? nil : 0
+                }
+                .font(.caption.weight(.medium))
+                .foregroundStyle(TomatoToken.brandPrimary)
             }
-            .font(.caption.weight(.medium))
-            .foregroundStyle(TomatoToken.brandPrimary)
         }
     }
 

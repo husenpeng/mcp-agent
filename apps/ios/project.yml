@@ -34,6 +34,7 @@ targets:
           # Build output and browser probes must never become app resources;
           # a stray DerivedData here also makes XcodeGen emit duplicate tasks.
           - ".derived"
+          - ".derived-device"
           - ".playwright-mcp"
     settings:
       base:
@@ -57,6 +58,7 @@ targets:
         embed: true
     scheme:
       testTargets:
+        - TomatoRemoteTests
         - TomatoRemoteUITests
       gatherCoverageData: false
 
@@ -91,6 +93,20 @@ targets:
       - sdk: WidgetKit.framework
       - sdk: SwiftUI.framework
       - sdk: ActivityKit.framework
+
+  # Pure rules of the app run here: no Host, no device UI. A unit test host keeps
+  # the app's own types importable, so dictation and wire rules stay testable.
+  TomatoRemoteTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: TomatoRemoteTests
+    dependencies:
+      - target: TomatoRemote
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: ai.tomato.remote.unittests
 
   TomatoRemoteUITests:
     type: bundle.ui-testing

@@ -58,6 +58,19 @@ struct HubClient: Sendable {
         try await callDiscarding("session/rename", body: SessionRenameRequest(sessionId: sessionId, title: title))
     }
 
+    /// Change one Session's working directory on the Host.
+    /// @param sessionId - Session whose scope changes.
+    /// @param path - absolute directory, or a path relative to the current one.
+    /// @returns the canonical directory the Host committed.
+    func setWorkingDirectory(sessionId: String, path: String) async throws -> String {
+        let value = try await call(
+            "session/setWorkingDirectory",
+            body: SessionSetWorkingDirectoryRequest(sessionId: sessionId, path: path),
+            as: SessionSetWorkingDirectoryValue.self
+        )
+        return value.workingDirectory
+    }
+
     func cancelSession(sessionId: String) async throws {
         try await callDiscarding("session/cancel", body: SessionCancelRequest(sessionId: sessionId))
     }

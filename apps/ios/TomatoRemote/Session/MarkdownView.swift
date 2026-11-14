@@ -13,9 +13,14 @@ struct MarkdownView: View {
     let text: String
     /// Width one full-width block may use; diagrams center in it.
     var body: some View {
+        // Identity is the block's position, not its content: a content-derived
+        // id collides for two rules or two identical paragraphs, and rebuilding
+        // those id strings costs the whole message on every evaluation. Blocks of
+        // a settled message never move, so the index is stable and free.
+        let blocks = MarkdownParser.blocks(of: text)
         VStack(alignment: .leading, spacing: 8) {
-            ForEach(MarkdownParser.blocks(of: text)) { block in
-                MarkdownBlockView(block: block)
+            ForEach(blocks.indices, id: \.self) { index in
+                MarkdownBlockView(block: blocks[index])
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -124,6 +129,8 @@ private struct MarkdownBlockView: View {
                     row(marker: "\(index + 1).", text: item)
                 }
             }
+        case let .table(header, rows, alignments):
+            MarkdownTable(header: header, rows: rows, alignments: alignments)
         case .rule:
             Rectangle()
                 .fill(TomatoToken.borderL2)
@@ -177,8 +184,11 @@ struct CodeBlock: View {
                     Image(systemName: "doc.on.doc")
                         .font(.caption2)
                         .foregroundStyle(TomatoToken.labelCaption)
+                        // The glyph is caption2; the touch target is not.
+                        .frame(width: 44, height: 30)
+                        .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(TomatoPressableStyle())
                 .accessibilityLabel("复制代码")
                 .accessibilityIdentifier("markdown.copyCode")
             }

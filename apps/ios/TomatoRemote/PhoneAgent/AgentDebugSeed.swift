@@ -24,6 +24,8 @@
             let mcpURL: String?
             let mcpName: String?
             let prompt: String
+            /// `reasoning_effort` to check; absent leaves the default automatic.
+            let reasoningEffort: String?
         }
 
         private struct Result: Encodable {
@@ -31,6 +33,8 @@
                 let role: String
                 let text: String
                 let tool: String?
+                /// Characters of thinking the endpoint streamed for this turn.
+                let reasoningChars: Int?
             }
 
             let finishedAt: String
@@ -67,6 +71,7 @@
             config.baseURL = seed.baseURL
             config.model = seed.model
             config.maxSteps = 8
+            config.reasoningEffort = seed.reasoningEffort
             AgentConfigStore.save(config)
             do {
                 try AgentConfigStore.setAPIKey(seed.key)
@@ -91,7 +96,12 @@
             let messages = await agent.runForTesting(seed.prompt)
             let result = Result(
                 finishedAt: ISO8601DateFormatter().string(from: Date()),
-                entries: messages.map { Result.Entry(role: $0.role.rawValue, text: $0.text, tool: $0.toolName) },
+                entries: messages.map {
+                    Result.Entry(
+                        role: $0.role.rawValue, text: $0.text, tool: $0.toolName,
+                        reasoningChars: $0.reasoning?.count
+                    )
+                },
                 error: agent.errorMessage,
                 installError: installError
             )

@@ -15,19 +15,35 @@ struct SessionListView: View {
     @State private var renaming: SessionSummary?
     @State private var draftTitle = ""
     @State private var openedSessionId: String?
+    /// The row a tap last pushed, so a second tap inside the push animation
+    /// cannot append the same destination twice.
+    @State private var lastOpen: (id: String, at: Date)?
     @State private var query = ""
     @State private var showingNewSession = false
-    /// Folders the reader closed, persisted so the list opens as it was left.
-    @AppStorage("sessions.collapsedFolders") private var collapsedFoldersJSON = "[]"
+    /// Folders the reader closed.
+    ///
+    /// View state, persisted separately: a header's tap flips these rows in the
+    /// same update, and the stored value only decides the next launch. The list
+    /// opens with the folders the reader left closed.
+    @State private var collapsedFolders: Set<String>
+
+    init() {
+        _collapsedFolders = State(initialValue: Self.storedCollapsedFolders())
+    }
 
     var body: some View {
         NavigationStack(path: $path) {
             content
                 .background(TomatoToken.bgBase)
                 .navigationTitle("会话")
+                .navigationBarTitleDisplayMode(.inline)
+                .tomatoFloatingTabs()
                 .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索会话")
                 .navigationDestination(for: SessionSummary.self) { summary in
                     ChatView(summary: summary, preloaded: model.cachedEvents(summary.sessionId))
+                }
+                .navigationDestination(for: RunningSessionsRoute.self) { _ in
+                    RunningSessionsView(onOpen: open)
                 }
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -162,8 +178,8 @@ extension SessionListView {
                 // A read that failed leaves the rows it replaced on screen, and a
                 // row that stopped updating reads as a finished turn. Name the
                 // failure instead of letting the states look current.
-                if let error = model.sessionsError, !model.isFollowingEvents {
-                    ErrorBanner(message: "状态可能已过期：\(error)") {
+                if let warning = model.staleSessionsWarning {
+                    ErrorBanner(message: warning) {
                         Task { await model.refreshSessions(force: true) }
                     }
                     .padding(.horizontal, 16)
@@ -171,26 +187,93 @@ extension SessionListView {
                 }
                 ScrollViewReader { proxy in
                     List {
+                        // The running shortcut opens its own page, so the reader
+                        // can see what is executing without scanning every
+                        // folder. A search lists matches, not shortcuts.
+                        if query.isEmpty, runningCount > 0 {
+                            Button {
+                                path.append(RunningSessionsRoute())
+                            } label: {
+                                RunningSessionsEntry(count: runningCount)
+                            }
+                            .buttonStyle(TomatoPressableStyle())
+                            .accessibilityIdentifier("session.running.entry")
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 2, leading: 4, bottom: 8, trailing: 12))
+                        }
+                        // Finished conversations from the last day, above the
+                        // folders: returning to yesterday's answer is the most
+                        // common trip back into this list. The rows carry their
+                        // own identifiers, so a Session listed here and in its
+                        // folder never answers one accessibility query twice.
+                        if query.isEmpty, !recentCompleted.isEmpty {
+                            HStack(spacing: 6) {
+                                Image(systemName: "checkmark.circle")
+                                    .font(.subheadline)
+                                    .foregroundStyle(TomatoToken.brandPrimary)
+                                Text("最近完成 · 24 小时")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(TomatoToken.labelSecondary)
+                                Spacer(minLength: 0)
+                                Text("\(recentCompleted.count)")
+                                    .font(.caption.monospacedDigit())
+                                    .foregroundStyle(TomatoToken.labelCaption)
+                            }
+                            .padding(.vertical, 6)
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 10, leading: 4, bottom: 2, trailing: 12))
+                            // A plain HStack is not an accessibility element, so
+                            // without this the identifier never reaches XCUITest.
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel("最近完成 24 小时")
+                            .accessibilityIdentifier("session.recent.header")
+                            ForEach(recentCompleted) { summary in
+                                row(for: summary, identifier: "session.recent.\(summary.sessionId)")
+                                    .id("recent-\(summary.sessionId)")
+                            }
+                        }
                         ForEach(folders) { folder in
                             // The folder is the first level and its conversations the
                             // second, which is how the Host files them: a Session owns
-                            // one working directory.
-                            DisclosureGroup(isExpanded: expansion(for: folder)) {
+                            // one working directory. The header is an ordinary List
+                            // row, not a section header: on iOS 26 a
+                            // `Section(isExpanded:)` header drew the folder title in
+                            // the large-title font and let it overlap its first row.
+                            // Every conversation stays an individual row, so a folder
+                            // with hundreds of sessions still lays out only what the
+                            // screen shows.
+                            //
+                            // The target comes from this render, so a repeated
+                            // action on the same header cannot flip the folder
+                            // back to where it started.
+                            let expanded = isExpanded(folder)
+                            Button {
+                                setExpanded(folder, to: !expanded)
+                            } label: {
+                                FolderLabel(folder: folder, isExpanded: expanded)
+                                    .padding(.vertical, 6)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(TomatoPressableStyle())
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 10, leading: 4, bottom: 2, trailing: 12))
+                            .accessibilityIdentifier("session.folder.\(folder.id)")
+                            if expanded {
                                 ForEach(folder.items) { summary in
                                     row(for: summary)
                                         .id(summary.sessionId)
                                 }
-                            } label: {
-                                FolderLabel(folder: folder)
-                                    .padding(.vertical, 6)
                             }
-                            .listRowBackground(Color.clear)
-                            .listRowSeparator(.hidden)
-                            .accessibilityIdentifier("session.folder.\(folder.id)")
                         }
                     }
                     .listStyle(.plain)
                     .scrollContentBackground(.hidden)
+                    // The floating control sits over the list's last rows; this
+                    // margin lets them scroll clear of it.
+                    .contentMargins(.bottom, 76, for: .scrollContent)
                     .tomatoScrollEdge()
                     .task { await autoscrollIfAsked(proxy) }
                 }
@@ -201,16 +284,20 @@ extension SessionListView {
     /// One conversation row. A plain button pushes the row itself, so the
     /// journal entry and the navigation are one action; a gesture layered on a
     /// `NavigationLink` competes with the link's own tap and swallows it.
-    /// - Parameter summary: the Session this row opens.
+    /// - Parameters:
+    ///   - summary: the Session this row opens.
+    ///   - identifier: accessibility identity; the 24-hour shelf passes its own
+    ///     so a conversation listed there and in its folder never answers one
+    ///     query twice.
     /// - Returns: the row with its rename affordances.
-    private func row(for summary: SessionSummary) -> some View {
+    private func row(for summary: SessionSummary, identifier: String? = nil) -> some View {
         Button {
             open(summary)
         } label: {
             SessionRow(summary: summary)
         }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier("session.row.\(summary.sessionId)")
+        .buttonStyle(TomatoPressableStyle())
+        .accessibilityIdentifier(identifier ?? "session.row.\(summary.sessionId)")
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
         .listRowInsets(EdgeInsets(top: 2, leading: 4, bottom: 2, trailing: 12))
@@ -250,6 +337,37 @@ extension SessionListView {
         }
     }
 
+    /// How many conversations the in-progress page lists.
+    ///
+    /// Subagent children and robot runs are executing too, but neither opens
+    /// from this list, so the shortcut counts only what its page holds.
+    private var runningCount: Int {
+        model.sessions.reduce(0) { total, summary in
+            total + (summary.running && !summary.isSubagent && !summary.isRobotRun ? 1 : 0)
+        }
+    }
+
+    /// How far back the 最近完成 shelf reaches, in milliseconds.
+    private static let recentWindow: Double = 24 * 60 * 60 * 1000
+    /// How many conversations the shelf lists; the folders below still hold
+    /// every one of them, so nothing is reachable only while it is recent.
+    private static let recentLimit = 8
+
+    /// Conversations that finished inside the last day, newest first.
+    ///
+    /// "Finished" is what the list can state without opening each Session: the
+    /// Host reports it as not running and not blank, and its last activity sits
+    /// inside the window. A running Session is still working; a blank one never
+    /// held a turn; subagent children and robot runs live on their own pages.
+    private var recentCompleted: [SessionSummary] {
+        let cutoff = Date().timeIntervalSince1970 * 1000 - Self.recentWindow
+        return Array(
+            filtered
+                .filter { !$0.running && !$0.blank && $0.updatedAt >= cutoff }
+                .prefix(Self.recentLimit)
+        )
+    }
+
     /// Conversations filed under their working directory, folders ordered by
     /// their most recent activity. A Session without a `cwd` still needs a home.
     private var folders: [SessionFolder] {
@@ -269,34 +387,47 @@ extension SessionListView {
         .sorted { $0.latest > $1.latest }
     }
 
-    /// Folder ids the reader closed.
-    private var collapsedFolders: Set<String> {
-        guard let data = collapsedFoldersJSON.data(using: .utf8),
+    /// Expansion state for one folder. A search always lists its matches, so a
+    /// folder closed earlier cannot hide the result the reader is looking for.
+    /// - Parameter folder: the folder row being drawn.
+    /// - Returns: whether its conversations are drawn.
+    private func isExpanded(_ folder: SessionFolder) -> Bool {
+        query.isEmpty ? !collapsedFolders.contains(folder.id) : true
+    }
+
+    /// Open or close one folder with the row animation the old DisclosureGroup had.
+    /// - Parameters:
+    ///   - folder: folder whose header was tapped.
+    ///   - expanded: state the reader asked for.
+    private func setExpanded(_ folder: SessionFolder, to expanded: Bool) {
+        var next = collapsedFolders
+        if expanded {
+            next.remove(folder.id)
+        } else {
+            next.insert(folder.id)
+        }
+        withAnimation(.easeInOut(duration: 0.2)) {
+            collapsedFolders = next
+        }
+        Self.storeCollapsedFolders(next)
+    }
+
+    /// Where the reader's closed folders are remembered between launches.
+    private static let collapsedFoldersKey = "sessions.collapsedFolders"
+
+    private static func storedCollapsedFolders() -> Set<String> {
+        guard let text = UserDefaults.standard.string(forKey: collapsedFoldersKey),
+              let data = text.data(using: .utf8),
               let list = try? JSONDecoder().decode([String].self, from: data)
         else { return [] }
         return Set(list)
     }
 
-    /// Expansion state for one folder. A search always lists its matches, so a
-    /// folder closed earlier cannot hide the result the reader is looking for.
-    /// - Parameter folder: the folder row being drawn.
-    /// - Returns: the binding `DisclosureGroup` toggles.
-    private func expansion(for folder: SessionFolder) -> Binding<Bool> {
-        Binding(
-            get: { query.isEmpty ? !collapsedFolders.contains(folder.id) : true },
-            set: { expanded in
-                var next = collapsedFolders
-                if expanded {
-                    next.remove(folder.id)
-                } else {
-                    next.insert(folder.id)
-                }
-                guard let data = try? JSONEncoder().encode(Array(next).sorted()),
-                      let text = String(data: data, encoding: .utf8)
-                else { return }
-                collapsedFoldersJSON = text
-            }
-        )
+    private static func storeCollapsedFolders(_ folders: Set<String>) {
+        guard let data = try? JSONEncoder().encode(Array(folders).sorted()),
+              let text = String(data: data, encoding: .utf8)
+        else { return }
+        UserDefaults.standard.set(text, forKey: collapsedFoldersKey)
     }
 
     /// Full folder paths the Host already knows, for the new-Session chooser.
@@ -310,6 +441,11 @@ extension SessionListView {
     /// Open one conversation: remember it, then push it.
     /// - Parameter summary: the row the reader tapped.
     private func open(_ summary: SessionSummary) {
+        let now = Date()
+        if let lastOpen, lastOpen.id == summary.sessionId, now.timeIntervalSince(lastOpen.at) < 0.6 {
+            return
+        }
+        lastOpen = (summary.sessionId, now)
         AppLog.mark("打开 \(summary.sessionId.prefix(8))")
         AppLog.info(
             .ui,
@@ -423,6 +559,7 @@ private struct SessionFolder: Identifiable {
 /// First-level row: the folder, its full path, and how much is filed under it.
 private struct FolderLabel: View {
     let folder: SessionFolder
+    let isExpanded: Bool
 
     var body: some View {
         HStack(spacing: 9) {
@@ -454,10 +591,14 @@ private struct FolderLabel: View {
             Text("\(folder.items.count)")
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(TomatoToken.labelDimmed)
+            Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(TomatoToken.labelDimmed)
+                .accessibilityHidden(true)
         }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(folder.title)，\(folder.items.count) 个会话")
+        .accessibilityLabel("\(folder.title)，\(folder.items.count) 个会话，\(isExpanded ? "已展开" : "已收起")")
     }
 }
 
@@ -477,7 +618,7 @@ private struct SessionRow: View {
                 Spacer(minLength: 6)
                 SessionStateBadge(state: summary.state)
             }
-            if let preview {
+            if let preview = summary.rowPreview {
                 Text(preview)
                     .font(.subheadline)
                     .foregroundStyle(TomatoToken.labelCaption)
@@ -499,14 +640,6 @@ private struct SessionRow: View {
     private var background: Color {
         summary.running ? TomatoToken.brandPrimary.opacity(0.06) : TomatoToken.bgLayer2
     }
-
-    /// The latest message the Host projected, when it says more than the title.
-    private var preview: String? {
-        let text = summary.displaySubtitle
-        let fallbacks = [summary.cwd, String(summary.sessionId.prefix(8)), summary.displayTitle]
-        guard !fallbacks.contains(text) else { return nil }
-        return text.replacingOccurrences(of: "\n", with: " ")
-    }
 }
 
 /// New-Session chooser: pick a folder the Host already knows, or type a path.
@@ -518,6 +651,7 @@ private struct NewSessionSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var selected: String?
     @State private var manual = ""
+    @FocusState private var pathFocused: Bool
 
     private var effective: String? {
         let typed = manual.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -553,7 +687,7 @@ private struct NewSessionSheet: View {
                                 }
                             }
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(TomatoPressableStyle())
                     }
                 } header: {
                     Text("选择文件夹")
@@ -564,6 +698,7 @@ private struct NewSessionSheet: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .font(.footnote.monospaced())
+                        .focused($pathFocused)
                         .onChange(of: manual) { _, value in
                             if !value.isEmpty {
                                 selected = nil
@@ -576,6 +711,16 @@ private struct NewSessionSheet: View {
                 }
             }
             .listStyle(.plain)
+            // The 创建 button sits below the list where the keyboard lands, and
+            // dragging the sheet down would destroy the typed path, so the list
+            // itself and a keyboard accessory are the two ways to dismiss.
+            .scrollDismissesKeyboard(.interactively)
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("完成") { pathFocused = false }
+                }
+            }
             .tomatoSheetContent()
             SheetPrimaryButton(title: "创建", isBusy: isBusy) {
                 onCreate(effective)

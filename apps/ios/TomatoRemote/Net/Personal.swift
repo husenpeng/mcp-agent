@@ -287,8 +287,8 @@ struct GoalProgress: Hashable, Sendable {
         guard let objective = goal["objective"]?.stringValue else { return nil }
         self.objective = objective
         phase = goal["phase"]?.stringValue ?? "active"
-        roundsStarted = Int(projection["roundsStarted"]?.doubleValue ?? goal["roundsStarted"]?.doubleValue ?? 0)
-        maxGoalRounds = (goal["maxGoalRounds"]?.doubleValue).map { Int($0) }
+        roundsStarted = finiteInt(projection["roundsStarted"]?.doubleValue ?? goal["roundsStarted"]?.doubleValue)
+        maxGoalRounds = goal["maxGoalRounds"]?.doubleValue.map { finiteInt($0) }
     }
 
     var phaseText: String {

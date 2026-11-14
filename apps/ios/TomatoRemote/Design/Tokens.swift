@@ -111,6 +111,7 @@ private enum TomatoLight {
   static let toastBg = Color(.sRGB, red: 0.098, green: 0.1059, blue: 0.1098, opacity: 1)
   static let toastLabel = Color(.sRGB, red: 1, green: 1, blue: 1, opacity: 1)
   static let tooltipBg = Color(.sRGB, red: 0.1804, green: 0.1922, blue: 0.1961, opacity: 1)
+  static let tooltipLabel = Color(.sRGB, red: 1, green: 1, blue: 1, opacity: 1)
   static let turnTriggerBg = Color(.sRGB, red: 0.9765, green: 0.9804, blue: 0.9843, opacity: 1)
   static let turnTriggerBgHover = Color(.sRGB, red: 0.098, green: 0.1059, blue: 0.1098, opacity: 0.05)
 }
@@ -216,6 +217,7 @@ private enum TomatoDark {
   static let toastBg = Color(.sRGB, red: 0.2667, green: 0.2784, blue: 0.2863, opacity: 1)
   static let toastLabel = Color(.sRGB, red: 0.9412, green: 0.949, blue: 0.9569, opacity: 1)
   static let tooltipBg = Color(.sRGB, red: 0.2667, green: 0.2784, blue: 0.2863, opacity: 1)
+  static let tooltipLabel = Color(.sRGB, red: 1, green: 1, blue: 1, opacity: 1)
   static let turnTriggerBg = Color(.sRGB, red: 0.9412, green: 0.949, blue: 0.9569, opacity: 0.08)
   static let turnTriggerBgHover = Color(.sRGB, red: 0.9412, green: 0.949, blue: 0.9569, opacity: 0.14)
 }
@@ -322,6 +324,7 @@ enum TomatoToken {
   static let toastBg = tomatoDynamic(light: TomatoLight.toastBg, dark: TomatoDark.toastBg)
   static let toastLabel = tomatoDynamic(light: TomatoLight.toastLabel, dark: TomatoDark.toastLabel)
   static let tooltipBg = tomatoDynamic(light: TomatoLight.tooltipBg, dark: TomatoDark.tooltipBg)
+  static let tooltipLabel = tomatoDynamic(light: TomatoLight.tooltipLabel, dark: TomatoDark.tooltipLabel)
   static let turnTriggerBg = tomatoDynamic(light: TomatoLight.turnTriggerBg, dark: TomatoDark.turnTriggerBg)
   static let turnTriggerBgHover = tomatoDynamic(light: TomatoLight.turnTriggerBgHover, dark: TomatoDark.turnTriggerBgHover)
 }

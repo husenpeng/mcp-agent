@@ -131,6 +131,7 @@ struct DesktopStatusView: View {
         .tomatoPageTitle("桌面", caption: "Watchdog 独立于 Desktop 运行，所以 Host 挂死时这里仍能重启它。")
         .navigationBarTitleDisplayMode(.large)
         .tomatoScrollEdge()
+        .toolbar(.hidden, for: .tabBar)
         .task { await refresh() }
         .refreshable { await refresh() }
     }

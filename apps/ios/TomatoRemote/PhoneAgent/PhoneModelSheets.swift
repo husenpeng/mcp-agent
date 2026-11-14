@@ -173,8 +173,12 @@ struct PhoneModelSheet: View {
     private func choose(_ model: String) {
         let trimmed = model.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        config.model = trimmed
-        AgentConfigStore.save(config)
+        // Start from the stored configuration: the settings sheet writes the
+        // same record, and this sheet's snapshot may predate that write.
+        var saved = AgentConfigStore.load()
+        saved.model = trimmed
+        AgentConfigStore.save(saved)
+        config = saved
         dismiss()
     }
 }
@@ -227,8 +231,12 @@ struct PhoneReasoningSheet: View {
     private func row(effort: String?, name: String, detail: String) -> some View {
         let selected = config.reasoningEffort == effort
         return Button {
-            config.reasoningEffort = effort
-            AgentConfigStore.save(config)
+            // Start from the stored configuration so a model or depth chosen
+            // elsewhere is kept instead of being overwritten by this snapshot.
+            var saved = AgentConfigStore.load()
+            saved.reasoningEffort = effort
+            AgentConfigStore.save(saved)
+            config = saved
             dismiss()
         } label: {
             HStack(alignment: .center, spacing: 12) {

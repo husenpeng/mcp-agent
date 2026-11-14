@@ -107,12 +107,19 @@ enum AppLogCategory: String, CaseIterable, Codable, Sendable {
 struct AppLogEntry: Identifiable, Equatable, Sendable {
     let id: UInt64
     let date: Date
-    /// Preformatted `yyyy-MM-dd HH:mm:ss.SSS`, so every reader shows one shape.
-    let timestamp: String
     let level: AppLogLevel
     let category: AppLogCategory
     let message: String
     let detail: String?
+
+    /// `yyyy-MM-dd HH:mm:ss.SSS`, formatted when a reader or the file needs it.
+    ///
+    /// Formatting during `record` cost a first-use ICU initialization on the
+    /// caller's thread — at launch, the main thread. The file is written on the
+    /// log queue and rows format as they appear, so both pay it off the launch.
+    var timestamp: String {
+        LogClock.text(for: date)
+    }
 
     /// One line for the file and the exported report.
     var line: String {
@@ -126,6 +133,29 @@ struct AppLogEntry: Identifiable, Equatable, Sendable {
     /// Clock part shown in the reader's row.
     var clock: String {
         String(timestamp.suffix(12))
+    }
+}
+
+/// Shared timestamp formatter for log records.
+///
+/// `DateFormatter` is not thread-safe, and the log is written from every thread
+/// while the reader formats on the main actor, so both go through one lock.
+private enum LogClock {
+    private static let lock = NSLock()
+    private static let formatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
+        return formatter
+    }()
+
+    /// Format one moment for a log record.
+    /// - Parameter date: moment the record was made.
+    /// - Returns: `yyyy-MM-dd HH:mm:ss.SSS` in the device time zone.
+    static func text(for date: Date) -> String {
+        lock.lock()
+        defer { lock.unlock() }
+        return formatter.string(from: date)
     }
 }
 
@@ -163,20 +193,12 @@ final class AppLog: ObservableObject, @unchecked Sendable {
     private var name = "启动"
     /// Step inside that screen; see `mark(_:)`.
     private var operation = ""
-    private let writer = LogFileWriter.shared
 
     private static let loggers: [AppLogCategory: Logger] = Dictionary(
         uniqueKeysWithValues: AppLogCategory.allCases.map {
             ($0, Logger(subsystem: "ai.tomato.remote", category: $0.rawValue))
         }
     )
-
-    private static let timestampFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
-        return formatter
-    }()
 
     private init() {}
 
@@ -198,7 +220,6 @@ final class AppLog: ObservableObject, @unchecked Sendable {
         entry = AppLogEntry(
             id: nextId,
             date: now,
-            timestamp: Self.timestampFormatter.string(from: now),
             level: level,
             category: category,
             message: message,
@@ -216,7 +237,7 @@ final class AppLog: ObservableObject, @unchecked Sendable {
             console += " | " + trimmedDetail
         }
         Self.loggers[category]?.log(level: level.osLogType, "\(console, privacy: .public)")
-        writer.append(entry.line)
+        LogFileWriter.append(entry)
         schedulePublish()
     }
 
@@ -225,7 +246,12 @@ final class AppLog: ObservableObject, @unchecked Sendable {
     func mark(_ activity: String) {
         lock.lock()
         operation = activity
+        let screen = name
         lock.unlock()
+        // The run log is asynchronous and a watchdog kill loses its tail; this
+        // one line is written before the step begins so the next launch can
+        // name the screen that hung.
+        LastActivity.record("\(screen) · \(activity)")
     }
 
     /// Say which screen is on top. A background refresh from another screen no
@@ -236,6 +262,7 @@ final class AppLog: ObservableObject, @unchecked Sendable {
         self.name = name
         operation = ""
         lock.unlock()
+        LastActivity.record(name)
     }
 
     /// Screen and step the main thread last reported.
@@ -299,7 +326,7 @@ final class AppLog: ObservableObject, @unchecked Sendable {
         lock.unlock()
         entries = []
         revision += 1
-        writer.clearCurrent()
+        LogFileWriter.clearCurrent()
     }
 
     /// Human-readable report of this run, the previous run's tail, and the last
@@ -328,16 +355,16 @@ final class AppLog: ObservableObject, @unchecked Sendable {
     func exportText() -> String {
         var parts: [String] = []
         parts.append("Tomato Remote 运行日志")
-        parts.append("导出时间：\(Self.timestampFormatter.string(from: Date()))")
+        parts.append("导出时间：\(LogClock.text(for: Date()))")
         parts.append("环境：\(environment.isEmpty ? "尚未记录" : environment)")
         parts.append("内存：\(MemoryFootprint.text())")
         if let lastCrash {
-            parts.append("上次崩溃：\(Self.timestampFormatter.string(from: lastCrash.date)) · \(lastCrash.summary)")
+            parts.append("上次崩溃：\(LogClock.text(for: lastCrash.date)) · \(lastCrash.summary)")
             parts.append(lastCrash.stack.prefix(20).joined(separator: "\n"))
         }
         parts.append("— 本次运行 —")
         parts.append(entries.map(\.line).joined(separator: "\n"))
-        let previous = writer.tailText(limit: 400)
+        let previous = LogFileWriter.tailText(limit: 400)
         if !previous.isEmpty {
             parts.append("— 上次运行（尾部 400 行）—")
             parts.append(previous)
@@ -349,7 +376,7 @@ final class AppLog: ObservableObject, @unchecked Sendable {
     /// - Parameter limit: lines kept.
     /// - Returns: raw lines, oldest first.
     func previousRunText(limit: Int = 400) -> String {
-        writer.tailText(limit: limit)
+        LogFileWriter.tailText(limit: limit)
     }
 }
 
