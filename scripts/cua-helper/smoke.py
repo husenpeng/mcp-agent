@@ -78,7 +78,9 @@ def main():
                     assert response["id"] == method and "result" in response, response
                     result = response["result"]
                     if method == "getCapabilities":
-                        assert result["platform"] == "macos", result
+                        assert isinstance(result["permissions"]["accessibility"], bool), result
+                        assert isinstance(result["permissions"]["screenRecording"], bool), result
+                        assert result["sessionLocked"] in [True, False, None], result
                     else:
                         assert result["launchApplication"]["name"] == executable.parents[2].name, result.get("launchApplication", {}).get("name")
                         assert isinstance(result["accessibility"], bool) and isinstance(result["screenRecording"], bool)

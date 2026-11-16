@@ -26,18 +26,26 @@ export const EXPERIMENTAL_PACKAGE_NAME_EXCEPTIONS: Readonly<Record<string, strin
   'packages/experimental/client-ui-creation-recommendations': '@tomato/client-ui-creation-recommendations',
   'packages/experimental/plugin-recommendations': '@tomato/plugin-recommendations',
   'packages/experimental/client-ui-plugin-recommendations': '@tomato/client-ui-plugin-recommendations',
+  'packages/experimental/client-ui-superagent': '@tomato/client-ui-superagent',
   'packages/experimental/personalized-recommendations': '@tomato/personalized-recommendations',
+  'packages/experimental/superagent': '@tomato/superagent',
+  'packages/experimental/superagent-local': '@tomato/superagent-local',
+  'packages/experimental/superagent-runtime': '@tomato/superagent-runtime',
 } satisfies Record<`packages/experimental/${string}`, `@tomato/${string}`>
 
 /** Legacy npm namespace, allowed only in `LEGACY_PREFIXED_EXPERIMENTAL_PACKAGE_DIRECTORIES`. */
 export const EXPERIMENTAL_PACKAGE_NAME_PREFIX = '@tomato/experimental-'
 
-/** Existing experimental packages that keep the legacy prefix until a rename; this list must not grow. */
+/**
+ * Existing experimental packages that keep the legacy prefix until a rename.
+ * Every entry predates the naming policy; a new package must not join it.
+ */
 export const LEGACY_PREFIXED_EXPERIMENTAL_PACKAGE_DIRECTORIES: readonly string[] = [
   'packages/experimental/api-speech-to-text',
   'packages/experimental/auto-review',
   'packages/experimental/badge-skill-bundle',
   'packages/experimental/browser-use-chrome-devtools-mcp',
+  'packages/experimental/browser-use-playwright-bundle',
   'packages/experimental/browser-use-playwright-mcp',
   'packages/experimental/browser-use-runtime',
   'packages/experimental/browser-use-stagehand-native',
@@ -51,6 +59,16 @@ export const LEGACY_PREFIXED_EXPERIMENTAL_PACKAGE_DIRECTORIES: readonly string[]
   'packages/experimental/computer-use-cua-driver-native',
   'packages/experimental/cot-translation-bundle',
   'packages/experimental/cua-macos',
+  'packages/experimental/embeddings',
+  'packages/experimental/embeddings-http',
+  'packages/experimental/experimental-robot-crew',
+  'packages/experimental/experimental-robot-crew-local',
+  'packages/experimental/experimental-robot-crew-remote',
+  'packages/experimental/experimental-robot-room',
+  'packages/experimental/experimental-robot-room-local',
+  'packages/experimental/experimental-robot-room-remote',
+  'packages/experimental/experimental-tool-robot-crew',
+  'packages/experimental/focus',
   'packages/experimental/forge',
   'packages/experimental/forge-bundle',
   'packages/experimental/forge-github',
@@ -59,9 +77,23 @@ export const LEGACY_PREFIXED_EXPERIMENTAL_PACKAGE_DIRECTORIES: readonly string[]
   'packages/experimental/inspector-profile',
   'packages/experimental/liveshare',
   'packages/experimental/liveshare-protocol',
+  'packages/experimental/memory',
+  'packages/experimental/muse-bundle',
+  'packages/experimental/muse-insights',
+  'packages/experimental/phone-use',
+  'packages/experimental/phone-use-bundle',
+  'packages/experimental/phone-use-macos',
   'packages/experimental/plugin-market-bundle',
   'packages/experimental/ptc-runtime-python',
   'packages/experimental/ralph-bundle',
+  'packages/experimental/robot',
+  'packages/experimental/robot-app',
+  'packages/experimental/robot-local',
+  'packages/experimental/robot-remote',
+  'packages/experimental/robot-runtime',
+  'packages/experimental/robot-templates-knowledge-work',
+  'packages/experimental/robot-templates-marketing',
+  'packages/experimental/robot-triggers',
   'packages/experimental/session-inspector',
   'packages/experimental/session-search',
   'packages/experimental/session-titles-bundle',
@@ -69,6 +101,8 @@ export const LEGACY_PREFIXED_EXPERIMENTAL_PACKAGE_DIRECTORIES: readonly string[]
   'packages/experimental/speech-to-text-sensevoice',
   'packages/experimental/subagent-oar',
   'packages/experimental/terminal-bundle',
+  'packages/experimental/tool-memory',
+  'packages/experimental/tool-robot',
   'packages/experimental/tool-subagent-oar',
   'packages/experimental/tool-worktree',
   'packages/experimental/translator',

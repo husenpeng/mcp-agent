@@ -2,16 +2,6 @@
   "comment": "Maps each primary ` ```ts type-equiv ` or ` ```ts public-api ` block (by doc + declared symbol + projection) to the source declaration and original JSDoc it must match. Paired `.zh.md` blocks are byte-identical derivatives checked through their unsuffixed sibling and have no duplicate entry. Omit projection for the complete declaration; use public-api with a ` ```ts public-api ` block for a body-stripped public class declaration. verify-type-equiv.ts enforces a 1:1 correspondence between primary blocks and entries. Add an entry when you add a primary source-equivalence block; remove it when you remove the block.",
   "entries": [
     {
-      "doc": "docs/subsystems/session.md",
-      "symbol": "SessionLogUploadRequest",
-      "source": "packages/session/session-log-deepseek/src/types.ts"
-    },
-    {
-      "doc": "docs/subsystems/session.md",
-      "symbol": "SessionLogUploadExclusion",
-      "source": "packages/session/session-log-deepseek/src/types.ts"
-    },
-    {
       "doc": "docs/subsystems/compaction.md",
       "symbol": "ImageOffloadTarget",
       "source": "packages/compaction/compaction-image-offload/src/projection.ts"
@@ -73,16 +63,6 @@
     },
     {
       "doc": "docs/subsystems/llm-streaming.md",
-      "symbol": "LlmModelBadgeTone",
-      "source": "packages/llm/llm/src/types.ts"
-    },
-    {
-      "doc": "docs/subsystems/llm-streaming.md",
-      "symbol": "LlmModelBadge",
-      "source": "packages/llm/llm/src/types.ts"
-    },
-    {
-      "doc": "docs/subsystems/llm-streaming.md",
       "symbol": "LlmModelInfo",
       "source": "packages/llm/llm/src/types.ts"
     },
@@ -129,16 +109,6 @@
     {
       "doc": "docs/subsystems/llm-streaming.md",
       "symbol": "RequestMessage",
-      "source": "packages/llm/llm/src/types.ts"
-    },
-    {
-      "doc": "docs/subsystems/llm-streaming.md",
-      "symbol": "LlmRequestPurposeMap",
-      "source": "packages/llm/llm/src/types.ts"
-    },
-    {
-      "doc": "docs/subsystems/llm-streaming.md",
-      "symbol": "LlmRequestPurpose",
       "source": "packages/llm/llm/src/types.ts"
     },
     {
@@ -853,11 +823,6 @@
     },
     {
       "doc": "docs/subsystems/tools.md",
-      "symbol": "ToolGuardDenial",
-      "source": "packages/core/tools/src/contracts.ts"
-    },
-    {
-      "doc": "docs/subsystems/tools.md",
       "symbol": "ToolErrorInfo",
       "source": "packages/core/tools/src/contracts.ts"
     },
@@ -1263,28 +1228,12 @@
     },
     {
       "doc": "docs/subsystems/ptc-runtime.md",
-      "symbol": "PtcProgramFormat",
-      "source": "packages/ptc-runtime/ptc-runtime/src/types.ts"
-    },
-    {
-      "doc": "docs/subsystems/ptc-runtime.md",
       "symbol": "PtcRunRequest",
       "source": "packages/ptc-runtime/ptc-runtime/src/types.ts"
     },
     {
       "doc": "docs/subsystems/ptc-runtime.md",
       "symbol": "PtcRunResult",
-      "source": "packages/ptc-runtime/ptc-runtime/src/types.ts"
-    },
-    {
-      "doc": "docs/subsystems/ptc-runtime.md",
-      "symbol": "PtcImage",
-      "source": "packages/ptc-runtime/ptc-runtime/src/image.ts",
-      "projection": "public-api"
-    },
-    {
-      "doc": "docs/subsystems/ptc-runtime.md",
-      "symbol": "PtcOutput",
       "source": "packages/ptc-runtime/ptc-runtime/src/types.ts"
     },
     {
@@ -2148,11 +2097,6 @@
       "source": "packages/session/session-projection/src/index.ts"
     },
     {
-      "doc": "docs/subsystems/session-projection.md",
-      "symbol": "ProjectionEventChangeListener",
-      "source": "packages/session/session-projection/src/index.ts"
-    },
-    {
       "doc": "docs/subsystems/core.md",
       "symbol": "AgentHandle",
       "source": "packages/core/agent/src/index.ts"
@@ -2399,11 +2343,6 @@
       "source": "packages/subagent/subagent/src/types.ts"
     },
     {
-      "doc": "docs/subsystems/subagent.md",
-      "symbol": "SubagentMemberNames",
-      "source": "packages/subagent/subagent/src/types.ts"
-    },
-    {
       "doc": "docs/subsystems/product-telemetry.md",
       "symbol": "ProductTelemetryScalar",
       "source": "packages/host/product-telemetry-otel/src/index.ts"
@@ -2622,31 +2561,6 @@
       "doc": "docs/subsystems/session-projection.md",
       "symbol": "ProjectionKeySelection",
       "source": "packages/session/session-projection/src/index.ts"
-    },
-    {
-      "doc": "docs/subsystems/worktrees.md",
-      "symbol": "CreateWorktreePhase",
-      "source": "packages/experimental/worktree/src/types.ts"
-    },
-    {
-      "doc": "docs/subsystems/worktrees.md",
-      "symbol": "RestoreWorktreeRequest",
-      "source": "packages/experimental/worktree/src/types.ts"
-    },
-    {
-      "doc": "docs/subsystems/worktrees.md",
-      "symbol": "WorktreeCleanup",
-      "source": "packages/experimental/worktree/src/types.ts"
-    },
-    {
-      "doc": "docs/subsystems/worktrees.md",
-      "symbol": "WorktreeCreation",
-      "source": "packages/experimental/worktree/src/types.ts"
-    },
-    {
-      "doc": "docs/subsystems/worktrees.md",
-      "symbol": "RestoredWorktree",
-      "source": "packages/experimental/worktree/src/types.ts"
     },
     {
       "doc": "docs/subsystems/forge.md",
@@ -2892,11 +2806,6 @@
       "doc": "docs/subsystems/forge.md",
       "symbol": "ForgeReviewData",
       "source": "packages/experimental/forge/src/types.ts"
-    },
-    {
-      "doc": "docs/subsystems/session.md",
-      "symbol": "SessionEventInput",
-      "source": "packages/core/session/src/types.ts"
     },
     {
       "doc": "docs/subsystems/forge.md",

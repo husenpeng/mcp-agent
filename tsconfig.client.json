@@ -319,6 +319,9 @@
       "path": "./packages/experimental/muse-insights/tsconfig.client.json"
     },
     {
+      "path": "./packages/experimental/client-ui-superagent/tsconfig.client.json"
+    },
+    {
       "path": "./packages/experimental/client-ui-cot-translation/tsconfig.client.json"
     },
     {

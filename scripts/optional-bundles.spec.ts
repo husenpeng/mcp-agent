@@ -9,7 +9,12 @@ import type { EntryOptions } from '@tomato/cordis-plugin-loader'
 import { loadOverlayPatches } from '../packages/boot/app-boot/src/index.ts'
 import { readPluginMeta } from '../packages/boot/app-boot/src/package-meta.ts'
 import { bundlePatchPaths, composeEntries, initProfile, readProfileManifest } from '../packages/boot/app-boot/src/profile.ts'
-import { OPTIONAL_BUNDLES, PROFILE_TEMPLATES } from '../packages/util/official-bundles/src/bundles.ts'
+import {
+  INSTALLATION_OWNED_PROFILE_TUPLES,
+  OPTIONAL_BUNDLES,
+  PROFILE_TEMPLATES,
+  RETIRED_BUNDLES,
+} from '../packages/util/official-bundles/src/bundles.ts'
 import type { TomatoBundleManifest } from '../packages/util/package-manifest/src/types.ts'
 import { createPluginProfile } from '../apps/desktop/src/project-manager.ts'
 
@@ -177,6 +182,19 @@ describe('optional bundles', () => {
     expect(composed.find(row => row.id === 'worktree')?.config).toEqual(config)
     expect(composed.find(row => row.id === 'tool-worktree')?.disabled).toBe(true)
     expect(composed.find(row => row.id === 'forge-panel')?.disabled).toBe(true)
+  })
+
+  it('keeps every installation-owned profile tuple resolvable and distinct from its template', () => {
+    for (const [name, tuple] of Object.entries(INSTALLATION_OWNED_PROFILE_TUPLES)) {
+      const template = PROFILE_TEMPLATES[name]
+      // A tuple whose profile has no template can never converge: normalization writes nothing.
+      expect(template, `${name} has no shipped template`).toBeDefined()
+      // A tuple equal to its template is dead weight that would rewrite nothing.
+      expect(new Set(tuple).size, `${name} repeats a bundle`).toBe(tuple.length)
+      expect(tuple, `${name} already equals its template`).not.toEqual(template?.bundles)
+      // One normalization pass must reach the template, so a retired bundle cannot be in the tuple.
+      expect(tuple.filter(bundle => RETIRED_BUNDLES.has(bundle)), `${name} carries a retired bundle`).toEqual([])
+    }
   })
 
   it('ships all five lightweight bundles without selecting them in a default template', () => {

@@ -1798,6 +1798,21 @@
       "@tomato/storage-sqlite": [
         "./packages/storage/storage-sqlite/src"
       ],
+      "@tomato/superagent": [
+        "./packages/experimental/superagent/src/index.ts"
+      ],
+      "@tomato/superagent-local": [
+        "./packages/experimental/superagent-local/src/index.ts"
+      ],
+      "@tomato/client-ui-superagent": [
+        "./packages/experimental/client-ui-superagent/src/index.ts"
+      ],
+      "@tomato/client-ui-superagent/client": [
+        "./packages/experimental/client-ui-superagent/src/client/index.ts"
+      ],
+      "@tomato/superagent-runtime": [
+        "./packages/experimental/superagent-runtime/src/index.ts"
+      ],
       "@tomato/subagent": [
         "./packages/subagent/subagent/src"
       ],

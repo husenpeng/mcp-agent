@@ -786,6 +786,18 @@
       "path": "./packages/experimental/focus"
     },
     {
+      "path": "./packages/experimental/superagent"
+    },
+    {
+      "path": "./packages/experimental/superagent-local"
+    },
+    {
+      "path": "./packages/experimental/superagent-runtime"
+    },
+    {
+      "path": "./packages/experimental/client-ui-superagent/tsconfig.host.json"
+    },
+    {
       "path": "./packages/experimental/muse-bundle"
     },
     {
