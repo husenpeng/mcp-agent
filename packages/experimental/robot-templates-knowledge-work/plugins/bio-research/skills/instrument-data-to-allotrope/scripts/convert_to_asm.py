@@ -209,7 +209,7 @@ def get_deterministic_timestamp(filepath: str) -> str:
 
 
 def calculate_file_hash(filepath: str) -> str:
-    """Calculate SHA256 hash of file for provenance tracking."""
+    """Calculate SHA256 hash of file for source tracking."""
     try:
         with open(filepath, "rb") as f:
             return hashlib.sha256(f.read()).hexdigest()
@@ -225,7 +225,7 @@ def get_library_version(library: str) -> str:
         return "VERSION_NOT_AVAILABLE"
 
 
-def add_provenance_metadata(
+def add_source_metadata(
     asm: Dict[str, Any],
     filepath: str,
     vendor: str,
@@ -234,7 +234,7 @@ def add_provenance_metadata(
     warnings: list = None,
 ) -> Dict[str, Any]:
     """
-    Add provenance metadata to ASM for reproducibility and audit trail.
+    Add source metadata to ASM for reproducibility and audit trail.
 
     This metadata enables:
     - Reproducing conversions months later
@@ -468,8 +468,8 @@ def main():
         print("Error: Could not convert file")
         sys.exit(1)
 
-    # Add provenance metadata
-    asm = add_provenance_metadata(
+    # Add source metadata
+    asm = add_source_metadata(
         asm, str(input_path), vendor, confidence, used_fallback, warnings
     )
 

@@ -56,7 +56,7 @@ Information about software used for acquisition, analysis, or conversion.
 | File path | `file-identifier` | "/data/runs/2024-01-15/" |
 | Database ID | `ASM-converter-name` | "allotropy v0.1.55" |
 
-**Rule:** If the value describes software, file metadata, or data provenance, it goes in `data-system-document`.
+**Rule:** If the value describes software, file metadata, or data source, it goes in `data-system-document`.
 
 ---
 
