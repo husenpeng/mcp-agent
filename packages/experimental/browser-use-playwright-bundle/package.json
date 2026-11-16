@@ -1,7 +1,7 @@
 {
   "name": "@tomato/experimental-browser-use-playwright-bundle",
   "description": "On-demand Playwright MCP browser tools for every session",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "icon": "./icon.svg",
   "publishConfig": {
     "access": "public"

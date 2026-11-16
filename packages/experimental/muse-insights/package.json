@@ -1,7 +1,7 @@
 {
   "name": "@tomato/experimental-muse-insights",
   "description": "Daily work recaps and proactive unfinished-task nudges over the Muse memory bundle",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },

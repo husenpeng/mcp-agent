@@ -1,7 +1,7 @@
 {
   "name": "@tomato/experimental-muse-bundle",
   "description": "Account-scoped profile and workspace memory across sessions and goal-round focus, switched on together.",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "icon": "./icon.svg",
   "publishConfig": {
     "access": "public"

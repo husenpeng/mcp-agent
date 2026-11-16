@@ -1,7 +1,7 @@
 {
   "name": "@tomato/experimental-robot-app",
   "description": "The Tomato Rbot bundle: the robot registry, run executor, triggers, Remote controller, and the robot page with its sidebar roster and separate conversation surface",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },

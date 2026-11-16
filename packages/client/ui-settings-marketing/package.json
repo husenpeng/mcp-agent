@@ -1,7 +1,7 @@
 {
   "name": "@tomato/client-ui-settings-marketing",
   "description": "The Marketing settings page on the tomato web client's Plugins page: one switch per advertising or marketing provider and its credential references",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },

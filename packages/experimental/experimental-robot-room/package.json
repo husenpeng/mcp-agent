@@ -1,7 +1,7 @@
 {
   "name": "@tomato/experimental-robot-room",
   "description": "Robot Room vocabulary and pure policy: room specification, A2A v2 envelopes, admission pipeline, loop guard, budgets, and member context.",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },

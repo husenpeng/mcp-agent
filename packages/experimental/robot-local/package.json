@@ -1,7 +1,7 @@
 {
   "name": "@tomato/experimental-robot-local",
   "description": "Storage-backed robot specification registry, instantiation, and run control",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },

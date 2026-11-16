@@ -1,7 +1,7 @@
 {
   "name": "@tomato/experimental-robot-runtime",
   "description": "Executes queued robot runs through a composed Agent and records their outcomes",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },

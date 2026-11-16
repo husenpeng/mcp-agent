@@ -1,7 +1,7 @@
 {
   "name": "@tomato/client-ui-image-evidence",
   "description": "Evidence card beside each pasted image: which vision engine read it, how long it took, and whether the read failed or was truncated",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },

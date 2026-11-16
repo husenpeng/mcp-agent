@@ -1,7 +1,7 @@
 {
   "name": "@tomato/client-ui-settings-remote",
   "description": "Settings page that supervises the Desktop Host's phone tunnel and shows its pairing link and QR code",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },

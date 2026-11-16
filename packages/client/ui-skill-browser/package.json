@@ -1,7 +1,7 @@
 {
   "name": "@tomato/client-ui-skill-browser",
   "description": "Skills tab type for the right Sidebar: browse every installed skill, open its details, and edit personal skill files",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },

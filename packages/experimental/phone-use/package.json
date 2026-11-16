@@ -1,7 +1,7 @@
 {
   "name": "@tomato/experimental-phone-use",
   "description": "Observe and operate an attached iPhone over the phone-use Remote namespace",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },

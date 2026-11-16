@@ -1,7 +1,7 @@
 {
   "name": "@tomato/client-ui-account-access",
   "description": "Feishu account access section showing verified roles and quotas",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "private": true,
   "type": "module",
   "main": "lib/index.js",

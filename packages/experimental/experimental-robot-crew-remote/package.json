@@ -1,7 +1,7 @@
 {
   "name": "@tomato/experimental-robot-crew-remote",
   "description": "Mounts the generated crew Remote contribution in an optional client assembly",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },

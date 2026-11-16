@@ -1,7 +1,7 @@
 {
   "name": "@tomato/experimental-tool-robot-crew",
   "description": "Model-facing robot_crew_create tool that orchestrates published Tomato Rbot agents into a crew from a conversation",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },

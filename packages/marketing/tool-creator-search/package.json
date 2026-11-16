@@ -1,7 +1,7 @@
 {
   "name": "@tomato/tool-creator-search",
   "description": "Model-facing creator search tools (creator_search, creator_detail, youtube_channel) over the company BFF's /api/v1/creator-search endpoints, authenticated by the Desktop session cookie",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },

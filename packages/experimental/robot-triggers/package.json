@@ -1,7 +1,7 @@
 {
   "name": "@tomato/experimental-robot-triggers",
   "description": "Starts robot runs from cron schedules and robot event topics",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },

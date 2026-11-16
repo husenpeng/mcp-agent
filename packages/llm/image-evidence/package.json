@@ -1,7 +1,7 @@
 {
   "name": "@tomato/image-evidence",
   "description": "Image evidence bridge: text-only models read pasted images through a configured vision model",
-  "version": "0.2.1-rc.3",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },
