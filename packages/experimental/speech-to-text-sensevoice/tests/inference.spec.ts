@@ -83,3 +83,23 @@ it('restores the onset a cold VAD reports late, for the first segment only and w
   off(wave(1024, 1000), 'zh')
   expect(native.accepted).toEqual([512, 512])
 })
+
+it('builds a Whisper pair, maps automatic detection to an empty hint, and rejects Cantonese', () => {
+  native.configs.length = 0; native.speech = true; native.starts = [0]; native.texts = ['第一句。']
+  const transcribe = createTranscriber(Object.assign(
+    Config({ dataRoot: '/cache', family: 'whisper' }),
+    { model: '/encoder', decoder: '/decoder', tokens: '/tokens', vad: '/vad' },
+  ))
+  expect(native.configs[0]).toMatchObject({
+    modelConfig: { whisper: { encoder: '/encoder', decoder: '/decoder', language: '', task: 'transcribe' }, tokens: '/tokens' },
+  })
+  expect(transcribe(wave(), 'auto').text).toBe('第一句。')
+  expect(native.configs.at(-1)).toMatchObject({ modelConfig: { whisper: { language: '' } } })
+  native.texts = ['第二句。']
+  transcribe(wave(), 'zh')
+  expect(native.configs.at(-1)).toMatchObject({ modelConfig: { whisper: { language: 'zh' } } })
+  expect(() => transcribe(wave(), 'yue')).toThrow('language')
+  expect(() => createTranscriber(Object.assign(
+    Config({ dataRoot: '/cache', family: 'whisper' }), { model: '/m', tokens: '/t', vad: '/v' },
+  ))).toThrow('decoder')
+})

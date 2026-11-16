@@ -201,3 +201,30 @@ it('reports the final source when every download fails', async () => {
   })
   expect(fetcher.mock.calls.filter(([, init]) => init?.method !== 'HEAD')).toHaveLength(2)
 })
+
+it('prepares Whisper from explicit files without downloading', async () => {
+  const { root, fetcher } = await fixture()
+  const models = join(root, 'whisper')
+  await mkdir(models, { recursive: true })
+  for (const name of ['encoder.onnx', 'decoder.onnx', 'tokens.txt']) await writeFile(join(models, name), bytes)
+  const vad = join(root, 'silero_vad.onnx')
+  await writeFile(vad, bytes)
+  const signal = new AbortController().signal
+  const config = Config({ dataRoot: root, family: 'whisper', modelDirectory: models, vadModelPath: vad })
+  const paths = await prepareRuntime(new Context(), config, signal)
+  expect(paths).toMatchObject({
+    model: join(models, 'encoder.onnx'), decoder: join(models, 'decoder.onnx'), tokens: join(models, 'tokens.txt'), vad,
+  })
+  expect(fetcher).not.toHaveBeenCalled()
+  expect(await inspectRuntime(config, signal)).toEqual(paths)
+  await rm(join(models, 'decoder.onnx'))
+  expect(await inspectRuntime(config, signal)).toBeUndefined()
+})
+
+it('refuses Whisper without explicit model and VAD paths', async () => {
+  const { root } = await fixture()
+  await expect(prepareRuntime(new Context(), Config({ dataRoot: root, family: 'whisper' }), new AbortController().signal))
+    .rejects.toThrow('modelDirectory')
+  await expect(prepareRuntime(new Context(), Config({ dataRoot: root, family: 'whisper', modelDirectory: root }),
+    new AbortController().signal)).rejects.toThrow('vadModelPath')
+})

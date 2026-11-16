@@ -1,6 +1,6 @@
 {
   "name": "@tomato/experimental-speech-to-text-sensevoice",
-  "description": "Local SenseVoice ONNX transcription with a managed sherpa-onnx process",
+  "description": "Local SenseVoice or Whisper ONNX transcription with a managed sherpa-onnx process",
   "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"

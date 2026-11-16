@@ -47,3 +47,25 @@ it.each([
 ])('rejects invalid download source configuration %j', (config) => {
   expect(() => Provider.Config({ dataRoot: process.cwd(), ...config })).toThrow()
 })
+
+it.each(['int8', 'fp32'] as const)('registers Whisper (%s) with its own hint set and explicit model paths', async (precision) => {
+  const ctx = new Context()
+  try {
+    await ctx.plugin(LocalSubprocess)
+    await ctx.plugin(SpeechToText, { defaultProvider: 'whisper-local', language: 'auto' })
+    const fiber = ctx.plugin(Provider, { dataRoot: process.cwd(), providerId: 'whisper-local', family: 'whisper', precision,
+      modelDirectory: process.cwd(), vadModelPath: '/tmp/silero_vad.onnx' })
+    await fiber
+    const speech = ctx.get('speechToText')!
+    expect(speech.listProviders()).toMatchObject([{ id: 'whisper-local',
+      name: `Whisper small (${precision.toUpperCase()})`,
+      location: 'host-local', languages: ['auto', 'zh', 'en', 'ja', 'ko'] }])
+    expect(speech.listProviders()[0]?.setupEstimate).toEqual({
+      recommendedDiskBytes: precision === 'int8' ? 4e8 : 1.1e9,
+      expectedMemoryBytes: precision === 'int8' ? 4e8 : 1.1e9,
+      minimumMinutes: 1, maximumMinutes: 10,
+    })
+    await fiber.dispose()
+    expect(speech.listProviders()).toEqual([])
+  } finally { await ctx.fiber.dispose() }
+})

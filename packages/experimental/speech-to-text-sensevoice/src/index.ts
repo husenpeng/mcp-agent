@@ -6,7 +6,7 @@ import type {} from '@tomato/subprocess'
 import type { SpeechProviderId } from '@tomato/experimental-speech-to-text/types'
 import { Config } from './config.ts'
 import { SenseVoiceWorker } from './recognizer.ts'
-import { languages } from './input.ts'
+import { familyLanguages } from './input.ts'
 
 export { Config } from './config.ts'
 export const name = 'experimental-speech-to-text-sensevoice'
@@ -19,14 +19,19 @@ export const inject = ['speechToText', 'subprocess']
  */
 export function apply(ctx: Context, config: Config): void {
   for (const path of [config.dataRoot, config.modelDirectory, config.vadModelPath]) {
-    if (path !== undefined && !isAbsolute(path)) throw new Error(`SenseVoice paths must be absolute: ${path}`)
+    if (path !== undefined && !isAbsolute(path)) throw new Error(`Local speech paths must be absolute: ${path}`)
   }
   for (const origin of config.modelOrigin === undefined ? config.modelOrigins : [config.modelOrigin]) new URL(origin)
   const worker = new SenseVoiceWorker(ctx, config)
-  const estimatedBytes = config.precision === 'int8' ? 1_000_000_000 : 2_000_000_000
+  const whisper = config.family === 'whisper'
+  const estimatedBytes = whisper
+    ? (config.precision === 'int8' ? 400_000_000 : 1_100_000_000)
+    : (config.precision === 'int8' ? 1_000_000_000 : 2_000_000_000)
   ctx.effect(() => {
     const unregister = ctx.speechToText.register({
-      info: { id: config.providerId as SpeechProviderId, name: `SenseVoiceSmall (${config.precision.toUpperCase()})`, location: 'host-local', languages, downloadSources: worker.downloadSources,
+      info: { id: config.providerId as SpeechProviderId,
+        name: whisper ? `Whisper small (${config.precision.toUpperCase()})` : `SenseVoiceSmall (${config.precision.toUpperCase()})`,
+        location: 'host-local', languages: familyLanguages(config.family), downloadSources: worker.downloadSources,
         setupEstimate: { recommendedDiskBytes: estimatedBytes, expectedMemoryBytes: estimatedBytes,
           minimumMinutes: 1, maximumMinutes: 10 } },
       preparation: worker,

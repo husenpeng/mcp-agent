@@ -2,13 +2,14 @@
 import { createRequire } from 'node:module'
 import type { Transcript } from '@tomato/experimental-speech-to-text/types'
 import type { Config } from './config.ts'
-import { validateInput } from './input.ts'
+import { familyLanguages, validateInput } from './input.ts'
 
 /** Verified files and validated inference settings sent by the Host. */
 export interface InferenceConfig extends Config {
   readonly model: string
   readonly tokens: string
   readonly vad: string
+  readonly decoder?: string | undefined
 }
 
 interface Stream { acceptWaveform(audio: { samples: Float32Array; sampleRate: number }): void }
@@ -39,9 +40,13 @@ interface Sherpa {
 export function createTranscriber(config: InferenceConfig): (audio: Uint8Array, language: string) => Transcript {
   // sherpa-onnx-node publishes a CommonJS Node-API binding with JSDoc but no declarations.
   const sherpa = createRequire(import.meta.url)('sherpa-onnx-node') as Sherpa
+  if (config.family === 'whisper' && config.decoder === undefined) throw new Error('Whisper requires a decoder model path')
+  const senseVoice = { model: config.model, language: 'auto', useInverseTextNormalization: 1 }
+  // Whisper treats an empty hint as automatic language detection.
+  const whisper = { encoder: config.model, decoder: config.decoder ?? '', language: '', task: 'transcribe', tailPaddings: -1 }
   const nativeConfig = {
     featConfig: { sampleRate: 16000, featureDim: 80 },
-    modelConfig: { senseVoice: { model: config.model, language: 'auto', useInverseTextNormalization: 1 },
+    modelConfig: { ...(config.family === 'whisper' ? { whisper } : { senseVoice }),
       tokens: config.tokens, numThreads: config.threads, provider: 'cpu', debug: 0 },
   }
   const recognizer = new sherpa.OfflineRecognizer(nativeConfig)
@@ -51,10 +56,11 @@ export function createTranscriber(config: InferenceConfig): (audio: Uint8Array, 
     sampleRate: 16000, numThreads: config.threads, provider: 'cpu', debug: 0,
   }, config.segmentSeconds + config.minSilenceSeconds + 1)
   return (audio, language) => {
-    const audioSeconds = validateInput(audio, language, config.maxAudioBytes)
+    const audioSeconds = validateInput(audio, language, config.maxAudioBytes, familyLanguages(config.family))
     const pcm = new DataView(audio.buffer, audio.byteOffset + 44, audio.byteLength - 44)
     const samples = Float32Array.from({ length: pcm.byteLength / 2 }, (_, i) => pcm.getInt16(i * 2, true) / 32768)
-    nativeConfig.modelConfig.senseVoice.language = language
+    if (config.family === 'whisper') whisper.language = language === 'auto' ? '' : language
+    else senseVoice.language = language
     recognizer.setConfig(nativeConfig)
     detector.reset()
     const started = performance.now(), texts: string[] = []

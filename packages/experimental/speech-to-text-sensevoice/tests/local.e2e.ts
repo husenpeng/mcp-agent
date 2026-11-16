@@ -1,4 +1,4 @@
-/** Explicit opt-in real SenseVoice inference, including the managed runtime when no overrides are supplied. */
+/** Explicit opt-in real local inference, including the managed runtime when no overrides are supplied. */
 import { readFile } from 'node:fs/promises'
 import { Context } from '@tomato/cordis'
 import LocalSubprocess from '@tomato/subprocess-local'
@@ -13,6 +13,7 @@ it.skipIf(!dataRoot || !audioPath)('prepares a real local recognizer, transcribe
   await ctx.plugin(LocalSubprocess)
   const spawn = vi.spyOn(ctx.get('subprocess')!, 'spawn')
   const worker = new SenseVoiceWorker(ctx, Config({ dataRoot: dataRoot!,
+    family: process.env.TOMATO_SPEECH_E2E_FAMILY === 'whisper' ? 'whisper' : 'sensevoice',
     modelDirectory: process.env.TOMATO_SPEECH_E2E_MODEL,
     vadModelPath: process.env.TOMATO_SPEECH_E2E_VAD,
     precision: process.env.TOMATO_SPEECH_E2E_PRECISION === 'fp32' ? 'fp32' : 'int8',
@@ -26,10 +27,10 @@ it.skipIf(!dataRoot || !audioPath)('prepares a real local recognizer, transcribe
     expect(cold.text.length).toBeGreaterThan(0)
     expect(warm.text).toBe(cold.text)
     expect(warm.audioSeconds).toBeGreaterThan(0)
-    await expect(worker.transcribe({ ...input, language: 'fr' }, new AbortController().signal)).rejects.toThrow('Unsupported SenseVoice language')
+    await expect(worker.transcribe({ ...input, language: 'fr' }, new AbortController().signal)).rejects.toThrow('Unsupported language')
     expect((await worker.transcribe(input, new AbortController().signal)).text).toBe(warm.text)
     expect(spawn).toHaveBeenCalledOnce()
-    console.info('SenseVoice inference', { cold, warm })
+    console.info('Local inference', { cold, warm })
   } finally {
     await worker.dispose()
     await ctx.fiber.dispose()

@@ -7,6 +7,14 @@
       name: '@tomato/experimental-speech-to-text-sensevoice'
       config:
         dataRoot: !!js tomatoHomePath('speech-to-text', 'sensevoice')
+    - id: speech-to-text-whisper
+      name: '@tomato/experimental-speech-to-text-sensevoice'
+      config:
+        providerId: whisper-local
+        family: whisper
+        dataRoot: !!js tomatoHomePath('speech-to-text', 'whisper')
+        modelDirectory: !!js tomatoHomePath('speech-to-text', 'whisper', 'models')
+        vadModelPath: !!js tomatoHomePath('speech-to-text', 'whisper', 'models', 'silero_vad.onnx')
     - id: api-speech-to-text
       name: '@tomato/experimental-api-speech-to-text'
     - id: ui-voice-input

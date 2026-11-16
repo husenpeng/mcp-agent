@@ -6,6 +6,8 @@ import { MAX_TIMER_DELAY_MS } from '@tomato/timeout'
 export interface Config {
   /** Unique registration id; consumers select this exact id. */
   providerId: string
+  /** Local model family; Whisper ships with the deployment instead of downloading. */
+  family: 'sensevoice' | 'whisper'
   /** Absolute directory for verified ONNX models. */
   dataRoot: string
   /** Existing directory containing the selected ONNX model and tokens.txt; omission downloads verified files. */
@@ -55,6 +57,7 @@ export interface Config {
 /** Validate deployment-varying runtime choices at plugin activation. */
 export const Config: z<Partial<Config>, Config> = z.object({
   providerId: z.string().min(1).default('sensevoice-local'),
+  family: z.union(['sensevoice', 'whisper']).default('sensevoice'),
   dataRoot: z.string().min(1).required(),
   modelDirectory: z.union([z.string().min(1), z.const(undefined)]),
   vadModelPath: z.union([z.string().min(1), z.const(undefined)]),

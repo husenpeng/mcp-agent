@@ -34,6 +34,8 @@ export interface RuntimePaths {
   readonly model: string
   readonly tokens: string
   readonly vad: string
+  /** Whisper's decoder; absent for SenseVoice, whose model is one encoder-decoder file. */
+  readonly decoder?: string | undefined
   readonly worker: string
 }
 
@@ -56,19 +58,34 @@ function resolveRuntime(config: Config) {
   const supported = ['darwin-arm64', 'darwin-x64', 'linux-arm64', 'linux-x64', 'win32-x64']
   if (!supported.includes(`${process.platform}-${process.arch}`)) throw new Error(`Local speech is unavailable for ${process.platform}-${process.arch}`)
   const lock = JSON.parse(readFileSync(new URL('../runtime/assets.json', import.meta.url), 'utf8')) as RuntimeLock
+  /* v8 ignore next -- built worker resolution is exercised by real Node and Electron process smokes */
+  const worker = fileURLToPath(new URL(import.meta.url.endsWith('.ts') ? './worker.ts' : './worker.js', import.meta.url))
+  if (config.family === 'whisper') {
+    // Whisper ships with the deployment: three fixed file names under one directory, no managed download.
+    if (config.modelDirectory === undefined) throw new Error('Whisper requires an absolute modelDirectory')
+    if (config.vadModelPath === undefined) throw new Error('Whisper requires an absolute vadModelPath')
+    const paths: RuntimePaths = {
+      model: join(config.modelDirectory, 'encoder.onnx'),
+      decoder: join(config.modelDirectory, 'decoder.onnx'),
+      tokens: join(config.modelDirectory, 'tokens.txt'),
+      vad: config.vadModelPath,
+      worker,
+    }
+    return { lock, modelRoot: config.modelDirectory, paths }
+  }
   const modelRoot = config.modelDirectory ?? join(config.dataRoot, 'models', 'sensevoice-onnx')
   const paths: RuntimePaths = {
     model: join(modelRoot, lock.models[config.precision].name), tokens: join(modelRoot, lock.tokens.name),
     vad: config.vadModelPath ?? join(config.dataRoot, 'models', 'silero', lock.vad.name),
-    /* v8 ignore next -- built worker resolution is exercised by real Node and Electron process smokes */
-    worker: fileURLToPath(new URL(import.meta.url.endsWith('.ts') ? './worker.ts' : './worker.js', import.meta.url)),
+    worker,
   }
   return { lock, modelRoot, paths }
 }
 
 async function verifyRuntime(config: Config, paths: RuntimePaths, lock: RuntimeLock, signal: AbortSignal): Promise<boolean> {
   signal.throwIfAborted()
-  try { await Promise.all([paths.model, paths.tokens, paths.vad].map(path => access(path))) }
+  const required = [paths.model, paths.tokens, paths.vad, ...paths.decoder === undefined ? [] : [paths.decoder]]
+  try { await Promise.all(required.map(path => access(path))) }
   catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
     return false
