@@ -820,3 +820,25 @@ describe('removeLinkProjections', () => {
     expect(existsSync(join(profile, 'node_modules', 'my-plugin', 'package.json'))).toBe(true)
   })
 })
+
+describe('profile normalization notices', () => {
+  it('reports the bundle list it replaced, so a rewritten profile is not silent', () => {
+    const anchor = stageInstallation({
+      '@tomato/base': { patch: '[]\n' },
+      '@tomato/web-app': { patch: '[]\n' },
+      '@tomato/headless': { patch: '[]\n' },
+    })
+    const home = tmp()
+    const dir = resolveProfileDir('headless', home)
+    initProfile(dir, ['@tomato/base', '@tomato/web-app', '@tomato/headless'])
+    const stderr = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
+    try {
+      loadProfile('t', 'headless', anchor, home)
+      expect(stderr).toHaveBeenCalledWith(expect.stringContaining(
+        'updated profile "headless" to its shipped bundle list: @tomato/base, @tomato/web-app, @tomato/headless → @tomato/base, @tomato/headless',
+      ))
+    } finally {
+      stderr.mockRestore()
+    }
+  })
+})

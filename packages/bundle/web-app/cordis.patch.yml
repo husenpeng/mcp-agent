@@ -529,9 +529,6 @@
     - id: ui-model-selection
       name: '@tomato/client-ui-model-selection'
 
-    - id: ui-deepseek-model-label-1017
-      name: '@tomato/client-ui-deepseek-model-label-1017'
-
     - id: ui-permission
       name: '@tomato/client-ui-permission-presets'
 

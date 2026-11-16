@@ -608,9 +608,21 @@ function withBundles(manifest: ProfileManifest, bundles: readonly string[]): Pro
 
 /**
  * Normalize an exact installation-owned bundle tuple to its shipped template,
- * preserving all other manifest fields. Other bundle lists remain untouched.
+ * preserving all other manifest fields. Other bundle lists remain untouched,
+ * including a retired tuple carrying an extra bundle: only an exact match is a
+ * list nobody chose. A rewrite is reported because it changes what boots.
+ * @param binName - launcher name the notice is written under.
+ * @param name - profile being normalized.
+ * @param dir - profile directory whose manifest is rewritten.
+ * @param manifest - manifest as read.
+ * @returns the manifest that boots, rewritten when the tuple was the retired one.
  */
-function normalizeShippedProfile(name: string, dir: string, manifest: ProfileManifest): ProfileManifest {
+function normalizeShippedProfile(
+  binName: string,
+  name: string,
+  dir: string,
+  manifest: ProfileManifest,
+): ProfileManifest {
   const installationOwned = INSTALLATION_OWNED_PROFILE_TUPLES[name]
   const template = PROFILE_TEMPLATES[name]
   const bundles = manifest.tomato?.profile?.bundles
@@ -619,6 +631,11 @@ function normalizeShippedProfile(name: string, dir: string, manifest: ProfileMan
   if (!isRetiredTuple) return manifest
   const normalized = withBundles(manifest, template.bundles)
   writeProfileManifest(dir, normalized)
+  // The rewrite changes what this profile boots, so the person who owns it hears about it.
+  process.stderr.write(
+    `${binName}: updated profile ${JSON.stringify(name)} to its shipped bundle list: `
+    + `${bundles.join(', ')} → ${template.bundles.join(', ')}\n`,
+  )
   return normalized
 }
 
@@ -757,7 +774,7 @@ export function loadProfile(
     initProfile(dir, template.bundles)
   }
   removeLinkProjections(dir)
-  normalizeShippedProfile(name, dir, readProfileManifest(binName, dir))
+  normalizeShippedProfile(binName, name, dir, readProfileManifest(binName, dir))
   return loadProfileDirectory(binName, dir, installAnchor, options)
 }
 

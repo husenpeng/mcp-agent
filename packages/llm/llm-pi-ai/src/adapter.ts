@@ -342,7 +342,14 @@ export class PiAiAdapter extends LlmAdapter {
     // The configured name, not the route key: `displayName` exists so a
     // deployment can label a route, and a label only the configuration surface
     // reads would leave every selector showing the raw key.
-    return { id: provider, name: this.current().profiles.get(provider)?.displayName ?? provider }
+    const snapshot = this.current()
+    const profile = snapshot.profiles.get(provider)
+    const models = profile === undefined ? [] : snapshot.models.getModels(provider).map(model => model.id)
+    return {
+      id: provider,
+      name: profile?.displayName ?? provider,
+      ...models.length === 0 ? {} : { models },
+    }
   }
 
   override providerRetryPolicy(provider: string): ResolvedRetryPolicy | undefined {

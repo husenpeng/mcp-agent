@@ -82,9 +82,22 @@ export {
 export { assertSessionHeadersCompatible } from './sources.ts'
 export type { SessionObservation, SessionObservationOptions } from './observation.ts'
 
+/** Cross-Session read grants a deployment publishes when its Sessions belong to one piece of work. */
+export interface SessionAccess {
+  /**
+   * Whether one Session may read another.
+   * @param caller - Session asking to read.
+   * @param target - Session it wants to read.
+   * @returns whether the deployment allows that read.
+   */
+  allows(caller: string, target: string): boolean
+}
+
 declare module '@tomato/cordis' {
   interface Context {
     sessionQuery: SessionQueryEngine
+    /** Cross-Session read grants; absent keeps the directory-only rule. */
+    sessionAccess?: SessionAccess
   }
 }
 

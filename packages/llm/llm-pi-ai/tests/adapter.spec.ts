@@ -264,7 +264,8 @@ describe('PiAiAdapter provider routing', () => {
       baseURL: 'https://acme.test/v1',
       models: [{ id: 'acme-large' }],
     } })
-    expect(adapter.providerInfo('acme-gateway')).toEqual({ id: 'acme-gateway', name: 'Acme Gateway' })
+    expect(adapter.providerInfo('acme-gateway'))
+      .toEqual({ id: 'acme-gateway', name: 'Acme Gateway', models: ['acme-large'] })
 
     // The registry and the profiles can disagree for a moment: a refused
     // registration swap leaves the previous routes serving while resolution

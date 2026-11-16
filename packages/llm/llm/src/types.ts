@@ -232,6 +232,13 @@ export interface LlmProviderInfo {
   id: string
   /** Human-readable provider name for selectors and diagnostics. */
   name: string
+  /**
+   * Model ids the route currently serves, in the adapter's listing order, or
+   * absent when the adapter cannot name them without a request. Configuration
+   * surfaces mirror the deployment allowlist from this list, so a route the
+   * person just configured is never born blocked.
+   */
+  models?: readonly string[]
 }
 
 /** Merge-extensible provider model modality vocabulary. */

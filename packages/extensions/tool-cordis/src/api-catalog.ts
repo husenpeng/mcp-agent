@@ -929,6 +929,31 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'creatorFeedback',
+    summary: 'Durable feedback over one storage table.',
+    description: 'Durable feedback over one storage table.',
+    methods: [
+      {
+        signature: 'list(client: string | undefined): FeedbackRecord[]',
+        description: 'List the records that apply to one client.',
+        parameters: [{ name: 'client', description: 'client to include; undefined includes host-wide records only.' }],
+        returns: 'the matching records, newest first.',
+      },
+      {
+        signature: 'byCreator(client: string | undefined): Map<string, FeedbackRecord>',
+        description: 'Read the records that apply to one client, keyed by creator.',
+        parameters: [{ name: 'client', description: 'the brief\'s client, when it names one.' }],
+        returns: 'the most specific record per creator.',
+      },
+      {
+        signature: 'async record(input: FeedbackInput, now: number = Date.now()): Promise<FeedbackRecord>',
+        description: 'Insert or replace the decision for one creator.',
+        parameters: [{ name: 'input', description: 'the reviewer\'s decision.' }, { name: 'now', description: 'epoch milliseconds; tests replace it.' }],
+        returns: 'the stored record.',
+      },
+    ],
+  },
+  {
     key: 'credentials',
     summary: 'Abstract credential service over two key spaces that answer two questions.',
     description: 'Abstract credential service over two key spaces that answer two questions.\n\nA CredentialRef answers "what is behind this environment-variable name": the provider-managed store first, then ambient fallbacks such as the process environment and `.env` files. One seam-wide rule binds that half: an empty stored value is absent everywhere — `resolve` skips it, `describe` reports it unconfigured — so a blank never masquerades as a configured secret.\n\nA CredentialKey answers "what credential does this plugin hold for this id". Nothing can layer here — an authorization grant has no environment to be read from — so presence of the record is the whole fact, and modifyRecord is the only write path because a correct write depends on the current value (a token refresh is read-decide-replace under one lock).',
@@ -1075,7 +1100,7 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
   {
     key: 'crews',
     summary: 'Abstract crew domain service.',
-    description: 'Abstract crew domain service. Subclass it, implement every operation, and load the subclass as the provider; it registers as `ctx.crews`.\n\nImplementations must honor these semantics:\n\n- publish validates the complete specification and returns an immutable revision; a rejected publication allocates no identity.\n- Revisions are append-only and never change after publication.\n- start accepts a run only for a published revision and returns before the run executes; observers follow run and the ledger.\n- cancel is cooperative; a terminal run keeps its state.\n- Ledger sequences are contiguous per run and never rewritten.',
+    description: 'Abstract crew domain service. Subclass it, implement every operation, and load the subclass as the provider; it registers as `ctx.crews`.\n\nImplementations must honor these semantics:\n\n- publish validates the complete specification, requires every member to name a published Rbot revision, and returns an immutable revision; a rejected publication allocates no identity.\n- Revisions are append-only and never change after publication.\n- start accepts a run only for a published revision and returns before the run executes; observers follow run and the ledger.\n- cancel is cooperative; a terminal run keeps its state.\n- Ledger sequences are contiguous per run and never rewritten.',
     methods: [
       {
         signature: 'abstract publish(spec: CrewSpec, previous?: CrewSpecRef): Promise<CrewSpecRevision>',
@@ -2488,7 +2513,7 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
       },
       {
         signature: 'async confirm(view: MemoryView, id: MemoryIdType): Promise<MemoryRecord | undefined>',
-        description: 'Activate a candidate.',
+        description: 'Activate a candidate. A candidate that names a `proposalFor` record replaces that record\'s statement instead of adding one: the proposal\'s value becomes the new version of the target\'s identity, and the proposal is closed so the change stays traceable to the person who accepted it.',
         parameters: [{ name: 'view', description: 'view that must see the record.' }, { name: 'id', description: 'candidate to confirm.' }],
         returns: 'the active record, or `undefined` when the view sees no candidate with that id.',
       },
@@ -7443,6 +7468,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface CreateWorktreeRequest {\n    name?: string;\n    from?: string;\n}',
   },
   {
+    name: 'CreatorPlatform',
+    declaration: 'export type CreatorPlatform = \'TIKTOK\' | \'INSTAGRAM\' | \'YOUTUBE\';',
+  },
+  {
     name: 'CredentialInfo',
     declaration: 'export interface CredentialInfo {\n    configured: boolean;\n    source?: string;\n    writable: boolean;\n    masked?: string;\n}',
   },
@@ -7784,7 +7813,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'EmbeddingsStatusView',
-    declaration: 'export interface EmbeddingsStatusView {\n    readonly available: boolean;\n    readonly enabled: boolean;\n    readonly model?: string;\n    readonly dimensions?: number;\n    readonly baseUrl?: string;\n    readonly usage?: EmbeddingsUsageView;\n}',
+    declaration: 'export interface EmbeddingsStatusView {\n    readonly available: boolean;\n    readonly enabled: boolean;\n    readonly model?: string;\n    readonly dimensions?: number;\n    readonly baseUrl?: string;\n    readonly apiKeyEnv?: string;\n    readonly usage?: EmbeddingsUsageView;\n}',
   },
   {
     name: 'EmbeddingsUsageView',
@@ -7853,6 +7882,18 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'FeedbackCategory',
     declaration: 'export type FeedbackCategory = \'task-result\' | \'instruction-following\' | \'product-interaction\' | \'service-stability\' | \'resource-cost\' | \'security-privacy-permission\' | \'other\';',
+  },
+  {
+    name: 'FeedbackDecision',
+    declaration: 'export type FeedbackDecision = \'accept\' | \'reject\' | \'watch\';',
+  },
+  {
+    name: 'FeedbackInput',
+    declaration: 'export interface FeedbackInput {\n    readonly platform: CreatorPlatform;\n    readonly creatorId: string;\n    readonly handle?: string;\n    readonly name?: string;\n    readonly decision: FeedbackDecision;\n    readonly reasons?: readonly FeedbackReason[];\n    readonly note?: string;\n    readonly client?: string;\n}',
+  },
+  {
+    name: 'FeedbackReason',
+    declaration: 'export type FeedbackReason = (typeof FEEDBACK_REASONS)[number];',
   },
   {
     name: 'FiberState',
@@ -8600,7 +8641,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'LlmProviderInfo',
-    declaration: 'export interface LlmProviderInfo {\n    id: string;\n    name: string;\n}',
+    declaration: 'export interface LlmProviderInfo {\n    id: string;\n    name: string;\n    models?: readonly string[];\n}',
   },
   {
     name: 'LlmReasoningEffortInfo',
@@ -9688,7 +9729,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'RememberRequest',
-    declaration: 'export interface RememberRequest {\n    readonly owner: MemoryOwner;\n    readonly scope: MemoryScope;\n    readonly kind: MemoryKind;\n    readonly entity: string;\n    readonly key: string;\n    readonly value: string;\n    readonly status: MemoryStatus;\n    readonly pinned: boolean;\n    readonly source: MemorySource;\n}',
+    declaration: 'export interface RememberRequest {\n    readonly owner: MemoryOwner;\n    readonly scope: MemoryScope;\n    readonly kind: MemoryKind;\n    readonly entity: string;\n    readonly key: string;\n    readonly value: string;\n    readonly status: MemoryStatus;\n    readonly pinned: boolean;\n    readonly source: MemorySource;\n    readonly proposalFor?: MemoryId;\n}',
   },
   {
     name: 'RemoteAccessAction',
