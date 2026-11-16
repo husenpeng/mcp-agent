@@ -24,6 +24,8 @@ interface Caller {
   readonly header: SessionHeader
   /** The caller's own-session boundary fold (the `turnBoundary` projection). */
   readonly boundary: TurnBoundaryProjection
+  /** Whether the deployment grants this caller a read of one other Session. */
+  readonly granted: (target: SessionIdValue) => boolean
 }
 
 interface TitleView {
@@ -60,10 +62,14 @@ function callerOf(exec: ToolRunContext, ctx: Context): Caller {
       'SESSION_QUERY_TOOL_MISSING_AGENT',
     )
   }
+  const access = ctx.get('sessionAccess')
   return {
     id: agent.session.id,
     header: agent.session.header,
     boundary: ctx.agents.turnBoundaryOf(agent.session),
+    // A deployment that runs related Sessions names them itself; without that
+    // service the directory rule below is the only one.
+    granted: target => access !== undefined && access.allows(String(agent.session.id), String(target)),
   }
 }
 
@@ -78,6 +84,7 @@ async function authorizeTarget(
   signal: AbortSignal,
 ): Promise<void> {
   if (target === caller.id) return
+  if (caller.granted(target)) return
   const cwd = caller.header.cwd
   if (cwd === undefined) throw serviceBoundary.unauthorizedTarget()
   const records = await serviceBoundary.call(ctx, signal, 'target authorization', () =>
@@ -94,6 +101,7 @@ function recordAuthorized(record: SessionRecord, caller: Caller): boolean {
 
 function headerAuthorized(header: SessionHeader, caller: Caller): boolean {
   if (header.id === caller.id) return header.cwd === caller.header.cwd
+  if (caller.granted(header.id)) return true
   return caller.header.cwd !== undefined && header.cwd === caller.header.cwd
 }
 
@@ -118,6 +126,8 @@ async function authorizeSessionIds(
   if (unique.includes(caller.id)) authorized.add(caller.id)
   const cwd = caller.header.cwd
   const other = unique.filter(id => id !== caller.id)
+  // A granted Session needs no directory lookup; the rest still do.
+  for (const id of other) if (caller.granted(id)) authorized.add(id)
   if (cwd === undefined || other.length === 0) return authorized
   const records = await serviceBoundary.call(ctx, signal, 'session-id authorization', () =>
     ctx.sessionQuery.filterSessions([

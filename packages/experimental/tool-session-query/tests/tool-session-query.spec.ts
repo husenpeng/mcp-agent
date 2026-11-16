@@ -623,6 +623,36 @@ describe('workspace authority and lineage redaction', () => {
       .toBe('SESSION_QUERY_TOOL_UNAUTHORIZED')
   })
 
+  it('reads a Session the deployment grants, and keeps denying one it does not', async () => {
+    const mounted = await mount()
+    const worker = createSession(mounted.ctx, 'worker-1', '/elsewhere')
+    worker.append('turn/end', { reason: { kind: 'completed' } } as never)
+    // Without the service the directory rule still denies it.
+    expect(errorCode(await mounted.call('session_event_read', { session_id: 'worker-1', seq: 0 })))
+      .toBe('SESSION_QUERY_TOOL_UNAUTHORIZED')
+
+    // A deployment that names a worker grants the read; another target stays denied.
+    mounted.ctx.provide('sessionAccess', {
+      allows: (caller: string, target: string) => target === 'worker-1' && caller === mounted.caller.id,
+    })
+    const granted = await mounted.call('session_event_read', { session_id: 'worker-1', seq: 0 })
+    expect(granted.isError).toBe(false)
+    createSession(mounted.ctx, 'child-of-worker', '/elsewhere', 2, worker.id)
+    const unrelated = createSession(mounted.ctx, 'unrelated', '/elsewhere')
+    unrelated.append('turn/end', { reason: { kind: 'completed' } } as never)
+    expect(errorCode(await mounted.call('session_event_read', { session_id: 'unrelated', seq: 0 })))
+      .toBe('SESSION_QUERY_TOOL_UNAUTHORIZED')
+
+    // A search keeps a granted parent filter and drops one the caller cannot read.
+    FakeQuery.sessionRequests.length = 0
+    await mounted.call('session_search', {
+      query: 'needle',
+      parent_session_ids: ['worker-1', 'unrelated'],
+    })
+    const parentFilter = FakeQuery.sessionRequests[0]?.sessionFilters?.find(filter => filter.kind === 'parent')
+    expect(parentFilter).toEqual({ kind: 'parent', values: ['worker-1'] })
+  })
+
   it('makes hidden and nonexistent parent guesses indistinguishable without calling search', async () => {
     const mounted = await mount()
     const hiddenParent = createSession(mounted.ctx, 'guessed-hidden-parent-secret', '/outside')
