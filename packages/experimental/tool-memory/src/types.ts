@@ -5,6 +5,7 @@
  * @module @tomato/experimental-tool-memory/types
  */
 
+import { isDue } from '@tomato/experimental-memory'
 import type { MemoryKind, MemoryRecord } from '@tomato/experimental-memory'
 
 /** One memory as the phone renders it. */
@@ -23,6 +24,12 @@ export interface MemoryWireRecord {
   readonly value: string
   /** Only `active` records reach later turns. */
   readonly status: 'active' | 'candidate'
+  /** Whether this candidate is worth putting in front of a person now. */
+  readonly due: boolean
+  /** Times an independent write stated this candidate; absent counts as one. */
+  readonly evidence?: number
+  /** Record whose confirmation would replace this candidate statement. */
+  readonly proposalFor?: string
   /** Last write, in epoch milliseconds. */
   readonly updatedAt: number
   /** Session the write was attributed to. */
@@ -110,6 +117,9 @@ export function wireRecord(record: MemoryRecord): MemoryWireRecord {
     key: record.key,
     value: record.value,
     status: record.status,
+    due: record.status === 'candidate' && isDue(record),
+    ...record.evidence === undefined ? {} : { evidence: record.evidence },
+    ...record.proposalFor === undefined ? {} : { proposalFor: record.proposalFor },
     updatedAt: record.updatedAt,
     sessionId: record.source.sessionId,
   }

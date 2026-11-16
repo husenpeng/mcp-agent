@@ -259,3 +259,38 @@
     flex-direction: column;
   }
 }
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.actionRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.actionId {
+  color: var(--dsw-alias-label-tertiary);
+  font-family: var(--ds-font-family-code);
+  font-size: 11px;
+}
+
+.action {
+  padding: 2px 10px;
+  border: 1px solid var(--dsw-alias-line-primary);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.action:hover {
+  border-color: var(--dsw-alias-label-secondary);
+}

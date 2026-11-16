@@ -79,6 +79,28 @@ async function resolveKey(ctx: Context, name: string | undefined): Promise<strin
   throw new EmbeddingsError(`embedding credential "${name}" is not configured`, 'provider')
 }
 
+/**
+ * Describe a transport failure with its underlying cause; Node's `fetch` reports
+ * every connection error as a bare `fetch failed` and keeps the reason in `cause`.
+ */
+function transportDetail(error: unknown): string {
+  if (!(error instanceof Error)) return String(error)
+  const cause: unknown = error.cause
+  const reason = cause instanceof Error ? cause.message : undefined
+  return reason === undefined || reason === '' || reason === error.message ? error.message : `${error.message} (${reason})`
+}
+
+/** Extract a bounded provider message from an OpenAI-style error response. */
+async function httpErrorDetail(response: Response): Promise<string> {
+  const body: unknown = await response.json().catch(() => undefined)
+  const record = typeof body === 'object' && body !== null ? body as Record<string, unknown> : undefined
+  const failure = record?.error
+  const message = typeof failure === 'object' && failure !== null
+    ? (failure as Record<string, unknown>).message
+    : undefined
+  return typeof message === 'string' && message.trim() !== '' ? `: ${message.trim().slice(0, 500)}` : ''
+}
+
 /** Loopback host names that may use plain HTTP. */
 const LOOPBACK = new Set(['localhost', '127.0.0.1', '[::1]', '::1'])
 
@@ -106,7 +128,7 @@ export function resolveEmbeddingsConfig(config: Config): ResolvedEmbeddingsConfi
   }
   const limits = {
     timeoutMs: now(config.timeoutMs, 15_000),
-    batchSize: now(config.batchSize, 32),
+    batchSize: now(config.batchSize, 10),
     maxInputChars: now(config.maxInputChars, 4000),
     failureThreshold: now(config.failureThreshold, 3),
     cooldownMs: now(config.cooldownMs, 30_000),
@@ -195,7 +217,7 @@ export async function probeEmbeddingsEndpoint(
       body: JSON.stringify({ model: settings.model, input: 'ping' }),
       signal: combined,
     })
-    if (!response.ok) return { ok: false, detail: `endpoint answered HTTP ${response.status}`, latencyMs: latency() }
+    if (!response.ok) return { ok: false, detail: `endpoint answered HTTP ${response.status}${await httpErrorDetail(response)}`, latencyMs: latency() }
     const body: unknown = await response.json()
     const record = typeof body === 'object' && body !== null ? body as Record<string, unknown> : undefined
     const data: readonly unknown[] | undefined = Array.isArray(record?.data) ? record.data : undefined
@@ -213,7 +235,7 @@ export async function probeEmbeddingsEndpoint(
   } catch (error: unknown) {
     if (signal?.aborted === true) throw error
     if (timeout.aborted) return { ok: false, detail: `the endpoint timed out after ${settings.timeoutMs} ms`, latencyMs: latency() }
-    return { ok: false, detail: error instanceof Error ? error.message : String(error), latencyMs: latency() }
+    return { ok: false, detail: transportDetail(error), latencyMs: latency() }
   }
 }
 
@@ -228,7 +250,7 @@ export default class HttpEmbeddings extends Embeddings {
     dimensions: z.number().step(1).min(0).max(16_384),
     enabled: z.boolean().default(true).volatile(),
     timeoutMs: z.number().step(1).min(1).max(120_000).default(15_000).volatile(),
-    batchSize: z.number().step(1).min(1).max(256).default(32).volatile(),
+    batchSize: z.number().step(1).min(1).max(256).default(10).volatile(),
     maxInputChars: z.number().step(1).min(1).max(100_000).default(4000).volatile(),
     failureThreshold: z.number().step(1).min(1).max(100).default(3).volatile(),
     cooldownMs: z.number().step(1).min(100).max(600_000).default(30_000).volatile(),
@@ -244,6 +266,11 @@ export default class HttpEmbeddings extends Embeddings {
   /** Normalized endpoint base the provider calls. */
   override get baseUrl(): string {
     return this.resolvedBaseUrl
+  }
+
+  /** Credential reference the provider resolves its bearer key from. */
+  override get apiKeyEnv(): string | undefined {
+    return this.resolvedApiKeyEnv
   }
 
   /** Whether memory search may use this provider now; the Plugins page toggles it. */
@@ -266,6 +293,7 @@ export default class HttpEmbeddings extends Embeddings {
   }
 
   private readonly resolvedBaseUrl: string
+  private readonly resolvedApiKeyEnv: string | undefined
   private readonly endpoint: string
   private readonly counters = { requests: 0, texts: 0, failures: 0, totalMs: 0, lastError: undefined as string | undefined }
   private consecutiveFailures = 0
@@ -284,6 +312,7 @@ export default class HttpEmbeddings extends Embeddings {
     this.model = resolved.model
     this.dimensions = resolved.dimensions
     this.resolvedBaseUrl = resolved.baseUrl
+    this.resolvedApiKeyEnv = resolved.apiKeyEnv
     this.endpoint = `${resolved.baseUrl}/embeddings`
   }
 
@@ -356,10 +385,10 @@ export default class HttpEmbeddings extends Embeddings {
     } catch (error) {
       if (signal?.aborted === true) throw error
       if (timeout.aborted) throw new EmbeddingsError(`embedding request timed out after ${settings.timeoutMs} ms`, 'timeout')
-      throw new EmbeddingsError(`embedding request failed: ${error instanceof Error ? error.message : String(error)}`, 'provider')
+      throw new EmbeddingsError(`embedding request failed: ${transportDetail(error)}`, 'provider')
     }
     if (!response.ok) {
-      throw new EmbeddingsError(`embedding endpoint returned HTTP ${response.status}`, 'provider')
+      throw new EmbeddingsError(`embedding endpoint returned HTTP ${response.status}${await httpErrorDetail(response)}`, 'provider')
     }
     let body: unknown
     try {

@@ -124,6 +124,7 @@ it('mounts the Remote, its page type, notice, and navigation face, then withdraw
     mutate: async () => true,
   }
   ctx.provide('remote.museInsights', { snapshot: snapshotCall, refresh: refreshCall } as never)
+  ctx.provide('remote.credentials', { set: vi.fn(async () => ({ ok: true as const, value: undefined })) } as never)
   ctx.provide('sidebarRightTabs', { register } as never)
   ctx.provide('sidebarRight', sidebarRight as never)
   ctx.provide('uiWorkspace', { startSession } as never)
@@ -238,6 +239,7 @@ it('pages the schema rows the Plugins page holds no entry for, and yields a key 
     new TestRemote()
     const sidebarRight = sidebar()
     ctx.provide('remote.museInsights', { snapshot: vi.fn(async () => ({ ok: true as const, value: snapshot })), refresh: vi.fn() } as never)
+    ctx.provide('remote.credentials', { set: vi.fn(async () => ({ ok: true as const, value: undefined })) } as never)
     ctx.provide('sidebarRightTabs', { register: () => () => {} } as never)
     ctx.provide('sidebarRight', sidebarRight as never)
     ctx.provide('uiWorkspace', { startSession: () => {} } as never)

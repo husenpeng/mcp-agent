@@ -1,11 +1,11 @@
 /**
- * Configuration page of the embedding-provider row. It displays the fixed
- * model and vector length read-only, lets a person edit the endpoint and the
- * credential name, switches semantic search on or off, runs the connectivity
- * test through the Host, and shows the provider's cumulative request counters.
+ * Configuration page of the embedding-provider row. It edits the endpoint,
+ * model and vector length, stores a write-only API key through the Host,
+ * switches semantic search on or off, runs the connectivity test through the
+ * Host, and shows the provider's cumulative request counters.
  */
 import { useEffect, useState } from 'react'
-import { Button } from '@tomato/client-ui-primitives'
+import { Button, Checkbox } from '@tomato/client-ui-primitives'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@tomato/client-ui-slots'
 import type { SettingsFormPathOp } from '@tomato/client-ui-primitives'
 import {
@@ -35,6 +35,8 @@ export interface EmbeddingsPageInjected {
   readonly probe: (input: EmbeddingsProbeInput, signal?: AbortSignal) => Promise<EmbeddingsProbeResult>
   /** Current provider state and counters. */
   readonly status: (signal?: AbortSignal) => Promise<EmbeddingsStatusView>
+  /** Store a newly entered API key on the Host; the result is a failure message when refused. */
+  readonly storeCredential: (ref: string, value: string) => Promise<string | undefined>
 }
 
 /** Props of the configuration page. */
@@ -65,14 +67,16 @@ function Fact({ label, value, hint }: { readonly label: string; readonly value: 
  * @param props - injected scope, Host probe, status reader, and translator.
  * @returns the page, or its one-line summary.
  */
-export function EmbeddingsConfigPage({ scope, probe, status, t, view }: EmbeddingsConfigPageProps) {
+export function EmbeddingsConfigPage({ scope, probe, status, storeCredential, t, view }: EmbeddingsConfigPageProps) {
   const snapshot = useSnapshot(scope)
   const config: EmbeddingsConfigView = configOf(snapshot.value)
   const known = modelOption(config.model)
   const [draft, setDraft] = useState<EndpointDraft>(() => endpointDraftOf(snapshot.value))
   const [dirty, setDirty] = useState(false)
+  const [keyDraft, setKeyDraft] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveState, setSaveState] = useState<'idle' | 'saved' | 'failed'>('idle')
+  const [saveError, setSaveError] = useState<string | undefined>()
   const [toggling, setToggling] = useState(false)
   const [toggleState, setToggleState] = useState<'idle' | 'accepted' | 'refused'>('idle')
   const [probing, setProbing] = useState(false)
@@ -96,6 +100,52 @@ export function EmbeddingsConfigPage({ scope, probe, status, t, view }: Embeddin
   const refreshUsage = (): void => {
     void status().then(setUsage).catch(() => {})
   }
+  // An empty field drops the override, so the probe uses the value the mounted provider runs with.
+  const inherited = {
+    baseUrl: usage?.baseUrl ?? '',
+    model: usage?.model ?? '',
+    dimensions: usage?.dimensions === undefined || usage.dimensions === 0 ? '' : String(usage.dimensions),
+    apiKeyEnv: usage?.apiKeyEnv ?? '',
+  }
+  const staged = {
+    baseUrl: draft.baseUrl.trim() === '' ? inherited.baseUrl : draft.baseUrl.trim(),
+    model: draft.model.trim() === '' ? inherited.model : draft.model.trim(),
+    apiKeyEnv: draft.apiKeyEnv.trim() === '' ? inherited.apiKeyEnv : draft.apiKeyEnv.trim(),
+    dimensions: draft.dimensions.trim() === '' ? inherited.dimensions : draft.dimensions.trim(),
+  }
+  const credentialRef = effective.apiKeyEnv || 'EMBEDDINGS_HTTP_API_KEY'
+  const save = async (): Promise<void> => {
+    setSaving(true)
+    setSaveState('idle')
+    setSaveError(undefined)
+    const keyValue = keyDraft.trim()
+    try {
+      if (keyValue !== '') {
+        const failure = await storeCredential(credentialRef, keyValue)
+        if (failure !== undefined) {
+          setSaveState('failed')
+          setSaveError(failure)
+          return
+        }
+      }
+      const nextDraft = keyValue !== '' && draft.apiKeyEnv.trim() === ''
+        ? { ...draft, apiKeyEnv: credentialRef }
+        : draft
+      const accepted = await scope.mutate(endpointWrites(nextDraft, config), snapshot.revision)
+      setSaveState(accepted ? 'saved' : 'failed')
+      if (accepted) {
+        setDraft(nextDraft)
+        setDirty(false)
+        setKeyDraft('')
+        refreshUsage()
+      }
+    } catch (error: unknown) {
+      setSaveState('failed')
+      setSaveError(error instanceof Error ? error.message : String(error))
+    } finally {
+      setSaving(false)
+    }
+  }
   return (
     <section className={css.page} aria-label={t('embeddings.title')}>
       <header className={css.header}>
@@ -114,7 +164,7 @@ export function EmbeddingsConfigPage({ scope, probe, status, t, view }: Embeddin
           <span className={css.label}>{t('embeddings.baseUrl')}</span>
           <input
             id="muse-embeddings-baseUrl" aria-label={t('embeddings.baseUrl')} className={css.input}
-            value={draft.baseUrl} disabled={disabled}
+            value={draft.baseUrl} placeholder={effective.baseUrl} disabled={disabled}
             onChange={(event) => {
               const value = event.currentTarget.value
               setDraft(current => ({ ...current, baseUrl: value }))
@@ -123,16 +173,17 @@ export function EmbeddingsConfigPage({ scope, probe, status, t, view }: Embeddin
             }}
           />
         </label>
-        <label className={css.field} htmlFor="muse-embeddings-apiKeyEnv">
+        <label className={css.field} htmlFor="muse-embeddings-apiKey">
           <span className={css.label}>{t('embeddings.apiKeyEnv')}</span>
           <input
-            id="muse-embeddings-apiKeyEnv" aria-label={t('embeddings.apiKeyEnv')} className={css.input}
-            value={draft.apiKeyEnv} disabled={disabled}
+            id="muse-embeddings-apiKey" aria-label={t('embeddings.apiKeyEnv')} className={css.input}
+            type="password" autoComplete="new-password" value={keyDraft}
+            placeholder={effective.apiKeyEnv === '' ? t('embeddings.apiKeyPlaceholder') : t('embeddings.apiKeySaved')}
+            disabled={disabled}
             onChange={(event) => {
-              const value = event.currentTarget.value
-              setDraft(current => ({ ...current, apiKeyEnv: value }))
-              setDirty(true)
+              setKeyDraft(event.currentTarget.value)
               setSaveState('idle')
+              setSaveError(undefined)
             }}
           />
           <span className={css.hint}>{t('embeddings.apiKeyEnvHint')}</span>
@@ -143,7 +194,7 @@ export function EmbeddingsConfigPage({ scope, probe, status, t, view }: Embeddin
           <span className={css.label}>{t('embeddings.model')}</span>
           <input
             id="muse-embeddings-model" aria-label={t('embeddings.model')} className={css.input}
-            list="muse-embeddings-models" value={draft.model} disabled={disabled}
+            list="muse-embeddings-models" value={draft.model} placeholder={effective.model} disabled={disabled}
             onChange={(event) => {
               const value = event.currentTarget.value
               setDraft(current => ({ ...current, model: value }))
@@ -158,7 +209,7 @@ export function EmbeddingsConfigPage({ scope, probe, status, t, view }: Embeddin
           <span className={css.label}>{t('embeddings.dimensions')}</span>
           <input
             id="muse-embeddings-dimensions" aria-label={t('embeddings.dimensions')} className={css.input}
-            inputMode="numeric" value={draft.dimensions} disabled={disabled}
+            inputMode="numeric" value={draft.dimensions} placeholder={effective.dimensions === '0' ? '' : effective.dimensions} disabled={disabled}
             onChange={(event) => {
               const value = event.currentTarget.value
               setDraft(current => ({ ...current, dimensions: value }))
@@ -171,38 +222,30 @@ export function EmbeddingsConfigPage({ scope, probe, status, t, view }: Embeddin
       <div className={css.actions}>
         <Button
           variant="primary"
-          disabled={disabled || !dirty || draft.baseUrl.trim() === ''}
-          onClick={() => {
-            setSaving(true)
-            void scope.mutate(endpointWrites(draft, config), snapshot.revision).then((accepted) => {
-              setSaving(false)
-              setSaveState(accepted ? 'saved' : 'failed')
-              if (accepted) { setDirty(false); refreshUsage() }
-            })
-          }}
+          disabled={disabled || (!dirty && keyDraft.trim() === '') || draft.baseUrl.trim() === ''}
+          onClick={() => { void save() }}
         >
           {t('embeddings.endpointSave')}
         </Button>
-        <label className={css.toggle}>
-          <input
-            type="checkbox" checked={config.enabled} disabled={disabled}
-            onChange={(event) => {
-              setToggling(true); setToggleState('idle')
-              void scope.mutate(enabledWrite(event.currentTarget.checked), snapshot.revision).then((accepted) => {
-                setToggling(false); setToggleState(accepted ? 'accepted' : 'refused')
-              })
-            }}
-          />
-          <span>{config.enabled ? t('embeddings.enabled') : t('embeddings.disabled')}</span>
-        </label>
+        <Checkbox
+          checked={config.enabled} disabled={disabled}
+          label={config.enabled ? t('embeddings.enabled') : t('embeddings.disabled')}
+          onChange={(next) => {
+            setToggling(true); setToggleState('idle')
+            void scope.mutate(enabledWrite(next), snapshot.revision).then((accepted) => {
+              setToggling(false); setToggleState(accepted ? 'accepted' : 'refused')
+            })
+          }}
+        />
         <Button
-          disabled={disabled || draft.baseUrl.trim() === '' || config.model.trim() === ''}
+          variant="outline"
+          disabled={disabled || keyDraft.trim() !== '' || staged.baseUrl === '' || staged.model === ''}
           onClick={() => {
             setProbing(true); setResult(undefined)
             void probe({
-              baseUrl: draft.baseUrl, model: draft.model,
-              dimensions: Number(draft.dimensions) || 0,
-              ...draft.apiKeyEnv.trim() === '' ? {} : { apiKeyEnv: draft.apiKeyEnv.trim() },
+              baseUrl: staged.baseUrl, model: staged.model,
+              dimensions: Number(staged.dimensions) || 0,
+              ...staged.apiKeyEnv === '' ? {} : { apiKeyEnv: staged.apiKeyEnv },
             }).then((next) => {
               setProbing(false); setResult(next); refreshUsage()
             })
@@ -213,7 +256,7 @@ export function EmbeddingsConfigPage({ scope, probe, status, t, view }: Embeddin
       </div>
       {saveState === 'idle' ? null : (
         <p className={saveState === 'saved' ? css.ok : css.bad}>
-          {saveState === 'saved' ? t('embeddings.endpointSaved') : t('embeddings.endpointFailed')}
+          {saveState === 'saved' ? t('embeddings.endpointSaved') : saveError ?? t('embeddings.endpointFailed')}
         </p>
       )}
       {toggleState === 'idle' ? null : (

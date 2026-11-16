@@ -104,6 +104,18 @@ export const memoryRecordSchema = z.object({
   supersededBy: z.string().min(1).transform(MemoryId).optional(),
   createdAt: z.number().int().nonnegative(),
   updatedAt: z.number().int().nonnegative(),
+  /**
+   * Record whose confirmation would replace this candidate's statement. A
+   * capture that contradicts an already confirmed record stores the new
+   * statement beside it, never over it.
+   */
+  proposalFor: z.string().min(1).transform(MemoryId).optional(),
+  /** Times an independent write stated this candidate; absent counts as one. */
+  evidence: z.number().int().positive().optional(),
+  /** When a person last ignored this candidate, as epoch milliseconds. */
+  dismissedAt: z.number().int().nonnegative().optional(),
+  /** Evidence count at that moment; a later statement makes it due again. */
+  dismissedEvidence: z.number().int().positive().optional(),
   source: z.object({
     sessionId: z.string().min(1).transform(SessionId),
     userMessageSeq: z.number().int().nonnegative().transform(SessionSeq).optional(),
@@ -162,9 +174,9 @@ export const vectorDomain = defineDomain({
  */
 export const memoryDomain = defineDomain({
   name: 'tomato_memory',
-  version: 3,
+  version: 5,
   layout: 'per-record',
-  compatibleVersions: [1, 2],
+  compatibleVersions: [1, 2, 3, 4],
   tables: { records: domainTable<MemoryIdType, MemoryRecord>(memoryRecordSchema) },
 })
 

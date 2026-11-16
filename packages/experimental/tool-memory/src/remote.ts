@@ -110,6 +110,19 @@ export class MemoryRemote extends TypertRemoteService {
   }
 
   /**
+   * Silence one candidate until another write states it again.
+   * @param request - Session and the record to dismiss.
+   * @returns the dismissed record, or the reason nothing was dismissed.
+   */
+  @Remote('dismiss')
+  async dismiss(request: MemoryTargetRequest): Promise<MemoryConfirmationValue> {
+    const resolved = await this.resolve(request.sessionId)
+    if ('code' in resolved) return { code: resolved.code }
+    const record = await this.memory.dismiss(resolved.view, MemoryId(request.id))
+    return record === undefined ? { code: 'not_found' } : { record: wireRecord(record) }
+  }
+
+  /**
    * Delete one record, whichever state it is in.
    * @param request - Session and the record to delete.
    * @returns whether a record was removed.

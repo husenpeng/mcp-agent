@@ -20,6 +20,8 @@ describe('embeddings seam', () => {
     await ctx.plugin(LengthEmbeddings)
     expect(ctx.embeddings.model).toBe('length')
     expect(ctx.embeddings.dimensions).toBe(2)
+    expect(ctx.embeddings.baseUrl).toBeUndefined()
+    expect(ctx.embeddings.apiKeyEnv).toBeUndefined()
     expect(await ctx.embeddings.embed({ texts: ['ab', ''] })).toEqual([
       Float32Array.from([2, 1]),
       Float32Array.from([0, 1]),

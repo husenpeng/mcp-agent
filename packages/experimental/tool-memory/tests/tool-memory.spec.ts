@@ -61,6 +61,24 @@ const contexts: Context[] = []
 const directories: string[] = []
 const SIGNAL = new AbortController().signal
 
+/** Run one simulated tool execution through the post-execute listeners the plugin installs. */
+async function postExecute(
+  ctx: Context,
+  agent: Agent,
+  callId: string,
+  failed: boolean,
+  args: Record<string, unknown> = { file_path: 'src/a.ts' },
+): Promise<void> {
+  await ctx.waterfall(
+    'tools/post-execute',
+    { name: 'edit', callId: ToolCallId(callId), arguments: args, agent, signal: SIGNAL } as never,
+    failed
+      ? { isError: true, content: [], error: { message: 'old_string matched 2 times' }, value: {}, meta: {} } as never
+      : { isError: false, content: [], value: {}, meta: {} } as never,
+    () => Promise.resolve({ kind: 'accept' as const }),
+  )
+}
+
 afterEach(async () => {
   vi.restoreAllMocks()
   for (const ctx of contexts.splice(0)) await ctx.fiber.dispose()
@@ -268,6 +286,8 @@ describe('plugin exports', () => {
     await expect(memoryTools.apply(test.ctx, { minRelevantScore: 2 })).rejects.toThrow('minRelevantScore must be a number from 0 to 1')
     await expect(memoryTools.apply(test.ctx, { minHistoryScore: 2 })).rejects.toThrow('minHistoryScore must be a number from 0 to 1')
     await expect(memoryTools.apply(test.ctx, { captureMaxToolBytes: 0 })).rejects.toThrow('captureMaxToolBytes must be a positive safe integer')
+    await expect(memoryTools.apply(test.ctx, { captureProvider: 'p' }))
+      .rejects.toThrow('captureProvider and captureModel must be supplied together')
     await expect(memoryTools.apply(test.ctx, { minQuoteChars: 0 })).rejects.toThrow('minQuoteChars must be a positive safe integer')
     await expect(memoryTools.apply(test.ctx, { expansionTimeoutMs: 0 })).rejects.toThrow('expansionTimeoutMs must be a positive safe integer')
     await expect(memoryTools.apply(test.ctx, { expansionProvider: 'mock' })).rejects.toThrow('expansionProvider and expansionModel must be supplied together')
@@ -1291,6 +1311,87 @@ describe('post-turn capture', () => {
     await vi.waitFor(() => { expect(warn).toHaveBeenCalledWith('experimental-tool-memory: post-turn capture failed: store down') })
   })
 
+  it('keeps a contradicted statement as a proposal beside the confirmed rule', async () => {
+    const test = await harness({ capture: true })
+    provideSessionQuery(test)
+    const { agent, session } = await live(test)
+    const confirmed = await seed(test, agent, {})
+    startTurn(session)
+    say(session, '以后给达人写邮件可以用一个 emoji')
+    session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    test.model.replies.push(JSON.stringify({
+      summary: null,
+      candidates: [{
+        scope: 'workspace', kind: 'preference', entity: 'user', key: 'email-tone', value: '达人邮件可以用一个 emoji',
+        quote: '可以用一个 emoji',
+      }],
+    }))
+    endTurn(session)
+    await vi.waitFor(() => { expect(test.ctx.memory.list(test.view)).toHaveLength(2) })
+
+    const records = test.ctx.memory.list(test.view)
+    // The confirmed rule keeps applying; the capture waits as a proposal naming it.
+    expect(records.find(record => record.entity === 'user')).toMatchObject({
+      id: confirmed.id, status: 'active', value: '邮件口吻要简短直接',
+    })
+    const proposal = records.find(record => record.entity === 'proposal')
+    expect(proposal).toMatchObject({
+      status: 'candidate', value: '达人邮件可以用一个 emoji', proposalFor: confirmed.id,
+    })
+    expect((await test.ctx.memory.recall({ view: test.view, text: '简短' })).map(record => record.id)).toEqual([confirmed.id])
+    expect(captures(session)[0]).toMatchObject({ outcome: { status: 'stored', ids: [proposal?.id] } })
+
+    // Accepting the proposal replaces the rule's statement and keeps one history of it.
+    const accepted = await test.ctx.memory.confirm(test.view, proposal?.id ?? confirmed.id)
+    expect(accepted).toMatchObject({ status: 'active', entity: 'user', key: 'email-tone', value: '达人邮件可以用一个 emoji' })
+    expect(test.ctx.memory.list(test.view).map(record => record.value)).toEqual(['达人邮件可以用一个 emoji'])
+  })
+
+  it('counts a statement a second turn repeats and shows one candidate with its evidence', async () => {
+    const test = await harness({ capture: true })
+    provideSessionQuery(test)
+    const { session } = await live(test)
+    const candidate = {
+      scope: 'workspace', kind: 'preference', entity: 'user', key: 'email-emoji', value: '达人邮件不用 emoji',
+      quote: '不要用 emoji',
+    }
+    for (const turn of ['first', 'second']) {
+      startTurn(session)
+      say(session, `以后给达人写邮件都用简短直接的语气，不要用 emoji（${turn}）`)
+      session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+      test.model.replies.push(JSON.stringify({ summary: null, candidates: [candidate] }))
+      endTurn(session)
+      await vi.waitFor(() => { expect(captures(session)).toHaveLength(turn === 'first' ? 1 : 2) })
+    }
+    const records = test.ctx.memory.list(test.view)
+    expect(records).toHaveLength(1)
+    expect(records[0]).toMatchObject({ status: 'candidate', value: '达人邮件不用 emoji', evidence: 2 })
+    const [stored] = records
+    expect(stored === undefined ? '' : memoryTools.recordLine(memoryTools.recordValue(stored))).toContain('stated 2 times')
+  })
+
+  it('leaves an unconfirmed candidate alone when a later capture states something else', async () => {
+    const test = await harness({ capture: true })
+    provideSessionQuery(test)
+    const { agent, session } = await live(test)
+    await seed(test, agent, { status: 'candidate', value: '邮件口吻要简短直接' })
+    startTurn(session)
+    say(session, '以后给达人写邮件可以用一个 emoji')
+    session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    test.model.replies.push(JSON.stringify({
+      summary: null,
+      candidates: [{
+        scope: 'workspace', kind: 'preference', entity: 'user', key: 'email-tone', value: '达人邮件可以用一个 emoji',
+        quote: '可以用一个 emoji',
+      }],
+    }))
+    endTurn(session)
+    await vi.waitFor(() => { expect(captures(session)).toHaveLength(1) })
+    expect(captures(session)[0]).toMatchObject({ outcome: { status: 'skipped' } })
+    // A person has not accepted either statement yet, so the first one stays the only candidate.
+    expect(test.ctx.memory.list(test.view).map(record => record.value)).toEqual(['邮件口吻要简短直接'])
+  })
+
   it('skips a summary whose title is empty', async () => {
     const test = await harness({ capture: true })
     provideSessionQuery(test)
@@ -1427,7 +1528,7 @@ describe('capture transcript and parsing', () => {
 })
 
 describe('/memory', () => {
-  const USAGE = 'Usage: /memory [list|profile|stats|show <id>|related <id> [1-2]|confirm <id>|pin <id>|unpin <id>|forget <id>]'
+  const USAGE = 'Usage: /memory [list|profile|due|stats|show <id>|related <id> [1-2]|confirm <id>|dismiss <id>|pin <id>|unpin <id>|forget <id>]'
 
   it('lists, confirms, pins, unpins, and deletes records of the agent workspace', async () => {
     const test = await harness()
@@ -1446,6 +1547,124 @@ describe('/memory', () => {
     expect(await command(test, agent, `/memory unpin ${candidate.id}`)).toEqual({ kind: 'success', text: `Unpinned ${candidate.id}.` })
     expect(await command(test, agent, `/memory forget ${candidate.id}`)).toEqual({ kind: 'success', text: `Deleted ${candidate.id}.` })
     expect(await command(test, agent, `/memory forget ${candidate.id}`)).toEqual({ kind: 'error', text: `No memory ${candidate.id} exists here.` })
+  })
+
+  it('lists only the candidates that need a decision now', async () => {
+    const test = await harness()
+    const { agent } = await live(test)
+    expect(await command(test, agent, '/memory due')).toEqual({
+      kind: 'success', text: 'No memory needs a decision now.',
+    })
+    // One mention is not enough to ask; two are.
+    await test.ctx.memory.remember({
+      owner: LOCAL_MEMORY_OWNER, scope: { kind: 'workspace', path: test.workspace }, kind: 'preference',
+      entity: 'user', key: 'email-tone', value: 'Reply briefly', status: 'candidate', pinned: false,
+      source: { sessionId: agent.session.id },
+    })
+    expect(await command(test, agent, '/memory due')).toEqual({
+      kind: 'success', text: 'No memory needs a decision now.',
+    })
+    await test.ctx.memory.remember({
+      owner: LOCAL_MEMORY_OWNER, scope: { kind: 'workspace', path: test.workspace }, kind: 'preference',
+      entity: 'user', key: 'email-tone', value: 'Reply briefly', status: 'candidate', pinned: false,
+      source: { sessionId: agent.session.id },
+    })
+    const due = await command(test, agent, '/memory due')
+    expect(due.kind === 'success' ? due.text : '').toContain('Memories waiting for a decision:')
+    expect(due.kind === 'success' ? due.text : '').toContain('user / email-tone: Reply briefly')
+    expect(due.kind === 'success' ? due.text : '').toContain('due')
+  })
+
+  it('announces, once a turn ends, the candidates that need a decision now', async () => {
+    const test = await harness()
+    const { agent, session } = await live(test)
+    const candidates = () => session.snapshotEvents()
+      .map(pluginRecordOf)
+      .filter(record => record?.type === 'plugin:tool-memory/candidates')
+      .map(record => record?.data as { candidates: readonly { entity: string; key: string; value: string; evidence: number }[] })
+    // A single mention is not worth asking about, so nothing is announced.
+    await test.ctx.memory.remember({
+      owner: LOCAL_MEMORY_OWNER, scope: { kind: 'workspace', path: test.workspace }, kind: 'preference',
+      entity: 'user', key: 'once', value: 'Reply briefly', status: 'candidate', pinned: false,
+      source: { sessionId: session.id },
+    })
+    session.append('turn/end', { reason: { kind: 'completed' } } as never)
+    await new Promise(resolve => setTimeout(resolve, 20))
+    expect(candidates()).toEqual([])
+
+    // A repeated statement is due, and the announcement names it without a model.
+    for (const turn of ['a', 'b']) {
+      await test.ctx.memory.remember({
+        owner: LOCAL_MEMORY_OWNER, scope: { kind: 'workspace', path: test.workspace }, kind: 'preference',
+        entity: 'user', key: 'twice', value: 'Reply at length', status: 'candidate', pinned: false,
+        source: { sessionId: session.id },
+      })
+      void turn
+    }
+    session.append('turn/end', { reason: { kind: 'completed' } } as never)
+    await vi.waitFor(() => { expect(candidates()).toHaveLength(1) })
+    expect(candidates()[0]?.candidates).toEqual([
+      expect.objectContaining({ entity: 'user', key: 'twice', value: 'Reply at length', evidence: 2 }),
+    ])
+
+    // A proposal is due on its own, carries the record it replaces, and reports one statement.
+    const confirmed = await test.ctx.memory.remember({
+      owner: LOCAL_MEMORY_OWNER, scope: { kind: 'workspace', path: test.workspace }, kind: 'preference',
+      entity: 'user', key: 'rule', value: 'Keep replies short', status: 'active', pinned: false,
+      source: { sessionId: session.id },
+    })
+    await test.ctx.memory.remember({
+      owner: LOCAL_MEMORY_OWNER, scope: { kind: 'workspace', path: test.workspace }, kind: 'preference',
+      entity: 'proposal', key: 'replace-0123456789abcdef', value: 'Replies may be longer', status: 'candidate',
+      pinned: false, source: { sessionId: session.id }, proposalFor: confirmed.id,
+    })
+    session.append('turn/end', { reason: { kind: 'completed' } } as never)
+    await vi.waitFor(() => { expect(candidates()).toHaveLength(2) })
+    expect(candidates()[1]?.candidates).toContainEqual(
+      expect.objectContaining({ entity: 'proposal', evidence: 1, proposalFor: confirmed.id }),
+    )
+
+    // The announcement is bounded: no more than five candidates, each one statement.
+    for (let index = 0; index < 6; index += 1) {
+      for (const _ of [0, 1]) {
+        await test.ctx.memory.remember({
+          owner: LOCAL_MEMORY_OWNER, scope: { kind: 'workspace', path: test.workspace }, kind: 'preference',
+          entity: 'user', key: `many-${index}`, value: 'x'.repeat(300), status: 'candidate', pinned: false,
+          source: { sessionId: session.id },
+        })
+      }
+    }
+    session.append('turn/end', { reason: { kind: 'completed' } } as never)
+    await vi.waitFor(() => { expect(candidates()).toHaveLength(3) })
+    const bounded = candidates()[2]?.candidates ?? []
+    expect(bounded).toHaveLength(5)
+    expect(bounded.every(candidate => candidate.value.length <= 200)).toBe(true)
+
+    // A memory service that fails at announcement time logs it and leaves the turn alone.
+    const broken = await harness()
+    const brokenRun = await live(broken)
+    const warn = vi.spyOn(broken.ctx.logger, 'warn')
+    vi.spyOn(broken.ctx.memory, 'accessOf').mockRejectedValue(new Error('store down'))
+    brokenRun.session.append('turn/end', { reason: { kind: 'completed' } } as never)
+    await vi.waitFor(() => {
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('announcing candidates failed: Error: store down'))
+    })
+    void agent
+  })
+
+  it('dismisses a candidate until another write states it again', async () => {
+    const test = await harness()
+    const { agent } = await live(test)
+    await write(test, agent, { user_quote: 'not said' })
+    const [candidate] = test.ctx.memory.list(test.view) as [MemoryRecord]
+    expect(await command(test, agent, `/memory dismiss ${candidate.id}`)).toEqual({
+      kind: 'success', text: `Dismissed ${candidate.id} until it is stated again.`,
+    })
+    // Dismissing only speaks for a candidate: a confirmed record has nothing to silence.
+    await test.ctx.memory.confirm(test.view, candidate.id)
+    expect(await command(test, agent, `/memory dismiss ${candidate.id}`)).toEqual({
+      kind: 'error', text: `No unconfirmed memory ${candidate.id} exists here.`,
+    })
   })
 
   it('lists the profile alone, refuses to pin a profile memory, and shows the profile without a workspace', async () => {
@@ -1762,6 +1981,34 @@ describe('snapshot injection', () => {
     const [snapshot] = await preStep(test, agent, 1, { kind: 'user' }, 'FTS5')
     expect(snapshot).toContain(other.id)
     expect(snapshot).not.toContain(own.id)
+  })
+
+  it('gives a confirmed pitfall its own snapshot slot that the lexical query cannot bury', async () => {
+    const test = await harness({ maxSnapshotBytes: 4096 })
+    const { agent } = await live(test)
+    const pitfall = await test.ctx.memory.remember({
+      owner: LOCAL_MEMORY_OWNER, scope: { kind: 'workspace', path: test.workspace }, kind: 'constraint',
+      entity: 'pitfall', key: 'pitfall-01234567', value: 'A capped glob hides the file you want (repeated in 3 sessions)',
+      status: 'candidate', pinned: false, source: { sessionId: agent.session.id },
+    })
+    // An unconfirmed pitfall reaches no turn.
+    expect((await preStep(test, agent)).join('\n')).not.toContain('Known pitfalls')
+    await test.ctx.memory.confirm(test.view, pitfall.id)
+    expect((await preStep(test, agent)).join('\n')).toContain(
+      'Known pitfalls in this workspace (confirmed by repeated sessions):\n- A capped glob hides the file you want (repeated in 3 sessions)',
+    )
+  })
+
+  it('drops the pitfall section when the remaining budget fits no line', async () => {
+    const test = await harness({ maxSnapshotBytes: 256 })
+    const { agent } = await live(test)
+    await test.ctx.memory.remember({
+      owner: LOCAL_MEMORY_OWNER, scope: { kind: 'workspace', path: test.workspace }, kind: 'constraint',
+      entity: 'pitfall', key: 'pitfall-01234567', value: 'x'.repeat(200), status: 'active', pinned: false,
+      source: { sessionId: agent.session.id },
+    })
+    // Nothing fits the leftover budget, so the turn sees no pitfall heading at all.
+    expect((await preStep(test, agent)).join('\n')).not.toContain('Known pitfalls')
   })
 
   it('leaves no room for the index when the snapshot fills the budget', async () => {
@@ -2556,6 +2803,40 @@ describe('glob lessons', () => {
     await run()
     await new Promise(resolve => setTimeout(resolve, 20))
     expect(test.ctx.memory.listEpisodes(test.view)).toHaveLength(1)
+  })
+
+  it('records one lesson when a failed call is retried successfully in the same turn', async () => {
+    const test = await harness({ lessonCapture: true })
+    const { agent, session } = await live(test)
+    // A call whose arguments name none of the known target fields still has a target.
+    await postExecute(test.ctx, agent, 'call-0', false, {})
+    await postExecute(test.ctx, agent, 'call-1', true)
+    await postExecute(test.ctx, agent, 'call-2', false)
+    session.append('turn/end', { reason: { kind: 'completed' } } as never)
+    await vi.waitFor(() => {
+      expect(test.ctx.memory.listEpisodes(test.view).some(episode => episode.type === 'lesson')).toBe(true)
+    })
+    expect(test.ctx.memory.listEpisodes(test.view).find(episode => episode.type === 'lesson'))
+      .toMatchObject({ kind: 'observation', type: 'lesson', title: 'edit retry succeeded after a failure' })
+    // A call that was never retried records nothing.
+    const alone = await harness({ lessonCapture: true })
+    const lone = await live(alone)
+    await postExecute(alone.ctx, lone.agent, 'call-x', true, { file_path: 'src/b.ts' })
+    lone.session.append('turn/end', { reason: { kind: 'completed' } } as never)
+    await new Promise(resolve => setTimeout(resolve, 30))
+    expect(alone.ctx.memory.listEpisodes(alone.view).some(episode => episode.type === 'lesson')).toBe(false)
+
+    // A store that refuses the lesson write logs the failure instead of breaking the turn.
+    const broken = await harness({ lessonCapture: true })
+    const brokenRun = await live(broken)
+    const warn = vi.spyOn(broken.ctx.logger, 'warn')
+    await postExecute(broken.ctx, brokenRun.agent, 'call-b1', true, { file_path: 'src/c.ts' })
+    await postExecute(broken.ctx, brokenRun.agent, 'call-b2', false, { file_path: 'src/c.ts' })
+    vi.spyOn(broken.ctx.memory, 'rememberEpisode').mockRejectedValueOnce(new Error('store down'))
+    brokenRun.session.append('turn/end', { reason: { kind: 'completed' } } as never)
+    await vi.waitFor(() => {
+      expect(warn).toHaveBeenCalledWith('experimental-tool-memory: recording a retry lesson failed: store down')
+    })
   })
 
   it('respects the per-session lesson cap and the capture switch', async () => {

@@ -15,9 +15,25 @@ import type { Session, SessionEvent } from '@tomato/session'
 import { BlockAssembler, createUserMessage } from '@tomato/llm'
 import type { Message } from '@tomato/llm'
 import { isMemoryIdentifier, MemoryError, normalizeIdentifier, normalizeStatement } from '@tomato/experimental-memory'
-import type { MemoryKind, MemoryScope, MemoryView } from '@tomato/experimental-memory'
+import type { MemoryRecord, MemoryKind, MemoryScope, MemoryView } from '@tomato/experimental-memory'
 import { deadline } from '@tomato/timeout'
 import { messageText, normalizeQuote, quotedMessage } from './quote.ts'
+
+/** Identity of the record a proposal names. */
+export type ProposalTarget = NonNullable<MemoryRecord['proposalFor']>
+
+/** Subject a contradicted capture is stored under until a person accepts it. */
+export const PROPOSAL_ENTITY = 'proposal'
+
+/**
+ * Attribute of one proposal, derived from the record it would replace, so a
+ * second contradiction of the same record keeps one identity.
+ * @param target - record whose confirmation would replace the statement.
+ * @returns the lower-kebab-case key naming that record.
+ */
+export function proposalKey(target: ProposalTarget): string {
+  return `replace-${createHash('sha256').update(String(target)).digest('hex').slice(0, 16)}`
+}
 
 declare module '@tomato/session/types' {
   interface PluginRecordMap {
@@ -503,11 +519,20 @@ export async function captureTurn(ctx: Context, options: CaptureTurnOptions): Pr
     const activating = activateProfile && candidate.scope === 'profile'
     const existing = stored.find(record => sameScope(record, scope)
       && record.entity === candidate.entity && record.key === candidate.key)
+    let entity = candidate.entity
+    let key = candidate.key
+    let proposalFor: ProposalTarget | undefined
     if (existing !== undefined) {
       const sameValue = normalizeStatement(existing.value) === normalizeStatement(candidate.value)
-      if (sameValue && !(activating && existing.status === 'candidate')) continue
-      // A workspace statement never replaces what a person already confirmed.
-      if (!activating) continue
+      // A confirmed rule already states this, so the capture adds nothing.
+      if (sameValue && existing.status === 'active') continue
+      // A workspace statement never replaces what a person already confirmed; it waits as a proposal beside it.
+      if (!activating && !sameValue) {
+        if (existing.status !== 'active') continue
+        entity = PROPOSAL_ENTITY
+        key = proposalKey(existing.id)
+        proposalFor = existing.id
+      }
     } else if (ctx.memory.duplicates({
       owner: view.owner, scope, kind: candidate.kind, entity: candidate.entity, key: candidate.key, value: candidate.value,
     }).length > 0) {
@@ -520,12 +545,13 @@ export async function captureTurn(ctx: Context, options: CaptureTurnOptions): Pr
         owner: view.owner,
         scope,
         kind: candidate.kind,
-        entity: candidate.entity,
-        key: candidate.key,
+        entity,
+        key,
         value: candidate.value,
         status: activating ? 'active' : 'candidate',
         pinned: false,
         source: { sessionId: session.id, userMessageSeq: SessionSeq(seq) },
+        ...proposalFor === undefined ? {} : { proposalFor },
       })
       ids.push(saved.id)
       if (activating) activated.push(saved.id)

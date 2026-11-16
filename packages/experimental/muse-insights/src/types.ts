@@ -166,6 +166,8 @@ export interface EmbeddingsStatusView {
   readonly dimensions?: number
   /** Endpoint the mounted provider calls, when known. */
   readonly baseUrl?: string
+  /** Credential reference the mounted provider resolves its key from, when it uses one. */
+  readonly apiKeyEnv?: string
   /** Cumulative search work, when mounted. */
   readonly usage?: EmbeddingsUsageView
 }

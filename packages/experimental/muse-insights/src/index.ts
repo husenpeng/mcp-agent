@@ -364,6 +364,7 @@ export default class MuseInsights extends TypertRemoteService {
       model: embeddings.model,
       dimensions: embeddings.dimensions,
       ...embeddings.baseUrl === undefined ? {} : { baseUrl: embeddings.baseUrl },
+      ...embeddings.apiKeyEnv === undefined ? {} : { apiKeyEnv: embeddings.apiKeyEnv },
       usage,
     })
   }

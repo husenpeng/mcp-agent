@@ -1,5 +1,6 @@
 /** Memory service storage, scoping, replacement, limits, and restart durability. */
 import assert from 'node:assert/strict'
+import { execFile } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { mkdir, mkdtemp, readdir, readFile, realpath, rm, stat, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -17,6 +18,7 @@ import MemoryService, {
   LOCAL_MEMORY_OWNER,
   MemoryError,
   MemoryId,
+  MemoryIndex,
   accountMemoryOwner,
   cosineSimilarity,
   isMemoryIdentifier,
@@ -24,10 +26,12 @@ import MemoryService, {
   memoryEmbeddingText,
   memoryTokens,
   normalizeIdentifier,
+  isDue,
   normalizeStatement,
   provisionalProjectId,
   ProjectId,
   rankMemories,
+  repositoryRootOf,
   resolveMemoryLimits,
   resolveMemoryWorkspace,
   scoreMemories,
@@ -120,6 +124,33 @@ async function tempDirectory(): Promise<string> {
   const directory = await mkdtemp(join(tmpdir(), 'tomato-memory-'))
   directories.push(directory)
   return directory
+}
+
+/** Run one Git command in a directory, with an identity that never reads the operator's configuration. */
+async function git(directory: string, ...args: string[]): Promise<void> {
+  await new Promise<void>((settle, fail) => {
+    execFile(
+      'git',
+      ['-c', 'user.name=fixture', '-c', 'user.email=fixture@example.com', '-c', 'commit.gpgsign=false', ...args],
+      { cwd: directory },
+      (error) => {
+        if (error === null) settle()
+        else fail(new Error(`git ${args.join(' ')} failed: ${error.message}`, { cause: error }))
+      },
+    )
+  })
+}
+
+/** A committed repository and one linked worktree of it, both canonical. */
+async function repositoryWithWorktree(): Promise<{ repository: string; worktree: string }> {
+  const root = await tempDirectory()
+  await git(root, 'init', '--quiet')
+  await writeFile(join(root, 'tracked.txt'), 'content\n')
+  await git(root, 'add', 'tracked.txt')
+  await git(root, 'commit', '--quiet', '--no-verify', '-m', 'initial')
+  const worktree = join(await tempDirectory(), 'checkout')
+  await git(root, 'worktree', 'add', '--quiet', '--detach', worktree, 'HEAD')
+  return { repository: await realpath(root), worktree: await realpath(worktree) }
 }
 
 describe('identifiers and tokens', () => {
@@ -526,6 +557,51 @@ describe('MemoryService', () => {
     expect(memory.snapshot(VIEW_A).map(record => record.id)).toEqual([profileCandidate.id])
   })
 
+  it('keeps a confirmed record in force until a proposal that replaces it is accepted', async () => {
+    const { memory } = await harness()
+    const confirmed = await memory.remember(request({ value: 'Short and direct, no emoji' }))
+    const proposal = await memory.remember(request({
+      entity: 'proposal',
+      key: 'replace-0123456789abcdef',
+      value: 'Short and direct, one emoji is fine',
+      status: 'candidate',
+      source: { sessionId: SessionId('s') },
+      proposalFor: confirmed.id,
+    }))
+    expect(proposal.proposalFor).toBe(confirmed.id)
+
+    // The proposal waits beside the rule it contradicts, and the rule keeps applying.
+    expect((await memory.recall({ view: VIEW_A, text: 'emoji' })).map(record => record.id)).toEqual([confirmed.id])
+    expect(memory.list(VIEW_A).map(record => record.entity).sort()).toEqual(['proposal', 'user'])
+
+    const accepted = await memory.confirm(VIEW_A, proposal.id)
+    expect(accepted).toMatchObject({ status: 'active', entity: 'user', key: 'email-tone', value: 'Short and direct, one emoji is fine' })
+    const current = memory.list(VIEW_A)
+    expect(current.map(record => record.id)).toEqual([accepted?.id])
+    expect(current[0]?.scope).toEqual(confirmed.scope)
+    // The replaced version stays stored as history, and the proposal records what it replaced.
+    const versions = memory.versions(VIEW_A, confirmed.id)
+    expect(versions.find(record => record.id === confirmed.id)?.supersededBy).toBe(accepted?.id)
+    expect(memory.versions(VIEW_A, proposal.id)[0]?.supersededBy).toBe(accepted?.id)
+  })
+
+  it('activates a proposal on its own identity when the record it named is gone', async () => {
+    const { memory } = await harness()
+    const confirmed = await memory.remember(request())
+    const proposal = await memory.remember(request({
+      entity: 'proposal',
+      key: 'replace-fedcba9876543210',
+      value: 'A statement whose rule was deleted',
+      status: 'candidate',
+      source: { sessionId: SessionId('s') },
+      proposalFor: confirmed.id,
+    }))
+    await memory.forget(VIEW_A, confirmed.id)
+    const accepted = await memory.confirm(VIEW_A, proposal.id)
+    expect(accepted).toMatchObject({ id: proposal.id, status: 'active', entity: 'proposal' })
+    expect(memory.list(VIEW_A).map(record => record.value)).toEqual(['A statement whose rule was deleted'])
+  })
+
   it('filters recall by kind and bounds it by maxRecallResults', async () => {
     const { memory } = await harness({ config: { maxRecallResults: 1 } })
     await memory.remember(request({ key: 'a', kind: 'fact', value: 'shared word' }))
@@ -670,6 +746,72 @@ describe('MemoryService', () => {
     // A run without a Session resolves its view by directory.
     expect(await memory.accessFor(link)).toEqual(first)
     expect(await memory.accessFor(join(directory, 'gone'))).toEqual({ kind: 'available', view: { owner: OWNER } })
+  })
+
+  it('gives a linked Git worktree the project identity of its repository', async () => {
+    const { ctx, memory } = await harness()
+    const { repository, worktree } = await repositoryWithWorktree()
+    const outside = await realpath(await tempDirectory())
+
+    expect(await repositoryRootOf(worktree)).toBe(repository)
+    // A conventional checkout, a directory below one, and a directory outside Git keep their own identity.
+    expect(await repositoryRootOf(repository)).toBeUndefined()
+    expect(await repositoryRootOf(join(repository, 'nested'))).toBeUndefined()
+    expect(await repositoryRootOf(outside)).toBeUndefined()
+
+    expect((await resolveMemoryWorkspace(ctx, worktree)).id).toBe(provisionalProjectId(repository))
+    expect((await resolveMemoryWorkspace(ctx, repository)).id).toBe(provisionalProjectId(repository))
+    expect((await resolveMemoryWorkspace(ctx, outside)).id).toBe(provisionalProjectId(outside))
+    // Without the repository mapping the two directories would be separate projects.
+    expect(provisionalProjectId(worktree)).not.toBe(provisionalProjectId(repository))
+
+    // A record a worktree writes keeps its own directory as the display path and reaches the repository's Sessions.
+    const stored = await memory.remember(request({ scope: { kind: 'workspace', path: worktree } }))
+    expect(stored.scope).toMatchObject({ kind: 'workspace', workspaceId: provisionalProjectId(repository), path: worktree })
+    const inRepository = await memory.accessFor(repository)
+    assert(inRepository.kind === 'available' && inRepository.view.workspace !== undefined)
+    expect(memory.list(inRepository.view).map(record => record.id)).toEqual([stored.id])
+  })
+
+  it('keeps a checkout that names no repository on its own project identity', async () => {
+    const { ctx } = await harness()
+    // A `.git` file that names no gitdir, and a gitdir that does not exist, name no repository.
+    const noPointer = await tempDirectory()
+    await writeFile(join(noPointer, '.git'), 'not a gitdir line\n')
+    const dangling = await tempDirectory()
+    await writeFile(join(dangling, '.git'), `gitdir: ${join(dangling, 'absent')}\n`)
+
+    // A submodule's gitdir carries no `commondir`, so it names a repository of its own rather than its parent's.
+    const submodule = await tempDirectory()
+    await mkdir(join(submodule, 'gitdir'), { recursive: true })
+    await writeFile(join(submodule, '.git'), `gitdir: ${join(submodule, 'gitdir')}\n`)
+
+    // A `commondir` that names no directory, and an empty one, name no repository either.
+    const absentCommon = await tempDirectory()
+    await mkdir(join(absentCommon, 'gitdir'), { recursive: true })
+    await writeFile(join(absentCommon, '.git'), `gitdir: ${join(absentCommon, 'gitdir')}\n`)
+    await writeFile(join(absentCommon, 'gitdir', 'commondir'), '../absent\n')
+    const emptyCommon = await tempDirectory()
+    await mkdir(join(emptyCommon, 'gitdir'), { recursive: true })
+    await writeFile(join(emptyCommon, '.git'), `gitdir: ${join(emptyCommon, 'gitdir')}\n`)
+    await writeFile(join(emptyCommon, 'gitdir', 'commondir'), '\n')
+
+    for (const directory of [noPointer, dangling, submodule, absentCommon, emptyCommon]) {
+      expect(await repositoryRootOf(directory)).toBeUndefined()
+      expect((await resolveMemoryWorkspace(ctx, directory)).id).toBe(provisionalProjectId(directory))
+    }
+
+    // A `.git` file may name its gitdir relatively, as a submodule does.
+    const parent = await tempDirectory()
+    const repository = join(parent, 'repository')
+    const worktree = join(parent, 'checkout')
+    await mkdir(join(repository, '.git', 'worktrees', 'checkout'), { recursive: true })
+    await writeFile(join(repository, '.git', 'worktrees', 'checkout', 'commondir'), '../..\n')
+    await mkdir(worktree, { recursive: true })
+    await writeFile(join(worktree, '.git'), 'gitdir: ../repository/.git/worktrees/checkout\n')
+    const root = await realpath(repository)
+    expect(await repositoryRootOf(worktree)).toBe(root)
+    expect((await resolveMemoryWorkspace(ctx, worktree)).id).toBe(provisionalProjectId(root))
   })
 
   it('serves the signed-in account, distinguishes a loading account from a sign-out, and refuses after one', async () => {
@@ -1307,6 +1449,32 @@ describe('sidecar index', () => {
     expect(embeddings).toBeDefined()
   })
 
+  it('falls back to domain search when delaying a failed batch cannot write to the index', async () => {
+    const directory = await tempDirectory()
+    const indexPath = join(directory, 'index.sqlite')
+    const unhandled: unknown[] = []
+    const onUnhandled = (reason: unknown): void => { unhandled.push(reason) }
+    process.on('unhandledRejection', onUnhandled)
+    const retry = vi.spyOn(MemoryIndex.prototype, 'retryEmbeddings').mockImplementation(() => {
+      throw Object.assign(new Error('database is locked'), { errcode: 5 })
+    })
+    try {
+      const harnessed = await harness({ config: { indexPath } })
+      await harnessed.ctx.plugin(ScriptEmbeddings)
+      const embeddings = harnessed.ctx.embeddings as ScriptEmbeddings
+      embeddings.failure = new Error('provider down')
+      const stored = await harnessed.memory.remember(request({ key: 'tone', value: 'Reply briefly' }))
+      await vi.waitFor(() => { expect(retry).toHaveBeenCalled() })
+      await new Promise<void>((resolve) => { setImmediate(resolve) })
+      expect(unhandled).toEqual([])
+      expect((await harnessed.memory.recall({ view: VIEW_A, text: 'briefly' })).map(entry => entry.id))
+        .toEqual([stored.id])
+    } finally {
+      retry.mockRestore()
+      process.off('unhandledRejection', onUnhandled)
+    }
+  })
+
   it('precomputes episode vectors and uses them for semantic episode search', async () => {
     const directory = await tempDirectory()
     const indexPath = join(directory, 'index.sqlite')
@@ -1871,6 +2039,73 @@ describe('project history', () => {
     }))
     expect(await memory.promote(VIEW_A)).toEqual([])
     expect(memory.list(VIEW_A)).toEqual([])
+  })
+
+  it('asks only for candidates stated more than once, and stops asking once a person dismisses one', async () => {
+    const { memory } = await harness()
+    const once = await memory.remember(request({ status: 'candidate', value: 'One mention', source: { sessionId: SessionId('s1') } }))
+    expect(isDue(once)).toBe(false)
+    // A confirmed rule is never due, and dismissing a single-mention candidate records the count it had.
+    expect(isDue(await memory.remember(request({ key: 'other-rule', value: 'Confirmed already' })))).toBe(false)
+    expect(await memory.dismiss(VIEW_A, once.id)).toMatchObject({ dismissedEvidence: 1 })
+
+    const twice = await memory.remember(request({ status: 'candidate', value: 'Two mentions', source: { sessionId: SessionId('s2') } }))
+    expect(isDue(await memory.remember(request({
+      status: 'candidate', value: 'Two mentions', source: { sessionId: SessionId('s2') },
+    })))).toBe(true)
+
+    const dismissed = await memory.dismiss(VIEW_A, twice.id)
+    expect(dismissed).toMatchObject({ dismissedEvidence: 2 })
+    expect(isDue(dismissed ?? twice)).toBe(false)
+    // A repeat from another turn makes the same statement due again.
+    expect(isDue(await memory.remember(request({
+      status: 'candidate', value: 'Two mentions', source: { sessionId: SessionId('s3') },
+    })))).toBe(true)
+
+    // A proposal is due immediately: it asks whether a confirmed rule should change.
+    const confirmed = await memory.remember(request({ value: 'Current rule' }))
+    const proposal = await memory.remember(request({
+      entity: 'proposal', key: 'replace-0000000000000000', value: 'New rule', status: 'candidate',
+      source: { sessionId: SessionId('s4') }, proposalFor: confirmed.id,
+    }))
+    expect(isDue(proposal)).toBe(true)
+    // Dismissal only speaks for candidates, and only for a record the view sees.
+    expect(await memory.dismiss(VIEW_A, confirmed.id)).toBeUndefined()
+    expect(await memory.dismiss(VIEW_B, proposal.id)).toBeUndefined()
+  })
+
+  it('strengthens a repeated candidate instead of storing a second copy', async () => {
+    const { memory } = await harness()
+    const first = await memory.remember(request({ status: 'candidate', value: 'Reply briefly', source: { sessionId: SessionId('s1') } }))
+    expect(first.evidence).toBeUndefined()
+    const again = await memory.remember(request({ status: 'candidate', value: 'Reply  briefly', source: { sessionId: SessionId('s2') } }))
+    // The same statement restated keeps one identity and one version, counting the repetition.
+    expect(again.id).toBe(first.id)
+    expect(again.evidence).toBe(2)
+    expect(memory.versions(VIEW_A, first.id)).toHaveLength(1)
+    expect((await memory.remember(request({ status: 'candidate', value: 'Reply briefly', source: { sessionId: SessionId('s3') } }))).evidence).toBe(3)
+    // A different statement still replaces the candidate as a new version.
+    const other = await memory.remember(request({ status: 'candidate', value: 'Reply at length', source: { sessionId: SessionId('s4') } }))
+    expect(other.id).not.toBe(first.id)
+    expect(other.evidence).toBeUndefined()
+  })
+
+  it('marks a lesson three different sessions repeat as a pitfall that still waits for a person', async () => {
+    const { memory } = await harness()
+    for (const session of ['s1', 's2', 's3']) {
+      await memory.rememberEpisode(episodeRequest({
+        type: 'lesson', fingerprint: `lesson-${session}`, source: { sessionId: SessionId(session) },
+        facts: ['A capped glob hides the file you want'],
+      }))
+    }
+    const [outcome] = await memory.promote(VIEW_A)
+    expect(outcome).toMatchObject({ entity: 'pitfall', value: 'A capped glob hides the file you want (repeated in 3 sessions)' })
+    expect(outcome?.key).toMatch(/^pitfall-[0-9a-f]{8}$/u)
+    // Repetition marks the subject, not the authority: a rule reaches Sessions only once a person confirms it.
+    const [record] = memory.list(VIEW_A)
+    expect(record).toMatchObject({ status: 'candidate', kind: 'constraint', entity: 'pitfall' })
+    expect(await memory.recall({ view: VIEW_A, text: 'capped glob' })).toEqual([])
+    expect((await memory.confirm(VIEW_A, record?.id ?? MemoryId('memory-missing')))?.status).toBe('active')
   })
 
   it('excludes a Session from indexed episode search', async () => {

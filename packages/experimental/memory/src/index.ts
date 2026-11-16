@@ -53,7 +53,7 @@ import type {
 } from './types.ts'
 
 export type * from './types.ts'
-export { ProjectId, provisionalProjectId, resolveMemoryWorkspace, scopeProjectId } from './project.ts'
+export { ProjectId, provisionalProjectId, repositoryRootOf, resolveMemoryWorkspace, scopeProjectId } from './project.ts'
 export type { ProjectScope } from './project.ts'
 export { INDEX_VERSION, MemoryIndex } from './search-index.ts'
 export { bytesToVector, decodeVector, encodeVector, vectorToBytes } from './vector.ts'
@@ -341,6 +341,24 @@ function sameScope(left: MemoryScope, right: MemoryScope): boolean {
 function visibleIn(view: MemoryView, record: MemoryRecord): boolean {
   return record.owner === view.owner
     && (record.scope.kind === 'profile' || scopeProjectId(record.scope) === view.workspace?.id)
+}
+
+/**
+ * Whether a candidate is worth putting in front of a person now.
+ *
+ * A candidate is due when it carries a replacement proposal, when it was stated
+ * more than once, and it is not due while a person already dismissed it at the
+ * same evidence count: dismissing silences that statement until another session
+ * or turn states it again.
+ * @param record - current record version.
+ * @returns whether the person should be asked to confirm or drop it.
+ */
+export function isDue(record: MemoryRecord): boolean {
+  if (record.status !== 'candidate') return false
+  if (record.proposalFor !== undefined) return true
+  const evidence = record.evidence ?? 1
+  if (evidence < 2) return false
+  return record.dismissedEvidence === undefined || evidence > record.dismissedEvidence
 }
 
 /** Whether one record version is the current one. */
@@ -714,7 +732,11 @@ export class MemoryService extends Service {
     this.embeddingTimer.unref()
   }
 
-  /** Drain one batch of the embedding outbox and store its vectors. */
+  /**
+   * Drain one batch of the embedding outbox and store its vectors. Provider
+   * failures delay the batch; a sidecar failure closes the derived index and
+   * leaves lexical search reading the authoritative domains.
+   */
   private async drainEmbeddings(): Promise<void> {
     const index = this.index
     const embeddings = this.ctx.get('embeddings')
@@ -765,7 +787,12 @@ export class MemoryService extends Service {
       /* v8 ignore next -- disposal aborts the provider; a closed index is the same path. */
       if (this.embeddingAbort?.signal.aborted === true || this.index !== index) return
       this.ctx.logger.warn(`experimental-memory: embedding the search index failed: ${String(error)}`)
-      index.retryEmbeddings(jobs.map(entry => entry.job.seq), Date.now() + this.embedRetryMs)
+      try {
+        index.retryEmbeddings(jobs.map(entry => entry.job.seq), Date.now() + this.embedRetryMs)
+      } catch (retryError: unknown) {
+        this.disableIndex(retryError)
+        return
+      }
       this.scheduleEmbedding(this.embedRetryMs)
     } finally {
       this.embeddingDraining = false
@@ -1265,6 +1292,18 @@ export class MemoryService extends Service {
     const scope = await this.scopeWithIdentity(request.scope)
     const records = this.all().filter(record => record.owner === request.owner && sameScope(record.scope, scope) && isCurrent(record))
     const previous = records.find(record => record.entity === entity && record.key === key)
+    // A person stating the same candidate again strengthens it instead of adding a second copy:
+    // repetition is the strongest evidence that a pending statement is worth confirming.
+    if (previous !== undefined && previous.status === 'candidate' && request.status === 'candidate'
+      && normalizeStatement(previous.value) === value) {
+      const bumped = await this.records.update(previous.id, current => ({
+        ...current,
+        evidence: (current.evidence ?? 1) + 1,
+        updatedAt: Date.now(),
+      }))
+      this.indexRecord(bumped)
+      return bumped
+    }
     if (previous === undefined) {
       if (scope.kind === 'profile' && records.length >= this.limits.maxProfileRecords) {
         throw new MemoryError(`the profile already stores ${this.limits.maxProfileRecords} memories; delete unused ones first`, 'profile-full')
@@ -1290,6 +1329,7 @@ export class MemoryService extends Service {
       validFrom: now,
       createdAt: now,
       updatedAt: now,
+      ...request.proposalFor === undefined ? {} : { proposalFor: request.proposalFor },
       source: request.source,
     }
     await this.records.put(record.id, record)
@@ -1616,7 +1656,10 @@ export class MemoryService extends Service {
   }
 
   /**
-   * Activate a candidate.
+   * Activate a candidate. A candidate that names a `proposalFor` record
+   * replaces that record's statement instead of adding one: the proposal's
+   * value becomes the new version of the target's identity, and the proposal
+   * is closed so the change stays traceable to the person who accepted it.
    * @param view - view that must see the record.
    * @param id - candidate to confirm.
    * @returns the active record, or `undefined` when the view sees no candidate with that id.
@@ -1624,8 +1667,66 @@ export class MemoryService extends Service {
   async confirm(view: MemoryView, id: MemoryIdType): Promise<MemoryRecord | undefined> {
     const record = this.visible(view, id)
     if (record === undefined || !isCurrent(record) || record.status !== 'candidate') return undefined
+    if (record.proposalFor !== undefined) return await this.acceptProposal(view, record, record.proposalFor)
     const updated = await this.records.update(id, current => ({ ...current, status: 'active', updatedAt: Date.now() }))
     this.indexRecord(updated)
+    return updated
+  }
+
+  /**
+   * Write an accepted proposal as the new version of the record it replaced.
+   * A proposal whose target is gone activates on its own identity instead, so
+   * accepting one never loses the statement.
+   * @param view - view that must see both records.
+   * @param proposal - candidate carrying the proposed statement.
+   * @param targetId - record whose confirmation would replace the statement.
+   * @returns the record that now carries the proposal's statement.
+   */
+  private async acceptProposal(view: MemoryView, proposal: MemoryRecord, targetId: MemoryIdType): Promise<MemoryRecord> {
+    const target = this.visible(view, targetId)
+    if (target === undefined || !isCurrent(target)) {
+      const activated = await this.records.update(proposal.id, current => ({ ...current, status: 'active', updatedAt: Date.now() }))
+      this.indexRecord(activated)
+      return activated
+    }
+    const replacement = await this.remember({
+      owner: proposal.owner,
+      scope: target.scope,
+      kind: target.kind,
+      entity: target.entity,
+      key: target.key,
+      value: proposal.value,
+      status: 'active',
+      pinned: target.pinned,
+      source: {
+        sessionId: proposal.source.sessionId,
+        ...proposal.source.userMessageSeq === undefined ? {} : { userMessageSeq: proposal.source.userMessageSeq },
+      },
+    })
+    const closed = await this.records.update(proposal.id, current => ({
+      ...current, validTo: Date.now(), supersededBy: replacement.id, updatedAt: Date.now(),
+    }))
+    this.unindexRecord(closed.id)
+    return replacement
+  }
+
+  /**
+   * Silence one candidate for its current evidence. It becomes visible again
+   * only after another write states it, which is how a repeated statement still
+   * reaches a person.
+   * @param view - view that must see the record.
+   * @param id - candidate to dismiss.
+   * @returns the updated record, or `undefined` when the view sees no candidate with that id.
+   */
+  async dismiss(view: MemoryView, id: MemoryIdType): Promise<MemoryRecord | undefined> {
+    const record = this.visible(view, id)
+    if (record === undefined || !isCurrent(record) || record.status !== 'candidate') return undefined
+    const updated = await this.records.update(id, current => ({
+      ...current,
+      dismissedAt: Date.now(),
+      dismissedEvidence: current.evidence ?? 1,
+      updatedAt: Date.now(),
+    }))
     return updated
   }
 
@@ -1744,16 +1845,16 @@ export class MemoryService extends Service {
       if (group.length === 0) continue
       const members = [episode, ...group]
       for (const member of members) claimed.add(member.id)
-      // Three Sessions repeating one failure/lesson signature is a pitfall the
-      // workspace has proven, not a one-off candidate.
+      // Three Sessions repeating the same lesson make it a pitfall of the workspace.
+      // It still waits for the person who confirms every rule that reaches a Session.
       const pitfall = members.length >= 3
         && new Set(members.map(member => member.source.sessionId)).size >= 3
-        && members.every(member => member.type === 'failure' || member.type === 'lesson')
+        && members.every(member => member.type === 'lesson')
       const key = pitfall ? `pitfall-${createHash('sha256').update(fact).digest('hex').slice(0, 8)}` : promotionKey(fact, episode)
       const scope = { kind: 'workspace', workspaceId: view.workspace.id, path: view.workspace.path } as const
       const entity = pitfall ? 'pitfall' : 'project'
       const kind = pitfall ? 'constraint' : 'fact'
-      const status = pitfall ? 'active' : 'candidate'
+      const status = 'candidate'
       const value = pitfall ? `${fact} (repeated in ${members.length} sessions)` : fact
       const existing = this.all().find(record => record.owner === view.owner && sameScope(record.scope, scope)
         && isCurrent(record) && record.entity === entity && record.key === key)

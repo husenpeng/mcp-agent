@@ -229,6 +229,13 @@ export interface RememberRequest {
   readonly pinned: boolean
   /** The write that justified the record. */
   readonly source: MemorySource
+  /**
+   * Record whose confirmation would replace this candidate's statement, when a
+   * capture found a value that contradicts an already confirmed record. The
+   * candidate keeps its own identity so the confirmed record stays in force
+   * until a person accepts the proposal.
+   */
+  readonly proposalFor?: MemoryId
 }
 
 /** Input of `ctx.memory.recall()`. */

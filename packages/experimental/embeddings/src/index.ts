@@ -72,6 +72,11 @@ export abstract class Embeddings extends Service {
     return undefined
   }
 
+  /** Credential reference the provider resolves its key from, when it uses one. */
+  get apiKeyEnv(): string | undefined {
+    return undefined
+  }
+
   /** Whether consumers may use this provider now; a disabled provider stays mounted and is ignored. */
   get enabled(): boolean {
     return true

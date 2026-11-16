@@ -85,6 +85,21 @@ describe('memories Remote', () => {
       .toEqual({ signedIn: true, records: [] })
   })
 
+  it('dismisses a candidate through the Remote and reports a missing one', async () => {
+    const test = await harness()
+    const written = await test.ctx.memories.propose({
+      sessionId: test.sessionId,
+      entries: [{ scope: 'workspace', kind: 'preference', entity: 'user', key: 'email-tone', value: 'Reply briefly' }],
+    })
+    expect(written.written).toHaveLength(1)
+    const candidate = written.written[0]!
+    if (candidate === undefined) throw new Error('expected a written candidate')
+    const dismissed = await test.ctx.memories.dismiss({ sessionId: test.sessionId, id: candidate.id })
+    expect(dismissed).toMatchObject({ record: { id: candidate.id, status: 'candidate' } })
+    expect(await test.ctx.memories.dismiss({ sessionId: test.sessionId, id: 'memory-missing' }))
+      .toEqual({ code: 'not_found' })
+  })
+
   it('refuses an oversized proposal and answers write calls while the account loads', async () => {
     const test = await harness()
     const account = new AccountState()
@@ -101,6 +116,8 @@ describe('memories Remote', () => {
       .toEqual({ code: 'account_loading' })
     expect(await test.ctx.memories.forget({ sessionId: test.sessionId, id: 'memory-1' }))
       .toEqual({ deleted: false, code: 'account_loading' })
+    expect(await test.ctx.memories.dismiss({ sessionId: test.sessionId, id: 'memory-1' }))
+      .toEqual({ code: 'account_loading' })
   })
 
   it('reports a loading account separately from a sign-out', async () => {

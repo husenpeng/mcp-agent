@@ -46,6 +46,15 @@ async function harness(config: TestConfig = {}, credentials = true) {
   return { ctx, embeddings: ctx.embeddings }
 }
 
+it('names the configured endpoint and credential reference', async () => {
+  const { embeddings } = await harness({ apiKeyEnv: ' EMBED_KEY ' })
+  expect(embeddings.baseUrl).toBe('https://api.example.test/v1')
+  expect(embeddings.apiKeyEnv).toBe('EMBED_KEY')
+
+  const { embeddings: none } = await harness()
+  expect(none.apiKeyEnv).toBeUndefined()
+})
+
 it('probes an endpoint from the Host and reports its length and latency', async () => {
   const { ctx } = await harness()
   const request = respond({ data: [{ index: 0, embedding: [1, 2, 3] }] })
@@ -70,9 +79,15 @@ it('probes an endpoint from the Host and reports its length and latency', async 
   respond({ error: 'down' }, 500)
   expect(await probeEmbeddingsEndpoint(ctx, { baseUrl: 'https://api.example.test/v1', model: 'embed-small', dimensions: 0 }))
     .toMatchObject({ ok: false, detail: 'endpoint answered HTTP 500' })
+  respond({ error: { message: 'batch size is invalid, it should not be larger than 10.: input.contents' } }, 400)
+  expect(await probeEmbeddingsEndpoint(ctx, { baseUrl: 'https://api.example.test/v1', model: 'embed-small', dimensions: 0 }))
+    .toMatchObject({ ok: false, detail: 'endpoint answered HTTP 400: batch size is invalid, it should not be larger than 10.: input.contents' })
   vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('socket closed') }))
   expect(await probeEmbeddingsEndpoint(ctx, { baseUrl: 'https://api.example.test/v1', model: 'embed-small', dimensions: 0 }))
     .toMatchObject({ ok: false, detail: 'socket closed' })
+  vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('fetch failed', { cause: new Error('getaddrinfo ENOTFOUND api.example.test') }) }))
+  expect(await probeEmbeddingsEndpoint(ctx, { baseUrl: 'https://api.example.test/v1', model: 'embed-small', dimensions: 0 }))
+    .toMatchObject({ ok: false, detail: 'fetch failed (getaddrinfo ENOTFOUND api.example.test)' })
   vi.stubGlobal('fetch', vi.fn(async () => new Response('not json', { status: 200 })))
   expect(await probeEmbeddingsEndpoint(ctx, { baseUrl: 'https://api.example.test/v1', model: 'embed-small', dimensions: 0 }).then(result => result.ok))
     .toBe(false)
@@ -202,7 +217,7 @@ describe('configuration', () => {
       apiKeyEnv: undefined,
       dimensions: 384,
       timeoutMs: 15_000,
-      batchSize: 32,
+      batchSize: 10,
       maxInputChars: 4000,
       failureThreshold: 3,
       cooldownMs: 30_000,
@@ -247,6 +262,23 @@ describe('embedding requests', () => {
     expect(url).toBe('https://api.example.test/v1/embeddings')
     assert.equal(typeof init, 'object')
     assert.equal((init as { body?: unknown }).body, JSON.stringify({ model: 'embed-small', input: ['alpha', 'beta'] }))
+  })
+
+  it('limits default requests to ten texts per batch', async () => {
+    const { embeddings } = await harness()
+    const fetch = vi.fn(async (_url: string, init?: RequestInit) => {
+      if (typeof init?.body !== 'string') throw new Error('fetch body must be a JSON string')
+      const body = JSON.parse(init.body) as { input: readonly string[] }
+      return new Response(JSON.stringify(vectors(body.input.length)), { headers: { 'content-type': 'application/json' } })
+    })
+    vi.stubGlobal('fetch', fetch)
+    await embeddings.embed({ texts: Array.from({ length: 11 }, (_, index) => `text-${index}`) })
+    expect(fetch).toHaveBeenCalledTimes(2)
+    const batches = fetch.mock.calls.map((call) => {
+      const body = JSON.parse((call[1] as { body: string }).body) as { input: readonly string[] }
+      return body.input.length
+    })
+    expect(batches).toEqual([10, 1])
   })
 
   it('splits by batch size and truncates each text', async () => {
@@ -340,12 +372,26 @@ describe('transport and response failures', () => {
     const { embeddings } = await harness({ timeoutMs: 20 })
     respond({ error: 'no' }, 503)
     await expect(embeddings.embed({ texts: ['a'] })).rejects.toMatchObject({ code: 'provider', message: expect.stringMatching(/HTTP 503/u) })
+    respond({ error: { message: 'batch size is invalid' } }, 400)
+    await expect(embeddings.embed({ texts: ['a'] })).rejects.toMatchObject({
+      code: 'provider', message: 'embedding endpoint returned HTTP 400: batch size is invalid',
+    })
     vi.stubGlobal('fetch', vi.fn(async () => new Response('plain', { status: 200 })))
     await expect(embeddings.embed({ texts: ['a'] })).rejects.toMatchObject({ code: 'invalid-response' })
     vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('network down') }))
     await expect(embeddings.embed({ texts: ['a'] })).rejects.toMatchObject({ code: 'provider', message: expect.stringMatching(/network down/u) })
     vi.stubGlobal('fetch', vi.fn(async () => { throw 'network down' }))
     await expect(embeddings.embed({ texts: ['a'] })).rejects.toMatchObject({ code: 'provider', message: 'embedding request failed: network down' })
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('fetch failed', { cause: new Error('connect ECONNREFUSED 127.0.0.1:11434') }) }))
+    await expect(embeddings.embed({ texts: ['a'] })).rejects.toMatchObject({
+      code: 'provider', message: 'embedding request failed: fetch failed (connect ECONNREFUSED 127.0.0.1:11434)',
+    })
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('fetch failed', { cause: 'opaque' }) }))
+    await expect(embeddings.embed({ texts: ['a'] })).rejects.toMatchObject({ message: 'embedding request failed: fetch failed' })
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('fetch failed', { cause: new Error('fetch failed') }) }))
+    await expect(embeddings.embed({ texts: ['a'] })).rejects.toMatchObject({ message: 'embedding request failed: fetch failed' })
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('fetch failed', { cause: new Error('') }) }))
+    await expect(embeddings.embed({ texts: ['a'] })).rejects.toMatchObject({ message: 'embedding request failed: fetch failed' })
     vi.stubGlobal('fetch', vi.fn((_url: string, init?: RequestInit) => new Promise((_resolve, reject) => {
       init?.signal?.addEventListener('abort', () => { reject(new DOMException('aborted', 'AbortError')) })
     })))

@@ -1,7 +1,7 @@
 /**
- * Read-only provider facts, the editable endpoint and credential name, and the
- * staged write behind the embedding-provider page. Model and vector length stay
- * Host configuration fields for a future migration; the page never changes them.
+ * Provider facts and the staged settings write behind the embedding-provider
+ * page. The page keeps the credential reference in this draft while its
+ * write-only key input stores secret values through the credential service.
  * @module @tomato/experimental-muse-insights/client/embeddings-config
  */
 
@@ -33,7 +33,11 @@ export const EMBEDDING_MODELS: readonly EmbeddingModelOption[] = [
   { id: 'text-embedding-3-large', dimensions: 3072, description: 'model.large' },
 ]
 
-/** The catalog entry of one model id, when the catalog knows it. */
+/**
+ * The catalog entry of one model id, when the catalog knows it.
+ * @param model - endpoint model id.
+ * @returns the matching catalog entry, or `undefined` for a custom model.
+ */
 export function modelOption(model: string): EmbeddingModelOption | undefined {
   return EMBEDDING_MODELS.find(option => option.id === model)
 }
@@ -52,7 +56,11 @@ export interface EmbeddingsConfigView {
   readonly enabled: boolean
 }
 
-/** Read the displayed settings from one stored section. */
+/**
+ * Read the displayed settings from one stored section.
+ * @param value - stored settings section.
+ * @returns normalized text fields and the semantic-search switch.
+ */
 export function configOf(value: unknown): EmbeddingsConfigView {
   const section = typeof value === 'object' && value !== null ? value as Record<string, unknown> : {}
   const text = (field: string): string => {
@@ -80,7 +88,11 @@ export interface EndpointDraft {
   readonly dimensions: string
 }
 
-/** Read the editable fields from one stored section. */
+/**
+ * Read the editable fields from one stored section.
+ * @param value - stored settings section.
+ * @returns the endpoint, model, vector length and credential reference.
+ */
 export function endpointDraftOf(value: unknown): EndpointDraft {
   const config = configOf(value)
   return { baseUrl: config.baseUrl, apiKeyEnv: config.apiKeyEnv, model: config.model, dimensions: config.dimensions }
@@ -93,19 +105,32 @@ export function endpointDraftOf(value: unknown): EndpointDraft {
  * @param mounted - live provider identity from the Host, when mounted.
  * @returns the values the page displays.
  */
-export function effectiveConfig(view: EmbeddingsConfigView, mounted: { readonly baseUrl?: string | undefined; readonly model?: string | undefined; readonly dimensions?: number | undefined } | undefined): EmbeddingsConfigView {
+export function effectiveConfig(
+  view: EmbeddingsConfigView,
+  mounted: {
+    readonly baseUrl?: string | undefined
+    readonly model?: string | undefined
+    readonly dimensions?: number | undefined
+    readonly apiKeyEnv?: string | undefined
+  } | undefined,
+): EmbeddingsConfigView {
   return {
     baseUrl: view.baseUrl === '' ? mounted?.baseUrl ?? '' : view.baseUrl,
     model: view.model === '' ? mounted?.model ?? '' : view.model,
     dimensions: view.dimensions === '' || view.dimensions === '0'
       ? mounted?.dimensions === undefined ? '' : String(mounted.dimensions)
       : view.dimensions,
-    apiKeyEnv: view.apiKeyEnv,
+    apiKeyEnv: view.apiKeyEnv === '' ? mounted?.apiKeyEnv ?? '' : view.apiKeyEnv,
     enabled: view.enabled,
   }
 }
 
-/** Field writes the save stages; an empty value clears its override. */
+/**
+ * Field writes the save stages; an empty value clears its override.
+ * @param draft - staged fields.
+ * @param baseline - stored fields used to omit unchanged writes.
+ * @returns minimal set/unset operations in field order.
+ */
 export function endpointWrites(draft: EndpointDraft, baseline?: EmbeddingsConfigView): readonly SettingsFormPathOp[] {
   const baseUrl = draft.baseUrl.trim()
   const apiKeyEnv = draft.apiKeyEnv.trim()
@@ -120,7 +145,7 @@ export function endpointWrites(draft: EndpointDraft, baseline?: EmbeddingsConfig
     length === undefined ? { op: 'unset', path: ['dimensions'] } : { op: 'set', path: ['dimensions'], value: length },
   ]
   if (baseline === undefined) return writes
-  return writes.filter(write => {
+  return writes.filter((write) => {
     const [field] = write.path
     const stored = field === 'baseUrl' ? baseline.baseUrl
       : field === 'apiKeyEnv' ? baseline.apiKeyEnv
@@ -132,7 +157,11 @@ export function endpointWrites(draft: EndpointDraft, baseline?: EmbeddingsConfig
   })
 }
 
-/** The one write the enable switch stages. */
+/**
+ * The one write the enable switch stages.
+ * @param enabled - whether semantic search may use the provider.
+ * @returns the switch's settings operation.
+ */
 export function enabledWrite(enabled: boolean): readonly SettingsFormPathOp[] {
   return [{ op: 'set', path: ['enabled'], value: enabled }]
 }

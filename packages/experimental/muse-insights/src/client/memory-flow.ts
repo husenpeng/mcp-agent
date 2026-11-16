@@ -14,7 +14,14 @@ import type { SessionEvent } from '@tomato/session/types'
 export type MemoryFlowKind = 'snapshot' | 'call' | 'result' | 'capture' | 'promotion'
 
 /** Plugin records and snapshot outcomes the tab renders with their own copy. */
-export type MemoryFlowRecord = 'snapshot' | 'withdrawn' | 'query-expansion' | 'turn-capture' | 'episode-capture' | 'promotion'
+export type MemoryFlowRecord =
+  | 'snapshot'
+  | 'withdrawn'
+  | 'query-expansion'
+  | 'turn-capture'
+  | 'episode-capture'
+  | 'promotion'
+  | 'candidates'
 
 /** Heading counts of one injected snapshot. */
 export interface MemorySnapshotCounts {
@@ -44,6 +51,18 @@ export interface MemoryFlowItem {
   readonly lines: readonly string[]
   /** Heading counts of an injected snapshot. */
   readonly counts?: MemorySnapshotCounts
+  /** Records this row can act on, each with the command that acts on it. */
+  readonly actions?: readonly MemoryFlowAction[]
+}
+
+/** One record a row can act on, and the host command that acts on it. */
+export interface MemoryFlowAction {
+  /** Record identity the command names. */
+  readonly id: string
+  /** Prompt text the host runs as a command; it needs no model turn. */
+  readonly confirm: string
+  /** Prompt text that silences the record until another write states it. */
+  readonly dismiss: string
 }
 
 /** Longest detail one row keeps; the tab is a log, not a payload viewer. */
@@ -221,6 +240,43 @@ function rowOf(event: SessionEvent, calls: CallNames): MemoryFlowItem | undefine
       title: suffix,
       detail: bounded(JSON.stringify(data)),
       lines,
+    }
+  }
+  if (suffix === 'candidates') {
+    const records = objectField(data, 'candidates')
+    const lines = Array.isArray(records)
+      ? records.flatMap((record) => {
+        const entity = stringField(record, 'entity')
+        const key = stringField(record, 'key')
+        const id = stringField(record, 'id')
+        if (entity === undefined || key === undefined || id === undefined) return []
+        const value = stringField(record, 'value') ?? ''
+        const evidence = numberField(record, 'evidence')
+        const replaces = stringField(record, 'proposalFor')
+        const marks = [
+          ...evidence === undefined || evidence < 2 ? [] : [`x${evidence}`],
+          ...replaces === undefined ? [] : [`replaces ${replaces}`],
+        ]
+        return [`${entity} / ${key}: ${value}${marks.length === 0 ? '' : ` (${marks.join(', ')})`} → ${id}`]
+      })
+      : []
+    const actions = Array.isArray(records)
+      ? records.flatMap((record) => {
+        const id = stringField(record, 'id')
+        return id === undefined
+          ? []
+          : [{ id, confirm: `/memory confirm ${id}`, dismiss: `/memory dismiss ${id}` }]
+      })
+      : []
+    return {
+      seq: event.seq,
+      time: event.time,
+      kind: 'capture',
+      record: 'candidates',
+      title: suffix,
+      detail: bounded(JSON.stringify(data)),
+      lines,
+      ...actions.length === 0 ? {} : { actions },
     }
   }
   if (suffix === 'query-expansion') {

@@ -57,7 +57,7 @@ export type { MuseInsightsKey } from './locales.ts'
 export type { MuseInsightsConfig, MuseInsightsConfigFace, MuseInsightsConfigState } from './config-form.ts'
 
 /** Services the mounted browser contribution requires. */
-export const inject = ['remote', 'slots', 'locale', 'sessions', 'sidebarRightTabs', 'sidebarRight', 'uiWorkspace']
+export const inject = ['remote', 'remote.credentials', 'slots', 'locale', 'sessions', 'sidebarRightTabs', 'sidebarRight', 'uiWorkspace']
 
 /**
  * Register the locale dictionaries, polling controller, both Sidebar page types,
@@ -172,6 +172,10 @@ function registerUi(ctx: ClientContext): void {
         status: async (signal) => {
           const result = await configCtx.remote.museInsights.embeddingsStatus(signal)
           return result.ok ? result.value : { available: false, enabled: false }
+        },
+        storeCredential: async (ref, value) => {
+          const result = await configCtx.remote.credentials.set(ref, value)
+          return result.ok ? undefined : result.error.message
         },
       }),
     }, EmbeddingsConfigPage))), 'muse-insights: embeddings page')

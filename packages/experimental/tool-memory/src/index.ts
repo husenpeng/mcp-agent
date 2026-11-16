@@ -26,7 +26,7 @@ import type { ProjectionHandle } from '@tomato/session-projection'
 import { defineTool } from '@tomato/tools'
 import type { ToolRunContext } from '@tomato/tools'
 import {
-  MEMORY_KINDS, MEMORY_RELATIONS, MAX_RELATION_DEPTH, MemoryError, MemoryId, isMemoryIdentifier,
+  MEMORY_KINDS, MEMORY_RELATIONS, MAX_RELATION_DEPTH, MemoryError, MemoryId, isDue, isMemoryIdentifier,
   normalizeIdentifier, normalizeStatement, scoreMemories,
 } from '@tomato/experimental-memory'
 import type { EpisodeRecord, MemoryErrorCode, MemoryKind, MemoryRecord, MemoryRelation, MemoryScope, MemoryView, MemoryWorkspace, PromotionOutcome, RelatedMemory } from '@tomato/experimental-memory'
@@ -105,6 +105,44 @@ declare module '@tomato/cordis' {
 
 export const name = 'experimental-tool-memory'
 export const inject = ['memory', 'tools', 'agents', 'commands', 'sessionProjections', 'llm']
+
+/** Plugin record announcing the candidates that now need a decision. */
+export const PLUGIN_RECORD_CANDIDATES = 'plugin:tool-memory/candidates'
+
+/** Most candidates one announcement carries. */
+export const MAX_ANNOUNCED_CANDIDATES = 5
+
+/** Most characters of one announced statement. */
+export const MAX_ANNOUNCED_CHARS = 200
+
+/** One candidate a client can put in front of a person. */
+export interface AnnouncedCandidate {
+  /** Record identity, which the confirm and dismiss commands take. */
+  readonly id: string
+  /** Subject the statement is about. */
+  readonly entity: string
+  /** Attribute of that subject. */
+  readonly key: string
+  /** The statement itself, bounded. */
+  readonly value: string
+  /** Times an independent write stated it. */
+  readonly evidence: number
+  /** Record whose confirmation would replace this statement, for a contradicted capture. */
+  readonly proposalFor?: string
+}
+
+/** What one announcement carried. */
+export interface CandidateAnnouncement {
+  /** Candidates waiting for a person, most relevant first. */
+  readonly candidates: readonly AnnouncedCandidate[]
+}
+
+declare module '@tomato/session/types' {
+  interface PluginRecordMap {
+    /** Candidates waiting for a decision after one finished turn. */
+    'plugin:tool-memory/candidates': CandidateAnnouncement
+  }
+}
 
 declare module '@tomato/session/types' {
   interface PluginRecordMap {
@@ -437,8 +475,9 @@ const SNAPSHOT_CLEARED = 'Saved memories: no memory is shown for this turn. Earl
  * @returns the section, or an empty string when nothing fits.
  */
 function renderPitfalls(records: readonly MemoryRecord[], budget: number): string {
-  const lines = ['Known pitfalls in this workspace (confirmed by repeated sessions):']
-  let used = Buffer.byteLength(lines[0]!, 'utf8')
+  const header = 'Known pitfalls in this workspace (confirmed by repeated sessions):'
+  const lines = [header]
+  let used = Buffer.byteLength(header, 'utf8')
   for (const record of records) {
     const line = `- ${record.value}`
     const bytes = 1 + Buffer.byteLength(line, 'utf8')
@@ -460,7 +499,7 @@ const MAX_INDEXED_ATTRIBUTES = 6
 
 const INDEX_HEADER = 'Project memories by subject (counts only; memory_search returns the values):'
 
-const USAGE = 'Usage: /memory [list|profile|stats|show <id>|related <id> [1-2]|confirm <id>|pin <id>|unpin <id>|forget <id>]'
+const USAGE = 'Usage: /memory [list|profile|due|stats|show <id>|related <id> [1-2]|confirm <id>|dismiss <id>|pin <id>|unpin <id>|forget <id>]'
 
 /** Most ids one `memory_get` call reads; a caller asking for more gets the first ones. */
 const MAX_GET_IDS = 20
@@ -495,6 +534,9 @@ const RECORD_SCHEMA = {
     value: { type: 'string', required: true },
     status: { type: 'string', required: true, enum: ['candidate', 'active'] },
     pinned: { type: 'boolean', required: true },
+    evidence: { type: 'number', description: 'Times an independent write stated this candidate.' },
+    due: { type: 'boolean', description: 'Whether this candidate is worth putting in front of a person now.' },
+    proposalFor: { type: 'string', description: 'Record whose confirmation would replace this candidate statement.' },
     saved: { type: 'string', required: true },
   },
 } as const
@@ -550,6 +592,12 @@ interface RecordValue {
   value: string
   status: MemoryRecord['status']
   pinned: boolean
+  /** Record whose confirmation would replace this candidate's statement, for a contradicted capture. */
+  proposalFor?: string
+  /** Times an independent write stated this candidate; absent counts as one. */
+  evidence?: number
+  /** Whether this candidate is worth putting in front of a person now. */
+  due?: boolean
   saved: string
 }
 
@@ -631,6 +679,9 @@ export function recordValue(record: MemoryRecord): RecordValue {
     value: record.value,
     status: record.status,
     pinned: record.pinned,
+    ...record.proposalFor === undefined ? {} : { proposalFor: record.proposalFor },
+    ...record.evidence === undefined ? {} : { evidence: record.evidence },
+    due: isDue(record),
     saved: new Date(record.updatedAt).toISOString().slice(0, 10),
   }
 }
@@ -697,7 +748,7 @@ export function renderMemoryGet(
  * @param record - model-facing record view.
  * @param extra - optional detail appended inside the trailing parentheses.
  * @returns `- <id> [<flags>] <entity> / <key>: <value> (saved <date>)`; the flags are the kind, then
- *   `profile`, `pinned`, and `unconfirmed` where they apply.
+ *   `profile`, `pinned`, `unconfirmed`, and `replaces <id>` where they apply.
  */
 export function recordLine(record: RecordValue, extra?: string): string {
   const flags = [
@@ -705,6 +756,9 @@ export function recordLine(record: RecordValue, extra?: string): string {
     ...record.scope === 'profile' ? ['profile'] : [],
     ...record.pinned ? ['pinned'] : [],
     ...record.status === 'candidate' ? ['unconfirmed'] : [],
+    ...record.evidence === undefined || record.evidence < 2 ? [] : [`stated ${record.evidence} times`],
+    ...record.due ? ['due'] : [],
+    ...record.proposalFor === undefined ? [] : [`replaces ${record.proposalFor}`],
   ]
   const detail = extra === undefined ? '' : `; ${extra}`
   return `- ${record.id} [${flags.join(', ')}] ${record.entity} / ${record.key}: ${record.value} (saved ${record.saved}${detail})`
@@ -939,8 +993,8 @@ function assertNever(value: never, label: string): never {
 /* v8 ignore stop */
 
 type MemoryCommand =
-  | { readonly kind: 'list' | 'profile' | 'stats' }
-  | { readonly kind: 'confirm' | 'pin' | 'unpin' | 'forget' | 'show'; readonly id: MemoryIdType }
+  | { readonly kind: 'list' | 'profile' | 'stats' | 'due' }
+  | { readonly kind: 'confirm' | 'dismiss' | 'pin' | 'unpin' | 'forget' | 'show'; readonly id: MemoryIdType }
   | { readonly kind: 'related'; readonly id: MemoryIdType; readonly depth: number }
   | { readonly kind: 'invalid' }
 
@@ -949,7 +1003,7 @@ function parseMemoryCommand(rawInput: string): MemoryCommand {
   const [verb, id, ...rest] = rawInput.trim().split(/\s+/u)
   if (verb === undefined || verb === '' || (verb === 'list' && id === undefined)) return { kind: 'list' }
   if (verb === 'profile' && id === undefined) return { kind: 'profile' }
-  if (verb === 'stats' && id === undefined) return { kind: 'stats' }
+  if ((verb === 'stats' || verb === 'due') && id === undefined) return { kind: verb }
   if (verb === 'show' && id !== undefined && rest.length === 0) return { kind: 'show', id: MemoryId(id) }
   if (verb === 'related' && id !== undefined && rest.length <= 1) {
     const depth = rest[0] === undefined ? 1 : Number(rest[0])
@@ -957,7 +1011,8 @@ function parseMemoryCommand(rawInput: string): MemoryCommand {
       return { kind: 'related', id: MemoryId(id), depth }
     }
   }
-  if ((verb === 'confirm' || verb === 'pin' || verb === 'unpin' || verb === 'forget') && id !== undefined && rest.length === 0) {
+  if ((verb === 'confirm' || verb === 'dismiss' || verb === 'pin' || verb === 'unpin' || verb === 'forget')
+    && id !== undefined && rest.length === 0) {
     return { kind: verb, id: MemoryId(id) }
   }
   return { kind: 'invalid' }
@@ -1466,6 +1521,16 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
           : listText(records.filter(record => record.scope.kind === 'workspace'), 'Memories in this workspace:', 'No memories in this workspace.')
         return { kind: 'success', text: `${command.kind === 'list' ? `${profile}\n\n${workspace}` : profile}\n\n${USAGE}` }
       }
+      case 'due': {
+        // Only what a person must decide now: a contradicted rule, or a statement repeated enough to matter.
+        const due = ctx.memory.list(view).filter(record => record.status === 'candidate' && isDue(record))
+        return {
+          kind: 'success',
+          text: due.length === 0
+            ? 'No memory needs a decision now.'
+            : ['Memories waiting for a decision:', ...due.map(record => recordLine(recordValue(record)))].join('\n'),
+        }
+      }
       case 'stats': {
         const stats = ctx.memory.stats(view)
         return {
@@ -1507,6 +1572,12 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
         return reached.length === 0
           ? { kind: 'success', text: `No memories are connected to ${command.id}.` }
           : { kind: 'success', text: `Related memories:\n${reached.map(record => relatedLine(relatedValue(record))).join('\n')}` }
+      }
+      case 'dismiss': {
+        const record = await ctx.memory.dismiss(view, command.id)
+        return record === undefined
+          ? { kind: 'error', text: `No unconfirmed memory ${command.id} exists here.` }
+          : { kind: 'success', text: `Dismissed ${record.id} until it is stated again.` }
       }
       case 'confirm': {
         const record = await ctx.memory.confirm(view, command.id)
@@ -1743,7 +1814,37 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
     if (event.type !== 'turn/end') return
     void startRetryLessons(session)
     startPromotion(session)
+    void announceDueCandidates(session)
   })
+
+  /**
+   * Log the candidates that now need a person's decision, so a client can show
+   * them without asking a model or scanning every record itself. The record
+   * carries identities and one-line statements only; nothing here reaches a
+   * model request.
+   * @param session - Session whose turn just ended.
+   */
+  async function announceDueCandidates(session: Session): Promise<void> {
+    try {
+      const access = await ctx.memory.accessOf(session)
+      if (access.kind !== 'available') return
+      const due = ctx.memory.list(access.view).filter(record => record.status === 'candidate' && isDue(record))
+      if (due.length === 0) return
+      appendPluginRecord(session, PLUGIN_RECORD_CANDIDATES, {
+        candidates: due.slice(0, MAX_ANNOUNCED_CANDIDATES).map(record => ({
+          id: record.id,
+          entity: record.entity,
+          key: record.key,
+          value: record.value.slice(0, MAX_ANNOUNCED_CHARS),
+          evidence: record.evidence ?? 1,
+          ...record.proposalFor === undefined ? {} : { proposalFor: record.proposalFor },
+        })),
+      })
+    } catch (error: unknown) {
+      // The turn already ended; a Session disposed mid-announcement cannot receive the record.
+      ctx.logger.warn(`experimental-tool-memory: announcing candidates failed: ${String(error)}`)
+    }
+  }
 
   /** Store one lesson for every failure that a same-target retry later followed in the finished turn. */
   async function startRetryLessons(session: Session): Promise<void> {

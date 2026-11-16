@@ -65,7 +65,8 @@ function host(overrides: { status?: EmbeddingsStatusView } = {}) {
     available: true, enabled: true, model: 'text-embedding-v4', dimensions: 1024,
     usage: { requests: 4, texts: 9, failures: 1, totalMs: 2_500, lastError: 'boom' },
   })
-  return { probe, status }
+  const storeCredential = vi.fn(async (): Promise<string | undefined> => undefined)
+  return { probe, status, storeCredential }
 }
 
 describe('embeddings configuration', () => {
@@ -123,7 +124,8 @@ describe('EmbeddingsConfigPage', () => {
     expect(screen.getByText(en['model.v4'])).toBeTruthy()
     expect(screen.getByText('1024')).toBeTruthy()
     expect((screen.getByLabelText<HTMLInputElement>(en['embeddings.baseUrl'])).value).toBe(section.baseUrl)
-    expect((screen.getByLabelText<HTMLInputElement>(en['embeddings.apiKeyEnv'])).value).toBe('CLAUDE_SONNET_5_5_API_KEY')
+    expect((screen.getByLabelText<HTMLInputElement>(en['embeddings.apiKeyEnv'])).value).toBe('')
+    expect((screen.getByLabelText<HTMLInputElement>(en['embeddings.apiKeyEnv'])).type).toBe('password')
     await screen.findByText(en['embeddings.usage'])
     expect(screen.getByText(t('embeddings.usageLine', { requests: '4', texts: '9', failures: '1', seconds: '2.5' }))).toBeTruthy()
     expect(screen.getByText('boom')).toBeTruthy()
@@ -142,17 +144,17 @@ describe('EmbeddingsConfigPage', () => {
     await act(async () => Promise.resolve())
   })
 
-  it('saves the endpoint and credential, reports refusal, and refreshes usage', async () => {
+  it('saves the endpoint and a newly entered credential, reports refusal, and refreshes usage', async () => {
     const page = scope(section)
     const injected = host()
     render(<EmbeddingsConfigPage {...standard} scope={page.form} {...injected} t={t} view="page" />)
     fireEvent.change(screen.getByLabelText<HTMLInputElement>(en['embeddings.baseUrl']), { target: { value: 'http://127.0.0.1:11434/v1' } })
-    fireEvent.change(screen.getByLabelText<HTMLInputElement>(en['embeddings.apiKeyEnv']), { target: { value: '' } })
+    fireEvent.change(screen.getByLabelText<HTMLInputElement>(en['embeddings.apiKeyEnv']), { target: { value: 'new-secret' } })
     fireEvent.click(screen.getByText(en['embeddings.endpointSave']))
     await screen.findByText(en['embeddings.endpointSaved'])
+    expect(injected.storeCredential).toHaveBeenCalledWith('CLAUDE_SONNET_5_5_API_KEY', 'new-secret')
     expect(page.mutate).toHaveBeenCalledWith([
       { op: 'set', path: ['baseUrl'], value: 'http://127.0.0.1:11434/v1' },
-      { op: 'unset', path: ['apiKeyEnv'] },
     ], 3)
     expect(injected.status).toHaveBeenCalledTimes(2)
 
@@ -160,6 +162,31 @@ describe('EmbeddingsConfigPage', () => {
     fireEvent.change(screen.getByLabelText<HTMLInputElement>(en['embeddings.baseUrl']), { target: { value: 'http://127.0.0.1:1234/v1' } })
     fireEvent.click(screen.getByText(en['embeddings.endpointSave']))
     await screen.findByText(en['embeddings.endpointFailed'])
+  })
+
+  it('derives and saves the credential reference with the first API key', async () => {
+    const page = scope({ ...section, apiKeyEnv: '' })
+    const injected = host()
+    render(<EmbeddingsConfigPage {...standard} scope={page.form} {...injected} t={t} view="page" />)
+    fireEvent.change(screen.getByLabelText<HTMLInputElement>(en['embeddings.apiKeyEnv']), { target: { value: 'new-secret' } })
+    expect((screen.getByText<HTMLButtonElement>(en['embeddings.test'])).disabled).toBe(true)
+    fireEvent.click(screen.getByText(en['embeddings.endpointSave']))
+    await screen.findByText(en['embeddings.endpointSaved'])
+    expect(injected.storeCredential).toHaveBeenCalledWith('EMBEDDINGS_HTTP_API_KEY', 'new-secret')
+    expect(page.mutate).toHaveBeenCalledWith([{ op: 'set', path: ['apiKeyEnv'], value: 'EMBEDDINGS_HTTP_API_KEY' }], 3)
+    expect((screen.getByLabelText<HTMLInputElement>(en['embeddings.apiKeyEnv'])).value).toBe('')
+  })
+
+  it('keeps settings unchanged when the Host refuses a new credential', async () => {
+    const page = scope({ ...section, apiKeyEnv: '' })
+    const injected = host()
+    injected.storeCredential.mockResolvedValueOnce('credential store unavailable')
+    render(<EmbeddingsConfigPage {...standard} scope={page.form} {...injected} t={t} view="page" />)
+    fireEvent.change(screen.getByLabelText<HTMLInputElement>(en['embeddings.apiKeyEnv']), { target: { value: 'new-secret' } })
+    fireEvent.click(screen.getByText(en['embeddings.endpointSave']))
+    await screen.findByText('credential store unavailable')
+    expect(injected.storeCredential).toHaveBeenCalledWith('EMBEDDINGS_HTTP_API_KEY', 'new-secret')
+    expect(page.mutate).not.toHaveBeenCalled()
   })
 
   it('toggles semantic search and reports acceptance or refusal', async () => {
@@ -191,27 +218,46 @@ describe('EmbeddingsConfigPage', () => {
 
   it('survives status failures and renders zero usage when none was reported', async () => {
     const page = scope(section)
-    const failing = { probe: vi.fn(), status: vi.fn(async () => { throw new Error('host down') }) }
+    const failing = { probe: vi.fn(), status: vi.fn(async () => { throw new Error('host down') }), storeCredential: vi.fn() }
     render(<EmbeddingsConfigPage {...standard} scope={page.form} {...failing} t={t} view="page" />)
     await act(async () => Promise.resolve())
     expect(screen.queryByText(en['embeddings.usage'])).toBeNull()
 
-    const zero = { probe: vi.fn(), status: vi.fn(async () => ({ available: true, enabled: true })) }
+    const zero = { probe: vi.fn(), status: vi.fn(async () => ({ available: true, enabled: true })), storeCredential: vi.fn() }
     render(<EmbeddingsConfigPage {...standard} scope={scope(section).form} {...zero} t={t} view="page" />)
     await screen.findByText(en['embeddings.usage'])
     expect(screen.getByText(t('embeddings.usageLine', { requests: '0', texts: '0', failures: '0', seconds: '0.0' }))).toBeTruthy()
   })
 
   it('tests without a credential and reports a result without a length', async () => {
-    const page = scope(section)
+    const page = scope({ ...section, apiKeyEnv: '' })
     const injected = host()
     injected.probe.mockResolvedValueOnce({ ok: true, detail: 'returned a vector', latencyMs: 7 })
     render(<EmbeddingsConfigPage {...standard} scope={page.form} {...injected} t={t} view="page" />)
-    fireEvent.change(screen.getByLabelText<HTMLInputElement>(en['embeddings.apiKeyEnv']), { target: { value: '' } })
     fireEvent.click(screen.getByText(en['embeddings.test']))
     await screen.findByText(content => content.includes(`${en['embeddings.testOk']}: returned a vector`))
     expect(injected.probe.mock.calls[0]?.[0]).not.toHaveProperty('apiKeyEnv')
     expect(screen.getByText(content => content.includes('0 ' + en['embeddings.dimensionsUnit']))).toBeTruthy()
+  })
+
+  it('probes the values in effect when the stored section inherits them from the profile', async () => {
+    const page = scope({ enabled: true })
+    const injected = host({ status: {
+      available: true, enabled: true, model: 'nomic-embed-text', dimensions: 768, baseUrl: 'http://127.0.0.1:11434/v1',
+      apiKeyEnv: 'EMBED_KEY',
+      usage: { requests: 4, texts: 128, failures: 4, totalMs: 0, lastError: 'embedding request failed: fetch failed (connect ECONNREFUSED 127.0.0.1:11434)' },
+    } })
+    render(<EmbeddingsConfigPage {...standard} scope={page.form} {...injected} t={t} view="page" />)
+    await screen.findByText(content => content.includes('ECONNREFUSED'))
+    expect(screen.getByLabelText<HTMLInputElement>(en['embeddings.baseUrl']).placeholder).toBe('http://127.0.0.1:11434/v1')
+    expect(screen.getByLabelText<HTMLInputElement>(en['embeddings.model']).placeholder).toBe('nomic-embed-text')
+    expect(screen.getByLabelText<HTMLInputElement>(en['embeddings.dimensions']).placeholder).toBe('768')
+    expect(screen.getByLabelText<HTMLInputElement>(en['embeddings.apiKeyEnv']).placeholder).toBe(en['embeddings.apiKeySaved'])
+    fireEvent.click(screen.getByText(en['embeddings.test']))
+    await screen.findByText(content => content.includes(en['embeddings.testOk']))
+    expect(injected.probe).toHaveBeenCalledWith({
+      baseUrl: 'http://127.0.0.1:11434/v1', model: 'nomic-embed-text', dimensions: 768, apiKeyEnv: 'EMBED_KEY',
+    })
   })
 
   it('probes with an unknown vector length as zero', async () => {

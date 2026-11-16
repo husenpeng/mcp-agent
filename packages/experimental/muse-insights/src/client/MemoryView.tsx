@@ -17,6 +17,12 @@ export interface MemoryViewInjected {
     readonly getSnapshot: () => readonly MemoryFlowItem[]
     readonly subscribe: (listener: () => void) => () => void
   }
+  /**
+   * Send one prompt into the Session. The host runs a `/memory` command without
+   * a model turn, so a row's controls act on the record itself. A host that
+   * provides no channel renders the rows without controls.
+   */
+  readonly run?: (text: string) => Promise<void>
 }
 
 /** Filters the toolbar offers; `call` also shows results. */
@@ -53,6 +59,7 @@ const RECORD_TITLE: Readonly<Record<MemoryFlowRecord, MemoryKey>> = {
   'query-expansion': 'record.queryExpansion',
   'turn-capture': 'record.turnCapture',
   'episode-capture': 'record.episodeCapture',
+  candidates: 'record.candidates',
   promotion: 'record.promotion',
 }
 
@@ -88,7 +95,7 @@ function sectionCount(
  * @param props - injected live flow and the bound locale translator.
  * @returns the tab body.
  */
-export function MemoryView({ flow, t }: MemoryViewInjected & PropsLocale<'museMemory'>) {
+export function MemoryView({ flow, run, t }: MemoryViewInjected & PropsLocale<'museMemory'>) {
   const rows = useSyncExternalStore(flow.subscribe, flow.getSnapshot)
   const paused = rows.some(row => row.kind === 'capture' && row.detail.includes('"reason":"sign-in-required"'))
   const [filter, setFilter] = useState<Filter>('all')
@@ -158,6 +165,29 @@ export function MemoryView({ flow, t }: MemoryViewInjected & PropsLocale<'museMe
                   {row.lines.length > 0 && (
                     <ul className={css.lines}>
                       {row.lines.map((line, index) => <li key={`${row.seq}-${index}`}>{line}</li>)}
+                    </ul>
+                  )}
+                  {row.actions !== undefined && row.actions.length > 0 && (
+                    <ul className={css.actions}>
+                      {row.actions.map(action => (
+                        <li key={action.id} className={css.actionRow}>
+                          <code className={css.actionId}>{action.id}</code>
+                          <button
+                            type="button"
+                            className={css.action}
+                            onClick={() => { void run?.(action.confirm) }}
+                          >
+                            {t('action.confirm')}
+                          </button>
+                          <button
+                            type="button"
+                            className={css.action}
+                            onClick={() => { void run?.(action.dismiss) }}
+                          >
+                            {t('action.dismiss')}
+                          </button>
+                        </li>
+                      ))}
                     </ul>
                   )}
                   <details className={css.raw}>
