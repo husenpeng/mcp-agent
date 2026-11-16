@@ -47,13 +47,13 @@ private func fixtureApplication(_ directory: URL, name: String, identifier: Stri
     }
 }
 
-@Test func unsignedPendingIdentityChangesWhenTheExecutableChanges() throws {
+@Test func bundleIdentityRemainsPersistableWhenTheExecutableChanges() throws {
     let root = FileManager.default.temporaryDirectory.appendingPathComponent("dsh-cua-apps-" + UUID().uuidString)
     defer { try? FileManager.default.removeItem(at: root) }
     let app = try fixtureApplication(root, name: "Fixture", identifier: "test.dsh.identity." + UUID().uuidString)
     let before = try ApplicationAuthorization.describeInstalled(app)
-    #expect(before["persistable"] == .bool(false))
+    #expect(before["persistable"] == .bool(true))
     try Data("replacement executable".utf8).write(to: URL(fileURLWithPath: app.executablePath))
     let after = try ApplicationAuthorization.describeInstalled(app)
-    #expect(before["id"] != after["id"])
+    #expect(before["id"] == after["id"])
 }

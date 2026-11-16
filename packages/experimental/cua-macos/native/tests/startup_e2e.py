@@ -108,6 +108,7 @@ def main():
                           "CFBundlePackageType": "APPL", "LSUIElement": True}, output)
         subprocess.run(["xcrun", "swiftc", "-parse-as-library", "-swift-version", "6",
                         str(ROOT / "tests/StartupFixture.swift"), str(args.runtime_source),
+                        str(ROOT / "Sources/CuaNative/StandaloneApplication.swift"),
                         str(ROOT / "Sources/CuaNative/Protocol.swift"), "-o", str(binary)], check=True, timeout=90)
         subprocess.run(["codesign", "--force", "--sign", "-", str(application)], check=True, capture_output=True)
         for mode, timeout_ms, expected in [("exit", 10000, "NATIVE_STARTUP"),

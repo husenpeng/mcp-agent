@@ -5,6 +5,7 @@ import io
 import json
 from pathlib import Path
 import plistlib
+import re
 import secrets
 import sys
 import tempfile
@@ -214,6 +215,30 @@ class SigningOptionsTests(unittest.TestCase):
                     builder.main()
                 self.assertEqual(error.exception.code, 2)
                 run.assert_not_called()
+
+
+class NativePackageIdentityTests(unittest.TestCase):
+    def setUp(self):
+        self.root = Path(__file__).resolve().parents[1]
+
+    def test_build_product_matches_the_swift_package_manifest(self):
+        manifest = (self.root / "Package.swift").read_text()
+        product = re.search(r'\.executable\(name: "([^"]+)", targets: \["CuaNative"\]\)', manifest)
+        self.assertIsNotNone(product)
+        with patch.object(sys, "argv", ["build_app.py"]), patch.object(builder.subprocess, "run") as run, \
+             patch.object(builder, "publish", return_value="helper"), contextlib.redirect_stdout(io.StringIO()):
+            builder.main()
+        command = run.call_args.args[0]
+        self.assertEqual(command[command.index("--product") + 1], product.group(1))
+
+    def test_application_resources_exist(self):
+        for filename in ["Info.plist", "TOMATOComputerUse.icns", "LICENSE.computer-use-icon", "LICENSE.cua-driver"]:
+            with self.subTest(filename=filename):
+                self.assertTrue((self.root / filename).is_file())
+
+    def test_stdio_proxy_uses_the_documented_runtime_directory(self):
+        source = (self.root / "Sources/CuaNative/SharedHelperProxy.swift").read_text()
+        self.assertIn('"/tmp/tomato-cua-\\(getuid())"', source)
 
 
 if __name__ == "__main__":
