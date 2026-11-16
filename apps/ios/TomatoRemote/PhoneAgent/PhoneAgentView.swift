@@ -31,6 +31,10 @@ struct PhoneAgentView: View {
     /// Company Feishu sign-in, offered in place when search needs it.
     @State private var showsLogin = false
     @State private var marketKind: AgentCapabilityKind = .mcp
+    /// Catalog rows currently connecting or installing.
+    @State private var installing: Set<String> = []
+    /// Why the last catalog install failed; the row shows it in place.
+    @State private var installError: String?
     /// The endpoint, model, and depth the next turn uses.
     @State private var config = AgentConfigStore.load()
     /// Which model picker the composer is showing, if any.
@@ -68,6 +72,7 @@ struct PhoneAgentView: View {
                 segmented
                 if segment == 0 {
                     turnStatus
+                    cacheNoticeBar
                     chat
                 } else {
                     market
@@ -279,10 +284,57 @@ struct PhoneAgentView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("模型设置")
+            .accessibilityIdentifier("phone.modelSettings")
         }
         .padding(.horizontal, 20)
         .padding(.top, 8)
         .padding(.bottom, 12)
+    }
+
+    /// The cache monitor's current conclusion, shown until dismissed.
+    @ViewBuilder
+    private var cacheNoticeBar: some View {
+        if let notice = agent.cacheNotice {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: notice.severity == .warning ? "exclamationmark.triangle.fill" : "info.circle.fill")
+                    .font(.caption)
+                    .foregroundStyle(notice.severity == .warning ? AgentTheme.danger : AgentTheme.accent)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(notice.title)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(AgentTheme.ink)
+                        .accessibilityIdentifier("phone.cache.notice")
+                    Text(notice.detail)
+                        .font(.caption2)
+                        .foregroundStyle(AgentTheme.inkSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 4)
+                Button {
+                    agent.dismissCacheNotice()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(AgentTheme.inkSecondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("phone.cache.dismiss")
+            }
+            .padding(12)
+            .background(
+                (notice.severity == .warning ? AgentTheme.danger : AgentTheme.accent).opacity(0.08),
+                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(
+                        (notice.severity == .warning ? AgentTheme.danger : AgentTheme.accent).opacity(0.25),
+                        lineWidth: 0.5
+                    )
+            )
+            .padding(.horizontal, 16)
+            .padding(.bottom, 8)
+        }
     }
 
     private var segmented: some View {
@@ -312,6 +364,7 @@ struct PhoneAgentView: View {
                 )
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("phone.segment.\(value)")
     }
 
     // MARK: Phase
@@ -1212,6 +1265,7 @@ struct PhoneAgentView: View {
                         )
                     }
                     .buttonStyle(.plain)
+                    .accessibilityIdentifier("market.kind.\(kind.rawValue)")
                 }
                 Spacer()
             }
@@ -1231,8 +1285,8 @@ struct PhoneAgentView: View {
                     ForEach(installed(for: marketKind)) { capability in
                         capabilityCard(capability)
                     }
+                    recommended
                     addCard
-                    catalog
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
@@ -1358,18 +1412,149 @@ struct PhoneAgentView: View {
         )
     }
 
-    private var catalog: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("能力市场")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(AgentTheme.inkSecondary)
-            Text("插件、Skill 和 MCP 都可以在这里安装；对话里让 agent 提议也行。外部数据只经 MCP 进入。")
+    /// Open-source capabilities the app knows how to install itself.
+    private var recommended: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("推荐安装")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(AgentTheme.ink)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Text("内置的开源 Skill、公开 MCP 端点与组合插件，点一下就能安装。")
                 .font(.caption2)
                 .foregroundStyle(AgentTheme.inkSecondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            if let installError {
+                Text(installError)
+                    .font(.caption2)
+                    .foregroundStyle(AgentTheme.danger)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            ForEach(CapabilityCatalog.entries(for: marketKind)) { entry in
+                catalogCard(entry)
+            }
         }
         .padding(.top, 4)
     }
+
+    /// One catalog row: what it is, where it comes from, and its install action.
+    /// - Parameter entry: shipped capability declaration.
+    private func catalogCard(_ entry: CapabilityCatalogEntry) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: entry.kind.symbol)
+                .font(.body)
+                .foregroundStyle(AgentTheme.accent)
+                .frame(width: 38, height: 38)
+                .background(AgentTheme.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    Text(entry.name)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(AgentTheme.ink)
+                        .accessibilityIdentifier("market.recommend.\(entry.id)")
+                    Text("v\(entry.version)")
+                        .font(.caption2)
+                        .foregroundStyle(AgentTheme.inkSecondary)
+                }
+                Text(entry.summary)
+                    .font(.caption)
+                    .foregroundStyle(AgentTheme.inkSecondary)
+                    .lineLimit(3)
+                VStack(alignment: .leading, spacing: 2) {
+                    if let url = URL(string: entry.sourceURL) {
+                        Link(entry.sourceName, destination: url)
+                            .font(.caption2)
+                            .foregroundStyle(AgentTheme.accent)
+                            .lineLimit(1)
+                    } else {
+                        Text(entry.sourceName)
+                            .font(.caption2)
+                            .foregroundStyle(AgentTheme.accent)
+                            .lineLimit(1)
+                    }
+                    Text(entry.license)
+                        .font(.caption2)
+                        .foregroundStyle(AgentTheme.inkSecondary)
+                        .lineLimit(1)
+                }
+            }
+            Spacer(minLength: 4)
+            installControl(entry)
+        }
+        .padding(14)
+        .background(AgentTheme.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(AgentTheme.border, lineWidth: 1)
+        )
+    }
+
+    /// Install, installing, or already present.
+    /// - Parameter entry: catalog row the owner may add.
+    @ViewBuilder
+    private func installControl(_ entry: CapabilityCatalogEntry) -> some View {
+        if isInstalled(entry) {
+            Label("已安装", systemImage: "checkmark.circle.fill")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(AgentTheme.success)
+                .accessibilityIdentifier("market.installed.\(entry.id)")
+        } else if installing.contains(entry.id) {
+            ProgressView()
+                .controlSize(.small)
+                .accessibilityIdentifier("market.installing.\(entry.id)")
+        } else {
+            Button("安装") {
+                install(entry)
+            }
+            .font(.caption.weight(.semibold))
+            .buttonStyle(.bordered)
+            .tint(AgentTheme.accent)
+            .controlSize(.small)
+            .accessibilityIdentifier("market.install.\(entry.id)")
+        }
+    }
+
+    /// Whether a catalog row is already in the capability table.
+    /// - Parameter entry: catalog row.
+    /// - Returns: true when the skill, MCP endpoint, or plugin is present.
+    private func isInstalled(_ entry: CapabilityCatalogEntry) -> Bool {
+        switch entry.kind {
+        case .mcp:
+            store.items.contains { $0.kind == .mcp && $0.mcpURL == entry.mcpURL }
+        case .skill:
+            store.items.contains { $0.kind == .skill && $0.name == entry.name }
+        case .plugin:
+            store.items.contains { $0.kind == .plugin && $0.name == entry.name }
+        }
+    }
+
+    /// Install one catalog row; remote entries connect before they appear.
+    /// - Parameter entry: shipped capability declaration.
+    private func install(_ entry: CapabilityCatalogEntry) {
+        installError = nil
+        switch entry.kind {
+        case .skill:
+            guard let text = entry.skillText else { return }
+            store.installSkill(name: entry.name, text: text)
+        case .mcp, .plugin:
+            guard !installing.contains(entry.id) else { return }
+            installing.insert(entry.id)
+            Task {
+                defer { installing.remove(entry.id) }
+                do {
+                    if entry.kind == .plugin {
+                        _ = try await store.installPlugin(entry.manifest)
+                    } else if let url = entry.mcpURL {
+                        _ = try await store.installMCP(urlString: url, name: entry.name, token: "")
+                    }
+                } catch {
+                    installError = "\(entry.name)：\(error.localizedDescription)"
+                }
+            }
+        }
+    }
 }
+
+// MARK: - Model settings}
 
 // MARK: - Model settings
 
@@ -1379,7 +1564,7 @@ struct AgentModelSettingsView: View {
     @State private var config = AgentConfigStore.load()
     @State private var keyDraft = AgentConfigStore.apiKey ?? ""
     @State private var saved: String?
-    @StateObject private var catalog = PhoneModelCatalog.shared
+    @ObservedObject private var agent = PhoneAgentModel.shared
     @FocusState private var editing: Bool
 
     var body: some View {
@@ -1406,21 +1591,17 @@ struct AgentModelSettingsView: View {
                         Text("当前模型")
                         Spacer(minLength: 12)
                         Menu {
-                            if catalog.models.isEmpty {
-                                Text("先获取模型，或直接输入模型 ID")
-                            } else {
-                                ForEach(catalog.models, id: \.self) { model in
-                                    Button {
-                                        config.model = model
-                                        saveConfig()
-                                    } label: {
-                                        if model == config.model {
-                                            Label(model, systemImage: "checkmark")
-                                        } else {
-                                            Text(model)
-                                        }
+                            ForEach(CacheableModels.all) { entry in
+                                Button {
+                                    choose(entry)
+                                } label: {
+                                    if entry.id == config.model {
+                                        Label(entry.title, systemImage: "checkmark")
+                                    } else {
+                                        Text(entry.title)
                                     }
                                 }
+                                .accessibilityIdentifier("phone.model.pick.\(entry.id)")
                             }
                         } label: {
                             Text(config.model)
@@ -1428,24 +1609,13 @@ struct AgentModelSettingsView: View {
                                 .lineLimit(1)
                                 .truncationMode(.middle)
                         }
+                        .accessibilityIdentifier("phone.model.current")
                     }
-                    TextField("模型 ID", text: $config.model)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .focused($editing)
-                    Button(catalog.isLoading ? "正在获取…" : "获取模型列表") {
-                        Task { await refreshModels() }
-                    }
-                    .disabled(catalog.isLoading)
-                    if let error = catalog.error {
-                        Text(error)
-                            .font(.footnote)
-                            .foregroundStyle(AgentTheme.danger)
-                    }
+                    LabeledContent("缓存协议", value: config.wireProtocol.title)
                 } header: {
                     Text("模型")
                 } footer: {
-                    Text("选择后立即生效；即使不点「保存」，关闭时也会保留。")
+                    Text("只列出已验证可缓存的模型；协议随模型自动选择。")
                 }
 
                 Section {
@@ -1457,14 +1627,35 @@ struct AgentModelSettingsView: View {
                     }
                     .pickerStyle(.menu)
                     .tint(AgentTheme.accent)
+                    .accessibilityIdentifier("phone.model.reasoning")
                 } header: {
                     Text("推理")
                 } footer: {
-                    Text("「自动」交给模型决定；低、中、高会作为 reasoning_effort 随每次请求发送。模型返回的思考内容会显示在回答上方，用来核对这次档位是否真的起了作用。")
+                    Text(config.wireProtocol == .anthropic
+                        ? "「自动」交给模型决定；低、中、高会作为 thinking 预算随每次请求发送。模型返回的思考内容会显示在回答上方。"
+                        : "「自动」交给模型决定；低、中、高会作为 reasoning_effort 随每次请求发送。模型返回的思考内容会显示在回答上方，用来核对这次档位是否真的起了作用。")
                 }
 
                 Section {
-                    Stepper("最多 \(config.maxSteps) 步", value: $config.maxSteps, in: 2 ... 20)
+                    Stepper("最多 \(config.maxSteps) 步", value: $config.maxSteps)
+                        .onChange(of: config.maxSteps) { _, next in
+                            if next < 1 {
+                                config.maxSteps = 1
+                            }
+                        }
+                } header: {
+                    Text("步数")
+                } footer: {
+                    Text("只限制一次消息里最多调用几轮工具，不设上限；填多大就允许多少轮。")
+                }
+
+                Section {
+                    LabeledContent("缓存状态", value: agent.cacheStatus)
+                    usageRows
+                } header: {
+                    Text("缓存监测")
+                } footer: {
+                    Text("cached 是服务端提示词缓存命中的 token；连续两次相同前缀的请求里，第二次应大于 0。")
                 }
 
                 Section {
@@ -1515,21 +1706,34 @@ struct AgentModelSettingsView: View {
         AgentConfigStore.save(config)
     }
 
+    /// The last step's token counters, including cache reads and writes.
+    @ViewBuilder
+    private var usageRows: some View {
+        if let usage = agent.lastUsage {
+            LabeledContent("输入", value: "\(usage.inputTokens ?? 0)")
+            LabeledContent("输出", value: "\(usage.outputTokens ?? 0)")
+            LabeledContent("cached", value: "\(usage.cachedInputTokens ?? 0)")
+            LabeledContent("cache-write", value: "\(usage.cacheWriteTokens ?? 0)")
+        } else {
+            Text("还没有完成一次模型调用。")
+                .font(.footnote)
+                .foregroundStyle(AgentTheme.inkSecondary)
+        }
+    }
+
+    /// Record the chosen verified model together with its cache protocol.
+    /// - Parameter entry: measured model the picker offered.
+    private func choose(_ entry: CacheableModel) {
+        config.model = entry.id
+        config.api = entry.wire
+        AgentConfigStore.save(config)
+    }
+
     /// Bridge the optional stored effort to the picker's string tags.
     private var reasoningSelection: Binding<String> {
         Binding(
             get: { config.reasoningEffort ?? "" },
             set: { config.reasoningEffort = $0.isEmpty ? nil : $0 }
-        )
-    }
-
-    /// Read the endpoint's models with the key on screen, so a just-typed key
-    /// works without saving the sheet first.
-    private func refreshModels() async {
-        await catalog.load(
-            baseURL: config.baseURL,
-            apiKey: keyDraft.isEmpty ? AgentConfigStore.apiKey : keyDraft,
-            force: true
         )
     }
 
@@ -1650,7 +1854,7 @@ private struct StagedPhoto: Identifiable, Equatable {
 
     init(data: Data) {
         self.data = data
-        self.image = UIImage(data: data)
+        image = UIImage(data: data)
     }
 
     static func == (lhs: StagedPhoto, rhs: StagedPhoto) -> Bool {

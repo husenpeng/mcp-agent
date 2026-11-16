@@ -54,21 +54,28 @@ struct HubClient: Sendable {
         try await call("session/create", body: SessionCreateRequest(cwd: cwd, agentPreset: agentPreset), as: SessionCreateValue.self)
     }
 
-    func renameSession(sessionId: String, title: String) async throws {
-        try await callDiscarding("session/rename", body: SessionRenameRequest(sessionId: sessionId, title: title))
+    /// Every permission preset this Host offers.
+    func permissionCatalog() async throws -> PermissionCatalogWire {
+        try await call("permissionPresets/catalog", argName: nil, body: EmptyBody(), as: PermissionCatalogWire.self)
     }
 
-    /// Change one Session's working directory on the Host.
-    /// @param sessionId - Session whose scope changes.
-    /// @param path - absolute directory, or a path relative to the current one.
-    /// @returns the canonical directory the Host committed.
-    func setWorkingDirectory(sessionId: String, path: String) async throws -> String {
-        let value = try await call(
-            "session/setWorkingDirectory",
-            body: SessionSetWorkingDirectoryRequest(sessionId: sessionId, path: path),
-            as: SessionSetWorkingDirectoryValue.self
-        )
-        return value.workingDirectory
+    /// Run one Host command line in a Session, for example `/permission workspace-write`.
+    /// - Parameters:
+    ///   - sessionId: Session the command runs in.
+    ///   - line: command text including its leading slash.
+    /// - Returns: the settled execution, or nil when the Host has no such command.
+    func executeCommand(sessionId: String, line: String) async throws -> CommandExecutionWire? {
+        let value = try await invoke("commands/execute", args: [
+            "agentId": .string(sessionId),
+            "line": .string(line),
+            "submittedAttachments": .array([]),
+        ])
+        guard !value.isNull else { return nil }
+        return try decode(CommandExecutionWire.self, from: value)
+    }
+
+    func renameSession(sessionId: String, title: String) async throws {
+        try await callDiscarding("session/rename", body: SessionRenameRequest(sessionId: sessionId, title: title))
     }
 
     func cancelSession(sessionId: String) async throws {
@@ -374,6 +381,10 @@ extension HubClient {
         } else {
             args = [:]
         }
+        return try await invoke(endpoint, args: args)
+    }
+
+    private func invoke(_ endpoint: String, args: [String: JSONValue]) async throws -> JSONValue {
         let envelope = ClientRequestEnvelope(
             rpcId: UUID().uuidString,
             method: endpoint,
@@ -472,6 +483,10 @@ extension HubClient {
             AppLog.error(.network, "请求无法编码", detail: error.localizedDescription)
             throw HubError.decoding("请求无法编码：\(error.localizedDescription)")
         }
+    }
+
+    private func decode<Result: Decodable>(_ type: Result.Type, from value: JSONValue) throws -> Result {
+        try decode(type, from: JSONEncoder().encode(value))
     }
 
     private func decode<Result: Decodable>(_ type: Result.Type, from data: Data) throws -> Result {

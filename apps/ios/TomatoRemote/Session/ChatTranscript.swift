@@ -108,7 +108,7 @@ struct ToolDetail: Equatable {
         self.status = status
         self.startedAt = startedAt
         self.finishedAt = finishedAt
-        self.summary = Self.summarize(name: name, arguments: arguments)
+        summary = Self.summarize(name: name, arguments: arguments)
     }
 
     /// One line that tells apart two calls of the same tool.

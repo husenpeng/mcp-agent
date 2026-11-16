@@ -24,31 +24,36 @@ enum PhonePicker: String, Identifiable {
 }
 
 /// Model sheet for the endpoint Tomato Phone calls directly.
+///
+/// Only models whose prompt cache was measured are offered; choosing one also
+/// chooses the protocol that produced the cache hit, so the composer never
+/// exposes a protocol switch.
 struct PhoneModelSheet: View {
     @Binding var config: AgentModelConfig
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var catalog = PhoneModelCatalog.shared
-    /// Manual entry, for an endpoint that advertises nothing or a model the
-    /// list omits.
-    @State private var manual = ""
 
     var body: some View {
         VStack(spacing: 0) {
             SheetHeader(
                 title: "选择模型",
-                caption: "Tomato Phone 直接连这个模型服务；选择只影响之后的消息。",
+                caption: "只列出已验证可缓存的模型；协议随模型自动选择。",
                 onClose: { dismiss() }
             )
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    if let error = catalog.error {
-                        ErrorBanner(message: error) {
-                            Task { await refresh() }
+                    InfoRow(label: "当前模型", value: config.model)
+                    TomatoCard(padding: 0) {
+                        VStack(spacing: 0) {
+                            ForEach(Array(CacheableModels.all.enumerated()), id: \.element.id) { index, entry in
+                                row(entry)
+                                if index < CacheableModels.all.count - 1 {
+                                    Divider()
+                                        .overlay(TomatoToken.borderL1)
+                                        .padding(.leading, 14)
+                                }
+                            }
                         }
                     }
-                    InfoRow(label: "当前模型", value: config.model)
-                    content
-                    manualEntry
                     Text("影像输入需要模型支持图片；不支持时请去掉照片再发送。")
                         .font(.caption)
                         .foregroundStyle(TomatoToken.labelDimmed)
@@ -61,62 +66,26 @@ struct PhoneModelSheet: View {
         }
         .background(TomatoToken.bgBase)
         .accessibilityIdentifier("phone.model.sheet")
-        .task {
-            manual = config.model
-            await catalog.load(baseURL: config.baseURL, apiKey: AgentConfigStore.apiKey)
-        }
-    }
-
-    @ViewBuilder
-    private var content: some View {
-        if catalog.isLoading, catalog.models.isEmpty {
-            HStack(spacing: 8) {
-                ProgressView().controlSize(.small)
-                Text("正在读取模型列表…")
-                    .font(.footnote)
-                    .foregroundStyle(TomatoToken.labelCaption)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.vertical, 8)
-        } else if catalog.models.isEmpty {
-            Text("没有可选的模型。填写服务地址和 Key 后重试，或在下面直接输入模型 ID。")
-                .font(.footnote)
-                .foregroundStyle(TomatoToken.labelCaption)
-                .fixedSize(horizontal: false, vertical: true)
-        } else {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("这个服务提供的模型")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(TomatoToken.labelCaption)
-                TomatoCard(padding: 0) {
-                    VStack(spacing: 0) {
-                        ForEach(Array(catalog.models.enumerated()), id: \.element) { index, model in
-                            row(model)
-                            if index < catalog.models.count - 1 {
-                                Divider()
-                                    .overlay(TomatoToken.borderL1)
-                                    .padding(.leading, 14)
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 
     /// One model row; the chosen id carries a check.
-    /// - Parameter model: id the endpoint advertised.
-    private func row(_ model: String) -> some View {
-        let selected = model == config.model
+    /// - Parameter entry: measured cacheable model.
+    private func row(_ entry: CacheableModel) -> some View {
+        let selected = entry.id == config.model
         return Button {
-            choose(model)
+            choose(entry)
         } label: {
             HStack(spacing: 12) {
-                Text(model)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(selected ? TomatoToken.brandPrimary : TomatoToken.labelPrimary)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(entry.id)
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(selected ? TomatoToken.brandPrimary : TomatoToken.labelPrimary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    Text(entry.vendor)
+                        .font(.caption)
+                        .foregroundStyle(TomatoToken.labelCaption)
+                }
                 Spacer(minLength: 8)
                 Image(systemName: selected ? "checkmark.circle.fill" : "circle")
                     .font(.body)
@@ -127,56 +96,17 @@ struct PhoneModelSheet: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityIdentifier("phone.model.\(model)")
+        .accessibilityIdentifier("phone.model.\(entry.id)")
     }
 
-    private var manualEntry: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("手动指定")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(TomatoToken.labelCaption)
-            HStack(spacing: 8) {
-                TextField("模型 ID", text: $manual)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .font(.subheadline)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
-                    .background(TomatoToken.bgLayer2, in: RoundedRectangle(cornerRadius: TomatoRadius.md, style: .continuous))
-                    .accessibilityIdentifier("phone.model.manual")
-                Button("使用") {
-                    choose(manual)
-                }
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(TomatoToken.brandPrimary)
-                .disabled(manual.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            }
-            Button(catalog.isLoading ? "正在刷新…" : "刷新模型列表") {
-                Task { await refresh() }
-            }
-            .font(.footnote)
-            .foregroundStyle(TomatoToken.brandPrimary)
-            .disabled(catalog.isLoading)
-        }
-    }
-
-    private func refresh() async {
-        await catalog.load(
-            baseURL: config.baseURL,
-            apiKey: AgentConfigStore.apiKey,
-            force: true
-        )
-    }
-
-    /// Record one model id and close.
-    /// - Parameter model: id typed or chosen.
-    private func choose(_ model: String) {
-        let trimmed = model.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
+    /// Record one model with its cache protocol and close.
+    /// - Parameter entry: measured model the owner picked.
+    private func choose(_ entry: CacheableModel) {
         // Start from the stored configuration: the settings sheet writes the
         // same record, and this sheet's snapshot may predate that write.
         var saved = AgentConfigStore.load()
-        saved.model = trimmed
+        saved.model = entry.id
+        saved.api = entry.wire
         AgentConfigStore.save(saved)
         config = saved
         dismiss()
@@ -192,7 +122,9 @@ struct PhoneReasoningSheet: View {
         VStack(spacing: 0) {
             SheetHeader(
                 title: "推理等级",
-                caption: "模型在回答前投入的推理量；等级越高，耗时和用量越大。",
+                caption: config.wireProtocol == .anthropic
+                    ? "模型在回答前投入的 thinking 预算；等级越高，耗时和用量越大。"
+                    : "模型在回答前投入的推理量；等级越高，耗时和用量越大。",
                 onClose: { dismiss() }
             )
             ScrollView {

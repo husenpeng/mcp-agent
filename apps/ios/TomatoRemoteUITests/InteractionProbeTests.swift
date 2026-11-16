@@ -56,7 +56,9 @@ final class InteractionProbeTests: XCTestCase {
             let first = app.staticTexts["第 1 轮：帮我看一下第 1 个问题"].firstMatch
             let earlier = app.buttons["chat.loadEarlier"].firstMatch
             print("PROBE back \(index): first=\(first.exists) earlier=\(earlier.exists) newest=\(frame(of: app, newest))")
-            if first.exists || earlier.exists { break }
+            if first.exists || earlier.exists {
+                break
+            }
         }
         shot("long-back")
         print("PROBE after back: newest=\(frame(of: app, newest)) first=\(frame(of: app, "第 1 轮：帮我看一下第 1 个问题"))")
@@ -119,7 +121,9 @@ final class InteractionProbeTests: XCTestCase {
         }
         print("PROBE table header=\(frame(of: app, "项目"))")
         print("PROBE code=\(frame(of: app, "let round"))")
-        print("PROBE long line exists=\(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "a very long command")).firstMatch.exists)")
+        print(
+            "PROBE long line exists=\(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "a very long command")).firstMatch.exists)"
+        )
 
         // The diagram's full-screen reader.
         let diagram = app.otherElements["流程图"].firstMatch
@@ -138,7 +142,14 @@ final class InteractionProbeTests: XCTestCase {
     /// scroll opens its own conversation.
     func testProbeSessionList() {
         let app = XCUIApplication()
-        app.launchArguments = ["-TOMATO_NO_LOCK", "-TOMATO_NO_NOTIFICATIONS", "-TOMATO_PREVIEW_PAIRING", host, "-TOMATO_OPEN_URL", "tomato://sessions"]
+        app.launchArguments = [
+            "-TOMATO_NO_LOCK",
+            "-TOMATO_NO_NOTIFICATIONS",
+            "-TOMATO_PREVIEW_PAIRING",
+            host,
+            "-TOMATO_OPEN_URL",
+            "tomato://sessions",
+        ]
         app.launch()
         XCTAssertTrue(app.navigationBars["会话"].waitForExistence(timeout: 20))
         let list = app.collectionViews.firstMatch

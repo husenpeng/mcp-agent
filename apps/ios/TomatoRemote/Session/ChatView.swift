@@ -31,8 +31,8 @@ struct ChatView: View {
     @StateObject private var chat: ChatModel
     @State private var detail: ChatItem?
     @State private var showsAgent = false
+    @State private var pendingPermission: PermissionCatalogWire.Option?
     @State private var showsProgress = false
-    @State private var showsWorkScope = false
     @State private var showsPendings = false
     /// Which model picker the dock is showing, if any. The two are separate
     /// sheets: a model is one choice, its reasoning level is another.
@@ -93,7 +93,8 @@ struct ChatView: View {
             blockedReason: blocked,
             preloaded: preloaded,
             selection: hinted.flatMap { $0.next ?? $0.lastUsed },
-            workingDirectory: summary.projections?.values?["workingDirectory"]?.stringValue ?? summary.cwd
+            workingDirectory: summary.projections?.values?["workingDirectory"]?.stringValue ?? summary.cwd,
+            permission: summary.projections?.values?["permissions"]?["currentValue"]?.stringValue
         ))
         _progress = StateObject(wrappedValue: ProgressModel(sessionId: summary.sessionId))
         title = summary.displayTitle
@@ -134,9 +135,7 @@ struct ChatView: View {
     var body: some View {
         VStack(spacing: 0) {
             statusBar
-            if chat.allowsWorkingDirectoryChange {
-                workScopeBar
-            }
+            permissionBar
             if let error = chat.errorMessage {
                 ErrorBanner(message: error) {
                     chat.errorMessage = nil
@@ -334,11 +333,34 @@ struct ChatView: View {
             AgentSheet(sessionId: chat.sessionId, preset: chat.agentPreset, usage: chat.usage, running: chat.isRunning)
                 .tomatoSheet()
         }
+        .confirmationDialog(
+            pendingPermission.map { PermissionPresentation.confirmationTitle($0.value) } ?? "确认切换权限？",
+            isPresented: Binding(
+                get: { pendingPermission != nil },
+                set: {
+                    if !$0 {
+                        pendingPermission = nil
+                    }
+                }
+            ),
+            titleVisibility: .visible
+        ) {
+            if let option = pendingPermission {
+                Button("启用\(PermissionPresentation.label(option))", role: .destructive) {
+                    pendingPermission = nil
+                    Task { await chat.setPermission(option.value) }
+                }
+            }
+            Button("取消", role: .cancel) { pendingPermission = nil }
+        } message: {
+            if let option = pendingPermission {
+                Text(PermissionPresentation.confirmationMessage(option))
+            }
+        }
         .sheet(isPresented: $showsProgress) {
             ProgressSheet(progress: progress)
                 .tomatoSheet([.large])
         }
-        .workScopeSheet(chat: chat, folders: model.scopeFolders, isPresented: $showsWorkScope)
         .sheet(item: $previewFile) { file in
             FilePreviewSheet(file: file)
                 .tomatoFullSheet()
@@ -390,6 +412,7 @@ struct ChatView: View {
         // One catalog read for the whole Host; the composer's chips read names
         // and levels from it, and a failure stays in the sheet.
         .task { await models.load(hub: model.hub) }
+        .task { await chat.loadPermissions(hub: model.hub) }
     }
 
     /// Open one link a message carried.
@@ -476,16 +499,21 @@ extension ChatView {
         )
     }
 
-    /// The Session's folder on the Mac, one tap from changing it.
-    private var workScopeBar: some View {
-        HStack(spacing: 8) {
-            WorkScopeChip(path: chat.workingDirectory, fallback: project) {
-                showsWorkScope = true
+    /// The Session's permission preset: what the Agent may do on this Mac.
+    private var permissionBar: some View {
+        PermissionBar(
+            current: chat.currentPermission,
+            options: chat.permissionOptions,
+            isBusy: chat.isChangingPermission,
+            error: chat.permissionError
+        ) { option in
+            guard option.value != chat.currentPermission else { return }
+            if PermissionPresentation.needsConfirmation(option.value) {
+                pendingPermission = option
+            } else {
+                Task { await chat.setPermission(option.value) }
             }
-            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 20)
-        .padding(.bottom, 4)
     }
 
     /// The phase this conversation is in, in the order a reader would notice:

@@ -45,7 +45,7 @@ enum HostSnapshots {
     /// - Parameters:
     ///   - value: decoded value to store.
     ///   - key: identity of the read.
-    static func write<T: Encodable & Sendable>(_ value: T, key: String) {
+    static func write(_ value: some Encodable & Sendable, key: String) {
         guard let url = file(for: key) else { return }
         Task.detached(priority: .utility) {
             guard let data = try? JSONEncoder().encode(value) else { return }

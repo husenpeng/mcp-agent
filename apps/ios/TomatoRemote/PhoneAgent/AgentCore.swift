@@ -12,6 +12,7 @@
 //  bundle of the two. No downloaded code runs on the phone.
 //
 
+import CryptoKit
 import Foundation
 import SwiftUI
 
@@ -29,6 +30,14 @@ struct AgentModelConfig: Codable, Equatable {
     /// default. Optional so a configuration saved before this choice existed
     /// still decodes.
     var reasoningEffort: String?
+    /// Wire protocol this endpoint speaks; absence means the OpenAI-compatible
+    /// shape saved before the protocol became a stored choice.
+    var api: AgentModelProtocol?
+
+    /// The protocol every request builder uses.
+    var wireProtocol: AgentModelProtocol {
+        api ?? .openai
+    }
 }
 
 /// The reasoning depths the composer offers for the direct endpoint.
@@ -71,11 +80,13 @@ enum AgentReasoningLevel: String, CaseIterable, Identifiable {
     }
 }
 
-/// The models one OpenAI-compatible endpoint advertises.
+/// The models one endpoint advertises under one wire protocol.
 ///
-/// Tomato Phone talks to that endpoint directly instead of a paired Host, so
-/// this catalog comes from `/models` with the owner's own key. A failed or
-/// empty read is reported in the sheet; the typed model id stays usable.
+/// Tomato Phone talks to the endpoint directly instead of a paired Host, so
+/// this catalog comes from that protocol's list path with the owner's own key.
+/// A recent read is reused in memory, an older one is kept across launches and
+/// shown when the endpoint cannot be reached, and a failed or empty read is
+/// reported in the sheet; the typed model id stays usable.
 @MainActor
 final class PhoneModelCatalog: ObservableObject {
     static let shared = PhoneModelCatalog()
@@ -83,46 +94,75 @@ final class PhoneModelCatalog: ObservableObject {
     @Published private(set) var models: [String] = []
     @Published private(set) var isLoading = false
     @Published private(set) var error: String?
+    /// When the shown list was read, or nil for a live read this session.
+    @Published private(set) var cachedAt: Date?
 
-    /// The endpoint and key the current list was read with.
+    /// The protocol, endpoint, and key the in-memory list was read with.
     private var cachedIdentity: String?
     private var loadedAt: Date?
-    /// How long one read stands before the sheet asks again.
-    private static let lifetime: TimeInterval = 300
+    private let cache: ModelCatalogCache
+    private let fetch: (URLRequest) async throws -> (Data, URLResponse)
 
-    /// Read the endpoint's model list, reusing a recent one for the same
-    /// endpoint and key.
     /// - Parameters:
-    ///   - baseURL: OpenAI-compatible base, with or without a trailing slash.
+    ///   - cache: persisted list store; tests pass an isolated suite.
+    ///   - fetch: transport; tests pass a stub.
+    init(
+        cache: ModelCatalogCache = .shared,
+        fetch: @escaping (URLRequest) async throws -> (Data, URLResponse) = { try await URLSession.shared.data(for: $0) }
+    ) {
+        self.cache = cache
+        self.fetch = fetch
+    }
+
+    /// Read the endpoint's model list for one protocol.
+    /// - Parameters:
+    ///   - wire: protocol whose list path and credentials apply.
+    ///   - baseURL: endpoint root, with or without a trailing slash.
     ///   - apiKey: key typed or stored; nil fails with the setup hint.
     ///   - force: read even when a recent list exists.
-    func load(baseURL: String, apiKey: String?, force: Bool = false) async {
-        let base = baseURL.trimmingCharacters(in: CharacterSet(charactersIn: "/ "))
+    func load(
+        protocol wire: AgentModelProtocol,
+        baseURL: String,
+        apiKey: String?,
+        force: Bool = false
+    ) async {
+        let base = ModelCatalogCache.normalized(baseURL)
         guard let key = apiKey?.trimmingCharacters(in: .whitespacesAndNewlines), !key.isEmpty else {
             models = []
+            cachedAt = nil
             error = "先在设置里填写模型 API Key"
             return
         }
-        let identity = "\(base)|\(key)"
+        let identity = "\(wire.rawValue)|\(base)|\(key)"
         if !force,
            identity == cachedIdentity,
            let loadedAt,
-           Date.now.timeIntervalSince(loadedAt) < Self.lifetime
+           Date.now.timeIntervalSince(loadedAt) < ModelCatalogCache.freshFor
         {
             return
+        }
+        // A stored read fills the sheet immediately; a fresh one also lets the
+        // read skip the network, while an older one remains an offline fallback.
+        let stored = cache.entry(protocol: wire, baseURL: base, apiKey: key)
+        if !force, let stored {
+            models = stored.models
+            cachedAt = stored.fetchedAt
+            error = nil
+            if Date.now.timeIntervalSince(stored.fetchedAt) < ModelCatalogCache.freshFor {
+                cachedIdentity = identity
+                loadedAt = stored.fetchedAt
+                return
+            }
         }
         isLoading = true
         error = nil
         defer { isLoading = false }
-        guard let url = URL(string: base + "/models") else {
+        guard let request = ModelWire.modelListRequest(protocol: wire, baseURL: base, apiKey: key) else {
             error = "模型地址不合法"
             return
         }
-        var request = URLRequest(url: url)
-        request.timeoutInterval = 20
-        request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await fetch(request)
             guard let http = response as? HTTPURLResponse else {
                 error = "模型服务没有回应"
                 return
@@ -131,44 +171,52 @@ final class PhoneModelCatalog: ObservableObject {
                 error = "模型服务返回 HTTP \(http.statusCode)"
                 return
             }
-            let list = Self.parse(data)
+            let list = ModelWire.parseModelList(protocol: wire, data: data)
             guard !list.isEmpty else {
                 error = "这个服务没有返回模型列表，可直接输入模型 ID"
                 return
             }
             models = list
+            cachedAt = .now
             cachedIdentity = identity
             loadedAt = .now
+            cache.store(protocol: wire, baseURL: base, apiKey: key, models: list)
         } catch let failure {
-            error = failure.localizedDescription
+            if let stored {
+                models = stored.models
+                cachedAt = stored.fetchedAt
+                error = "\(failure.localizedDescription)；显示上次缓存的结果"
+            } else {
+                error = failure.localizedDescription
+            }
         }
-    }
-
-    /// Read ids from either `{data: [{id}]}` or `{models: [{id}]}`.
-    /// - Parameter data: the `/models` response body.
-    static func parse(_ data: Data) -> [String] {
-        guard let object = try? JSONSerialization.jsonObject(with: data),
-              let root = object as? [String: Any]
-        else { return [] }
-        let entries = root["data"] as? [[String: Any]] ?? root["models"] as? [[String: Any]] ?? []
-        var seen = Set<String>()
-        return entries
-            .compactMap { $0["id"] as? String ?? $0["name"] as? String }
-            .filter { seen.insert($0).inserted }
-            .sorted()
     }
 }
 
-/// Persists the local agent's model choice and credential.
 enum AgentConfigStore {
     private static let key = "phoneAgent.model"
     private static let account = "phoneAgent.key"
 
     static func load() -> AgentModelConfig {
-        guard let data = UserDefaults.standard.data(forKey: key),
-              let config = try? JSONDecoder().decode(AgentModelConfig.self, from: data)
-        else { return AgentModelConfig() }
-        return config
+        let decoded: AgentModelConfig = if let data = UserDefaults.standard.data(forKey: key),
+                                           let config = try? JSONDecoder().decode(AgentModelConfig.self, from: data)
+        {
+            config
+        } else {
+            AgentModelConfig()
+        }
+        var normalized = CacheableModels.normalized(decoded)
+        // The removed protocol picker also swapped the base URL to a vendor
+        // preset. The verified table targets the configured relay, so put that
+        // stale preset back to the app's default relay root.
+        let presetBases = Set(AgentModelProtocol.allCases.map(\.defaultBaseURL))
+        if presetBases.contains(normalized.baseURL.trimmingCharacters(in: CharacterSet(charactersIn: "/ "))) {
+            normalized.baseURL = AgentModelConfig().baseURL
+        }
+        if normalized != decoded {
+            save(normalized)
+        }
+        return normalized
     }
 
     /// @param config - endpoint, model, and step budget to persist.
@@ -823,6 +871,20 @@ final class PhoneAgentModel: ObservableObject {
     /// Thinking the endpoint is streaming for the running step, kept beside the
     /// answer so the selected reasoning depth shows what it produced.
     @Published private(set) var streamingReasoning = ""
+    /// Token counters of the last completed model step, including cache hits.
+    @Published private(set) var lastUsage: ModelUsage?
+    /// What the last cache observation concluded; the chat shows it until dismissed.
+    @Published private(set) var cacheNotice: ModelCacheNotice?
+    /// One-line cache state for the settings panel and device checks.
+    @Published private(set) var cacheStatus = "还没有模型调用"
+    /// Cache controls the next request carries; repair changes them.
+    private var cachePolicy = ModelCachePolicy.standard
+    /// Successive observations for the current stable prompt prefix.
+    private var cacheMonitor = ModelCacheMonitor()
+    /// Whether the current anomaly already received its one automatic repair.
+    private var cacheRepairApplied = false
+    /// A notice the owner dismissed; it stays hidden until the cache state changes.
+    private var dismissedCacheNoticeId: String?
     /// Whether the history is being read from disk. The first read happens when
     /// the phone tab appears instead of inside `init`, so launch never decodes a
     /// long transcript on the main thread.
@@ -882,6 +944,24 @@ final class PhoneAgentModel: ObservableObject {
             legacyThread: folder.appendingPathComponent("thread.json")
         )
         activeConversation = PhoneConversation()
+        #if DEBUG
+            // A script can ask the app to survey cache behaviour with its own
+            // stored key; only counters and errors are written to Documents.
+            if let models = CacheSurvey.requestedModels {
+                Task { await CacheSurvey.run(models: models) }
+            }
+            // A design or UI check can render the cache banner without waiting
+            // for a provider that misses; release builds never seed it.
+            if ProcessInfo.processInfo.arguments.contains("-TOMATO_CACHE_NOTICE_DEMO") {
+                cacheNotice = ModelCacheNotice(
+                    id: "demo-cache-notice",
+                    title: "当前对话的模型缓存已失效",
+                    detail: "上次命中 12,400 tokens，这一轮相同前缀没有命中。已自动为下一轮补上最后一轮对话的缓存断点，并保留系统与工具断点。",
+                    severity: .warning,
+                    repaired: true
+                )
+            }
+        #endif
     }
 
     /// Read the conversations this phone kept, once, off the main thread.
@@ -1155,15 +1235,15 @@ final class PhoneAgentModel: ObservableObject {
             let result = Result { try store.save(conversation) }
             await MainActor.run { [weak self] in
                 guard let self else { return }
-                self.writeInFlight = false
-                if case .failure(let error) = result {
+                writeInFlight = false
+                if case let .failure(error) = result {
                     AppLog.error(.session, "Phone 会话保存失败", detail: error.localizedDescription)
-                    self.errorMessage = "会话没能保存：\(error.localizedDescription)"
+                    errorMessage = "会话没能保存：\(error.localizedDescription)"
                 }
                 // A snapshot queued while this one was writing is newer; write it
                 // now instead of leaving the file one message behind.
-                if self.pendingWrite != nil {
-                    self.drainWrites()
+                if pendingWrite != nil {
+                    drainWrites()
                 }
             }
         }
@@ -1305,6 +1385,10 @@ final class PhoneAgentModel: ObservableObject {
         }
         guard token == turn else { return }
         let config = AgentConfigStore.load()
+        guard CacheableModels.entry(for: config.model) != nil else {
+            errorMessage = "该模型未验证可缓存，暂不可使用；请在模型设置中选择带缓存的模型。"
+            return
+        }
         guard let key = AgentConfigStore.apiKey, !key.isEmpty else {
             errorMessage = AgentError.missingKey.errorDescription
             return
@@ -1366,81 +1450,31 @@ final class PhoneAgentModel: ObservableObject {
         let toolCalls: [AgentToolCall]?
     }
 
-    /// One tool call while its deltas are still arriving.
-    private struct PartialCall {
-        var id = ""
-        var name = ""
-        var arguments = ""
-    }
-
     /// Run one model step, streaming its text into `streamingText`.
     ///
     /// The endpoint speaks SSE. A relay that ignores `stream` and answers one
-    /// JSON document is decoded by the same parser, so the screen still fills.
+    /// JSON document is decoded by the same protocol entry point, so the screen
+    /// still fills.
     /// - Parameters:
-    ///   - config: endpoint, model, and reasoning depth.
-    ///   - key: bearer credential.
+    ///   - config: endpoint, protocol, model, and reasoning depth.
+    ///   - key: credential for the selected protocol.
     ///   - token: identity of the turn this step belongs to.
     /// - Returns: the step's text, its reasoning, and any tool calls it asked for.
     private func turn(config: AgentModelConfig, key: String, token: Int) async throws -> Answer {
-        guard let url = URL(string: config.baseURL.trimmingCharacters(in: CharacterSet(charactersIn: "/")) + "/chat/completions") else {
-            throw AgentError.transport("模型地址不合法")
-        }
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.timeoutInterval = 120
-        request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
         let system = systemPrompt()
-        var apiMessages: [JSONValue] = [.object(["role": .string("system"), "content": .string(system)])]
-        for message in messages {
-            switch message.role {
-            case .user:
-                apiMessages.append(.object(["role": .string("user"), "content": userContent(for: message)]))
-            case .assistant:
-                if let calls = message.toolCalls, !calls.isEmpty {
-                    var entry: [String: JSONValue] = [
-                        "role": .string("assistant"),
-                        "tool_calls": .array(calls.map { call in
-                            .object([
-                                "id": .string(call.id),
-                                "type": .string("function"),
-                                "function": .object([
-                                    "name": .string(call.name),
-                                    "arguments": .string(Self.encodeArguments(call.arguments)),
-                                ]),
-                            ])
-                        }),
-                    ]
-                    // Some relays reject an explicit null content on an
-                    // assistant turn; keep the narration when there is one.
-                    entry["content"] = message.text.isEmpty ? .string("") : .string(message.text)
-                    apiMessages.append(.object(entry))
-                } else if !message.text.isEmpty {
-                    apiMessages.append(.object(["role": .string("assistant"), "content": .string(message.text)]))
-                }
-            case .tool:
-                apiMessages.append(.object([
-                    "role": .string("tool"),
-                    "tool_call_id": .string(message.toolCallId ?? ""),
-                    "content": .string(message.text),
-                ]))
-            case .proposal:
-                continue
-            }
-        }
-        var body: [String: JSONValue] = [
-            "model": .string(config.model),
-            "messages": .array(apiMessages),
-            "tools": .array(store.openAITools()),
-            "tool_choice": .string("auto"),
-            "stream": .bool(true),
-        ]
-        if let effort = config.reasoningEffort {
-            body["reasoning_effort"] = .string(effort)
-        }
-        request.httpBody = try JSONEncoder().encode(JSONValue.object(body))
+        let tools = store.openAITools()
+        let signature = cacheSignature(protocol: config.wireProtocol, model: config.model, system: system, tools: tools)
+        let request = try ModelWire.request(
+            protocol: config.wireProtocol,
+            baseURL: config.baseURL,
+            model: config.model,
+            key: key,
+            system: system,
+            messages: apiMessages(),
+            tools: tools,
+            reasoningEffort: config.reasoningEffort,
+            cache: cachePolicy
+        )
         let bytes: URLSession.AsyncBytes
         let response: URLResponse
         do {
@@ -1459,104 +1493,211 @@ final class PhoneAgentModel: ObservableObject {
                 data.append(byte)
             }
             guard token == turn else { throw CancellationError() }
-            return try Self.answer(from: data)
+            let answer = try ModelWire.parseAnswer(protocol: config.wireProtocol, data: data)
+            recordUsage(answer.usage, signature: signature, wire: config.wireProtocol, baseURL: config.baseURL)
+            return Answer(text: answer.text, reasoning: answer.reasoning, toolCalls: answer.toolCalls)
         }
-        var text = ""
-        var reasoning = ""
-        var partials: [Int: PartialCall] = [:]
+        var parser = ModelWire.streamParser(protocol: config.wireProtocol)
         var lastFlush = Date.distantPast
         for try await line in bytes.lines {
             if Task.isCancelled || token != turn {
                 throw CancellationError()
             }
-            guard line.hasPrefix("data:") else { continue }
-            let payload = line.dropFirst(5).trimmingCharacters(in: .whitespaces)
-            if payload == "[DONE]" {
+            if parser.ingest(line) {
                 break
             }
-            guard let chunk = try? JSONDecoder().decode(JSONValue.self, from: Data(payload.utf8)),
-                  let choice = chunk["choices"]?.arrayValue?.first
-            else { continue }
-            let delta = choice["delta"] ?? choice["message"]
-            // OpenAI-compatible relays stream thinking as `reasoning_content`;
-            // some spell the same field `reasoning`. Both belong to this step.
-            if let piece = delta?["reasoning_content"]?.stringValue ?? delta?["reasoning"]?.stringValue,
-               !piece.isEmpty
-            {
-                reasoning += piece
-                let now = Date.now
-                if now.timeIntervalSince(lastFlush) > 0.05 {
-                    streamingReasoning = reasoning
-                    lastFlush = now
-                }
+            let now = Date.now
+            guard now.timeIntervalSince(lastFlush) > 0.05 else { continue }
+            lastFlush = now
+            if parser.text != streamingText {
+                streamingText = parser.text
             }
-            if let content = delta?["content"]?.stringValue, !content.isEmpty {
-                text += content
-                let now = Date.now
-                if now.timeIntervalSince(lastFlush) > 0.05 {
-                    streamingText = text
-                    lastFlush = now
-                }
-            }
-            for entry in delta?["tool_calls"]?.arrayValue ?? [] {
-                let index = finiteInt(entry["index"]?.doubleValue)
-                var partial = partials[index] ?? PartialCall()
-                if let id = entry["id"]?.stringValue, !id.isEmpty {
-                    partial.id = id
-                }
-                if let name = entry["function"]?["name"]?.stringValue, !name.isEmpty {
-                    partial.name = name
-                }
-                if let arguments = entry["function"]?["arguments"]?.stringValue {
-                    partial.arguments += arguments
-                }
-                partials[index] = partial
+            if parser.reasoning != streamingReasoning {
+                streamingReasoning = parser.reasoning
             }
         }
         guard token == turn else { throw CancellationError() }
-        streamingText = text
-        streamingReasoning = reasoning
-        let calls = partials.keys.sorted().compactMap { index -> AgentToolCall? in
-            guard let partial = partials[index], !partial.name.isEmpty else { return nil }
-            let raw = partial.arguments.isEmpty ? "{}" : partial.arguments
-            let arguments = (try? JSONDecoder().decode(JSONValue.self, from: Data(raw.utf8))) ?? .object([:])
-            return AgentToolCall(
-                id: partial.id.isEmpty ? "call_\(index)" : partial.id,
-                name: partial.name,
-                arguments: arguments
-            )
+        if let failure = parser.failure {
+            throw AgentError.transport(failure)
         }
-        return Answer(
-            text: text,
-            reasoning: reasoning.isEmpty ? nil : reasoning,
-            toolCalls: calls.isEmpty ? nil : calls
+        let answer = parser.answer()
+        streamingText = answer.text
+        streamingReasoning = answer.reasoning ?? ""
+        recordUsage(answer.usage, signature: signature, wire: config.wireProtocol, baseURL: config.baseURL)
+        return Answer(text: answer.text, reasoning: answer.reasoning, toolCalls: answer.toolCalls)
+    }
+
+    /// Record one step's counters and decide whether its cache needs attention.
+    /// - Parameters:
+    ///   - usage: counters the reply carried, or nil when it sent none.
+    ///   - signature: digest of the stable prefix this step used.
+    ///   - wire: protocol that produced the reply.
+    ///   - baseURL: endpoint root, used to choose a repair.
+    private func recordUsage(
+        _ usage: ModelUsage?,
+        signature: String,
+        wire: AgentModelProtocol,
+        baseURL: String
+    ) {
+        if let usage, !usage.isEmpty {
+            lastUsage = usage
+            AppLog.info(.network, "模型用量", detail: usage.summary)
+        }
+        // OpenAI's official prompt cache needs 1024 tokens; Anthropic's minimum
+        // is also over a thousand. DeepSeek-compatible relays cache from a few
+        // hundred, so the phone's ~1k system prefix is diagnosable there.
+        let minimumInput = wire == .anthropic || URL(string: baseURL)?.host == "api.openai.com" ? 1024 : 256
+        let verdict = cacheMonitor.observe(signature: signature, usage: usage, minimumInput: minimumInput)
+        switch verdict {
+        case .reset:
+            cacheRepairApplied = false
+            dismissedCacheNoticeId = nil
+            cacheNotice = nil
+            cacheStatus = "前缀已变化，重新观察"
+        case .unknown:
+            cacheStatus = "样本不足或输入过短"
+        case .healthy:
+            cacheRepairApplied = false
+            dismissedCacheNoticeId = nil
+            cacheNotice = nil
+            cacheStatus = "已命中"
+        case let .warming(written):
+            cacheStatus = "已写入 \(written.formatted()) tokens"
+            showCacheNotice(ModelCacheNotice(
+                id: "warming-\(signature)",
+                title: "缓存已写入",
+                detail: "这一轮写入了 \(written.formatted()) tokens 的缓存，下一轮相同前缀应能命中。",
+                severity: .info,
+                repaired: false
+            ))
+        case let .invalidated(previous):
+            cacheStatus = "失效（上次命中 \(previous.formatted())）"
+            let repair = repairCache(wire: wire, baseURL: baseURL)
+            showCacheNotice(ModelCacheNotice(
+                id: "invalidated-\(signature)",
+                title: "当前对话的模型缓存已失效",
+                detail: "上次命中 \(previous.formatted()) tokens，这一轮相同前缀没有命中。\(repair)",
+                severity: .warning,
+                repaired: true
+            ))
+        case let .ineffective(turns):
+            cacheStatus = "连续 \(turns) 轮未命中"
+            let repair = repairCache(wire: wire, baseURL: baseURL)
+            showCacheNotice(ModelCacheNotice(
+                id: "ineffective-\(signature)",
+                title: "连续 \(turns) 轮没有命中模型缓存",
+                detail: "输入足够长且前缀未变，但服务端没有回报缓存读取。\(repair)",
+                severity: .warning,
+                repaired: true
+            ))
+        case .unsupported:
+            cacheStatus = "服务未上报缓存"
+            showCacheNotice(ModelCacheNotice(
+                id: "unsupported",
+                title: "这个模型服务未上报缓存指标",
+                detail: "响应里没有缓存读取或写入计数，无法判断命中。可以换用会回报缓存的服务；本地配置已检查。",
+                severity: .info,
+                repaired: false
+            ))
+        }
+    }
+
+    /// Apply the one repair available for the configured protocol.
+    /// - Parameters:
+    ///   - wire: protocol the conversation speaks.
+    ///   - baseURL: endpoint root the conversation calls.
+    /// - Returns: a sentence describing what changed.
+    private func repairCache(wire: AgentModelProtocol, baseURL: String) -> String {
+        if cacheRepairApplied {
+            return "本轮已应用过修复；仍然为 0 说明服务端未启用或未回报缓存。"
+        }
+        cacheRepairApplied = true
+        return ModelCacheRepair.apply(
+            wire: wire,
+            baseURL: baseURL,
+            policy: &cachePolicy,
+            conversationId: activeConversationId
         )
     }
 
-    /// Decode one non-streaming completion body.
-    /// - Parameter data: the response body.
-    /// - Returns: the message's text, its reasoning, and its tool calls.
-    private static func answer(from data: Data) throws -> Answer {
-        guard let root = try? JSONDecoder().decode(JSONValue.self, from: data),
-              let message = root["choices"]?.arrayValue?.first?["message"]
-        else {
-            throw AgentError.transport("模型回应无法解析")
+    /// Show one notice unless the owner already dismissed this state.
+    /// - Parameter notice: cache notice to present.
+    private func showCacheNotice(_ notice: ModelCacheNotice) {
+        guard notice.id != dismissedCacheNoticeId else { return }
+        cacheNotice = notice
+    }
+
+    /// Dismiss the visible cache notice until the cache state changes.
+    func dismissCacheNotice() {
+        dismissedCacheNoticeId = cacheNotice?.id
+        cacheNotice = nil
+    }
+
+    /// Digest the parts that must stay byte-stable for a cache hit.
+    /// - Parameters:
+    ///   - protocol: wire protocol in use.
+    ///   - model: model id.
+    ///   - system: system prompt.
+    ///   - tools: tool declarations in request order.
+    /// - Returns: a hex SHA-256 digest.
+    private func cacheSignature(
+        protocol wire: AgentModelProtocol,
+        model: String,
+        system: String,
+        tools: [JSONValue]
+    ) -> String {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        let toolData = (try? encoder.encode(JSONValue.array(tools))) ?? Data()
+        var material = Data("\(wire.rawValue)|\(model)|".utf8)
+        material.append(Data(system.utf8))
+        material.append(toolData)
+        return SHA256.hash(data: material)
+            .map { String(format: "%02x", $0) }
+            .joined()
+    }
+
+    /// The conversation as OpenAI-shaped wire rows, without the system prompt.
+    /// - Returns: one row per user turn, assistant turn, and tool result.
+    private func apiMessages() -> [JSONValue] {
+        var rows: [JSONValue] = []
+        for message in messages {
+            switch message.role {
+            case .user:
+                rows.append(.object(["role": .string("user"), "content": userContent(for: message)]))
+            case .assistant:
+                if let calls = message.toolCalls, !calls.isEmpty {
+                    var entry: [String: JSONValue] = [
+                        "role": .string("assistant"),
+                        "tool_calls": .array(calls.map { call in
+                            .object([
+                                "id": .string(call.id),
+                                "type": .string("function"),
+                                "function": .object([
+                                    "name": .string(call.name),
+                                    "arguments": .string(Self.encodeArguments(call.arguments)),
+                                ]),
+                            ])
+                        }),
+                    ]
+                    // Some relays reject an explicit null content on an
+                    // assistant turn; keep the narration when there is one.
+                    entry["content"] = message.text.isEmpty ? .string("") : .string(message.text)
+                    rows.append(.object(entry))
+                } else if !message.text.isEmpty {
+                    rows.append(.object(["role": .string("assistant"), "content": .string(message.text)]))
+                }
+            case .tool:
+                rows.append(.object([
+                    "role": .string("tool"),
+                    "tool_call_id": .string(message.toolCallId ?? ""),
+                    "content": .string(message.text),
+                ]))
+            case .proposal:
+                continue
+            }
         }
-        let text = message["content"]?.stringValue ?? ""
-        let reasoning = message["reasoning_content"]?.stringValue ?? message["reasoning"]?.stringValue
-        let calls = (message["tool_calls"]?.arrayValue ?? []).compactMap { entry -> AgentToolCall? in
-            guard let id = entry["id"]?.stringValue,
-                  let name = entry["function"]?["name"]?.stringValue
-            else { return nil }
-            let raw = entry["function"]?["arguments"]?.stringValue ?? "{}"
-            let arguments = (try? JSONDecoder().decode(JSONValue.self, from: Data(raw.utf8))) ?? .object([:])
-            return AgentToolCall(id: id, name: name, arguments: arguments)
-        }
-        return Answer(
-            text: text,
-            reasoning: reasoning.flatMap { $0.isEmpty ? nil : $0 },
-            toolCalls: calls.isEmpty ? nil : calls
-        )
+        return rows
     }
 
     /// The content of one user turn: its text, documents as text, and photos as

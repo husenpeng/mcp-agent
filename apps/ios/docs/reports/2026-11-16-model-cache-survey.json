@@ -1,0 +1,513 @@
+{
+  "generatedAt" : "2026-11-16T08:49:06Z",
+  "rows" : [
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 1426,
+        "protocolName" : "anthropic"
+      },
+      "model" : "DeepSeek-V4-Flash",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 1426,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 1426,
+        "protocolName" : "anthropic"
+      },
+      "model" : "DeepSeek-V4-Flash-0731",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 1426,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "model" : "DeepSeek-V4-Pro",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 1024,
+        "inputTokens" : 1347,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 1024,
+        "inputTokens" : 402,
+        "protocolName" : "anthropic"
+      },
+      "model" : "DeepSeek-V4-Pro-0813",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 1426,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 1280,
+        "inputTokens" : 83,
+        "protocolName" : "anthropic"
+      },
+      "model" : "DeepSeek-V4.1-Flash",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "error" : "未上报缓存计数",
+        "inputTokens" : 1363,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "model" : "DeepSeek-V4.1-Flash-1017",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 1280,
+        "inputTokens" : 1363,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 1509,
+        "protocolName" : "anthropic"
+      },
+      "model" : "Doubao-Seed-2.0-pro",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 1509,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 1506,
+        "protocolName" : "anthropic"
+      },
+      "model" : "Doubao-Seed-2.0-Code",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 1507,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 1599,
+        "protocolName" : "anthropic"
+      },
+      "model" : "Doubao-Seed-2.1-pro",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 1598,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 1510,
+        "protocolName" : "anthropic"
+      },
+      "model" : "Doubao-Seed-2.1-turbo",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 1511,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 1599,
+        "protocolName" : "anthropic"
+      },
+      "model" : "Doubao-Seed-2.1-lite",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 1609,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "error" : "未上报缓存计数",
+        "inputTokens" : 0,
+        "protocolName" : "anthropic"
+      },
+      "model" : "MiniMax-M2.7",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 1098,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "model" : "MiniMax-M3",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 1313,
+        "error" : "未上报缓存计数",
+        "inputTokens" : 1357,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "model" : "MiniMax-M3.1-Flash",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 1024,
+        "inputTokens" : 1353,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 2817,
+        "cachedTokens" : 2841,
+        "inputTokens" : 6,
+        "protocolName" : "anthropic"
+      },
+      "model" : "claude-opus-4-7",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 2874,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 2428,
+        "cachedTokens" : 2447,
+        "inputTokens" : 2,
+        "protocolName" : "anthropic"
+      },
+      "model" : "claude-opus-4-8",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 2468,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 2425,
+        "cachedTokens" : 2446,
+        "inputTokens" : 2,
+        "protocolName" : "anthropic"
+      },
+      "model" : "claude-opus-5",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 2465,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 2429,
+        "cachedTokens" : 2448,
+        "inputTokens" : 2,
+        "protocolName" : "anthropic"
+      },
+      "model" : "claude-opus-5-5",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 2467,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 2495,
+        "cachedTokens" : 2513,
+        "inputTokens" : 2,
+        "protocolName" : "anthropic"
+      },
+      "model" : "claude-sonnet-5",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 2532,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 2425,
+        "cachedTokens" : 2443,
+        "inputTokens" : 4,
+        "protocolName" : "anthropic"
+      },
+      "model" : "claude-sonnet-5-5",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 2465,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 2427,
+        "cachedTokens" : 2446,
+        "inputTokens" : 4,
+        "protocolName" : "anthropic"
+      },
+      "model" : "claude-haiku-5-5",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 2467,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "error" : "HTTP 400",
+        "protocolName" : "anthropic"
+      },
+      "model" : "gemini-3.5-flash",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 1082,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "error" : "HTTP 400",
+        "protocolName" : "anthropic"
+      },
+      "model" : "gemini-3.7-flash",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 1068,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "error" : "HTTP 400",
+        "protocolName" : "anthropic"
+      },
+      "model" : "gemini-3.8-flash",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "error" : "HTTP 429",
+        "inputTokens" : 1044,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "error" : "HTTP 400",
+        "protocolName" : "anthropic"
+      },
+      "model" : "gemini-4-argon",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "error" : "HTTP 403",
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 1170,
+        "protocolName" : "anthropic"
+      },
+      "model" : "gpt-5.4",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 1273,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "model" : "gpt-5.4-mini",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 1152,
+        "inputTokens" : 1273,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "model" : "gpt-5.5",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 1152,
+        "inputTokens" : 1273,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "error" : "HTTP 400",
+        "protocolName" : "anthropic"
+      },
+      "model" : "gpt-5.6-sol",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "error" : "HTTP 400",
+        "inputTokens" : 1251,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "error" : "HTTP 400",
+        "protocolName" : "anthropic"
+      },
+      "model" : "gpt-6-sol",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "error" : "HTTP 400",
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "error" : "未上报缓存计数",
+        "inputTokens" : 0,
+        "protocolName" : "anthropic"
+      },
+      "model" : "glm-5.3",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "error" : "未上报缓存计数",
+        "inputTokens" : 1193,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "model" : "kimi-k2.6",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 1024,
+        "error" : "未上报缓存计数",
+        "inputTokens" : 1122,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "model" : "kimi-k3",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 1024,
+        "error" : "未上报缓存计数",
+        "inputTokens" : 1305,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "model" : "kimi-k3.1-pro",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 1024,
+        "error" : "未上报缓存计数",
+        "inputTokens" : 1305,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "error" : "未上报缓存计数",
+        "inputTokens" : 1091,
+        "protocolName" : "anthropic"
+      },
+      "model" : "qwen3.6-plus",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "error" : "未上报缓存计数",
+        "inputTokens" : 1363,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "anthropic" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "error" : "未上报缓存计数",
+        "inputTokens" : 1091,
+        "protocolName" : "anthropic"
+      },
+      "model" : "qwen3.7-flash",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 0,
+        "inputTokens" : 1364,
+        "protocolName" : "openai"
+      }
+    },
+    {
+      "model" : "qwen3.8-max",
+      "openAI" : {
+        "cacheWriteTokens" : 0,
+        "cachedTokens" : 1024,
+        "inputTokens" : 1410,
+        "protocolName" : "openai"
+      }
+    }
+  ]
+}

@@ -268,7 +268,9 @@ struct MainTabs: View {
                 let deadline = Date().addingTimeInterval(20)
                 while Date() < deadline {
                     try? await Task.sleep(nanoseconds: 1_000_000_000)
-                    if Date().timeIntervalSince(model.lastNavigation) > 2 { break }
+                    if Date().timeIntervalSince(model.lastNavigation) > 2 {
+                        break
+                    }
                 }
                 await MermaidRenderer.shared.warmIfUsedBefore()
             }
@@ -460,13 +462,6 @@ final class AppModel: ObservableObject {
     var staleSessionsWarning: String? {
         guard !isFollowingEvents, let sessionsError else { return nil }
         return "状态可能已过期：\(sessionsError)"
-    }
-
-    /// Folders the Host's Sessions already work in, each once, for the
-    /// conversation's work-scope sheet.
-    var scopeFolders: [String] {
-        var seen = Set<String>()
-        return sessions.compactMap(\.cwd).filter { seen.insert($0).inserted }
     }
 
     /// Session a `tomato://session/<id>` link asked to open, consumed by the list

@@ -408,11 +408,6 @@ struct SessionListValue: Decodable, Sendable {
     let items: [SessionSummary]
 }
 
-/// `session/setWorkingDirectory` value.
-struct SessionSetWorkingDirectoryValue: Decodable, Sendable {
-    let workingDirectory: String
-}
-
 /// `session/create` value.
 struct SessionCreateValue: Decodable, Sendable {
     let sessionId: String
@@ -459,12 +454,42 @@ struct SessionPage: Decodable, Sendable {
     let hasMore: Bool
 }
 
+// MARK: - Permission presets
+
+/// `permissionPresets/catalog` value: every preset this Host offers.
+struct PermissionCatalogWire: Decodable, Sendable {
+    /// One selectable preset, with the label its deployment configured.
+    struct Option: Decodable, Sendable, Identifiable, Hashable {
+        let value: String
+        let name: String
+        let description: String?
+
+        var id: String {
+            value
+        }
+    }
+
+    let options: [Option]
+    let defaultOptions: [Option]
+    let defaultPreset: String
+}
+
+/// `commands/execute` value: the settled command plus its lifecycle id.
+struct CommandExecutionWire: Decodable, Sendable {
+    struct Result: Decodable, Sendable {
+        let kind: String
+        let text: String?
+    }
+
+    let commandId: String
+    let result: Result
+}
+
 // MARK: - Requests
 
 struct SessionListRequest: Encodable { let cursor: String? }
 struct SessionCreateRequest: Encodable { let cwd: String?; let agentPreset: String? }
 struct SessionRenameRequest: Encodable { let sessionId: String; let title: String }
-struct SessionSetWorkingDirectoryRequest: Encodable { let sessionId: String; let path: String }
 struct SessionCancelRequest: Encodable { let sessionId: String }
 struct SessionProjectionsRequest: Encodable { let sessionId: String }
 struct SessionPageRequest: Encodable {

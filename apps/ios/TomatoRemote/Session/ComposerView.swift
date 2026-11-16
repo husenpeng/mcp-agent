@@ -774,7 +774,7 @@ private struct StagedPhoto: Identifiable, Equatable {
 
     init(data: Data) {
         self.data = data
-        self.image = UIImage(data: data)
+        image = UIImage(data: data)
     }
 
     static func == (lhs: StagedPhoto, rhs: StagedPhoto) -> Bool {

@@ -70,10 +70,14 @@ final class ChatModel: ObservableObject {
     @Published var modelError: String?
     /// Directory this Session works in on the Mac, as the Host projects it.
     @Published private(set) var workingDirectory: String?
-    /// Whether a scope change is already on its way to the Host.
-    @Published private(set) var isChangingWorkingDirectory = false
-    /// Why the last scope change failed; the scope sheet shows it in place.
-    @Published var workingDirectoryError: String?
+    /// Selectable permission presets the Host advertises for this Session.
+    @Published private(set) var permissionOptions: [PermissionCatalogWire.Option] = []
+    /// Preset the Host projects as the Session's current permission.
+    @Published private(set) var currentPermission: String?
+    /// Whether a permission switch is already on its way to the Host.
+    @Published private(set) var isChangingPermission = false
+    /// Why the last permission switch failed; the chip's menu shows it in place.
+    @Published var permissionError: String?
     /// Photos this transcript draws, keyed by what the Host recorded. The rows
     /// carry references rather than pixels, so the fold stays cheap to replay.
     let photos = ChatImages()
@@ -131,6 +135,8 @@ final class ChatModel: ObservableObject {
     private var modelWatermark: Double = -1
     /// Sequence of the newest directory fact already applied.
     private var workingDirectoryWatermark: Double = -1
+    /// Sequence of the newest permission fact already applied.
+    private var permissionWatermark: Double = -1
     private var loadedEarlier = false
 
     private let blockedReason: String?
@@ -181,13 +187,15 @@ final class ChatModel: ObservableObject {
         parentSessionId: String? = nil,
         subagentMode: String? = nil,
         selection: ModelRoute? = nil,
-        workingDirectory: String? = nil
+        workingDirectory: String? = nil,
+        permission: String? = nil
     ) {
         self.sessionId = sessionId
         self.parentSessionId = parentSessionId
         self.subagentMode = subagentMode
         modelSelection = selection
         self.workingDirectory = workingDirectory
+        currentPermission = permission
         seededRunning = running
         seededBlank = blank
         isRunning = running
@@ -679,6 +687,23 @@ extension ChatModel {
             workingDirectoryWatermark = cut
             updateWorkingDirectory(directory)
         }
+        if cut >= permissionWatermark,
+           let preset = projections["values"]?["permissions"]?["currentValue"]?.stringValue
+        {
+            permissionWatermark = cut
+            currentPermission = preset
+        }
+    }
+
+    /// Adopt one durable permission change younger than the applied facts.
+    /// - Parameter event: one `permission/preset` wire event.
+    private func adoptPermissionEvent(_ event: JSONValue) {
+        guard event["type"]?.stringValue == "permission/preset",
+              let seq = event["seq"]?.doubleValue, seq > permissionWatermark,
+              let preset = event["data"]?["preset"]?.stringValue
+        else { return }
+        permissionWatermark = seq
+        currentPermission = preset
     }
 
     /// Adopt one durable directory change younger than the applied facts.
@@ -723,6 +748,7 @@ extension ChatModel {
     private func merge(_ event: JSONValue) {
         adoptModelEvent(event)
         adoptWorkingDirectoryEvent(event)
+        adoptPermissionEvent(event)
         guard let seq = event["seq"]?.doubleValue else {
             events.append(event)
             apply(event, to: &folded)
@@ -1234,36 +1260,42 @@ extension ChatModel {
         parentSessionId == nil && blockedReason == nil
     }
 
-    /// Whether this screen may change the Session's directory. A child Session
-    /// is served through its parent and refuses direct commands, so the scope
-    /// chip is not offered there.
-    var allowsWorkingDirectoryChange: Bool {
-        parentSessionId == nil && blockedReason == nil
+    /// Read the Host's permission catalog once for this conversation.
+    func loadPermissions(hub: HubClient?) async {
+        guard let hub, permissionOptions.isEmpty else { return }
+        do {
+            permissionOptions = try await hub.permissionCatalog().options
+        } catch {
+            permissionError = describe(error)
+            AppLog.warning(.session, "权限目录读取失败", detail: describe(error))
+        }
     }
 
-    /// Change this Session's working directory on the Mac.
-    ///
-    /// The Host commits the change to the Session log, so later work starts in
-    /// the new directory; shells and processes already running keep their own.
-    /// - Parameter path: absolute directory, or a path relative to the current one.
-    func setWorkingDirectory(_ path: String) async {
-        guard allowsWorkingDirectoryChange, let hub, !isChangingWorkingDirectory else { return }
-        let trimmed = path.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            workingDirectoryError = "目录不能为空"
-            return
-        }
-        isChangingWorkingDirectory = true
-        workingDirectoryError = nil
-        defer { isChangingWorkingDirectory = false }
+    /// Switch this Session's permission preset through the Host command.
+    /// - Parameter preset: catalog value to apply.
+    func setPermission(_ preset: String) async {
+        guard let hub, !isChangingPermission else { return }
+        isChangingPermission = true
+        permissionError = nil
+        defer { isChangingPermission = false }
         do {
-            let directory = try await hub.setWorkingDirectory(sessionId: sessionId, path: trimmed)
-            workingDirectoryWatermark = max(workingDirectoryWatermark, newestSeq)
-            updateWorkingDirectory(directory)
-            AppLog.info(.session, "会话 \(sessionId.prefix(8)) 工作范围已切换", detail: directory)
+            guard let execution = try await hub.executeCommand(
+                sessionId: sessionId,
+                line: "/permission \(preset)"
+            ) else {
+                permissionError = "Host 没有 /permission 命令"
+                return
+            }
+            guard execution.result.kind == "success" else {
+                permissionError = execution.result.text ?? "切换权限失败"
+                return
+            }
+            currentPermission = preset
+            permissionWatermark = max(permissionWatermark, newestSeq)
+            AppLog.info(.session, "会话 \(sessionId.prefix(8)) 权限已切换", detail: preset)
         } catch {
-            workingDirectoryError = describe(error)
-            AppLog.error(.session, "切换工作范围失败", detail: describe(error))
+            permissionError = describe(error)
+            AppLog.error(.session, "切换权限失败", detail: describe(error))
         }
     }
 
