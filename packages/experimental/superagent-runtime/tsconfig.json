@@ -1,0 +1,51 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib/types"
+  },
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "../../../vendor/cordis"
+    },
+    {
+      "path": "../../core/agent"
+    },
+    {
+      "path": "../../core/session"
+    },
+    {
+      "path": "../../storage/storage-domain"
+    },
+    {
+      "path": "../superagent"
+    },
+    {
+      "path": "../superagent-local"
+    },
+    {
+      "path": "../../../vendor/schemastery"
+    },
+    {
+      "path": "../../util/branded"
+    },
+    {
+      "path": "../worktree"
+    },
+    {
+      "path": "../../core/agent-default-model"
+    },
+    {
+      "path": "../../fs/tool-fs"
+    },
+    {
+      "path": "../../fs/tool-fs-search"
+    },
+    {
+      "path": "../../core/tool-executor-native"
+    }
+  ]
+}

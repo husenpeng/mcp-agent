@@ -1,0 +1,59 @@
+{
+  "name": "@tomato/client-ui-superagent",
+  "description": "The team's tickets beside the conversation: one read-only row per ticket with where it stands",
+  "version": "0.2.2-rc.2",
+  "publishConfig": { "access": "public" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/experimental/client-ui-superagent"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": { "types": "./lib/types/index.d.ts", "default": "./lib/index.js" },
+    "./client": { "types": "./lib/types/client/index.d.ts", "default": "./lib/client.js" },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ],
+  "license": "MIT",
+  "tomato": {
+    "client": {
+      "inject": [
+        "@tomato/client-locale",
+        "@tomato/client-ui-layout",
+        "@tomato/client-ui-renderer",
+        "@tomato/client-ui-sidebar-right",
+        "@tomato/client-ui-session"
+      ],
+      "platform": "web"
+    }
+  },
+  "peerDependencies": {
+    "@tomato/client-locale": "workspace:*",
+    "@tomato/client-ui-sidebar-right": "workspace:*",
+    "@tomato/client-ui-slots": "workspace:*",
+    "@tomato/client-ui-session": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "@tomato/client-locale": "workspace:*",
+    "@tomato/client-test-runtime": "workspace:*",
+    "@tomato/client-ui-sidebar-right": "workspace:*",
+    "@tomato/client-ui-slots": "workspace:*",
+    "@tomato/client-ui-session": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@testing-library/react": "^16.3.3",
+    "react": "^18.2.0"
+  }
+}

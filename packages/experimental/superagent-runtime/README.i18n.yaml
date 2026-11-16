@@ -1,0 +1,31 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/superagent-runtime/README.md
+/:
+  en: b2629acd820fc7db
+  zh: 431b5c5b5b44b7b4
+/tomato-superagent-runtime:
+  en: c3196820253e7849
+  zh: 1e7f52c325846299
+/tomato-superagent-runtime/summary:
+  en: 1d2383b5a51d6594
+  zh: f36bdb00e23cf6ed
+/tomato-superagent-runtime/table-of-contents:
+  en: 3460b3e585e0c020
+  zh: 7ffafe068a00bc07
+/tomato-superagent-runtime/use-this-package:
+  en: 80bc8616be74e670
+  zh: 58886cf400ec48fc
+/tomato-superagent-runtime/understand-the-implementation:
+  en: 41aca72a5336ae86
+  zh: 9a71ee2fd3ba22c8
+/tomato-superagent-runtime/model-experience:
+  en: ab1bcda7ff28ed42
+  zh: 3a4f74c310e4f452
+/tomato-superagent-runtime/model-experience/kv-cache-effect:
+  en: 93de614c27e53177
+  zh: 606e06b0a1feb0a2
+/tomato-superagent-runtime/known-limitations-and-deferred-work:
+  en: dedd17d5f5a9de10
+  zh: 99885840e28dfd1f
