@@ -39,15 +39,16 @@ const FILE_SETTINGS = ['TOMATO_DESKTOP_WINDOWS_CER_FILE', 'TOMATO_DESKTOP_WINDOW
 const PRESET_OWNED_SETTING = /^TOMATO_DESKTOP_(?:AUTH_SERVICE_URL|TOMATO_WEB_URL|IM_SERVICE_URL)$/u
 
 /**
- * Read the login origins an unsigned build seals into its app bundle. The local
- * development file supplies the defaults, so the test services a development
- * launch uses are the ones an unsigned dmg carries to another machine.
+ * Read the login origins an unsigned build seals into its app bundle. They come
+ * from `config/unsigned-package.env`, not the development file: an installed app
+ * and the development shell run their Hosts differently and sign in against
+ * different services.
  * @param {NodeJS.ProcessEnv} environment - Launcher environment; exported values win over the file.
  * @param {string} appRoot - Desktop application directory.
  * @returns {NodeJS.ProcessEnv} The paired login variables, or none when neither source configures them.
  */
 function localLoginEnvironment(environment, appRoot) {
-  const file = join(appRoot, 'config', 'development.env')
+  const file = join(appRoot, 'config', 'unsigned-package.env')
   const settings = existsSync(file) ? parseEnv(readFileSync(file, 'utf8')) : {}
   const selected = {
     [AUTH_SERVICE_URL_ENV]: environment[AUTH_SERVICE_URL_ENV] ?? settings[AUTH_SERVICE_URL_ENV],
@@ -65,10 +66,10 @@ function localLoginEnvironment(environment, appRoot) {
 
 /**
  * Select local macOS test defaults without reading release presets or inheriting release settings.
- * Login origins come from the development file (or an explicit environment pair) so an unsigned
+ * Login origins come from the unsigned package file (or an explicit environment pair) so an unsigned
  * build can sign in against the test services; every other release setting is dropped.
  * @param {NodeJS.ProcessEnv} environment Parent environment, retained for build tools and networking.
- * @param {string} appRoot Desktop application directory holding the development file.
+ * @param {string} appRoot Desktop application directory holding the unsigned package file.
  * @returns {NodeJS.ProcessEnv} Unsigned build environment with the standard application identifier and no update policy.
  */
 export function localMacOSPackageEnvironment(environment = process.env, appRoot = APP_ROOT) {

@@ -12,23 +12,26 @@
   en: 470bdf1487a739f9
   zh: cd80330eaa8f730c
 /desktop-ci-publication/table-of-contents:
-  en: 34283bf8397f6836
-  zh: 1798bd921c3adf6c
+  en: 37d76f8473b967b7
+  zh: d211cc54af96672d
 /desktop-ci-publication/setup-sequence:
   en: e1213ca3f9c0ac24
   zh: 446d102d350855ab
 /desktop-ci-publication/runner-labels-and-queue-diagnosis:
-  en: fe198fe500a7e336
-  zh: ac3ff8846c8d7830
+  en: 9e34b85f4ad55489
+  zh: df6baa6dc93b6f2e
 /desktop-ci-publication/machine-setup:
-  en: 04e6d366431b5216
-  zh: d9b3379aaf979302
+  en: 5af818614079b297
+  zh: aebab2943e50f7b9
 /desktop-ci-publication/package-and-publish:
-  en: 0888aba6a03f20d2
-  zh: f3807d21bab28ccf
+  en: b4e1df4d4e385ef7
+  zh: 7c95894c48eb41c9
+/desktop-ci-publication/rollout-and-website-publication:
+  en: ee7a9ab8c66df979
+  zh: c355668bc9bdb635
 /desktop-ci-publication/recovery-and-records:
-  en: 2e1e6b16d0d6bd41
-  zh: 6ff4ad5a8f1f57b4
+  en: e6f4e59c97655315
+  zh: 290e73149d0caef4
 /desktop-ci-publication/restore-a-channel:
   en: caa14e97673dda8b
   zh: 25adb4985b82f500

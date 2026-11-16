@@ -87,6 +87,37 @@ function readRemote(value: unknown): DesktopSettings['remote'] {
   }
 }
 
+/** Fields the running shell may persist after a Settings action. */
+export interface DesktopSettingsPatch {
+  /** Hold the `prevent-app-suspension` assertion on the next launch. */
+  readonly keepAwake?: boolean
+}
+
+/**
+ * Persist the remote fields the Settings page can change, preserving every other member.
+ *
+ * A document that exists but cannot be parsed is left untouched and reported, so a
+ * malformed file is never replaced by a partial one.
+ * @param userData - Electron's userData directory, independent of TOMATO_HOME.
+ * @param patch - remote fields to replace; absent fields keep their stored value.
+ * @throws when an existing document is unreadable or the write fails.
+ */
+export function writeDesktopSettings(userData: string, patch: DesktopSettingsPatch): void {
+  const directory = join(userData, 'desktop')
+  const path = join(directory, 'settings.json')
+  let document: Record<string, unknown> = {}
+  try {
+    const value: unknown = JSON.parse(readFileSync(path, 'utf8'))
+    if (record(value)) document = value
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+  }
+  const remote = record(document.remote) ? { ...document.remote } : {}
+  if (patch.keepAwake !== undefined) remote.keepAwake = patch.keepAwake
+  mkdirSync(directory, { recursive: true, mode: 0o700 })
+  writeFileSync(path, `${JSON.stringify({ ...document, remote }, null, 2)}\n`, { mode: 0o600 })
+}
+
 /**
  * Read shell settings, creating the default document exclusively when missing.
  * @param userData - Electron's userData directory, independent of TOMATO_HOME.

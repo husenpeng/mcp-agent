@@ -167,10 +167,10 @@ describe('Desktop local packaging configuration', () => {
     })
   })
 
-  it('seals the development login origins into an unsigned build and lets an explicit pair win', async () => {
+  it('seals the unsigned package login origins into an unsigned build and lets an explicit pair win', async () => {
     await withDirectory(async (directory) => {
       await mkdir(join(directory, 'config'), { recursive: true })
-      await writeFile(join(directory, 'config', 'development.env'),
+      await writeFile(join(directory, 'config', 'unsigned-package.env'),
         'TOMATO_DESKTOP_AUTH_SERVICE_URL=http://auth.example:8003/\nTOMATO_DESKTOP_TOMATO_WEB_URL=https://web.example/\n')
       expect(localMacOSPackageEnvironment({}, directory)).toMatchObject({
         TOMATO_DESKTOP_AUTH_SERVICE_URL: 'http://auth.example:8003',
@@ -189,10 +189,10 @@ describe('Desktop local packaging configuration', () => {
   it('rejects an unpaired or malformed local login origin', async () => {
     await withDirectory(async (directory) => {
       await mkdir(join(directory, 'config'), { recursive: true })
-      await writeFile(join(directory, 'config', 'development.env'),
+      await writeFile(join(directory, 'config', 'unsigned-package.env'),
         'TOMATO_DESKTOP_AUTH_SERVICE_URL=http://auth.example:8003\n')
       expect(() => localMacOSPackageEnvironment({}, directory)).toThrow('must be set together')
-      await writeFile(join(directory, 'config', 'development.env'),
+      await writeFile(join(directory, 'config', 'unsigned-package.env'),
         'TOMATO_DESKTOP_AUTH_SERVICE_URL=http://auth.example:8003/path\nTOMATO_DESKTOP_TOMATO_WEB_URL=https://web.example\n')
       expect(() => localMacOSPackageEnvironment({}, directory)).toThrow('without credentials, path, query, or fragment')
     })

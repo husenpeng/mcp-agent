@@ -1,6 +1,6 @@
 /** Development login variables projected from the checked-in env file. */
 import { describe, expect, it } from 'vitest'
-import { developmentLoginEnvironment } from '../scripts/development-login.ts'
+import { developmentLoginEnvironment, withoutHostLogin } from '../scripts/development-login.ts'
 
 const FILE = {
   TOMATO_DESKTOP_AUTH_SERVICE_URL: 'http://localhost:8020',
@@ -17,8 +17,8 @@ describe('developmentLoginEnvironment', () => {
 
   it('lets explicit launch variables win over the file', () => {
     expect(developmentLoginEnvironment(FILE, {
-      AUTH_SERVICE_URL: 'http://127.0.0.1:9000',
-      TOMATO_WEB_URL: 'http://127.0.0.1:4000',
+      TOMATO_DESKTOP_AUTH_SERVICE_URL: 'http://127.0.0.1:9000',
+      TOMATO_DESKTOP_TOMATO_WEB_URL: 'http://127.0.0.1:4000',
     })).toEqual({
       AUTH_SERVICE_URL: 'http://127.0.0.1:9000',
       TOMATO_WEB_URL: 'http://127.0.0.1:4000',
@@ -27,11 +27,34 @@ describe('developmentLoginEnvironment', () => {
       .toMatchObject({ AUTH_SERVICE_URL: 'http://127.0.0.1:9000' })
   })
 
+  it('ignores the Host runtime variables a launching Tomato process exports', () => {
+    expect(developmentLoginEnvironment(FILE, {
+      AUTH_SERVICE_URL: 'http://14.103.39.34:8003',
+      TOMATO_WEB_URL: 'http://127.0.0.1:43110',
+      TOMATO_COMPANY_WEB_URL: 'https://test.tomatoai.vip',
+    })).toEqual({
+      AUTH_SERVICE_URL: 'http://localhost:8020',
+      TOMATO_WEB_URL: 'http://localhost:3000',
+    })
+  })
+
   it('omits absent values and rejects malformed origins', () => {
     expect(developmentLoginEnvironment({}, {})).toEqual({})
-    expect(() => developmentLoginEnvironment({}, { AUTH_SERVICE_URL: 'not a url' }))
-      .toThrow(/AUTH_SERVICE_URL/)
+    expect(() => developmentLoginEnvironment({}, { TOMATO_DESKTOP_AUTH_SERVICE_URL: 'not a url' }))
+      .toThrow(/TOMATO_DESKTOP_AUTH_SERVICE_URL/)
     expect(() => developmentLoginEnvironment({ TOMATO_DESKTOP_TOMATO_WEB_URL: 'http://localhost:3000/ui' }, {}))
-      .toThrow(/TOMATO_WEB_URL/)
+      .toThrow(/TOMATO_DESKTOP_TOMATO_WEB_URL/)
+  })
+})
+
+describe('withoutHostLogin', () => {
+  it('drops the inherited login variables and keeps the rest', () => {
+    expect(withoutHostLogin({
+      PATH: '/usr/bin',
+      AUTH_SERVICE_URL: 'http://14.103.39.34:8003',
+      TOMATO_WEB_URL: 'http://127.0.0.1:43110',
+      TOMATO_COMPANY_WEB_URL: 'https://test.tomatoai.vip',
+      TOMATO_SEARCH_GATEWAY_URL: 'http://127.0.0.1:43110',
+    })).toEqual({ PATH: '/usr/bin', TOMATO_SEARCH_GATEWAY_URL: 'http://127.0.0.1:43110' })
   })
 })

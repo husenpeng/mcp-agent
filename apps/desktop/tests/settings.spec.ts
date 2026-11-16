@@ -3,7 +3,7 @@ import * as fs from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, expect, it, onTestFinished, vi } from 'vitest'
-import { readDesktopSettings } from '../src/settings.ts'
+import { readDesktopSettings, writeDesktopSettings } from '../src/settings.ts'
 
 vi.mock('node:fs', async importOriginal => ({ ...await importOriginal<typeof import('node:fs')>() }))
 
@@ -139,5 +139,52 @@ it('continues with defaults even when warning output fails', () => {
   writeFileSync(path, '{')
   vi.mocked(console.warn).mockImplementation(() => { throw new Error('output unavailable') })
   expect(readDesktopSettings(userData).updates.allowTestAuthPopupWindow).toBe(false)
+  expect(readFileSync(path, 'utf8')).toBe('{')
+})
+
+it('persists a changed keep-awake choice without dropping other members', () => {
+  const { userData, path } = fixture()
+  writeFileSync(path, JSON.stringify({
+    updates: { allowTestAuthPopupWindow: true },
+    remote: { launchAtLogin: true, trustedHosts: ['hub.example'] },
+    custom: { preserved: true },
+  }))
+  writeDesktopSettings(userData, { keepAwake: true })
+  expect(readDesktopSettings(userData)).toEqual({
+    updates: { allowTestAuthPopupWindow: true },
+    remote: { listenPort: 43_110, keepAwake: true, launchAtLogin: true, trustedHosts: ['hub.example'], tunnel: false },
+  })
+  expect(JSON.parse(readFileSync(path, 'utf8'))).toEqual({
+    updates: { allowTestAuthPopupWindow: true },
+    remote: { launchAtLogin: true, trustedHosts: ['hub.example'], keepAwake: true },
+    custom: { preserved: true },
+  })
+})
+
+it('writes a remote object into a document that has none', () => {
+  const { userData, path } = fixture()
+  writeFileSync(path, '{"updates":{"allowTestAuthPopupWindow":false}}')
+  writeDesktopSettings(userData, { keepAwake: true })
+  expect(readFileSync(path, 'utf8')).toBe(`{
+  "updates": {
+    "allowTestAuthPopupWindow": false
+  },
+  "remote": {
+    "keepAwake": true
+  }
+}
+`)
+})
+
+it('creates the document when the first launch has not written it yet', () => {
+  const { userData, path } = fixture()
+  writeDesktopSettings(userData, { keepAwake: true })
+  expect(JSON.parse(readFileSync(path, 'utf8'))).toEqual({ remote: { keepAwake: true } })
+})
+
+it('refuses to replace a malformed settings document', () => {
+  const { userData, path } = fixture()
+  writeFileSync(path, '{')
+  expect(() => { writeDesktopSettings(userData, { keepAwake: true }) }).toThrow()
   expect(readFileSync(path, 'utf8')).toBe('{')
 })

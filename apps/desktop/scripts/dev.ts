@@ -14,7 +14,7 @@ import { prepareDevelopmentProject } from './development-project.ts'
 import { prepareDevelopmentApp } from './development-app.ts'
 import { pnpmInvocation } from '../../../scripts/pnpm-invocation.ts'
 import { preparePrimaryRuntime } from './prepare-primary-runtime.ts'
-import { developmentLoginEnvironment } from './development-login.ts'
+import { developmentLoginEnvironment, withoutHostLogin } from './development-login.ts'
 import { withoutReleaseSettings } from './development-environment.ts'
 
 const APP_ROOT = resolve(import.meta.dirname, '..')
@@ -90,7 +90,7 @@ async function launchElectron(): Promise<void> {
     process.env,
   )
   const environment: NodeJS.ProcessEnv = {
-    ...withoutReleaseSettings(process.env),
+    ...withoutHostLogin(withoutReleaseSettings(process.env)),
     ...login,
     TOMATO_DESKTOP_DEV_APP: '1',
     TOMATO_HOME: home,

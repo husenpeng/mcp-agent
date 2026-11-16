@@ -198,7 +198,7 @@ macOS 和 Linux 从图形界面启动的程序只继承会话管理器提供的�
 pnpm run dev:desktop
 ```
 
-开发 Harness 状态默认写入 `apps/desktop/.desktop-build/development/home`，一次性 npm 项目位于 `apps/desktop/.desktop-build/development/project`，Electron 浏览器数据则位于 `apps/desktop/.desktop-build/development/electron-user-data`。因此，会话、设置、凭据、包链接和浏览器数据都不会进入用户正常使用的 Harness home。`config/development.env` 提供本启动器的默认值；启动 shell 导出的值优先，空条目表示未设置。来源 preset 的打包与发布设置（应用标识、更新策略、签名、下载凭据）不会传入开发壳，只使用其登录服务地址。显式 `TOMATO_HOME` 只会替换开发 Harness home。Renderer DevTools 默认自动打开，Main、Renderer 和 tomato Host 调试端口依次为 9229、9222 和 9230。`TOMATO_DESKTOP_MAIN_INSPECT_PORT`、`TOMATO_DESKTOP_RENDERER_DEBUG_PORT` 与 `TOMATO_DESKTOP_HOST_INSPECT_PORT` 可以替换这些端口，`TOMATO_DESKTOP_OPEN_DEVTOOLS=0` 则保持 Renderer 调试窗口关闭。
+开发 Harness 状态默认写入 `apps/desktop/.desktop-build/development/home`，一次性 npm 项目位于 `apps/desktop/.desktop-build/development/project`，Electron 浏览器数据则位于 `apps/desktop/.desktop-build/development/electron-user-data`。因此，会话、设置、凭据、包链接和浏览器数据都不会进入用户正常使用的 Harness home。`config/development.env` 提供本启动器的默认值；启动 shell 导出的值优先，空条目表示未设置。来源 preset 的打包与发布设置（应用标识、更新策略、签名、下载凭据）不会传入开发壳。开发壳的登录服务地址只来自 `TOMATO_DESKTOP_AUTH_SERVICE_URL` 与 `TOMATO_DESKTOP_TOMATO_WEB_URL`，默认指向本地服务；继承的 `AUTH_SERVICE_URL`、`TOMATO_WEB_URL` 与 `TOMATO_COMPANY_WEB_URL` 会被丢弃，因为启动它的 Tomato 进程会为自己的 Host 导出这些变量。本地 unsigned macOS 构建则封入 `config/unsigned-package.env` 中的地址。显式 `TOMATO_HOME` 只会替换开发 Harness home。Renderer DevTools 默认自动打开，Main、Renderer 和 tomato Host 调试端口依次为 9229、9222 和 9230。`TOMATO_DESKTOP_MAIN_INSPECT_PORT`、`TOMATO_DESKTOP_RENDERER_DEBUG_PORT` 与 `TOMATO_DESKTOP_HOST_INSPECT_PORT` 可以替换这些端口，`TOMATO_DESKTOP_OPEN_DEVTOOLS=0` 则保持 Renderer 调试窗口关闭。
 
 显式构建完成后，`start:desktop` 会重新生成一次性项目，并跳过构建直接启动已有产物：
 
@@ -336,7 +336,7 @@ Electron 主进程在启动时读取一次 `app.getPath('userData')/desktop/sett
 
 任一字段非法都会否决整份文件：壳层按文件路径告警，然后整体使用默认值，因此不会运行"只生效一部分"的访问配置。这些字段不改变回环绑定；外部链路、证书和路径前缀都归转发主机所有。
 
-设置 → 手机 可以启停当前进程的隧道，并显示配对链接及其二维码供手机扫描。Watchdog（`scripts/watchdog.mjs`，同目录 `launchd/` 下有 agent 模板）在 Host 之外以自己的本地回环端口运行，因此即使 Host 挂死，已配对的设备仍能读取 Desktop 的状态并重启它。`GET /health` 不需要凭据；`POST /restart` 与 `POST /stop` 需要 `~/.tomato-watchdog/token` 中的 bearer 令牌，这两个端点通过 `launchctl` 操作应用自己的 job。打包后的应用不包含这个脚本，因此在安装 agent 之前，请先把脚本和同目录的 agent 模板复制到一个稳定位置。
+设置 → 手机 可以启停当前进程的隧道，并显示配对链接及其二维码供手机扫描。开启隧道时会询问是否让这台 Mac 在隧道运行期间保持唤醒，默认勾选；若答案与已保存的 `remote.keepAwake` 不同，会写入该字段并重启应用，重启后会再开启一次隧道，让手机连接恢复。`remote.tunnel` 仍是后续启动的长期开关。Watchdog（`scripts/watchdog.mjs`，同目录 `launchd/` 下有 agent 模板）在 Host 之外以自己的本地回环端口运行，因此即使 Host 挂死，已配对的设备仍能读取 Desktop 的状态并重启它。`GET /health` 不需要凭据；`POST /restart` 与 `POST /stop` 需要 `~/.tomato-watchdog/token` 中的 bearer 令牌，这两个端点通过 `launchctl` 操作应用自己的 job。打包后的应用不包含这个脚本，因此在安装 agent 之前，请先把脚本和同目录的 agent 模板复制到一个稳定位置。
 
 <a id="mandatory-update-policy"></a>
 

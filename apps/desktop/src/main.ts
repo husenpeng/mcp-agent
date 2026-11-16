@@ -63,7 +63,9 @@ import { DesktopMandatoryUpdatePolicy, resolveDesktopPolicyConfig, type DesktopP
 import { desktopClientMetadata, desktopClientVersion } from './client-metadata.ts'
 import { DesktopMandatoryUpdateWindow } from './mandatory-update-window.ts'
 import { DesktopPolicyTestAuth } from './policy-test-auth.ts'
-import { readDesktopSettings, type DesktopSettings } from './settings.ts'
+import { readDesktopSettings, writeDesktopSettings, type DesktopSettings } from './settings.ts'
+import { clearTunnelResume, consumeTunnelResume, requestTunnelResume } from './remote-resume.ts'
+import { tunnelStartChoice, tunnelStartPrompt } from './remote-prompt.ts'
 import { DesktopUpdateDialog, type UpdateDialogOptions } from './update-dialog.ts'
 import { readDesktopRuntime } from './runtime-tree.ts'
 import { DesktopBrowserGuests } from './browser-guests.ts'
@@ -85,6 +87,8 @@ let startupSplash: DesktopSplash | undefined
  * development restart command. The installer handoff has its own before-quit branch.
  */
 let skipQuitConfirmation = false
+/** Relaunch after the next approved quit; set while a changed keep-awake choice waits for it. */
+let relaunchAfterQuit = false
 let windowsLanguage: string | undefined
 /**
  * Whether the backend has reached ready: false until the first ready, back to
@@ -268,8 +272,26 @@ function createWindow(preload: string, show = false, primary = false): BrowserWi
     },
   })
   window.webContents.setWindowOpenHandler(({ url }) => {
+    // Temporary diagnostic for a stray browser handoff; the launch token never enters the log.
+    diagnostics.write('renderer', `window.open request: ${url.replace(/([?&]token=)[^&]*/u, '$1[redacted]')}`)
     if (['http:', 'https:'].includes(new URL(url).protocol)) void shell.openExternal(url)
     return { action: 'deny' }
+  })
+  // Temporary diagnostic: record the page caller of every `window.open`, since
+  // only the main process can open the authenticated Web origin externally.
+  window.webContents.on('did-finish-load', () => {
+    const script = [
+      '(() => {',
+      '  const original = window.open.bind(window)',
+      '  window.open = (url, target, features) => {',
+      '    try {',
+      "      console.error('tomato desktop diagnostic: window.open ' + String(url).replace(/token=[^&]*/g, 'token=[redacted]') + '\\n' + (new Error('open caller').stack ?? ''))",
+      '    } catch { /* diagnostics are best-effort */ }',
+      '    return original(url, target, features)',
+      '  }',
+      '})()',
+    ].join('\n')
+    void window.webContents.executeJavaScript(script).catch(() => undefined)
   })
   if (process.platform === 'darwin' || process.platform === 'win32') {
     // Fullscreen hides native window controls; overlays drop their caption clearance.
@@ -362,6 +384,8 @@ function applyRemotePosture(remote: DesktopSettings['remote']): void {
 
 async function main(): Promise<void> {
   const desktopSettings = readDesktopSettings(app.getPath('userData'))
+  // A settings-driven restart reopens the tunnel once without making it permanent.
+  const resumeTunnel = consumeTunnelResume(app.getPath('userData'))
   applyRemotePosture(desktopSettings.remote)
   void pruneCrashReports(app.getPath('logs'))
   const journalDirectory = process.env.TOMATO_DESKTOP_UPDATE_JOURNAL_DIR
@@ -594,7 +618,7 @@ async function main(): Promise<void> {
         hostCookie = await authenticateWebHost(ready.url)
         hostUrl = ready.url
         diagnostics.write('info', `host ready at ${ready.url}`)
-        if (desktopSettings.remote.tunnel) remoteTunnel.start()
+        if (desktopSettings.remote.tunnel || resumeTunnel) remoteTunnel.start()
         if (ready.injections === undefined) throw new Error('Desktop Host did not provide boot injections')
         injections = ready.injections
         welcomeBackend = await connectDesktopWelcome(ready.url, (input, init) => net.fetch(input, init), hostCookie)
@@ -878,11 +902,40 @@ async function main(): Promise<void> {
     assertProductSender(event)
     return browserGuests.release(event.sender, lease)
   })
+  /**
+   * Ask whether the tunnel should hold the keep-awake assertion before it starts.
+   * The checkbox defaults to checked: a sleeping machine drops the phone link.
+   * @returns the chosen state, or undefined when the user cancelled.
+   */
+  const askTunnelKeepAwake = async (): Promise<boolean | undefined> => {
+    const options = tunnelStartPrompt(currentDesktopLocale().messages)
+    const window = currentMainWindow()
+    const result = window === undefined
+      ? await dialog.showMessageBox(options)
+      : await dialog.showMessageBox(window, options)
+    return tunnelStartChoice(result)
+  }
+  /**
+   * Persist a changed keep-awake choice and relaunch so the next process holds it.
+   * The one-shot marker reopens the tunnel after the restart without making the
+   * public link permanent.
+   * @param keepAwake - the choice confirmed in the prompt.
+   */
+  const restartWithKeepAwake = (keepAwake: boolean): void => {
+    writeDesktopSettings(app.getPath('userData'), { keepAwake })
+    requestTunnelResume(app.getPath('userData'))
+    // The ordinary quit path keeps the task confirmation; approval relaunches in finishQuit.
+    relaunchAfterQuit = true
+    app.quit()
+  }
   registerRemoteIpc({
     host: { handle: (channel, listener) => { ipcMain.handle(channel, listener) } },
     tunnel: remoteTunnel,
     assertSender: (event) => { assertProductSender(event) },
     snapshot: () => withPairingQr(remoteSnapshot()),
+    keepAwake: desktopSettings.remote.keepAwake,
+    askKeepAwake: askTunnelKeepAwake,
+    restartWithKeepAwake,
   })
 
   session.defaultSession.webRequest.onBeforeSendHeaders({ urls: ['ws://127.0.0.1/*', 'wss://127.0.0.1/*'] }, (details, callback) => {
@@ -1490,6 +1543,10 @@ async function main(): Promise<void> {
   })
   if (process.platform !== 'win32') powerMonitor.on('shutdown', () => { sessionEnding = true })
   const finishQuit = (): void => {
+    if (relaunchAfterQuit) {
+      relaunchAfterQuit = false
+      app.relaunch()
+    }
     quitting = true
     shuttingDown = true
     startupSplash?.dispose()
@@ -1529,6 +1586,12 @@ async function main(): Promise<void> {
     void quitConfirmation.confirm().then((approved) => {
       if (quitting || shellInstallerOwnsQuit) return
       if (approved) { finishQuit(); return }
+      if (relaunchAfterQuit) {
+        // A cancelled restart keeps the saved choice for the next launch but must not
+        // reopen the tunnel there.
+        relaunchAfterQuit = false
+        clearTunnelResume(app.getPath('userData'))
+      }
       // A quit that started from closing the welcome window destroyed it; a cancelled quit needs it back.
       if (!enteredWorkspace && !isRecovering()) void showWelcome().catch((error: unknown) => { reportFatal(error, 'main') })
     }).catch((error: unknown) => { console.error(error); if (!quitting && !shellInstallerOwnsQuit) finishQuit() })

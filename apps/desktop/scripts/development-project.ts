@@ -146,6 +146,34 @@ export function prepareDevelopmentProject(options: DevelopmentProjectOptions): s
 
   removeOwnedPath(options.projectDir)
   createDevelopmentProjectMetadata(options.projectDir, options.release)
+  // The development tree carries the multi-agent team when the developer asked for it.
+  // These are application-layer settings: the engine itself names no provider.
+  const teamDirectory = process.env.TOMATO_SUPERAGENT_DIRECTORY
+  if (teamDirectory !== undefined && teamDirectory !== '') {
+    writeFileSync(join(options.projectDir, 'cordis.patch.yml'), [
+      '- insert:',
+      '    - id: superagent-runtime',
+      '      name: "@tomato/superagent-runtime"',
+      '      config:',
+      `        directory: ${JSON.stringify(teamDirectory)}`,
+      `        provider: ${JSON.stringify(process.env.TOMATO_SUPERAGENT_PROVIDER ?? 'claude-sonnet-5-5')}`,
+      `        model: ${JSON.stringify(process.env.TOMATO_SUPERAGENT_MODEL ?? 'DeepSeek-V4.1-Flash-1017')}`,
+      '        maxOutputTokens: 16000',
+      '        permissionPreset: workspace-write',
+      '        allowedSenders:',
+      `          - ${JSON.stringify(process.env.TOMATO_SUPERAGENT_SENDER ?? 'ou_b2d923aea664c674f8c16ecfbb0814e5')}`,
+      '        bot:',
+      `          baseUrl: ${JSON.stringify(process.env.TOMATO_SUPERAGENT_BOT_URL ?? 'http://127.0.0.1:8013')}`,
+      '          userId: tomato-supervisor',
+      '        pollSeconds: 15',
+      '        isolate: false',
+      '        replies: false',
+      '- insert:',
+      '    - id: client-ui-superagent',
+      '      name: "@tomato/client-ui-superagent"',
+      '',
+    ].join('\n'))
+  }
   const destinationModules = join(options.projectDir, 'node_modules')
   mkdirSync(destinationModules, { recursive: true })
   const names = [
