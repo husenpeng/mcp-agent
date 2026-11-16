@@ -2,14 +2,14 @@
 
 English | [中文](agent-team.zh.md)
 
-Types shared by the experimental implicit-root Team domain, model tools, and host adapters. The [Agent Teams Agent Note](../../.agents/notes/implemented/feature/2026-08-05-agent-teams.md) owns identity, mailbox, task, and shared-checkout decisions; this page records the durable and client-visible forms from [`packages/experimental/agent-team/src/types.ts`](../../packages/experimental/agent-team/src/types.ts).
+Types shared by the shared task board, model tools, and host adapters. The [task-board wait decision](../../.agents/notes/implemented/architecture/2026-10-19-team-task-board-inbox.md) owns coordination semantics; this page records durable and client-visible forms from [`packages/team/agent-team/src/types.ts`](../../packages/team/agent-team/src/types.ts).
 
-## Identity and roster
+## Identity and historical roster
 
-`TeamId` is the root `SessionId` under a distinct [brand](core.md#branded-ids). `TeamTaskId` is allocated as `task-<n>`. New sends return the target inbox `MessageId`; `TeamMessageId` is retained only for historical mailbox records. Teammate names are immutable labels.
+`TeamId` brands the root `SessionId`; `TeamTaskId` uses `task-<n>`. `TeamMessageId` and roster records remain for historical decoding. The subagent runtime resolves the tree and discovers eligible task owners at arbitrary depth; historical roster entries grant no authority.
 
 ```ts type-equiv
-/** Whole durable value written on every teammate lifecycle change. */
+/** Historical roster value written by earlier Team builds on every teammate lifecycle change. */
 interface TeamMemberSnapshot {
   readonly id: SessionId
   readonly name: string
@@ -21,11 +21,11 @@ interface TeamMemberSnapshot {
 }
 ```
 
-Every member starts in `provisioning` and reaches exactly one terminal roster phase, `active` or `failed`. Roster `running`/`inactive` status is derived separately and never rewrites this record.
+Historical records retain their recorded `provisioning`, `active`, or `failed` phase. Current turn activity belongs to ordinary subagent discovery and Session status, independently of task completion.
 
 ## Messages and historical mailbox
 
-New sends return inbox acceptance or reject. The target stores the existing `agent-message` source with the real sender Session id and a sender-name content prefix. Team has no new-message outbox or resend deduplication. The [package contract](../../packages/experimental/agent-team/README.md#understand-the-implementation) defines persistence. The following mailbox types remain readable so historical Lead logs still replay; Team does not deliver their pending records.
+Members exchange ordinary [subagent messages](subagent.md), retaining the real sender Session id. Task changes do not end inbox waits, add inbox messages, or start idle agents. Send an explicit message when an agent needs to act on a task update. The following historical mailbox types remain readable; Team never delivers their pending records.
 
 ```ts type-equiv
 /** One peer message recorded by the historical Team mailbox. */
@@ -37,8 +37,6 @@ interface TeamMessageSnapshot {
   readonly content: ContentBlock[]
 }
 ```
-
-Every message attempts Steer delivery. A running target receives it at the nearest step boundary; an inactive target starts a turn if loaded or cold-resumes otherwise. Scheduling is not stored in the durable record because callers cannot select another mode.
 
 Historical `team-message` sources retain the old message id and sender attribution; the client uses them for the message title and icon.
 
@@ -66,30 +64,22 @@ interface TeamTaskSnapshot {
   readonly description: string
   readonly status: TeamTaskStatus
   readonly ownerId?: SessionId
+  /** Immutable agent path captured at assignment; absent on unnamed historical owners. */
+  readonly ownerName?: string
   readonly blockedBy: TeamTaskId[]
   readonly writeScopes: string[]
 }
 ```
 
-`pending` is unstarted or released, `in_progress` carries an owner, `completed` satisfies blockers, and `deleted` is a retained tombstone. Views add owner name, readiness, and write-scope overlap warnings without changing the durable snapshot.
+`pending` is unstarted or released, `in_progress` carries an owner, `completed` satisfies blockers, and `deleted` is a retained tombstone. Views expose `ownerId`, readiness, and advisory write-scope overlap without changing the durable snapshot.
 
 <a id="web-projection"></a>
 
 ## Web projection
 
-The Lead Session publishes `SessionProjectionMap.agentTeam` with durable roster rows and non-deleted task views. `failure` reports a rejected persisted record beside the last valid state. Member activity comes from Session status; model labels come from each member's `modelSelection` projection.
+`agentTeam.enabled` exposes the root Session’s saved selection. New Sessions default to false; `team/mode` records explicit selections. Historical tasks imply enabled until an explicit selection. Only the root can call `setEnabled`; descendants share that mode. The Web menu calls the same method through `remote.agentTeams.setEnabled`, with the root Session id resolved to its live Agent by the Gateway. Mode writes take effect before awaiting persistence. Tools resolve availability at step preparation; prompt providers read the selection when evaluated. Task mutations check the current mode when their queued operation starts; admitted mutations may finish. Mode changes do not end inbox waits. A failed flush leaves the appended selection active; retrying the same selection flushes it without a duplicate event.
 
-```ts type-equiv
-/** One durable roster row published through the `agentTeam` Session projection. */
-interface TeamMemberProjection {
-  readonly id: SessionId
-  readonly name: string
-  readonly role: 'lead' | 'teammate'
-  /** Durable lifecycle; the Lead row is always `active`. Turn activity comes from Session status. */
-  readonly phase: TeamMemberPhase
-  readonly error?: string
-}
-```
+The root Session publishes non-deleted task views through `SessionProjectionMap.agentTeam`. `failure` reports a rejected persisted task or mode record beside the last valid state. Historical roster and mailbox records are not projected. Views identify every owner by its Session id; the task panel and task tools display the owner's agent name, or the Session id when the owner has no name.
 
 ```ts type-equiv
 /** Runtime-enriched task view returned to tools and hosts. */
@@ -101,6 +91,8 @@ interface TeamTaskView {
   readonly status: TeamTaskStatus
   readonly blockedBy: TeamTaskId[]
   readonly writeScopes: string[]
+  readonly ownerId?: SessionId
+  /** Immutable agent path captured at assignment; absent on unnamed historical owners. */
   readonly ownerName?: string
   readonly ready: boolean
   readonly writeScopeWarnings: string[]
@@ -111,10 +103,10 @@ interface TeamTaskView {
 /**
  * Durable Team state published to browser clients through the Lead Session's
  * `agentTeam` projection. `failure` names the first rejected persisted Team
- * record; members and tasks then stay at the last valid state.
+ * record; tasks then stay at the last valid state.
  */
 interface TeamProjection {
-  readonly members: TeamMemberProjection[]
+  readonly enabled: boolean
   readonly tasks: TeamTaskView[]
   readonly failure?: string
 }
@@ -122,7 +114,7 @@ interface TeamProjection {
 
 ## Replay
 
-The `agentTeam` Session projection replays one root Session into the roster, task board, and historical queued-minus-delivered mailbox. It selects records by `TeamId`, so events inherited by an ordinary fork retain the ancestor id and never enter the new root's state. Session event `seq` and `time` remain the ordering and timing record; Team snapshots do not duplicate them. Roster and task reads reach callers as views; pending mail is not exposed to callers. The package [README](../../packages/experimental/agent-team/README.md) owns operation, authorization, recovery, and limit behavior.
+The `agentTeam` projection replays task records selected by `TeamId` and the Session’s own mode selections. Subagent discovery owns current tree membership and ignores inherited catalog authority. Session event `seq` and `time` own ordering and timing. Committed durable generations are preserved. The [package README](../../packages/team/agent-team/README.md) defines task operations and limits.
 
 <!-- BEGIN GENERATED cordis-surface (gen-cordis-catalog.ts) — do not edit between markers -->
 

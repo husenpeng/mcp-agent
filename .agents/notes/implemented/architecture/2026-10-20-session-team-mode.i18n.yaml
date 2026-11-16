@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for 2026-10-20-session-team-mode.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-10-20-session-team-mode.md
+/agent-note-team-availability-is-selected-per-session:
+  en: 2fbc1fc3de0964f1
+  zh: ce973858d62c68c4
+/agent-note-team-availability-is-selected-per-session/problem:
+  en: db7a81ab452fdd0f
+  zh: a14fdcdb8ff4cd47
+/agent-note-team-availability-is-selected-per-session/decision:
+  en: 86bdd96a98ff32ce
+  zh: 7822b074ae362af9
+/agent-note-team-availability-is-selected-per-session/alternatives-considered:
+  en: d50ed45e8f902281
+  zh: c01d9be4b6e5df06
+/agent-note-team-availability-is-selected-per-session/consequences:
+  en: 411d97970056d3b9
+  zh: 435a18cd9c7f952c

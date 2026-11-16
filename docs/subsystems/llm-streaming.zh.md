@@ -334,6 +334,8 @@ interface AppIdentity {
   version: string
   /** Repository home URL of the app, used as the `User-Agent` comment. */
   url: string
+  /** RFC 9110 product token appended after the comment, such as `tomato-profile/web`. */
+  suffix?: string | undefined
 }
 ```
 
@@ -475,6 +477,13 @@ interface LlmProviderInfo {
   id: string
   /** Human-readable provider name for selectors and diagnostics. */
   name: string
+  /**
+   * Model ids the route currently serves, in the adapter's listing order, or
+   * absent when the adapter cannot name them without a request. Configuration
+   * surfaces mirror the deployment allowlist from this list, so a route the
+   * person just configured is never born blocked.
+   */
+  models?: readonly string[]
 }
 ```
 
@@ -554,6 +563,8 @@ interface LlmModelInfo {
    * disabled row while {@link LlmRuntime.stream} refuses to call it.
    */
   blockedReason?: string
+  /** Provider-authored label shown beside the name; display data only. */
+  badge?: LlmModelBadge
 }
 ```
 
@@ -634,7 +645,7 @@ type RequestMessage = Message | RequestUserInput
 
 ```ts type-equiv
 /** A single model request, fully assembled. */
-interface GenerateOptions {
+interface GenerateOptions<Purpose extends string = LlmRequestPurpose> {
   /** Registered provider route selecting the adapter instance. */
   provider: string
   model: string
@@ -675,7 +686,7 @@ interface GenerateOptions {
    * map the purpose to model-hidden transport metadata. Ordinary conversation
    * requests leave it unset.
    */
-  purpose?: 'compaction' | 'session-title'
+  purpose?: Purpose
 }
 ```
 

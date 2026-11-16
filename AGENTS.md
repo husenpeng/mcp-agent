@@ -12,6 +12,10 @@ Record each externally perceptible breaking change immediately in an [upgrade gu
 
 **Application launch.** Only `tomato` profiles launch supported Node apps; package bins, demos, and public SDK argv escapes are forbidden ([rule](docs/architecture.md#application-launch)).
 
+## Upstream DeepSeek Harness syncs
+
+Syncs never change Tomato visuals: keep Tomato's client CSS, theme tokens, and visual components like `DotField`; only add rules for new upstream class names.
+
 ## Repository layout
 
 ```
@@ -122,7 +126,7 @@ Before pushing, follow [dsh-pre-push-checks](.agents/skills/dsh-pre-push-checks/
 
 ### Finish every task with its review pass
 
-Before reporting a task complete, review its own diff against the standards here and against the request itself: fix every `P0`/`P1` finding, re-run the checks the touched surface needs, and report what was left. The procedure and checklist live in [RULE.md](RULE.md#every-finished-task-runs-the-review-pass) and [tomato-post-task-review](.agents/skills/tomato-post-task-review/SKILL.md).
+Before reporting a task complete, review its own diff against the standards here and against the request itself: fix every `P0`/`P1` finding, re-run the checks the touched surface needs, and report what was left. The procedure and checklist live in [RULE.md](RULE.md#every-finished-task-runs-the-review-pass) and [tomato-post-task-review](.agents/skills/dsh-post-task-review/SKILL.md).
 
 ## Secrets / .env
 

@@ -18,7 +18,9 @@
   - 注入 Host 子进程环境，让本地网关在启动时完成登录配置；
   - 账户菜单打开条款/隐私页时的公司 Web 基地址。
 - 本地 unsigned 构建可以不提供这两个值，行为与之前一致：工作区可用，登录显示不可用。
-- 开发态（`dev:desktop`）读取提交的 `apps/desktop/config/development.env`，把 `DSH_DESKTOP_*` 两个键映射成 `AUTH_SERVICE_URL` / `TOMATO_WEB_URL`；启动环境中的显式变量仍逐字段覆盖。开发地址是 localhost，生产地址不进入仓库。
+- 开发态（`dev:desktop`）读取提交的 `apps/desktop/config/development.env`，把 `TOMATO_DESKTOP_AUTH_SERVICE_URL` / `TOMATO_DESKTOP_TOMATO_WEB_URL` 映射成 `AUTH_SERVICE_URL` / `TOMATO_WEB_URL`；导出同名 `TOMATO_DESKTOP_*` 键逐字段覆盖文件值。开发地址指向本地服务（`http://localhost:8020` / `http://localhost:3000`），生产地址不进入仓库。
+- 开发壳与安装包的 Host 启动方式不同、回调基址因此不同，两份文件分开：unsigned macOS 构建封入 `apps/desktop/config/unsigned-package.env`，开发壳只读 `development.env`。
+- 启动器**不继承**宿主进程导出的 `AUTH_SERVICE_URL` / `TOMATO_WEB_URL` / `TOMATO_COMPANY_WEB_URL`：它们由启动 Desktop 的那个 Tomato 进程为自己的 Host 导出（Web profile 的 `TOMATO_WEB_URL` 是本 GUI 自身地址），继承下来会把登录跳转打到错误的 origin。
 
 ## 备选方案
 

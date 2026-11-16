@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for 2026-10-31-native-office-tool.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-10-31-native-office-tool.md
+/agent-note-on-demand-office-tools-for-rendering-conversion-and-recalculation:
+  en: 8b5683b7176cd2d8
+  zh: 0aa9389e580b5884
+/agent-note-on-demand-office-tools-for-rendering-conversion-and-recalculation/problem:
+  en: 6d5438f8a10a8b08
+  zh: 53f576daf3aaf3de
+/agent-note-on-demand-office-tools-for-rendering-conversion-and-recalculation/decision:
+  en: 1cf0e2739277dccf
+  zh: 651da344b8902ca9
+/agent-note-on-demand-office-tools-for-rendering-conversion-and-recalculation/alternatives-considered:
+  en: f36e8534958e5a46
+  zh: 96a3876a26a9d9ac
+/agent-note-on-demand-office-tools-for-rendering-conversion-and-recalculation/consequences:
+  en: 8ea5f5c493dfae3d
+  zh: 29d7160bd3f98512

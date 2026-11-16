@@ -273,6 +273,8 @@ Chat Node 还通过 `groupTree` 选择所在行的位置。位置由外到内排
 
 Assembler 会记录这项依赖。如果后续 older prepend 带来了更近的前序 Context、补齐了原先未知的窗口缺口，或者前序 State 被修订，引擎会从 `start` 重新运行依赖方 Context，并按 `seq` 升序回放其 update。被查询的 Definition 仍负责把有用信息写入自身 State；Reader 不提供业务专用查询方法，也不授予修改其他 Context 的权限。
 
+<a id="window-update-paths"></a>
+
 ## Window 更新路径
 
 历史可能从尾部开始一页一页向前请求。Session journal 先校验互不重叠的逻辑 seq range，Assembler 再按每个已接受 input 的首 `seq` 排序并进入 State 回放。

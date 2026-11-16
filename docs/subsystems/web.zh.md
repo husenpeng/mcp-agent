@@ -26,9 +26,9 @@ interface WebSearchRequest {
   /**
    * Upper bound on returned sources; the seam truncates to it. Omitted = no
    * bound. `@tomato/tool-web` always sets it. A provider whose API supports a
-   * result-count control (Exa's `numResults`) should apply it at the request
-   * layer as a cost/latency optimization; the seam enforces the bound
-   * regardless.
+   * result-count control (the DeepSeek Search API's `count`) should apply it
+   * at the request layer as a cost/latency optimization; the seam enforces the
+   * bound regardless.
    */
   readonly maxResults?: number
 }
@@ -37,8 +37,8 @@ interface WebSearchRequest {
 ```ts type-equiv
 /**
  * Normalized search outcome. `content` is optional provider-generated answer
- * text or summary (Exa and DeepSeek return none; Perplexity returns a
- * generated answer).
+ * text or summary (DeepSeek returns none; a provider whose API generates an
+ * answer returns it here).
  * `sources[]` is the portable citation shape. `truncated` is set by the seam
  * when it cut `sources[]` down to `maxResults`.
  */
@@ -56,8 +56,8 @@ interface WebSearchResult {
 /**
  * One citeable source. A source always has a URL; `title`, `snippet`, `summary`,
  * and `publishedAt` are optional because not every provider returns them — forcing
- * adapters to invent them would make the seam lie (Perplexity citations may be
- * URL-only). `@tomato/tool-web` renders `title ?? hostname(url)` for display.
+ * adapters to invent them would make the seam lie (some providers return
+ * URL-only citations). `@tomato/tool-web` renders `title ?? hostname(url)` for display.
  */
 interface WebSearchSource {
   readonly url: string

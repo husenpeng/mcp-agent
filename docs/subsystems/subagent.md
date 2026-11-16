@@ -28,15 +28,19 @@ interface SubagentCapabilities {
 
 ```ts type-equiv
 /** One managed child execution and its result delivery policy. */
-interface SubagentActivationSpec {
+interface SubagentActivationSpec extends Omit<SubagentStartRequest, 'label' | 'signal'> {
   /** Registered backend to use. */
   readonly provider: string
   /** Short task label retained in cataloged child membership. */
   readonly label: string
+  /**
+   * Requested name, unique among the parent's children: 1–32 lower-case
+   * letters, digits, or hyphens starting with a letter, other than `lead`.
+   * Omission selects the first free `agent-N`.
+   */
+  readonly name?: string
   /** Optional reserved identity for a local child; external backends allocate their own ids. */
   readonly childId?: SessionId
-  /** Task, parent, and backend-supported execution options. */
-  readonly request: Omit<SubagentStartRequest, 'label' | 'signal'>
   /** Cancellation before publication; callers own later cancellation through dispose. */
   readonly signal: AbortSignal
   /** Parent delivery notifies the model; caller delivery only returns the result. Local children always enter the parent catalog. */
@@ -49,6 +53,11 @@ interface SubagentActivationSpec {
 interface SubagentActivation {
   /** Stable identity of the child. */
   readonly childId: SessionId
+  /**
+   * Model-facing name: slash-separated names from the root when every creator
+   * below the root is named, otherwise the child Session id.
+   */
+  readonly name: string
   /** Accepted inbox message, when the backend has a local inbox. */
   readonly messageId?: MessageId
   /**
@@ -56,16 +65,15 @@ interface SubagentActivation {
    * Teardown failures are reported by dispose() without replacing a captured result.
    */
   readonly result: Promise<SubagentResult>
-  /** Stop and release this activation and its owned descendants; rejects on teardown failure. */
+  /** Stop and release only this activation; rejects on teardown failure. */
   dispose(): Promise<void>
 }
 ```
 
 ```ts type-equiv
 /**
- * Task and optional capabilities supplied to a backend. startActivation carries
- * these fields in request while owning its label, cancellation, and delivery
- * policy separately.
+ * Task and optional capabilities supplied to a backend. The activation spec
+ * shares these task options and defines its own label and cancellation policy.
  */
 interface SubagentStartRequest {
   /** Initial child directory; relative paths resolve against the parent's current directory. Omitted inherits that directory at start. */
@@ -200,13 +208,15 @@ interface SubagentSettledMessageSource {
   readonly form: 'notice'
   /** One-line account of how the child ended. */
   readonly summary: string
+  /** Exact execution stop reason; absent on historical notices. Writers always include it. */
+  readonly stopReason?: SubagentResult['stopReason']
   /** Session id of the child that settled. */
   readonly senderSessionId: SessionId
 }
 ```
 
 ```ts type-equiv
-/** Options for one model-authored message between adjacent Agents. */
+/** Options for one model-authored message within a subagent tree. */
 interface SubagentSendMessageOptions {
   /** Caller cancellation, owning the operation only until inbox acceptance. */
   readonly signal: AbortSignal
@@ -215,12 +225,12 @@ interface SubagentSendMessageOptions {
 
 ```ts type-equiv
 /**
- * Authority under which one interrupt request is admitted. `user` carries the
- * durable direct-parent address a human client presented; `ancestor` carries
- * the exact live Agent object whose recorded lineage must contain the caller.
+ * Authority under which one interrupt request is admitted. `user` is a trusted
+ * host operation; Remote callers need permission on the target Session before
+ * invoking it. `ancestor` carries an exact live Agent in the target's creation ancestry.
  */
 type SubagentInterruptAuthority =
-  | { readonly kind: 'user'; readonly parentSessionId: SessionId }
+  | { readonly kind: 'user' }
   | { readonly kind: 'ancestor'; readonly agent: Agent }
 ```
 
@@ -387,6 +397,8 @@ type SubagentDescendantListEntry = SubagentListEntry & {
   readonly parentId: SessionId
   /** Edge distance from the requested root; direct children are `1`. */
   readonly depth: number
+  /** Slash-separated names from the requested root; absent when this child or an ancestor below the root has no name. */
+  readonly path?: string
 }
 ```
 

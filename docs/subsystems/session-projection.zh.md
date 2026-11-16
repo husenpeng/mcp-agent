@@ -14,10 +14,19 @@ interface ProjectionHandle<S> {
   /**
    * Read the current state, including after unregistering, by folding new
    * Session events with this handle's original unit. Do not mutate the live value.
+   * After the final release, a read also advances the released cell that
+   * `checkpoint(session)` serves, until the key registers again.
    * @param session - Session whose committed events are folded.
    * @returns the projection state at the Session's current cursor.
    */
   stateOf(session: Session): S
+  /**
+   * Create a reader for one exact Session without reading state or preparing it.
+   * The reader retains this unit after unregistration and owns no disposal.
+   * @param session - Session whose committed events the bound reader folds.
+   * @returns a synchronous callback with the same state and failures as `stateOf(session)`.
+   */
+  readerFor(session: Session): () => S
   /**
    * Unregister from global drives and snapshots without invalidating this reader.
    * @returns a promise that resolves when this registration is released.
@@ -85,10 +94,10 @@ interface ProjectionDefinition<K extends string, S> {
     summary?: boolean
   } : never
   /**
-   * Persisted-cache invalidation version: bump whenever the serialized state fields or the
-   * fold semantics change, so persisted `(sessionId, key, ver, seq, val)`
-   * rows from an older unit are discarded instead of being forward-applied
-   * into garbage. Non-negative integer.
+   * Non-negative persisted-cache invalidation version. Bump when state fields or fold
+   * semantics change, except for optional additions whose absence preserves historical
+   * meaning and whose old-checkpoint suffix replay matches full replay. Test that
+   * equivalence before retaining a version; schema acceptance alone is insufficient.
    */
   stateVersion: number
 }

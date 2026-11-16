@@ -96,6 +96,23 @@ interface DomainSpec {
 
 `defineDomain(spec)` pins the spec's literal types and fails loud at the owner's module load, before any medium is touched: a domain or table name outside `UNIT_NAME_RE`, a version that is not a non-negative integer, or a global schema that accepts `null` all throw (`null` is the medium's "never written" sentinel, so a stored nullable global could not round-trip). `domainTable<K, V>(schema)` declares one table with a phantom compile-time key type (typically a [branded id](core.md#branded-ids)); `descriptorOf(spec)` projects the backend-facing unit descriptor.
 
+<a id="domain-versioning"></a>
+## Domain versioning
+
+`version` names the current read/write format. `compatibleVersions` lists older versions whose records and global value the owner can decode with its current schemas; only nonnegative integers below `version` are allowed. Without that declaration, reads stay exact-version. Acceptance does not weaken record validation or permit a newer unknown version. Each row's saved fields must determine its meaning unambiguously; a unit stamp cannot distinguish different meanings of identical fields in mixed rows.
+
+Ordinary compatible opens and reads do not restamp or normalize saved values. Whole-unit JSON publishes the current stamp and changed data in one atomic file replacement; SQLite commits its first updated unit stamp and mutation in one transaction; batch deletes always use one transaction. Deleting missing records or an empty batch does not advance the stamp. The stamp identifies an accepted format, not completion of value normalization; readers must accept mixed generations. A backend with a unit-wide stamp rejects an unsupported unit version.
+
+Serialization failure before publication or successful SQLite rollback preserves the previous data and stamp. An I/O failure after JSON replacement, or a failure of SQLite rollback itself, can leave the saved outcome unknown despite rejection. Stop using and close the backend and its domains, then reopen to inspect saved state before deciding whether to retry. The backend READMEs define these failure cases.
+
+JSON's `per-record` layout checks and stamps each document independently; an unsupported document reads as absent. Its existing whole-unit bootstrap is an exception to read-only loading: it copies accepted historical values into current-stamped documents without converting them. An existing declared table directory, even when empty, or a declared global document suppresses bootstrap. SQLite retains unit-wide version checks regardless of the layout request. See the [JSON backend](../../packages/storage/storage-json/README.md) and [SQLite backend](../../packages/storage/storage-sqlite/README.md) for layout and recovery behavior.
+
+For a compatible successor, bump `version`, keep all still-readable stamps in `compatibleVersions`, and extend the same schema's decoding/defaults. Consumers normalize values when rewriting selected records; Storage does not assign application record versions. Verify historical and skipped upgrades, mixed values, reads without writes, failure rollback, restart, other-unit isolation, and unknown-version refusal. Table removal and layout changes require their own retention and upgrade policy; a compatible stamp alone does not define either.
+
+A v2 unit may contain untouched v1 values. A v3 reader accepting stamp 2 must still decode those values; accepting stamp 1 is also necessary for users who skipped v2 entirely. Removing old decoding requires rewriting and validating every affected record, including those already under a current unit stamp. An incompatible change needs an explicit, recoverable upgrade before opening with the new schema; the storage domain has no value-migration runner.
+
+Keep a consistent backup before writing a new format if return to an older reader is required: that reader can refuse the new stamp after the first mutation. Lowering a saved stamp by hand does not reverse value conversion. Domain compatibility does not migrate SQLite's physical schema or JSON envelope formats, and changing a backend route does not transfer stored data. Session-format migrations and SQLite physical-layout versioning have separate owners and do not migrate domain values.
+
 ## The open domain
 
 ```ts type-equiv
@@ -177,6 +194,38 @@ type DomainChanged = DomainChangedPut | DomainChangedDeleted
 ## Cordis API
 
 Generated from source by `scripts/gen-cordis-catalog.ts` (verified fresh by `pnpm run verify-cordis-catalog` in doc-sync; regenerate with `pnpm run gen-cordis-catalog`) — the language sides differ only in locale-specific paired document paths. Signature blocks use a `ts cordis-catalog` fence and keep the original source JSDoc; dispatch modes are defined in the [primer](../cordis-primer.md#dispatch-modes), and the framework-inherited `ctx` API lives in [cordis-api/inherited.md](../cordis-api/inherited.md).
+
+<a id="ctxcreatorfeedback--creatorfeedbackstore"></a>
+
+### `ctx.creatorFeedback` — `CreatorFeedbackStore`
+
+Durable feedback over one storage table.
+
+```ts cordis-catalog
+/**
+ * List the records that apply to one client.
+ * @param client - client to include; undefined includes host-wide records only.
+ * @returns the matching records, newest first.
+ */
+list(client: string | undefined): FeedbackRecord[]
+
+/**
+ * Read the records that apply to one client, keyed by creator.
+ * @param client - the brief's client, when it names one.
+ * @returns the most specific record per creator.
+ */
+byCreator(client: string | undefined): Map<string, FeedbackRecord>
+
+/**
+ * Insert or replace the decision for one creator.
+ * @param input - the reviewer's decision.
+ * @param now - epoch milliseconds; tests replace it.
+ * @returns the stored record.
+ */
+async record(input: FeedbackInput, now: number = Date.now()): Promise<FeedbackRecord>
+```
+
+Source: [`packages/marketing/tool-creator-search/src/feedback.ts`](../../packages/marketing/tool-creator-search/src/feedback.ts)
 
 <a id="ctxembeddings--embeddings-abstract-seam"></a>
 
@@ -317,7 +366,10 @@ async forget(view: MemoryView, id: MemoryIdType): Promise<boolean>
 async setPinned(view: MemoryView, id: MemoryIdType, pinned: boolean): Promise<MemoryRecord | undefined>
 
 /**
- * Activate a candidate.
+ * Activate a candidate. A candidate that names a `proposalFor` record
+ * replaces that record's statement instead of adding one: the proposal's
+ * value becomes the new version of the target's identity, and the proposal
+ * is closed so the change stays traceable to the person who accepted it.
  * @param view - view that must see the record.
  * @param id - candidate to confirm.
  * @returns the active record, or `undefined` when the view sees no candidate with that id.

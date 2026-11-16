@@ -1,0 +1,28 @@
+# Bilingual-pair consistency record for forge.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/subsystems/forge.md
+/forges:
+  en: 72dd60462771243a
+  zh: b07cddeea22b9183
+/forges/providers-and-change-requests:
+  en: e5d807b29f553751
+  zh: e0b25d9e964f988e
+/forges/status-polling:
+  en: 5b1ea160887c3c79
+  zh: e9b884c59174fa98
+/forges/change-request-actions:
+  en: 4e35029c77caa491
+  zh: c6bf54a409d1ee52
+/forges/review-threads:
+  en: 4854156fd7fc7308
+  zh: e7893f2deb144426
+/forges/overview-and-viewed-marks:
+  en: c98df7331e1f66d3
+  zh: 506b5b520dcd3c51
+/forges/session-bindings:
+  en: 16f34b80a18ab716
+  zh: 5190020e8612c6cd
+/forges/panel:
+  en: caebe98fc4aa8c97
+  zh: 7d2efcd836a46ffb

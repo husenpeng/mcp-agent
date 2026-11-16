@@ -129,7 +129,7 @@ Abstract crew domain service. Subclass it, implement every operation, and load t
 
 Implementations must honor these semantics:
 
-- publish validates the complete specification and returns an immutable revision; a rejected publication allocates no identity.
+- publish validates the complete specification, requires every member to name a published Rbot revision, and returns an immutable revision; a rejected publication allocates no identity.
 - Revisions are append-only and never change after publication.
 - start accepts a run only for a published revision and returns before the run executes; observers follow run and the ledger.
 - cancel is cooperative; a terminal run keeps its state.

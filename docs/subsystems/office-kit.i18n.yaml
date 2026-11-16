@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for office-kit.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/subsystems/office-kit.md
+/office-kit:
+  en: 8ab3eea4dbb72021
+  zh: 352ba3d5344b0a08
+/office-kit/ownership:
+  en: 77dadaa7ed5084eb
+  zh: 43e5de7dba01ebd9
+/office-kit/requests-and-results:
+  en: fe61a088b2556ab8
+  zh: 428bab78cb84cfcb
+/office-kit/preview-reads:
+  en: 5a7bdb07749ced28
+  zh: fad8d5e1c0025a9f
+/office-kit/engine-selection-and-limits:
+  en: e791c4ece08042e1
+  zh: 7543efea6d88519c

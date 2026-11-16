@@ -1684,6 +1684,8 @@ export interface Config {
 export interface Config {
   /** Unique registration id; consumers select this exact id. */
   providerId: string
+  /** Local model family; Whisper ships with the deployment instead of downloading. */
+  family: 'sensevoice' | 'whisper'
   /** Absolute directory for verified ONNX models. */
   dataRoot: string
   /** Existing directory containing the selected ONNX model and tokens.txt; omission downloads verified files. */
@@ -4825,8 +4827,8 @@ export interface Config {
 
 ## `@tomato/tool-creator-search`
 
-- `inject`: `tools` · `storageDomain` · `systemPrompt`
-- `source`: [`packages/marketing/tool-creator-search/src/index.ts:177`](../packages/marketing/tool-creator-search/src/index.ts)
+- `inject`: `tools` · `creatorFeedback` · `systemPrompt`
+- `source`: [`packages/marketing/tool-creator-search/src/index.ts:179`](../packages/marketing/tool-creator-search/src/index.ts)
 
 ```ts config-catalog
 /** Plugin config (all optional — `apply` fills environment and constant defaults). */
@@ -5955,7 +5957,7 @@ export interface Config {
 | `@tomato/experimental-robot-triggers` | `robots` | [`packages/experimental/robot-triggers/src/index.ts`](../packages/experimental/robot-triggers/src/index.ts) |
 | `@tomato/experimental-session-inspector` | — | [`packages/experimental/session-inspector/src/index.ts`](../packages/experimental/session-inspector/src/index.ts) |
 | `@tomato/experimental-tool-robot` | `agents` · `robots` · `tools` | [`packages/experimental/tool-robot/src/index.ts`](../packages/experimental/tool-robot/src/index.ts) |
-| `@tomato/experimental-tool-robot-crew` | `agents` · `crews` · `tools` | [`packages/experimental/experimental-tool-robot-crew/src/index.ts`](../packages/experimental/experimental-tool-robot-crew/src/index.ts) |
+| `@tomato/experimental-tool-robot-crew` | `agents` · `crews` · `robots` · `tools` | [`packages/experimental/experimental-tool-robot-crew/src/index.ts`](../packages/experimental/experimental-tool-robot-crew/src/index.ts) |
 | `@tomato/experimental-tool-worktree` | `tools` · `worktrees` | [`packages/experimental/tool-worktree/src/index.ts`](../packages/experimental/tool-worktree/src/index.ts) |
 | `@tomato/fs-observation-policy` | — | [`packages/fs/fs-observation-policy/src/index.ts`](../packages/fs/fs-observation-policy/src/index.ts) |
 | `@tomato/fs-ssh` | `ssh` · `sandboxPolicy` | [`packages/ssh/fs-ssh/src/index.ts`](../packages/ssh/fs-ssh/src/index.ts) |
