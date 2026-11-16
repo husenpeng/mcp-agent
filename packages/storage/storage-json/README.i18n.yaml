@@ -9,8 +9,8 @@
   en: 17d7c81b3ba87e25
   zh: e3fd87a31bcca726
 /tomato-storage-json/summary:
-  en: 20a5d44b6c3a0945
-  zh: 3ab5375cce899acb
+  en: 506d5beefd11a68e
+  zh: 704b68fa5fa73f05
 /tomato-storage-json/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
@@ -18,20 +18,20 @@
   en: 87ddc847b7024cac
   zh: 6e97d0f216587d5b
 /tomato-storage-json/use-this-package/when-to-choose-it:
-  en: 28ebb528cbe13f31
-  zh: 7e3744e9d080d2bb
+  en: 40e60fa139e0d6f6
+  zh: 0c4ce58c26ee4bf7
 /tomato-storage-json/use-this-package/configuration:
   en: 460f5dc50fd42fd6
   zh: ce9a928e1c134989
 /tomato-storage-json/use-this-package/observable-behavior:
-  en: 75b7e8c8ae917439
-  zh: 30ff8fc276621b7a
+  en: af6856d816612777
+  zh: 5f773f9a9d317282
 /tomato-storage-json/understand-the-implementation:
   en: b7d222309b3e5438
   zh: 807c7314ee341d94
 /tomato-storage-json/understand-the-implementation/design-concept:
-  en: 6cd51dcd7e255715
-  zh: 8c4514893f89064a
+  en: 975a4b005d9f8d0d
+  zh: 71127701477ae358
 /tomato-storage-json/understand-the-implementation/file-formats:
   en: b3de0a697db4f916
   zh: 56b26f7823392bd5
@@ -57,8 +57,8 @@
   en: c13c59d13a5f1651
   zh: 5aab838ae3ff5324
 /tomato-storage-json/known-limitations-and-deferred-work:
-  en: 07d386decf38f247
-  zh: c3e866b4d8e3372a
+  en: 073ca8d8c9bb8123
+  zh: 088ca8438f11ce6c
 /tomato-storage-json/known-limitations-and-deferred-work/dev-note:
   en: dd40dd4cb9109aea
   zh: 3fd79d2242eccadb

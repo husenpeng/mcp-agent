@@ -15,20 +15,20 @@
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /tomato-llm/use-this-package:
-  en: 33738e61ce410ac0
-  zh: 363760460f4d4bed
+  en: b8fbcecd62f6cad0
+  zh: d6eb81611ef0f3c5
 /tomato-llm/use-this-package/when-to-choose-it:
   en: 735893d4030abe74
   zh: 775c4e347f2d1819
 /tomato-llm/use-this-package/minimal-composition:
-  en: 9d481d19dc52e404
-  zh: aa09cf4462e93ba6
+  en: b4132c5c864c9828
+  zh: 60018e819e3d8a8b
 /tomato-llm/use-this-package/what-you-can-do:
   en: dc61eb86585f6e0d
   zh: 9c0d6b240dfd2cda
 /tomato-llm/use-this-package/failures-and-recovery:
-  en: 106feb7a6463866a
-  zh: dd5d83baf9b4c2b4
+  en: 942aa3b3ac7bf55d
+  zh: e0b568e113749b02
 /tomato-llm/understand-the-implementation:
   en: 9630d7e26193a512
   zh: 94222c2a487c4b8c
@@ -54,8 +54,8 @@
   en: a81634136baef72f
   zh: b92dda883986b0e1
 /tomato-llm/known-limitations-and-deferred-work:
-  en: 9599c4b27ca5074c
-  zh: 7b9817ce9252264b
+  en: 01f16cc6f75d8f97
+  zh: 813d15df6b621181
 /tomato-llm/known-limitations-and-deferred-work/dev-note:
   en: ecbc333b88e14d88
   zh: 77c725d92efd8646

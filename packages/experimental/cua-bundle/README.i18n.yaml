@@ -3,44 +3,44 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/experimental/cua-bundle/README.md
 /:
-  en: cc518dcd97629a96
-  zh: 465e999011282dc3
+  en: 0df5d6f2b9e2ac15
+  zh: d0a9bd1f4e172d25
 /tomato-cua-bundle:
   en: 5e40be0c9c6a7471
   zh: e97d1964e936f9b4
 /tomato-cua-bundle/summary:
-  en: 06d8bf4ee1ef6f3b
-  zh: 8568f649fb846615
+  en: 3d50bcc4555611b2
+  zh: c320d510872b704f
 /tomato-cua-bundle/table-of-contents:
   en: b563e4ec4727d0de
   zh: d0228da978238e05
 /tomato-cua-bundle/use-this-package:
-  en: 4273b4796796c833
-  zh: 1477d870ea0e00be
+  en: 67df80cd56c6dced
+  zh: d813febcb2f27a46
 /tomato-cua-bundle/understand-the-implementation:
-  en: c763d03dadec4bb7
-  zh: 16c52145d7f065fd
+  en: ea1c23153c13b1a9
+  zh: 7d1ece447b3172ec
 /tomato-cua-bundle/further-exploration:
   en: 1d4e7d8639f5d514
   zh: fe6569b9514bb3f1
 /tomato-cua-bundle/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
-/tomato-cua-bundle/model-experience/computer-use-in-ptc-sessions:
-  en: e8f11f45b375771e
-  zh: e8f11f45b375771e
-/tomato-cua-bundle/model-experience/computer-use-in-ptc-sessions/what-the-model-sees:
-  en: 26a8a0857b923302
-  zh: 828f123240cff571
-/tomato-cua-bundle/model-experience/computer-use-in-ptc-sessions/token-effect:
-  en: e8de232e96220fe7
-  zh: 5c791307e2123667
-/tomato-cua-bundle/model-experience/computer-use-in-ptc-sessions/kv-cache-effect:
-  en: 417c40acd93df532
-  zh: 69cc5cf7140c75a9
+/tomato-cua-bundle/model-experience/computer-use-across-presets:
+  en: b59f3023a8494477
+  zh: 72f91459a6b94e0a
+/tomato-cua-bundle/model-experience/computer-use-across-presets/what-the-model-sees:
+  en: ef8ce8b5ba5cf5bf
+  zh: 0f9349541930104a
+/tomato-cua-bundle/model-experience/computer-use-across-presets/token-effect:
+  en: dd5821cb31405880
+  zh: d3b529cee8233dbf
+/tomato-cua-bundle/model-experience/computer-use-across-presets/kv-cache-effect:
+  en: f818723a618d1917
+  zh: 362d5d51d05e56b1
 /tomato-cua-bundle/known-limitations-and-deferred-work:
-  en: 41f8c54d76d92c95
-  zh: 44c9662e437f4cbe
+  en: bf20d89b76eb3ff1
+  zh: f27823427e2ee56c
 /tomato-cua-bundle/known-limitations-and-deferred-work/dev-note:
   en: 0a1253c6f7b5e8b9
   zh: ce96645b3e75874e

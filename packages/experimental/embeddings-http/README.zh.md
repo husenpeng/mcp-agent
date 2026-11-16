@@ -25,7 +25,7 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
-把它作为 Host 行挂载。Muse 配置包把它与记忆一起提供，默认禁用并指向本机 Ollama；启用该行后，它会把配置提供给 Plugins 的**向量提供方**页面。该页只读显示运行中的端点、模型、向量长度与凭据名，开关语义检索，并从浏览器发送一次测试嵌入请求。模型与长度保留为 Host 配置字段，供未来迁移，不作为页面控件。回环端点不需要 key 时无需其他服务；远程端点应通过 `apiKeyEnv` 命名其 key。
+把它作为 Host 行挂载。Muse 配置包把它与记忆一起提供，默认禁用并指向本机 Ollama；启用该行后，它会把配置提供给 Plugins 的**向量提供方**页面。该页编辑端点、模型与向量长度，通过凭据服务保存不回显的 API 密钥，开关语义检索，并从 Host 发送一次测试嵌入请求。回环端点不需要 key 时无需其他服务；远程端点应通过 `apiKeyEnv` 命名其 key。
 
 ```yaml
 - name: '@tomato/experimental-embeddings-http'
@@ -43,7 +43,7 @@ kind: "package-reference"
 | `dimensions` | `0` | 期望的向量长度；`0` 采用第一次响应的长度 |
 | `enabled` | `true` | 记忆搜索是否可以使用该提供方；`false` 时仍挂载但搜索保持词法 |
 | `timeoutMs` | `15000` | 单次 HTTP 请求的截止时间 |
-| `batchSize` | `32` | 每次 HTTP 请求的文本数 |
+| `batchSize` | `10` | 每次 HTTP 请求的文本数 |
 | `maxInputChars` | `4000` | 发送前每条文本保留的字符数 |
 | `failureThreshold` | `3` | 连续失败多少次后暂停提供方 |
 | `cooldownMs` | `30000` | 达到阈值后的首次暂停时长；之后每次翻倍 |

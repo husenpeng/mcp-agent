@@ -5,45 +5,45 @@
 /:
   en: 0ca51f37788dcbdb
   zh: 14d73c6bc8d4e17f
-/deepseek-ai-tomato-client-ui-conversation:
-  en: 77ecbd074ef3a3ce
-  zh: 2c0e2b720e3b201e
-/deepseek-ai-@tomato/client-ui-conversation/summary:
+/tomato-client-ui-conversation:
+  en: 256717f04153f8bc
+  zh: 5115ef04f0cb025e
+/tomato-client-ui-conversation/summary:
   en: 8811c28013fdc6dc
   zh: 0a86edc422b38ba8
-/deepseek-ai-@tomato/client-ui-conversation/table-of-contents:
+/tomato-client-ui-conversation/table-of-contents:
   en: eef4f18c3972ccc4
   zh: 6be65c6ac84ce497
-/deepseek-ai-@tomato/client-ui-conversation/conversation-assembly:
-  en: ef43c4f149195939
-  zh: 49fc6c83fd3a05ce
-/deepseek-ai-@tomato/client-ui-conversation/sent-user-text:
-  en: 4a094cd97426ad18
-  zh: 5faadddb7e2b0a43
-/deepseek-ai-@tomato/client-ui-conversation/shell-and-standard-props:
-  en: 7c45c9c9767b3184
-  zh: 290037aa8a71b1df
-/deepseek-ai-@tomato/client-ui-conversation/temporary-composer-entries:
-  en: 59cd63057dfb6eeb
-  zh: b2e2c86e810b7bb8
-/deepseek-ai-@tomato/client-ui-conversation/model-experience:
+/tomato-client-ui-conversation/conversation-assembly:
+  en: 475f02853792d0fe
+  zh: 9dfe335d19a0549e
+/tomato-client-ui-conversation/sent-user-text:
+  en: bc545f981a32bea8
+  zh: 7797976684f43135
+/tomato-client-ui-conversation/shell-and-standard-props:
+  en: d11cdd20c2fe5181
+  zh: f16b52be994e7a2f
+/tomato-client-ui-conversation/temporary-composer-entries:
+  en: 4cf4f3418aa5263c
+  zh: 4cad13ac275070f3
+/tomato-client-ui-conversation/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
-/deepseek-ai-@tomato/client-ui-conversation/model-experience/manual-continuation-request:
+/tomato-client-ui-conversation/model-experience/manual-continuation-request:
   en: 6a7ae99570c9c007
   zh: 26e86063e97d82c7
-/deepseek-ai-@tomato/client-ui-conversation/model-experience/manual-continuation-request/what-the-model-sees:
+/tomato-client-ui-conversation/model-experience/manual-continuation-request/what-the-model-sees:
   en: 017391d7ad0f9eb7
   zh: 2693ed29d44b1164
-/deepseek-ai-@tomato/client-ui-conversation/model-experience/manual-continuation-request/token-effect:
+/tomato-client-ui-conversation/model-experience/manual-continuation-request/token-effect:
   en: 517c56dbd522c929
   zh: 55fa3a02d026e36a
-/deepseek-ai-@tomato/client-ui-conversation/model-experience/manual-continuation-request/kv-cache-effect:
+/tomato-client-ui-conversation/model-experience/manual-continuation-request/kv-cache-effect:
   en: f8621bbc481c26ae
   zh: 5be844989dc80803
-/deepseek-ai-@tomato/client-ui-conversation/known-limitations-and-deferred-work:
-  en: c8323c1986c1be46
-  zh: 6151492c67d4cb88
-/deepseek-ai-@tomato/client-ui-conversation/known-limitations-and-deferred-work/dev-note:
+/tomato-client-ui-conversation/known-limitations-and-deferred-work:
+  en: d100a994ea5cf400
+  zh: 878c0f7420b4026b
+/tomato-client-ui-conversation/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: e88aeb617ffb74ea

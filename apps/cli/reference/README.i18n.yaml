@@ -3,7 +3,7 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write apps/cli/reference/README.md
 /tomato-cli-behavior-reference:
-  en: 9eb326b12f0fbe81
+  en: ce9ac3132c415e5b
   zh: 089bbb5625e04037
 /tomato-cli-behavior-reference/profile-boot:
   en: 8405b05b28949a41
@@ -24,8 +24,8 @@
   en: 56ff84a12909d8c4
   zh: 71db809d9eecb014
 /tomato-cli-behavior-reference/shared-deployment-behavior:
-  en: 9eef0855fa250cf0
-  zh: 0abebf61b05132be
+  en: 9f0ba4c069175ab1
+  zh: 15c340ade4f8777d
 /tomato-cli-behavior-reference/source-execution:
-  en: 1cb2b3baa186d3a8
-  zh: 9c2f96d58d7c615a
+  en: 86dd672ff38c92b6
+  zh: 151fe26631556170

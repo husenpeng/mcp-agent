@@ -25,7 +25,7 @@ Turns `ctx.embeddings` into one batched `POST <baseUrl>/embeddings` client for a
 <a id="use-this-package"></a>
 ## Use this package
 
-Mount it as a Host row. It needs no other service for a loopback endpoint without a key; a remote endpoint should name its key through `apiKeyEnv`. The Muse bundle ships this row beside memory, disabled by default with a local Ollama endpoint; enabling the row serves its configuration to the **Embedding provider** page in Plugins. That page displays the running endpoint, model, vector length, and credential name read-only, switches semantic search on or off, and sends one test embedding from the browser. The model and length stay Host configuration fields for a future migration rather than page controls.
+Mount it as a Host row. It needs no other service for a loopback endpoint without a key; a remote endpoint should name its key through `apiKeyEnv`. The Muse bundle ships this row beside memory, disabled by default with a local Ollama endpoint; enabling the row serves its configuration to the **Embedding provider** page in Plugins. That page edits the endpoint, model and vector length, stores a write-only API key through the credential service, switches semantic search on or off, and sends one test embedding from the Host.
 
 ```yaml
 - name: '@tomato/experimental-embeddings-http'
@@ -43,7 +43,7 @@ Mount it as a Host row. It needs no other service for a loopback endpoint withou
 | `dimensions` | `0` | Expected vector length; `0` accepts the first response's length |
 | `enabled` | `true` | Whether memory search may use the provider; `false` keeps it mounted but search stays lexical |
 | `timeoutMs` | `15000` | Deadline of one HTTP request |
-| `batchSize` | `32` | Texts per HTTP request |
+| `batchSize` | `10` | Texts per HTTP request |
 | `maxInputChars` | `4000` | Characters kept from one text before sending |
 | `failureThreshold` | `3` | Consecutive failed calls that pause the provider |
 | `cooldownMs` | `30000` | First pause after the threshold; every later trip doubles it |
@@ -51,7 +51,7 @@ Mount it as a Host row. It needs no other service for a loopback endpoint withou
 
 The generated [configuration catalog](../../../docs/config-catalog.md#tomatoexperimental-embeddings-http) is the exhaustive source for every accepted field.
 
-A remote endpoint must use HTTPS; plain HTTP is accepted only for `localhost`, `127.0.0.1`, and `::1`. The page's **Test connection** runs in the browser, so it verifies the recommended loopback path directly; a remote endpoint that refuses cross-origin requests reports that refusal, while the Host still uses the endpoint normally after a save. The key resolves first through `ctx.credentials` and then through the launch environment, so a stored value reaches the next request without a restart.
+A remote endpoint must use HTTPS; plain HTTP is accepted only for `localhost`, `127.0.0.1`, and `::1`. The page's **Test connection** runs in the Host, so a remote endpoint's browser CORS policy cannot mask a working provider. The key resolves first through `ctx.credentials` and then through the launch environment, so a stored value reaches the next request without a restart.
 
 -----
 

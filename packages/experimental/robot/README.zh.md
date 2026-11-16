@@ -63,7 +63,7 @@ kind: "package-reference"
 ## 延伸阅读
 
 - [机器人平台产品架构](../../../.agents/notes/proposed/architecture/2026-10-29-robot-platform-product-architecture.zh.md)——产品形态、运行时、A2A、记忆与交付决策。
-- [Agent Teams](../agent-team/README.zh.md)——本契约在生产机器人中取代的实验性会话内 roster、邮箱与任务看板。
+- [Agent Teams](../../team/agent-team/README.zh.md)——本契约在生产机器人中取代的实验性会话内 roster、邮箱与任务看板。
 
 -----
 

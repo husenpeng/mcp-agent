@@ -18,8 +18,8 @@
   en: 9fb142b09ed72372
   zh: 63dc7b15960a53a7
 /tomato-session-log-export/use-this-package/copy-session-as-markdown:
-  en: 55c163a4ae5b8d5d
-  zh: c1dac154ed1fa56d
+  en: c5686d8f4ed5410b
+  zh: 35f6f8cf17ba61b8
 /tomato-session-log-export/use-this-package/when-to-choose-it:
   en: 4011f686afd24f09
   zh: 2710b9995c80ba1f
@@ -27,8 +27,8 @@
   en: 252bc78a7850557a
   zh: e695658a94c8c2bf
 /tomato-session-log-export/use-this-package/composition:
-  en: eebc3ce4cae786c3
-  zh: e90a9553b3340dfe
+  en: c0e74ca66ab34525
+  zh: bbbac4f0b67a3897
 /tomato-session-log-export/use-this-package/configuration:
   en: 377a0d8860c46f63
   zh: 9eb7698f813b2fa3
@@ -36,8 +36,8 @@
   en: 26329688b9a924a7
   zh: 94e21c10fdcfc1ac
 /tomato-session-log-export/use-this-package/what-to-expect:
-  en: 44be1f1d1903d12a
-  zh: c8f1eb5b92b71a30
+  en: e4ad198e0e410fbf
+  zh: 06a815208987d006
 /tomato-session-log-export/use-this-package/failures:
   en: e92a382bebfe99e3
   zh: 671178b06808bfb9
@@ -45,11 +45,11 @@
   en: 7cb82a6851405f95
   zh: b8c525170d19dc6c
 /tomato-session-log-export/understand-the-implementation/design-split:
-  en: 3bb8e18b107c353f
-  zh: 3cc45ce2b5699066
+  en: a1a931677dabc1aa
+  zh: d4bd10bde23c14e9
 /tomato-session-log-export/understand-the-implementation/download-flow:
-  en: bd46d2fa1273a6a4
-  zh: 4d3eb2cf0a9bf12b
+  en: 00002fe0448b1654
+  zh: 9d8f88e42d88fd15
 /tomato-session-log-export/understand-the-implementation/markdown-copy-flow:
   en: d4e02b56ffb8ee8a
   zh: 0a329039788a13ee

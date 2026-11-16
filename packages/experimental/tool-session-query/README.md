@@ -50,7 +50,7 @@ The generated [configuration catalog](../../../docs/config-catalog.md#tomatotool
 | `session_event_trace` | One event's positional replacements and cited source-event relationships |
 | `session_event_read` | One full unabridged event as JSON, plus optional neighboring event summaries |
 
-Workspace authority is conservative: cross-session access requires exact `cwd` equality between target and caller session, and a caller without `cwd` can inspect only itself. Requested parent ids are deduplicated and authority-checked before search; missing and cross-workspace guesses behave identically. Search results are cursor-free: a capped result asks the model to narrow its query, and never exposes provider cursors, offsets, page sizes, or a model-controlled limit. Timestamps at the tool boundary are timezone-qualified ISO 8601 and become inclusive epoch-millisecond filters.
+Workspace authority is conservative: cross-session access requires exact `cwd` equality between target and caller session, and a caller without `cwd` can inspect only itself — unless the deployment publishes `ctx.sessionAccess` and that service grants the specific target, which is how a supervisor reads the Sessions its tickets ran in. The grant never widens search or lineage: it only adds the target the service named. Requested parent ids are deduplicated and authority-checked before search; missing and cross-workspace guesses behave identically. Search results are cursor-free: a capped result asks the model to narrow its query, and never exposes provider cursors, offsets, page sizes, or a model-controlled limit. Timestamps at the tool boundary are timezone-qualified ISO 8601 and become inclusive epoch-millisecond filters.
 
 ### Failures and recovery
 
@@ -168,7 +168,7 @@ Append-only result text follows the reusable request prefix and does not invalid
 These limits define when this package is a poor fit or needs special operational care. They are current package constraints, not a task backlog.
 
 - **Search caps without continuation** — search returns at most the deployment cap and asks the model to narrow its query when more matches exist; there is no continuation token.
-- **Conservative workspace identity** — workspace identity is exact-string `cwd` equality, so symlink-equivalent paths do not share authority.
+- **Conservative workspace identity** — workspace identity is exact-string `cwd` equality, so symlink-equivalent paths do not share authority; a deployment that runs related Sessions must publish `ctx.sessionAccess` itself, and the grant is per target rather than per workspace.
 - **Inline payloads without the spill policy** — custom compositions without the generic spill policy accept complete trace and event payloads inline.
 
 <a id="dev-note"></a>

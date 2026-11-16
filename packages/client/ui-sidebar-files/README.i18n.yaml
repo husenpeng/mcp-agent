@@ -3,32 +3,41 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-sidebar-files/README.md
 /:
-  en: 230c08e7a4cfe19b
-  zh: d874f3659c8ca0fb
+  en: 81ddd69595f43571
+  zh: 877e091b48a422fe
 /tomato-client-ui-sidebar-files:
   en: 1fa479bebe5111f2
   zh: d39b5e1254512213
 /tomato-client-ui-sidebar-files/summary:
-  en: 1605ae92aee5c231
-  zh: ad519ddb9e338892
+  en: 46067f0415ea2e76
+  zh: f0b48804ad460a05
 /tomato-client-ui-sidebar-files/table-of-contents:
-  en: 9411fb4809692e09
-  zh: dd13990d39c5be7f
+  en: 81cb6e051699a7b4
+  zh: 566d0278acae69fa
 /tomato-client-ui-sidebar-files/what-it-registers:
-  en: d7d4c7aecaad1bd9
-  zh: 03220b165763f68d
+  en: 43e47fea8bda3362
+  zh: 68b095a5987cc84e
+/tomato-client-ui-sidebar-files/the-navigator:
+  en: 509aeeb96c2334ee
+  zh: ffcbe357f326cef4
 /tomato-client-ui-sidebar-files/the-tree:
-  en: 679e1e70d5a17651
-  zh: da2b2fca95c64ecd
+  en: 288532b6c2fc24ce
+  zh: cd56f42032094828
+/tomato-client-ui-sidebar-files/search:
+  en: 094ceaa4dff90825
+  zh: 2fe1d40a25838588
+/tomato-client-ui-sidebar-files/reusable-tree-factory:
+  en: 84b5c873ddae7381
+  zh: 000da25758a05fb2
 /tomato-client-ui-sidebar-files/model-experience:
   en: a18a43f6842f1371
   zh: 69f2a2b35f06dfc7
 /tomato-client-ui-sidebar-files/model-experience/kv-cache-effect:
-  en: 5a6febb45089991a
-  zh: b17ed755fd098b83
+  en: 39debadcc6cefd24
+  zh: cc212c8377851a91
 /tomato-client-ui-sidebar-files/known-limitations-and-deferred-work:
-  en: c0e1831d8975186c
-  zh: 332aac8738458bb0
+  en: f28a32e47e684f5c
+  zh: e5e38014048ebe59
 /tomato-client-ui-sidebar-files/known-limitations-and-deferred-work/dev-note:
-  en: d8b51fb935f38650
-  zh: fee9d330ecf8ec0e
+  en: 1ec99e9fb6b4c948
+  zh: c4f7883934307c3c

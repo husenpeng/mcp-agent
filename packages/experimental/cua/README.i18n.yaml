@@ -6,26 +6,26 @@
   en: ed2539c6d12f814a
   zh: 55a6c9d7f0d21fb7
 /tomato-cua:
-  en: d9ee6e3c0cf60b6a
-  zh: cad5c668a5fde31a
+  en: 899a9d9c5ea0010b
+  zh: fd3c2a5a7d23586c
 /tomato-cua/summary:
-  en: f4d9cc48587d62a2
-  zh: d1bac6c1fe7eb29e
+  en: 23eb2a4f1cb71986
+  zh: 62e2bec7155ed063
 /tomato-cua/table-of-contents:
   en: 5db4d4fea25493b9
   zh: 65ab64fc24eb0d09
 /tomato-cua/use-this-package:
-  en: ede69afafc025a3b
-  zh: 53182a207545b807
+  en: 7d614c02c26c66c0
+  zh: 5e0c7a3ffd1203d3
 /tomato-cua/use-this-package/permission-controls:
-  en: eeddc411274a7f20
-  zh: 35c58d08bddb76f0
+  en: 98c129f5ec09037c
+  zh: f135082bf9f1c58a
 /tomato-cua/understand-the-implementation:
-  en: a32743fc5b545ab3
-  zh: e8842c589966202b
+  en: 63387c1ac8f90fc5
+  zh: 867b582b37f54ead
 /tomato-cua/further-exploration:
-  en: c18105d127ca2a5f
-  zh: 6b7f79fba9c6569c
+  en: b07d37daae794a23
+  zh: 13a185c4a61c64a4
 /tomato-cua/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
@@ -33,17 +33,17 @@
   en: 0faf1e4d409d61aa
   zh: 1866dd0b702f2a26
 /tomato-cua/model-experience/authorized-application-operations/what-the-model-sees:
-  en: 83f52b60b2002bc2
-  zh: 65a717868225c331
+  en: e1137a24d41ee036
+  zh: ab2a00b8e433ffa4
 /tomato-cua/model-experience/authorized-application-operations/token-effect:
-  en: 88463f0304c207bd
-  zh: 6d3ae2f1b8e45747
+  en: b9b9827c0baf946d
+  zh: 137bf1a711bba968
 /tomato-cua/model-experience/authorized-application-operations/kv-cache-effect:
   en: 2d5df52dafa1d940
   zh: 06e815759b9150c3
 /tomato-cua/known-limitations-and-deferred-work:
-  en: e7c4be6d890eb9a5
-  zh: 7822296567880184
+  en: ac28c3c17092cae6
+  zh: a7cd3117be7fef20
 /tomato-cua/known-limitations-and-deferred-work/dev-note:
   en: 0a1253c6f7b5e8b9
   zh: 9f56528562c7c914

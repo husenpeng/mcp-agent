@@ -16,6 +16,8 @@ kind: "package-library"
 - [使用本包](#use-this-package)
 - [理解实现](#understand-the-implementation)
 - [进一步探索](#further-exploration)
+- [模型体验](#model-experience)
+- [已知限制与延期工作](#known-limitations-and-deferred-work)
 - [开发备注](#dev-note)
 
 -----
@@ -65,8 +67,26 @@ throw new ArchiveError('archive entry is missing', 'ARCHIVE_ENTRY_NOT_FOUND')
 
 -----
 
+<a id="model-experience"></a>
+## 模型体验
+
+通过工具结果间接体现：注册表会记录抛出的 `HarnessError` 的 `name` 与 `code`，因此模型能看到稳定 code；本包不添加提示词文本或工具 schema。
+
+#### KV Cache effect
+
+无；该基类不贡献任何请求内容，因此提供方的缓存前缀保持不变。
+
+## 已知限制与延期工作
+
+<a id="known-limitations-and-deferred-work"></a>
+
+- 本包不提供 code 或子类目录；每个所属包自行定义并记录自己的失败。
+- `cause` 只是本地诊断上下文，不会序列化进工具结果或回放记录。
+
+-----
+
 <a id="dev-note"></a>
-## 开发备注
+### 开发备注
 
 <details>
 <summary>维护者的工作背景——点击展开</summary>

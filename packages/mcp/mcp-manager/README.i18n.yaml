@@ -5,60 +5,60 @@
 /:
   en: 706845526cca8ee3
   zh: 8807cb31259da85a
-/deepseek-ai-dsh-mcp-manager:
-  en: 4aaba88431d337f0
-  zh: dbeb71a252aa7748
-/deepseek-ai-dsh-mcp-manager/summary:
-  en: d2b26c63ca0e837b
-  zh: ea377b20252a0fbe
-/deepseek-ai-dsh-mcp-manager/table-of-contents:
+/tomato-mcp-manager:
+  en: 067c26fa1d402d69
+  zh: 977b6524e107f937
+/tomato-mcp-manager/summary:
+  en: b55171cd020611a9
+  zh: 4a7184630bbfa14d
+/tomato-mcp-manager/table-of-contents:
   en: d152484eb41ac6b4
   zh: f14f34fce35a8d90
-/deepseek-ai-dsh-mcp-manager/use-this-package:
-  en: f36f5244cd0b34f9
-  zh: a9df08b327869f1d
-/deepseek-ai-dsh-mcp-manager/use-this-package/when-to-choose-it:
-  en: 5a005b1ef5f53881
-  zh: d8bae243d10b2da5
-/deepseek-ai-dsh-mcp-manager/use-this-package/minimal-configuration:
-  en: 3d76f37b955a2b1f
-  zh: 995e71d500fa074b
-/deepseek-ai-dsh-mcp-manager/use-this-package/managing-configured-servers:
-  en: 765209b5639c4be2
-  zh: 48211813d2d25afc
-/deepseek-ai-dsh-mcp-manager/use-this-package/registering-a-server-from-a-plugin:
+/tomato-mcp-manager/use-this-package:
+  en: d6e4e2936fbe520c
+  zh: 486b5bd2b2fc7668
+/tomato-mcp-manager/use-this-package/when-to-choose-it:
+  en: 468a3864a2aeb6ba
+  zh: eaf9a7a1fd4961e9
+/tomato-mcp-manager/use-this-package/minimal-configuration:
+  en: a7f82f64a4f97ef0
+  zh: bc7ec10085cc636c
+/tomato-mcp-manager/use-this-package/managing-configured-servers:
+  en: ac70940adab86ba8
+  zh: 0677850ae4663598
+/tomato-mcp-manager/use-this-package/registering-a-server-from-a-plugin:
   en: 313bcb35b12be8e1
   zh: a85f75db6b138547
-/deepseek-ai-dsh-mcp-manager/use-this-package/observing-and-recovering:
+/tomato-mcp-manager/use-this-package/observing-and-recovering:
   en: 1aab15d93a450282
   zh: 2c3a04ab964db576
-/deepseek-ai-dsh-mcp-manager/use-this-package/remote-operations:
-  en: 38be117d2c122c61
-  zh: 3a0bffa9a708fdc4
-/deepseek-ai-dsh-mcp-manager/understand-the-implementation:
+/tomato-mcp-manager/use-this-package/remote-operations:
+  en: 4d763a1be8ae9527
+  zh: 8c0456f51077a195
+/tomato-mcp-manager/understand-the-implementation:
   en: 8a74186fa5bfe79d
   zh: c7c952876ca2992b
-/deepseek-ai-dsh-mcp-manager/understand-the-implementation/design-philosophy:
+/tomato-mcp-manager/understand-the-implementation/design-philosophy:
   en: 910e4cfd420dad93
   zh: 4985a140ffd51160
-/deepseek-ai-dsh-mcp-manager/understand-the-implementation/source-map:
+/tomato-mcp-manager/understand-the-implementation/source-map:
   en: 874fe61698123da8
   zh: 85f9cb1eb4881cbc
-/deepseek-ai-dsh-mcp-manager/understand-the-implementation/lifecycle-notes:
+/tomato-mcp-manager/understand-the-implementation/lifecycle-notes:
   en: 22a062b31ef64262
   zh: db244dae206d56fc
-/deepseek-ai-dsh-mcp-manager/further-exploration:
-  en: 1383d0b5ab881285
-  zh: bef9f5386cb092e1
-/deepseek-ai-dsh-mcp-manager/model-experience:
-  en: 622033747c4c0066
-  zh: 821213fd61a98105
-/deepseek-ai-dsh-mcp-manager/model-experience/kv-cache-effect:
+/tomato-mcp-manager/further-exploration:
+  en: 1c0d45bccd2a0497
+  zh: 829979586ca89507
+/tomato-mcp-manager/model-experience:
+  en: b0c24b017e5e29f3
+  zh: f42aee563694cde5
+/tomato-mcp-manager/model-experience/kv-cache-effect:
   en: 7a8d0bf11425040b
   zh: b39181f89ba4fbe8
-/deepseek-ai-dsh-mcp-manager/known-limitations-and-deferred-work:
+/tomato-mcp-manager/known-limitations-and-deferred-work:
   en: 4c85bea0533cc44a
   zh: 73fdc5d1a90a3011
-/deepseek-ai-dsh-mcp-manager/known-limitations-and-deferred-work/dev-note:
+/tomato-mcp-manager/known-limitations-and-deferred-work/dev-note:
   en: 8b2c53fe07fdaf2d
   zh: 7839d0302f02fa5b

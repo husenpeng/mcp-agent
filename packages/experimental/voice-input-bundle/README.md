@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-This optional bundle composes a speech Service Definition, local SenseVoice provider, authenticated Remote and browser microphone control. Shipped profiles leave it disabled.
+This optional bundle composes a speech Service Definition, local SenseVoice and Whisper providers, authenticated Remote and browser microphone control. Shipped profiles leave it disabled.
 
 ## Table of Contents
 
@@ -35,7 +35,7 @@ Open Plugins in the Web sidebar and enable Voice Input, marked by a blue wavefor
 <details>
 <summary>Maintainer details — click to expand</summary>
 
-The static `cordis.patch.yml` adds the four voice rows, selects `sensevoice-local` as the default recognizer and supplies the provider cache directory with `tomatoHomePath`. Optional-bundle installation makes the package available to management without selecting it in default profiles. The browser contribution owns its generated Remote mount; stable API Remotes do not import experimental code.
+The static `cordis.patch.yml` adds the five voice rows, selects `sensevoice-local` as the default recognizer and supplies both provider cache directories with `tomatoHomePath`. The Whisper row reads deployment-supplied `encoder.onnx`, `decoder.onnx` and `tokens.txt` from its cache directory and never downloads them. Optional-bundle installation makes the package available to management without selecting it in default profiles. The browser contribution owns its generated Remote mount; stable API Remotes do not import experimental code.
 
 </details>
 

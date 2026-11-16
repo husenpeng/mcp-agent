@@ -1,5 +1,5 @@
 ---
-description: "按需准备和运行本地 CPU SenseVoice 工作进程。"
+description: "按需准备和运行本地 CPU SenseVoice 或 Whisper 工作进程。"
 kind: "package-reference"
 ---
 
@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-此 Provider 在 Host CPU 上使用 SenseVoiceSmall ONNX 与 Silero VAD 识别语音。各平台的 sherpa-onnx Node 包包含 ONNX Runtime；用户无需 Python、编译器或模型转换。启用时检查缓存资源，不加载模型或下载资源。
+此 Provider 在 Host CPU 上使用 SenseVoiceSmall 或 Whisper small ONNX 与 Silero VAD 识别语音。各平台的 sherpa-onnx Node 包包含 ONNX Runtime；用户无需 Python、编译器或模型转换。启用时检查缓存资源，不加载模型或下载资源。
 
 ## 目录
 
@@ -25,7 +25,7 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用此包
 
-[Bundle](../voice-input-bundle/README.zh.md) 在 TOMATO 主目录下提供绝对 `dataRoot`。准备会下载固定修订的模型文件，校验大小与 SHA-256，再加载模型。`precision` 默认为 `int8`，`fp32` 选择较大的参考权重。`modelDirectory` 提供包含所选 ONNX 文件和 `tokens.txt` 的已有绝对目录，`vadModelPath` 选择已有 Silero ONNX 文件。取消或失败后复用已完成并通过校验的文件。
+[Bundle](../voice-input-bundle/README.zh.md) 在 TOMATO 主目录下提供绝对 `dataRoot`。准备会下载固定修订的模型文件，校验大小与 SHA-256，再加载模型。`family` 选择识别模型：`sensevoice`（默认）下载固定权重；`whisper` 要求绝对 `modelDirectory`（内含 `encoder.onnx`、`decoder.onnx` 和 `tokens.txt`）并提供显式 `vadModelPath`，Host 不下载也不校验这些文件。`precision` 默认为 `int8`，`fp32` 选择较大的参考权重。`modelDirectory` 提供包含所选 ONNX 文件和 `tokens.txt` 的已有绝对目录，`vadModelPath` 选择已有 Silero ONNX 文件。取消或失败后复用已完成并通过校验的文件。
 
 下载每个缺失文件前，Host 会比较兼容 Hugging Face 的 `modelOrigins`，默认为 `https://huggingface.co` 和 [HF-Mirror](https://hf-mirror.com)。并发 HEAD 请求沿用固定文件路径，通过 Host 的 fetch 代理跟随重定向，先返回 2xx 的源优先下载。`modelProbeTimeoutMs` 默认为 3000 毫秒；所有探测均失败时按配置顺序下载。网络、HTTP、证书或完整性校验失败会尝试其他源；取消、存储错误和未分类错误会停止准备。所有源都必须符合固定修订、大小和 SHA-256 校验值。响应延迟不代表下载吞吐量，完整下载仍受准备阶段的总超时约束。
 
@@ -71,7 +71,7 @@ Host 在页面和 Session 变化期间拥有准备任务：检查资源、下载
 
 <a id="known-limitations-and-deferred-work"></a>
 
-- 仅使用 CPU。原生包面向 macOS arm64/x64、Linux glibc arm64/x64 和 Windows x64；Windows ARM64 与 Linux musl 尚非已验证部署目标。INT8 权重约 239 MB，FP32 约 938 MB，另需运行时和 VAD。模型内存大于文件大小，并随录音长度增长；安装提示属于估算。语言提示包括自动、中文、英语、粤语、日语和韩语。禁用插件保留模型缓存。桌面发行包仍需各平台签名和麦克风权限验收；Linux 桌面分发不属于此 Provider。
+- 仅使用 CPU。原生包面向 macOS arm64/x64、Linux glibc arm64/x64 和 Windows x64；Windows ARM64 与 Linux musl 尚非已验证部署目标。SenseVoice 的 INT8 权重约 239 MB，FP32 约 938 MB，另需运行时和 VAD。模型内存大于文件大小，并随录音长度增长；安装提示属于估算。语言提示包括自动、中文、英语、粤语、日语和韩语；Whisper 部署则接受自动、中文、英语、日语和韩语。Whisper 的 INT8 编码器与解码器约 375 MB，Host 不校验其大小与哈希，CPU 推理也比 SenseVoice 慢数倍。禁用插件保留模型缓存。桌面发行包仍需各平台签名和麦克风权限验收；Linux 桌面分发不属于此 Provider。
 
 -----
 

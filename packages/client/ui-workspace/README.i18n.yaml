@@ -15,35 +15,35 @@
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /tomato-client-ui-workspace/use-this-package:
-  en: 650a0b951c92626e
-  zh: 8b059c0678656a79
+  en: 9226c42c2559fbf0
+  zh: 5527f59aa379c9fd
 /tomato-client-ui-workspace/use-this-package/reordering-and-view-options:
   en: 55054408b8593c70
   zh: 9fdf9861a48abba3
 /tomato-client-ui-workspace/use-this-package/workspace-hierarchy:
-  en: a94394a5a9f70ed8
-  zh: 62ce596a95395ad8
+  en: cd8635fa6516441d
+  zh: c06e251fe3dd895b
 /tomato-client-ui-workspace/use-this-package/search:
-  en: 29facc4eae028dae
-  zh: 754ebac4cc294e65
+  en: 148f2ab562fecc09
+  zh: 9ba7c07999705b31
 /tomato-client-ui-workspace/use-this-package/managing-sessions:
-  en: 5da8313906b9850f
-  zh: 2d29badcafb3648b
+  en: b9f24a2c9a659082
+  zh: 86d0b2353e6d5ef7
 /tomato-client-ui-workspace/use-this-package/pending-interactions:
   en: 9fb88260380bf093
   zh: 3bace2b96ecd4a82
 /tomato-client-ui-workspace/use-this-package/active-schedule-markers:
-  en: 7ebd67e441fdfa0f
-  zh: 42a9271715771ea5
+  en: 8a9c0bcf7f9eee53
+  zh: 4d04a778134c9ab6
 /tomato-client-ui-workspace/understand-the-implementation:
-  en: 17efb3d33fe042e8
-  zh: 29b6169f2358b5eb
+  en: f004173cddfcd794
+  zh: fe9b0bab47688254
 /tomato-client-ui-workspace/understand-the-implementation/the-directory-flow-hole:
   en: 868904dbfb5713f8
-  zh: 225906bfef7398bf
+  zh: 35d3c285ed770885
 /tomato-client-ui-workspace/understand-the-implementation/session-row-actions:
-  en: 5bbba6e462faf3dc
-  zh: 4734263208ee07c9
+  en: 07e8c5cddd6903bb
+  zh: 53acb56cce265355
 /tomato-client-ui-workspace/understand-the-implementation/session-row-actions/packaged-client-plugin:
   en: 36934671b80b11ae
   zh: 8e0aea6162e35e77
@@ -51,14 +51,14 @@
   en: 5888f2cc40732a76
   zh: f76fd6fa5c2f2cc9
 /tomato-client-ui-workspace/understand-the-implementation/view-state:
-  en: b62b5a344b962c45
-  zh: 6c773bece95c3621
+  en: 10bfba5b257f1ed1
+  zh: b73a64b1fa8ad942
 /tomato-client-ui-workspace/understand-the-implementation/hover-cards:
   en: 8bcb7bd90d7c5773
   zh: 17663be926a099d2
 /tomato-client-ui-workspace/further-exploration:
-  en: a5a07d3c35a72a80
-  zh: c120870685923d44
+  en: 8402bd3d8f2a73df
+  zh: 5194f6d806411d22
 /tomato-client-ui-workspace/model-experience:
   en: 3120df665299c634
   zh: 1d9f365d091d0d2a

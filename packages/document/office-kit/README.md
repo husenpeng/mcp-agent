@@ -56,7 +56,7 @@ Browsers request PDFs through the `officeKit.render` Remote method with a Sessio
 | `maxImageResolution` | `192` | Image resolution in DPI of PDF exports; overrides the kit default of `144`. `renderImages()` uses each request's `dpi` instead. |
 | `fontFallbacks` | Kit defaults | Ordered font-family preference groups; each group requires at least two names containing non-whitespace characters. |
 
-The [configuration catalog](../../../docs/config-catalog.md#deepseek-aitomato-office-kit) owns the full font, archive, and image settings. `fontDirectories` accepts absolute directories; omission uses the kit platform defaults. Explicit `fontFallbacks` replaces the kit's default groups. Installed requested fonts retain precedence, and other system fonts remain eligible for uncovered glyphs. Native engines can select installed metric-compatible fonts before these preferences.
+The [configuration catalog](../../../docs/config-catalog.md#tomatooffice-kit) owns the full font, archive, and image settings. `fontDirectories` accepts absolute directories; omission uses the kit platform defaults. Explicit `fontFallbacks` replaces the kit's default groups. Installed requested fonts retain precedence, and other system fonts remain eligible for uncovered glyphs. Native engines can select installed metric-compatible fonts before these preferences.
 
 The [bounded conversion decision](../../../.agents/notes/implemented/architecture/2026-09-15-bounded-office-conversion.md) explains queue admission, cache limits, and shared cancellation.
 

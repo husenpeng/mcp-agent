@@ -16,6 +16,8 @@ English | [中文](README.zh.md)
 - [Use this package](#use-this-package)
 - [Understand the implementation](#understand-the-implementation)
 - [Further Exploration](#further-exploration)
+- [Model Experience](#model-experience)
+- [Known Limitations and Deferred Work](#known-limitations-and-deferred-work)
 - [Dev Note](#dev-note)
 
 -----
@@ -65,8 +67,26 @@ Assign `this.name` a string literal in a subclass constructor when a bundler cou
 
 -----
 
+<a id="model-experience"></a>
+## Model Experience
+
+Indirectly, through tool results: the registry records a thrown `HarnessError`'s `name` and `code`, so the model sees the stable code while this package adds no prompt text or tool schema.
+
+#### KV Cache effect
+
+None; the base class contributes no request content, so cached provider prefixes stay unchanged.
+
+## Known Limitations and Deferred Work
+
+<a id="known-limitations-and-deferred-work"></a>
+
+- The package supplies no catalog of codes or subclasses; each owning package defines and documents its own failures.
+- A `cause` is local diagnostic context and is not serialized into tool results or replay records.
+
+-----
+
 <a id="dev-note"></a>
-## Dev Note
+### Dev Note
 
 <details>
 <summary>Working context for maintainers — click to expand</summary>

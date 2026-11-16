@@ -134,7 +134,7 @@ Prefix-stable while the plugin stays loaded; loading or unloading it changes the
 
 #### What the model sees
 
-The two schemas are listed in the [`@tomato/terminal-panel` catalog section](../../../docs/tool-catalog.md#deepseek-aitomato-terminal-panel). The six terminal tools keep the schemas of [`@tomato/tool-terminal`](../../../docs/tool-catalog.md#deepseek-aitomato-tool-terminal).
+The two schemas are listed in the [`@tomato/terminal-panel` catalog section](../../../docs/tool-catalog.md#tomatoterminal-panel). The six terminal tools keep the schemas of [`@tomato/tool-terminal`](../../../docs/tool-catalog.md#tomatotool-terminal).
 
 #### Token effect
 

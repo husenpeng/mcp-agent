@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-This provider recognizes speech with SenseVoiceSmall ONNX and Silero VAD on the Host CPU. The platform-specific sherpa-onnx Node package includes ONNX Runtime; users need no Python, compiler or model conversion. Activation checks cached resources without loading models or downloading assets.
+This provider recognizes speech with SenseVoiceSmall or Whisper small ONNX and Silero VAD on the Host CPU. The platform-specific sherpa-onnx Node package includes ONNX Runtime; users need no Python, compiler or model conversion. Activation checks cached resources without loading models or downloading assets.
 
 ## Table of Contents
 
@@ -25,7 +25,7 @@ This provider recognizes speech with SenseVoiceSmall ONNX and Silero VAD on the 
 <a id="use-this-package"></a>
 ## Use this package
 
-The [bundle](../voice-input-bundle/README.md) supplies an absolute `dataRoot` under the TOMATO home. Preparation downloads revision-pinned model files, verifies their sizes and SHA-256 hashes, then loads them. `precision` defaults to `int8`; `fp32` selects the larger reference weights. `modelDirectory` supplies an existing absolute directory containing the selected ONNX file and `tokens.txt`; `vadModelPath` selects an existing Silero ONNX file. Verified completed files remain reusable after cancellation or failure.
+The [bundle](../voice-input-bundle/README.md) supplies an absolute `dataRoot` under the TOMATO home. Preparation downloads revision-pinned model files, verifies their sizes and SHA-256 hashes, then loads them. `family` selects the recognizer: `sensevoice` (the default) downloads its pinned weights, while `whisper` requires an absolute `modelDirectory` containing `encoder.onnx`, `decoder.onnx` and `tokens.txt` plus an explicit `vadModelPath`, and never downloads or verifies those files. `precision` defaults to `int8`; `fp32` selects the larger reference weights. `modelDirectory` supplies an existing absolute directory containing the selected ONNX file and `tokens.txt`; `vadModelPath` selects an existing Silero ONNX file. Verified completed files remain reusable after cancellation or failure.
 
 Before each missing asset is downloaded, the Host compares the Hugging Face-compatible `modelOrigins`, which default to `https://huggingface.co` and [HF-Mirror](https://hf-mirror.com). Concurrent HEAD requests follow the pinned file path and redirects through the Host's fetch proxy; the first 2xx response is tried first. `modelProbeTimeoutMs` defaults to 3000 ms; when every probe fails, downloads use the configured order. Network, HTTP, certificate and integrity failures try the remaining sources; cancellation, storage failures and unclassified failures stop preparation. Pinned revisions, sizes and SHA-256 hashes apply to every source. Response latency does not measure download throughput; the preparation deadline still bounds the complete download.
 
@@ -71,7 +71,7 @@ No direct effect; ordinary submission owns the message content.
 
 <a id="known-limitations-and-deferred-work"></a>
 
-- CPU only. Native packages target macOS arm64/x64, Linux glibc arm64/x64 and Windows x64; Windows ARM64 and Linux musl are not verified deployment targets. INT8 weights occupy about 239 MB, FP32 about 938 MB, plus the runtime and VAD. Model memory exceeds file size and grows with recording length; installation hints are estimates. Language hints are auto, Chinese, English, Cantonese, Japanese and Korean. Disabling the plugin retains model caches. Packaged Desktop releases still require platform signing and microphone-permission acceptance; Linux Desktop distribution is outside this provider.
+- CPU only. Native packages target macOS arm64/x64, Linux glibc arm64/x64 and Windows x64; Windows ARM64 and Linux musl are not verified deployment targets. INT8 SenseVoice weights occupy about 239 MB, FP32 about 938 MB, plus the runtime and VAD. Model memory exceeds file size and grows with recording length; installation hints are estimates. Language hints are auto, Chinese, English, Cantonese, Japanese and Korean; a Whisper deployment instead accepts auto, Chinese, English, Japanese and Korean. Whisper's INT8 encoder and decoder occupy about 375 MB, the Host verifies neither size nor hash for them, and CPU inference is several times slower than SenseVoice. Disabling the plugin retains model caches. Packaged Desktop releases still require platform signing and microphone-permission acceptance; Linux Desktop distribution is outside this provider.
 
 -----
 

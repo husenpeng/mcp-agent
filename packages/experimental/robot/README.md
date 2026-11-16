@@ -63,7 +63,7 @@ Identities are compile-time brands, so a `RobotId` cannot be passed where a `Run
 ## Further Exploration
 
 - [Robot platform product architecture](../../../.agents/notes/proposed/architecture/2026-10-29-robot-platform-product-architecture.md) — product form, runtime, A2A, memory, and delivery decisions.
-- [Agent Teams](../agent-team/README.md) — the experimental session-local roster, mailbox, and task board this contract supersedes for production robots.
+- [Agent Teams](../../team/agent-team/README.md) — the experimental session-local roster, mailbox, and task board this contract supersedes for production robots.
 
 -----
 

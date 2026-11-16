@@ -3,14 +3,14 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/experimental/client-ui-creation-recommendations/README.md
 /:
-  en: e332dc3625021ad9
-  zh: a6637d7d8696ba5a
+  en: 2f8f55fa844646b4
+  zh: 0ce8ade588ff4cac
 /tomato-client-ui-creation-recommendations:
   en: b43f1d6e43fc6b91
   zh: fc6a415d4b757c0f
 /tomato-client-ui-creation-recommendations/summary:
-  en: c2b93e3c50f80ecd
-  zh: da8aa68e686abddd
+  en: a8fcbe071c951c04
+  zh: 6ecef794e208c48c
 /tomato-client-ui-creation-recommendations/table-of-contents:
   en: d152484eb41ac6b4
   zh: b00dddf4c88f0a45
@@ -18,11 +18,11 @@
   en: bb8d3cd80f82f6a6
   zh: b09c78dfe27c8b78
 /tomato-client-ui-creation-recommendations/use-this-package/outcomes-and-recovery:
-  en: 5a3df9cd58832f91
-  zh: 2068dca0a62394fe
+  en: e6ce5b7dca9ededf
+  zh: 8f41b6d59c913283
 /tomato-client-ui-creation-recommendations/understand-the-implementation:
-  en: 26b049c5e3f38846
-  zh: 15768ae54aec3511
+  en: d493c9dccc11c3a0
+  zh: d2a8d39089dcb4d1
 /tomato-client-ui-creation-recommendations/further-exploration:
   en: 377d1f14f2b7f47a
   zh: f7fd35dae6bc8144

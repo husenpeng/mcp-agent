@@ -9,7 +9,7 @@ kind: "package-bundle"
 
 ## 概述
 
-此可选 Bundle 组合语音服务定义、本地 SenseVoice Provider、带认证的 Remote 与浏览器麦克风控件。随包配置默认禁用。
+此可选 Bundle 组合语音服务定义、本地 SenseVoice 与 Whisper Provider、带认证的 Remote 与浏览器麦克风控件。随包配置默认禁用。
 
 ## 目录
 
@@ -35,7 +35,7 @@ kind: "package-bundle"
 <details>
 <summary>维护者信息 — 点击展开</summary>
 
-静态 `cordis.patch.yml` 添加四个语音条目，选择 `sensevoice-local` 作为默认识别器，并通过 `tomatoHomePath` 提供 Provider 缓存目录。可选 Bundle 安装使插件管理器能够发现此包，但不会在默认配置中选择它。浏览器贡献拥有其生成 Remote 的挂载；稳定 API Remotes 不导入实验性代码。
+静态 `cordis.patch.yml` 添加五个语音条目，选择 `sensevoice-local` 作为默认识别器，并通过 `tomatoHomePath` 提供两个 Provider 的缓存目录。Whisper 条目从其缓存目录读取部署方提供的 `encoder.onnx`、`decoder.onnx` 与 `tokens.txt`，从不下载。可选 Bundle 安装使插件管理器能够发现此包，但不会在默认配置中选择它。浏览器贡献拥有其生成 Remote 的挂载；稳定 API Remotes 不导入实验性代码。
 
 </details>
 

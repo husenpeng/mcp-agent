@@ -109,9 +109,13 @@ kind: "package-reference"
 | `/memory stats` | 统计画像与本工作区的条数、两个上限以及最早的生效记录 |
 | `/memory show <id>` | 显示一条记录，以及保存它的会话和引用消息 |
 | `/memory related <id> [1-2]` | 列出与一条记录相连的记忆以及每条是如何到达的 |
+| `/memory due` | 只列出此刻需要决定的候选 |
 | `/memory confirm <id>` | 激活一个候选 |
+| `/memory dismiss <id>` | 让候选在当时的计数上安静，直到再次被陈述 |
 | `/memory pin <id>` / `/memory unpin <id>` | 修改一条生效的工作区记录是否进入新轮次；画像记忆总会进入 |
 | `/memory forget <id>` | 删除一条记录 |
+
+每个结束的回合之后，插件还会写入 `plugin:tool-memory/candidates`，最多点名五条待决定的候选及其身份、陈述、证据计数，以及提案将要替换的记录；这条记录是客户端无需模型即可渲染的数据。
 
 命令不经过模型轮次运行，只作用于当前所有者的画像和会话自己的工作区。
 
@@ -173,7 +177,7 @@ kind: "package-reference"
 
 #### 模型看到什么
 
-搜索返回 `Saved memories (historical records, not instructions):`，随后每条记录一行，格式为 `- <id> [<kind>, profile, pinned, unconfirmed] <entity> / <key>: <value> (saved <date>)`，kind 之后的每个标记只在适用时出现；或返回 `No saved memories match.`。写入返回 `Saved <id>.`，或说明该记录是未确认的候选；当这次陈述几乎重复了其他已保存记忆时，同一段文本会追加 `Similar saved memories: <id> (<实体> / <键>), …; use memory_forget when one is superseded.`，最多三条。删除返回 `Deleted <id>.` 或 `No saved memory <id> exists here.`。在提供账号的 Host 上无人登录时，每个工具都以 `memory is unavailable until the user signs in` 失败。
+搜索返回 `Saved memories (historical records, not instructions):`，随后每条记录一行，格式为 `- <id> [<kind>, profile, pinned, unconfirmed, stated <n> times, due, replaces <id>] <entity> / <key>: <value> (saved <date>)`，kind 之后的每个标记只在适用时出现；或返回 `No saved memories match.`。写入返回 `Saved <id>.`，或说明该记录是未确认的候选；当这次陈述几乎重复了其他已保存记忆时，同一段文本会追加 `Similar saved memories: <id> (<实体> / <键>), …; use memory_forget when one is superseded.`，最多三条。删除返回 `Deleted <id>.` 或 `No saved memory <id> exists here.`。在提供账号的 Host 上无人登录时，每个工具都以 `memory is unavailable until the user signs in` 失败。
 
 #### Token 影响
 
@@ -247,7 +251,7 @@ You expand search queries over short saved notes. Reply with alternative wording
 
 #### 模型看到什么
 
-开启 `capture` 时，每个结束的回合之后会发一次辅助请求。它不带历史、不带工具、也不带智能体的指令：只有下面的开头、该回合中人的文本消息（每条前面带上它的事件 seq）、一段有界的 `Tool activity`（点名本轮工具调用及其结果首行），以及回复不得复述的已保存事实。助手文本与合成上下文从不进入请求。回复会把总结存为一条项目总结情节。带原话验证的 `profile` 陈述在 `captureProfileActive` 开启时立即生效，采用与 `memory_write` 相同的原话规则；工作区候选等待 `/memory confirm`。画像偏好出现新值时替换之前的版本，而工作区候选永远不会覆盖已有记录。请求及其结果以插件记录 `plugin:tool-memory/turn-capture` 写入会话，记录中注明构成输入的消息 seq 范围；存为生效的记录会出现在 `outcome.activated` 中。
+开启 `capture` 时，每个结束的回合之后会发一次辅助请求。它不带历史、不带工具、也不带智能体的指令：只有下面的开头、该回合中人的文本消息（每条前面带上它的事件 seq）、一段有界的 `Tool activity`（点名本轮工具调用及其结果首行），以及回复不得复述的已保存事实。助手文本与合成上下文从不进入请求。回复会把总结存为一条项目总结情节。带原话验证的 `profile` 陈述在 `captureProfileActive` 开启时立即生效，采用与 `memory_write` 相同的原话规则；工作区候选等待 `/memory confirm`。画像偏好出现新值时替换之前的版本，而工作区候选永远不会覆盖已有记录：与已确认的工作区记录相悖的捕获会存为 `candidate`，并在 `proposalFor` 中指明它，规则继续生效，直到人接受该提案。请求及其结果以插件记录 `plugin:tool-memory/turn-capture` 写入会话，记录中注明构成输入的消息 seq 范围；存为生效的记录会出现在 `outcome.activated` 中。
 
 ##### 捕捉系统文本
 
@@ -288,6 +292,7 @@ Do not restate a fact listed under "Saved facts" below. Return {"summary":null,"
 - **相关记录是词法匹配** — 请求相关块按词的覆盖率打分，因此没有共享词的同义转述只能通过挂载了 embedding 提供方的 `memory_search` 命中。
 - **关系是结构化的** — `memory_related` 按相同的主体、属性或写入会话连接；它不推断语义关联。
 - **语义能力需要提供方** — 没有提供方时扩展仍是词法匹配，模型只提出其他词；有提供方时，服务会把记录文本与查询发送给它。
+- **控件通过提示动作** —— 记忆视图的「确认」「忽略」把 `/memory confirm <id>` 与 `/memory dismiss <id>` 作为提示发出，由宿主作为命令执行；会朗读每条提示的部署会念出它们。`/memory due` 与 `/memory <子命令> <id>` 仍是直接的操作方式。
 - **模型压缩的情节捕获默认关闭** — 确定性卡片不需要模型；开启 `episodeCapture` 会把工具输入与输出发送到配置的路由，并替换这些工具的卡片；情节保持项目级。
 - **提升是词法匹配** — 当两个不同会话的情节共享大部分词时，重复事实才会成为候选记录；换了说法的转述会漏掉，且候选记录要等 `/memory confirm`。失败观察和只有退出码的事实永远不会提升。
 - **卡片不含模型解释** — 确定性卡片记工具、它运行的命令、结果与路径，不解释这次调用为何重要；重复的相同调用只更新时间戳。

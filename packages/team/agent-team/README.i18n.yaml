@@ -5,93 +5,93 @@
 /:
   en: bbaec84fc235ea72
   zh: 27cf5497047053b7
-/deepseek-ai-dsh-agent-team:
-  en: 7b6634fba007904f
-  zh: ba0ef9d7e8802685
-/deepseek-ai-dsh-agent-team/summary:
-  en: 39cd235ebb600b7e
-  zh: 8a4b9ec33d44e5ea
-/deepseek-ai-dsh-agent-team/table-of-contents:
+/tomato-agent-team:
+  en: b743207aed992573
+  zh: 98467f64a1d83ebe
+/tomato-agent-team/summary:
+  en: e2963a9ed2a72d6c
+  zh: a2994c2b8e5353f6
+/tomato-agent-team/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
-/deepseek-ai-dsh-agent-team/use-this-package:
-  en: 92311f706a7fefa9
-  zh: 76bc555e6af63d29
-/deepseek-ai-dsh-agent-team/use-this-package/when-to-choose-it:
+/tomato-agent-team/use-this-package:
+  en: 43262fb186a24742
+  zh: 2f967ba0b348d985
+/tomato-agent-team/use-this-package/when-to-choose-it:
   en: 41e193fafb0b96f9
   zh: 3265330fe77b3707
-/deepseek-ai-dsh-agent-team/use-this-package/smallest-working-setup:
-  en: 91d685c0498c8087
-  zh: 41f635be59c9b398
-/deepseek-ai-dsh-agent-team/use-this-package/teammates:
+/tomato-agent-team/use-this-package/smallest-working-setup:
+  en: 2a23d6566b4dd528
+  zh: 05a5dc78cdc845b4
+/tomato-agent-team/use-this-package/teammates:
   en: 26e5e5322356eadf
   zh: 400bcf10902d167a
-/deepseek-ai-dsh-agent-team/use-this-package/messages-between-teammates:
+/tomato-agent-team/use-this-package/messages-between-teammates:
   en: 55235dedfdc54998
   zh: f0746747507e291e
-/deepseek-ai-dsh-agent-team/use-this-package/shared-task-board:
+/tomato-agent-team/use-this-package/shared-task-board:
   en: 27e822116b00ca32
   zh: b49fa665c72692bf
-/deepseek-ai-dsh-agent-team/use-this-package/waiting-and-interruption:
-  en: 2d266b76e6fea2a7
-  zh: 4c829e65ba77e406
-/deepseek-ai-dsh-agent-team/use-this-package/what-success-and-failure-look-like:
+/tomato-agent-team/use-this-package/waiting-and-interruption:
+  en: b1897abb4b5c9d2f
+  zh: 15181bc57229429c
+/tomato-agent-team/use-this-package/what-success-and-failure-look-like:
   en: 36814f2b06dc2359
   zh: c46af795bc89942f
-/deepseek-ai-dsh-agent-team/understand-the-implementation:
+/tomato-agent-team/understand-the-implementation:
   en: 6a18034f1ccc247a
   zh: e08b0eb0ccb41ea8
-/deepseek-ai-dsh-agent-team/understand-the-implementation/design-philosophy:
-  en: 864117c368113c14
-  zh: 6f8b66333e517ca2
-/deepseek-ai-dsh-agent-team/understand-the-implementation/source-map:
+/tomato-agent-team/understand-the-implementation/design-philosophy:
+  en: e050aace0048ea57
+  zh: 63daa9c1e23c5df2
+/tomato-agent-team/understand-the-implementation/source-map:
   en: 5831a7143e7a1fa9
   zh: c828f09ffef9b74f
-/deepseek-ai-dsh-agent-team/understand-the-implementation/team-identity-and-membership:
+/tomato-agent-team/understand-the-implementation/team-identity-and-membership:
   en: 6edb88f9d3fde16a
   zh: 7918022f3e09ef46
-/deepseek-ai-dsh-agent-team/understand-the-implementation/task-assignees:
+/tomato-agent-team/understand-the-implementation/task-assignees:
   en: 7fa01f9974908f37
   zh: 2181e6180a867e32
-/deepseek-ai-dsh-agent-team/understand-the-implementation/messages-and-historical-mailbox:
+/tomato-agent-team/understand-the-implementation/messages-and-historical-mailbox:
   en: d8a199f2e66db836
   zh: 65578fa4a8766ce6
-/deepseek-ai-dsh-agent-team/understand-the-implementation/shared-task-board:
+/tomato-agent-team/understand-the-implementation/shared-task-board:
   en: a3eaccd15b02cc8f
   zh: c2829d437a1dfe57
-/deepseek-ai-dsh-agent-team/understand-the-implementation/durability-model:
-  en: 702ab0504cdb8fab
-  zh: 93cb260d2d108239
-/deepseek-ai-dsh-agent-team/understand-the-implementation/disposal:
+/tomato-agent-team/understand-the-implementation/durability-model:
+  en: dd9e0278a5755758
+  zh: 6aba7fca0f34f32c
+/tomato-agent-team/understand-the-implementation/disposal:
   en: a8baf51f2fcd6d49
   zh: 357c8db36823fe0e
-/deepseek-ai-dsh-agent-team/understand-the-implementation/browser-projection:
-  en: ed33e64ea55d2b75
-  zh: eb326025ff156dea
-/deepseek-ai-dsh-agent-team/further-exploration:
-  en: 60d969ec526f5556
-  zh: ed4f813006f86215
-/deepseek-ai-dsh-agent-team/model-experience:
+/tomato-agent-team/understand-the-implementation/browser-projection:
+  en: f858b4d0f3e5a34c
+  zh: 36d76f1cf4ba812d
+/tomato-agent-team/further-exploration:
+  en: 65d0cb1449363f9f
+  zh: b2d67886c848321f
+/tomato-agent-team/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
-/deepseek-ai-dsh-agent-team/model-experience/task-views-and-errors:
+/tomato-agent-team/model-experience/task-views-and-errors:
   en: 8b29cb821f80db40
   zh: 43e402736a553ce5
-/deepseek-ai-dsh-agent-team/model-experience/task-views-and-errors/what-the-model-sees:
-  en: 97de871641a44120
-  zh: 2c2e65ca29e89668
-/deepseek-ai-dsh-agent-team/model-experience/task-views-and-errors/token-effect:
+/tomato-agent-team/model-experience/task-views-and-errors/what-the-model-sees:
+  en: 9260966a8bea7515
+  zh: 8c4883280b52c884
+/tomato-agent-team/model-experience/task-views-and-errors/token-effect:
   en: 9e87d5f5aec04775
   zh: da4230e3cad15de6
-/deepseek-ai-dsh-agent-team/model-experience/task-views-and-errors/kv-cache-effect:
+/tomato-agent-team/model-experience/task-views-and-errors/kv-cache-effect:
   en: 2b6842dc044d70ce
   zh: 9f120fb4eb656f5f
-/deepseek-ai-dsh-agent-team/known-limitations-and-deferred-work:
+/tomato-agent-team/known-limitations-and-deferred-work:
   en: ee7ee8f5c77955cd
   zh: 6ff2c042468d375b
-/deepseek-ai-dsh-agent-team/known-limitations-and-deferred-work/dev-note:
+/tomato-agent-team/known-limitations-and-deferred-work/dev-note:
   en: 498e4cf9fe5741a7
   zh: 9d2bab630e655c99
-/deepseek-ai-dsh-agent-team/known-limitations-and-deferred-work/dev-note/future-directions:
+/tomato-agent-team/known-limitations-and-deferred-work/dev-note/future-directions:
   en: 39d7ee66217a58eb
   zh: 229016fb44c10ce5

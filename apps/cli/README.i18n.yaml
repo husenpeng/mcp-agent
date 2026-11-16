@@ -17,6 +17,9 @@
 /tomato-cli/optional-overlays:
   en: ae371a479786b934
   zh: fad0e4f058ef414b
+/tomato-cli/installed-payload:
+  en: c19f3d56f611f173
+  zh: 5002a7a318414960
 /tomato-cli/development:
   en: c8017a36cbb0875f
   zh: 612d74a7731ef2cb

@@ -3,38 +3,38 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/skill/skill-office/README.md
 /:
-  en: b65118b967447a79
-  zh: 83afe7dbc1a82c44
+  en: 0f4a6d0244a9d9bf
+  zh: c93c159987c4881d
 /tomato-skill-office:
   en: 712195d3c1704125
   zh: f5e1d6a71d6cacca
 /tomato-skill-office/summary:
-  en: 3f41e39809756048
-  zh: 5ec8623eeb617755
+  en: 58c425c692c30959
+  zh: b17cc2a33624d69a
 /tomato-skill-office/table-of-contents:
   en: c361195a73cf5755
   zh: 745b04e7be0be369
 /tomato-skill-office/use-this-package:
-  en: 99fd72101ee391ec
-  zh: d2686c490da7760d
+  en: 980d10747bcaf7fe
+  zh: 81d3a78b7570a12a
 /tomato-skill-office/use-this-package/progressive-loading:
-  en: 86278b4393aa8d81
-  zh: 55cfd145a7734ebd
+  en: 34dba830aba25713
+  zh: 0d670be50fd30115
 /tomato-skill-office/understand-the-implementation:
-  en: 6946e30f3663c72f
-  zh: 81dd5de9c7e61562
+  en: 979cdfe0f498bc48
+  zh: 1a0fa84d3a43f37b
 /tomato-skill-office/further-exploration:
-  en: 77b81eee91354b06
-  zh: c74850610f2b13de
+  en: 8375ea59c18c54cc
+  zh: 82b3af51a50f1959
 /tomato-skill-office/model-experience:
-  en: a9d88ca3874cd496
-  zh: 9ac3609be873733e
+  en: 57a094740a19fcbe
+  zh: 5bffd6e5fea9138e
 /tomato-skill-office/model-experience/kv-cache-effect:
-  en: dc9e9205d989f1d0
-  zh: 01bdbbfba743813a
+  en: 82649bba2b18f520
+  zh: deb9b8c52d2205c6
 /tomato-skill-office/known-limitations-and-deferred-work:
-  en: 1f718fc3bb4352d9
-  zh: c1aa108ad2b05fdd
+  en: af3a40fdd4da52d6
+  zh: 7e8a5aada81142e9
 /tomato-skill-office/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 8ec3e73528ddb1a6

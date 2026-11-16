@@ -15,23 +15,23 @@
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /tomato-client-ui-model-selection/use-this-package:
-  en: c682d7e21ce04771
-  zh: 645f336c8e295579
+  en: 76a4f59f23924b63
+  zh: 36eacf2320724b06
 /tomato-client-ui-model-selection/use-this-package/model-and-effort:
-  en: 1cefcfc15dc63918
-  zh: 1f2576a44bb5ff29
+  en: af9513624e9a58e7
+  zh: b8225f924cd2e1f8
 /tomato-client-ui-model-selection/use-this-package/model-label-extensions:
-  en: bc47871cf8b61451
-  zh: 17d21da46604f071
+  en: a37274a5a81cc409
+  zh: fa2d8dbeb6e59c61
 /tomato-client-ui-model-selection/use-this-package/unroutable-sessions:
   en: 7f20428c747ff052
   zh: 975e6de728e02fa0
 /tomato-client-ui-model-selection/use-this-package/selection-failures:
-  en: ccd9bf846386495e
-  zh: 93fe1b6f4c51c2a4
+  en: af06ebabcfb951b0
+  zh: 5bc9d3fc36c3da0e
 /tomato-client-ui-model-selection/understand-the-implementation:
-  en: 0bd23eaf2f0910c5
-  zh: 35bf844845c93109
+  en: 808610bc0c8f78a6
+  zh: b5fb159d4afc648f
 /tomato-client-ui-model-selection/further-exploration:
   en: fb435eddebc95ca3
   zh: 3b6e99cfcf63c480
@@ -42,8 +42,8 @@
   en: 68e54c00412a40d1
   zh: 0ac96f57fd194d96
 /tomato-client-ui-model-selection/known-limitations-and-deferred-work:
-  en: 75b37954ceacd92a
-  zh: a49d0361486e35c4
+  en: 7003aff3aa57e40c
+  zh: 450d88a5e9332f05
 /tomato-client-ui-model-selection/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

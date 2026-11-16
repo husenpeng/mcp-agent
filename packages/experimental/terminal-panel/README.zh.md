@@ -134,7 +134,7 @@ Terminals you open with terminal_open appear in the user's side panel. The user 
 
 #### 模型看到什么
 
-两个 schema 列在 [`@tomato/terminal-panel` 目录小节](../../../docs/tool-catalog.zh.md#deepseek-aitomato-terminal-panel)中。6 个终端工具沿用 [`@tomato/tool-terminal`](../../../docs/tool-catalog.zh.md#deepseek-aitomato-tool-terminal) 的 schema。
+两个 schema 列在 [`@tomato/terminal-panel` 目录小节](../../../docs/tool-catalog.zh.md#tomatoterminal-panel)中。6 个终端工具沿用 [`@tomato/tool-terminal`](../../../docs/tool-catalog.zh.md#tomatotool-terminal) 的 schema。
 
 #### Token 影响
 

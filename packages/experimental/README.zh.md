@@ -76,9 +76,6 @@ kind: "package-group"
 | [`plugin-market-bundle`](plugin-market-bundle/README.zh.md) | 默认禁用的可选自定义插件索引：索引服务和「发现」标签页 | — |
 | [`liveshare-protocol`](liveshare-protocol/README.zh.md) | owner bundle 与 Relay 共用的线路帧与身份契约 | — |
 | [`voice-input-bundle`](voice-input-bundle/README.zh.md) | 默认禁用的可选语音输入组合 | — |
-| [`agent-team-profile`](agent-team-profile/README.zh.md) | Agent Teams 协作、工具与 Web UI 组合包 | — |
-| [`agent-team`](agent-team/README.zh.md) | 具名 teammate，成员之间直接消息与持久共享任务板 | `ctx.agentTeams` |
-| [`client-ui-agent-team`](client-ui-agent-team/README.zh.md) | Web Team roster、任务板与 teammate 导航 | — |
 | [`auto-review`](auto-review/README.zh.md) | 显式 Web 层，在每个原生或 PTC inner 工具调用前使用同一模型审查 | — |
 | [`subagent-oar`](subagent-oar/README.zh.md) | 通过 OAR 执行外部编程智能体的独立任务 | `ctx.subagents` |
 | [`tool-subagent-oar`](tool-subagent-oar/README.zh.md) | 为每项委派任务选择配置的外部代理 | `ctx.tools` |
@@ -105,7 +102,6 @@ kind: "package-group"
 | [`experimental-robot-room-remote`](experimental-robot-room-remote/README.zh.md) | 在可选客户端装配中挂载生成的 room Remote 贡献 | — |
 | [`robot-runtime`](robot-runtime/README.zh.md) | 通过组合的 Agent 执行排队的机器人 run 并记录结果 | — |
 | [`robot-triggers`](robot-triggers/README.zh.md) | 从 cron 调度与机器人事件主题启动机器人 run | — |
-| [`tool-agent-team`](tool-agent-team/README.zh.md) | 让模型创建、发消息与协调 teammate 的九个工具 | 按作用域注册工具到 `ctx.tools` |
 | [`tool-worktree`](tool-worktree/README.zh.md) | 创建并进入工作树的可选 bundle 与模型工具 | `ctx.tools` |
 | [`webworker-packer`](webworker-packer/README.zh.md) | 构建浏览器 worker 预览所消费的 gzip 压缩虚拟文件系统（VFS）镜像 | 库与 CLI（命令行界面），不使用 ctx key |
 | [`webworker-runtime`](webworker-runtime/README.zh.md) | 在专用浏览器 worker 中运行 harness 插件树 | 库与 worker 入口，不使用 ctx key |

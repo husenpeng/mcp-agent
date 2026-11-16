@@ -5,96 +5,96 @@
 /:
   en: 6440e0efb151c0fa
   zh: d767308eb95b9d3f
-/deepseek-ai-tomato-mcp-client:
-  en: c3e635d210dd707e
-  zh: bd749579307d6a2d
-/deepseek-ai-@tomato/mcp-client/summary:
-  en: 428cc4078a9d5b53
-  zh: 49b867131f518c0f
-/deepseek-ai-@tomato/mcp-client/table-of-contents:
+/tomato-mcp-client:
+  en: 2254d66cfa3c2d21
+  zh: 361281a37bba2a71
+/tomato-mcp-client/summary:
+  en: d8a9dcb9c74f6c43
+  zh: 7f68f9473fe713e7
+/tomato-mcp-client/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
-/deepseek-ai-@tomato/mcp-client/use-this-package:
-  en: e77871d58566601a
-  zh: c5ef229d22eb3ebf
-/deepseek-ai-@tomato/mcp-client/use-this-package/minimal-configuration:
-  en: ddabcaed3c51d7a3
-  zh: 98b40b12fca41d36
-/deepseek-ai-@tomato/mcp-client/use-this-package/tool-naming-and-coexistence:
+/tomato-mcp-client/use-this-package:
+  en: 11c6e015350003f2
+  zh: c0d81b771d84a963
+/tomato-mcp-client/use-this-package/minimal-configuration:
+  en: 999d80404784bb1e
+  zh: f7897865502e08e4
+/tomato-mcp-client/use-this-package/tool-naming-and-coexistence:
   en: 75ae9745d5b04796
   zh: 8ae5b8ca6e73296e
-/deepseek-ai-@tomato/mcp-client/use-this-package/calling-tools-and-reading-results:
+/tomato-mcp-client/use-this-package/calling-tools-and-reading-results:
   en: cad16c6102b0e316
   zh: 03841eea6ead54cd
-/deepseek-ai-@tomato/mcp-client/use-this-package/startup-updates-and-reconnection:
+/tomato-mcp-client/use-this-package/startup-updates-and-reconnection:
   en: 213d2d67088beccc
   zh: 1e3ff5454c937f11
-/deepseek-ai-@tomato/mcp-client/use-this-package/runtime-templates-and-credentials:
-  en: 255e8f48e5981b52
-  zh: 7b4ad77794c6b7fc
-/deepseek-ai-@tomato/mcp-client/understand-the-implementation:
+/tomato-mcp-client/use-this-package/runtime-templates-and-credentials:
+  en: 256eb6b93653110a
+  zh: 259bf5a08d460748
+/tomato-mcp-client/understand-the-implementation:
   en: d33ddd080880b3f5
   zh: 64328f5239c26752
-/deepseek-ai-@tomato/mcp-client/understand-the-implementation/design-philosophy:
+/tomato-mcp-client/understand-the-implementation/design-philosophy:
   en: 4e213d68082b07f0
   zh: 7617949ba46a3b63
-/deepseek-ai-@tomato/mcp-client/understand-the-implementation/source-map:
+/tomato-mcp-client/understand-the-implementation/source-map:
   en: a24bab044e8ded03
   zh: b02c605363467b83
-/deepseek-ai-@tomato/mcp-client/understand-the-implementation/lifecycle-and-sync:
-  en: 1793a89464c70cec
-  zh: fcf7b9c2eb343ce3
-/deepseek-ai-@tomato/mcp-client/understand-the-implementation/tool-execution-internals:
+/tomato-mcp-client/understand-the-implementation/lifecycle-and-sync:
+  en: ef4196b4ce0d51af
+  zh: a521e7fe89ae70b2
+/tomato-mcp-client/understand-the-implementation/tool-execution-internals:
   en: bb161208cc002746
   zh: 3ab0588ca71effe5
-/deepseek-ai-@tomato/mcp-client/understand-the-implementation/environment-scrubbing-stdio:
-  en: fef482a6f8cc789f
-  zh: 08f4c594ec83b4a1
-/deepseek-ai-@tomato/mcp-client/further-exploration:
-  en: 1374f838098f1fc4
-  zh: a8393b3130fd7a72
-/deepseek-ai-@tomato/mcp-client/model-experience:
+/tomato-mcp-client/understand-the-implementation/environment-scrubbing-stdio:
+  en: 80e665b11740c8ec
+  zh: bc6f9550bccd62e3
+/tomato-mcp-client/further-exploration:
+  en: dfd89bbaedb485ab
+  zh: d6afccd7d6e3dd12
+/tomato-mcp-client/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
-/deepseek-ai-@tomato/mcp-client/model-experience/discovered-mcp-tools:
+/tomato-mcp-client/model-experience/discovered-mcp-tools:
   en: 9f6397197d9a607d
   zh: 79cf93aaf2e25a39
-/deepseek-ai-@tomato/mcp-client/model-experience/discovered-mcp-tools/what-the-model-sees:
+/tomato-mcp-client/model-experience/discovered-mcp-tools/what-the-model-sees:
   en: 866a129e71634e0e
   zh: b27e4b22a07c2f26
-/deepseek-ai-@tomato/mcp-client/model-experience/discovered-mcp-tools/token-effect:
-  en: ac85a6a5130c6440
-  zh: 9a31229f5355432b
-/deepseek-ai-@tomato/mcp-client/model-experience/discovered-mcp-tools/kv-cache-effect:
+/tomato-mcp-client/model-experience/discovered-mcp-tools/token-effect:
+  en: 30babd9b51310957
+  zh: 31c29916404d9f84
+/tomato-mcp-client/model-experience/discovered-mcp-tools/kv-cache-effect:
   en: dae97512f6d61027
   zh: 5e6103fab15ab42d
-/deepseek-ai-@tomato/mcp-client/model-experience/tool-call-history-and-results:
+/tomato-mcp-client/model-experience/tool-call-history-and-results:
   en: a8503137ad03720c
   zh: 611a2dadf7c0c706
-/deepseek-ai-@tomato/mcp-client/model-experience/tool-call-history-and-results/what-the-model-sees:
+/tomato-mcp-client/model-experience/tool-call-history-and-results/what-the-model-sees:
   en: 5b3a7fe5bf11e73b
   zh: e015c2468962fcf3
-/deepseek-ai-@tomato/mcp-client/model-experience/tool-call-history-and-results/token-effect:
+/tomato-mcp-client/model-experience/tool-call-history-and-results/token-effect:
   en: cc030374eca00e1c
   zh: d4b19b9db621b367
-/deepseek-ai-@tomato/mcp-client/model-experience/tool-call-history-and-results/kv-cache-effect:
+/tomato-mcp-client/model-experience/tool-call-history-and-results/kv-cache-effect:
   en: f5d5f97a153f7c70
   zh: 31911b4f3506d6c8
-/deepseek-ai-@tomato/mcp-client/model-experience/server-instructions:
+/tomato-mcp-client/model-experience/server-instructions:
   en: a3cb7c5760a8c141
   zh: ec9fc8d4f00a5eb6
-/deepseek-ai-@tomato/mcp-client/model-experience/server-instructions/what-the-model-sees:
+/tomato-mcp-client/model-experience/server-instructions/what-the-model-sees:
   en: d3e9d53702f9c494
   zh: 62bd2b185abbd38c
-/deepseek-ai-@tomato/mcp-client/model-experience/server-instructions/token-effect:
+/tomato-mcp-client/model-experience/server-instructions/token-effect:
   en: 082214331ebf38d7
   zh: 2251c4f8e4d2e05c
-/deepseek-ai-@tomato/mcp-client/model-experience/server-instructions/kv-cache-effect:
+/tomato-mcp-client/model-experience/server-instructions/kv-cache-effect:
   en: 189198f7ace2a991
   zh: 00948145a803d614
-/deepseek-ai-@tomato/mcp-client/known-limitations-and-deferred-work:
-  en: b9328b9c1ca68299
-  zh: 8d1b2f1c94108857
-/deepseek-ai-@tomato/mcp-client/known-limitations-and-deferred-work/dev-note:
-  en: 34374b896d0fcd40
-  zh: 0a4c5a161a91f173
+/tomato-mcp-client/known-limitations-and-deferred-work:
+  en: 5aac96916d0c27ae
+  zh: e357dbe46f78834f
+/tomato-mcp-client/known-limitations-and-deferred-work/dev-note:
+  en: 3230c30a226ebe2a
+  zh: fbe4dd6bd462feaf

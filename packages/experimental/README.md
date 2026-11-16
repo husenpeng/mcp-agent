@@ -76,9 +76,6 @@ Promotion requires a named product role, documented public behavior and limitati
 | [`plugin-market-bundle`](plugin-market-bundle/README.md) | Default-disabled optional custom plugin indexes: the index service and the Discover tab | — |
 | [`liveshare-protocol`](liveshare-protocol/README.md) | Wire frames and the identity contract shared by the owner bundle and the Relay | — |
 | [`voice-input-bundle`](voice-input-bundle/README.md) | Default-disabled optional voice input composition | — |
-| [`agent-team-profile`](agent-team-profile/README.md) | Agent Teams collaboration, tools, and Web UI bundle | — |
-| [`agent-team`](agent-team/README.md) | Named teammates with direct messages and a durable shared task board | `ctx.agentTeams` |
-| [`client-ui-agent-team`](client-ui-agent-team/README.md) | Team roster, task board, and teammate navigation for Web | — |
 | [`auto-review`](auto-review/README.md) | Explicit Web layer for same-model review before each native or PTC inner tool call | — |
 | [`subagent-oar`](subagent-oar/README.md) | Run standalone external coding-agent tasks through OAR | `ctx.subagents` |
 | [`tool-subagent-oar`](tool-subagent-oar/README.md) | Select a configured external agent for each delegated task | `ctx.tools` |
@@ -105,7 +102,6 @@ Promotion requires a named product role, documented public behavior and limitati
 | [`experimental-robot-room-remote`](experimental-robot-room-remote/README.md) | Mounts the generated room Remote contribution in an optional client assembly | — |
 | [`robot-runtime`](robot-runtime/README.md) | Executes queued robot runs through a composed Agent and records outcomes | — |
 | [`robot-triggers`](robot-triggers/README.md) | Starts robot runs from cron schedules and robot event topics | — |
-| [`tool-agent-team`](tool-agent-team/README.md) | Nine tools that let the model create, message, and coordinate teammates | registers scoped tools on `ctx.tools` |
 | [`tool-worktree`](tool-worktree/README.md) | Optional bundle and model tool for creating and entering worktrees | `ctx.tools` |
 | [`webworker-packer`](webworker-packer/README.md) | Builds the gzip-compressed VFS image consumed by the browser worker preview | library and CLI — no ctx key |
 | [`webworker-runtime`](webworker-runtime/README.md) | Runs the harness plugin tree inside a dedicated browser worker | library and worker entry — no ctx key |

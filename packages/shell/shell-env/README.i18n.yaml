@@ -18,26 +18,26 @@
   en: 225fc89e2462a9ad
   zh: a3f654e3f7cf092b
 /tomato-shell-env/use-this-package/what-every-shell-call-receives:
-  en: ff931ba15009a03d
-  zh: 66a173bc4ccc3c38
+  en: 87157d688c741b81
+  zh: f18cdd981f28fea3
 /tomato-shell-env/use-this-package/adding-your-own-environment-facts:
-  en: 05530728ded2aa9b
-  zh: 866e5216096857eb
+  en: 07e62968091e6b48
+  zh: b3fdebab6ea1ac07
 /tomato-shell-env/use-this-package/choosing-the-harness-home:
   en: 63eedba1ddc5609e
   zh: cf2b162d264eb7b4
 /tomato-shell-env/use-this-package/what-can-go-wrong:
-  en: 7e8975c71e1bbbd4
-  zh: b2d0587869c4f99b
+  en: 2658fc7588c90b3f
+  zh: 3141522bec86deca
 /tomato-shell-env/understand-the-implementation:
   en: f782557ca8da3138
   zh: e8f0082b9692cacc
 /tomato-shell-env/understand-the-implementation/design-philosophy:
-  en: 0654bc728f955e4f
-  zh: e0ef6b5e464dc911
+  en: cffcba2773bee8a0
+  zh: 50e51ac258ce9200
 /tomato-shell-env/understand-the-implementation/source-map:
-  en: 72eba3bfadcfa581
-  zh: dcd83e02a1910f27
+  en: da18240c8c1dc687
+  zh: a854ddaca8953832
 /tomato-shell-env/understand-the-implementation/collection:
   en: dfd8286ff0800bf6
   zh: 4e6f49d6ae54070d
@@ -51,8 +51,8 @@
   en: e95e649f0410fa75
   zh: b3d64877420b4c0d
 /tomato-shell-env/known-limitations-and-deferred-work:
-  en: 96cee24152d7e710
-  zh: 0b586cb4b59188b2
+  en: 757c1f268cb39c5d
+  zh: e3cccd18ba09d904
 /tomato-shell-env/known-limitations-and-deferred-work/dev-note:
   en: e67f633dc6fe7773
   zh: 3bb0c20c93f16f98

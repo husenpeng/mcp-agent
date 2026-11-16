@@ -9,32 +9,35 @@
   en: 06e39da3b37d7898
   zh: 03ea946971ec297a
 /tomato-sdk-client/summary:
-  en: ffa13f7de43a857d
-  zh: 9a9619a4c9c527d0
+  en: 183a1ee61c23d0c7
+  zh: 538ab0f9c552f2eb
 /tomato-sdk-client/table-of-contents:
   en: d152484eb41ac6b4
   zh: 09388d293f9be9cb
 /tomato-sdk-client/use-this-package:
-  en: 7a95370c1e7ef3ce
-  zh: fe93f73b2b775a22
+  en: ca2835dae7fc44ac
+  zh: bb3bb72cfcb9c4fe
 /tomato-sdk-client/use-this-package/running-agent-turns-with-deepseekharness:
-  en: 01c58dddd7e62de2
-  zh: 6dbd46e244f3f135
+  en: 1a36c54463e17340
+  zh: ad67f9cbccc56def
+/tomato-sdk-client/use-this-package/run-text-and-native-commands:
+  en: b364c3bc03b5aeed
+  zh: 365ba6afedea18e7
 /tomato-sdk-client/use-this-package/lower-level-control-with-harnessclient:
-  en: d224f83742378a75
-  zh: d0af9caec3fafa95
+  en: 88a690b05c804617
+  zh: c5860c872165d720
 /tomato-sdk-client/use-this-package/native-user-questions:
-  en: ea40f378444c8153
-  zh: 96e29c99aa5c15f0
+  en: f5b9d6a7363bd9e5
+  zh: f53b3786d22a729d
 /tomato-sdk-client/understand-the-implementation:
   en: 8773f50c51da85f0
   zh: 4649ebc69357deb0
 /tomato-sdk-client/understand-the-implementation/design-concept:
-  en: f460be3b5ee45e3b
-  zh: faa82c30de657432
+  en: eb9465a868ac4e37
+  zh: 13776972faa9a927
 /tomato-sdk-client/understand-the-implementation/source-map:
-  en: a3c7978a80f5aba3
-  zh: fdc4dfdafd2eccfa
+  en: ee896439a5c07ca3
+  zh: 1b18751fe2db250e
 /tomato-sdk-client/understand-the-implementation/owned-activity-flow:
   en: 94a42babac5f1c7d
   zh: df9e42ed02f7d002
@@ -51,8 +54,8 @@
   en: 7abe0be104a791e7
   zh: 445311f78b1069ca
 /tomato-sdk-client/known-limitations-and-deferred-work:
-  en: 27d11e47df2033b5
-  zh: b8d7b28befcf74eb
+  en: 405ed71a9cd0ecb8
+  zh: d2d3f937af085f5f
 /tomato-sdk-client/known-limitations-and-deferred-work/dev-note:
   en: 6177a56f053936a4
   zh: 0f4b20228c2d15da
