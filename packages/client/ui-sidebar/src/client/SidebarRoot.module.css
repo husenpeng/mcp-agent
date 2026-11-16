@@ -616,9 +616,18 @@
 .panelEntry {
   position: relative;
   display: flex;
+  /* A panel's nested subnav (`sidebar.panellist.subnav`) renders inside the
+     entry after its row; wrapping puts it on its own full-width line under the
+     row instead of as a second column beside it. */
+  flex-wrap: wrap;
   border-inline: var(--tomato-sidebar-paint-inset) solid transparent;
   border-radius: var(--dsw-radius-md);
   background-clip: padding-box;
+}
+
+.panelEntry > :not(:first-child, .panelUnpin) {
+  flex: 1 0 100%;
+  min-width: 0;
 }
 
 .panelEntryWide > *:first-child {

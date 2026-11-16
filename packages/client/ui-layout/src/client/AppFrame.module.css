@@ -3,6 +3,7 @@
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
   height: 100%;
+  box-sizing: border-box;
   overflow: hidden;
   background: var(--dsw-alias-bg-base);
 }
@@ -55,7 +56,11 @@
   }
 }
 
+/* Columns state their tracks: the drawer mask precedes them in document order
+   and would otherwise take the first cell. */
 .sidebarCol {
+  grid-column: 1;
+  grid-row: 1;
   position: relative;
   z-index: 1;
   min-width: 0;
@@ -66,18 +71,22 @@
 }
 
 .centerCol {
+  grid-column: 2;
+  grid-row: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-/* The center occupant fills the column, whether it is the built-in main panel
-   or a plugin-owned wrapper in the main slot. Without the growth, a conversation
-   in the hero phase measures its content height and centers the hero near the
-   top instead of the column center. */
-.centerCol > * {
-  flex: 1 1 auto;
+/* The main panel fills the column with a bounded height, so an occupant that
+   sizes itself `height: 100%` or owns an inner scroller resolves against the
+   column instead of growing with its content. */
+.mainPanel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
   min-height: 0;
 }
 
@@ -276,9 +285,102 @@
  * where it is. The occupant draws its own left border.
  */
 .rightbarCol {
+  grid-column: 3;
+  grid-row: 1;
   position: relative;
   min-width: 0;
   overflow: visible;
+}
+
+/* Below the drawer breakpoint the sidebar leaves the grid and slides over the
+   frame from the left edge, above a dimming mask. */
+.frame[data-sidebar-drawer] {
+  --tomato-frame-leading-clearance: 84px;
+  overflow: clip;
+}
+
+:global(html:not([data-platform])) .frame[data-sidebar-drawer] {
+  /* 12px seat offset + 28px opener + 8px gap; Desktop keeps room for two controls. */
+  --tomato-frame-leading-clearance: 48px;
+}
+
+.frame[data-sidebar-drawer] .mainPanel[data-global-panel] {
+  padding-top: max(0px, calc(48px - var(--tomato-frame-top-clearance, 0px)));
+}
+
+.frame[data-sidebar-drawer] .sidebarCol {
+  position: absolute;
+  grid-area: auto;
+  inset: 0 auto 0 0;
+  z-index: 71;
+  box-sizing: border-box;
+  border-right: none;
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform var(--ds-transition-duration-slow) var(--ds-ease-in-out);
+}
+
+/* A drawer covers the conversation, so it paints the opaque sidebar fill
+   rather than the translucent macOS tint. */
+:global([data-platform='darwin']) .frame[data-sidebar-drawer] .sidebarCol {
+  background: var(--dsw-specific-sidebar-fill);
+}
+
+.frame[data-sidebar-drawer][data-sidebar-collapsed] .sidebarCol {
+  transform: translateX(-100%);
+  visibility: hidden;
+  transition:
+    transform var(--ds-transition-duration-slow) var(--ds-ease-in-out),
+    visibility 0s linear var(--ds-transition-duration-slow);
+}
+
+.frame[data-sidebar-drawer][data-sidebar-instant] .sidebarCol {
+  transition: none;
+}
+
+.drawerMask {
+  position: absolute;
+  inset: var(--tomato-frame-chrome-top, 0px) 0 0;
+  z-index: 70;
+  background: var(--dsw-alias-bg-mask-1);
+  backdrop-filter: var(--dsw-mask-blur);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--ds-transition-duration-slow) var(--ds-ease-in-out);
+}
+
+.frame[data-sidebar-drawer]:not([data-sidebar-collapsed]) .drawerMask {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.frame[data-sidebar-drawer] .leadingSeat {
+  top: 11px;
+  left: 12px;
+}
+
+:global([data-platform='darwin']) .frame[data-sidebar-drawer] {
+  --tomato-frame-leading-clearance: 160px;
+}
+
+:global([data-platform='darwin']) .frame[data-sidebar-drawer] .leadingSeat {
+  left: 88px;
+}
+
+:global([data-platform='darwin'][data-fullscreen]) .frame[data-sidebar-drawer] {
+  --tomato-frame-leading-clearance: 84px;
+}
+
+:global([data-platform='darwin'][data-fullscreen]) .frame[data-sidebar-drawer] .leadingSeat {
+  left: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frame[data-sidebar-drawer] .sidebarCol,
+  .frame[data-sidebar-drawer][data-sidebar-collapsed] .sidebarCol,
+  .drawerMask {
+    transition: none;
+  }
 }
 
 .bottomRow {

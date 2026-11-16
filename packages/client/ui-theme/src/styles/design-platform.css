@@ -368,6 +368,7 @@ body {
   --dsw-alias-toast-bg: var(--dsw-static-tomato-gray-10);
   --dsw-alias-toast-label: var(--dsw-static-tomato-gray-100);
   --dsw-alias-tooltip-bg: var(--dsw-static-tomato-gray-20);
+  --dsw-alias-tooltip-label: var(--dsw-static-tomato-gray-100);
   --dsw-alias-tooltip-key-bg: color-mix(in srgb, var(--dsw-alias-tooltip-bg), white 18%);
   --dsw-alias-turn-trigger-bg: var(--dsw-alias-markdown-code-block);
   --dsw-alias-turn-trigger-bg-hover: var(--dsw-alias-interactive-bg-hover);
@@ -491,6 +492,7 @@ body[data-ds-dark-theme] {
   --dsw-alias-toast-bg: var(--dsw-static-tomato-gray-30);
   --dsw-alias-toast-label: var(--dsw-static-tomato-gray-95);
   --dsw-alias-tooltip-bg: var(--dsw-static-tomato-gray-30);
+  --dsw-alias-tooltip-label: var(--dsw-static-tomato-gray-100);
   --dsw-alias-tooltip-key-bg: color-mix(in srgb, var(--dsw-alias-tooltip-bg), white 18%);
   --dsw-alias-turn-trigger-bg: var(--dsw-alias-interactive-bg-hover);
   --dsw-alias-turn-trigger-bg-hover: var(--dsw-alias-interactive-bg-active);

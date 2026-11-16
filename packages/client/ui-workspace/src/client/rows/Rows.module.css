@@ -22,7 +22,7 @@
   background-color: transparent;
   background-image: var(--dsw-brand-gradient-signature);
   box-shadow: var(--dsw-specific-shadow-nav-active);
-  color: var(--dsw-alias-label-primary-inverted);
+  color: rgb(255, 255, 255);
 }
 
 .sessionRow.selected .title,
@@ -410,21 +410,21 @@
 .hoverTitle {
   font-size: 14px;
   line-height: 20px;
-  color: var(--dsw-alias-label-primary-inverted);
+  color: #FFFFFF;
   overflow-wrap: break-word;
 }
 
 .hoverPath {
   font-size: 12px;
   line-height: 16px;
-  color: color-mix(in srgb, var(--dsw-alias-label-primary-inverted) 80%, transparent);
+  color: #CFD3D6;
   word-break: break-all;
 }
 
 .hoverTime {
   font-size: 12px;
   line-height: 16px;
-  color: color-mix(in srgb, var(--dsw-alias-label-primary-inverted) 80%, transparent);
+  color: #CFD3D6;
 }
 
 .hoverStatus {
@@ -433,7 +433,7 @@
   gap: 8px;
   font-size: 12px;
   line-height: 20px;
-  color: color-mix(in srgb, var(--dsw-alias-label-primary-inverted) 66%, transparent);
+  color: #ADB2B8;
 }
 
 /* Archive glyph rides the status row's text color; slight inset aligns it with the 6px status dots. */

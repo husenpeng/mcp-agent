@@ -65,6 +65,12 @@ export interface ModelsOperations {
    * @returns the candidates, or the refusal.
    */
   discoverModels(settingsNs: string, request: LlmModelDiscoveryRequest): Promise<ModelDiscoveryOutcome>
+  /**
+   * Model ids one provider route currently serves, without a request.
+   * @param provider - provider route key.
+   * @returns the route's model ids, empty while the route is not registered yet.
+   */
+  providerModels(provider: string): Promise<readonly string[]>
 }
 
 /**
@@ -88,6 +94,11 @@ export function createModelsOperations(ctx: ClientContext): ModelsOperations {
       if (response.ok) return { kind: 'written', view: response.value }
       const { code, message } = response.error
       return code === 'settings/conflict' ? { kind: 'conflict', message } : { kind: 'refused', message }
+    },
+    providerModels: async (provider) => {
+      const response = await ctx.remote.llm.listProviders()
+      if (!response.ok) return []
+      return response.value.find(entry => entry.id === provider)?.models ?? []
     },
     discoverModels: async (settingsNs, request) => {
       const response = await ctx.remote.llm.discoverModels(settingsNs, request)

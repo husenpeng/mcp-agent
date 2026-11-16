@@ -39,6 +39,7 @@ import { deriveKeyRef, protocolChoices, reasoningLevelChoices } from './store.ts
 import { protocolLabel } from './protocol-label.ts'
 import { protocolNeedsKey, protocolReasoningLevels } from './protocol-rules.ts'
 import type { ModelsOperations } from './operations.ts'
+import { allowlistOps, type ModelPolicyView } from './policy.ts'
 import type { SettingsSchemaOperations } from './schema-operations.ts'
 import type { en } from './locales.ts'
 import { ApiKeyInput } from './ApiKeyInput.tsx'
@@ -51,6 +52,25 @@ type EditorLayout = 'deepseek' | 'pi-ai' | 'unknown'
 
 
 /** Props of {@link ProviderEditor}. */
+/** How long the card waits for the adapter to publish a just-written route's models. */
+const PROVIDER_MODELS_SETTLE_MS = 400
+
+/**
+ * Read a route's served models after its profile write. The settings change
+ * reaches the adapter asynchronously, so the first read may precede the route.
+ * @param operations - page operations.
+ * @param provider - provider route key.
+ * @returns the route's model ids, empty when it publishes none in time.
+ */
+async function settledProviderModels(operations: ModelsOperations, provider: string): Promise<readonly string[]> {
+  const deadline = Date.now() + PROVIDER_MODELS_SETTLE_MS
+  for (;;) {
+    const models = await operations.providerModels(provider)
+    if (models.length > 0 || Date.now() >= deadline) return models
+    await new Promise((resolve) => { setTimeout(resolve, 50) })
+  }
+}
+
 export interface ProviderEditorProps {
   /** Provider route id. */
   provider: string
@@ -84,6 +104,12 @@ export interface ProviderEditorProps {
   credential?: CredentialInfo
   /** Redacted checks for the profile's named reference or the provider's native variables. */
   credentialChecks?: Readonly<Record<string, CredentialInfo>>
+  /**
+   * Enforced deployment allowlist, when the adapter reports one. A catalog
+   * route is born blocked by it, so the card mirrors the route's served models
+   * into the allowlist as part of the same save.
+   */
+  policy?: ModelPolicyView
   /** Section copy. */
   t: (key: keyof typeof en) => string
   /** Disable writes (read-only settings provider). */
@@ -359,6 +385,16 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
       setCommittedOriginal(schema.getPath(written.view.user, settingsPath))
       setExpectedRevision(written.view.revision)
       setDraft(next)
+      if (props.policy !== undefined) {
+        // A route's served models come from the adapter's catalog, which the
+        // page cannot read before the write registers the route.
+        const models = await settledProviderModels(operations, props.provider)
+        const allowlist = allowlistOps(props.policy, props.provider, models)
+        if (allowlist.length > 0) {
+          const mirrored = await operations.writeSettings(ns, allowlist, written.view.revision)
+          if (mirrored.kind === 'written') setExpectedRevision(mirrored.view.revision)
+        }
+      }
     }
     if (keyValue.length > 0) {
       const stored = await operations.storeCredential(keyRef, keyValue)

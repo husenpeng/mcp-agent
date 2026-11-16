@@ -100,9 +100,10 @@ export class ModelDirectory {
       sessionId: this.sessionId,
       provider: selection.provider,
       model: selection.model,
-      ...selection.reasoningEffort === undefined
-        ? {}
-        : { reasoningEffort: selection.reasoningEffort },
+      // Send the resolved level, not only an explicit one: the Host persists
+      // this selection as the default, so an omitted effort would erase the
+      // thinking level the person already had on the previous model.
+      ...nextEffort === undefined ? {} : { reasoningEffort: nextEffort },
     })
     if (this.disposed || generation !== this.generation) {
       return result.ok ? { ok: true, value: undefined } : result

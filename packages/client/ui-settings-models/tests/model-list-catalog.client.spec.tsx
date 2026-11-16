@@ -10,6 +10,7 @@ afterEach(cleanup)
 
 function operations(discoverModels: ModelsOperations['discoverModels']): ModelsOperations {
   return {
+    providerModels: vi.fn(() => Promise.resolve([])),
     discoverModels,
     storeCredential: vi.fn(),
     removeCredential: vi.fn(),

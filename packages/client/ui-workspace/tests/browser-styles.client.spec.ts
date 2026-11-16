@@ -98,7 +98,7 @@ describe('WorkspaceBrowser.module.css list', () => {
     expect(rowDeclarations('.sessionRow.selected')?.get('background-image'))
       .toBe('var(--dsw-brand-gradient-signature)')
     expect(rowDeclarations('.sessionRow.selected')?.get('background-color')).toBe('transparent')
-    expect(rowDeclarations('.sessionRow.selected')?.get('color')).toBe('var(--dsw-alias-label-primary-inverted)')
+    expect(rowDeclarations('.sessionRow.selected')?.get('color')).toBe('rgb(255, 255, 255)')
   })
 
   it('marquees a clipped session title on row hover', () => {

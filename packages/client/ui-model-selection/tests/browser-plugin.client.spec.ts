@@ -294,6 +294,20 @@ describe('ui-model-selection dual entry', () => {
     expect(options.find((o: SelectOption) => o.label === 'DeepSeek-V4-Pro')).toMatchObject({ active: true })
   })
 
+  it('a seat selection that omits the level still persists the model default', async () => {
+    const b = await bench()
+    b.mint('s1')
+    const seatFace = b.seat().inject!(sid('s1'))
+    await seatFace.select({ provider: 'deepseek-official', model: 'deepseek-v4-pro' })
+    // The Host persists this selection as the default model. Sending no level
+    // would erase the thinking level the person already had configured.
+    expect(b.hostCurrent()).toEqual({
+      provider: 'deepseek-official',
+      model: 'deepseek-v4-pro',
+      reasoningEffort: 'high',
+    })
+  })
+
   it('a popup selection lands on the seat store — the reverse direction of the same state', async () => {
     const b = await bench()
     b.mint('s1')

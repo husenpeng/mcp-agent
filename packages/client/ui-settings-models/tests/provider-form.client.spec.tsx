@@ -27,6 +27,10 @@ const LEVELS = ['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']
 
 /** The pi-ai profile shape as the host serializes it, including the layer-1 fields. */
 const PiAiConfig = Schema.object({
+  modelPolicy: Schema.object({
+    enabled: Schema.boolean(),
+    local: Schema.array(Schema.object({ provider: Schema.string().required(), model: Schema.string().required() })),
+  }),
   providers: Schema.dict(Schema.object({
     apiKey: Schema.string().role('secret'),
     apiKeyEnv: Schema.string().role('credential-ref'),
@@ -83,15 +87,16 @@ function piAiNamespace(
   providers: Record<string, JsonValue>,
   userProviders: Record<string, JsonValue> = providers,
   baseProviders: Record<string, JsonValue> = {},
+  policy?: { enabled: boolean; local: { provider: string; model: string }[] },
 ): SettingsNamespaceView {
   return {
     ns: 'llm-pi-ai',
     schema: JSON.parse(JSON.stringify(PiAiConfig.toJSON())) as JsonValue,
     // `value` is the effective section; `user` is only the layer this page
     // writes. They differ whenever a composition `base` supplies something.
-    value: { providers },
+    value: { providers, ...policy === undefined ? {} : { modelPolicy: policy } },
     base: { providers: baseProviders },
-    user: { providers: userProviders },
+    user: { providers: userProviders, ...policy === undefined ? {} : { modelPolicy: policy } },
     autoGenerate: true, applies: 'live',
     secrets: [],
     revision: 3,
@@ -109,18 +114,25 @@ function scriptedFace(options: {
   discover?: ReturnType<typeof vi.fn>
   mutate?: ReturnType<typeof vi.fn>
   set?: ReturnType<typeof vi.fn>
+  /** Enforced allowlist the page reports, written into the namespace. */
+  policy?: { enabled: boolean; local: { provider: string; model: string }[] }
+  /** Model ids the adapter reports for each configured route. */
+  providerModels?: Record<string, readonly string[]>
 } = {}) {
   const providers = options.providers ?? {
     openai: { apiKeyEnv: 'OPENAI_API_KEY', baseURL: 'https://proxy.example/v1' },
   }
-  const namespace = piAiNamespace(providers, options.userProviders ?? providers, options.baseProviders ?? {})
+  const namespace = piAiNamespace(providers, options.userProviders ?? providers, options.baseProviders ?? {}, options.policy)
   const discover = options.discover ?? vi.fn(() => Promise.resolve(ok([])))
   const mutate = options.mutate ?? vi.fn(() => Promise.resolve(remoteOk(namespace)))
   const set = options.set ?? vi.fn(() => Promise.resolve(remoteOk(undefined)))
   const face = {
     llm: {
       listProviders: vi.fn(() => Promise.resolve(ok(
-        Object.keys(providers).map(provider => ({ id: provider, name: provider })),
+        Object.keys(providers).map(provider => ({
+          id: provider, name: provider,
+          ...options.providerModels?.[provider] === undefined ? {} : { models: options.providerModels[provider] },
+        })),
       ))),
       listConfigurableProviders: vi.fn(() => Promise.resolve(ok(
         Object.keys(providers).map(provider => ({
@@ -325,6 +337,30 @@ describe('model list editing', () => {
       expectedRevision: 3,
       ops: [{ op: 'set', path: ['providers', 'openai', 'models'], value: [{ id: 'acme-large', contextWindow: 65_536, input: ['text', 'image'] }] }],
     })
+  })
+
+  it('mirrors the served models of a configured catalog route into the enforced allowlist', async () => {
+    const { mutate } = await mountSection({
+      providers: { openai: { models: [{ id: 'preview' }] } },
+      policy: { enabled: true, local: [] },
+      providerModels: { openai: ['gpt-x', 'gpt-y'] },
+    })
+    openEditor('openai')
+    expandModel(1)
+    fireEvent.click(within(screen.getByRole('group', { name: `${en.modelInputTypes} 1` })).getByRole('checkbox', { name: en.modelInputImage }))
+    fireEvent.click(screen.getByText(en.apply))
+    await waitFor(() => { expect(mutate).toHaveBeenCalledTimes(2) })
+    // The profile keeps its own write; the allowlist follows as a second,
+    // fenced write so the route is usable the moment it is configured.
+    expect(firstMutate(mutate).ops).toEqual([{
+      op: 'set', path: ['providers', 'openai', 'models'],
+      value: [{ id: 'preview', input: ['text', 'image'] }],
+    }])
+    const followUp = mutate.mock.calls[1] as [string, { op: string; path: string[]; value?: unknown }[], number | undefined]
+    expect(followUp[1]).toEqual([{
+      op: 'set', path: ['modelPolicy', 'local'],
+      value: [{ provider: 'openai', model: 'gpt-x' }, { provider: 'openai', model: 'gpt-y' }],
+    }])
   })
 
   it('names a duplicate model id in the edit flow too', async () => {
