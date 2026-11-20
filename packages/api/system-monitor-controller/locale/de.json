@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Systemmonitor-Controller",
+    "description": "Erfasst Host-Hardware und -Prozesse und streamt pro Intervall ein Frame an Browser."
+  }
+}

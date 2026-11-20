@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "System monitor controller",
+    "description": "Samples host hardware and processes and streams one frame per interval to browsers."
+  }
+}

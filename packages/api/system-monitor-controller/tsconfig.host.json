@@ -1,0 +1,33 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib/types",
+    "tsBuildInfoFile": "lib/tsconfig.host.tsbuildinfo"
+  },
+  "files": [
+    "src/index.ts",
+    "src/sampler.ts",
+    "src/types.ts",
+    "src/collect/command.ts",
+    "src/collect/cpu.ts",
+    "src/collect/disk.ts",
+    "src/collect/gpu.ts",
+    "src/collect/host.ts",
+    "src/collect/memory.ts",
+    "src/collect/network.ts",
+    "src/collect/power.ts",
+    "src/collect/processes.ts"
+  ],
+  "references": [
+    {
+      "path": "../../../vendor/cordis"
+    },
+    {
+      "path": "../../../vendor/schemastery"
+    },
+    {
+      "path": "../../typert/protocol"
+    }
+  ]
+}

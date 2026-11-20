@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Monitor do sistema",
+    "description": "Leituras de processador, gráficos, memória, rede, disco, energia e processos em uma janela flutuante."
+  }
+}

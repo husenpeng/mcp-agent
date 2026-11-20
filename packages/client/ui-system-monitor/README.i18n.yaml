@@ -1,0 +1,37 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/client/ui-system-monitor/README.md
+/:
+  en: dde3bb31b80ccae5
+  zh: 693ea1c386800770
+/system-monitor-overlay:
+  en: 2cf436446c4d19c0
+  zh: 5a14aeb61a8a8cdf
+/system-monitor-overlay/summary:
+  en: de11dcc44231c568
+  zh: d90daa8f40037197
+/system-monitor-overlay/table-of-contents:
+  en: f32ec4ca133ab32f
+  zh: 16847acadab9a2dd
+/system-monitor-overlay/what-it-draws:
+  en: e30adfa1982cd401
+  zh: a9d674024231c4c9
+/system-monitor-overlay/placement-and-interaction:
+  en: d33c25d9ab9f6c7b
+  zh: 5c32bbac0cb6c49f
+/system-monitor-overlay/desktop-panel:
+  en: 63f2d0cfdc98d7c5
+  zh: b5e85ff94eb84e1d
+/system-monitor-overlay/model-experience:
+  en: 084ddb0d38a7705a
+  zh: 9c6aaf0667e239aa
+/system-monitor-overlay/model-experience/kv-cache-effect:
+  en: cb8861f98fec3dde
+  zh: 96a6bc8afd793af4
+/system-monitor-overlay/known-limitations-and-deferred-work:
+  en: ed11c2cfbf323fdd
+  zh: 26b6a15fa7168157
+/system-monitor-overlay/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 3c8bbe93d71a3377

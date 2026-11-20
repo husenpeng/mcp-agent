@@ -1,0 +1,561 @@
+/* The monitor overlay: a floating card above every column, with a collapsed
+ * pill that rests above the bottom-right corner, and a ball that a closed
+ * monitor parks against the nearer side edge with half of it outside. */
+
+.layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.pill {
+  position: absolute;
+  display: inline-flex;
+  gap: 2px;
+  align-items: center;
+  height: 40px;
+  padding: 0 6px 0 16px;
+  border: 1px solid var(--dsw-alias-settings-card-stroke);
+  border-radius: 999px;
+  background: var(--dsw-alias-bg-base);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 18%);
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 1;
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  transition:
+    left 160ms ease,
+    top 160ms ease;
+}
+
+.pill:active {
+  cursor: grabbing;
+}
+
+.pillOpen {
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+  height: 100%;
+  padding: 0 8px 0 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pillOpen:focus-visible,
+.pillClose:focus-visible {
+  outline: 2px solid var(--dsw-alias-state-business-primary);
+  outline-offset: 2px;
+}
+
+/* The park control reads as a quiet dot until the pill is hovered or focused. */
+.pillClose {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .pill:hover {
+    border-color: var(--dsw-alias-interactive-bg-hover);
+    color: var(--dsw-alias-label-primary);
+  }
+
+  .pillClose:hover {
+    background: var(--dsw-alias-interactive-bg-hover);
+    color: var(--dsw-alias-label-primary);
+  }
+}
+
+/* The parked ball: a 44px disc of which half hangs outside the edge it rests
+ * against, so it reads as pinned to the side rather than floating nearby. */
+.ball {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1.5px solid var(--dsw-alias-bg-base);
+  border-radius: 50%;
+  background: var(--dsw-alias-label-tertiary);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 22%);
+  color: var(--dsw-alias-bg-base);
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    top 160ms ease,
+    background-color 200ms ease;
+}
+
+.ball[data-tone='calm'] {
+  background: var(--dsw-alias-state-success-primary);
+}
+
+.ball[data-tone='busy'] {
+  background: var(--dsw-alias-state-warn-primary);
+}
+
+.ball[data-tone='hot'] {
+  background: var(--dsw-alias-state-error-primary);
+}
+
+.ball:focus-visible {
+  outline: 2px solid var(--dsw-alias-state-business-primary);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .ball:hover {
+    filter: brightness(1.06);
+  }
+}
+
+.ballValue {
+  max-width: 32px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pill,
+  .ball {
+    transition: none;
+  }
+}
+
+.pillText {
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.pillPair {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  color: var(--dsw-alias-label-primary);
+  font-weight: 500;
+}
+
+.pillLabel {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+/* A separator between readings, so each pair reads as one unit. */
+.pillPair + .pillPair {
+  padding-left: 12px;
+  border-left: 1px solid var(--dsw-alias-settings-card-stroke);
+}
+
+.dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dsw-alias-label-tertiary);
+}
+
+.dot[data-state='live'] {
+  background: var(--dsw-alias-state-success-primary);
+}
+
+.dot[data-state='reconnecting'] {
+  background: var(--dsw-alias-state-warn-primary);
+}
+
+.dot[data-state='failed'] {
+  background: var(--dsw-alias-state-error-primary);
+}
+
+.card {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  width: 348px;
+  height: 452px;
+  cursor: grab;
+  touch-action: none;
+  border: 1px solid var(--dsw-alias-settings-card-stroke);
+  border-radius: var(--dsw-radius-lg);
+  background: var(--dsw-alias-bg-base);
+  box-shadow: 0 18px 52px rgb(0 0 0 / 24%);
+  color: var(--dsw-alias-label-primary);
+  font-size: 12px;
+  line-height: 1.4;
+  pointer-events: auto;
+  overflow: hidden;
+  transition: left 160ms ease, top 160ms ease;
+}
+
+.card:active {
+  cursor: grabbing;
+}
+
+.header {
+  display: flex;
+  flex: none;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 8px 6px 12px;
+  border-bottom: 1px solid var(--dsw-alias-settings-card-stroke);
+  background: var(--dsw-alias-bg-module-platform);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.header:active {
+  cursor: grabbing;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status {
+  display: inline-flex;
+  flex: none;
+  gap: 5px;
+  align-items: center;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+}
+
+.control {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dsw-radius-sm);
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.rotated {
+  transform: rotate(-90deg);
+}
+
+.control:focus-visible {
+  outline: 2px solid var(--dsw-alias-state-business-primary);
+  outline-offset: 1px;
+}
+
+@media (hover: hover) {
+  .control:hover {
+    background: var(--dsw-alias-interactive-bg-hover);
+    color: var(--dsw-alias-label-primary);
+  }
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 12px 10px;
+  overflow: auto;
+  cursor: auto;
+  touch-action: auto;
+  user-select: text;
+}
+
+.empty {
+  margin: 12px 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+}
+
+.facts {
+  margin: 6px 0 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  line-height: 15px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0 2px;
+  border-top: 1px solid var(--dsw-alias-settings-card-stroke);
+}
+
+.sectionHead {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  justify-content: space-between;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.reading {
+  color: var(--dsw-alias-label-primary);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.spark {
+  display: block;
+  width: 100%;
+  height: 30px;
+}
+
+.cpuSpark {
+  color: var(--dsw-alias-state-business-primary);
+}
+
+.gpuSpark {
+  color: var(--dsw-alias-brand-primary);
+}
+
+.memSpark {
+  color: var(--dsw-alias-state-success-primary);
+}
+
+.cores {
+  display: flex;
+  gap: 2px;
+  align-items: flex-end;
+  height: 24px;
+}
+
+.core {
+  flex: 1;
+  min-height: 3px;
+  border-radius: 2px 2px 0 0;
+  background: var(--dsw-alias-state-business-primary);
+  opacity: 0.6;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+.rowLabel {
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.rowValue {
+  color: var(--dsw-alias-label-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.meter {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.meterFill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--dsw-alias-state-business-primary);
+  transition: width 300ms ease;
+}
+
+.meter[data-tone='memory'] .meterFill {
+  background: var(--dsw-alias-state-success-primary);
+}
+
+.meter[data-tone='gpu'] .meterFill {
+  background: var(--dsw-alias-brand-primary);
+}
+
+.meter[data-tone='disk'] .meterFill {
+  background: var(--dsw-alias-state-business-primary);
+}
+
+.meter[data-tone='swap'] .meterFill {
+  background: var(--dsw-alias-state-warn-primary);
+}
+
+.meter[data-tone='warn'] .meterFill {
+  background: var(--dsw-alias-state-warn-primary);
+}
+
+.processes {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.process {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px 48px;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 11px;
+}
+
+.processHead {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 10px;
+}
+
+.processHead > span:not(:first-child) {
+  text-align: right;
+}
+
+.processName {
+  overflow: hidden;
+  color: var(--dsw-alias-label-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.processValue {
+  color: var(--dsw-alias-label-secondary);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.unavailable {
+  margin: 0 0 8px;
+  color: var(--dsw-alias-state-warn-label);
+  font-size: 10px;
+}
+
+.footer {
+  flex: none;
+  padding: 6px 12px;
+  border-top: 1px solid var(--dsw-alias-settings-card-stroke);
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meterFill {
+    transition: none;
+  }
+}
+
+/* The desktop panel window: the native vibrancy material is the surface, so
+ * the page paints only text, separators, and controls. */
+
+:global(html[data-system-monitor-window]) {
+  background: transparent;
+}
+
+/* Icon sprites and portals (notices, toasts, dialogs) hang off the body; the
+ * panel is its card, so nothing else may paint over or behind it. */
+:global(html[data-system-monitor-window] body > :not(#root):not(script):not(style)) {
+  display: none;
+}
+
+:global(html[data-system-monitor-window] #root > :not([data-shell-frame])) {
+  display: none;
+}
+
+:global(html[data-system-monitor-window] body) {
+  background: transparent;
+}
+
+:global(html[data-system-monitor-window] [data-shell-frame]) {
+  display: block;
+  background: transparent;
+}
+
+:global(html[data-system-monitor-window] [data-shell-frame] > :not([data-shell-overlay])) {
+  display: none;
+}
+
+:global(html[data-system-monitor-window] [data-shell-overlay]) {
+  position: absolute;
+  inset: 0;
+}
+
+.windowLayer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  pointer-events: none;
+}
+
+.windowCard {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--dsw-alias-label-primary);
+  font-size: 12px;
+  line-height: 1.4;
+  pointer-events: auto;
+}
+
+.windowHeader {
+  display: flex;
+  flex: none;
+  gap: 6px;
+  align-items: center;
+  padding: 10px 12px 6px;
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+.windowHeader .control {
+  width: 26px;
+  height: 26px;
+  -webkit-app-region: no-drag;
+}
+
+.windowCard .body {
+  padding: 2px 12px 12px;
+}
+
+.windowCard .section {
+  border-top-color: var(--dsw-alias-settings-card-stroke);
+}
+
+.windowCard .footer {
+  display: none;
+}

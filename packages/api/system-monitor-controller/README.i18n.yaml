@@ -1,0 +1,37 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/api/system-monitor-controller/README.md
+/:
+  en: c71b02da03b568d6
+  zh: daf0d96a575818ce
+/system-monitor-controller:
+  en: f8c79d81734ae2d9
+  zh: a39006e935187613
+/system-monitor-controller/summary:
+  en: 467a30dbbf5bc2a3
+  zh: 94936379264e0eae
+/system-monitor-controller/table-of-contents:
+  en: 19b66177c70e3660
+  zh: 6166d6b1652b2cb0
+/system-monitor-controller/use-this-package:
+  en: fabd9f37b7172a40
+  zh: 39206ccb79ed7a3c
+/system-monitor-controller/use-this-package/config:
+  en: 655577841d67da55
+  zh: 5d1578d89289b886
+/system-monitor-controller/host-probes:
+  en: a0f9b31c349f4dd0
+  zh: a2d21b1e6b8e6240
+/system-monitor-controller/model-experience:
+  en: 49fbb901bc225642
+  zh: 2ae12e28d70652a8
+/system-monitor-controller/model-experience/kv-cache-effect:
+  en: 4e8ed465d0bb17e5
+  zh: 0c796d803e155678
+/system-monitor-controller/known-limitations-and-deferred-work:
+  en: 6c70509ca217ec80
+  zh: 85deb2dbfb0d32f4
+/system-monitor-controller/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 3c8bbe93d71a3377

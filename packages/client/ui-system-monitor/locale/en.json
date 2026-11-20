@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "System monitor",
+    "description": "Processor, graphics, memory, network, disk, power, and process readings in a floating overlay."
+  }
+}

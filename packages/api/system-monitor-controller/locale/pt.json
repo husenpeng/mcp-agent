@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Controlador do monitor do sistema",
+    "description": "Amostra o hardware e os processos do host e transmite um quadro por intervalo aos navegadores."
+  }
+}

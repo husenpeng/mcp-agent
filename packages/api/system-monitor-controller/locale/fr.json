@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Contrôleur du moniteur système",
+    "description": "Échantillonne le matériel et les processus de l'hôte et diffuse une image par intervalle aux navigateurs."
+  }
+}
