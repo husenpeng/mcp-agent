@@ -69,7 +69,7 @@
     "@tomato/session": "workspace:*",
     "@tomato/typert-protocol": "workspace:*",
     "@tomato/util-values": "workspace:*",
-    "undici": "8.11.2",
+    "undici": "8.12.3",
     "ws": "^8.18.3",
     "zod": "4.6.6"
   },
