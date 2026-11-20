@@ -5,10 +5,15 @@
 - group "添加插件":
   - button "添加插件" [disabled]
   - button "选择添加插件方式" [disabled]
-- status "正在读取插件…"
+- tablist "插件视图":
+  - tab "已安装" [selected]
+  - tab "通用市场"
+  - tab "营销市场"
+- tabpanel "已安装":
+  - status "正在读取插件…"
 
-1680px: 4 rows; page/group headers, rows, icons and text line origins align within 0.1px
-1000px: 4 rows; page/group headers, rows, icons and text line origins align within 0.1px
+1680px: 3 rows; page/group headers, rows, icons and text line origins align within 0.1px
+1000px: 3 rows; page/group headers, rows, icons and text line origins align within 0.1px
 Loading: header actions disabled; action spaces are empty 36×20 areas, with no switch placeholders
 Loaded: skeleton removed; header actions enabled
 Motion: 13 opacity-only pulses, 2000ms; reduced motion stops all pulses

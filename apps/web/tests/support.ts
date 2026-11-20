@@ -467,15 +467,24 @@ export function conversationContextKey(kind: string, id: string): string {
  * @param locale - current UI language.
  */
 export async function openSettings(page: Page, locale: 'en' | 'zh' | 'ja'): Promise<void> {
-  const labels = { en: ['Account menu', 'Settings'], zh: ['账号菜单', '设置'], ja: ['アカウントメニュー', '設定'] } as const
-  const trigger = page.getByRole('button', {
-    name: labels[locale][0], exact: true, includeHidden: true,
-  })
+  const labels = { en: ['Settings'], zh: ['设置'], ja: ['設定'] } as const
+  const dialog = page.getByRole('dialog', { name: labels[locale][0], exact: true })
+  if (await dialog.count() > 0) return
+  // The shortcut opens settings without the account menu, which a shipped overlay may cover on a short window.
+  await page.keyboard.press('ControlOrMeta+Alt+Comma')
+  try {
+    await dialog.waitFor({ timeout: 5_000 })
+    return
+  } catch {
+    // A page whose shortcuts are still loading answers the account menu instead.
+  }
+  const trigger = page.getByRole('button', { name: 'Account menu', exact: true, includeHidden: true })
+  if (await trigger.count() === 0) await revealNavigationDrawer(page, locale)
   await trigger.waitFor({ state: 'attached' })
   await revealNavigationDrawer(page, locale)
   if (!await trigger.isVisible()) {
     await page.getByRole('button', { name: { en: 'Open sidebar', zh: '打开侧边栏', ja: 'サイドバーを開く' }[locale], exact: true }).click()
   }
   await trigger.click()
-  await page.getByRole('menuitem', { name: labels[locale][1], exact: true }).click()
+  await page.getByRole('menuitem', { name: labels[locale][0], exact: true }).click()
 }

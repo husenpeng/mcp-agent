@@ -5,51 +5,73 @@
 - group "添加插件":
   - button "添加插件"
   - button "选择添加插件方式"
-- heading "内置插件配置" [level=3]
-- list:
-  - listitem:
-    - button "查看 子智能体": 子智能体
-    - text: 设置子智能体的递归层级、数量和模型。
-  - listitem:
-    - button "查看 网页搜索与获取": 网页搜索与获取
-    - text: 选择网页搜索与网页获取使用的提供方。
-  - listitem:
-    - button "查看 Agent 循环": Agent 循环
-    - text: 控制 Agent 派发工具调用的方式。
-  - listitem:
-    - button "查看 终端": 终端
-    - text: 限制每条命令最多能跑多久、最多输出多少内容。
-- heading "实验性插件" [level=3]
-- button "更多"
-- list:
-  - listitem:
-    - button "查看 语音输入": 语音输入
-    - text: 实验性 在本机使用 SenseVoice 转写录音，首次使用需安装依赖。
-    - status
-    - switch "启用 语音输入"
-  - listitem:
-    - button "查看 自定义插件索引": 自定义插件索引
-    - text: 实验性 在插件页添加“发现”标签页，从你添加的插件索引中浏览和安装插件。
-    - status
-    - switch "启用 自定义插件索引"
-  - listitem:
-    - button "查看 自动授权审查": 自动授权审查
-    - text: 实验性 提供“自动审查”访问模式：每次工具调用前，由模型对照你的要求检查，获准的调用立即运行，被拒绝的调用等你审批。
-    - status
-    - switch "启用 自动授权审查"
-  - listitem:
-    - button "查看 变更请求与工作树": 变更请求与工作树
-    - text: 实验性 在会话侧栏集中跟踪关联的 GitHub PR：查看检查状态、评审意见与代码差异，并把修改建议交给智能体继续处理。也可查看本地改动，用独立工作树隔离任务。GitHub 功能需要本机安装 gh 并登录。
-    - status
-    - switch "启用 变更请求与工作树"
-- heading "已安装插件" [level=3]
-- list:
-  - listitem:
-    - button "查看 @fixture/bundle": "@fixture/bundle"
-    - text: Registry description for the fixture bundle.
-    - status
-    - switch "启用 @fixture/bundle" [checked]
-  - listitem:
-    - button "查看 tomato-web-scaffold-defaults": tomato-web-scaffold-defaults
-    - status
-    - switch "启用 tomato-web-scaffold-defaults" [checked]
+- tablist "插件视图":
+  - tab "已安装" [selected]
+  - tab "通用市场"
+  - tab "营销市场"
+- tabpanel "已安装":
+  - heading "内置插件配置" [level=3]
+  - list:
+    - listitem:
+      - button "查看 子智能体": 子智能体
+      - text: 设置子智能体的递归层级、数量和模型。
+    - listitem:
+      - button "查看 Agent 循环": Agent 循环
+      - text: 控制 Agent 派发工具调用的方式。
+    - listitem:
+      - button "查看 终端": 终端
+      - text: 限制每条命令最多能跑多久、最多输出多少内容。
+  - heading "实验性插件" [level=3]
+  - button "更多"
+  - list:
+    - listitem:
+      - button "查看 语音输入": 语音输入
+      - text: 实验性 在本机使用 SenseVoice 转写录音，首次使用需安装依赖。
+      - status
+      - switch "启用 语音输入"
+    - listitem:
+      - button "查看 自定义插件索引": 自定义插件索引
+      - text: 实验性 在插件页添加“发现”标签页，从你添加的插件索引中浏览和安装插件。
+      - status
+      - switch "启用 自定义插件索引"
+    - listitem:
+      - button "查看 自动授权审查": 自动授权审查
+      - text: 实验性 提供“自动审查”访问模式：每次工具调用前，由模型对照你的要求检查，获准的调用立即运行，被拒绝的调用等你审批。
+      - status
+      - switch "启用 自动授权审查"
+    - listitem:
+      - button "查看 Playwright 浏览器": Playwright 浏览器
+      - text: 通过 Playwright MCP 为每个会话提供独立的 Chromium。首次使用前请安装 Playwright 所需的 Chromium 构建。
+      - status
+      - switch "启用 Playwright 浏览器"
+    - listitem:
+      - button "查看 变更请求与工作树": 变更请求与工作树
+      - text: 实验性 在会话侧栏集中跟踪关联的 GitHub PR：查看检查状态、评审意见与代码差异，并把修改建议交给智能体继续处理。也可查看本地改动，用独立工作树隔离任务。GitHub 功能需要本机安装 gh 并登录。
+      - status
+      - switch "启用 变更请求与工作树"
+    - listitem:
+      - button "查看 记忆与目标专注": 记忆与目标专注
+      - text: 在会话和工作区之间记住你说过的偏好、决定和关于你的事实，并防止长目标反复执行失败的调用。
+      - status
+      - switch "启用 记忆与目标专注"
+    - listitem:
+      - button "查看 Tomato Rbot": Tomato Rbot
+      - text: 定义机器人、运行它们，并在独立于工作区对话的会话面中交流。
+      - status
+      - switch "启用 Tomato Rbot"
+    - listitem:
+      - button "查看 机器人协作团队": 机器人协作团队
+      - text: 可选的多智能体协作流程：带版本的交接图、持久运行账本，以及群聊标签页与流程画布。
+      - status
+      - switch "启用 机器人协作团队"
+  - heading "已安装插件" [level=3]
+  - list:
+    - listitem:
+      - button "查看 @fixture/bundle": "@fixture/bundle"
+      - text: Registry description for the fixture bundle.
+      - status
+      - switch "启用 @fixture/bundle" [checked]
+    - listitem:
+      - button "查看 tomato-web-scaffold-defaults": tomato-web-scaffold-defaults
+      - status
+      - switch "启用 tomato-web-scaffold-defaults" [checked]

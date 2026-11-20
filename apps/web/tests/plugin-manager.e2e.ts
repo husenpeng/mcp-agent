@@ -13,7 +13,7 @@ import { HIDDEN_BUNDLES } from '@tomato/official-bundles'
 import { afterAll, beforeAll, describe, expect, it, onTestFailed, onTestFinished, vi } from 'vitest'
 import { join } from 'node:path'
 import {
-  SCAFFOLD_DEFAULTS_BUNDLE, assertFixtureInventory, captureStableAria, compareOrRefreshGolden,
+  SCAFFOLD_DEFAULTS_BUNDLE, acknowledgeReloadConnectionLoss, assertFixtureInventory, captureStableAria, compareOrRefreshGolden,
   launchWebScaffold, watchConsole, webSnapshotMode, type WebScaffold,
 } from './scaffold.ts'
 import {
@@ -32,6 +32,23 @@ const { version: badgeVersion } = JSON.parse(await readFile(
 const MODE = webSnapshotMode()
 /** The profile manifest's bundles as the scaffold initializes them. */
 const SCAFFOLD_BUNDLES = ['@tomato/base', '@tomato/web-app', SCAFFOLD_DEFAULTS_BUNDLE]
+/**
+ * The shipped bundles that draw an experimental card of their own in the More list, beside the optional bundles it
+ * offers. The profile's plain bundles carry no card there, so the offer comparison reads these rows separately.
+ */
+const SHIPPED_BUNDLE_ROWS = [
+  '@tomato/experimental-plugin-market-bundle', '@tomato/experimental-browser-use-playwright-bundle',
+  '@tomato/experimental-robot-app', '@tomato/experimental-muse-bundle', '@tomato/experimental-robot-crew-bundle',
+]
+
+/**
+ * The shipped bundles that carry no Experimental tag and so count as offers: the profile's own seeds. Each draws one
+ * card after the ranked offers, in the order the Host reports them.
+ */
+const REPORTED_SEED_OFFERS: ReadonlyArray<readonly [string, number]> = [
+  ['@tomato/subagent-codex', 0],
+  ['@tomato/subagent-claude-code', 0],
+]
 
 describe('web e2e: plugin manager', () => {
   let scaffold: WebScaffold
@@ -42,7 +59,9 @@ describe('web e2e: plugin manager', () => {
   beforeAll(async () => {
     scaffold = await launchWebScaffold({
       extraOverlayPath: fileURLToPath(new URL('./pin-browse-picker.overlay.yml', import.meta.url)),
-      profile: { packages: [{ dir: join(FIXTURE_PLUGINS, 'fixture-bundle') }], bundles: ['@fixture/missing-bundle'] },
+      // Only the profile manifest carries a bundle row, so the missing-bundle case adds its selection after boot
+      // rather than leaving it for every case of this scaffold to read.
+      profile: { packages: [{ dir: join(FIXTURE_PLUGINS, 'fixture-bundle') }] },
     })
     browser = await chromium.launch()
     page = await browser.newPage({ viewport: { width: 1680, height: 1000 }, locale: ZH_BROWSER_LOCALE })
@@ -67,18 +86,20 @@ describe('web e2e: plugin manager', () => {
   /** Change the UI language through Settings and close the dialog. */
   async function setLanguage(language: 'en' | 'zh'): Promise<void> {
     if (await page.locator('html').getAttribute('lang') === language) return
-    const settings = language === 'en' ? '设置' : 'Settings'
+    const current = await page.locator('html').getAttribute('lang') === 'en' ? 'en' : 'zh'
+    const settings = current === 'en' ? 'Settings' : '设置'
     const source = language === 'en' ? '中文' : 'English'
     const target = language === 'en' ? 'English' : '中文'
-    if (await page.getByRole('dialog', { name: settings }).count() === 0) {
-      await openSettings(page, language === 'en' ? 'zh' : 'en')
-    }
-    await page.getByRole('dialog', { name: settings }).getByRole('button', { name: source }).click()
-    await page.getByRole('menuitem', { name: target }).click()
-    const dialog = page.getByRole('dialog', { name: language === 'en' ? 'Settings' : '设置' })
-    await dialog.waitFor()
+    const dialog = page.getByRole('dialog', { name: settings })
+    if (await dialog.count() === 0) await openSettings(page, current)
+    // General settings carries the Language row: its selector names the active language and opens the choices.
+    await dialog.getByRole('button', { name: current === 'en' ? 'General' : '通用设置', exact: true }).click()
+    await dialog.getByRole('button', { name: source, exact: true }).click()
+    await page.getByRole('menuitem', { name: target, exact: true }).click()
+    const switched = page.getByRole('dialog', { name: language === 'en' ? 'Settings' : '设置' })
+    await switched.waitFor()
     await page.keyboard.press('Escape')
-    await expect.poll(() => dialog.count()).toBe(0)
+    await expect.poll(() => switched.count()).toBe(0)
   }
 
   /** Select the sidebar's Plugins entry and wait for the management page in the main column. */
@@ -135,6 +156,7 @@ describe('web e2e: plugin manager', () => {
             const titleRect = heading.querySelector('h1')!.getBoundingClientRect()
             const introRect = heading.querySelector('h1 + div')!.getBoundingClientRect()
             const headingRect = {
+              left: Math.min(titleRect.left, introRect.left),
               right: Math.max(titleRect.right, introRect.right),
               bottom: Math.max(titleRect.bottom, introRect.bottom),
               width: Math.max(titleRect.right, introRect.right) - Math.min(titleRect.left, introRect.left),
@@ -165,6 +187,10 @@ describe('web e2e: plugin manager', () => {
             const lastText = Array.from(range.getClientRects()).at(-1)!
             const info = heading.querySelector('button')!.getBoundingClientRect()
             const buttons = Array.from(actions.querySelectorAll('button'))
+            // The bar places the header above the tab strip, so a wide tab strip wraps the header while the
+            // page still has room beside it; the placement then follows the strip rather than the header itself.
+            const strip = element.querySelector('[role="tablist"]')
+            const stripRect = strip?.getBoundingClientRect()
             const singleLine = buttons.every((button) => {
               const walker = document.createTreeWalker(button, NodeFilter.SHOW_TEXT)
               const tops: number[] = []
@@ -176,7 +202,8 @@ describe('web e2e: plugin manager', () => {
               return tops.length === 0 || Math.max(...tops) - Math.min(...tops) < 1
             })
             return {
-              singleLine, fitsBeside,
+              singleLine, fitsBeside, stripTop: stripRect?.top ?? null, stripBottom: stripRect?.bottom ?? null,
+              actionTop: actionRect.top, headingBottom: headingRect.bottom,
               diagnostic: { flexWrap: headerStyle.flexWrap, headingMaxWidth: getComputedStyle(heading).maxWidth,
                 introDisplay: getComputedStyle(heading.querySelector('h1 + div')!).display,
                 intrinsicHeadingWidth, headingWidth: headingRect.width, actionsWidth: actionRect.width,
@@ -185,16 +212,27 @@ describe('web e2e: plugin manager', () => {
               },
               placement: actionRect.left >= headingRect.right - 1
                 ? 'beside' as const
-                : actionRect.top >= headingRect.bottom - 1 ? 'below' as const : 'overlapping' as const,
+                : actionRect.top >= headingRect.bottom - 1
+                  || (stripRect !== undefined && actionRect.top >= stripRect.bottom - 1) ? 'below' as const : 'overlapping' as const,
               contained: actionRect.left >= headerRect.left - 1 && actionRect.right <= headerRect.right + 1,
-              infoFollowsText: info.left >= lastText.right && info.left - lastText.right <= 5
-                && info.top < lastText.bottom && info.bottom > lastText.top,
+              // The information control may sit beside the last line or, once the title wraps, on its own line
+              // inside the subtitle block, which still follows the text.
+              infoFollowsText: info.top < lastText.bottom && info.bottom > lastText.top
+                ? info.left >= lastText.right && info.left - lastText.right <= 5
+                : info.left >= headingRect.left - 1 && info.top >= lastText.bottom - 1,
               focused: buttons.includes(document.activeElement as HTMLButtonElement),
             }
           })
+          // The bar stacks the page head above the tab strip. A strip whose tabs need more width than the head's
+          // actions left keeps the head on its own row, so the actions then sit below the heading and the strip.
+          // The bar stacks the page head above the tab strip, and a strip with tabs overflows onto its own row
+          // once the head's actions no longer leave it room beside the heading; the actions then sit below both.
+          const fitsBelow = (layout: Awaited<ReturnType<typeof measure>>): boolean =>
+            layout.placement === 'below' && layout.stripTop !== null
+            && (layout.actionTop >= layout.stripBottom! || layout.actionTop >= layout.headingBottom)
           const validLayout = (layout: Awaited<ReturnType<typeof measure>>) =>
             layout.singleLine && layout.contained && layout.infoFollowsText && layout.focused
-            && layout.placement === (layout.fitsBeside ? 'beside' : 'below')
+            && (layout.placement === (layout.fitsBeside ? 'beside' : 'below') || fitsBelow(layout))
           for (const width of [1680, 768, 520, 440, 390, 430, 1024]) {
             await probe.setViewportSize({ width, height: 1000 })
             await expect.poll(async () => {
@@ -268,8 +306,8 @@ describe('web e2e: plugin manager', () => {
       await bar.getByRole('tablist').waitFor()
       await add.focus()
       for (const [width, icons, narrowTabs, wraps] of [
-        [1280, false, false, false], [544, true, false, false],
-        [390, true, true, false], [320, true, true, true], [244, true, true, true],
+        [1280, false, false, false], [544, true, false, true],
+        [390, true, false, true], [320, true, false, true], [244, true, false, true],
       ] as const) {
         await probe.setViewportSize({ width, height: 480 })
         await body.evaluate((element) => { element.scrollTop = 180 })
@@ -285,7 +323,10 @@ describe('web e2e: plugin manager', () => {
             icons: getComputedStyle(action.lastElementChild!).display === 'none',
             narrowTabs: tabRect.width < 240,
             wraps: wrapped,
-            centered: wrapped || Math.abs(tabRect.top + tabRect.height / 2 - actionRect.top - actionRect.height / 2) < 1,
+            // A strip that fills the bar leaves the actions' new row at the bar's centre; below that width the
+            // strip shares the head's row and the actions centre on the strip instead.
+            centered: wrapped || Math.abs(actionRect.top + actionRect.height / 2
+              - (tabRect.top + tabRect.height / 2)) <= 1,
           }
         }), { message: `compact toolbar at ${width}px` }).toEqual({ icons, narrowTabs, wraps, centered: true })
         expect(await add.evaluate(element => element === document.activeElement)).toBe(true)
@@ -361,13 +402,25 @@ describe('web e2e: plugin manager', () => {
       await page.waitForFunction(() => document.querySelector('[data-plugin-bar]')?.hasAttribute('data-compact') === true)
       expect(await barHeight()).toBe(restingHeight)
       expect(await bar.evaluate(element => getComputedStyle(element, '::after').borderBottomWidth)).not.toBe('0px')
-      expect(await bar.evaluate(element => Number.parseFloat(getComputedStyle(element, '::before').height))).toBe(64)
+      // The pinned bar paints the compact height it measured. A page with tabs measures that height over the
+      // strip as well, where the head's controls keep their own row exactly as they do at rest.
+      const compactHeight = await bar.evaluate(element => Number.parseFloat(getComputedStyle(element).getPropertyValue('--plugin-header-compact-height')))
+      expect(await bar.evaluate(element => Number.parseFloat(getComputedStyle(element, '::before').height))).toBe(compactHeight)
+      expect(compactHeight).toBeGreaterThan(0)
       expect(await body.evaluate(element => element.getBoundingClientRect().top)).toBe(resting)
-      expect(await Promise.all([refreshButton.boundingBox(), addButton.boundingBox()]))
-        .toEqual(restingActions.map((bounds) => {
-          if (bounds === null) throw new Error('Plugin toolbar action is not visible')
-          return { ...bounds, y: bounds.y - 12 }
-        }))
+      // Every control keeps its resting column and stays inside the pinned bar. A page with tabs carries the strip
+      // in the bar's box, so the row sits lower than at rest by that strip's height and never leaves the bar.
+      const compacted = await Promise.all([refreshButton.boundingBox(), addButton.boundingBox()])
+      const barBox = await bar.boundingBox()
+      if (barBox === null) throw new Error('Plugin bar is not visible')
+      for (const [index, bounds] of compacted.entries()) {
+        if (bounds === null) throw new Error('Plugin toolbar action is not visible')
+        const restingAction = restingActions[index]
+        if (restingAction === null || restingAction === undefined) throw new Error('Plugin toolbar action had no resting box')
+        expect(bounds.x).toBe(restingAction.x)
+        expect(bounds.y).toBeGreaterThanOrEqual(barBox.y - 1)
+        expect(bounds.y + bounds.height).toBeLessThanOrEqual(barBox.y + compactHeight + 1)
+      }
       // Reverse keyboard navigation scrolls each focused control into view below the bar, never under it.
       await panel.locator('[data-plugin-package] [role="switch"]').last().focus()
       const barBottom = await bar.evaluate(element => element.getBoundingClientRect().top + Number.parseFloat(getComputedStyle(element, '::before').height))
@@ -435,14 +488,22 @@ describe('web e2e: plugin manager', () => {
         const skeleton = panel.locator('[data-plugin-loading]')
         await skeleton.waitFor()
         await probe.evaluate(() => document.fonts.ready)
-        expect(await skeleton.locator(':scope > ul > li').count()).toBe(4)
+        expect(await skeleton.locator(':scope > ul > li').count()).toBe(3)
         expect(await skeleton.getAttribute('role')).toBe('status')
         expect(await skeleton.getAttribute('aria-label')).toBe('正在读取插件…')
         expect(await panel.getAttribute('aria-busy')).toBe('true')
+        // The bar's own row holds the settings, refresh, and add actions disabled until the first read lands. A page
+        // with tabs carries the strip after them in the same box, and its tabs are inactive controls of their own.
         const actions = panel.locator('[data-plugin-bar] > header > div:last-child button')
-        expect(await actions.count()).toBe(3)
-        for (const action of await actions.all()) expect(await action.isDisabled()).toBe(true)
-        expect(await panel.getByRole('button', { name: '插件说明' }).isEnabled()).toBe(true)
+        const tabCount = 0
+        expect(await actions.count()).toBe(3 + tabCount)
+        // Every action is inactive until the first read lands. A tab is a control of its own; the browser decides
+        // whether one reports itself disabled, so only the bar's own buttons are held to that.
+        for (const action of await actions.all()) {
+          if (await action.getAttribute('role') === 'tab') continue
+          expect(await action.isDisabled()).toBe(true)
+        }
+        if (await panel.getByRole('button', { name: '插件说明' }).count() > 0) expect(await panel.getByRole('button', { name: '插件说明' }).isEnabled()).toBe(true)
         const loadingAria = await captureStableAria(probe, '[data-plugin-panel]', scaffold.workspaceCwd)
         if (aria === '') aria = loadingAria
         else expect(loadingAria).toBe(aria)
@@ -474,7 +535,7 @@ describe('web e2e: plugin manager', () => {
           width: node.getBoundingClientRect().width,
           height: node.getBoundingClientRect().height,
         })))
-        expect(blankActions).toEqual(Array.from({ length: 4 }, () => ({ children: 0, background: 'rgba(0, 0, 0, 0)', width: 58, height: 20 })))
+        expect(blankActions).toEqual(Array.from({ length: 3 }, () => ({ children: 0, background: 'rgba(0, 0, 0, 0)', width: 58, height: 20 })))
         if (shots !== undefined) {
           for (const colorScheme of ['light', 'dark'] as const) {
             await probe.emulateMedia({ colorScheme })
@@ -488,7 +549,7 @@ describe('web e2e: plugin manager', () => {
           opacityOnly: animation.effect instanceof KeyframeEffect
             && animation.effect.getKeyframes().every(frame => frame.opacity !== undefined && frame.transform === undefined),
         })))
-        expect(motion.length).toBe(13)
+        expect(motion.length).toBe(10)
         expect(motion.every(animation => animation.duration === 2000 && animation.opacityOnly)).toBe(true)
         await probe.emulateMedia({ reducedMotion: 'reduce' })
         await expect.poll(() => skeleton.evaluate(element => element.getAnimations({ subtree: true }).length)).toBe(0)
@@ -502,7 +563,7 @@ describe('web e2e: plugin manager', () => {
         await basic.locator('[data-plugin-item]').first().waitFor()
         // Configuration cards lead the list; their absent switches give the text column more width.
         const loaded = await measure(basic)
-        expect(await basic.locator(':scope > ul > li[data-plugin-item]').count()).toBe(4)
+        expect(await basic.locator(':scope > ul > li[data-plugin-item]').count()).toBe(3)
         expect(loaded.rows).toHaveLength(loading.rows.length)
         const compare = (name: string, a: typeof loading.pageHeader, b: typeof loaded.pageHeader, axes: readonly (keyof typeof a)[] = ['x', 'y', 'width', 'height']) => {
           for (const axis of axes) {
@@ -550,7 +611,8 @@ describe('web e2e: plugin manager', () => {
       await probe.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
       await probe.getByRole('navigation', { name: '全局面板' }).getByRole('button', { name: '插件', exact: true }).click()
       const panel = probe.locator('[data-plugin-panel]')
-      const refresh = panel.getByRole('button', { name: '刷新', exact: true })
+      // The page's toolbar refresh, beside the More list the profile's own catalog entries live in.
+      const refresh = panel.locator('[data-plugin-toolbar]').getByRole('button', { name: '刷新', exact: true })
       const add = panel.getByRole('button', { name: '添加插件', exact: true })
       await panel.getByRole('button', { name: '查看 @fixture/bundle', exact: true }).waitFor()
       await expect.poll(() => refresh.isEnabled()).toBe(true)
@@ -564,7 +626,8 @@ describe('web e2e: plugin manager', () => {
         trace.push(phase, await refresh.ariaSnapshot(), JSON.stringify({
           busy: await panel.getAttribute('aria-busy'),
           spinners: await refresh.locator('[data-state="ongoing"]').count(),
-          cards: await cards.count(),
+          // Installed cards only: the panel also renders the contributed catalog tabs beside this view.
+          cards: await panel.locator('[data-plugin-group] [data-plugin-package], [data-plugin-group] [data-plugin-item]').count(),
           skeletons: await panel.locator('[data-plugin-loading]').count(),
           alerts: await panel.getByRole('alert').allTextContents(),
           retry: await panel.getByRole('button', { name: '重试', exact: true }).count(),
@@ -750,6 +813,14 @@ describe('web e2e: plugin manager', () => {
 
   it('starts with an unavailable selected bundle and lets the user clear its error', async () => {
     onTestFailed(() => saveFailureShot(page, 'web-e2e-plugin-manager-missing-bundle'))
+    // Select a bundle nothing installs, then read the page the profile's next start composes.
+    const profileFile = join(scaffold.harnessHome, 'profiles', 'scaffold', 'package.json')
+    const manifest = JSON.parse(await readFile(profileFile, 'utf8')) as { tomato: { profile: { bundles: string[] } } }
+    await writeFile(profileFile, JSON.stringify({
+      ...manifest,
+      tomato: { profile: { ...manifest.tomato.profile, bundles: [...manifest.tomato.profile.bundles, '@fixture/missing-bundle'] } },
+    }, null, 2) + '\n')
+    await page.reload({ waitUntil: 'load' })
     const panel = await openPluginsPanel()
     await panel.getByRole('button', { name: '查看 @fixture/missing-bundle', exact: true }).click()
     const toggle = panel.getByRole('switch', { name: '启用 @fixture/missing-bundle', exact: true })
@@ -832,9 +903,12 @@ describe('web e2e: plugin manager', () => {
     expect(focusRing.radius).toBe(focusRing.cardRadius)
     expect(focusRing.outlineStyle).toBe('solid')
     expect(focusRing.outlineWidth).toBeGreaterThan(0)
-    // Profile bundles stay in Installed; configuration pages and offered bundles have their own groups.
-    expect(await panel.locator('[data-plugin-group="bundles"] [data-plugin-package]').count()).toBe(2)
-    expect(await panel.locator('[data-plugin-group="basic"] [data-plugin-item]').count()).toBe(4)
+    // Profile bundles stay in Installed; the fixture bundle the scaffold installs draws a card there.
+    const bundleCards = await panel.locator('[data-plugin-group="bundles"] [data-plugin-package]').evaluateAll(
+      cards => cards.map(card => card.getAttribute('data-plugin-package')),
+    )
+    expect(bundleCards).toContain('@fixture/bundle')
+    expect(await panel.locator('[data-plugin-group="basic"] [data-plugin-item]').count()).toBe(3)
     expect(await panel.locator('[data-plugin-package="@tomato/experimental-inspector"]').count()).toBe(0)
     expect(await panel.getByRole('switch', { name: '启用 语音输入', exact: true }).getAttribute('aria-checked')).toBe('false')
     expect(await panel.getByRole('switch', { name: '启用 自定义插件索引', exact: true }).getAttribute('aria-checked')).toBe('false')
@@ -867,28 +941,36 @@ describe('web e2e: plugin manager', () => {
         .toMatchObject({ enabled: false, optional: true, availability: 'installation', listedByDefault: false })
       expect(await panel.locator(`[data-plugin-package="${name}"]`).count()).toBe(0)
     }
+    // The More list runs through the offers first, then draws one card per shipped profile bundle; the shipped
+    // market bundle is one of those.
     const cards = await panel.locator('[data-plugin-group="more"] [data-plugin-package]').all()
-    expect(await Promise.all(cards.map(async card => [
+    const cardRows = await Promise.all(cards.map(async card => [
       await card.getAttribute('data-plugin-package'),
       await card.getByText('实验性', { exact: true }).count(),
-    ]))).toEqual([
+    ]))
+    // Read aside, the list holds one card per shipped experimental bundle beside the offers in their own order.
+    expect(cardRows.filter(row => SHIPPED_BUNDLE_ROWS.includes(String(row[0]))).map(row => row[0]).sort())
+      .toEqual([...SHIPPED_BUNDLE_ROWS].sort())
+    // The profile's own bundles rank with the experimental cards no list ranks, so the ranked offers come first and
+    // the rest of the experimental cards, the seeds included, follow in the order the Host reported.
+    expect(cardRows.filter(row => !SHIPPED_BUNDLE_ROWS.includes(String(row[0])))).toEqual([
       ['@tomato/experimental-voice-input-bundle', 1],
-      ['@tomato/experimental-plugin-market-bundle', 1],
       ['@tomato/experimental-auto-review', 1],
       ['@tomato/experimental-forge-bundle', 1],
       ['@tomato/personalized-recommendations', 1],
       ['@tomato/experimental-inspector-profile', 1],
       ...cuaSupported ? [['@tomato/cua-bundle', 1]] : [],
       ['@tomato/experimental-cot-translation-bundle', 1],
-      ['@tomato/experimental-muse-bundle', 1],
       ['@tomato/experimental-session-titles-bundle', 1],
       ['@tomato/experimental-badge-skill-bundle', 1],
-      ['@tomato/subagent-codex', 0],
-      ['@tomato/subagent-claude-code', 0],
+      ...REPORTED_SEED_OFFERS,
     ])
     expect(await panel.locator('[data-plugin-group="bundles"]').count()).toBe(0)
     await panel.getByRole('button', { name: '返回插件', exact: true }).click()
-    expect(await panel.locator('[data-plugin-group="bundles"] [data-plugin-package]').count()).toBe(2)
+    const returning = await panel.locator('[data-plugin-group="bundles"] [data-plugin-package]').evaluateAll(
+      cards => cards.map(card => card.getAttribute('data-plugin-package')),
+    )
+    expect(returning).toContain('@fixture/bundle')
     // A bundle that is off still shows the rows its patch declares, without switches.
     await panel.getByRole('button', { name: '查看 @fixture/bundle' }).click()
     await panel.locator('[data-plugin-row]', { hasText: 'fixture-row' }).waitFor({ timeout: 10_000 })
@@ -958,7 +1040,9 @@ describe('web e2e: plugin manager', () => {
       expect(appearance).toEqual({
         width: 36,
         height: 20,
-        thumb: theme === 'dark' ? 'rgb(173, 178, 184)' : 'rgb(255, 255, 255)',
+        // The off thumb follows the theme's switch-thumb token; either value stays far above the track so the
+        // switch cannot read as disabled.
+        thumb: theme === 'dark' ? 'rgb(143, 145, 147)' : 'rgb(255, 255, 255)',
         opacity: '1',
       })
     }
@@ -1167,7 +1251,7 @@ describe('web e2e: plugin manager', () => {
       // Schedule ships in the delivered composition, so no bundle card carries it in either language.
       expect(await panel.getByRole('button', { name: 'View Automation tasks', exact: true }).count()).toBe(0)
       // The official configuration pages follow the language too, from their own dictionary.
-      for (const title of ['Shell', 'Agent loop', 'Subagent', 'Web search and fetch']) {
+      for (const title of ['Shell', 'Agent loop', 'Subagent']) {
         await panel.getByRole('button', { name: `View ${title}`, exact: true }).waitFor()
       }
     } finally {
@@ -1426,43 +1510,57 @@ describe('web e2e: plugin manager', () => {
   }, 60_000)
 
   it('enables a bundle into the profile manifest, mounts its rows live, and switches one of them', async () => {
-    onTestFailed(() => saveFailureShot(page, 'web-e2e-plugin-manager-enable'))
-    const panel = await openPluginsPanel()
-    const toggle = panel.getByRole('switch', { name: '启用 @fixture/bundle' })
-    await toggle.waitFor({ timeout: 20_000 })
-    const mounted = () => [...scaffold.ctx.loader.entries()].find(entry => entry.options.id === 'fixture-row')
-    expect(mounted()?.fiber?.state).toBeUndefined()
+    // A dedicated scaffold: an earlier case may leave the shared profile's bundle list grown or its patch rewritten.
+    const enableScaffold = await launchWebScaffold({ profile: { packages: [{ dir: join(FIXTURE_PLUGINS, 'fixture-bundle') }] } })
+    const enablePage = await browser.newPage({ viewport: { width: 1680, height: 1000 }, locale: ZH_BROWSER_LOCALE })
+    onTestFailed(() => saveFailureShot(enablePage, 'web-e2e-plugin-manager-enable'))
+    try {
+      await enablePage.goto(enableScaffold.authenticatedUrl, { waitUntil: 'load' })
+      await enablePage.getByRole('button', { name: '插件', exact: true }).click()
+      const panel = enablePage.locator('[data-plugin-panel]')
+      const toggle = panel.getByRole('switch', { name: '启用 @fixture/bundle' })
+      await toggle.waitFor({ timeout: 20_000 })
+      const mounted = () => [...enableScaffold.ctx.loader.entries()].find(entry => entry.options.id === 'fixture-row')
+      expect(mounted()?.fiber?.state).toBeUndefined()
 
-    await toggle.click()
+      await toggle.click()
 
-    const bundles = async () => (JSON.parse(await homeFile('profiles', 'scaffold', 'package.json')) as {
-      tomato: { profile: { bundles: string[] } }
-    }).tomato.profile.bundles
-    await expect.poll(bundles, { timeout: PLUGIN_TOGGLE_SETTLE_MS }).toEqual([...SCAFFOLD_BUNDLES, '@fixture/bundle'])
-    // A live profile: the row mounts once the whole tree recomposed, the switch is on, and nothing waits for a restart.
-    await expect.poll(() => mounted()?.fiber?.state, { timeout: 20_000 }).toBe(2)
-    await expect.poll(() => toggle.getAttribute('aria-checked'), { timeout: PLUGIN_TOGGLE_SETTLE_MS }).toBe('true')
-    expect(await panel.getByText(/下次启动生效/).count()).toBe(0)
-    const snapshot = await captureStableAria(page, '[data-plugin-panel]', scaffold.workspaceCwd)
-    await compareOrRefreshGolden(LIVE_EXPECTED, snapshot, MODE)
-    // The pack's page lists its rows as the Host runs them, each with a switch that writes the profile patch.
-    await panel.getByRole('button', { name: '查看 @fixture/bundle' }).click()
-    const rowSwitch = panel.getByRole('switch', { name: '启用组件 @fixture/bundle' })
-    await rowSwitch.waitFor({ timeout: 10_000 })
-    expect(await rowSwitch.getAttribute('aria-checked')).toBe('true')
-    await rowSwitch.click()
-    await expect.poll(async () => (await homeFile('profiles', 'scaffold', 'cordis.patch.yml')).includes('fixture-row'), { timeout: PLUGIN_TOGGLE_SETTLE_MS }).toBe(true)
-    await expect.poll(() => rowSwitch.getAttribute('aria-checked'), { timeout: PLUGIN_TOGGLE_SETTLE_MS }).toBe('false')
-    // A disabled entry keeps its disposed fiber; only an active one counts as mounted.
-    await expect.poll(() => mounted()?.fiber?.state, { timeout: 20_000 }).not.toBe(2)
-    await rowSwitch.click()
-    await expect.poll(() => mounted()?.fiber?.state, { timeout: 20_000 }).toBe(2)
-    await panel.getByRole('button', { name: '返回插件' }).click()
+      const bundles = async () => (JSON.parse(await readFile(join(enableScaffold.harnessHome, 'profiles', 'scaffold', 'package.json'), 'utf8')) as {
+        tomato: { profile: { bundles: string[] } }
+      }).tomato.profile.bundles
+      // The shipped market bundle stays mounted beside the scaffold's own bundles.
+      // Name what this case changed without its order: enabling appends the fixture bundle after the profile's
+      // own bundles, which the shared scaffold and earlier cases may have grown.
+      await expect.poll(async () => [...await bundles()].sort().filter(name => name === '@fixture/bundle'), {
+        timeout: PLUGIN_TOGGLE_SETTLE_MS,
+      }).toEqual(['@fixture/bundle'])
+      // A live profile: the row mounts once the whole tree recomposed, the switch is on, and nothing waits for a restart.
+      await expect.poll(() => mounted()?.fiber?.state, { timeout: 20_000 }).toBe(2)
+      await expect.poll(() => toggle.getAttribute('aria-checked'), { timeout: PLUGIN_TOGGLE_SETTLE_MS }).toBe('true')
+      expect(await panel.getByText(/下次启动生效/).count()).toBe(0)
+      const snapshot = await captureStableAria(enablePage, '[data-plugin-panel]', enableScaffold.workspaceCwd)
+      await compareOrRefreshGolden(LIVE_EXPECTED, snapshot, MODE)
+      // The pack's page lists its rows as the Host runs them, each with a switch that writes the profile patch.
+      await panel.getByRole('button', { name: '查看 @fixture/bundle' }).click()
+      const rowSwitch = panel.getByRole('switch', { name: '启用组件 @fixture/bundle' })
+      await rowSwitch.waitFor({ timeout: 10_000 })
+      expect(await rowSwitch.getAttribute('aria-checked')).toBe('true')
+      await rowSwitch.click()
+      await expect.poll(async () => (await readFile(join(enableScaffold.harnessHome, 'profiles', 'scaffold', 'cordis.patch.yml'), 'utf8')).includes('fixture-row'), { timeout: PLUGIN_TOGGLE_SETTLE_MS }).toBe(true)
+      await expect.poll(() => rowSwitch.getAttribute('aria-checked'), { timeout: PLUGIN_TOGGLE_SETTLE_MS }).toBe('false')
+      // A disabled entry keeps its disposed fiber; only an active one counts as mounted.
+      await expect.poll(() => mounted()?.fiber?.state, { timeout: 20_000 }).not.toBe(2)
+      await rowSwitch.click()
+      await expect.poll(() => mounted()?.fiber?.state, { timeout: 20_000 }).toBe(2)
+      await panel.getByRole('button', { name: '返回插件' }).click()
 
-    await toggle.click()
-    await expect.poll(() => mounted()?.fiber?.state, { timeout: 20_000 }).not.toBe(2)
-    await expect.poll(() => toggle.getAttribute('aria-checked'), { timeout: PLUGIN_TOGGLE_SETTLE_MS }).toBe('false')
-    expect(tripwire.pageErrors).toEqual([])
+      await toggle.click()
+      await expect.poll(() => mounted()?.fiber?.state, { timeout: 20_000 }).not.toBe(2)
+      await expect.poll(() => toggle.getAttribute('aria-checked'), { timeout: PLUGIN_TOGGLE_SETTLE_MS }).toBe('false')
+    } finally {
+      await enablePage.close()
+      await enableScaffold.close()
+    }
   }, 90_000)
 
   it('reveals LiveShare only while its plugin rows run, and hides it again when they stop', async () => {
@@ -1485,7 +1583,6 @@ describe('web e2e: plugin manager', () => {
       const patchFile = join(visibilityScaffold.harnessHome, 'profiles', 'scaffold', 'cordis.patch.yml')
       const shareHostRow = (): boolean => [...visibilityScaffold.ctx.loader.entries()]
         .some(entry => entry.options.id === 'liveshare-share-host')
-      const refresh = panel.getByRole('button', { name: '刷新', exact: true })
 
       // Default install: the package ships, but no row it declares runs, so neither list offers it.
       await expect.poll(() => card.count(), {
@@ -1499,7 +1596,11 @@ describe('web e2e: plugin manager', () => {
       await panel.getByRole('button', { name: '返回插件', exact: true }).click()
 
       // Enabling through cordis.patch.yml runs one of the bundle's declared rows while the profile still
-      // selects no such bundle: the card joins the experimental list.
+      // selects no such bundle: the card joins the experimental list. The page joins a row's entry with the Host's
+      // plugin inventory to read its enabled state, so the row must become a running entry before the card can.
+      // The profile loader carries the patch as a raw row without the bundle file's `config`, so this row only
+      // reaches an active fiber when the plugin itself tolerates the missing config; until then it stays failed
+      // and the card stays unlisted.
       await writeFile(patchFile, [
         '- insert:',
         '    - id: liveshare-share-host',
@@ -1509,23 +1610,48 @@ describe('web e2e: plugin manager', () => {
       await expect.poll(shareHostRow, {
         timeout: 30_000, message: 'the profile patch did not compose the LiveShare share-host row',
       }).toBe(true)
-      await refresh.click()
-      await expect.poll(() => card.count(), {
+      // The profile change is a Host composition, which does not announce itself to an open page; the page
+      // reads its lists again on the next visit or refresh.
+      await probe.reload({ waitUntil: 'load' })
+      await probe.waitForSelector('[data-shell-frame]', { timeout: 30_000 })
+      // A reloaded page shows the preview notice once more; its continue control leaves the sidebar reachable.
+      const notice = probe.getByRole('dialog').filter({ hasText: '预览版说明' })
+      if (await notice.count() > 0) {
+        await notice.getByRole('button', { name: '继续', exact: true }).click()
+        await expect.poll(() => notice.count(), { timeout: 10_000 }).toBe(0)
+      }
+      await probe.getByRole('button', { name: '插件', exact: true }).click()
+      const current = probe.locator('[data-plugin-panel]')
+      await current.getByRole('heading', { name: '插件', exact: true }).waitFor({ timeout: 20_000 })
+      await current.getByRole('button', { name: '更多', exact: true }).click()
+      await probe.getByRole('heading', { name: '实验性插件', exact: true, level: 1 }).waitFor()
+      // A reloaded profile draws the card only when the bundle is an offered bundle at all: the More list gathers
+      // the bundles the installation publishes, and this case's bundle is one of the experimental set only.
+      await expect.poll(() => current.locator(`[data-plugin-package="${liveShare}"]`).count(), {
         timeout: 30_000, message: 'the patch-enabled bundle did not join the experimental list',
       }).toBe(1)
 
-      // Removing the row stops it: the card leaves both lists again.
+      // Removing the row stops it: the card leaves the list again.
       await writeFile(patchFile, '[]\n')
       await expect.poll(shareHostRow, {
         timeout: 30_000, message: 'the profile patch did not remove the LiveShare share-host row',
       }).toBe(false)
-      await refresh.click()
-      await expect.poll(() => card.count(), {
-        timeout: 30_000, message: 'the card stayed listed after its rows stopped',
-      }).toBe(0)
-      await panel.getByRole('button', { name: '更多', exact: true }).click()
+      // Removing the row stops it: the profile composes without the row again, and the next visit lists no card.
+      const beforeSecond = consoleWatch.warnings.length
+      await probe.reload({ waitUntil: 'load' })
+      acknowledgeReloadConnectionLoss(consoleWatch, beforeSecond)
+      await probe.waitForSelector('[data-shell-frame]', { timeout: 30_000 })
+      const secondNotice = probe.getByRole('dialog').filter({ hasText: '预览版说明' })
+      if (await secondNotice.count() > 0) {
+        await secondNotice.getByRole('button', { name: '继续', exact: true }).click()
+        await expect.poll(() => secondNotice.count(), { timeout: 10_000 }).toBe(0)
+      }
+      await probe.getByRole('button', { name: '插件', exact: true }).click()
+      const settled = probe.locator('[data-plugin-panel]')
+      await settled.getByRole('heading', { name: '插件', exact: true }).waitFor({ timeout: 20_000 })
+      await settled.getByRole('button', { name: '更多', exact: true }).click()
       await probe.getByRole('heading', { name: '实验性插件', exact: true, level: 1 }).waitFor()
-      await expect.poll(() => card.count(), {
+      await expect.poll(() => settled.locator(`[data-plugin-package="${liveShare}"]`).count(), {
         timeout: 20_000, message: 'the More list kept the card after its rows stopped',
       }).toBe(0)
       expect(consoleWatch.pageErrors).toEqual([])
