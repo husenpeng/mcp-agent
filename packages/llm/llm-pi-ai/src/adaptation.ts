@@ -18,14 +18,23 @@
  * verifies model by model when it adopts a relay. Anthropic Messages routes
  * receive the same levels (pi-ai maps them to adaptive effort or a thinking
  * budget) plus the adaptive-thinking switch for Claude. Other protocols receive
- * modality advice only.
+ * modality advice only, and only OpenAI-compatible or Responses routes take the
+ * instruction-role switch.
+ *
+ * The route dialect goes beyond reasoning. pi-ai reads an endpoint it does not
+ * recognize as OpenAI itself: a reasoning model's instructions carry the
+ * `developer` role, and an `openai-completions` conversation has no place for
+ * instructions after it starts. Those switches describe the route rather than a
+ * model — every model of the route sends the same role and message order — so
+ * the reply states them once on the route and the configuration surface writes
+ * them there.
  *
  * Advice is a pure function of the draft: it reads nothing stored and writes
  * nothing. It names only fields the draft leaves unset AND no catalog entry
- * already supplies, so adopting it never overwrites a deployment's own
- * declaration or a first-party capability. The configuration surface offers the
- * reply for adoption; `cordis.patch.yml` remains the only thing that decides
- * what a route serves.
+ * already supplies, per field, so adopting it never overwrites a deployment's
+ * own declaration or a first-party capability. The configuration surface offers
+ * the reply for adoption; `cordis.patch.yml` remains the only thing that
+ * decides what a route serves.
  *
  * @module @tomato/llm-pi-ai/adaptation
  */
@@ -124,9 +133,48 @@ function declaresEfforts(target: LlmModelAdaptationTarget): boolean {
   return typeof efforts === 'object' && efforts !== null
 }
 
+/** The OpenAI-compatible wire switches a gateway needs, and nothing a field already states. */
+interface CompletionsDialect {
+  /** Whether the endpoint accepts the `developer` instruction role. */
+  supportsDeveloperRole: boolean
+  /** Whether the endpoint reads `reasoning_effort`. */
+  supportsReasoningEffort?: boolean
+  /** Reasoning parameter format the endpoint expects. */
+  thinkingFormat?: PiAiThinkingFormat
+}
+
+/**
+ * The switches a route needs to serve its models, in the order they are
+ * written, each skipped when the route already states it.
+ * @param api - the protocol the route speaks.
+ * @param dialect - what that protocol's route needs beyond pi-ai's detection.
+ * @param route - the switches the route already declares.
+ * @returns the switches to write on the route; empty when it declares them all.
+ */
+function missingSwitches(
+  api: string,
+  dialect: CompletionsDialect,
+  route: LlmModelAdaptationRequest['compat'],
+): Record<string, JsonValue> {
+  const switches: Record<string, JsonValue> = {}
+  const offer = (field: string, value: JsonValue | undefined): void => {
+    if (value === undefined || route?.[field] !== undefined) return
+    switches[field] = value
+  }
+  if (api === 'openai-completions') {
+    offer('supportsDeveloperRole', dialect.supportsDeveloperRole)
+    offer('supportsReasoningEffort', dialect.supportsReasoningEffort)
+    offer('thinkingFormat', dialect.thinkingFormat)
+    return switches
+  }
+  if (api === 'openai-responses') offer('supportsDeveloperRole', dialect.supportsDeveloperRole)
+  return switches
+}
+
 /**
  * Advise the profile fields one provider draft is missing to serve its models
- * with their families' protocol parameters and reasoning levels.
+ * with their families' protocol parameters and reasoning levels, plus the route
+ * switches no declaration on either layer states.
  *
  * A model the catalog already describes inherits its reasoning and modalities
  * through catalog materialization, so it receives no reasoning or modality
@@ -137,13 +185,105 @@ function declaresEfforts(target: LlmModelAdaptationTarget): boolean {
  * model's authoritative compat is left untouched. Reasoning levels are advised
  * only for the OpenAI-compatible and Anthropic Messages protocols; every other
  * protocol receives modality advice only. A non-chat model and an unrecognized
- * family receive nothing.
+ * family receive no row advice.
+ *
+ * The route switches answer pi-ai's detection, which treats an endpoint it does
+ * not recognize as OpenAI itself and then sends a reasoning model's
+ * instructions as the `developer` role and places later instructions mid
+ * message list. They are advised whenever no family-declared row covers them,
+ * reduce to one wire spelling when every family agrees, and are filled from the
+ * draft's standard gateway dialect when no family declared a row.
  * @param request - the effective route facts and drafted rows, in list order.
- * @returns one advice entry per model with something to declare, in request order;
- *   a complete model yields no entry.
+ * @returns one entry per model with something to declare, in request order, then
+ *   zero or one entry naming the route with `route: true`; a complete draft
+ *   yields no entry.
+ */
+/**
+ * Whether a row or the route already states one switch, which is then never restated.
+ * @param field - compat field name.
+ * @param target - the drafted row.
+ * @param request - the effective route facts.
+ * @returns true when either layer sets the field.
+ */
+function declares(
+  field: string,
+  target: LlmModelAdaptationTarget,
+  request: LlmModelAdaptationRequest,
+): boolean {
+  return target.compat?.[field] !== undefined || request.compat?.[field] !== undefined
+}
+
+/**
+ * The route dialect implied by the families that declared a row: each switch is
+ * advised as `false` when any family needs it off, since one route cannot serve
+ * both roles to one endpoint, and a wire spelling only when every family that
+ * named one agrees. With no family row, the standard gateway needs the switches
+ * pi-ai's detection would otherwise get wrong — the endpoint is not OpenAI
+ * itself, so it takes `system` and needs later instructions folded in.
+ * Later instruction messages need no switch: `supportsMidConvoSystemMessages` is
+ * catalog-owned, so an unrecognized endpoint folds them into a user message.
+ * @param dialects - one entry per family-declared reasoning row, in request order.
+ * @returns the switches the route needs beyond what it states.
+ */
+function routeDialect(dialects: readonly CompletionsDialect[]): CompletionsDialect {
+  const standard: CompletionsDialect = { supportsDeveloperRole: false }
+  if (dialects.length === 0) return { ...standard, supportsReasoningEffort: true }
+  const formats = new Set(dialects.flatMap(dialect => dialect.thinkingFormat === undefined ? [] : [dialect.thinkingFormat]))
+  const [format] = formats
+  return {
+    ...standard,
+    supportsReasoningEffort: dialects.some(dialect => dialect.supportsReasoningEffort === true),
+    ...formats.size === 1 && format !== undefined ? { thinkingFormat: format } : {},
+  }
+}
+
+/**
+ * The protocol a draft speaks when neither the form nor the route's catalog
+ * names one. A route with no catalog models is the gateway case this dataset
+ * exists for, so it receives the OpenAI-compatible switches; one whose catalog
+ * models disagree on the protocol receives none, since no single set fits it.
+ * @param request - the effective route facts.
+ * @returns the protocol whose route switches the draft needs.
+ */
+function inferApi(request: LlmModelAdaptationRequest): string {
+  const protocols = request.models.flatMap((model) => {
+    const base = catalogBaseFor(request.provider, model.id)
+    return base === undefined ? [] : [base.api]
+  })
+  if (protocols.length === 0) return 'openai-completions'
+  return protocols.every(protocol => protocol === protocols[0]) ? protocols[0] ?? 'unknown' : 'unknown'
+}
+
+/**
+ * Advise the profile fields one provider draft is missing to serve its models
+ * with their families' protocol parameters and reasoning levels, and the route
+ * switches no declaration on either layer states.
+ *
+ * A model the catalog already describes inherits its reasoning and modalities
+ * through catalog materialization, so it receives no reasoning or modality
+ * advice; only a model the catalog does not describe is filled from the dataset.
+ * Row switches are advised only for an unknown model or one repointed to another
+ * protocol, because a repoint inherits no catalog compat, and only on a
+ * single-model request restating a switch the route already declared: there the
+ * next reply must find the row complete rather than advise it again. Any other
+ * draft leaves those switches to the route entry. Reasoning levels are advised
+ * only for the OpenAI-compatible and Anthropic Messages protocols; every other
+ * protocol receives modality advice only. A non-chat model and an unrecognized
+ * family receive no row advice.
+ *
+ * The route switches answer pi-ai's detection, which treats an endpoint it does
+ * not recognize as OpenAI itself. A route whose dialect no row declared receives
+ * the standard gateway dialect; one whose families declared rows receives their
+ * switch values when every family that named one agrees.
+ * @param request - the effective route facts and drafted rows, in list order.
+ * @returns one entry per model with something to declare, in request order, then
+ *   at most one entry naming the route with `route: true`; a complete draft
+ *   yields no entry.
  */
 export function adaptModels(request: LlmModelAdaptationRequest): readonly LlmModelAdaptation[] {
   const advice: LlmModelAdaptation[] = []
+  const dialects: CompletionsDialect[] = []
+  const routeApi = request.api ?? catalogSharedApi(request.provider)
   for (const target of request.models) {
     if (target.id.length === 0) continue
     const canonical = canonicalModelId(target.id)
@@ -151,7 +291,7 @@ export function adaptModels(request: LlmModelAdaptationRequest): readonly LlmMod
     const family = familyFor(canonical)
     if (family === undefined) continue
     const base = catalogBaseFor(request.provider, target.id)
-    const api = request.api ?? base?.api ?? catalogSharedApi(request.provider)
+    const api = routeApi ?? base?.api ?? 'openai-completions'
     let input: readonly PiAiModality[] | undefined
     let reasoningEfforts: PiAiReasoningEfforts | undefined
     let compat: Record<string, JsonValue> | undefined
@@ -167,27 +307,40 @@ export function adaptModels(request: LlmModelAdaptationRequest): readonly LlmMod
         : { ...STANDARD_EFFORTS, off: family.off ?? null }
     }
 
-    // Switches that make the reasoning dispatch land, each missing from the row
-    // and the route. A model the catalog describes on its own protocol inherits
-    // its catalog compat, which is authoritative, so it receives no switch
-    // advice; only an unknown model or one repointed to another protocol (which
-    // inherits no catalog compat) is filled from the family dialect.
+    // The protocol a model speaks decides whether any switch is its own. A model
+    // the catalog describes on its own protocol inherits its catalog compat,
+    // which is authoritative, so it declares no dialect; only an unknown model or
+    // one repointed to another protocol (which inherits no catalog compat) does.
     const fills = base === undefined || base.api !== api
-    const wanted: Record<string, JsonValue | undefined> = {}
-    if (fills && api === 'openai-completions' && (reasons || reasoningEfforts !== undefined)) {
-      wanted.supportsReasoningEffort = true
-      if (family.thinkingFormat !== undefined) wanted.thinkingFormat = family.thinkingFormat
-    } else if (fills && api === 'anthropic-messages' && family.adaptive === true) {
-      wanted.forceAdaptiveThinking = true
+    const reasoning = fills && (reasons || reasoningEfforts !== undefined)
+    if (reasoning && api === 'anthropic-messages') {
+      dialects.push({ supportsDeveloperRole: false })
+      const switches: Record<string, JsonValue> = {}
+      if (family.adaptive === true && !declares('forceAdaptiveThinking', target, request)) {
+        switches['forceAdaptiveThinking'] = true
+      }
+      if (Object.keys(switches).length > 0) compat = switches
+    } else if (reasoning) {
+      // pi-ai sends a reasoning model's instructions as `developer` only when
+      // the endpoint claims that role, so the gateway dialect states both.
+      const dialect: CompletionsDialect = {
+        supportsDeveloperRole: false,
+        supportsReasoningEffort: true,
+        ...family.thinkingFormat === undefined ? {} : { thinkingFormat: family.thinkingFormat },
+      }
+      dialects.push(dialect)
+      // The route states these switches itself: one dialect serves the whole
+      // endpoint. A row restates them only on a single-model request, the shape
+      // the configuration surface sends once the route entry is written. There the
+      // route facts already carry them, and the next reply must find the row
+      // complete rather than advise it again.
+      const inherited = request.models.length === 1 && request.compat !== undefined
+        ? Object.fromEntries(Object.entries(missingSwitches(
+          api, { supportsDeveloperRole: false, supportsReasoningEffort: true }, request.compat,
+        )).filter(([field]) => target.compat?.[field] === undefined))
+        : {}
+      if (Object.keys(inherited).length > 0) compat = inherited
     }
-    const switches: Record<string, JsonValue> = {}
-    for (const [field, value] of Object.entries(wanted)) {
-      if (value === undefined) continue
-      if (target.compat?.[field] !== undefined) continue
-      if (request.compat?.[field] !== undefined) continue
-      switches[field] = value
-    }
-    if (Object.keys(switches).length > 0) compat = switches
 
     // Modalities fill only an unknown model whose effective fallback is narrower
     // than the family declares; a catalog entry's or a row's own list stands.
@@ -206,5 +359,8 @@ export function adaptModels(request: LlmModelAdaptationRequest): readonly LlmMod
       })
     }
   }
+
+  const route = missingSwitches(routeApi ?? inferApi(request), routeDialect(dialects), request.compat)
+  if (Object.keys(route).length > 0) advice.push({ route: true, compat: route })
   return advice
 }

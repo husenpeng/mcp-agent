@@ -210,7 +210,10 @@ describe('llm-pi-ai real dormant composition', () => {
         id: 'qwen4-max',
         input: ['text', 'image'],
         reasoningEfforts: { off: null, low: 'low', medium: 'medium', high: 'high', max: 'max' },
-        compat: { supportsReasoningEffort: true },
+      },
+      {
+        route: true,
+        compat: { supportsDeveloperRole: false, supportsReasoningEffort: true },
       },
     ])
   })

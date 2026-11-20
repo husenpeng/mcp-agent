@@ -118,11 +118,13 @@ profile 的 `models` 列表会替换而非扩展路由的已安装目录；每�
 
 插件会回答「该提供方可以提供哪些模型？」，供配置界面正在编辑或起草的路由使用。已安装目录提供的路由直接由目录回答，不发网络请求，并将其 `input` 数组保留为发现结果的 `inputModalities`；只有目录未描述的路由才会经网络询问。`openai-completions` 与 `openai-responses` 使用带 bearer 鉴权的 `GET {baseURL}/models`，`anthropic-messages` 则以 `x-api-key` 和 `anthropic-version` 使用原生 `GET /v1/models?limit=1000` 语义；其列表 URL 接受带或不带末尾 `/v1` 的 API 根地址，因为网关文档两种写法都会发布，且只有该列表 URL 会归一化这一段，模型请求收到的仍是配置原样的 `baseURL`。`google-generative-ai` 以 `x-goog-api-key` 使用 `GET {baseURL}/models?pageSize=1000`，因为其 `baseURL` 已包含 API 版本，例如 `/v1beta`。已配置且具名的路由会在 Host 内部提供已存凭据与 profile `headers`，因此通过 `cordis.patch.yml` 或 Cordis 配置设置的部署标头可以到达模型发现请求，但不会成为发现请求或 Models 页面的字段；表单中新键入的密钥仍优先于已存凭据。解析器接受标准 `data` 数组或富信息 `models` 对象，并归一化每个候选的 id、显示名、上下文窗口与最大输出 token 数；Anthropic 的 `max_input_tokens` 与 `max_tokens` 会进入相同容量字段，即使对象条目点名了另一个规范 id，对象键仍是请求 id，原始类型的对象属性会被忽略，缺失的显示名则回退到该请求 id。Gemini 的回答则是 `models` 数组：每个 `name` 去掉 `models/` 前缀后成为请求 id，`displayName`、`inputTokenLimit` 与 `outputTokenLimit` 填入相同字段，`supportedGenerationMethods` 不含 `generateContent` 的条目会被跳过。回答是界面可以提供给用户采纳的候选元数据——不存储任何内容，`cordis.patch.yml` 仍然是决定路由服务内容的唯一事实。
 
-### 按家族适配模型
+### 按家族适配模型，并把路由适配到它的网关
 
 安装目录尚未收录的网关模型，解析时没有推理能力也没有协议兼容开关，因此只会当作纯文本模型应答。[`src/adaptation.ts`](src/adaptation.ts) 是填补这一空缺的代码内数据集：按模型家族存储推理深度档位与让其生效的协议参数，以 profile 字段表达。其方言是 OpenAI 兼容网关方言——`reasoning_effort`，外加 DeepSeek 原生的 `thinking` 开关；Anthropic Messages 路由获得相同档位以及 Claude 的自适应思考开关。插件通过 `ctx.llm.registerModelAdaptation` 注册该数据集，因此 `ctx.llm.adaptModels(settingsNs, request)` 可为提供方草稿给出建议。
 
-建议是草稿的纯函数，只点名草稿未设置且目录条目也未提供的字段。未知模型按其家族填充；处于自身协议上的目录模型交由目录处理；改接其他协议的目录模型保留继承的推理能力，但获得该家族的开关。行自身声明的 `reasoningEfforts`、`compat` 或 `input`，以及路由已设置的任何开关，都不会被重复写入。网关在聊天模型之外列出的非聊天模型——嵌入、重排、图像生成、语音——以及无法识别的家族，不获得任何建议。回复是供配置界面采纳的建议；不写入任何存储。Models 页的一键适配与一键更新动作会应用它，并在同一次保存中镜像部署允许清单。
+回复还会点名草稿缺少的路由开关。pi-ai 把无法识别的端点当作 OpenAI 本身：推理模型的首条指令以 `developer` 角色发出。私有网关通常拒收该角色，于是每个请求都以 `400` 失败，而任何模型级字段都修不了——角色属于协议，不属于模型。数据集在路由上作答：`supportsDeveloperRole: false`（角色保持 `system`），以及家族需要的 `supportsReasoningEffort: true` 与 `thinkingFormat`。后续指令不需要开关：`supportsMidConvoSystemMessages` 由 catalog 掌管，catalog 未描述的端点会把它们折叠成用户消息。两个处理器都以一条带 `route: true` 的条目在路由上给出这些开关，配置界面把它写在路由上，绝不逐模型重复。说 `anthropic-messages` 的路由不需要角色开关；两种推理方言之外的协议不获得路由建议。
+
+建议是草稿的纯函数，只点名草稿未设置且目录条目也未提供的字段。未知模型按其家族的档位与模态填充；处于自身协议上的目录模型在这些方面交由目录处理；改接其他协议的目录模型保留继承的推理能力，且不获得行级开关，因为路由已经承担。行自身声明的 `reasoningEfforts`、`compat` 或 `input`，以及路由已设置的任何开关，都不会被重复写入。家族行只重述路由已声明的开关，因此以该表单的路由事实发起的后续请求会发现各行已完整。网关在聊天模型之外列出的非聊天模型——嵌入、重排、图像生成、语音——以及无法识别的家族不获得档位，但路由开关仍由草稿的协议决定。回复是供配置界面采纳的建议；不写入任何存储。Models 页的一键适配与一键更新动作会应用它，并在同一次保存中镜像部署允许清单。
 
 ### 失败与恢复
 

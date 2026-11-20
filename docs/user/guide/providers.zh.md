@@ -168,7 +168,7 @@ DeepSeek 将省略的 `inputModalities` 视为纯文本，并拒绝空列表。�
 
 网关可能持有可用的密钥、地址也通得到，却仍然拒绝每一个请求。pi-ai 依据端点的 URL 决定请求的形状——系统提示词由哪个角色承载、输出上限写在哪个字段、思考级别如何传输——而对于它无法识别的地址，会当作 OpenAI 本身来对待。多数 OpenAI 兼容网关至少会拒绝 OpenAI 所接受的某一样东西。
 
-其中两样占了绝大多数。声明了推理能力的模型，其系统提示词会以 `role: "developer"` 发出，很多网关直接拒绝；输出上限则写作 `max_completion_tokens`，只认 `max_tokens` 的服务端会拒绝。表单里没有这两个字段；请在 `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml` 的路由上更正：
+其中三项占了绝大多数。声明了推理能力的模型，其系统提示词会以 `role: "developer"` 发出，很多网关直接拒绝——报错会点名 `developer` 不是受支持的角色。输出上限写作 `max_completion_tokens`，只认 `max_tokens` 的服务端会拒绝。`openai-completions` 对话开始后不能再携带指令消息；pi-ai 会为它无法确认的端点重排对话，harness 也会自行折叠后续指令，所以这一项不需要开关。表单里没有这些字段；**一键适配**会在路由上替你写入角色开关，其余各项可在 `$TOMATO_HOME/profiles/<profile>/cordis.patch.yml` 中直接改正：
 
 ```yaml
 - id: llm-pi-ai
@@ -197,6 +197,8 @@ DeepSeek 将省略的 `inputModalities` 视为纯文本，并拒绝空列表。�
 
 两者都未设置的字段，沿用已安装 catalog 为该模型记录的值；catalog 也未描述的，落到 pi-ai 的检测。凡是写下的开关都要给值：冒号后留空的键（`supportsDeveloperRole:`）会被拒绝而不是被忽略，因为空值会抹掉 catalog 已知的信息，却又没有给出任何替代。任何协议都不接受的名字同样会被拒绝，报错会列出可用的那些。
 
+对话开始后才到达的指令——即 harness 的系统提醒，以及工具的增删通知——取决于模型的 `supportsMidConvoSystemMessages`，该能力属于 pi-ai 已安装的 catalog，不能在路由上设置。目录条目声明了该能力的模型，这些消息就地保留；其余模型（包括 catalog 未描述的那些）会把每条折叠成以系统提醒包裹的用户消息，因此无法识别的网关永远不会收到对话中途的指令。要声明该能力，就把厂商指定为路由。
+
 每个开关归属于声明了它的那些协议，因此在某个 `api` 上合法的开关，在另一个上可能被拒绝——报错会点名该协议实际提供哪些。与上面的 `input` 一样，开关陈述的是关于你的端点的一个断言，而不是对它的检查：设置一个网关其实并不需要的开关，只是发出一个不同的请求而已。
 
 全部开关、各自接受的取值，以及接受它们的协议，都列在[生成的 `@tomato/llm-pi-ai` 配置参考](../../config-catalog.zh.md#tomatollm-pi-ai)的 `PiAiCompatProfile` 之下——该参考派生自源码，因此不会落后于适配器实际接受的内容。
@@ -208,7 +210,7 @@ DeepSeek 将省略的 `inputModalities` 视为纯文本，并拒绝空列表。�
 - **获取可用模型返回 401**：检查密钥。模型发现会调用 OpenAI 兼容的 `GET /models` 端点；对于不提供该端点的服务，请手动输入模型。
 - **获取可用模型提示既没有 `data` 数组也没有 `models` 对象**：端点返回的列表格式不在探测的读取范围内。请手动输入模型。
 - **密钥与地址都正确，网关却拒绝每一个请求**：它的请求形状与 OpenAI 不同。先在路由上设 `compat.supportsDeveloperRole: false` 与 `compat.maxTokensField: max_tokens`。
-- **只有推理模型失败**：pi-ai 把它们的系统提示词以 `developer` 角色发出，而网关拒绝该角色。设 `compat.supportsDeveloperRole: false`。
+- **只有推理模型失败**：pi-ai 把它们的系统提示词以 `developer` 角色发出，而网关拒绝该角色。设 `compat.supportsDeveloperRole: false`，或在提供方模型列表上点**一键适配**——它会在路由上写入该开关。
 - **手动录入的模型没有推理等级菜单**：该模型没有声明任何等级。如果是自定义模型 API 提供商，在该模型的**模型选项**中打开**推理等级**；其他提供商在 `cordis.patch.yml` 中给该模型加上 `reasoningEfforts`。
 - **`off` 无法让 DeepSeek 模型停止思考**：留空的 `off` 不发送任何推理字段，默认思考的端点就继续思考。请在模型或路由上设置 `compat.thinkingFormat: deepseek`。
 - **某个 compat 开关因没有值而被拒绝**：冒号后什么都没写。给它一个值，或删掉该键以沿用已安装 catalog 的值。
