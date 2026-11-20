@@ -5573,7 +5573,7 @@ export interface Config {
 
 - `inject`: `agents` · `crews` · `robots` · `tools`
 - `refs`: [`SandboxLevel`](../packages/experimental/robot/src/index.ts) · `Volatile` (`@tomato/cordis`)
-- `source`: [`packages/experimental/tool-work-team/src/index.ts:56`](../packages/experimental/tool-work-team/src/index.ts)
+- `source`: [`packages/experimental/tool-work-team/src/index.ts:65`](../packages/experimental/tool-work-team/src/index.ts)
 
 ```ts config-catalog
 /** Live-editable defaults applied to every robot this tool creates. */
