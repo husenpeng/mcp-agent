@@ -1,0 +1,33 @@
+# The Work Team layer: robot-based work teams over the Tomato Rbot registry.
+# It mounts the crew workflow layer (provider, Remote controller, canvas, and
+# the team tab), the work_team_create tool that authors the robots a team needs
+# from a conversation, and the work-team settings page. It replaces the
+# collaboration-room tab with the work-team tab. Selecting this bundle is the
+# opt-in; the Rbot bundle (`@tomato/experimental-robot-app`) carries the robot
+# registry this layer builds on.
+
+# The work-team tab takes the place of the collaboration room in the sidebar.
+- id: ui-robot-room
+  disabled: true
+
+- insert:
+    - id: robot-crew-local
+      name: '@tomato/experimental-robot-crew-local'
+
+    - id: robot-crew-remote
+      name: '@tomato/experimental-robot-crew-remote'
+
+    - id: api-robot-crew-controller
+      name: '@tomato/api-robot-crew-controller'
+
+    - id: robot-crew-tool
+      name: '@tomato/experimental-tool-robot-crew'
+
+    - id: tool-work-team
+      name: '@tomato/tool-work-team'
+
+    - id: ui-robot-crew
+      name: '@tomato/client-ui-robot-crew'
+
+    - id: ui-settings-work-team
+      name: '@tomato/client-ui-settings-work-team'

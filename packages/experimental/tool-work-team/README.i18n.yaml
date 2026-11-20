@@ -1,0 +1,40 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/tool-work-team/README.md
+/:
+  en: 8fb0a5b693dea029
+  zh: 6bb6fabab1b8b3c4
+/tool-work-team-create:
+  en: dee7498ab0b2bf03
+  zh: 1e98ca3e29d3118d
+/tool-work-team-create/summary:
+  en: a06ce7cde02524f2
+  zh: cb7eed1acb9260d7
+/tool-work-team-create/table-of-contents:
+  en: 4e53164159b5ce41
+  zh: 89582dc0294d0776
+/tool-work-team-create/use-this-package:
+  en: 33a1f9c48c1cc44c
+  zh: 810707e17bd316e6
+/tool-work-team-create/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/tool-work-team-create/model-experience/work-team-create:
+  en: 419a85af18debacf
+  zh: 419a85af18debacf
+/tool-work-team-create/model-experience/work-team-create/what-the-model-sees:
+  en: f21b604cfd1d1e1b
+  zh: eb62db2373eab61f
+/tool-work-team-create/model-experience/work-team-create/token-effect:
+  en: d3fec8ba33bcb44a
+  zh: c6e7d8899d15be15
+/tool-work-team-create/model-experience/work-team-create/kv-cache-effect:
+  en: 7118b46154c6fd7d
+  zh: 2f47ad58b86f7d1c
+/tool-work-team-create/known-limitations-and-deferred-work:
+  en: 5ed2471d7396dcc5
+  zh: 624fad1f873e9652
+/tool-work-team-create/known-limitations-and-deferred-work/dev-note:
+  en: df79b3a82d81d2ad
+  zh: 4d40aaf2904f91ea

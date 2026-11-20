@@ -1,0 +1,34 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/work-team-bundle/README.md
+/:
+  en: 2f5cbb8f100703d3
+  zh: 020637068571961d
+/tomato-work-team-bundle:
+  en: cc29c24213039bc6
+  zh: 264306f07f3aa481
+/tomato-work-team-bundle/summary:
+  en: a404bb01b4272f05
+  zh: 0087a575492397a2
+/tomato-work-team-bundle/table-of-contents:
+  en: 76368b6b1da79c80
+  zh: 52384aee991ac542
+/tomato-work-team-bundle/use-this-package:
+  en: 235160b971e0a2da
+  zh: f61486af40cca4e6
+/tomato-work-team-bundle/understand-the-implementation:
+  en: 8da5c17b8289d1aa
+  zh: 1eb25b02b3b0b21b
+/tomato-work-team-bundle/model-experience:
+  en: ccda9792c305576b
+  zh: 2fe1e746ab99589a
+/tomato-work-team-bundle/model-experience/kv-cache-effect:
+  en: 9e62a0f0c118b837
+  zh: 8024ddacaf535ac4
+/tomato-work-team-bundle/known-limitations-and-deferred-work:
+  en: 6fc7b39906bcb38e
+  zh: 2d6f66a9aa0aafcd
+/tomato-work-team-bundle/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 3c8bbe93d71a3377
