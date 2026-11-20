@@ -37,6 +37,8 @@
 判定条件是：正确性是否依赖「那个回调已经跑过」，而不是具名调用点或状态机。两条边界：测试的 timeout 预算是在等失败，不属于靠时序保正确性；纯粹为可见工作 pacing 的延迟也不属本条。开发者一侧没有例外通道，确需时序技巧须经对应领域专家确认。
 
 ```ts
+// A fence compiles on its own; `export {}` keeps these declarations module-scoped.
+export {}
 // The order is written into the code: dispose the old store, then build its successor.
 declare let store: { dispose(): void }
 declare function createStore(scopeKey: string): { dispose(): void }
@@ -62,6 +64,7 @@ setTimeout(() => setMounted(true), 0)             // waits for a render that was
 判定条件是：`?.` 是否被用来替代「该字段存在」的判定，而不是在处理一个已知值上真正可选的一跳。这条要求约束接口契约：两个分支都要写明返回值与副作用，并由调用方从契约处读到。没有例外通道——无法说清两种行为的调用点属于评审打回项，不是风格偏好。
 
 ```ts
+export {}
 // Both behaviors are in the contract: no options object means "unknown", not "skip".
 interface ResolveInput { options?: readonly string[] }
 type Resolution = { kind: 'unknown' } | { kind: 'value'; value: string }
@@ -87,6 +90,7 @@ const value = a?.b?.c?.d ?? fallback   // four layers of fallback hide whether d
 判定条件是：同一个「无值」是否承载了多种语义——**未查询**、**查到为空**、**无法判定**。通常的实现是可辨识联合或显式枚举值，并在类型定义处记录（见 [core.zh.md](../subsystems/core.zh.md#repo-wide-type-patterns)）。
 
 ```ts
+export {}
 type ValueState<T> = { kind: 'unknown' } | { kind: 'empty' } | { kind: 'value'; value: T }
 ```
 
@@ -124,6 +128,7 @@ let activeTabId: TabId | undefined   // module-level; every component reads the 
 判定条件：说出拥有该值的服务或实例；说不出所有者时，先定所有者再实现。边界是：服务或实例上的字段可以被任意多个注入方读取，跨域传递走既有接口而不是全局命名空间。没有默认例外；确需全局检索键时须经对应领域专家确认，并一并给出回收策略。
 
 ```ts
+export {}
 // The shared value hangs on the session service instance; consumers inject it.
 interface Sessions { readonly current: string }
 declare const ctx: { get(name: 'sessions'): Sessions }
@@ -148,6 +153,7 @@ globalThis.__tomatoCache = new Map()   // shared across instances, reclaimed nev
 判定条件是：该能力是否由业务包自己声明并注册，中心层只做转发与生命周期管理、不做业务判定。边界是：中心层持有注册表结构与 disposal 生命周期，条目来自拥有它们的包。一条例外：纯基础设施能力——日志、传输、存储——不经业务注册面接入。中心层新增分支必须说明它为何无法下沉到业务包。
 
 ```ts
+export {}
 // The business package registers its own slot and handlers in its apply.
 interface Slots {
   inject(name: string, register: () => void): void
@@ -230,6 +236,7 @@ throw new EndpointError('not found')   // was: return { ok: false, code: 'not_fo
 判定条件是：抛异常的监听器是否能让分发 promise 被 reject，或让其后的监听器不再运行。边界是调用方自己的 await——分发器有意抛给发起该操作的那条路径的错误，不属于隔离失败。
 
 ```ts
+export {}
 async function dispatch(listeners: ((event: string) => Promise<void>)[], event: string): Promise<void> {
   for (const listener of listeners) {
     try { await listener(event) } catch (error) { console.warn('listener failed', error) }

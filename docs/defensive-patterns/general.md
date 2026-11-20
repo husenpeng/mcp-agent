@@ -29,6 +29,8 @@ Correctness comes from explicit call points and explicit state, never from where
 The judged condition is whether correctness depends on "that callback already ran" instead of on a named call point or state machine. Two boundaries: a test's timeout budget waits for a failure and is not timing-dependent correctness, and a deliberate delay that only paces user-visible work is not this rule. There is no developer-side exception; a genuine need for a timing technique goes to the domain owner.
 
 ```ts
+// A fence compiles on its own; `export {}` keeps these declarations module-scoped.
+export {}
 // The order is written into the code: dispose the old store, then build its successor.
 declare let store: { dispose(): void }
 declare function createStore(scopeKey: string): { dispose(): void }
@@ -52,6 +54,7 @@ An optional parameter states what the callee does when it is present and when it
 The judged condition is whether `?.` replaces a determination that a field exists rather than handling a genuinely optional hop on a known value. The requirement binds the interface contract: both branches state their return value and their side effects, and the contract is where the caller reads them. There is no exception channel — a call site that cannot state both behaviors is a review blocker, not a style preference.
 
 ```ts
+export {}
 // Both behaviors are in the contract: no options object means "unknown", not "skip".
 interface ResolveInput { options?: readonly string[] }
 type Resolution = { kind: 'unknown' } | { kind: 'value'; value: string }
@@ -75,6 +78,7 @@ An unknown value, an empty collection or string, and a genuinely absent field ar
 The judged condition is whether a single "no value" carries more than one semantic: not yet queried, queried and empty, and cannot be determined. A discriminated union or an explicit enum value is the ordinary implementation, documented where the type is defined in [core.md](../subsystems/core.md#repo-wide-type-patterns).
 
 ```ts
+export {}
 type ValueState<T> = { kind: 'unknown' } | { kind: 'empty' } | { kind: 'value'; value: T }
 ```
 
@@ -108,6 +112,7 @@ Shared state hangs on a service or an instance, so its owner is a named object w
 The judged condition: name the service or instance that owns the value; if no owner can be named, the owner is decided before the implementation. The boundary is that a field on a service or instance may be read by any number of injected consumers, and passing that value across domains goes through the existing interface rather than a global namespace. There is no default exception; a genuine need for a global lookup key goes to the domain owner together with its reclamation policy.
 
 ```ts
+export {}
 // The shared value hangs on the session service instance; consumers inject it.
 interface Sessions { readonly current: string }
 declare const ctx: { get(name: 'sessions'): Sessions }
@@ -130,6 +135,7 @@ Establish whether a new distinction, field, or adapter is needed before choosing
 The judged condition is whether the capability declares and registers itself, with the center layer only forwarding and managing lifetime rather than making business decisions. The boundary is that the center layer holds the registry structure and the disposal lifecycle while the entries come from the owning packages. One exception: pure infrastructure — logging, transport, storage — does not attach through a business registration surface. A new branch in a center layer must explain why it cannot live in the owning package.
 
 ```ts
+export {}
 // The business package registers its own slot and handlers in its apply.
 interface Slots {
   inject(name: string, register: () => void): void
@@ -204,6 +210,7 @@ Catch and report each listener's exception without rejecting the dispatch promis
 The judged condition is whether a throwing listener can reject the dispatch promise or prevent later listeners from running. The boundary is the caller's own await: an error the dispatcher deliberately propagates to the operation that requested it is not a containment failure.
 
 ```ts
+export {}
 async function dispatch(listeners: ((event: string) => Promise<void>)[], event: string): Promise<void> {
   for (const listener of listeners) {
     try { await listener(event) } catch (error) { console.warn('listener failed', error) }
