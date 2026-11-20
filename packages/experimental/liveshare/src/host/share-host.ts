@@ -123,11 +123,14 @@ export function publishedShareState(share: OwnerShare): ForkShareState {
 /**
  * Register the owner sign-in routes and the share-management Remote, and enforce current grants on
  * external Session input.
+ *
+ * A row this host mounts through a profile overlay arrives without the bundle file's `config`, so the whole
+ * configuration is optional here: an absent one means every field keeps its documented default.
  * @param ctx - Host context carrying Connection and optional execution services.
- * @param config - Relay and owner-state configuration.
+ * @param config - Relay and owner-state configuration; absent for a row inserted by an overlay patch.
  * @returns Async disposer that stops the tunnel worker and releases share access.
  */
-export async function apply(ctx: Context, config: Config): Promise<() => Promise<void>> {
+export async function apply(ctx: Context, config: Config = {}): Promise<() => Promise<void>> {
   // Configuration failures reject rather than throw, so every caller awaits one failure mode.
   await Promise.resolve()
   /** The launcher fills this slot before the share host mounts; compositions may omit it. */

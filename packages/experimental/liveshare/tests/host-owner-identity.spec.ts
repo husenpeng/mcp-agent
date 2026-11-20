@@ -100,6 +100,26 @@ describe('liveshare owner identity per relay', () => {
     expect(await identityOf(host, verified.relayUrl)).toMatchObject({ state: 'verified' })
   })
 
+  it('mounts from a row the profile overlay inserted, which carries no config at all', async () => {
+    // A profile overlay adds the row by name, so the loader hands the plugin no configuration object; the host
+    // must still come up on its documented defaults rather than fail reading a field of nothing.
+    const home = mkdtempSync(join(tmpdir(), 'liveshare-configless-'))
+    const savedHome = process.env.TOMATO_HOME
+    process.env.TOMATO_HOME = home
+    const relay = await identityRelayWith()
+    closers.push(relay.close)
+    try {
+      // Its owner state lives below the fresh home, so this mount starts with no saved address.
+      const { routes, host } = ownerRoutes()
+      closers.push(await apply(host))
+      expect([...routes.keys()].length).toBeGreaterThan(0)
+      expect(await identityOf(host, relay.relayUrl)).toMatchObject({ state: 'unverified' })
+    } finally {
+      if (savedHome === undefined) delete process.env.TOMATO_HOME
+      else process.env.TOMATO_HOME = savedHome
+    }
+  })
+
   it('ignores a late probe answer from another address', async () => {
     const slowUnsupported = await identityRelayWith({ supported: false, probeDelayMs: 250 })
     const supported = await identityRelayWith()

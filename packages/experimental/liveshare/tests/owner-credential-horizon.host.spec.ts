@@ -19,7 +19,17 @@ import { apply } from '../src/host/share-host.ts'
 
 const START = Date.parse('2026-10-15T00:00:00.000Z')
 const PAST = new Date(START).toISOString()
-const LIVE = new Date(START + 30 * 24 * 60 * 60_000).toISOString()
+
+/**
+ * A horizon a credential can still be reported under.
+ *
+ * The fixture's own date passes as the calendar moves, so a case that needs a live horizon takes one thirty days
+ * out from when it runs rather than from a fixed start.
+ * @returns ISO time thirty days from now.
+ */
+function futureHorizon(): string {
+  return new Date(Date.now() + 30 * 24 * 60 * 60_000).toISOString()
+}
 const STORED_TOKEN = 'stored-payload.stored-signature'
 
 /**
@@ -149,34 +159,36 @@ async function host(options: {
 
 describe('owner host credential horizon', () => {
   it('adopts the horizon the Relay reports for a claim past the signed expiry', async () => {
-    const relay = await relayStandIn({ claim: { body: { claimed: true, ownerCredentialExpiresAt: LIVE } } })
+    const live = futureHorizon()
+    const relay = await relayStandIn({ claim: { body: { claimed: true, ownerCredentialExpiresAt: live } } })
     onTestFinished(relay.close)
     const fixture = await host({ relayUrl: relay.relayUrl, expiresAt: PAST, shares: true })
 
     await expect.poll(async () => (await fixture.identity()).state).toBe('verified')
-    expect(await fixture.identity()).toMatchObject({ state: 'verified', expiresAt: LIVE })
+    expect(await fixture.identity()).toMatchObject({ state: 'verified', expiresAt: live })
     // The host presented the token it held even though its own expiry read had passed: the Relay is
     // the only party that can say whether the login behind it is still renewed.
     expect(relay.claims[0]?.credential).toBe(STORED_TOKEN)
     expect(JSON.parse(readFileSync(fixture.ownerCredentialFile, 'utf8'))).toEqual({
       relay: relay.relayUrl,
       credential: STORED_TOKEN,
-      expiresAt: LIVE,
+      expiresAt: live,
       subjectId: 'owner',
     })
   })
 
   it('adopts the horizon the capability probe reports when no share reaches a claim', async () => {
+    const live = futureHorizon()
     const relay = await relayStandIn({
       claim: { body: { claimed: true } },
-      probe: { body: { supported: true, ownerCredentialExpiresAt: LIVE } },
+      probe: { body: { supported: true, ownerCredentialExpiresAt: live } },
     })
     onTestFinished(relay.close)
     const fixture = await host({ relayUrl: relay.relayUrl, expiresAt: PAST, shares: false })
 
     await expect.poll(async () => (await fixture.identity()).state).toBe('verified')
     expect(relay.claims).toEqual([])
-    expect(storedHorizon(fixture.ownerCredentialFile)).toBe(LIVE)
+    expect(storedHorizon(fixture.ownerCredentialFile)).toBe(live)
   })
 
   it('leaves the signed expiry in place when the Relay reports no horizon', async () => {
@@ -204,7 +216,8 @@ describe('owner host credential horizon', () => {
   it('adopts a shorter horizon, so a Relay that stopped renewing is not reported as usable', async () => {
     const relay = await relayStandIn({ claim: { body: { claimed: true, ownerCredentialExpiresAt: PAST } } })
     onTestFinished(relay.close)
-    const fixture = await host({ relayUrl: relay.relayUrl, expiresAt: LIVE, shares: true })
+    // The stored horizon starts out usable, so the drop can only come from the Relay's answer.
+    const fixture = await host({ relayUrl: relay.relayUrl, expiresAt: futureHorizon(), shares: true })
 
     await expect.poll(async () => (await fixture.identity()).state).toBe('expired')
     expect(storedHorizon(fixture.ownerCredentialFile)).toBe(PAST)
