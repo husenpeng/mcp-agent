@@ -2231,6 +2231,14 @@ Create a complete work team of Tomato Rbot agents from a description of its role
           "model": {
             "type": "string",
             "description": "Override the team default model for this member."
+          },
+          "maxTurns": {
+            "type": "integer",
+            "description": "Turns this member may take in one run, 1 to 8; defaults to one."
+          },
+          "budgetTokens": {
+            "type": "integer",
+            "description": "Tokens this member may spend in one run; omitted uses the crew node default."
           }
         },
         "required": [
