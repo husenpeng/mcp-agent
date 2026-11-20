@@ -19,7 +19,7 @@ describe('@tomato/web-search-company real-load-path guard', () => {
 
   it('boots over ctx.web through the unwrapped module without an inject error', async () => {
     const ctx = new Context()
-    await ctx.plugin(WebRuntime, { searchProvider: 'company' })
+    await ctx.plugin(WebRuntime, { searchProviders: ['company'] })
     ctx.provide('desktopSession', { sessionId: () => 'session-1' })
 
     const loader = Object.create(Loader.prototype) as Loader

@@ -3,6 +3,7 @@ import { availableParallelism } from 'node:os'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import { defineConfig } from 'vitest/config'
 import { standardDecoratorPlugin, vitestExecArgv } from './vitest.shared.ts'
+import { subpathAliases, workspaceAliases } from './vitest.aliases.ts'
 
 const DEFAULT_SNAPSHOT_MAX_CONCURRENCY = 5
 
@@ -50,6 +51,7 @@ if (process.env.TOMATO_SNAPSHOT === 'record') {
 }
 
 export default defineConfig({
+  resolve: { alias: [...workspaceAliases, ...subpathAliases] },
   // Same resolution note as vitest.config.ts: bare workspace names resolve
   // through the tsconfig.base.json paths facade; the native option cannot do
   // this (the root tsconfig is a solution file with no paths).

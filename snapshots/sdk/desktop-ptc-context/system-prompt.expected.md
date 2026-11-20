@@ -146,6 +146,11 @@ interface ToolArgsMap {
     /** One glob filter for which files to search (e.g. "*.ts", "*.{js,jsx}"). Not a list; negation is not supported. */
     include?: string;
   } & Record<string, JsonValue>;
+  /** Ask a subagent to stop its current work. This call returns without waiting for it to stop. You can continue a local subagent's conversation later with send_message. External executions stop permanently and cannot receive follow-ups. Subagents it started will keep running. */
+  interrupt_agent: {
+    /** The name of an agent created under you: your direct child or a deeper descendant. */
+    agent: string;
+  } & Record<string, JsonValue>;
   /** Request cancellation of a running background job. */
   job_kill: {
     /** Job id returned by the tool that started the background work. */
@@ -492,6 +497,9 @@ interface ToolOutputMap {
       line: string;
     }[];
   };
+  interrupt_agent: {
+    accepted: boolean;
+  };
   job_kill: {
     outcome: "cancellation-requested" | "already-finished";
     job: {
@@ -579,6 +587,8 @@ interface ToolOutputMap {
       deliveredAt: string;
       targetSessionId: string;
     };
+    sessionId?: string;
+    paused?: boolean;
     kind: "rrule";
     rrule: string;
   } | {
@@ -611,6 +621,8 @@ interface ToolOutputMap {
       deliveredAt: string;
       targetSessionId: string;
     };
+    sessionId?: string;
+    paused?: boolean;
     kind: "cron";
     expression: string;
     timeZone: string;
@@ -644,6 +656,8 @@ interface ToolOutputMap {
       deliveredAt: string;
       targetSessionId: string;
     };
+    sessionId?: string;
+    paused?: boolean;
     kind: "every";
     everySeconds: number;
   } | {
@@ -676,6 +690,8 @@ interface ToolOutputMap {
       deliveredAt: string;
       targetSessionId: string;
     };
+    sessionId?: string;
+    paused?: boolean;
     kind: "after";
     afterSeconds: number;
   } | {
@@ -708,6 +724,8 @@ interface ToolOutputMap {
       deliveredAt: string;
       targetSessionId: string;
     };
+    sessionId?: string;
+    paused?: boolean;
     kind: "at";
   } | {
     id: string;
@@ -739,6 +757,8 @@ interface ToolOutputMap {
       deliveredAt: string;
       targetSessionId: string;
     };
+    sessionId?: string;
+    paused?: boolean;
     kind: "daily";
     time: string;
     timeZone: string;
@@ -772,6 +792,8 @@ interface ToolOutputMap {
       deliveredAt: string;
       targetSessionId: string;
     };
+    sessionId?: string;
+    paused?: boolean;
     kind: "weekly";
     time: string;
     timeZone: string;
@@ -810,6 +832,8 @@ interface ToolOutputMap {
       deliveredAt: string;
       targetSessionId: string;
     };
+    sessionId?: string;
+    paused?: boolean;
     kind: "rrule";
     rrule: string;
   } | {
@@ -842,6 +866,8 @@ interface ToolOutputMap {
       deliveredAt: string;
       targetSessionId: string;
     };
+    sessionId?: string;
+    paused?: boolean;
     kind: "cron";
     expression: string;
     timeZone: string;
@@ -875,6 +901,8 @@ interface ToolOutputMap {
       deliveredAt: string;
       targetSessionId: string;
     };
+    sessionId?: string;
+    paused?: boolean;
     kind: "every";
     everySeconds: number;
   } | {
@@ -907,6 +935,8 @@ interface ToolOutputMap {
       deliveredAt: string;
       targetSessionId: string;
     };
+    sessionId?: string;
+    paused?: boolean;
     kind: "after";
     afterSeconds: number;
   } | {
@@ -939,6 +969,8 @@ interface ToolOutputMap {
       deliveredAt: string;
       targetSessionId: string;
     };
+    sessionId?: string;
+    paused?: boolean;
     kind: "at";
   } | {
     id: string;
@@ -970,6 +1002,8 @@ interface ToolOutputMap {
       deliveredAt: string;
       targetSessionId: string;
     };
+    sessionId?: string;
+    paused?: boolean;
     kind: "daily";
     time: string;
     timeZone: string;
@@ -1003,6 +1037,8 @@ interface ToolOutputMap {
       deliveredAt: string;
       targetSessionId: string;
     };
+    sessionId?: string;
+    paused?: boolean;
     kind: "weekly";
     time: string;
     timeZone: string;
@@ -1051,6 +1087,8 @@ interface ToolOutputMap {
         deliveredAt: string;
         targetSessionId: string;
       };
+      sessionId?: string;
+      paused?: boolean;
       kind: "rrule";
       rrule: string;
     } | {
@@ -1083,6 +1121,8 @@ interface ToolOutputMap {
         deliveredAt: string;
         targetSessionId: string;
       };
+      sessionId?: string;
+      paused?: boolean;
       kind: "cron";
       expression: string;
       timeZone: string;
@@ -1116,6 +1156,8 @@ interface ToolOutputMap {
         deliveredAt: string;
         targetSessionId: string;
       };
+      sessionId?: string;
+      paused?: boolean;
       kind: "every";
       everySeconds: number;
     } | {
@@ -1148,6 +1190,8 @@ interface ToolOutputMap {
         deliveredAt: string;
         targetSessionId: string;
       };
+      sessionId?: string;
+      paused?: boolean;
       kind: "after";
       afterSeconds: number;
     } | {
@@ -1180,6 +1224,8 @@ interface ToolOutputMap {
         deliveredAt: string;
         targetSessionId: string;
       };
+      sessionId?: string;
+      paused?: boolean;
       kind: "at";
     } | {
       id: string;
@@ -1211,6 +1257,8 @@ interface ToolOutputMap {
         deliveredAt: string;
         targetSessionId: string;
       };
+      sessionId?: string;
+      paused?: boolean;
       kind: "daily";
       time: string;
       timeZone: string;
@@ -1244,6 +1292,8 @@ interface ToolOutputMap {
         deliveredAt: string;
         targetSessionId: string;
       };
+      sessionId?: string;
+      paused?: boolean;
       kind: "weekly";
       time: string;
       timeZone: string;
@@ -1287,6 +1337,8 @@ interface ToolOutputMap {
       deliveredAt: string;
       targetSessionId: string;
     };
+    sessionId?: string;
+    paused?: boolean;
     kind: "rrule";
     rrule: string;
   } | {
@@ -1319,6 +1371,8 @@ interface ToolOutputMap {
       deliveredAt: string;
       targetSessionId: string;
     };
+    sessionId?: string;
+    paused?: boolean;
     kind: "cron";
     expression: string;
     timeZone: string;
@@ -1352,6 +1406,8 @@ interface ToolOutputMap {
       deliveredAt: string;
       targetSessionId: string;
     };
+    sessionId?: string;
+    paused?: boolean;
     kind: "every";
     everySeconds: number;
   } | {
@@ -1384,6 +1440,8 @@ interface ToolOutputMap {
       deliveredAt: string;
       targetSessionId: string;
     };
+    sessionId?: string;
+    paused?: boolean;
     kind: "after";
     afterSeconds: number;
   } | {
@@ -1416,6 +1474,8 @@ interface ToolOutputMap {
       deliveredAt: string;
       targetSessionId: string;
     };
+    sessionId?: string;
+    paused?: boolean;
     kind: "at";
   } | {
     id: string;
@@ -1447,6 +1507,8 @@ interface ToolOutputMap {
       deliveredAt: string;
       targetSessionId: string;
     };
+    sessionId?: string;
+    paused?: boolean;
     kind: "daily";
     time: string;
     timeZone: string;
@@ -1480,6 +1542,8 @@ interface ToolOutputMap {
       deliveredAt: string;
       targetSessionId: string;
     };
+    sessionId?: string;
+    paused?: boolean;
     kind: "weekly";
     time: string;
     timeZone: string;

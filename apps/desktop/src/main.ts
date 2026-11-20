@@ -2,6 +2,7 @@ import type { ProductEventMap, ProductEvent } from '@tomato/client-product-analy
 import { WINDOWS_TITLEBAR_HEIGHT } from './windows-layout.ts'
 /** Electron shell: desktop project ownership, custom protocol, windows, and lifecycle. */
 
+import { readFileSync, writeFileSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -18,12 +19,14 @@ import {
   nativeTheme,
   net,
   protocol,
+  screen,
   session,
   shell,
   type IpcMainInvokeEvent,
   type MenuItemConstructorOptions,
 } from 'electron'
-import { resolveDesktopPaths } from './paths.ts'
+import { resolveDesktopPaths, type DesktopPaths } from './paths.ts'
+import { SystemMonitorPanel, parsePanelBounds, isPanelForm, type PanelWindow } from './system-monitor-window.ts'
 import { resolvePlaywrightBrowsers, resolvePlaywrightShell, withPlaywrightBrowsers } from './playwright-browsers.ts'
 import { DesktopProjectManager } from './project-manager.ts'
 import { DesktopHostFatalError, DesktopHostProcess, DesktopHostUncleanExitError } from './host-process.ts'
@@ -32,7 +35,7 @@ import { installDesktopFileDrag } from './file-drag.ts'
 import { installDesktopDirectoryPicker } from './directory-picker.ts'
 import { installMicrophonePermissions } from './microphone-permissions.ts'
 import { DesktopBackendController } from './backend-controller.ts'
-import { DESKTOP_IPC, SCHEME, assertDesktopSender, type DesktopRemoteState, type DesktopUpdateState } from './ipc.ts'
+import { DESKTOP_IPC, SCHEME, assertDesktopSender, type DesktopUpdateState } from './ipc.ts'
 import { readDeviceInfo } from './device-info.ts'
 import { desktopUpdateReadyConfirmation, formatDesktopMessage, resolveDesktopLocale, resolveDesktopStartupLocale } from './locale.ts'
 import { claimDesktopSingleInstance } from './single-instance.ts'
@@ -50,8 +53,8 @@ import { WELCOME_IPC, needsWelcome, type WelcomeNotice } from './welcome-api.ts'
 import { connectDesktopWelcome, type DesktopWelcomeBackend } from './welcome-backend.ts'
 import { webBaseUrl } from './tomato-auth.ts'
 import { registerRemoteIpc } from './remote-ipc.ts'
-import { encodePairingQr, pairingSnapshot } from './remote-link.ts'
-import { RemoteTunnel, type RemoteTunnelState } from './remote-tunnel.ts'
+import { createPairingSnapshots } from './remote-link.ts'
+import { RemoteTunnel } from './remote-tunnel.ts'
 import { resolveLoginEnvironment, withLoginEnvironment, type DesktopLoginEnvironment } from './login-environment.ts'
 import { DesktopUpdateJournal } from './update-journal.ts'
 import { DesktopUpdatePreparationError } from './update-error.ts'
@@ -121,7 +124,9 @@ const recovery = new DesktopFatalRecovery({
   show: options => dialog.showMessageBox(options),
   stop: () => { shuttingDown = true; return stopForRecovery() },
   disablePlugins: async () => {
-    const manager = new DesktopProjectManager(resolveDesktopPaths(), runtimeResources())
+    const paths = resolveDesktopPaths()
+    const resources = runtimeResources()
+    const manager = new DesktopProjectManager({ ...paths, profile: activeDesktopProfile(paths, resources) }, resources)
     const backupPath = await manager.disableAllPlugins()
     console.info('Desktop profile recovery completed:', { profilePatchBackup: backupPath ?? null, homePatch: 'unchanged' })
   },
@@ -192,6 +197,13 @@ function runtimeResources(): RuntimeResources {
     node, nodeBin, pnpm, tomato,
     ...(development ? {} : { releaseOverlay: join(process.resourcesPath, 'release-profile.patch.yml') }),
   }
+}
+
+/** Team development uses the disposable project for startup and recovery; ordinary launches use the user's profile. */
+function activeDesktopProfile(paths: DesktopPaths, resources: RuntimeResources): string {
+  const teamDevelopment = !app.isPackaged && process.env.TOMATO_SUPERAGENT_DIRECTORY !== undefined
+    && process.env.TOMATO_SUPERAGENT_DIRECTORY !== ''
+  return teamDevelopment ? resources.tomato : paths.profile
 }
 
 function developmentPrimaryRuntime(): string {
@@ -408,8 +420,8 @@ async function main(): Promise<void> {
   // target runtime's copy when preparation placed one beside the primary runtime.
   const playwrightBrowsers = resolvePlaywrightBrowsers(development, primaryRuntime, process.resourcesPath)
   const playwrightShell = playwrightBrowsers === undefined ? undefined : resolvePlaywrightShell(playwrightBrowsers)
-  const activeProject = paths.profile
-  const manager = new DesktopProjectManager(paths, resources)
+  const activeProject = activeDesktopProfile(paths, resources)
+  const manager = new DesktopProjectManager({ ...paths, profile: activeProject }, resources)
   // Dock and Finder launches inherit only launchd's environment; every Host shares one login-shell read.
   const loginShellRead = new AbortController()
   // The probe runs in its own process group, which outlives Desktop unless the read is aborted.
@@ -540,20 +552,16 @@ async function main(): Promise<void> {
     return mainWindow
   }
 
-  /** Pairing snapshot: tunnel state plus the tokenized root once both sides are up. */
-  const remoteSnapshot = (state: RemoteTunnelState = remoteTunnel.state()): DesktopRemoteState =>
-    pairingSnapshot(state, hostUrl)
-  /** Last encoded pairing QR; regenerated whenever the tunnel hands out a new link. */
-  let pairingQr: { readonly url: string; readonly data: string } | undefined
-  const withPairingQr = async (snapshot: DesktopRemoteState): Promise<DesktopRemoteState> => {
-    const url = snapshot.pairingUrl
-    if (url === undefined) return snapshot
-    if (pairingQr?.url === url) return { ...snapshot, pairingQr: pairingQr.data }
-    const data = await encodePairingQr(url)
-    if (data === undefined) return snapshot
-    pairingQr = { url, data }
-    return { ...snapshot, pairingQr: data }
-  }
+  /**
+   * Pairing snapshot: tunnel state plus the tokenized root once both sides are up.
+   * Both inputs move under a mounted page — the tunnel hands out a new hostname on
+   * every start, and a replacement Host mints a new launch token — so the page is
+   * published on either change instead of only when the tunnel reports one.
+   */
+  const pairingSnapshots = createPairingSnapshots({
+    hostUrl: () => hostUrl,
+    send: (snapshot) => { mainWindow?.webContents.send(DESKTOP_IPC.remoteChanged, snapshot) },
+  })
   const remoteTunnel = new RemoteTunnel({
     binaries: ['cloudflared', '/opt/homebrew/bin/cloudflared', '/usr/local/bin/cloudflared'],
     target: () => {
@@ -561,11 +569,7 @@ async function main(): Promise<void> {
       const url = new URL(hostUrl)
       return { host: url.hostname, port: url.port === '' ? 80 : Number(url.port) }
     },
-    onChange: (state) => {
-      void withPairingQr(remoteSnapshot(state)).then((snapshot) => {
-        mainWindow?.webContents.send(DESKTOP_IPC.remoteChanged, snapshot)
-      })
-    },
+    onChange: (state) => { pairingSnapshots.publish(state) },
   })
   app.on('will-quit', () => { remoteTunnel.stop() })
 
@@ -618,6 +622,9 @@ async function main(): Promise<void> {
         hostCookie = await authenticateWebHost(ready.url)
         hostUrl = ready.url
         diagnostics.write('info', `host ready at ${ready.url}`)
+        // The replacement Host mints a new launch token, so a page that stayed
+        // mounted on the previous process must show the link of this one.
+        pairingSnapshots.publish(remoteTunnel.state())
         if (desktopSettings.remote.tunnel || resumeTunnel) remoteTunnel.start()
         if (ready.injections === undefined) throw new Error('Desktop Host did not provide boot injections')
         injections = ready.injections
@@ -932,7 +939,7 @@ async function main(): Promise<void> {
     host: { handle: (channel, listener) => { ipcMain.handle(channel, listener) } },
     tunnel: remoteTunnel,
     assertSender: (event) => { assertProductSender(event) },
-    snapshot: () => withPairingQr(remoteSnapshot()),
+    snapshot: () => pairingSnapshots.snapshot(remoteTunnel.state()),
     keepAwake: desktopSettings.remote.keepAwake,
     askKeepAwake: askTunnelKeepAwake,
     restartWithKeepAwake,
@@ -1022,6 +1029,57 @@ async function main(): Promise<void> {
     assertProductSender(event)
     await openUpdatePrompt()
   })
+
+  // The floating monitor panel lives outside the main window: same document
+  // origin, its own native window, and its own close control.
+  const monitorBoundsFile = join(app.getPath('userData'), 'system-monitor-window.json')
+  const systemMonitorPanel = new SystemMonitorPanel({
+    preload: appPreload,
+    readUrl: () => backend.host === undefined ? undefined : applicationUrl,
+    createWindow: (bounds, options): PanelWindow => {
+      const panel = new BrowserWindow({ ...options, ...bounds })
+      panel.setAlwaysOnTop(true, 'floating')
+      panel.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+      return panel
+    },
+    readWorkArea: () => screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea,
+    readBounds: () => {
+      try {
+        return parsePanelBounds(readFileSync(monitorBoundsFile, 'utf8'))
+      } catch (_absentMonitorBounds) {
+        return null
+      }
+    },
+    writeBounds: (bounds) => {
+      try {
+        writeFileSync(monitorBoundsFile, JSON.stringify(bounds))
+      } catch (_unwritableMonitorBounds) {
+        // A read-only profile costs the next launch this position, nothing else.
+      }
+    },
+    onChange: (open) => {
+      for (const target of BrowserWindow.getAllWindows()) {
+        if (!target.isDestroyed()) target.webContents.send(DESKTOP_IPC.systemMonitorChanged, open)
+      }
+    },
+  })
+  ipcMain.handle(DESKTOP_IPC.systemMonitorToggle, async (event) => {
+    assertProductSender(event)
+    return (await systemMonitorPanel.toggle()) === true
+  })
+  ipcMain.handle(DESKTOP_IPC.systemMonitorClose, (event) => {
+    assertDesktopSender(event, ['app'])
+    systemMonitorPanel.close()
+  })
+  ipcMain.handle(DESKTOP_IPC.systemMonitorResize, (event, form) => {
+    assertDesktopSender(event, ['app'])
+    // The panel document is the only sender; its form arrives untyped across IPC.
+    if (!isPanelForm(form)) throw new Error(`Unknown monitor panel form: ${String(form)}`)
+    // The document reports a change it made; a live panel follows at once.
+    systemMonitorPanel.resize(form)
+    systemMonitorPanel.apply()
+  })
+  app.on('will-quit', () => { systemMonitorPanel.dispose() })
 
   let promptOperation: Promise<void> | undefined
   let policyAuthenticationQueued = false

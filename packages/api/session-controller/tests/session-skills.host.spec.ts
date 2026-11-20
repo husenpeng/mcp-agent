@@ -65,11 +65,15 @@ describe('SessionSkillCatalog', () => {
         whenToUse: 'Before publishing.',
         path: '/cold/project/.agents/skills/review/SKILL.md',
         invocation: { modelInvocable: true, userInvocable: true },
+        source: 'project-agents',
+        provider: 'project',
       },
       {
         name: 'model-only',
         description: 'Not shown to the user.',
         invocation: { modelInvocable: true, userInvocable: false },
+        source: 'runtime',
+        provider: 'runtime',
       },
     ]))
     ctx.provide('skills', { list } as never)
@@ -84,7 +88,7 @@ describe('SessionSkillCatalog', () => {
         modelInvocable: true,
         userInvocable: true,
         editable: false,
-        source: 'unknown',
+        source: 'project-agents',
       }],
     })
     expect(observeSession).toHaveBeenCalledWith(sessionId)
@@ -138,6 +142,8 @@ describe('SessionSkillCatalog', () => {
       name: 'preset-owned',
       description: 'Composed for this Agent.',
       invocation: { modelInvocable: false, userInvocable: true },
+      source: 'runtime',
+      provider: 'preset',
     }]))
     const acquireScope = vi.fn()
     ctx.provide('agentPresets', {
@@ -153,7 +159,7 @@ describe('SessionSkillCatalog', () => {
         modelInvocable: false,
         userInvocable: true,
         editable: false,
-        source: 'unknown',
+        source: 'runtime',
       }],
     })
     expect(scopedList).toHaveBeenCalledWith({ cwd: '/live/current', scope: agent })

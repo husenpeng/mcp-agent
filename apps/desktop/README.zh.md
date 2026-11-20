@@ -34,6 +34,8 @@ Desktop 在原生应用中运行 Harness 工作区。本参考文档说明应用
 
 桌面应用是完整 tomato Web 应用外的一层 Electron 壳。Electron RunAsNode 子进程启动共享 profile runner，Electron 立即从 `tomato-app://app/` 加载打包内的 Web 入口。共享加载页等待 Host 启动注入，然后在同一文档中启动客户端。Electron 将应用 HTTP 请求转发给已认证的 Web Host，转发时丢弃描述 Node fetch 连接而非资源本身的响应头（`transfer-encoding`、`connection`、`keep-alive`），并把插件 bundle 响应标记为 `no-store`，因为其每次启动都变化的 revision 只会在 Chromium 磁盘缓存中累积；WebSocket 流连接到该 Host，仅为归属的应用窗口附加凭据。Node IPC 承载启动注入、就绪与关闭。Desktop 默认监听系统分配的端口，因此不会与 Web 的 `3080` 或系统保留端口冲突；可通过 `webserver.config.port` patch 覆盖。
 
+在 macOS 上，应用内系统监控卡片中的 **浮到桌面** 会在桌面之上打开一个无边框面板窗口（`tomato-app://app/?surface=system-monitor`）：以侧栏毛玻璃材质为透明背景、在 floating 层级始终置顶并对所有工作区可见、没有交通灯按钮且带原生阴影。面板出现时不激活应用、首次点击即可操作其控件、跨启动在 `system-monitor-window.json` 中记住位置，并通过卡片控件或再次按浮到桌面来隐藏。其他平台没有面板，因此不提供该控件。
+
 Desktop 绑定 `127.0.0.1`，即 Electron 为就绪 URL 与 WebSocket 凭据过滤器拨号的地址。WebSocket 流按 Host 监听器使用 `ws:` 或 `wss:`；附加凭据要求 authority 与 scheme 均匹配。
 
 应用菜单第一项“**关于 Tomato Harness**”打开 Electron 原生关于面板，展示应用图标、产品名称和当前安装的发布版本。菜单文案跟随桌面壳的语言。macOS 的隐藏、隐藏其他、显示全部和退出条目使用本地化文案，隐藏和退出条目包含 Tomato Harness 产品名称。这些条目保留原生动作和快捷键。macOS 从应用包读取图标，因此未打包的开发启动会显示 Electron 图标；Windows 使用随包分发的 PNG。
@@ -336,7 +338,7 @@ Electron 主进程在启动时读取一次 `app.getPath('userData')/desktop/sett
 
 任一字段非法都会否决整份文件：壳层按文件路径告警，然后整体使用默认值，因此不会运行"只生效一部分"的访问配置。这些字段不改变回环绑定；外部链路、证书和路径前缀都归转发主机所有。
 
-设置 → 手机 可以启停当前进程的隧道，并显示配对链接及其二维码供手机扫描。开启隧道时会询问是否让这台 Mac 在隧道运行期间保持唤醒，默认勾选；若答案与已保存的 `remote.keepAwake` 不同，会写入该字段并重启应用，重启后会再开启一次隧道，让手机连接恢复。`remote.tunnel` 仍是后续启动的长期开关。Watchdog（`scripts/watchdog.mjs`，同目录 `launchd/` 下有 agent 模板）在 Host 之外以自己的本地回环端口运行，因此即使 Host 挂死，已配对的设备仍能读取 Desktop 的状态并重启它。`GET /health` 不需要凭据；`POST /restart` 与 `POST /stop` 需要 `~/.tomato-watchdog/token` 中的 bearer 令牌，这两个端点通过 `launchctl` 操作应用自己的 job。打包后的应用不包含这个脚本，因此在安装 agent 之前，请先把脚本和同目录的 agent 模板复制到一个稳定位置。
+设置 → 手机 可以启停当前进程的隧道，并显示配对链接及其二维码供手机扫描。链接跟随 Host：替换后的 Host 进程会签发新的启动令牌，壳会重新推送归属该进程的链接，因此长期开着的页面不会显示已退出进程的令牌。开启隧道时会询问是否让这台 Mac 在隧道运行期间保持唤醒，默认勾选；若答案与已保存的 `remote.keepAwake` 不同，会写入该字段并重启应用，重启后会再开启一次隧道，让手机连接恢复。`remote.tunnel` 仍是后续启动的长期开关。Watchdog（`scripts/watchdog.mjs`，同目录 `launchd/` 下有 agent 模板）在 Host 之外以自己的本地回环端口运行，因此即使 Host 挂死，已配对的设备仍能读取 Desktop 的状态并重启它。`GET /health` 不需要凭据；`POST /restart` 与 `POST /stop` 需要 `~/.tomato-watchdog/token` 中的 bearer 令牌，这两个端点通过 `launchctl` 操作应用自己的 job。打包后的应用不包含这个脚本，因此在安装 agent 之前，请先把脚本和同目录的 agent 模板复制到一个稳定位置。
 
 <a id="mandatory-update-policy"></a>
 

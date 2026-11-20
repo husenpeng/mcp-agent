@@ -38,9 +38,11 @@ extension ChatModel {
     /// What one person's message carries in the transcript.
     ///
     /// Photos are structure, not words: the Host records each as a durable
-    /// reference beside the text, and the transcript draws the pictures. Only a
-    /// staged document keeps a marker in the bubble, because the app shows its
-    /// name in the composer but has no card for it yet.
+    /// reference beside the text, and the transcript draws the pictures. That
+    /// reference travels with the row in full, because reading the bytes back
+    /// verifies the media type, byte length, and dimensions, not only the id.
+    /// Only a staged document keeps a marker in the bubble, because the app
+    /// shows its name in the composer but has no card for it yet.
     /// - Parameter data: the `user/message` payload.
     /// - Returns: the message's text, photo references, and document count.
     static func content(of data: JSONValue?) -> ChatMessageContent {
@@ -56,7 +58,13 @@ extension ChatModel {
                     parts.append(value)
                 }
             case "image":
-                if let id = block["attachment"]?["attachmentId"]?.stringValue, !id.isEmpty {
+                if let attachment = block["attachment"]?.decoded(ChatImageAttachment.self),
+                   !attachment.attachmentId.isEmpty
+                {
+                    content.images.append(ChatImageRef(attachment))
+                } else if let id = block["attachment"]?["attachmentId"]?.stringValue, !id.isEmpty {
+                    // A log from before the reference carried its dimensions can
+                    // still draw the row, but its bytes cannot be verified.
                     content.images.append(ChatImageRef(id: id))
                 }
             case "file":

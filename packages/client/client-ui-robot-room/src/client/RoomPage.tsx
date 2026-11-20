@@ -8,16 +8,82 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import type { InjectFace, PropsLocale, PropsRuntime, TranslateNS } from '@tomato/client-ui-slots'
 import {
-  Button, IconCloseOutlineMedium, IconPauseOutlineMedium,
+  Button, Checkbox, IconCloseOutlineMedium, IconPauseOutlineMedium,
   IconPlayOutlineMedium, IconPlusOutlineMedium, IconSendOutlineMedium, IconWarningTriangleOutlineMedium, Tag, Tooltip,
 } from '@tomato/client-ui-primitives'
 import type { TagTone } from '@tomato/client-ui-primitives'
 import type {
-  A2aEnvelopeV2, MemberRole, Room, RoomMemberId, RoomMemberSpec, RoomMessage, RoomSpec, WakeRule,
+  A2aEnvelopeV2, MemberRole, Room, RoomMemberId, RoomMemberSpec, RoomMessage, RoomSpec, RoomWorkRecord, WakeRule,
 } from '@tomato/api-robot-room-controller/types'
+import type {
+  RobotCapabilitiesRequest, RobotCapabilityCatalog, RobotCapabilityOption,
+} from '@tomato/api-robot-controller/types'
+import type { RemoteResult } from '@tomato/typert-protocol'
 import { NS } from './locales.ts'
 import type { RoomInjected, RoomRobotOption } from './types.ts'
 import css from './RoomPage.module.css'
+
+/** Tone one ticket state renders with. */
+function ticketTone(state: RoomWorkRecord['state']): TagTone {
+  if (state === 'ready') return 'success'
+  if (state === 'blocked') return 'warning'
+  if (state === 'failed') return 'danger'
+  if (state === 'running') return 'info'
+  return 'neutral'
+}
+
+/** Render one room's tickets grouped by the request thread they belong to. */
+function Tickets({ records, loading, onRefresh, t }: {
+  readonly records: readonly RoomWorkRecord[]
+  readonly loading: boolean
+  readonly onRefresh: () => void
+  readonly t: TranslateNS<typeof NS>
+}): ReactNode {
+  const groups = useMemo(() => {
+    const byThread = new Map<string, RoomWorkRecord[]>()
+    for (const record of records) {
+      const list = byThread.get(record.thread) ?? []
+      list.push(record)
+      byThread.set(record.thread, list)
+    }
+    return [...byThread.entries()]
+  }, [records])
+  return (
+    <div className={css.tickets}>
+      <div className={css.ticketsBar}>
+        <span className={css.ticketsTitle}>{t('tickets.title')}</span>
+        <Button size="sm" onClick={onRefresh}>{t('tickets.refresh')}</Button>
+      </div>
+      {loading && records.length === 0
+        ? <div className={css.ticketsEmpty}>{t('tickets.loading')}</div>
+        : records.length === 0
+          ? <div className={css.ticketsEmpty}>{t('tickets.empty')}</div>
+          : groups.map(([thread, rows]) => (
+            <section key={thread} className={css.ticketGroup}>
+              <div className={css.ticketThread}>{t('tickets.thread')} · {thread}</div>
+              {rows.map(record => (
+                <div key={record.ticket} className={css.ticketRow}>
+                  <div className={css.ticketHead}>
+                    <span className={css.ticketMember}>{record.member}</span>
+                    <span className={css.ticketSubject}>{record.subject}</span>
+                    <Tag tone={ticketTone(record.state)}>{t(`tickets.state.${record.state}`)}</Tag>
+                  </div>
+                  <div className={css.ticketMeta}>
+                    <span>{t('tickets.rounds', { count: record.rounds })}</span>
+                    {record.review === undefined
+                      ? null
+                      : <span>{t('tickets.review', { rounds: record.review.rounds })}</span>}
+                    {record.review !== undefined && record.review.findings.length > 0
+                      ? <span className={css.ticketFindings}>{record.review.findings.join(' · ')}</span>
+                      : null}
+                  </div>
+                </div>
+              ))}
+            </section>
+          ))}
+    </div>
+  )
+}
 
 /** Props of the Robot Room page. */
 export type RoomPageProps =
@@ -80,8 +146,12 @@ export function RoomPage(props: RoomPageProps): ReactNode {
   const rooms = roomsSnapshot.rooms
   const [selected, setSelected] = useState<string | undefined>(rooms[0]?.id)
   const [messages, setMessages] = useState<readonly RoomMessage[]>([])
+  const [view, setView] = useState<'chat' | 'tickets'>('chat')
+  const [work, setWork] = useState<readonly RoomWorkRecord[]>([])
+  const [workLoading, setWorkLoading] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [error, setError] = useState<string | undefined>(undefined)
-  const [tab, setTab] = useState<'monitor' | 'members' | 'settings'>('monitor')
+  const [tab, setTab] = useState<'monitor' | 'members'>('monitor')
   const [editing, setEditing] = useState<RoomMemberId | undefined>(undefined)
   const [creating, setCreating] = useState(false)
   const [toast, setToast] = useState<string | undefined>(undefined)
@@ -141,6 +211,21 @@ export function RoomPage(props: RoomPageProps): ReactNode {
     const timer = setInterval(() => { void read() }, 1000)
     return () => { live = false; clearInterval(timer) }
   }, [room?.id, actions])
+
+  const loadWork = async (roomId: Room['id']): Promise<void> => {
+    setWorkLoading(true)
+    const result = await actions.work({ room: roomId })
+    setWorkLoading(false)
+    if (result.ok) { setWork(result.value); setError(undefined) }
+    else setError(result.error.message)
+  }
+
+  useEffect(() => {
+    if (view !== 'tickets' || room === undefined) return
+    void loadWork(room.id)
+    const timer = setInterval(() => { void loadWork(room.id) }, 2000)
+    return () => { clearInterval(timer) }
+  }, [view, room?.id, actions])
 
   useEffect(() => {
     if (messages.length === 0) return
@@ -328,106 +413,132 @@ export function RoomPage(props: RoomPageProps): ReactNode {
                     </span>
                   ))}
                 </div>
+                <Button size="sm" onClick={() => { setSettingsOpen(true) }}>{t('settings.open')}</Button>
                 <Button size="sm" onClick={() => { void togglePause() }}>
                   {room.state === 'paused' ? <IconPlayOutlineMedium size={15} /> : <IconPauseOutlineMedium size={15} />}
                   {room.state === 'paused' ? t('header.resume') : t('header.pause')}
                 </Button>
               </header>
 
-              <div className={css.feed} ref={feed}>
-                <div className={css.feedInner} style={{ height: virtualizer.getTotalSize() }}>
-                  {virtualizer.getVirtualItems().map((virtual) => {
-                    const message = messages[virtual.index]
-                    if (message === undefined) return null
-                    const previous = messages[virtual.index - 1]
-                    const showEpisode = message.kind === 'episode' || previous === undefined || previous.episode !== message.episode
-                    return (
-                      <div
-                        key={message.id}
-                        data-index={virtual.index}
-                        ref={virtualizer.measureElement}
-                        className={css.virtualRow}
-                        style={{ transform: `translateY(${virtual.start}px)` }}
-                      >
-                        {showEpisode
-                          ? (
-                            <div className={css.episode}>
-                              <span>{t('episode.label', { n: message.episode })}</span>
-                              <span>{t('episode.by', { name: message.author.kind === 'human' ? message.author.name : '—' })}</span>
+              <div className={css.viewTabs}>
+                {(['chat', 'tickets'] as const).map(key => (
+                  <button
+                    key={key}
+                    className={`${css.viewTab} ${view === key ? css.viewTabActive : ''}`}
+                    onClick={() => { setView(key) }}
+                  >
+                    {t(`view.${key}`)}
+                  </button>
+                ))}
+              </div>
+
+              {view === 'tickets'
+                ? (
+                  <Tickets
+                    records={work}
+                    loading={workLoading}
+                    t={t}
+                    onRefresh={() => { void loadWork(room.id) }}
+                  />
+                )
+                : (
+                  <>
+                    <div className={css.feed} ref={feed}>
+                      <div className={css.feedInner} style={{ height: virtualizer.getTotalSize() }}>
+                        {virtualizer.getVirtualItems().map((virtual) => {
+                          const message = messages[virtual.index]
+                          if (message === undefined) return null
+                          const previous = messages[virtual.index - 1]
+                          const showEpisode = message.kind === 'episode' || previous === undefined || previous.episode !== message.episode
+                          return (
+                            <div
+                              key={message.id}
+                              data-index={virtual.index}
+                              ref={virtualizer.measureElement}
+                              className={css.virtualRow}
+                              style={{ transform: `translateY(${virtual.start}px)` }}
+                            >
+                              {showEpisode
+                                ? (
+                                  <div className={css.episode}>
+                                    <span>{t('episode.label', { n: message.episode })}</span>
+                                    <span>{t('episode.by', { name: message.author.kind === 'human' ? message.author.name : '—' })}</span>
+                                  </div>
+                                )
+                                : null}
+                              <Message
+                                message={message}
+                                memberOf={memberOf}
+                                labels={labels}
+                                t={t}
+                                onApprove={approve}
+                                onOpenSession={props.openSession}
+                                guardActive={room.state === 'tripped' && lastGuard?.id === message.id}
+                                onResume={resume}
+                                onRelax={relax}
+                                onEnd={endEpisode}
+                              />
                             </div>
                           )
-                          : null}
-                        <Message
-                          message={message}
-                          memberOf={memberOf}
-                          labels={labels}
-                          t={t}
-                          onApprove={approve}
-                          onOpenSession={props.openSession}
-                          guardActive={room.state === 'tripped' && lastGuard?.id === message.id}
-                          onResume={resume}
-                          onRelax={relax}
-                          onEnd={endEpisode}
-                        />
+                        })}
                       </div>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {error === undefined ? null : (
-                <div className={css.error}><IconWarningTriangleOutlineMedium size={16} />{error}<button onClick={() => { setError(undefined) }}>{t('common.close')}</button></div>
-              )}
-
-              <div className={css.composerWrap}>
-                {room.state === 'tripped' ? <div className={css.lock}>{t('composer.locked')}</div> : null}
-                <div className={css.composer}>
-                  <textarea
-                    ref={textarea}
-                    rows={2}
-                    value={text}
-                    placeholder={t('composer.placeholder')}
-                    onChange={(event) => { setText(event.target.value) }}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
-                        event.preventDefault()
-                        void send()
-                      }
-                    }}
-                  />
-                  <div className={css.composerRow}>
-                    <div className={css.mentions}>
-                      {members.slice(0, 5).map((member, index) => (
-                        <button
-                          key={member.id}
-                          className={css.mention}
-                          onClick={() => {
-                            setText(value => `${value} @${labels.get(member.id) ?? member.id} `)
-                            textarea.current?.focus()
-                          }}
-                        >
-                          <span className={css.miniAvatar} style={{ background: colorOf(member, index) }}>
-                            {initial(member.displayName ?? member.id)}
-                          </span>
-                          {member.displayName ?? member.id}
-                        </button>
-                      ))}
                     </div>
-                    <Button variant="primary" size="sm" disabled={text.trim() === ''} onClick={() => { void send() }}>
-                      <IconSendOutlineMedium size={15} />
-                      {t('composer.send')}
-                    </Button>
-                  </div>
-                </div>
-                <div className={css.composerHint}>{t('composer.hint')}</div>
-              </div>
+
+                    {error === undefined ? null : (
+                      <div className={css.error}><IconWarningTriangleOutlineMedium size={16} />{error}<button onClick={() => { setError(undefined) }}>{t('common.close')}</button></div>
+                    )}
+
+                    <div className={css.composerWrap}>
+                      {room.state === 'tripped' ? <div className={css.lock}>{t('composer.locked')}</div> : null}
+                      <div className={css.composer}>
+                        <textarea
+                          ref={textarea}
+                          rows={2}
+                          value={text}
+                          placeholder={t('composer.placeholder')}
+                          onChange={(event) => { setText(event.target.value) }}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+                              event.preventDefault()
+                              void send()
+                            }
+                          }}
+                        />
+                        <div className={css.composerRow}>
+                          <div className={css.mentions}>
+                            {members.slice(0, 5).map((member, index) => (
+                              <button
+                                key={member.id}
+                                className={css.mention}
+                                onClick={() => {
+                                  setText(value => `${value} @${labels.get(member.id) ?? member.id} `)
+                                  textarea.current?.focus()
+                                }}
+                              >
+                                <span className={css.miniAvatar} style={{ background: colorOf(member, index) }}>
+                                  {initial(member.displayName ?? member.id)}
+                                </span>
+                                {member.displayName ?? member.id}
+                              </button>
+                            ))}
+                          </div>
+                          <Button variant="primary" size="sm" disabled={text.trim() === ''} onClick={() => { void send() }}>
+                            <IconSendOutlineMedium size={15} />
+                            {t('composer.send')}
+                          </Button>
+                        </div>
+                      </div>
+                      <div className={css.composerHint}>{t('composer.hint')}</div>
+                    </div>
+                  </>
+                )}
             </>
           )}
       </main>
 
       <aside className={css.inspector}>
         <div className={css.tabs}>
-          {(['monitor', 'members', 'settings'] as const).map(key => (
+          {(['monitor', 'members'] as const).map(key => (
             <button key={key} className={`${css.tab} ${tab === key ? css.tabActive : ''}`} onClick={() => { setTab(key) }}>
               {t(`inspector.${key}`)}
             </button>
@@ -447,12 +558,19 @@ export function RoomPage(props: RoomPageProps): ReactNode {
               onAdd={(robot) => { void addMember(robot) }}
             />
           ) : null}
-          {tab === 'settings' ? (
-            <Settings room={room} t={t} onSave={saveSpec} />
-          ) : null}
         </div>
       </aside>
 
+      {settingsOpen && room !== undefined ? (
+        <SettingsDrawer
+          room={room}
+          t={t}
+          pickDirectory={props.pickDirectory}
+          capabilities={request => props.capabilities(request)}
+          onClose={() => { setSettingsOpen(false) }}
+          onSave={async (spec) => { await saveSpec(spec) }}
+        />
+      ) : null}
       {editingMember === undefined || room === undefined ? null : (
         <MemberEditor
           room={room} member={editingMember} t={t}
@@ -734,16 +852,63 @@ function Members(props: {
   )
 }
 
-function Settings(props: {
-  readonly room: Room | undefined
+function CapabilityPicker(props: {
+  readonly label: string
+  readonly options: readonly RobotCapabilityOption[]
+  readonly selected: readonly string[]
+  onChange(next: readonly string[]): void
+}): ReactNode {
+  const selected = new Set(props.selected)
+  return (
+    <div className={css.picker}>
+      <div className={css.pickerLabel}>{props.label}</div>
+      {props.options.length === 0
+        ? <div className={css.pickerEmpty}>—</div>
+        : (
+          <div className={css.pickerBox}>
+            {props.options.map(option => (
+              <Checkbox
+                key={option.value}
+                label={option.label}
+                title={option.description ?? option.value}
+                checked={selected.has(option.value)}
+                onChange={(checked) => {
+                  const next = checked
+                    ? [...props.selected, option.value]
+                    : props.selected.filter(value => value !== option.value)
+                  props.onChange(next)
+                }}
+              />
+            ))}
+          </div>
+        )}
+    </div>
+  )
+}
+
+function SettingsDrawer(props: {
+  readonly room: Room
   readonly t: TranslateNS<typeof NS>
-  onSave(spec: RoomSpec): Promise<boolean>
+  readonly pickDirectory: () => Promise<string | null>
+  readonly capabilities: (request: RobotCapabilitiesRequest) => Promise<RemoteResult<RobotCapabilityCatalog>>
+  onClose(): void
+  onSave(spec: RoomSpec): Promise<void>
 }): ReactNode {
   const { room, t } = props
-  const [draft, setDraft] = useState<RoomSpec | undefined>(room?.spec)
+  const [draft, setDraft] = useState<RoomSpec>(room.spec)
+  const [section, setSection] = useState<'basic' | 'advanced'>('basic')
   const [saving, setSaving] = useState(false)
-  useEffect(() => { setDraft(room?.spec) }, [room?.revision])
-  if (room === undefined || draft === undefined) return null
+  const [notice, setNotice] = useState<string>()
+  const [catalog, setCatalog] = useState<RobotCapabilityCatalog>()
+  useEffect(() => { setDraft(room.spec) }, [room.revision])
+  useEffect(() => {
+    let live = true
+    void props.capabilities({}).then((result) => {
+      if (!live || !result.ok) return
+      setCatalog(result.value)
+    })
+    return () => { live = false }
+  }, [props.capabilities])
   const update = (mutate: (spec: Mutable<RoomSpec>) => void): void => {
     const next = structuredClone(draft) as Mutable<RoomSpec>
     mutate(next)
@@ -752,54 +917,190 @@ function Settings(props: {
   const number = (label: string, value: number, set: (value: number) => void, unit = ''): ReactNode => (
     <label className={css.field}><span>{label}</span><input type="number" value={value} onChange={(event) => { set(Number(event.target.value)) }} />{unit}</label>
   )
+  const review = draft.review ?? { selfReview: true, acceptance: true, maxRounds: 3 }
+  const setReview = (mutate: (review: Mutable<NonNullable<RoomSpec['review']>>) => void): void => {
+    update((spec) => {
+      const next = structuredClone(review) as Mutable<NonNullable<RoomSpec['review']>>
+      mutate(next)
+      spec.review = next
+    })
+  }
+  const capability = draft.capability ?? {}
+  const setCapability = (mutate: (capability: Mutable<NonNullable<RoomSpec['capability']>>) => void): void => {
+    update((spec) => {
+      const next = structuredClone(capability) as Mutable<NonNullable<RoomSpec['capability']>>
+      mutate(next)
+      spec.capability = next
+    })
+  }
+  const pick = async (): Promise<void> => {
+    try {
+      const path = await props.pickDirectory()
+      if (path !== null && path.trim() !== '') update((spec) => { spec.workspaceRoot = path.trim() })
+    } catch {
+      setNotice(t('settings.pickUnavailable'))
+    }
+  }
   return (
-    <>
-      <div className={css.card}>
-        <div className={css.cardTitle}>{t('settings.routing')}</div>
-        <label className={css.field}><span>{t('settings.humanDefault')}</span>
-          <select value={draft.routing.humanDefault} onChange={(event) => { update((spec) => { spec.routing.humanDefault = event.target.value as RoomSpec['routing']['humanDefault'] }) }}>
-            <option value="coordinator">{t('settings.coordinator')}</option>
-            <option value="mentioned">{t('members.wake.mention')}</option>
-            <option value="all-eligible">{t('members.wake.all-human')}</option>
-          </select>
-        </label>
-        {number(t('settings.maxFanout'), draft.routing.maxFanout, (value) => { update((spec) => { spec.routing.maxFanout = value }) })}
-        {number(t('settings.floor'), draft.routing.floor, (value) => { update((spec) => { spec.routing.floor = value }) })}
+    <div className={css.scrim} onClick={() => { props.onClose() }}>
+      <div className={`${css.drawer} ${css.settingsDrawer}`} onClick={(event) => { event.stopPropagation() }}>
+        <div className={css.drawerHead}>
+          <b>{t('settings.title')}</b>
+          <span>{t('settings.subtitle')}</span>
+          <button className={css.iconButton} onClick={() => { props.onClose() }}><IconCloseOutlineMedium size={16} /></button>
+        </div>
+        <div className={css.segRow}>
+          <div className={css.seg}>
+            {(['basic', 'advanced'] as const).map(key => (
+              <button key={key} className={section === key ? css.segOn : ''} onClick={() => { setSection(key) }}>
+                {t(`settings.section.${key}`)}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className={css.drawerBody}>
+          {section === 'basic' ? (
+            <>
+              <div className={css.group}>
+                <h4>{t('settings.routing')}</h4>
+                <label className={css.field}><span>{t('settings.humanDefault')}</span>
+                  <select
+                    value={draft.routing.humanDefault}
+                    onChange={(event) => {
+                      update((spec) => { spec.routing.humanDefault = event.target.value as RoomSpec['routing']['humanDefault'] })
+                    }}
+                  >
+                    <option value="coordinator">{t('settings.coordinator')}</option>
+                    <option value="mentioned">{t('members.wake.mention')}</option>
+                    <option value="all-eligible">{t('members.wake.all-human')}</option>
+                  </select>
+                </label>
+                {number(t('settings.maxFanout'), draft.routing.maxFanout, (value) => { update((spec) => { spec.routing.maxFanout = value }) })}
+                {number(t('settings.floor'), draft.routing.floor, (value) => { update((spec) => { spec.routing.floor = value }) })}
+              </div>
+              <div className={css.group}>
+                <h4>{t('settings.review')}</h4>
+                <Checkbox
+                  label={t('settings.selfReview')}
+                  checked={review.selfReview}
+                  onChange={(value) => { setReview((next) => { next.selfReview = value }) }}
+                />
+                <Checkbox
+                  label={t('settings.acceptance')}
+                  checked={review.acceptance}
+                  onChange={(value) => { setReview((next) => { next.acceptance = value }) }}
+                />
+                {number(t('settings.maxRounds'), review.maxRounds, (value) => { setReview((next) => { next.maxRounds = value }) })}
+                <p className={css.hint}>{t('settings.reviewHint')}</p>
+              </div>
+              <div className={css.group}>
+                <h4>{t('settings.workspace')}</h4>
+                <div className={css.pathRow}>
+                  <input
+                    value={draft.workspaceRoot ?? ''}
+                    placeholder={t('settings.workspacePlaceholder')}
+                    onChange={(event) => {
+                      update((spec) => {
+                        const path = event.target.value.trim()
+                        if (path === '') delete spec.workspaceRoot
+                        else spec.workspaceRoot = path
+                      })
+                    }}
+                  />
+                  <Button size="sm" onClick={() => { void pick() }}>{t('settings.pickDirectory')}</Button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className={css.group}>
+                <h4>{t('settings.guard')}</h4>
+                {number(t('settings.maxDepth'), draft.guard.maxDepth, (value) => { update((spec) => { spec.guard.maxDepth = value }) })}
+                {number(t('settings.episodeTurns'), draft.guard.episodeTurns, (value) => { update((spec) => { spec.guard.episodeTurns = value }) })}
+                {number(t('settings.episodeMessages'), draft.guard.episodeMessages, (value) => { update((spec) => { spec.guard.episodeMessages = value }) })}
+                {number(t('settings.episodeTokens'), draft.guard.episodeTokens, (value) => { update((spec) => { spec.guard.episodeTokens = value }) })}
+                {number(t('settings.wallClock'), Math.round(draft.guard.wallClockMs / 60_000), (value) => { update((spec) => { spec.guard.wallClockMs = value * 60_000 }) })}
+                {number(t('settings.turnTimeout'), Math.round(draft.guard.memberTurnTimeoutMs / 1000), (value) => { update((spec) => { spec.guard.memberTurnTimeoutMs = value * 1000 }) })}
+                {number(t('settings.pingPong'), draft.guard.pingPongLimit, (value) => { update((spec) => { spec.guard.pingPongLimit = value }) })}
+                {number(t('settings.duplicates'), draft.guard.maxDuplicates, (value) => { update((spec) => { spec.guard.maxDuplicates = value }) })}
+                {number(t('settings.noProgress'), draft.guard.noProgressWindow, (value) => { update((spec) => { spec.guard.noProgressWindow = value }) })}
+              </div>
+              <div className={css.group}>
+                <h4>{t('settings.budget')}</h4>
+                {number(t('settings.dailyTokens'), Math.round(draft.budget.dailyTokens / 1000), (value) => { update((spec) => { spec.budget.dailyTokens = value * 1000 }) })}
+                {number(t('settings.softLimit'), Math.round(draft.budget.softLimitRatio * 100), (value) => { update((spec) => { spec.budget.softLimitRatio = value / 100 }) })}
+              </div>
+              <div className={css.group}>
+                <h4>{t('settings.context')}</h4>
+                {number(t('settings.window'), draft.context.window, (value) => { update((spec) => { spec.context.window = value }) })}
+                {number(t('settings.messageChars'), draft.context.messageChars, (value) => { update((spec) => { spec.context.messageChars = value }) })}
+                {number(t('settings.summaryChars'), draft.context.summaryChars, (value) => { update((spec) => { spec.context.summaryChars = value }) })}
+                {number(t('settings.triggerChars'), draft.context.triggerChars, (value) => { update((spec) => { spec.context.triggerChars = value }) })}
+              </div>
+              <div className={css.group}>
+                <h4>{t('settings.capability')}</h4>
+                <p className={css.hint}>{t('settings.capabilityHint')}</p>
+                <CapabilityPicker
+                  label={t('settings.skills')}
+                  options={catalog?.skills ?? []}
+                  selected={capability.skills ?? []}
+                  onChange={(next) => {
+                    setCapability((target) => {
+                      if (next.length === 0) delete target.skills
+                      else target.skills = [...next]
+                    })
+                  }}
+                />
+                <CapabilityPicker
+                  label={t('settings.mcpServers')}
+                  options={catalog?.mcpServers ?? []}
+                  selected={capability.mcpServers ?? []}
+                  onChange={(next) => {
+                    setCapability((target) => {
+                      if (next.length === 0) delete target.mcpServers
+                      else target.mcpServers = [...next]
+                    })
+                  }}
+                />
+                <CapabilityPicker
+                  label={t('settings.toolsAllow')}
+                  options={catalog?.tools ?? []}
+                  selected={capability.tools?.allow ?? []}
+                  onChange={(next) => {
+                    setCapability((target) => {
+                      target.tools = { ...target.tools ?? {}, allow: [...next] }
+                    })
+                  }}
+                />
+                <CapabilityPicker
+                  label={t('settings.toolsDeny')}
+                  options={catalog?.tools ?? []}
+                  selected={capability.tools?.deny ?? []}
+                  onChange={(next) => {
+                    setCapability((target) => {
+                      target.tools = { ...target.tools ?? {}, deny: [...next] }
+                    })
+                  }}
+                />
+              </div>
+            </>
+          )}
+        </div>
+        <div className={css.drawerFoot}>
+          <span className={css.hint}>{notice ?? t('settings.footHint')}</span>
+          <Button
+            variant="primary"
+            disabled={saving}
+            onClick={() => {
+              setSaving(true)
+              void props.onSave(draft).finally(() => { setSaving(false) })
+            }}
+          >
+            {saving ? t('settings.saving') : t('settings.save')}
+          </Button>
+        </div>
       </div>
-      <div className={css.card}>
-        <div className={css.cardTitle}>{t('settings.guard')}</div>
-        {number(t('settings.maxDepth'), draft.guard.maxDepth, (value) => { update((spec) => { spec.guard.maxDepth = value }) })}
-        {number(t('settings.episodeTurns'), draft.guard.episodeTurns, (value) => { update((spec) => { spec.guard.episodeTurns = value }) })}
-        {number(t('settings.episodeMessages'), draft.guard.episodeMessages, (value) => { update((spec) => { spec.guard.episodeMessages = value }) })}
-        {number(t('settings.episodeTokens'), draft.guard.episodeTokens, (value) => { update((spec) => { spec.guard.episodeTokens = value }) })}
-        {number(t('settings.wallClock'), Math.round(draft.guard.wallClockMs / 60_000), (value) => { update((spec) => { spec.guard.wallClockMs = value * 60_000 }) })}
-        {number(t('settings.turnTimeout'), Math.round(draft.guard.memberTurnTimeoutMs / 1000), (value) => { update((spec) => { spec.guard.memberTurnTimeoutMs = value * 1000 }) })}
-        {number(t('settings.pingPong'), draft.guard.pingPongLimit, (value) => { update((spec) => { spec.guard.pingPongLimit = value }) })}
-        {number(t('settings.duplicates'), draft.guard.maxDuplicates, (value) => { update((spec) => { spec.guard.maxDuplicates = value }) })}
-        {number(t('settings.noProgress'), draft.guard.noProgressWindow, (value) => { update((spec) => { spec.guard.noProgressWindow = value }) })}
-      </div>
-      <div className={css.card}>
-        <div className={css.cardTitle}>{t('settings.budget')}</div>
-        {number(t('settings.dailyTokens'), Math.round(draft.budget.dailyTokens / 1000), (value) => { update((spec) => { spec.budget.dailyTokens = value * 1000 }) })}
-      </div>
-      <div className={css.card}>
-        <div className={css.cardTitle}>{t('settings.context')}</div>
-        {number(t('settings.window'), draft.context.window, (value) => { update((spec) => { spec.context.window = value }) })}
-        {number(t('settings.messageChars'), draft.context.messageChars, (value) => { update((spec) => { spec.context.messageChars = value }) })}
-        {number(t('settings.summaryChars'), draft.context.summaryChars, (value) => { update((spec) => { spec.context.summaryChars = value }) })}
-      </div>
-      <Button
-        className={css.block}
-        variant="primary"
-        disabled={saving}
-        onClick={() => {
-          setSaving(true)
-          void props.onSave(draft).finally(() => { setSaving(false) })
-        }}
-      >
-        {saving ? t('settings.saving') : t('settings.save')}
-      </Button>
-    </>
+    </div>
   )
 }
 

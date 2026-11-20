@@ -12,6 +12,8 @@ import { createDesktopBrowserBridge } from './preload-browser.ts'
 import type { FileDragHandle } from '@tomato/util-file-drag'
 
 function createProductApi(): TomatoDesktopProductApi {
+  // The form the monitor panel last asked for; the host only resizes on a change.
+  let lastPanelForm: 'pill' | 'card' | undefined
   return {
     protocolVersion: 1,
     development: process.env.TOMATO_DESKTOP_DEV_APP === '1',
@@ -37,6 +39,21 @@ function createProductApi(): TomatoDesktopProductApi {
       }) },
     },
     deviceInfo: () => ipcRenderer.invoke(DESKTOP_IPC.deviceInfo) as Promise<string>,
+    systemMonitor: {
+      toggle: () => ipcRenderer.invoke(DESKTOP_IPC.systemMonitorToggle) as Promise<boolean>,
+      close: () => ipcRenderer.invoke(DESKTOP_IPC.systemMonitorClose) as Promise<void>,
+      resize: (form) => {
+        // The panel document asks again on every render; only a change crosses.
+        if (form === lastPanelForm) return Promise.resolve()
+        lastPanelForm = form
+        return ipcRenderer.invoke(DESKTOP_IPC.systemMonitorResize, form) as Promise<void>
+      },
+      subscribe: (listener) => {
+        const handle = (_event: Electron.IpcRendererEvent, open: boolean): void => { listener(open) }
+        ipcRenderer.on(DESKTOP_IPC.systemMonitorChanged, handle)
+        return () => { ipcRenderer.off(DESKTOP_IPC.systemMonitorChanged, handle) }
+      },
+    },
     remote: {
       status: () => ipcRenderer.invoke(DESKTOP_IPC.remoteStatus) as Promise<DesktopRemoteState>,
       start: () => ipcRenderer.invoke(DESKTOP_IPC.remoteStart) as Promise<DesktopRemoteState>,

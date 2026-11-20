@@ -109,8 +109,14 @@ struct HubClient: Sendable {
     /// Live control stream: one baseline, then replacement frames. It carries
     /// projection values only — liveness travels as `api-session/*` on the
     /// forwarded event stream — so no screen reads it yet.
-    func controlStream() -> AsyncThrowingStream<JSONValue, Error> {
-        RemoteStream.frames(base: base, cookie: cookieHeader, endpoint: "session/control", payload: EmptyBody())
+    func controlStream(logAttempt: Bool = true) -> AsyncThrowingStream<JSONValue, Error> {
+        RemoteStream.frames(
+            base: base,
+            cookie: cookieHeader,
+            endpoint: "session/control",
+            logAttempt: logAttempt,
+            payload: EmptyBody()
+        )
     }
 
     /// One conversation's opening snapshot followed by its live events and
@@ -126,12 +132,14 @@ struct HubClient: Sendable {
     /// - Returns: the multiplexed frame stream.
     func followStream(
         sessionId: String,
-        maxMessages: Int? = nil
+        maxMessages: Int? = nil,
+        logAttempt: Bool = true
     ) -> AsyncThrowingStream<JSONValue, Error> {
         RemoteStream.frames(
             base: base,
             cookie: cookieHeader,
             endpoint: "session/follow",
+            logAttempt: logAttempt,
             payload: SessionFollowRequest(
                 address: SessionAddress(sessionId: sessionId),
                 assistantStream: true,
@@ -294,18 +302,12 @@ extension HubClient {
         do {
             (data, response) = try await URLSession.shared.data(for: request, delegate: NoRedirectDelegate())
         } catch {
-            let failure = error as NSError
-            // iOS refuses cleartext to an address outside the Info.plist
-            // exceptions. Say which half of the pairing is wrong instead of
-            // relaying the framework's ATS sentence.
-            if failure.domain == NSURLErrorDomain,
-               failure.code == NSURLErrorAppTransportSecurityRequiresSecureConnection
-            {
-                AppLog.error(.network, "配对被 ATS 拒绝", detail: url.host ?? "")
-                throw HubError.transport("这个地址是 http，且不在局域网或 Tailscale 范围内，iOS 不允许明文连接。请改用桌面端隧道生成的 https 链接。")
-            }
-            AppLog.error(.network, "交换配对令牌失败", detail: failure.localizedDescription)
-            throw HubError.transport(failure.localizedDescription)
+            // The copy names the half of the pairing that is wrong — cleartext
+            // refused by ATS, nothing listening, no network — instead of
+            // relaying the framework's own sentence.
+            let failure = HubError.transport(from: error)
+            AppLog.error(.network, "交换配对令牌失败", detail: describe(failure))
+            throw failure
         }
         guard let http = response as? HTTPURLResponse else { throw HubError.transport("非 HTTP 响应") }
         guard let cookie = sessionCookie(from: http) else {
@@ -412,7 +414,28 @@ extension HubClient {
         as: Result.Type
     ) async throws -> Result {
         let value = try await invoke(endpoint, argName: argName, body: body)
+        guard Self.hasContent(value) else {
+            // A Host from another build answers `ok` with an empty value for
+            // methods it does not implement. Decoding would report a missing
+            // field and send the reader hunting for a parse bug this app does
+            // not have; pairing a version mismatch is the actionable answer.
+            AppLog.warning(.network, "Host 响应缺少内容，版本可能不匹配", detail: endpoint)
+            throw HubError.notFound
+        }
         return try decode(Result.self, from: JSONEncoder().encode(value))
+    }
+
+    /// Whether a successful result carries fields to decode.
+    /// - Parameter value: the `value` member of a successful result.
+    /// - Returns: false for null and for an object with no members.
+    static func hasContent(_ value: JSONValue) -> Bool {
+        if value.isNull {
+            return false
+        }
+        if let object = value.objectValue {
+            return !object.isEmpty
+        }
+        return true
     }
 
     func callDiscarding(_ endpoint: String, argName: String? = "request", body: some Encodable) async throws {
@@ -447,8 +470,9 @@ extension HubClient {
         do {
             (data, response) = try await Self.transport.data(for: request)
         } catch {
-            AppLog.error(.network, "\(method) \(path) 连接失败", detail: describe(error))
-            throw HubError.transport((error as NSError).localizedDescription)
+            let failure = HubError.transport(from: error)
+            AppLog.error(.network, "\(method) \(path) 连接失败", detail: describe(failure))
+            throw failure
         }
         guard let http = response as? HTTPURLResponse else {
             AppLog.error(.network, "\(method) \(path) 不是 HTTP 响应")

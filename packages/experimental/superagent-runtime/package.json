@@ -1,6 +1,6 @@
 {
   "name": "@tomato/superagent-runtime",
-  "description": "Runs a superagent team in one Host: reads a bot service, opens tickets, runs work, and reviews it",
+  "description": "Runs a superagent team in one Host: takes bot or app requests, opens tickets, runs work, reviews it, and lets a person cancel or continue",
   "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
@@ -18,17 +18,39 @@
       "types": "./lib/types/index.d.ts",
       "default": "./lib/index.js"
     },
+    "./typert": {
+      "types": "./lib/typert.host.d.ts",
+      "default": "./lib/typert.host.js"
+    },
+    "./remote": {
+      "types": "./lib/typert.remote-client.d.ts",
+      "default": "./lib/typert.remote-client.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
   "files": [
     "lib/index.js",
+    "lib/typert.host.js",
+    "lib/typert.host.d.ts",
+    "lib/typert.host.d.ts.map",
+    "lib/typert.remote-client.js",
+    "lib/typert.remote-client.d.ts",
+    "lib/typert.remote-client.d.ts.map",
+    "lib/types/**/*.js",
     "lib/types/**/*.d.ts",
     "lib/types/**/*.d.ts.map",
     "lib/**/*.js.map",
     "src"
   ],
   "license": "MIT",
+  "dependencies": {
+    "zod": "4.6.6"
+  },
   "peerDependencies": {
     "@tomato/agent": "workspace:*",
     "@tomato/cordis": "workspace:~",
@@ -42,7 +64,8 @@
     "@tomato/agent-default-model": "workspace:*",
     "@tomato/tool-fs": "workspace:*",
     "@tomato/tool-fs-search": "workspace:*",
-    "@tomato/tool-executor-native": "workspace:*"
+    "@tomato/tool-executor-native": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*"
   },
   "devDependencies": {
     "@tomato/agent": "workspace:*",
@@ -60,6 +83,7 @@
     "@tomato/experimental-worktree": "workspace:*",
     "@tomato/tool-fs": "workspace:*",
     "@tomato/tool-fs-search": "workspace:*",
-    "@tomato/tool-executor-native": "workspace:*"
+    "@tomato/tool-executor-native": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*"
   }
 }

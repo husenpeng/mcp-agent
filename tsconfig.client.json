@@ -45,6 +45,7 @@
     "packages/client/*/tests/**/*.host.ts"
   ],
   "references": [
+    { "path": "./packages/client/ui-system-monitor" },
     {
       "path": "./packages/experimental/client-ui-action-cards"
     },
@@ -274,7 +275,7 @@
       "path": "./packages/client/ui-settings-subagent"
     },
     {
-      "path": "./packages/client/ui-settings-web-search"
+      "path": "./packages/experimental/client-ui-settings-work-team"
     },
     {
       "path": "./packages/client/ui-settings-marketing"
@@ -401,6 +402,12 @@
     },
     {
       "path": "./packages/client/ui-plugin-manager/tsconfig.client.json"
+    },
+    {
+      "path": "./plugins/tomato-market"
+    },
+    {
+      "path": "./packages/client/ui-tomato-market"
     },
     {
       "path": "./packages/client/ui-settings-developer/tsconfig.client.json"

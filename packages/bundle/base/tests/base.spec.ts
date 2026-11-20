@@ -43,7 +43,7 @@ describe('@tomato/base bundle', () => {
     })
     expect(rows.filter(row => row.id === 'subagent-codex')).toHaveLength(0)
     expect(rows.filter(row => row.id === 'subagent-claude-code')).toHaveLength(0)
-    expect(rows.find(row => row.id === 'web')?.config).toMatchObject({ fetchProvider: 'company' })
+    expect(rows.find(row => row.id === 'web')?.config).toMatchObject({ fetchProviders: ['company', 'http'] })
     expect(rows.find(row => row.id === 'web-fetch-http')).toBeDefined()
     expect(rows.find(row => row.id === 'tool-web')?.config).toMatchObject({ fetch: true })
     expect(manifest.dependencies).not.toHaveProperty('@tomato/subagent-codex')
@@ -121,6 +121,7 @@ describe('@tomato/base bundle', () => {
     )
     expect(rows.find(row => row.id === 'agent-default-model')?.config)
       .toEqual({ provider: 'blueai-anthropic', model: 'claude-opus-5-5', reasoningEffort: 'high' })
+    // oxlint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc needs this narrowing to read providers.
     const piAi = rows.find(row => row.id === 'llm-pi-ai')?.config as LlmPiAi.Options | undefined
     if (piAi === undefined) throw new Error('base patch must configure llm-pi-ai')
     // The package names the credential reference, never the key.

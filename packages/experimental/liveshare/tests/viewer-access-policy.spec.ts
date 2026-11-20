@@ -49,7 +49,7 @@ const SESSION_READS = [
   'session/events', 'session/follow', 'session/list', 'session/observeEvent', 'session/observeProjections',
   'session/observeState', 'session/page', 'session/projections', 'session/state', 'session/wait',
   'skills/get',
-      'skills/list', 'toolResults/watch', 'workspace/follow',
+  'skills/list', 'toolResults/watch', 'workspace/follow',
 ] as const
 const SESSION_EVENTS = [
   'event:api-session/activity', 'event:api-session/added', 'event:api-session/error',

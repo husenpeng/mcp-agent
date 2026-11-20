@@ -93,30 +93,39 @@ final class ChatImages: ObservableObject {
     /// Fetch the photos this transcript needs and does not hold yet.
     ///
     /// Every call is idempotent: a key that is loaded, loading, or failed starts
-    /// nothing, so a transcript rebuild never repeats a read.
+    /// nothing, so a transcript rebuild never repeats a read. A recorded photo
+    /// without its complete reference can never be verified by the Host, so it
+    /// settles as a failed tile instead of spinning forever.
     /// - Parameters:
-    ///   - keys: durable attachment identities the visible rows reference.
+    ///   - refs: photos the visible rows reference.
     ///   - sessionId: Session whose log authorizes the reads.
     ///   - hub: client for the paired Host.
-    func load(_ keys: Set<String>, sessionId: String, hub: HubClient) {
-        for key in keys where !key.hasPrefix("pending:") {
-            guard images[key] == nil, !failures.contains(key), !loading.contains(key) else { continue }
-            loading.insert(key)
+    func load(_ refs: [ChatImageRef], sessionId: String, hub: HubClient) {
+        for ref in refs where !ref.isPending {
+            guard images[ref.id] == nil, !failures.contains(ref.id), !loading.contains(ref.id)
+            else { continue }
+            guard let attachment = ref.attachment else {
+                failures.insert(ref.id)
+                AppLog.warning(.chat, "消息图片缺少完整引用", detail: ref.id)
+                continue
+            }
+            loading.insert(ref.id)
             Task { [weak self] in
-                await self?.fetch(key, sessionId: sessionId, hub: hub)
+                await self?.fetch(attachment, sessionId: sessionId, hub: hub)
             }
         }
     }
 
     /// Read one attachment and keep its thumbnail.
     /// - Parameters:
-    ///   - key: the durable attachment identity.
+    ///   - attachment: the complete reference the message recorded.
     ///   - sessionId: Session whose log authorizes the read.
     ///   - hub: client for the paired Host.
-    private func fetch(_ key: String, sessionId: String, hub: HubClient) async {
+    private func fetch(_ attachment: ChatImageAttachment, sessionId: String, hub: HubClient) async {
+        let key = attachment.attachmentId
         defer { loading.remove(key) }
         do {
-            let (_, data) = try await hub.attachment(sessionId: sessionId, attachmentId: key)
+            let (_, data) = try await hub.attachment(sessionId: sessionId, attachment: attachment)
             let photo = await Task.detached(priority: .userInitiated) {
                 UIImage(data: data)
             }.value

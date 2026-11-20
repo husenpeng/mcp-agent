@@ -61,6 +61,8 @@ export function apply(ctx: Context, config: Config): void {
     // ACP reserves stdout for protocol messages, including during successful catalog loads.
     info: (message) => { console.error(LOG_TAG, message) },
     warn: (message) => { console.warn(LOG_TAG, message) },
+    // A refreshed catalog changes what the Models surface offers, so clients reload it.
+    changed: () => { ctx.emit('llm/models-updated', PROVIDER) },
   })
   let reportedListing: ModelListing | undefined
   /** Resolve the catalog of one operation, reporting each listing's hidden entries once. */

@@ -46,9 +46,26 @@ struct ChatItem: Identifiable, Equatable {
 ///
 /// The key is what the transcript looks the picture up by: the Host's durable
 /// attachment identity once the message is recorded, or a prompt's temporary key
-/// while it is still on its way.
+/// while it is still on its way. The recorded reference travels with the row
+/// because the Host verifies a read against the whole reference.
 struct ChatImageRef: Identifiable, Equatable {
     let id: String
+    /// The Host's complete reference; nil while the prompt is still on its way.
+    var attachment: ChatImageAttachment?
+
+    /// A prompt's photo, which this phone already holds.
+    /// - Parameter id: the prompt's temporary store key.
+    init(id: String) {
+        self.id = id
+        attachment = nil
+    }
+
+    /// A photo the Host recorded on a settled message.
+    /// - Parameter attachment: the complete reference from the log.
+    init(_ attachment: ChatImageAttachment) {
+        id = attachment.attachmentId
+        self.attachment = attachment
+    }
 
     /// Whether the message carrying this photo is still being sent.
     var isPending: Bool {

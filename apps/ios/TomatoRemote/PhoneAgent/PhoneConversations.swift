@@ -28,19 +28,23 @@ struct PhoneConversation: Codable, Equatable, Identifiable {
     var createdAt: Date
     var updatedAt: Date
     var messages: [AgentMessage]
+    /// Session id on the company agent_service, when this conversation runs there.
+    var serviceSessionId: String?
 
     init(
         id: String = UUID().uuidString,
         title: String = PhoneConversation.untitled,
         createdAt: Date = .now,
         updatedAt: Date = .now,
-        messages: [AgentMessage] = []
+        messages: [AgentMessage] = [],
+        serviceSessionId: String? = nil
     ) {
         self.id = id
         self.title = title
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.messages = messages
+        self.serviceSessionId = serviceSessionId
     }
 
     /// Whether nothing has been said in this conversation yet.

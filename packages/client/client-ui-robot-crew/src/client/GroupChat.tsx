@@ -82,10 +82,11 @@ function Line({ line, t }: { readonly line: ChatLine; readonly t: TranslateNS<ty
  * @returns the tab body.
  */
 export function GroupChat({
-  useRegistry, useLedger, actions, createWithConversation, openCanvas, workspaceRoot, t, useRemoteAccess,
+  useRegistry, useLedger, useRobots, actions, createWithConversation, openCanvas, workspaceRoot, t, useRemoteAccess,
 }: GroupChatProps): ReactNode {
   const registry = useRegistry(snapshot => snapshot)
   const ledger = useLedger(snapshot => snapshot)
+  const robots = useRobots(snapshot => snapshot)
   const canCreateSession = useRemoteAccess('session/create')
   const chats = useMemo(() => groupChats(registry), [registry])
 
@@ -122,6 +123,12 @@ export function GroupChat({
   }, [notice])
 
   const createFromTemplate = async (): Promise<void> => {
+    // Every member runs as a published Rbot; publication rejects a member without one.
+    const robot = robots.options[0]
+    if (robot === undefined) {
+      setNotice({ tone: 'warning', text: t('group.notice.noRobot') })
+      return
+    }
     setBusy(true)
     try {
       const result = await actions.publish({
@@ -129,6 +136,7 @@ export function GroupChat({
           name: uniqueGroupName(chats.map(chat => chat.name), t('template.name')),
           mission: t('template.mission'),
           prompt: t('group.taskPlaceholder'),
+          robot: { spec: robot.spec, revision: robot.revision },
           labels: {
             kickoff: t('label.kickoff'),
             build: t('label.build'),
@@ -201,11 +209,14 @@ export function GroupChat({
         <button
           type="button"
           className={css.templateButton}
-          disabled={busy}
+          disabled={busy || robots.options.length === 0}
+          title={robots.options.length === 0 ? t('group.notice.noRobot') : undefined}
           onClick={() => { void createFromTemplate() }}
         >
           {t('group.template')}
         </button>
+        {/* The rail is always rendered, so a creation failure stays readable while the list is empty. */}
+        {notice === undefined ? null : <p className={css.railNotice} data-tone={notice.tone}>{notice.text}</p>}
         {chats.length === 0
           ? <p className={css.railEmpty}>{t('group.emptyHint')}</p>
           : (
@@ -301,7 +312,6 @@ export function GroupChat({
                   onChange={(event) => { setTask(event.target.value) }}
                 />
                 <div className={css.composerBar}>
-                  <span className={css.notice} data-tone={notice?.tone}>{notice?.text ?? ''}</span>
                   <Button
                     variant="primary"
                     icon={<IconPlayOutlineMedium />}

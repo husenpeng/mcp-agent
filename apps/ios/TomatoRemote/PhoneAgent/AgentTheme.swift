@@ -15,11 +15,11 @@ import SwiftUI
 /// Colors and metrics shared by every Tomato Phone screen.
 enum AgentTheme {
     /// Page background behind cards and the composer.
-    static let canvas = TomatoToken.bgBase
+    static let canvas = TomatoSurface.page
     /// Card and bubble surface.
-    static let surface = TomatoToken.bgLayer1
+    static let surface = TomatoSurface.card
     /// Secondary surface for tool cards and suggestion chips.
-    static let surfaceMuted = TomatoToken.bgLayer2
+    static let surfaceMuted = TomatoSurface.variant
     /// Headline and body text.
     static let ink = TomatoToken.labelPrimary
     /// Supporting copy.
@@ -29,15 +29,16 @@ enum AgentTheme {
     /// Accent gradient end.
     static let accentSoft = TomatoToken.stateErrorSecondary
     /// Hairline border on cards.
-    static let border = TomatoToken.borderL3
+    static let border = TomatoLine.hairline
     /// Destructive action.
     static let danger = TomatoToken.stateErrorPrimary
     /// Success status.
     static let success = TomatoToken.stateSuccessPrimary
 
-    /// The accent used on primary buttons and the send control.
+    /// The send control keeps the existing gradient API but uses one solid brand
+    /// colour, so primary actions do not become decorative red gradients.
     static var accentGradient: LinearGradient {
-        LinearGradient(colors: [accent, accentSoft], startPoint: .topLeading, endPoint: .bottomTrailing)
+        LinearGradient(colors: [accent, accent], startPoint: .topLeading, endPoint: .bottomTrailing)
     }
 
     /// Conversation text. One step below the system body size, so a turn reads
@@ -47,9 +48,9 @@ enum AgentTheme {
     static let inputFont = Font.callout
 
     /// Card radius, sharing the Host client's card geometry.
-    static let cardRadius: CGFloat = 18
+    static let cardRadius: CGFloat = TomatoCorner.card
     /// Message bubble radius.
-    static let bubbleRadius: CGFloat = 16
+    static let bubbleRadius: CGFloat = TomatoCorner.control
     /// Composer and chip radius.
     static let pillRadius: CGFloat = 20
 }

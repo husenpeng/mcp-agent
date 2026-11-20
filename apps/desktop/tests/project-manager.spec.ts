@@ -330,3 +330,19 @@ describe('desktop link-backend projections', () => {
     expect(existsSync(join(target, 'package.json'))).toBe(true)
   })
 })
+
+describe('desktop plugin market bundle', () => {
+  it('replaces the former marketplace bundle with the shipped plugin markets bundle', async () => {
+    const { manager } = setup()
+    await manager.applyRelease()
+    const path = join(manager.paths.profile, 'package.json')
+    const manifest = JSON.parse(readFileSync(path, 'utf8')) as { tomato: { profile: { bundles: string[] } } }
+    manifest.tomato.profile.bundles = manifest.tomato.profile.bundles.filter(bundle => bundle !== '@tomato/plugin-tomato-market')
+    manifest.tomato.profile.bundles.push('tomato-market')
+    writeFileSync(path, JSON.stringify(manifest))
+    await manager.applyRelease()
+    const migrated = JSON.parse(readFileSync(path, 'utf8')) as { tomato: { profile: { bundles: string[] } } }
+    expect(migrated.tomato.profile.bundles).toContain('@tomato/plugin-tomato-market')
+    expect(migrated.tomato.profile.bundles).not.toContain('tomato-market')
+  })
+})

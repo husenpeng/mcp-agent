@@ -6,6 +6,7 @@ import {
   assign,
   recordReview,
   report,
+  stop,
 } from '@tomato/superagent'
 import type { ActorId, MandateId, TicketId } from '@tomato/superagent'
 import { ticketSummary } from '../src/index.ts'
@@ -66,14 +67,42 @@ describe('ticket summary', () => {
   it('reads a ticket nobody has worked on yet as open work with no run state', () => {
     expect(ticketSummary(unworked())).toEqual({
       id: 'ticket-2', subject: '查一下客户端要不要跟着改', stage: 'working', blocking: 0, rounds: 0,
+      running: false, stopped: false,
     })
   })
 
   it('reads a reviewed ticket as work waiting on a person', () => {
     expect(ticketSummary(ticketOf({ severity: 'p1', summary: 'naming' }))).toEqual({
       id: 'ticket-1', subject: '给达人详情页加 tier 字段', stage: 'person', needs: 'review',
-      state: 'ready', blocking: 0, rounds: 1,
+      state: 'ready', blocking: 0, rounds: 1, running: false, stopped: false,
     })
+  })
+
+  it('reads an in-flight run as cancellable and a stopped ticket as stopped', () => {
+    const store = new InMemoryStore()
+    const ticket = accept(store, {
+      id: 'ticket-3' as TicketId,
+      subject: '改文案',
+      supervisor: 'supervisor-session',
+      thread: { source: 'app', id: 'app-1' },
+      mandate: {
+        id: 'mandate-3' as MandateId,
+        policyVersion: 'p1',
+        scope: 'change',
+        strength: 'explicit',
+        matchedRules: ['app:direct'],
+        sender: 'app-user' as ActorId,
+        thread: { source: 'app', id: 'app-1' },
+        at: '2026-11-14T00:00:00.000Z',
+      },
+    })
+    const assignment = assign(store, ticket.id, { session: 'worker-3', directory: '/work/three' })
+    report(store, ticket.id, assignment.id, { state: 'progress' })
+    expect(ticketSummary(store.ticket(ticket.id)?.ticket as ReturnType<typeof accept>))
+      .toMatchObject({ stage: 'working', running: true, stopped: false })
+    stop(store, ticket.id)
+    expect(ticketSummary(store.ticket(ticket.id)?.ticket as ReturnType<typeof accept>))
+      .toMatchObject({ running: true, stopped: true })
   })
 
   it('reads work nobody reviewed yet as still in progress', () => {

@@ -373,3 +373,67 @@ xcrun devicectl device copy from --device <UDID> --domain-type appDataContainer 
 3. ~~触控区余量 2 处~~ → 同轮补齐：Mermaid 全屏三控件 contentShape 扩到 44pt、VoiceInputBar minHeight 36→44。
 4. 注意：本仓库存在并发写者（第 9 轮的 P2-2 由其落地）；后续轮次动手前先核对其活动状态。
 ```
+
+## 第 11 轮（2026-11-18，模拟器 / Debug）：断线日志复盘与重连修复
+
+### 证据
+
+`iPhone 17e` 容器里的 `tomato-remote.log`，2026-11-16 20:08 → 11-18 12:02（约 40 小时），7389 行 / 713 KB：
+
+| 现象 | 数字 |
+|---|---|
+| 配对的 Host（`http://127.0.0.1:43298`）失联 | 21:08 起每次 `session/list` 都是 `-1004`；确认该端口当前无监听 |
+| 失败轮询 | 2384 次请求 / 2352 次失败；每次失败写 `network 连接失败` + `session 刷新失败` 两条 E，共 4704 条，占全部 E 的 99%、全文件的 64% |
+| 事件流放弃后不再重连 | 20:22:27 会话 `进入离线（重连次数用尽）`、20:22:32 `交互事件流停止重连（5 次）`；此后 39 小时 0 次重连，而列表轮询照常 |
+| 主线程卡顿 | 27 次 F / 25 次恢复；多数 2.0–2.5 s，两次 12.7 s，最长 19.0 s（iOS 看门狗约 20 s） |
+| 归因不可信 | "最后操作"自 21:07 起一直停在 `刷新列表`；15:36:15 同时出现 `恢复 2.5 s` 与 61 ms 后的 `无响应 2.4 s` |
+| 文案 | 横幅直接显示 `网络错误：Could not connect to the server.` |
+
+### 修复
+
+| # | 问题 | 处理 | 位置 |
+|---|---|---|---|
+| 1 | 事件流用尽重连次数后永久放弃 | 5 次快速重试（1.5–7.5 s）后转为每分钟一次，永不停；`Host 关闭了连接` 也算断线并重试 | `Net/StreamRetry.swift`、`Interactions/InteractionCenter.swift`、`Robots/RobotsView.swift`、`Rooms/RoomsView.swift` |
+| 2 | 离线轮询无退避、每次两条 E | 成功 60 s；失败 60→120→240→480→600 s 封顶；一次断线只记一条 E，其后按计数记 D，恢复时记一条 I | `Session/SessionPollSchedule.swift`、`Session/SessionListView.swift`、`App.swift` |
+| 3 | Host 恢复后已离线的对话不回来 | 列表读取在失败后成功时 bump `hostReachableTick`，打开中的对话据此 `resume` | `App.swift`、`Session/ChatView.swift` |
+| 4 | 错误文案中英混排 | `HubError.transport(from:)` 按 `URLError` 分流成中文（没监听 / 无网络 / 超时 / ATS / 证书） | `Net/Wire.swift`、`Net/HubClient.swift` |
+| 5 | 版本漂移只报"解码失败" | `200 + 空 value` 判为版本不匹配，记一条 W 并抛 `notFound` | `Net/HubClient.swift` |
+| 6 | 卡顿归因不可信 | 步骤标签带年龄（5 s/分钟）；看门狗按同一起点计算进行中与恢复时长；MetricKit 卡顿报告把系统抓的栈写进日志 | `Diagnostics/AppLog.swift`、`Diagnostics/HangWatchdog.swift`、`Diagnostics/MetricKitMonitor.swift` |
+
+### 验证
+
+单元测试 `TomatoRemoteTests`：108 项全绿，其中 `RetryPolicyTests` 覆盖退避曲线、流重试永不停、文案分流、空 value 判定、标签年龄。
+
+模拟器实测（2026-11-18，iPhone 17e，`-TOMATO_PREVIEW_PAIRING` 指向地址；真机未接入）：
+
+| 场景 | 结果 |
+|---|---|
+| Host 不在（43298 无监听） | 横幅为中文：`网络错误：Host 上没有服务监听这个地址：桌面端可能没在运行，或换了一个端口。请在桌面端复制新的配对链接。` |
+| 事件流重试节奏 | 第 1–5 次间隔 1.5/3/4.5/6/7.5 s，第 6 次起 `改为每分钟重试`；此后每分钟仍握手（实测 13:53:53、13:54:53 两轮各 9 次 `GET /api/remote.mux` 打到该端口），但一分钟内新增日志 **0 行**（修复前每个流每次失败 4–5 行） |
+| 列表读取 | 断线只记一条 E（`会话列表刷新失败 … · 60 秒后重试`），下一次失败记 D（`仍不可达 … 连续 2 次 · 120 秒后重试`） |
+| Host 恢复（mock 重新监听 43201） | 无需切前台：14:01:12 三条流自行重连（`已连接 robot/watch`、`已连接 $events`、`交互事件流已连接`），断线期间只留下 5 行日志 |
+
+日志里可核对的行：`会话列表刷新失败 … N 秒后重试`（每次断线一条）、`会话列表仍不可达`（调试级、带连续次数）、`会话列表已刷新 … 连续失败 N 次后恢复`、`交互事件流改为每分钟重试`、`智能体流已恢复`、`群聊流已恢复`、`主线程无响应约 N 秒 | 最后操作：…（N 分钟前）`、`系统卡顿 N 秒 | 帧…`。
+
+### 真机日志复盘（2026-11-18，菲菲的iPhone / iPhone 15 Pro / iOS 26.5.2 / v0.1.4 (5)）
+
+用 `devicectl` 取回 `appDataContainer` 日志与 `systemCrashLogs`：
+
+| 证据 | 结论 |
+|---|---|
+| 当前运行日志（14:27）反复 `-1003 A server with the specified hostname could not be found`，Host 为 `https://element-traditional-organizer-louisiana.trycloudflare.com` | 配对的 Cloudflare 快速隧道已失效（域名每次重启都会变），不是手机端网络问题；需要在桌面端重新复制配对链接 |
+| 上一轮日志（11:20–12:38）同一地址可正常连接（流 1.6 s 内连上、审批与 `api-session/status` 持续到达），12:38:06 正常终止 | 手机与 Host 的链路本身没问题，只有地址会随 Desktop 重启失效 |
+| 22 份 `TomatoRemote-*.ips`（11-11 → 11-15） | 13 次 SIGTRAP、5 次 SIGKILL、3 次 SIGSEGV、2 次 EXC_BREAKPOINT；MetricKit 另记 79 条崩溃、3 条 CPU 超限、0 条卡顿 |
+| SIGTRAP 中 2 次栈为 `_assertionFailure` ← `CheckedContinuation.resume(returning:)` ← `RemoteSocket.ping()` | **真实缺陷**：`sendPing` 的 pong 回调在 socket 取消时会被调用两次，`withCheckedContinuation` 第二次 resume 直接 trap |
+| 3 次 SIGSEGV 栈为 `CrashGuard.selfTest()` ← `AppModel.handle(_:)` | 调试深链 `tomato://crash` 的主动自测，不是缺陷 |
+| 5 次 SIGKILL 全部为 `0x8badf00d`：3 次 `scene-update` 超过 10 s、2 次 `Failed to terminate gracefully after 5.0s`；主线程栈全是 SwiftUI `StackLayout / _FlexFrameLayout` 的 `explicitAlignment` 递归（64–128 帧） | 真机上确实发生过主线程被布局卡死而被系统杀掉；后三次发生在 11-14，此后 11-15 起未再出现，本轮日志也没有 |
+
+据此的修复：`RemoteSocket.ping()` 的 pong 回调改成一次性（`Once`）；`-1003` 与 `-1004` 文案分开（域名失效 vs 没人监听）；`HomeModel` 一次失败后 10 s 内不再被"页面重新出现"立刻重读（真机上 2 s 内连读两轮）；MetricKit 除卡顿外也把崩溃栈写进 App 日志（`系统记录到崩溃 signal N · exception N`）。
+
+### 尚未解决 / 下一轮
+
+1. 真机复测：拔网 → 恢复后确认事件流重连、横幅为中文；模拟器容器已被重装替换，原 713 KB 证据日志随之删除（数字已记在本文）。
+2. MetricKit 卡顿栈要等系统下一次投递（通常次日）才能看到首条记录。
+3. 机器人/群聊横幅在重连后要等第一条快照帧才消失（mock 的 robot/watch、room/watch 不发帧，故本轮没看到 `智能体流已恢复`）；真机应随快照帧即时清除。
+4. 主线程布局递归导致的 5 次 `0x8badf00d` 只定位到 SwiftUI 布局栈（无 App 帧），未定位到具体视图；需要真机 Instruments 走查（建议在下一次被系统杀掉后立刻用 Time Profiler 复现），本轮没有盲改布局。
+5. 列表轮询随「会话」页存活，离开该页就不再读；这是既有设计，不是本轮改动。

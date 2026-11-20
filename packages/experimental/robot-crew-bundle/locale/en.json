@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Robot Crew",
+    "description": "Optional multi-agent crew workflow: a versioned handoff graph, a durable run ledger, and the crew canvas with its group-chat tab."
+  }
+}

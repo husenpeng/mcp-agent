@@ -7,7 +7,7 @@
  *
  * The gateway owns the fetch vendors and their credentials; this plugin only
  * needs the gateway origin and the current session. Base compositions keep
- * `fetchProvider: http` pinned until a deployment opts in, because the seam
+ * `fetchProviders: [http]` pinned until a deployment opts in, because the seam
  * refuses to choose between two usable fetch providers.
  *
  * @module @tomato/web-fetch-company

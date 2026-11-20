@@ -1,0 +1,46 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/experimental/memory-dream/README.md
+/:
+  en: be2ff09df090c10e
+  zh: fb96b835ff895522
+/tomato-memory-dream:
+  en: 68607668936c1aae
+  zh: 69884eecf9b7bb03
+/tomato-memory-dream/summary:
+  en: 45477a21c48a6ade
+  zh: 6cb2aff848f377c1
+/tomato-memory-dream/table-of-contents:
+  en: 76368b6b1da79c80
+  zh: ddafa933c150c4d1
+/tomato-memory-dream/use-this-package:
+  en: 1ade403aa25c337e
+  zh: 28ef37d2a7e8c1e6
+/tomato-memory-dream/use-this-package/configuration:
+  en: dfa357e40e7f7f99
+  zh: e6d16930e0ceb4c0
+/tomato-memory-dream/understand-the-implementation:
+  en: 4b89e5f6b723add2
+  zh: a3c632d787c4e890
+/tomato-memory-dream/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/tomato-memory-dream/model-experience/dream-request:
+  en: 0675b169fb43d9b2
+  zh: 8c08817fbeee4511
+/tomato-memory-dream/model-experience/dream-request/what-the-model-sees:
+  en: cad0542651d43268
+  zh: a898475be487be30
+/tomato-memory-dream/model-experience/dream-request/token-effect:
+  en: e9370eab2b515321
+  zh: e31d44737306e894
+/tomato-memory-dream/model-experience/dream-request/kv-cache-effect:
+  en: e1318a88c4a6c50a
+  zh: 5e02d3956e3a8dc6
+/tomato-memory-dream/known-limitations-and-deferred-work:
+  en: ce0c78cc4b9b4101
+  zh: 0767437484873e3e
+/tomato-memory-dream/known-limitations-and-deferred-work/dev-note:
+  en: e67f633dc6fe7773
+  zh: 53f4f253c602e14c

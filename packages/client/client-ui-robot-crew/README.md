@@ -8,7 +8,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`@tomato/client-ui-robot-crew` registers the `collab` collaboration tab and the `crews` canvas studio, neither with a sidebar entry. The collaboration tab lists every published crew as a group chat, creates one by hand, from chat, or from the development template, starts a task, and renders the run as a transcript of member reports and the lead's answers. The studio shows the roster as chips, a draggable workflow canvas with handoff edges, a crew, member, or handoff inspector, a one-sentence composer, and a live flow ledger for the selected run. Registry and run state come from `ctx.crewRuns`; the plugin keeps only viewing state.
+`@tomato/client-ui-robot-crew` registers a sidebar entry for the `collab` tab, plus the `crews` canvas studio. The collaboration tab lists every published crew as a group chat, creates one by hand, from chat, or from the development template, starts a task, and renders the run as a transcript of member reports and the lead's answers. The studio shows the roster as chips, a draggable workflow canvas with handoff edges, a crew, member, or handoff inspector, a one-sentence composer, and a live flow ledger for the selected run. Registry and run state come from `ctx.crewRuns`; the plugin keeps only viewing state.
 
 ## Table of Contents
 

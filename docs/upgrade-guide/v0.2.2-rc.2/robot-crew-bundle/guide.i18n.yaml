@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v0.2.2-rc.2/robot-crew-bundle/guide.md
+/:
+  en: 976ff34408a6a23d
+  zh: c0fa9b017a1a2cdf
+/the-crew-workflow-moved-to-its-own-bundle:
+  en: 3eeb4d22b07b9522
+  zh: 1eddc9ae13669c7e
+/the-crew-workflow-moved-to-its-own-bundle/change:
+  en: d89f01a2ccbaabac
+  zh: 1acd17e9c72318c5
+/the-crew-workflow-moved-to-its-own-bundle/migration:
+  en: b6329bdc99162ea3
+  zh: 6f897061a182fef2

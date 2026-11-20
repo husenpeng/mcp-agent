@@ -42,6 +42,7 @@
     "@tomato/client-ui-layout": "workspace:*",
     "@tomato/client-ui-primitives": "workspace:*",
     "@tomato/client-ui-renderer": "workspace:*",
+    "@tomato/client-ui-sidebar": "workspace:*",
     "@tomato/client-ui-slots": "workspace:*",
     "@tomato/client-ui-workspace": "workspace:*",
     "@tomato/cordis": "workspace:~",

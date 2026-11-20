@@ -18,6 +18,8 @@ import type {
   LlmImageRequestPricing,
   LlmModelContext,
   LlmModelDiscoveryRequest,
+  LlmModelAdaptation,
+  LlmModelAdaptationRequest,
   LlmModelInfo,
   LlmResolvedModelInfo,
   LlmProviderInfo,
@@ -151,7 +153,7 @@ export class LlmError extends HarnessError {
    */
   static fromFailure(failure: LlmFailure, options?: ErrorOptions): LlmError {
     // The constructor validates the code at runtime; the built-in type constrains only codes raised here.
-    return new LlmError(failure.message, failure.code as string, { ...failure, ...options })
+    return new LlmError(failure.message, failure.code, { ...failure, ...options })
   }
 }
 
@@ -382,6 +384,10 @@ export class LlmRuntime extends TypertRemoteService {
   private discoveries = new Map<
     string,
     (request: LlmModelDiscoveryRequest, signal?: AbortSignal) => Promise<readonly LlmDiscoveredModel[]>
+  >()
+  private adaptations = new Map<
+    string,
+    (request: LlmModelAdaptationRequest) => Promise<readonly LlmModelAdaptation[]>
   >()
 
   constructor(ctx: Context) {
@@ -679,6 +685,99 @@ export class LlmRuntime extends TypertRemoteService {
         {
           settingsNs,
           ...request.baseURL === undefined ? {} : { baseURL: request.baseURL },
+        },
+        { cause: error },
+      )
+    }
+  }
+
+  /**
+   * Offer to advise model-adaptation profile fields on behalf of the settings
+   * namespace this plugin owns. The namespace is the key for the same reason
+   * discovery uses it: a configuration surface holds it from the directory,
+   * and a provider being added has no route to name yet. Disposed with the fiber.
+   * @param settingsNs - the namespace whose profiles this adaptation serves.
+   * @param adapt - computes the missing profile fields for one draft.
+   * @returns the disposer that withdraws the offer.
+   */
+  registerModelAdaptation(
+    settingsNs: string,
+    adapt: (request: LlmModelAdaptationRequest) => Promise<readonly LlmModelAdaptation[]>,
+  ): () => void {
+    const dispose = this.ctx.effect(function* (this: LlmRuntime) {
+      if (settingsNs.length === 0) {
+        throw new LlmError('model adaptation needs a non-empty settings namespace', 'INVALID_ADAPTATION')
+      }
+      if (this.adaptations.has(settingsNs)) {
+        throw new LlmError(`model adaptation for "${settingsNs}" is already registered`, 'DUPLICATE_ADAPTATION')
+      }
+      this.adaptations.set(settingsNs, adapt)
+      yield () => {
+        this.adaptations.delete(settingsNs)
+      }
+    }.bind(this), 'llm.registerModelAdaptation()')
+    return () => void dispose()
+  }
+
+  /**
+   * Advise the profile fields a provider draft is missing to serve its models
+   * with their families' protocol parameters and reasoning levels. Like
+   * discovery, this reads and writes nothing stored: the request carries the
+   * draft, and the reply is advice a surface may adopt. Each model is advised
+   * at most once, in request order.
+   * @param settingsNs - namespace whose registered adaptation serves this draft.
+   * @param request - the route facts and drafted rows to advise.
+   * @returns one advice entry per model that has something to declare; a model
+   *   already complete yields no entry.
+   */
+  async adaptModels(
+    settingsNs: string,
+    request: LlmModelAdaptationRequest,
+  ): Promise<LlmModelAdaptation[]> {
+    const adapt = this.adaptations.get(settingsNs)
+    if (adapt === undefined) {
+      throw new LlmError(`no model adaptation is registered for "${settingsNs}"`, 'NO_ADAPTATION')
+    }
+    if (request.models.length === 0) {
+      throw new LlmError('model adaptation needs at least one drafted model', 'INVALID_ADAPTATION')
+    }
+    const advised = await adapt(request)
+    const seen = new Set<string>()
+    const models: LlmModelAdaptation[] = []
+    for (const model of advised) {
+      if (typeof model.id !== 'string' || model.id.length === 0 || seen.has(model.id)) continue
+      seen.add(model.id)
+      models.push({
+        id: model.id,
+        ...model.input === undefined ? {} : { input: [...model.input] },
+        ...model.reasoningEfforts === undefined ? {} : { reasoningEfforts: { ...model.reasoningEfforts } },
+        ...model.compat === undefined ? {} : { compat: { ...model.compat } },
+      })
+    }
+    return models
+  }
+
+  /**
+   * Remote adapter for one draft model-adaptation request.
+   * @param settingsNs - namespace whose registered adaptation serves this draft.
+   * @param request - the route facts and drafted rows to advise.
+   * @returns advice entries in request order.
+   * @throws RemoteError with `llm/model-adaptation-rejected` when adaptation refuses or fails.
+   */
+  @Remote('adaptModels')
+  async remoteAdaptModels(
+    settingsNs: string,
+    request: LlmModelAdaptationRequest,
+  ): Promise<LlmModelAdaptation[]> {
+    try {
+      return await this.adaptModels(settingsNs, request)
+    } catch (error: unknown) {
+      throw new RemoteError(
+        'llm/model-adaptation-rejected',
+        error instanceof Error ? error.message : String(error),
+        {
+          settingsNs,
+          ...request.provider === undefined ? {} : { provider: request.provider },
         },
         { cause: error },
       )

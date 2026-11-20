@@ -151,15 +151,18 @@ struct RoomDetailView: View {
                 Button {
                     send()
                 } label: {
+                    // The visible circle stays 34 pt; the touch target meets 44 pt.
                     if thread.isSending {
                         ProgressView().controlSize(.small)
                             .frame(width: 34, height: 34)
+                            .contentShape(Circle().inset(by: -5))
                     } else {
                         Image(systemName: "arrow.up")
                             .font(.footnote.weight(.bold))
                             .foregroundStyle(canSend ? Color.white : TomatoToken.labelTertiary)
                             .frame(width: 34, height: 34)
                             .background(canSend ? TomatoToken.buttonPrimaryFill : TomatoToken.bgLayer3, in: Circle())
+                            .contentShape(Circle().inset(by: -5))
                     }
                 }
                 .buttonStyle(.plain)
@@ -599,9 +602,9 @@ func roomStateLabel(_ state: String) -> String {
 /// @param state - wire state.
 func roomStateTone(_ state: String) -> StatusPill.Tone {
     switch state {
-    case "active": .ok
+    case "active": .active
     case "paused": .idle
-    case "tripped": .warn
+    case "tripped": .error
     case "archived": .idle
     default: .idle
     }

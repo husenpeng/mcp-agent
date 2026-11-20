@@ -52,6 +52,30 @@ final class VoiceTranscriptionTests: XCTestCase {
         )
     }
 
+    /// The owner repeated the whole sentence after a failed attempt; the
+    /// fuller second attempt replaces the first instead of being appended.
+    func testRepeatedFullAttemptReplacesInsteadOfConcatenating() {
+        XCTAssertEqual(
+            VoiceTranscription.adopted(
+                "Agent Service 北京的 Agent 服务能走通正式的模型",
+                after: "Agent Service 北京的 Agent 服务"
+            ),
+            "Agent Service 北京的 Agent 服务能走通正式的模型"
+        )
+    }
+
+    /// A shorter fragment already contained in the shown sentence is a repeat,
+    /// not a new tail.
+    func testContainedFragmentDoesNotAppend() {
+        XCTAssertEqual(
+            VoiceTranscription.adopted(
+                "北京的 Agent 服务",
+                after: "Agent Service 北京的 Agent 服务能走通正式的模型"
+            ),
+            "Agent Service 北京的 Agent 服务能走通正式的模型"
+        )
+    }
+
     /// A silent update carries nothing and changes nothing.
     func testSilentHypothesisKeepsTheShownSentence() {
         XCTAssertEqual(VoiceTranscription.adopted("", after: "已经说过的话"), "已经说过的话")
@@ -68,6 +92,13 @@ final class VoiceTranscriptionTests: XCTestCase {
             VoiceTranscription.adopted("and save it", after: "open the file"),
             "open the file and save it"
         )
+    }
+
+    /// A Latin word repeated while the recognizer revises collapses once;
+    /// Chinese repetition stays meaningful.
+    func testNormalizationCollapsesRepeatedLatinWord() {
+        XCTAssertEqual(VoiceTranscription.normalized("Agent Agent Service"), "Agent Service")
+        XCTAssertEqual(VoiceTranscription.normalized("看看这个"), "看看这个")
     }
 
     /// A continuation after punctuation joins with no stray separator.

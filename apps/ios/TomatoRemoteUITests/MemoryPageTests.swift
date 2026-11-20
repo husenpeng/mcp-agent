@@ -32,19 +32,24 @@ final class MemoryPageTests: XCTestCase {
     /// The deep link lands on the page, and the page states the one store.
     func testDeepLinkOpensMemoryPage() throws {
         let app = try launch()
-        XCTAssertTrue(app.navigationBars["记忆"].waitForExistence(timeout: 20), "memory page did not open")
+        XCTAssertTrue(app.buttons["memory.about"].waitForExistence(timeout: 20), "memory page did not open")
         XCTAssertTrue(app.staticTexts["待确认"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["生效中"].exists)
     }
 
-    /// A candidate the Host holds is confirmable from the phone.
+    /// A candidate the Host holds is confirmable from the phone. Rows are clean
+    /// cards that only navigate; the confirm and delete actions live on the
+    /// record's detail page, so the test opens the first candidate to reach them.
     func testCandidateOffersConfirmation() throws {
         let app = try launch()
         XCTAssertTrue(app.staticTexts["待确认"].waitForExistence(timeout: 20))
+        let row = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'memory.row.'")).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 10), "no memory row to open")
+        row.tap()
         XCTAssertTrue(
-            app.buttons["确认"].waitForExistence(timeout: 10),
+            app.buttons["确认生效"].waitForExistence(timeout: 10),
             "a candidate without a confirm action cannot be promoted"
         )
-        XCTAssertTrue(app.buttons["删除"].exists)
+        XCTAssertTrue(app.buttons["删除这条记忆"].exists)
     }
 }

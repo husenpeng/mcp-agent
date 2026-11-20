@@ -40,7 +40,13 @@ async function contextOf(pool: MemoryMediaPool, delivered: string[], hang = fals
     id: 'agent-1',
     session: { id: 'agent-1' },
     followup: (message: { content: readonly { type: string; text?: string }[] }) => {
-      delivered.push(message.content.map(block => block.text ?? '').join(''))
+      const text = message.content.map(block => block.text ?? '').join('')
+      delivered.push(text)
+      const answer = text.includes('## Self-review') ? 'REVIEW: pass' : 'the answer'
+      ctx.emit('session/event', agent.session as never, {
+        type: 'assistant/message',
+        data: { message: { content: [{ type: 'text', text: answer }] } },
+      } as never)
     },
     whenIdle: hang ? () => new Promise<void>(() => {}) : async () => {},
     cancel: () => {},
@@ -76,10 +82,12 @@ describe('room routing', () => {
       const room = await ctx.rooms.publish(undefined, spec())
       const message = await ctx.rooms.post({ room: room.id, text: '请出本周周报', author: { id: 'alice', name: 'Alice' } })
       expect(message.seq).toBe(1)
-      await vi.waitFor(() => { expect(delivered).toHaveLength(1) })
+      await vi.waitFor(() => { expect(delivered).toHaveLength(2) })
       expect(delivered[0]).toContain('请出本周周报')
       expect(delivered[0]).toContain('Why you were woken')
+      expect(delivered[1]).toContain('## Self-review')
       const messages = await ctx.rooms.messages(room.id)
+      expect(messages.some(item => item.author.kind === 'system' && item.text === 'self-review passed in round 1')).toBe(true)
       const activities = messages.filter(item => item.kind === 'activity' && item.author.kind === 'member' && item.author.id === 'coord')
       expect(activities.length).toBeGreaterThan(0)
       expect(activities.every(item => item.sessionRef?.sessionId === 'agent-1')).toBe(true)
@@ -101,8 +109,8 @@ describe('room routing', () => {
       for (const text of ['第一条', '第二条', '第三条']) {
         await ctx.rooms.post({ room: room.id, text, author: { id: 'alice', name: 'Alice' } })
       }
-      await vi.waitFor(() => { expect(delivered.length).toBeGreaterThanOrEqual(2) })
-      expect(delivered.at(-1)).toContain('MODEL SUMMARY')
+      await vi.waitFor(() => { expect(delivered.some(text => text.includes('MODEL SUMMARY'))).toBe(true) })
+      expect(delivered.filter(text => !text.includes('## Self-review')).at(-1)).toContain('MODEL SUMMARY')
     } finally {
       await ctx.fiber.dispose()
     }
@@ -151,14 +159,14 @@ describe('room routing', () => {
     try {
       const room = await ctx.rooms.publish(undefined, spec())
       await ctx.rooms.post({ room: room.id, text: '第一条', author: { id: 'alice', name: 'Alice' } })
-      await vi.waitFor(() => { expect(delivered).toHaveLength(1) })
+      await vi.waitFor(() => { expect(delivered).toHaveLength(2) })
       await ctx.rooms.pause(room.id, true)
       await ctx.rooms.post({ room: room.id, text: '暂停期间的消息', author: { id: 'alice', name: 'Alice' } })
       await new Promise(resolve => setTimeout(resolve, 50))
-      expect(delivered).toHaveLength(1)
+      expect(delivered).toHaveLength(2)
       await ctx.rooms.resume(room.id)
-      await vi.waitFor(() => { expect(delivered).toHaveLength(2) })
-      expect(delivered[1]).toContain('暂停期间的消息')
+      await vi.waitFor(() => { expect(delivered).toHaveLength(4) })
+      expect(delivered[2]).toContain('暂停期间的消息')
     } finally {
       await ctx.fiber.dispose()
     }

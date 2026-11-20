@@ -95,6 +95,7 @@
     "@tomato/tool-workflow": "workspace:*",
     "@tomato/web-app": "workspace:*",
     "@tomato/experimental-robot-app": "workspace:*",
+    "@tomato/experimental-robot-crew-bundle": "workspace:*",
     "@tomato/workflow-ptc": "workspace:*",
     "@tomato/schemastery": "workspace:~",
     "commander": "^15.0.0",

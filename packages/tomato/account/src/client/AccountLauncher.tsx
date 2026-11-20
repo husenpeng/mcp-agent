@@ -61,11 +61,14 @@ export function AccountLauncher(props: AccountLauncherProps) {
             data-status={state.status} aria-label={t('menu')} aria-haspopup="menu"
             aria-expanded={open} aria-busy={state.busy}
             onClick={() => { setOpen(value => !value) }}>
-            {signedIn
-              ? <span className={css.avatar}><AccountAvatar user={state.user} /></span>
-              : state.status === 'unavailable'
-                ? <IconRefreshOutlineMedium size={16} />
-                : <IconUserOutlineMedium size={16} />}
+            {/* The labels fill the trigger's label box, so assistive technology keeps the button's own name. */}
+            <span className={css.triggerIcon} aria-hidden>
+              {signedIn
+                ? <AccountAvatar user={state.user} />
+                : state.status === 'unavailable'
+                  ? <IconRefreshOutlineMedium size={16} />
+                  : <IconUserOutlineMedium size={16} />}
+            </span>
             {wide && <span className={css.label}>{label}</span>}
           </button>
         )}

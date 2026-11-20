@@ -91,7 +91,7 @@ it('stacks font fields at narrow widths while keeping font-size controls on the 
       const original = await field.elementHandle()
       for (const width of [1440, 390]) {
         await page.setViewportSize({ width, height: 844 })
-        expect(await original!.evaluate(input => input === document.activeElement && input.isConnected)).toBe(true)
+        expect(await original.evaluate(input => input === document.activeElement && input.isConnected)).toBe(true)
         expect(await field.inputValue()).toBe('Uncommitted font draft')
       }
     } finally {

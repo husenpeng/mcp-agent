@@ -46,7 +46,7 @@ struct VoiceInputBar: View {
         // Hold-to-talk is a eyes-free gesture; the bar meets the 44 pt minimum
         // rather than asking for a 36 pt strip under a thumb.
         .frame(maxWidth: .infinity, minHeight: 44)
-        .background(background, in: RoundedRectangle(cornerRadius: TomatoRadius.sm, style: .continuous))
+        .background(background, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .contentShape(Rectangle())
         .gesture(holdGesture)
         // VoiceOver cannot hold a finger down; its representation is a button

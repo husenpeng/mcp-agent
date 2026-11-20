@@ -24,11 +24,11 @@ The invariant behind every function here: **a member model can only propose a me
 <a id="use-this-package"></a>
 ## Use this package
 
-Use the specification helpers (`emptyRoomSpec`, `validateRoomSpec`, `requireRoomSpec`, `ROOM_PRESETS`), the A2A v2 protocol (`createEnvelopeV2`, `roomSignature`, `clampText`), the admission and guard (`RoomGuard`, `routeHuman`, `wakeMatches`, `similarity`), the budget arithmetic (`grantFor`, `preflight`, `softLimitCrossed`), and the context builder (`buildMemberInput`, `visibleTo`, `unreadCount`). The `Rooms` service definition is the seam the provider implements.
+Use the specification helpers (`emptyRoomSpec`, `validateRoomSpec`, `requireRoomSpec`, `reviewSpecOf`, `ROOM_PRESETS`), the A2A v2 protocol (`createEnvelopeV2`, `roomSignature`, `clampText`), the admission and guard (`RoomGuard`, `routeHuman`, `wakeMatches`, `similarity`), the budget arithmetic (`grantFor`, `preflight`, `softLimitCrossed`), and the context builder (`buildMemberInput`, `visibleTo`, `unreadCount`). The `Rooms` service definition is the seam the provider implements; `work(room)` reads the tickets a room produced as `RoomWorkRecord` rows.
 
 ### Room specification
 
-A room names its charter, two to twelve members, each member's published Rbot revision, role, wake rule, A2A permissions, per-turn and daily budgets, an optional model override, and the room's routing, guard, budget, and context limits. The validator reports every field problem at once. A member's room-level A2A permissions only narrow the robot's own `position.callers` and `a2a` limits; the provider intersects the two.
+A room names its charter, two to twelve members, each member's published Rbot revision, role, wake rule, A2A permissions, per-turn and daily budgets, an optional model override, and the room's routing, guard, budget, context, and review limits. The validator reports every field problem at once. `review` is optional: `selfReview`, `acceptance`, and `maxRounds` default to on, on, and three, so a revision stored before the field keeps running; providers read it through `reviewSpecOf`. `capability` is optional too: its tool allow/deny, skill, and MCP-server lists can only narrow each member's `RobotSpec`, and its permission preset must match the robot's own. A member's room-level A2A permissions only narrow the robot's own `position.callers` and `a2a` limits; the provider intersects the two.
 
 ### A2A v2
 

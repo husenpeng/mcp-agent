@@ -27,7 +27,7 @@ function jsonResponse(body: unknown, status = 200): Response {
  */
 async function boot(sessionId: () => string | undefined, config: companyPlugin.Config = { baseURL: 'https://bff.test' }): Promise<Context> {
   const ctx = new Context()
-  await ctx.plugin(WebRuntime, { searchProvider: 'company' })
+  await ctx.plugin(WebRuntime, { searchProviders: ['company'] })
   ctx.provide('desktopSession', { sessionId })
   await ctx.plugin(companyPlugin, config)
   return ctx

@@ -272,6 +272,20 @@ final class ChatModel: ObservableObject {
             || error.localizedDescription.contains("active write handle")
     }
 
+    /// Take a warm-up page that arrived after this screen opened.
+    ///
+    /// A tap that outruns the list's prefetch opened on a skeleton while the
+    /// page was still travelling. The page is the same newest history the
+    /// follow snapshot carries, so adopting it paints the conversation early
+    /// instead of waiting for the socket. History already folded wins: a page
+    /// that arrives after the snapshot adds nothing.
+    /// - Parameter page: events the list cached for this Session.
+    func adoptPreview(_ page: [JSONValue]) {
+        guard !page.isEmpty, events.isEmpty else { return }
+        mergeHistory(page, hasMore: nil)
+        AppLog.info(.chat, "会话 \(sessionId.prefix(8)) 采用预取页", detail: "\(page.count) 条")
+    }
+
     func adopt(running: Bool, agentAttached: Bool) {
         self.agentAttached = agentAttached
         isRunning = running
@@ -1245,10 +1259,11 @@ extension ChatModel {
     /// The row asks when it appears rather than the transcript scanning every
     /// row it holds: a long conversation keeps only the photos it has shown, and
     /// the store dedupes so a redraw never repeats a request.
-    /// - Parameter id: the durable attachment identity.
-    func loadImage(_ id: String) {
+    /// - Parameter image: the photo, with the complete reference the Host
+    ///   recorded once the message settled.
+    func loadImage(_ image: ChatImageRef) {
         guard let hub else { return }
-        photos.load([id], sessionId: sessionId, hub: hub)
+        photos.load([image], sessionId: sessionId, hub: hub)
     }
 
     /// Whether this screen may change the model at all.

@@ -18,11 +18,13 @@ import { z as zod } from 'zod'
 import type { Agent, PreStepDecision } from '@tomato/agent'
 import { CommandDefinitionId } from '@tomato/commands/brand'
 import type { CommandInvocation, CommandResult } from '@tomato/commands'
-import { createUserMessage, HarnessError } from '@tomato/llm'
+import { createUserMessage, HarnessError, ReasoningEffortId } from '@tomato/llm'
 import type { UserMessage } from '@tomato/llm'
 import { SessionSeq, appendPluginRecord, isReplacementSurfaceEvent } from '@tomato/session'
 import type { Session, SessionEvent, SessionId } from '@tomato/session'
 import type { ProjectionHandle } from '@tomato/session-projection'
+// Type-only: the dream service is optional at runtime, and the import carries its `ctx.memoryDream` augmentation.
+import type {} from '@tomato/memory-dream'
 import { defineTool } from '@tomato/tools'
 import type { ToolRunContext } from '@tomato/tools'
 import {
@@ -197,6 +199,8 @@ export interface Config {
   captureProvider?: string | Volatile<string | undefined>
   /** Explicit capture model; must be paired with `captureProvider`. */
   captureModel?: string | Volatile<string | undefined>
+  /** Reasoning effort for capture requests; `off` keeps a hybrid model cheap for review. */
+  captureReasoningEffort?: string | Volatile<string | undefined>
 
   /** Maximum UTF-8 bytes of the person messages sent to one capture request. */
   captureMaxInputBytes?: number | Volatile<number | undefined>
@@ -261,6 +265,9 @@ interface ConfigInput {
   maxAlternatives?: number
   capture?: boolean
   captureProfileActive?: boolean
+  captureProvider?: string
+  captureModel?: string
+  captureReasoningEffort?: string
   captureMaxToolBytes?: number
   captureMaxInputBytes?: number
   captureMaxTokens?: number
@@ -314,9 +321,10 @@ export const Config: z<ConfigInput, Config> = z.object({
   captureMaxToolBytes: z.number().step(1).min(512).max(8192).default(1200).volatile(),
   captureProvider: z.string().volatile(),
   captureModel: z.string().volatile(),
+  captureReasoningEffort: z.string().volatile(),
   captureMaxInputBytes: z.number().step(1).min(512).max(32_768).default(6000).volatile(),
-  captureMaxTokens: z.number().step(1).min(64).max(2048).default(400).volatile(),
-  captureTimeoutMs: z.number().step(1).min(1000).max(60_000).default(12_000).volatile(),
+  captureMaxTokens: z.number().step(1).min(64).max(2048).default(900).volatile(),
+  captureTimeoutMs: z.number().step(1).min(1000).max(60_000).default(24_000).volatile(),
   episodeCapture: z.boolean().default(false).volatile(),
   episodeTools: z.array(z.string()).default(['edit', 'write', 'bash']).volatile(),
   episodeMaxInputBytes: z.number().step(1).min(512).max(32_768).default(6000).volatile(),
@@ -996,6 +1004,7 @@ type MemoryCommand =
   | { readonly kind: 'list' | 'profile' | 'stats' | 'due' }
   | { readonly kind: 'confirm' | 'dismiss' | 'pin' | 'unpin' | 'forget' | 'show'; readonly id: MemoryIdType }
   | { readonly kind: 'related'; readonly id: MemoryIdType; readonly depth: number }
+  | { readonly kind: 'dream'; readonly action: 'run' | 'status' }
   | { readonly kind: 'invalid' }
 
 /** Parse the grammar owned by `/memory`. */
@@ -1015,6 +1024,8 @@ function parseMemoryCommand(rawInput: string): MemoryCommand {
     && id !== undefined && rest.length === 0) {
     return { kind: verb, id: MemoryId(id) }
   }
+  if (verb === 'dream' && (id === undefined || id === 'run') && rest.length === 0) return { kind: 'dream', action: 'run' }
+  if (verb === 'dream' && id === 'status' && rest.length === 0) return { kind: 'dream', action: 'status' }
   return { kind: 'invalid' }
 }
 
@@ -1051,8 +1062,8 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
   const captureLimits = {
     captureMaxInputBytes: current(config.captureMaxInputBytes) ?? 6000,
     captureMaxToolBytes: current(config.captureMaxToolBytes) ?? 1200,
-    captureMaxTokens: current(config.captureMaxTokens) ?? 400,
-    captureTimeoutMs: current(config.captureTimeoutMs) ?? 12_000,
+    captureMaxTokens: current(config.captureMaxTokens) ?? 900,
+    captureTimeoutMs: current(config.captureTimeoutMs) ?? 24_000,
   }
   for (const [field, value] of Object.entries(captureLimits)) {
     if (!Number.isSafeInteger(value) || value < 1) {
@@ -1599,6 +1610,39 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
         return await ctx.memory.forget(view, command.id)
           ? { kind: 'success', text: `Deleted ${command.id}.` }
           : { kind: 'error', text: `No memory ${command.id} exists here.` }
+      case 'dream': {
+        const dreamService = ctx.get('memoryDream')
+        if (dreamService === undefined) {
+          return { kind: 'error', text: 'Memory dreaming is not mounted. Enable the memory-dream plugin to use /memory dream.' }
+        }
+        if (command.action === 'status') {
+          const cursor = dreamService.getCursor()
+          const lastRun = cursor.lastRunAt > 0 ? new Date(cursor.lastRunAt).toISOString() : 'never'
+          return {
+            kind: 'success',
+            text: [
+              `Dream status: ${dreamService.isRunning ? 'running' : 'idle'}`,
+              `Last run: ${lastRun}`,
+              `Cursor: chunk ${cursor.index}, watermark ${new Date(cursor.watermark).toISOString().slice(0, 10)}`,
+            ].join('\n'),
+          }
+        }
+        // action === 'run'
+        const session = invocation.agent.session
+        const outcome = await dreamService.run(session, view)
+        return {
+          kind: 'success',
+          text: [
+            `Dream run: ${outcome.status}`,
+            ...outcome.reason !== undefined ? [`Reason: ${outcome.reason}`] : [],
+            `Chunks: ${outcome.chunksProcessed}/${outcome.chunksTotal}, targets: ${outcome.targetsCovered} covered, ${outcome.targetsPending} pending`,
+            ...outcome.notes.length === 0 ? [] : ['Notes:', ...outcome.notes.map((note: string) => `  - ${note}`)],
+            `Operations: ${outcome.opResults.length} (${outcome.opResults.filter((r: { status: string }) => r.status === 'applied').length} applied, ${outcome.opResults.filter((r: { status: string }) => r.status === 'rejected').length} rejected, ${outcome.opResults.filter((r: { status: string }) => r.status === 'failed').length} failed)`,
+            `Tokens: ${outcome.inputTokens} in, ${outcome.outputTokens} out`,
+            `Route: ${outcome.modelRoute.provider}/${outcome.modelRoute.model}`,
+          ].join('\n'),
+        }
+      }
       case 'invalid':
         return { kind: 'error', text: USAGE }
       /* v8 ignore next 2 -- MemoryCommand is closed and every member is handled above */
@@ -1611,7 +1655,7 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
     definitionId: CommandDefinitionId('@tomato/experimental-tool-memory'),
     name: 'memory',
     description: 'View, inspect, confirm, pin, or delete your profile memories and the memories saved for this workspace',
-    input: { hint: '[list|profile|stats|show <id>|related <id> [1-2]|confirm <id>|pin <id>|unpin <id>|forget <id>]' },
+    input: { hint: '[list|profile|stats|show <id>|related <id> [1-2]|confirm <id>|pin <id>|unpin <id>|forget <id>|dream [run|status]]' },
     handler: invocation => executeMemoryCommand(invocation),
   })
 
@@ -1992,11 +2036,19 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
         const header = observation.events.findLast(candidate => candidate.type === 'request/header')
         if (header?.type !== 'request/header') return
         const turnRoute = header.data.header.config
-        const { provider, model } = resolveCaptureRoute(config) ?? { provider: turnRoute.provider, model: turnRoute.model }
+        const configuredEffort = current(config.captureReasoningEffort)
+        const captureEffort = configuredEffort === undefined ? undefined : ReasoningEffortId(configuredEffort)
+        const captureRoute = resolveCaptureRoute(config)
+        const turnRouteConfig = { provider: turnRoute.provider, model: turnRoute.model }
+        const { provider, model } = captureRoute ?? turnRouteConfig
         await captureTurn(ctx, {
           session,
           view: access.view,
           route: { provider, model },
+          // The turn's own route is what the person is actually using; a configured
+          // route that no longer names a provider must not take capture down with it.
+          ...captureRoute === undefined ? {} : { fallbackRoute: turnRouteConfig },
+          ...captureEffort === undefined ? {} : { reasoningEffort: captureEffort },
           transcript,
           turn: event.data.turn,
           existingFacts: reviewFacts(ctx.memory.list(access.view), REVIEW_FACTS_BUDGET),

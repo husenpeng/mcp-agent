@@ -39,13 +39,25 @@ final class HomeModel: ObservableObject {
         if let lastRefresh, Date().timeIntervalSince(lastRefresh) < Self.freshness {
             return
         }
+        // A failed read leaves `lastRefresh` nil, so without this gate every
+        // appearance read both surfaces again: a device run on 2026-11-18 issued
+        // them twice within 2 s while the paired tunnel address no longer
+        // resolved.
+        if let lastAttempt, Date().timeIntervalSince(lastAttempt) < Self.retryPause {
+            return
+        }
         Task { await refresh() }
     }
 
     /// Seconds the cards stay valid for an appearance-driven refresh.
     private static let freshness: TimeInterval = 30
+    /// Seconds an appearance waits after a read that failed.
+    private static let retryPause: TimeInterval = 10
     /// When the last complete read landed.
     private var lastRefresh: Date?
+    /// When the last read began, so a failure is not retried on the next
+    /// appearance within a second.
+    private var lastAttempt: Date?
 
     /// Replace the Session order the goal lookup follows, without re-reading.
     /// - Parameter sessions: the list the app currently shows.
@@ -56,6 +68,7 @@ final class HomeModel: ObservableObject {
     /// Re-read both surfaces.
     func refresh() async {
         guard let hub else { return }
+        lastAttempt = Date()
         isLoading = true
         defer { isLoading = false }
         AppLog.mark("刷新")

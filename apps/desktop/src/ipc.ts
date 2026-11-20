@@ -43,6 +43,10 @@ export const DESKTOP_IPC = {
   remoteStart: 'tomato-desktop:remote-start',
   remoteStop: 'tomato-desktop:remote-stop',
   remoteChanged: 'tomato-desktop:remote-changed',
+  systemMonitorToggle: 'tomato-desktop:system-monitor-toggle',
+  systemMonitorClose: 'tomato-desktop:system-monitor-close',
+  systemMonitorResize: 'tomato-desktop:system-monitor-resize',
+  systemMonitorChanged: 'tomato-desktop:system-monitor-changed',
 } as const
 
 /** Desktop release update state rendered by desktop-owned UI. */
@@ -122,6 +126,32 @@ export interface DesktopAccountApi {
   subscribe(listener: () => void): () => void
 }
 
+/**
+ * The desktop floating system-monitor panel: a frameless, always-on-top window
+ * over the desktop that renders the same monitor card as the in-app overlay.
+ */
+export interface DesktopSystemMonitorApi {
+  /**
+   * Show the panel, hide it when already visible, or create it on first use.
+   * @returns the resulting visibility; false when this platform has no panel yet.
+   */
+  toggle(): Promise<boolean>
+  /** Close the panel, keeping its position for the next open. @returns completion. */
+  close(): Promise<void>
+  /**
+   * Size the panel's native window to the form its document shows.
+   * @param form - the pill or the expanded card.
+   * @returns completion; a hidden panel only records the form.
+   */
+  resize(form: 'pill' | 'card'): Promise<void>
+  /**
+   * Observe panel visibility.
+   * @param listener - receives whether the panel is visible.
+   * @returns unsubscribe function.
+   */
+  subscribe(listener: (open: boolean) => void): () => void
+}
+
 /** Product documents cannot supply update versions, package URLs, or installation authorization. */
 export interface TomatoDesktopProductApi {
   readonly protocolVersion: 1
@@ -133,6 +163,7 @@ export interface TomatoDesktopProductApi {
   readonly keyboard: DesktopKeyboardApi
   readonly shortcuts: DesktopShortcutsApi
   readonly remote: DesktopRemoteApi
+  readonly systemMonitor: DesktopSystemMonitorApi
   /**
    * Local machine description for the feedback questionnaire.
    * @returns `name=value` fields separated by `; `, with no hostname, user name, or serial number.

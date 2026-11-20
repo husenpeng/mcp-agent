@@ -2,9 +2,11 @@ import { availableParallelism } from 'node:os'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import { defineConfig } from 'vitest/config'
 import { standardDecoratorPlugin, vitestExecArgv } from './vitest.shared.ts'
+import { subpathAliases, workspaceAliases } from './vitest.aliases.ts'
 
 /** Owner-local assembled expected-output tests that do not use a recorded session as their input. */
 export default defineConfig({
+  resolve: { alias: [...workspaceAliases, ...subpathAliases] },
   plugins: [tsconfigPaths({ projects: ['./tsconfig.base.json'] }), standardDecoratorPlugin()],
   test: {
     execArgv: vitestExecArgv,

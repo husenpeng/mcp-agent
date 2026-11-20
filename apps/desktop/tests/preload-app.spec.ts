@@ -219,6 +219,30 @@ it('exposes constrained shortcut operations and releases configuration subscript
   off(); expect(electron.ipcRenderer.off).toHaveBeenCalledWith(DESKTOP_IPC.shortcutsChanged, handler)
 })
 
+it('forwards panel visibility controls and releases the subscription', async () => {
+  vi.stubGlobal('location', new URL('tomato-app://app/'))
+  await import('../src/preload-app.ts')
+  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'tomatoDesktop')?.[1] as TomatoDesktopProductApi
+  await api.systemMonitor.toggle()
+  await api.systemMonitor.close()
+  await api.systemMonitor.resize('pill')
+  // A repeated report of the same form crosses once; a change crosses again.
+  await api.systemMonitor.resize('pill')
+  await api.systemMonitor.resize('card')
+  expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(DESKTOP_IPC.systemMonitorToggle)
+  expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(DESKTOP_IPC.systemMonitorClose)
+  expect(electron.ipcRenderer.invoke.mock.calls.filter(([name]) => name === DESKTOP_IPC.systemMonitorResize))
+    .toEqual([[DESKTOP_IPC.systemMonitorResize, 'pill'], [DESKTOP_IPC.systemMonitorResize, 'card']])
+  const listener = vi.fn()
+  const off = api.systemMonitor.subscribe(listener)
+  const handler = electron.ipcRenderer.on.mock.calls.find(([name]) => name === DESKTOP_IPC.systemMonitorChanged)![1] as
+    (event: unknown, open: unknown) => void
+  handler({}, true)
+  expect(listener).toHaveBeenCalledWith(true)
+  off()
+  expect(electron.ipcRenderer.off).toHaveBeenCalledWith(DESKTOP_IPC.systemMonitorChanged, handler)
+})
+
 it('withholds the product API from same-origin child frames', async () => {
   vi.stubGlobal('location', new URL('tomato-app://app/'))
   vi.stubGlobal('process', { ...process, isMainFrame: false })

@@ -65,7 +65,7 @@ function searchProvider(result: WebSearchResult, isAvailable = available): WebSe
 /** Mount the real registry, seam, and tool-web; return an executor helper. */
 async function mountTools(opts: {
   config?: ToolWeb.Config
-  webConfig?: { searchProvider?: string; fetchProvider?: string }
+  webConfig?: { searchProviders?: string[]; fetchProviders?: string[] }
   search?: WebSearchProvider
   fetchProvider?: WebFetchProvider
 } = {}): Promise<{ ctx: Context; agent: Agent; fiber: Awaited<ReturnType<Context['plugin']>>; call: (name: string, args: unknown) => Promise<ToolExecutionResult> }> {
@@ -73,7 +73,10 @@ async function mountTools(opts: {
   await ctx.plugin(SystemPrompt)
   await ctx.plugin(ToolRuntime)
   await ctx.plugin(NativeToolExecutor)
-  await ctx.plugin(WebRuntime, opts.webConfig ?? {})
+  await ctx.plugin(WebRuntime, {
+    ...opts.webConfig?.searchProviders === undefined ? {} : { searchProviders: opts.webConfig.searchProviders },
+    ...opts.webConfig?.fetchProviders === undefined ? {} : { fetchProviders: opts.webConfig.fetchProviders },
+  })
   if (opts.search) ctx.web.registerSearchProvider(opts.search)
   if (opts.fetchProvider) ctx.web.registerFetchProvider(opts.fetchProvider)
   const fiber = await ctx.plugin(ToolWeb, opts.config ?? {})
@@ -552,7 +555,7 @@ describe('tool-web execution through the real registry', () => {
       content: 'answer', truncated: false,
       sources: [{ url: 'https://a.test', title: 'A', snippet: 'snip', publishedAt: '2026-07-20' }],
     }
-    const { fiber, call } = await mountTools({ webConfig: { searchProvider: 'stub-search' }, search: searchProvider(result) })
+    const { fiber, call } = await mountTools({ webConfig: { searchProviders: ['stub-search'] }, search: searchProvider(result) })
     const out = await call('web_search', { queries: ['q'] })
     expect(out.isError).toBe(false)
     expect(out.value).toEqual(result)
@@ -564,7 +567,7 @@ describe('tool-web execution through the real registry', () => {
     const longSnippet = `${'word '.repeat(400)}tail`
     const { fiber, call } = await mountTools({
       config: { search: true, fetch: false, searchSummaryMaxChars: 40 },
-      webConfig: { searchProvider: 'stub-search' },
+      webConfig: { searchProviders: ['stub-search'] },
       search: searchProvider({ truncated: false, sources: [{ url: 'https://a.test', snippet: longSnippet }] }),
     })
     const out = await call('web_search', { queries: ['q'] })
@@ -587,7 +590,7 @@ describe('tool-web execution through the real registry', () => {
     }
     const { fiber, call } = await mountTools({
       config: { search: true, fetch: false, searchMaxSourcesPerHost: 2 },
-      webConfig: { searchProvider: 'stub-search' },
+      webConfig: { searchProviders: ['stub-search'] },
       search: searchProvider(result),
     })
     const out = await call('web_search', { queries: ['q'] })
@@ -601,7 +604,7 @@ describe('tool-web execution through the real registry', () => {
   it('keeps a source whose URL cannot be parsed instead of dropping it', async () => {
     const { fiber, call } = await mountTools({
       config: { search: true, fetch: false },
-      webConfig: { searchProvider: 'stub-search' },
+      webConfig: { searchProviders: ['stub-search'] },
       search: searchProvider({ truncated: false, sources: [{ url: 'not-a-url' }, { url: 'https://a.test' }] }),
     })
     const out = await call('web_search', { queries: ['q'] })
@@ -617,7 +620,7 @@ describe('tool-web execution through the real registry', () => {
     }))
     const { fiber, call } = await mountTools({
       config: { search: true, fetch: false, searchSummaryMaxChars: 400, searchMaxOutputChars: 900 },
-      webConfig: { searchProvider: 'stub-search' },
+      webConfig: { searchProviders: ['stub-search'] },
       search: searchProvider({ truncated: false, sources }),
     })
     const out = await call('web_search', { queries: ['q'] })
@@ -631,7 +634,7 @@ describe('tool-web execution through the real registry', () => {
   it('caps a provider answer inside the complete-output cap', async () => {
     const { fiber, call } = await mountTools({
       config: { search: true, fetch: false, searchAnswerMaxChars: 100, searchMaxOutputChars: 4000 },
-      webConfig: { searchProvider: 'stub-search' },
+      webConfig: { searchProviders: ['stub-search'] },
       search: searchProvider({ content: 'x'.repeat(1000), truncated: false, sources: [] }),
     })
     const out = await call('web_search', { queries: ['q'] })
@@ -644,7 +647,7 @@ describe('tool-web execution through the real registry', () => {
     const snippet = `${'a'.repeat(100)}. ${'b'.repeat(100)}`
     const { fiber, call } = await mountTools({
       config: { search: true, fetch: false, searchSummaryMaxChars: 120 },
-      webConfig: { searchProvider: 'stub-search' },
+      webConfig: { searchProviders: ['stub-search'] },
       search: searchProvider({ truncated: false, sources: [{ url: 'https://a.test', snippet }] }),
     })
     const out = await call('web_search', { queries: ['q'] })
@@ -682,7 +685,7 @@ describe('tool-web execution through the real registry', () => {
         })
       },
     }
-    const { fiber, call } = await mountTools({ webConfig: { searchProvider: 'stub-search' }, search: provider })
+    const { fiber, call } = await mountTools({ webConfig: { searchProviders: ['stub-search'] }, search: provider })
     const pending = call('web_search', { queries: ['one', 'one', 'two'] })
     try {
       await vi.waitFor(() => { expect(seen).toEqual(['one', 'two']) })
@@ -714,7 +717,7 @@ describe('tool-web execution through the real registry', () => {
         ? { content: '', sources: [{ url: 'https://a.test' }], truncated: false }
         : { sources: [{ url: 'https://b.test' }, { url: 'https://c.test' }], truncated: false }),
     }
-    const { fiber, call } = await mountTools({ webConfig: { searchProvider: 'stub-search' }, search: provider })
+    const { fiber, call } = await mountTools({ webConfig: { searchProviders: ['stub-search'] }, search: provider })
     const out = await call('web_search', { queries: ['one', 'two'] })
     expect(out.isError).toBe(false)
     expect(out.value).toEqual({
@@ -744,7 +747,7 @@ describe('tool-web execution through the real registry', () => {
         })
       },
     }
-    const { fiber, call } = await mountTools({ webConfig: { searchProvider: 'stub-search' }, search: provider })
+    const { fiber, call } = await mountTools({ webConfig: { searchProviders: ['stub-search'] }, search: provider })
     const pending = call('web_search', { queries: ['one', 'two'] })
     let callSettled = false
     void pending.then(() => { callSettled = true })
@@ -772,7 +775,7 @@ describe('tool-web execution through the real registry', () => {
         truncated: false,
       }),
     }
-    const { fiber, call } = await mountTools({ config: { searchMaxResults: 2 }, webConfig: { searchProvider: 'stub-search' }, search: provider })
+    const { fiber, call } = await mountTools({ config: { searchMaxResults: 2 }, webConfig: { searchProviders: ['stub-search'] }, search: provider })
     const out = await call('web_search', { queries: ['one', 'two'] })
     expect(out.isError).toBe(false)
     expect(out.value).toEqual({
@@ -789,7 +792,7 @@ describe('tool-web execution through the real registry', () => {
       content: 'answer', truncated: true,
       sources: [{ url: 'https://a.test', title: 'A', snippet: 'snip', publishedAt: '2026-07-20' }],
     }
-    const { ctx, fiber, call } = await mountTools({ webConfig: { searchProvider: 'stub-search' }, search: searchProvider(result) })
+    const { ctx, fiber, call } = await mountTools({ webConfig: { searchProviders: ['stub-search'] }, search: searchProvider(result) })
     const out = await call('web_search', { queries: ['q'] })
     expect(out.meta).toEqual({
       answer: 'answer', truncated: true,
@@ -805,7 +808,7 @@ describe('tool-web execution through the real registry', () => {
       truncated: false,
       sources: [{ url: 'https://a.test', title: 'A', snippet: 'snip', summary: '  Heading\n\n### Part\tone\n...\nlast  ' }],
     }
-    const { fiber, call } = await mountTools({ webConfig: { searchProvider: 'stub-search' }, search: searchProvider(result) })
+    const { fiber, call } = await mountTools({ webConfig: { searchProviders: ['stub-search'] }, search: searchProvider(result) })
     try {
       const out = await call('web_search', { queries: ['q'] })
       expect(out.value).toEqual({
@@ -819,7 +822,7 @@ describe('tool-web execution through the real registry', () => {
 
   it('falls back to the snippet when the summary holds only whitespace', async () => {
     const result: WebSearchResult = { truncated: false, sources: [{ url: 'https://a.test', snippet: 'snip', summary: ' \n ' }] }
-    const { fiber, call } = await mountTools({ webConfig: { searchProvider: 'stub-search' }, search: searchProvider(result) })
+    const { fiber, call } = await mountTools({ webConfig: { searchProviders: ['stub-search'] }, search: searchProvider(result) })
     try {
       const out = await call('web_search', { queries: ['q'] })
       expect(out.value).toEqual({ truncated: false, sources: [{ url: 'https://a.test', snippet: 'snip' }] })
@@ -835,7 +838,7 @@ describe('tool-web execution through the real registry', () => {
         url: request.url, statusCode: 200, body: { kind: 'text' as const, content: 'ok' }, truncated: true,
       }),
     }
-    const { ctx, fiber, call } = await mountTools({ webConfig: { fetchProvider: 'stub-fetch' }, fetchProvider })
+    const { ctx, fiber, call } = await mountTools({ webConfig: { fetchProviders: ['stub-fetch'] }, fetchProvider })
     const out = await call('web_fetch', { url: 'https://a.test' })
     expect(out.meta).toEqual({ url: 'https://a.test', statusCode: 200, truncated: true })
     const view = ctx.tools.get('web_fetch')?.presentResult?.({ url: 'https://a.test' }, { content: out.content, isError: out.isError, ...out.meta !== undefined ? { meta: out.meta } : {} })
@@ -861,7 +864,7 @@ describe('tool-web execution through the real registry', () => {
   })
 
   it.each([{}, { queries: [123] }])('rejects absent or wrongly typed queries with a structured INVALID_ARGS error', async (args) => {
-    const { fiber, call } = await mountTools({ webConfig: { searchProvider: 'stub-search' }, search: searchProvider({ sources: [], truncated: false }) })
+    const { fiber, call } = await mountTools({ webConfig: { searchProviders: ['stub-search'] }, search: searchProvider({ sources: [], truncated: false }) })
     const out = await call('web_search', args)
     expect(out.isError).toBe(true)
     expect(out.error?.info?.code).toBe('INVALID_ARGS')
@@ -883,7 +886,7 @@ describe('tool-web execution through the real registry', () => {
         return Promise.resolve({ url: request.url, statusCode: 200, body: { kind: 'text' as const, content: 'ok' }, truncated: false })
       },
     }
-    const { ctx, agent, fiber } = await mountTools({ webConfig: { fetchProvider: 'stub-fetch' }, fetchProvider })
+    const { ctx, agent, fiber } = await mountTools({ webConfig: { fetchProviders: ['stub-fetch'] }, fetchProvider })
     const controller = new AbortController()
     const out = await executeInStep(ctx, agent, { callId: ToolCallId('fetch-1'), name: 'web_fetch', arguments: { url: 'https://a.test' }, signal: controller.signal })
     expect(out.isError).toBe(false)
@@ -911,7 +914,7 @@ describe('tool-web execution through the real registry', () => {
         return Promise.resolve({ url: request.url, statusCode: 200, body: { kind: 'text' as const, content: 'ok' }, truncated: false })
       },
     }
-    const { ctx, agent, fiber } = await mountTools({ webConfig: { fetchProvider: 'stub-fetch' }, fetchProvider })
+    const { ctx, agent, fiber } = await mountTools({ webConfig: { fetchProviders: ['stub-fetch'] }, fetchProvider })
     const out = await executeInStep(ctx, agent, { signal: testToolSignal, callId: ToolCallId('fetch-2'), name: 'web_fetch', arguments: { url: 'https://a.test' } })
     expect(out.isError).toBe(false)
     expect(out.value).toEqual({
@@ -932,7 +935,7 @@ describe('tool-web execution through the real registry', () => {
       available: () => available,
       search: (_request, signal) => { seen.signal = signal; return Promise.resolve({ sources: [], truncated: false }) },
     }
-    const { ctx, agent, fiber } = await mountTools({ webConfig: { searchProvider: 'stub-search' }, search: provider })
+    const { ctx, agent, fiber } = await mountTools({ webConfig: { searchProviders: ['stub-search'] }, search: provider })
     const controller = new AbortController()
     await executeInStep(ctx, agent, { callId: ToolCallId('search-1'), name: 'web_search', arguments: { queries: ['q'] }, signal: controller.signal })
     expect(seen.signal).toBe(controller.signal)
@@ -951,7 +954,7 @@ describe('tool-web execution through the real registry', () => {
         })
       },
     }
-    const { ctx, agent, fiber } = await mountTools({ webConfig: { searchProvider: 'stub-search' }, search: provider })
+    const { ctx, agent, fiber } = await mountTools({ webConfig: { searchProviders: ['stub-search'] }, search: provider })
     const controller = new AbortController()
     const pending = executeInStep(ctx, agent, { callId: ToolCallId('search-multi-1'), name: 'web_search', arguments: { queries: ['one', 'two'] }, signal: controller.signal })
     await vi.waitFor(() => { expect(signals).toHaveLength(2) })
@@ -972,7 +975,7 @@ describe('searchMaxResults is plugin config', () => {
       available: () => available,
       search: (request) => { seen.maxResults = request.maxResults; return Promise.resolve({ sources: [], truncated: false }) },
     }
-    const { fiber, call } = await mountTools({ webConfig: { searchProvider: 'stub-search' }, search: provider })
+    const { fiber, call } = await mountTools({ webConfig: { searchProviders: ['stub-search'] }, search: provider })
     await call('web_search', { queries: ['q'] })
     expect(seen.maxResults).toBe(WEB_SEARCH_MAX_RESULTS)
     await fiber.dispose()
@@ -985,7 +988,7 @@ describe('searchMaxResults is plugin config', () => {
       available: () => available,
       search: () => Promise.resolve({ sources, truncated: false }),
     }
-    const { fiber, call } = await mountTools({ config: { searchMaxResults: 2 }, webConfig: { searchProvider: 'stub-search' }, search: provider })
+    const { fiber, call } = await mountTools({ config: { searchMaxResults: 2 }, webConfig: { searchProviders: ['stub-search'] }, search: provider })
     const out = await call('web_search', { queries: ['q'] })
     expect(out.isError).toBe(false)
     const body = out.content.map(b => b.type === 'text' ? b.text : '').join('')
@@ -1014,7 +1017,7 @@ describe('searchSummaryMaxChars is plugin config', () => {
   /** Run one search whose single source carries `summary` and return the tool output value. */
   async function boundedValue(summary: string, config: ToolWeb.Config = {}): Promise<unknown> {
     const result: WebSearchResult = { truncated: false, sources: [{ url: 'https://a.test', summary }] }
-    const { fiber, call } = await mountTools({ config, webConfig: { searchProvider: 'stub-search' }, search: searchProvider(result) })
+    const { fiber, call } = await mountTools({ config, webConfig: { searchProviders: ['stub-search'] }, search: searchProvider(result) })
     try {
       return (await call('web_search', { queries: ['q'] })).value
     } finally { await fiber.dispose() }
@@ -1062,7 +1065,7 @@ describe('searchMaxQueries is plugin config', () => {
     }
     const { fiber, ctx, call } = await mountTools({
       config: { searchMaxQueries: 2 },
-      webConfig: { searchProvider: 'stub-search' },
+      webConfig: { searchProviders: ['stub-search'] },
       search: provider,
     })
     const schema = ctx.tools.schemas().find(item => item.name === 'web_search')
@@ -1087,7 +1090,7 @@ describe('searchMaxQueries is plugin config', () => {
         })
       },
     }
-    const { fiber, call } = await mountTools({ webConfig: { searchProvider: 'stub-search' }, search: provider })
+    const { fiber, call } = await mountTools({ webConfig: { searchProviders: ['stub-search'] }, search: provider })
     const queries = Array.from({ length: 10 }, (_, index) => `q${index}`)
     const out = await call('web_search', { queries })
     expect(out.isError).toBeFalsy()
@@ -1180,7 +1183,7 @@ describe('fetchMaxOutputChars is plugin config', () => {
     }
     const { fiber, call } = await mountTools({
       config: { fetchMaxOutputChars: 100 },
-      webConfig: { fetchProvider: 'stub-fetch' },
+      webConfig: { fetchProviders: ['stub-fetch'] },
       fetchProvider,
     })
     const out = await call('web_fetch', { url: 'https://a.test' })
@@ -1316,8 +1319,8 @@ describe('web tool admission per model step', () => {
     await ctx.plugin(ToolRuntime)
     await ctx.plugin(NativeToolExecutor)
     await ctx.plugin(WebRuntime, {
-      ...setup.searchProvider === undefined ? {} : { searchProvider: setup.searchProvider },
-      ...setup.fetchProvider === undefined ? {} : { fetchProvider: setup.fetchProvider },
+      ...setup.searchProvider === undefined ? {} : { searchProviders: [setup.searchProvider] },
+      ...setup.fetchProvider === undefined ? {} : { fetchProviders: [setup.fetchProvider] },
     })
     for (const provider of setup.providers) ctx.web.registerSearchProvider(provider)
     for (const provider of setup.fetchProviders ?? []) ctx.web.registerFetchProvider(provider)

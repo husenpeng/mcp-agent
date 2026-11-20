@@ -26,7 +26,7 @@ final class SmoothnessWalkTests: XCTestCase {
 
         XCTAssertTrue(app.waitForTabBall(timeout: 30), "the floating destination control did not appear")
         app.openTab(.sessions)
-        XCTAssertTrue(app.navigationBars["会话"].waitForExistence(timeout: 10), "会话 tab did not open")
+        XCTAssertTrue(app.buttons["新建会话"].waitForExistence(timeout: 10), "会话 tab did not open")
 
         // Session list: two full swipes exercise folder grouping and row layout.
         // A SwiftUI `List` is a collection view, not a scroll view.
@@ -70,12 +70,12 @@ final class SmoothnessWalkTests: XCTestCase {
             app.navigationBars.buttons.element(boundBy: 0).tap()
         }
 
-        walkTab(app, tab: .home, title: "记忆")
-        walkTab(app, tab: .robots, title: "智能体")
-        walkTab(app, tab: .rooms, title: "群聊")
+        walkTab(app, tab: .home, anchor: "home.memory")
+        walkTab(app, tab: .robots, anchor: "刷新智能体")
+        walkTab(app, tab: .rooms, anchor: "刷新群聊")
 
         app.openTab(.account)
-        XCTAssertTrue(app.navigationBars["账号"].waitForExistence(timeout: 10), "账号 tab did not open")
+        XCTAssertTrue(app.descendants(matching: .any)["account.memory"].firstMatch.waitForExistence(timeout: 10), "账号 tab did not open")
 
         let logs = app.buttons["account.logs"]
         if logs.waitForExistence(timeout: 5) {
@@ -120,7 +120,7 @@ final class SmoothnessWalkTests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.waitForTabBall(timeout: 30), "the floating destination control did not appear")
         app.openTab(.sessions)
-        XCTAssertTrue(app.navigationBars["会话"].waitForExistence(timeout: 10), "会话 tab did not open")
+        XCTAssertTrue(app.buttons["新建会话"].waitForExistence(timeout: 10), "会话 tab did not open")
 
         let list = app.collectionViews.firstMatch
         XCTAssertTrue(list.waitForExistence(timeout: 10), "session list did not appear")
@@ -132,19 +132,13 @@ final class SmoothnessWalkTests: XCTestCase {
         sleep(2)
     }
 
-    private func walkTab(_ app: XCUIApplication, tab: TomatoTab, title: String) {
+    private func walkTab(_ app: XCUIApplication, tab: TomatoTab, anchor: String) {
         app.openTab(tab)
-        if tab == .home {
-            // The dashboard owns its compact header; it has no navigation bar.
-            XCTAssertTrue(
-                app.descendants(matching: .any)["home.header"].firstMatch.waitForExistence(timeout: 10),
-                "\(tab.rawValue) destination did not open"
-            )
-        } else {
-            XCTAssertTrue(
-                app.navigationBars[title].waitForExistence(timeout: 10),
-                "\(tab.rawValue) destination did not open"
-            )
-        }
+        // Pages carry no navigation title; a stable content control proves the
+        // destination opened.
+        XCTAssertTrue(
+            app.descendants(matching: .any)[anchor].firstMatch.waitForExistence(timeout: 10),
+            "\(tab.rawValue) destination did not open"
+        )
     }
 }

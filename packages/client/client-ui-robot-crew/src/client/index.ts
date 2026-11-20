@@ -17,6 +17,7 @@ import type {} from '@tomato/client-ui-renderer/client'
 import type {} from '@tomato/client-ui-workspace/client'
 import { CrewStudio } from './CrewStudio.tsx'
 import { GroupChat } from './GroupChat.tsx'
+import { GroupChatPanelIcon } from './GroupChatPanelIcon.tsx'
 import { NS, en, zh } from './locales.ts'
 import { createCrewLedgerTracker } from './ledger.ts'
 import type { CrewLedgerSource } from './ledger.ts'
@@ -112,6 +113,7 @@ export function apply(ctx: ClientContext): void {
     hooks: {
       registry: ctx.crewRuns.state,
       ledger: collabLedger satisfies CrewLedgerSource,
+      robots,
     },
     actions: {
       publish: request => ctx.crewRuns.publish(request),
@@ -132,4 +134,12 @@ export function apply(ctx: ClientContext): void {
     locale: NS,
     inject: () => collabFace,
   }, GroupChat))
+
+  ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({
+    name: 'sidebar.panellist',
+    id: COLLAB_PANEL_ID,
+    order: 44,
+    locale: NS,
+    label: () => t('group.nav'),
+  }, GroupChatPanelIcon))
 }

@@ -1,7 +1,10 @@
 - dialog "设置":
   - text: 设置
   - navigation:
+    - button "账户"
+    - button "权限"
     - button "通用设置"
+    - button "手机"
     - button "模型"
     - button "内置插件"
     - button "Agent 预设"
@@ -15,6 +18,10 @@
       - img "API 密钥已配置"
       - button "编辑 minimax-cn": 编辑
       - button "删除 minimax-cn": 删除
+    - listitem:
+      - text: BlueAI Claude 自定义
+      - img "API 密钥缺失"
+      - button "编辑 BlueAI Claude (blueai-anthropic)": 编辑
     - listitem:
       - text: Acme Gateway 自定义
       - button "编辑 Acme Gateway (acme-gateway)": 编辑
@@ -46,6 +53,8 @@
         - region "模型目录":
           - text: 模型目录 已自定义模型目录
           - button "恢复默认模型"
+          - button "一键适配"
+          - button "一键更新"
           - button "获取可用模型"
           - button "调整模型顺序 1"
           - textbox "模型 ID 1":

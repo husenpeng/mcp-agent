@@ -366,9 +366,9 @@ func robotStateLabel(_ state: String) -> String {
 /// @param state - wire state.
 func robotStateTone(_ state: String) -> StatusPill.Tone {
     switch state {
-    case "running": .ok
-    case "provisioning": .info
-    case "paused": .warn
+    case "running": .active
+    case "provisioning": .active
+    case "paused": .idle
     case "failed": .error
     case "stopped": .idle
     default: .idle
@@ -396,9 +396,9 @@ func runStateLabel(_ state: String) -> String {
 /// @param state - wire state.
 func runStateTone(_ state: String) -> StatusPill.Tone {
     switch state {
-    case "running", "leased": .ok
-    case "queued", "finalizing": .info
-    case "waiting": .warn
+    case "running", "leased": .active
+    case "queued", "finalizing": .active
+    case "waiting": .active
     case "failed", "timed_out": .error
     default: .idle
     }

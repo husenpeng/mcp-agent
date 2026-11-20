@@ -3,25 +3,30 @@
 //  Tomato Remote
 //
 //  Reading back one image the Host recorded for a message. The Session log keeps
-//  only the admitted reference and its dimensions; the bytes come from this call,
-//  which is authorized against the same log.
+//  the admitted reference; the bytes come from this call, which is authorized
+//  against the same log.
 //
 
 import Foundation
 
 /// One durable image reference as the Host recorded it on a message.
-struct ChatImageAttachment: Decodable, Hashable, Sendable {
+///
+/// The Host verifies the whole reference, not only its identity, so every field
+/// the log records travels back with the read. `name` is a display label the
+/// Host strips of local paths; it is absent when the upload carried none.
+struct ChatImageAttachment: Codable, Hashable, Sendable {
     let attachmentId: String
     let mediaType: String
-    let width: Double?
-    let height: Double?
-    let bytes: Int?
+    let bytes: Int
+    let width: Double
+    let height: Double
+    let name: String?
 }
 
-/// `session/attachment` request: which image of which Session.
+/// `session/attachment` request: the complete image reference of one Session.
 struct SessionAttachmentRequest: Encodable {
     let sessionId: String
-    let attachmentId: String
+    let attachment: ChatImageAttachment
 }
 
 /// `session/attachment` value: the verified reference and the encoded bytes.
@@ -36,14 +41,19 @@ extension HubClient {
     ///
     /// The Host re-verifies the bytes against the recorded reference, so a
     /// response is worth showing even after the attachment store was rewritten.
+    /// The request carries that reference in full: the Host rejects a read that
+    /// names only the identity.
     /// - Parameters:
     ///   - sessionId: Session whose log holds the message.
-    ///   - attachmentId: the recorded attachment identity.
+    ///   - attachment: the complete reference the message recorded.
     /// - Returns: the reference and the decoded image bytes.
     /// @throws HubError when the reference is not in this Session or the bytes
     ///   do not decode.
-    func attachment(sessionId: String, attachmentId: String) async throws -> (ref: ChatImageAttachment, data: Data) {
-        let request = SessionAttachmentRequest(sessionId: sessionId, attachmentId: attachmentId)
+    func attachment(
+        sessionId: String,
+        attachment: ChatImageAttachment
+    ) async throws -> (ref: ChatImageAttachment, data: Data) {
+        let request = SessionAttachmentRequest(sessionId: sessionId, attachment: attachment)
         let value = try await call("session/attachment", body: request, as: SessionAttachmentValue.self)
         guard let data = Data(base64Encoded: value.data) else {
             throw HubError.decoding("图片数据不是合法的 base64")

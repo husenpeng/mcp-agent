@@ -41,15 +41,3 @@
   config:
     mode: !!js process.env.TOMATO_PERMISSION_MODE ?? 'workspace-write'
     workspaceRoot: !!js process.cwd()
-
-# Own key references no runner sets on the DeepSeek Search and Fetch APIs: the
-# turn runs as a deployment without web search credentials, whatever
-# DEEPSEEK_API_KEY the launching environment exports.
-- id: web-deepseek-api
-  config:
-    searchApiKeyEnv: TOMATO_KEYLESS_SMOKE_SEARCH_KEY
-    fetchApiKeyEnv: TOMATO_KEYLESS_SMOKE_FETCH_KEY
-
-- id: web-search-deepseek
-  config:
-    apiKeyEnv: TOMATO_KEYLESS_SMOKE_SEARCH_KEY

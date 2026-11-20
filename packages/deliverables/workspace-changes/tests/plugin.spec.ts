@@ -195,8 +195,8 @@ describe('workspace-changes in a repository', () => {
     const cwd = join(root, 'pkg')
     await mkdir(cwd)
     const outside = await (async () => {
-    try { return await mkdtemp(join(homedir(), '.tomato-workspace-changes-test-')) } catch { return await mkdtemp(join(tmpdir(), '.tomato-workspace-changes-test-')) }
-  })()
+      try { return await mkdtemp(join(homedir(), '.tomato-workspace-changes-test-')) } catch { return await mkdtemp(join(tmpdir(), '.tomato-workspace-changes-test-')) }
+    })()
     cleanups.push(() => rm(outside, { recursive: true, force: true }))
     const { ctx } = await boot()
     const session = ctx.sessions.create(SessionId('nested'), { meta: { cwd } })

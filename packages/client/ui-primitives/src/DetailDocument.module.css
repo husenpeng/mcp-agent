@@ -9,6 +9,9 @@
   min-width: 0;
   /* A long README scrolls inside the section instead of pushing the page's later sections out of reach. */
   max-height: min(560px, 60vh);
+  /* Survive a space-constrained parent as a scrollable region rather than a squashed one: a shrunk region squashes
+     size-less content such as an SVG preview that only carries a viewBox. */
+  flex-shrink: 0;
   overflow-y: auto;
   /* Horizontal rules separate the document from its neighbors; a full frame would clash with the images' own corners. */
   border-block: 0.5px solid var(--dsw-alias-border-l1);

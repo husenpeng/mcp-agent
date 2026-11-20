@@ -24,7 +24,7 @@ function injectedOf(snapshot: AccountSnapshot) {
 
 function renderSection(snapshot: AccountSnapshot) {
   const face = injectedOf(snapshot)
-  render(<AccountSection
+  const view = render(<AccountSection
     startSignIn={face.startSignIn}
     signOut={face.signOut}
     refresh={face.refresh}
@@ -32,7 +32,7 @@ function renderSection(snapshot: AccountSnapshot) {
     useAccount={selector => selector(snapshot)}
     t={key => (en as Readonly<Record<string, string>>)[key] ?? key}
   />)
-  return face
+  return { ...face, container: view.container }
 }
 
 it('renders the signed-in identity and signs out', async () => {
@@ -44,6 +44,36 @@ it('renders the signed-in identity and signs out', async () => {
   expect(screen.getByText('Email: u@example.com')).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: 'Sign out' }))
   expect(face.signOut).toHaveBeenCalledOnce()
+})
+
+it('bounds the settings avatar in its own sized frame and falls back to initials', () => {
+  const { container } = renderSection({
+    status: 'signed-in',
+    user: { id: 'u1', email: 'u@example.com', name: 'User One', avatarUrl: 'https://example.com/a.png' },
+    busy: false, notice: null,
+  })
+  const image = container.querySelector('img')
+  expect(image?.getAttribute('width')).toBe('48')
+  expect((image?.parentElement as HTMLElement).style.width).toBe('48px')
+  fireEvent.error(image as HTMLImageElement)
+  expect(container.querySelector('img')).toBeNull()
+  expect(screen.getByText('U')).toBeTruthy()
+})
+
+it('names an identity without a display name by its email, without repeating it', () => {
+  renderSection({
+    status: 'signed-in',
+    user: { id: 'u1', email: 'u@example.com', name: null, avatarUrl: null },
+    busy: false, notice: null,
+  })
+  expect(screen.getByText('u@example.com')).toBeTruthy()
+  expect(screen.queryByText('Email: u@example.com')).toBeNull()
+})
+
+it('shows the checking state with sign-in disabled', () => {
+  renderSection({ status: 'loading', user: null, busy: false, notice: null })
+  expect(screen.getByText('Checking account…')).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Sign in' }).hasAttribute('disabled')).toBe(true)
 })
 
 it('renders the signed-out call to action', () => {

@@ -35,7 +35,7 @@ extension AppModel.Tab: CaseIterable, Identifiable {
     /// Name the palette and the navigation bar share.
     var title: String {
         switch self {
-        case .home: "记忆"
+        case .home: "今天"
         case .sessions: "会话"
         case .phoneAgent: "Tomato Phone"
         case .robots: "智能体"
@@ -47,7 +47,7 @@ extension AppModel.Tab: CaseIterable, Identifiable {
     /// Symbol the destination uses in the palette and on the ball.
     var systemImage: String {
         switch self {
-        case .home: "brain"
+        case .home: "sun.max"
         case .sessions: "bubble.left.and.bubble.right"
         case .phoneAgent: "iphone.gen3"
         case .robots: "brain.head.profile"
@@ -96,11 +96,11 @@ private struct TabCounts {
 
 // MARK: - Layer
 
-/// The scrim, the palette, and the ball as one full-screen layer.
+/// The palette, its tap-away catcher, and the ball as one full-screen layer.
 ///
-/// Drawing them separately let the scrim's ignored safe area move the ball down
-/// over the home indicator. One layer keeps the ball where a thumb expects it
-/// and lets the scrim cover the whole screen.
+/// Drawing them separately let an ignored safe area move the ball down over the
+/// home indicator. One layer keeps the ball where a thumb expects it and lets
+/// the catcher cover the whole screen.
 private struct FloatingTabsLayer: View {
     @EnvironmentObject private var model: AppModel
     @EnvironmentObject private var interactions: InteractionCenter
@@ -121,7 +121,17 @@ private struct FloatingTabsLayer: View {
         if showsBall || menu.expanded {
             GeometryReader { proxy in
                 ZStack(alignment: .bottomTrailing) {
-                    PaletteScrim()
+                    // A light scrim separates temporary navigation from the
+                    // work beneath it without turning the whole page dark.
+                    if menu.expanded {
+                        TomatoSurface.scrim
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                withAnimation(.easeOut(duration: 0.16)) { menu.expanded = false }
+                            }
+                            .transition(.opacity.animation(.easeOut(duration: 0.16)))
+                            .accessibilityHidden(true)
+                    }
                     if showsBall {
                         FloatingTabBall(counts: counts)
                             .padding(.trailing, 18)
@@ -158,47 +168,12 @@ private struct FloatingTabsLayer: View {
     /// the ball would land on the home indicator. The window still knows the
     /// inset the screen actually has.
     private func bottomInset(_ proxy: GeometryProxy) -> CGFloat {
-        max(proxy.safeAreaInsets.bottom, Self.windowBottomInset)
-    }
-
-    private static var windowBottomInset: CGFloat {
-        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
-        let window = scenes.flatMap(\.windows).first(where: \.isKeyWindow)
-            ?? scenes.flatMap(\.windows).first
-        return window?.safeAreaInsets.bottom ?? 0
+        max(proxy.safeAreaInsets.bottom, WindowSafeArea.bottomInset)
     }
 
     private func close() {
         guard menu.expanded else { return }
         withAnimation(.easeOut(duration: 0.16)) { menu.expanded = false }
-    }
-}
-
-// MARK: - Scrim
-
-/// The veil between an open palette and the page.
-///
-/// A flat black tint left the white page looking washed out and stopped at the
-/// bottom safe area. A vertical veil keeps the page readable, darkens the field
-/// the palette sits on, and the full-screen layer carries it over the
-/// home-indicator strip too.
-private struct PaletteScrim: View {
-    @EnvironmentObject private var menu: FloatingTabMenuState
-
-    var body: some View {
-        if menu.expanded {
-            LinearGradient(
-                colors: [TomatoToken.bgMask2, TomatoToken.bgMask1],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .contentShape(Rectangle())
-            .onTapGesture {
-                withAnimation(.easeOut(duration: 0.16)) { menu.expanded = false }
-            }
-            .transition(.opacity)
-            .accessibilityHidden(true)
-        }
     }
 }
 
@@ -280,22 +255,26 @@ private struct FloatingTabPalette: View {
     let counts: TabCounts
 
     var body: some View {
-        VStack(spacing: 2) {
+        VStack(spacing: 3) {
             ForEach(AppModel.Tab.allCases) { tab in
                 item(tab)
             }
         }
-        .frame(width: 208)
+        .frame(width: 216)
         .padding(8)
         .background(
-            RoundedRectangle(cornerRadius: 26, style: .continuous)
+            RoundedRectangle(cornerRadius: TomatoCorner.card, style: .continuous)
                 .fill(.regularMaterial)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .strokeBorder(TomatoToken.borderL2, lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: TomatoCorner.card, style: .continuous)
+                .strokeBorder(TomatoLine.hairline, lineWidth: 1)
         )
-        .shadow(color: .black.opacity(0.14), radius: 20, y: 10)
+        .shadow(
+            color: TomatoShadow.floating.color,
+            radius: TomatoShadow.floating.radius,
+            y: TomatoShadow.floating.y
+        )
     }
 
     /// One destination, sized for a thumb and labelled in words as well as with
@@ -309,15 +288,15 @@ private struct FloatingTabPalette: View {
             HStack(spacing: 10) {
                 Image(systemName: tab.systemImage)
                     .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(active ? Color.white : TomatoToken.labelSecondary)
+                    .foregroundStyle(active ? TomatoContainer.primary.label : TomatoToken.labelSecondary)
                     .frame(width: 30, height: 30)
                     .background(
-                        active ? TomatoToken.brandPrimary : TomatoToken.bgLayer3,
+                        active ? TomatoContainer.primary.fill : TomatoSurface.variant,
                         in: Circle()
                     )
                 Text(tab.title)
-                    .font(.subheadline.weight(active ? .semibold : .medium))
-                    .foregroundStyle(active ? TomatoToken.brandPrimary : TomatoToken.labelSecondary)
+                    .font(.subheadline.weight(active ? .semibold : .regular))
+                    .foregroundStyle(active ? TomatoToken.labelPrimary : TomatoToken.labelSecondary)
                     .lineLimit(1)
                 Spacer(minLength: 0)
                 if let count = badgeCount(for: tab), count > 0 {
@@ -329,17 +308,17 @@ private struct FloatingTabPalette: View {
             .padding(.horizontal, 10)
             .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
             .background(
-                active ? TomatoToken.brandPrimary.opacity(0.10) : Color.clear,
-                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                active ? TomatoBrand.soft : Color.clear,
+                in: RoundedRectangle(cornerRadius: TomatoCorner.control, style: .continuous)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                RoundedRectangle(cornerRadius: TomatoCorner.control, style: .continuous)
                     .strokeBorder(
-                        active ? TomatoToken.brandPrimary.opacity(0.25) : Color.clear,
+                        active ? TomatoLine.brandSoft : Color.clear,
                         lineWidth: 1
                     )
             )
-            .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: TomatoCorner.control, style: .continuous))
         }
         .buttonStyle(TomatoPressableStyle())
         .accessibilityIdentifier(tab.identifier)

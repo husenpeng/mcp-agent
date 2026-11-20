@@ -1,6 +1,7 @@
 /**
  * Compose what the remote-access page needs from the Host's authenticated URL:
- * the phone pairing link (tunnel root plus the launch token) and a QR image of it.
+ * the phone pairing link (tunnel root plus the launch token), a QR image of it,
+ * and the delivery that keeps a mounted page on the link of the running Host.
  */
 import QRCode from 'qrcode'
 import type { DesktopRemoteState } from './ipc.ts'
@@ -39,5 +40,65 @@ export async function encodePairingQr(url: string): Promise<string | undefined> 
   } catch {
     // Encoding is a convenience: the page always shows the link itself.
     return undefined
+  }
+}
+
+/** Construction inputs for {@link createPairingSnapshots}. */
+export interface PairingSnapshotOptions {
+  /** Tokenized URL of the running Host, or undefined while it is not running. */
+  readonly hostUrl: () => string | undefined
+  /** Receives a snapshot once its QR image is ready, unless a newer one replaced it first. */
+  readonly send: (snapshot: DesktopRemoteState) => void
+  /** QR encoder; {@link encodePairingQr} when absent. */
+  readonly encodeQr?: (url: string) => Promise<string | undefined>
+}
+
+/** The Phone page's pairing source: answer the current snapshot, or deliver it after a change. */
+export interface PairingSnapshots {
+  /**
+   * Compose the snapshot for one tunnel state, with its QR image, without delivering it.
+   * @param state - tunnel phase the page should render.
+   * @returns the snapshot the `status` channel answers with.
+   */
+  snapshot(state: RemoteTunnelState): Promise<DesktopRemoteState>
+  /**
+   * Compose and deliver the snapshot for one tunnel state.
+   * @param state - tunnel phase the page should render.
+   */
+  publish(state: RemoteTunnelState): void
+}
+
+/**
+ * Create the pairing source the shell feeds whenever the tunnel or the Host moves.
+ *
+ * The link joins two inputs that change independently: the tunnel hands out a new
+ * hostname on every start, and a replacement Host process mints a new launch token.
+ * Encoding a QR image is asynchronous, so a snapshot that a newer request replaced
+ * while it was encoding is dropped rather than delivered late.
+ * @param options - Host URL reader, delivery sink, and QR encoder.
+ * @returns the snapshot reader and the publisher.
+ */
+export function createPairingSnapshots(options: PairingSnapshotOptions): PairingSnapshots {
+  const encodeQr = options.encodeQr ?? encodePairingQr
+  let issued = 0
+  let qr: { readonly url: string; readonly data: string } | undefined
+  const compose = async (state: RemoteTunnelState): Promise<DesktopRemoteState> => {
+    const snapshot = pairingSnapshot(state, options.hostUrl())
+    const url = snapshot.pairingUrl
+    if (url === undefined) return snapshot
+    if (qr?.url === url) return { ...snapshot, pairingQr: qr.data }
+    const data = await encodeQr(url).catch(() => undefined)
+    if (data === undefined) return snapshot
+    qr = { url, data }
+    return { ...snapshot, pairingQr: data }
+  }
+  return {
+    snapshot: compose,
+    publish: (state) => {
+      const request = ++issued
+      void compose(state).then((snapshot) => {
+        if (request === issued) options.send(snapshot)
+      })
+    },
   }
 }

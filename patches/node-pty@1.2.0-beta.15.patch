@@ -1,5 +1,28 @@
+diff --git a/binding.gyp b/binding.gyp
+index 9e8780ea67658836f53b3b26a481fbdfceffe462..42c231864889bf6395555353311e178ede69d48a 100644
+--- a/binding.gyp
++++ b/binding.gyp
+@@ -29,6 +29,18 @@
+         },
+       }, {
+         'cflags': ['-O2', '-fstack-protector-strong'],
++        # Keep node-addon-api's callback wrapper and Napi::Error typeinfo private
++        # to this module. The upstream prebuilds export the wrapper as a weak
++        # symbol, which dyld/ELF coalesce with koffi's exception-free copy; a
++        # node-pty throw then escapes through a wrapper with no catch and aborts
++        # the process. Hidden visibility binds pty.node to its own catching
++        # wrapper so native failures surface as JS errors. napi_register_module_v1
++        # stays exported through NAPI_MODULE_EXPORT's default visibility.
++        'cflags_cc': ['-fvisibility=hidden', '-fvisibility-inlines-hidden'],
++        'xcode_settings': {
++          'GCC_SYMBOLS_PRIVATE_EXTERN': 'YES',
++          'GCC_INLINES_ARE_PRIVATE_EXTERN': 'YES',
++        },
+       }],
+     ],
+   },
 diff --git a/lib/unixTerminal.js b/lib/unixTerminal.js
-index af2d24c39deb60e77ad16e6b864f37a7ef58881c..2ece2590445dc1ecce167b8ba4710c3176d32a21 100644
+index af2d24c39deb60e77ad16e6b864f37a7ef58881c..3a9df6a5af82ec82fc8688d80d0790d273bb573f 100644
 --- a/lib/unixTerminal.js
 +++ b/lib/unixTerminal.js
 @@ -28,10 +28,23 @@ var terminal_1 = require("./terminal");
@@ -43,3 +66,25 @@ index 90ffd8fb69764052b0714cfb2b1213c073603c28..399861d7bbd0fb733fa032e923efa8b6
              this._outSocket.on('data', function () {
                  _this._conoutSocketWorker.dispose();
              });
+diff --git a/scripts/prebuild.js b/scripts/prebuild.js
+index 17f1d980e62e017d77058627a7a15c4c29f9470c..bf2f96d308ae20df421d86eb2466aef05b88a4bf 100644
+--- a/scripts/prebuild.js
++++ b/scripts/prebuild.js
+@@ -24,6 +24,17 @@ if (process.env.npm_config_build_from_source === 'true') {
+   process.exit(1);
+ }
+
++// Tomato: build from source on Unix so binding.gyp's hidden-visibility flags
++// take effect. The upstream prebuilds export node-addon-api's callback wrapper
++// as a weak symbol that dyld/ELF coalesce with koffi's exception-free copy,
++// turning a node-pty throw into a process abort. Windows has no weak-symbol
++// interposition and keeps its prebuilds.
++if (process.platform !== 'win32') {
++  console.log('\x1b[33m> Rebuilding node-pty from source for the hidden-visibility patch\x1b[0m');
++  fs.rmSync(PREBUILDS_ROOT, { recursive: true, force: true });
++  process.exit(1);
++}
++
+ // Check whether the correct prebuilt files exist
+ console.log('\x1b[32m> Checking prebuilds...\x1b[0m');
+ if (!fs.existsSync(PREBUILD_DIR)) {

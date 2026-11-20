@@ -3,29 +3,29 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/experimental/superagent-runtime/README.md
 /:
-  en: b2629acd820fc7db
-  zh: 431b5c5b5b44b7b4
+  en: 03e189f6bd9294ed
+  zh: f80ada8839ef419b
 /tomato-superagent-runtime:
   en: c3196820253e7849
   zh: 1e7f52c325846299
 /tomato-superagent-runtime/summary:
-  en: 1d2383b5a51d6594
-  zh: f36bdb00e23cf6ed
+  en: 152d79d63dbd965e
+  zh: 73c1988a2d8039b3
 /tomato-superagent-runtime/table-of-contents:
-  en: 3460b3e585e0c020
-  zh: 7ffafe068a00bc07
+  en: 134c9b5c374e0e8e
+  zh: a61fb1d5c42071ab
 /tomato-superagent-runtime/use-this-package:
-  en: 80bc8616be74e670
-  zh: 58886cf400ec48fc
-/tomato-superagent-runtime/understand-the-implementation:
-  en: 41aca72a5336ae86
-  zh: 9a71ee2fd3ba22c8
+  en: 98f99a9ddf4c5284
+  zh: 288b7d61a8bec06f
+/tomato-superagent-runtime/dev-note:
+  en: 81ee07eecd14e429
+  zh: 418561390b3f7164
 /tomato-superagent-runtime/model-experience:
-  en: ab1bcda7ff28ed42
-  zh: 3a4f74c310e4f452
+  en: ab2b22fa016950b6
+  zh: 35e6b397c9e03abc
 /tomato-superagent-runtime/model-experience/kv-cache-effect:
-  en: 93de614c27e53177
-  zh: 606e06b0a1feb0a2
+  en: c72f0cb1521dc1a3
+  zh: 8aff0ed8ab67a1f6
 /tomato-superagent-runtime/known-limitations-and-deferred-work:
-  en: dedd17d5f5a9de10
-  zh: 99885840e28dfd1f
+  en: 51c8829e69f24b3a
+  zh: 7be965dff1889dcd

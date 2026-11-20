@@ -102,7 +102,7 @@ function normalizedBin(value: unknown): string | undefined {
 
 function manifestBinViolations(root: string): string[] {
   const failures: string[] = []
-  const manifests = globSync(['apps/*/package.json', 'packages/*/*/package.json'], { cwd: root }).sort()
+  const manifests = globSync(['apps/*/package.json', 'packages/*/*/package.json', 'plugins/tomato-market/package.json'], { cwd: root }).sort()
   for (const rawPath of manifests) {
     const path = repositoryPath(rawPath)
     const manifest = JSON.parse(readFileSync(resolve(root, path), 'utf8')) as PackageManifest

@@ -193,6 +193,8 @@ final class AppLog: ObservableObject, @unchecked Sendable {
     private var name = "启动"
     /// Step inside that screen; see `mark(_:)`.
     private var operation = ""
+    /// When the step was marked, so an old label cannot read as current.
+    private var operationAt = Date()
 
     private static let loggers: [AppLogCategory: Logger] = Dictionary(
         uniqueKeysWithValues: AppLogCategory.allCases.map {
@@ -246,6 +248,7 @@ final class AppLog: ObservableObject, @unchecked Sendable {
     func mark(_ activity: String) {
         lock.lock()
         operation = activity
+        operationAt = Date()
         let screen = name
         lock.unlock()
         // The run log is asynchronous and a watchdog kill loses its tail; this
@@ -261,16 +264,33 @@ final class AppLog: ObservableObject, @unchecked Sendable {
         lock.lock()
         self.name = name
         operation = ""
+        operationAt = Date()
         lock.unlock()
         LastActivity.record(name)
     }
 
-    /// Screen and step the main thread last reported.
+    /// Screen, step, and how long ago the step was reported.
+    ///
+    /// A watchdog kill needs the step the main thread was inside, but a label
+    /// outlives the step that marked it: for a day and a half every stall was
+    /// blamed on `刷新列表` because that was the last step marked before the
+    /// Host went away. The age tells a stalled step from a stale one.
     var currentActivity: String {
         lock.lock()
         defer { lock.unlock() }
         guard !operation.isEmpty else { return name }
-        return name + " · " + operation
+        return name + " · " + Self.step(operation, age: Date().timeIntervalSince(operationAt))
+    }
+
+    /// Step text annotated with its age.
+    /// - Parameters:
+    ///   - text: the step as it was marked.
+    ///   - age: seconds since the mark.
+    /// - Returns: the step, annotated once it is older than a few seconds.
+    static func step(_ text: String, age: TimeInterval) -> String {
+        guard age >= 5 else { return text }
+        guard age < 120 else { return "\(text)（\(Int(age / 60)) 分钟前）" }
+        return "\(text)（\(Int(age)) 秒前）"
     }
 
     /// Publish the buffer to the reader at a readable rate; the reader's own

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /** Assembled viewer page privacy against the production Owner reader; ordinary Session data uses a scripted Owner. */
-import type { ClientConnectionRpc, ConnectionHandle } from '@tomato/client-connection/client'
+import type { ClientConnectionRpc } from '@tomato/client-connection/client'
 import type {} from '@tomato/client-locale/client'
 import type {} from '@tomato/client-ui-settings/client'
 import type {} from '@tomato/client-ui-theme/client'
@@ -160,7 +160,7 @@ describe('Assembled viewer page global configuration privacy', () => {
     expect(forms.describe().getSnapshot().error).toContain('settings/describe')
 
     // Direct callers still cross the production viewer transport; absence of Settings UI is not enforcement.
-    const connection = context.get('connection') as ConnectionHandle | undefined
+    const connection = context.get('connection')
     if (connection === undefined) throw new Error('assembled viewer page Connection did not activate')
     const denialCount = relay.answers.length
     // The Owner Gateway refuses each one through remote access: the share's provider names the

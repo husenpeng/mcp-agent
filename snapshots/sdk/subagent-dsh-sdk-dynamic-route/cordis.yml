@@ -2,41 +2,41 @@
 # a separate SDK child runtime. Both runtimes persist their request headers.
 
 - id: llm-deepseek
-  name: '@deepseek-ai/dsh-llm-deepseek-api-key'
+  name: '@tomato/llm-deepseek-api-key'
   disabled: true
 
 - id: tool-subagent
-  name: '@deepseek-ai/dsh-tool-subagent'
+  name: '@tomato/tool-subagent'
   disabled: true
 
 - id: sdk-jsonrpc-server
-  name: '@deepseek-ai/dsh-sdk-jsonrpc-server'
+  name: '@tomato/sdk-jsonrpc-server'
   disabled: true
 
 - id: session-persistence-jsonl
-  name: '@deepseek-ai/dsh-session-persistence-jsonl'
+  name: '@tomato/session-persistence-jsonl'
   config:
-    root: !!js dshHomePath('sessions')
+    root: !!js tomatoHomePath('sessions')
     compression: none
 
 - insert:
     - id: mock-llm
-      name: '../../../packages/subagent/subagent-dsh-sdk/tests/fixtures/loader/mock-delegating-llm.ts'
-      disabled: !!js process.env.DSH_SNAPSHOT !== 'record'
+      name: '../../../packages/subagent/subagent-sdk/tests/fixtures/loader/mock-delegating-llm.ts'
+      disabled: !!js process.env.TOMATO_SNAPSHOT !== 'record'
 
     - id: subagent-dsh-sdk
-      name: '@deepseek-ai/dsh-subagent-dsh-sdk'
+      name: '@tomato/subagent-sdk'
       config:
         profile: sdk
-        patches: !!js JSON.parse(process.env.DSH_TEST_CHILD_PATCHES ?? '[]')
-        dshHome: !!js process.env.DSH_TEST_CHILD_HOME
+        patches: !!js JSON.parse(process.env.TOMATO_TEST_CHILD_PATCHES ?? '[]')
+        tomatoHome: !!js process.env.TOMATO_TEST_CHILD_HOME
         provider: mock
         model: mock-routed
         env:
-          DSH_TELEMETRY_DISABLED: '1'
+          TOMATO_TELEMETRY_DISABLED: '1'
 
     - id: subagent-model-selection-settings
-      name: '@deepseek-ai/dsh-tool-subagent/model-selection-settings'
+      name: '@tomato/tool-subagent/model-selection-settings'
       config:
         enabled: true
         allowedModels:
@@ -44,7 +44,7 @@
             model: mock-routed
 
     - id: tool-subagent-dsh-sdk
-      name: '../../../packages/subagent/subagent-dsh-sdk/tests/fixtures/loader/scoped-tool-subagent.ts'
+      name: '../../../packages/subagent/subagent-sdk/tests/fixtures/loader/scoped-tool-subagent.ts'
       config:
         provider: dsh-sdk
         toolName: subagent
@@ -53,9 +53,9 @@
         maxDepth: 'provider-managed'
 
     - id: sdk-jsonrpc-server-dynamic-live
-      name: '@deepseek-ai/dsh-sdk-jsonrpc-server'
+      name: '@tomato/sdk-jsonrpc-server'
       inject: [sdkAppStartup, loader]
-      disabled: !!js process.env.DSH_SNAPSHOT !== 'record'
+      disabled: !!js process.env.TOMATO_SNAPSHOT !== 'record'
       config:
         maxTokensAsSuccess: true
 

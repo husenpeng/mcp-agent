@@ -62,13 +62,11 @@ extension View {
         // Reserving the inset keeps the transcript above the dock, and the dock
         // hugs its own content instead of stretching a glass sheet.
         safeAreaInset(edge: .bottom, spacing: 0) {
+            // The page's own fill, not a material: a thin material over a white
+            // page painted the band below the controls grey and drew a seam
+            // across it. The controls carry their own edge.
             content()
-                .background(.ultraThinMaterial)
-                .overlay(alignment: .top) {
-                    Rectangle()
-                        .fill(TomatoToken.borderL1)
-                        .frame(height: 0.5)
-                }
+                .background(TomatoSurface.page.ignoresSafeArea(edges: .bottom))
         }
     }
 

@@ -24,11 +24,11 @@ kind: "package-reference"
 <a id="use-this-package"></a>
 ## 使用本包
 
-使用规格助手（`emptyRoomSpec`、`validateRoomSpec`、`requireRoomSpec`、`ROOM_PRESETS`）、A2A v2 协议（`createEnvelopeV2`、`roomSignature`、`clampText`）、准入与守卫（`RoomGuard`、`routeHuman`、`wakeMatches`、`similarity`）、预算算术（`grantFor`、`preflight`、`softLimitCrossed`）以及上下文构建（`buildMemberInput`、`visibleTo`、`unreadCount`）。`Rooms` 服务定义是 provider 实现的接缝。
+使用规格助手（`emptyRoomSpec`、`validateRoomSpec`、`requireRoomSpec`、`reviewSpecOf`、`ROOM_PRESETS`）、A2A v2 协议（`createEnvelopeV2`、`roomSignature`、`clampText`）、准入与守卫（`RoomGuard`、`routeHuman`、`wakeMatches`、`similarity`）、预算算术（`grantFor`、`preflight`、`softLimitCrossed`）以及上下文构建（`buildMemberInput`、`visibleTo`、`unreadCount`）。`Rooms` 服务定义是 provider 实现的接缝；`work(room)` 以 `RoomWorkRecord` 行读取群聊产生的工单。
 
 ### 群聊规格
 
-一个群聊声明章程、二到十二个成员、每个成员的已发布 Rbot 修订、角色、唤醒规则、A2A 权限、单轮与日额预算、可选模型覆盖，以及群聊的路由、守卫、预算与上下文上限。校验器一次报告全部字段问题。成员在群聊级的 A2A 权限只能收紧机器人自身的 `position.callers` 与 `a2a` 限制；provider 取交集。
+一个群聊声明章程、二到十二个成员、每个成员的已发布 Rbot 修订、角色、唤醒规则、A2A 权限、单轮与日额预算、可选模型覆盖，以及群聊的路由、守卫、预算、上下文与评审上限。校验器一次报告全部字段问题。`review` 可选：`selfReview`、`acceptance`、`maxRounds` 默认为开、开、三轮，因此在该字段之前写入的修订仍可运行；provider 通过 `reviewSpecOf` 读取。`capability` 同样可选：它的工具 allow/deny、技能与 MCP 服务器列表只能收窄每个成员的 `RobotSpec`，权限预设必须与机器人一致。成员在群聊级的 A2A 权限只能收紧机器人自身的 `position.callers` 与 `a2a` 限制；provider 取交集。
 
 ### A2A v2
 

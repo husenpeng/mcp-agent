@@ -6,7 +6,7 @@
  */
 
 import { Context, Service } from '@tomato/cordis'
-import type { Room, RoomId, RoomMemberId, RoomMessage, RoomNotice, RoomSpec } from './types.ts'
+import type { Room, RoomId, RoomMemberId, RoomMessage, RoomNotice, RoomSpec, RoomWorkRecord } from './types.ts'
 
 export type * from './types.ts'
 export { RoomSpecValidationError } from './types.ts'
@@ -16,8 +16,8 @@ export {
 } from './protocol.ts'
 export type { RoomEnvelopeInput } from './protocol.ts'
 export {
-  DEFAULT_ROOM_BUDGET, DEFAULT_ROOM_CONTEXT, DEFAULT_ROOM_GUARD, MAX_MEMBERS, MIN_MEMBERS, ROOM_PRESETS,
-  emptyRoomSpec, requireRoomSpec, roomMember, validateRoomSpec,
+  DEFAULT_ROOM_BUDGET, DEFAULT_ROOM_CONTEXT, DEFAULT_ROOM_GUARD, DEFAULT_ROOM_REVIEW, MAX_MEMBERS, MIN_MEMBERS,
+  ROOM_PRESETS, emptyRoomSpec, requireRoomSpec, reviewSpecOf, roomMember, validateRoomSpec,
 } from './spec.ts'
 export type { EmptyRoomInput, EmptyRoomMemberInput, RoomPreset } from './spec.ts'
 export { estimateTokens, grantFor, preflight, remaining, softLimitCrossed } from './budget.ts'
@@ -116,6 +116,13 @@ export abstract class Rooms extends Service {
    * @returns messages in sequence order.
    */
   abstract messages(id: RoomId, afterSeq?: number, limit?: number): Promise<readonly RoomMessage[]>
+
+  /**
+   * Read the work records one room produced, oldest first.
+   * @param id - room identity.
+   * @returns one record per ticket the room opened.
+   */
+  abstract work(id: RoomId): Promise<readonly RoomWorkRecord[]>
 
   /**
    * Pause or resume a room.

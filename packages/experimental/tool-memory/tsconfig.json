@@ -49,6 +49,9 @@
     },
     {
       "path": "../../typert/protocol"
+    },
+    {
+      "path": "../memory-dream"
     }
   ],
   "files": [

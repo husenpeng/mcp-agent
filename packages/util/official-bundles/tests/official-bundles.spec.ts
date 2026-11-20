@@ -38,7 +38,12 @@ describe('Shipped profile templates', () => {
     expect(PROFILE_TEMPLATES).toEqual({
       acp: { bundles: ['@tomato/base', '@tomato/acp-app'] },
       web: {
-        bundles: ['@tomato/base', '@tomato/web-app', '@tomato/experimental-browser-use-playwright-bundle'],
+        bundles: [
+          '@tomato/base',
+          '@tomato/web-app',
+          '@tomato/experimental-browser-use-playwright-bundle',
+          '@tomato/plugin-tomato-market',
+        ],
       },
       headless: { bundles: ['@tomato/base', '@tomato/headless'] },
       sdk: { bundles: ['@tomato/base', '@tomato/sdk-app'] },
@@ -49,6 +54,11 @@ describe('Shipped profile templates', () => {
   it('ships the Playwright browser layer on by default in the Web and Desktop profile', () => {
     expect(PROFILE_TEMPLATES.web!.bundles).toContain('@tomato/experimental-browser-use-playwright-bundle')
     expect(OPTIONAL_BUNDLES).toContain('@tomato/experimental-browser-use-playwright-bundle')
+  })
+
+  it('mounts the plugin markets in the Web and Desktop profile', () => {
+    expect(PROFILE_TEMPLATES.web!.bundles).toContain('@tomato/plugin-tomato-market')
+    expect(OPTIONAL_BUNDLES).not.toContain('@tomato/plugin-tomato-market')
   })
 })
 

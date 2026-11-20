@@ -1,10 +1,13 @@
 /** Client-side Robot Room page seams. */
 
 import type { RoomRunsSource } from '@tomato/api-robot-room-controller/client'
+import type {
+  RobotCapabilitiesRequest, RobotCapabilityCatalog,
+} from '@tomato/api-robot-controller/types'
 import type { RemoteResult } from '@tomato/typert-protocol'
 import type {
   Room, RoomApprovalRequest, RoomMemberId, RoomMessage, RoomMessagesRequest, RoomPauseRequest, RoomPostRequest,
-  RoomPublicationRequest, RoomSpec, RoomTargetRequest,
+  RoomPublicationRequest, RoomSpec, RoomTargetRequest, RoomWorkRecord,
 } from '@tomato/api-robot-room-controller/types'
 
 /** One published Rbot revision the editor can add. */
@@ -53,6 +56,8 @@ export interface RoomActions {
   post(request: RoomPostRequest): Promise<RemoteResult<RoomMessage>>
   /** Read messages. */
   messages(request: RoomMessagesRequest): Promise<RemoteResult<readonly RoomMessage[]>>
+  /** Read the tickets this room produced. */
+  work(request: RoomTargetRequest): Promise<RemoteResult<readonly RoomWorkRecord[]>>
   /** Pause or resume a room. */
   pause(request: RoomPauseRequest): Promise<RemoteResult<Room>>
   /** Resume a tripped room. */
@@ -78,6 +83,10 @@ export interface RoomInjected {
   openRobots(): void
   /** Open one member's full Session in the workspace. */
   openSession(sessionId: string): void
+  /** Open the Host's own directory chooser; rejects when the deployment has none. */
+  pickDirectory(): Promise<string | null>
+  /** Read the deployment's live capability catalog for narrowing fields. */
+  capabilities(request: RobotCapabilitiesRequest): Promise<RemoteResult<RobotCapabilityCatalog>>
 }
 
 /** One member id list helper. */

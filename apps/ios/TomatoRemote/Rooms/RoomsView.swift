@@ -59,25 +59,41 @@ final class RoomListModel: ObservableObject {
             var attempt = 0
             while !Task.isCancelled {
                 do {
-                    for try await frame in hub.roomSnapshot() {
+                    for try await frame in hub.roomSnapshot(
+                        logAttempt: attempt <= StreamRetry.quickAttempts
+                    ) {
                         guard let self, self.generation == generation else { return }
+                        if errorMessage != nil {
+                            // Self-healed: the banner that said the stream was
+                            // down must not outlive the outage.
+                            errorMessage = nil
+                            AppLog.info(.stream, "群聊流已恢复")
+                        }
+                        attempt = 0
                         apply(frame)
                     }
-                    break
                 } catch {
                     guard let self, !Task.isCancelled else { break }
                     if let failure = error as? HubError, failure.isFinal {
                         errorMessage = Self.message(for: failure)
                         break
                     }
-                    attempt += 1
-                    if attempt > 5 {
-                        errorMessage = describe(error)
-                        break
-                    }
-                    errorMessage = "连接中断，正在重试（\(attempt)/5）…"
-                    try? await Task.sleep(nanoseconds: UInt64(attempt) * 1_500_000_000)
                 }
+                guard let self, !Task.isCancelled else { break }
+                // A closed snapshot stream is a disconnect too: the Host
+                // restarted or moved port, and nothing reopens this socket while
+                // the app stays on this tab.
+                isFollowing = false
+                attempt += 1
+                errorMessage = StreamRetry.status(attempt: attempt)
+                if attempt <= StreamRetry.quickAttempts {
+                    AppLog.warning(.stream, "群聊流中断", detail: "第 \(attempt) 次")
+                } else if attempt == StreamRetry.quickAttempts + 1 {
+                    AppLog.warning(.stream, "群聊流改为每分钟重试", detail: "第 \(attempt) 次")
+                }
+                try? await Task.sleep(
+                    nanoseconds: UInt64(StreamRetry.pause(afterAttempt: attempt) * 1_000_000_000)
+                )
             }
             guard let self, self.generation == generation else { return }
             isConnecting = false
@@ -298,8 +314,9 @@ struct RoomsView: View {
     var body: some View {
         NavigationStack(path: $path) {
             content
-                .background(TomatoToken.bgBase)
-                .navigationTitle("群聊")
+                .background(TomatoSurface.page)
+                // No page title: the caption and the rows are the page.
+                .navigationTitle("")
                 .navigationBarTitleDisplayMode(.inline)
                 .tomatoFloatingTabs()
                 .toolbar {
@@ -395,12 +412,13 @@ struct RoomsView: View {
                         .listRowInsets(EdgeInsets(top: 2, leading: 12, bottom: 2, trailing: 12))
                     }
                 } header: {
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: 8) {
                         PageCaption(caption: Self.caption)
-                        Text("群聊")
-                            .font(.footnote.weight(.medium))
-                            .foregroundStyle(TomatoToken.labelCaption)
-                            .textCase(nil)
+                        SectionHeader(title: "协作空间") {
+                            Text("\(roomModel.ordered.count) 个")
+                                .font(.caption.monospacedDigit())
+                                .foregroundStyle(TomatoToken.labelCaption)
+                        }
                     }
                     .textCase(nil)
                     .padding(.leading, 4)
@@ -420,44 +438,50 @@ private struct RoomRow: View {
     let room: Room
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            HStack(spacing: 8) {
-                if room.state == "tripped" {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.caption)
-                        .foregroundStyle(TomatoToken.stateWarnPrimary)
+        HStack(alignment: .top, spacing: 12) {
+            IconChip(
+                systemImage: "person.3.fill",
+                tint: room.state == "tripped" ? TomatoToken.stateErrorPrimary : TomatoToken.labelCaption,
+                side: 36
+            )
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Text(room.name)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(TomatoToken.labelPrimary)
+                        .lineLimit(1)
+                    Spacer(minLength: 6)
+                    StatusPill(text: roomStateLabel(room.state), tone: roomStateTone(room.state))
                 }
-                Text(room.name)
-                    .font(.body.weight(.medium))
-                    .foregroundStyle(TomatoToken.labelPrimary)
-                    .lineLimit(1)
-                Spacer(minLength: 6)
-                StatusPill(text: roomStateLabel(room.state), tone: roomStateTone(room.state))
+                if !room.charter.isEmpty {
+                    Text(room.charter)
+                        .font(.footnote)
+                        .foregroundStyle(TomatoToken.labelCaption)
+                        .lineLimit(2)
+                }
+                HStack(spacing: 5) {
+                    Image(systemName: "person.2")
+                        .font(.caption2)
+                    Text("\(room.members.count) 个成员")
+                    Text("·")
+                    Text(relativeTime(room.updatedAt))
+                }
+                .font(.caption)
+                .foregroundStyle(TomatoToken.labelCaption)
             }
-            if !room.charter.isEmpty {
-                Text(room.charter)
-                    .font(.subheadline)
-                    .foregroundStyle(TomatoToken.labelCaption)
-                    .lineLimit(2)
-            }
-            HStack(spacing: 5) {
-                Image(systemName: "person.2")
-                    .font(.caption2)
-                Text("\(room.members.count) 个成员")
-                Text("·")
-                Text(relativeTime(room.updatedAt))
-            }
-            .font(.caption)
-            .foregroundStyle(TomatoToken.labelDimmed)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            room.state == "tripped" ? TomatoToken.stateWarnPrimary.opacity(0.08) : TomatoToken.bgLayer2,
-            in: RoundedRectangle(cornerRadius: TomatoRadius.md, style: .continuous)
+            room.state == "tripped" ? TomatoContainer.error.fill : TomatoSurface.card,
+            in: RoundedRectangle(cornerRadius: TomatoCorner.card, style: .continuous)
         )
-        .contentShape(RoundedRectangle(cornerRadius: TomatoRadius.md, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: TomatoCorner.card, style: .continuous)
+                .strokeBorder(room.state == "tripped" ? TomatoToken.stateErrorPrimary.opacity(0.18) : TomatoLine.hairline, lineWidth: 1)
+        )
+        .contentShape(RoundedRectangle(cornerRadius: TomatoCorner.card, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 }

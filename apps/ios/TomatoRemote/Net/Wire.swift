@@ -267,6 +267,45 @@ enum HubError: LocalizedError, Equatable {
     }
 }
 
+extension HubError {
+    /// Wrap a URLSession failure in the sentence the reader needs.
+    ///
+    /// CFNetwork's own sentence names neither the cause nor the fix, and the
+    /// banner shows it verbatim, so a dead pairing read "Could not connect to
+    /// the server." in an otherwise Chinese app for as long as the phone kept
+    /// retrying.
+    /// - Parameter error: the failure the HTTP carrier threw.
+    /// - Returns: a transport error whose message says what to fix.
+    static func transport(from error: Error) -> HubError {
+        let failure = error as NSError
+        guard failure.domain == NSURLErrorDomain else {
+            return .transport(failure.localizedDescription)
+        }
+        switch failure.code {
+        case NSURLErrorCannotFindHost:
+            // A Cloudflare quick tunnel takes a new random name every start, so
+            // the paired address stops resolving rather than refusing.
+            return .transport("找不到这个 Host 域名：桌面端重启后隧道域名会变，请在桌面端复制新的配对链接。")
+        case NSURLErrorCannotConnectToHost:
+            return .transport("Host 上没有服务监听这个地址：桌面端可能没在运行，或换了一个端口。请在桌面端复制新的配对链接。")
+        case NSURLErrorNotConnectedToInternet:
+            return .transport("这台设备没有网络。")
+        case NSURLErrorTimedOut:
+            return .transport("Host 没有在 30 秒内回应。")
+        case NSURLErrorNetworkConnectionLost:
+            return .transport("连接被中断，Host 可能刚退出。")
+        case NSURLErrorAppTransportSecurityRequiresSecureConnection:
+            return .transport("这个地址是 http，且不在局域网或 Tailscale 范围内，iOS 不允许明文连接。请改用桌面端隧道生成的 https 链接。")
+        case NSURLErrorSecureConnectionFailed, NSURLErrorServerCertificateUntrusted:
+            return .transport("Host 的证书不受信任，隧道域名可能变了。")
+        case NSURLErrorCancelled:
+            return .transport("请求已取消。")
+        default:
+            return .transport("无法连接 Host：\(failure.localizedDescription)（\(failure.code)）")
+        }
+    }
+}
+
 // MARK: - Session wire types
 
 /// Liveness of one conversation.

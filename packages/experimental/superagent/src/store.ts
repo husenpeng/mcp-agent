@@ -21,6 +21,8 @@ export interface SuperagentStore {
   putTrigger(trigger: Trigger): void
   /** Read one trigger, when the store holds it. */
   trigger(id: TriggerId): Trigger | undefined
+  /** Every stored trigger, oldest first. */
+  triggers(): readonly Trigger[]
   /** Store one ticket with its subscriptions. */
   putTicket(entry: StoredTicket): void
   /** Read one ticket, when the store holds it. */
@@ -50,6 +52,10 @@ export class InMemoryStore implements SuperagentStore {
 
   trigger(id: TriggerId): Trigger | undefined {
     return this.#triggers.get(id)
+  }
+
+  triggers(): readonly Trigger[] {
+    return [...this.#triggers.values()]
   }
 
   putTicket(entry: StoredTicket): void {

@@ -145,6 +145,68 @@ describe('in-process worker', () => {
   })
 })
 
+describe('worker cancellation', () => {
+  it('resolves a cancelled lease as dropped without driving a turn', async () => {
+    const { ctx, adapter } = await harness('REPORT: ready')
+    const directory = await mkdtemp(join(tmpdir(), 'superagent-worker-'))
+    directories.push(directory)
+    const lease = await worker(ctx, directory).lease({ ticket: 'ticket-1' as TicketId, subject: 'one task', mandate: MANDATE })
+    lease.cancel()
+    expect(await lease.run({ ticket: 'ticket-1' as TicketId, subject: 'one task', mandate: MANDATE }))
+      .toEqual({ state: 'dropped', summary: 'the run was cancelled' })
+    expect(adapter.requests).toHaveLength(0)
+  })
+
+  it('aborts an in-flight turn, records dropped, and frees the ticket for the next run', async () => {
+    const ctx = new Context()
+    contexts.push(ctx)
+    await mountAgentLoopTestDependencies(ctx)
+    await ctx.plugin(AgentDefaultModelConfig, { provider: 'test-provider', model: 'test-model' })
+    const gate = Promise.withResolvers<undefined>()
+    let cancelRun: (() => void) | undefined
+    class GatedAdapter extends LlmAdapter {
+      readonly requests: GenerateOptions[] = []
+      override resolveModel(provider: string, model: string): Promise<LlmResolvedModelInfo> {
+        return Promise.resolve({ provider, id: model, name: model })
+      }
+      async * stream(options: GenerateOptions): AsyncIterable<StreamChunk> {
+        this.requests.push(options)
+        // The turn is live now: a person pressing stop aborts it mid-stream.
+        cancelRun?.()
+        const signal = options.signal
+        await new Promise<undefined>((resolve, reject) => {
+          const abort = (): void => { reject(new Error('the turn was cancelled')) }
+          if (signal?.aborted) { abort(); return }
+          signal?.addEventListener('abort', abort, { once: true })
+          void gate.promise.then(() => { signal?.removeEventListener('abort', abort); resolve(undefined) })
+        })
+        yield { type: 'block-start', index: 0, blockType: 'text' }
+        yield { type: 'text-delta', index: 0, text: 'REPORT: ready' }
+        yield { type: 'block-end', index: 0, block: { type: 'text', text: 'REPORT: ready' } }
+        yield { type: 'usage', usage: { inputTokens: 10, outputTokens: 8 } }
+        yield { type: 'finish', reason: { kind: 'stop' } }
+      }
+    }
+    const adapter = new GatedAdapter()
+    ctx.llm.registerAdapter(['test-provider'], adapter)
+    await mountAgentLoopTestHarness(ctx)
+    const directory = await mkdtemp(join(tmpdir(), 'superagent-worker-'))
+    directories.push(directory)
+    const store = new InMemoryStore()
+    const ticketId = accepted(store)
+    const running = runAssignment(store, ticketId, worker(ctx, directory), {
+      onLease: (lease) => { cancelRun = () => { lease.cancel() } },
+    })
+    const ran = await running
+    expect(ran.report).toEqual({ state: 'dropped', summary: 'the run was cancelled' })
+    expect(ticketStage(ran.ticket)).toEqual({ stage: 'idle' })
+    gate.resolve(undefined)
+    // The freed slot takes the next run once the person continues the work.
+    const next = await runAssignment(store, ticketId, worker(ctx, directory))
+    expect(next.ticket.assignments).toHaveLength(2)
+  })
+})
+
 describe('turn outcome', () => {
   it('maps an error reason and a cancellation to their reports without reading text', () => {
     expect(reportOf({ text: 'REPORT: ready', reason: { kind: 'error', error: { code: 'provider', message: 'quota' } } }))

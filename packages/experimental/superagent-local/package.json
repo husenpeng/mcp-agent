@@ -44,6 +44,7 @@
     "@tomato/agent-loop-testkit": "workspace:*",
     "@tomato/cordis": "workspace:~",
     "@tomato/llm": "workspace:*",
+    "@tomato/permission-presets": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/superagent": "workspace:*",
     "@tomato/storage": "workspace:*",

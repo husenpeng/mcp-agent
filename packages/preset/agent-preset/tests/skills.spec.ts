@@ -64,9 +64,9 @@ describe('the shipped dsh-doc skill', () => {
   it('lists the repository doc skill under its historical name', async (test) => {
     const ctx = await loadRoot(repositorySkills, test)
     const repository = (await ctx.skills.list()).map(entry => entry.name)
-    // The fork keeps the repository's own doc skill as `dsh-doc`; the packaged
-    // skill above is the copy the preset ships and is not duplicated here.
-    expect(repository).toContain('dsh-doc')
+    // The repository's own doc skill is `dsh-doc-writing`; the packaged skill
+    // above is the copy the preset ships and is not duplicated here.
+    expect(repository).toContain('dsh-doc-writing')
     expect(new Set(repository).size).toBe(repository.length)
   })
 

@@ -322,6 +322,14 @@ export default defineConfig({
         'packages/client/ui-workspace/src/client/WorkspacePicker.tsx',
         'packages/client/ui-workspace/src/client/rows/WorkspaceBrowser.tsx',
         'packages/client/ui-renderer/src/client/*',
+        // The plugin-market tabs: package entry wiring plus the two page views over Host catalog reads. Their
+        // controllers, contracts, and catalog helpers stay under the gate, and so does every other view's own
+        // coverage debt there.
+        'packages/client/ui-tomato-market/src/index.ts',
+        'packages/client/ui-tomato-market/src/client/index.ts',
+        'packages/client/ui-tomato-market/src/client/GeneralMarket.tsx',
+        'packages/client/ui-tomato-market/src/client/MarketingMarket.tsx',
+        'packages/client/ui-tomato-market/src/client/marketing-search.ts',
         // Session object internals retain the runtime GUI debt exemption; the
         // assistant-stream reconciler, Controller entry, transport, Agent scope,
         // and adapters stay gated.

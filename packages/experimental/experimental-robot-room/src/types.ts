@@ -167,6 +167,31 @@ export interface RoomContextSpec {
   readonly triggerChars: number
 }
 
+/** Capability narrowing a room applies on top of each member's Rbot revision. Every list can only narrow the robot. */
+export interface RoomCapabilitySpec {
+  /** Tool allow and deny lists, intersected with the robot's own lists. */
+  readonly tools?: {
+    readonly allow?: readonly string[]
+    readonly deny?: readonly string[]
+  }
+  /** Skills the room keeps available; empty keeps every skill the robot allows. */
+  readonly skills?: readonly string[]
+  /** MCP servers the room keeps available; empty keeps every server the robot allows. */
+  readonly mcpServers?: readonly string[]
+  /** Permission preset; it must match the robot's own preset when the robot names one. */
+  readonly permissionPreset?: string
+}
+
+/** Review the room enforces around member work. */
+export interface RoomReviewSpec {
+  /** Whether every finished turn ends with a mandatory self-review before delivery. */
+  readonly selfReview: boolean
+  /** Whether a finished request waits for a reviewer member's acceptance. */
+  readonly acceptance: boolean
+  /** Rounds of self-review or acceptance one request may spend before the operator takes over. */
+  readonly maxRounds: number
+}
+
 /** One complete room configuration. */
 export interface RoomSpec {
   /** Display name unique among rooms. */
@@ -183,8 +208,38 @@ export interface RoomSpec {
   readonly budget: RoomBudgetSpec
   /** Context construction. */
   readonly context: RoomContextSpec
+  /** Review rounds; omitted keeps the deployment default. */
+  readonly review?: RoomReviewSpec
+  /** Capability narrowing; omitted keeps each member's robot capability unchanged. */
+  readonly capability?: RoomCapabilitySpec
   /** Absolute directory every member works in; omitted uses the deployment default. */
   readonly workspaceRoot?: string
+}
+
+/** One piece of member work the room records as a ticket. */
+export interface RoomWorkRecord {
+  /** Ticket identity. */
+  readonly ticket: string
+  /** Room the work belongs to. */
+  readonly room: string
+  /** Request thread the work belongs to. */
+  readonly thread: string
+  /** Member whose round produced it. */
+  readonly member: string
+  /** What the member was asked to do. */
+  readonly subject: string
+  /** Who authorized the work, as `<kind>:<id>`. */
+  readonly sender: string
+  /** How firmly the request was made. */
+  readonly strength: 'explicit' | 'proposed'
+  /** State of the latest assignment's report. */
+  readonly state: 'running' | 'ready' | 'blocked' | 'failed' | 'dropped'
+  /** Assignments the ticket had, oldest first. */
+  readonly rounds: number
+  /** Acceptance review, when a reviewer read a ready result. */
+  readonly review?: { readonly rounds: number; readonly findings: readonly string[] } | undefined
+  /** Unix epoch milliseconds when the ticket was opened. */
+  readonly at: number
 }
 
 /** One operator-facing room notice that a channel plugin may deliver. */

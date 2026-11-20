@@ -316,6 +316,78 @@ describe('model discovery registry', () => {
   })
 })
 
+describe('model adaptation registry', () => {
+  it('offers one adaptation per settings namespace and disposes with its fiber', async () => {
+    const ctx = await setup()
+    const adapt = vi.fn(() => Promise.resolve([{ id: 'qwen4-max', reasoningEfforts: { off: null, high: 'high' } }]))
+
+    const dispose = ctx.llm.registerModelAdaptation('llm-example', adapt)
+    await expect(ctx.llm.adaptModels('llm-example', { models: [{ id: 'qwen4-max' }] }))
+      .resolves.toEqual([{ id: 'qwen4-max', reasoningEfforts: { off: null, high: 'high' } }])
+    expect(adapt).toHaveBeenCalledWith({ models: [{ id: 'qwen4-max' }] })
+
+    dispose()
+    await expect(ctx.llm.adaptModels('llm-example', { models: [{ id: 'qwen4-max' }] }))
+      .rejects.toThrow(/no model adaptation is registered/)
+  })
+
+  it('rejects an unnamed namespace and a second registration of the same one', async () => {
+    const ctx = await setup()
+    const adapt = (): Promise<never[]> => Promise.resolve([])
+
+    expect(() => ctx.llm.registerModelAdaptation('', adapt)).toThrow(/non-empty settings namespace/)
+    ctx.llm.registerModelAdaptation('llm-example', adapt)
+    expect(() => ctx.llm.registerModelAdaptation('llm-example', adapt)).toThrow(/already registered/)
+    await expect(ctx.llm.adaptModels('llm-example', { models: [{ id: 'keep' }] })).resolves.toEqual([])
+  })
+
+  it('deduplicates advice by id and preserves each advised field', async () => {
+    const ctx = await setup()
+    ctx.llm.registerModelAdaptation('llm-example', () => Promise.resolve([
+      { id: 'keep', input: ['text', 'image'], reasoningEfforts: { off: null, high: 'high' }, compat: { supportsReasoningEffort: true } },
+      { id: '' },
+      { id: 'keep' },
+      { id: 'bare' },
+    ] as never))
+
+    expect(await ctx.llm.adaptModels('llm-example', { models: [{ id: 'keep' }, { id: 'bare' }] })).toEqual([
+      { id: 'keep', input: ['text', 'image'], reasoningEfforts: { off: null, high: 'high' }, compat: { supportsReasoningEffort: true } },
+      { id: 'bare' },
+    ])
+  })
+
+  it('maps adaptation failures onto the Remote error code', async () => {
+    const ctx = await setup()
+    const adapt = vi.fn()
+      .mockRejectedValueOnce(new Error('catalog unreadable'))
+      .mockRejectedValueOnce('adapter refused')
+    ctx.llm.registerModelAdaptation('llm-example', adapt)
+
+    await expect(ctx.llm.remoteAdaptModels('llm-example', { provider: 'blueai', models: [{ id: 'qwen4-max' }] }))
+      .rejects.toMatchObject({
+        code: 'llm/model-adaptation-rejected',
+        message: 'catalog unreadable',
+        details: { settingsNs: 'llm-example', provider: 'blueai' },
+      })
+    await expect(ctx.llm.remoteAdaptModels('llm-example', { models: [{ id: 'qwen4-max' }] }))
+      .rejects.toMatchObject({
+        code: 'llm/model-adaptation-rejected',
+        message: 'adapter refused',
+        details: { settingsNs: 'llm-example' },
+      })
+  })
+
+  it('refuses a namespace nothing serves and a draft with no models', async () => {
+    const ctx = await setup()
+    ctx.llm.registerModelAdaptation('llm-example', () => Promise.resolve([]))
+
+    await expect(ctx.llm.adaptModels('llm-absent', { models: [{ id: 'keep' }] }))
+      .rejects.toMatchObject({ code: 'NO_ADAPTATION' })
+    await expect(ctx.llm.adaptModels('llm-example', { models: [] }))
+      .rejects.toMatchObject({ code: 'INVALID_ADAPTATION' })
+  })
+})
+
 describe('imageRequestPricing resolution', () => {
   it('resolves the owning adapter declaration and degrades everywhere else to undefined', async () => {
     const ctx = await setup()

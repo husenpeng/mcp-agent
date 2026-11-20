@@ -45,60 +45,64 @@ declare module '@tomato/cordis' {
 
 /** Selection inputs for execution-time provider resolution. */
 interface Selection<P> {
-  /** The configured provider id for this capability, if any. */
-  readonly configuredId?: string
+  /** Ordered candidate ids for this capability; empty means auto-select. */
+  readonly candidates: readonly string[]
   /** Providers registered for this capability kind. */
   readonly providers: ReadonlyMap<string, P>
 }
 
 /**
- * Config for the web seam. `searchProvider` / `fetchProvider` pin which provider
- * wins for each capability; both are optional (a single registered usable
- * provider auto-selects). Each operation reads the current value, so a settings
- * change applies to the next search or fetch without remounting the service.
- * Operational overrides such as environment variables must feed these same
- * fields rather than introduce a hidden priority chain.
+ * Config for the web seam. `searchProviders` / `fetchProviders` are ordered
+ * candidate lists: the first candidate that is registered and reports itself
+ * available wins, so a deployment can name a preferred backend and a fallback.
+ * An empty list auto-selects a single registered usable provider. Each
+ * operation reads the current value, so a settings change applies to the next
+ * search or fetch without remounting the service. Operational overrides such
+ * as environment variables must feed these same fields rather than introduce
+ * a second, hidden priority chain.
  */
 export interface WebRuntimeConfig {
-  /** Explicit search provider id. Omitted = auto-select when exactly one usable. */
-  readonly searchProvider: Volatile<string | undefined>
-  /** Explicit fetch provider id. Omitted = auto-select when exactly one usable. */
-  readonly fetchProvider: Volatile<string | undefined>
+  /** Ordered search provider ids; empty = auto-select when exactly one usable. */
+  readonly searchProviders: Volatile<string[]>
+  /** Ordered fetch provider ids; empty = auto-select when exactly one usable. */
+  readonly fetchProviders: Volatile<string[]>
 }
 
 /**
  * The web access service. Registered as `ctx.web` (one instance per context)
  * and exposed to Clients as the `web` Remote namespace (`listProviders`).
  *
- * Selection semantics (resolved at execution time, never order-dependent):
- * - A configured id that is registered and `available()` → that provider.
- * - A configured id not registered → `WEB_PROVIDER_CONFIGURED_MISSING`.
- * - A configured id registered but unavailable →
- *   `WEB_PROVIDER_CONFIGURED_UNAVAILABLE`.
- * - No id configured, exactly one registered usable provider → that provider.
- * - No id configured, multiple usable providers → `WEB_PROVIDER_AMBIGUOUS`.
- * - No id configured, no usable provider → `WEB_PROVIDER_UNAVAILABLE`.
+ * Selection semantics (resolved at execution time; registration order only
+ * breaks ties inside one configured list, never across auto-selection):
+ * - With candidates, the first registered candidate whose `available()` is true wins.
+ * - A candidate that is not registered is skipped; when none wins and a
+ *   candidate was missing, `WEB_PROVIDER_CONFIGURED_MISSING` names the first one.
+ * - Candidates all registered but unavailable → `WEB_PROVIDER_CONFIGURED_UNAVAILABLE`.
+ * - No candidates, exactly one registered usable provider → that provider.
+ * - No candidates, multiple usable providers → `WEB_PROVIDER_AMBIGUOUS`.
+ * - No candidates, no usable provider → `WEB_PROVIDER_UNAVAILABLE`.
  */
 export class WebRuntime extends TypertRemoteService {
   /**
    * Provider selection config. Operational env overrides feed the SAME fields:
-   * `$TOMATO_WEB_SEARCH_PROVIDER` / `$TOMATO_WEB_FETCH_PROVIDER` are equivalent to
-   * `searchProvider` / `fetchProvider` and are NOT a hidden priority chain.
+   * `$TOMATO_WEB_SEARCH_PROVIDERS` / `$TOMATO_WEB_FETCH_PROVIDERS` carry a
+   * comma-separated ordered list equivalent to `searchProviders` /
+   * `fetchProviders` and are NOT a second priority chain.
    */
   static Config = z.object({
-    searchProvider: z.string().volatile(),
-    fetchProvider: z.string().volatile(),
+    searchProviders: z.array(z.string()).volatile(),
+    fetchProviders: z.array(z.string()).volatile(),
   })
 
   private searchProviders = new Map<string, WebSearchProvider>()
   private fetchProviders = new Map<string, WebFetchProvider>()
-  private readonly searchProviderEnv: string | undefined
-  private readonly fetchProviderEnv: string | undefined
+  private readonly searchProviderEnv: readonly string[]
+  private readonly fetchProviderEnv: readonly string[]
 
   constructor(ctx: Context, private readonly config: WebRuntimeConfig) {
     super(ctx, 'web')
-    this.searchProviderEnv = process.env.TOMATO_WEB_SEARCH_PROVIDER
-    this.fetchProviderEnv = process.env.TOMATO_WEB_FETCH_PROVIDER
+    this.searchProviderEnv = candidateList(process.env.TOMATO_WEB_SEARCH_PROVIDERS)
+    this.fetchProviderEnv = candidateList(process.env.TOMATO_WEB_FETCH_PROVIDERS)
   }
 
   /**
@@ -201,10 +205,10 @@ export class WebRuntime extends TypertRemoteService {
 
   /** Select the search provider with the rules above, throwing the matching {@link WebError}. */
   private selectSearchProvider(): WebSearchProvider {
-    const configuredId = this.config.searchProvider.get() ?? this.searchProviderEnv
+    const configured = this.config.searchProviders.get()
     return resolveProvider({
       providers: this.searchProviders,
-      ...configuredId !== undefined ? { configuredId } : {},
+      candidates: configured.length > 0 ? configured : this.searchProviderEnv,
     })
   }
 
@@ -234,10 +238,10 @@ export class WebRuntime extends TypertRemoteService {
 
   /** Select the fetch provider with the rules above, throwing the matching {@link WebError}. */
   private selectFetchProvider(): WebFetchProvider {
-    const configuredId = this.config.fetchProvider.get() ?? this.fetchProviderEnv
+    const configured = this.config.fetchProviders.get()
     return resolveProvider({
       providers: this.fetchProviders,
-      ...configuredId !== undefined ? { configuredId } : {},
+      candidates: configured.length > 0 ? configured : this.fetchProviderEnv,
     })
   }
 }
@@ -271,18 +275,32 @@ async function selectedProviderReady(select: () => ResolvableProvider, llmProvid
   return await provider.ready?.(llmProvider) ?? true
 }
 
+/** Parse a comma-separated env override into its ordered, non-empty candidates. */
+function candidateList(raw: string | undefined): readonly string[] {
+  if (raw === undefined) return []
+  return raw.split(',').map(candidate => candidate.trim()).filter(candidate => candidate.length > 0)
+}
+
 /** Resolve the selected provider or throw the matching {@link WebError}. */
 function resolveProvider<P extends ResolvableProvider>(selection: Selection<P>): P {
-  const { configuredId, providers } = selection
-  if (configuredId !== undefined) {
-    const provider = providers.get(configuredId)
-    if (!provider) {
-      throw new WebError(`configured web provider "${configuredId}" is not registered`, 'WEB_PROVIDER_CONFIGURED_MISSING')
+  const { candidates, providers } = selection
+  if (candidates.length > 0) {
+    let firstMissing: string | undefined
+    for (const id of candidates) {
+      const provider = providers.get(id)
+      if (!provider) {
+        firstMissing ??= id
+        continue
+      }
+      if (provider.available()) return provider
     }
-    if (!provider.available()) {
-      throw new WebError(`configured web provider "${configuredId}" is registered but unavailable`, 'WEB_PROVIDER_CONFIGURED_UNAVAILABLE')
+    if (firstMissing !== undefined) {
+      throw new WebError(`configured web providers "${candidates.join(', ')}": "${firstMissing}" is not registered`, 'WEB_PROVIDER_CONFIGURED_MISSING')
     }
-    return provider
+    throw new WebError(
+      `configured web providers "${candidates.join(', ')}" are registered but unavailable`,
+      'WEB_PROVIDER_CONFIGURED_UNAVAILABLE',
+    )
   }
   const usable = [...providers.values()].filter(provider => provider.available())
   const [single] = usable

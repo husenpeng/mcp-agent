@@ -50,6 +50,8 @@ const NO_MODEL_EXPERIENCE_SECTION: Readonly<Record<string, string>> = {
  */
 const SENTENCE_MODEL_EXPERIENCE: Readonly<Record<string, SentenceContract>> = {
   'packages/client/ui-context-menu': { kind: 'none', reason: 'Client menu presentation and contributed callbacks add no model input.' },
+  'packages/client/ui-tomato-market': { kind: 'none', reason: 'The market tabs render Host catalog reads and page install requests; nothing they show reaches a model request.' },
+  'plugins/tomato-market': { kind: 'none', reason: 'The market Host half serves the Plugins page tabs over its own route; nothing it reads or installs reaches a model request.' },
   'packages/client/ui-file-actions': { kind: 'none', reason: 'Explicit user file saves and clipboard operations add no model input.' },
   'packages/client/ui-entry-customization': { kind: 'none', reason: 'Controls browser launchers and prepares a reviewable Creator draft without submitting model input.' },
   'packages/client/ui-deepseek-model-label-1017': { kind: 'none', reason: 'The plugin decorates browser model labels and contributes no prompt text, tool schema, or Session event.' },
@@ -57,6 +59,8 @@ const SENTENCE_MODEL_EXPERIENCE: Readonly<Record<string, SentenceContract>> = {
   'packages/experimental/cot-translation-bundle': { kind: 'indirect', reason: 'The GUI consumer delegates paid query prompts to the translator and normal activation context to the Session preset.' },
   'packages/client/product-analytics': { kind: 'none', reason: 'Desktop analytics observes selected interactions without contributing model context or Session events.' },
   'packages/api/robot-controller': { kind: 'none', reason: 'Transports registry snapshots and browser control calls; the runtime package assembles the model context of a robot run.' },
+  'packages/api/system-monitor-controller': { kind: 'none', reason: 'Samples Host hardware on demand over Remote and registers nothing model-facing.' },
+  'packages/client/ui-system-monitor': { kind: 'none', reason: 'Presents the sampled frame in a floating overlay and contributes no prompt text, tool schema, or Session event.' },
   'packages/experimental/robot-remote': { kind: 'none', reason: 'Mounts browser Remote descriptors for the optional robot bundle; it registers nothing model-facing.' },
   'packages/tomato/brand': { kind: 'none', reason: 'The package fills sidebar and hero brand slots with presentation-only occupants and registers nothing model-facing.' },
   'packages/tomato/account': { kind: 'none', reason: 'The account surface presents auth_service state and issues browser login commands without registering model context.' },
@@ -190,7 +194,7 @@ const SENTENCE_MODEL_EXPERIENCE: Readonly<Record<string, SentenceContract>> = {
   'packages/client/ui-settings-session-log': { kind: 'none', reason: 'Browser preference controls request metadata, not model input.' },
   'packages/client/ui-settings-agent-loop': { kind: 'none', reason: 'Browser-side settings surface; registers no model surface.' },
   'packages/client/ui-settings-subagent': { kind: 'none', reason: 'Browser-side settings surface; registers no model surface.' },
-  'packages/client/ui-settings-web-search': { kind: 'none', reason: 'Browser-side settings surface; registers no model surface.' },
+  'packages/experimental/client-ui-settings-work-team': { kind: 'none', reason: 'Browser-side settings surface; registers no model surface.' },
   'packages/client/ui-settings-marketing': { kind: 'none', reason: 'Browser-side settings surface; registers no model surface.' },
   'packages/client/ui-settings-remote': { kind: 'none', reason: 'Browser-side settings page that supervises the shell-owned phone tunnel and renders its pairing link; it registers no model input.' },
   'packages/client/ui-plan': { kind: 'indirect', reason: 'The chip dispatches /plan off; @tomato/plan-mode owns the model-visible policy, exit tool, and logged state.' },
@@ -237,6 +241,8 @@ const SENTENCE_MODEL_EXPERIENCE: Readonly<Record<string, SentenceContract>> = {
   'packages/experimental/terminal-bundle': { kind: 'indirect', reason: 'The profile layer delegates model-visible behavior to its selected capability.' },
   'packages/experimental/badge-skill-bundle': { kind: 'indirect', reason: 'The profile layer delegates model-visible behavior to its selected capability.' },
   'packages/experimental/session-titles-bundle': { kind: 'indirect', reason: 'The profile layer delegates model-visible behavior to its selected capability.' },
+  'packages/experimental/robot-crew-bundle': { kind: 'indirect', reason: 'The profile layer mounts the crew capability, which owns the member brief, the ledger, and the loop guard.' },
+  'packages/experimental/work-team-bundle': { kind: 'indirect', reason: 'The profile layer mounts the crew capability and the work-team tool, which own the member brief, the ledger, and the creation schema.' },
   'packages/bundle/base': { kind: 'indirect', reason: 'The bundle is a patch-list carrier; each inserted row\'s package owns its model-facing behavior.' },
   'packages/bundle/headless': { kind: 'none', reason: 'The one-shot runner submits the task as an ordinary user message; prompts and tools belong to the composed base and headless bundles.' },
   'packages/llm/llm': { kind: 'none', reason: 'The adapter registry forwards already-assembled requests unchanged.' },
@@ -296,7 +302,6 @@ const SENTENCE_MODEL_EXPERIENCE: Readonly<Record<string, SentenceContract>> = {
   'packages/util/native-command': { kind: 'none', reason: 'The host-side subprocess runner registers nothing model-facing.' },
   'packages/web/web': { kind: 'indirect', reason: 'The provider registry delegates model rendering to @tomato/tool-web.' },
   'packages/web/web-fetch-http': { kind: 'indirect', reason: 'The provider backend delegates model rendering to @tomato/tool-web.' },
-  'packages/web/web-search-exa': { kind: 'indirect', reason: 'The provider backend delegates model rendering to @tomato/tool-web.' },
   'packages/web/web-search-company': { kind: 'indirect', reason: 'The provider returns seam sources and Web error codes; @tomato/tool-web owns every model-visible line and prompt text.' },
   'packages/workflow/workflow': { kind: 'indirect', reason: 'The service delegates parent and child model rendering to its consumer and engine.' },
 }
@@ -382,7 +387,7 @@ for (const line of readFileSync(resolve(root, 'docs/tool-catalog.md'), 'utf8').s
 }
 
 const failures: Failure[] = []
-const packageJsons = globSync('packages/*/*/package.json', { cwd: root }).map(path => path.split(sep).join('/')).sort()
+const packageJsons = globSync(['packages/*/*/package.json', 'plugins/tomato-market/package.json'], { cwd: root }).map(path => path.split(sep).join('/')).sort()
 const scannedPackages = new Set(packageJsons.map(path => path.slice(0, -'/package.json'.length)))
 let structuredCount = 0
 let modelContextEntryCount = 0

@@ -2,7 +2,8 @@
 //  MessageRows.swift
 //  Tomato Remote
 //
-//  The two speakers of a transcript, drawn so they never look alike.
+//  The speakers of a transcript and the tool calls between them, drawn so no
+//  two surfaces look alike.
 //
 
 import SwiftUI
@@ -27,36 +28,28 @@ struct AssistantRow: View, Equatable {
     let pending: Bool
 
     var body: some View {
-        // The answer sits on a page-colored card with a leading accent, so the
-        // two speakers can be told apart without reading the labels.
-        HStack(alignment: .top, spacing: 0) {
-            RoundedRectangle(cornerRadius: 1.5, style: .continuous)
-                .fill(TomatoToken.brandPrimary.opacity(0.55))
-                .frame(width: 3)
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 6) {
-                    Image(systemName: "sparkles")
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(TomatoToken.brandPrimary)
-                    Text("Tomato")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(TomatoToken.labelCaption)
-                    if pending {
-                        RunningDot()
-                    }
+        // The answer reads directly on the page. A compact identity mark is
+        // enough to separate speakers without turning every answer into a card.
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 7) {
+                IconChip(systemImage: "sparkles", side: 24)
+                Text("Tomato")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(TomatoToken.labelSecondary)
+                if pending {
+                    RunningDot()
                 }
-                answer
-                    .foregroundStyle(TomatoToken.labelPrimary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .contextMenu {
-                        Button("复制") { UIPasteboard.general.string = text }
-                    }
             }
-            .padding(.leading, 10)
-            .padding(.vertical, 10)
-            .padding(.trailing, 12)
+            .accessibilityHidden(true)
+            answer
+                .foregroundStyle(TomatoToken.labelPrimary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contextMenu {
+                    Button("复制") { UIPasteboard.general.string = text }
+                }
         }
-        .background(TomatoToken.bgLayer2, in: RoundedRectangle(cornerRadius: TomatoRadius.md, style: .continuous))
+        .padding(.vertical, 2)
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("chat.row.assistant")
     }
 
@@ -78,6 +71,104 @@ struct AssistantRow: View, Equatable {
         } else {
             MarkdownText(text: text, lineSpacing: 5)
         }
+    }
+}
+
+/// One tool call in a turn.
+///
+/// The row names the tool, one line of its arguments, and how it settled.
+/// Equality is the tool payload alone: the closure only forwards the tap, so an
+/// append at the tail must not re-render every visible card.
+extension ToolCard: Equatable {
+    static func == (lhs: ToolCard, rhs: ToolCard) -> Bool {
+        lhs.tool == rhs.tool
+    }
+}
+
+struct ToolCard: View {
+    let tool: ToolDetail
+    let open: () -> Void
+
+    var body: some View {
+        Button(action: open) {
+            HStack(alignment: .center, spacing: 8) {
+                Image(systemName: icon)
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(tint)
+                    .frame(width: 18)
+                Text(tool.name)
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(TomatoToken.labelSecondary)
+                    .lineLimit(1)
+                Text(tool.summary)
+                    .font(.footnote)
+                    .foregroundStyle(TomatoToken.labelCaption)
+                    .lineLimit(1)
+                Spacer(minLength: 6)
+                trailing
+                Image(systemName: "chevron.right")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(TomatoToken.labelDimmed)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .frame(minHeight: 44)
+            .background(TomatoSurface.variant, in: RoundedRectangle(cornerRadius: TomatoCorner.control, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: TomatoCorner.control, style: .continuous)
+                    .strokeBorder(TomatoLine.hairline, lineWidth: 1)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: TomatoCorner.control, style: .continuous))
+        }
+        .buttonStyle(TomatoPressableStyle())
+        .accessibilityHint("查看工具参数与结果")
+    }
+
+    @ViewBuilder
+    private var trailing: some View {
+        switch tool.status {
+        case .running:
+            ProgressView().controlSize(.small)
+        case .done:
+            if let duration = tool.durationText {
+                Text(duration).font(.caption2.monospacedDigit()).foregroundStyle(TomatoToken.labelCaption)
+            }
+        case .failed:
+            Image(systemName: "exclamationmark.circle.fill")
+                .font(.footnote)
+                .foregroundStyle(TomatoToken.stateErrorPrimary)
+        }
+    }
+
+    private var tint: Color {
+        switch tool.status {
+        case .failed: TomatoToken.stateErrorPrimary
+        case .running: TomatoToken.stateBusinessPrimary
+        case .done: TomatoToken.labelCaption
+        }
+    }
+
+    private var icon: String {
+        let name = tool.name.lowercased()
+        if name.contains("bash") || name.contains("shell") || name.contains("terminal") {
+            return "terminal"
+        }
+        if name.contains("read") || name.contains("write") || name.contains("edit") || name.contains("file") {
+            return "doc.text"
+        }
+        if name.contains("glob") || name.contains("grep") || name.contains("search") {
+            return "magnifyingglass"
+        }
+        if name.contains("web") || name.contains("fetch") {
+            return "globe"
+        }
+        if name.contains("job") || name.contains("schedule") || name.contains("wait") {
+            return "clock"
+        }
+        if name.contains("agent") || name.contains("subagent") {
+            return "person.2"
+        }
+        return "wrench.and.screwdriver"
     }
 }
 
@@ -304,13 +395,11 @@ private struct UserBubble: ViewModifier {
         content
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
+            // One soft tint, no outline: the stroke around a tinted bubble
+            // drew a second edge the eye read as a border on every message.
             .background(
-                TomatoToken.brandPrimary.opacity(0.12),
-                in: RoundedRectangle(cornerRadius: 18, style: .continuous)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(TomatoToken.brandPrimary.opacity(0.18), lineWidth: 1)
+                TomatoContainer.primary.fill,
+                in: RoundedRectangle(cornerRadius: TomatoCorner.card, style: .continuous)
             )
             .contextMenu {
                 Button("复制") { UIPasteboard.general.string = text }

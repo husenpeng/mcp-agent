@@ -66,6 +66,8 @@ struct RootView: View {
                     #if DEBUG
                         if ProcessInfo.processInfo.arguments.contains("-TOMATO_CHAT_STYLE_PREVIEW") {
                             ChatStylePreview()
+                        } else if ProcessInfo.processInfo.arguments.contains("-TOMATO_CHAT_LAYOUT_PREVIEW") {
+                            ChatLayoutPreview()
                         } else {
                             MainTabs()
                         }
@@ -107,7 +109,10 @@ struct RootView: View {
             #if DEBUG
                 // A simulator or device check may leave one model seed, one MCP
                 // server, and one prompt; run the local agent and record it.
-                if AgentDebugSeed.isPresent {
+                if let prompt = AgentDebugSeed.serviceProbePrompt {
+                    model.tab = .phoneAgent
+                    await AgentDebugSeed.runServiceProbe(prompt: prompt)
+                } else if AgentDebugSeed.isPresent {
                     model.tab = .phoneAgent
                     await AgentDebugSeed.runIfPresent()
                 } else if ProcessInfo.processInfo.arguments.contains("-TOMATO_PHONE_TAB") {
@@ -358,7 +363,7 @@ struct MainTabs: View {
     /// - Returns: the label the log reader groups by.
     private static func label(for tab: AppModel.Tab) -> String {
         switch tab {
-        case .home: "记忆"
+        case .home: "今天"
         case .sessions: "会话"
         case .phoneAgent: "Tomato Phone"
         case .robots: "智能体"
@@ -416,12 +421,27 @@ final class AppModel: ObservableObject {
     /// because the provider list belongs to the Host rather than to a Session.
     let modelCatalog = ModelCatalogStore()
     /// Recent event pages keyed by Session, filled ahead of a tap so the
-    /// conversation renders its history immediately.
-    @Published private(set) var previewEvents: [String: [JSONValue]] = [:]
+    /// conversation renders its history immediately. Bounded and
+    /// least-recently-used, so history sessions stay warm too.
+    let previews = SessionPreviewCache()
+    /// Sessions with a warm-up already in flight, so a row that re-appears
+    /// during a scroll does not ask the Host for the same page twice.
+    private var previewsInFlight: Set<String> = []
     @Published var isLoadingSessions = false
     @Published var isCreatingSession = false
+    /// Failed list reads since the last success, so the repair read backs off
+    /// instead of probing a Host that is not there every minute.
+    private(set) var consecutiveRefreshFailures = 0
+    /// Bumped whenever a list read succeeds after failures. Screens holding a
+    /// stream that gave up use it to reopen without a scene change.
+    @Published private(set) var hostReachableTick = 0
     /// When the last successful list read landed.
     private(set) var lastSessionsRead: Date?
+
+    /// Wait the repair read uses next.
+    var sessionPollInterval: TimeInterval {
+        SessionPollSchedule.pause(afterConsecutiveFailures: consecutiveRefreshFailures)
+    }
 
     /// Where list-level interactions are remembered. Optional so a test can
     /// build the model without a journal.
@@ -755,14 +775,9 @@ final class AppModel: ObservableObject {
             }
             sessionsError = nil
             lastSessionsRead = Date()
-            AppLog.info(
-                .session,
-                "会话列表已刷新",
-                detail: "\(items.count) 条 · \(Self.milliseconds(since: started)) ms"
-            )
+            noteSessionsRead(count: items.count, since: started)
         } catch {
-            sessionsError = describe(error)
-            AppLog.error(.session, "会话列表刷新失败", detail: describe(error))
+            noteSessionsReadFailed(error)
         }
     }
 
@@ -826,39 +841,65 @@ final class AppModel: ObservableObject {
     ///
     /// A failure is not reported: the conversation loads its own first page and
     /// this cache only decides whether it can paint before that round trip ends.
-    /// - Parameter summary: Session to warm; already-cached entries stay as-is.
+    /// A page already warm, or a request already travelling, is left alone.
+    /// - Parameter summary: Session to warm.
     func prefetch(_ summary: SessionSummary) async {
-        guard previewEvents[summary.sessionId] == nil, let hub else { return }
+        let sessionId = summary.sessionId
+        guard let hub, !previews.contains(sessionId), !previewsInFlight.contains(sessionId) else { return }
         // The Host refuses a `throughSeq` past the Session's cursor, so the only
         // usable address is the watermark the list projected. Without one the
         // conversation waits for its follow snapshot instead of guessing.
+        guard let cursor = summary.projections?.asOfSeq else { return }
+        previewsInFlight.insert(sessionId)
+        defer { previewsInFlight.remove(sessionId) }
         let started = CFAbsoluteTimeGetCurrent()
-        guard let cursor = summary.projections?.asOfSeq, let page = try? await hub.pageEvents(
-            sessionId: summary.sessionId,
+        guard let page = try? await hub.pageEvents(
+            sessionId: sessionId,
             throughSeq: cursor,
             maxMessages: SessionPageLimit.opening
         ) else { return }
-        previewEvents[summary.sessionId] = page.events
+        // The Session may have been dropped from the list while the page was in
+        // flight; caching it would only spend room on a row nobody can open.
+        guard sessions.contains(where: { $0.sessionId == sessionId }) else { return }
+        previews.store(page.events, for: sessionId)
         AppLog.debug(
             .session,
-            "预取会话 \(summary.sessionId.prefix(8))",
+            "预取会话 \(sessionId.prefix(8))",
             detail: "\(page.events.count) 条 · \(Int((CFAbsoluteTimeGetCurrent() - started) * 1000)) ms"
         )
     }
 
-    /// Warm the one conversation a reader is most likely to open next. Warming
-    /// several spent a slow link's bandwidth on pages nobody read.
+    /// Warm the conversations a reader is most likely to open next.
+    ///
+    /// The newest few rows are warmed together at list load, so the list opens
+    /// with the top conversations ready; every other row warms its own page as
+    /// it scrolls into view. Both paths share the bounded cache, so a long
+    /// history stays instant to revisit without growing without limit.
     /// - Parameter summaries: rows currently visible, newest first.
     func prefetchLikely(_ summaries: [SessionSummary]) async {
-        guard let next = summaries.first(where: { !$0.isSubagent && !$0.isRobotRun }) else { return }
-        await prefetch(next)
+        let candidates = summaries
+            .filter { !$0.isSubagent && !$0.isRobotRun }
+            .prefix(Self.prefetchAtLoad)
+        // Three at a time: enough to have the next tap ready on a slow link,
+        // few enough that a page read does not queue behind a burst.
+        await withTaskGroup(of: Void.self) { group in
+            for summary in candidates {
+                group.addTask { @MainActor [weak self] in
+                    await self?.prefetch(summary)
+                }
+            }
+            await group.waitForAll()
+        }
     }
+
+    /// How many of the newest conversations the list warms on load.
+    private static let prefetchAtLoad = 6
 
     /// Events already fetched for one Session, if any.
     /// @param sessionId - Session whose preview is read.
     /// @returns the cached page, or an empty array.
     func cachedEvents(_ sessionId: String) -> [JSONValue] {
-        previewEvents[sessionId] ?? []
+        previews.page(for: sessionId) ?? []
     }
 
     func rename(_ summary: SessionSummary, to title: String) async {
@@ -880,5 +921,47 @@ final class AppModel: ObservableObject {
     /// - Parameter summary: the row the reader tapped.
     func noteOpened(_ summary: SessionSummary) {
         journal?.record(UsageEvent(kind: .opened, project: summary.folderName))
+    }
+}
+
+// MARK: - List read accounting
+
+/// What a list read means for the retry cadence and for screens whose stream died.
+extension AppModel {
+    /// Record a successful read, and tell screens that gave up on their stream
+    /// that the Host answers again.
+    /// - Parameters:
+    ///   - count: Sessions the read returned.
+    ///   - started: `CFAbsoluteTimeGetCurrent()` the read began at.
+    private func noteSessionsRead(count: Int, since started: CFAbsoluteTime) {
+        let failures = consecutiveRefreshFailures
+        consecutiveRefreshFailures = 0
+        AppLog.info(
+            .session,
+            "会话列表已刷新",
+            detail: "\(count) 条 · \(Self.milliseconds(since: started)) ms"
+                + (failures > 0 ? " · 连续失败 \(failures) 次后恢复" : "")
+        )
+        guard failures > 0 else { return }
+        hostReachableTick += 1
+    }
+
+    /// Record a failed read: one error per outage, then a counted retry line.
+    /// - Parameter error: the failure the read threw.
+    private func noteSessionsReadFailed(_ error: Error) {
+        consecutiveRefreshFailures += 1
+        sessionsError = describe(error)
+        let wait = Int(SessionPollSchedule.pause(afterConsecutiveFailures: consecutiveRefreshFailures))
+        // The banner keeps showing the reason; repeating it every attempt is
+        // what turned one dead pairing into 4704 error lines.
+        guard consecutiveRefreshFailures == 1 else {
+            AppLog.debug(
+                .session,
+                "会话列表仍不可达",
+                detail: "连续 \(consecutiveRefreshFailures) 次 · \(wait) 秒后重试 · \(describe(error))"
+            )
+            return
+        }
+        AppLog.error(.session, "会话列表刷新失败", detail: "\(describe(error)) · \(wait) 秒后重试")
     }
 }

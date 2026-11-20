@@ -1,0 +1,22 @@
+# Bilingual-pair consistency record for 2026-11-19-superagent-app-source-person-control.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-11-19-superagent-app-source-person-control.md
+/agent-note-the-superagent-team-takes-app-requests-and-person-control:
+  en: 9b16accdedfa68da
+  zh: beb1d2e661c05e5b
+/agent-note-the-superagent-team-takes-app-requests-and-person-control/problem:
+  en: 04127a8069327d01
+  zh: fb3b0a0ee67ba64f
+/agent-note-the-superagent-team-takes-app-requests-and-person-control/decision:
+  en: 7fc230253a6b48e1
+  zh: d041d94dbcad1831
+/agent-note-the-superagent-team-takes-app-requests-and-person-control/alternatives-considered:
+  en: 442a2766eb90320e
+  zh: 0af98b461fc11585
+/agent-note-the-superagent-team-takes-app-requests-and-person-control/consequences:
+  en: 25d1590aa51099b8
+  zh: 62b7c6c562fe764d
+/agent-note-the-superagent-team-takes-app-requests-and-person-control/verification:
+  en: ab05e7ab18feade9
+  zh: 4202d9de63774037

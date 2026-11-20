@@ -1,0 +1,57 @@
+{
+  "name": "@tomato/experimental-robot-crew-bundle",
+  "description": "Optional Robot Crew layer: crew providers, the crew Remote controller, the agent crew tool, and the crew canvas with its group-chat tab",
+  "version": "0.2.2-rc.2",
+  "icon": "./icon.svg",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/experimental/robot-crew-bundle"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./locale/*.json": "./locale/*.json",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "icon.svg",
+    "locale/*.json",
+    "lib/index.js",
+    "cordis.patch.yml",
+    "lib/types/**/*.d.ts",
+    "lib/**/*.js.map",
+    "lib/types/**/*.d.ts.map",
+    "src"
+  ],
+  "license": "MIT",
+  "tomato": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "@tomato/api-robot-crew-controller": "workspace:*",
+    "@tomato/client-ui-robot-crew": "workspace:*",
+    "@tomato/experimental-robot-crew-local": "workspace:*",
+    "@tomato/experimental-robot-crew-remote": "workspace:*",
+    "@tomato/experimental-tool-robot-crew": "workspace:*",
+    "@tomato/tool-work-team": "workspace:*"
+  },
+  "peerDependencies": {
+    "@tomato/cordis": "workspace:~"
+  },
+  "devDependencies": {
+    "@tomato/cordis": "workspace:~"
+  }
+}

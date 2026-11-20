@@ -60,7 +60,7 @@ function authenticatedWeb(launchUrl: string): Promise<{ origin: string; cookie: 
     }
     return {
       origin: new URL(launchUrl).origin,
-      cookie: setCookie.split(';', 1)[0]!,
+      cookie: setCookie.split(';', 1)[0],
     }
   })()
   authenticatedCookies.set(launchUrl, exchange)
@@ -215,7 +215,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function providerTitle(page: HistoryPage): string | undefined {
   const events = page.records.flatMap(record => record.type === 'event' ? [record.event] : [])
   for (let index = events.length - 1; index >= 0; index--) {
-    const event = events[index] as HistoryEvent
+    const event = events[index]
     if (event.type !== 'session/title' || !isRecord(event.data)) continue
     const source = event.data.source
     if (typeof event.data.title === 'string' && isRecord(source) && source.kind === 'provider') {
@@ -265,7 +265,7 @@ function firstMappedSource(script: string, payload: ConstructorParameters<typeof
   const consumer = new SourceMap(payload)
   const lines = script.split('\n')
   for (let line = 0; line < lines.length; line++) {
-    const lastColumn = Math.min(lines[line]!.length, 512)
+    const lastColumn = Math.min(lines[line].length, 512)
     for (let column = 0; column <= lastColumn; column++) {
       const entry = consumer.findEntry(line, column)
       if (!('originalSource' in entry) || typeof entry.originalSource !== 'string') continue
@@ -285,7 +285,7 @@ async function screen(page: Page, name: string): Promise<void> {
 /** First column track (px string) of the frame grid. */
 async function firstTrack(page: Page): Promise<string> {
   return (await page.locator('[class*="frame"]').evaluate(
-    el => getComputedStyle(el).gridTemplateColumns)).split(' ')[0]!
+    el => getComputedStyle(el).gridTemplateColumns)).split(' ')[0]
 }
 
 /** Last column track (details) as a number of pixels. */

@@ -29,10 +29,11 @@ import { decodeVector, encodeVector } from './vector.ts'
 import {
   cosineSimilarity, episodeEmbeddingText, memoryEmbeddingText, memoryTokens, scoreEpisodes, scoreMemories, tokenContainment,
 } from './retrieval.ts'
-import { normalizeIdentifier, normalizeStatement } from './normalize.ts'
+import { boundStatement, normalizeIdentifier, normalizeStatement } from './normalize.ts'
 import { WriteLockTimeoutError, withWriteLock } from './write-lock.ts'
 import {
-  EpisodeId, LOCAL_MEMORY_OWNER, MemoryId, VectorId, accountMemoryOwner, episodeDomain, isMemoryIdentifier, memoryDomain, vectorDomain,
+  EPISODE_BOUNDS, EpisodeId, LOCAL_MEMORY_OWNER, MAX_EPISODE_TYPE_LENGTH, MemoryId, VectorId, accountMemoryOwner,
+  episodeDomain, isMemoryIdentifier, memoryDomain, vectorDomain,
 } from './storage.ts'
 import type { EpisodeRecord, MemoryRecord, VectorRecord } from './storage.ts'
 import type {
@@ -85,7 +86,7 @@ export {
   scoreEpisodes, scoreMemories, tokenContainment,
 } from './retrieval.ts'
 export type { ScoredEpisode, ScoredMemory } from './retrieval.ts'
-export { normalizeIdentifier, normalizeStatement } from './normalize.ts'
+export { boundStatement, normalizeIdentifier, normalizeStatement } from './normalize.ts'
 export { WriteLockTimeoutError, withWriteLock } from './write-lock.ts'
 export type { WriteLockOptions } from './write-lock.ts'
 
@@ -204,6 +205,21 @@ export const MAX_RELATION_DEPTH = 2
 
 /** One lower-kebab-case episode type, such as `bugfix`. */
 const EPISODE_TYPE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u
+
+/**
+ * Normalize one list field to its stored form: every entry normalized, empty
+ * entries dropped, each entry bounded, then the entry count bounded.
+ * @param values - caller entries, or `undefined` for none.
+ * @param maxEntry - per-entry limit in UTF-16 units.
+ * @param maxEntries - stored entry count limit.
+ * @returns the normalized entries, at most `maxEntries` long.
+ */
+function fieldList(values: readonly string[] | undefined, maxEntry: number, maxEntries: number): string[] {
+  return (values ?? [])
+    .map(value => boundStatement(normalizeStatement(value), maxEntry))
+    .filter(value => value !== '')
+    .slice(0, maxEntries)
+}
 
 /** How a related record connects to the record one hop before it. */
 export type MemoryRelation = 'same-entity' | 'same-session' | 'same-key'
@@ -1742,31 +1758,33 @@ export class MemoryService extends Service {
   /**
    * Store one compressed episode. A repeated fingerprint of the same owner and
    * project updates the earlier record's timestamp instead of appending.
-   * Every text field is normalized before the size check and the fingerprint lookup.
+   * Every text field is normalized before the size check and the fingerprint
+   * lookup, and bounded to {@link EPISODE_BOUNDS}, so a stored episode always
+   * satisfies {@link episodeRecordSchema}.
    * @param request - owner, project, episode fields, fingerprint, and source.
    * @returns the stored episode.
-   * @throws {@link MemoryError} `invalid-identifier`, `empty-value`, `episode-too-large`, or `episodes-full`.
+   * @throws {@link MemoryError} `invalid-identifier`, `empty-value`, or `episode-too-large`.
    */
   async rememberEpisode(request: RememberEpisodeRequest): Promise<EpisodeRecord> {
     const type = normalizeIdentifier(request.type)
-    if (!EPISODE_TYPE.test(type)) {
-      throw new MemoryError(`an episode type must be one lower-kebab-case word, got "${request.type}"`, 'invalid-identifier')
+    if (!EPISODE_TYPE.test(type) || type.length > MAX_EPISODE_TYPE_LENGTH) {
+      throw new MemoryError(`an episode type must be one lower-kebab-case word of at most ${MAX_EPISODE_TYPE_LENGTH} characters, got "${request.type}"`, 'invalid-identifier')
     }
-    const title = normalizeStatement(request.title)
+    const title = boundStatement(normalizeStatement(request.title), EPISODE_BOUNDS.title)
     if (title === '') throw new MemoryError('an episode title must not be empty', 'empty-value')
-    const subtitle = request.subtitle === undefined ? '' : normalizeStatement(request.subtitle)
-    const narrative = normalizeStatement(request.narrative)
+    const subtitle = request.subtitle === undefined ? '' : boundStatement(normalizeStatement(request.subtitle), EPISODE_BOUNDS.subtitle)
+    const narrative = boundStatement(normalizeStatement(request.narrative), EPISODE_BOUNDS.narrative)
     const scope = await this.episodeScopeWithIdentity(request.scope)
     const projectId = scope.workspaceId
     const facts = this.uncoveredFacts(
       request.owner,
       { id: projectId, path: scope.path },
-      (request.facts ?? []).map(normalizeStatement).filter(fact => fact !== ''),
+      fieldList(request.facts, EPISODE_BOUNDS.fact, EPISODE_BOUNDS.facts),
     )
-    const concepts = (request.concepts ?? []).map(normalizeStatement).filter(concept => concept !== '')
-    const filesRead = (request.filesRead ?? []).map(normalizeStatement).filter(file => file !== '')
-    const filesModified = (request.filesModified ?? []).map(normalizeStatement).filter(file => file !== '')
-    const tool = request.tool === undefined ? undefined : normalizeStatement(request.tool)
+    const concepts = fieldList(request.concepts, EPISODE_BOUNDS.concept, EPISODE_BOUNDS.concepts)
+    const filesRead = fieldList(request.filesRead, EPISODE_BOUNDS.file, EPISODE_BOUNDS.files)
+    const filesModified = fieldList(request.filesModified, EPISODE_BOUNDS.file, EPISODE_BOUNDS.files)
+    const tool = request.tool === undefined ? undefined : boundStatement(normalizeStatement(request.tool), EPISODE_BOUNDS.tool)
     const characters = [title, subtitle, narrative,
       ...facts, ...concepts, ...filesRead, ...filesModified]
       .join('').length
@@ -1783,9 +1801,14 @@ export class MemoryService extends Service {
       this.indexEpisode(updated)
       return updated
     }
+    // A full project makes room by dropping its oldest observation card: those are
+    // the derived, cheap layer, while summaries carry what the project learned.
     const stored = this.allEpisodes().filter(record => record.owner === request.owner && scopeProjectId(record.scope) === projectId)
     if (stored.length >= this.limits.maxEpisodesPerWorkspace) {
-      throw new MemoryError(`this project already stores ${this.limits.maxEpisodesPerWorkspace} episodes; delete unused ones first`, 'episodes-full')
+      const evicted = await this.evictOldestObservation(stored, request.kind)
+      if (!evicted) {
+        throw new MemoryError(`this project already stores ${this.limits.maxEpisodesPerWorkspace} episodes; delete unused ones first`, 'episodes-full')
+      }
     }
     const record: EpisodeRecord = {
       id: EpisodeId(`episode-${randomUUID()}`),
@@ -1880,6 +1903,29 @@ export class MemoryService extends Service {
       outcomes.push({ recordId, episodeIds: members.map(member => member.id), entity, key, value })
     }
     return outcomes
+  }
+
+  /**
+   * Free one episode slot by dropping the oldest observation card, so a summary
+   * never loses to the derived layer. An observation write itself must not evict
+   * an observation: a card-in flow keeps its own bound instead of churning.
+   * @param stored - current episodes of that project.
+   * @param incoming - kind of the episode asking for a slot.
+   * @returns whether a slot was freed.
+   */
+  private async evictOldestObservation(
+    stored: readonly EpisodeRecord[],
+    incoming: EpisodeRecord['kind'],
+  ): Promise<boolean> {
+    if (incoming !== 'summary') return false
+    const victim = stored
+      .filter(record => record.kind === 'observation')
+      .sort((left, right) => left.createdAt - right.createdAt)[0]
+    if (victim === undefined) return false
+    await this.dropVector('episode', victim.id)
+    await this.episodes.delete(victim.id)
+    this.unindexEpisode(victim.id)
+    return true
   }
 
   /** Facts of one episode not already stated by an active record of the same project. */

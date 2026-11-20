@@ -1721,6 +1721,40 @@ describe('duplicate detection', () => {
   })
 })
 
+describe('episode capacity', () => {
+  it('frees one slot for a summary by dropping the oldest observation card', async () => {
+    const { memory } = await harness({ config: { maxEpisodesPerWorkspace: 2 } })
+    const scope = { kind: 'project' as const, workspaceId: VIEW_A.workspace!.id, path: VIEW_A.workspace!.path }
+    const card = (fingerprint: string) => ({
+      owner: OWNER,
+      scope,
+      kind: 'observation' as const,
+      type: 'command',
+      title: `card ${fingerprint}`,
+      narrative: '',
+      fingerprint,
+      source: { sessionId: SessionId('s-episode') },
+    })
+    await memory.rememberEpisode(card('a'))
+    await memory.rememberEpisode(card('b'))
+    // The project is full of observation cards; a summary still gets in.
+    const summary = await memory.rememberEpisode({
+      owner: OWNER,
+      scope,
+      kind: 'summary',
+      type: 'summary',
+      title: 'what the project learned',
+      narrative: 'a durable summary',
+      fingerprint: 'summary',
+      source: { sessionId: SessionId('s-episode') },
+    })
+    const stored = memory.listEpisodes(VIEW_A)
+    expect(stored).toHaveLength(2)
+    expect(stored.map(record => record.id)).toContain(summary.id)
+    expect(stored.filter(record => record.kind === 'observation').map(record => record.title)).toEqual(['card b'])
+  })
+})
+
 describe('project history', () => {
   function episodeRequest(overrides: Partial<RememberEpisodeRequest> = {}): RememberEpisodeRequest {
     return {
@@ -1784,6 +1818,49 @@ describe('project history', () => {
     expect(repeated.updatedAt).toBe(2_000)
     expect(repeated.title).toBe('Chose FTS5 for session search')
     expect(memory.listEpisodes(VIEW_A)).toHaveLength(1)
+  })
+
+  it('clips an oversized episode text field to its schema bound', async () => {
+    const { memory } = await harness()
+    const stored = await memory.rememberEpisode(episodeRequest({
+      title: 'x'.repeat(300),
+      subtitle: 'y'.repeat(400),
+      narrative: 'z'.repeat(5000),
+      tool: 't'.repeat(80),
+    }))
+    expect(stored.title).toHaveLength(200)
+    expect(stored.subtitle).toHaveLength(300)
+    expect(stored.narrative).toHaveLength(4096)
+    expect(stored.tool).toHaveLength(64)
+    expect(memory.listEpisodes(VIEW_A).map(record => record.id)).toEqual([stored.id])
+  })
+
+  it('clips episode list entries and counts to their schema bounds', async () => {
+    const { memory } = await harness()
+    const stored = await memory.rememberEpisode(episodeRequest({
+      facts: Array.from({ length: 22 }, () => 'f'.repeat(240)),
+      concepts: Array.from({ length: 13 }, () => 'c'.repeat(150)),
+      filesRead: Array.from({ length: 22 }, () => 'r/read'),
+      filesModified: ['m/write'],
+    }))
+    expect(stored.facts).toHaveLength(20)
+    expect(stored.concepts).toHaveLength(12)
+    expect(stored.concepts.every(concept => concept.length === 150)).toBe(true)
+    expect(stored.filesRead).toHaveLength(20)
+    expect(stored.filesModified).toEqual(['m/write'])
+    expect(memory.listEpisodes(VIEW_A).map(record => record.id)).toEqual([stored.id])
+  })
+
+  it('clips an episode file path to its schema bound', async () => {
+    const { memory } = await harness()
+    const stored = await memory.rememberEpisode(episodeRequest({ filesModified: [`m/${'m'.repeat(520)}`] }))
+    expect(stored.filesModified).toEqual([`m/${'m'.repeat(510)}`])
+  })
+
+  it('rejects an episode type longer than its stored bound', async () => {
+    const { memory } = await harness()
+    await expect(memory.rememberEpisode(episodeRequest({ type: 'a'.repeat(33) })))
+      .rejects.toMatchObject({ code: 'invalid-identifier' })
   })
 
   it('rejects an oversized episode and a project at its stored limit', async () => {

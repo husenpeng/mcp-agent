@@ -58,7 +58,6 @@
     "@tomato/tool-testkit": "workspace:*",
     "@tomato/tools": "workspace:*",
     "@tomato/web": "workspace:*",
-    "@tomato/web-deepseek-api": "workspace:*",
     "@tomato/web-fetch-http": "workspace:*",
     "@types/turndown": "^5.0.6",
     "@tomato/scope": "workspace:*",

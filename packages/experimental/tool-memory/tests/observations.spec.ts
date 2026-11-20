@@ -84,6 +84,11 @@ describe('buildObservationCard', () => {
     expect(bareBash).toMatchObject({ type: 'command', title: 'bash: done' })
   })
 
+  it('clips a path-name concept to the episode concept bound', () => {
+    const card = buildObservationCard({ tool: 'edit', arguments: { path: `/repo/${'n'.repeat(400)}` }, failed: false, output: '' })
+    expect(card.concepts).toEqual(['edit', 'n'.repeat(256)])
+  })
+
   it('changes the fingerprint with the outcome and keeps it for an identical retry', () => {
     const call = { tool: 'bash', arguments: { command: 'pnpm test' }, failed: false, output: 'ok', value: { exitCode: 0 } }
     expect(buildObservationCard(call).fingerprint).toBe(buildObservationCard(call).fingerprint)

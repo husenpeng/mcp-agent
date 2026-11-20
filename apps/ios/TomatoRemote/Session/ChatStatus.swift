@@ -193,8 +193,8 @@ struct ChatStatusStrip: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 20)
-        .padding(.vertical, 6)
-        .background(TomatoToken.bgBase)
+        .padding(.vertical, 4)
+        .background(TomatoSurface.page)
         .accessibilityIdentifier("chat.status")
     }
 

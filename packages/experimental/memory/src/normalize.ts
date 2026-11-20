@@ -41,3 +41,17 @@ export function normalizeStatement(value: string): string {
     .replaceAll(/\s+/gu, ' ')
     .trim()
 }
+
+/**
+ * Trim one normalized text field to a stored-field limit. The limit counts
+ * UTF-16 units, the unit the storage schema bounds, so a clipped value always
+ * fits; a trailing part of a surrogate pair is dropped whole and the result is
+ * trimmed again.
+ * @param value - a field already passed through {@link normalizeStatement}.
+ * @param max - stored-field limit.
+ * @returns the value, at most `max` UTF-16 units long.
+ */
+export function boundStatement(value: string, max: number): string {
+  if (value.length <= max) return value
+  return value.slice(0, max).replace(/[\uD800-\uDBFF]$/u, '').trimEnd()
+}

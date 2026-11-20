@@ -32,7 +32,8 @@ struct ImagePreviewSheet: View {
                     .foregroundStyle(.white)
                     .frame(width: 34, height: 34)
                     .background(.white.opacity(0.16), in: Circle())
-                    .contentShape(Circle())
+                    // The visible circle stays 34 pt; the touch target meets 44 pt.
+                    .contentShape(Circle().inset(by: -5))
             }
             .buttonStyle(.plain)
             .padding(16)

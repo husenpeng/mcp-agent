@@ -1,0 +1,79 @@
+{
+  "name": "@tomato/client-ui-settings-work-team",
+  "description": "Settings page of the robot work team on the tomato web client's Plugins page: the defaults every work_team_create robot inherits and the model route of each published robot",
+  "version": "0.2.2-rc.2",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "packages/experimental/client-ui-settings-work-team"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "tomato": {
+    "client": {
+      "inject": [
+        "@tomato/api-robot-controller",
+        "@tomato/client-locale",
+        "@tomato/client-ui-primitives",
+        "@tomato/client-ui-renderer",
+        "@tomato/client-ui-settings",
+        "@tomato/client-ui-plugin-manager",
+        "@tomato/api-remotes"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@tomato/cordis": "workspace:~"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.3",
+    "@tomato/api-remotes": "workspace:*",
+    "@tomato/api-robot-controller": "workspace:*",
+    "@tomato/branded": "workspace:*",
+    "@tomato/client-locale": "workspace:*",
+    "@tomato/client-store": "workspace:*",
+    "@tomato/client-test-runtime": "workspace:*",
+    "@tomato/client-ui-plugin-manager": "workspace:*",
+    "@tomato/client-ui-primitives": "workspace:*",
+    "@tomato/client-ui-renderer": "workspace:*",
+    "@tomato/client-ui-settings": "workspace:*",
+    "@tomato/client-ui-slots": "workspace:*",
+    "@tomato/cordis": "workspace:~",
+    "@tomato/experimental-robot": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "files": [
+    "locale/*.json",
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
+    "src"
+  ]
+}

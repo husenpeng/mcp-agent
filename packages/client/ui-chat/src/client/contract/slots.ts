@@ -485,6 +485,14 @@ declare module '@tomato/client-ui-slots' {
     'conversation.chat.message.images': { kind: 'single'; scope: 'session'; owner: MessageImagesOwnerProps }
     /** User-message images, including pending and local-echo previews, independently replaceable from output images. */
     'conversation.chat.user.images': { kind: 'single'; scope: 'session'; owner: MessageImagesOwnerProps }
+    /**
+     * Metadata rendered beside one user-message image, listed in registration
+     * order for the admitted image reference the owner passes. A registration
+     * adds one badge per image (for example a read-status or evidence marker)
+     * and receives that reference in its props; it does not replace the image
+     * renderer or the `conversation.chat.user.images` entry. With no
+     * registrants nothing appears beside the image.
+     */
     'conversation.chat.user.image-meta': { kind: 'list'; scope: 'session'; owner: UserImageMetaOwnerProps }
     /**
      * Command row keyed by the command name. The component receives the folded

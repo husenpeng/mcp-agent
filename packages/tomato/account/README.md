@@ -31,6 +31,8 @@ Mount it in the browser roster after `ui-settings` and `locale`. It registers tw
 
 The client service keeps `loading`, `signed-in`, `signed-out`, and `unavailable` states. It reads the gateway on mount, on window focus, and after the login popup posts `tomato-auth-result`; it never polls. Sign-out calls `POST /api/auth/logout` on Web or the Desktop bridge, then refreshes the projection. A remote revoke that auth_service does not confirm becomes a dismissible notice.
 
+The page presents the account as one settings card: a 48px circular avatar, the name with its email line, and the state action share a row, and the action drops to its own line when the pane is too narrow. A signed-in session adds a green dot and the Signed in caption beside the name; the checking, signed-out, and unavailable states name the state in place of an identity, and the unavailable state adds the gateway hint beneath the identity.
+
 The renderer never receives the session id: Web keeps it in the httpOnly `tomato_session` cookie, and Desktop stores it in `safeStorage` behind the main process.
 
 ## Model Experience

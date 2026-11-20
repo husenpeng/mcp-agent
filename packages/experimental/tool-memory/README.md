@@ -52,8 +52,9 @@ Choose it whenever the memory service is mounted: the service alone has no model
 | `maxAlternatives` | `8` | Wordings kept from one expansion reply |
 | `capture` | `false` | Whether one bounded request captures durable statements from each finished turn as candidates |
 | `captureProfileActive` | `true` | Whether a quote-verified profile statement becomes active immediately |
-| `captureProvider` | current turn | Explicit provider of the capture request; set it with `captureModel` to keep review off an expensive conversation model |
-| `captureModel` | current turn | Explicit capture model; must be paired with `captureProvider` |
+| `captureProvider` | current turn | Explicit provider of the capture request; set it with `captureModel` to keep review off an expensive conversation model. A route that names no registered adapter falls back to the finished turn's own route and both routes are logged |
+| `captureModel` | current turn | Explicit capture model; must be paired with `captureProvider` and falls back with it |
+| `captureReasoningEffort` | route default | Reasoning effort for capture requests, for example `off` to keep a hybrid model cheap; a model that does not declare it fails the request loud |
 | `captureMaxInputBytes` | `6000` | UTF-8 bytes of the person messages sent to one capture request |
 | `captureMaxToolBytes` | `1200` | UTF-8 bytes of the tool activity sent to one capture request |
 | `captureMaxTokens` | `400` | Output-token cap of one capture request |
@@ -133,7 +134,7 @@ The `agent/pre-step` listener runs after the other listeners on the first step o
 
 At every `turn/end` a promotion pass waits for the turn's card writes, promotes facts repeated by episodes from different Sessions into candidate records, and appends the plugin record `plugin:tool-memory/promotion` with the records and episodes it covered. Failure observations and bare exit codes never promote.
 
-A second `tools/post-execute` listener stores one deterministic card per observed call: the tool, the work its command performs, its failure message or exit code, and a content fingerprint. The card's concepts name the real command and the paths it touched, so a command behind `cd <dir> &&` is searchable by what it did. It writes no model request, skips memory tools and delegated agents, and stands down while `episodeCapture` owns the observed tools, so a call is never stored twice.
+A second `tools/post-execute` listener stores one deterministic card per observed call: the tool, the work its command performs, its failure message or exit code, and a content fingerprint. The card's concepts name the real command and the paths it touched, so a command behind `cd <dir> &&` is searchable by what it did, and each concept is clipped to the stored concept bound so a long file name cannot make the card unstorable. It writes no model request, skips memory tools and delegated agents, and stands down while `episodeCapture` owns the observed tools, so a call is never stored twice.
 
 Query expansion sends one request through `ctx.llm.prepareCall()` under its own deadline and the tool call's cancellation, and appends the plugin record `plugin:tool-memory/query-expansion` (route, system text, query, token cap, and the wordings or the failure reason) to the calling Session before the result is used. Cancelling the tool call ends the search; every other failure falls back to the literal result.
 

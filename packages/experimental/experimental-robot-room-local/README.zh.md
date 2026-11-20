@@ -36,9 +36,19 @@ provider 强制执行本包的不变量：**成员模型只能提议一条消息
 
 ### 成员执行
 
+房间可选的 `capability` 块对每个成员的 `RobotSpec` 做收窄：工具 allow 取交集、deny 取并集、技能取交集，不在房间列表里的 MCP 服务器按工具名 deny，权限预设必须与机器人一致。
+
 成员的 Session id 是 `room-<room id>-<member id>`。provider 在已持久化时恢复它，否则创建它，挂载 `room:charter` system prompt section，并注册群聊工具。它在成员 scope 里拒绝 `send_message`、`subagent`、`workflow` 与 Team 任务工具，因此群聊日志是联系其他 Agent 的唯一路径。
 
 一次唤醒用成员的读取游标构建 `buildMemberInput`，运行预检预算，追加一条带成员 Session 与 turn 的 `activity` 消息，投递一条 user message，等待 turn 结束，记录实测用量，更新游标，并追加带同一引用的 finished activity。成员在本轮中发出的消息记录同一引用。群聊的 `routing.floor` 限制并发成员 turn；调度器合并同一成员的重复唤醒。成员 turn 超过 `guard.memberTurnTimeoutMs` 未结束会被取消，并以 `storm` 触发熔断。
+
+### 工单、自审与验收
+
+`work(room)` 为群聊页投影这些记录：每张工单一行，带成员、thread、主题、发起者、mandate 强度、最新报告状态、assignment 轮数与验收发现项。每次唤醒都在 `tomato_room_work` 域里按 superagent 词汇开一张工单：触发消息提供主题与 thread，人类触发记 `explicit` mandate，成员触发记 `proposed`。一轮成员工作对应一次 assignment，只有成员自己的自审放行，报告才是 `ready`。
+
+每个结束的任务 turn 之后，同一成员 Session 里再跑一个自审 turn：成员以 `REVIEW: pass` 或 `REVIEW: fail` 结尾，并在失败时每条问题一行。未通过或缺少结论的结果不会投递；provider 在同一张工单上开新的 assignment，把发现项交回成员，最多 `review.maxRounds` 轮，之后写系统行把任务留给你裁决。出站 A2A 请求与回复在 turn 期间被暂存，只有自审通过才投递；未通过则丢弃并写一行未投递数量。
+
+一条请求 thread 的全部工单都 `ready` 后，群聊里的 `reviewer` 成员跑一个验收 turn，用同样的结论格式作答。验收失败会把发现项作为新的 assignment 退回 worker；耗尽 `review.maxRounds` 后写系统行等待你处理。房间没有启用的 `reviewer` 成员时，记录为等待验收。`review.selfReview: false` 跳过自审 turn，`review.acceptance: false` 跳过验收；两项默认开启、默认三轮。
 
 ### 拒绝与批准
 
@@ -51,11 +61,11 @@ A2A 拒绝会追加一条带类型化 code 与 detail 的 `guard` 消息，并�
 
 #### 模型看到什么
 
-每次唤醒只投递一条由 `buildMemberInput` 构建的 user message：较早未读消息的摘要、最近窗口的原始群聊消息、唤醒原因与触发文本，以及结尾点名群聊工具的一行。成员的 system prompt 通过 `room:charter` section 携带群聊名称、章程、自身角色与成员名册；`room_ask` 与 `room_post` 接受成员名称或 id。工具结果报告受理的序列号，或拒绝码与说明。挂载了 `ctx.llm` 时，provider 会让成员模型生成较早消息摘要；路由缺失、超时或模型失败时回退到确定性摘要。
+每次唤醒只投递一条由 `buildMemberInput` 构建的 user message：较早未读消息的摘要、最近窗口的原始群聊消息、唤醒原因与触发文本，以及结尾点名群聊工具的一行。成员的 system prompt 通过 `room:charter` section 携带群聊名称、章程、自身角色与成员名册；`room_ask` 与 `room_post` 接受成员名称或 id。工具结果报告受理、暂存状态或拒绝码与说明。任务 turn 结束后会收到一条承载自审指令的 user message；reviewer 成员会收到一条承载验收指令的 user message。挂载了 `ctx.llm` 时，provider 会让成员模型生成较早消息摘要；路由缺失、超时或模型失败时回退到确定性摘要。
 
 #### Token 影响
 
-每次唤醒一条有界 user message，受群聊上下文窗口与单条限制约束；预检会拒绝无法放进单轮、回合与成员日额的唤醒。后续 turn 用实测的 `assistant/message` 用量替代估算。
+每次唤醒一条有界 user message 加一条自审指令，每条完成的 thread 再加一条验收指令；唤醒本身受群聊上下文窗口与单条限制约束；预检会拒绝无法放进单轮、回合与成员日额的唤醒。后续 turn 用实测的 `assistant/message` 用量替代估算。
 
 #### KV Cache 影响
 
@@ -66,9 +76,11 @@ A2A 拒绝会追加一条带类型化 code 与 detail 的 `guard` 消息，并�
 
 - **进程内调度器**——唤醒在内存排队；重启会丢失排队唤醒，且不重放机器人连锁。守卫快照会写入，但重启不会继续被中断的成员 turn。
 - **没有跨进程投递**——所有成员 Agent 都在 host 进程内运行；远程执行器与多 host 群聊后续再做。
-- **尚未应用机器人能力**——provider 挂载群聊章程与工具限制，但尚未解析每个成员的 `RobotSpec` 工具、技能与权限上限。
+- **只能收窄**——房间会应用成员的 `RobotSpec` 工具、技能与权限上限，并且只能收窄；房间侧若选择会放大机器人权限，会被忽略；权限预设不一致会让成员 turn 失败。
 - **每次唤醒一条消息**——成员不能拉取无界历史；`room_read` 最多 50 条，并计入本轮。
 - **没有流式 UI feed**——`room/changed` 在写入后发出；流式帧 controller 属于 Remote consumer。
+- **A2A 暂存投递**——成员在 turn 中提出的请求或回复，只有该 turn 的自审通过后才到达对端；对端无法在同一 turn 内回答。
+- **验收需要 reviewer**——没有启用的 `reviewer` 成员时，群聊不会完成验收；请求停在 ready 等待。
 
 <a id="dev-note"></a>
 ### 开发备注

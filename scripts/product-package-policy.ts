@@ -44,8 +44,6 @@ export const PRODUCT_PACKAGE_POLICY: Readonly<Record<string, ProductPackagePolic
   'packages/session/session-telemetry': { category: 'optional', reason: 'Tomato uses its own OTLP reporter; the upstream session telemetry seam stays off.' },
   'packages/session/session-telemetry-otel': { category: 'optional', reason: 'Tomato uses its own OTLP reporter; the upstream OTel upload stays off.' },
   'packages/telemetry/otel': { category: 'optional', reason: 'Tomato telemetry posts directly to its relay; the upstream OTel service is not mounted by default.' },
-  'packages/web/web-deepseek-api': { category: 'optional', reason: 'Tomato disables the DeepSeek web-search API provider; retained as a non-default upstream package.' },
-  'packages/web/web-search-deepseek': { category: 'optional', reason: 'Tomato disables DeepSeek web search in its bundles; HTTP fetch remains the default.' },
   'packages/sdk/client': { category: 'sdk', reason: 'Published TypeScript embedding client runs in the consumer process.' },
   'packages/typert/generator': { category: 'build', reason: 'Build-time generation of type metadata.' },
   'packages/test-support/agent-loop-testkit': { category: 'test', reason: 'Published agent-loop test harness.' },

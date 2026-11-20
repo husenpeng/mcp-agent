@@ -15,7 +15,7 @@ export type { RoomRunsSnapshot, RoomRunsSource } from './model.ts'
 export type { IRoomRuns } from './service.ts'
 export type {
   Room, RoomApprovalRequest, RoomMessage, RoomMessagesRequest, RoomPauseRequest, RoomPostRequest,
-  RoomPublicationRequest, RoomSnapshotFrame, RoomTargetRequest,
+  RoomPublicationRequest, RoomSnapshotFrame, RoomTargetRequest, RoomWorkRecord,
 } from '../types.ts'
 
 /** Required Client Remote services. */

@@ -17,6 +17,14 @@
         # cheap model where the conversation model is expensive.
         capture: true
 
+    - id: optional-memory-dream
+      name: '@tomato/memory-dream'
+      disabled: true
+      config:
+        # Offline consolidation: report mode by default, enable when ready.
+        enabled: false
+        applyMode: report
+
     - id: optional-focus
       name: '@tomato/experimental-focus'
 

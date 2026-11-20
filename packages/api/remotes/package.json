@@ -55,6 +55,7 @@
     "src"
   ],
   "dependencies": {
+    "@tomato/api-system-monitor-controller": "workspace:*",
     "@tomato/deque": "workspace:*",
     "@tomato/util-values": "workspace:*"
   },

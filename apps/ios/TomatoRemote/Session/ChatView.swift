@@ -7,6 +7,7 @@
 //  `ChatModel`.
 //
 
+import Combine
 import SwiftUI
 import UIKit
 
@@ -43,10 +44,14 @@ struct ChatView: View {
     @State private var previewFile: DeliveredFile?
     /// Photo of this conversation opened full screen.
     @State private var previewPhoto: ChatImageRef?
-    /// Document staged on the Host for the next prompt.
+    /// Document staged on the Host for the next prompt, with the bytes its chip
+    /// previews.
     @State private var staged: StagedFile?
+    @State private var stagedLocal: StagedDocument?
     @State private var isUploading = false
     @FocusState private var composerFocused: Bool
+    /// A starter prompt waiting to land in the dock, unsent.
+    @State private var prefill: ComposerPrefill?
     /// Whether the viewport is being kept on the newest message. A drag that
     /// scrolls up releases it until the reader asks to come back.
     @State private var followsBottom = true
@@ -184,22 +189,8 @@ struct ChatView: View {
                                 AssistantRow(text: chat.streamingText, pending: true)
                                     .id("streaming")
                             }
-                            // A turn that has produced neither words nor a visible
-                            // tool card yet still needs a living line where its
-                            // answer will land.
-                            if activity.showsInTranscript, chat.streamingText.isEmpty {
-                                ChatLiveRow(activity: activity, startedAt: activityStartedAt)
-                                    .id("live")
-                            }
-                            if chat.rows.isEmpty, chat.streamingText.isEmpty {
-                                EmptyPlaceholder(
-                                    systemImage: "sparkles",
-                                    title: chat.state == .ended ? "这段对话已结束" : "和 Mac 上的 agent 打个招呼",
-                                    detail: chat.state == .ended
-                                        ? "历史还在。发一条消息会让 Host 重新启动这个会话的 agent。"
-                                        : "它会在这里回答，并把用到的工具和花费记在时间线上。"
-                                )
-                            }
+                            // The persistent status strip already reports the
+                            // active phase; do not repeat the same live row here.
                         }
                         if !chat.deliverables.isEmpty {
                             DeliverablesCard(files: chat.deliverables) { previewFile = $0 }
@@ -218,7 +209,11 @@ struct ChatView: View {
                         }
                     )
                 }
-                .defaultScrollAnchor(.bottom)
+                // A conversation shorter than the screen reads from the top;
+                // pinning it to the bottom left a blank band above the first
+                // message. Only an overflowing transcript starts at the newest
+                // line.
+                .defaultScrollAnchor(transcriptHeight > viewportHeight + 4 ? .bottom : .top)
                 .background(
                     GeometryReader { geometry in
                         Color.clear.preference(key: ViewportHeightKey.self, value: geometry.size.height)
@@ -232,7 +227,12 @@ struct ChatView: View {
                 // the keyboard.
                 .simultaneousGesture(
                     DragGesture(minimumDistance: 12)
-                        .onChanged { _ in
+                        .onChanged { value in
+                            // Only a drag toward older messages takes the
+                            // scroll over. An upward flick at the bottom is
+                            // bounce; releasing the follow there stopped the
+                            // transcript right before the answer landed.
+                            guard value.translation.height > 0 else { return }
                             if followsBottom {
                                 followsBottom = false
                             }
@@ -253,8 +253,19 @@ struct ChatView: View {
                         jumpToLatest(proxy)
                     }
                 }
+                .overlay { welcomeOverlay }
                 .onChange(of: chat.rows.count) { _, _ in scheduleScroll(proxy) }
+                .onChange(of: chat.entries.count) { _, _ in scheduleScroll(proxy) }
                 .onChange(of: chat.streamingText) { _, _ in scheduleScroll(proxy) }
+                .onChange(of: chat.deliverables.count) { _, _ in scheduleScroll(proxy) }
+                // The turn's last update replaces the streaming text with the
+                // durable Markdown row, whose height the lazy stack measures
+                // after the change lands; follow it once more as it settles.
+                .onChange(of: chat.isRunning) { was, running in
+                    if was, !running {
+                        scheduleScroll(proxy)
+                    }
+                }
                 // The keyboard and the growing dock take height out of the
                 // viewport. A transcript that was following the newest message
                 // must keep it on screen instead of leaving blank space above
@@ -276,26 +287,30 @@ struct ChatView: View {
                         detail: "\(chat.rows.count) 行 · \(chat.deliverables.count) 个交付物"
                     )
                     chat.start(hub: model.hub)
+                    // A tap can outrun the list's warm-up; take the page if it
+                    // has landed since this screen was constructed.
+                    chat.adoptPreview(model.cachedEvents(chat.sessionId))
                 }
                 .task { await autoscrollTranscriptIfAsked(proxy) }
                 .task { stageDebugSampleIfAsked() }
             }
-            // The composer is a sibling of the transcript, not a safe-area inset.
-            // On iOS 26 a keyboard dismissal could leave an inset bar at the
-            // keyboard's old height and draw the conversation beneath it.
+            // The composer sits on the screen's own bottom safe area. That
+            // inset is the home indicator and nothing else once the tab bar is
+            // hidden. Behind the dock the page continues to the physical edge
+            // in its own fill: a material there tinted the band under the card
+            // grey and drew a seam across the page, and the dock floats clear of
+            // the transcript on its own soft shadow instead.
             composer
                 .background {
-                    Rectangle()
-                        .fill(.ultraThinMaterial)
-                        .ignoresSafeArea(edges: .bottom)
+                    TomatoToken.bgBase.ignoresSafeArea(edges: .bottom)
                 }
                 .overlay(alignment: .top) {
-                    Rectangle()
-                        .fill(TomatoToken.borderL1)
-                        .frame(height: 0.5)
+                    FadeOutToPage()
+                        .frame(height: 24)
+                        .allowsHitTesting(false)
                 }
         }
-        .background(TomatoToken.bgBase)
+        .background(TomatoSurface.page)
         // Messages carry Markdown links. A path on the Mac, or a tomato://
         // address, is this app's business; everything else belongs to the system.
         .environment(\.openURL, OpenURLAction { openLink($0) })
@@ -330,8 +345,14 @@ struct ChatView: View {
             }
         }
         .sheet(isPresented: $showsAgent) {
-            AgentSheet(sessionId: chat.sessionId, preset: chat.agentPreset, usage: chat.usage, running: chat.isRunning)
-                .tomatoSheet()
+            AgentSheet(
+                sessionId: chat.sessionId,
+                preset: chat.agentPreset,
+                usage: chat.usage,
+                running: chat.isRunning,
+                model: chat.modelSelection?.model
+            )
+            .tomatoSheet()
         }
         .confirmationDialog(
             pendingPermission.map { PermissionPresentation.confirmationTitle($0.value) } ?? "确认切换权限？",
@@ -383,6 +404,12 @@ struct ChatView: View {
             default:
                 break
             }
+        }
+        // The list's repair read is the only traffic left when the Host goes
+        // away. A read that succeeds after failures means it answers again, so a
+        // conversation left "离线" rejoins without the reader reopening it.
+        .onChange(of: model.hostReachableTick) { _, _ in
+            chat.resume(hub: model.hub)
         }
         // The list follows the Host's own notifications, so the conversation
         // takes its liveness from there: a turn that starts after this screen
@@ -548,6 +575,41 @@ extension ChatView {
         chat.runningTool?.startedAt ?? chat.turnStartedAt
     }
 
+    /// Whether the conversation still shows its welcome.
+    ///
+    /// A running turn without words draws its own live row, so an empty
+    /// transcript under one is not the welcome state; neither is a transcript
+    /// still loading, one with an earlier page to load, one that only carries
+    /// deliverables, or one whose owner is already typing.
+    private var showsWelcome: Bool {
+        !chat.isLoadingInitial
+            && !composerFocused
+            && !chat.hasEarlier
+            && chat.rows.isEmpty
+            && chat.streamingText.isEmpty
+            && chat.deliverables.isEmpty
+            && !activity.showsInTranscript
+    }
+
+    /// The first screen of a conversation is its welcome, not empty canvas. It
+    /// centers in the viewport and scrolls when a large type size makes it taller
+    /// than the screen.
+    @ViewBuilder
+    private var welcomeOverlay: some View {
+        if showsWelcome {
+            GeometryReader { geometry in
+                ScrollView {
+                    ConversationWelcome(state: chat.state) { prompt in
+                        prefill = ComposerPrefill(text: prompt)
+                    }
+                    .padding(.horizontal, 20)
+                    .frame(minHeight: geometry.size.height, alignment: .center)
+                }
+                .scrollBounceBehavior(.basedOnSize)
+            }
+        }
+    }
+
     private var restingNote: String? {
         switch chat.link {
         case .connecting:
@@ -612,7 +674,7 @@ extension ChatView {
                 images: item.images,
                 photos: chat.photos,
                 open: { previewPhoto = $0 },
-                needs: { chat.loadImage($0.id) }
+                needs: { chat.loadImage($0) }
             )
             .equatable()
             .opacity(item.pending ? 0.7 : 1)
@@ -717,6 +779,7 @@ extension ChatView {
                 onSend: { outgoing, images in
                     let receipt = staged?.receiptId
                     staged = nil
+                    stagedLocal = nil
                     followsBottom = true
                     journal.recordPrompt(outgoing, project: project, carriedPhoto: !images.isEmpty)
                     // Personal context now lives on the Host: the phone proposes
@@ -727,8 +790,12 @@ extension ChatView {
                 onPickDocument: { url, accessed in
                     Task { await uploadDocument(url, accessed: accessed) }
                 },
-                stagedDocument: staged?.name,
-                onRemoveDocument: { staged = nil },
+                stagedDocument: stagedLocal,
+                onRemoveDocument: {
+                    staged = nil
+                    stagedLocal = nil
+                },
+                prefill: prefill,
                 pending: pendingHere,
                 onAnswer: { showsPendings = true },
                 modelTitle: modelChipTitle,
@@ -781,11 +848,15 @@ extension ChatView {
         }
         do {
             let data = try Data(contentsOf: url)
-            staged = try await hub.uploadDocument(
+            let staged = try await hub.uploadDocument(
                 sessionId: chat.sessionId,
                 name: url.lastPathComponent,
                 data: data
             )
+            self.staged = staged
+            // The Host receipt names the upload but cannot serve the bytes back,
+            // so the chip keeps the local copy it previews.
+            stagedLocal = StagedDocument(name: staged.name, data: data)
         } catch {
             chat.errorMessage = describe(error)
             AppLog.error(.ui, "上传文档失败", detail: "\(url.lastPathComponent)：\(describe(error))")
@@ -895,25 +966,41 @@ extension ChatView {
         guard followsBottom else { return }
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 120_000_000)
-            guard followsBottom else { return }
+            guard followsBottom, transcriptHeight > viewportHeight + 4 else { return }
             proxy.scrollTo("bottom", anchor: .bottom)
         }
     }
 
     /// Scroll once per burst: streaming text changes many times per second and
     /// a `scrollTo` per chunk makes the thread stutter.
+    ///
+    /// After the burst goes quiet one more pass lands: the change that ends a
+    /// turn swaps the streaming text for the durable Markdown row, and the lazy
+    /// stack measures that row after the scroll already ran. Without the second
+    /// pass the finished answer sits below the viewport until a manual pull.
     private func scheduleScroll(_ proxy: ScrollViewProxy) {
         scrollWanted = true
         guard scrollTask == nil else { return }
         scrollTask = Task { @MainActor in
-            while scrollWanted {
-                scrollWanted = false
-                try? await Task.sleep(nanoseconds: 100_000_000)
-                if followsBottom {
-                    withAnimation(.easeOut(duration: 0.18)) {
-                        proxy.scrollTo("bottom", anchor: .bottom)
+            while true {
+                while scrollWanted {
+                    scrollWanted = false
+                    try? await Task.sleep(nanoseconds: 100_000_000)
+                    if followsBottom, transcriptHeight > viewportHeight + 4 {
+                        withAnimation(.easeOut(duration: 0.18)) {
+                            proxy.scrollTo("bottom", anchor: .bottom)
+                        }
                     }
                 }
+                try? await Task.sleep(nanoseconds: 350_000_000)
+                // A new burst during the wait belongs to the loop above.
+                if scrollWanted {
+                    continue
+                }
+                if followsBottom, transcriptHeight > viewportHeight + 4 {
+                    proxy.scrollTo("bottom", anchor: .bottom)
+                }
+                break
             }
             scrollTask = nil
         }
@@ -934,103 +1021,6 @@ extension ChatView {
                 proxy.scrollTo(anchor, anchor: .top)
             }
         }
-    }
-}
-
-// MARK: - Rows
-
-/// One assistant answer: running text with a small identity line, no bubble.
-///
-/// A bubble around a full-width answer wastes the phone's narrowest margin and
-/// makes long technical text harder to scan; mainstream assistants put the
-/// answer directly on the page and let the person's own message carry the tint.
-/// Equality is the tool payload alone: the closure only forwards the tap, so an
-/// append at the tail must not re-render every visible card.
-extension ToolCard: Equatable {
-    static func == (lhs: ToolCard, rhs: ToolCard) -> Bool {
-        lhs.tool == rhs.tool
-    }
-}
-
-struct ToolCard: View {
-    let tool: ToolDetail
-    let open: () -> Void
-
-    var body: some View {
-        Button(action: open) {
-            HStack(alignment: .center, spacing: 8) {
-                Image(systemName: icon)
-                    .font(.footnote.weight(.medium))
-                    .foregroundStyle(tint)
-                    .frame(width: 18)
-                Text(tool.name)
-                    .font(.footnote.weight(.medium))
-                    .foregroundStyle(TomatoToken.labelSecondary)
-                    .lineLimit(1)
-                Text(tool.summary)
-                    .font(.footnote)
-                    .foregroundStyle(TomatoToken.labelCaption)
-                    .lineLimit(1)
-                Spacer(minLength: 6)
-                trailing
-                Image(systemName: "chevron.right")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(TomatoToken.labelDimmed)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 9)
-            .background(TomatoToken.bgLayer2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        }
-        .buttonStyle(TomatoPressableStyle())
-        .accessibilityHint("查看工具参数与结果")
-    }
-
-    @ViewBuilder
-    private var trailing: some View {
-        switch tool.status {
-        case .running:
-            ProgressView().controlSize(.small)
-        case .done:
-            if let duration = tool.durationText {
-                Text(duration).font(.caption2.monospacedDigit()).foregroundStyle(TomatoToken.labelDimmed)
-            }
-        case .failed:
-            Image(systemName: "exclamationmark.circle.fill")
-                .font(.footnote)
-                .foregroundStyle(TomatoToken.stateErrorPrimary)
-        }
-    }
-
-    private var tint: Color {
-        switch tool.status {
-        case .failed: TomatoToken.stateErrorPrimary
-        case .running: TomatoToken.stateBusinessPrimary
-        case .done: TomatoToken.labelCaption
-        }
-    }
-
-    private var icon: String {
-        let name = tool.name.lowercased()
-        if name.contains("bash") || name.contains("shell") || name.contains("terminal") {
-            return "terminal"
-        }
-        if name.contains("read") || name.contains("write") || name.contains("edit") || name.contains("file") {
-            return "doc.text"
-        }
-        if name.contains("glob") || name.contains("grep") || name.contains("search") {
-            return "magnifyingglass"
-        }
-        if name.contains("web") || name.contains("fetch") {
-            return "globe"
-        }
-        if name.contains("job") || name.contains("schedule") || name.contains("wait") {
-            return "clock"
-        }
-        if name.contains("agent") || name.contains("subagent") {
-            return "person.2"
-        }
-        return "wrench.and.screwdriver"
     }
 }
 
@@ -1058,13 +1048,13 @@ private struct ToolDetailSheet: View {
                 }
                 .padding(20)
             }
-            .background(TomatoToken.bgBase)
+            .background(TomatoSurface.page)
         }
         // safeAreaInset reserves the header's height: as an overlay its opaque
         // background hid the first card at scroll-top and ate its touches.
         .safeAreaInset(edge: .top, spacing: 0) {
             SheetHeader(title: tool.name, caption: "工具调用", onClose: { dismiss() })
-                .background(TomatoToken.bgBase)
+                .background(TomatoSurface.page)
         }
     }
 
@@ -1116,6 +1106,8 @@ private struct AgentSheet: View {
     let preset: String?
     let usage: TokenTotals
     let running: Bool
+    /// Model the Session last routed to, when the Host has reported one.
+    let model: String?
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -1123,13 +1115,12 @@ private struct AgentSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     TomatoCard(padding: 18) {
-                        VStack(alignment: .leading, spacing: 12) {
-                            SectionHeader(title: "这个 Agent") {
-                                StatusPill(text: running ? "运行中" : "空闲", tone: running ? .warn : .idle)
-                            }
-                            InfoRow(label: "预设", value: preset ?? "默认")
-                            InfoRow(label: "会话", value: String(sessionId.prefix(12)) + "…")
-                        }
+                        AgentIdentity(
+                            preset: preset ?? "默认",
+                            model: model,
+                            running: running,
+                            onCopySessionId: { UIPasteboard.general.string = sessionId }
+                        )
                     }
 
                     TomatoCard(padding: 18) {
@@ -1150,13 +1141,54 @@ private struct AgentSheet: View {
                 }
                 .padding(20)
             }
-            .background(TomatoToken.bgBase)
+            .background(TomatoSurface.page)
         }
         // Same reason as the tool sheet: the header must reserve its height
         // instead of covering the first row of facts.
         .safeAreaInset(edge: .top, spacing: 0) {
             SheetHeader(title: "Agent", caption: "这个会话当前的运行事实。", onClose: { dismiss() })
-                .background(TomatoToken.bgBase)
+                .background(TomatoSurface.page)
+        }
+    }
+}
+
+/// What this Session runs as: the preset, the model, and its live state.
+///
+/// The preset reads as the row's value, not as a second title, and the
+/// Session id is the one fact worth carrying off this sheet, so it is a copy
+/// target rather than a truncated string.
+private struct AgentIdentity: View {
+    let preset: String
+    let model: String?
+    let running: Bool
+    let onCopySessionId: () -> Void
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                InfoRow(label: "预设", value: preset)
+                if let model {
+                    InfoRow(label: "模型", value: model)
+                }
+            }
+            Spacer(minLength: 0)
+            VStack(alignment: .trailing, spacing: 10) {
+                StatusPill(text: running ? "运行中" : "空闲", tone: running ? .active : .idle)
+                Button(action: onCopySessionId) {
+                    Label("复制会话", systemImage: "doc.on.doc")
+                        .font(.caption)
+                        .foregroundStyle(TomatoToken.labelCaption)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(TomatoToken.bgLayer2, in: Capsule())
+                        // The pill is caption-sized; the touch target is not.
+                        .frame(minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(TomatoPressableStyle())
+                .accessibilityLabel("复制会话 ID")
+                .accessibilityIdentifier("agent.copySessionId")
+            }
         }
     }
 }
@@ -1189,5 +1221,20 @@ private struct ViewportHeightKey: PreferenceKey {
 
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = max(value, nextValue())
+    }
+}
+
+/// A hairline-free transition into the dock's band: the transcript fades into
+/// the page beneath it instead of ending at a divider.
+private struct FadeOutToPage: View {
+    var body: some View {
+        Rectangle()
+            .fill(
+                LinearGradient(
+                    colors: [TomatoToken.bgBase.opacity(0), TomatoToken.bgBase],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
     }
 }

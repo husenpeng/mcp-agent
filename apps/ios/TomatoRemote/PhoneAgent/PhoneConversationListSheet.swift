@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 /// The history sheet under the Tomato Phone header.
 struct PhoneConversationListSheet: View {
@@ -180,6 +181,13 @@ struct PhoneConversationListSheet: View {
                     .tint(AgentTheme.accent)
                 }
                 .contextMenu {
+                    if let preview = summary.preview, !preview.isEmpty {
+                        Button {
+                            UIPasteboard.general.string = preview
+                        } label: {
+                            Label("复制消息", systemImage: "doc.on.doc")
+                        }
+                    }
                     Button {
                         renaming = summary
                     } label: {

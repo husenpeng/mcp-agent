@@ -92,6 +92,8 @@ export class DeepSeekAdapter<C extends Connection = Connection> extends LlmAdapt
     options: GenerateOptions, connection: C, signal: AbortSignal, activity: () => void,
   ): AsyncGenerator<StreamChunk> {
     signal.throwIfAborted()
+    // Purpose ids merge in from consumer packages; this package's compiler face sees only the base map.
+    const purpose = options.purpose as string | undefined
     const { messages, versions } = await prepareImages(
       options.messages, connection, options.model, this.dependencies.resolveAttachments?.(), this.imageAccess, signal,
     )
@@ -122,7 +124,7 @@ export class DeepSeekAdapter<C extends Connection = Connection> extends LlmAdapt
         const extensions = await prepareRequestExtensions(body as Readonly<Record<string, DeepSeekLlmApiJson>>, {
           signal,
           ...options.sessionId === undefined ? {} : { sessionId: String(options.sessionId) },
-          ...options.purpose === undefined ? {} : { purpose: options.purpose },
+          ...purpose === undefined ? {} : { purpose },
         }, this.dependencies.prepareExtensions, (fields, error) => {
           this.dependencies.onExtensionsOmitted?.({ provider: options.provider, model: options.model, fields, error })
         }, (error) => {
@@ -145,7 +147,7 @@ export class DeepSeekAdapter<C extends Connection = Connection> extends LlmAdapt
             ...betas.length === 0 ? {} : { 'anthropic-beta': betas.join(',') },
             'x-deepseek-harness-user-id': this.dependencies.resolveUserId(),
             ...options.sessionId === undefined ? {} : { 'x-deepseek-harness-session-id': String(options.sessionId) },
-            ...options.purpose === 'compaction' ? { 'x-deepseek-harness-compact': '1' } : {},
+            ...purpose === 'compaction' ? { 'x-deepseek-harness-compact': '1' } : {},
           },
         })
         if (!response.ok) {

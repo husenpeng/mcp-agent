@@ -24,6 +24,8 @@ struct PhoneAgentView: View {
     @EnvironmentObject private var tabMenu: FloatingTabMenuState
     @State private var segment = ProcessInfo.processInfo.arguments.contains("-TOMATO_PHONE_MARKET") ? 1 : 0
     @State private var showsSettings = false
+    /// Event log of the conversation on screen.
+    @State private var showsAudit = false
     /// The history sheet; the header's title control opens it.
     @State private var showsConversations = false
     @State private var showsMCP = false
@@ -84,6 +86,10 @@ struct PhoneAgentView: View {
             // opened from a button inside it, so no strip is reserved under the
             // input for a floating ball.
             .tomatoFloatingTabs(showsBall: false)
+            .sheet(isPresented: $showsAudit) {
+                PhoneAuditSheet(agent: agent)
+                    .tomatoSheet([.large])
+            }
             .sheet(
                 isPresented: $showsSettings,
                 onDismiss: {
@@ -96,6 +102,7 @@ struct PhoneAgentView: View {
             .sheet(isPresented: $showsConversations) {
                 PhoneConversationListSheet(agent: agent)
                     .tomatoSheet([.large])
+                    .task { await agent.refreshHistory() }
             }
             .sheet(isPresented: $showsMCP) {
                 MCPInstallSheet(store: store)
@@ -112,8 +119,13 @@ struct PhoneAgentView: View {
             .sheet(item: $picker) { which in
                 switch which {
                 case .model:
-                    PhoneModelSheet(config: $config)
-                        .tomatoSheet()
+                    if agent.backend == .service {
+                        PhoneServiceModelSheet(agent: agent)
+                            .tomatoSheet()
+                    } else {
+                        PhoneModelSheet(config: $config)
+                            .tomatoSheet()
+                    }
                 case .reasoning:
                     PhoneReasoningSheet(config: $config)
                         .tomatoSheet()
@@ -240,45 +252,48 @@ struct PhoneAgentView: View {
 
     private var header: some View {
         HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Tomato Phone")
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(AgentTheme.ink)
-                // The current conversation's name, and the way into the history:
-                // with more than one conversation, the header must say which one
-                // the composer writes into.
-                Button {
-                    composerFocused = false
-                    showsConversations = true
-                } label: {
-                    HStack(spacing: 5) {
-                        Image(systemName: "clock.arrow.circlepath")
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(AgentTheme.accent.opacity(0.85))
-                        Text(agent.currentTitle)
-                            .font(.caption)
-                            .lineLimit(1)
-                            .foregroundStyle(AgentTheme.inkSecondary)
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 8, weight: .bold))
-                            .foregroundStyle(AgentTheme.inkSecondary)
-                    }
-                    .contentShape(Rectangle())
+            // The current conversation is the useful title; the destination
+            // palette already names Tomato Phone, so no extra page title competes.
+            Button {
+                composerFocused = false
+                showsConversations = true
+            } label: {
+                HStack(spacing: 8) {
+                    IconChip(systemImage: "clock.arrow.circlepath", side: 32)
+                    Text(agent.currentTitle)
+                        .font(.headline)
+                        .lineLimit(1)
+                        .foregroundStyle(AgentTheme.ink)
+                    Image(systemName: "chevron.down")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(AgentTheme.inkSecondary)
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("会话列表")
-                .accessibilityValue(agent.currentTitle)
-                .accessibilityHint("打开这台手机上的历史会话")
-                .accessibilityIdentifier("phone.conversations")
+                .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("会话列表")
+            .accessibilityValue(agent.currentTitle)
+            .accessibilityHint("打开这台手机上的历史会话")
+            .accessibilityIdentifier("phone.conversations")
             Spacer(minLength: 8)
+            Button {
+                showsAudit = true
+            } label: {
+                Image(systemName: "list.bullet.rectangle")
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(AgentTheme.inkSecondary)
+                    .frame(width: 44, height: 44)
+            }
+            .accessibilityLabel("会话审计")
+            .accessibilityIdentifier("phone.audit")
             Button {
                 showsSettings = true
             } label: {
                 Image(systemName: "slider.horizontal.3")
                     .font(.body.weight(.medium))
-                    .foregroundStyle(AgentTheme.accent)
-                    .frame(width: 38, height: 38)
+                    .foregroundStyle(AgentTheme.inkSecondary)
+                    .frame(width: 44, height: 44)
                     .background(AgentTheme.surface, in: Circle())
                     .overlay(Circle().strokeBorder(AgentTheme.border, lineWidth: 1))
             }
@@ -287,8 +302,8 @@ struct PhoneAgentView: View {
             .accessibilityIdentifier("phone.modelSettings")
         }
         .padding(.horizontal, 20)
-        .padding(.top, 8)
-        .padding(.bottom, 12)
+        .padding(.top, 4)
+        .padding(.bottom, 8)
     }
 
     /// The cache monitor's current conclusion, shown until dismissed.
@@ -406,7 +421,7 @@ struct PhoneAgentView: View {
     private var turnStatus: some View {
         if let phase {
             TimelineView(.periodic(from: .now, by: 1)) { context in
-                HStack(spacing: 8) {
+                HStack(spacing: 7) {
                     ProgressView()
                         .controlSize(.mini)
                         .tint(AgentTheme.accent)
@@ -417,13 +432,19 @@ struct PhoneAgentView: View {
                     Spacer(minLength: 6)
                     if let elapsed = elapsedText(now: context.date) {
                         Text(elapsed)
-                            .font(.caption2.monospacedDigit())
-                            .foregroundStyle(AgentTheme.accent.opacity(0.8))
+                            .font(.caption2.monospacedDigit().weight(.medium))
+                            .foregroundStyle(AgentTheme.accent)
                             .contentTransition(.numericText())
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 6)
+                // One pill instead of a bare line: the running state sits in the
+                // transcript like an element, not like a stray caption.
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(AgentTheme.surfaceMuted, in: Capsule())
+                .overlay(Capsule().strokeBorder(AgentTheme.border.opacity(0.6), lineWidth: 0.5))
+                .padding(.horizontal, 16)
+                .padding(.bottom, 6)
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel(statusLabel(phase, now: context.date))
             }
@@ -461,7 +482,7 @@ struct PhoneAgentView: View {
         VStack(spacing: 0) {
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 10) {
+                    LazyVStack(alignment: .leading, spacing: 12) {
                         if agent.messages.isEmpty {
                             if agent.isLoadingHistory {
                                 historyLoading
@@ -531,10 +552,10 @@ struct PhoneAgentView: View {
                 .frame(width: 22, height: 22)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
-                Text("联网搜索需要飞书登录")
+                Text("使用公司 agent 需要飞书登录")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(AgentTheme.ink)
-                Text("登录由公司飞书完成，不经过配对的 Mac。")
+                Text("登录由公司飞书完成；登录后模型调用、会话与工具都在公司 agent_service。")
                     .font(.caption2)
                     .foregroundStyle(AgentTheme.inkSecondary)
             }
@@ -633,8 +654,34 @@ struct PhoneAgentView: View {
     @ViewBuilder
     private func assistantRow(_ message: AgentMessage) -> some View {
         if !message.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            assistantBubble(message.text)
+            answerBlock {
+                assistantBubble(message.text)
+            }
+            .contextMenu {
+                Button("复制") { UIPasteboard.general.string = message.text }
+            }
+            .accessibilityIdentifier("phone.message.assistant.\(message.id)")
         }
+    }
+
+    /// One answer with the phone's mark in the gutter, so a reply reads as the
+    /// assistant speaking rather than as a floating card.
+    /// - Parameter content: the bubble the answer draws.
+    /// - Returns: the marked row.
+    private func answerBlock(@ViewBuilder content: () -> some View) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            assistantMark
+                .padding(.top, 2)
+            content()
+                .frame(maxWidth: 560, alignment: .leading)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Small identity mark beside an answer: brand red, one letter, no pretence
+    /// at being a logo.
+    private var assistantMark: some View {
+        IconChip(systemImage: "sparkles", side: 24)
     }
 
     /// One answer bubble. The font is the transcript size, so a long turn scans
@@ -670,7 +717,8 @@ struct PhoneAgentView: View {
     /// - Returns: the content on the phone's card surface.
     private func phoneBubble(@ViewBuilder content: () -> some View) -> some View {
         content()
-            .padding(12)
+            .padding(.horizontal, 13)
+            .padding(.vertical, 11)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(AgentTheme.surface, in: RoundedRectangle(cornerRadius: AgentTheme.bubbleRadius, style: .continuous))
             .overlay(
@@ -682,12 +730,21 @@ struct PhoneAgentView: View {
     /// The answer as it arrives. It occupies the same bubble the finished row
     /// will, with a cursor-like dot so a slow first token still shows activity.
     private var streamingRow: some View {
-        HStack(alignment: .bottom, spacing: 6) {
-            streamingBubble(agent.streamingText)
-            Circle()
-                .fill(AgentTheme.accent)
-                .frame(width: 5, height: 5)
-                .padding(.bottom, 10)
+        answerBlock {
+            phoneBubble {
+                HStack(alignment: .lastTextBaseline, spacing: 2) {
+                    markdown(agent.streamingText)
+                        .font(AgentTheme.messageFont)
+                        .lineSpacing(2)
+                        .foregroundStyle(AgentTheme.ink)
+                    // A caret, not an animation: the phone's own frame probe and
+                    // UI tests treat a forever-running animation as a hang.
+                    RoundedRectangle(cornerRadius: 1, style: .continuous)
+                        .fill(AgentTheme.accent.opacity(0.85))
+                        .frame(width: 2, height: 14)
+                        .accessibilityHidden(true)
+                }
+            }
         }
         .accessibilityIdentifier("phone.streaming")
     }
@@ -729,12 +786,26 @@ struct PhoneAgentView: View {
                 Text(message.text)
                     .font(AgentTheme.messageFont)
                     .lineSpacing(2)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 9)
-                    .background(AgentTheme.accentGradient, in: RoundedRectangle(cornerRadius: AgentTheme.bubbleRadius, style: .continuous))
+                    .foregroundStyle(TomatoContainer.primary.label)
+                    .padding(.horizontal, 13)
+                    .padding(.vertical, 10)
+                    .background(
+                        TomatoContainer.primary.fill,
+                        in: UnevenRoundedRectangle(
+                            topLeadingRadius: AgentTheme.bubbleRadius,
+                            bottomLeadingRadius: AgentTheme.bubbleRadius,
+                            bottomTrailingRadius: 6,
+                            topTrailingRadius: AgentTheme.bubbleRadius,
+                            style: .continuous
+                        )
+                    )
+                    .contextMenu {
+                        Button("复制") { UIPasteboard.general.string = message.text }
+                    }
+                    .accessibilityIdentifier("phone.message.user.\(message.id)")
             }
         }
+        .frame(maxWidth: 300, alignment: .trailing)
         .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
@@ -783,8 +854,36 @@ struct PhoneAgentView: View {
         )
     }
 
+    /// The service is waiting on a tool approval; both decisions are explicit.
+    /// - Parameter approval: the pending request.
+    private func approvalBar(_ approval: AgentServiceApproval) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("服务端要执行：\(approval.toolName)")
+                .font(.caption.weight(.medium))
+                .foregroundStyle(AgentTheme.ink)
+            Text("风险：\(approval.risk)")
+                .font(.caption2)
+                .foregroundStyle(AgentTheme.inkSecondary)
+            HStack(spacing: 10) {
+                Button("拒绝") { agent.rejectPendingApproval() }
+                    .buttonStyle(.bordered)
+                    .accessibilityIdentifier("phone.approval.reject")
+                Button("允许") { agent.approvePendingApproval() }
+                    .buttonStyle(.borderedProminent)
+                    .accessibilityIdentifier("phone.approval.approve")
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(AgentTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal, 16)
+    }
+
     private var composer: some View {
         VStack(spacing: 8) {
+            if let approval = agent.pendingApproval {
+                approvalBar(approval)
+            }
             if let attachError {
                 Text(attachError)
                     .font(.caption)
@@ -839,20 +938,25 @@ struct PhoneAgentView: View {
                 }
                 toolbar
             }
-            .padding(10)
-            .background(AgentTheme.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .padding(12)
+            .background(AgentTheme.surface, in: RoundedRectangle(cornerRadius: AgentTheme.cardRadius, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                RoundedRectangle(cornerRadius: AgentTheme.cardRadius, style: .continuous)
                     .strokeBorder(
-                        composerFocused ? AgentTheme.accent.opacity(0.35) : AgentTheme.border,
+                        composerFocused ? TomatoLine.brandSoft : AgentTheme.border,
                         lineWidth: 1
                     )
+            )
+            .shadow(
+                color: TomatoShadow.flat.color,
+                radius: TomatoShadow.flat.radius,
+                y: TomatoShadow.flat.y
             )
             .animation(.easeOut(duration: 0.16), value: composerFocused)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .background(.ultraThinMaterial)
+        .background(AgentTheme.canvas.ignoresSafeArea(edges: .bottom))
     }
 
     @State private var draft = ""
@@ -863,20 +967,11 @@ struct PhoneAgentView: View {
     /// choices are independent.
     private var modelRow: some View {
         HStack(spacing: 6) {
-            ModelChoiceChip(title: config.model, identifier: "phone.composer.model") {
+            ModelChoiceChip(title: AgentBackendStore.serviceModelRoute ?? "默认模型", identifier: "phone.composer.model") {
                 composerFocused = false
                 picker = .model
             }
             .layoutPriority(1)
-            EffortChoiceChip(
-                title: AgentReasoningLevel.title(for: config.reasoningEffort),
-                isActive: config.reasoningEffort != nil,
-                identifier: "phone.composer.effort"
-            ) {
-                composerFocused = false
-                picker = .reasoning
-            }
-            .fixedSize()
             Spacer(minLength: 0)
             Button {
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -1001,8 +1096,10 @@ struct PhoneAgentView: View {
                 .foregroundStyle(agent.isRunning || hasContent ? Color.white : AgentTheme.inkSecondary)
                 .frame(width: 38, height: 38)
                 .background {
-                    if agent.isRunning || hasContent {
-                        Circle().fill(agent.isRunning ? AnyShapeStyle(AgentTheme.ink) : AnyShapeStyle(AgentTheme.accentGradient))
+                    if agent.isRunning {
+                        Circle().fill(AgentTheme.accent)
+                    } else if hasContent {
+                        Circle().fill(AgentTheme.accentGradient)
                     } else {
                         Circle().fill(AgentTheme.surfaceMuted)
                     }
@@ -1561,192 +1658,62 @@ struct PhoneAgentView: View {
 /// Model endpoint, key, and model id for the local agent.
 struct AgentModelSettingsView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var config = AgentConfigStore.load()
-    @State private var keyDraft = AgentConfigStore.apiKey ?? ""
-    @State private var saved: String?
     @ObservedObject private var agent = PhoneAgentModel.shared
-    @FocusState private var editing: Bool
+    @ObservedObject private var auth = AccountAuthStore.shared
+    @State private var showsLogin = false
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("Base URL", text: $config.baseURL)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .keyboardType(.URL)
-                        .focused($editing)
-                    SecureField("API Key", text: $keyDraft)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .focused($editing)
+                    LabeledContent("运行位置", value: "公司 agent_service")
+                    if auth.isSignedIn {
+                        LabeledContent("账号", value: "已登录")
+                        Button("退出登录", role: .destructive) {
+                            auth.clear()
+                            agent.startNewConversation()
+                        }
+                    } else {
+                        Button("飞书登录") { showsLogin = true }
+                            .accessibilityIdentifier("phone.settings.login")
+                    }
                 } header: {
-                    Text("模型服务")
+                    Text("Agent")
                 } footer: {
-                    Text("Key 只存在这台手机的钥匙串；Tomato Phone 的模型调用直接发往这个地址，不经过配对的 Mac。")
+                    Text("模型调用、工具与会话都在公司 agent_service；手机不保存模型 Key。")
                 }
 
                 Section {
-                    HStack {
-                        Text("当前模型")
-                        Spacer(minLength: 12)
-                        Menu {
-                            ForEach(CacheableModels.all) { entry in
-                                Button {
-                                    choose(entry)
-                                } label: {
-                                    if entry.id == config.model {
-                                        Label(entry.title, systemImage: "checkmark")
-                                    } else {
-                                        Text(entry.title)
-                                    }
-                                }
-                                .accessibilityIdentifier("phone.model.pick.\(entry.id)")
-                            }
-                        } label: {
-                            Text(config.model)
-                                .foregroundStyle(AgentTheme.accent)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                        }
-                        .accessibilityIdentifier("phone.model.current")
-                    }
-                    LabeledContent("缓存协议", value: config.wireProtocol.title)
+                    LabeledContent("当前模型", value: AgentBackendStore.serviceModelRoute ?? "服务端默认")
                 } header: {
                     Text("模型")
                 } footer: {
-                    Text("只列出已验证可缓存的模型；协议随模型自动选择。")
+                    Text("在对话页的模型芯片里切换；选择会写回当前会话，下一条消息生效。")
                 }
 
                 Section {
-                    Picker("推理深度", selection: reasoningSelection) {
-                        Text("自动").tag("")
-                        ForEach(AgentReasoningLevel.allCases) { level in
-                            Text(level.title).tag(level.rawValue)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .tint(AgentTheme.accent)
-                    .accessibilityIdentifier("phone.model.reasoning")
+                    LabeledContent("服务端", value: AgentBackendStore.serviceBase.host ?? "测试环境")
                 } header: {
-                    Text("推理")
+                    Text("连接")
                 } footer: {
-                    Text(config.wireProtocol == .anthropic
-                        ? "「自动」交给模型决定；低、中、高会作为 thinking 预算随每次请求发送。模型返回的思考内容会显示在回答上方。"
-                        : "「自动」交给模型决定；低、中、高会作为 reasoning_effort 随每次请求发送。模型返回的思考内容会显示在回答上方，用来核对这次档位是否真的起了作用。")
-                }
-
-                Section {
-                    Stepper("最多 \(config.maxSteps) 步", value: $config.maxSteps)
-                        .onChange(of: config.maxSteps) { _, next in
-                            if next < 1 {
-                                config.maxSteps = 1
-                            }
-                        }
-                } header: {
-                    Text("步数")
-                } footer: {
-                    Text("只限制一次消息里最多调用几轮工具，不设上限；填多大就允许多少轮。")
-                }
-
-                Section {
-                    LabeledContent("缓存状态", value: agent.cacheStatus)
-                    usageRows
-                } header: {
-                    Text("缓存监测")
-                } footer: {
-                    Text("cached 是服务端提示词缓存命中的 token；连续两次相同前缀的请求里，第二次应大于 0。")
-                }
-
-                Section {
-                    Button("保存") {
-                        save()
-                        saved = "已保存：\(config.model)"
-                    }
-                    if let saved {
-                        Text(saved)
-                            .font(.footnote)
-                            .foregroundStyle(AgentTheme.success)
-                    }
+                    Text("固定接入公司 agent_service 测试服务端，无需配置地址。")
                 }
             }
-            .scrollDismissesKeyboard(.immediately)
-            .navigationTitle("Tomato Phone 模型")
+            .navigationTitle("Tomato Phone 设置")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("关闭") {
-                        saveIfNeeded()
-                        dismiss()
-                    }
-                }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("完成") {
-                        save()
-                        dismiss()
-                    }
-                }
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("收起键盘") { editing = false }
+                    Button("完成") { dismiss() }
                 }
             }
-            .onChange(of: config) { _, next in
-                AgentConfigStore.save(next)
+            .sheet(isPresented: $showsLogin) {
+                FeishuLoginSheet(base: CompanyAuth.baseURL) { session, _ in
+                    auth.save(sessionId: session, searchBaseURL: CompanyAuth.baseURL.absoluteString)
+                    Task { await agent.refreshServiceConversations() }
+                }
+                .tomatoSheet([.large])
             }
-            // The composer's sheets write the same stored configuration, so a
-            // snapshot taken before they ran must not be edited as current.
-            .onAppear { config = AgentConfigStore.load() }
-            .onDisappear { saveIfNeeded() }
             .presentationDragIndicator(.visible)
-        }
-    }
-
-    private func saveConfig() {
-        AgentConfigStore.save(config)
-    }
-
-    /// The last step's token counters, including cache reads and writes.
-    @ViewBuilder
-    private var usageRows: some View {
-        if let usage = agent.lastUsage {
-            LabeledContent("输入", value: "\(usage.inputTokens ?? 0)")
-            LabeledContent("输出", value: "\(usage.outputTokens ?? 0)")
-            LabeledContent("cached", value: "\(usage.cachedInputTokens ?? 0)")
-            LabeledContent("cache-write", value: "\(usage.cacheWriteTokens ?? 0)")
-        } else {
-            Text("还没有完成一次模型调用。")
-                .font(.footnote)
-                .foregroundStyle(AgentTheme.inkSecondary)
-        }
-    }
-
-    /// Record the chosen verified model together with its cache protocol.
-    /// - Parameter entry: measured model the picker offered.
-    private func choose(_ entry: CacheableModel) {
-        config.model = entry.id
-        config.api = entry.wire
-        AgentConfigStore.save(config)
-    }
-
-    /// Bridge the optional stored effort to the picker's string tags.
-    private var reasoningSelection: Binding<String> {
-        Binding(
-            get: { config.reasoningEffort ?? "" },
-            set: { config.reasoningEffort = $0.isEmpty ? nil : $0 }
-        )
-    }
-
-    private func save() {
-        saveConfig()
-        try? AgentConfigStore.setAPIKey(keyDraft)
-    }
-
-    /// Closing the sheet by swiping must not lose an edit.
-    private func saveIfNeeded() {
-        saveConfig()
-        if !keyDraft.isEmpty {
-            try? AgentConfigStore.setAPIKey(keyDraft)
         }
     }
 }

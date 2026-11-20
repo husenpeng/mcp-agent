@@ -12,7 +12,7 @@ import type {
 export type {
   A2aEnvelopeV2, A2aIntent, AdmissionVerdict, BreakerState, MemberRole, RefusalCode, Room, RoomApproval,
   RoomAuthor, RoomEpisode, RoomGuardRecord, RoomGuardSnapshot, RoomId, RoomMemberId, RoomMemberSpec, RoomMessage,
-  RoomMessageId, RoomMessageKind, RoomSpec, RoomSpecIssue, RoomState, TripReason, WakeRule,
+  RoomMessageId, RoomMessageKind, RoomSpec, RoomSpecIssue, RoomState, RoomWorkRecord, TripReason, WakeRule,
 } from '@tomato/experimental-robot-room'
 
 /** One whole-room snapshot frame. */

@@ -33,20 +33,21 @@ Choose the service when a plugin or tool must search or fetch without hard-codin
 
 ### Minimal configuration
 
-Load the service and let a single mounted backend auto-select, or pin a provider id with `searchProvider`/`fetchProvider`. The environment variables `$TOMATO_WEB_SEARCH_PROVIDER` and `$TOMATO_WEB_FETCH_PROVIDER` feed the same fields and are not a separate priority chain. Both backends below register a fetch provider, so the example pins `fetchProvider: http`.
+Load the service and let a single mounted backend auto-select, or name an ordered candidate list with `searchProviders`/`fetchProviders`: the first candidate that is registered and available wins, so a deployment can prefer the gateway and keep the anonymous HTTP fetch as its signed-out fallback. The environment variables `$TOMATO_WEB_SEARCH_PROVIDERS` and `$TOMATO_WEB_FETCH_PROVIDERS` carry the same comma-separated lists and are not a separate priority chain.
 
 ```yaml
 - name: '@tomato/web'
   config:
-    fetchProvider: http
-- name: '@tomato/web-deepseek-api'
-- name: '@tomato/web-fetch-http'
+    searchProviders: [company]
+    fetchProviders: [company, http]
+- name: '@tomato/web-search-company'
+- name: '@tomato/web-fetch-company'
 ```
 
 | Field | Default | Meaning |
 |---|---|---|
-| `searchProvider` | (unset) | Pinned search provider id; unset auto-selects when exactly one is usable |
-| `fetchProvider` | (unset) | Pinned fetch provider id; unset auto-selects when exactly one is usable |
+| `searchProviders` | `[]` | Ordered search candidate ids; the first registered usable one wins, and an empty list auto-selects exactly one usable provider |
+| `fetchProviders` | `[]` | Ordered fetch candidate ids; the first registered usable one wins, which is how a signed-out step still reaches the anonymous HTTP provider |
 
 The generated [configuration catalog](../../../docs/config-catalog.md#tomatoweb) is the exhaustive source for every accepted field and its JSDoc.
 
@@ -84,7 +85,7 @@ A provider's availability is a cheap local check — for example whether its API
 <a id="listing-providers"></a>
 ### Listing providers
 
-`listProviders()` returns every registered search and fetch provider as `{ id, title?, description? }` entries, each list in registration order; it lists unavailable providers too, because a picker shows what can be pinned. `title` is the provider's optional display name, and a picker shows `id` when it is absent. `description` is optional `LocalizedText` from `@tomato/package-manifest`, a plain string or translations keyed by lowercase language id with a required `en` entry, stating what the provider suits and what it costs or cannot do; a picker shows it under the selected provider and shows nothing when it is absent. Each registration and each disposal emits the payload-free `web/providers-changed` event after the registry changes, and observer failures cannot veto the change. Clients call the same method as the `web` Remote namespace, `ctx.remote.web.listProviders()`, whose Remote result carries the lists in `value` only when `ok` is true, and refresh on the forwarded `web/providers-changed` event; the [Web search and fetch settings page](../../client/ui-settings-web-search/README.md) fills its Search and Fetch menus this way. A plugin (including one written in creator mode) that registers a provider with a `title` appears in the matching menu under that title, shows its `description` while selected, and choosing it pins `searchProvider` or `fetchProvider` to its `id`.
+`listProviders()` returns every registered search and fetch provider as `{ id, title?, description? }` entries, each list in registration order; it lists unavailable providers too, because a picker shows what can be pinned. `title` is the provider's optional display name, and a picker shows `id` when it is absent. `description` is optional `LocalizedText` from `@tomato/package-manifest`, a plain string or translations keyed by lowercase language id with a required `en` entry, stating what the provider suits and what it costs or cannot do; a picker shows it under the selected provider and shows nothing when it is absent. Each registration and each disposal emits the payload-free `web/providers-changed` event after the registry changes, and observer failures cannot veto the change. Clients call the same method as the `web` Remote namespace, `ctx.remote.web.listProviders()`, whose Remote result carries the lists in `value` only when `ok` is true, and refresh on the forwarded `web/providers-changed` event; a provider picker fills its Search and Fetch menus this way. A plugin (including one written in creator mode) that registers a provider with a `title` appears in the matching menu under that title, shows its `description` while selected, and choosing it puts that `id` first in `searchProviders` or `fetchProviders`.
 
 ```text
 // Remote: web/listProviders; Host event: web/providers-changed
@@ -106,7 +107,7 @@ A search or fetch backend outside the shipped composition is a plugin package th
       name: '@example/tomato-web-search-acme'
 ```
 
-`tomato --profile <name> --dump-config` prints the row under the patch file's layer. After the restart, the provider appears in the **Web search provider** or **Web fetch provider** menu of the [settings page](../../client/ui-settings-web-search/README.md) under its `title`, or its `id` when it has none; the page needs no change. Choosing it pins `searchProvider` or `fetchProvider` to its `id`. If the row is later removed while the provider is selected, the menu shows the stored id as **(not loaded)** and each call fails with `WEB_PROVIDER_CONFIGURED_MISSING` until another provider is chosen.
+`tomato --profile <name> --dump-config` prints the row under the patch file's layer. After the restart, the provider appears in the **Web search provider** or **Web fetch provider** menu of a provider picker under its `title`, or its `id` when it has none; the page needs no change. Choosing it puts that `id` first in `searchProviders` or `fetchProviders`. If the row is later removed while the provider is selected, the menu shows the stored id as **(not loaded)** and each call fails with `WEB_PROVIDER_CONFIGURED_MISSING` until another provider is chosen.
 
 <a id="search-readiness"></a>
 ### Search and fetch readiness

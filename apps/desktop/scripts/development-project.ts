@@ -150,22 +150,29 @@ export function prepareDevelopmentProject(options: DevelopmentProjectOptions): s
   // These are application-layer settings: the engine itself names no provider.
   const teamDirectory = process.env.TOMATO_SUPERAGENT_DIRECTORY
   if (teamDirectory !== undefined && teamDirectory !== '') {
+    // An empty bot URL runs the team app-only: requests arrive from the ticket
+    // panel's composer instead of a Feishu service.
+    const botUrl = process.env.TOMATO_SUPERAGENT_BOT_URL ?? 'http://127.0.0.1:8013'
     writeFileSync(join(options.projectDir, 'cordis.patch.yml'), [
       '- insert:',
       '    - id: superagent-runtime',
       '      name: "@tomato/superagent-runtime"',
       '      config:',
       `        directory: ${JSON.stringify(teamDirectory)}`,
-      `        provider: ${JSON.stringify(process.env.TOMATO_SUPERAGENT_PROVIDER ?? 'claude-sonnet-5-5')}`,
+      `        provider: ${JSON.stringify(process.env.TOMATO_SUPERAGENT_PROVIDER ?? 'blueai')}`,
       `        model: ${JSON.stringify(process.env.TOMATO_SUPERAGENT_MODEL ?? 'DeepSeek-V4.1-Flash-1017')}`,
       '        maxOutputTokens: 16000',
       '        permissionPreset: workspace-write',
-      '        allowedSenders:',
-      `          - ${JSON.stringify(process.env.TOMATO_SUPERAGENT_SENDER ?? 'ou_b2d923aea664c674f8c16ecfbb0814e5')}`,
-      '        bot:',
-      `          baseUrl: ${JSON.stringify(process.env.TOMATO_SUPERAGENT_BOT_URL ?? 'http://127.0.0.1:8013')}`,
-      '          userId: tomato-supervisor',
-      '        pollSeconds: 15',
+      ...botUrl === ''
+        ? ['        pollSeconds: 0']
+        : [
+          '        allowedSenders:',
+          `          - ${JSON.stringify(process.env.TOMATO_SUPERAGENT_SENDER ?? 'ou_b2d923aea664c674f8c16ecfbb0814e5')}`,
+          '        bot:',
+          `          baseUrl: ${JSON.stringify(botUrl)}`,
+          '          userId: tomato-supervisor',
+          '        pollSeconds: 15',
+        ],
       '        isolate: false',
       '        replies: false',
       '- insert:',
@@ -173,6 +180,28 @@ export function prepareDevelopmentProject(options: DevelopmentProjectOptions): s
       '      name: "@tomato/client-ui-superagent"',
       '',
     ].join('\n'))
+    // The browser roster is read from the profile manifest, so the client half
+    // must be listed there as a dependency of the generated profile.
+    const manifestPath = join(options.projectDir, 'package.json')
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
+      dependencies?: Record<string, string>
+      tomato?: { profile?: { bundles?: string[] } }
+    }
+    manifest.dependencies = {
+      ...manifest.dependencies,
+      '@tomato/superagent-runtime': '*',
+      '@tomato/client-ui-superagent': '*',
+      '@tomato/experimental-robot-app': '*',
+    }
+    const bundles = manifest.tomato?.profile?.bundles ?? []
+    manifest.tomato = {
+      ...manifest.tomato,
+      profile: {
+        ...manifest.tomato?.profile,
+        bundles: [...new Set([...bundles, '@tomato/experimental-robot-app'])],
+      },
+    }
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, undefined, 2)}\n`)
   }
   const destinationModules = join(options.projectDir, 'node_modules')
   mkdirSync(destinationModules, { recursive: true })

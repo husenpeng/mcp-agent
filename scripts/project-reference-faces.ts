@@ -13,6 +13,7 @@ interface ProjectReferenceConfig {
 
 const WORKSPACE_MANIFESTS = [
   'packages/*/*/package.json',
+  'plugins/tomato-market/package.json',
   'apps/*/package.json',
   'vendor/*/package.json',
 ] as const

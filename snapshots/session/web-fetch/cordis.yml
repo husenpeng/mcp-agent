@@ -7,6 +7,9 @@
 
 - id: web
   name: '@tomato/web'
+  config:
+    fetchProviders: [http]
+
 
 - id: web-fetch-http
   name: '@tomato/web-fetch-http'

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { Context } from '@tomato/cordis'
 import WebRuntime, {
   WebError,
@@ -34,9 +34,14 @@ function fetchResult(marker: string): WebFetchResult {
 }
 
 /** Mount a WebRuntime on a fresh root context with the given config. */
-async function mountWeb(config: { searchProvider?: string; fetchProvider?: string } = {}): Promise<{ ctx: Context; web: WebRuntime }> {
+async function mountWeb(
+  config: { searchProviders?: string[]; fetchProviders?: string[] } = {},
+): Promise<{ ctx: Context; web: WebRuntime }> {
   const ctx = new Context()
-  await ctx.plugin(WebRuntime, config)
+  await ctx.plugin(WebRuntime, {
+    ...config.searchProviders === undefined ? {} : { searchProviders: config.searchProviders },
+    ...config.fetchProviders === undefined ? {} : { fetchProviders: config.fetchProviders },
+  })
   return { ctx, web: ctx.web }
 }
 
@@ -154,13 +159,13 @@ describe('WebRuntime execution resolution', () => {
   })
 
   it('throws WEB_PROVIDER_CONFIGURED_MISSING for an unregistered configured id', async () => {
-    const { web } = await mountWeb({ searchProvider: 'perplexity' })
+    const { web } = await mountWeb({ searchProviders: ['perplexity'] })
     web.registerSearchProvider(makeSearchProvider('exa', available, () => Promise.resolve(searchResult('exa'))))
     await expect(web.search({ query: 'q' })).rejects.toThrow(expect.objectContaining({ code: 'WEB_PROVIDER_CONFIGURED_MISSING' }))
   })
 
   it('throws WEB_PROVIDER_CONFIGURED_UNAVAILABLE for an unusable configured id', async () => {
-    const { web } = await mountWeb({ searchProvider: 'exa' })
+    const { web } = await mountWeb({ searchProviders: ['exa'] })
     web.registerSearchProvider(makeSearchProvider('exa', unavailable, () => Promise.resolve(searchResult('exa'))))
     await expect(web.search({ query: 'q' })).rejects.toThrow(expect.objectContaining({ code: 'WEB_PROVIDER_CONFIGURED_UNAVAILABLE' }))
   })
@@ -173,10 +178,82 @@ describe('WebRuntime execution resolution', () => {
   })
 
   it('runs the configured provider even when another usable provider is registered', async () => {
-    const { web } = await mountWeb({ searchProvider: 'perplexity' })
+    const { web } = await mountWeb({ searchProviders: ['perplexity'] })
     web.registerSearchProvider(makeSearchProvider('exa', available, () => Promise.resolve(searchResult('exa'))))
     web.registerSearchProvider(makeSearchProvider('perplexity', available, () => Promise.resolve(searchResult('perplexity'))))
     await expect(web.search({ query: 'q' })).resolves.toMatchObject({ content: 'perplexity' })
+  })
+
+  it('uses the first available candidate and ignores registration order', async () => {
+    const { web } = await mountWeb({ searchProviders: ['perplexity', 'exa'] })
+    web.registerSearchProvider(makeSearchProvider('exa', available, () => Promise.resolve(searchResult('exa'))))
+    web.registerSearchProvider(makeSearchProvider('perplexity', available, () => Promise.resolve(searchResult('perplexity'))))
+    await expect(web.search({ query: 'q' })).resolves.toMatchObject({ content: 'perplexity' })
+  })
+
+  it('falls back to the next candidate when the preferred one is unavailable', async () => {
+    const { web } = await mountWeb({ searchProviders: ['company', 'http'] })
+    web.registerSearchProvider(makeSearchProvider('company', unavailable, () => Promise.resolve(searchResult('company'))))
+    web.registerSearchProvider(makeSearchProvider('http', available, () => Promise.resolve(searchResult('http'))))
+    await expect(web.search({ query: 'q' })).resolves.toMatchObject({ content: 'http' })
+  })
+
+  it('uses the environment search candidate list when the config names none', async () => {
+    vi.stubEnv('TOMATO_WEB_SEARCH_PROVIDERS', 'perplexity')
+    try {
+      const { web } = await mountWeb()
+      web.registerSearchProvider(makeSearchProvider('exa', available, () => Promise.resolve(searchResult('exa'))))
+      web.registerSearchProvider(makeSearchProvider('perplexity', available, () => Promise.resolve(searchResult('perplexity'))))
+      await expect(web.search({ query: 'q' })).resolves.toMatchObject({ content: 'perplexity' })
+    } finally {
+      vi.unstubAllEnvs()
+    }
+  })
+
+  it('uses the environment fetch candidate list when the config names none', async () => {
+    vi.stubEnv('TOMATO_WEB_FETCH_PROVIDERS', 'perplexity')
+    try {
+      const { web } = await mountWeb()
+      web.registerFetchProvider(makeFetchProvider('exa', available, fetchResult('exa')))
+      web.registerFetchProvider(makeFetchProvider('perplexity', available, fetchResult('perplexity')))
+      await expect(web.fetch({ url: 'https://example.com' })).resolves.toMatchObject({ body: { content: 'perplexity' } })
+    } finally {
+      vi.unstubAllEnvs()
+    }
+  })
+
+  it('falls through an unregistered candidate to a registered available one', async () => {
+    const { web } = await mountWeb({ searchProviders: ['company', 'http'] })
+    web.registerSearchProvider(makeSearchProvider('http', available, () => Promise.resolve(searchResult('http'))))
+    await expect(web.search({ query: 'q' })).resolves.toMatchObject({ content: 'http' })
+  })
+
+  it('reports every candidate when none is usable', async () => {
+    const { web } = await mountWeb({ searchProviders: ['company', 'http'] })
+    web.registerSearchProvider(makeSearchProvider('company', unavailable, () => Promise.resolve(searchResult('company'))))
+    web.registerSearchProvider(makeSearchProvider('http', unavailable, () => Promise.resolve(searchResult('http'))))
+    await expect(web.search({ query: 'q' })).rejects.toThrow(expect.objectContaining({
+      code: 'WEB_PROVIDER_CONFIGURED_UNAVAILABLE',
+      message: expect.stringContaining('company, http') as string,
+    }))
+  })
+
+  it('reports the first unregistered candidate when nothing else is usable', async () => {
+    const { web } = await mountWeb({ searchProviders: ['company', 'http'] })
+    web.registerSearchProvider(makeSearchProvider('http', unavailable, () => Promise.resolve(searchResult('http'))))
+    await expect(web.search({ query: 'q' })).rejects.toThrow(expect.objectContaining({
+      code: 'WEB_PROVIDER_CONFIGURED_MISSING',
+      message: expect.stringContaining('company') as string,
+    }))
+  })
+
+  it('applies the candidate order to fetch as well', async () => {
+    const { web } = await mountWeb({ fetchProviders: ['company', 'http'] })
+    web.registerFetchProvider(makeFetchProvider('http', available, fetchResult('http')))
+    web.registerFetchProvider(makeFetchProvider('company', unavailable, fetchResult('company')))
+    await expect(web.fetch({ url: 'https://example.com' })).resolves.toMatchObject({
+      body: { kind: 'text', content: 'http' },
+    })
   })
 
   it('ignores unusable providers when auto-selecting', async () => {
@@ -235,7 +312,7 @@ describe('WebRuntime search readiness', () => {
   }
 
   it('answers from the selected provider and passes it the request route', async () => {
-    const { web } = await mountWeb({ searchProvider: 'deepseek' })
+    const { web } = await mountWeb({ searchProviders: ['deepseek'] })
     const asked: (string | undefined)[] = []
     web.registerSearchProvider(readyProvider('deepseek', available, false, asked))
     await expect(web.searchReady('deepseek-official')).resolves.toBe(false)
@@ -243,7 +320,7 @@ describe('WebRuntime search readiness', () => {
   })
 
   it('does not ask a provider that search() would not select', async () => {
-    const { web } = await mountWeb({ searchProvider: 'exa' })
+    const { web } = await mountWeb({ searchProviders: ['exa'] })
     const deepseekAsked: (string | undefined)[] = []
     web.registerSearchProvider(readyProvider('exa', available, true))
     web.registerSearchProvider(readyProvider('deepseek', available, false, deepseekAsked))
@@ -264,12 +341,15 @@ describe('WebRuntime search readiness', () => {
     await expect(web.searchReady('deepseek-official')).resolves.toBe(true)
   })
 
-  it.each([
+  const readinessCases: Array<[string, Parameters<typeof mountWeb>[0], WebSearchProvider[]]> = [
     ['nothing is registered', {}, []],
-    ['the configured provider is not registered', { searchProvider: 'missing' }, [readyProvider('other', available, false)]],
-    ['the configured provider is unavailable', { searchProvider: 'down' }, [readyProvider('down', unavailable, false)]],
+    ['the configured provider is not registered', { searchProviders: ['missing'] }, [readyProvider('other', available, false)]],
+    ['the configured provider is unavailable', { searchProviders: ['down'] }, [readyProvider('down', unavailable, false)]],
     ['several usable providers are registered', {}, [readyProvider('a', available, false), readyProvider('b', available, false)]],
-  ] as const)('answers true when %s, leaving search() to report the failure', async (_label, config, providers) => {
+  ]
+  it.each(readinessCases)('answers true when %s, leaving search() to report the failure', async (
+    _label, config, providers,
+  ) => {
     const { web } = await mountWeb(config)
     for (const provider of providers) web.registerSearchProvider(provider)
     await expect(web.searchReady('deepseek-official')).resolves.toBe(true)
@@ -340,7 +420,7 @@ describe('WebRuntime fetch readiness', () => {
   }
 
   it('answers from the provider fetch() selects and passes it the request route', async () => {
-    const { web } = await mountWeb({ fetchProvider: 'deepseek' })
+    const { web } = await mountWeb({ fetchProviders: ['deepseek'] })
     const asked: (string | undefined)[] = []
     const httpAsked: (string | undefined)[] = []
     web.registerFetchProvider(readyFetchProvider('deepseek', available, false, asked))
@@ -357,7 +437,7 @@ describe('WebRuntime fetch readiness', () => {
   })
 
   it('answers true when no provider qualifies, leaving fetch() to report the failure', async () => {
-    const { web } = await mountWeb({ fetchProvider: 'down' })
+    const { web } = await mountWeb({ fetchProviders: ['down'] })
     web.registerFetchProvider(readyFetchProvider('down', unavailable, false))
     await expect(web.fetchReady('deepseek-official')).resolves.toBe(true)
     await expect(web.fetch({ url: 'https://example.com' })).rejects.toMatchObject({ code: 'WEB_PROVIDER_CONFIGURED_UNAVAILABLE' })
@@ -377,7 +457,7 @@ describe('live provider selection', () => {
     const { liveConfig } = await import('../../../settings/settings/tests/live-config.ts')
     const ctx = new Context()
     try {
-      const live = await liveConfig(ctx, WebRuntime, { searchProvider: 'first', fetchProvider: 'first' })
+      const live = await liveConfig(ctx, WebRuntime, { searchProviders: ['first'], fetchProviders: ['first'] })
       const fiber = live.fiber
       for (const id of ['first', 'second']) {
         ctx.web.registerSearchProvider(makeSearchProvider(id, true, () => Promise.resolve(searchResult(id))))
@@ -385,7 +465,7 @@ describe('live provider selection', () => {
       }
       await expect(ctx.web.search({ query: 'q' })).resolves.toMatchObject({ content: 'first' })
       await expect(ctx.web.fetch({ url: 'https://example.com' })).resolves.toMatchObject({ body: { content: 'first' } })
-      await live.update({ searchProvider: 'second', fetchProvider: 'second' })
+      await live.update({ searchProviders: ['second'], fetchProviders: ['second'] })
       expect(Object.is(live.entry.fiber, fiber)).toBe(true)
       await expect(ctx.web.search({ query: 'q' })).resolves.toMatchObject({ content: 'second' })
       await expect(ctx.web.fetch({ url: 'https://example.com' })).resolves.toMatchObject({ body: { content: 'second' } })

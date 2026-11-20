@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import type { Room, RoomMessage } from '@tomato/api-robot-room-controller/types'
+import type { Room, RoomMessage, RoomWorkRecord } from '@tomato/api-robot-room-controller/types'
 import type { RoomEpisodeId, RoomId, RoomMemberId, RoomMessageId, RoomSpec } from '@tomato/experimental-robot-room'
 import { RoomPage } from '../src/client/RoomPage.tsx'
 import type { RoomPageProps } from '../src/client/RoomPage.tsx'
@@ -74,6 +74,12 @@ const memberChat = {
   mentions: [], depth: 0, sessionRef: { sessionId: 'room-room-1-research', turn: 1 }, at: 4,
 } satisfies RoomMessage
 
+const workRecord = {
+  ticket: 't1', room: 'room-1', thread: 'room-1#1', member: 'coord', subject: '整理竞品定价',
+  sender: 'human:alice', strength: 'explicit', state: 'ready', rounds: 2, at: 5,
+  review: { rounds: 2, findings: ['缺少来源'] },
+} satisfies RoomWorkRecord
+
 const roomsSnapshot = { rooms: [room] }
 const robotsSnapshot = { options: [
   { spec: 'coord-bot', revision: 1, name: '协调员', mission: '协调' },
@@ -92,6 +98,7 @@ const face: RoomInjected = {
     publish,
     post: async () => ({ ok: true, value: message }),
     messages: async () => ({ ok: true, value: [message] }),
+    work: async () => ({ ok: true, value: [workRecord] }),
     pause,
     resume: async () => ({ ok: true, value: room }),
     relaxOnce: async () => ({ ok: true, value: room }),
@@ -100,6 +107,17 @@ const face: RoomInjected = {
   },
   openRobots: () => {},
   openSession: () => {},
+  pickDirectory: async () => '/tmp/room',
+  capabilities: async () => ({
+    ok: true,
+    value: {
+      skills: [{ value: 'research', label: 'research' }],
+      plugins: [{ value: 'plug', label: 'plug' }],
+      tools: [{ value: 'read', label: 'read' }],
+      mcpServers: [{ value: 'github', label: 'github' }],
+      workspaceRoots: [],
+    },
+  }),
 }
 
 /** Render the page over one message set and the supplied Session opener. */
@@ -132,6 +150,80 @@ describe('RoomPage data flow', () => {
     )
     await waitFor(() => { expect(screen.getByText('请出本周周报')).toBeTruthy() })
     expect(screen.getAllByText('竞品周报').length).toBeGreaterThan(0)
+  })
+
+  it('shows the tickets view with the work this room produced', async () => {
+    render(
+      <RoomPage
+        {...({} as RoomPageProps)}
+        useRooms={selector => selector(roomsSnapshot)}
+        useRobots={selector => selector(robotsSnapshot)}
+        actions={face.actions}
+        openRobots={() => { face.openRobots() }}
+        openSession={() => {}}
+        t={((key: string) => key)}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'view.tickets' }))
+    await waitFor(() => { expect(screen.getByText('整理竞品定价')).toBeTruthy() })
+    expect(screen.getByText('缺少来源')).toBeTruthy()
+    expect(screen.getByText('coord')).toBeTruthy()
+  })
+
+  it('opens the settings drawer and saves a review revision', async () => {
+    render(
+      <RoomPage
+        {...({} as RoomPageProps)}
+        useRooms={selector => selector(roomsSnapshot)}
+        useRobots={selector => selector(robotsSnapshot)}
+        actions={face.actions}
+        openRobots={() => { face.openRobots() }}
+        openSession={() => {}}
+        pickDirectory={async () => '/tmp/room'}
+        capabilities={request => face.capabilities(request)}
+        t={((key: string) => key)}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'settings.open' }))
+    await waitFor(() => { expect(screen.getByText('settings.review')).toBeTruthy() })
+    fireEvent.change(screen.getByLabelText('settings.maxRounds'), { target: { value: '2' } })
+    fireEvent.click(screen.getByRole('button', { name: 'settings.section.advanced' }))
+    await waitFor(() => { expect(screen.getByText('settings.guard')).toBeTruthy() })
+    fireEvent.click(screen.getByRole('button', { name: 'settings.save' }))
+    await waitFor(() => { expect(publish).toHaveBeenCalledTimes(1) })
+    expect(publish.mock.calls[0]?.[0].spec.review).toEqual({ selfReview: true, acceptance: true, maxRounds: 2 })
+  })
+
+  it('narrows a capability from the deployment catalog', async () => {
+    render(
+      <RoomPage
+        {...({} as RoomPageProps)}
+        useRooms={selector => selector(roomsSnapshot)}
+        useRobots={selector => selector(robotsSnapshot)}
+        actions={face.actions}
+        openRobots={() => { face.openRobots() }}
+        openSession={() => {}}
+        pickDirectory={async () => '/tmp/room'}
+        capabilities={async () => ({
+          ok: true,
+          value: {
+            skills: [{ value: 'research', label: 'research' }],
+            plugins: [],
+            tools: [{ value: 'read', label: 'read' }],
+            mcpServers: [{ value: 'github', label: 'github' }],
+            workspaceRoots: [],
+          },
+        })}
+        t={((key: string) => key)}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'settings.open' }))
+    fireEvent.click(screen.getByRole('button', { name: 'settings.section.advanced' }))
+    await waitFor(() => { expect(screen.getByText('settings.capability')).toBeTruthy() })
+    fireEvent.click(screen.getByRole('checkbox', { name: 'research' }))
+    fireEvent.click(screen.getByRole('button', { name: 'settings.save' }))
+    await waitFor(() => { expect(publish).toHaveBeenCalledTimes(1) })
+    expect(publish.mock.calls[0]?.[0].spec.capability).toEqual({ skills: ['research'] })
   })
 
   it('publishes a room from the new-room dialog using two published robots', async () => {

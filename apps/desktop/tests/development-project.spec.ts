@@ -1,7 +1,7 @@
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { prepareDevelopmentProject } from '../scripts/development-project.ts'
 import { DESKTOP_HOST_PROTOCOL_VERSION } from '../src/host-protocol.ts'
 import { DesktopProjectManager } from '../src/project-manager.ts'
@@ -28,6 +28,7 @@ function release(version = '1.2.3'): DesktopRelease {
 
 afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true })
+  vi.unstubAllEnvs()
 })
 
 describe('desktop development project', () => {
@@ -100,6 +101,71 @@ describe('desktop development project', () => {
     expect(readFileSync(join(cli, 'package.json'), 'utf8')).toBe('{"name":"@tomato/cli","version":"1.2.3"}\n')
     expect(readFileSync(join(host, 'lib', 'index.js'), 'utf8')).toBe('')
 
+  })
+
+  it('generates the opt-in team and collaboration profile with the desktop model route', () => {
+    const root = temporaryRoot()
+    const cli = join(root, 'apps', 'cli')
+    const host = join(root, 'apps', 'desktop-host')
+    const dependencies = join(root, 'workspace-dependencies')
+    mkdirSync(join(cli, 'lib'), { recursive: true })
+    mkdirSync(join(host, 'lib'), { recursive: true })
+    mkdirSync(dependencies, { recursive: true })
+    writeFileSync(join(cli, 'package.json'), '{"name":"@tomato/cli","version":"1.2.3"}\n')
+    writeFileSync(join(host, 'package.json'), '{"name":"@tomato/desktop-host","version":"1.2.3"}\n')
+    writeFileSync(join(host, 'lib', 'index.js'), '')
+    vi.stubEnv('TOMATO_SUPERAGENT_DIRECTORY', '/work/team')
+    vi.stubEnv('TOMATO_SUPERAGENT_PROVIDER', undefined)
+    vi.stubEnv('TOMATO_SUPERAGENT_MODEL', undefined)
+    vi.stubEnv('TOMATO_SUPERAGENT_SENDER', 'ou_demo')
+
+    const project = prepareDevelopmentProject({
+      projectDir: join(root, 'development'), cliDir: cli, hostDir: host,
+      dependencyDir: dependencies, release: release(), target: 'mac-arm64',
+    })
+
+    const patch = readFileSync(join(project, 'cordis.patch.yml'), 'utf8')
+    expect(patch).toContain('provider: "blueai"')
+    expect(patch).toContain('model: "DeepSeek-V4.1-Flash-1017"')
+    expect(patch).toContain('- "ou_demo"')
+    expect(patch).toContain('name: "@tomato/client-ui-superagent"')
+    const manifest = JSON.parse(readFileSync(join(project, 'package.json'), 'utf8')) as {
+      dependencies: Record<string, string>
+      tomato: { profile: { bundles: string[] } }
+    }
+    expect(manifest.dependencies).toMatchObject({
+      '@tomato/superagent-runtime': '*',
+      '@tomato/client-ui-superagent': '*',
+      '@tomato/experimental-robot-app': '*',
+    })
+    expect(manifest.tomato.profile.bundles).toContain('@tomato/experimental-robot-app')
+  })
+
+  it('generates an app-only team without a bot service when the bot URL is empty', () => {
+    const root = temporaryRoot()
+    const cli = join(root, 'apps', 'cli')
+    const host = join(root, 'apps', 'desktop-host')
+    const dependencies = join(root, 'workspace-dependencies')
+    mkdirSync(join(cli, 'lib'), { recursive: true })
+    mkdirSync(join(host, 'lib'), { recursive: true })
+    mkdirSync(dependencies, { recursive: true })
+    writeFileSync(join(cli, 'package.json'), '{"name":"@tomato/cli","version":"1.2.3"}\n')
+    writeFileSync(join(host, 'package.json'), '{"name":"@tomato/desktop-host","version":"1.2.3"}\n')
+    writeFileSync(join(host, 'lib', 'index.js'), '')
+    vi.stubEnv('TOMATO_SUPERAGENT_DIRECTORY', '/work/team')
+    vi.stubEnv('TOMATO_SUPERAGENT_BOT_URL', '')
+
+    const project = prepareDevelopmentProject({
+      projectDir: join(root, 'development'), cliDir: cli, hostDir: host,
+      dependencyDir: dependencies, release: release(), target: 'mac-arm64',
+    })
+
+    const patch = readFileSync(join(project, 'cordis.patch.yml'), 'utf8')
+    expect(patch).toContain('name: "@tomato/superagent-runtime"')
+    expect(patch).toContain('pollSeconds: 0')
+    expect(patch).not.toContain('bot:')
+    expect(patch).not.toContain('allowedSenders:')
+    expect(patch).toContain('name: "@tomato/client-ui-superagent"')
   })
 
   it('rejects a CLI package from another release', () => {

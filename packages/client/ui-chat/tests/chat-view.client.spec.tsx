@@ -2573,7 +2573,7 @@ describe('ChatView', () => {
     expect(images).toHaveLength(2)
     expect(images.every(image => image.getAttribute('data-count') === '1')).toBe(true)
     expect(images.every(image => image.getAttribute('data-compact') === 'true')).toBe(true)
-    expect(images[0]?.parentElement).toBe(images[1]?.parentElement)
+    expect(images[0]?.closest('[data-message-attachments]')).toBe(images[1]?.closest('[data-message-attachments]'))
     expect(JSON.parse(images[0]?.getAttribute('data-first') ?? '{}')).toEqual({
       preview: { url: 'blob:echo-a', name: 'a.png', width: 4, height: 3 },
     })
@@ -2615,8 +2615,8 @@ describe('ChatView', () => {
     const last = view.getByTestId('images-last.png')
     expect(first.getAttribute('data-compact')).toBe('true')
     expect(last.getAttribute('data-compact')).toBe('true')
-    expect(first.parentElement).toBe(file.parentElement)
-    expect(file.parentElement).toBe(last.parentElement)
+    expect(first.closest('[data-message-attachments]')).toBe(file.closest('[data-message-attachments]'))
+    expect(file.closest('[data-message-attachments]')).toBe(last.closest('[data-message-attachments]'))
     expect(first.compareDocumentPosition(file) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     expect(file.compareDocumentPosition(last) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
     expect(view.getByText('TXT 23B')).toBeTruthy()

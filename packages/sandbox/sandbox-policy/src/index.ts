@@ -247,7 +247,7 @@ export class SandboxPolicyService extends Service {
    */
   registerWritableRoot(session: Session, directory: string): () => void {
     resolveAbsoluteRoots([directory], 'additionalWritableRoots')
-    return this.ctx.effect(() => {
+    const dispose = this.ctx.effect(() => {
       let registrations = this.writableRootRegistrations.get(session)
       if (registrations === undefined) {
         registrations = new Map()
@@ -260,6 +260,8 @@ export class SandboxPolicyService extends Service {
         if (registrations.size === 0) this.writableRootRegistrations.delete(session)
       }
     }, 'sandboxPolicy.registerWritableRoot()')
+    // ctx.effect's disposer returns Promise<void>; this registration API is synchronous fire-and-forget.
+    return () => void dispose()
   }
 
   /**

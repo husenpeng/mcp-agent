@@ -1,8 +1,8 @@
 /** One team end to end: a request from the bot service becomes finished, reviewed work. */
-import { mkdtemp, rm } from 'node:fs/promises'
+import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import AgentDefaultModelConfig from '@tomato/agent-default-model'
 import { mountAgentLoopTestDependencies, mountAgentLoopTestHarness } from '@tomato/agent-loop-testkit'
 import { Context } from '@tomato/cordis'
@@ -17,11 +17,20 @@ import * as Runtime from '../src/index.ts'
 import { MemoryMediaPool, MemoryStorageBackend } from '../../../storage/storage-domain/tests/helpers/memory-backend.ts'
 
 const contexts: Context[] = []
+const backends: MemoryStorageBackend[] = []
 const directories: string[] = []
+
+beforeEach(async () => {
+  const home = await mkdtemp(join(tmpdir(), 'superagent-test-home-'))
+  directories.push(home)
+  vi.stubEnv('TOMATO_HOME', home)
+})
 
 afterEach(async () => {
   await Promise.all(contexts.splice(0).map(ctx => ctx.fiber.dispose()))
   await Promise.all(directories.splice(0).map(directory => rm(directory, { recursive: true, force: true })))
+  backends.length = 0
+  vi.unstubAllEnvs()
 })
 
 /** The one request the fake service holds. */
@@ -80,6 +89,8 @@ class TeamAdapter extends LlmAdapter {
   constructor(
     /** What the work turn reports; `ready` by default. */
     private readonly workAnswer = 'Changed the page and opened a pull request.\nREPORT: ready - PR opened',
+    /** Optional gate that holds work and review streams while supervision remains immediate. */
+    private readonly workGate?: Promise<undefined>,
   ) {
     super()
   }
@@ -91,6 +102,7 @@ class TeamAdapter extends LlmAdapter {
   async * stream(options: GenerateOptions): AsyncIterable<StreamChunk> {
     this.requests.push(options)
     const prompt = JSON.stringify(options.messages)
+    if (this.workGate !== undefined && !prompt.includes('You supervise a team')) await this.workGate
     const answer = prompt.includes('You supervise a team')
       ? 'DECISION: change the tier field on the creator detail page'
       : prompt.includes('Review the result')
@@ -121,6 +133,8 @@ async function harness(options: {
   ctx: Context
   adapter: TeamAdapter
   gateway: FakeGateway
+  backend: MemoryStorageBackend
+  fiber: ReturnType<Context['plugin']>
   team: Runtime.SuperagentTeam
 }> {
   const ctx = new Context()
@@ -132,6 +146,7 @@ async function harness(options: {
   await mountAgentLoopTestHarness(ctx)
   await ctx.plugin(Storage)
   const backend = new MemoryStorageBackend(new MemoryMediaPool())
+  backends.push(backend)
   ctx.effect(() => ctx.storage.backend.register('fixture', backend))
   const facility = new DomainFacility(ctx, { backend: 'fixture' })
   ctx.effect(() => {
@@ -147,30 +162,32 @@ async function harness(options: {
   const gateway = options.gateway ?? new FakeGateway()
   ctx.provide('botGateway', gateway)
   if (options.worktrees !== undefined) ctx.provide('worktrees', options.worktrees as never)
+  const fiber = ctx.plugin({ name: Runtime.name, inject: Runtime.inject, Config: Runtime.Config, apply: Runtime.apply }, {
+    directory,
+    provider: options.provider ?? 'test-provider',
+    model: options.model ?? 'test-model',
+    policyVersion: 'p1',
+    appUser: 'app-user',
+    allowedSenders: options.allowedSenders ?? ['ou_1'],
+    bot: { baseUrl: 'http://127.0.0.1:8013', userId: 'tomato-team' },
+    pollSeconds: options.pollSeconds ?? 0,
+    botOpenId: options.botOpenId ?? 'ou_bot',
+    scope: 'change',
+    limit: 10,
+    workerPreset: '',
+    permissionPreset: '',
+    maxOutputTokens: options.maxOutputTokens ?? 0,
+    isolate: options.isolate ?? false,
+    replies: options.replies ?? false,
+  })
   try {
-    await ctx.plugin({ name: Runtime.name, inject: Runtime.inject, Config: Runtime.Config, apply: Runtime.apply }, {
-      directory,
-      provider: options.provider ?? 'test-provider',
-      model: options.model ?? 'test-model',
-      policyVersion: 'p1',
-      allowedSenders: options.allowedSenders ?? ['ou_1'],
-      bot: { baseUrl: 'http://127.0.0.1:8013', userId: 'tomato-team' },
-      pollSeconds: options.pollSeconds ?? 0,
-      botOpenId: options.botOpenId ?? 'ou_bot',
-      scope: 'change',
-      limit: 10,
-      workerPreset: '',
-      permissionPreset: '',
-      maxOutputTokens: options.maxOutputTokens ?? 0,
-      isolate: options.isolate ?? false,
-      replies: options.replies ?? false,
-    })
+    await fiber.await()
   } catch (error: unknown) {
     throw new Error(`mount failed: ${String(error)}`)
   }
   const team = ctx.get('superagent')
   if (team === undefined) throw new Error('the runtime did not publish its team')
-  return { ctx, adapter, gateway, team }
+  return { ctx, adapter, gateway, backend, fiber, team }
 }
 
 describe('superagent runtime', () => {
@@ -195,6 +212,147 @@ describe('superagent runtime', () => {
     expect(adapter.requests).toHaveLength(3)
   })
 
+  it('serves the current ticket summaries through its own Remote service', async () => {
+    const { ctx, team } = await harness({ adapter: new TeamAdapter('REPORT: waiting') })
+    await team.runOnce()
+
+    await expect(ctx.superagentTickets.list(new AbortController().signal)).resolves.toEqual([
+      expect.objectContaining({ subject: 'the tier field on the creator detail page', state: 'waiting' }),
+    ])
+  })
+
+  it('retries a failed store opening for both Remote reads and a later cycle', async () => {
+    const { ctx, team, backend } = await harness()
+    const open = vi.spyOn(backend.kv, 'open').mockRejectedValueOnce(new Error('open failed'))
+
+    await expect(ctx.superagentTickets.list(new AbortController().signal)).rejects.toThrow('open failed')
+    await expect(ctx.superagentTickets.list(new AbortController().signal)).resolves.toEqual([])
+    expect(open).toHaveBeenCalledTimes(2)
+    await team.runOnce()
+    expect(team.tickets()).toHaveLength(1)
+  })
+
+  it('drains a deferred Remote open and closes the domain during disposal', async () => {
+    const { ctx, backend, fiber } = await harness()
+    const gate = Promise.withResolvers<undefined>()
+    const open = backend.kv.open.bind(backend.kv)
+    let closed = 0
+    const opening = vi.spyOn(backend.kv, 'open').mockImplementationOnce(async (descriptor) => {
+      await gate.promise
+      const unit = await open(descriptor)
+      const wrapped = Object.create(unit) as typeof unit
+      wrapped.close = async () => { closed += 1; await unit.close() }
+      return wrapped
+    })
+    const reading = ctx.superagentTickets.list(new AbortController().signal)
+    await vi.waitFor(() => { expect(opening).toHaveBeenCalledOnce() })
+    let disposed = false
+    const disposing = fiber.dispose().then(() => { disposed = true })
+    await new Promise(resolve => setTimeout(resolve, 10))
+    expect(disposed).toBe(false)
+
+    gate.resolve(undefined)
+    await expect(reading).rejects.toThrow('the team is disposed')
+    await disposing
+    expect(disposed).toBe(true)
+    expect(closed).toBe(1)
+  })
+
+  it('disposes the operation scope and reports a store close failure', async () => {
+    const { ctx, fiber, backend } = await harness()
+    const open = backend.kv.open.bind(backend.kv)
+    let closed = 0
+    vi.spyOn(backend.kv, 'open').mockImplementationOnce(async (descriptor) => {
+      const unit = await open(descriptor)
+      const wrapped = Object.create(unit) as typeof unit
+      wrapped.close = async () => {
+        closed += 1
+        await unit.close()
+        throw new Error('close failed')
+      }
+      return wrapped
+    })
+    await ctx.superagentTickets.list(new AbortController().signal)
+    const logError = vi.spyOn(ctx.logger, 'error')
+
+    const [disposal] = await Promise.allSettled([fiber.dispose()])
+    expect(closed).toBe(1)
+    expect(ctx.get('superagentOperationScope')).toBeUndefined()
+    if (disposal?.status === 'rejected') expect(String(disposal.reason)).toContain('close failed')
+    else expect(logError.mock.calls.flat().map(String).join('\n')).toContain('close failed')
+  })
+
+  it('stops new Agent work and drains in-flight intake during disposal', async () => {
+    const gateway = new FakeGateway(1, 80)
+    const read = vi.spyOn(gateway, 'events')
+    const { team, adapter, fiber } = await harness({
+      gateway, adapter: new TeamAdapter('REPORT: waiting'),
+    })
+    const running = team.runOnce()
+    await vi.waitFor(() => { expect(read).toHaveBeenCalledOnce() })
+    let disposed = false
+    const disposing = fiber.dispose().then(() => { disposed = true })
+    await new Promise(resolve => setTimeout(resolve, 10))
+    expect(disposed).toBe(false)
+
+    await disposing
+    await expect(running).rejects.toThrow('the team is disposed')
+    expect(adapter.requests).toHaveLength(0)
+  })
+
+  it('keeps an active worker and its completion listener alive until the reported state is stored', async () => {
+    const gate = Promise.withResolvers<undefined>()
+    const adapter = new TeamAdapter('REPORT: waiting', gate.promise)
+    const { ctx, team, backend } = await harness({ adapter })
+    const running = team.runOnce()
+    await vi.waitFor(() => { expect(adapter.requests).toHaveLength(2) })
+    let disposed = false
+    const disposing = ctx.fiber.dispose().then(() => { disposed = true })
+    await new Promise(resolve => setTimeout(resolve, 10))
+    expect(disposed).toBe(false)
+
+    gate.resolve(undefined)
+    await expect(running).rejects.toThrow('the team is disposed')
+    await disposing
+    const records = [...backend.pool.media.values()].flatMap(medium =>
+      [...medium.tables.values()].flatMap(table => [...table.values()]))
+    const persisted = JSON.stringify(records)
+    expect(persisted).toContain('"state":"waiting"')
+    expect(persisted).not.toContain('"state":"failed"')
+  })
+
+  it('does not create a worker when directory resolution finishes after disposal', async () => {
+    const directory = Promise.withResolvers<{ path: string }>()
+    const { ctx, team, fiber, adapter } = await harness({
+      isolate: true,
+      worktrees: { create: () => directory.promise },
+    })
+    const createAgent = vi.spyOn(ctx.agents, 'create')
+    const running = team.runOnce()
+    await vi.waitFor(() => { expect(adapter.requests).toHaveLength(1) })
+    const disposing = fiber.dispose()
+    directory.resolve({ path: '/tmp/late-worker' })
+
+    await expect(running).rejects.toThrow('the team is disposed')
+    await disposing
+    expect(createAgent).toHaveBeenCalledTimes(2)
+    expect(adapter.requests).toHaveLength(1)
+  })
+
+  it('records the intake outcome and nested refusal reason without message contents', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'superagent-logs-'))
+    directories.push(home)
+    vi.stubEnv('TOMATO_HOME', home)
+    const { team } = await harness({ allowedSenders: ['ou_outsider'] })
+    await team.runOnce()
+
+    const diagnostics = await readFile(join(home, 'logs', 'superagent.log'), 'utf8')
+    expect(diagnostics).toContain('outcomes')
+    expect(diagnostics).toContain('stored(reached=0)')
+    expect(diagnostics).toContain('refused(actor-not-allowed)')
+    expect(diagnostics).not.toContain('给达人详情页加 tier 字段')
+  })
+
   it('reads nothing new on the next cycle and keeps the cursor', async () => {
     const { team } = await harness()
     await team.runOnce()
@@ -213,6 +371,7 @@ describe('superagent runtime', () => {
       provider: 'test-provider',
       model: 'test-model',
       policyVersion: 'p1',
+      appUser: 'app-user',
       allowedSenders: [],
       bot: { baseUrl: 'http://127.0.0.1:8013', userId: 'x' },
       pollSeconds: 0,
@@ -259,6 +418,7 @@ describe('superagent runtime polling', () => {
       provider: 'test-provider',
       model: 'test-model',
       policyVersion: 'p1',
+      appUser: 'app-user',
       allowedSenders: ['ou_1'],
       bot: { baseUrl: 'http://127.0.0.1:8013', userId: 'tomato-team' },
       pollSeconds: 0.02,
@@ -351,6 +511,7 @@ describe('superagent runtime defaults', () => {
       provider: 'test-provider',
       model: 'test-model',
       policyVersion: 'p1',
+      appUser: 'app-user',
       allowedSenders: ['ou_1'],
       bot: { baseUrl: 'http://127.0.0.1:8013', userId: 'tomato-team' },
       pollSeconds: 0,
@@ -440,7 +601,7 @@ describe('superagent runtime ticket view', () => {
     if (supervisor === undefined) throw new Error('the runtime created no supervising session')
     const records = supervisor.session.snapshotEvents()
       .map(pluginRecordOf)
-      .filter(record => record?.type === 'plugin:superagent/tickets')
+      .filter(record => record?.type === 'plugin:superagent-runtime/tickets')
     expect(records).toHaveLength(1)
     const recorded = records[0]?.data as { tickets: readonly { id: unknown }[] } | undefined
     expect(recorded?.tickets).toHaveLength(1)
@@ -461,7 +622,7 @@ describe('superagent runtime ticket view', () => {
     if (supervisor === undefined) throw new Error('the runtime created no supervising session')
     const latest = supervisor.session.snapshotEvents()
       .map(pluginRecordOf)
-      .filter(record => record?.type === 'plugin:superagent/tickets')
+      .filter(record => record?.type === 'plugin:superagent-runtime/tickets')
       .at(-1)
     expect(latest?.data).toEqual({
       tickets: [expect.objectContaining({ stage: 'person', needs: 'review', state: 'ready', rounds: 1 })],
@@ -474,6 +635,45 @@ describe('superagent runtime model route', () => {
     const { team } = await harness({ provider: '', model: '', adapter: new TeamAdapter('REPORT: waiting') })
     const report = await team.runOnce()
     expect(report.worked).toHaveLength(1)
+  })
+
+  it('closes a Remote store opened while route verification is pending and fails', async () => {
+    const route = Promise.withResolvers<undefined>()
+    const adapter = new TeamAdapter()
+    vi.spyOn(adapter, 'resolveModel').mockImplementationOnce(async () => {
+      await route.promise
+      throw new Error('route rejected')
+    })
+    const mounting = harness({ adapter })
+    await vi.waitFor(() => { expect(backends).toHaveLength(1) })
+    const ctx = contexts.at(-1)
+    const backend = backends.at(-1)
+    if (ctx === undefined || backend === undefined) throw new Error('the mounting fixture is unavailable')
+    const openGate = Promise.withResolvers<undefined>()
+    const open = backend.kv.open.bind(backend.kv)
+    let closed = 0
+    const opening = vi.spyOn(backend.kv, 'open').mockImplementationOnce(async (descriptor) => {
+      await openGate.promise
+      const unit = await open(descriptor)
+      const wrapped = Object.create(unit) as typeof unit
+      wrapped.close = async () => { closed += 1; await unit.close() }
+      return wrapped
+    })
+    const reading = ctx.superagentTickets.list(new AbortController().signal)
+    await vi.waitFor(() => { expect(opening).toHaveBeenCalledOnce() })
+
+    route.resolve(undefined)
+    await Promise.resolve()
+    openGate.resolve(undefined)
+    await Promise.allSettled([reading])
+    await expect(mounting).rejects.toThrow('model route test-provider/test-model is unavailable')
+    expect(closed).toBe(1)
+  })
+
+  it('refuses to mount when the configured route has no working adapter', async () => {
+    const adapter = new TeamAdapter()
+    vi.spyOn(adapter, 'resolveModel').mockRejectedValueOnce(new Error('adapter unavailable'))
+    await expect(harness({ adapter })).rejects.toThrow('model route test-provider/test-model is unavailable')
   })
 })
 
@@ -503,6 +703,7 @@ describe('superagent runtime without any model route', () => {
       provider: '',
       model: '',
       policyVersion: 'p1',
+      appUser: 'app-user',
       allowedSenders: [],
       bot: { baseUrl: 'http://127.0.0.1:8013', userId: 'x' },
       pollSeconds: 0,

@@ -35,7 +35,7 @@ struct AccountView: View {
     var body: some View {
         NavigationStack(path: $path) {
             ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: 14) {
                     // The caption sits in the content: a navigation subtitle
                     // grows the iOS 26 bar, and the auto-inset of the first
                     // block under it was unreliable.
@@ -49,37 +49,16 @@ struct AccountView: View {
                     if !isSignedIn {
                         loginButton
                     }
-                    NavigationLink(value: Self.memoryRoute) {
-                        memoryRow
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier("account.memory")
                     hostCard
-                    NavigationLink(value: Self.desktopRoute) {
-                        linkRow(
-                            systemImage: "desktopcomputer",
-                            title: "桌面状态",
-                            detail: "Watchdog 与重启 Mac 上的 Desktop"
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier("account.desktop")
-                    NavigationLink(value: Self.logsRoute) {
-                        linkRow(
-                            systemImage: "doc.text.magnifyingglass",
-                            title: "运行日志",
-                            detail: "崩溃、卡顿与网络记录，可导出"
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier("account.logs")
+                    settingsLinks
                     actions
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 88)
             }
-            .background(TomatoToken.bgBase)
-            .navigationTitle("账号")
+            .background(TomatoSurface.page)
+            // No page title: the caption and the cards are the page.
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .tomatoScrollEdge()
             .tomatoFloatingTabs()
@@ -143,67 +122,92 @@ struct AccountView: View {
         }
     }
 
-    /// One row of a page linked from the account screen.
-    /// - Parameters:
-    ///   - systemImage: leading glyph.
-    ///   - title: row name.
-    ///   - detail: one line saying what the page shows.
-    /// - Returns: the row, styled like the memory entry.
-    private func linkRow(systemImage: String, title: String, detail: String) -> some View {
-        TomatoCard(padding: 16) {
-            HStack(spacing: 12) {
-                Image(systemName: systemImage)
-                    .font(.body.weight(.medium))
-                    .foregroundStyle(TomatoToken.brandPrimary)
-                    .frame(width: 28)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(TomatoToken.labelPrimary)
-                    Text(detail)
-                        .font(.caption)
-                        .foregroundStyle(TomatoToken.labelCaption)
-                        .lineLimit(1)
+    /// Personal settings and device support as quiet grouped rows, following the
+    /// reference settings page: bare line icons, one hairline between rows, no
+    /// outer card box.
+    private var settingsLinks: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            SectionHeader(title: "个人与设备")
+            VStack(spacing: 0) {
+                Button {
+                    path.append(Self.memoryRoute)
+                } label: {
+                    memoryRow
                 }
-                Spacer(minLength: 8)
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(TomatoToken.labelDimmed)
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("account.memory")
+                Divider().overlay(TomatoLine.hairline).padding(.leading, 40)
+                Button {
+                    path.append(Self.desktopRoute)
+                } label: {
+                    linkRow(
+                        systemImage: "desktopcomputer",
+                        title: "桌面状态",
+                        detail: "Watchdog 与重启 Mac 上的 Desktop"
+                    )
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("account.desktop")
+                Divider().overlay(TomatoLine.hairline).padding(.leading, 40)
+                Button {
+                    path.append(Self.logsRoute)
+                } label: {
+                    linkRow(
+                        systemImage: "doc.text.magnifyingglass",
+                        title: "运行日志",
+                        detail: "崩溃、卡顿与网络记录，可导出"
+                    )
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("account.logs")
             }
         }
+    }
+
+    /// One row of a page linked from the account screen.
+    private func linkRow(systemImage: String, title: String, detail: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.body)
+                .foregroundStyle(TomatoToken.brandPrimary)
+                .frame(width: 24)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline)
+                    .foregroundStyle(TomatoToken.labelPrimary)
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(TomatoToken.labelCaption)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 8)
+            Image(systemName: "chevron.right")
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(TomatoToken.labelDimmed)
+                .accessibilityHidden(true)
+        }
+        .padding(.horizontal, 4)
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
+        .contentShape(Rectangle())
     }
 
     /// Personal memory is a property of this device, reached from the account
     /// page rather than given a tab of its own.
     private var memoryRow: some View {
-        TomatoCard(padding: 16) {
-            HStack(spacing: 12) {
-                Image(systemName: "brain")
-                    .font(.body.weight(.medium))
-                    .foregroundStyle(TomatoToken.brandPrimary)
-                    .frame(width: 28)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("个人记忆")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(TomatoToken.labelPrimary)
-                    Text("这台手机怎么用 Agent，以及它被告知了什么")
-                        .font(.caption)
-                        .foregroundStyle(TomatoToken.labelCaption)
-                        .lineLimit(1)
-                }
-                Spacer(minLength: 8)
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(TomatoToken.labelDimmed)
-            }
-        }
+        linkRow(
+            systemImage: "brain",
+            title: "个人记忆",
+            detail: "这台手机怎么用 Agent，以及它被告知了什么"
+        )
     }
 
     // MARK: - Cards
 
     private var profileCard: some View {
-        TomatoCard(padding: 18) {
-            VStack(alignment: .leading, spacing: 16) {
+        TomatoCard(padding: 14) {
+            VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 14) {
                     monogram
                     VStack(alignment: .leading, spacing: 3) {
@@ -232,8 +236,8 @@ struct AccountView: View {
     }
 
     private var hostCard: some View {
-        TomatoCard(padding: 18) {
-            VStack(alignment: .leading, spacing: 12) {
+        TomatoCard(padding: 14) {
+            VStack(alignment: .leading, spacing: 10) {
                 SectionHeader(title: "Host") {
                     Image(systemName: "desktopcomputer")
                         .font(.footnote)
@@ -277,7 +281,7 @@ struct AccountView: View {
             }
             Text("登录由公司飞书完成，会话保存在这台手机的钥匙串；没有配对 Mac 也能登录。解除配对只清除这台 Mac 的配对凭据。")
                 .font(.caption)
-                .foregroundStyle(TomatoToken.labelDimmed)
+                .foregroundStyle(TomatoToken.labelCaption)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -354,7 +358,7 @@ struct AccountView: View {
             return .ok
         }
         if session?.isUnavailable == true {
-            return .warn
+            return .idle
         }
         return .idle
     }

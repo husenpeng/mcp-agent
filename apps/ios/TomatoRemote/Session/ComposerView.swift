@@ -18,6 +18,24 @@ import PhotosUI
 import SwiftUI
 import UIKit
 
+/// One starter prompt the conversation screen asks the dock to hold. The token
+/// separates two taps of the same starter, so the second lands even when the
+/// field already holds the first.
+struct ComposerPrefill: Equatable {
+    let token = UUID()
+    let text: String
+}
+
+/// A document staged for the next prompt, with the bytes its chip previews.
+///
+/// The Host's receipt names the upload but cannot serve its contents back, so
+/// the composer keeps the local copy for the lifetime of the staged chip.
+struct StagedDocument: Identifiable {
+    let id = UUID()
+    let name: String
+    let data: Data
+}
+
 struct ComposerView: View {
     /// The draft lives here, not on the conversation screen: a keystroke must
     /// only redraw the dock, never the transcript behind it.
@@ -41,9 +59,11 @@ struct ComposerView: View {
     /// Called with a document the owner chose and whether its security scope
     /// was opened; the screen stages it and closes the scope when done.
     var onPickDocument: ((URL, Bool) -> Void)?
-    /// Name of the document already staged, shown so the owner can drop it.
-    var stagedDocument: String?
+    /// Document already staged on the Host, with the bytes its chip previews.
+    var stagedDocument: StagedDocument?
     var onRemoveDocument: (() -> Void)?
+    /// A starter prompt to place in the field, unsent.
+    var prefill: ComposerPrefill?
     /// Requests this conversation is waiting on, shown above the field.
     var pending: [PendingInteraction] = []
     var onAnswer: (() -> Void)?
@@ -73,6 +93,10 @@ struct ComposerView: View {
     /// Staged photos carry a stable identity: removing one by its row offset
     /// deleted the next photo, or trapped once the array had shrunk.
     @State private var pickedImages: [StagedPhoto] = []
+    /// A staged photo the owner asked to view before sending.
+    @State private var previewPhoto: StagedPhoto?
+    /// A staged document the owner asked to view before sending.
+    @State private var previewDocument: StagedDocument?
     @State private var attachError: String?
     @State private var showsImporter = false
     @State private var showsCamera = false
@@ -101,6 +125,12 @@ struct ComposerView: View {
     /// transcript on screen; a longer draft scrolls inside the field instead of
     /// pushing the conversation away.
     private static let maximumInputLines = 4
+    /// Width the dock stops growing at, matching the Web client's composer
+    /// column: on an iPad or a landscape phone a dock spanning the page would
+    /// leave a line of text running across the whole screen.
+    private static let maximumDockWidth: CGFloat = 560
+    /// Side length of one control in the toolbar row.
+    private static let controlSide: CGFloat = 32
 
     private var isReadyToSend: Bool {
         let hasText = !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -109,6 +139,11 @@ struct ComposerView: View {
 
     private var isCancelling: Bool {
         dragUp <= -VoiceDictation.cancelDistance
+    }
+
+    /// Outline of the focused dock, in the brand tint the controls use.
+    private var focusBorder: Color {
+        TomatoToken.brandPrimary.opacity(0.4)
     }
 
     var body: some View {
@@ -172,34 +207,56 @@ struct ComposerView: View {
                 )
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
-            // One container holds the field and both actions, the way chat
-            // assistants draw their input: the whole capsule reads as the place
-            // to type, and the send action sits inside it at the trailing edge.
-            VStack(alignment: .leading, spacing: 6) {
-                if mode == .typing {
-                    inputField
-                } else {
-                    VoiceInputBar(
-                        dictation: dictation,
-                        dragUp: $dragUp,
-                        onBegin: invalidateRefinement,
-                        onFinish: finishDictation,
-                        onCancel: { dictation.cancel() }
-                    )
-                }
+            // One card, one surface: the prompt sits directly on the card and
+            // the controls that act on it share the row beneath, with the send
+            // action at the row's trailing edge. A recessed well inside the
+            // card drew a box inside a box; the fill and the hairline carry
+            // the lift on their own.
+            VStack(alignment: .leading, spacing: 4) {
+                inputRow
                 toolbar
             }
-            .padding(8)
-            .tomatoGlass(in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .frame(maxWidth: Self.maximumDockWidth)
+            .background(TomatoSurface.card, in: RoundedRectangle(cornerRadius: TomatoCorner.card, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .strokeBorder(isFocused.wrappedValue ? TomatoToken.brandPrimary.opacity(0.35) : Color.clear, lineWidth: 1)
+                RoundedRectangle(cornerRadius: TomatoCorner.card, style: .continuous)
+                    .strokeBorder(
+                        isFocused.wrappedValue ? TomatoLine.brandSoft : TomatoLine.hairline,
+                        lineWidth: 1
+                    )
             )
+            .shadow(
+                color: TomatoShadow.flat.color,
+                radius: TomatoShadow.flat.radius,
+                y: TomatoShadow.flat.y
+            )
+            .animation(.easeOut(duration: 0.16), value: isFocused.wrappedValue)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 12)
+        .padding(.top, 6)
+        // Six points above the home indicator: the home indicator already
+        // marks where the screen ends, and the previous inset plus the dock's
+        // shadow read as a grey plank under the card.
+        .padding(.bottom, 6)
         .animation(.easeOut(duration: 0.18), value: dictation.isActive)
         .animation(.easeOut(duration: 0.18), value: mode)
+        // A starter goes into the field, not onto the wire: the reader can edit it first.
+        .onChange(of: prefill) { _, next in
+            guard let next else { return }
+            leaveVoiceMode()
+            text = text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? next.text
+                : text + "\n" + next.text
+        }
+        // A test run may stage the sample photo without the system picker, so the
+        // preview path is reachable on a simulator.
+        .task {
+            #if DEBUG
+                stageDebugPhotoIfAsked()
+                stageDebugDraftIfAsked()
+            #endif
+        }
         // A test run may start dictation without a tap, so the microphone path
         // can be observed on a device that automation cannot touch.
         .task {
@@ -268,29 +325,147 @@ struct ComposerView: View {
             )
             .ignoresSafeArea()
         }
+        // A staged attachment is the owner's own file, still on the phone, so
+        // its preview never waits for the Host. Both sheets show what will be
+        // sent, not a stand-in for it.
+        .sheet(item: $previewPhoto) { photo in
+            if let image = photo.image {
+                ImagePreviewSheet(image: image)
+                    .tomatoFullSheet()
+                    .presentationBackground(.black)
+            }
+        }
+        .sheet(item: $previewDocument) { document in
+            LocalFilePreviewSheet(name: document.name, data: document.data)
+                .tomatoFullSheet()
+        }
     }
 }
 
 // MARK: - Dock surfaces
 
 extension ComposerView {
+    /// The prompt's row: the field or the voice bar, directly on the card.
+    /// The card's own fill is what the eye reads as "type here"; a second
+    /// recessed surface inside it only added a seam.
+    @ViewBuilder
+    private var inputRow: some View {
+        if mode == .typing {
+            inputField
+        } else {
+            VoiceInputBar(
+                dictation: dictation,
+                dragUp: $dragUp,
+                onBegin: invalidateRefinement,
+                onFinish: finishDictation,
+                onCancel: { dictation.cancel() }
+            )
+        }
+    }
+
+    /// One equal weight per control, at the dock's own size. Model and
+    /// reasoning sit apart from the attachment controls so the row groups as
+    /// "what answers" on the left and "what it carries" beside it; the send
+    /// action closes the row at thumb height.
+    private var toolbar: some View {
+        HStack(spacing: 6) {
+            modelIcons
+            dockDivider
+            PhotosPicker(selection: $pickerItems, maxSelectionCount: 6, matching: .images) {
+                controlGlyph("photo.on.rectangle")
+            }
+            .buttonStyle(TomatoPressableStyle())
+            .disabled(pickedImages.count >= 6)
+            .accessibilityLabel("附加照片")
+
+            Button(action: openCamera) {
+                controlGlyph("camera")
+            }
+            .buttonStyle(TomatoPressableStyle())
+            .accessibilityLabel("拍照")
+            .accessibilityIdentifier("composer.camera")
+
+            Button {
+                showsImporter = true
+            } label: {
+                controlGlyph("paperclip")
+            }
+            .buttonStyle(TomatoPressableStyle())
+            .accessibilityLabel("附加文档")
+
+            if mode == .typing {
+                Button(action: enterVoiceMode) {
+                    controlGlyph("mic")
+                }
+                .buttonStyle(TomatoPressableStyle())
+                .accessibilityLabel("语音输入")
+                .accessibilityIdentifier("composer.mic")
+            } else {
+                Button(action: leaveVoiceMode) {
+                    controlGlyph("keyboard")
+                }
+                .buttonStyle(TomatoPressableStyle())
+                .accessibilityLabel("切回键盘")
+                .accessibilityIdentifier("composer.keyboard")
+            }
+
+            Spacer(minLength: 0)
+
+            // The keyboard's own dismiss key sits where the row ends: it is a
+            // convenience while typing, not one of the dock's standing actions.
+            if isFocused.wrappedValue {
+                Button {
+                    isFocused.wrappedValue = false
+                } label: {
+                    controlGlyph("keyboard.chevron.compact.down")
+                }
+                .buttonStyle(TomatoPressableStyle())
+                .accessibilityLabel("收起输入框")
+                .accessibilityIdentifier("composer.collapse")
+            }
+
+            actionButton
+        }
+    }
+
+    /// Separates the two groups of controls without a second fill; a full
+    /// hairline would cut the card the way a divider does.
+    private var dockDivider: some View {
+        Rectangle()
+            .fill(TomatoToken.borderL3)
+            .frame(width: 1, height: 16)
+            .padding(.horizontal, 4)
+            .accessibilityHidden(true)
+    }
+
+    /// One toolbar control: a square glyph that shows its tint on press, at the
+    /// 44 pt touch minimum the row's spacing alone cannot give it.
+    /// - Parameter name: the SF Symbol to draw.
+    /// - Returns: the pressed glyph.
+    private func controlGlyph(_ name: String) -> some View {
+        Image(systemName: name)
+            .font(.system(size: 16, weight: .regular))
+            .foregroundStyle(TomatoToken.labelSecondary)
+            // A circle inset past the 32 pt square: the visible glyph stays a
+            // toolbar control, the touch area reaches 44 pt, and a neighbour
+            // 6 pt away never takes the tap.
+            .frame(width: Self.controlSide, height: Self.controlSide)
+            .contentShape(Circle().inset(by: -6))
+    }
+
     /// Two small icons where the composer used to carry a chip row: one for the
-    /// model, one for its reasoning level. The row cost a whole line of the
-    /// conversation; an icon keeps both choices one tap away at toolbar size.
+    /// model, one for its reasoning level. Each opens its own sheet, because a
+    /// model and its reasoning depth are two separate choices.
     @ViewBuilder
     private var modelIcons: some View {
         if let modelTitle, let onOpenModel {
             Button(action: onOpenModel) {
-                Image(systemName: "cpu")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(TomatoToken.labelSecondary)
-                    .frame(width: 30, height: 30)
-                    .contentShape(Circle().inset(by: -7))
+                controlGlyph("cpu")
                     .overlay(alignment: .topTrailing) {
                         if isSwitchingModel {
                             ProgressView()
                                 .controlSize(.mini)
-                                .offset(x: 2, y: -2)
+                                .offset(x: 6, y: 8)
                         }
                     }
             }
@@ -302,10 +477,10 @@ extension ComposerView {
         if let effortTitle, let onOpenReasoning {
             Button(action: onOpenReasoning) {
                 Image(systemName: "brain")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 16, weight: .regular))
                     .foregroundStyle(effortIsActive ? TomatoToken.brandPrimary : TomatoToken.labelSecondary)
-                    .frame(width: 30, height: 30)
-                    .contentShape(Circle().inset(by: -7))
+                    .frame(width: Self.controlSide, height: Self.controlSide)
+                    .contentShape(Circle().inset(by: -6))
             }
             .buttonStyle(TomatoPressableStyle())
             .accessibilityIdentifier("composer.effort")
@@ -323,6 +498,7 @@ extension ComposerView {
             .lineLimit(1 ... (text.isEmpty ? 1 : Self.maximumInputLines))
             .focused(isFocused)
             .font(.body)
+            .foregroundStyle(TomatoToken.labelPrimary)
             .submitLabel(.send)
             .onSubmit {
                 if isReadyToSend {
@@ -338,103 +514,22 @@ extension ComposerView {
                 send()
                 return .handled
             }
-            .padding(.horizontal, 6)
-            .padding(.top, 4)
+            .padding(.vertical, 7)
             .accessibilityIdentifier("composer.input")
     }
 
-    /// Photo, document, mode switch, and send, under whichever surface is up.
-    private var toolbar: some View {
-        HStack(spacing: 8) {
-            modelIcons
-            PhotosPicker(selection: $pickerItems, maxSelectionCount: 6, matching: .images) {
-                Image(systemName: "photo.on.rectangle")
-                    .font(.body)
-                    .foregroundStyle(TomatoToken.labelSecondary)
-                    .frame(width: 34, height: 34)
-                    .contentShape(Circle().inset(by: -5))
-            }
-            .buttonStyle(TomatoPressableStyle())
-            .disabled(pickedImages.count >= 6)
-            .accessibilityLabel("附加照片")
-
-            Button(action: openCamera) {
-                Image(systemName: "camera")
-                    .font(.body)
-                    .foregroundStyle(TomatoToken.labelSecondary)
-                    .frame(width: 34, height: 34)
-                    .contentShape(Circle().inset(by: -5))
-            }
-            .buttonStyle(TomatoPressableStyle())
-            .accessibilityLabel("拍照")
-            .accessibilityIdentifier("composer.camera")
-
-            Button {
-                showsImporter = true
-            } label: {
-                Image(systemName: "paperclip")
-                    .font(.body)
-                    .foregroundStyle(TomatoToken.labelSecondary)
-                    .frame(width: 34, height: 34)
-                    .contentShape(Circle().inset(by: -5))
-            }
-            .buttonStyle(TomatoPressableStyle())
-            .accessibilityLabel("附加文档")
-
-            if mode == .typing {
-                Button(action: enterVoiceMode) {
-                    Image(systemName: "mic")
-                        .font(.body)
-                        .foregroundStyle(TomatoToken.labelSecondary)
-                        .frame(width: 34, height: 34)
-                        .contentShape(Circle().inset(by: -5))
-                }
-                .buttonStyle(TomatoPressableStyle())
-                .accessibilityLabel("语音输入")
-                .accessibilityIdentifier("composer.mic")
-            } else {
-                Button(action: leaveVoiceMode) {
-                    Image(systemName: "keyboard")
-                        .font(.body)
-                        .foregroundStyle(TomatoToken.labelSecondary)
-                        .frame(width: 34, height: 34)
-                        .contentShape(Circle().inset(by: -5))
-                }
-                .buttonStyle(TomatoPressableStyle())
-                .accessibilityLabel("切回键盘")
-                .accessibilityIdentifier("composer.keyboard")
-            }
-
-            if isFocused.wrappedValue {
-                Button {
-                    isFocused.wrappedValue = false
-                } label: {
-                    Image(systemName: "keyboard.chevron.compact.down")
-                        .font(.body)
-                        .foregroundStyle(TomatoToken.labelSecondary)
-                        .frame(width: 34, height: 34)
-                        .contentShape(Circle().inset(by: -5))
-                }
-                .buttonStyle(TomatoPressableStyle())
-                .accessibilityLabel("收起输入框")
-                .accessibilityIdentifier("composer.collapse")
-            }
-
-            Spacer(minLength: 0)
-            actionButton
-        }
-    }
-
-    /// Send while idle, stop while a turn runs.
+    /// Send while idle, stop while a turn runs, closing the control row at
+    /// thumb height.
     @ViewBuilder
     private var actionButton: some View {
         if isRunning {
             Button(action: onCancel) {
                 Image(systemName: "stop.fill")
-                    .font(.footnote.weight(.semibold))
+                    .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(Color.white)
-                    .frame(width: 34, height: 34)
+                    .frame(width: Self.controlSide, height: Self.controlSide)
                     .background(TomatoToken.labelPrimary, in: Circle())
+                    .contentShape(Circle().inset(by: -6))
             }
             .buttonStyle(TomatoPressableStyle())
             .accessibilityLabel("停止")
@@ -442,10 +537,11 @@ extension ComposerView {
         } else {
             Button(action: send) {
                 Image(systemName: "arrow.up")
-                    .font(.footnote.weight(.bold))
-                    .foregroundStyle(isReadyToSend ? Color.white : TomatoToken.labelTertiary)
-                    .frame(width: 34, height: 34)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(isReadyToSend ? Color.white : TomatoToken.labelDimmed)
+                    .frame(width: Self.controlSide, height: Self.controlSide)
                     .background(isReadyToSend ? TomatoToken.buttonPrimaryFill : TomatoToken.bgLayer3, in: Circle())
+                    .contentShape(Circle().inset(by: -6))
             }
             .buttonStyle(TomatoPressableStyle())
             .disabled(!isReadyToSend)
@@ -544,6 +640,8 @@ extension ComposerView {
             guard !sentence.isEmpty else {
                 if live.isEmpty {
                     dictation.note("没有听清，请再说一次")
+                } else {
+                    dictation.note("Mac 精修未完成，已保留手机识别，可直接修改")
                 }
                 return
             }
@@ -605,7 +703,7 @@ extension ComposerView {
     /// - Parameter audio: canonical WAV of the sentence.
     private static func refinementDeadline(for audio: Data) -> TimeInterval {
         let seconds = Double(max(0, audio.count - 44)) / 32000
-        return min(20, max(6, 4 + seconds * 0.5))
+        return min(30, max(8, 5 + seconds * 0.7))
     }
 
     /// Drop a second pass that no longer belongs to the field.
@@ -646,21 +744,41 @@ extension ComposerView {
 
 extension ComposerView {
     /// Staged document, shown by name so the owner knows what rides along.
-    private func documentChip(_ name: String) -> some View {
+    /// Its name opens a local preview; the remove control stays a separate
+    /// target so a tap never drops the file the owner meant to inspect.
+    /// - Parameter document: the staged file and the bytes it will send.
+    private func documentChip(_ document: StagedDocument) -> some View {
         HStack(spacing: 8) {
-            Image(systemName: "doc")
-                .font(.footnote)
-                .foregroundStyle(TomatoToken.brandPrimary)
-            Text(name)
-                .font(.caption)
-                .foregroundStyle(TomatoToken.labelCaption)
-                .lineLimit(1)
-            Spacer(minLength: 0)
+            Button {
+                previewDocument = document
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "doc")
+                        .font(.footnote)
+                        .foregroundStyle(TomatoToken.brandPrimary)
+                    Text(document.name)
+                        .font(.caption)
+                        .foregroundStyle(TomatoToken.labelCaption)
+                        .lineLimit(1)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(TomatoToken.labelDimmed)
+                }
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(TomatoPressableStyle())
+            .accessibilityLabel("预览文档 \(document.name)")
+            .accessibilityHint("打开这个文件的本地副本")
+            .accessibilityIdentifier("composer.document.preview")
             Button {
                 onRemoveDocument?()
             } label: {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundStyle(TomatoToken.labelDimmed)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Circle())
             }
             .buttonStyle(TomatoPressableStyle())
             .accessibilityLabel("移除文档")
@@ -669,16 +787,27 @@ extension ComposerView {
     }
 
     /// Staged-photo preview with its size and a way to drop it.
+    /// The thumbnail opens the picture full screen; its bytes are already on the
+    /// phone, so the preview does not depend on the Host.
     /// @param photo - one staged photo; its image was decoded once at staging.
     /// @param remove - drops this photo from the staged set.
     private func attachmentChip(_ photo: StagedPhoto, remove: @escaping () -> Void) -> some View {
         HStack(spacing: 10) {
             if let image = photo.image {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 44, height: 44)
-                    .clipShape(RoundedRectangle(cornerRadius: TomatoRadius.sm, style: .continuous))
+                Button {
+                    previewPhoto = photo
+                } label: {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 44, height: 44)
+                        .clipShape(RoundedRectangle(cornerRadius: TomatoRadius.sm, style: .continuous))
+                        .contentShape(RoundedRectangle(cornerRadius: TomatoRadius.sm, style: .continuous))
+                }
+                .buttonStyle(TomatoPressableStyle())
+                .accessibilityLabel("预览照片")
+                .accessibilityHint("打开这张照片")
+                .accessibilityIdentifier("composer.photo.preview")
             }
             Text("照片 · \(byteCount(photo.data.count))")
                 .font(.caption)
@@ -687,6 +816,8 @@ extension ComposerView {
             Button(action: remove) {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundStyle(TomatoToken.labelDimmed)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Circle())
             }
             .buttonStyle(TomatoPressableStyle())
             .accessibilityLabel("移除照片")
@@ -704,6 +835,36 @@ extension ComposerView {
         isFocused.wrappedValue = false
         showsCamera = true
     }
+
+    #if DEBUG
+        /// Stage one generated photo when a test run asks for it.
+        ///
+        /// Present only with `-TOMATO_STAGE_SAMPLE_PHOTO`; a release build never
+        /// attaches a photo the owner did not choose.
+        private func stageDebugPhotoIfAsked() {
+            guard ProcessInfo.processInfo.arguments.contains("-TOMATO_STAGE_SAMPLE_PHOTO"),
+                  pickedImages.isEmpty
+            else { return }
+            let image = UIGraphicsImageRenderer(size: CGSize(width: 240, height: 240)).image { context in
+                context.cgContext.setFillColor(UIColor.systemTeal.cgColor)
+                context.cgContext.fill(CGRect(x: 0, y: 0, width: 240, height: 240))
+            }
+            guard let data = Self.prepare(image) else { return }
+            pickedImages.append(StagedPhoto(data: data))
+        }
+
+        /// Put a draft in the field when a style preview asks for one.
+        ///
+        /// Present only with `-TOMATO_PREVIEW_DRAFT`; the layout preview has no
+        /// keyboard to type on, so the filled dock — the send action lit, the
+        /// placeholder gone — otherwise has no way to be inspected.
+        private func stageDebugDraftIfAsked() {
+            guard ProcessInfo.processInfo.arguments.contains("-TOMATO_PREVIEW_DRAFT"),
+                  text.isEmpty
+            else { return }
+            text = "把输入框的圆角和留白收一下，发送键放进框里。"
+        }
+    #endif
 
     /// Downscale and stage one captured photo.
     /// @param image - the full-size capture.

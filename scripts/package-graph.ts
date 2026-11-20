@@ -41,7 +41,7 @@ export function collectPackageGraph(root: string, groupOrder: readonly string[],
       .map(path => (JSON.parse(readFileSync(resolve(root, path), 'utf8')) as { name?: string }).name)
       .filter((name): name is string => name !== undefined),
   )
-  for (const rel of globSync('packages/*/*/package.json', { cwd: root }).map(path => path.split(sep).join('/')).sort()) {
+  for (const rel of globSync(['packages/*/*/package.json', 'plugins/tomato-market/package.json'], { cwd: root }).map(path => path.split(sep).join('/')).sort()) {
     const json = JSON.parse(readFileSync(resolve(root, rel), 'utf8')) as {
       name: string
       peerDependencies?: Record<string, string>

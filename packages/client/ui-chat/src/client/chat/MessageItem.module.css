@@ -313,6 +313,10 @@
   gap: 8px;
 }
 
+.imageAttachment {
+  display: contents;
+}
+
 .fileCard {
   display: inline-flex;
   flex: 0 0 240px;

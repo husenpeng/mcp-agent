@@ -59,6 +59,20 @@ final class HangWatchdog: @unchecked Sendable {
         timer = source
     }
 
+    /// Anchor the beat clock again after a lifecycle transition.
+    ///
+    /// The beat task stops while the process is suspended, so the first probe
+    /// after the app returns would otherwise report the whole suspension as a
+    /// stall and blame whatever step was marked before it.
+    func resetClock() {
+        let now = CFAbsoluteTimeGetCurrent()
+        lock.lock()
+        lastBeat = now
+        stallStart = nil
+        lastReport = 0
+        lock.unlock()
+    }
+
     /// Mark the main thread alive. Called on the main actor.
     func beat() {
         let now = CFAbsoluteTimeGetCurrent()
@@ -82,19 +96,32 @@ final class HangWatchdog: @unchecked Sendable {
         let now = CFAbsoluteTimeGetCurrent()
         lock.lock()
         let stalled = now - lastBeat
-        let reported = lastReport
-        let start = stallStart
-        lock.unlock()
-
-        guard stalled > Self.threshold, start == nil || now - reported > Self.reportInterval else { return }
-
-        lock.lock()
-        if stallStart == nil {
-            stallStart = lastBeat
+        // The main thread answered since the last probe: whatever the beat task
+        // did not close is closed by the next beat, and no report is due.
+        guard stalled > Self.threshold else {
+            lock.unlock()
+            return
         }
+        // Every duration below counts from the beat that started the stall, so
+        // a fault and the recovery that closes it cannot name two lengths for
+        // the same window.
+        if let start = stallStart {
+            guard now - lastReport >= Self.reportInterval else {
+                lock.unlock()
+                return
+            }
+            lastReport = now
+            lock.unlock()
+            AppLog.fault(
+                .diagnostics,
+                "主线程仍无响应约 \(Self.seconds(now - start)) 秒",
+                detail: "最后操作：\(AppLog.shared.currentActivity)"
+            )
+            return
+        }
+        stallStart = lastBeat
         lastReport = now
         lock.unlock()
-
         AppLog.fault(
             .diagnostics,
             "主线程无响应约 \(Self.seconds(stalled)) 秒",

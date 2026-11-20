@@ -52,8 +52,9 @@ kind: "package-reference"
 | `maxAlternatives` | `8` | 从一次扩展回复中保留的说法数 |
 | `capture` | `false` | 是否为每个结束的回合发一次有界请求，把持久陈述捕捉为候选 |
 | `captureProfileActive` | `true` | 带原话验证的画像陈述是否立即生效 |
-| `captureProvider` | 当前回合 | 捕捉请求的显式 provider；与 `captureModel` 一起设置可避免用昂贵的对话模型做回顾 |
-| `captureModel` | 当前回合 | 显式捕捉模型；必须与 `captureProvider` 配对 |
+| `captureProvider` | 当前回合 | 捕捉请求的显式 provider；与 `captureModel` 一起设置可避免用昂贵的对话模型做回顾。该路由没有注册适配器时回落到刚结束回合自己的路由，两条路由都会记入日志 |
+| `captureModel` | 当前回合 | 显式捕捉模型；必须与 `captureProvider` 配对，并与其一同回落 |
+| `captureReasoningEffort` | 路由默认 | 捕捉请求的推理档，例如用 `off` 让混合模型保持便宜；模型未声明该档时请求直接失败 |
 | `captureMaxInputBytes` | `6000` | 一次捕捉请求发送的人的消息的 UTF-8 字节数 |
 | `captureMaxToolBytes` | `1200` | 一次捕捉请求发送的工具活动的 UTF-8 字节数 |
 | `captureMaxTokens` | `400` | 一次捕捉请求的输出 token 上限 |
@@ -133,7 +134,7 @@ kind: "package-reference"
 
 每次 `turn/end` 都会运行一次提升：等待该轮卡片写入完成，把不同会话重复出现的事实提升为候选记录，并把覆盖的记录与情节写成插件记录 `plugin:tool-memory/promotion`。失败观察和只有退出码的事实永远不会提升。
 
-第二个 `tools/post-execute` 监听器为每个被观察的调用存下一张确定性卡片：工具、命令真正执行的工作、失败信息或退出码，以及内容指纹。卡片的概念名使用真正的命令及其涉及的路径，因此 `cd <dir> &&` 后面的命令可按它做了什么被搜索到。它不发模型请求，跳过记忆工具与委派智能体，并在 `episodeCapture` 接管这些工具时让位，因此同一次调用不会被存两遍。
+第二个 `tools/post-execute` 监听器为每个被观察的调用存下一张确定性卡片：工具、命令真正执行的工作、失败信息或退出码，以及内容指纹。卡片的概念名使用真正的命令及其涉及的路径，因此 `cd <dir> &&` 后面的命令可按它做了什么被搜索到；每个概念都会裁剪到存储的概念上限，超长文件名不会让卡片无法存储。它不发模型请求，跳过记忆工具与委派智能体，并在 `episodeCapture` 接管这些工具时让位，因此同一次调用不会被存两遍。
 
 查询扩展通过 `ctx.llm.prepareCall()` 发送一次请求，受自身截止时间和工具调用取消的约束，并在使用结果之前，向调用方会话追加插件记录 `plugin:tool-memory/query-expansion`（路由、系统文本、查询、token 上限，以及得到的说法或失败原因）。取消工具调用会结束搜索；其他任何失败都回退到字面结果。
 

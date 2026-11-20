@@ -23,6 +23,225 @@ enum PhonePicker: String, Identifiable {
     }
 }
 
+/// Model sheet for the company agent_service.
+///
+/// The list comes from the service catalog, and a tap writes the route onto the
+/// open session; the phone stores only the chosen name, never a model key.
+struct PhoneServiceModelSheet: View {
+    @ObservedObject var agent: PhoneAgentModel
+    @StateObject private var catalog = AgentServiceModelCatalog()
+    /// Depth the sheet shows as chosen; the store alone does not repaint a row.
+    @State private var pickedLevel: String?
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 0) {
+            SheetHeader(
+                title: "选择模型",
+                caption: "由服务端 agent 提供；选择会写回当前会话。",
+                onClose: { dismiss() }
+            )
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    if let error = catalog.error {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundStyle(AgentTheme.danger)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    if catalog.isLoading, catalog.models.isEmpty {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                    }
+                    TomatoCard(padding: 0) {
+                        VStack(spacing: 0) {
+                            ForEach(Array(catalog.models.enumerated()), id: \.element.id) { index, model in
+                                row(model)
+                                if index < catalog.models.count - 1 {
+                                    Divider()
+                                        .overlay(TomatoToken.borderL1)
+                                        .padding(.leading, 14)
+                                }
+                            }
+                        }
+                    }
+                    Text("推理档位")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(AgentTheme.ink)
+                    thinkingSection
+                    Text("由服务端模型路由执行；选择会写回当前会话。")
+                        .font(.caption)
+                        .foregroundStyle(AgentTheme.inkSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("模型由公司 agent_service 管理；手机上不再保存模型 Key。")
+                        .font(.caption)
+                        .foregroundStyle(AgentTheme.inkSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 28)
+                .padding(.top, 4)
+            }
+        }
+        .background(AgentTheme.canvas)
+        .task {
+            await catalog.load()
+            reconcileThinkingLevel()
+            pickedLevel = AgentBackendStore.serviceThinkingLevel
+        }
+        .accessibilityIdentifier("phone.service.model.sheet")
+    }
+
+    /// The depths the service accepts for the route on screen.
+    ///
+    /// A route reports its own whitelist; an empty one means the route does not
+    /// open thinking, so no depth is offered for it. Before a route is chosen
+    /// the whitelist is unknown — the session would follow the agent's own
+    /// route — so the picker waits instead of guessing.
+    @ViewBuilder private var thinkingSection: some View {
+        if let model = selectedModel {
+            let levels = model.selectableThinkingLevels
+            if levels.isEmpty {
+                Text("该模型不开放推理档位；会话使用服务端默认设置。")
+                    .font(.caption)
+                    .foregroundStyle(AgentTheme.inkSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                TomatoCard(padding: 0) {
+                    VStack(spacing: 0) {
+                        thinkingRow(title: "服务端默认", detail: routeDefaultDetail(model), level: nil)
+                        ForEach(levels, id: \.self) { level in
+                            Divider()
+                                .overlay(TomatoToken.borderL1)
+                                .padding(.leading, 14)
+                            thinkingRow(title: title(for: level), level: level)
+                        }
+                    }
+                }
+            }
+        } else {
+            Text("先选择一个模型；可选档位由该模型的白名单决定。")
+                .font(.caption)
+                .foregroundStyle(AgentTheme.inkSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    /// Route the stored choice names, when the catalog still lists it.
+    private var selectedModel: AgentServiceModel? {
+        guard let name = AgentBackendStore.serviceModelRoute else { return nil }
+        return catalog.models.first { $0.name == name }
+    }
+
+    /// Default depth the route itself carries.
+    /// - Parameter model: route the service offers.
+    /// - Returns: one supporting line for the "service default" row.
+    private func routeDefaultDetail(_ model: AgentServiceModel) -> String {
+        guard let level = model.thinkingLevel, !level.isEmpty else {
+            return "路由不启用推理"
+        }
+        return "路由默认 \(level)"
+    }
+
+    /// Wording for one depth; a name this build does not know shows as sent.
+    /// - Parameter level: depth the route lists.
+    /// - Returns: the row title.
+    private func title(for level: String) -> String {
+        switch level {
+        case "low": "低"
+        case "balanced": "中"
+        case "high": "高"
+        case "ultra": "很高"
+        case "max": "最高"
+        default: level
+        }
+    }
+
+    /// Drop a stored depth the route on screen no longer lists.
+    private func reconcileThinkingLevel() {
+        guard let model = selectedModel,
+              let stored = AgentBackendStore.serviceThinkingLevel,
+              !model.allowsThinkingLevel(stored)
+        else { return }
+        agent.selectServiceThinkingLevel(nil)
+    }
+
+    /// One thinking-depth row.
+    /// - Parameters:
+    ///   - title: wording on the row.
+    ///   - detail: optional supporting line.
+    ///   - level: stored value, nil for the route default.
+    private func thinkingRow(title: String, detail: String? = nil, level: String?) -> some View {
+        let selected = pickedLevel == level
+        return Button {
+            pickedLevel = level
+            agent.selectServiceThinkingLevel(level)
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(selected ? AgentTheme.accent : AgentTheme.ink)
+                    if let detail {
+                        Text(detail)
+                            .font(.caption)
+                            .foregroundStyle(AgentTheme.inkSecondary)
+                    }
+                }
+                Spacer(minLength: 8)
+                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(selected ? AgentTheme.accent : AgentTheme.inkSecondary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("phone.service.thinking.\(level ?? "default")")
+    }
+
+    /// Vendor plus the thinking depth the route carries.
+    /// - Parameter model: route the service offers.
+    /// - Returns: one supporting line.
+    private func subtitle(for model: AgentServiceModel) -> String {
+        let vendor = model.provider ?? model.name
+        guard let level = model.thinkingLevel, !level.isEmpty else { return vendor }
+        return "\(vendor) · 默认推理 \(level)"
+    }
+
+    /// One route row; the stored choice carries a check.
+    /// - Parameter model: route the service offers.
+    private func row(_ model: AgentServiceModel) -> some View {
+        let selected = AgentBackendStore.serviceModelRoute == model.name
+        return Button {
+            agent.selectServiceModel(model)
+            dismiss()
+        } label: {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(model.model ?? model.name)
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(selected ? AgentTheme.accent : AgentTheme.ink)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    Text(subtitle(for: model))
+                        .font(.caption)
+                        .foregroundStyle(AgentTheme.inkSecondary)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                    .font(.body)
+                    .foregroundStyle(selected ? AgentTheme.accent : AgentTheme.inkSecondary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("phone.service.model.\(model.name)")
+    }
+}
+
 /// Model sheet for the endpoint Tomato Phone calls directly.
 ///
 /// Only models whose prompt cache was measured are offered; choosing one also

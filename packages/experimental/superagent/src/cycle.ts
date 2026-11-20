@@ -19,7 +19,7 @@ export type CycleVerdict =
   | { readonly kind: 'accepted'; readonly tickets: readonly Ticket[]; readonly trigger: Trigger }
   | { readonly kind: 'declined'; readonly reason: string; readonly trigger: Trigger }
   | { readonly kind: 'continued'; readonly reached: readonly TicketId[]; readonly trigger: Trigger }
-  | { readonly kind: 'refused'; readonly admission: Admission; readonly trigger: Trigger }
+  | { readonly kind: 'refused'; readonly admission: Extract<Admission, { readonly admitted: false }>; readonly trigger: Trigger }
 
 /** What one cycle read and decided. */
 export interface CycleResult {
@@ -31,23 +31,16 @@ export interface CycleResult {
   readonly outcomes: readonly IntakeOutcome[]
 }
 
-/** What one cycle needs to run. */
-export interface CycleRequest {
+/** What the intake decision needs, independent of the source that carried the events. */
+export interface IntakeRequest {
   readonly store: SuperagentStore
-  readonly gateway: BotGateway
   readonly policy: Policy
-  /** Cursor the caller last processed. */
-  readonly cursor: number
-  /** Most events to read in one cycle. */
-  readonly limit: number
   /** Identity to give the next ticket. */
   readonly nextTicketId: () => TicketId
   /** Identity to give the next mandate. */
   readonly nextMandateId: () => MandateId
   /** How far accepted work may go; defaults to a change. */
   readonly scope?: MandateScope
-  /** The agent's own open id, when the deployment knows it. */
-  readonly botOpenId?: string
   /** Session that supervises the accepted work; it may read every Session the work uses. */
   readonly supervisor: string
   /**
@@ -55,6 +48,17 @@ export interface CycleRequest {
    * one ticket named by its text; with it, one ticket per piece it plans.
    */
   readonly judge?: Supervisor
+}
+
+/** What one cycle needs to run. */
+export interface CycleRequest extends IntakeRequest {
+  readonly gateway: BotGateway
+  /** Cursor the caller last processed. */
+  readonly cursor: number
+  /** Most events to read in one cycle. */
+  readonly limit: number
+  /** The agent's own open id, when the deployment knows it. */
+  readonly botOpenId?: string
 }
 
 /**
@@ -72,10 +76,30 @@ export async function runCycle(request: CycleRequest): Promise<CycleResult> {
     request.limit,
     request.botOpenId,
   )
+  const verdicts = await decideTriggers(
+    request,
+    polled.events.map((event, index) => ({
+      trigger: toTrigger(event, request.botOpenId),
+      outcome: polled.outcomes[index] as IntakeOutcome,
+    })),
+  )
+  return { nextCursor: polled.nextCursor, verdicts, outcomes: polled.outcomes }
+}
+
+/**
+ * Decide each already-intaken trigger: admit it, let a reached ticket continue,
+ * or open the work it names. The source that carried the events is irrelevant
+ * here, so a bot poll and an app submission share one decision path.
+ * @param request - store, policy, identity sources, and the optional judge.
+ * @param events - triggers paired with what intake did, oldest first.
+ * @returns one verdict per event, in the same order.
+ */
+export async function decideTriggers(
+  request: IntakeRequest,
+  events: readonly { readonly trigger: Trigger; readonly outcome: IntakeOutcome }[],
+): Promise<CycleVerdict[]> {
   const verdicts: CycleVerdict[] = []
-  for (const [index, event] of polled.events.entries()) {
-    const trigger = toTrigger(event, request.botOpenId)
-    const outcome = polled.outcomes[index] as IntakeOutcome
+  for (const { trigger, outcome } of events) {
     const admission = admit(request.policy, trigger)
     if (!admission.admitted) {
       verdicts.push({ kind: 'refused', admission, trigger })
@@ -108,7 +132,7 @@ export async function runCycle(request: CycleRequest): Promise<CycleResult> {
     }))
     verdicts.push({ kind: 'accepted', tickets, trigger })
   }
-  return { nextCursor: polled.nextCursor, verdicts, outcomes: polled.outcomes }
+  return verdicts
 }
 
 /**

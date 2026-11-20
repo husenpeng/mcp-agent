@@ -11,7 +11,7 @@ import AgentRegistry, { agentEvents } from '@tomato/agent'
 import type { Agent, AgentStatus } from '@tomato/agent'
 import { createInboxStub } from '@tomato/agent-loop-testkit'
 import CommandRuntime from '@tomato/commands'
-import LlmRuntime, { LlmAdapter, createToolResultMessage, createUserMessage, ToolCallId } from '@tomato/llm'
+import LlmRuntime, { LlmAdapter, LlmError, ReasoningEffortId, createToolResultMessage, createUserMessage, ToolCallId } from '@tomato/llm'
 import type { ContextFormed, GenerateOptions, MessageSource, StreamChunk } from '@tomato/llm'
 import SessionStore, { SessionId, SessionSeq } from '@tomato/session'
 import { pluginRecordOf } from '@tomato/session'
@@ -89,6 +89,15 @@ afterEach(async () => {
 class ExpansionModel extends LlmAdapter {
   readonly requests: GenerateOptions[] = []
   constructor(readonly replies: (string | Error)[] = []) { super() }
+  /** Declare one selectable effort, so a capture request can pin `off`. */
+  override async resolveModel(provider: string, model: string) {
+    return {
+      provider,
+      id: model,
+      name: model,
+      reasoning: { efforts: [{ id: ReasoningEffortId('off'), name: 'off' }] },
+    }
+  }
   override async *stream(options: GenerateOptions): AsyncIterable<StreamChunk> {
     this.requests.push(options)
     const reply = this.replies.shift() ?? ''
@@ -272,7 +281,7 @@ describe('plugin exports', () => {
       expansionProvider: undefined, expansionModel: undefined,
       expansionTimeoutMs: 8000, expansionMaxTokens: 120, maxAlternatives: 8,
       capture: false, captureProfileActive: true, captureMaxToolBytes: 1200, captureMaxInputBytes: 6000,
-      captureMaxTokens: 400, captureTimeoutMs: 12_000,
+      captureMaxTokens: 900, captureTimeoutMs: 24_000, captureReasoningEffort: undefined,
       episodeCapture: false, episodeTools: ['edit', 'write', 'bash'], episodeMaxInputBytes: 6000, episodeMaxResultBytes: 6000,
       episodeMaxTokens: 500, episodeTimeoutMs: 20_000, episodeSampleRate: 1, episodeSampleBudget: 0, maxHistoryBytes: 1536,
       minHistoryScore: 0.25,
@@ -826,6 +835,13 @@ describe('post-turn capture', () => {
     } as never)
   }
 
+  /** Capture records as objects, for field assertions. */
+  function provided(test: Harness): Record<string, unknown>[] {
+    const sessionId = test.ctx.sessions.list()[0]?.id
+    const session = sessionId === undefined ? undefined : test.ctx.sessions.get(sessionId)
+    return session === undefined ? [] : captures(session) as Record<string, unknown>[]
+  }
+
   /** Capture records logged in the Session. */
   function captures(session: Session): unknown[] {
     return session.snapshotEvents().flatMap((event) => {
@@ -856,7 +872,7 @@ describe('post-turn capture', () => {
     expect(record).toMatchObject({ status: 'candidate', scope: { kind: 'workspace' }, source: { sessionId: session.id } })
     expect(record.source.userMessageSeq).toBeDefined()
     expect(test.model.requests).toHaveLength(1)
-    expect(test.model.requests[0]).toMatchObject({ provider: 'mock', model: 'mock', system: memoryTools.CAPTURE_SYSTEM, maxTokens: 400 })
+    expect(test.model.requests[0]).toMatchObject({ provider: 'mock', model: 'mock', system: memoryTools.CAPTURE_SYSTEM, maxTokens: 900 })
     expect(JSON.stringify(test.model.requests[0]?.messages)).toContain('简短直接的语气')
     await vi.waitFor(() => { expect(captures(session)).toHaveLength(1) })
     expect(captures(session)[0]).toMatchObject({ route: { provider: 'mock', model: 'mock' }, outcome: { status: 'stored' } })
@@ -1145,6 +1161,48 @@ describe('post-turn capture', () => {
     await new Promise(resolve => setTimeout(resolve, 10))
     expect(signedOut.model.requests).toEqual([])
     expect(captures(session)).toMatchObject([{ outcome: { status: 'skipped', reason: 'sign-in-required' } }])
+  })
+
+  it('pins the configured reasoning effort on the capture request', async () => {
+    const test = await harness({ capture: true, captureReasoningEffort: 'off' })
+    provideSessionQuery(test)
+    const { session } = await live(test)
+    startTurn(session)
+    say(session, '以后给达人写邮件都用简短直接的语气，不要用 emoji')
+    session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    test.model.replies.push(JSON.stringify({ summary: null, candidates: [] }))
+    endTurn(session)
+    await vi.waitFor(() => { expect(test.model.requests).toHaveLength(1) })
+    expect(test.model.requests[0]).toMatchObject({ provider: 'mock', model: 'mock', reasoningEffort: 'off' })
+  })
+
+  it('falls back to the turn route when the configured capture route has no adapter', async () => {
+    // A configured route can outlive the provider it names; the person is still
+    // working on a route that exists, so capture must follow that one.
+    const test = await harness({ capture: true, captureProvider: 'gone-provider', captureModel: 'gone-model' })
+    provideSessionQuery(test)
+    const { session } = await live(test)
+    startTurn(session)
+    say(session, '以后给达人写邮件都用简短直接的语气，不要用 emoji')
+    session.append('request/header', { header: { config: { provider: 'mock', model: 'mock' } }, reason: 'initial' })
+    vi.spyOn(test.ctx.llm, 'prepareCall').mockRejectedValueOnce(
+      new LlmError('no adapter registered for provider "gone-provider"', 'NO_ADAPTER'),
+    )
+    test.model.replies.push(JSON.stringify({
+      summary: null,
+      candidates: [{
+        scope: 'workspace', kind: 'preference', entity: 'user', key: 'email-tone',
+        value: '邮件简短直接，不用 emoji', quote: '简短直接的语气，不要用 emoji',
+      }],
+    }))
+    endTurn(session)
+    await vi.waitFor(() => { expect(provided(test)).toHaveLength(1) })
+    expect(provided(test)[0]).toMatchObject({
+      route: { provider: 'mock', model: 'mock' },
+      attemptedRoute: { provider: 'gone-provider', model: 'gone-model' },
+      outcome: { status: 'stored' },
+    })
+    expect(test.model.requests.at(-1)).toMatchObject({ provider: 'mock', model: 'mock' })
   })
 
   it('logs a thrown non-Error failure and ignores non-text reply blocks', async () => {
@@ -2794,7 +2852,7 @@ describe('glob lessons', () => {
       meta: { shape: 'paths', paths: [], truncated: true, total: 840 },
     }
     const next = () => Promise.resolve({ kind: 'accept' as const })
-    const run = () => test.ctx.waterfall('tools/post-execute', exec as never, result as never, next)
+    const run = async (): Promise<void> => { await test.ctx.waterfall('tools/post-execute', exec as never, result as never, next) }
     await run()
     await vi.waitFor(() => { expect(test.ctx.memory.listEpisodes(test.view)).toHaveLength(1) })
     expect(test.ctx.memory.listEpisodes(test.view)[0]).toMatchObject({
@@ -2843,12 +2901,12 @@ describe('glob lessons', () => {
     const capped = await harness({ lessonCapture: true, lessonMaxPerSession: 1 })
     const first = await live(capped)
     const second = await live(capped)
-    const call = async (agent: Agent, pattern: string) => capped.ctx.waterfall(
+    const call = async (agent: Agent, pattern: string): Promise<void> => { await capped.ctx.waterfall(
       'tools/post-execute',
       { name: 'glob', callId: ToolCallId(`call-${pattern}`), arguments: { pattern }, agent, signal: SIGNAL } as never,
       { isError: false, content: [], value: {}, meta: { shape: 'paths', truncated: true, total: 300 } } as never,
       () => Promise.resolve({ kind: 'accept' as const }),
-    )
+    ) }
     await call(first.agent, 'a')
     await call(first.agent, 'b')
     await vi.waitFor(() => { expect(capped.ctx.memory.listEpisodes(capped.view)).toHaveLength(1) })
@@ -2885,12 +2943,12 @@ describe('glob lesson boundaries', () => {
   it('skips a focused result, a delegated agent, a Session without a project, and logs a failed write', async () => {
     const test = await harness({ lessonCapture: true })
     const { agent } = await live(test)
-    const waterfall = (exec: object, meta: object) => test.ctx.waterfall(
+    const waterfall = async (exec: object, meta: object): Promise<void> => { await test.ctx.waterfall(
       'tools/post-execute',
       exec as never,
       { isError: false, content: [], value: {}, meta } as never,
       () => Promise.resolve({ kind: 'accept' as const }),
-    )
+    ) }
     await waterfall({ name: 'glob', callId: ToolCallId('small'), arguments: { pattern: '*.ts' }, agent }, { shape: 'paths', truncated: false, total: 3 })
     const delegated = await live(test, { owner: agent })
     await waterfall({ name: 'glob', callId: ToolCallId('delegated'), arguments: { pattern: '*' }, agent: delegated.agent }, { shape: 'paths', truncated: true, total: 300 })

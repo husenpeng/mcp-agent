@@ -7,7 +7,7 @@
  */
 
 import type { Context } from '@tomato/cordis'
-import type { Room, RoomId, RoomMessage, RoomSpecIssue } from '@tomato/experimental-robot-room'
+import type { Room, RoomId, RoomMessage, RoomSpecIssue, RoomWorkRecord } from '@tomato/experimental-robot-room'
 import type {} from '@tomato/experimental-robot-room'
 import { Remote, RemoteError, TypertRemoteService } from '@tomato/typert-protocol'
 import type {
@@ -107,6 +107,16 @@ export class RoomController extends TypertRemoteService {
     } catch (error: unknown) {
       throw this.conflict(request.room, error)
     }
+  }
+
+  /**
+   * Read the work records one room produced.
+   * @param request - room identity.
+   * @returns one record per ticket, oldest first.
+   */
+  @Remote('work')
+  work(request: RoomTargetRequest): Promise<readonly RoomWorkRecord[]> {
+    return this.ctx.rooms.work(request.room)
   }
 
   /**

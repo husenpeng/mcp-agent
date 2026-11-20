@@ -151,7 +151,7 @@ final class InteractionProbeTests: XCTestCase {
             "tomato://sessions",
         ]
         app.launch()
-        XCTAssertTrue(app.navigationBars["会话"].waitForExistence(timeout: 20))
+        XCTAssertTrue(app.buttons["新建会话"].waitForExistence(timeout: 20))
         let list = app.collectionViews.firstMatch
         shot("qa-list-open")
         for index in 0 ..< 3 {

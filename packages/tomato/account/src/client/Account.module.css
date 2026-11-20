@@ -45,13 +45,29 @@
   color: var(--dsw-alias-state-warn-primary);
 }
 
-.avatar {
-  display: flex;
+.label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The frame owns the square, so the image stays inside it wherever the avatar is
+   laid out; callers pass the diameter instead of wrapping it. */
+/* Holds the 16px avatar and status icons at the trigger's square, so the label stays on the text lines. */
+.triggerIcon {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   flex: none;
-  width: 24px;
-  height: 24px;
+  width: 16px;
+  height: 16px;
+}
+
+.avatarFrame {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
   border-radius: 50%;
   corner-shape: round;
   overflow: hidden;
@@ -69,19 +85,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: none;
-  border-radius: 50%;
-  corner-shape: round;
-  background: var(--dsw-alias-bg-skeleton);
+  width: 100%;
+  height: 100%;
+  font-weight: 500;
   color: var(--dsw-alias-label-secondary);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .page {
@@ -89,6 +96,7 @@
   flex-direction: column;
   gap: 16px;
   min-width: 0;
+  color: var(--dsw-alias-label-primary);
 }
 
 .heading {
@@ -101,6 +109,7 @@
   margin: 0;
   font-size: 18px;
   line-height: 26px;
+  font-weight: 500;
   color: var(--dsw-alias-label-primary);
 }
 
@@ -124,20 +133,24 @@
   line-height: 20px;
 }
 
+/* Shared settings card material (docs/ui-radius.md#settings-cards). */
 .card {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 16px;
-  border: 0.5px solid var(--dsw-alias-border-l1);
-  border-radius: var(--dsw-radius-lg);
-  background: var(--dsw-alias-bg-layer-1);
+  gap: 12px;
+  padding: 16px 18px;
+  border: 0.5px solid var(--dsw-alias-settings-card-stroke);
+  border-radius: var(--dsw-radius-xl);
+  background: var(--dsw-alias-settings-card-fill);
 }
 
+/* Identity and its action share a line; the action drops below them when the
+   settings pane leaves no room to sit beside the name. */
 .identity {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 12px 14px;
   min-width: 0;
 }
 
@@ -145,48 +158,59 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1 1 168px;
+  min-width: 0;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
 }
 
 .name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
   font-size: 14px;
   line-height: 22px;
+  font-weight: 500;
   color: var(--dsw-alias-label-primary);
 }
 
+/* The sign-in service reports its own failure, so the state line carries the warning ink. */
+.name[data-status='unavailable'] {
+  color: var(--dsw-alias-state-warn-label);
+}
+
 .email {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
   font-size: 12px;
   line-height: 18px;
   color: var(--dsw-alias-label-tertiary);
+}
+
+/* A session chip, not a second name: the dot and the caption weight keep it
+   beside the identity instead of competing with it. */
+.session {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-state-success-primary);
 }
 
 .placeholderIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  flex: none;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   corner-shape: round;
   background: var(--dsw-alias-bg-skeleton);
-  color: var(--dsw-alias-label-tertiary);
-}
-
-.statusRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  line-height: 20px;
-}
-
-.statusLabel {
   color: var(--dsw-alias-label-tertiary);
 }
 
@@ -199,6 +223,8 @@
 
 .actions {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
   gap: 8px;
+  flex: none;
+  margin-left: auto;
 }

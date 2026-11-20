@@ -1,0 +1,22 @@
+# Bilingual-pair consistency record for 2026-11-19-model-adaptation-dataset.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-11-19-model-adaptation-dataset.md
+/agent-note-third-party-model-adaptation-dataset-and-one-click-actions:
+  en: 976c003dfe0acaa3
+  zh: 13883fa4b966a6d3
+/agent-note-third-party-model-adaptation-dataset-and-one-click-actions/problem:
+  en: 621881031916cf6c
+  zh: 5e888591e15bc6fb
+/agent-note-third-party-model-adaptation-dataset-and-one-click-actions/decision:
+  en: 882578df65aff693
+  zh: 668e3d7eeae00410
+/agent-note-third-party-model-adaptation-dataset-and-one-click-actions/alternatives-considered:
+  en: 017ccf5f2b49e403
+  zh: 3cb331689a59f2fa
+/agent-note-third-party-model-adaptation-dataset-and-one-click-actions/consequences:
+  en: 9bb77a9ef72687a7
+  zh: 5a3120551f94d2a4
+/agent-note-third-party-model-adaptation-dataset-and-one-click-actions/verification:
+  en: c52d60d8cfbca69a
+  zh: 7ca74a0d5c3eccd4

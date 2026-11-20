@@ -37,7 +37,7 @@ function readPackage(path: string): WorkspacePackage | null {
 function workspacePackages(): WorkspacePackage[] {
   return [
     ...globSync('vendor/*/package.json', { cwd: root }),
-    ...globSync('packages/*/*/package.json', { cwd: root }),
+    ...globSync(['packages/*/*/package.json', 'plugins/tomato-market/package.json'], { cwd: root }),
   ]
     .map(path => readPackage(resolve(root, path)))
     .filter(pkg => pkg !== null)

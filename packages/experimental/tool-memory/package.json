@@ -76,6 +76,7 @@
     "@tomato/experimental-memory": "workspace:*",
     "@tomato/gateway": "workspace:*",
     "@tomato/llm": "workspace:*",
+    "@tomato/memory-dream": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/session-projection": "workspace:*",
     "@tomato/session-query": "workspace:*",

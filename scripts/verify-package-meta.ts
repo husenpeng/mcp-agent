@@ -263,7 +263,7 @@ function packageProblems(manifestPath: string, parser: DOMParser): string[] {
  * @returns diagnostics for an empty package corpus, invalid metadata or SVG artwork, inaccessible resources, or omitted publication files.
  */
 export function packageMetaProblems(root: string): string[] {
-  const manifests = globSync('packages/*/*/package.json', { cwd: root }).map(path => path.replaceAll('\\', '/'))
+  const manifests = globSync(['packages/*/*/package.json', 'plugins/tomato-market/package.json'], { cwd: root }).map(path => path.replaceAll('\\', '/'))
   if (manifests.length === 0) return [`${root}: no workspace package manifests found`]
   const { window } = new JSDOM()
   try {

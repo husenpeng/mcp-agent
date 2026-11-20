@@ -22,15 +22,19 @@ import {
 import type { DesktopPaths } from './paths.ts'
 import type { DesktopRelease } from './release.ts'
 import { readDesktopRuntime } from './runtime-tree.ts'
-import { initProfile, removeLinkProjections, sanitizeProfile } from '@tomato/app-boot'
+import { initProfile, readProfileManifest, removeLinkProjections, sanitizeProfile, writeProfileManifest } from '@tomato/app-boot'
 import { PROFILE_TEMPLATES, type ProfileTemplate } from '@tomato/official-bundles'
 
 const PROJECT_NAME = '@tomato/desktop-runtime'
 const TOMATO_PACKAGE = '@tomato/cli'
 const CORE_BUILD_PACKAGE = '@tomato/subprocess-local'
 const WEB_PROFILE = PROFILE_TEMPLATES.web as ProfileTemplate
-/** Bundles a Desktop profile starts with: the Web composition plus the built-in plugin market. */
-const DESKTOP_PROFILE_BUNDLES = [...WEB_PROFILE.bundles, 'tomato-market'] as const
+/** Bundles a Desktop profile starts with: the Web composition, which already mounts the plugin markets. */
+const DESKTOP_PROFILE_BUNDLES = [...WEB_PROFILE.bundles] as const
+/** The plugin markets bundle: the Marketing plugins and General plugins tabs. */
+const MARKET_BUNDLE = '@tomato/plugin-tomato-market'
+/** The bundle a release before this one mounted in place of {@link MARKET_BUNDLE}. */
+const PREVIOUS_MARKET_BUNDLE = 'tomato-market'
 const WORKSPACE_SETTINGS = 'nodeLinker: hoisted\nautoInstallPeers: false\n'
 function writeJson(path: string, value: unknown): void {
   writeFileSync(path, `${JSON.stringify(value, undefined, 2)}\n`, { mode: 0o600 })
@@ -58,6 +62,35 @@ function migrateProfileSettings(projectDir: string): void {
   }
 }
 
+/**
+ * Replace the profile's former marketplace bundle with the one this release mounts. Only a list that names the former
+ * bundle and not its successor is rewritten; every other list keeps its choice. Callers log the rewrite.
+ * @param dir - the Desktop profile directory.
+ * @returns whether the manifest was rewritten.
+ */
+function migrateMarketBundle(dir: string): boolean {
+  const manifestPath = join(dir, 'package.json')
+  // A profile directory this installation has not created yet is initialized by `createPluginProfile`.
+  if (!existsSync(manifestPath)) return false
+  const manifest = readProfileManifest('tomato', dir)
+  const bundles = manifest.tomato?.profile?.bundles
+  if (bundles === undefined || !bundles.includes(PREVIOUS_MARKET_BUNDLE) || bundles.includes(MARKET_BUNDLE)) return false
+  const renamed = bundles.map(bundle => bundle === PREVIOUS_MARKET_BUNDLE ? MARKET_BUNDLE : bundle)
+  writeProfileManifest(dir, {
+    ...manifest,
+    tomato: { ...manifest.tomato, profile: { ...manifest.tomato?.profile, bundles: renamed } },
+  })
+  return true
+}
+
+/**
+ * Report a profile rewrite to the person who owns it.
+ * @param migrated - whether `migrateMarketBundle` rewrote the manifest.
+ */
+function reportMarketMigration(migrated: boolean): void {
+  if (migrated) process.stderr.write(`tomato: desktop profile now mounts ${MARKET_BUNDLE} in place of ${PREVIOUS_MARKET_BUNDLE}\n`)
+}
+
 /** Initializes the Desktop profile and disables third-party bundles during recovery. */
 export class DesktopProjectManager {
   /**
@@ -75,7 +108,10 @@ export class DesktopProjectManager {
    * @returns Backup path after the locked profile write, or undefined if the patch was absent.
    */
   async disableAllPlugins(): Promise<string | undefined> {
-    return this.withLock(() => sanitizeProfile('tomato', this.paths.profile, DESKTOP_PROFILE_BUNDLES))
+    return this.withLock(() => {
+      reportMarketMigration(migrateMarketBundle(this.paths.profile))
+      return sanitizeProfile('tomato', this.paths.profile, DESKTOP_PROFILE_BUNDLES)
+    })
   }
 
   /**
@@ -86,6 +122,7 @@ export class DesktopProjectManager {
       // Validation only: an unreadable or mismatched runtime descriptor stops preparation before the Host starts.
       readDesktopRuntime(this.runtime.tomato)
       migrateProfileSettings(this.paths.profile)
+      reportMarketMigration(migrateMarketBundle(this.paths.profile))
       createPluginProfile(this.paths.profile)
       removeLinkProjections(this.paths.profile)
     })

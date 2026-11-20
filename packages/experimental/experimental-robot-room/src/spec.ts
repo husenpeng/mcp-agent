@@ -5,7 +5,7 @@
  */
 
 import type {
-  RoomBudgetSpec, RoomContextSpec, RoomGuardSpec, RoomMemberId, RoomMemberSpec, RoomSpec, RoomSpecIssue,
+  RoomBudgetSpec, RoomContextSpec, RoomGuardSpec, RoomMemberId, RoomMemberSpec, RoomReviewSpec, RoomSpec, RoomSpecIssue,
 } from './types.ts'
 import { RoomSpecValidationError } from './types.ts'
 
@@ -38,6 +38,13 @@ export const DEFAULT_ROOM_CONTEXT: RoomContextSpec = Object.freeze({
   messageChars: 1500,
   summaryChars: 1200,
   triggerChars: 6000,
+})
+
+/** Default review behavior: every turn self-reviews and every request waits for acceptance. */
+export const DEFAULT_ROOM_REVIEW: RoomReviewSpec = Object.freeze({
+  selfReview: true,
+  acceptance: true,
+  maxRounds: 3,
 })
 
 /** One named guard and budget preset the editor offers. */
@@ -156,6 +163,7 @@ export function emptyRoomSpec(input: EmptyRoomInput): RoomSpec {
     guard: { ...preset.guard },
     budget: { ...preset.budget },
     context: { ...DEFAULT_ROOM_CONTEXT },
+    review: { ...DEFAULT_ROOM_REVIEW },
     ...input.workspaceRoot === undefined || input.workspaceRoot.trim() === ''
       ? {}
       : { workspaceRoot: input.workspaceRoot.trim() },
@@ -254,7 +262,40 @@ export function validateRoomSpec(spec: RoomSpec): RoomSpecIssue[] {
   if (!Number.isInteger(spec.context.messageChars) || spec.context.messageChars < 100 || spec.context.messageChars > 20_000) issue('context.messageChars', 'must be between 100 and 20000')
   if (!Number.isInteger(spec.context.summaryChars) || spec.context.summaryChars < 200 || spec.context.summaryChars > 20_000) issue('context.summaryChars', 'must be between 200 and 20000')
   if (!Number.isInteger(spec.context.triggerChars) || spec.context.triggerChars < 200 || spec.context.triggerChars > 50_000) issue('context.triggerChars', 'must be between 200 and 50000')
+
+  if (spec.capability !== undefined) {
+    const capability = spec.capability
+    const named = (list: readonly string[] | undefined): boolean => list === undefined
+      || (Array.isArray(list) && list.every(entry => typeof entry === 'string' && entry.trim() !== ''))
+    if (!named(capability.skills)) issue('capability.skills', 'must hold non-empty names')
+    if (!named(capability.mcpServers)) issue('capability.mcpServers', 'must hold non-empty names')
+    if (capability.tools !== undefined) {
+      if (!named(capability.tools.allow)) issue('capability.tools.allow', 'must hold non-empty tool names')
+      if (!named(capability.tools.deny)) issue('capability.tools.deny', 'must hold non-empty tool names')
+    }
+    if (capability.permissionPreset !== undefined && capability.permissionPreset.trim() === '') {
+      issue('capability.permissionPreset', 'must be non-empty when set')
+    }
+  }
+
+  if (spec.review !== undefined) {
+    if (typeof spec.review.selfReview !== 'boolean') issue('review.selfReview', 'must be a boolean')
+    if (typeof spec.review.acceptance !== 'boolean') issue('review.acceptance', 'must be a boolean')
+    if (!Number.isInteger(spec.review.maxRounds) || spec.review.maxRounds < 1 || spec.review.maxRounds > 5) {
+      issue('review.maxRounds', 'must be between 1 and 5')
+    }
+  }
   return issues
+}
+
+/**
+ * Review rounds one room enforces, applying the deployment default when the
+ * specification predates the field.
+ * @param spec - room specification.
+ * @returns its review configuration.
+ */
+export function reviewSpecOf(spec: RoomSpec): RoomReviewSpec {
+  return spec.review ?? DEFAULT_ROOM_REVIEW
 }
 
 /**

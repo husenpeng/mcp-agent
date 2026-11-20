@@ -125,6 +125,8 @@ describe('SSE framing and provider failures', () => {
     [undefined, { type: 'authentication_error' }, 'AUTH'], [undefined, { type: 'rate_limit_error' }, 'RATE_LIMIT'],
     [undefined, { type: 'invalid_request_error' }, 'INVALID_REQUEST'], [undefined, {}, 'SERVER'],
     [400, { message: 'maximum context length exceeded' }, 'CONTEXT_WINDOW_EXCEEDED'],
+    [400, { type: 'invalid_request_error', code: 'invalid_argument', message: 'input token limit is 1048576' }, 'CONTEXT_WINDOW_EXCEEDED'],
+    [413, { message: 'input token limit exceeded' }, 'CONTEXT_WINDOW_EXCEEDED'],
     [400, { message: 'insufficient balance' }, 'QUOTA'],
   ])('classifies status %s and error %j', (status, error, code) => {
     expect(providerError({ error }, status)).toMatchObject({ code })

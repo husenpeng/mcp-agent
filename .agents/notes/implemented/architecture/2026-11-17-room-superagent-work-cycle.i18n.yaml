@@ -1,0 +1,22 @@
+# Bilingual-pair consistency record for 2026-11-17-room-superagent-work-cycle.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-11-17-room-superagent-work-cycle.md
+/agent-note-room-work-records-through-the-superagent-engine:
+  en: 2cf0a7e45b3687d9
+  zh: 48149b40b174e338
+/agent-note-room-work-records-through-the-superagent-engine/problem:
+  en: 0c6f1482c175387d
+  zh: 5ac992fb44dc2e0d
+/agent-note-room-work-records-through-the-superagent-engine/decision:
+  en: 602f08fe7bed2c3f
+  zh: f197b569ac34c39f
+/agent-note-room-work-records-through-the-superagent-engine/alternatives-considered:
+  en: ba5552d361ea83d3
+  zh: a0b28d2fc915a22e
+/agent-note-room-work-records-through-the-superagent-engine/consequences:
+  en: b4309a3f84dcbc4f
+  zh: a104fb34eb953934
+/agent-note-room-work-records-through-the-superagent-engine/verification:
+  en: c4f2ef6a63521025
+  zh: c9becc904285e194

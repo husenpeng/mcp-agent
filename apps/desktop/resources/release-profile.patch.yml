@@ -10,8 +10,9 @@
 - id: harness-dev-context
   config:
     sourceContext: false
-# Memory: the packaged Desktop profile reaches the company embedding relay and
-# sends turn capture to the cheap Claude route instead of the conversation model.
+# Memory: the packaged Desktop profile reaches the company embedding relay.
+# Turn capture follows the session's own provider and model: a route pinned here
+# breaks every capture as soon as that provider is renamed or removed.
 - id: optional-embeddings-http
   config:
     baseUrl: https://bmc-llm-relay.bluemediagroup.cn/v1
@@ -21,5 +22,3 @@
 - id: optional-tool-memory
   config:
     capture: true
-    captureProvider: blue-opus
-    captureModel: claude-haiku-5-5

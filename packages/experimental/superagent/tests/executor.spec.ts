@@ -56,7 +56,7 @@ function worker(answer: (brief: WorkerBrief) => Promise<AssignmentReport>, seen:
   return {
     lease: async (brief): Promise<WorkerLease> => {
       seen.push(brief)
-      return { session: 'worker-ticket-1', directory: '/work/ticket-1', run: answer }
+      return { session: 'worker-ticket-1', directory: '/work/ticket-1', run: answer, cancel: () => {} }
     },
   }
 }

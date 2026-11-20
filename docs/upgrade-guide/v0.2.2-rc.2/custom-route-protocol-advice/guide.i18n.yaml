@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v0.2.2-rc.2/custom-route-protocol-advice/guide.md
+/:
+  en: 8f97cd75e7549cab
+  zh: a3d62dfeb0ab792b
+/custom-routes-prefill-their-protocol-from-the-endpoint:
+  en: 9fead8241eeb6dfd
+  zh: 7af7857ef326efc0
+/custom-routes-prefill-their-protocol-from-the-endpoint/change:
+  en: 7436915adc383c97
+  zh: f46dbdeb0dcf53a1
+/custom-routes-prefill-their-protocol-from-the-endpoint/migration:
+  en: 44ec2adcc37b110f
+  zh: 5bead0f68d53f941

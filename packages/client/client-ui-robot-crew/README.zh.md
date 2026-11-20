@@ -8,7 +8,7 @@ kind: "package-reference"
 
 ## 概述
 
-`@tomato/client-ui-robot-crew` 注册 `collab` 协作标签页与 `crews` 画布工作室，两者都不注册侧栏入口。协作标签页把每个已发布 crew 当作一个群聊，支持手动建群、对话建群和开发模板建群，在群聊里开启任务，并把该次运行渲染成成员汇报与主 agent 答复的对话。工作室以 chips 展示成员，提供可拖拽的交接边画布、crew/成员/交接检查器、一句话组合器，以及所选运行的实时流程账本。registry 与运行状态来自 `ctx.crewRuns`；插件只保留查看状态。
+`@tomato/client-ui-robot-crew` 注册 `collab` 标签页的侧栏入口和 `crews` 画布工作室。协作标签页把每个已发布 crew 当作一个群聊，支持手动建群、对话建群和开发模板建群，在群聊里开启任务，并把该次运行渲染成成员汇报与主 agent 答复的对话。工作室以 chips 展示成员，提供可拖拽的交接边画布、crew/成员/交接检查器、一句话组合器，以及所选运行的实时流程账本。registry 与运行状态来自 `ctx.crewRuns`；插件只保留查看状态。
 
 ## 目录
 

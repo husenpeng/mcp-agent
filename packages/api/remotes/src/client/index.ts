@@ -29,6 +29,7 @@ import sessionReferencesRemote from '@tomato/session-reference/remote'
 import subagentsRemote from '@tomato/subagent/remote'
 import sessionRemote from '@tomato/api-session-controller/remote'
 import jobRemote from '@tomato/api-job-controller/remote'
+import systemMonitorRemote from '@tomato/api-system-monitor-controller/remote'
 import workspaceRemote from '@tomato/api-workspace-controller/remote'
 import terminalRemote from '@tomato/api-terminal-controller/remote'
 import workspaceFilesRemote from '@tomato/api-workspace-files/remote'
@@ -76,6 +77,7 @@ export type * from '@tomato/subagent/client'
 export type {} from '@tomato/api-session-controller/remote'
 export type * from '@tomato/api-session-controller/types'
 export type {} from '@tomato/api-job-controller/remote'
+export type {} from '@tomato/api-system-monitor-controller/remote'
 export type * from '@tomato/api-job-controller/types'
 export type {} from '@tomato/api-workspace-controller/remote'
 export type * from '@tomato/api-workspace-controller/types'
@@ -159,10 +161,11 @@ export type { CredentialInfo } from '@tomato/credentials/types'
 export type {
   SettingsDescribeValue, SettingsNamespaceView, SettingsPathOpView, SettingsSecretView,
 } from '@tomato/settings/types'
-// Provider registry and discovery vocabulary for the llm namespace.
+// Provider registry, discovery, and adaptation vocabulary for the llm namespace.
 export type {
   LlmConfigurableProvider, LlmDiscoveredModel,
-  LlmModelDiscoveryRequest, LlmNativeAuth, LlmProviderInfo,
+  LlmModelAdaptation, LlmModelAdaptationRequest, LlmModelAdaptationTarget,
+  LlmModelDiscoveryRequest, LlmNativeAuth, LlmProviderInfo, ModelModality,
 } from '@tomato/llm/types'
 // Reference-discovery result vocabulary for the fileReferences and
 // sessionReferenceResolver namespaces.
@@ -203,7 +206,8 @@ export async function apply(ctx: Context): Promise<() => Promise<void>> {
       toolResultsRemote,
       messageFeedbackRemote, sessionFeedbackRemote,
       fileUploadsRemote, sessionReferencesRemote,
-      permissionPresetsRemote, subagentsRemote, sessionRemote, jobRemote, workspaceRemote, workspaceFilesRemote, terminalRemote,
+      permissionPresetsRemote, subagentsRemote, sessionRemote, jobRemote, systemMonitorRemote,
+      workspaceRemote, workspaceFilesRemote, terminalRemote,
       officeKitRemote, userQuestionsRemote, webRemote,
     ]) {
       disposers.push(await ctx.remote.$mount(contribution))

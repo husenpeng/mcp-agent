@@ -115,6 +115,19 @@ it('retains native prebuilds for the selected macOS architecture', () => {
   expect(desktopRuntimeFileExclusion('node-pty/prebuilds/win32-x64/conpty.node', mac, 'darwin-arm64')).toBeDefined()
 })
 
+it('omits node-pty source-build output while keeping the loadable binaries', () => {
+  const mac = { platform: 'darwin' as const, arch: 'arm64' }
+  for (const entry of [
+    'node-pty/build/Makefile', 'node-pty/build/binding.Makefile', 'node-pty/build/config.gypi',
+    'node-pty/build/gyp-mac-tool', 'node-pty/build/pty.target.mk', 'node-pty/build/spawn-helper.target.mk',
+    'node-pty/build/Release/obj.target/pty/src/unix/pty.o', 'node-pty/build/Release/pty.pdb',
+    'node-pty/build/Debug/pty.node',
+  ]) expect(desktopRuntimeFileExclusion(entry, mac, 'darwin-arm64'), entry).toBe('node-pty build output')
+  for (const entry of ['node-pty/build/Release/pty.node', 'node-pty/build/Release/spawn-helper']) {
+    expect(desktopRuntimeFileExclusion(entry, mac, 'darwin-arm64'), entry).toBeUndefined()
+  }
+})
+
 it.each([
   ['darwin', 'arm64'], ['darwin', 'x64'],
   ['linux', 'arm64'], ['linux', 'x64'],

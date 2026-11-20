@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  emptyRoomSpec, requireRoomSpec, validateRoomSpec,
+  emptyRoomSpec, requireRoomSpec, reviewSpecOf, validateRoomSpec,
 } from '../src/index.ts'
 import type { RoomSpec } from '../src/index.ts'
 
@@ -50,6 +50,34 @@ describe('room specification', () => {
     const { coordinator: _coordinator, ...routing } = spec.routing
     const noCoordinator = { ...spec, routing }
     expect(validateRoomSpec(noCoordinator).some(issue => issue.path === 'routing.coordinator')).toBe(true)
+  })
+
+  it('defaults review to a mandatory self-review and acceptance within three rounds', () => {
+    const spec = room()
+    expect(spec.review).toEqual({ selfReview: true, acceptance: true, maxRounds: 3 })
+    expect(reviewSpecOf(spec)).toEqual(spec.review)
+    const { review: _review, ...withoutReview } = spec
+    expect(reviewSpecOf(withoutReview)).toEqual({ selfReview: true, acceptance: true, maxRounds: 3 })
+  })
+
+  it('validates capability narrowing names', () => {
+    const spec = room()
+    expect(validateRoomSpec({ ...spec, capability: { skills: ['a'], mcpServers: ['m'] } })).toEqual([])
+    expect(validateRoomSpec({ ...spec, capability: { skills: [''] } })
+      .some(issue => issue.path === 'capability.skills')).toBe(true)
+    expect(validateRoomSpec({ ...spec, capability: { tools: { allow: [''] } } })
+      .some(issue => issue.path === 'capability.tools.allow')).toBe(true)
+    expect(validateRoomSpec({ ...spec, capability: { permissionPreset: ' ' } })
+      .some(issue => issue.path === 'capability.permissionPreset')).toBe(true)
+  })
+
+  it('rejects a review round budget outside one to five', () => {
+    const spec = room()
+    expect(validateRoomSpec({ ...spec, review: { selfReview: true, acceptance: true, maxRounds: 0 } })
+      .some(issue => issue.path === 'review.maxRounds')).toBe(true)
+    expect(validateRoomSpec({ ...spec, review: { selfReview: true, acceptance: true, maxRounds: 6 } })
+      .some(issue => issue.path === 'review.maxRounds')).toBe(true)
+    expect(validateRoomSpec({ ...spec, review: { selfReview: true, acceptance: true, maxRounds: 5 } })).toEqual([])
   })
 
   it('applies the conservative and permissive presets', () => {

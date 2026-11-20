@@ -12,25 +12,33 @@ import { brandString } from '@tomato/branded'
 import type { Context } from '@tomato/cordis'
 import {
   Rooms, RoomGuard, buildMemberInput, createEnvelopeV2, estimateTokens, grantFor, preflight,
-  routeHuman, validateRoomSpec, visibleTo,
+  reviewSpecOf, routeHuman, validateRoomSpec, visibleTo,
 } from '@tomato/experimental-robot-room'
 import type {
   A2aEnvelopeV2, A2aIntent, AdmissionBudgets, MemberInput, Room, RoomApproval, RoomEpisode, RoomEpisodeId, RoomId,
-  RoomMemberId, RoomMemberSpec, RoomMessage, RoomMessageId, RoomPost, RoomSpec, WakeReason,
+  RoomMemberId, RoomMemberSpec, RoomMessage, RoomMessageId, RoomPost, RoomSpec, RoomWorkRecord, WakeReason,
 } from '@tomato/experimental-robot-room'
 import { createUserMessage } from '@tomato/llm'
+import {
+  assign as startAssignment, latestAssignment, recordReview, report as recordAssignmentReport,
+} from '@tomato/superagent'
+import type { Assignment, AssignmentReport, Ticket } from '@tomato/superagent'
 import type { ReasoningEffortId } from '@tomato/llm/brand'
+import type { RobotSpecId } from '@tomato/experimental-robot'
 import type { SessionEvent } from '@tomato/session'
+import type {} from '@tomato/skill'
 import { Service } from '@tomato/cordis'
 import z from '@tomato/schemastery'
 import {
   approvalRowOf, episodeRowOf, guardRowOf, memberSessionOf, messageOf, roomDomain, roomOf, roomRowOf, withMemberSession,
 } from './storage.ts'
 import type { RoomRow, RoomStore } from './storage.ts'
-import { memberCharter } from './prompt.ts'
+import { acceptanceInstruction, memberCharter, reworkInstruction, selfReviewInstruction } from './prompt.ts'
 import { summarizeWithModel } from './summary.ts'
 import { registerRoomTools } from './tools.ts'
 import type { RoomToolHost, RoomToolResult } from './tools.ts'
+import { createRoomWorkStore, openRoomTicket, parseSelfReview, reportForTurn, workRecordOf } from './work.ts'
+import type { RoomWorkStore, SelfReview } from './work.ts'
 
 /** Deployment limits for room execution. */
 export interface Config {
@@ -60,6 +68,24 @@ interface PreparedWake {
   readonly member: RoomMemberSpec
 }
 
+/** Capability one room member runs under after narrowing the robot's own lists. */
+interface MemberCapability {
+  readonly tools?: { readonly allow: readonly string[]; readonly deny: readonly string[] }
+  readonly skills: readonly string[]
+  readonly permissionPreset?: string
+}
+
+/** Prefix one MCP tool name carries for its server. */
+const MCP_TOOL_PREFIX = 'mcp__'
+
+/** The ticket one member wake owns and the assignment its current round runs as. */
+interface MemberWork {
+  readonly ticket: Ticket
+  readonly session: string
+  readonly directory: string
+  assignment: Assignment
+}
+
 /**
  * Storage-backed room provider. Load it after a storage backend and
  * `@tomato/storage-domain`; it registers as `ctx.rooms`, opens the durable
@@ -75,6 +101,7 @@ export default class LocalRooms extends Rooms {
   /** Validated execution limits. */
   private readonly maxConcurrent: number
   private domain!: RoomStore
+  private workStore!: RoomWorkStore
   private chain: Promise<unknown> = Promise.resolve()
   private readonly guards = new Map<RoomId, RoomGuard>()
   private readonly queues = new Map<RoomId, Wake[]>()
@@ -83,6 +110,7 @@ export default class LocalRooms extends Rooms {
   private disposed = false
   private readonly summaries = new Map<string, { readonly upto: number; readonly text: string }>()
   private readonly currentTurns = new Map<string, MemberSessionRef>()
+  private readonly outbound = new Map<string, (() => Promise<void>)[]>()
 
   constructor(ctx: Context, config: Config = {}) {
     super(ctx)
@@ -91,10 +119,12 @@ export default class LocalRooms extends Rooms {
 
   protected async [Service.init](): Promise<void> {
     this.domain = await this.ctx.storageDomain.open(roomDomain)
-    this.ctx.effect(() => () => {
+    this.workStore = await createRoomWorkStore(this.ctx)
+    this.ctx.effect(() => async () => {
       this.disposed = true
-      return this.domain.close()
-    }, 'robot-room-local: close storage domain')
+      await this.workStore.close()
+      await this.domain.close()
+    }, 'robot-room-local: close storage domains')
     // A restart never replays a robot chain: open episodes become interrupted and
     // an open breaker keeps the room tripped until an operator resumes it.
     for (const [, row] of this.rooms.entries()) {
@@ -191,6 +221,18 @@ export default class LocalRooms extends Rooms {
       .filter(message => message.seq > afterSeq)
       .slice(0, Math.max(1, Math.min(500, limit)))
       .map(message => withMemberSession(id, message)))
+  }
+
+  /** Work records one room produced, oldest first. */
+  work(id: RoomId): Promise<readonly RoomWorkRecord[]> {
+    const records: RoomWorkRecord[] = []
+    for (const [ticketId, seat] of this.workStore.seats()) {
+      if (seat.room !== id) continue
+      const entry = this.workStore.ticket(ticketId)
+      if (entry === undefined) continue
+      records.push(workRecordOf(entry, seat))
+    }
+    return Promise.resolve(records.sort((left, right) => left.at - right.at))
   }
 
   /** Pause or resume a room. */
@@ -502,26 +544,69 @@ export default class LocalRooms extends Rooms {
       activity: { label: 'started', tools: [], done: false },
       sessionRef,
     })
+    this.currentTurns.set(readKey(row.id, member.id), sessionRef)
+    const reviewSpec = reviewSpecOf(row.spec)
+    const work = this.openWork(row, member, wake, agent)
     let usage = 0
     let output = ''
-    const stop = this.ctx.on('session/event', (session, event: SessionEvent) => {
-      if (session !== agent.session) return
-      if (event.type === 'assistant/message') {
-        output = event.data.message.content.filter(block => block.type === 'text').map(block => block.text).join('\n')
-        if (event.data.usage !== undefined) usage += event.data.usage.inputTokens + event.data.usage.outputTokens
-      }
-    })
-    this.currentTurns.set(readKey(row.id, member.id), sessionRef)
+    let round = 1
+    let delivered = false
     try {
-      agent.followup(createUserMessage({ content: [{ type: 'text', text: prepared.input.text }], source: { kind: 'user' } }))
-      if (!await this.settles(agent, row.spec.guard.memberTurnTimeoutMs)) {
-        agent.cancel({ kind: 'user' })
-        await this.trip(row, 'storm', `member turn did not settle within ${row.spec.guard.memberTurnTimeoutMs}ms`)
-        return
+      let input = prepared.input.text
+      for (;;) {
+        const turn = await this.runMemberTurn(agent, input, row.spec.guard.memberTurnTimeoutMs)
+        usage += turn.usage
+        output = turn.text
+        if (turn.timedOut) {
+          agent.cancel({ kind: 'user' })
+          await this.trip(row, 'storm', `member turn did not settle within ${row.spec.guard.memberTurnTimeoutMs}ms`)
+          return
+        }
+        let review: SelfReview = { passed: true, parsed: true, findings: [] }
+        if (reviewSpec.selfReview) {
+          const reviewTurn = await this.runMemberTurn(agent, selfReviewInstruction(), row.spec.guard.memberTurnTimeoutMs)
+          usage += reviewTurn.usage
+          if (reviewTurn.timedOut) {
+            agent.cancel({ kind: 'user' })
+            await this.trip(row, 'storm', `member self-review did not settle within ${row.spec.guard.memberTurnTimeoutMs}ms`)
+            return
+          }
+          review = parseSelfReview(reviewTurn.text)
+        }
+        const report = reportForTurn({ text: output, review })
+        await this.recordWork(work, report)
+        if (report.state === 'ready') {
+          delivered = true
+          await this.flushOutbound(row, member)
+          await this.appendSystem(row, reviewSpec.selfReview
+            ? `self-review passed in round ${String(round)}`
+            : 'result accepted without self-review')
+          if (reviewSpec.acceptance) {
+            const verdict = await this.acceptThread(row, work, reviewSpec.maxRounds)
+            if (verdict.kind === 'rework') {
+              input = reworkInstruction(verdict.findings)
+              work.assignment = this.startWorkRound(work)
+              round = 1
+              continue
+            }
+          }
+          break
+        }
+        if (round >= reviewSpec.maxRounds) {
+          await this.appendSystem(
+            row,
+            `self-review did not pass after ${String(round)} rounds; the task waits for the operator`,
+          )
+          break
+        }
+        round += 1
+        await this.appendSystem(row, `self-review failed; rework round ${String(round)}`)
+        input = reworkInstruction(review.findings)
+        work.assignment = this.startWorkRound(work)
       }
     } finally {
-      stop()
       this.currentTurns.delete(readKey(row.id, member.id))
+      if (!delivered) await this.dropOutbound(row, member)
     }
     await this.reads.put(readKey(row.id, member.id), { room: row.id, member: member.id, seq: prepared.input.toSeq })
     const trip = guard.recordTurn({ member: member.id, tokens: usage, output })
@@ -536,6 +621,210 @@ export default class LocalRooms extends Rooms {
     if (trip !== undefined) await this.trip(row, trip.reason, trip.detail)
     else { guard.settle(); await this.saveGuard(row) }
     void started
+  }
+
+  /**
+   * Ask the room's reviewer member to accept a finished request.
+   * @param row - room row.
+   * @param work - the ticket whose thread finished.
+   * @param maxRounds - acceptance rounds the room allows.
+   * @returns what happened: skipped, waiting, escalated, passed, or rework with findings.
+   */
+  private async acceptThread(row: RoomRow, work: MemberWork, maxRounds: number): Promise<
+  { readonly kind: 'skipped' | 'waiting' | 'escalated' | 'passed' }
+  | { readonly kind: 'rework'; readonly findings: readonly string[] }
+  > {
+    const thread = work.ticket.follows[0]
+    if (thread === undefined) return { kind: 'skipped' }
+    const tickets = this.workStore.tickets().filter(entry =>
+      entry.ticket.follows.some(follow => follow.source === thread.source && follow.id === thread.id))
+    const complete = tickets.every(entry => latestAssignment(entry.ticket)?.report?.state === 'ready')
+    if (!complete) return { kind: 'skipped' }
+    const reviewer = row.spec.members.find(candidate => candidate.role === 'reviewer' && candidate.enabled)
+    if (reviewer === undefined) {
+      await this.appendSystem(row, 'the request is ready; acceptance waits for a reviewer member')
+      return { kind: 'waiting' }
+    }
+    const current = this.workStore.ticket(work.ticket.id)?.ticket ?? work.ticket
+    const rounds = current.review?.rounds ?? 0
+    if (rounds >= maxRounds) {
+      await this.appendSystem(row, `acceptance did not pass after ${String(maxRounds)} rounds; the task waits for the operator`)
+      return { kind: 'escalated' }
+    }
+    const agent = await this.memberAgent(row, reviewer)
+    const results = tickets.map(entry => latestAssignment(entry.ticket)?.report?.summary ?? '')
+    const turn = await this.runMemberTurn(agent, acceptanceInstruction(current.subject, results), row.spec.guard.memberTurnTimeoutMs)
+    if (turn.timedOut) {
+      agent.cancel({ kind: 'user' })
+      await this.trip(row, 'storm', `reviewer turn did not settle within ${row.spec.guard.memberTurnTimeoutMs}ms`)
+      return { kind: 'escalated' }
+    }
+    const verdict = parseSelfReview(turn.text)
+    recordReview(this.workStore, work.ticket.id, {
+      findings: verdict.findings.map(summary => ({ summary, severity: 'p0' as const, file: '(room)' })),
+      rounds: rounds + 1,
+    })
+    await this.workStore.flush()
+    if (verdict.passed) {
+      const seq = thread.id.split('#')[1] ?? ''
+      await this.appendSystem(row, `acceptance passed for request #${seq}`)
+      return { kind: 'passed' }
+    }
+    if (rounds + 1 >= maxRounds) {
+      await this.appendSystem(row, `acceptance did not pass after ${String(maxRounds)} rounds; the task waits for the operator`)
+      return { kind: 'escalated' }
+    }
+    await this.appendSystem(row, `acceptance failed; rework round ${String(rounds + 2)}`)
+    return { kind: 'rework', findings: verdict.findings }
+  }
+
+  /**
+   * Hold one outbound message until the member's self-review clears it.
+   * @param room - room identity.
+   * @param member - member that produced the message.
+   * @param send - delivery to run once the review passes.
+   */
+  private holdOutbound(room: RoomId, member: RoomMemberId, send: () => Promise<void>): void {
+    const key = readKey(room, member)
+    const queue = this.outbound.get(key) ?? []
+    queue.push(send)
+    this.outbound.set(key, queue)
+  }
+
+  /**
+   * Deliver the messages one member held during a passing round.
+   * @param row - room row.
+   * @param member - member whose review passed.
+   */
+  private async flushOutbound(row: RoomRow, member: RoomMemberSpec): Promise<void> {
+    const key = readKey(row.id, member.id)
+    const queue = this.outbound.get(key) ?? []
+    this.outbound.delete(key)
+    for (const send of queue) await send()
+  }
+
+  /**
+   * Release the held messages of a round whose self-review did not pass.
+   * @param row - room row.
+   * @param member - member whose review failed.
+   */
+  private async dropOutbound(row: RoomRow, member: RoomMemberSpec): Promise<void> {
+    const key = readKey(row.id, member.id)
+    const queue = this.outbound.get(key) ?? []
+    this.outbound.delete(key)
+    if (queue.length === 0) return
+    this.guard(row).settlePending(member.id)
+    await this.saveGuard(row)
+    await this.appendSystem(
+      row,
+      `${String(queue.length)} message(s) were not delivered because self-review did not pass`,
+    )
+  }
+
+  /**
+   * Run one member turn and collect the text and token usage it reported.
+   * @param agent - member Agent the turn runs in.
+   * @param text - user message the turn starts from.
+   * @param timeoutMs - longest the turn may stay unsettled.
+   * @returns its assistant text, measured tokens, and whether it timed out.
+   */
+  private async runMemberTurn(agent: Agent, text: string, timeoutMs: number): Promise<{
+    readonly text: string
+    readonly usage: number
+    readonly timedOut: boolean
+  }> {
+    let captured = ''
+    let usage = 0
+    const stop = this.ctx.on('session/event', (session, event: SessionEvent) => {
+      if (session !== agent.session) return
+      if (event.type === 'assistant/message') {
+        captured = event.data.message.content.filter(block => block.type === 'text').map(block => block.text).join('\n')
+        if (event.data.usage !== undefined) usage += event.data.usage.inputTokens + event.data.usage.outputTokens
+      }
+    })
+    try {
+      agent.followup(createUserMessage({ content: [{ type: 'text', text }], source: { kind: 'user' } }))
+      const settled = await this.settles(agent, timeoutMs)
+      return { text: captured, usage, timedOut: !settled }
+    } finally {
+      stop()
+    }
+  }
+
+  /**
+   * Open the ticket one member wake owns and start its first assignment.
+   * @param row - room row the wake belongs to.
+   * @param member - member that was woken.
+   * @param wake - wake reason carrying the triggering message.
+   * @param agent - member Agent the work runs in.
+   * @returns the ticket, its run target, and the started assignment.
+   */
+  private openWork(row: RoomRow, member: RoomMemberSpec, wake: Wake, agent: Agent): MemberWork {
+    const trigger = (wake.reason as { readonly messageSeqs?: readonly number[] }).messageSeqs?.[0]
+    const messages = this.messagesFor(row.id)
+    const message = trigger === undefined ? undefined : messages.find(item => item.seq === trigger)
+    const sender = message?.author.kind === 'human'
+      ? { kind: 'human' as const, id: message.author.id }
+      : message?.author.kind === 'member'
+        ? { kind: 'member' as const, id: message.author.id }
+        : { kind: 'member' as const, id: member.id }
+    const session = String(agent.session.id)
+    const directory = this.workDirectory(row)
+    const seq = message?.seq ?? messages.at(-1)?.seq ?? 1
+    const ticket = openRoomTicket({
+      store: this.workStore,
+      room: row.id,
+      messageSeq: seq,
+      subject: message?.text ?? wake.reason.detail,
+      sender,
+      supervisor: session,
+      scope: 'change',
+      policyVersion: 'room-1',
+      now: new Date(),
+    })
+    this.workStore.putSeat(ticket.id, { room: row.id, member: member.id, seq, at: now() })
+    const assignment = startAssignment(this.workStore, ticket.id, { session, directory })
+    return { ticket, session, directory, assignment }
+  }
+
+  /**
+   * Start another assignment on one ticket for a rework round.
+   * @param work - the ticket and its run target.
+   * @returns the started assignment.
+   */
+  private startWorkRound(work: MemberWork): Assignment {
+    return startAssignment(this.workStore, work.ticket.id, { session: work.session, directory: work.directory })
+  }
+
+  /**
+   * Record what one round reported on its ticket.
+   * @param work - the ticket and the assignment that reported.
+   * @param report - the report itself.
+   */
+  private async recordWork(work: MemberWork, report: AssignmentReport): Promise<void> {
+    recordAssignmentReport(this.workStore, work.ticket.id, work.assignment.id, report)
+    await this.workStore.flush()
+  }
+
+  /**
+   * Append one operator-facing system line to the room log.
+   * @param row - room row.
+   * @param text - line text.
+   */
+  private async appendSystem(row: RoomRow, text: string): Promise<void> {
+    await this.append(row, await this.currentEpisode(row), {
+      author: { kind: 'system' }, kind: 'chat', text, mentions: [], depth: 0,
+    })
+    this.ctx.emit('room/changed', row.id)
+  }
+
+  /**
+   * Directory every member of one room works in.
+   * @param row - room row supplying its workspace root.
+   * @returns the absolute working directory.
+   */
+  private workDirectory(row: RoomRow): string {
+    return row.spec.workspaceRoot ?? this.ctx.get('workspaceRegistry')?.list()[0]?.path ?? process.cwd()
   }
 
   private async prepare(row: RoomRow, member: RoomMemberSpec, reason: WakeReason): Promise<PreparedWake | undefined> {
@@ -603,7 +892,7 @@ export default class LocalRooms extends Rooms {
     const sessionId = memberSessionOf(row.id, member.id)
     const existing = agents.get(sessionId)
     if (existing !== undefined) return existing
-    const cwd = row.spec.workspaceRoot ?? this.ctx.get('workspaceRegistry')?.list()[0]?.path ?? process.cwd()
+    const cwd = this.workDirectory(row)
     const used = this.memberUsage(row.id, member.id)
     const soft = used >= member.budget.dailyTokens * row.spec.budget.softLimitRatio
     const selection = member.model ?? (soft && member.fallbackModel !== undefined ? member.fallbackModel : undefined)
@@ -617,12 +906,18 @@ export default class LocalRooms extends Rooms {
           : { reasoningEffort: selection.reasoningEffort as ReasoningEffortId },
       }
     const host = this.toolHost(row, member)
+    const capability = await this.capabilityOf(row, member)
     const setup = (agentCtx: Context, agent: Agent): void => {
       agentCtx.systemPrompt.section({
         name: 'room:charter', order: -600,
         text: memberCharter(row.spec, member),
       })
       registerRoomTools(agentCtx, member.id, host)
+      if (capability.tools !== undefined) agentCtx.get('tools')?.restrict(capability.tools)
+      if (capability.skills.length > 0) agentCtx.get('skills')?.restrict({ allow: [...capability.skills] })
+      if (capability.permissionPreset !== undefined) {
+        this.ctx.get('permissionPresets')?.set(agent.session, capability.permissionPreset)
+      }
       void agent
     }
     try {
@@ -640,6 +935,59 @@ export default class LocalRooms extends Rooms {
         agentOptions: options,
       })
       return handle.agent
+    }
+  }
+
+  /**
+   * Resolve the capability one member runs under: its Rbot revision's lists,
+   * narrowed by the room's own selection. The room can only narrow the robot.
+   * @param row - room row carrying the narrowing selection.
+   * @param member - member whose robot revision supplies the allowed sets.
+   * @returns the tool lists, skills, and permission preset to apply.
+   */
+  private async capabilityOf(row: RoomRow, member: RoomMemberSpec): Promise<MemberCapability> {
+    const narrowing = row.spec.capability
+    const robots = this.ctx.get('robots')
+    const revision = robots === undefined
+      ? undefined
+      : await robots.revision({
+        spec: brandString<RobotSpecId>(member.robot.spec),
+        revision: member.robot.revision,
+      })
+    const robot = revision?.spec.capability
+    const roomAllow = narrowing?.tools?.allow ?? []
+    const robotAllow = robot?.tools.allow ?? []
+    let allow = roomAllow.length === 0
+      ? robotAllow
+      : robotAllow.length === 0 ? roomAllow : roomAllow.filter(name => robotAllow.includes(name))
+    const deny = [...new Set([...(robot?.tools.deny ?? []), ...narrowing?.tools?.deny ?? []])]
+
+    const roomSkills = narrowing?.skills ?? []
+    const robotSkills = robot?.skills ?? []
+    const skills = roomSkills.length === 0
+      ? robotSkills
+      : robotSkills.length === 0 ? roomSkills : roomSkills.filter(name => robotSkills.includes(name))
+
+    const servers = narrowing?.mcpServers ?? []
+    if (servers.length > 0) {
+      const definitions = this.ctx.get('tools')?.definitions() ?? []
+      const prefixes = servers.map(server => `${MCP_TOOL_PREFIX}${server}__`)
+      for (const tool of definitions) {
+        if (!tool.name.startsWith(MCP_TOOL_PREFIX)) continue
+        if (!prefixes.some(prefix => tool.name.startsWith(prefix))) deny.push(tool.name)
+      }
+      if (allow.length > 0) allow = allow.filter(name => !name.startsWith(MCP_TOOL_PREFIX) || !deny.includes(name))
+    }
+
+    const preset = narrowing?.permissionPreset
+    const robotPreset = robot?.permissionPreset.trim() ?? ''
+    if (preset !== undefined && robotPreset !== '' && preset !== robotPreset) {
+      throw new Error(`room ${row.id} names permission preset "${preset}" but member ${member.id} runs as ${robotPreset}`)
+    }
+    return {
+      ...allow.length === 0 && deny.length === 0 ? {} : { tools: { allow: [...new Set(allow)], deny: [...new Set(deny)] } },
+      skills,
+      ...((preset ?? robotPreset) === '' ? {} : { permissionPreset: preset ?? robotPreset }),
     }
   }
 
@@ -720,19 +1068,26 @@ export default class LocalRooms extends Rooms {
       await this.saveGuard(row)
       const needsApproval = receivers.some(id =>
         row.spec.members.find(candidate => candidate.id === id)?.a2a.requiresApproval.includes(member.id) === true)
-      if (needsApproval) {
+      this.holdOutbound(row.id, member.id, async () => {
+        if (!needsApproval) {
+          await this.emitEnvelope(row, envelope)
+          return
+        }
         const approval: RoomApproval = { id: randomUUID(), envelope, at: now() }
         await this.approvals.put(`${row.id}:${approval.id}`, approvalRowOf(approval))
-        const message = await this.append(row, await this.currentEpisode(row), {
+        await this.append(row, await this.currentEpisode(row), {
           author: { kind: 'member', id: member.id }, kind: 'approval', text: task, mentions: receivers, depth: envelope.depth,
           a2a: envelope, approval,
           sessionRef: this.currentTurns.get(readKey(row.id, member.id)),
         })
         this.ctx.emit('room/notice', { room: row.id, kind: 'approval', text: task, at: approval.at })
-        return { ok: true, text: `Queued for operator approval as #${message.seq}.` }
+      })
+      return {
+        ok: true,
+        text: needsApproval
+          ? 'Held for operator approval; it is released after your self-review passes.'
+          : 'Accepted; the peer is notified after your self-review passes.',
       }
-      await this.emitEnvelope(row, envelope)
-      return { ok: true, text: `Accepted #${row.nextSeq - 1}; the peer answers later in the room.` }
     })
   }
 
@@ -757,16 +1112,18 @@ export default class LocalRooms extends Rooms {
         grantTokens: 0, deadline: now() + 5 * 60 * 1000,
       })
       guard.settlePending(member.id)
-      await this.append(row, await this.currentEpisode(row), {
-        author: { kind: 'member', id: member.id }, kind: 'reply', text, mentions: envelope.to, depth: envelope.depth,
-        a2a: envelope, causedBy: original.id,
-        sessionRef: this.currentTurns.get(readKey(row.id, member.id)),
+      this.holdOutbound(row.id, member.id, async () => {
+        await this.append(row, await this.currentEpisode(row), {
+          author: { kind: 'member', id: member.id }, kind: 'reply', text, mentions: envelope.to, depth: envelope.depth,
+          a2a: envelope, causedBy: original.id,
+          sessionRef: this.currentTurns.get(readKey(row.id, member.id)),
+        })
+        if (original.author.kind === 'member') this.enqueue(row.id, original.author.id, {
+          kind: 'reply', detail: `member ${member.id} answered #${original.seq}`, messageSeqs: [original.seq],
+        })
+        this.ctx.emit('room/changed', row.id)
       })
-      if (original.author.kind === 'member') this.enqueue(row.id, original.author.id, {
-        kind: 'reply', detail: `member ${member.id} answered #${original.seq}`, messageSeqs: [original.seq],
-      })
-      this.ctx.emit('room/changed', row.id)
-      return { ok: true, text: `Replied to #${original.seq}.` }
+      return { ok: true, text: `Reply to #${original.seq} is held until your self-review passes.` }
     })
   }
 

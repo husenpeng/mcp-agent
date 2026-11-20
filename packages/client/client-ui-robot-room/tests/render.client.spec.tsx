@@ -62,6 +62,7 @@ const face: RoomInjected = {
     },
   },
   actions: {
+    work: async () => ({ ok: true as const, value: [] }),
     publish: async () => ({ ok: true, value: room }),
     post: async () => ({ ok: true, value: message }),
     messages: async () => ({ ok: true, value: [message] }),
@@ -72,6 +73,11 @@ const face: RoomInjected = {
     approve: async () => ({ ok: true, value: room }),
   },
   openRobots: () => {},
+  pickDirectory: async () => null,
+  capabilities: async () => ({
+    ok: true,
+    value: { skills: [], plugins: [], tools: [], mcpServers: [], workspaceRoots: [] },
+  }),
   openSession: () => {},
 }
 

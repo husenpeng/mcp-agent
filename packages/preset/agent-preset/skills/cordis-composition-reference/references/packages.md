@@ -116,7 +116,6 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@tomato/client-ui-settings-session-log` | no | General settings control for Session-log upload with DeepSeek API requests |
 | `@tomato/client-ui-settings-shell` | no | Settings page of the shell executor on the tomato web client's Plugins page: the command timeout and the per-stream output cap of the shell namespace |
 | `@tomato/client-ui-settings-subagent` | no | Settings page of Subagent delegation on the tomato web client's Plugins page: recursion depth, parallel capacity, and the models agents may choose for subagents |
-| `@tomato/client-ui-settings-web-search` | no | Settings page of the DeepSeek web-search provider on the tomato web client's Plugins page: its API key, endpoint, and per-request search budget |
 | `@tomato/client-ui-shortcuts` | no | Keyboard shortcut reference, recording, and local preference editing |
 | `@tomato/client-ui-sidebar` | no | Sidebar plugin: session multi-level tree, search, grouping, state dots |
 | `@tomato/client-ui-sidebar-browser` | no | Sandboxed Web browser tabs for the right Sidebar |
@@ -554,13 +553,9 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 |---|---|---|
 | `@tomato/tool-web` | yes | Model-facing web tools (web_search, web_fetch) over the Tomato Harness web capability seam (ctx.web) |
 | `@tomato/web` | yes | Abstract web access capability seam (ctx.web) for the Tomato Harness — search/fetch provider registry, registration-order-independent selection, request/result vocabulary, and the WebError taxonomy |
-| `@tomato/web-deepseek-api` | yes | DeepSeek Search and Fetch API providers for the Tomato Harness web capability seam (ctx.web) |
 | `@tomato/web-fetch-company` | yes | Company-gateway fetch provider for the Tomato Harness web capability seam (ctx.web) |
 | `@tomato/web-fetch-http` | yes | Anonymous HTTP(S) fetch provider for the Tomato Harness web capability seam (ctx.web) |
 | `@tomato/web-search-company` | yes | Company-gateway search provider for the Tomato Harness web capability seam (ctx.web) |
-| `@tomato/web-search-deepseek` | yes | DeepSeek-backed search provider (native web_search via the Anthropic-compatible API) for the Tomato Harness web capability seam (ctx.web) |
-| `@tomato/web-search-exa` | yes | Exa-backed search provider for the Tomato Harness web capability seam (ctx.web) |
-| `@tomato/web-search-perplexity` | yes | Perplexity-backed search provider for the Tomato Harness web capability seam (ctx.web) |
 
 ## workflow
 

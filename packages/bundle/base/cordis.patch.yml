@@ -382,6 +382,15 @@
       config:
         providerName: fork
 
+    # Team mode is per root Session and off by default; the service and its
+    # task tools mount here so the model and reasoning menu can switch them
+    # on, and `@tomato/tool-agent-team` explains the shared board.
+    - id: agent-team
+      name: '@tomato/agent-team'
+
+    - id: tool-agent-team
+      name: '@tomato/tool-agent-team'
+
     # Continuable background children are selected per delegation tool. The
     # separately loaded follow-up tool registers the one global `send_message`.
     - id: tool-subagent-control
@@ -467,9 +476,9 @@
     # third-party API that cannot carry a provider-side search tool, so this tool
     # is the only search path and its backend lives behind the BFF. The gateway
     # owns the vendor and its credential; this deployment supplies only its
-    # origin. DeepSeek's own search backends need an official credential this
-    # deployment never holds, so they stay off. A search is one gateway request
-    # with a 40s upstream budget, so this route gets 60s while the
+    # origin. No other search backend ships: without a signed-in gateway session
+    # a step neither declares nor dispatches web_search. A search is one gateway
+    # request with a 40s upstream budget, so this route gets 60s while the
     # provider-neutral tool default remains 30s. Anonymous fetch accepts only
     # public HTTP(S) destinations, resolves and validates every destination, and
     # pins every actual connection.
@@ -479,12 +488,8 @@
         # Both web tools use the company gateway: the local fetch provider needs a
         # DeepSeek login that is not available in this deployment, while the BFF
         # session already authenticates the same account.
-        searchProvider: company
-        fetchProvider: company
-
-    - id: web-search-deepseek
-      name: '@tomato/web-search-deepseek'
-      disabled: true
+        searchProviders: [company]
+        fetchProviders: [company, http]
 
     # The company gateway owns the search vendor and its credential; this
     # deployment supplies only the gateway origin. The provider reads an
@@ -496,10 +501,6 @@
       config:
         maxCharsPerResult: 500
         maxChars: 3000
-
-    - id: web-deepseek-api
-      name: '@tomato/web-deepseek-api'
-      disabled: true
 
     - id: web-fetch-company
       name: '@tomato/web-fetch-company'

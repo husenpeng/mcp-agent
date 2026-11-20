@@ -291,7 +291,10 @@ export interface PluginVersion {
   readonly deprecated?: string
   /** Whether the version declares a `tomato.bundle`; a version that does not cannot replace a bundle. */
   readonly bundle: boolean
-  /** Present when the version's `engines.tomato` or TOMATO peers reject the running TOMATO version without an exemption for the exact pair. */
+  /**
+   * Present when the version's `engines.tomato` or TOMATO peers reject the running TOMATO version
+   * without an exemption for the exact pair.
+   */
   readonly incompatible?: IncompatiblePlugin
 }
 

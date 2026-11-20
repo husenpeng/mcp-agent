@@ -141,4 +141,14 @@ describe('shared diagnostic status and matching rules', () => {
   ] as const)('matches selected denial signatures only on failed exits (%s,%s)', (code, stderr, expected) => {
     expect(matchesSignature(code, stderr, ['permission denied'])).toBe(expected)
   })
+
+  it('recognizes a node-pty allocation denial as a sandbox denial, but not the abort it replaces', () => {
+    // The hidden-visibility node-pty build reports a confined PTY allocation failure as a
+    // catchable EPERM error on a failed exit, which the seatbelt denial dialect recognizes and
+    // routes to the user-approval escalation. The SIGABRT it replaces is a signal death with no
+    // exit code, so it never matched a denial and bypassed the authorization path entirely.
+    const seatbelt = ['operation not permitted']
+    expect(matchesSignature(1, 'posix_openpt failed: Operation not permitted', seatbelt)).toBe(true)
+    expect(matchesSignature(null, 'terminating due to uncaught exception of type Napi::Error', seatbelt)).toBe(false)
+  })
 })

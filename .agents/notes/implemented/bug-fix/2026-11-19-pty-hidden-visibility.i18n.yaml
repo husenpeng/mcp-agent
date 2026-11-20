@@ -1,0 +1,22 @@
+# Bilingual-pair consistency record for 2026-11-19-pty-hidden-visibility.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/bug-fix/2026-11-19-pty-hidden-visibility.md
+/agent-note-node-pty-builds-from-source-with-hidden-visibility-so-native-errors-do-not-abort-the-host:
+  en: 470103c1a0c2756b
+  zh: 020d293337fd0858
+/agent-note-node-pty-builds-from-source-with-hidden-visibility-so-native-errors-do-not-abort-the-host/problem:
+  en: a28180d7bc76be1b
+  zh: cec931873d88ff96
+/agent-note-node-pty-builds-from-source-with-hidden-visibility-so-native-errors-do-not-abort-the-host/decision:
+  en: 3d490bd06a18181b
+  zh: 2c5bc453bb05c279
+/agent-note-node-pty-builds-from-source-with-hidden-visibility-so-native-errors-do-not-abort-the-host/alternatives-considered:
+  en: b4ea09939562bf51
+  zh: ad2b063fc01571e1
+/agent-note-node-pty-builds-from-source-with-hidden-visibility-so-native-errors-do-not-abort-the-host/consequences:
+  en: 304c0fc4b21469f7
+  zh: 280dad0837bfe858
+/agent-note-node-pty-builds-from-source-with-hidden-visibility-so-native-errors-do-not-abort-the-host/testing:
+  en: d74a438ee0a75e77
+  zh: 0874f720c7cd1450

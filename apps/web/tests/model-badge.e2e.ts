@@ -10,6 +10,7 @@ import {
 import { connectFreshWorkspaceZh, ZH_BROWSER_LOCALE } from './support.ts'
 
 const NAME = 'DeepSeek-V4.1-Flash'
+const THIRD_PARTY_NAME = 'Third-party Flash'
 const LONG_NAME = 'DeepSeek model with a very long release and capability description that exceeds the selector width'
 const FIXTURE = fileURLToPath(new URL('./fixtures/model-badge/session.v4.jsonl', import.meta.url))
 const EXPECTED = fileURLToPath(new URL('./expected/model-badge/models.expected.md', import.meta.url))
@@ -29,12 +30,12 @@ describe.skipIf(MODE === 'record')('web e2e: catalog model badges', () => {
 
   beforeAll(async () => {
     scaffold = await launchWebScaffold({
-      extraOverlayPath: fileURLToPath(new URL('./fixtures/model-badge/account.overlay.yml', import.meta.url)),
+      extraOverlayPath: fileURLToPath(new URL('./fixtures/model-badge/default.overlay.yml', import.meta.url)),
       replayFixture: FIXTURE,
       replayProvidersOnly: true,
       replayProviders: [
-        { id: 'deepseek-account', name: 'DeepSeek Account', models: [
-          listedModel('deepseek-flash', NAME, { text: ' 1017 ', tone: 'info' }),
+        { id: 'thirdparty-api', name: 'Third-party API', models: [
+          listedModel('thirdparty-flash', THIRD_PARTY_NAME, { text: ' 1017 ', tone: 'info' }),
         ] },
         { id: 'deepseek-official', name: 'DeepSeek', models: [
           listedModel('deepseek-flash', NAME, { text: { en: ' New ', zh: ' 新 ' }, tone: 'success' }),
@@ -73,13 +74,13 @@ describe.skipIf(MODE === 'record')('web e2e: catalog model badges', () => {
       expect(await menu.getByRole('group', { name: 'External', exact: true }).locator('[data-tone]').count()).toBe(0)
       expect(await menu.getByRole('menuitemradio', { name: 'Invalid badge model', exact: true }).locator('[data-tone]').count()).toBe(0)
       expect(await menu.getByRole('menuitemradio', { name: `${LONG_NAME} Preview`, exact: true }).locator('[data-tone]').getAttribute('data-tone')).toBe('neutral')
-      const account = menu.getByRole('group', { name: 'DeepSeek 账号', exact: true })
-      expect(await account.getByText('1017', { exact: true }).getAttribute('data-tone')).toBe('info')
-      await account.getByRole('menuitemradio', { name: `${NAME} 1017`, exact: true }).click()
-      await expect.poll(() => scaffold.ctx.agentDefaultModel.currentSelection()).toEqual({ provider: 'deepseek-account', model: 'deepseek-flash' })
-      await expect.poll(() => trigger.textContent()).toContain(`1017 ${NAME}`)
-      const catalog = await scaffold.ctx.llm.listModels('deepseek-account')
-      expect(catalog.map(model => ({ id: model.id, name: model.name }))).toEqual([{ id: 'deepseek-flash', name: NAME }])
+      const thirdParty = menu.getByRole('group', { name: 'Third-party API', exact: true })
+      expect(await thirdParty.getByText('1017', { exact: true }).getAttribute('data-tone')).toBe('info')
+      await thirdParty.getByRole('menuitemradio', { name: `${THIRD_PARTY_NAME} 1017`, exact: true }).click()
+      await expect.poll(() => scaffold.ctx.agentDefaultModel.currentSelection()).toEqual({ provider: 'thirdparty-api', model: 'thirdparty-flash' })
+      await expect.poll(() => trigger.textContent()).toContain(`1017 ${THIRD_PARTY_NAME}`)
+      const catalog = await scaffold.ctx.llm.listModels('thirdparty-api')
+      expect(catalog.map(model => ({ id: model.id, name: model.name }))).toEqual([{ id: 'thirdparty-flash', name: THIRD_PARTY_NAME }])
     } finally {
       await page.keyboard.press('Escape')
       await page.keyboard.press('Escape')
@@ -122,7 +123,7 @@ describe.skipIf(MODE === 'record')('web e2e: catalog model badges', () => {
       await page.keyboard.press('Escape')
       await trigger.click()
       await page.getByRole('menuitem', { name: /^模型/ }).click()
-      await page.getByRole('menuitemradio', { name: `${NAME} 1017`, exact: true }).click()
+      await page.getByRole('menuitemradio', { name: `${THIRD_PARTY_NAME} 1017`, exact: true }).click()
       unregister()
     }
   })

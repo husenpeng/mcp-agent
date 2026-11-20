@@ -40,9 +40,9 @@ final class RemoteTabsTests: XCTestCase {
 
         // Rooms and account share one system slot; the ball must still reach both.
         app.openTab(.account)
-        XCTAssertTrue(app.navigationBars["账号"].waitForExistence(timeout: 5), "账号 destination did not open")
+        XCTAssertTrue(app.descendants(matching: .any)["account.memory"].firstMatch.waitForExistence(timeout: 5), "账号 destination did not open")
         app.openTab(.rooms)
-        XCTAssertTrue(app.navigationBars["群聊"].waitForExistence(timeout: 5), "群聊 destination did not reopen")
+        XCTAssertTrue(app.buttons["刷新群聊"].waitForExistence(timeout: 5), "群聊 destination did not reopen")
     }
 
     /// Both new destinations exist, open their own page, and state their empty case.
@@ -51,13 +51,13 @@ final class RemoteTabsTests: XCTestCase {
         XCTAssertTrue(app.waitForTabBall(timeout: 20), "the floating destination control did not appear")
 
         app.openTab(.robots)
-        XCTAssertTrue(app.navigationBars["智能体"].waitForExistence(timeout: 5), "智能体 destination did not open")
+        XCTAssertTrue(app.buttons["刷新智能体"].waitForExistence(timeout: 5), "智能体 destination did not open")
         // The toolbar proves the page rendered; the list itself reports the
         // unreachable Host in its own body.
         XCTAssertTrue(app.buttons["刷新智能体"].waitForExistence(timeout: 10), "智能体 toolbar is missing")
 
         app.openTab(.rooms)
-        XCTAssertTrue(app.navigationBars["群聊"].waitForExistence(timeout: 5), "群聊 destination did not open")
+        XCTAssertTrue(app.buttons["刷新群聊"].waitForExistence(timeout: 5), "群聊 destination did not open")
         XCTAssertTrue(app.buttons["刷新群聊"].waitForExistence(timeout: 10), "群聊 toolbar is missing")
     }
 
@@ -80,7 +80,7 @@ final class RemoteTabsTests: XCTestCase {
         )
         app.buttons["app.tab.home"].tap()
         XCTAssertTrue(
-            app.descendants(matching: .any)["home.header"].firstMatch.waitForExistence(timeout: 10),
+            app.descendants(matching: .any)["home.memory"].firstMatch.waitForExistence(timeout: 10),
             "selecting a destination from the composer palette did not switch"
         )
     }
@@ -94,6 +94,6 @@ final class RemoteTabsTests: XCTestCase {
             "-TOMATO_OPEN_URL", "tomato://rooms",
         ]
         app.launch()
-        XCTAssertTrue(app.navigationBars["群聊"].waitForExistence(timeout: 20), "tomato://rooms did not open 群聊")
+        XCTAssertTrue(app.buttons["刷新群聊"].waitForExistence(timeout: 20), "tomato://rooms did not open 群聊")
     }
 }

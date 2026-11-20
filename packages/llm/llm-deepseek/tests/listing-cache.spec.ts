@@ -17,6 +17,7 @@ function harness(timeoutMs = 60_000, honorsAbort = true) {
   const loads: Array<{ token: string; signal: AbortSignal; settle: PromiseWithResolvers<ModelListing> }> = []
   const info = vi.fn()
   const warn = vi.fn()
+  const changed = vi.fn()
   const settings: ListingSettings = { url: 'https://api.example/models', timeoutMs, maxAgeMs: 100 }
   const cache = new ModelListingCache({
     credential: () => Promise.resolve(token),
@@ -29,6 +30,7 @@ function harness(timeoutMs = 60_000, honorsAbort = true) {
     now: () => clock,
     info,
     warn,
+    changed,
   })
   const flush = () => new Promise(resolve => setImmediate(resolve))
   // Every access passes the same configuration generation.
@@ -39,7 +41,7 @@ function harness(timeoutMs = 60_000, honorsAbort = true) {
     dispose: () => { cache.dispose() },
   }
   return {
-    catalog, loads, info, warn, flush,
+    catalog, loads, info, warn, changed, flush,
     advance: (ms: number) => { clock += ms },
     credential: (value: string | undefined) => { token = value },
   }
@@ -63,6 +65,30 @@ it('shares one first load between concurrent callers', async () => {
   await expect(second).resolves.toEqual({ authenticated: true, listing: listing('a') })
   expect(catalog.current()).toEqual({ authenticated: true, listing: listing('a') })
   expect(info).toHaveBeenCalledExactlyOnceWith('model listing from https://api.example/models loaded 1 model(s), skipped 0 row(s)')
+})
+
+it('reports a changed catalog only when the loaded listing differs', async () => {
+  const { catalog, loads, changed } = harness()
+  void catalog.view()
+  await new Promise(resolve => setImmediate(resolve))
+  loads[0]!.settle.resolve(listing('a'))
+  await new Promise(resolve => setImmediate(resolve))
+  expect(changed).toHaveBeenCalledTimes(1)
+
+  // The same catalog on a later refresh is not a change a client must reload for.
+  catalog.invalidate()
+  void catalog.view()
+  await new Promise(resolve => setImmediate(resolve))
+  loads[1]!.settle.resolve(listing('a'))
+  await new Promise(resolve => setImmediate(resolve))
+  expect(changed).toHaveBeenCalledTimes(1)
+
+  catalog.invalidate()
+  void catalog.view()
+  await new Promise(resolve => setImmediate(resolve))
+  loads[2]!.settle.resolve(listing('a', 'b'))
+  await new Promise(resolve => setImmediate(resolve))
+  expect(changed).toHaveBeenCalledTimes(2)
 })
 
 it('bounds the first wait by the request deadline and serves no listing after a failure', async () => {

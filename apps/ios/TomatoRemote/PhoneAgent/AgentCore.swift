@@ -40,6 +40,61 @@ struct AgentModelConfig: Codable, Equatable {
     }
 }
 
+/// Where Tomato Phone runs its agent.
+enum PhoneAgentBackend: String, Codable, CaseIterable {
+    /// The on-device loop: model key in the Keychain, endpoint configured here.
+    case local
+    /// The company agent_service: model, tools, sessions and approvals there.
+    case service
+
+    var title: String {
+        switch self {
+        case .local: "本机"
+        case .service: "服务端"
+        }
+    }
+}
+
+/// Persisted backend choice and the service model route the owner last picked.
+enum AgentBackendStore {
+    private static let backendKey = "phoneAgent.backend"
+    private static let modelRouteKey = "phoneAgent.service.modelRoute"
+
+    /// Tomato Phone always runs on the company agent_service.
+    ///
+    /// The local loop and its third-party endpoint settings are gone; this stays
+    /// a stored property so a build that predates the switch still reads a value.
+    static var backend: PhoneAgentBackend {
+        get { .service }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: backendKey) }
+    }
+
+    /// Last model route chosen for the service; the session applies it.
+    static var serviceModelRoute: String? {
+        get { UserDefaults.standard.string(forKey: modelRouteKey) }
+        set { UserDefaults.standard.set(newValue, forKey: modelRouteKey) }
+    }
+
+    private static let thinkingKey = "phoneAgent.service.thinking"
+
+    /// Thinking depth the owner last picked; nil leaves the route default.
+    static var serviceThinkingLevel: String? {
+        get { UserDefaults.standard.string(forKey: thinkingKey) }
+        set {
+            let trimmed = newValue?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            UserDefaults.standard.set(trimmed.isEmpty ? nil : trimmed, forKey: thinkingKey)
+        }
+    }
+
+    /// Origin every agent_service call uses: the company test BFF.
+    ///
+    /// The phone offers no address setting; `/api/agent-v2/*` is always reached
+    /// on the deployment `CompanyAuth` selects for this build.
+    static var serviceBase: URL {
+        CompanyAuth.baseURL
+    }
+}
+
 /// The reasoning depths the composer offers for the direct endpoint.
 ///
 /// These are the OpenAI-compatible `reasoning_effort` values every relay of
@@ -700,6 +755,15 @@ final class AgentCapabilityStore: ObservableObject {
         }
     }
 
+    /// Enabled text skills, as the service session carries them.
+    /// - Returns: name and body pairs in installation order.
+    func clientSkills() -> [(name: String, text: String)] {
+        items.filter(\.enabled).compactMap { item in
+            guard let text = item.skillText, !text.isEmpty else { return nil }
+            return (item.name, text)
+        }
+    }
+
     /// Execute one tool call.
     /// - Parameters:
     ///   - name: declaration name the model used.
@@ -812,6 +876,8 @@ struct AgentAttachment: Codable, Identifiable, Equatable {
     var file: String
     /// Encoded image or extracted-text size.
     var byteCount: Int
+    /// Attachment id agent_service assigned after upload; nil until uploaded.
+    var serviceId: String?
 }
 
 /// One transcript entry.
@@ -890,6 +956,10 @@ final class PhoneAgentModel: ObservableObject {
     /// long transcript on the main thread.
     @Published private(set) var isLoadingHistory = false
     @Published var errorMessage: String?
+    /// Where the agent runs; changing it takes effect on the next message.
+    @Published private(set) var backend: PhoneAgentBackend = AgentBackendStore.backend
+    /// A tool approval the service is waiting on.
+    @Published private(set) var pendingApproval: AgentServiceApproval?
 
     private var task: Task<Void, Never>?
     /// The one history read; every caller waits on it.
@@ -908,6 +978,16 @@ final class PhoneAgentModel: ObservableObject {
     /// Identifies the turn allowed to write the transcript. A stopped turn may
     /// still be unwinding; its writes must not land in another conversation.
     private var turn = 0
+    /// Turn id the service is running, for cancel.
+    private var serviceTurnId: String?
+    /// Step whose token deltas are appended, and its attempt.
+    private var serviceDeltaStep: String?
+    private var serviceDeltaAttempt: Int?
+    /// Skill digest already pushed for each service session.
+    private var serviceSkillDigests: [String: String] = [:]
+
+    /// Service code for a model route or thinking depth it does not offer.
+    private static let modelRouteInvalid = 40004
 
     /// The transcript of the conversation on screen.
     var messages: [AgentMessage] {
@@ -944,6 +1024,9 @@ final class PhoneAgentModel: ObservableObject {
             legacyThread: folder.appendingPathComponent("thread.json")
         )
         activeConversation = PhoneConversation()
+        // The phone no longer calls a third-party endpoint; drop any model key a
+        // previous build left in the Keychain.
+        try? AgentConfigStore.setAPIKey("")
         #if DEBUG
             // A script can ask the app to survey cache behaviour with its own
             // stored key; only counters and errors are written to Documents.
@@ -971,6 +1054,11 @@ final class PhoneAgentModel: ObservableObject {
     /// history. A second caller waits on the same read instead of starting one.
     func loadHistoryIfNeeded() async {
         if historyLoaded {
+            return
+        }
+        if backend == .service {
+            historyLoaded = true
+            await refreshServiceConversations()
             return
         }
         if let historyTask {
@@ -1040,7 +1128,7 @@ final class PhoneAgentModel: ObservableObject {
         append(message)
         persist()
         let token = beginTurn()
-        task = Task { await run(token: token) }
+        task = Task { await runService(text: trimmed, attachments: files, token: token) }
     }
 
     /// Start a blank conversation; the one on screen stays in the history.
@@ -1057,6 +1145,10 @@ final class PhoneAgentModel: ObservableObject {
     /// - Parameter id: identity from the history list.
     func selectConversation(_ id: String) {
         guard id != activeConversation.id else { return }
+        if backend == .service {
+            Task { await openServiceConversation(id) }
+            return
+        }
         guard let conversation = conversationStore.load(id) else {
             AppLog.error(.session, "Phone 会话读取失败", detail: String(id.prefix(8)))
             errorMessage = "会话读取失败，可能已经被删除。"
@@ -1073,6 +1165,25 @@ final class PhoneAgentModel: ObservableObject {
     ///   - title: the name the list should show.
     func rename(_ id: String, to title: String) {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        if backend == .service {
+            guard let client = AgentServiceClient.current() else { return }
+            Task {
+                do {
+                    try await client.patchSession(sessionId: id, title: trimmed)
+                    await refreshServiceConversations()
+                } catch {
+                    report(error)
+                }
+            }
+            if id == activeConversation.id {
+                activeConversation.title = trimmed
+            }
+            if let index = conversations.firstIndex(where: { $0.id == id }) {
+                conversations[index].title = trimmed
+            }
+            return
+        }
         guard !trimmed.isEmpty,
               var conversation = id == activeConversation.id
               ? activeConversation
@@ -1101,6 +1212,30 @@ final class PhoneAgentModel: ObservableObject {
     /// - Parameter summary: the history row to remove.
     func delete(_ summary: PhoneConversationSummary) {
         let isActive = summary.id == activeConversation.id
+        if backend == .service {
+            if isActive {
+                stop()
+            }
+            conversations.removeAll { $0.id == summary.id }
+            guard let client = AgentServiceClient.current() else {
+                if isActive {
+                    startNewConversation()
+                }
+                return
+            }
+            Task {
+                do {
+                    try await client.deleteSession(sessionId: summary.id)
+                    await refreshServiceConversations()
+                } catch {
+                    report(error)
+                }
+            }
+            if isActive {
+                startNewConversation()
+            }
+            return
+        }
         guard let conversation = conversationStore.load(summary.id) else {
             conversations.removeAll { $0.id == summary.id }
             if isActive {
@@ -1185,6 +1320,16 @@ final class PhoneAgentModel: ObservableObject {
         turn &+= 1
         task?.cancel()
         task = nil
+        if let sessionId = activeConversation.serviceSessionId,
+           let runningTurn = serviceTurnId,
+           let client = AgentServiceClient.current()
+        {
+            Task { try? await client.cancel(sessionId: sessionId, turnId: runningTurn) }
+        }
+        serviceTurnId = nil
+        serviceDeltaStep = nil
+        serviceDeltaAttempt = nil
+        pendingApproval = nil
         isRunning = false
         streamingText = ""
         streamingReasoning = ""
@@ -1251,7 +1396,7 @@ final class PhoneAgentModel: ObservableObject {
 
     /// Put the conversation on screen at its place in the history.
     private func refreshSummary() {
-        guard !activeConversation.isEmpty else { return }
+        guard backend == .local, !activeConversation.isEmpty else { return }
         let summary = activeConversation.summary
         if let index = conversations.firstIndex(where: { $0.id == summary.id }) {
             conversations[index] = summary
@@ -1375,6 +1520,516 @@ final class PhoneAgentModel: ObservableObject {
     /// Every write checks the token first: a turn that was stopped or replaced
     /// must not append into what the reader is looking at now.
     /// - Parameter token: identity the turn was opened with.
+    // MARK: - Company agent service
+
+    /// Re-read the signed-in user's service sessions into the history list.
+    func refreshServiceConversations() async {
+        guard let client = AgentServiceClient.current() else { return }
+        do {
+            let page = try await client.sessions()
+            conversations = page.items.map { item in
+                PhoneConversationSummary(
+                    id: item.sessionId,
+                    title: item.title ?? item.preview ?? PhoneConversation.untitled,
+                    updatedAt: AgentServiceDate.parse(item.lastActiveAt ?? item.createdAt),
+                    messageCount: item.turnCount ?? 0,
+                    preview: item.preview
+                )
+            }
+        } catch {
+            AppLog.warning(.session, "服务端会话列表读取失败", detail: error.localizedDescription)
+        }
+    }
+
+    /// Refresh the history list for the current backend.
+    func refreshHistory() async {
+        if backend == .service {
+            await refreshServiceConversations()
+        }
+    }
+
+    /// Open one server conversation and replay its history.
+    /// - Parameter id: server session id from the history list.
+    private func openServiceConversation(_ id: String) async {
+        guard let client = AgentServiceClient.current() else {
+            errorMessage = AgentServiceError.notSignedIn.errorDescription
+            return
+        }
+        stop()
+        errorMessage = nil
+        do {
+            let page = try await client.messages(sessionId: id)
+            let messages = page.items.compactMap(Self.message(from:))
+            let summary = conversations.first { $0.id == id }
+            activeConversation = PhoneConversation(
+                id: id,
+                title: summary?.title ?? PhoneConversation.untitled,
+                messages: messages,
+                serviceSessionId: id
+            )
+        } catch {
+            report(error)
+        }
+    }
+
+    /// Map one service history row onto the phone's transcript row.
+    /// - Parameter item: history projection from the service.
+    /// - Returns: the transcript entry, or nil for rows the phone does not draw.
+    private static func message(from item: AgentServiceMessage) -> AgentMessage? {
+        switch item.role {
+        case "user":
+            guard item.kind == "message", !item.text.isEmpty else { return nil }
+            return AgentMessage(role: .user, text: item.text)
+        case "assistant":
+            guard item.kind == "message", !item.text.isEmpty else { return nil }
+            return AgentMessage(role: .assistant, text: item.text)
+        case "tool":
+            guard item.kind == "tool_result", !item.text.isEmpty else { return nil }
+            return AgentMessage(role: .tool, text: item.text)
+        case "system":
+            guard item.kind == "error", !item.text.isEmpty else { return nil }
+            return AgentMessage(role: .tool, text: "错误：\(item.text)")
+        default:
+            return nil
+        }
+    }
+
+    /// Run one prompt through agent_service.
+    ///
+    /// Files upload first, then one session carries the local skills and model
+    /// route; the turn streams back events that land in the same transcript the
+    /// local loop writes to. The local loop stays available as the fallback.
+    /// - Parameters:
+    ///   - text: prompt that was sent.
+    ///   - attachments: files staged for this message.
+    ///   - token: identity of the turn this run belongs to.
+    private func runService(text: String, attachments: [AgentAttachment], token: Int) async {
+        guard let client = AgentServiceClient.current() else {
+            errorMessage = AgentServiceError.notSignedIn.errorDescription
+            finishServiceTurn(token: token, failure: nil)
+            return
+        }
+        do {
+            let sessionId = try await ensureServiceSession(client: client)
+            guard token == turn else { return }
+            try await syncServiceSkills(client: client, sessionId: sessionId)
+            let attachmentIds = try await uploadServiceAttachments(
+                client: client,
+                sessionId: sessionId,
+                attachments: attachments,
+                token: token
+            )
+            guard token == turn else { return }
+            // Where the session's log stands before this turn writes anything:
+            // resuming from 0 replayed every earlier turn into the transcript.
+            let sessionHead = try? await client.messages(sessionId: sessionId, limit: 1)
+            guard token == turn else { return }
+            let accepted = try await client.submitTurn(
+                sessionId: sessionId,
+                text: text,
+                attachmentIds: attachmentIds
+            )
+            serviceTurnId = accepted.turnId
+            let following = accepted.turnId
+            var lastSeq = sessionHead?.items.compactMap(\.seq).max() ?? 0
+            var attempts = 0
+            var sawEnd = false
+            while true {
+                do {
+                    for try await event in client.stream(
+                        sessionId: sessionId,
+                        turnId: following,
+                        afterSeq: lastSeq
+                    ) {
+                        guard token == turn else { return }
+                        if let seq = event.seq {
+                            lastSeq = max(lastSeq, seq)
+                        }
+                        guard event.belongsToTurn(following) else { continue }
+                        if event.name == "turn/end" {
+                            sawEnd = true
+                        }
+                        handleServiceEvent(event, token: token)
+                    }
+                    // A carrier can close an event stream before the turn ends —
+                    // the SSE proxy here did it 225 ms after the turn started,
+                    // while the model answered five seconds later. Ending the
+                    // UI turn on a clean close dropped that answer; resuming from
+                    // the last sequence picks it up instead.
+                    guard !sawEnd, token == turn else { break }
+                    attempts += 1
+                    guard attempts <= 5 else {
+                        AppLog.warning(.model, "事件流提前结束，改为读取消息", detail: "第 \(attempts) 次 · afterSeq \(lastSeq)")
+                        await recoverServiceTranscript(client: client, sessionId: sessionId, afterSeq: lastSeq, token: token)
+                        break
+                    }
+                    AppLog.warning(.model, "事件流提前结束，续播", detail: "第 \(attempts) 次 · afterSeq \(lastSeq)")
+                    try? await Task.sleep(nanoseconds: 800_000_000)
+                } catch is CancellationError {
+                    return
+                } catch {
+                    guard token == turn else { return }
+                    attempts += 1
+                    if attempts >= 5 {
+                        report(error)
+                        break
+                    }
+                    try? await Task.sleep(nanoseconds: 1_000_000_000)
+                }
+            }
+            finishServiceTurn(token: token, failure: nil)
+            if token == turn {
+                await refreshServiceConversations()
+            }
+        } catch is CancellationError {
+            return
+        } catch {
+            guard token == turn else { return }
+            report(error)
+            finishServiceTurn(token: token, failure: nil)
+        }
+    }
+
+    /// Open one service session for this conversation, or reuse the one it has.
+    /// - Parameter client: service client for the signed-in account.
+    /// - Returns: the session id.
+    private func ensureServiceSession(client: AgentServiceClient) async throws -> String {
+        if let existing = activeConversation.serviceSessionId, !existing.isEmpty {
+            return existing
+        }
+        let skills = localServiceSkills()
+        let created: AgentServiceSession
+        do {
+            created = try await client.createSession(
+                modelRoute: AgentBackendStore.serviceModelRoute,
+                skills: skills,
+                thinkingLevel: AgentBackendStore.serviceThinkingLevel
+            )
+        } catch let AgentServiceError.rejected(code, _)
+            where code == Self.modelRouteInvalid && AgentBackendStore.serviceThinkingLevel != nil
+        {
+            // A depth the route no longer lists would otherwise block the whole
+            // conversation; the session starts on the route default instead.
+            AppLog.warning(.model, "服务端拒绝了本地推理档位，改用路由默认档")
+            AgentBackendStore.serviceThinkingLevel = nil
+            created = try await client.createSession(
+                modelRoute: AgentBackendStore.serviceModelRoute,
+                skills: skills
+            )
+        }
+        activeConversation.serviceSessionId = created.sessionId
+        serviceSkillDigests[created.sessionId] = skillDigest(of: skills)
+        persist()
+        return created.sessionId
+    }
+
+    /// Local skills the phone carries into a service session.
+    /// - Returns: name and body pairs from the capability store.
+    private func localServiceSkills() -> [AgentServiceSkill] {
+        store.clientSkills().map { AgentServiceSkill(name: $0.name, content: $0.text) }
+    }
+
+    /// Stable digest of one skill set, so an unchanged set is not re-uploaded.
+    /// - Parameter skills: current local skills.
+    /// - Returns: hex SHA-256 over the sorted name and body pairs.
+    private func skillDigest(of skills: [AgentServiceSkill]) -> String {
+        let joined = skills.map { "\($0.name)\n\($0.content)" }.sorted().joined(separator: "\u{1F}")
+        return SHA256.hash(data: Data(joined.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
+
+    /// Push the local skill set when it changed since the last turn.
+    /// - Parameters:
+    ///   - client: service client.
+    ///   - sessionId: session to update.
+    private func syncServiceSkills(client: AgentServiceClient, sessionId: String) async throws {
+        let skills = localServiceSkills()
+        let digest = skillDigest(of: skills)
+        guard serviceSkillDigests[sessionId] != digest else { return }
+        try await client.putClientSkills(sessionId: sessionId, skills: skills)
+        serviceSkillDigests[sessionId] = digest
+    }
+
+    /// Upload files this message carries that the service has not seen yet.
+    /// - Parameters:
+    ///   - client: service client.
+    ///   - sessionId: session the turn belongs to.
+    ///   - attachments: files on the user message.
+    ///   - token: identity of the running turn.
+    /// - Returns: uploaded attachment ids, in message order.
+    private func uploadServiceAttachments(
+        client: AgentServiceClient,
+        sessionId: String,
+        attachments: [AgentAttachment],
+        token: Int
+    ) async throws -> [String] {
+        var ids: [String] = []
+        for attachment in attachments {
+            guard token == turn else { throw CancellationError() }
+            if let existing = attachment.serviceId, !existing.isEmpty {
+                ids.append(existing)
+                continue
+            }
+            let bytes: Data
+            let name: String
+            let mime: String
+            switch attachment.kind {
+            case .image:
+                guard let data = imageData(for: attachment) else { continue }
+                bytes = data
+                name = attachment.name.isEmpty ? "photo.jpg" : attachment.name
+                mime = "image/jpeg"
+            case .document:
+                let text = documentText(for: attachment) ?? ""
+                bytes = Data(text.utf8)
+                name = "\(attachment.name.isEmpty ? "document" : attachment.name).txt"
+                mime = "text/plain"
+            }
+            let uploaded = try await client.uploadAttachment(
+                sessionId: sessionId,
+                data: bytes,
+                name: name,
+                mime: mime
+            )
+            ids.append(uploaded)
+            recordServiceAttachment(attachment.id, serviceId: uploaded)
+        }
+        return ids
+    }
+
+    /// Remember the server id on the message that carried the file.
+    /// - Parameters:
+    ///   - attachmentId: local attachment identity.
+    ///   - serviceId: id the service assigned.
+    private func recordServiceAttachment(_ attachmentId: String, serviceId: String) {
+        for index in activeConversation.messages.indices {
+            guard var attachments = activeConversation.messages[index].attachments,
+                  let position = attachments.firstIndex(where: { $0.id == attachmentId })
+            else { continue }
+            attachments[position].serviceId = serviceId
+            activeConversation.messages[index].attachments = attachments
+            persist()
+            return
+        }
+    }
+
+    /// Apply one streamed event to the transcript.
+    /// - Parameters:
+    ///   - event: decoded SSE frame.
+    ///   - token: identity of the running turn.
+    private func handleServiceEvent(_ event: AgentServiceEvent, token: Int) {
+        guard token == turn else { return }
+        switch event.name {
+        case "assistant/delta":
+            guard let delta = event.delta else { return }
+            if serviceDeltaStep != delta.stepId || serviceDeltaAttempt != delta.attempt {
+                serviceDeltaStep = delta.stepId
+                serviceDeltaAttempt = delta.attempt
+                streamingText = ""
+            }
+            streamingText += delta.text
+        case "assistant/message":
+            let text = event.assistantText.trimmingCharacters(in: .whitespacesAndNewlines)
+            streamingText = ""
+            streamingReasoning = ""
+            if !text.isEmpty {
+                appendDuringTurn(AgentMessage(role: .assistant, text: text), token: token)
+            }
+        case "tool/result":
+            guard let content = event.payload?["content"]?.stringValue, !content.isEmpty else { return }
+            let clipped = content.count > 4000 ? String(content.prefix(4000)) + "…" : content
+            appendDuringTurn(AgentMessage(role: .tool, text: clipped), token: token)
+        case "approval/request":
+            guard let payload = event.payload,
+                  let approvalId = payload["approval_id"]?.stringValue,
+                  let toolName = payload["tool_name"]?.stringValue
+            else { return }
+            let risk = payload["risk"]?.stringValue ?? ""
+            pendingApproval = AgentServiceApproval(id: approvalId, toolName: toolName, risk: risk)
+            appendDuringTurn(
+                AgentMessage(role: .tool, text: "需要确认才能执行：\(toolName)（风险 \(risk)）"),
+                token: token
+            )
+        case "turn/end":
+            let status = event.payload?["status"]?.stringValue ?? ""
+            finishServiceTurn(token: token, failure: status == "failed" ? "服务端执行失败" : nil)
+        default:
+            break
+        }
+    }
+
+    /// Read the turn's messages once its stream stopped delivering them.
+    ///
+    /// The event carrier can close before the turn ends, and the messages route
+    /// is the durable copy: without this the answer generated after the socket
+    /// closed never reached the screen even though the service had it.
+    /// - Parameters:
+    ///   - client: service client for the signed-in account.
+    ///   - sessionId: session the turn ran in.
+    ///   - afterSeq: last sequence the stream delivered.
+    ///   - token: identity of the running turn.
+    private func recoverServiceTranscript(
+        client: AgentServiceClient,
+        sessionId: String,
+        afterSeq: Int,
+        token: Int
+    ) async {
+        guard token == turn, let page = try? await client.messages(sessionId: sessionId, limit: 20) else { return }
+        let shown = Set(activeConversation.messages.map(\.text))
+        for item in page.items.sorted(by: { ($0.seq ?? 0) < ($1.seq ?? 0) }) {
+            guard let seq = item.seq, seq > afterSeq, item.role == "assistant" else { continue }
+            let text = item.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !text.isEmpty, !shown.contains(text) else { continue }
+            _ = appendDuringTurn(AgentMessage(role: .assistant, text: text), token: token)
+        }
+    }
+
+    /// Close the current service turn in the UI.
+    /// - Parameters:
+    ///   - token: identity of the running turn.
+    ///   - failure: message to show when the turn failed, or nil.
+    private func finishServiceTurn(token: Int, failure: String?) {
+        guard token == turn else { return }
+        if let failure, !failure.isEmpty {
+            errorMessage = failure
+        }
+        pendingApproval = nil
+        serviceTurnId = nil
+        serviceDeltaStep = nil
+        serviceDeltaAttempt = nil
+        streamingText = ""
+        streamingReasoning = ""
+        isRunning = false
+    }
+
+    /// Approve the tool the service is waiting on.
+    func approvePendingApproval() {
+        decidePendingApproval("approve")
+    }
+
+    /// Reject the tool the service is waiting on.
+    func rejectPendingApproval() {
+        decidePendingApproval("reject")
+    }
+
+    /// Send one approval decision and clear the banner.
+    /// - Parameter decision: `approve` or `reject`.
+    private func decidePendingApproval(_ decision: String) {
+        guard let approval = pendingApproval,
+              let sessionId = activeConversation.serviceSessionId,
+              let client = AgentServiceClient.current()
+        else { return }
+        pendingApproval = nil
+        Task {
+            do {
+                try await client.decideApproval(
+                    sessionId: sessionId,
+                    approvalId: approval.id,
+                    decision: decision
+                )
+            } catch {
+                report(error)
+            }
+        }
+    }
+
+    /// Switch between the on-device loop and the company service.
+    /// - Parameter next: backend the owner chose.
+    func setBackend(_ next: PhoneAgentBackend) {
+        guard next != backend else { return }
+        stop()
+        backend = next
+        AgentBackendStore.backend = next
+        if next == .service {
+            // A local transcript was never sent to the service; start clean
+            // instead of implying the server already has it.
+            if activeConversation.serviceSessionId == nil {
+                activeConversation = PhoneConversation()
+            }
+            Task { await refreshServiceConversations() }
+        } else {
+            Task {
+                await reloadLocalConversations()
+                activeConversation = conversations.first.flatMap { conversationStore.load($0.id) }
+                    ?? PhoneConversation()
+            }
+        }
+    }
+
+    /// Re-read the on-device history without the once-per-launch guard.
+    private func reloadLocalConversations() async {
+        let store = conversationStore
+        let loaded = await Task.detached(priority: .utility) { store.loadAll() }.value
+        conversations = loaded.map(\.summary)
+        historyLoaded = true
+    }
+
+    /// Session id on the service for the conversation on screen, if any.
+    var activeServiceSessionId: String? {
+        activeConversation.serviceSessionId
+    }
+
+    /// Remember the picked thinking depth and apply it to the open session.
+    /// - Parameter level: a depth from the selected route's whitelist, or nil
+    ///   for the route default.
+    func selectServiceThinkingLevel(_ level: String?) {
+        AgentBackendStore.serviceThinkingLevel = level
+        guard let sessionId = activeConversation.serviceSessionId,
+              let client = AgentServiceClient.current()
+        else { return }
+        Task {
+            do {
+                try await client.patchSession(
+                    sessionId: sessionId,
+                    thinkingLevel: level,
+                    clearThinkingLevel: level == nil
+                )
+            } catch {
+                report(error)
+            }
+        }
+    }
+
+    /// Remember the picked service model and apply it to the open session.
+    ///
+    /// The depth is part of the same choice: a level the new route does not
+    /// list is dropped here, and the service then falls back to that route's
+    /// default on the next turn.
+    /// - Parameter model: route the picker offered, with its whitelist.
+    func selectServiceModel(_ model: AgentServiceModel) {
+        AgentBackendStore.serviceModelRoute = model.name
+        let kept = AgentBackendStore.serviceThinkingLevel.flatMap {
+            model.allowsThinkingLevel($0) ? $0 : nil
+        }
+        AgentBackendStore.serviceThinkingLevel = kept
+        guard let sessionId = activeConversation.serviceSessionId,
+              let client = AgentServiceClient.current()
+        else { return }
+        Task {
+            do {
+                try await client.patchSession(
+                    sessionId: sessionId,
+                    modelRoute: model.name,
+                    thinkingLevel: kept
+                )
+            } catch {
+                report(error)
+            }
+        }
+    }
+
+    /// Show one service failure, forgetting a session the service rejected.
+    ///
+    /// An expired Feishu session answers every call with 401. Clearing it here
+    /// lets the tab offer the sign-in again instead of repeating a failure the
+    /// owner cannot fix from this screen.
+    /// - Parameter error: failure a service call threw.
+    private func report(_ error: Error) {
+        if let serviceError = error as? AgentServiceError, case .notSignedIn = serviceError {
+            AccountAuthStore.shared.clear()
+        }
+        errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+    }
+
     private func run(token: Int) async {
         defer {
             if token == turn {

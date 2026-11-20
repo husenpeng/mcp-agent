@@ -89,33 +89,45 @@ final class InteractionCenter: ObservableObject {
             guard let self else { return }
             var attempt = 0
             while !Task.isCancelled {
+                var failure = "Host 关闭了连接"
                 do {
-                    for try await frame in hub.eventFrames() {
+                    for try await frame in hub.eventFrames(
+                        logAttempt: attempt <= StreamRetry.quickAttempts
+                    ) {
                         guard self.generation == generation else { return }
                         ingest(frame)
                         attempt = 0
                         if !isConnected {
                             isConnected = true
+                            // A self-healed reconnect must take the outage
+                            // banner with it; the sheet would otherwise keep
+                            // claiming the stream is down.
+                            errorMessage = nil
                             AppLog.info(.stream, "交互事件流已连接")
                         }
                     }
-                    isConnected = false
+                } catch is CancellationError {
                     break
                 } catch {
-                    if Task.isCancelled {
-                        break
-                    }
-                    isConnected = false
-                    attempt += 1
-                    if attempt > 5 {
-                        errorMessage = describe(error)
-                        AppLog.error(.stream, "交互事件流停止重连", detail: describe(error))
-                        break
-                    }
-                    errorMessage = "事件流中断，正在重试（\(attempt)/5）…"
-                    AppLog.warning(.stream, "交互事件流中断", detail: "第 \(attempt) 次 · \(describe(error))")
-                    try? await Task.sleep(nanoseconds: UInt64(attempt) * 2_000_000_000)
+                    guard !Task.isCancelled else { break }
+                    failure = describe(error)
                 }
+                guard !Task.isCancelled else { break }
+                // A closed socket is a disconnect even when the Host ended it
+                // politely: this stream is the only channel approvals travel
+                // on, so it has to come back by itself.
+                isConnected = false
+                attempt += 1
+                errorMessage = StreamRetry.status(attempt: attempt)
+                let detail = "第 \(attempt) 次 · \(failure)"
+                if attempt <= StreamRetry.quickAttempts {
+                    AppLog.warning(.stream, "交互事件流中断", detail: detail)
+                } else if attempt == StreamRetry.quickAttempts + 1 {
+                    AppLog.warning(.stream, "交互事件流改为每分钟重试", detail: detail)
+                }
+                try? await Task.sleep(
+                    nanoseconds: UInt64(StreamRetry.pause(afterAttempt: attempt) * 1_000_000_000)
+                )
             }
             if self.generation == generation {
                 streamTask = nil

@@ -10,7 +10,7 @@ import { RemoteStreamCarrierError, type ClientRemote } from '@tomato/api-gateway
 import type { RemoteResult } from '@tomato/typert-protocol'
 import type {
   Room, RoomApprovalRequest, RoomMessage, RoomMessagesRequest, RoomPauseRequest, RoomPostRequest,
-  RoomPublicationRequest, RoomSnapshotFrame, RoomTargetRequest,
+  RoomPublicationRequest, RoomSnapshotFrame, RoomTargetRequest, RoomWorkRecord,
 } from '../types.ts'
 import type { RoomRunsModel, RoomRunsSource } from './model.ts'
 
@@ -51,6 +51,12 @@ export interface RoomRemote {
    * @returns the Remote result of the call.
    */
   messages(request: RoomMessagesRequest): Promise<RemoteResult<readonly RoomMessage[]>>
+  /**
+   * Read the work records one room produced.
+   * @param request - room target and request fields.
+   * @returns the Remote result of the call.
+   */
+  work(request: RoomTargetRequest): Promise<RemoteResult<readonly RoomWorkRecord[]>>
   /**
    * Pause or resume a room.
    * @param request - room target and request fields.
@@ -122,6 +128,12 @@ export interface IRoomRuns {
    * @returns the Remote result of the call.
    */
   messages(request: RoomMessagesRequest): Promise<RemoteResult<readonly RoomMessage[]>>
+  /**
+   * Read the work records one room produced.
+   * @param request - room target and request fields.
+   * @returns the Remote result of the call.
+   */
+  work(request: RoomTargetRequest): Promise<RemoteResult<readonly RoomWorkRecord[]>>
   /**
    * Pause or resume a room.
    * @param request - room target and request fields.
@@ -217,6 +229,10 @@ export class ClientRoomRuns extends Service implements IRoomRuns {
 
   messages(request: RoomMessagesRequest): Promise<RemoteResult<readonly RoomMessage[]>> {
     return this.remote.room.messages(request)
+  }
+
+  work(request: RoomTargetRequest): Promise<RemoteResult<readonly RoomWorkRecord[]>> {
+    return this.remote.room.work(request)
   }
 
   pause(request: RoomPauseRequest): Promise<RemoteResult<Room>> {

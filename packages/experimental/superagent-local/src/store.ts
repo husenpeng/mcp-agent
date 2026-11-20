@@ -84,7 +84,8 @@ const ticketSchema = z.object({
   review: verdictSchema.optional(),
 })
 
-const storedTicketSchema = z.object({ ticket: ticketSchema, subscriptions: z.array(threadRefSchema) })
+/** Durable shape of one stored ticket, shared by stores that keep the engine's work records. */
+export const storedTicketSchema = z.object({ ticket: ticketSchema, subscriptions: z.array(threadRefSchema) })
 
 const triggerSchema = z.object({
   id: idOf<TriggerId>(z.string().min(1)),
@@ -142,6 +143,7 @@ export async function createStorageStore(ctx: Context): Promise<StorageStore> {
       write(async () => { await domain.table('triggers').put(trigger.id, trigger) })
     },
     trigger: id => triggers.get(id),
+    triggers: () => [...triggers.values()],
     putTicket: (entry) => {
       tickets.set(entry.ticket.id, entry)
       write(async () => { await domain.table('tickets').put(entry.ticket.id, entry) })

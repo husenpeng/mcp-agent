@@ -36,7 +36,7 @@ const TOMATO_PACKAGE = '@tomato/cli'
 const ROOT_PACKAGES = [TOMATO_PACKAGE, DESKTOP_HOST_PACKAGE] as const
 /** First-party packages the Desktop runtime needs but the public release family omits. */
 const EXTRA_PACKAGES = [
-  'tomato-market',
+  '@tomato/plugin-tomato-market',
   '@tomato/account-service',
   '@tomato/brand',
   '@tomato/gateway',
@@ -60,7 +60,7 @@ const PRIVATE_RUNTIME_PACKAGES = [
  * rows instead of composing absent modules.
  */
 const EXCLUDED_PACKAGES_BY_BUNDLE: Readonly<Record<string, readonly string[]>> = {
-  '@tomato/experimental-robot-app': [
+  '@tomato/experimental-robot-crew-bundle': [
     '@tomato/api-robot-crew-controller',
     '@tomato/client-ui-robot-crew',
     '@tomato/experimental-robot-crew-local',
@@ -394,18 +394,12 @@ function main(): void {
     allowPositionals: false,
   })
   const inputs = (values.from ?? defaultInputs).map(path => resolve(REPOSITORY_ROOT, path))
-  // The built-in plugin market is a repository plugin rather than a workspace
-  // package, and private runtime plugins are excluded from the public release
-  // family. Pack both here and select them as extra closure roots. A build-local
-  // npm cache keeps packaging independent of the caller's npm home.
+  // Private runtime plugins are excluded from the public release family, so pack
+  // them here and select them as extra closure roots. A build-local npm cache
+  // keeps packaging independent of the caller's npm home.
   const extraDir = mkdtempSync(join(tmpdir(), 'tomato-desktop-extra-'))
   const npmCache = join(buildPaths.root, 'npm-cache')
   mkdirSync(npmCache, { recursive: true })
-  execFileSync('npm', ['pack', '--pack-destination', extraDir], {
-    cwd: join(REPOSITORY_ROOT, 'plugins', 'tomato-market'),
-    env: { ...process.env, npm_config_cache: npmCache },
-    stdio: ['ignore', 'ignore', 'inherit'],
-  })
   for (const directory of PRIVATE_RUNTIME_PACKAGES) {
     const invocation = pnpmInvocation(['--dir', join(REPOSITORY_ROOT, directory), 'pack', '--pack-destination', extraDir])
     execFileSync(invocation.command, invocation.args, {

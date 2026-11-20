@@ -6,11 +6,12 @@ import { join } from 'node:path'
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import type { MenuItemConstructorOptions, MessageBoxOptions } from 'electron'
-import { DESKTOP_IPC, type DesktopUpdateState } from '../src/ipc.ts'
+import { DESKTOP_IPC, type DesktopRemoteState, type DesktopUpdateState } from '../src/ipc.ts'
 import { MANDATORY_IPC } from '../src/mandatory-update-ipc.ts'
 import { DesktopHostFatalError, DesktopHostUncleanExitError } from '../src/host-process.ts'
 import { en, zh } from '../src/locale.ts'
 import { DesktopUpdatePreparationError } from '../src/update-error.ts'
+import type { RemoteTunnelState } from '../src/remote-tunnel.ts'
 import { writeCrashReport } from '../src/crash-report.ts'
 
 type InvokeEvent = { sender?: unknown; senderFrame: { url: string } }
@@ -169,6 +170,24 @@ const harness = await vi.hoisted(async () => {
       readonly packageManager?: { pnpm: string; nodeBin: string },
     ) { hosts.push(this) }
   }
+  /** Stand-in for the supervised tunnel: reports one stable hostname once started. */
+  const tunnels: FakeTunnel[] = []
+  class FakeTunnel {
+    current: RemoteTunnelState = { phase: 'off' }
+    private child = false
+    constructor(readonly options: { readonly onChange: (state: RemoteTunnelState) => void }) { tunnels.push(this) }
+    state(): RemoteTunnelState { return this.current }
+    // A second start is a no-op while the child still runs, which keeps the
+    // shell's own republish the only way a replacement Host reaches the page.
+    start(): void {
+      if (this.child) return
+      this.child = true
+      this.move({ phase: 'online', host: 'phone.trycloudflare.com' })
+    }
+
+    stop(): void { this.child = false; this.move({ phase: 'off' }) }
+    private move(state: RemoteTunnelState): void { this.current = state; this.options.onChange(state) }
+  }
   const app = Object.assign(new EventEmitter(), {
     isPackaged: true,
     name: 'Desktop test',
@@ -209,9 +228,11 @@ const harness = await vi.hoisted(async () => {
   }
   const backgroundNotice = { close: vi.fn((hide: () => void) => { hide() }), dispose: vi.fn(), markerPath: undefined as string | undefined }
   const shellDialog = { isOpen: false, focus: vi.fn() }
+  const projectProfiles: { profile: string }[] = []
   return {
     failWindow(error: Error) { windowFailure = error },
-    windows, views, hosts, handlers, app, FakeWindow, FakeView, FakeHost, powerMonitor, nativeTheme, analytics,
+    windows, views, hosts, handlers, app, FakeWindow, FakeView, FakeHost, FakeTunnel, tunnels, powerMonitor, nativeTheme, analytics,
+    projectProfiles,
     trays, FakeTray, backgroundNotice, shellDialog,
     menu, popup, socketHeaders: vi.fn(), loginShell, readLoginShell, updateCheck, updateDownload, updateInstall,
     platformDispose,
@@ -259,7 +280,8 @@ const harness = await vi.hoisted(async () => {
     reset() {
       accountListener = undefined
       windows.length = 0
-      views.length = 0; hosts.length = 0; handlers.clear(); app.removeAllListeners()
+      views.length = 0; hosts.length = 0; tunnels.length = 0; handlers.clear(); app.removeAllListeners()
+      projectProfiles.length = 0
       trays.length = 0
       backgroundNotice.markerPath = undefined
       shellDialog.isOpen = false
@@ -356,6 +378,7 @@ vi.mock('../src/runtime-tree.ts', () => ({ readDesktopRuntime: () => ({ release:
 vi.mock('../src/paths.ts', () => ({ resolveDesktopPaths: () => ({ profile: 'desktop-test-profile' }) }))
 vi.mock('../src/project-manager.ts', () => ({
   DesktopProjectManager: class {
+    constructor(readonly paths: { profile: string }) { harness.projectProfiles.push(paths) }
     readonly applyRelease = harness.applyRelease
     disableAllPlugins = harness.disableAllPlugins
 
@@ -364,6 +387,7 @@ vi.mock('../src/project-manager.ts', () => ({
 vi.mock('../src/host-process.ts', async importOriginal => ({
   ...await importOriginal<typeof import('../src/host-process.ts')>(), DesktopHostProcess: harness.FakeHost,
 }))
+vi.mock('../src/remote-tunnel.ts', () => ({ RemoteTunnel: harness.FakeTunnel }))
 vi.mock('../src/update-dialog.ts', () => ({ DesktopUpdateDialog: class {
   get isOpen() { return harness.shellDialog.isOpen }
   input() { return { revision: 0, blocked: false } }
@@ -2126,6 +2150,37 @@ describe('desktop main startup', () => {
     }
   })
 
+  it('republishes the pairing link when a replacement Host mints a new launch token', async () => {
+    // A paired phone must scan the link of the Host that is running now; the page
+    // mounts once and stays mounted, so only a pushed snapshot can move it.
+    const settingsDirectory = join(harness.app.getPath('userData'), 'desktop')
+    mkdirSync(settingsDirectory, { recursive: true })
+    writeFileSync(join(settingsDirectory, 'settings.json'), JSON.stringify({ remote: { tunnel: true } }))
+    const host = await readyForUpdate()
+    const pushed = () => harness.windows[0]!.webContents.send.mock.calls
+      .filter(([channel]) => channel === DESKTOP_IPC.remoteChanged)
+      .map(([, snapshot]) => snapshot as DesktopRemoteState)
+    await vi.waitFor(() => {
+      expect(pushed().at(-1)?.pairingUrl).toBe('https://phone.trycloudflare.com/?token=test')
+    })
+    harness.dialog.showMessageBox.mockResolvedValueOnce({ response: 0 })
+    const preparing = harness.prepareUpdate()
+    await host.stopping.promise
+    host.exited.resolve()
+    await expect(preparing).resolves.toBe(true)
+    harness.dialog.showMessageBox.mockResolvedValue({ response: 1 })
+    const restarted = harness.nextHostStart()
+    harness.publishUpdate({ phase: 'error', version: '1.0.1-nightly.1', failedOperation: 'install', message: 'Installer failed' })
+    await restarted
+    const replacement = harness.hosts[1]!
+    replacement.url = 'http://127.0.0.1:3099/?token=replacement'
+    replacement.ready.resolve()
+    await vi.waitFor(() => {
+      expect(pushed().at(-1)?.pairingUrl).toBe('https://phone.trycloudflare.com/?token=replacement')
+    })
+    expect(harness.tunnels).toHaveLength(1)
+  })
+
   it.each([false, true])('restores a confirmed non-graceful exit without approving installation, mandatory: %s', async (mandatory) => {
     if (mandatory) {
       harness.embeddedPolicy = { origin: 'https://policy.example.com', allowedPageOrigins: ['https://downloads.example.com'] }
@@ -2466,6 +2521,29 @@ describe('desktop main startup', () => {
     harness.hosts[0]!.ready.resolve()
     await harness.navigated.promise
     expect(harness.dialog.showErrorBox).not.toHaveBeenCalled()
+  })
+
+  it('uses the generated team profile for both Host startup and plugin recovery', async () => {
+    harness.app.isPackaged = false
+    harness.dialog.showMessageBox.mockResolvedValue({ response: 2, checkboxChecked: false })
+    vi.stubEnv('TOMATO_DESKTOP_BUNDLE_DIR', undefined)
+    vi.stubEnv('TOMATO_SUPERAGENT_DIRECTORY', '/tmp/team-work/service')
+    await import('../src/main.ts')
+    await harness.preparing.promise
+    harness.prepared.resolve()
+    await harness.hostStarted.promise
+    const project = join(harness.app.getAppPath(), '.desktop-build', 'development', 'project')
+    const host = harness.hosts[0]!
+    expect(host).toMatchObject({ runtime: project, profile: project })
+    expect(harness.projectProfiles[0]?.profile).toBe(project)
+    host.ready.resolve()
+    await harness.navigated.promise
+    host.onFailure!(new Error('backend exited'))
+    await host.stopping.promise
+    host.exited.resolve()
+    await harness.quitCompleted.promise
+    expect(harness.disableAllPlugins).toHaveBeenCalledOnce()
+    expect(harness.projectProfiles.map(paths => paths.profile)).toEqual([project, project])
   })
 
   it('fails an unpackaged launch that receives no primary runtime directory', async () => {

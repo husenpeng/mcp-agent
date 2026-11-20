@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct SessionListView: View {
     @EnvironmentObject private var model: AppModel
@@ -34,9 +35,14 @@ struct SessionListView: View {
     var body: some View {
         NavigationStack(path: $path) {
             content
-                .background(TomatoToken.bgBase)
-                .navigationTitle("会话")
+                .background(TomatoSurface.page)
+                // No page title: the search field and the rows are the page.
+                .navigationTitle("")
                 .navigationBarTitleDisplayMode(.inline)
+                // The iOS 26 glass toolbar reads this mode when the list scrolls;
+                // without it the title could outgrow the bar and draw over the
+                // first rows, the way a stale "进行中" did.
+                .toolbarTitleDisplayMode(.inline)
                 .tomatoFloatingTabs()
                 .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索会话")
                 .navigationDestination(for: SessionSummary.self) { summary in
@@ -79,7 +85,12 @@ struct SessionListView: View {
                 // up rows the phone did not know about.
                 .task {
                     while !Task.isCancelled {
-                        try? await Task.sleep(nanoseconds: 60_000_000_000)
+                        // The wait follows the last outcome: a minute while the
+                        // Host answers, backing off to ten while it does not.
+                        // Probing a dead pairing every minute for hours wrote
+                        // two error lines a minute and learned nothing.
+                        let wait = model.sessionPollInterval
+                        try? await Task.sleep(nanoseconds: UInt64(wait * 1_000_000_000))
                         if Task.isCancelled {
                             return
                         }
@@ -200,7 +211,7 @@ extension SessionListView {
                             .accessibilityIdentifier("session.running.entry")
                             .listRowBackground(Color.clear)
                             .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 2, leading: 4, bottom: 8, trailing: 12))
+                            .listRowInsets(EdgeInsets(top: 2, leading: 20, bottom: 4, trailing: 20))
                         }
                         // Finished conversations from the last day, above the
                         // folders: returning to yesterday's answer is the most
@@ -209,12 +220,13 @@ extension SessionListView {
                         // folder never answers one accessibility query twice.
                         if query.isEmpty, !recentCompleted.isEmpty {
                             HStack(spacing: 6) {
-                                Image(systemName: "checkmark.circle")
+                                Image(systemName: "clock")
                                     .font(.subheadline)
-                                    .foregroundStyle(TomatoToken.brandPrimary)
+                                    .foregroundStyle(TomatoToken.labelCaption)
+                                    .accessibilityHidden(true)
                                 Text("最近完成 · 24 小时")
                                     .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(TomatoToken.labelSecondary)
+                                    .foregroundStyle(TomatoToken.labelPrimary)
                                 Spacer(minLength: 0)
                                 Text("\(recentCompleted.count)")
                                     .font(.caption.monospacedDigit())
@@ -223,7 +235,7 @@ extension SessionListView {
                             .padding(.vertical, 6)
                             .listRowBackground(Color.clear)
                             .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 10, leading: 4, bottom: 2, trailing: 12))
+                            .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 2, trailing: 20))
                             // A plain HStack is not an accessibility element, so
                             // without this the identifier never reaches XCUITest.
                             .accessibilityElement(children: .ignore)
@@ -253,13 +265,13 @@ extension SessionListView {
                                 setExpanded(folder, to: !expanded)
                             } label: {
                                 FolderLabel(folder: folder, isExpanded: expanded)
-                                    .padding(.vertical, 6)
+                                    .padding(.vertical, 4)
                                     .contentShape(Rectangle())
                             }
                             .buttonStyle(TomatoPressableStyle())
                             .listRowBackground(Color.clear)
                             .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 10, leading: 4, bottom: 2, trailing: 12))
+                            .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 2, trailing: 20))
                             .accessibilityIdentifier("session.folder.\(folder.id)")
                             if expanded {
                                 ForEach(folder.items) { summary in
@@ -294,13 +306,17 @@ extension SessionListView {
         Button {
             open(summary)
         } label: {
-            SessionRow(summary: summary)
+            SessionRow(summary: summary, recent: identifier?.hasPrefix("session.recent.") == true)
         }
         .buttonStyle(TomatoPressableStyle())
         .accessibilityIdentifier(identifier ?? "session.row.\(summary.sessionId)")
+        // A row that scrolls into view warms its own page, so a history
+        // conversation opens on its messages instead of a skeleton. The cache
+        // bounds how many pages stay warm, so this cannot grow without limit.
+        .task { await model.prefetch(summary) }
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
-        .listRowInsets(EdgeInsets(top: 2, leading: 4, bottom: 2, trailing: 12))
+        .listRowInsets(EdgeInsets(top: 1, leading: 20, bottom: 1, trailing: 20))
         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
             Button {
                 draftTitle = summary.displayTitle
@@ -311,6 +327,13 @@ extension SessionListView {
             .tint(TomatoToken.brandPrimary)
         }
         .contextMenu {
+            if let preview = summary.rowPreview, !preview.isEmpty {
+                Button {
+                    UIPasteboard.general.string = preview
+                } label: {
+                    Label("复制消息", systemImage: "doc.on.doc")
+                }
+            }
             Button {
                 draftTitle = summary.displayTitle
                 renaming = summary
@@ -574,7 +597,7 @@ private struct FolderLabel: View {
                 if let path = folder.path {
                     Text(path)
                         .font(.caption2)
-                        .foregroundStyle(TomatoToken.labelDimmed)
+                        .foregroundStyle(TomatoToken.labelCaption)
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }
@@ -590,7 +613,7 @@ private struct FolderLabel: View {
             }
             Text("\(folder.items.count)")
                 .font(.caption.monospacedDigit())
-                .foregroundStyle(TomatoToken.labelDimmed)
+                .foregroundStyle(TomatoToken.labelCaption)
             Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                 .font(.caption2.weight(.semibold))
                 .foregroundStyle(TomatoToken.labelDimmed)
@@ -602,43 +625,86 @@ private struct FolderLabel: View {
     }
 }
 
-/// One history row in the style chat assistants share: the title, a one-line
-/// preview, the conversation's state, and its time. The folder lives in the
-/// section header, and no icon tile is drawn — state is the only colour.
+/// One history row. Recent completions read like the reference drawer's plain
+/// history lines; project rows stay compact cards, with running work carrying
+/// the same brand wash as the running entry.
 private struct SessionRow: View {
     let summary: SessionSummary
+    var recent = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 8) {
-                Text(summary.displayTitle)
-                    .font(.body.weight(.medium))
-                    .foregroundStyle(TomatoToken.labelPrimary)
-                    .lineLimit(1)
+        if recent {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "bubble.left")
+                    .font(.subheadline)
+                    .foregroundStyle(TomatoToken.labelCaption)
+                    .padding(.top, 2)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(summary.displayTitle)
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(TomatoToken.labelPrimary)
+                        .lineLimit(1)
+                    if let preview = summary.rowPreview {
+                        Text(preview)
+                            .font(.footnote)
+                            .foregroundStyle(TomatoToken.labelCaption)
+                            .lineLimit(1)
+                    }
+                    Text(relativeTime(summary.updatedAt))
+                        .font(.caption2)
+                        .foregroundStyle(TomatoToken.labelDimmed)
+                }
                 Spacer(minLength: 6)
                 SessionStateBadge(state: summary.state)
             }
-            if let preview = summary.rowPreview {
-                Text(preview)
-                    .font(.subheadline)
-                    .foregroundStyle(TomatoToken.labelCaption)
-                    .lineLimit(1)
+            .padding(.horizontal, 4)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .accessibilityElement(children: .combine)
+        } else {
+            HStack(alignment: .top, spacing: 12) {
+                IconChip(
+                    systemImage: "bubble.left.and.bubble.right",
+                    tint: summary.running ? TomatoToken.brandPrimary : TomatoToken.labelCaption,
+                    neutral: !summary.running,
+                    side: 32
+                )
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 8) {
+                        Text(summary.displayTitle)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(TomatoToken.labelPrimary)
+                            .lineLimit(1)
+                        Spacer(minLength: 6)
+                        SessionStateBadge(state: summary.state)
+                    }
+                    if let preview = summary.rowPreview {
+                        Text(preview)
+                            .font(.footnote)
+                            .foregroundStyle(TomatoToken.labelCaption)
+                            .lineLimit(1)
+                    }
+                    Text(relativeTime(summary.updatedAt))
+                        .font(.caption2)
+                        .foregroundStyle(TomatoToken.labelDimmed)
+                }
             }
-            Text(relativeTime(summary.updatedAt))
-                .font(.caption)
-                .foregroundStyle(TomatoToken.labelDimmed)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                summary.running ? TomatoBrand.soft : TomatoSurface.card,
+                in: RoundedRectangle(cornerRadius: TomatoCorner.card, style: .continuous)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: TomatoCorner.card, style: .continuous)
+                    .strokeBorder(summary.running ? TomatoLine.brandSoft : TomatoLine.hairline, lineWidth: 1)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: TomatoCorner.card, style: .continuous))
+            .accessibilityElement(children: .combine)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 11)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(background, in: RoundedRectangle(cornerRadius: TomatoRadius.md, style: .continuous))
-        .contentShape(RoundedRectangle(cornerRadius: TomatoRadius.md, style: .continuous))
-        .accessibilityElement(children: .combine)
-    }
-
-    /// A running Session gets a faint brand wash; idle rows stay neutral.
-    private var background: Color {
-        summary.running ? TomatoToken.brandPrimary.opacity(0.06) : TomatoToken.bgLayer2
     }
 }
 
@@ -677,8 +743,9 @@ private struct NewSessionSheet: View {
                                         .foregroundStyle(TomatoToken.labelPrimary)
                                     Text(shortened(folder))
                                         .font(.caption2)
-                                        .foregroundStyle(TomatoToken.labelDimmed)
+                                        .foregroundStyle(TomatoToken.labelCaption)
                                         .lineLimit(1)
+                                        .truncationMode(.middle)
                                 }
                                 Spacer(minLength: 8)
                                 if selected == folder {
@@ -761,6 +828,6 @@ private struct RenameSessionSheet: View {
             }
             .padding(.bottom, 22)
         }
-        .background(TomatoToken.bgBase)
+        .background(TomatoSurface.page)
     }
 }

@@ -51,6 +51,9 @@
     },
     {
       "path": "../../client/ui-settings/tsconfig.client.json"
+    },
+    {
+      "path": "../superagent-runtime"
     }
   ],
   "files": []

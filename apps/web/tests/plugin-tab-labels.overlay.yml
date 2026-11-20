@@ -1,0 +1,6 @@
+# Loader overlay for the Plugins page layout cases: a stand-in tab with a long label. The page's strip measures
+# the tabs it actually carries, so the layout cases need more than one contributed tab without mounting a market
+# bundle; the market's own tabs are counted by their own case.
+- insert:
+    - id: ui-plugin-tab-labels
+      name: '@tomato/client-ui-tomato-market/tab-labels'

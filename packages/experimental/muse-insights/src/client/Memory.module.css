@@ -285,12 +285,15 @@
   padding: 2px 10px;
   border: 1px solid var(--dsw-alias-line-primary);
   border-radius: 999px;
+  corner-shape: round;
   background: transparent;
   color: var(--dsw-alias-label-primary);
   font-size: 11px;
   cursor: pointer;
 }
 
-.action:hover {
-  border-color: var(--dsw-alias-label-secondary);
+@media (hover: hover) {
+  .action:hover {
+    border-color: var(--dsw-alias-label-secondary);
+  }
 }

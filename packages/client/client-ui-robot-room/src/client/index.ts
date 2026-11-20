@@ -80,6 +80,7 @@ export function apply(ctx: ClientContext): void {
       publish: request => ctx.roomRuns.publish(request),
       post: request => ctx.roomRuns.post(request),
       messages: request => ctx.roomRuns.messages(request),
+      work: request => ctx.roomRuns.work(request),
       pause: request => ctx.roomRuns.pause(request),
       resume: request => ctx.roomRuns.resume(request),
       relaxOnce: request => ctx.roomRuns.relaxOnce(request),
@@ -88,6 +89,8 @@ export function apply(ctx: ClientContext): void {
     },
     openRobots: () => { ctx.layout.selectPanel(ROBOTS_PANEL_ID) },
     openSession: (sessionId) => { ctx.uiWorkspace.openSession(brandString<SessionId>(sessionId)) },
+    pickDirectory: () => ctx.uiWorkspace.pickDirectory(),
+    capabilities: request => ctx.robotRuns.capabilities(request),
   }
 
   ctx.slots.inject('main', () => ctx.slots.register({

@@ -31,6 +31,8 @@ kind: "package-reference"
 
 Client service 维护 `loading`、`signed-in`、`signed-out`、`unavailable` 四态。挂载、窗口获得焦点、登录弹窗发出 `tomato-auth-result` 后各读一次网关；不做轮询。登出在 Web 调 `POST /api/auth/logout`，在 Desktop 走 preload 桥，然后刷新投影；auth_service 未确认远端吊销时显示可关闭提示。
 
+该页把账户呈现为一张设置卡片：48px 圆形头像、姓名与其邮箱行、状态操作同处一行，面板过窄时操作换到下一行。已登录会话在姓名旁加上绿点与「已登录」；检查中、未登录、不可用三种状态直接以状态名代替身份，不可用时另加网关提示。侧栏入口以 24px 显示同一头像。
+
 渲染进程永远拿不到 sessionId：Web 存在 httpOnly `tomato_session` cookie，Desktop 由主进程存入 `safeStorage`。
 
 ## Model Experience

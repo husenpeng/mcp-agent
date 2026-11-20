@@ -49,6 +49,16 @@ export function desktopRuntimeFileExclusion(
     if (platform !== undefined && platform !== `${target.platform}-${target.arch}`) return 'node-pty other platform'
     if (file.endsWith('.pdb')) return 'node-pty debug symbols'
   }
+  // Unix builds node-pty from source for the hidden-visibility patch; omit node-gyp's makefiles,
+  // config.gypi, debug builds, and compiler intermediates while keeping the loadable Release binaries.
+  // Match individual entries, not a file whitelist, so the copy filter does not prune build/Release itself.
+  if (name === 'node-pty' && entry.startsWith('build/')) {
+    const compilerOutput = /^build\/(?:Release|Debug)\/obj(?:\.target)?(?:\/|$)/u.test(entry)
+      || /^build\/(?:Release|Debug)\/.*\.(?:pdb|exp|lib|iobj|ipdb|o|obj)$/u.test(entry)
+    const buildConfig = /^build\/(?:Makefile|binding\.Makefile|config\.gypi|gyp-mac-tool)$/u.test(entry)
+      || /^build\/(?:[^/]+\.target\.mk|binding\.sln|[^/]+\.vcxproj(?:\.filters)?)$/u.test(entry)
+    if (entry.startsWith('build/Debug/') || compilerOutput || buildConfig) return 'node-pty build output'
+  }
   if (name === '@koromix/koffi-win32-x64' && entry === 'win32_x64/koffi.lib') return 'Koffi import library'
   return undefined
 }

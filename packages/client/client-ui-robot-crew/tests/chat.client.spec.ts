@@ -6,6 +6,7 @@ const spec: CrewSpec = developmentCrew({
   name: '开发协作群',
   mission: '改码与审核',
   prompt: '这次要改什么？',
+  robot: { spec: 'dev-bot', revision: 3 },
   labels: { kickoff: '主 agent（立项）', build: '开发', verify: '测试', audit: '审核', dispatch: '主 agent（派活）' },
 })
 
@@ -143,8 +144,16 @@ describe('development template', () => {
   it('records the working directory when the deployment has one', () => {
     const crew = developmentCrew({
       name: 'n', mission: 'm', prompt: 'p', workspaceRoot: '/repo',
+      robot: { spec: 'dev-bot', revision: 3 },
       labels: { kickoff: 'k', build: 'b', verify: 'v', audit: 'a', dispatch: 'd' },
     })
     expect(crew.workspaceRoot).toBe('/repo')
+  })
+
+  it('runs every member as the published Rbot the caller names', () => {
+    // Publication rejects a member without a robot, so the template must carry one on all five.
+    expect(spec.nodes.map(node => node.robot)).toEqual(
+      Array.from({ length: 5 }, () => ({ spec: 'dev-bot', revision: 3 })),
+    )
   })
 })

@@ -119,6 +119,10 @@
     # the roster rides the session control stream above.
     - id: job-controller
       name: '@tomato/api-job-controller'
+    # Hardware, power, network, and process sampling sampled on demand while a
+    # browser holds one observation stream.
+    - id: system-monitor
+      name: '@tomato/api-system-monitor-controller'
     # Workspace file service: bounded read, directory listing, and the
     # agent-write change feed inside the session workspace root.
     - id: terminal-controller
@@ -377,6 +381,17 @@
     - id: ui-plugin-manager
       name: '@tomato/client-ui-plugin-manager'
 
+    # The Plugin markets bundle's host half: catalog readers and installers
+    # behind the authenticated `/api/tomato-market` route.
+    - id: plugin-tomato-market
+      name: '@tomato/plugin-tomato-market'
+
+    # The Marketing market and General market tabs of the Plugins page. They
+    # render whenever they are mounted, so a profile that drops the market
+    # bundle loses both tabs with its row.
+    - id: ui-tomato-market
+      name: '@tomato/client-ui-tomato-market'
+
     # Read-only Plugin list tab in the Settings Plugins section; the built-in
     # bundles the sidebar page leaves out are inspected here.
     - id: ui-settings-plugin-inventory
@@ -510,6 +525,11 @@
     - id: ui-jobs
       name: '@tomato/client-ui-jobs'
 
+    # Floating system monitor: a collapsed pill that opens into processor,
+    # graphics, memory, network, disk, power, and process readings.
+    - id: ui-system-monitor
+      name: '@tomato/client-ui-system-monitor'
+
     # Task management and Session reminder catalog over the Host Schedule
     # service mounted above.
     - id: ui-schedule
@@ -562,9 +582,6 @@
 
     - id: ui-settings-subagent
       name: '@tomato/client-ui-settings-subagent'
-
-    - id: ui-settings-web-search
-      name: '@tomato/client-ui-settings-web-search'
 
     # Plan control: the composer plan seat over the plan projection + /plan channel.
     - id: ui-plan

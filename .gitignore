@@ -77,3 +77,7 @@ scratch/
 
 # macOS AppleDouble resource-fork files from copies through non-native volumes
 ._*
+
+# ppt-master local install (vendored skill + venv)
+.agents/skills/ppt-master/
+.tomato/venv/

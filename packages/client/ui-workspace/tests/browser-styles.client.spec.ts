@@ -98,7 +98,20 @@ describe('WorkspaceBrowser.module.css list', () => {
     expect(rowDeclarations('.sessionRow.selected')?.get('background-image'))
       .toBe('var(--dsw-brand-gradient-signature)')
     expect(rowDeclarations('.sessionRow.selected')?.get('background-color')).toBe('transparent')
-    expect(rowDeclarations('.sessionRow.selected')?.get('color')).toBe('rgb(255, 255, 255)')
+    expect(rowDeclarations('.sessionRow.selected')?.get('color')).toBe('var(--dsw-alias-label-on-color)')
+  })
+
+  it('keeps every selected-row cell on the on-color ink', () => {
+    for (const selector of [
+      '.sessionRow.selected .title',
+      '.sessionRow.selected .slot',
+      '.sessionRow.selected .rowResting',
+      '.sessionRow.selected .time',
+      '.sessionRow.selected .pinIndicator',
+      '.sessionRow.selected .iconButton',
+    ]) {
+      expect(rowDeclarations(selector)?.get('color'), selector).toBe('inherit')
+    }
   })
 
   it('marquees a clipped session title on row hover', () => {

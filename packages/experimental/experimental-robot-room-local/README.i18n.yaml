@@ -18,8 +18,11 @@
   en: 2c18b07f3a244161
   zh: a1f3f65a68073f80
 /robot-room-local/use-this-package/member-execution:
-  en: 6ed279cd43b40acc
-  zh: 4c85f18af7c1adb6
+  en: b30f54fe6e93a316
+  zh: ba3a1a1d364a33ad
+/robot-room-local/use-this-package/work-records-self-review-and-acceptance:
+  en: 07d645cb3193d974
+  zh: bab867861c34bb96
 /robot-room-local/use-this-package/refusals-and-approvals:
   en: 3b35182849f94857
   zh: 3b3320366676ba89
@@ -30,17 +33,17 @@
   en: c207ed1e14e9b2bd
   zh: 76c2233f79842fb4
 /robot-room-local/model-experience/member-turn/what-the-model-sees:
-  en: dccfbbe673a0e821
-  zh: 7318c94c24c28ffc
+  en: 51d4fddf8675da34
+  zh: 9243500cf0c03c82
 /robot-room-local/model-experience/member-turn/token-effect:
-  en: bac86770aac2c9c4
-  zh: ecfd7d6f978bf010
+  en: d7778acc6cbf0f22
+  zh: d527f12638d2e6d6
 /robot-room-local/model-experience/member-turn/kv-cache-effect:
   en: 1c9563be126e0ec2
   zh: d6fcb9e8b9d42fda
 /robot-room-local/known-limitations-and-deferred-work:
-  en: 649b3f46a2cec17d
-  zh: 68a458a9bbf7db58
+  en: 6a1151fac7d0292c
+  zh: 23e889b40a382017
 /robot-room-local/known-limitations-and-deferred-work/dev-note:
   en: c8b62e6470d680d2
   zh: 478e0c9aec39b46b

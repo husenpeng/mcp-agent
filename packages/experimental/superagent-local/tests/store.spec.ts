@@ -71,6 +71,7 @@ describe('durable store', () => {
     const second = await harness(first.pool)
     const reopened = await createStorageStore(second.ctx)
     expect(reopened.trigger('feishu:evt-1' as TriggerId)?.text).toBe('给达人详情页加 tier 字段')
+    expect(reopened.triggers().map(trigger => trigger.id)).toEqual(['feishu:evt-1'])
     const stored = reopened.ticket('ticket-1' as TicketId)
     expect(stored?.ticket.assignments[0]).toMatchObject({ session: 'worker-1', report: { state: 'ready' } })
     expect(stored?.subscriptions).toEqual([{ source: 'feishu', id: 'oc_1:om_root' }])
@@ -88,6 +89,7 @@ describe('durable store', () => {
     store.putTrigger(TRIGGER)
     store.putTrigger({ ...TRIGGER, text: 'second write' })
     expect(store.trigger(TRIGGER.id)?.text).toBe('给达人详情页加 tier 字段')
+    expect(store.triggers()).toEqual([TRIGGER])
 
     // A medium that refuses the write is logged, and the caller keeps running.
     const warn = vi.spyOn(ctx.logger, 'warn')

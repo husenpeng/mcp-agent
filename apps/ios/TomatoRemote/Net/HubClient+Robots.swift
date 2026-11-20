@@ -14,8 +14,15 @@ extension HubClient {
     /// Whole-registry frames for the optional `robot` namespace. The first
     /// frame of a reconnect already carries every spec, robot, and run, so a
     /// reader replaces its state instead of merging frames.
-    func robotSnapshot() -> AsyncThrowingStream<JSONValue, Error> {
-        RemoteStream.frames(base: base, cookie: cookie, endpoint: "robot/watch", argName: nil, payload: EmptyBody())
+    func robotSnapshot(logAttempt: Bool = true) -> AsyncThrowingStream<JSONValue, Error> {
+        RemoteStream.frames(
+            base: base,
+            cookie: cookie,
+            endpoint: "robot/watch",
+            argName: nil,
+            logAttempt: logAttempt,
+            payload: EmptyBody()
+        )
     }
 
     /// Start one manual run.
@@ -55,8 +62,15 @@ extension HubClient {
     // MARK: Rooms
 
     /// Whole-room frames for the optional `room` namespace.
-    func roomSnapshot() -> AsyncThrowingStream<JSONValue, Error> {
-        RemoteStream.frames(base: base, cookie: cookie, endpoint: "room/watch", argName: nil, payload: EmptyBody())
+    func roomSnapshot(logAttempt: Bool = true) -> AsyncThrowingStream<JSONValue, Error> {
+        RemoteStream.frames(
+            base: base,
+            cookie: cookie,
+            endpoint: "room/watch",
+            argName: nil,
+            logAttempt: logAttempt,
+            payload: EmptyBody()
+        )
     }
 
     /// Read messages after a room sequence cursor.

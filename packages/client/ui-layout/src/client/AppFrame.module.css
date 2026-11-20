@@ -91,10 +91,10 @@
 }
 
 /* macOS desktop: the frame goes transparent so window vibrancy reaches the
-   sidebar column, which keeps only a translucent tint; the centre paints the
+   sidebar column, which paints the fixed surface below; the centre paints the
    base background itself to stay opaque. The sidebar/centre separator moves
-   to the opaque centre: on the translucent sidebar the alpha border mixes
-   with the wallpaper and reads as a dark seam. */
+   to the opaque centre: on the sidebar the alpha border mixes with the
+   wallpaper and reads as a dark seam. */
 :global([data-platform='darwin']) .frame {
   background: transparent;
 }
@@ -128,45 +128,50 @@
   --tomato-frame-chrome-top: 0px;
 }
 
-:global([data-platform='darwin']) .sidebarCol {
-  /* A warm tomato wash over the top of the translucent tint, gone by a third
-     of the column; a faint deep-red cast rises through the bottom third; and a
-     faint red cast is mixed into the tint itself. Every layer stays transparent
-     so vibrancy shows. */
-  background:
-    linear-gradient(
-      to bottom,
-      rgb(255 54 40 / 0.06),
-      rgb(255 54 40 / 0) 35%,
-      rgb(183 22 22 / 0) 68%,
-      rgb(183 22 22 / 0.04)
-    ),
-    color-mix(in srgb, color-mix(in srgb, var(--dsw-specific-sidebar-fill) 97%, rgb(255 40 40)) 40%, transparent);
-  border-right: none;
+/* The darwin column is a warm surface, not a thin tint over the material: a
+   translucent tint takes its hue from the desktop behind the window, so the
+   sidebar reads beige in a window, green in full screen, and plain white in
+   the narrow drawer. The tomato washes ride above the surface, and the last 6%
+   of that surface keeps a whisper of vibrancy — the 94% share the darwin menu
+   fill uses over a varying backdrop. */
+:global([data-platform='darwin']) .frame {
+  --tomato-sidebar-wash: linear-gradient(
+    to bottom,
+    rgb(255 54 40 / 0.06),
+    rgb(255 54 40 / 0) 35%,
+    rgb(183 22 22 / 0) 68%,
+    rgb(183 22 22 / 0.04)
+  );
+  --tomato-sidebar-backing: var(--tomato-sidebar-wash),
+    color-mix(in srgb, var(--dsw-specific-sidebar-surface) 94%, transparent);
 }
 
-/* Dark thins the fill so more wallpaper shows; the tomato washes stay. */
-:global([data-platform='darwin']) :global([data-ds-dark-theme]) .sidebarCol {
-  background:
-    linear-gradient(
-      to bottom,
-      rgb(255 84 73 / 0.06),
-      rgb(255 84 73 / 0) 35%,
-      rgb(183 22 22 / 0) 68%,
-      rgb(183 22 22 / 0.04)
-    ),
-    color-mix(in srgb, var(--dsw-specific-sidebar-fill) 50%, transparent);
+/* Dark deepens the wash and takes the dark surface; the share is unchanged. */
+:global([data-platform='darwin']) :global([data-ds-dark-theme]) .frame {
+  --tomato-sidebar-wash: linear-gradient(
+    to bottom,
+    rgb(255 84 73 / 0.06),
+    rgb(255 84 73 / 0) 35%,
+    rgb(183 22 22 / 0) 68%,
+    rgb(183 22 22 / 0.04)
+  );
 }
 
-/* macOS Reduce Transparency: the OS flattens the window's vibrancy layer to a
-   solid grey, so the thin tint and washes read washed-out over it. Replace
-   them with a 90%-opaque fill of the same token in both themes (the dark
-   selector repeats so this outranks its thinner fill). */
+/* A drawer covers the conversation, so it paints the same surface opaque;
+   Reduce Transparency flattens the window's material the same way. */
+:global([data-platform='darwin']) .frame[data-sidebar-drawer] {
+  --tomato-sidebar-backing: var(--tomato-sidebar-wash), var(--dsw-specific-sidebar-surface);
+}
+
 @media (prefers-reduced-transparency: reduce) {
-  :global([data-platform='darwin']) .sidebarCol,
-  :global([data-platform='darwin']) :global([data-ds-dark-theme]) .sidebarCol {
-    background: color-mix(in srgb, var(--dsw-specific-sidebar-fill) 90%, transparent);
+  :global([data-platform='darwin']) .frame {
+    --tomato-sidebar-backing: var(--tomato-sidebar-wash), var(--dsw-specific-sidebar-surface);
   }
+}
+
+:global([data-platform='darwin']) .sidebarCol {
+  background: var(--tomato-sidebar-backing);
+  border-right: none;
 }
 
 :global([data-platform='darwin']) .centerCol {
@@ -318,12 +323,6 @@
   transform: translateX(0);
   visibility: visible;
   transition: transform var(--ds-transition-duration-slow) var(--ds-ease-in-out);
-}
-
-/* A drawer covers the conversation, so it paints the opaque sidebar fill
-   rather than the translucent macOS tint. */
-:global([data-platform='darwin']) .frame[data-sidebar-drawer] .sidebarCol {
-  background: var(--dsw-specific-sidebar-fill);
 }
 
 .frame[data-sidebar-drawer][data-sidebar-collapsed] .sidebarCol {

@@ -40,6 +40,18 @@
     },
     {
       "path": "../../../vendor/schemastery"
+    },
+    {
+      "path": "../superagent"
+    },
+    {
+      "path": "../superagent-local"
+    },
+    {
+      "path": "../robot"
+    },
+    {
+      "path": "../../skill/skill"
     }
   ]
 }

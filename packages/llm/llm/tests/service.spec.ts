@@ -125,11 +125,24 @@ describe('LlmRuntime', () => {
     expect(isContextWindowExceededError('input exceeds the model context window limit')).toBe(true)
   })
 
+  it('recognizes gateway wording that names the request input cap', () => {
+    expect(isContextWindowExceededError(
+      'invalid_request_error invalid_argument input token limit is 1048576',
+    )).toBe(true)
+    expect(isContextWindowExceededError('input token limit: 131072')).toBe(true)
+    expect(isContextWindowExceededError('prompt token cap exceeded')).toBe(true)
+    expect(isContextWindowExceededError('maximum input tokens reached')).toBe(true)
+    expect(isContextWindowExceededError('exceeds the input token limit')).toBe(true)
+    expect(isContextWindowExceededError('request goes beyond the prompt token limit')).toBe(true)
+  })
+
   it('does not mistake unrelated input validation for context-window overflow', () => {
     expect(isContextWindowExceededError('invalid request: malformed tool arguments')).toBe(false)
     expect(isContextWindowExceededError('invalid input: temperature exceeds maximum allowed value')).toBe(false)
     expect(isContextWindowExceededError('input exceeds maximum allowed value')).toBe(false)
     expect(isContextWindowExceededError('context window size must be positive')).toBe(false)
+    expect(isContextWindowExceededError('maximum output tokens exceeded')).toBe(false)
+    expect(isContextWindowExceededError('input tokens per minute limit exceeded')).toBe(false)
   })
 
   it('distinguishes exhausted account quota from transient rate limiting', () => {

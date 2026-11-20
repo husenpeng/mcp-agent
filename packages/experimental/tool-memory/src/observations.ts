@@ -7,6 +7,7 @@
 
 import { createHash } from 'node:crypto'
 import { z } from 'zod'
+import { boundStatement, EPISODE_BOUNDS } from '@tomato/experimental-memory'
 
 /** One finished tool call as the card builder sees it. */
 export interface ObservationCall {
@@ -137,7 +138,7 @@ function conceptsOf(tool: string, command: string | undefined, path: string | un
     const name = path.split('/').pop()
     if (name !== undefined && name !== '') concepts.push(name.replace(/\.[^.]+$/u, ''))
   }
-  return [...new Set(concepts.map(concept => concept.toLowerCase()).filter(concept => concept !== ''))].slice(0, 6)
+  return [...new Set(concepts.map(concept => boundStatement(concept.toLowerCase(), EPISODE_BOUNDS.concept)).filter(concept => concept !== ''))].slice(0, 6)
 }
 
 /**

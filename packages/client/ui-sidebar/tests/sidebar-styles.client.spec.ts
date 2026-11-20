@@ -43,6 +43,28 @@ describe('SidebarRoot.module.css', () => {
     expect(declarations('.collapsed .panelRow')?.get('padding')).toBe('0')
   })
 
+  it('paints the selected panel row with the brand fill and its on-color ink', () => {
+    const row = declarations('.panelEntryActive .panelRow')
+    expect(row?.get('background-color')).toBe('transparent')
+    expect(row?.get('background-image')).toBe('var(--dsw-brand-gradient-signature)')
+    expect(row?.get('box-shadow')).toBe('var(--dsw-specific-shadow-nav-active)')
+    expect(row?.get('color')).toBe('var(--dsw-alias-label-on-color)')
+    // The entry keeps no fill of its own: a nested subnav must not sit on it.
+    expect(declarations('.panelEntryActive')).toBeUndefined()
+    expect(declarations('.panelEntryActive .panelUnpin')?.get('color')).toBe('var(--dsw-alias-label-on-color)')
+    expect(declarations('.collapsed .panelEntryActive .panelRow')?.get('color')).toBe('var(--dsw-alias-label-on-color)')
+  })
+
+  it('keeps the flat hover and focus wash on the unselected launcher row only', () => {
+    // An entry that nests a subnav is taller than its launcher, so the wash
+    // stays on the row: an entry-level fill would paint the whole stacked block.
+    expect(declarations('.panelEntry:not(.panelEntryActive):hover')).toBeUndefined()
+    expect(declarations('.panelEntry:not(.panelEntryActive) .panelRow:hover')?.get('background-color'))
+      .toBe('var(--dsw-alias-interactive-bg-hover)')
+    expect(declarations('.panelEntry:not(.panelEntryActive):has(:focus-visible)')?.get('background-color'))
+      .toBe('var(--dsw-alias-interactive-bg-hover)')
+  })
+
   it('owns a shared scrollport whose gaps scroll away', () => {
     const root = declarations('.root')
     const scrollport = declarations('.scrollArea')

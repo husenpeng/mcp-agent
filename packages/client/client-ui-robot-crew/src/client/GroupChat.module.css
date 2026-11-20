@@ -83,6 +83,22 @@
   line-height: 1.5;
 }
 
+.railNotice {
+  margin: 0 2px;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 11px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.railNotice[data-tone='error'] {
+  color: var(--dsw-alias-state-danger-primary, var(--dsw-alias-label-primary));
+}
+
+.railNotice[data-tone='success'] {
+  color: var(--dsw-alias-state-success-primary, var(--dsw-alias-label-primary));
+}
+
 .chatList {
   display: flex;
   flex-direction: column;

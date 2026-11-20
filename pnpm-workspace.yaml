@@ -7,6 +7,9 @@ packages:
   - native/system/packages/*
   # Product assemblies over the package tier; apps/cli owns the `tomato` bin.
   - apps/*
+  # The plugin markets bundle of the Web and Desktop profiles; its client half is
+  # @tomato/client-ui-tomato-market, which the Web rosters mount statically.
+  - plugins/tomato-market
   # Private package owning repository-level benchmark dependencies.
   - benchmarks
   - website

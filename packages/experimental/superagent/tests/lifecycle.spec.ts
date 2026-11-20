@@ -79,7 +79,7 @@ function twoAttemptWorker(): Worker {
     lease: async (): Promise<WorkerLease> => {
       attempt += 1
       const state = attempt === 1 ? 'progress' : 'ready'
-      return { session: `worker-${attempt}`, directory: `/work/ticket-${attempt}`, run: async () => ({ state, summary: `${state} result` }) }
+      return { session: `worker-${attempt}`, directory: `/work/ticket-${attempt}`, run: async () => ({ state, summary: `${state} result` }), cancel: () => {} }
     },
   }
 }

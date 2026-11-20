@@ -28,7 +28,7 @@ final class PersonalAgentTests: XCTestCase {
     func testHomeShowsRecapAndOpenTasks() throws {
         let app = try launch()
         XCTAssertTrue(
-            app.descendants(matching: .any)["home.header"].firstMatch.waitForExistence(timeout: 20),
+            app.descendants(matching: .any)["home.memory"].firstMatch.waitForExistence(timeout: 20),
             "home did not open"
         )
         XCTAssertTrue(app.staticTexts["今日回顾"].waitForExistence(timeout: 10))

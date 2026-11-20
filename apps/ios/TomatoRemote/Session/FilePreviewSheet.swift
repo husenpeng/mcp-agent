@@ -98,6 +98,67 @@ struct FilePreviewSheet: View {
     }
 }
 
+/// QuickLook over bytes the app already holds.
+///
+/// The composer stages a document by uploading it to the Host, whose receipt
+/// does not serve the contents back. The bytes stay here while the chip is
+/// staged, so tapping the chip opens the local copy instead of a download that
+/// has nothing to name.
+struct LocalFilePreviewSheet: View {
+    let name: String
+    let data: Data
+    @Environment(\.dismiss) private var dismiss
+    @State private var file: URL?
+    @State private var failure: String?
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if let file {
+                    QuickLookView(url: file)
+                        .ignoresSafeArea(edges: .bottom)
+                } else if let failure {
+                    EmptyPlaceholder(systemImage: "exclamationmark.triangle", title: "打不开这个文件", detail: failure)
+                } else {
+                    ProgressView("正在准备预览…")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+            .background(TomatoToken.bgBase)
+            .navigationTitle(name)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("完成") { dismiss() }
+                }
+            }
+        }
+        .task { await prepare() }
+    }
+
+    /// Write the held bytes where QuickLook can read them.
+    ///
+    /// A staged PDF can be several megabytes, so the write and directory setup
+    /// stay off the main thread; the sheet shows its spinner until they land.
+    private func prepare() async {
+        guard file == nil, failure == nil else { return }
+        do {
+            let target = try await Task.detached(priority: .userInitiated) {
+                let folder = FileManager.default.temporaryDirectory
+                    .appendingPathComponent("TomatoStaged/\(UUID().uuidString)", isDirectory: true)
+                try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+                let leaf = URL(fileURLWithPath: name).lastPathComponent
+                let target = folder.appendingPathComponent(leaf.isEmpty ? "file" : leaf)
+                try data.write(to: target, options: .atomic)
+                return target
+            }.value
+            file = target
+        } catch {
+            failure = describe(error)
+        }
+    }
+}
+
 /// The QuickLook controller, wrapped for SwiftUI.
 private struct QuickLookView: UIViewControllerRepresentable {
     let url: URL

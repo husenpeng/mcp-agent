@@ -12,9 +12,11 @@
 import { brandString } from '@tomato/branded'
 import type { Context } from '@tomato/cordis'
 import type {} from '@tomato/agent'
+import type { AgentHandle, CreateAgentOptions } from '@tomato/agent'
 import type {} from '@tomato/tools'
+import type {} from '@tomato/permission-presets'
 import { createUserMessage } from '@tomato/llm'
-import type { Session, SessionEvent } from '@tomato/session'
+import type { AgentCancelCause, Session, SessionEvent } from '@tomato/session'
 import { SessionId } from '@tomato/session'
 import {
   parseReport,
@@ -62,6 +64,8 @@ export interface InProcessWorkerOptions {
   readonly tools?: readonly string[]
   /** Mounts what the run's agent scope needs; the deployment owns which plugins those are. */
   readonly setup?: (agentCtx: Context) => Promise<void> | void
+  /** Rejects Agent creation during cancellation without aborting an admitted turn. */
+  readonly signal?: AbortSignal
 }
 
 /** The part of an Agent one run drives. */
@@ -70,12 +74,36 @@ interface WorkerAgent {
   followup(message: ReturnType<typeof createUserMessage>): void
   /** Resolve once no turn is running. */
   whenIdle(): Promise<void>
+  /** Abort the active turn; with no active activity this is a no-op. */
+  cancel(cause: AgentCancelCause): void
 }
 
 /** The last assistant text and the reason the turn ended. */
 export interface TurnResult {
   text: string
   reason: SessionEvent<'turn/end'>['data']['reason'] | undefined
+}
+
+/**
+ * Create one Agent only while the operation is active. A late handle is disposed before the abort is rethrown.
+ * @param ctx - operation scope that owns the Agent and its completion listeners.
+ * @param options - Agent and Session creation options.
+ * @param signal - lifecycle cancellation; it does not abort an already-running turn.
+ * @returns a ready Agent handle whose owner must dispose it.
+ * @throws the abort reason before creation, or after disposing a handle created during cancellation.
+ */
+async function createAgent(
+  ctx: Context,
+  options: CreateAgentOptions,
+  signal?: AbortSignal,
+): Promise<AgentHandle> {
+  signal?.throwIfAborted()
+  const handle = await ctx.agents.create(options)
+  if (signal?.aborted) {
+    await handle.dispose()
+    signal.throwIfAborted()
+  }
+  return handle
 }
 
 /**
@@ -127,7 +155,7 @@ export function createInProcessWorker(ctx: Context, options: InProcessWorkerOpti
         `${options.sessionPrefix ?? 'superagent-worker-'}${brief.ticket}-${String(Date.now())}`,
       )
       const directory = await options.directoryOf(brief.ticket)
-      const handle = await ctx.agents.create({
+      const handle = await createAgent(ctx, {
         sessionId,
         meta: {
           cwd: directory,
@@ -138,13 +166,14 @@ export function createInProcessWorker(ctx: Context, options: InProcessWorkerOpti
           ...options.maxTokens === undefined ? {} : { maxTokens: options.maxTokens },
         },
         ...options.setup === undefined ? {} : { setup: options.setup },
-      })
+      }, options.signal)
       // Confine the run to the directory it was handed, in the mechanism rather than in prose.
       if (options.permissionPreset !== undefined) {
         const presets = ctx.get('permissionPresets')
         presets?.set(handle.agent.session, options.permissionPreset)
       }
       let disposed = false
+      let cancelled = false
       const dispose = async (): Promise<void> => {
         if (disposed) return
         disposed = true
@@ -153,8 +182,14 @@ export function createInProcessWorker(ctx: Context, options: InProcessWorkerOpti
       return {
         session: brandString<SessionId>(sessionId),
         directory,
+        cancel: (): void => {
+          cancelled = true
+          // A person stopped the run: the active turn ends aborted and reports dropped.
+          handle.agent.cancel({ kind: 'user' })
+        },
         run: async (ticketBrief: WorkerBrief): Promise<AssignmentReport> => {
           try {
+            if (cancelled) return { state: 'dropped', summary: 'the run was cancelled' }
             return reportOf(await runTurn(ctx, handle.agent.session, handle.agent,
               workerBriefText(ticketBrief, directory)))
           } finally {
@@ -176,6 +211,8 @@ export interface InProcessSupervisorOptions {
   readonly model: { readonly provider: string; readonly model: string }
   /** Output-token budget one turn may spend; omitted keeps the route's default. */
   readonly maxTokens?: number
+  /** Rejects Agent creation during cancellation without aborting an admitted turn. */
+  readonly signal?: AbortSignal
 }
 
 /**
@@ -193,7 +230,7 @@ export function createInProcessSupervisor(
   return {
     supervise: async (request: SupervisorRequest): Promise<Supervision> => {
       const sessionId = SessionId(`${supervisorOptions.sessionPrefix ?? 'superagent-supervisor-'}${request.trigger.id}-${String(Date.now())}`)
-      const handle = await ctx.agents.create({
+      const handle = await createAgent(ctx, {
         sessionId,
         meta: { cwd: supervisorOptions.directory },
         agentOptions: {
@@ -201,7 +238,7 @@ export function createInProcessSupervisor(
           model: supervisorOptions.model.model,
           ...supervisorOptions.maxTokens === undefined ? {} : { maxTokens: supervisorOptions.maxTokens },
         },
-      })
+      }, supervisorOptions.signal)
       try {
         return supervisionOf(await runTurn(ctx, handle.agent.session, handle.agent,
           supervisorBriefText(request.trigger, request.policyVersion)))
@@ -223,14 +260,14 @@ export function createInProcessReviewer(ctx: Context, options: InProcessWorkerOp
   return {
     review: async (brief: ReviewerBrief): Promise<ReviewVerdict> => {
       const sessionId = SessionId(`${options.sessionPrefix ?? 'superagent-review-'}${brief.ticket}-${String(Date.now())}`)
-      const handle = await ctx.agents.create({
+      const handle = await createAgent(ctx, {
         sessionId,
         meta: { cwd: await options.directoryOf(brief.ticket) },
         agentOptions: {
           provider: options.model.provider, model: options.model.model,
           ...options.maxTokens === undefined ? {} : { maxTokens: options.maxTokens },
         },
-      })
+      }, options.signal)
       try {
         const turn = await runTurn(ctx, handle.agent.session, handle.agent, reviewerBriefText(brief))
         return parseReview(turn.text, brief.round + 1)
@@ -279,5 +316,5 @@ async function runTurn(
   return turn
 }
 
-export { createStorageStore, superagentDomain } from './store.ts'
+export { createStorageStore, storedTicketSchema, superagentDomain } from './store.ts'
 export type { StorageStore } from './store.ts'

@@ -71,6 +71,9 @@ enum AppDiagnostics {
         lock.lock()
         foreground = phase == "active"
         lock.unlock()
+        // A suspended process makes no beats. Re-anchoring here keeps a return
+        // from the background from being reported as one long main-thread stall.
+        HangWatchdog.shared.resetClock()
         AppLog.info(.app, "场景切换 \(phase)", detail: "占用 \(MemoryFootprint.text())")
     }
 

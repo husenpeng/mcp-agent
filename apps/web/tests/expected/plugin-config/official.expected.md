@@ -11,9 +11,6 @@
     - button "查看 子智能体": 子智能体
     - text: 设置子智能体的递归层级、数量和模型。
   - listitem:
-    - button "查看 网页搜索与获取": 网页搜索与获取
-    - text: 选择网页搜索与网页获取使用的提供方。
-  - listitem:
     - button "查看 Agent 循环": Agent 循环
     - text: 控制 Agent 派发工具调用的方式。
   - listitem:
@@ -38,10 +35,30 @@
     - status
     - switch "启用 自动授权审查"
   - listitem:
+    - button "查看 Playwright 浏览器": Playwright 浏览器
+    - text: 通过 Playwright MCP 为每个会话提供独立的 Chromium。首次使用前请安装 Playwright 所需的 Chromium 构建。
+    - status
+    - switch "启用 Playwright 浏览器"
+  - listitem:
     - button "查看 变更请求与工作树": 变更请求与工作树
     - text: 实验性 在会话侧栏集中跟踪关联的 GitHub PR：查看检查状态、评审意见与代码差异，并把修改建议交给智能体继续处理。也可查看本地改动，用独立工作树隔离任务。GitHub 功能需要本机安装 gh 并登录。
     - status
     - switch "启用 变更请求与工作树"
+  - listitem:
+    - button "查看 记忆与目标专注": 记忆与目标专注
+    - text: 在会话和工作区之间记住你说过的偏好、决定和关于你的事实，并防止长目标反复执行失败的调用。
+    - status
+    - switch "启用 记忆与目标专注"
+  - listitem:
+    - button "查看 Tomato Rbot": Tomato Rbot
+    - text: 定义机器人、运行它们，并在独立于工作区对话的会话面中交流。
+    - status
+    - switch "启用 Tomato Rbot"
+  - listitem:
+    - button "查看 机器人协作团队": 机器人协作团队
+    - text: 可选的多智能体协作流程：带版本的交接图、持久运行账本，以及群聊标签页与流程画布。
+    - status
+    - switch "启用 机器人协作团队"
 - heading "已安装插件" [level=3]
 - list:
   - listitem:

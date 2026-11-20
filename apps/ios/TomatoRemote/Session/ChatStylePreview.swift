@@ -113,4 +113,53 @@
             }
         }
     }
+
+    /// The real conversation screen over a fixture summary, for bottom-edge checks.
+    ///
+    /// The chat cannot be opened without a paired Host, so a layout that depends
+    /// on the screen's own bottom inset — the composer above the home indicator,
+    /// the dock's material under it — has no way to be inspected on a simulator.
+    /// This runs the shipped `ChatView` instead of a copy of it, so the frame that
+    /// measures is the frame the reader sees.
+    struct ChatLayoutPreview: View {
+        /// One finished conversation with a title and a preview, no Host behind it.
+        private static let fixture = SessionSummary(
+            sessionId: "layout-preview",
+            updatedAt: 0,
+            running: false,
+            blank: false,
+            agentAvailable: true,
+            parentSessionId: nil,
+            formatStatus: nil,
+            cwd: "/tmp/vera-rubin",
+            origin: nil,
+            projections: SessionSummary.Projections(
+                kind: "chat",
+                asOfSeq: 0,
+                values: [
+                    "title": .string("英伟达 Vera Rubin 供应链"),
+                    "lastMessage": .string("两处必须提醒的口径差异"),
+                ]
+            )
+        )
+
+        var body: some View {
+            // The shipped screen is pushed from a list inside the tab container,
+            // which is where the bottom edge differs from a bare NavigationStack.
+            TabView {
+                NavigationStack {
+                    Color.clear
+                        .navigationTitle("会话")
+                        .navigationDestination(isPresented: $pushed) {
+                            ChatView(summary: Self.fixture)
+                        }
+                        .onAppear { pushed = true }
+                }
+                .tabItem { Label("会话", systemImage: "bubble.left.and.bubble.right") }
+            }
+            .toolbar(.hidden, for: .tabBar)
+        }
+
+        @State private var pushed = false
+    }
 #endif

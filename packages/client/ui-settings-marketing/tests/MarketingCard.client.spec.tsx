@@ -74,7 +74,7 @@ describe('MarketingCard', () => {
     const store = createSnapshotStore<MarketingCardState>({ ...settled, providers: providers() })
     const props = {
       ...allowAllAccess, useResource, usePanelInfo, useSessions, useSessionStatus, useSessionRetainInfo, useWorkspaces,
-    useContextMenu: () => ({ getTriggerProps: () => ({}) }),
+      useContextMenu: () => ({ getTriggerProps: () => ({}) }),
       ...cardActions(), view: 'summary', t, useMarketingCard: bindSnapshotSelector(store),
     } as MarketingCardProps
     render(<MarketingCard {...props} />)

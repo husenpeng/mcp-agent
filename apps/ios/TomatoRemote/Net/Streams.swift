@@ -27,6 +27,7 @@ enum RemoteStream {
         cookie: String,
         endpoint: String,
         argName: String? = "request",
+        logAttempt: Bool = true,
         payload: some Encodable
     ) -> AsyncThrowingStream<JSONValue, Error> {
         AsyncThrowingStream { continuation in
@@ -34,9 +35,11 @@ enum RemoteStream {
                 let streamId = UUID().uuidString
                 let tag = streamId.prefix(8)
                 let started = CFAbsoluteTimeGetCurrent()
-                AppLog.debug(.stream, "打开 \(endpoint)", detail: "#\(tag)")
+                if logAttempt {
+                    AppLog.debug(.stream, "打开 \(endpoint)", detail: "#\(tag)")
+                }
                 do {
-                    let socket = try RemoteSocket(base: base, cookie: cookie)
+                    let socket = try RemoteSocket(base: base, cookie: cookie, logAttempt: logAttempt)
                     defer { socket.close() }
                     // A handshake that never completes would otherwise surface as a
                     // read failure an hour later; the reader gets a bounded attempt.
@@ -57,7 +60,9 @@ enum RemoteStream {
                     var items = 0
                     while !Task.isCancelled {
                         guard let message = try await socket.receive() else {
-                            AppLog.info(.stream, "连接关闭 \(endpoint)", detail: "#\(tag) · \(items) 帧")
+                            if logAttempt {
+                                AppLog.info(.stream, "连接关闭 \(endpoint)", detail: "#\(tag) · \(items) 帧")
+                            }
                             continuation.finish()
                             return
                         }
@@ -91,11 +96,7 @@ enum RemoteStream {
                     continuation.finish()
                 } catch {
                     let classified = Self.classify(error)
-                    AppLog.error(
-                        .stream,
-                        "流失败 \(endpoint)",
-                        detail: "#\(tag) · \(describe(classified))"
-                    )
+                    Self.noteFailure(classified, endpoint: endpoint, tag: String(tag), logAttempt: logAttempt)
                     continuation.finish(throwing: classified)
                 }
             }
@@ -108,6 +109,28 @@ enum RemoteStream {
     /// - Returns: the elapsed time in milliseconds.
     private static func milliseconds(since start: CFAbsoluteTime) -> Int {
         Int(((CFAbsoluteTimeGetCurrent() - start) * 1000).rounded())
+    }
+
+    /// One failed attempt, logged only when it says something new.
+    ///
+    /// A stream being retried already reports each cadence change, so repeating
+    /// every failed attempt at error level wrote three lines a minute per stream
+    /// for as long as the Host was away. Refusals stay at error level: they
+    /// answer identically until the reader does something.
+    /// - Parameters:
+    ///   - failure: the classified failure that ended the attempt.
+    ///   - endpoint: Remote endpoint whose socket failed.
+    ///   - tag: short stream identity the log line names.
+    ///   - logAttempt: whether this attempt reports its own failure.
+    private static func noteFailure(_ failure: Error, endpoint: String, tag: String, logAttempt: Bool) {
+        let final = (failure as? HubError)?.isFinal == true
+        guard logAttempt || final else { return }
+        AppLog.shared.record(
+            final ? .error : .debug,
+            .stream,
+            "流失败 \(endpoint)",
+            detail: "#\(tag) · \(describe(failure))"
+        )
     }
 
     // MARK: Frames
@@ -177,7 +200,7 @@ enum RemoteStream {
         if failure.domain == NSPOSIXErrorDomain
             || (failure.domain == NSURLErrorDomain && Self.isConnectivityCode(failure.code))
         {
-            return HubError.transport("连接已断开")
+            return HubError.transport(from: error)
         }
         return error
     }
@@ -218,11 +241,15 @@ final class RemoteSocket: NSObject, URLSessionWebSocketDelegate, @unchecked Send
     private var openResult: Result<Void, Error>?
     private var openWaiter: CheckedContinuation<Void, Error>?
     private var closed = false
+    /// Whether this attempt reports its own failure.
+    private let logAttempt: Bool
 
     /// @param base - Host root the socket addresses.
     /// @param cookie - complete `name=value` cookie header value from the Keychain.
+    /// @param logAttempt - whether this attempt's failure is worth a log line.
     /// @throws HubError.invalidBaseURL when the mux URL cannot be built.
-    init(base: URL, cookie: String) throws {
+    init(base: URL, cookie: String, logAttempt: Bool = true) throws {
+        self.logAttempt = logAttempt
         super.init()
         let trimmed = base.absoluteString.hasSuffix("/")
             ? String(base.absoluteString.dropLast())
@@ -335,10 +362,33 @@ final class RemoteSocket: NSObject, URLSessionWebSocketDelegate, @unchecked Send
 
     /// @returns false when the peer no longer answers, which ends the heartbeat.
     private func ping() async -> Bool {
-        await withCheckedContinuation { continuation in
+        let once = Once()
+        return await withCheckedContinuation { continuation in
             socket.sendPing { error in
+                // CFNetwork reports a pong twice when the socket is cancelled
+                // while one is in flight, and a checked continuation traps on
+                // the second resume: that trap ended two runs on the test device
+                // (2026-11-11 and 11-13).
+                guard once.take() else { return }
                 continuation.resume(returning: error == nil)
             }
+        }
+    }
+
+    /// A completion that runs at most once, from whichever queue reports first.
+    private final class Once: @unchecked Sendable {
+        private let lock = NSLock()
+        private var used = false
+
+        /// @returns true for the first caller, false for every later one.
+        func take() -> Bool {
+            lock.lock()
+            defer { lock.unlock() }
+            if used {
+                return false
+            }
+            used = true
+            return true
         }
     }
 
@@ -351,7 +401,9 @@ final class RemoteSocket: NSObject, URLSessionWebSocketDelegate, @unchecked Send
         }
         closed = true
         stateLock.unlock()
-        AppLog.debug(.stream, "关闭 WebSocket")
+        if logAttempt {
+            AppLog.debug(.stream, "关闭 WebSocket")
+        }
         // A caller still waiting on the handshake must not wait out its timeout
         // after the stream was told to stop.
         resolveOpen(.failure(CancellationError()))
@@ -379,11 +431,13 @@ final class RemoteSocket: NSObject, URLSessionWebSocketDelegate, @unchecked Send
     ) {
         guard let error else { return }
         let failure = error as NSError
-        AppLog.warning(
-            .stream,
-            "WebSocket 结束",
-            detail: "\(failure.domain) \(failure.code) · \(failure.localizedDescription)"
-        )
+        if logAttempt {
+            AppLog.debug(
+                .stream,
+                "WebSocket 结束",
+                detail: "\(failure.domain) \(failure.code) · \(failure.localizedDescription)"
+            )
+        }
         stateLock.lock()
         let opened = opened
         stateLock.unlock()

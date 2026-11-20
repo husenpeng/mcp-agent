@@ -24,12 +24,14 @@ export const LLM_FAILURE_CODES = {
   CONTEXT_WINDOW_EXCEEDED: {},
   DISCOVERY_FAILED: {},
   DISCOVERY_UNSUPPORTED: {},
+  DUPLICATE_ADAPTATION: {},
   DUPLICATE_ADAPTER: {},
   DUPLICATE_DIRECTORY: {},
   DUPLICATE_DISCOVERY: {},
   EMPTY_RESPONSE: { retryChoice: true },
   FILES_API: {},
   IMAGE_OFFLOAD_REQUIRED: {},
+  INVALID_ADAPTATION: {},
   INVALID_ADAPTER: {},
   INVALID_CATALOG: {},
   INVALID_CONFIG: {},
@@ -48,6 +50,7 @@ export const LLM_FAILURE_CODES = {
   MISSING_CREDENTIAL: {},
   MODEL_SWITCH_COMPACTION_FAILED: {},
   MODEL_UNSUPPORTED: {},
+  NO_ADAPTATION: {},
   NO_ADAPTER: {},
   NO_CREDENTIAL_STORE: {},
   NO_DISCOVERY: {},
@@ -131,9 +134,26 @@ const EXCEEDS_MODEL_CONTEXT = new RegExp(
 )
 
 /**
- * Recognize the context-overflow wording used by OpenAI-compatible providers
- * and library adapters. Adapters pass all available provider code, type, and
- * message text so both thrown and in-band delivery styles share one classifier.
+ * Gateway wording that names the request's own input cap instead of the model's
+ * context window, as in "input token limit is 1048576", "input token limit
+ * exceeded", or "maximum input tokens exceeded". The quota wording rules run
+ * first in every adapter, so a cap named here bounds one request's input rather
+ * than an account budget. Output-cap wording is absent on purpose: it reports a
+ * `max_tokens` validation, which compaction cannot relieve.
+ */
+const INPUT_TOKEN_CAP = new RegExp(
+  String.raw`\b(?:input|prompt)[\s_-]+tokens?[\s_-]+(?:limit|cap|maximum)\b`
+  + String.raw`(?:\s*[:=]?\s*\d+|\s+\w+\s+\d+|\s+(?:exceed(?:ed|s)?|reached)\b)`
+  + String.raw`|\b(?:maximum|max)\s+(?:number\s+of\s+)?(?:input|prompt)[\s_-]+tokens?\b`
+  + String.raw`|\b(?:exceed(?:s|ed)?|over|beyond)\b[^.]{0,24}\b(?:input|prompt)[\s_-]+tokens?[\s_-]+(?:limit|cap|maximum)\b`,
+  'i',
+)
+
+/**
+ * Recognize the context-overflow wording used by OpenAI-compatible providers,
+ * gateways, and library adapters. Adapters pass all available provider code,
+ * type, and message text so both thrown and in-band delivery styles share one
+ * classifier.
  * @param detail - provider error code/type/message text joined into one string.
  * @returns true when the detail identifies a request exceeding the model context window.
  */
@@ -143,6 +163,7 @@ export function isContextWindowExceededError(detail: string): boolean {
     || TOO_LARGE_FOR_CONTEXT.test(detail)
     || /\b(?:input|prompt|request)\s+(?:is\s+)?too\s+(?:long|large)\s+for\s+(?:this|the)\s+model\b/i.test(detail)
     || EXCEEDS_MODEL_CONTEXT.test(detail)
+    || INPUT_TOKEN_CAP.test(detail)
 }
 
 /**

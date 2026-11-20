@@ -1,5 +1,5 @@
 version: 1
-scenario: standard-dsh-doc
+scenario: standard-tomato-doc
 profile: web
 composition: web-default
 recording: authored

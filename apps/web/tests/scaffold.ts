@@ -396,26 +396,6 @@ export interface LaunchOptions {
   welcomeNoticePending?: boolean
   /** Leave first-use Workspace initialization eligible; ordinary scenarios start after the default was removed. */
   firstUse?: boolean
-  /** Pin the legacy Messages search endpoint and credential reference. */
-  deepSeekSearch?: {
-    /** Anthropic-compatible base URL; `/messages` is appended. */
-    baseURL?: string
-    /** Credential reference read for each search. */
-    apiKeyEnv: string
-  }
-  /**
-   * Give both sections of the shipped DeepSeek Search and Fetch API row their
-   * own credential reference and, when given, endpoint, so neither follows the
-   * conversation's DeepSeek credential. Browser search scenarios keep the real
-   * providers and credentials seam while avoiding external search traffic and
-   * ambient keys.
-   */
-  deepSeekWebApi?: {
-    /** Base URL of both sections; omitted uses the official base. The providers append `/search` or `/fetch`. */
-    baseURL?: string
-    /** Credential reference of both sections. */
-    apiKeyEnv: string
-  }
   /** Preset selection default and additional declarative definitions for this scenario. */
   agentPresets?: {
     default: string
@@ -686,25 +666,6 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
       { id: 'agent-preset-registry', config: { default: options.agentPresets.default } },
       { insert: (options.agentPresets.definitions ?? []).map(config => ({ id: `preset-${config.id}`, name: '@tomato/agent-preset', config })) },
     ],
-    ...options.deepSeekWebApi === undefined ? [] : [
-      {
-        id: 'web-deepseek-api',
-        config: {
-          searchApiKeyEnv: options.deepSeekWebApi.apiKeyEnv,
-          fetchApiKeyEnv: options.deepSeekWebApi.apiKeyEnv,
-          ...options.deepSeekWebApi.baseURL === undefined ? {} : {
-            searchBaseURL: options.deepSeekWebApi.baseURL, fetchBaseURL: options.deepSeekWebApi.baseURL,
-          },
-        },
-      },
-    ],
-    ...options.deepSeekSearch === undefined ? [] : [{
-      id: 'web-search-deepseek',
-      config: {
-        apiKeyEnv: options.deepSeekSearch.apiKeyEnv,
-        ...options.deepSeekSearch.baseURL === undefined ? {} : { baseURL: options.deepSeekSearch.baseURL },
-      },
-    }],
     { id: 'llm-deepseek', disabled: mode !== 'record' && !maskDeepSeekCredential },
   ]
 
@@ -724,7 +685,7 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
 
   // Live fields use a shared deployment layer; process-specific ports and roots stay in CLI overlays.
   const formEntries = new Set(['agent-default-model', 'agent-preset-registry', 'llm-deepseek', 'llm-pi-ai',
-    'web', 'web-search-deepseek', 'web-deepseek-api', 'agent-loop', 'subagent', 'bash-sandbox', 'pwsh-sandbox',
+    'web', 'agent-loop', 'subagent', 'bash-sandbox', 'pwsh-sandbox',
     'session-log-deepseek', 'ui-theme', 'locale', 'ui-chat', 'ui-conversation', 'ui-settings', 'ui-settings-general', 'permission'])
   const formDefaults: PatchOptions[] = []
   const processOverlays = overlayPatches.map((patch) => {

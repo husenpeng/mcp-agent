@@ -707,7 +707,6 @@ const legacySdkCompositions = new Set([
   'dynamic-tool-updates',
   'image',
   'ptc',
-  'sdk-account-provider-signout',
   'sdk-default',
   'sdk-tomato-sdk-diagnostic',
   'sdk-tomato-sdk-dynamic-route',

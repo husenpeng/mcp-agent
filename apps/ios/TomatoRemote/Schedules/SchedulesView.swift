@@ -50,8 +50,9 @@ struct SchedulesView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 28)
         }
-        .background(TomatoToken.bgBase)
-        .navigationTitle("定时任务")
+        .background(TomatoSurface.page)
+        // No page title: the back control and the cards are the page.
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -116,11 +117,11 @@ struct SchedulesView: View {
                     .font(.caption)
                     .foregroundStyle(TomatoToken.labelCaption)
                 HStack(spacing: 10) {
-                    TomatoPrimaryButton(title: "删除", systemImage: "trash") {
-                        Task { await delete(entry) }
-                    }
                     TomatoSecondaryButton(title: "取消") {
                         pendingDelete = nil
+                    }
+                    TomatoSecondaryButton(title: "删除", systemImage: "trash", isDestructive: true) {
+                        Task { await delete(entry) }
                     }
                 }
             }

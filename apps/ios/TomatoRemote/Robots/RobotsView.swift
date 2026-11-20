@@ -76,11 +76,19 @@ final class RobotListModel: ObservableObject {
             var attempt = 0
             while !Task.isCancelled {
                 do {
-                    for try await frame in hub.robotSnapshot() {
+                    for try await frame in hub.robotSnapshot(
+                        logAttempt: attempt <= StreamRetry.quickAttempts
+                    ) {
                         guard let self, self.generation == generation else { return }
+                        if errorMessage != nil {
+                            // Self-healed: the banner that said the stream was
+                            // down must not outlive the outage.
+                            errorMessage = nil
+                            AppLog.info(.stream, "智能体流已恢复")
+                        }
+                        attempt = 0
                         apply(frame)
                     }
-                    break
                 } catch {
                     guard let self, !Task.isCancelled else { break }
                     // A refused namespace answers identically on every attempt.
@@ -88,14 +96,22 @@ final class RobotListModel: ObservableObject {
                         errorMessage = Self.message(for: failure)
                         break
                     }
-                    attempt += 1
-                    if attempt > 5 {
-                        errorMessage = describe(error)
-                        break
-                    }
-                    errorMessage = "连接中断，正在重试（\(attempt)/5）…"
-                    try? await Task.sleep(nanoseconds: UInt64(attempt) * 1_500_000_000)
                 }
+                guard let self, !Task.isCancelled else { break }
+                // A closed snapshot stream is a disconnect too: the Host
+                // restarted or moved port, and nothing reopens this socket while
+                // the app stays on this tab.
+                isFollowing = false
+                attempt += 1
+                errorMessage = StreamRetry.status(attempt: attempt)
+                if attempt <= StreamRetry.quickAttempts {
+                    AppLog.warning(.stream, "智能体流中断", detail: "第 \(attempt) 次")
+                } else if attempt == StreamRetry.quickAttempts + 1 {
+                    AppLog.warning(.stream, "智能体流改为每分钟重试", detail: "第 \(attempt) 次")
+                }
+                try? await Task.sleep(
+                    nanoseconds: UInt64(StreamRetry.pause(afterAttempt: attempt) * 1_000_000_000)
+                )
             }
             guard let self, self.generation == generation else { return }
             isConnecting = false
@@ -233,8 +249,9 @@ struct RobotsView: View {
     var body: some View {
         NavigationStack {
             content
-                .background(TomatoToken.bgBase)
-                .navigationTitle("智能体")
+                .background(TomatoSurface.page)
+                // No page title: the caption and the rows are the page.
+                .navigationTitle("")
                 .navigationBarTitleDisplayMode(.inline)
                 .tomatoFloatingTabs()
                 .toolbar {
@@ -328,12 +345,13 @@ struct RobotsView: View {
                         .listRowInsets(EdgeInsets(top: 2, leading: 12, bottom: 2, trailing: 12))
                     }
                 } header: {
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: 8) {
                         PageCaption(caption: Self.caption)
-                        Text("已发布")
-                            .font(.footnote.weight(.medium))
-                            .foregroundStyle(TomatoToken.labelCaption)
-                            .textCase(nil)
+                        SectionHeader(title: "已发布") {
+                            Text("\(robotModel.ordered.count) 个")
+                                .font(.caption.monospacedDigit())
+                                .foregroundStyle(TomatoToken.labelCaption)
+                        }
                     }
                     .textCase(nil)
                     .padding(.leading, 4)
@@ -356,51 +374,60 @@ private struct RobotRow: View {
     let lastRun: RobotRun?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            HStack(spacing: 8) {
-                if robot.state == "running" {
-                    RunningDot()
+        HStack(alignment: .top, spacing: 12) {
+            IconChip(
+                systemImage: "cpu",
+                tint: robot.state == "running" ? TomatoToken.brandPrimary : TomatoToken.labelCaption,
+                neutral: robot.state != "running",
+                side: 36
+            )
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Text(robot.name)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(TomatoToken.labelPrimary)
+                        .lineLimit(1)
+                    Spacer(minLength: 6)
+                    StatusPill(text: robotStateLabel(robot.state), tone: robotStateTone(robot.state))
                 }
-                Text(robot.name)
-                    .font(.body.weight(.medium))
-                    .foregroundStyle(TomatoToken.labelPrimary)
-                    .lineLimit(1)
-                Spacer(minLength: 6)
-                StatusPill(text: robotStateLabel(robot.state), tone: robotStateTone(robot.state))
-            }
-            if let mission = spec?.goal.mission, !mission.isEmpty {
-                Text(mission)
-                    .font(.subheadline)
-                    .foregroundStyle(TomatoToken.labelCaption)
-                    .lineLimit(2)
-            }
-            HStack(spacing: 5) {
-                if let activeRun {
-                    Image(systemName: "bolt.fill")
-                        .font(.caption2)
-                        .foregroundStyle(TomatoToken.stateWarnPrimary)
-                    Text("这次运行：\(runStateLabel(activeRun.state))")
-                } else if let lastRun {
-                    Image(systemName: "clock")
-                        .font(.caption2)
-                    Text("上次：\(runStateLabel(lastRun.state)) · \(relativeTime(lastRun.startedAt))")
-                } else {
-                    Image(systemName: "circle.dashed")
-                        .font(.caption2)
-                    Text("还没有运行过")
+                if let mission = spec?.goal.mission, !mission.isEmpty {
+                    Text(mission)
+                        .font(.footnote)
+                        .foregroundStyle(TomatoToken.labelCaption)
+                        .lineLimit(2)
                 }
+                HStack(spacing: 5) {
+                    if let activeRun {
+                        Image(systemName: "bolt.fill")
+                            .font(.caption2)
+                            .foregroundStyle(TomatoToken.brandPrimary)
+                        Text("这次运行：\(runStateLabel(activeRun.state))")
+                    } else if let lastRun {
+                        Image(systemName: "clock")
+                            .font(.caption2)
+                        Text("上次：\(runStateLabel(lastRun.state)) · \(relativeTime(lastRun.startedAt))")
+                    } else {
+                        Image(systemName: "circle.dashed")
+                            .font(.caption2)
+                        Text("还没有运行过")
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(TomatoToken.labelCaption)
             }
-            .font(.caption)
-            .foregroundStyle(TomatoToken.labelDimmed)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            robot.state == "running" ? TomatoToken.brandPrimary.opacity(0.06) : TomatoToken.bgLayer2,
-            in: RoundedRectangle(cornerRadius: TomatoRadius.md, style: .continuous)
+            robot.state == "running" ? TomatoBrand.soft : TomatoSurface.card,
+            in: RoundedRectangle(cornerRadius: TomatoCorner.card, style: .continuous)
         )
-        .contentShape(RoundedRectangle(cornerRadius: TomatoRadius.md, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: TomatoCorner.card, style: .continuous)
+                .strokeBorder(robot.state == "running" ? TomatoLine.brandSoft : TomatoLine.hairline, lineWidth: 1)
+        )
+        .contentShape(RoundedRectangle(cornerRadius: TomatoCorner.card, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 }

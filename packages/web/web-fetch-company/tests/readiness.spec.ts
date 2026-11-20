@@ -17,7 +17,7 @@ afterEach(() => {
  */
 async function boot(sessionId: () => string | undefined, config: companyPlugin.Config = { baseURL: 'https://bff.test' }): Promise<Context> {
   const ctx = new Context()
-  await ctx.plugin(WebRuntime, { fetchProvider: 'company' })
+  await ctx.plugin(WebRuntime, { fetchProviders: ['company'] })
   ctx.provide('desktopSession', { sessionId })
   await ctx.plugin(companyPlugin, config)
   return ctx

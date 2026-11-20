@@ -71,8 +71,15 @@ extension HubClient {
     /// and approvals that are waiting on a person, and `cancel` frames for ones
     /// another client settled.
     /// - Returns: every downlink frame as JSON.
-    func eventFrames() -> AsyncThrowingStream<JSONValue, Error> {
-        RemoteStream.frames(base: base, cookie: cookie, endpoint: "$events", argName: nil, payload: EmptyBody())
+    func eventFrames(logAttempt: Bool = true) -> AsyncThrowingStream<JSONValue, Error> {
+        RemoteStream.frames(
+            base: base,
+            cookie: cookie,
+            endpoint: "$events",
+            argName: nil,
+            logAttempt: logAttempt,
+            payload: EmptyBody()
+        )
     }
 
     /// Settle one pending waterfall.

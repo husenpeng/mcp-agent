@@ -200,9 +200,9 @@ describe('desktop payload exclusions', () => {
 
   it('selects no excluded package and stops the package that named it from declaring it', () => {
     const available = new Map<string, PackedDesktopPackage>([
-      ['@tomato/cli', packed('@tomato/cli', { dependencies: { '@tomato/experimental-robot-app': '1.0.0' } })],
+      ['@tomato/cli', packed('@tomato/cli', { dependencies: { '@tomato/experimental-robot-crew-bundle': '1.0.0' } })],
       ['@tomato/desktop-host', packed('@tomato/desktop-host', { dependencies: { '@tomato/cli': '1.0.0' } })],
-      ['@tomato/experimental-robot-app', packed('@tomato/experimental-robot-app', {
+      ['@tomato/experimental-robot-crew-bundle', packed('@tomato/experimental-robot-crew-bundle', {
         dependencies: { [crewPackage]: '1.0.0', '@tomato/experimental-robot': '1.0.0' },
       })],
       [crewPackage, packed(crewPackage, { dependencies: { '@tomato/experimental-robot-crew': '1.0.0' } })],
@@ -211,11 +211,11 @@ describe('desktop payload exclusions', () => {
     ])
     const selected = selectDesktopPackageClosure(available, target, new Set([crewPackage]))
     expect(selected.map(entry => entry.manifest.name)).toEqual([
-      '@tomato/cli', '@tomato/desktop-host', '@tomato/experimental-robot', '@tomato/experimental-robot-app',
+      '@tomato/cli', '@tomato/desktop-host', '@tomato/experimental-robot', '@tomato/experimental-robot-crew-bundle',
     ])
-    const app = selected.find(entry => entry.manifest.name === '@tomato/experimental-robot-app')
-    expect(app?.manifest.dependencies).toEqual({ '@tomato/experimental-robot': '1.0.0' })
-    expect(app?.dropped).toEqual([crewPackage])
+    const bundle = selected.find(entry => entry.manifest.name === '@tomato/experimental-robot-crew-bundle')
+    expect(bundle?.manifest.dependencies).toEqual({ '@tomato/experimental-robot': '1.0.0' })
+    expect(bundle?.dropped).toEqual([crewPackage])
   })
 
   it('keeps Robot Room packages when only the crew cluster is excluded', () => {
@@ -273,9 +273,9 @@ describe('desktop payload exclusions', () => {
       { id: 'ui-robot', name: '@tomato/client-ui-robot' },
     ]
     const manifests = new Map<string, PackedDesktopPackage>([
-      ['@tomato/cli', packed('@tomato/cli', { dependencies: { '@tomato/experimental-robot-app': '1.0.0' } })],
+      ['@tomato/cli', packed('@tomato/cli', { dependencies: { '@tomato/experimental-robot-crew-bundle': '1.0.0' } })],
       ['@tomato/desktop-host', packed('@tomato/desktop-host')],
-      ['@tomato/experimental-robot-app', packed('@tomato/experimental-robot-app', {
+      ['@tomato/experimental-robot-crew-bundle', packed('@tomato/experimental-robot-crew-bundle', {
         dependencies: {
           [crewLocal]: '1.0.0',
           [crewTool]: '1.0.0',
@@ -299,7 +299,7 @@ describe('desktop payload exclusions', () => {
           writeFileSync(join(folder, file), '')
         }
       }
-      if (name === '@tomato/experimental-robot-app') {
+      if (name === '@tomato/experimental-robot-crew-bundle') {
         writeFileSync(join(folder, 'cordis.patch.yml'), `${patchHeader}- insert:\n${patchRows.map(row => `    - id: ${row.id}\n      name: '${row.name}'`).join('\n\n')}\n`)
       }
       execFileSync('tar', ['-czf', join(inputs, `${stem}.tgz`), '-C', join(folder, '..'), 'package'])
@@ -310,7 +310,7 @@ describe('desktop payload exclusions', () => {
     const files = readdirSync(join(output, DESKTOP_PACKAGES_DIR))
     expect(files).not.toContain('client-ui-robot-crew.tgz')
     expect(files).not.toContain('experimental-tool-robot-crew.tgz')
-    const appTarball = join(output, DESKTOP_PACKAGES_DIR, 'experimental-robot-app.tgz')
+    const appTarball = join(output, DESKTOP_PACKAGES_DIR, 'experimental-robot-crew-bundle.tgz')
     expect(tarballManifest(appTarball).dependencies).toEqual({ '@tomato/client-ui-robot': '1.0.0' })
     const patch = execFileSync('tar', ['-xOzf', basename(appTarball), 'package/cordis.patch.yml'], { cwd: dirname(appTarball), encoding: 'utf8' })
     expect(patch.startsWith(patchHeader)).toBe(true)

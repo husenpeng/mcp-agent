@@ -105,7 +105,6 @@ export const EXISTING_PLUGIN_ENTRY_EXPORTS = {
     'projectToolUpdates', 'requestImageHandleText', 'requiredImageOffload', 'resolveImageAttachmentAccess',
     'resolveRetryPolicy', 'runFirstTokenTime', 'runFirstVisibleTime', 'textOnlyImageText', 'userAgent',
   ],
-  '@tomato/llm-deepseek-account': ['plainAccountOptions', 'resolveAccountOptions'],
   '@tomato/llm-deepseek-api-key': ['plainOptions', 'resolveAdapterOptions'],
   '@tomato/llm-pi-ai': ['PiAiAdapter', 'supportedProtocols'],
   '@tomato/llm-replay': [
@@ -240,17 +239,7 @@ export const EXISTING_PLUGIN_ENTRY_EXPORTS = {
   '@tomato/user-approval': ['APPROVAL_POLICIES', 'ApprovalRequestId', 'setApprovalPolicy'],
   '@tomato/user-questions': ['TIMED_WAIT_PARAMETER', 'isTimedAskUserQuestionSchema'],
   '@tomato/web-app': ['internals'],
-  '@tomato/web-deepseek-api': [
-    'DEEPSEEK_DEFAULT_COUNT', 'DEEPSEEK_FETCH_API_PROVIDER_ID', 'DEEPSEEK_SEARCH_API_PROVIDER_ID',
-    'DEEPSEEK_SEARCH_REQUESTS_PER_SECOND', 'DEEPSEEK_WEB_API_BASE_URL', 'DeepSeekFetchApiProvider',
-    'DeepSeekSearchApiProvider', 'mapSearchResponse',
-  ],
   '@tomato/web-fetch-http': ['DEFAULT_USER_AGENT', 'HttpFetchProvider', 'LOCAL_FETCH_PROVIDER_ID'],
-  '@tomato/web-search-deepseek': [
-    'DEEPSEEK_DEFAULT_API_VERSION', 'DEEPSEEK_DEFAULT_BASE_URL', 'DEEPSEEK_DEFAULT_MAX_TOKENS',
-    'DEEPSEEK_DEFAULT_MAX_USES', 'DEEPSEEK_DEFAULT_MODEL', 'DEEPSEEK_PROVIDER_ID', 'DeepSeekSearchProvider',
-    'WEB_SEARCH_DEEPSEEK_SETTINGS_NAMESPACE',
-  ],
   '@tomato/webhook': ['WebhookDeliveryId', 'WebhookRuleId', 'WebhookSourceId'],
   '@tomato/workflow-ptc': ['materializeFromRealm', 'validateMeta'],
   '@tomato/workspace': [

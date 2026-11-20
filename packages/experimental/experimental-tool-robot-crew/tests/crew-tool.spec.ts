@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Context } from '@tomato/cordis'
 import AgentRegistry from '@tomato/agent'
-import type { Agent, AgentStatus, Inbox } from '@tomato/agent'
+import type { Agent, Inbox } from '@tomato/agent'
 import { createInboxStub, unsupportedModel } from '@tomato/agent-loop-testkit'
 import Robots from '@tomato/experimental-robot'
 import type { Robot, RobotId, RobotSpec, RobotSpecRef, RobotSpecRevision, Run } from '@tomato/experimental-robot'
@@ -115,7 +115,7 @@ async function stubAgent(ctx: Context, rawId: string): Promise<StubAgent> {
     session,
     model: unsupportedModel(),
     inbox,
-    status: 'running' as AgentStatus,
+    status: 'running',
     ctx,
     send: () => {},
     followup: () => {},

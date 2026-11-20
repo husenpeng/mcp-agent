@@ -164,11 +164,11 @@ struct ProgressSheet: View {
     }
 
     private var goalCard: some View {
-        TomatoCard(padding: 16) {
-            VStack(alignment: .leading, spacing: 10) {
+        TomatoCard(padding: 14) {
+            VStack(alignment: .leading, spacing: 8) {
                 SectionHeader(title: "目标") {
                     if let goal = progress.goal {
-                        StatusPill(text: goal.phaseText, tone: goal.phase == "blocked" ? .error : goal.phase == "complete" ? .ok : .info)
+                        StatusPill(text: goal.phaseText, tone: goal.phase == "blocked" ? .error : goal.phase == "complete" ? .ok : .active)
                     }
                 }
                 if let goal = progress.goal {
@@ -176,9 +176,7 @@ struct ProgressSheet: View {
                         .font(.callout)
                         .foregroundStyle(TomatoToken.labelPrimary)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text(goal.maxGoalRounds.map { "第 \(goal.roundsStarted) / \($0) 轮" } ?? "第 \(goal.roundsStarted) 轮")
-                        .font(.caption)
-                        .foregroundStyle(TomatoToken.labelCaption)
+                    GoalRoundsProgress(roundsStarted: goal.roundsStarted, maxGoalRounds: goal.maxGoalRounds)
                 } else {
                     Text("这个会话没有设定目标。")
                         .font(.footnote)
@@ -229,6 +227,8 @@ struct ProgressSheet: View {
                                 }
                                 .font(.caption)
                                 .padding(.leading, 12)
+                                .frame(minHeight: 44)
+                                .contentShape(Rectangle())
                             }
                         }
                     }
@@ -242,8 +242,8 @@ struct ProgressSheet: View {
             VStack(alignment: .leading, spacing: 10) {
                 SectionHeader(title: "子代理") {
                     Text("\(progress.children.count)")
-                        .font(.caption)
-                        .foregroundStyle(TomatoToken.labelDimmed)
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(TomatoToken.labelCaption)
                 }
                 if progress.children.isEmpty {
                     Text("这个会话没有派生子代理。")

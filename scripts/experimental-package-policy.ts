@@ -31,6 +31,10 @@ export const EXPERIMENTAL_PACKAGE_NAME_EXCEPTIONS: Readonly<Record<string, strin
   'packages/experimental/superagent': '@tomato/superagent',
   'packages/experimental/superagent-local': '@tomato/superagent-local',
   'packages/experimental/superagent-runtime': '@tomato/superagent-runtime',
+  'packages/experimental/memory-dream': '@tomato/memory-dream',
+  'packages/experimental/tool-work-team': '@tomato/tool-work-team',
+  'packages/experimental/client-ui-settings-work-team': '@tomato/client-ui-settings-work-team',
+  'packages/experimental/work-team-bundle': '@tomato/work-team-bundle',
 } satisfies Record<`packages/experimental/${string}`, `@tomato/${string}`>
 
 /** Legacy npm namespace, allowed only in `LEGACY_PREFIXED_EXPERIMENTAL_PACKAGE_DIRECTORIES`. */

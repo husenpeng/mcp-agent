@@ -643,8 +643,7 @@
   background: transparent;
 }
 
-.panelEntryActive,
-.panelEntry:has(:focus-visible) {
+.panelEntry:not(.panelEntryActive):has(:focus-visible) {
   background-color: var(--dsw-alias-interactive-bg-hover);
 }
 
@@ -672,8 +671,10 @@
 
 @media (hover: hover) {
   .panelUnpin { opacity: 0; }
-  .panelEntry:hover { background-color: var(--dsw-alias-interactive-bg-hover); }
-  .panelEntry .panelRow:hover { background: transparent; }
+  /* The wash belongs to the launcher row, not to the wrapping entry: an entry
+     that nests a subnav is taller than its row, so an entry-level fill would
+     paint the whole stacked block behind the nested rows. */
+  .panelEntry:not(.panelEntryActive) .panelRow:hover { background-color: var(--dsw-alias-interactive-bg-hover); }
   .panelUnpin:hover { color: var(--dsw-alias-label-primary); }
   .panelEntry:hover .panelUnpin,
   .panelEntry:has(:focus-visible) .panelUnpin { opacity: 1; }
@@ -732,6 +733,20 @@
   background-color: var(--dsw-alias-interactive-bg-hover);
 }
 
+/* The selected panel row carries the brand gradient and on-color ink, the
+   selection treatment session rows and settings navigation share; a nested
+   subnav below it keeps its own flat marker instead of sitting on the fill. */
+.panelEntryActive .panelRow {
+  background-color: transparent;
+  background-image: var(--dsw-brand-gradient-signature);
+  box-shadow: var(--dsw-specific-shadow-nav-active);
+  color: var(--dsw-alias-label-on-color);
+}
+
+.panelEntryActive .panelUnpin {
+  color: var(--dsw-alias-label-on-color);
+}
+
 .moreMenu {
   width: 288px;
   max-width: calc(100vw - 24px);
@@ -769,6 +784,11 @@
   background-clip: border-box;
   padding: 0;
   color: var(--dsw-alias-label-primary);
+}
+
+/* The rail keeps the selected row's on-color ink over its brand fill. */
+.collapsed .panelEntryActive .panelRow {
+  color: var(--dsw-alias-label-on-color);
 }
 
 /* The workspace seat stays mounted while its wide and rail bodies change. */

@@ -1,6 +1,7 @@
 /** Credential-scoped `/models` cache with single-flight loads, background refresh, and last-known-good retention. */
 import { createHash } from 'node:crypto'
 import { deadline } from '@tomato/timeout'
+import { deepEqualJson } from '@tomato/util-values'
 import type { ListingSettings } from './listing-config.ts'
 import { LISTING_TIMEOUT } from './listing.ts'
 import type { ModelListing } from './listing.ts'
@@ -17,6 +18,8 @@ export interface ListingCacheDependencies {
   readonly info: (message: string) => void
   /** Report the first failure of a failing streak. */
   readonly warn: (message: string) => void
+  /** Report a successful load whose catalog differs from the previous one, so consumers reload it. */
+  readonly changed?: (listing: ModelListing) => void
 }
 
 /** What request resolution reads. */
@@ -44,6 +47,8 @@ async function abandonable(task: Promise<void>, signal: AbortSignal | undefined)
 export class ModelListingCache {
   private scope: string | undefined
   private listing: ModelListing | undefined
+  /** Last catalog reported to consumers; survives cache rescoping so only a real change reports. */
+  private reported: ModelListing | undefined
   /** Settle time of the latest load in this scope; `undefined` before the first one settles. */
   private settledAt: number | undefined
   private inflight: Promise<void> | undefined
@@ -119,6 +124,10 @@ export class ModelListingCache {
         this.listing = listing
         this.settledAt = this.dependencies.now()
         this.failing = false
+        if (this.reported === undefined || !deepEqualJson(this.reported.entries, listing.entries)) {
+          this.reported = listing
+          this.dependencies.changed?.(listing)
+        }
         this.dependencies.info(`model listing from ${settings.url} loaded ${listing.entries.length} model(s), skipped ${listing.skipped} row(s)`)
       }, (error: unknown) => {
         if (generation !== this.generation) return

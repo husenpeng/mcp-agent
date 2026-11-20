@@ -33,6 +33,7 @@ const EMPTY_EXPECTED = join(SNAPSHOT_DIR, 'empty.expected.md')
 const NATIVE_KEYLESS_EXPECTED = join(SNAPSHOT_DIR, 'native-keyless.expected.md')
 const CONFIGURED_EXPECTED = join(SNAPSHOT_DIR, 'configured.expected.md')
 const DECLARED_EXPECTED = join(SNAPSHOT_DIR, 'declared.expected.md')
+const DECLARED_CREATE_EXPECTED = join(SNAPSHOT_DIR, 'declared-create.expected.md')
 const DECLARED_EDIT_EXPECTED = join(SNAPSHOT_DIR, 'declared-edit.expected.md')
 const MODEL_PICKER_EXPECTED = join(SNAPSHOT_DIR, 'model-picker.expected.md')
 const NATIVE_DELETE_EXPECTED = join(SNAPSHOT_DIR, 'native-delete.expected.md')
@@ -320,6 +321,12 @@ describe('web e2e: Models settings page configures a dormant provider', () => {
     const reasoning = custom.getByRole('group', { name: '推理等级 1' })
     await reasoning.getByRole('switch', { name: '推理等级 1' }).click()
     await reasoning.getByRole('button', { name: '删除档位 medium', exact: true }).click()
+    // The endpoint names no catalog provider, so the protocol stays at the
+    // OpenAI-compatible fallback, and the field carries its auto-selection help.
+    expect(await custom.getByLabel('API 协议', { exact: true }).inputValue()).toBe('openai-completions')
+    await custom.getByRole('button', { name: 'API 协议说明' }).waitFor({ timeout: 10_000 })
+    const createForm = await captureStableAria(page, '[role="dialog"]', scaffold.workspaceCwd)
+    await compareOrRefreshGolden(DECLARED_CREATE_EXPECTED, createForm, MODE)
     await custom.getByRole('button', { name: '创建提供商', exact: true }).click()
 
     const row = dialog.getByText('Acme Gateway', { exact: true }).first()
@@ -851,7 +858,7 @@ describe('web e2e: Models settings page configures a dormant provider', () => {
 
   it.skipIf(MODE === 'record')('keeps the fixture inventory closed', async () => {
     await assertFixtureInventory(SNAPSHOT_DIR, [
-      'configured.expected.md', 'declared-edit.expected.md', 'declared.expected.md',
+      'configured.expected.md', 'declared-create.expected.md', 'declared-edit.expected.md', 'declared.expected.md',
       'delete.expected.md', 'empty.expected.md', 'model-picker.expected.md',
       'native-delete.expected.md', 'native-keyless.expected.md', 'catalog-inputs.expected.md',
       'mobile-collapsed.expected.md', 'mobile-expanded.expected.md',

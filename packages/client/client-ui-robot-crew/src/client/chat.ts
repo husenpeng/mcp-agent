@@ -6,7 +6,7 @@
  * @module @tomato/client-ui-robot-crew
  */
 
-import type { CrewEntry, CrewRun, CrewSpec, CrewSpecRevision } from '@tomato/experimental-robot-crew'
+import type { CrewEntry, CrewRobotRef, CrewRun, CrewSpec, CrewSpecRevision } from '@tomato/experimental-robot-crew'
 
 /** Kind of one rendered chat line. */
 export type ChatLineKind = 'start' | 'memory' | 'working' | 'report' | 'a2a' | 'handoff' | 'guard' | 'end'
@@ -185,7 +185,7 @@ export interface DevelopmentCrewLabels {
  * three members deliver it, and the lead agent reports back with the next
  * round. Edges run kickoff → members → dispatch, so every report reaches the
  * lead agent through a handoff the runtime already delivers.
- * @param input - name, mission, localized member names, and the editor's run prompt.
+ * @param input - name, mission, localized member names, the editor's run prompt, and the published Rbot every member runs as.
  * @returns a publishable five-member crew.
  */
 export function developmentCrew(input: {
@@ -194,6 +194,8 @@ export function developmentCrew(input: {
   readonly prompt: string
   readonly labels: DevelopmentCrewLabels
   readonly workspaceRoot?: string | undefined
+  /** Published Rbot revision each member runs as; publication rejects a member without one. */
+  readonly robot: CrewRobotRef
 }): CrewSpec {
   const { labels } = input
   return {
@@ -212,6 +214,7 @@ export function developmentCrew(input: {
         kind: 'worker',
         maxTurns: 1,
         budgetTokens: 40_000,
+        robot: input.robot,
         at: { x: 16, y: 160 },
       },
       {
@@ -223,6 +226,7 @@ export function developmentCrew(input: {
         kind: 'worker',
         maxTurns: 2,
         budgetTokens: 80_000,
+        robot: input.robot,
         at: { x: 256, y: 32 },
       },
       {
@@ -234,6 +238,7 @@ export function developmentCrew(input: {
         kind: 'worker',
         maxTurns: 2,
         budgetTokens: 60_000,
+        robot: input.robot,
         at: { x: 256, y: 160 },
       },
       {
@@ -245,6 +250,7 @@ export function developmentCrew(input: {
         kind: 'reviewer',
         maxTurns: 1,
         budgetTokens: 60_000,
+        robot: input.robot,
         at: { x: 256, y: 288 },
       },
       {
@@ -256,6 +262,7 @@ export function developmentCrew(input: {
         kind: 'reviewer',
         maxTurns: 1,
         budgetTokens: 60_000,
+        robot: input.robot,
         at: { x: 496, y: 160 },
       },
     ],

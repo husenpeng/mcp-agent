@@ -1,0 +1,25 @@
+# The optional Robot Crew layer: the storage-backed crew provider, its Remote
+# transport and controller, the agent tool that accepts a crew specification,
+# and the crew page — the canvas and the group-chat tab that starts a run and
+# reads its flow ledger. Selecting this bundle is the opt-in; the Rbot bundle
+# (`@tomato/experimental-robot-app`) carries the robot registry and the
+# collaboration room without it, so a profile that never selects this layer
+# shows no crew tab and offers no crew tool.
+- insert:
+    - id: robot-crew-local
+      name: '@tomato/experimental-robot-crew-local'
+
+    - id: robot-crew-remote
+      name: '@tomato/experimental-robot-crew-remote'
+
+    - id: api-robot-crew-controller
+      name: '@tomato/api-robot-crew-controller'
+
+    - id: robot-crew-tool
+      name: '@tomato/experimental-tool-robot-crew'
+
+    - id: tool-work-team
+      name: '@tomato/tool-work-team'
+
+    - id: ui-robot-crew
+      name: '@tomato/client-ui-robot-crew'

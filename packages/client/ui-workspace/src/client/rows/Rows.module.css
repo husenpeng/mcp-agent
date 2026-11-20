@@ -22,11 +22,17 @@
   background-color: transparent;
   background-image: var(--dsw-brand-gradient-signature);
   box-shadow: var(--dsw-specific-shadow-nav-active);
-  color: rgb(255, 255, 255);
+  color: var(--dsw-alias-label-on-color);
 }
 
+/* Every readable cell of the selected row shares the on-color ink: the brand
+   gradient is too saturated for the tertiary and caption label steps. */
 .sessionRow.selected .title,
-.sessionRow.selected .slot {
+.sessionRow.selected .slot,
+.sessionRow.selected .rowResting,
+.sessionRow.selected .time,
+.sessionRow.selected .pinIndicator,
+.sessionRow.selected .iconButton {
   color: inherit;
 }
 
@@ -410,21 +416,21 @@
 .hoverTitle {
   font-size: 14px;
   line-height: 20px;
-  color: #FFFFFF;
+  color: var(--dsw-alias-hovercard-label-primary);
   overflow-wrap: break-word;
 }
 
 .hoverPath {
   font-size: 12px;
   line-height: 16px;
-  color: #CFD3D6;
+  color: var(--dsw-alias-hovercard-label-secondary);
   word-break: break-all;
 }
 
 .hoverTime {
   font-size: 12px;
   line-height: 16px;
-  color: #CFD3D6;
+  color: var(--dsw-alias-hovercard-label-secondary);
 }
 
 .hoverStatus {
@@ -433,7 +439,7 @@
   gap: 8px;
   font-size: 12px;
   line-height: 20px;
-  color: #ADB2B8;
+  color: var(--dsw-alias-hovercard-label-tertiary);
 }
 
 /* Archive glyph rides the status row's text color; slight inset aligns it with the 6px status dots. */

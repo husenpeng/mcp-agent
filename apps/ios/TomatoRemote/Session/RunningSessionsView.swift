@@ -11,6 +11,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 /// The Session list's navigation value for the in-progress page.
 struct RunningSessionsRoute: Hashable {}
@@ -56,34 +57,16 @@ struct RunningSessionsRows: Equatable {
     }
 }
 
-/// The Session list's shortcut into this page.
+/// The Session list's shortcut into this page — the standard action entry.
 struct RunningSessionsEntry: View {
     let count: Int
 
     var body: some View {
-        HStack(spacing: 10) {
-            RunningDot()
-            VStack(alignment: .leading, spacing: 2) {
-                Text("进行中")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(TomatoToken.labelPrimary)
-                Text("\(count) 个会话正在执行")
-                    .font(.caption)
-                    .foregroundStyle(TomatoToken.labelCaption)
-            }
-            Spacer(minLength: 8)
-            Image(systemName: "chevron.right")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(TomatoToken.labelDimmed)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 11)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            TomatoToken.brandPrimary.opacity(0.06),
-            in: RoundedRectangle(cornerRadius: TomatoRadius.md, style: .continuous)
+        TomatoActionEntry(
+            systemImage: "bolt.fill",
+            title: "进行中",
+            subtitle: "\(count) 个会话正在执行"
         )
-        .contentShape(RoundedRectangle(cornerRadius: TomatoRadius.md, style: .continuous))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("进行中，\(count) 个会话正在执行")
     }
@@ -102,9 +85,13 @@ struct RunningSessionsView: View {
 
     var body: some View {
         content
-            .background(TomatoToken.bgBase)
+            .background(TomatoSurface.page)
             .navigationTitle("进行中")
             .navigationBarTitleDisplayMode(.inline)
+            // The page's title must stay in the bar: iOS 26 can grow it into the
+            // large presentation while the list scrolls, and a returning Session
+            // list then had it drawn over its rows.
+            .toolbarTitleDisplayMode(.inline)
             .tomatoScrollEdge()
             .refreshable { await model.refreshSessions(force: true) }
             // The page is the liveness surface, so it reads once on entry
@@ -173,7 +160,7 @@ struct RunningSessionsView: View {
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
-            .listSectionSpacing(10)
+            .listSectionSpacing(8)
         }
     }
 
@@ -186,9 +173,18 @@ struct RunningSessionsView: View {
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("session.running.row.\(summary.sessionId)")
+        .contextMenu {
+            if let preview = summary.rowPreview, !preview.isEmpty {
+                Button {
+                    UIPasteboard.general.string = preview
+                } label: {
+                    Label("复制消息", systemImage: "doc.on.doc")
+                }
+            }
+        }
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
-        .listRowInsets(EdgeInsets(top: 2, leading: 4, bottom: 2, trailing: 12))
+        .listRowInsets(EdgeInsets(top: 1, leading: 20, bottom: 1, trailing: 20))
     }
 
     /// How many requests in one Session wait on the reader, if any.
@@ -208,10 +204,10 @@ private struct RunningSessionRow: View {
     let waiting: Int
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 8) {
                 Text(summary.displayTitle)
-                    .font(.body.weight(.medium))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(TomatoToken.labelPrimary)
                     .lineLimit(1)
                 Spacer(minLength: 6)
@@ -219,7 +215,7 @@ private struct RunningSessionRow: View {
             }
             if let preview = summary.rowPreview {
                 Text(preview)
-                    .font(.subheadline)
+                    .font(.footnote)
                     .foregroundStyle(TomatoToken.labelCaption)
                     .lineLimit(1)
             }
@@ -231,23 +227,27 @@ private struct RunningSessionRow: View {
             HStack(spacing: 6) {
                 if let folder = summary.folderName {
                     Text(folder)
-                        .font(.caption)
-                        .foregroundStyle(TomatoToken.labelDimmed)
+                        .font(.caption2)
+                        .foregroundStyle(TomatoToken.labelCaption)
                         .lineLimit(1)
                     Text("·")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundStyle(TomatoToken.labelDimmed)
                 }
                 Text(relativeTime(summary.updatedAt))
-                    .font(.caption)
-                    .foregroundStyle(TomatoToken.labelDimmed)
+                    .font(.caption2)
+                    .foregroundStyle(TomatoToken.labelCaption)
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 11)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(background, in: RoundedRectangle(cornerRadius: TomatoRadius.md, style: .continuous))
-        .contentShape(RoundedRectangle(cornerRadius: TomatoRadius.md, style: .continuous))
+        .background(background, in: RoundedRectangle(cornerRadius: TomatoCorner.card, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: TomatoCorner.card, style: .continuous)
+                .strokeBorder(finished ? TomatoLine.hairline : TomatoLine.brandSoft, lineWidth: 1)
+        )
+        .contentShape(RoundedRectangle(cornerRadius: TomatoCorner.card, style: .continuous))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(spoken)
     }
@@ -257,19 +257,19 @@ private struct RunningSessionRow: View {
         if finished {
             Text("已完成")
                 .font(.caption2.weight(.medium))
-                .foregroundStyle(TomatoToken.labelCaption)
+                .foregroundStyle(TomatoContainer.neutral.label)
                 .padding(.horizontal, 7)
                 .padding(.vertical, 3)
-                .background(TomatoToken.bgLayer3, in: Capsule())
+                .background(TomatoContainer.neutral.fill, in: Capsule())
         } else {
             SessionStateBadge(state: .running)
         }
     }
 
     /// A running row keeps the brand wash the Session list gives it; a finished
-    /// one returns to the neutral surface.
+    /// one returns to the quiet neutral surface.
     private var background: Color {
-        finished ? TomatoToken.bgLayer2 : TomatoToken.brandPrimary.opacity(0.06)
+        finished ? TomatoSurface.subtle : TomatoBrand.soft
     }
 
     /// One sentence for VoiceOver: the state, the title, and what waits on the

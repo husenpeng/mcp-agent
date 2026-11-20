@@ -55,7 +55,7 @@ The generated [configuration catalog](../../../docs/config-catalog.md#tomatohead
 
 The shipped headless profile disables the managed credential store and its authorization consumer. API-key routes use the launch environment, then `<invocation cwd>/.env`, then `$TOMATO_HOME/.env`. Keys and sign-ins saved by the GUI are ignored without changing their file. Providers that require a saved sign-in fail unless stored authentication is restored; external provider credential chains, such as AWS profiles, remain available.
 
-The DeepSeek Search and Fetch APIs [follow the session's DeepSeek credentials](../../web/web-deepseek-api/README.md#authentication). In the shipped headless profile, they send the DeepSeek model route's `DEEPSEEK_API_KEY` to that route's origin, so no sign-in is needed. Without that key, the model request omits `web_search`.
+Web search and gateway fetch authenticate through the signed-in company session; this profile disables that credential store, so a headless step declares neither tool and falls back to the anonymous HTTP fetch provider for `web_fetch` when the composition mounts it.
 
 Unset an empty launch variable to allow its `.env` fallback; an exported empty value shadows that fallback.
 

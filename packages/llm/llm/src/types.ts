@@ -7,6 +7,7 @@
 import type { Branded } from '@tomato/branded'
 import type { FileAttachmentRef, ImageAttachmentRef } from '@tomato/attachment'
 import type { LocalizedText } from '@tomato/package-manifest'
+import type { JsonValue } from '@tomato/util-values'
 import type { MessageId, ToolCallId, ProviderRequestId, ReasoningEffortId } from './brand.ts'
 import type { Message, UserMessage } from './message.ts'
 
@@ -285,6 +286,14 @@ export interface LlmConfigurableProvider {
   defaultBaseURL?: string
   /** Environment variables used to construct a provider endpoint; absent when none are reported. */
   baseURLEnv?: readonly string[]
+  /**
+   * The one wire protocol this route's installed catalog models agree on,
+   * when the adapter reports it and a hand-declared route may name it.
+   * Configuration surfaces derive endpoint-protocol advice from it together
+   * with `defaultBaseURL`; absent when the route ships no catalog, its models
+   * disagree, or the shared protocol is not one a hand-declared route may name.
+   */
+  sharedProtocol?: string
   /** Authentication the adapter performs when the profile names no credential reference; absent when it reports none. */
   nativeAuth?: LlmNativeAuth
   /** Configuration diagnostic for repair; unaffected models may remain serviceable. */
@@ -337,6 +346,11 @@ declare module '@tomato/typert-protocol' {
       readonly settingsNs: string
       readonly baseURL?: string
     }
+    /** A draft model-adaptation request refused or failed. */
+    'llm/model-adaptation-rejected': {
+      readonly settingsNs: string
+      readonly provider?: string
+    }
   }
 }
 
@@ -356,6 +370,61 @@ export interface LlmDiscoveredModel {
   maxTokens?: number
   /** Accepted input types when disclosed by the catalog or endpoint; absent means unknown. */
   inputModalities?: readonly ModelModality[]
+}
+
+/**
+ * One drafted model row an adaptation request asks about. The fields carry
+ * what the draft already declares so the adapter advises only what is missing;
+ * an omitted field is unset, and `reasoningEfforts: false` is an explicit
+ * non-reasoning declaration the adapter must not overwrite.
+ */
+export interface LlmModelAdaptationTarget {
+  /** Model id the route sends to the provider. */
+  id: string
+  /** Request modalities the row declares, when it declares any. */
+  input?: readonly ModelModality[]
+  /** Reasoning levels the row declares; `false` declares a non-reasoning model. */
+  reasoningEfforts?: false | Readonly<Record<string, string | null>>
+  /** Wire-compatibility switches the row declares. */
+  compat?: Readonly<Record<string, JsonValue>>
+}
+
+/**
+ * One adaptation request over a provider draft. Like discovery, this describes
+ * configuration a surface is still editing: the adapter reads nothing stored
+ * and writes nothing, and the reply is profile-field advice the surface may
+ * adopt. The route facts are the effective ones the form shows — a draft value
+ * wins over the inherited one — so advice matches what a save would resolve.
+ */
+export interface LlmModelAdaptationRequest {
+  /** Route the draft edits, when it edits an existing one; lets the adapter read its installed catalog. */
+  provider?: string
+  /** Wire protocol the route speaks, when the form names one. */
+  api?: string
+  /** Route-level modalities a model inherits when neither its row nor the catalog declares any. */
+  defaultInput?: readonly ModelModality[]
+  /** Route-level wire-compatibility switches a model inherits per field. */
+  compat?: Readonly<Record<string, JsonValue>>
+  /** The drafted rows to advise, in list order; at least one. */
+  models: readonly LlmModelAdaptationTarget[]
+}
+
+/**
+ * Adapter advice for one model: the profile fields the draft is missing to
+ * serve the model with its family's protocol parameters and reasoning levels.
+ * Every field is a patch the surface applies verbatim — the adapter names only
+ * fields the request left unset and no catalog entry already supplies, so
+ * adopting advice never overwrites a deployment's own declaration.
+ */
+export interface LlmModelAdaptation {
+  /** Model id the advice belongs to. */
+  id: string
+  /** Request modalities to declare, when the family widens the effective fallback. */
+  input?: readonly ModelModality[]
+  /** Reasoning levels and their wire spellings to declare, when the model would otherwise not reason. */
+  reasoningEfforts?: Readonly<Record<string, string | null>>
+  /** Wire-compatibility switches to declare, each missing from the row and the route. */
+  compat?: Readonly<Record<string, JsonValue>>
 }
 
 /**

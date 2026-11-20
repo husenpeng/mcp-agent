@@ -41,7 +41,7 @@ struct ScheduleCard: View {
                 }
                 Text(entry.prompt)
                     .font(.caption)
-                    .foregroundStyle(TomatoToken.labelDimmed)
+                    .foregroundStyle(TomatoToken.labelCaption)
                     .lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 10) {
@@ -70,7 +70,7 @@ struct ScheduleCard: View {
             if records.isEmpty {
                 Text("还没有投递记录。")
                     .font(.caption2)
-                    .foregroundStyle(TomatoToken.labelDimmed)
+                    .foregroundStyle(TomatoToken.labelCaption)
             } else {
                 ForEach(records.prefix(5)) { delivery in
                     HStack(spacing: 6) {

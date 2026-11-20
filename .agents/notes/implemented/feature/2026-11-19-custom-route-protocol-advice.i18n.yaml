@@ -1,0 +1,22 @@
+# Bilingual-pair consistency record for 2026-11-19-custom-route-protocol-advice.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-11-19-custom-route-protocol-advice.md
+/agent-note-custom-route-protocol-advice-is-endpoint-driven-not-model-driven:
+  en: 61ecb214ddf869e8
+  zh: ab9ad077ea47f58c
+/agent-note-custom-route-protocol-advice-is-endpoint-driven-not-model-driven/problem:
+  en: ee5cdc0a55a80017
+  zh: a056a347867786ff
+/agent-note-custom-route-protocol-advice-is-endpoint-driven-not-model-driven/decision:
+  en: 9cfe39af192fa211
+  zh: 94af4bd7cf81b5d7
+/agent-note-custom-route-protocol-advice-is-endpoint-driven-not-model-driven/alternatives-considered:
+  en: 59cb840aba53616a
+  zh: 03253784074317c8
+/agent-note-custom-route-protocol-advice-is-endpoint-driven-not-model-driven/consequences:
+  en: 06f2c7d1e4f0333c
+  zh: fbdd03521d10e045
+/agent-note-custom-route-protocol-advice-is-endpoint-driven-not-model-driven/related:
+  en: 8d463086c7f867dc
+  zh: 5aac36af54011e52

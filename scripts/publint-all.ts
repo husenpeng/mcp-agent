@@ -51,7 +51,7 @@ type PublintResult =
   }
 
 function workspacePackages(): PackageTarget[] {
-  return globSync('packages/*/*/package.json', { cwd: packagesRoot })
+  return globSync(['packages/*/*/package.json', 'plugins/tomato-market/package.json'], { cwd: packagesRoot })
     .sort()
     .map((manifestPath) => {
       const absoluteManifestPath = resolve(packagesRoot, manifestPath)

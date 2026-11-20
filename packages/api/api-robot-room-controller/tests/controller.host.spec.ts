@@ -1,6 +1,8 @@
 import { Context } from '@tomato/cordis'
 import { RoomSpecValidationError } from '@tomato/experimental-robot-room'
-import type { Room, RoomEpisodeId, RoomId, RoomMessage, RoomMessageId, RoomSpec } from '@tomato/experimental-robot-room'
+import type {
+  Room, RoomEpisodeId, RoomId, RoomMessage, RoomMessageId, RoomSpec, RoomWorkRecord,
+} from '@tomato/experimental-robot-room'
 import { describe, expect, it } from 'vitest'
 import RoomController from '../src/index.ts'
 
@@ -19,6 +21,10 @@ const room = {
   id: 'room-1' as RoomId, spec: roomSpec, revision: 1,
   state: 'active', createdAt: 1, updatedAt: 1,
 } satisfies Room
+const workRecord = {
+  ticket: 't1', room: 'room-1', thread: 'room-1#1', member: 'coord', subject: 'hi',
+  sender: 'human:alice', strength: 'explicit', state: 'ready', rounds: 1, at: 2,
+} satisfies RoomWorkRecord
 const message = {
   id: 'm1' as RoomMessageId, room: 'room-1' as RoomId, seq: 1, episode: 'ep-1' as RoomEpisodeId,
   author: { kind: 'human', id: 'alice', name: 'Alice' }, kind: 'chat', text: 'hi',
@@ -36,6 +42,7 @@ function boot(options: { publishError?: unknown } = {}) {
     },
     post: async () => message,
     messages: async () => [message],
+    work: async () => [workRecord],
     pause: async () => room,
     resume: async () => room,
     relaxOnce: async () => room,
@@ -54,6 +61,7 @@ describe('RoomController', () => {
       expect(await controller.rooms()).toEqual([room])
       expect(await controller.room({ room: room.id })).toEqual(room)
       expect(await controller.messages({ room: room.id })).toEqual([message])
+      expect(await controller.work({ room: room.id })).toEqual([workRecord])
       expect(await controller.post({ room: room.id, text: 'hi' })).toEqual(message)
     } finally {
       await ctx.fiber.dispose()

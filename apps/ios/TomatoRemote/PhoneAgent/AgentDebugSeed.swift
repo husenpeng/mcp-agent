@@ -41,6 +41,10 @@
             let entries: [Entry]
             let error: String?
             let installError: String?
+            /// Whether this run had an account session; absent on seed runs.
+            var signedIn: Bool?
+            /// BFF origin the run used, when it named one.
+            var serviceBase: String?
         }
 
         static var seedURL: URL {
@@ -51,12 +55,92 @@
             documents.appendingPathComponent("agent-result.json")
         }
 
+        /// Where the service probe writes its transcript.
+        static var serviceResultURL: URL {
+            documents.appendingPathComponent("service-probe.json")
+        }
+
         static var isPresent: Bool {
             FileManager.default.fileExists(atPath: seedURL.path)
         }
 
         private static var documents: URL {
             FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        }
+
+        /// Prompt a `-TOMATO_SERVICE_PROBE` launch asks the service backend to run.
+        static var serviceProbePrompt: String? {
+            let arguments = ProcessInfo.processInfo.arguments
+            guard let index = arguments.firstIndex(of: "-TOMATO_SERVICE_PROBE"),
+                  arguments.indices.contains(index + 1)
+            else { return nil }
+            return arguments[index + 1]
+        }
+
+        /// Second prompt the same run sends in the same conversation.
+        ///
+        /// A joint-debug run that only sends one prompt cannot see what the
+        /// second turn replays; this asks for a follow-up so the transcript in
+        /// `service-probe.json` shows whether an earlier answer leaked in.
+        static var serviceProbeFollowUp: String? {
+            let arguments = ProcessInfo.processInfo.arguments
+            guard let index = arguments.firstIndex(of: "-TOMATO_SERVICE_PROBE_FOLLOWUP"),
+                  arguments.indices.contains(index + 1)
+            else { return nil }
+            return arguments[index + 1]
+        }
+
+        /// Run one prompt through agent_service and record the transcript.
+        ///
+        /// Joint debugging on a device without a human at the screen: the launch
+        /// arguments name the BFF origin and the prompt, and the result lands in
+        /// both the log and `Documents/service-probe.json`.
+        /// - Parameter prompt: text to send as the first user message.
+        static func runServiceProbe(prompt: String) async {
+            let agent = PhoneAgentModel.shared
+            agent.setBackend(.service)
+            agent.startNewConversation()
+            await agent.loadHistoryIfNeeded()
+            agent.send(prompt)
+            // `send` may defer until history is read; wait for the turn to open
+            // before waiting for it to close.
+            for _ in 0 ..< 20 where !agent.isRunning {
+                try? await Task.sleep(nanoseconds: 250_000_000)
+            }
+            for _ in 0 ..< 240 where agent.isRunning {
+                try? await Task.sleep(nanoseconds: 500_000_000)
+            }
+            if let followUp = serviceProbeFollowUp {
+                agent.send(followUp)
+                for _ in 0 ..< 20 where !agent.isRunning {
+                    try? await Task.sleep(nanoseconds: 250_000_000)
+                }
+                for _ in 0 ..< 240 where agent.isRunning {
+                    try? await Task.sleep(nanoseconds: 500_000_000)
+                }
+            }
+            let result = Result(
+                finishedAt: ISO8601DateFormatter().string(from: Date()),
+                entries: agent.messages.map {
+                    Result.Entry(
+                        role: $0.role.rawValue,
+                        text: $0.text,
+                        tool: $0.toolName,
+                        reasoningChars: $0.reasoning?.count
+                    )
+                },
+                error: agent.errorMessage,
+                installError: nil,
+                signedIn: AccountAuthStore.shared.isSignedIn,
+                serviceBase: AgentBackendStore.serviceBase.absoluteString
+            )
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+            guard let encoded = try? encoder.encode(result),
+                  let text = String(data: encoded, encoding: .utf8)
+            else { return }
+            NSLog("TOMATO_SERVICE_PROBE_RESULT %@", text)
+            try? encoded.write(to: serviceResultURL, options: .atomic)
         }
 
         /// Configure, install, run one prompt, and leave the transcript behind.

@@ -416,9 +416,8 @@
   corner-shape: round;
   background-color: var(--dsw-alias-button-primary-fill);
   background-image: var(--dsw-brand-gradient-cta);
-  /* Static white, not the foreground token: the arrow stays white on the
-     gradient fill in both themes. */
-  color: #fff;
+  /* On-color ink stays white on the gradient fill in both themes. */
+  color: var(--dsw-alias-label-on-color);
   cursor: pointer;
   transition:
     transform var(--ds-transition-duration-fast) var(--ds-ease-in-out),

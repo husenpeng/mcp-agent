@@ -496,7 +496,7 @@ describe('HttpFetchProvider body cancellation on error paths', () => {
 describe('web-fetch-http plugin registration', () => {
   it('registers the provider into ctx.web (HMR-safe)', async () => {
     const ctx = new Context()
-    await ctx.plugin(WebRuntime, { fetchProvider: LOCAL_FETCH_PROVIDER_ID })
+    await ctx.plugin(WebRuntime, { fetchProviders: [LOCAL_FETCH_PROVIDER_ID] })
     const fiber = await ctx.plugin(fetchPlugin, {})
     await expect(ctx.web.fetch({ url: `${base}/` }))
       .resolves.toMatchObject({ statusCode: 200 })
@@ -511,42 +511,42 @@ describe('web-fetch-http plugin registration', () => {
 
   it('rejects a non-positive resource limit at construction', async () => {
     const ctx = new Context()
-    await ctx.plugin(WebRuntime, { fetchProvider: LOCAL_FETCH_PROVIDER_ID })
+    await ctx.plugin(WebRuntime, { fetchProviders: [LOCAL_FETCH_PROVIDER_ID] })
     await expect(ctx.plugin(fetchPlugin, { maxResponseBytes: -1 }))
       .rejects.toThrow(/maxResponseBytes must be a positive finite number/)
   })
 
   it('rejects a zero timeout at construction', async () => {
     const ctx = new Context()
-    await ctx.plugin(WebRuntime, { fetchProvider: LOCAL_FETCH_PROVIDER_ID })
+    await ctx.plugin(WebRuntime, { fetchProviders: [LOCAL_FETCH_PROVIDER_ID] })
     await expect(ctx.plugin(fetchPlugin, { timeoutMs: 0 }))
       .rejects.toThrow(/timeoutMs must be a positive finite number/)
   })
 
   it('rejects a timeout beyond Node timer range at construction', async () => {
     const ctx = new Context()
-    await ctx.plugin(WebRuntime, { fetchProvider: LOCAL_FETCH_PROVIDER_ID })
+    await ctx.plugin(WebRuntime, { fetchProviders: [LOCAL_FETCH_PROVIDER_ID] })
     await expect(ctx.plugin(fetchPlugin, { timeoutMs: 2_147_483_648 }))
       .rejects.toThrow(/timeoutMs must be no greater than 2147483647/)
   })
 
   it('rejects a fractional redirect cap at construction', async () => {
     const ctx = new Context()
-    await ctx.plugin(WebRuntime, { fetchProvider: LOCAL_FETCH_PROVIDER_ID })
+    await ctx.plugin(WebRuntime, { fetchProviders: [LOCAL_FETCH_PROVIDER_ID] })
     await expect(ctx.plugin(fetchPlugin, { maxRedirects: 1.5 }))
       .rejects.toThrow(/maxRedirects must be a non-negative integer/)
   })
 
   it('rejects a negative redirect cap at construction', async () => {
     const ctx = new Context()
-    await ctx.plugin(WebRuntime, { fetchProvider: LOCAL_FETCH_PROVIDER_ID })
+    await ctx.plugin(WebRuntime, { fetchProviders: [LOCAL_FETCH_PROVIDER_ID] })
     await expect(ctx.plugin(fetchPlugin, { maxRedirects: -1 }))
       .rejects.toThrow(/maxRedirects must be a non-negative integer/)
   })
 
   it('accepts maxRedirects: 0 (follow no redirects) as valid config', async () => {
     const ctx = new Context()
-    await ctx.plugin(WebRuntime, { fetchProvider: LOCAL_FETCH_PROVIDER_ID })
+    await ctx.plugin(WebRuntime, { fetchProviders: [LOCAL_FETCH_PROVIDER_ID] })
     const fiber = await ctx.plugin(fetchPlugin, { maxRedirects: 0 })
     await expect(ctx.web.fetch({ url: `${base}/` }))
       .resolves.toMatchObject({ statusCode: 200 })

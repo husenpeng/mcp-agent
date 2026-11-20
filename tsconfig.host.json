@@ -153,7 +153,6 @@
     "apps/web/tests/composer-placeholder.e2e.ts",
     "apps/web/tests/context-meter.e2e.ts",
     "apps/web/tests/cordis-tool-round.e2e.ts",
-    "apps/web/tests/web-search-round.e2e.ts",
     "apps/web/tests/file-upload-round.e2e.ts",
     "apps/web/tests/message-actions.e2e.ts",
     "apps/web/tests/open-in-app-ssh.e2e.ts",
@@ -284,6 +283,7 @@
     "scripts/client-bundle-purity.spec.ts"
   ],
   "references": [
+    { "path": "./packages/api/system-monitor-controller/tsconfig.host.json" },
     {
       "path": "./packages/experimental/action-cards"
     },
@@ -343,6 +343,12 @@
     },
     {
       "path": "./packages/experimental/robot-app"
+    },
+    {
+      "path": "./packages/experimental/robot-crew-bundle"
+    },
+    {
+      "path": "./packages/experimental/work-team-bundle"
     },
     {
       "path": "./packages/experimental/robot-templates-marketing"
@@ -783,6 +789,12 @@
       "path": "./packages/experimental/tool-memory"
     },
     {
+      "path": "./packages/experimental/memory-dream"
+    },
+    {
+      "path": "./packages/experimental/tool-work-team"
+    },
+    {
       "path": "./packages/experimental/focus"
     },
     {
@@ -994,12 +1006,6 @@
     },
     {
       "path": "./packages/web/web-search-company"
-    },
-    {
-      "path": "./packages/web/web-search-deepseek"
-    },
-    {
-      "path": "./packages/web/web-deepseek-api"
     },
     {
       "path": "./packages/web/web-fetch-company"
@@ -1227,6 +1233,9 @@
       "path": "./packages/boot/plugin-market"
     },
     {
+      "path": "./plugins/tomato-market"
+    },
+    {
       "path": "./packages/llm/plugin-package-inventory-deepseek"
     },
     {
@@ -1258,12 +1267,6 @@
     },
     {
       "path": "./packages/document/office-to-pdf"
-    },
-    {
-      "path": "./packages/web/web-search-exa"
-    },
-    {
-      "path": "./packages/web/web-search-perplexity"
     },
     {
       "path": "./packages/experimental/client-ui-cot-translation/tsconfig.host.json"
