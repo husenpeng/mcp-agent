@@ -12,7 +12,8 @@ export const PROFILE_TEMPLATES: Record<string, ProfileTemplate> = {
     bundles: ['@tomato/base', '@tomato/acp-app'],
   },
   web: {
-    bundles: ['@tomato/base', '@tomato/web-app', '@tomato/experimental-browser-use-playwright-bundle'],
+    // The plugin markets: the Marketing plugins and General plugins tabs.
+    bundles: ['@tomato/base', '@tomato/web-app', '@tomato/experimental-browser-use-playwright-bundle', '@tomato/plugin-tomato-market'],
   },
   headless: {
     bundles: ['@tomato/base', '@tomato/headless'],
@@ -73,6 +74,10 @@ export const OPTIONAL_BUNDLES: readonly string[] = [
   '@tomato/experimental-plugin-market-bundle',
   '@tomato/experimental-tool-worktree',
   '@tomato/experimental-browser-use-playwright-bundle',
+  '@tomato/experimental-robot-crew-bundle',
+  // Listed only once one of its rows runs: its client half surfaces a share action that a profile without the
+  // bundle's own rows cannot use.
+  '@tomato/experimental-liveshare',
 ]
 
 /**
