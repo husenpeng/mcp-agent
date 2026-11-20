@@ -398,7 +398,7 @@ export function resolveModelPolicy(config: ModelPolicyOptions): ResolvedModelPol
   }
   const releaseDates = new Map<string, string>()
   const releaseTimes = new Map<string, number>()
-  for (const [key, value] of Object.entries(config.releaseDates ?? {})) {
+  for (const [key, value] of Object.entries(config.releaseDates)) {
     const slash = key.indexOf('/')
     if (slash <= 0 || slash === key.length - 1) {
       throw new Error(`llm-pi-ai: modelPolicy.releaseDates key "${key}" must be provider/model`)

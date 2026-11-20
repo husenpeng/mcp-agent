@@ -247,7 +247,7 @@ const MODEL_FAMILIES: readonly { pattern: RegExp; providers: readonly string[] }
  * @param id - configured model id.
  * @returns the canonical model id used to find the first-party catalog entry.
  */
-function canonicalModelId(id: string): string {
+export function canonicalModelId(id: string): string {
   const slash = id.lastIndexOf('/')
   let value = (slash === -1 ? id : id.slice(slash + 1)).trim().toLowerCase()
   value = value.replace(/[.:]/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '')
@@ -281,6 +281,47 @@ function catalogModelIndex(): Map<string, Model<Api>> {
     }
   }
   return index
+}
+
+/**
+ * The catalog entry one model id inherits from: the route's own catalog first,
+ * then — only for a route the installed catalog does not describe — the
+ * first-party capability index keyed by canonical id.
+ * @param defaults - the route's installed catalog models by id.
+ * @param capabilityIndex - the first-party index, or undefined for a catalog route.
+ * @param id - configured model id.
+ * @returns the entry whose fields the model inherits, or undefined.
+ */
+function inheritanceBase(
+  defaults: ReadonlyMap<string, Model<Api>>,
+  capabilityIndex: ReadonlyMap<string, Model<Api>> | undefined,
+  id: string,
+): Model<Api> | undefined {
+  return defaults.get(id) ?? capabilityIndex?.get(canonicalModelId(id))
+}
+
+/**
+ * The first-party catalog entry one model id on one route inherits from, for a
+ * caller outside catalog materialization (model adaptation). A catalog route
+ * answers only from its own catalog; a declared route also consults the
+ * first-party capability index, exactly as {@link resolveRouteModels} does.
+ * @param provider - provider route key.
+ * @param id - configured model id.
+ * @returns the inherited catalog entry, or undefined for a model the catalog does not describe.
+ */
+export function catalogBaseFor(provider: string | undefined, id: string): Model<Api> | undefined {
+  const defaults = catalogModels(provider ?? '')
+  return inheritanceBase(defaults, defaults.size === 0 ? catalogModelIndex() : undefined, id)
+}
+
+/**
+ * The one wire protocol a route's installed catalog models agree on, for a
+ * caller outside catalog materialization.
+ * @param provider - provider route key.
+ * @returns the shared protocol, or undefined when the route ships no catalog or its models disagree.
+ */
+export function catalogSharedApi(provider: string | undefined): string | undefined {
+  return sharedCatalogApi(catalogModels(provider ?? ''))
 }
 
 /**
@@ -978,7 +1019,7 @@ export function resolveRouteModels(
     if (entry.id.length === 0) invalid(provider, 'has a model with an empty id')
     if (seen.has(entry.id)) invalid(provider, `lists model "${entry.id}" more than once`)
     seen.add(entry.id)
-    const base = defaults.get(entry.id) ?? capabilityIndex?.get(canonicalModelId(entry.id))
+    const base = inheritanceBase(defaults, capabilityIndex, entry.id)
     const api = request.api ?? base?.api ?? routeApi
     if (api === undefined) {
       invalid(provider, `model "${entry.id}" needs an api; the installed catalog does not describe it, so set the`

@@ -168,6 +168,7 @@ describe('request-level dynamic profiles', () => {
       settingsPath: ['providers', 'openai'],
       declared: false,
       defaultBaseURL: 'https://api.openai.com/v1',
+      sharedProtocol: 'openai-responses',
       nativeAuth: { env: ['OPENAI_API_KEY'], oauth: true },
     })
     await configurations.get(ctx)!.update({

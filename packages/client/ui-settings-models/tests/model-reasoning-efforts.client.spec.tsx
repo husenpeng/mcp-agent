@@ -280,6 +280,7 @@ describe('reasoning-level validation', () => {
 describe('reasoning levels in the model list', () => {
   const operations: ModelsOperations = {
     discoverModels: () => Promise.resolve({ kind: 'found', models: [] }),
+    adaptModels: vi.fn(() => Promise.resolve({ kind: 'advised' as const, advice: [] })),
     providerModels: vi.fn(() => Promise.resolve([])),
     storeCredential: vi.fn(),
     removeCredential: vi.fn(),

@@ -7,7 +7,7 @@
 
 import type { Context as ClientContext } from '@tomato/cordis'
 import type {
-  LlmDiscoveredModel, LlmModelDiscoveryRequest,
+  LlmDiscoveredModel, LlmModelAdaptation, LlmModelAdaptationRequest, LlmModelDiscoveryRequest,
   SettingsNamespaceView, SettingsPathOpView,
 } from '@tomato/api-remotes/client'
 
@@ -28,6 +28,13 @@ export type ModelDiscoveryOutcome =
   /** The candidates the provider disclosed, in its own order. */
   | { readonly kind: 'found'; readonly models: readonly LlmDiscoveredModel[] }
   /** The interrogation was refused, with the Host's own diagnostic. */
+  | { readonly kind: 'refused'; readonly message: string }
+
+/** What one model-adaptation request answered. */
+export type ModelAdaptationOutcome =
+  /** The profile-field advice per model that has something to declare, in request order. */
+  | { readonly kind: 'advised'; readonly advice: readonly LlmModelAdaptation[] }
+  /** The request was refused, with the Host's own diagnostic. */
   | { readonly kind: 'refused'; readonly message: string }
 
 /** The Host operations the Models page and its cards invoke. */
@@ -65,6 +72,14 @@ export interface ModelsOperations {
    * @returns the candidates, or the refusal.
    */
   discoverModels(settingsNs: string, request: LlmModelDiscoveryRequest): Promise<ModelDiscoveryOutcome>
+  /**
+   * Ask the adapter family for the protocol parameters and reasoning levels a
+   * provider draft is missing to serve its models.
+   * @param settingsNs - namespace whose adapter family answers.
+   * @param request - the effective route facts and drafted rows.
+   * @returns the per-model advice, or the refusal.
+   */
+  adaptModels(settingsNs: string, request: LlmModelAdaptationRequest): Promise<ModelAdaptationOutcome>
   /**
    * Model ids one provider route currently serves, without a request.
    * @param provider - provider route key.
@@ -104,6 +119,12 @@ export function createModelsOperations(ctx: ClientContext): ModelsOperations {
       const response = await ctx.remote.llm.discoverModels(settingsNs, request)
       return response.ok
         ? { kind: 'found', models: response.value }
+        : { kind: 'refused', message: response.error.message }
+    },
+    adaptModels: async (settingsNs, request) => {
+      const response = await ctx.remote.llm.adaptModels(settingsNs, request)
+      return response.ok
+        ? { kind: 'advised', advice: response.value }
         : { kind: 'refused', message: response.error.message }
     },
   }

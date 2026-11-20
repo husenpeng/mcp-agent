@@ -33,6 +33,7 @@ import type { DeepSeekModelsValidationFailure } from './DeepSeekModelsEditor.tsx
 import { apiKeyFailure } from './apiKey.ts'
 import { EditorFooter } from './EditorFooter.tsx'
 import { ModelListEditor } from './ModelListEditor.tsx'
+import type { ModelDraft } from './ModelListEditor.tsx'
 import { validateReasoningEfforts } from './ModelReasoningEfforts.tsx'
 import type { ReasoningEffortsFailure } from './ModelReasoningEfforts.tsx'
 import { deriveKeyRef, protocolChoices, reasoningLevelChoices } from './store.ts'
@@ -337,11 +338,12 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
    * descriptor, so a wholesale replace rebuilt from it could delete fields
    * outside the card. Ops name only the fields this card can see.
    */
-  const applyOnce = async (): Promise<string | undefined> => {
+  const applyOnce = async (override?: Record<string, unknown>, mirrorAlways = false): Promise<string | undefined> => {
     const ns = namespace.ns
+    const source = override ?? draft
     // Removing a catalog route's conventional reference restores native auth.
     // Other aliases and custom routes keep their named environment fallback.
-    const profileDraft = clearsDerivedRef ? schema.deletePath(draft, ['apiKeyEnv']) : draft
+    const profileDraft = clearsDerivedRef ? schema.deletePath(source, ['apiKeyEnv']) : source
     // A pi-ai profile names the conventional reference only when this page is
     // about to store a key. Otherwise the provider keeps its native auth path.
     const next = layout === 'pi-ai' && stringAt(profileDraft, 'apiKeyEnv') === undefined
@@ -379,21 +381,25 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
       // A later settings failure cannot restore a secret that was deleted.
       setKeyDraft({ ...keyRemoval, removed: true })
     }
+    let revision = expectedRevision
     if (ops.length > 0) {
-      const written = await operations.writeSettings(ns, ops, expectedRevision)
+      const written = await operations.writeSettings(ns, ops, revision)
       if (written.kind !== 'written') return written.kind === 'conflict' ? t('conflict') : written.message
       setCommittedOriginal(schema.getPath(written.view.user, settingsPath))
-      setExpectedRevision(written.view.revision)
+      revision = written.view.revision
+      setExpectedRevision(revision)
       setDraft(next)
-      if (props.policy !== undefined) {
-        // A route's served models come from the adapter's catalog, which the
-        // page cannot read before the write registers the route.
-        const models = await settledProviderModels(operations, props.provider)
-        const allowlist = allowlistOps(props.policy, props.provider, models)
-        if (allowlist.length > 0) {
-          const mirrored = await operations.writeSettings(ns, allowlist, written.view.revision)
-          if (mirrored.kind === 'written') setExpectedRevision(mirrored.view.revision)
-        }
+    }
+    // A quick action mirrors the allowlist even when no profile field changed,
+    // so a model already configured but missing from the policy is admitted.
+    if (props.policy !== undefined && (ops.length > 0 || mirrorAlways)) {
+      // A route's served models come from the adapter's catalog, which the
+      // page cannot read before the write registers the route.
+      const models = await settledProviderModels(operations, props.provider)
+      const allowlist = allowlistOps(props.policy, props.provider, models)
+      if (allowlist.length > 0) {
+        const mirrored = await operations.writeSettings(ns, allowlist, revision)
+        if (mirrored.kind === 'written') setExpectedRevision(mirrored.view.revision)
       }
     }
     if (keyValue.length > 0) {
@@ -438,6 +444,30 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
   }
 
   /**
+   * Commit a rebuilt model list from a one-click action through the same save
+   * path as Apply, without closing the card. The allowlist is mirrored even
+   * when no field changed. An unchanged list on a route that still inherits its
+   * catalog keeps inheriting it rather than pinning every row into the user
+   * layer. Resolves to the failure message, or undefined once committed.
+   */
+  const commitModels = async (next: ModelDraft[]): Promise<string | undefined> => {
+    setBusy(true)
+    setFailure(undefined)
+    try {
+      const ownsModels = schema.hasPath(draft, ['models'])
+      const effective = modelDrafts(ownsModels ? schema.getPath(draft, ['models']) : inheritedModels())
+      let nextDraft = schema.setPath(draft, ['models'], next)
+      if (!ownsModels && JSON.stringify(next) === JSON.stringify(effective)) {
+        nextDraft = schema.deletePath(nextDraft, ['models'])
+      }
+      setDraft(nextDraft)
+      return await applyOnce(nextDraft, true)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  /**
    * The curated fields of one known adapter family. The family arrives
    * narrowed so the per-family branches below are total: an unknown namespace
    * renders the hint instead and never reaches this body.
@@ -453,6 +483,7 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
     const defaultContextWindow = schema.getPath(fallback, ['defaultContextWindow'])
     const defaultMaxTokens = schema.getPath(fallback, ['maxTokens'])
     const defaultInput = schema.getPath(fallback, ['defaultInput'])
+    const routeCompatValue = schema.getPath(draft, ['compat']) ?? schema.getPath(fallback, ['compat'])
     const baseURL = stringAt(fallback, 'baseURL') ?? props.defaultBaseURL
     const endpointEnv = props.baseURLEnv ?? []
     const endpointHint = family === 'deepseek' ? t('deepSeekEndpointHint')
@@ -667,9 +698,11 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
                   reasoningLevels={reasoning.levels}
                   reasoningLevelsOnly={reasoning.levelsOnly}
                   defaultInput={Array.isArray(defaultInput) ? defaultInput : undefined}
+                  routeCompat={isRecord(routeCompatValue) ? routeCompatValue : undefined}
                   probe={probe}
                   probeBlocked={keyRemoval !== undefined ? 'keyRemovePending' : shownKeyFailure}
                   operations={operations}
+                  onCommitModels={commitModels}
                   onBusyChange={setListBusy}
                 />
               )}

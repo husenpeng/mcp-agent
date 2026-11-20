@@ -118,6 +118,12 @@ profile 的 `models` 列表会替换而非扩展路由的已安装目录；每�
 
 插件会回答「该提供方可以提供哪些模型？」，供配置界面正在编辑或起草的路由使用。已安装目录提供的路由直接由目录回答，不发网络请求，并将其 `input` 数组保留为发现结果的 `inputModalities`；只有目录未描述的路由才会经网络询问。`openai-completions` 与 `openai-responses` 使用带 bearer 鉴权的 `GET {baseURL}/models`，`anthropic-messages` 则以 `x-api-key` 和 `anthropic-version` 使用原生 `GET /v1/models?limit=1000` 语义；其列表 URL 接受带或不带末尾 `/v1` 的 API 根地址，因为网关文档两种写法都会发布，且只有该列表 URL 会归一化这一段，模型请求收到的仍是配置原样的 `baseURL`。`google-generative-ai` 以 `x-goog-api-key` 使用 `GET {baseURL}/models?pageSize=1000`，因为其 `baseURL` 已包含 API 版本，例如 `/v1beta`。已配置且具名的路由会在 Host 内部提供已存凭据与 profile `headers`，因此通过 `cordis.patch.yml` 或 Cordis 配置设置的部署标头可以到达模型发现请求，但不会成为发现请求或 Models 页面的字段；表单中新键入的密钥仍优先于已存凭据。解析器接受标准 `data` 数组或富信息 `models` 对象，并归一化每个候选的 id、显示名、上下文窗口与最大输出 token 数；Anthropic 的 `max_input_tokens` 与 `max_tokens` 会进入相同容量字段，即使对象条目点名了另一个规范 id，对象键仍是请求 id，原始类型的对象属性会被忽略，缺失的显示名则回退到该请求 id。Gemini 的回答则是 `models` 数组：每个 `name` 去掉 `models/` 前缀后成为请求 id，`displayName`、`inputTokenLimit` 与 `outputTokenLimit` 填入相同字段，`supportedGenerationMethods` 不含 `generateContent` 的条目会被跳过。回答是界面可以提供给用户采纳的候选元数据——不存储任何内容，`cordis.patch.yml` 仍然是决定路由服务内容的唯一事实。
 
+### 按家族适配模型
+
+安装目录尚未收录的网关模型，解析时没有推理能力也没有协议兼容开关，因此只会当作纯文本模型应答。[`src/adaptation.ts`](src/adaptation.ts) 是填补这一空缺的代码内数据集：按模型家族存储推理深度档位与让其生效的协议参数，以 profile 字段表达。其方言是 OpenAI 兼容网关方言——`reasoning_effort`，外加 DeepSeek 原生的 `thinking` 开关；Anthropic Messages 路由获得相同档位以及 Claude 的自适应思考开关。插件通过 `ctx.llm.registerModelAdaptation` 注册该数据集，因此 `ctx.llm.adaptModels(settingsNs, request)` 可为提供方草稿给出建议。
+
+建议是草稿的纯函数，只点名草稿未设置且目录条目也未提供的字段。未知模型按其家族填充；处于自身协议上的目录模型交由目录处理；改接其他协议的目录模型保留继承的推理能力，但获得该家族的开关。行自身声明的 `reasoningEfforts`、`compat` 或 `input`，以及路由已设置的任何开关，都不会被重复写入。网关在聊天模型之外列出的非聊天模型——嵌入、重排、图像生成、语音——以及无法识别的家族，不获得任何建议。回复是供配置界面采纳的建议；不写入任何存储。Models 页的一键适配与一键更新动作会应用它，并在同一次保存中镜像部署允许清单。
+
 ### 失败与恢复
 
 pi-ai 不提供的路由需要 `api`、`baseURL` 与非空 `models` 列表；无法服务的 profile 会在写入处被拒绝，并点名路由与模型。失败携带稳定 code：无法使用的凭据以 `INVALID_CREDENTIAL` 失败并点名路由与引用，`apiKeyEnv` 引用解析为空的路由以 `MISSING_CREDENTIAL` 失败，未配置模型以 `UNKNOWN_MODEL` 失败，终止性提供方失败则区分 `QUOTA` 与暂时性 `RATE_LIMIT`。`GenerateOptions.stop` 以 `UNSUPPORTED_OPTION` 被拒绝，因为 pi-ai 的通用流式 UI 无法跨提供方保证它。
@@ -168,10 +174,11 @@ Config 更新严格验证发生变化的 provider。初始加载将已存储的�
 | [`src/replay.ts`](src/replay.ts) | 带版本的 `ReplayEnvelope` 存储与校验 |
 | [`src/prefix-binding.ts`](src/prefix-binding.ts) | 请求前缀变化后省略 Anthropic thinking |
 | [`src/discovery.ts`](src/discovery.ts) | 面向配置界面的端点询问 |
+| [`src/adaptation.ts`](src/adaptation.ts) | 家族适配数据集与最小草稿建议 |
 
 ### 注册与目录
 
-插件会在可配置提供方目录中声明它能认证的每个已安装目录提供方，并加入当前 profile 声明的每条路由，因此配置界面可以在任何路由存在之前提供完整目录。目录列出了模型却没有聊天模型的提供方（例如只有分类器模型）不进入目录，也不注册登录流程，因为本适配器只分派聊天请求。每个条目都携带 `declared`——pi-ai 是否在该键下不提供任何内容——因为只有适配器能区分手工声明路由与收窄目录路由。目录条目以 `defaultBaseURL` 表示提供方的固定端点或全部模型共用的固定端点，以 `baseURLEnv` 表示端点配置变量，以 `nativeAuth` 表示认证变量和 OAuth 可用性。不同模型的端点和未展开的 URL 模板不会显示为单一固定默认值。路由注册具有原子性：与其他适配器冲突的候选集合会让此前路由继续服务。零路由的裸挂载即休眠姿态：settings 分节提供 profile 前不注册任何内容，分节清空时路由随之消失。
+插件会在可配置提供方目录中声明它能认证的每个已安装目录提供方，并加入当前 profile 声明的每条路由，因此配置界面可以在任何路由存在之前提供完整目录。目录列出了模型却没有聊天模型的提供方（例如只有分类器模型）不进入目录，也不注册登录流程，因为本适配器只分派聊天请求。每个条目都携带 `declared`——pi-ai 是否在该键下不提供任何内容——因为只有适配器能区分手工声明路由与收窄目录路由。目录条目以 `defaultBaseURL` 表示提供方的固定端点或全部模型共用的固定端点，以 `baseURLEnv` 表示端点配置变量，以 `nativeAuth` 表示认证变量和 OAuth 可用性。当其目录模型共用一种手工声明路由可命名的协议时，条目还携带 `sharedProtocol`，使配置界面能仅凭端点主机名建议协议；混协议目录、或配置形状无法表达的共用协议，则不报告。不同模型的端点和未展开的 URL 模板不会显示为单一固定默认值。路由注册具有原子性：与其他适配器冲突的候选集合会让此前路由继续服务。零路由的裸挂载即休眠姿态：settings 分节提供 profile 前不注册任何内容，分节清空时路由随之消失。
 
 <a id="generated-provider-metadata"></a>
 ### 生成的提供方元数据

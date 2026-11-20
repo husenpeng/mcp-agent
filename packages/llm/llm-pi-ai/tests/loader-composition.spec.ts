@@ -122,6 +122,13 @@ describe('llm-pi-ai real dormant composition', () => {
     })
     expect(directory.find(entry => entry.provider === 'radius')?.defaultBaseURL).toBe('https://radius.pi.dev/v1')
     expect(directory.find(entry => entry.provider === 'opencode')?.defaultBaseURL).toBeUndefined()
+    // Endpoint-protocol advice: a catalog whose models agree on one nameable
+    // protocol reports it; a mixed catalog and a protocol the configuration
+    // shape cannot name report none.
+    expect(directory.find(entry => entry.provider === 'openai')?.sharedProtocol).toBe('openai-responses')
+    expect(directory.find(entry => entry.provider === 'anthropic')?.sharedProtocol).toBe('anthropic-messages')
+    expect(directory.find(entry => entry.provider === 'openrouter')?.sharedProtocol).toBeUndefined()
+    expect(directory.find(entry => entry.provider === 'mistral')?.sharedProtocol).toBeUndefined()
 
     // Exactly what the web Models page leaves on disk.
     await writeFile(settingsPath, [
@@ -188,6 +195,24 @@ describe('llm-pi-ai real dormant composition', () => {
     expect(server.headers[0]?.authorization).toBe('Bearer key-from-store')
     expect(server.headers[0]?.accept).toBe('application/json')
     expect(server.headers[0]?.['user-agent']).toBe(userAgent())
+  })
+
+  it('advises family adaptation data for a drafted gateway model through the registered namespace', async () => {
+    const { ctx } = await loadComposition()
+    // The dormant mount registers adaptation for the whole namespace, so a
+    // provider being added can ask before its route exists; no endpoint is read.
+    await expect(ctx.llm.adaptModels('llm-pi-ai', {
+      provider: 'blueai',
+      api: 'openai-completions',
+      models: [{ id: 'qwen4-max' }, { id: 'text-embedding-v4' }],
+    })).resolves.toEqual([
+      {
+        id: 'qwen4-max',
+        input: ['text', 'image'],
+        reasoningEfforts: { off: null, low: 'low', medium: 'medium', high: 'high', max: 'max' },
+        compat: { supportsReasoningEffort: true },
+      },
+    ])
   })
 
   it('continues natively after max-token assembly drops a tool call, with pruned replay metadata', async () => {

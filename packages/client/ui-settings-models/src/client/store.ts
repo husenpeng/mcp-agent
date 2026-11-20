@@ -32,6 +32,7 @@ export interface ProviderDirectoryEntry {
   readonly declared?: boolean
   readonly defaultBaseURL?: string
   readonly baseURLEnv?: readonly string[]
+  readonly sharedProtocol?: string
   readonly nativeAuth?: LlmNativeAuth
   readonly error?: string
 }
@@ -57,6 +58,7 @@ export function joinProviderDirectory(
     ...entry.declared === undefined ? {} : { declared: entry.declared },
     ...entry.defaultBaseURL === undefined ? {} : { defaultBaseURL: entry.defaultBaseURL },
     ...entry.baseURLEnv === undefined ? {} : { baseURLEnv: entry.baseURLEnv },
+    ...entry.sharedProtocol === undefined ? {} : { sharedProtocol: entry.sharedProtocol },
     ...entry.nativeAuth === undefined ? {} : { nativeAuth: entry.nativeAuth },
     ...entry.error === undefined ? {} : { error: entry.error },
   }))

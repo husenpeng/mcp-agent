@@ -29,6 +29,7 @@ function Editor(props: {
       {...shared} probe={{ settingsNs: 'llm-pi-ai' }} onBusyChange={() => {}}
       operations={{
         providerModels: vi.fn(() => Promise.resolve([])), discoverModels: vi.fn(),
+        adaptModels: vi.fn(() => Promise.resolve({ kind: 'advised' as const, advice: [] })),
         storeCredential: vi.fn(), removeCredential: vi.fn(), writeSettings: vi.fn(),
       }}
     />

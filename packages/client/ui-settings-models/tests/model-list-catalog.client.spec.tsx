@@ -12,6 +12,7 @@ function operations(discoverModels: ModelsOperations['discoverModels']): ModelsO
   return {
     providerModels: vi.fn(() => Promise.resolve([])),
     discoverModels,
+    adaptModels: vi.fn(() => Promise.resolve({ kind: 'advised' as const, advice: [] })),
     storeCredential: vi.fn(),
     removeCredential: vi.fn(),
     writeSettings: vi.fn(),

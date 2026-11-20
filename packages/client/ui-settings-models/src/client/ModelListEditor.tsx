@@ -20,8 +20,12 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import type { LlmDiscoveredModel } from '@tomato/api-remotes/client'
+import type {
+  LlmDiscoveredModel, LlmModelAdaptation, LlmModelAdaptationRequest, LlmModelAdaptationTarget,
+  LlmModelDiscoveryRequest, ModelModality,
+} from '@tomato/api-remotes/client'
 import { AnimatedRows, Button, IconPlusOutlineRegular, Modal } from '@tomato/client-ui-primitives'
+import type { JsonValue } from '@tomato/util-values'
 import { formatCapacity, parseCapacity } from './DeepSeekModelsEditor.tsx'
 import type { ModelsOperations } from './operations.ts'
 import type { DeepSeekModelDraft } from './DeepSeekModelsEditor.tsx'
@@ -83,6 +87,14 @@ export interface ModelListEditorProps {
   reasoningLevelsOnly?: boolean | undefined
   /** Route input types for models absent from the installed catalog. */
   defaultInput?: readonly string[] | undefined
+  /** Route-level wire-compatibility switches a model inherits per field; the effective value the form shows. */
+  routeCompat?: Readonly<Record<string, unknown>> | undefined
+  /**
+   * Commit a rebuilt model list through the owning card's save path, mirroring
+   * the deployment allowlist. Resolves to a failure message, or undefined once
+   * committed. Absent hides the one-click adapt and update actions.
+   */
+  onCommitModels?: ((models: ModelDraft[]) => Promise<string | undefined>) | undefined
   /** Whether the user layer currently owns the whole array; absent on a create. */
   overridden?: boolean
   /** Replace the drafted rows. */
@@ -98,6 +110,13 @@ export interface ModelListEditorProps {
    * told what the field already says.
    */
   probeBlocked?: keyof typeof en | undefined
+  /**
+   * A sentence appended to a failed fetch's failure text, when the owning card
+   * has protocol advice to offer (its protocol field is still automatic). The
+   * card owns it because only it knows whether the protocol was chosen by the
+   * user or prefilled from the endpoint.
+   */
+  probeFailureHint?: string | undefined
   /** The Host operations whose interrogation answers the fetch action. */
   operations: ModelsOperations
   /** Section copy. */
@@ -148,17 +167,77 @@ function adopt(candidate: LlmDiscoveredModel): ModelDraft {
   }
 }
 
+/** Whether a JSON value is a plain object. */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+/** The drafted fields one row declares, as an adaptation request target. */
+function adaptationTarget(model: ModelDraft): LlmModelAdaptationTarget {
+  const input = model['input']
+  const efforts = model['reasoningEfforts']
+  const compat = model['compat']
+  return {
+    id: textOf(model, 'id'),
+    ...Array.isArray(input) ? { input: input as ModelModality[] } : {},
+    ...efforts === false || isRecord(efforts)
+      ? { reasoningEfforts: efforts as false | Record<string, string | null> }
+      : {},
+    ...isRecord(compat) ? { compat: compat as Record<string, JsonValue> } : {},
+  }
+}
+
+/** The route facts and rows one adaptation request carries, from the live form. */
+function adviceRequest(
+  probe: ProbeTarget,
+  defaultInput: readonly string[] | undefined,
+  routeCompat: Readonly<Record<string, unknown>> | undefined,
+  models: readonly ModelDraft[],
+): LlmModelAdaptationRequest {
+  return {
+    ...probe.provider === undefined ? {} : { provider: probe.provider },
+    ...probe.api === undefined ? {} : { api: probe.api },
+    ...defaultInput === undefined ? {} : { defaultInput: defaultInput as ModelModality[] },
+    ...routeCompat === undefined ? {} : { compat: routeCompat as Record<string, JsonValue> },
+    models: models.map(adaptationTarget).filter(target => target.id.length > 0),
+  }
+}
+
+/**
+ * Apply adapter advice to the rows it names. Each advised field is one the row
+ * left unset, so it is written verbatim; a compat switch merges into any the
+ * row already carries. Rows the advice does not name are returned unchanged.
+ */
+function mergeAdvice(models: readonly ModelDraft[], advice: readonly LlmModelAdaptation[]): ModelDraft[] {
+  const byId = new Map(advice.map(entry => [entry.id, entry]))
+  return models.map((model) => {
+    const entry = byId.get(textOf(model, 'id'))
+    if (entry === undefined) return model
+    const next = { ...model }
+    if (entry.input !== undefined) next['input'] = [...entry.input]
+    if (entry.reasoningEfforts !== undefined) next['reasoningEfforts'] = { ...entry.reasoningEfforts }
+    if (entry.compat !== undefined) next['compat'] = { ...isRecord(model['compat']) ? model['compat'] : {}, ...entry.compat }
+    return next
+  })
+}
+
 /**
  * Render the model list with its fetch action.
  * @param props - the drafted rows, probe target, wire face, and copy.
  * @returns the model-list editor.
  */
 export function ModelListEditor(props: ModelListEditorProps): ReactNode {
-  const { models, onChange, probe, operations, t, disabled, onBusyChange } = props
+  const { models, onChange: applyChange, probe, operations, t, disabled, onBusyChange } = props
   const { catalogProvider } = props
   const [busy, setBusy] = useState(false)
   useEffect(() => { onBusyChange(busy) }, [busy, onBusyChange])
   const [failure, setFailure] = useState<string | undefined>(undefined)
+  // A one-click action's outcome, shown beside the rows until the next edit or
+  // action; the list itself is the durable record of what changed.
+  const [notice, setNotice] = useState<string | undefined>(undefined)
+  // Which action holds the busy state, so only its button shows the pending label.
+  const [busyAction, setBusyAction] = useState<'fetch' | 'adapt' | 'update'>('fetch')
+  const onChange = (next: ModelDraft[]): void => { setNotice(undefined); applyChange(next) }
   const [inheritedCatalog, setInheritedCatalog] = useState<{
     provider: string
     models: readonly LlmDiscoveredModel[]
@@ -208,18 +287,24 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
     }))
   }
 
+  /** The endpoint facts a discovery request carries, from the live form. */
+  const discoveryRequest = (): LlmModelDiscoveryRequest => ({
+    ...probe.provider === undefined ? {} : { provider: probe.provider },
+    ...probe.baseURL === undefined || probe.baseURL.length === 0 ? {} : { baseURL: probe.baseURL },
+    ...probe.api === undefined ? {} : { api: probe.api },
+    ...probe.apiKey === undefined ? {} : { apiKey: probe.apiKey },
+  })
+
   const fetchModels = async (): Promise<void> => {
     setBusy(true)
+    setBusyAction('fetch')
     setFailure(undefined)
     try {
-      const answer = await operations.discoverModels(probe.settingsNs, {
-        ...probe.provider === undefined ? {} : { provider: probe.provider },
-        ...probe.baseURL === undefined || probe.baseURL.length === 0 ? {} : { baseURL: probe.baseURL },
-        ...probe.api === undefined ? {} : { api: probe.api },
-        ...probe.apiKey === undefined ? {} : { apiKey: probe.apiKey },
-      })
+      const answer = await operations.discoverModels(probe.settingsNs, discoveryRequest())
       if (answer.kind === 'refused') {
-        setFailure(answer.message)
+        setFailure(props.probeFailureHint === undefined
+          ? answer.message
+          : `${answer.message} ${props.probeFailureHint}`)
         return
       }
       const found = answer.models
@@ -241,6 +326,78 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
     setCandidates(undefined)
     setFlipped(new Set())
     setCandidateQuery('')
+  }
+
+  /**
+   * One-click adapt: ask the adapter for the protocol parameters and reasoning
+   * levels the rows are missing, apply them, and commit through the card's save
+   * path (which mirrors the allowlist even when no field changed).
+   */
+  const adaptModels = async (): Promise<void> => {
+    if (props.onCommitModels === undefined) return
+    setBusy(true)
+    setBusyAction('adapt')
+    setFailure(undefined)
+    setNotice(undefined)
+    try {
+      const answer = await operations.adaptModels(
+        probe.settingsNs, adviceRequest(probe, props.defaultInput, props.routeCompat, models),
+      )
+      if (answer.kind === 'refused') {
+        setFailure(answer.message)
+        return
+      }
+      const merged = mergeAdvice(models, answer.advice)
+      const failure = await props.onCommitModels(merged)
+      if (failure !== undefined) {
+        setFailure(failure)
+        return
+      }
+      setNotice(answer.advice.length === 0
+        ? t('adaptNone')
+        : t('adaptDone').replace('{count}', () => String(answer.advice.length)))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  /**
+   * One-click update: ask the endpoint what it serves, add the models the list
+   * does not name yet, adapt the merged list, and commit. A listing with no new
+   * model still commits so the allowlist mirrors the served models.
+   */
+  const updateModels = async (): Promise<void> => {
+    if (props.onCommitModels === undefined) return
+    setBusy(true)
+    setBusyAction('update')
+    setFailure(undefined)
+    setNotice(undefined)
+    try {
+      const answer = await operations.discoverModels(probe.settingsNs, discoveryRequest())
+      if (answer.kind === 'refused') {
+        setFailure(answer.message)
+        return
+      }
+      const found = [...new Map(answer.models.map(model => [model.id, model])).values()]
+      if (catalogProvider !== undefined) setInheritedCatalog({ provider: catalogProvider, models: found })
+      const existing = new Set(models.map(model => textOf(model, 'id')))
+      const added = found.filter(model => !existing.has(model.id)).map(adopt)
+      const merged = [...models, ...added]
+      const advice = await operations.adaptModels(
+        probe.settingsNs, adviceRequest(probe, props.defaultInput, props.routeCompat, merged),
+      )
+      const adapted = advice.kind === 'advised' ? mergeAdvice(merged, advice.advice) : merged
+      const failure = await props.onCommitModels(adapted)
+      if (failure !== undefined) {
+        setFailure(failure)
+        return
+      }
+      setNotice(added.length === 0
+        ? t('updateNone')
+        : t('updateDone').replace('{count}', () => String(added.length)))
+    } finally {
+      setBusy(false)
+    }
   }
 
   // The picker opens on the current list so a few models can be added or
@@ -333,6 +490,32 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
             </button>
           )
           : null}
+        {props.onCommitModels === undefined
+          ? null
+          : (
+            <>
+              <button
+                type="button"
+                className={styles['linkButton']}
+                disabled={disabled || busy || !models.some(model => textOf(model, 'id').length > 0)}
+                title={models.some(model => textOf(model, 'id').length > 0) ? undefined : t('adaptNeedsModels')}
+                onClick={() => { void adaptModels() }}
+              >
+                {busy && busyAction === 'adapt' ? t('adapting') : t('adaptModels')}
+              </button>
+              <button
+                type="button"
+                className={styles['linkButton']}
+                disabled={disabled || busy || !askable || props.probeBlocked !== undefined}
+                title={props.probeBlocked !== undefined
+                  ? t(props.probeBlocked)
+                  : askable ? undefined : t('fetchNeedsBaseUrl')}
+                onClick={() => { void updateModels() }}
+              >
+                {busy && busyAction === 'update' ? t('updating') : t('updateModels')}
+              </button>
+            </>
+          )}
         <button
           type="button"
           className={styles['linkButton']}
@@ -342,7 +525,7 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
             : askable ? undefined : t('fetchNeedsBaseUrl')}
           onClick={() => { void fetchModels() }}
         >
-          {busy ? t('fetching') : t('fetchModels')}
+          {busy && busyAction === 'fetch' ? t('fetching') : t('fetchModels')}
         </button>
       </div>
       {models.length === 0 ? <p className={styles['modelEmpty']}>{t('modelsEmpty')}</p> : null}
@@ -391,6 +574,7 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
         <IconPlusOutlineRegular size={14} />
         {t('addModel')}
       </button>
+      {notice !== undefined ? <p className={styles['savedNotice']} role="status">{notice}</p> : null}
       {failure !== undefined ? <p className={styles['error']}>{failure}</p> : null}
       <Modal
         open={candidates !== undefined}

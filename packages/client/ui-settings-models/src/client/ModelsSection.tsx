@@ -30,6 +30,7 @@ import type { LlmNativeAuth, SettingsNamespaceView } from '@tomato/api-remotes/c
 import type {} from './slot-contract.ts'
 import { CustomProviderCard } from './CustomProviderCard.tsx'
 import { readModelPolicy } from './policy.ts'
+import { protocolAdviceByHost } from './protocol-advice.ts'
 import { deriveKeyRef, protocolChoices, providerUsable, reasoningLevelChoices } from './store.ts'
 import type { ModelsSettingsStore, ProviderRow } from './store.ts'
 import type { ModelsOperations } from './operations.ts'
@@ -379,6 +380,10 @@ function Loaded({ injected, renderSlot }: { injected: ModelsSectionFace; renderS
   const protocols = protocolChoices(piAi, schema)
   const reasoningLevels = reasoningLevelChoices(piAi, schema)
   const policy = readModelPolicy(piAi, schema)
+  // Endpoint-protocol advice for the custom-API form, derived from the same
+  // directory the rows render: each catalog provider's endpoint hostname and
+  // the protocol its models agree on. The form prefills from it while automatic.
+  const protocolAdvice = protocolAdviceByHost(state.rows.map(row => row.entry))
   // Each mode is offered while its namespace is mounted and enabled while it
   // has something to offer; the card shows the chosen mode where both are
   // offered, else the only one there is. A mode's panel is mounted while it is
@@ -679,6 +684,7 @@ function Loaded({ injected, renderSlot }: { injected: ModelsSectionFace; renderS
                     <CustomProviderCard
                       taken={state.rows.map(row => row.entry.provider)}
                       protocols={protocols}
+                      protocolAdvice={protocolAdvice}
                       reasoningLevels={reasoningLevels}
                       revision={piAi.revision}
                       policy={policy}

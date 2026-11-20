@@ -66,6 +66,7 @@ function setup(namespace: SettingsNamespaceView, settingsPath: string[] = []) {
     removeCredential: vi.fn(() => Promise.resolve(undefined)),
     writeSettings,
     discoverModels: vi.fn<ModelsOperations['discoverModels']>(() => Promise.resolve({ kind: 'found', models: [] })),
+    adaptModels: vi.fn(() => Promise.resolve({ kind: 'advised' as const, advice: [] })),
     providerModels: vi.fn(() => Promise.resolve([])),
   }
   const onClose = vi.fn()

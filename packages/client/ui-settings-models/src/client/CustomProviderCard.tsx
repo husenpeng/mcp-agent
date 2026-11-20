@@ -30,7 +30,9 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { JsonValue } from '@tomato/util-values'
 import type { SettingsPathOpView } from '@tomato/api-remotes/client'
+import { Tooltip } from '@tomato/client-ui-primitives'
 import { apiKeyFailure } from './apiKey.ts'
+import { adviseProtocol } from './protocol-advice.ts'
 import { ApiKeyInput } from './ApiKeyInput.tsx'
 import { EditorFooter } from './EditorFooter.tsx'
 import { validateDeepSeekModels } from './DeepSeekModelsEditor.tsx'
@@ -83,6 +85,12 @@ export interface CustomProviderCardProps {
   taken: readonly string[]
   /** Wire protocols the adapter can serve, in the order it reports them. */
   protocols: readonly string[]
+  /**
+   * Hostname→protocol advice derived from the configurable-provider directory.
+   * While the protocol field is automatic it prefills from the endpoint's exact
+   * hostname, falling back to the first offered protocol; a manual choice sticks.
+   */
+  protocolAdvice: ReadonlyMap<string, string>
   /** Reasoning levels the adapter's schema accepts, in escalation order; empty shows no reasoning control. */
   reasoningLevels: readonly string[]
   /**
@@ -117,13 +125,18 @@ export interface CustomProviderCardProps {
  * @returns the creation card.
  */
 export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
-  const { taken, protocols, reasoningLevels, operations, t, onBusyChange } = props
+  const { taken, protocols, protocolAdvice, reasoningLevels, operations, t, onBusyChange } = props
   // The write is checked against the revision on which this draft was opened.
   const [openedAt] = useState(() => props.revision)
   const [route, setRoute] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [baseURL, setBaseURL] = useState('')
-  const [protocol, setProtocol] = useState(protocols[0] ?? '')
+  const fallbackProtocol = protocols[0] ?? ''
+  const [protocol, setProtocol] = useState(fallbackProtocol)
+  // The protocol field is automatic until the user explicitly chooses: while
+  // automatic it follows the endpoint, and a manual choice sticks through later
+  // endpoint edits so a correction is never silently undone.
+  const [protocolManual, setProtocolManual] = useState(false)
   const [keyDraft, setKeyDraft] = useState('')
   const [models, setModels] = useState<readonly ModelDraft[]>([])
   const [busy, setBusy] = useState(false)
@@ -149,6 +162,14 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
   // fallbacks; what a route cannot default is at least one model. Every row of
   // this hand-declared route edits its reasoning levels, so they are checked too.
   const reasoning = protocolReasoningLevels(protocol, reasoningLevels)
+  // While the protocol is still automatic, a failed endpoint interrogation may
+  // be the wrong protocol rather than a dead endpoint: the two common relay
+  // shapes point at each other. A manual choice owns its own failures, so it
+  // gets no suggestion.
+  const protocolSuggestion = protocolManual ? undefined
+    : protocol === 'openai-completions' ? t('customProtocolTryAnthropic')
+      : protocol === 'anthropic-messages' ? t('customProtocolTryCompletions')
+        : undefined
   const modelFailure = validateDeepSeekModels(models)
     ?? validateReasoningEfforts(models, reasoning.levelsOnly ? reasoning.levels : undefined)
   // A blank key is a legal choice only where the protocol can authenticate without one.
@@ -286,18 +307,27 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
           aria-label={t('baseUrl')}
           aria-invalid={baseUrlInvalid}
           disabled={profileDisabled}
-          onChange={(event) => { setBaseURL(event.target.value) }}
+          onChange={(event) => {
+            const next = event.target.value
+            setBaseURL(next)
+            if (!protocolManual) setProtocol(adviseProtocol(next.trim(), protocolAdvice, fallbackProtocol))
+          }}
         />
       </div>
       {baseUrlInvalid ? <p className={styles['error']}>{t('customBaseUrlInvalid')}</p> : null}
       <div className={styles['field']}>
-        <span className={styles['fieldLabel']}>{t('customApi')}</span>
+        <span className={styles['fieldLabel']}>
+          {t('customApi')}
+          <Tooltip label={t('customApiHelpText')} side="right" delayMs={0} focusDelayMs={0} portal openOnClick>
+            <button type="button" className={styles['helpButton']} aria-label={t('customApiHelp')}>?</button>
+          </Tooltip>
+        </span>
         <select
           className={`${styles['input']} ${styles['selectInput']}`}
           value={protocol}
           aria-label={t('customApi')}
           disabled={profileDisabled}
-          onChange={(event) => { setProtocol(event.target.value) }}
+          onChange={(event) => { setProtocol(event.target.value); setProtocolManual(true) }}
         >
           {protocols.map(choice => <option key={choice} value={choice}>{protocolLabel(t, choice)}</option>)}
         </select>
@@ -332,6 +362,7 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
           api: protocol,
           ...keyValue.length === 0 ? {} : { apiKey: keyValue },
         }}
+        probeFailureHint={protocolSuggestion}
         probeBlocked={baseUrlInvalid
           ? 'customBaseUrlInvalid'
           : keyFailure === 'keyBlank' ? 'keyBlankNew' : keyFailure}

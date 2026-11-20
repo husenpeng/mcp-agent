@@ -65,14 +65,16 @@ import type { AdapterRegistrationHandle, DirectoryRegistrationHandle, LlmConfigu
 import type {} from '@tomato/fs'
 import { deepEqualJson } from '@tomato/util-values'
 import { PiAiAdapter } from './adapter.ts'
+import { adaptModels } from './adaptation.ts'
 import { authContextFrom, credentialStoreFrom } from './auth.ts'
-import { catalogProvider, catalogProviderIds } from './catalog.ts'
+import { catalogProvider, catalogProviderIds, catalogSharedApi } from './catalog.ts'
 import { assertServiceable, Config, resolveModelPolicy, resolveProfiles } from './config.ts'
 import type { ModelPolicyConfig, ResolvedModelPolicy, ResolvedPiAiProviderProfile } from './config.ts'
 import { discoverModels } from './discovery.ts'
 import type { StoredModelDiscoveryProfile } from './discovery.ts'
 import { registerPiAiFlows } from './login.ts'
 import { providerDefaultsOf } from './provider-data.ts'
+import { supportedProtocols } from './provider.ts'
 import type { PiAiRequestHeaderContext } from './types.ts'
 
 export { PiAiAdapter } from './adapter.ts'
@@ -144,7 +146,9 @@ function registrationFacts(profiles: ReadonlyMap<string, ResolvedPiAiProviderPro
  * configuration surfaces could neither show nor edit it. A catalog route also
  * carries its catalog endpoint and native authentication, which a settings
  * editor shows while the profile leaves the endpoint or the credential
- * reference unset.
+ * reference unset. A catalog route also reports the one protocol its shipped
+ * models agree on, when a hand-declared route may name it, so a configuration
+ * surface can advise a protocol from the endpoint alone.
  * @param profiles - the currently resolved provider profiles.
  * @returns the directory entries in catalog order, declared routes last.
  */
@@ -153,8 +157,13 @@ function directoryEntries(
   settingsNs: string,
 ): LlmConfigurableProvider[] {
   const entries = new Map<string, LlmConfigurableProvider>()
+  const nameable = new Set(supportedProtocols())
   const declare = (provider: string, displayName: string, error?: string): void => {
     const installed = catalogProvider(provider)
+    // Only a protocol a hand-declared route may name is advice: a catalog whose
+    // shared protocol the configuration shape cannot express (Mistral
+    // Conversations) would advise a value the form refuses.
+    const shared = installed === undefined ? undefined : catalogSharedApi(provider)
     entries.set(provider, {
       provider,
       displayName,
@@ -165,6 +174,7 @@ function directoryEntries(
       // route is still one pi-ai knows.
       declared: installed === undefined,
       ...installed === undefined ? {} : providerDefaultsOf(installed),
+      ...shared !== undefined && nameable.has(shared) ? { sharedProtocol: shared } : {},
       ...error === undefined ? {} : { error },
     })
   }
@@ -322,6 +332,11 @@ export function apply(ctx: Context, config: Config): void {
     { ...request, ...signal === undefined ? {} : { signal } },
     () => storedDiscoveryProfile(request.provider),
   ))
+  // Adapting a draft's models to their families' protocol parameters and
+  // reasoning levels is the same kind of configuration-time action: a pure
+  // function of the draft the surface is editing, offered for the whole
+  // namespace so a provider being added can ask before its route exists.
+  ctx.llm.registerModelAdaptation(settingsNs, request => Promise.resolve(adaptModels(request)))
   // Route effects bind to this apply fiber via the stable `ctx` reference,
   // even when a swap runs inside the scoped settings callback below. A bare
   // mount (zero routes) is the dormant posture: nothing registers until a

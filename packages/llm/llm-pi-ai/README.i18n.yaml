@@ -38,6 +38,9 @@
 /tomato-llm-pi-ai/use-this-package/discover-models-from-endpoints:
   en: ac930f29006456cf
   zh: 8d37c47f02761452
+/tomato-llm-pi-ai/use-this-package/adapt-models-to-their-families:
+  en: 369e27295eead606
+  zh: ff70e8675d5268c4
 /tomato-llm-pi-ai/use-this-package/failures-and-recovery:
   en: 3c1edbc63de24a1a
   zh: 01592718c3a2c79f
@@ -51,11 +54,11 @@
   en: 615ca9834bf6544f
   zh: 2d70b548f99000d1
 /tomato-llm-pi-ai/understand-the-implementation/source-map:
-  en: 01520c709ee2202c
-  zh: de919d3f2ff61046
+  en: 673ee7849c503cd2
+  zh: 2afe6ea784a7a486
 /tomato-llm-pi-ai/understand-the-implementation/registration-and-directory:
-  en: 0c6df3e8b6a75372
-  zh: 476666a6f209542c
+  en: 841f887f6f5310fe
+  zh: 3ad0c15e358069e8
 /tomato-llm-pi-ai/understand-the-implementation/generated-provider-metadata:
   en: 477d277e9ac35c8f
   zh: 96870ca333fb6510

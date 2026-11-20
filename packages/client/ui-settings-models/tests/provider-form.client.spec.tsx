@@ -820,7 +820,8 @@ describe('endpoint interrogation', () => {
     const scripted = scriptedFace()
     render(
       <CustomProviderCard
-        taken={[]} protocols={PROTOCOLS} reasoningLevels={LEVELS} revision={7} operations={operationsWith(scripted.face)}
+        taken={[]} protocols={PROTOCOLS} protocolAdvice={new Map()} reasoningLevels={LEVELS} revision={7}
+        operations={operationsWith(scripted.face)}
         t={t} readOnly={false} onClose={vi.fn()}
       />,
     )
@@ -999,6 +1000,7 @@ describe('hand-declared providers', () => {
       <CustomProviderCard
         taken={['openai']}
         protocols={PROTOCOLS}
+        protocolAdvice={new Map()}
         reasoningLevels={LEVELS}
         revision={7}
         operations={operationsWith(scripted.face)}
@@ -1486,8 +1488,57 @@ describe('hand-declared providers', () => {
     fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'http://localhost:11434/v1' } })
     fireEvent.click(screen.getByText(en.fetchModels))
 
-    await screen.findByText('connection refused')
+    // The protocol is still automatic (the OpenAI-compatible fallback), so the
+    // failure carries the cross-protocol suggestion alongside the Host text.
+    await screen.findByText(`connection refused ${en.customProtocolTryAnthropic}`)
     expect(screen.queryByText(en.customBaseUrlInvalid)).toBeNull()
+  })
+
+  it('prefills the protocol from the endpoint hostname while automatic', () => {
+    mountCard({ protocolAdvice: new Map([['api.anthropic.com', 'anthropic-messages']]) })
+    const select = screen.getByLabelText(en.customApi) as HTMLSelectElement
+    expect(select.value).toBe('openai-completions')
+    fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://api.anthropic.com' } })
+    expect(select.value).toBe('anthropic-messages')
+  })
+
+  it('falls back to the first protocol for an endpoint the directory does not name', () => {
+    mountCard({ protocolAdvice: new Map([['api.anthropic.com', 'anthropic-messages']]) })
+    fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://relay.acme.example/v1' } })
+    expect(screen.getByLabelText<HTMLSelectElement>(en.customApi).value).toBe('openai-completions')
+  })
+
+  it('keeps a manually chosen protocol fixed through later endpoint edits', () => {
+    mountCard({
+      protocolAdvice: new Map([
+        ['api.anthropic.com', 'anthropic-messages'],
+        ['api.openai.com', 'openai-responses'],
+      ]),
+    })
+    const select = screen.getByLabelText(en.customApi) as HTMLSelectElement
+    fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://api.anthropic.com' } })
+    expect(select.value).toBe('anthropic-messages')
+    fireEvent.change(select, { target: { value: 'openai-completions' } })
+    fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://api.openai.com/v1' } })
+    expect(select.value).toBe('openai-completions')
+  })
+
+  it('offers no protocol suggestion once the protocol was chosen manually', async () => {
+    const discover = vi.fn(() => Promise.resolve(fail('connection refused', 'gateway/internal')))
+    mountCard({}, { discover })
+    fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://relay.acme.example/v1' } })
+    fireEvent.change(screen.getByLabelText(en.customApi), { target: { value: 'openai-completions' } })
+    fireEvent.click(screen.getByText(en.fetchModels))
+    await screen.findByText('connection refused')
+    expect(screen.queryByText(`connection refused ${en.customProtocolTryAnthropic}`)).toBeNull()
+  })
+
+  it('points an automatic Anthropic route at the OpenAI-compatible shape on failure', async () => {
+    const discover = vi.fn(() => Promise.resolve(fail('connection refused', 'gateway/internal')))
+    mountCard({ protocolAdvice: new Map([['api.anthropic.com', 'anthropic-messages']]) }, { discover })
+    fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://api.anthropic.com' } })
+    fireEvent.click(screen.getByText(en.fetchModels))
+    await screen.findByText(`connection refused ${en.customProtocolTryCompletions}`)
   })
 
   it('derives a reference the credential seam accepts for every id it admits', () => {
