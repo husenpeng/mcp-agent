@@ -52,7 +52,7 @@
     "@tomato/subagent": "workspace:*",
     "@tomato/typert-protocol": "workspace:*",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react-dom": "^19.3.1",
     "@tomato/client-ui-context-menu": "workspace:*"
   },
   "devDependencies": {
@@ -88,7 +88,7 @@
     "@tomato/web-app": "workspace:*",
     "@types/js-yaml": "^4.0.9",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react-dom": "^19.3.1",
     "@tomato/client-ui-context-menu": "workspace:*"
   },
   "files": [

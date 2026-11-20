@@ -52,7 +52,7 @@
     "@tomato/cordis": "workspace:~",
     "@testing-library/react": "^16.3.3",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react-dom": "^19.3.1",
     "@tomato/client-ui-conversation": "workspace:*",
     "@tomato/client-ui-slots": "workspace:*",
     "@tomato/client-locale": "workspace:*"
