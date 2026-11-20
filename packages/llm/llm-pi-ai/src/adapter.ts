@@ -65,6 +65,26 @@ import { toStreamChunks } from './stream.ts'
 import { bindThinkingToPrefix } from './prefix-binding.ts'
 import type { PrefixDigests } from './prefix-binding.ts'
 import type { PiAiRequestHeaderContext } from './types.ts'
+import { diagnoseProviderFailure } from './repair.ts'
+import type { PiAiRepair } from './repair.ts'
+
+/**
+ * Apply one repair to the model a retried call dispatches with.
+ *
+ * A route switch reaches only the protocol that declares it, and the two
+ * switches {@link diagnoseProviderFailure} answers belong to the
+ * OpenAI-compatible one, so a model speaking anything else keeps its own
+ * configuration and the refusal stands.
+ * @param model - the model the refused call used.
+ * @param repair - the switch that answers the refusal.
+ * @returns the repaired model, or undefined when the repair does not apply.
+ */
+function withRepair(model: Model<Api>, repair: PiAiRepair): Model<Api> | undefined {
+  const repaired: Model<Api> = repair.input === undefined ? model : { ...model, input: [...repair.input] }
+  if (repair.compat === undefined) return repaired
+  if (model.api !== 'openai-completions') return repair.input === undefined ? undefined : repaired
+  return { ...repaired, compat: { ...model.compat, ...repair.compat } }
+}
 
 /**
  * Initially active declaration added to an Anthropic request whose projected
@@ -141,6 +161,14 @@ export interface PiAiAdapterOptions {
    * conversation report them again.
    */
   onThinkingOmitted?: (detail: { provider: string; model: string; count: number }) => void
+  /**
+   * Observe one provider refusal the adapter is about to repair and retry. The
+   * adapter applies the repair to the retried request either way; this tells
+   * the deployment, which is what persists the switch so the refusal cannot
+   * repeat on the next request or the next boot.
+   * @param detail - the route, the model, and the switch that answers it.
+   */
+  onProviderRepair?: (detail: { provider: string; model: string; repair: PiAiRepair }) => void
 }
 
 /** The two auth injectables a pi-ai collection is built with. */
@@ -425,17 +453,107 @@ export class PiAiAdapter extends LlmAdapter {
     const snapshot = this.current()
     return Promise.resolve({
       model: this.modelInfo(snapshot, provider, model),
-      stream: options => this.streamWithSnapshot(options, snapshot),
+      stream: options => this.repairingStream(options, snapshot),
     })
   }
 
   stream(options: GenerateOptions): AsyncIterable<StreamChunk> {
-    return this.streamWithSnapshot(options, this.current())
+    return this.repairingStream(options, this.current())
+  }
+
+  /**
+   * Stream one call, repairing a named protocol refusal once.
+   *
+   * pi-ai reports a provider failure as a terminal stream event, not a throw, so
+   * the refusal arrives as an error finish reason. Chunks ahead of the first one
+   * that carries content are held back: a refusal produces none, so holding them
+   * lets the call retry without the caller having seen a partial reply or a
+   * first attempt's usage. Once content arrives the call is committed and no
+   * repair may run, because replaying a started reply would duplicate its output.
+   * @param options - the prepared call.
+   * @param snapshot - the configuration the call froze, shared by every attempt.
+   * @returns the provider's chunks.
+   */
+  private async * repairingStream(options: GenerateOptions, snapshot: PiAiSnapshot): AsyncIterable<StreamChunk> {
+    let repaired = false
+    let model: Model<Api> | undefined
+    while (true) {
+      const held: StreamChunk[] = []
+      let committed = false
+      let failure: PiAiRepair | undefined
+      try {
+        for await (const chunk of this.streamWithSnapshot(options, snapshot, model)) {
+          // Any content chunk commits the call: a replay would duplicate it.
+          if (chunk.type !== 'usage' && chunk.type !== 'finish') {
+            committed = true
+            for (const earlier of held.splice(0)) yield earlier
+            yield chunk
+            continue
+          }
+          if (committed) {
+            yield chunk
+            continue
+          }
+          held.push(chunk)
+          // Only a refusal ahead of any content can still be repaired, and only
+          // once: the retry keeps the provider's own error if it is refused too.
+          if (chunk.type === 'finish' && chunk.reason.kind === 'error' && !repaired
+            && this.config.onProviderRepair !== undefined) {
+            failure = diagnoseProviderFailure(new Error(chunk.reason.failure.message))
+            if (failure !== undefined) break
+          }
+        }
+      } catch (error) {
+        if (committed || repaired || this.config.onProviderRepair === undefined) throw error
+        const repair = diagnoseProviderFailure(error)
+        if (repair === undefined || !this.applyRepair(snapshot, options, repair)) throw error
+        repaired = true
+        model = this.repairedModel(snapshot, options, repair)
+        continue
+      }
+      if (failure === undefined || repaired) {
+        for (const chunk of held) yield chunk
+        return
+      }
+      if (!this.applyRepair(snapshot, options, failure)) {
+        for (const chunk of held) yield chunk
+        return
+      }
+      repaired = true
+      model = this.repairedModel(snapshot, options, failure)
+    }
+  }
+
+  /**
+   * Tell the deployment about one repair and keep the switch for the retry.
+   * @param snapshot - the configuration this call froze.
+   * @param options - the prepared call.
+   * @param repair - the switch that answers the refusal.
+   * @returns whether the repair changed this call, so a retry is worth making.
+   */
+  private applyRepair(snapshot: PiAiSnapshot, options: GenerateOptions, repair: PiAiRepair): boolean {
+    const model = this.modelOf(snapshot, options.provider, options.model)
+    if (withRepair(model, repair) === undefined) return false
+    this.config.onProviderRepair?.({ provider: options.provider, model: options.model, repair })
+    return true
+  }
+
+  /**
+   * The model a retried call dispatches with.
+   * @param snapshot - the configuration this call froze.
+   * @param options - the prepared call.
+   * @param repair - the switch that answers the refusal.
+   * @returns the repaired model.
+   */
+  private repairedModel(snapshot: PiAiSnapshot, options: GenerateOptions, repair: PiAiRepair): Model<Api> {
+    const model = this.modelOf(snapshot, options.provider, options.model)
+    return withRepair(model, repair) ?? model
   }
 
   private async * streamWithSnapshot(
     options: GenerateOptions,
     snapshot: PiAiSnapshot,
+    override?: Model<Api>,
   ): AsyncIterable<StreamChunk> {
     this.assertAllowed(options.provider, options.model)
     if (options.stop !== undefined) {
@@ -447,7 +565,7 @@ export class PiAiAdapter extends LlmAdapter {
     // mid-request builds a separate snapshot, so this request finishes under
     // the one it started with and the next call picks up the new one.
     const profile = this.profileOf(snapshot, options.provider)
-    const model = this.modelOf(snapshot, options.provider, options.model)
+    const model = override ?? this.modelOf(snapshot, options.provider, options.model)
     const updates = conversationUpdates(model)
     // pi-ai collapses Anthropic tool updates without an initially active declaration.
     const tools = options.tools ?? []

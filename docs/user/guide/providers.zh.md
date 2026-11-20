@@ -210,7 +210,7 @@ DeepSeek 将省略的 `inputModalities` 视为纯文本，并拒绝空列表。�
 - **获取可用模型返回 401**：检查密钥。模型发现会调用 OpenAI 兼容的 `GET /models` 端点；对于不提供该端点的服务，请手动输入模型。
 - **获取可用模型提示既没有 `data` 数组也没有 `models` 对象**：端点返回的列表格式不在探测的读取范围内。请手动输入模型。
 - **密钥与地址都正确，网关却拒绝每一个请求**：它的请求形状与 OpenAI 不同。先在路由上设 `compat.supportsDeveloperRole: false` 与 `compat.maxTokensField: max_tokens`。
-- **只有推理模型失败**：pi-ai 把它们的系统提示词以 `developer` 角色发出，而网关拒绝该角色。设 `compat.supportsDeveloperRole: false`，或在提供方模型列表上点**一键适配**——它会在路由上写入该开关。
+- **只有推理模型失败**：pi-ai 把它们的系统提示词以 `developer` 角色发出，而网关拒绝该角色。第一个被拒的请求会自动带上 `compat.supportsDeveloperRole: false` 重试一次，并把该开关保存到路由上，因此回复照样到达，警告里会说明这次改动；**一键适配**则提前写入同一个开关。被拒的 `max_completion_tokens` 字段、以及拒收图片的模型同样如此。背后没有对应开关的拒绝——例如密钥错误或限流——仍然按原样失败。
 - **手动录入的模型没有推理等级菜单**：该模型没有声明任何等级。如果是自定义模型 API 提供商，在该模型的**模型选项**中打开**推理等级**；其他提供商在 `cordis.patch.yml` 中给该模型加上 `reasoningEfforts`。
 - **`off` 无法让 DeepSeek 模型停止思考**：留空的 `off` 不发送任何推理字段，默认思考的端点就继续思考。请在模型或路由上设置 `compat.thinkingFormat: deepseek`。
 - **某个 compat 开关因没有值而被拒绝**：冒号后什么都没写。给它一个值，或删掉该键以沿用已安装 catalog 的值。

@@ -833,6 +833,82 @@ describe('provider profile lifecycle', () => {
     expect(await roles('acme-guess')).toEqual(['developer'])
   })
 
+  it('repairs a refused developer role once and retries the request', async () => {
+    vi.stubEnv('PI_TEST_KEY', 'test-key')
+    const server = await mockServer([
+      { status: 400, body: JSON.stringify({ error: { message: 'Unsupported role: developer' } }) },
+      { events: textEvents },
+    ])
+    const repairs: string[] = []
+    const ctx = new Context()
+    await ctx.plugin(LlmRuntime)
+    ctx.llm.registerAdapter(['acme-gateway'], new PiAiAdapter({
+      profiles: () => resolveProfiles({
+        'acme-gateway': {
+          apiKeyEnv: 'PI_TEST_KEY',
+          api: 'openai-completions',
+          baseURL: `${server.url}/v1`,
+          models: [{ id: 'acme-think', reasoningEfforts: { off: null, high: 'high' } }],
+        },
+      }),
+      resolveApiKey: () => Promise.resolve('test-key'),
+      auth: memoryAuth(),
+      onProviderRepair: ({ provider, model, repair }) => { repairs.push(`${provider}/${model}:${repair.summary}`) },
+    }))
+
+    const result = await assemble(ctx, {
+      provider: 'acme-gateway',
+      model: 'acme-think',
+      reasoningEffort: ReasoningEffortId('high'),
+      system: 'you are a harness',
+      messages: [],
+    })
+    // The repair is what turned the refusal into a reply, so the caller keeps it.
+    expect(result.message.content).toEqual([{ type: 'text', text: 'hello' }])
+    expect(repairs).toEqual(['acme-gateway/acme-think:developer-role'])
+    expect(server.requests).toHaveLength(2)
+    const rolesOf = (index: number): string[] =>
+      (server.requests[index] as { messages: { role: string }[] }).messages.map(message => message.role)
+    expect(rolesOf(0)).toEqual(['developer'])
+    expect(rolesOf(1)).toEqual(['system'])
+  })
+
+  it('keeps a refusal it cannot repair, and never retries twice', async () => {
+    vi.stubEnv('PI_TEST_KEY', 'test-key')
+    const server = await mockServer([
+      { status: 400, body: JSON.stringify({ error: { message: 'Unsupported role: developer' } }) },
+      { status: 400, body: JSON.stringify({ error: { message: 'Unsupported role: developer' } }) },
+    ])
+    const repairs: string[] = []
+    const ctx = new Context()
+    await ctx.plugin(LlmRuntime)
+    ctx.llm.registerAdapter(['acme-gateway'], new PiAiAdapter({
+      profiles: () => resolveProfiles({
+        'acme-gateway': {
+          apiKeyEnv: 'PI_TEST_KEY',
+          api: 'openai-completions',
+          baseURL: `${server.url}/v1`,
+          models: [{ id: 'acme-think', reasoningEfforts: { off: null, high: 'high' } }],
+        },
+      }),
+      resolveApiKey: () => Promise.resolve('test-key'),
+      auth: memoryAuth(),
+      onProviderRepair: ({ repair }) => { repairs.push(repair.summary) },
+    }))
+
+    const result = await assemble(ctx, {
+      provider: 'acme-gateway',
+      model: 'acme-think',
+      reasoningEffort: ReasoningEffortId('high'),
+      messages: [],
+    })
+    expect(result.finish).toMatchObject({ kind: 'error', failure: { code: 'INVALID_REQUEST' } })
+    expect(JSON.stringify(result.finish)).toContain('developer')
+    expect(repairs).toEqual(['developer-role'])
+    // One repair, one retry: a second refusal keeps the provider's own error.
+    expect(server.requests).toHaveLength(2)
+  })
+
   it('sends a declared off value as the effort parameter instead of omitting it', async () => {
     vi.stubEnv('PI_TEST_KEY', 'test-key')
     const server = await mockServer([{ events: textEvents }])

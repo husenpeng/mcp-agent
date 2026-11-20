@@ -136,6 +136,8 @@ Changing `displayName`, `apiKeyEnv`, or `baseURL` without resolving the provider
 
 Model discovery resolves each route’s credential configuration. A missing required credential yields an empty catalog; other resolution errors propagate. Routes with native authentication or no required key retain their configured catalog. This check does not probe the inference endpoint.
 
+A refusal that names a switch this harness may configure is repaired once instead of failing the step. pi-ai reports a provider failure as a terminal stream event, so the adapter holds back the chunks ahead of the first one that carries content — a refused request produces none — and answers three refusals: a rejected `developer` role becomes `supportsDeveloperRole: false`, a refused `max_completion_tokens` becomes `maxTokensField: max_tokens`, and a rejected image narrows that model to text. The switch is applied to the retried call at once and saved through the settings section, so the next request and the next boot keep it, and one warning names the route and what changed. A second refusal, a failure carrying no switch (`401`, `429`, `5xx`, a size or format complaint), and a reply that already started streaming keep the provider's own error. `repair.ts` owns the classification and the config write it implies; the adapter owns the retry.
+
 -----
 
 <a id="understand-the-implementation"></a>

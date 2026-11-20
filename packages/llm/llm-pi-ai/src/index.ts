@@ -74,6 +74,8 @@ import { discoverModels } from './discovery.ts'
 import type { StoredModelDiscoveryProfile } from './discovery.ts'
 import { registerPiAiFlows } from './login.ts'
 import { providerDefaultsOf } from './provider-data.ts'
+import { repairSettingsPatch } from './repair.ts'
+import type { PiAiRepair } from './repair.ts'
 import { supportedProtocols } from './provider.ts'
 import type { PiAiRequestHeaderContext } from './types.ts'
 
@@ -183,6 +185,15 @@ function directoryEntries(
   return [...entries.values()]
 }
 
+/** What one repair changes, in the words a person reads in the log. */
+function describeRepair(repair: PiAiRepair): string {
+  switch (repair.summary) {
+    case 'developer-role': return 'the endpoint rejects the `developer` role, so the system prompt now travels as `system`'
+    case 'output-token-field': return 'the endpoint reads `max_tokens`, not `max_completion_tokens`, so the output cap now uses that field'
+    case 'image-input': return 'the endpoint rejects images, so the model now declares text input only'
+  }
+}
+
 /** Register one generic pi-ai adapter for all configured provider routes. */
 export function apply(ctx: Context, config: Config): void {
   ctx.inject(['settings'], (child) => { child.effect(() => child.settings.configure({ auto: false }, ctx.fiber)) })
@@ -207,6 +218,35 @@ export function apply(ctx: Context, config: Config): void {
     return next
   }
   profiles()
+  /**
+   * Persist one repair so the refusal cannot repeat, and say so.
+   *
+   * The retried call already carries the switch in memory; this write is what
+   * makes it survive the request. A repair the route already states writes
+   * nothing, a deployment without a settings section has nothing to write to,
+   * and an image repair reaches only a model the route declares, because the
+   * route's default input cannot narrow one model. Either way the log line names
+   * what changed, so a person reading a refused request finds the fix already
+   * applied rather than a puzzle.
+   */
+  const persistRepair = (provider: string, model: string, repair: PiAiRepair): void => {
+    const settings = ctx.get('settings')
+    const patch = repairSettingsPatch(config.providers.get()[provider], model, repair)
+    ctx.logger.warn(`llm-pi-ai: route "${provider}" refused a request (${repair.summary});`
+      + ` ${describeRepair(repair)}`)
+    if (patch === undefined) return
+    if (settings === undefined) {
+      ctx.logger.warn('llm-pi-ai: no settings section is mounted, so the switch answering that refusal was not saved')
+      return
+    }
+    void settings.update(settingsNs, { providers: { [provider]: patch } }).then(
+      () => { ctx.logger.info(`llm-pi-ai: saved the switch that answers that refusal on route "${provider}"`) },
+      (error: unknown) => {
+        ctx.logger.warn(`llm-pi-ai: the switch answering that refusal was not saved on route "${provider}"; the next request will need it again`)
+        ctx.logger.warn(error)
+      },
+    )
+  }
   let lastPolicyRaw: ModelPolicyConfig | null | undefined
   let lastPolicy: ResolvedModelPolicy | undefined
   /** The current allowlist, memoized by the volatile policy snapshot. */
@@ -281,6 +321,7 @@ export function apply(ctx: Context, config: Config): void {
     onThinkingOmitted: ({ provider, model, count }) => {
       ctx.logger.debug(`llm-pi-ai: omitted stale thinking from ${count} assistant message(s) for route "${provider}/${model}"`)
     },
+    onProviderRepair: ({ provider, model, repair }) => { persistRepair(provider, model, repair) },
   })
   // Independent of the route set: signing in is what makes a route worth
   // adding, so the flows are offered before any profile names their provider.
