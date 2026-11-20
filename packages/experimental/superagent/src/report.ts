@@ -55,11 +55,18 @@ export function parseReport(text: string): ParsedReport {
  * be done, and how to end the turn, so a run needs no other instruction to
  * report honestly.
  * @param brief - work, subject, and mandate.
+ * @param directory - checkout the run works in, when the deployment handed one out.
  * @returns the prompt one executor turn receives.
  */
 export function workerBriefText(brief: WorkerBrief, directory?: string): string {
   return [
     `Work: ${brief.subject}`,
+    ...brief.context === undefined || brief.context.length === 0
+      ? []
+      : [
+        'Messages from the person after the work was accepted, oldest first; treat the latest as the current instruction:',
+        ...brief.context.map(message => `- ${message}`),
+      ],
     ...directory === undefined
       ? []
       : [

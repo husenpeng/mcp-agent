@@ -117,5 +117,8 @@ export function apply(ctx: Context, config: Config): void {
   })
 }
 
-/** Default database-free path used only by diagnostics. */
+/**
+ * Default database-free path used only by diagnostics.
+ * @returns the Xcode DerivedData directory under the current home.
+ */
 export const defaultDerivedData = (): string => join(homedir(), 'Library/Developer/Xcode/DerivedData')

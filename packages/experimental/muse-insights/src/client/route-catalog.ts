@@ -94,7 +94,10 @@ export class MuseRouteCatalog {
     this.unsubscribe = scope.subscribe(() => { this.store.set(routeOptions(scope.getSnapshot().value)) })
   }
 
-  /** @returns the snapshot store the configuration page reads through its hook. */
+  /**
+   * The snapshot store the configuration page reads its options through.
+   * @returns the store this catalog keeps current.
+   */
   options(): SnapshotStore<RouteOptions> {
     return this.store
   }

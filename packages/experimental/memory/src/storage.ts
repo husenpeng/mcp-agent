@@ -130,7 +130,11 @@ export const memoryRecordSchema = z.object({
 export type MemoryRecord = z.infer<typeof memoryRecordSchema>
 
 
-/** Brand one stored embedding vector identity. */
+/**
+ * Brand one stored embedding vector identity.
+ * @param id - the raw identity string.
+ * @returns the branded vector identity.
+ */
 export function VectorId(id: string): VectorIdType {
   return id as VectorIdType
 }
@@ -180,7 +184,11 @@ export const memoryDomain = defineDomain({
   tables: { records: domainTable<MemoryIdType, MemoryRecord>(memoryRecordSchema) },
 })
 
-/** Brand one stored or generated episode identity. */
+/**
+ * Brand one stored or generated episode identity.
+ * @param id - the raw identity string.
+ * @returns the branded episode identity.
+ */
 export function EpisodeId(id: string): EpisodeIdType {
   return id as EpisodeIdType
 }

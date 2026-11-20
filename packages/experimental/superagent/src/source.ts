@@ -64,6 +64,7 @@ declare module '@tomato/cordis' {
   }
 }
 
+/** Bot service a deployment publishes instead of the HTTP client; the poller reads events and threads through it. */
 export interface BotGateway {
   /** Read the events after a cursor. */
   events(cursor: number, limit: number): Promise<BotEventsPage>
@@ -83,7 +84,11 @@ export interface PollOutcome {
   readonly outcomes: readonly IntakeOutcome[]
 }
 
-/** Text a Feishu content payload carries, or the payload itself when it carries none. */
+/**
+ * Read the text a Feishu content payload carries.
+ * @param content - the raw JSON payload.
+ * @returns its `text` field, or the payload itself when it carries none.
+ */
 export function contentText(content: string): string {
   try {
     const parsed: unknown = JSON.parse(content)
@@ -107,7 +112,11 @@ export function threadOf(event: BotEvent): ThreadRef {
   return { source: 'feishu', id: `${event.chatId}:${event.rootId ?? event.messageId}` }
 }
 
-/** Where a reply to one event belongs. */
+/**
+ * Where a reply to one event belongs.
+ * @param event - the event to answer.
+ * @returns the channel addressing that event's message.
+ */
 export function channelOf(event: BotEvent): ChannelRef {
   return { source: 'feishu', address: { chatId: event.chatId, messageId: event.messageId } }
 }

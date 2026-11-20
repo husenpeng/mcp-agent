@@ -392,12 +392,18 @@ export class MemoryIndex {
     this.db.prepare('DELETE FROM vectors WHERE target = ? AND object_id = ?').run(target, id)
   }
 
-  /** Number of stored vectors. */
+  /**
+   * Number of stored vectors.
+   * @returns how many vectors the store holds.
+   */
   vectorCount(): number {
     return (this.db.prepare('SELECT COUNT(*) AS count FROM vectors').get() as { count: number }).count
   }
 
-  /** Number of queued embedding jobs. */
+  /**
+   * Number of queued embedding jobs.
+   * @returns how many rows the outbox holds.
+   */
   outboxCount(): number {
     return (this.db.prepare('SELECT COUNT(*) AS count FROM outbox').get() as { count: number }).count
   }

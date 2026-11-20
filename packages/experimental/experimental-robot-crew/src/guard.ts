@@ -204,7 +204,10 @@ export class CrewLoopGuard {
     return undefined
   }
 
-  /** Current counters and the trip, when one was reached. */
+  /**
+   * Current counters and the trip, when one was reached.
+   * @returns the counters, elapsed time, and the trip with its reason.
+   */
   snapshot(): GuardSnapshot {
     return {
       steps: this.steps,

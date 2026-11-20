@@ -57,6 +57,8 @@ export interface GroupChatInjected {
     readonly registry: import('@tomato/api-robot-crew-controller/client').CrewRunsSource
     /** Selected run's flow ledger. */
     readonly ledger: import('./ledger.ts').CrewLedgerSource
+    /** Published Rbot revisions a new group chat's members run as. */
+    readonly robots: RobotCatalogSource
   }
   /** Roster actions the tab calls. */
   readonly actions: CrewActions
@@ -83,7 +85,12 @@ export interface Notice {
   readonly text: string
 }
 
-/** Entry group a filter admits. */
+/**
+ * Whether a ledger entry belongs to the group one filter admits.
+ * @param entry - the ledger entry to test.
+ * @param filter - the selected filter.
+ * @returns whether the filter shows this entry.
+ */
 export function matchesFilter(entry: CrewEntry, filter: LedgerFilter): boolean {
   if (filter === 'all') return true
   if (filter === 'steps') return entry.kind === 'step-start' || entry.kind === 'step-result' || entry.kind === 'brief'
@@ -92,7 +99,13 @@ export function matchesFilter(entry: CrewEntry, filter: LedgerFilter): boolean {
   return entry.kind === 'guard'
 }
 
-/** Whether a node has no successors. */
+/**
+ * Whether a node has no successors.
+ * @param nodes - the crew's members.
+ * @param edges - every handoff, each naming its source as `from`.
+ * @param id - the member to test.
+ * @returns whether no handoff starts at that member.
+ */
 export function isLeaf(nodes: readonly CrewNode[], edges: readonly { readonly from: string }[], id: string): boolean {
   return nodes.length > 0 && !edges.some(edge => edge.from === id)
 }

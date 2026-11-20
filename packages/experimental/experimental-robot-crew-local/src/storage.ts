@@ -105,7 +105,11 @@ export const crewDomain = defineDomain({
   },
 })
 
-/** @param row - stored revision. @returns the immutable revision view. */
+/**
+ * Build the immutable revision view of one stored revision.
+ * @param row - stored revision.
+ * @returns the revision with its frozen reference.
+ */
 export function toRevision(row: CrewRevisionRow): CrewSpecRevision {
   return Object.freeze({
     ref: Object.freeze({ spec: row.ref.spec, revision: row.ref.revision }),
@@ -115,12 +119,20 @@ export function toRevision(row: CrewRevisionRow): CrewSpecRevision {
   })
 }
 
-/** @param ref - stored reference. @returns the immutable reference. */
+/**
+ * Copy a stored specification reference into its frozen form.
+ * @param row - stored reference.
+ * @returns the frozen reference.
+ */
 export function toRef(row: CrewSpecRef): CrewSpecRef {
   return Object.freeze({ spec: row.spec, revision: row.revision })
 }
 
-/** @param row - stored run. @returns the immutable run view. */
+/**
+ * Build the immutable run view of one stored run, including its frozen node progress.
+ * @param row - stored run.
+ * @returns the run view.
+ */
 export function toRun(row: CrewRunRow): CrewRun {
   const nodes: CrewNodeProgress[] = row.nodes.map(node => Object.freeze({
     id: node.id,
@@ -146,7 +158,11 @@ export function toRun(row: CrewRunRow): CrewRun {
   })
 }
 
-/** @param row - stored ledger entry. @returns the immutable entry view. */
+/**
+ * Build the immutable view of one stored ledger entry.
+ * @param row - stored ledger entry.
+ * @returns the entry view.
+ */
 export function toEntry(row: CrewEntryRow): CrewEntry {
   return Object.freeze({
     run: row.run,
@@ -159,12 +175,21 @@ export function toEntry(row: CrewEntryRow): CrewEntry {
   })
 }
 
-/** Key one ledger row inside the run. */
+/**
+ * Key one ledger row inside the run.
+ * @param run - run the row belongs to.
+ * @param seq - entry sequence within that run.
+ * @returns the zero-padded key, so keys sort in log order.
+ */
 export function entryKey(run: CrewRunId, seq: number): string {
   return `${run}#${String(seq).padStart(8, '0')}`
 }
 
-/** Run states that must not survive a process restart. */
+/**
+ * Whether a run state must not survive a process restart.
+ * @param state - the run's current state.
+ * @returns whether a restart settles the run as failed.
+ */
 export function resumableState(state: CrewRun['state']): boolean {
   return state === 'queued' || state === 'running'
 }

@@ -261,11 +261,18 @@ export class DomainImpl {
     return table
   }
 
+  /**
+   * Stamp the unit reports for the current data.
+   * @returns the unit's stamp, or undefined when the unit offers none.
+   */
   async changeStamp(): Promise<number | undefined> {
     this.assertReadable()
     return await this.unit.changeStamp?.()
   }
 
+  /**
+   * Reload every table from the unit's current snapshot.
+   */
   async reload(): Promise<void> {
     this.assertReadable()
     await this.enqueue(async () => {

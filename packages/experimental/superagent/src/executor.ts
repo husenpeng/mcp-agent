@@ -10,6 +10,7 @@ import { canStart, latestAssignment } from './index.ts'
 import type { SuperagentStore } from './store.ts'
 import type { Supervision } from './supervise.ts'
 import type {
+  Assignment,
   AssignmentReport,
   Mandate,
   ReviewDecision,
@@ -27,6 +28,12 @@ export interface WorkerBrief {
   readonly subject: string
   /** Why the work may be done and how far it may go. */
   readonly mandate: Mandate
+  /**
+   * Messages the person sent after the work was accepted — an answer, added
+   * context, or a continuation after a cancelled run — oldest first. The run
+   * reads them as the latest instruction on the same work.
+   */
+  readonly context?: readonly string[]
 }
 
 /** One executor run the engine has not recorded yet. */
@@ -37,6 +44,13 @@ export interface WorkerLease {
   readonly directory: string
   /** Drive the work and report on it. */
   run(brief: WorkerBrief): Promise<AssignmentReport>
+  /**
+   * Abort the run a person stopped. An in-flight turn ends aborted and `run`
+   * resolves with a `dropped` report; a run that has not started resolves
+   * `dropped` without driving a turn. The ticket keeps its slot released, so a
+   * later message may start the next run.
+   */
+  cancel(): void
 }
 
 /** An executor the engine can lease a run from. */
@@ -52,10 +66,16 @@ export interface Worker {
 /**
  * The brief one ticket hands its executor.
  * @param ticket - ticket to describe.
- * @returns the work, its subject, and the mandate that authorizes it.
+ * @param context - person messages the next run reads as its latest instruction, oldest first.
+ * @returns the work, its subject, the mandate that authorizes it, and any continuation context.
  */
-export function briefFor(ticket: Ticket): WorkerBrief {
-  return { ticket: ticket.id, subject: ticket.subject, mandate: ticket.mandate }
+export function briefFor(ticket: Ticket, context?: readonly string[]): WorkerBrief {
+  return {
+    ticket: ticket.id,
+    subject: ticket.subject,
+    mandate: ticket.mandate,
+    ...context === undefined || context.length === 0 ? {} : { context },
+  }
 }
 
 /**
@@ -76,19 +96,40 @@ export interface AssignmentRun {
   readonly report: AssignmentReport
 }
 
+/** What one assignment run accepts beyond the ticket and its executor. */
+export interface AssignmentOptions {
+  /** Person messages the run reads as its latest instruction, oldest first. */
+  readonly context?: readonly string[]
+  /**
+   * Receives the lease once the assignment is recorded and before the run is
+   * driven, so a caller can cancel the in-flight run through {@link WorkerLease.cancel}.
+   */
+  readonly onLease?: (lease: WorkerLease) => void
+}
+
+/**
+ * Lease a worker, record the assignment, and drive one run to its report.
+ * @param store - the ticket store the assignment is recorded in.
+ * @param ticketId - ticket that starts another assignment.
+ * @param worker - worker source the lease comes from.
+ * @param options - extra context messages and the lease observer.
+ * @returns the reported ticket with the outcome the run left.
+ */
 export async function runAssignment(
   store: SuperagentStore,
   ticketId: TicketId,
   worker: Worker,
+  options?: AssignmentOptions,
 ): Promise<AssignmentRun> {
   const entry = store.ticket(ticketId)
   if (entry === undefined) throw new SuperagentError(`unknown ticket "${ticketId}"`, 'unknown-ticket')
   if (!canStart(entry.ticket)) {
     throw new SuperagentError(`ticket "${ticketId}" cannot start another assignment now`, 'not-startable')
   }
-  const brief = briefFor(entry.ticket)
+  const brief = briefFor(entry.ticket, options?.context)
   const lease = await worker.lease(brief)
   const assignment = assign(store, ticketId, { session: lease.session, directory: lease.directory })
+  options?.onLease?.(lease)
   let outcome: AssignmentReport
   try {
     outcome = await lease.run(brief)
@@ -107,8 +148,12 @@ export function failureText(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 
-/** The assignment a ticket currently holds open, when it has one. */
-export function openAssignment(ticket: Ticket) {
+/**
+ * The assignment a ticket currently holds open, when it has one.
+ * @param ticket - the ticket to inspect.
+ * @returns its latest assignment while that assignment has not ended.
+ */
+export function openAssignment(ticket: Ticket): Assignment | undefined {
   const latest = latestAssignment(ticket)
   return latest === undefined || latest.ended ? undefined : latest
 }

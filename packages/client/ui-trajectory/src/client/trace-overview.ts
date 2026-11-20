@@ -110,7 +110,10 @@ export interface TraceOverview {
   totals: TraceOverviewTotals
 }
 
-/** Zero token buckets, shared by empty cards and the totals line. */
+/**
+ * Zero token buckets, shared by empty cards and the totals line.
+ * @returns zero counts for every bucket.
+ */
 export function emptyTraceTokens(): TraceTokens {
   return { input: 0, cacheRead: 0, cacheWrite: 0, output: 0, reasoning: 0, total: 0 }
 }

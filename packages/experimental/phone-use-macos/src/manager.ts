@@ -72,7 +72,10 @@ export class DeviceManager {
     private readonly now: () => Date = () => new Date(),
   ) {}
 
-  /** Current reading. */
+  /**
+   * Current reading.
+   * @returns the runner's latest status.
+   */
   read(): DeviceStatus {
     return this.status
   }
@@ -242,7 +245,10 @@ export class DeviceManager {
     }
   }
 
-  /** Start the watch loop; a no-op when the interval is zero. */
+  /**
+   * Start the watch loop; a no-op when the interval is zero.
+   * @param signal - aborts the pass this manager runs.
+   */
   start(signal: AbortSignal): void {
     if (this.config.checkIntervalMs === 0 || this.timer !== undefined) return
     this.timer = setInterval(() => {

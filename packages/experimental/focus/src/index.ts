@@ -290,6 +290,7 @@ function nextFailure(state: FocusState, tool: string, args: unknown, code: strin
 /**
  * Render the ledger appended to a goal round.
  * @param failures - distinct failures, most recent first.
+ * @param allSessions - whether the ledger counts failures across the whole Session instead of this goal round.
  * @returns the ledger text, or an empty string when nothing failed.
  */
 export function renderLedger(failures: readonly FocusFailure[], allSessions = false): string {

@@ -13,7 +13,8 @@ import type { Context } from '@tomato/cordis'
 import { appendPluginRecord, SessionSeq } from '@tomato/session'
 import type { Session, SessionEvent } from '@tomato/session'
 import { BlockAssembler, createUserMessage } from '@tomato/llm'
-import type { Message } from '@tomato/llm'
+import { LlmError } from '@tomato/llm'
+import type { Message, ReasoningEffortId } from '@tomato/llm'
 import { isMemoryIdentifier, MemoryError, normalizeIdentifier, normalizeStatement } from '@tomato/experimental-memory'
 import type { MemoryRecord, MemoryKind, MemoryScope, MemoryView } from '@tomato/experimental-memory'
 import { deadline } from '@tomato/timeout'
@@ -48,6 +49,9 @@ export const CAPTURE_MAX_CANDIDATES = 3
 /** Minimum user-perceived characters of a candidate quote, as stated in the system text. */
 export const CAPTURE_MIN_QUOTE_CHARS = 8
 
+/** Most reply characters one capture record keeps, so an empty outcome stays explainable. */
+export const MAX_LOGGED_CAPTURE_REPLY_CHARS = 2000
+
 /** Minimum user-perceived characters of the turn's person text before capture runs. */
 export const CAPTURE_MIN_PERSON_CHARS = 12
 
@@ -64,6 +68,7 @@ export const CAPTURE_SYSTEM = [
   'scope is "profile" for a lasting preference, constraint, or fact about the person that holds in every workspace (language, role, writing style), otherwise "workspace".',
   'kind is one of "preference", "constraint", "decision", "fact".',
   'When the person states how they want work done (tone, language, format, tools, approvals), prefer a "preference" or "constraint" candidate with scope "profile" over a task-specific fact; a rule for this project alone stays "workspace".',
+  'A turn that states a lasting rule (any wording of "from now on", "always", "一律", "以后都") always has a summary, even when an existing saved fact already states the same candidate: the summary records what the turn settled, the candidate list only avoids a duplicate.',
   'entity and key are lower-kebab-case identifiers (letters, digits, single dashes, optionally joined by colons), at most 64 characters; entity names the subject (for example "user" or "client:brand-x"), key names the attribute (for example "email-tone").',
   'value restates the statement in the language the person used, at most 200 characters.',
   'quote copies exact consecutive words from one user message above that support the statement, at least 8 characters.',
@@ -80,7 +85,7 @@ export type CaptureOutcome =
     /** Ids stored active rather than as unconfirmed candidates. */
     readonly activated?: readonly string[]
   }
-  | { readonly status: 'empty' }
+  | { readonly status: 'empty'; readonly summaryError?: string | undefined }
   | { readonly status: 'skipped'; readonly reason: string }
   | { readonly status: 'failed'; readonly reason: string }
 
@@ -102,6 +107,11 @@ export interface CaptureSummary {
 export interface TurnCaptureRecord {
   /** Exact provider and model that received the request. */
   readonly route: { readonly provider: string; readonly model: string }
+  /**
+   * Preferred route that had no registered adapter, when the request fell back
+   * to {@link route}. Present only after a fallback.
+   */
+  readonly attemptedRoute?: { readonly provider: string; readonly model: string }
   /** Exact system text of the request. */
   readonly system: string
   /** Seq of the first person message whose text formed the input. */
@@ -110,6 +120,8 @@ export interface TurnCaptureRecord {
   readonly toSeq: number
   /** Output-token cap of the request. */
   readonly maxTokens: number
+  /** Raw reply text, bounded, so an empty outcome stays explainable. */
+  readonly reply?: string
   /** What the request produced and stored. */
   readonly outcome: CaptureOutcome
 }
@@ -122,6 +134,7 @@ export interface TurnCaptureRecord {
  * @param transcript - person messages the turn contributed.
  * @param limits - token cap the capture would have used.
  * @param reason - why no request was made, for example `sign-in-required`.
+ * @returns the outcome recorded for the turn.
  */
 export function captureSkipped(
   session: Session,
@@ -426,6 +439,10 @@ export interface CaptureTurnOptions {
   readonly toolActivity?: readonly string[]
   /** Output and time limits. */
   readonly limits: CaptureLimits
+  /** Reasoning effort for the capture request; `undefined` keeps the route default. */
+  readonly reasoningEffort?: ReasoningEffortId
+  /** Route to retry when the preferred route has no registered adapter; the turn's own route. */
+  readonly fallbackRoute?: { readonly provider: string; readonly model: string }
   /** Disposal or write cancellation. */
   readonly signal: AbortSignal
 }
@@ -433,6 +450,11 @@ export interface CaptureTurnOptions {
 /** Whether a stored record belongs to the same profile or workspace as a scope. */
 function sameScope(record: { readonly scope: MemoryScope }, scope: MemoryScope): boolean {
   return scope.kind === 'profile' ? record.scope.kind === 'profile' : record.scope.kind === 'workspace' && record.scope.path === scope.path
+}
+
+/** Whether a failure means the route names no registered adapter. */
+function isMissingAdapter(error: unknown): boolean {
+  return error instanceof LlmError && error.code === 'NO_ADAPTER'
 }
 
 /** Readable reason of one failure. */
@@ -452,17 +474,30 @@ function reasonOf(error: unknown): string {
  * @returns what the attempt stored, or why it stored nothing.
  */
 export async function captureTurn(ctx: Context, options: CaptureTurnOptions): Promise<CaptureOutcome> {
-  const { session, view, route, transcript, turn, existingFacts, activateProfile, toolActivity = [], limits, signal } = options
-  const record = (outcome: CaptureOutcome): void => {
+  const {
+    session, view, route, fallbackRoute, transcript, turn, existingFacts, activateProfile,
+    toolActivity = [], limits, reasoningEffort, signal,
+  } = options
+  let usedRoute = route
+  const record = (outcome: CaptureOutcome, reply?: string): void => {
     // A Session disposed mid-capture cannot receive the record; the outer listener contains the rejection.
     appendPluginRecord(session, 'plugin:tool-memory/turn-capture', {
-      route, system: CAPTURE_SYSTEM, fromSeq: transcript.fromSeq, toSeq: transcript.toSeq, maxTokens: limits.maxTokens, outcome,
+      route: usedRoute,
+      ...usedRoute.provider === route.provider && usedRoute.model === route.model ? {} : { attemptedRoute: route },
+      system: CAPTURE_SYSTEM, fromSeq: transcript.fromSeq, toSeq: transcript.toSeq, maxTokens: limits.maxTokens,
+      ...reply === undefined ? {} : { reply: reply.slice(0, MAX_LOGGED_CAPTURE_REPLY_CHARS) },
+      outcome,
     })
   }
-  let reply: string
-  try {
+  const canFallBack = (): boolean => fallbackRoute !== undefined
+    && (fallbackRoute.provider !== route.provider || fallbackRoute.model !== route.model)
+  const request = async (target: { readonly provider: string; readonly model: string }): Promise<string> => {
     using callDeadline = deadline(signal, limits.timeoutMs, 'MEMORY_TURN_CAPTURE_TIMEOUT')
-    const call = await ctx.llm.prepareCall({ ...route, maxTokens: limits.maxTokens }, callDeadline.signal)
+    const call = await ctx.llm.prepareCall({
+      ...target,
+      maxTokens: limits.maxTokens,
+      ...reasoningEffort === undefined ? {} : { reasoningEffort },
+    }, callDeadline.signal)
     const messages: Message[] = [createUserMessage({
       content: [{ type: 'text', text: renderCaptureInput(transcript, existingFacts, toolActivity) }],
       source: { kind: 'experimental-tool-memory' },
@@ -473,20 +508,40 @@ export async function captureTurn(ctx: Context, options: CaptureTurnOptions): Pr
     }
     const finish = assembler.finish
     if (finish.kind === 'error' || finish.kind === 'aborted') throw new Error(finish.failure.message)
-    reply = assembler.blocks().flatMap(block => block.type === 'text' ? [block.text] : []).join('\n')
+    return assembler.blocks().flatMap(block => block.type === 'text' ? [block.text] : []).join('\n')
+  }
+  let reply: string
+  try {
+    reply = await request(route)
   } catch (error: unknown) {
     signal.throwIfAborted()
-    const outcome: CaptureOutcome = { status: 'failed', reason: reasonOf(error) }
-    record(outcome)
-    return outcome
+    // A configured route can outlive the provider it names; the turn's own route still exists.
+    if (!canFallBack() || !isMissingAdapter(error)) {
+      const outcome: CaptureOutcome = { status: 'failed', reason: reasonOf(error) }
+      record(outcome)
+      return outcome
+    }
+    usedRoute = fallbackRoute as { readonly provider: string; readonly model: string }
+    try {
+      reply = await request(usedRoute)
+    } catch (fallbackError: unknown) {
+      signal.throwIfAborted()
+      const outcome: CaptureOutcome = { status: 'failed', reason: reasonOf(fallbackError) }
+      record(outcome)
+      return outcome
+    }
   }
   const review = parseCaptureReview(reply)
   if (review.summary === undefined && review.candidates.length === 0) {
     const outcome: CaptureOutcome = { status: 'empty' }
-    record(outcome)
+    record(outcome, reply)
     return outcome
   }
   let summaryId: string | undefined
+  let summaryError: string | undefined
+  if (review.summary !== undefined && view.workspace === undefined) {
+    summaryError = 'this session has no project directory, so it has no episode store'
+  }
   if (review.summary !== undefined && view.workspace !== undefined) {
     try {
       const saved = await ctx.memory.rememberEpisode({
@@ -505,6 +560,8 @@ export async function captureTurn(ctx: Context, options: CaptureTurnOptions): Pr
       summaryId = saved.id
     } catch (error: unknown) {
       if (!(error instanceof MemoryError)) throw error
+      // A rejected summary used to disappear here; keep the reason in the record.
+      summaryError = error.message
     }
   }
   const quotes = transcript.messages.map(message => ({ seq: message.seq, text: normalizeQuote(message.text) }))
@@ -560,13 +617,15 @@ export async function captureTurn(ctx: Context, options: CaptureTurnOptions): Pr
     }
   }
   const outcome: CaptureOutcome = ids.length === 0 && summaryId === undefined
-    ? { status: 'skipped', reason: 'nothing new to store' }
+    ? review.summary === undefined && summaryError === undefined
+      ? { status: 'skipped', reason: 'nothing new to store' }
+      : { status: 'empty', ...summaryError === undefined ? {} : { summaryError } }
     : {
       status: 'stored',
       ids,
       ...summaryId === undefined ? {} : { summaryId },
       ...activated.length === 0 ? {} : { activated },
     }
-  record(outcome)
+  record(outcome, reply)
   return outcome
 }

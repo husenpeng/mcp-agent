@@ -11,6 +11,7 @@ declare module '@tomato/client-ui-slots' {
   interface LocaleNamespaceMap { 'settings.accountAccess': AccessKey }
 }
 
+/** Locale namespace this package's copy registers under. */
 export const NS = 'settings.accountAccess'
 export const inject = ['slots', 'locale']
 

@@ -408,7 +408,12 @@ export class RoomGuard {
     return undefined
   }
 
-  /** Open the breaker with a reason. The first trip wins. */
+  /**
+   * Open the breaker with a reason. The first trip wins.
+   * @param reason - limit this trip exceeded.
+   * @param detail - one sentence naming the observed value and the limit.
+   * @returns the trip as recorded, carrying the first reason to open the breaker.
+   */
   trip(reason: TripReason, detail: string): GuardTrip {
     this.breaker = 'open'
     this.tripReason ??= reason
@@ -472,7 +477,10 @@ export class RoomGuard {
     return softLimitCrossed(this.tokens, limit, ratio)
   }
 
-  /** Complete state a provider may persist. */
+  /**
+   * Complete state a provider may persist.
+   * @returns the guard snapshot with its episode start, signature counts, pair state, and pending counts.
+   */
   export(): RoomGuardState {
     return {
       snapshot: this.snapshot(),
@@ -512,7 +520,10 @@ export class RoomGuard {
     this.recent.length = 0
   }
 
-  /** Current counters and breaker state. */
+  /**
+   * Current counters and breaker state.
+   * @returns the counters, elapsed time, and breaker with the reason that opened it.
+   */
   snapshot(): RoomGuardSnapshot {
     return {
       breaker: this.breaker,
@@ -525,7 +536,12 @@ export class RoomGuard {
     }
   }
 
-  /** Tokens remaining for one member's day, given its daily ceiling and spend. */
+  /**
+   * Tokens remaining for one member's day, given its daily ceiling and spend.
+   * @param dailyTokens - the member's daily ceiling.
+   * @param spent - tokens the member's day already used.
+   * @returns the remaining allowance, never below zero.
+   */
   static memberRemaining(dailyTokens: number, spent: number): number {
     return remaining(dailyTokens, spent)
   }

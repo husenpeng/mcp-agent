@@ -252,28 +252,53 @@ export type PhoneErrorCode = typeof PHONE_ERROR_CODES[number]
 
 /** Types of every schema above, named for consumers. */
 export type PhonePoint = z.infer<typeof PhonePoint>
+/** Screen geometry in points and the backing scale factor. */
 export type PhoneScreen = z.infer<typeof PhoneScreen>
+/** Wide field the frontmost application changed. */
 export type PhoneForeground = z.infer<typeof PhoneForeground>
+/** One accessibility element of the current screen. */
 export type PhoneElement = z.infer<typeof PhoneElement>
+/** One recognised text line with its screen position. */
 export type PhoneOCRItem = z.infer<typeof PhoneOCRItem>
+/** Visible system alert, when the screen carries one. */
 export type PhoneAlert = z.infer<typeof PhoneAlert>
+/** Complete snapshot of the phone screen and its elements. */
 export type PhoneObservation = z.infer<typeof PhoneObservation>
+/** Lease lifecycle state the runner reports. */
 export type PhoneLeaseState = z.infer<typeof PhoneLeaseState>
+/** Runner health as the Host watches it. */
 export type PhoneHealth = z.infer<typeof PhoneHealth>
+/** Granted lease with its owner and expiry. */
 export type PhoneLeaseGrant = z.infer<typeof PhoneLeaseGrant>
+/** Actions a lease holder may run. */
 export type PhoneActionKind = z.infer<typeof PhoneActionKind>
+/** One action a lease holder may run on the device. */
 export type PhoneAction = z.infer<typeof PhoneAction>
+/** Request body of one action. */
 export type PhoneActRequest = z.infer<typeof PhoneActRequest>
+/** Outcome of one action. */
 export type PhoneActResult = z.infer<typeof PhoneActResult>
+/** Request body of one observation. */
 export type PhoneObserveRequest = z.infer<typeof PhoneObserveRequest>
+/** Request body of one screenshot. */
 export type PhoneScreenshotRequest = z.infer<typeof PhoneScreenshotRequest>
+/** Request body asking for the device lease. */
 export type PhoneLeaseRequest = z.infer<typeof PhoneLeaseRequest>
+/** Request body releasing the lease. */
 export type PhoneLeaseReleaseRequest = z.infer<typeof PhoneLeaseReleaseRequest>
+/** Request resolving a spoken target to a screen position. */
 export type PhoneResolveRequest = z.infer<typeof PhoneResolveRequest>
+/** Request attaching this Host to a runner. */
 export type PhoneAttachRequest = z.infer<typeof PhoneAttachRequest>
+/** Frame the Host sends one command in. */
 export type PhoneCommandFrame = z.infer<typeof PhoneCommandFrame>
+/** Frame cancelled a command with. */
 export type PhoneCancelFrame = z.infer<typeof PhoneCancelFrame>
+/** Frame reporting the runner went away. */
 export type PhoneDownFrame = z.infer<typeof PhoneDownFrame>
+/** Result frame the runner answers a command with. */
 export type PhoneCommandResult = z.infer<typeof PhoneCommandResult>
+/** One device event a runner reported. */
 export type PhoneDeviceEvent = z.infer<typeof PhoneDeviceEvent>
+/** Device a runner offers, as its summary states it. */
 export type PhoneDeviceSummary = z.infer<typeof PhoneDeviceSummary>

@@ -8,7 +8,11 @@
 
 import type { CrewEdge, CrewNode, CrewRun, CrewSpec } from '@tomato/experimental-robot-crew'
 
-/** Whether a run state has no further work. */
+/**
+ * Whether a run state is terminal, so the editor offers no further control for it.
+ * @param state - the run's current state.
+ * @returns whether the run ended.
+ */
 export function terminalRunState(state: CrewRun['state']): boolean {
   return state === 'succeeded' || state === 'failed' || state === 'tripped' || state === 'cancelled'
 }

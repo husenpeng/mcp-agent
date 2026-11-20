@@ -195,7 +195,14 @@ export const roomDomain = defineDomain({
 /** One opened room domain. */
 export type RoomStore = Domain<typeof roomDomain>
 
-/** Build a room row from a saved room. */
+/**
+ * Build a room row from a saved room.
+ * @param room - the room to store.
+ * @param nextSeq - sequence number the next message takes.
+ * @param episodeNumber - number of the episode the room is in.
+ * @param activeEpisode - episode currently open, when one is.
+ * @returns the row to persist.
+ */
 export function roomRowOf(room: Room, nextSeq: number, episodeNumber: number, activeEpisode?: RoomEpisodeId): RoomRow {
   return {
     id: room.id,
@@ -210,7 +217,11 @@ export function roomRowOf(room: Room, nextSeq: number, episodeNumber: number, ac
   }
 }
 
-/** Build a published room from its row. */
+/**
+ * Build a published room from its row.
+ * @param row - stored row.
+ * @returns the frozen room view.
+ */
 export function roomOf(row: RoomRow): Room {
   return deepFreeze({
     id: row.id,
@@ -222,7 +233,11 @@ export function roomOf(row: RoomRow): Room {
   })
 }
 
-/** Build the stored guard row from a snapshot and maps. */
+/**
+ * Build the stored guard row from a snapshot and maps.
+ * @param input - the guard snapshot with its signature counts and pending requests.
+ * @returns the row to persist.
+ */
 export function guardRowOf(input: {
   readonly room: RoomId
   readonly snapshot: RoomGuardSnapshot
@@ -249,7 +264,11 @@ export function guardRowOf(input: {
   }
 }
 
-/** Build one stored message row from a message. */
+/**
+ * Build one stored message row from a message.
+ * @param message - the message to store.
+ * @returns the row to persist.
+ */
 export function messageOf(message: RoomMessage): MessageRow {
   return message
 }
@@ -275,12 +294,20 @@ export function withMemberSession(room: RoomId, message: RoomMessage): RoomMessa
   return { ...message, sessionRef: { sessionId: memberSessionOf(room, message.author.id), turn: 0 } }
 }
 
-/** Build one stored episode row from an episode. */
+/**
+ * Build one stored episode row from an episode.
+ * @param episode - the episode to store.
+ * @returns the row to persist.
+ */
 export function episodeRowOf(episode: RoomEpisode): EpisodeRow {
   return episode
 }
 
-/** Build one stored approval row. */
+/**
+ * Build one stored approval row.
+ * @param approval - the approval to store.
+ * @returns the row to persist.
+ */
 export function approvalRowOf(approval: RoomApproval): ApprovalRow {
   return {
     id: approval.id,
@@ -291,7 +318,11 @@ export function approvalRowOf(approval: RoomApproval): ApprovalRow {
   }
 }
 
-/** Build one approval from its row. */
+/**
+ * Build one approval from its row.
+ * @param row - stored row.
+ * @returns the approval view.
+ */
 export function approvalOf(row: ApprovalRow): RoomApproval {
   return deepFreeze({
     id: row.id,

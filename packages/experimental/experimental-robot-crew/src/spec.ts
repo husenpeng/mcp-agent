@@ -73,7 +73,6 @@ export function emptyCrewSpec(input: EmptyCrewInput): CrewSpec {
 /**
  * The three-step starter graph: research, draft, review. It exists so a new
  * crew has a valid graph to run before the person edits it.
- * @param mission - mission the starter graph serves.
  * @returns nodes and edges in a straight chain.
  */
 export function starterGraph(): { nodes: CrewNode[]; edges: CrewEdge[] } {
