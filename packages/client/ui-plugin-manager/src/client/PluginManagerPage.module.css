@@ -1762,8 +1762,24 @@ label.registryOption {
   pointer-events: none;
 }
 
+/* Centering the head in its own row keeps a bar without tabs stable. A page with tabs paints the strip into the
+   same box, so centering there would lift the controls; that head stays at the top of its row. */
 .pageBar[data-compact]:not([data-natural]) .pageHead {
   align-items: center;
+}
+
+/* Sibling to the page head, the strip never crops the actions' row; below 600px it shares that row, so the
+   head then goes back to centering on the strip. */
+.pageBarWithTabs[data-compact]:not([data-natural]) .pageHead {
+  align-items: flex-start;
+  align-self: flex-start;
+}
+
+@container plugin-page-bar (width < 600px) {
+  .pageBarWithTabs[data-compact]:not([data-natural]) .pageHead {
+    align-items: center;
+    align-self: center;
+  }
 }
 
 .pageBar[data-compact]:not([data-natural]) .pageIntro {
@@ -1833,9 +1849,16 @@ label.registryOption {
   }
 }
 
-/* Keep the usual tab width until the icon actions and their gaps need its space. */
+/* Keep the usual tab width until the icon actions and their gaps need its space. A page that contributes tabs
+   carries the strip with several tabs, so there the strip gives way earlier, still inside the page head's row. */
 @container plugin-page-bar (width < 372px) {
   .pageTabList {
+    min-width: 0;
+  }
+}
+
+@container plugin-page-bar (width < 600px) {
+  .pageBarWithTabs .pageTabList {
     min-width: 0;
   }
 }

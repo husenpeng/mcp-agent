@@ -1,0 +1,43 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write plugins/tomato-market/README.md
+/:
+  en: 82dc9aac5473aa98
+  zh: 228a095a0a6d9879
+/tomato-plugin-tomato-market:
+  en: 1e9c237337d56650
+  zh: 1f2aa2a9d431faac
+/tomato-plugin-tomato-market/summary:
+  en: 84e68674b4425fbf
+  zh: 83487277b59247e5
+/tomato-plugin-tomato-market/table-of-contents:
+  en: 76368b6b1da79c80
+  zh: 11bd54c43c2b8b34
+/tomato-plugin-tomato-market/use-this-package:
+  en: f2de551815f4a1ad
+  zh: 3a5d8bf17e4d335a
+/tomato-plugin-tomato-market/use-this-package/marketing-catalog:
+  en: 21f41d4415cc12e6
+  zh: 6001d3967adffc6d
+/tomato-plugin-tomato-market/use-this-package/general-catalog-and-installs:
+  en: c7d0dcb96d922f17
+  zh: df892eed5cd62aac
+/tomato-plugin-tomato-market/use-this-package/configuration:
+  en: 2592223e9feeb5db
+  zh: ae64744e1475020c
+/tomato-plugin-tomato-market/understand-the-implementation:
+  en: 5f926ff104da8079
+  zh: e50f93597a5e8280
+/tomato-plugin-tomato-market/model-experience:
+  en: fc2a663caba859ff
+  zh: 2a53563bae70542d
+/tomato-plugin-tomato-market/model-experience/kv-cache-effect:
+  en: 4f0eadf94828e66e
+  zh: e9294367bb6fbbd6
+/tomato-plugin-tomato-market/known-limitations-and-deferred-work:
+  en: 59f17119105836a0
+  zh: fd017deccf39bd50
+/tomato-plugin-tomato-market/known-limitations-and-deferred-work/dev-note:
+  en: 1f01dc4d0ecb8f4c
+  zh: 4a7a89dfdb359933

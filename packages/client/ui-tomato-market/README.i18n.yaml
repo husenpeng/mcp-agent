@@ -1,0 +1,34 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/client/ui-tomato-market/README.md
+/:
+  en: e3ee08357747bc4d
+  zh: e1501d8f1c31f3ff
+/tomato-client-ui-tomato-market:
+  en: 98870dba176fe6ca
+  zh: ee6386a045329b1f
+/tomato-client-ui-tomato-market/summary:
+  en: 2ebf0467675f1c37
+  zh: 1632b02ee73e56a4
+/tomato-client-ui-tomato-market/table-of-contents:
+  en: 73f2687f0589969a
+  zh: e11875025f41e13f
+/tomato-client-ui-tomato-market/use-this-package:
+  en: b3a0329963dd8972
+  zh: 99793208a40ff732
+/tomato-client-ui-tomato-market/understand-the-implementation:
+  en: 64b63e6e3f387b62
+  zh: a5ce0d534bb23091
+/tomato-client-ui-tomato-market/model-experience:
+  en: feb530049a1d2233
+  zh: 859d5255dbe98595
+/tomato-client-ui-tomato-market/model-experience/kv-cache-effect:
+  en: 4f0eadf94828e66e
+  zh: 549ab4bd42766195
+/tomato-client-ui-tomato-market/known-limitations-and-deferred-work:
+  en: a36c81927525e63e
+  zh: 4f33d5f7d7356adb
+/tomato-client-ui-tomato-market/known-limitations-and-deferred-work/dev-note:
+  en: 5448183ee77c74fc
+  zh: 130514f9f03255ef

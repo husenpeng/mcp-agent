@@ -10,7 +10,8 @@
     "docs/i18n/terminology.md",
     "docs/i18n/translation-prompt.md",
     "docs/tomato/",
-    "plugins/",
+    "plugins/tomato-campaign/",
+    "plugins/ds-bot/",
     "packages/experimental/robot-templates-knowledge-work/plugins/",
     "prototypes/"
   ]

@@ -99,6 +99,8 @@ export function buildGates(
     for (const step of libraryBuildSteps(root, 'all')) {
       gates.push(libraryGate(step, step.id === 'host-src' ? ['native', ...step.needs] : step.needs, env))
     }
+    // The plugin tier bundles through its own package configs outside the workspace-wide passes.
+    gates.push(pnpmGate('plugin-bundles', 'Plugin bundles', ['--filter', './plugins/*', 'run', 'bundle'], [], env))
     gates.push(pnpmGate('web', 'Web build', ['run', 'build:web'], ['client-bundle'], env))
   }
   if (scope === 'typecheck') {

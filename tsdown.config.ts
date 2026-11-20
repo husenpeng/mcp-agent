@@ -20,6 +20,8 @@ function isBuildFaceClient(value: unknown): boolean {
  */
 export default defineConfig(({ env }) => {
   const client = isBuildFaceClient(env?.TOMATO_BUILD_FACE)
+  // The markets' Host half is a workspace package whose own config builds it outside this pass; only the
+  // packages under `packages/` share the tier's default entry.
   const packages = workspacePackageGlobs(globSync(['vendor/*/package.json', 'packages/*/*/package.json'], { cwd: import.meta.dirname }))
   return {
     workspace: [...packages, 'apps/cli', ...client ? [] : ['apps/desktop-host']],

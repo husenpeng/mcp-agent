@@ -252,7 +252,8 @@ describe('PluginManagerPage', () => {
     expect(screen.getByRole('tabpanel').getAttribute('aria-labelledby')).toBe(screen.getByRole('tab', { name: 'Discover' }).id)
     expect(screen.getByRole('tabpanel').closest('[data-plugin-body]')).not.toBeNull()
     expect(document.querySelector('[data-plugin-group="bundles"]')).toBeNull()
-    expect(screen.queryByRole('button', { name: en.refresh })).toBeNull()
+    // The page's Refresh stays in the header of a contributed tab: the entries under More are profile bundles.
+    expect(screen.getByRole('button', { name: en.refresh })).not.toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Discover install' }))
     expect(actions.installFrom).toHaveBeenCalledWith({ spec: 'tomato-a@1.0.0', registry: 'https://r.example/', title: 'Alpha', version: '1.0.0' })
     fireEvent.click(screen.getByRole('button', { name: 'Discover update' }))
@@ -567,7 +568,7 @@ describe('PluginManagerPage', () => {
     const { actions, set } = renderTab({ status: 'loading' })
     expect(actions.ensure).toHaveBeenCalledTimes(1)
     const loading = screen.getByRole('status', { name: en.loading })
-    expect(loading.querySelectorAll('li')).toHaveLength(4)
+    expect(loading.querySelectorAll('li')).toHaveLength(3)
     expect(loading.querySelector('ul')?.getAttribute('aria-hidden')).toBe('true')
     expect(loading.querySelector('button, input, [data-state="ongoing"]')).toBeNull()
     expect(document.querySelector('[data-plugin-panel]')?.getAttribute('aria-busy')).toBe('true')

@@ -1,11 +1,10 @@
 {
-  "name": "tomato-market",
-  "version": "0.4.0",
+  "name": "@tomato/plugin-tomato-market",
+  "version": "0.2.2-rc.2",
   "description": "Plugin markets for Tomato Harness: a curated marketing catalog of open-source plugins, MCP servers, and Skills, plus the open Tomato Harness plugin catalog.",
   "keywords": [
     "tomato-plugin",
     "tomato",
-    "deepseek-harness",
     "plugin",
     "market",
     "marketplace",
@@ -14,46 +13,64 @@
   ],
   "homepage": "https://awesome-tomato-plugin.com",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "plugins/tomato-market"
+  },
   "type": "module",
-  "main": "index.js",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
   "exports": {
-    ".": "./index.js",
-    "./client": "./client.js",
-    "./package.json": "./package.json"
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./api": {
+      "types": "./lib/types/api.d.ts",
+      "default": "./lib/types/api.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./locale/*.json": "./locale/*.json"
   },
   "files": [
-    "index.js",
-    "client.js",
-    "docs",
+    "lib/index.js",
+    "lib/types/**/*.d.ts",
+    "lib/types/**/*.d.ts.map",
+    "lib/**/*.js.map",
     "cordis.patch.yml",
-    "src/",
-    "README.md",
-    "LICENSE"
+    "locale/*.json",
+    "src"
   ],
   "tomato": {
     "bundle": {
       "patch": "./cordis.patch.yml"
-    },
-    "client": {
-      "platform": "web"
     }
   },
-  "engines": {
-    "tomato": ">=0.2.1-rc.3 <0.3.0"
-  },
-  "peerDependencies": {
-    "@tomato/cordis": "*"
-  },
   "scripts": {
-    "build": "node scripts/build-client.mjs",
-    "test": "node --test \"test/*.test.js\""
-  },
-  "devDependencies": {
-    "esbuild": "^0.28.2"
+    "bundle": "tsdown"
   },
   "dependencies": {
+    "@tomato/atomic-write": "workspace:*",
+    "@tomato/typert-protocol": "workspace:*",
     "js-yaml": "^4.3.2",
     "semver": "^7.8.6",
     "tar": "^7.5.22"
+  },
+  "peerDependencies": {
+    "@tomato/client-connection": "workspace:*",
+    "@tomato/cordis": "workspace:~"
+  },
+  "devDependencies": {
+    "@tomato/client-connection": "workspace:*",
+    "@tomato/cordis": "workspace:~"
+  },
+  "engines": {
+    "tomato": ">=0.2.1-rc.3 <0.3.0"
   }
 }

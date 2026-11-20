@@ -297,7 +297,7 @@ function RowsSection({ rows, t, resolveText, toggle, configure }: {
         ? (
           <Input
             type="search"
-            className={css.partsFilter as string}
+            className={css.partsFilter}
             placeholder={t('partsFilter')}
             aria-label={t('partsFilter')}
             value={filter}
@@ -479,7 +479,7 @@ function ListSkeleton({ label }: { readonly label: string }): ReactNode {
         </span>
       </div>
       <ul className={css.cards} aria-hidden="true">
-        {[0, 1, 2, 3].map(index => (
+        {[0, 1, 2].map(index => (
           <li key={index} className={css.card}>
             <div className={css.cardHead}>
               <span className={`${css.cardIcon} ${css.skeletonFill} ${css.skeletonIcon}`} />
@@ -1607,6 +1607,8 @@ export function PluginManagerPage(props: PluginManagerPageProps): ReactNode {
   const pinned = new Set(official.filter(pinnedToMainList).map(pkg => pkg.name))
   const extensions = ordered.filter(pkg => pinned.has(pkg.name))
   const more = ordered
+  // A reload can leave the loaded list up while a read is in flight; the toolbar follows that same list rather
+  // than the tab, so More keeps its refresh control inside a contributed tab.
   const loaded = state.status === 'ready' || state.status === 'error'
   const refreshing = state.refreshStatus === 'refreshing'
   const openPkg = view.kind === 'package' || view.kind === 'row'
@@ -1709,7 +1711,8 @@ export function PluginManagerPage(props: PluginManagerPageProps): ReactNode {
                     </Tooltip>
                   </div>
                 </div>
-                <div className={css.toolbar} data-plugin-toolbar data-plugin-header-part="toolbar" hidden={!onInstalled}>
+                {/* The entries under More are profile bundles, so the page's Refresh re-reads them from any tab. */}
+                <div className={css.toolbar} data-plugin-toolbar data-plugin-header-part="toolbar">
                   {updates === undefined ? null : <span className={css.updatesNote} data-tone={updates.tone}>{updates.text}</span>}
                   <Tooltip label={t('refresh')} delayMs={500} focusDelayMs={500} side="bottom" portal disabled={!loaded || refreshing}>
                     <Button variant="outline" size="sm" className={css.addButton} aria-label={t('refresh')} aria-busy={refreshing}

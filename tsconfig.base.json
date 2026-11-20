@@ -24,6 +24,9 @@
       "node"
     ],
     "paths": {
+      // BEGIN generated package aliases — pnpm run gen-tsconfig-paths
+      "@tomato/office-to-pdf": ["./packages/document/office-to-pdf/src"],
+      // END generated package aliases
       "@tomato/client-ui-file-actions": [
         "./packages/client/ui-file-actions/src/index.ts"
       ],
@@ -84,6 +87,12 @@
       "@tomato/experimental-tool-memory": [
         "./packages/experimental/tool-memory/src/index.ts"
       ],
+      "@tomato/memory-dream": [
+        "./packages/experimental/memory-dream/src/index.ts"
+      ],
+      "@tomato/memory-dream/types": [
+        "./packages/experimental/memory-dream/src/types.ts"
+      ],
       "@tomato/experimental-tool-robot": [
         "./packages/experimental/tool-robot/src/index.ts"
       ],
@@ -110,6 +119,12 @@
       ],
       "@tomato/experimental-robot-app": [
         "./packages/experimental/robot-app/src/index.ts"
+      ],
+      "@tomato/experimental-robot-crew-bundle": [
+        "./packages/experimental/robot-crew-bundle/src/index.ts"
+      ],
+      "@tomato/work-team-bundle": [
+        "./packages/experimental/work-team-bundle/src/index.ts"
       ],
       "@tomato/experimental-robot-templates-marketing": [
         "./packages/experimental/robot-templates-marketing/src/index.ts"
@@ -176,6 +191,15 @@
       ],
       "@tomato/client-ui-settings-developer/client": [
         "./packages/client/ui-settings-developer/src/client/index.ts"
+      ],
+      "@tomato/client-ui-deepseek-model-label-1017": [
+        "./packages/client/ui-deepseek-model-label-1017/src"
+      ],
+      "@tomato/client-ui-plugin-market": [
+        "./packages/client/ui-plugin-market/src"
+      ],
+      "@tomato/client-ui-plugin-market/client": [
+        "./packages/client/ui-plugin-market/src/client"
       ],
       "@tomato/client-ui-settings-remote": [
         "./packages/client/ui-settings-remote/src/index.ts"
@@ -506,6 +530,15 @@
       ],
       "@tomato/api-settings-controller": [
         "./packages/api/settings-controller/src/index.ts"
+      ],
+      "@tomato/api-system-monitor-controller": [
+        "./packages/api/system-monitor-controller/src/index.ts"
+      ],
+      "@tomato/api-system-monitor-controller/client": [
+        "./packages/api/system-monitor-controller/src/client/index.ts"
+      ],
+      "@tomato/api-system-monitor-controller/types": [
+        "./packages/api/system-monitor-controller/src/types.ts"
       ],
       "@tomato/api-settings-controller/types": [
         "./packages/api/settings-controller/src/types.ts"
@@ -1066,6 +1099,12 @@
       "@tomato/client-ui-subagent": [
         "./packages/client/ui-subagent/src"
       ],
+      "@tomato/client-ui-system-monitor": [
+        "./packages/client/ui-system-monitor/src"
+      ],
+      "@tomato/client-ui-system-monitor/client": [
+        "./packages/client/ui-system-monitor/src/client"
+      ],
       "@tomato/client-ui-agent-team": [
         "./packages/client/ui-agent-team/src"
       ],
@@ -1099,8 +1138,11 @@
       "@tomato/client-ui-settings-subagent": [
         "./packages/client/ui-settings-subagent/src"
       ],
-      "@tomato/client-ui-settings-web-search": [
-        "./packages/client/ui-settings-web-search/src"
+      "@tomato/client-ui-settings-work-team": [
+        "./packages/experimental/client-ui-settings-work-team/src"
+      ],
+      "@tomato/client-ui-settings-work-team/client": [
+        "./packages/experimental/client-ui-settings-work-team/src/client"
       ],
       "@tomato/client-ui-settings-marketing": [
         "./packages/client/ui-settings-marketing/src"
@@ -1162,7 +1204,13 @@
       "@tomato/client-ui-plugin-manager": [
         "./packages/client/ui-plugin-manager/src"
       ],
-      "@tomato/client-ui-plugin-market": [
+
+      "@tomato/client-ui-tomato-market": [
+        "./packages/client/ui-tomato-market/src"
+      ],
+      "@tomato/client-ui-tomato-market/client": [
+        "./packages/client/ui-tomato-market/src/client"
+      ],      "@tomato/client-ui-plugin-market": [
         "./packages/client/ui-plugin-market/src"
       ],
       "@tomato/client-ui-settings-plugin-inventory": [
@@ -1627,6 +1675,12 @@
       "@tomato/plugin-market": [
         "./packages/boot/plugin-market/src"
       ],
+      "@tomato/plugin-tomato-market": [
+        "./plugins/tomato-market/src"
+      ],
+      "@tomato/plugin-tomato-market/api": [
+        "./plugins/tomato-market/src/api.ts"
+      ],
       "@tomato/plugin-market-index": [
         "./packages/util/plugin-market-index/src"
       ],
@@ -1918,6 +1972,9 @@
       "@tomato/tool-session-query": [
         "./packages/experimental/tool-session-query/src"
       ],
+      "@tomato/tool-work-team": [
+        "./packages/experimental/tool-work-team/src"
+      ],
       "@tomato/tool-skill": [
         "./packages/skill/tool-skill/src"
       ],
@@ -1963,9 +2020,6 @@
       "@tomato/web-app": [
         "./packages/bundle/web-app/src"
       ],
-      "@tomato/web-deepseek-api": [
-        "./packages/web/web-deepseek-api/src"
-      ],
       "@tomato/web-fetch-company": [
         "./packages/web/web-fetch-company/src"
       ],
@@ -1974,9 +2028,6 @@
       ],
       "@tomato/web-search-company": [
         "./packages/web/web-search-company/src"
-      ],
-      "@tomato/web-search-deepseek": [
-        "./packages/web/web-search-deepseek/src"
       ],
       "@tomato/webhook": [
         "./packages/experimental/webhook/src"

@@ -66,6 +66,15 @@ const SHELL_PACKAGE = '@tomato/web-frontend'
 const TEST_INFRASTRUCTURE_PREFIX = 'packages/test-support/'
 
 /**
+ * Workspace manifests the client loop scans: the grouped package tier and the
+ * plugin tier, whose client halves mount through the same roster.
+ */
+const WORKSPACE_MANIFEST_GLOBS = ['packages/*/*/package.json', 'plugins/*/package.json']
+
+/** Package-local client bundle configs beside those manifests. */
+const WORKSPACE_TSDOWN_GLOBS = ['packages/*/*/tsdown.config.ts', 'plugins/*/tsdown.config.ts']
+
+/**
  * Sample one local public environment for every long-lived watcher stage.
  * @param root - repository root supplying version and Git metadata.
  * @param environment - watcher launch environment supplying public extensions.
@@ -124,16 +133,16 @@ export function parseDevWebArguments(argv: readonly string[]): DevWebArguments {
 }
 
 /**
- * Discover the watch workspace by declaration: every packages/<group>/<name>
- * whose package.json carries `tomato.client` with platform "web" is a client
- * plugin bundle emitter. Scanned once at startup — a package added while
- * watching means restarting this script.
+ * Discover the watch workspace by declaration: every workspace package whose
+ * package.json carries `tomato.client` with platform "web" is a client plugin
+ * bundle emitter, in the package tier and the plugins tier alike. Scanned once
+ * at startup — a package added while watching means restarting this script.
  * @param root - repository root containing the grouped package directories.
  * @returns workspace-relative plugin package directories.
  */
 export function discoverPluginDirs(root = repoRoot): string[] {
   const dirs: string[] = []
-  for (const manifestPath of globSync('packages/*/*/package.json', { cwd: root }).sort()) {
+  for (const manifestPath of globSync(WORKSPACE_MANIFEST_GLOBS, { cwd: root }).sort()) {
     const manifest = JSON.parse(readFileSync(join(root, manifestPath), 'utf8')) as {
       tomato?: { client?: { platform?: unknown } }
     }
@@ -156,7 +165,7 @@ export function discoverPluginDirs(root = repoRoot): string[] {
  */
 export function discoverLibraryDirs(root = repoRoot): string[] {
   const dirs: string[] = []
-  for (const configPath of globSync('packages/*/*/tsdown.config.ts', { cwd: root }).sort()) {
+  for (const configPath of globSync(WORKSPACE_TSDOWN_GLOBS, { cwd: root }).sort()) {
     const dir = dirname(configPath).split(sep).join('/')
     if (dir.startsWith(TEST_INFRASTRUCTURE_PREFIX)) continue
     if (!readFileSync(join(root, configPath), 'utf8').includes('tsdown.client.ts')) continue

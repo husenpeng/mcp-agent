@@ -52,7 +52,8 @@ export function apply(ctx: ClientContext): void {
   }, 'ui-plugin-market: host invalidations')
   const face = controller.face(text => ctx.locale.resolveText(text))
   const t = ctx.locale.bind(NS)
+  // Discover closes the strip: the market tabs and the installed plugins come before it.
   ctx.slots.inject('plugins.tab', () => ctx.slots.register({
-    name: 'plugins.tab', id: 'discover', label: () => t('title'), locale: NS, inject: () => face,
+    name: 'plugins.tab', id: 'discover', order: 2, label: () => t('title'), locale: NS, inject: () => face,
   }, DiscoverSection))
 }

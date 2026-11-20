@@ -29,7 +29,8 @@
     "plugins/", // Third-party plugin sources sit outside the workspace, TypeScript, and quality gates (plugins/README.md).
     "**/*.mjs",
     "**/*.config.ts", // Tool and app configs are outside the repository TypeScript programs.
-    "packages/client/tsdown.client.ts" // Shared client build preset, also outside a TypeScript program.
+    "packages/client/tsdown.client.ts", // Shared client build preset, also outside a TypeScript program.
+    "**/*.d.ts" // Checked-in declaration files come from the type-emit fixtures whose exports the source checks.
   ],
   "overrides": [
     {
