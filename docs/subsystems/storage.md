@@ -377,6 +377,16 @@ async setPinned(view: MemoryView, id: MemoryIdType, pinned: boolean): Promise<Me
 async confirm(view: MemoryView, id: MemoryIdType): Promise<MemoryRecord | undefined>
 
 /**
+ * Silence one candidate for its current evidence. It becomes visible again
+ * only after another write states it, which is how a repeated statement still
+ * reaches a person.
+ * @param view - view that must see the record.
+ * @param id - candidate to dismiss.
+ * @returns the updated record, or `undefined` when the view sees no candidate with that id.
+ */
+async dismiss(view: MemoryView, id: MemoryIdType): Promise<MemoryRecord | undefined>
+
+/**
  * Enumerate every record a view sees, for human management.
  * @param view - owner and optional workspace.
  * @returns profile and workspace records, newest first.
@@ -386,10 +396,12 @@ list(view: MemoryView): readonly MemoryRecord[]
 /**
  * Store one compressed episode. A repeated fingerprint of the same owner and
  * project updates the earlier record's timestamp instead of appending.
- * Every text field is normalized before the size check and the fingerprint lookup.
+ * Every text field is normalized before the size check and the fingerprint
+ * lookup, and bounded to {@link EPISODE_BOUNDS}, so a stored episode always
+ * satisfies {@link episodeRecordSchema}.
  * @param request - owner, project, episode fields, fingerprint, and source.
  * @returns the stored episode.
- * @throws {@link MemoryError} `invalid-identifier`, `empty-value`, `episode-too-large`, or `episodes-full`.
+ * @throws {@link MemoryError} `invalid-identifier`, `empty-value`, or `episode-too-large`.
  */
 async rememberEpisode(request: RememberEpisodeRequest): Promise<EpisodeRecord>
 
@@ -468,6 +480,38 @@ snapshot(view: MemoryView): readonly MemoryRecord[]
 Types: [PromotionOutcome](../../packages/experimental/memory/README.md) · [Session](session.md) · [SessionId](core.md)
 
 Source: [`packages/experimental/memory/src/index.ts`](../../packages/experimental/memory/src/index.ts)
+
+<a id="ctxmemorydream--memorydreamservice"></a>
+
+### `ctx.memoryDream` — `MemoryDreamService`
+
+Dream consolidation service: checks when a run is due and consolidates memory episodes.
+
+```ts cordis-catalog
+/** Current cursor state.
+ * @returns a copy of the cursor the next run starts from.
+ */
+getCursor(): DreamCursor
+
+/**
+ * Check whether a dream run is due based on time and episode count.
+ * @param view - memory view to check.
+ * @returns whether a run should start.
+ */
+isDue(view: MemoryView): boolean
+
+/**
+ * Run one dream consolidation cycle.
+ * @param session - session that triggered this run (for logging).
+ * @param view - memory view to consolidate.
+ * @returns the run outcome.
+ */
+async run(session: Session, view: MemoryView): Promise<DreamOutcome>
+```
+
+Types: [Session](session.md)
+
+Source: [`packages/experimental/memory-dream/src/index.ts`](../../packages/experimental/memory-dream/src/index.ts)
 
 <a id="ctxmuseinsights--museinsights"></a>
 

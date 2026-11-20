@@ -2,7 +2,7 @@
 
 [English](web.md) | 中文
 
-Web 访问 seam 是一个[能力 seam](../../.agents/notes/implemented/architecture/2026-06-24-web-capability-seam.zh.md)，在同一个 `ctx.web` 服务上横跨**两项操作**（search 与 fetch），并拆分到多个包：Service Definition（[@tomato/web](../../packages/web/web)，`ctx.web` + 提供方注册表）、Service Provider（[@tomato/web-search-exa](../../packages/web/web-search-exa)、[@tomato/web-search-perplexity](../../packages/web/web-search-perplexity)、[@tomato/web-search-deepseek](../../packages/web/web-search-deepseek)、[@tomato/web-deepseek-api](../../packages/web/web-deepseek-api)、[@tomato/web-fetch-http](../../packages/web/web-fetch-http)）与 Consumer（[@tomato/tool-web](../../packages/web/tool-web)，即 `web_search`/`web_fetch` 工具 schema）。Web 是**一项可选能力**，不属于 agent loop（智能体循环）主干，因此其词汇定义在此而非 [core.md](core.zh.md) 中。更换 search 提供方不会改变模型提交查询的方式，更换 fetch 提供方也不会改变模型请求 URL 的方式。
+Web 访问 seam 是一个[能力 seam](../../.agents/notes/implemented/architecture/2026-06-24-web-capability-seam.zh.md)，在同一个 `ctx.web` 服务上横跨**两项操作**（search 与 fetch），并拆分到多个包：Service Definition（[@tomato/web](../../packages/web/web)，`ctx.web` + 提供方注册表）、Service Provider（[@tomato/web-search-company](../../packages/web/web-search-company)、[@tomato/web-fetch-company](../../packages/web/web-fetch-company)、[@tomato/web-fetch-http](../../packages/web/web-fetch-http)）与 Consumer（[@tomato/tool-web](../../packages/web/tool-web)，即 `web_search`/`web_fetch` 工具 schema）。Web 是**一项可选能力**，不属于 agent loop（智能体循环）主干，因此其词汇定义在此而非 [core.md](core.zh.md) 中。更换 search 提供方不会改变模型提交查询的方式，更换 fetch 提供方也不会改变模型请求 URL 的方式。
 
 源码：[`packages/web/web/src/types.ts`](../../packages/web/web/src/types.ts)
 
@@ -157,14 +157,14 @@ Generated from source by `scripts/gen-cordis-catalog.ts` (verified fresh by `pnp
 
 The web access service. Registered as `ctx.web` (one instance per context) and exposed to Clients as the `web` Remote namespace (`listProviders`).
 
-Selection semantics (resolved at execution time, never order-dependent):
+Selection semantics (resolved at execution time; registration order only breaks ties inside one configured list, never across auto-selection):
 
-- A configured id that is registered and `available()` → that provider.
-- A configured id not registered → `WEB_PROVIDER_CONFIGURED_MISSING`.
-- A configured id registered but unavailable → `WEB_PROVIDER_CONFIGURED_UNAVAILABLE`.
-- No id configured, exactly one registered usable provider → that provider.
-- No id configured, multiple usable providers → `WEB_PROVIDER_AMBIGUOUS`.
-- No id configured, no usable provider → `WEB_PROVIDER_UNAVAILABLE`.
+- With candidates, the first registered candidate whose `available()` is true wins.
+- A candidate that is not registered is skipped; when none wins and a candidate was missing, `WEB_PROVIDER_CONFIGURED_MISSING` names the first one.
+- Candidates all registered but unavailable → `WEB_PROVIDER_CONFIGURED_UNAVAILABLE`.
+- No candidates, exactly one registered usable provider → that provider.
+- No candidates, multiple usable providers → `WEB_PROVIDER_AMBIGUOUS`.
+- No candidates, no usable provider → `WEB_PROVIDER_UNAVAILABLE`.
 
 ```ts cordis-catalog
 /**

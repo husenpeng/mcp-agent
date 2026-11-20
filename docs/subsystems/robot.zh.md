@@ -606,6 +606,13 @@ Host service backing the generated `ctx.remote.room` namespace.
 @Remote('post') async post(request: RoomPostRequest): Promise<RoomMessage>
 
 /**
+ * Read the work records one room produced.
+ * @param request - room identity.
+ * @returns one record per ticket, oldest first.
+ */
+@Remote('work') work(request: RoomTargetRequest): Promise<readonly RoomWorkRecord[]>
+
+/**
  * Read room messages.
  * @param request - room, start sequence, and limit.
  * @returns messages in sequence order.
@@ -656,7 +663,7 @@ Host service backing the generated `ctx.remote.room` namespace.
 @Remote({ mode: 'stream' }) watch(signal: AbortSignal): AsyncIterable<RoomSnapshotFrame>
 ```
 
-Types: [Room](../../packages/experimental/experimental-robot-room/README.zh.md) · [RoomApprovalRequest](../../packages/api/api-robot-room-controller/README.zh.md) · [RoomMessage](../../packages/experimental/experimental-robot-room/README.zh.md) · [RoomMessagesRequest](../../packages/api/api-robot-room-controller/README.zh.md) · [RoomPauseRequest](../../packages/api/api-robot-room-controller/README.zh.md) · [RoomPostRequest](../../packages/api/api-robot-room-controller/README.zh.md) · [RoomPublicationRequest](../../packages/api/api-robot-room-controller/README.zh.md) · [RoomSnapshotFrame](../../packages/api/api-robot-room-controller/README.zh.md) · [RoomTargetRequest](../../packages/api/api-robot-room-controller/README.zh.md)
+Types: [Room](../../packages/experimental/experimental-robot-room/README.zh.md) · [RoomApprovalRequest](../../packages/api/api-robot-room-controller/README.zh.md) · [RoomMessage](../../packages/experimental/experimental-robot-room/README.zh.md) · [RoomMessagesRequest](../../packages/api/api-robot-room-controller/README.zh.md) · [RoomPauseRequest](../../packages/api/api-robot-room-controller/README.zh.md) · [RoomPostRequest](../../packages/api/api-robot-room-controller/README.zh.md) · [RoomPublicationRequest](../../packages/api/api-robot-room-controller/README.zh.md) · [RoomSnapshotFrame](../../packages/api/api-robot-room-controller/README.zh.md) · [RoomTargetRequest](../../packages/api/api-robot-room-controller/README.zh.md) · [RoomWorkRecord](../../packages/experimental/experimental-robot-room/README.zh.md)
 
 Source: [`packages/api/api-robot-room-controller/src/index.ts`](../../packages/api/api-robot-room-controller/src/index.ts)
 
@@ -713,6 +720,13 @@ abstract post(input: RoomPost): Promise<RoomMessage>
 abstract messages(id: RoomId, afterSeq?: number, limit?: number): Promise<readonly RoomMessage[]>
 
 /**
+ * Read the work records one room produced, oldest first.
+ * @param id - room identity.
+ * @returns one record per ticket the room opened.
+ */
+abstract work(id: RoomId): Promise<readonly RoomWorkRecord[]>
+
+/**
  * Pause or resume a room.
  * @param id - room identity.
  * @param paused - whether robot wakes stop.
@@ -751,7 +765,7 @@ abstract endEpisode(id: RoomId): Promise<Room>
 abstract approve(id: RoomId, approval: string, decision: 'approved' | 'rejected'): Promise<Room>
 ```
 
-Types: [Room](../../packages/experimental/experimental-robot-room/README.zh.md) · [RoomId](../../packages/experimental/experimental-robot-room/README.zh.md) · [RoomMessage](../../packages/experimental/experimental-robot-room/README.zh.md) · [RoomPost](../../packages/experimental/experimental-robot-room/README.zh.md) · [RoomSpec](../../packages/experimental/experimental-robot-room/README.zh.md)
+Types: [Room](../../packages/experimental/experimental-robot-room/README.zh.md) · [RoomId](../../packages/experimental/experimental-robot-room/README.zh.md) · [RoomMessage](../../packages/experimental/experimental-robot-room/README.zh.md) · [RoomPost](../../packages/experimental/experimental-robot-room/README.zh.md) · [RoomSpec](../../packages/experimental/experimental-robot-room/README.zh.md) · [RoomWorkRecord](../../packages/experimental/experimental-robot-room/README.zh.md)
 
 Source: [`packages/experimental/experimental-robot-room/src/index.ts`](../../packages/experimental/experimental-robot-room/src/index.ts)
 
