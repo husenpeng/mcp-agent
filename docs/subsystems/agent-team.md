@@ -191,4 +191,92 @@ async updateTask(caller: Agent, request: UpdateTeamTaskRequest, signal?: AbortSi
 Types: [Agent](core.md)
 
 Source: [`packages/team/agent-team/src/index.ts`](../../packages/team/agent-team/src/index.ts)
+
+<a id="ctxsuperagent--superagentteam"></a>
+
+### `ctx.superagent` — `SuperagentTeam`
+
+The team one Host runs, for a caller that asks it to work or watches it.
+
+```ts cordis-catalog
+/** Read one page of requests and carry each accepted one through work and review.
+ * @returns the report of the completed team cycle.
+ */
+runOnce(): Promise<TeamReport>
+
+/** Every stored ticket, for a watcher.
+ * @returns the team's current tickets.
+ */
+tickets(): readonly Ticket[]
+
+/**
+ * Take one request a person typed into the app: admit it, let the supervisor
+ * decide what it becomes, and queue the accepted work. The work runs in the
+ * background; watch the tickets to see it progress.
+ * @param text - the request as the person stated it.
+ * @returns what the request became, with the opened tickets or the refusal reason.
+ */
+submit(text: string): Promise<SubmitResult>
+
+/**
+ * Send one ticket new context — an answer, a correction, or a continuation
+ * after a cancelled run. The message joins the ticket's thread and the next
+ * run reads it as the latest instruction.
+ * @param ticket - ticket to continue.
+ * @param text - the context or answer.
+ * @returns the ticket as the message left it.
+ */
+message(ticket: string, text: string): Promise<TicketSummary>
+
+/**
+ * Abort the ticket's in-flight run. The run reports `dropped`, the ticket
+ * stays open, and a later message may start the next run.
+ * @param ticket - ticket whose run to abort.
+ * @returns the ticket once the aborted run settled.
+ */
+cancel(ticket: string): Promise<TicketSummary>
+
+/**
+ * Stop a ticket for good, aborting its in-flight run when it has one. A
+ * stopped ticket takes no new work and no further messages.
+ * @param ticket - ticket to stop.
+ * @returns the stopped ticket.
+ */
+stop(ticket: string): Promise<TicketSummary>
+
+/**
+ * Read everything one ticket holds: its mandate, every run and report, the
+ * latest review, and the messages on its threads.
+ * @param ticket - ticket to read.
+ * @returns the full detail a person reads the flow from.
+ */
+detail(ticket: string): Promise<TicketDetail>
+```
+
+Types: [TeamReport](../../packages/experimental/superagent-runtime/README.md) · [Ticket](../../packages/experimental/superagent/README.md)
+
+Source: [`packages/experimental/superagent-runtime/src/index.ts`](../../packages/experimental/superagent-runtime/src/index.ts)
+
+<a id="superagent-events"></a>
+
+### `superagent/*` events
+
+<a id="superagentchanged--emit"></a>
+
+#### `superagent/changed` — emit
+
+One committed change to the team's tickets: intake decided a request, a run started or reported, a review recorded, or a person cancelled, messaged, or stopped a ticket.
+
+```ts cordis-catalog
+/**
+ * One committed change to the team's tickets: intake decided a request, a
+ * run started or reported, a review recorded, or a person cancelled,
+ * messaged, or stopped a ticket.
+ * @param ticket - ticket whose state changed, or undefined for a list-level change.
+ * @mode emit
+ */
+'superagent/changed'(ticket: TicketId | undefined): void
+```
+
+Source: [`packages/experimental/superagent-runtime/src/index.ts`](../../packages/experimental/superagent-runtime/src/index.ts)
 <!-- END GENERATED cordis-surface -->

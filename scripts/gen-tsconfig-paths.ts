@@ -193,9 +193,22 @@ export function writeRegion(text: string, body: string): string {
   const begin = text.indexOf(BEGIN)
   const end = text.indexOf(END)
   if (begin < 0 || end < begin) {
-    throw new Error(`gen-tsconfig-paths: ${CONFIG} is missing the generated-region markers.`)
+    // A config without the region keeps its aliases where a hand maintained map wrote them: the first
+    // generation wraps that block in the markers instead of demanding markers it has never written.
+    const first = text.search(/\n      "@tomato\/[^"]+": \[/)
+    if (first < 0) throw new Error(`gen-tsconfig-paths: ${CONFIG} is missing the generated-region markers.`)
+    // The region trails a comma because the hand-written members follow it, and the member that used to
+    // stand last before them therefore needs one of its own.
+    const rest = text.slice(first)
+    const separated = rest.replace(/^(\n      "@tomato\/[^"]+": \[[^\]]*\])(\n      "@tomato\/)/, '$1,$2')
+    return `${text.slice(0, first)}\n${BEGIN}\n${body},\n${END}${separated}`
   }
-  return `${text.slice(0, begin)}${BEGIN}\n${body}\n${END}${text.slice(end + END.length)}`
+  // Hand-written members may follow the region, so the region always trails a comma; the member that used to
+  // stand last before them keeps one of its own.
+  const before = text.slice(0, begin).replace(/,(\s*)$/, '$1')
+  const after = text.slice(end + END.length)
+    .replace(/^(\n      "@tomato\/[^"]+": \[[^\]]*\])(\n      "@tomato\/)/, '$1,$2')
+  return `${before}${BEGIN}\n${body},\n${END}${after}`
 }
 
 /**

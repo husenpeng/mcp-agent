@@ -144,6 +144,10 @@ flowchart LR
   cfg --> plugin_tomato_base_subagent_spawn_in_process
   plugin_tomato_base_subagent_fork_in_process["subagent-fork-in-process<br/>@tomato/subagent-fork-in-process"]
   cfg --> plugin_tomato_base_subagent_fork_in_process
+  plugin_tomato_base_agent_team["agent-team<br/>@tomato/agent-team"]
+  cfg --> plugin_tomato_base_agent_team
+  plugin_tomato_base_tool_agent_team["tool-agent-team<br/>@tomato/tool-agent-team"]
+  cfg --> plugin_tomato_base_tool_agent_team
   plugin_tomato_base_tool_subagent_control["tool-subagent-control<br/>@tomato/tool-subagent-control"]
   cfg --> plugin_tomato_base_tool_subagent_control
   plugin_tomato_base_tool_subagent["tool-subagent<br/>@tomato/tool-subagent"]
@@ -176,12 +180,8 @@ flowchart LR
   cfg --> plugin_tomato_base_repeat_tool_reminder
   plugin_tomato_base_web["web<br/>@tomato/web"]
   cfg --> plugin_tomato_base_web
-  plugin_tomato_base_web_search_deepseek["web-search-deepseek<br/>@tomato/web-search-deepseek"]
-  cfg --> plugin_tomato_base_web_search_deepseek
   plugin_tomato_base_web_search_company["web-search-company<br/>@tomato/web-search-company"]
   cfg --> plugin_tomato_base_web_search_company
-  plugin_tomato_base_web_deepseek_api["web-deepseek-api<br/>@tomato/web-deepseek-api"]
-  cfg --> plugin_tomato_base_web_deepseek_api
   plugin_tomato_base_web_fetch_company["web-fetch-company<br/>@tomato/web-fetch-company"]
   cfg --> plugin_tomato_base_web_fetch_company
   plugin_tomato_base_web_fetch_http["web-fetch-http<br/>@tomato/web-fetch-http"]
@@ -276,6 +276,8 @@ flowchart LR
 | `subagent` | `@tomato/subagent` |
 | `subagent-spawn-in-process` | `@tomato/subagent-spawn-in-process` |
 | `subagent-fork-in-process` | `@tomato/subagent-fork-in-process` |
+| `agent-team` | `@tomato/agent-team` |
+| `tool-agent-team` | `@tomato/tool-agent-team` |
 | `tool-subagent-control` | `@tomato/tool-subagent-control` |
 | `tool-subagent` | `@tomato/tool-subagent` |
 | `tool-subagent-fork` | `@tomato/tool-subagent` |
@@ -292,9 +294,7 @@ flowchart LR
 | `tool-goal` | `@tomato/tool-goal` |
 | `repeat-tool-reminder` | `@tomato/repeat-tool-reminder` |
 | `web` | `@tomato/web` |
-| `web-search-deepseek` | `@tomato/web-search-deepseek` |
 | `web-search-company` | `@tomato/web-search-company` |
-| `web-deepseek-api` | `@tomato/web-deepseek-api` |
 | `web-fetch-company` | `@tomato/web-fetch-company` |
 | `web-fetch-http` | `@tomato/web-fetch-http` |
 | `tool-web` | `@tomato/tool-web` |

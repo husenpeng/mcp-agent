@@ -314,6 +314,27 @@ export interface SettingsControllerInternals {
 ```
 <!-- END GENERATED config-catalog:@tomato/api-settings-controller -->
 
+<!-- BEGIN GENERATED config-catalog:@tomato/api-system-monitor-controller -->
+<a id="tomatoapi-system-monitor-controller"></a>
+
+## `@tomato/api-system-monitor-controller`
+
+- `inject`: `typert`
+- `source`: [`packages/api/system-monitor-controller/src/index.ts:45`](../packages/api/system-monitor-controller/src/index.ts)
+
+```ts config-catalog
+/** Deployment policy for sampling cost. */
+export interface Config {
+  /** Sampling interval in milliseconds (default 1000; clamped to 250–10,000). */
+  readonly intervalMs?: number
+  /** Process rows per frame, highest CPU first (default 6; 0–50). */
+  readonly processLimit?: number
+  /** Deadline for one platform probe in milliseconds (default 2000). */
+  readonly commandTimeoutMs?: number
+}
+```
+<!-- END GENERATED config-catalog:@tomato/api-system-monitor-controller -->
+
 <!-- BEGIN GENERATED config-catalog:@tomato/api-terminal-controller -->
 <a id="tomatoapi-terminal-controller"></a>
 
@@ -1384,7 +1405,7 @@ export interface InspectorOptions {
 
 - `inject`: `storageDomain`
 - `refs`: `Volatile` (`@tomato/cordis`)
-- `source`: [`packages/experimental/memory/src/index.ts:102`](../packages/experimental/memory/src/index.ts)
+- `source`: [`packages/experimental/memory/src/index.ts:103`](../packages/experimental/memory/src/index.ts)
 
 ```ts config-catalog
 /** Deployment limits for stored and recalled memory; Loader publishes each as a live reference. */
@@ -1626,7 +1647,7 @@ export interface Config {
 ## `@tomato/experimental-robot-room-local`
 
 - `inject`: `storageDomain`
-- `source`: [`packages/experimental/experimental-robot-room-local/src/index.ts:36`](../packages/experimental/experimental-robot-room-local/src/index.ts)
+- `source`: [`packages/experimental/experimental-robot-room-local/src/index.ts:44`](../packages/experimental/experimental-robot-room-local/src/index.ts)
 
 ```ts config-catalog
 /** Deployment limits for room execution. */
@@ -1770,7 +1791,7 @@ export interface Config {
 
 - `inject`: `memory` · `tools` · `agents` · `commands` · `sessionProjections` · `llm`
 - `refs`: `Volatile` (`@tomato/cordis`)
-- `source`: [`packages/experimental/tool-memory/src/index.ts:128`](../packages/experimental/tool-memory/src/index.ts)
+- `source`: [`packages/experimental/tool-memory/src/index.ts:168`](../packages/experimental/tool-memory/src/index.ts)
 
 ```ts config-catalog
 /** Snapshot, write-justification, and query-expansion policy; each field is live-editable. */
@@ -1808,6 +1829,8 @@ export interface Config {
   captureProvider?: string | Volatile<string | undefined>
   /** Explicit capture model; must be paired with `captureProvider`. */
   captureModel?: string | Volatile<string | undefined>
+  /** Reasoning effort for capture requests; `off` keeps a hybrid model cheap for review. */
+  captureReasoningEffort?: string | Volatile<string | undefined>
 
   /** Maximum UTF-8 bytes of the person messages sent to one capture request. */
   captureMaxInputBytes?: number | Volatile<number | undefined>
@@ -3114,6 +3137,48 @@ export interface McpManagedServerEntry {
 ```
 <!-- END GENERATED config-catalog:@tomato/mcp-manager -->
 
+<!-- BEGIN GENERATED config-catalog:@tomato/memory-dream -->
+<a id="tomatomemory-dream"></a>
+
+## `@tomato/memory-dream`
+
+- `inject`: `memory` · `llm` · `sessionQuery` · `storageDomain`
+- `refs`: `Volatile` (`@tomato/cordis`)
+- `source`: [`packages/experimental/memory-dream/src/index.ts:92`](../packages/experimental/memory-dream/src/index.ts)
+
+```ts config-catalog
+/** Settings the Memory Dream bundle passes to this plugin. */
+export interface Config {
+  /** Whether automatic dream runs are enabled. */
+  enabled?: boolean | Volatile<boolean | undefined>
+  /** How aggressively to apply plans. */
+  applyMode?: string | Volatile<string | undefined>
+  /** Explicit provider; must be paired with `model`. */
+  provider?: string | Volatile<string | undefined>
+  /** Explicit model; must be paired with `provider`. */
+  model?: string | Volatile<string | undefined>
+  /** Output-token cap per call. */
+  maxTokens?: number | Volatile<number | undefined>
+  /** Deadline per call in milliseconds. */
+  timeoutMs?: number | Volatile<number | undefined>
+  /** Maximum targets per chunk. */
+  maxTargetsPerChunk?: number | Volatile<number | undefined>
+  /** Maximum plan operations per call. */
+  maxPlanOps?: number | Volatile<number | undefined>
+  /** Maximum chunks to process per run. */
+  maxChunksPerRun?: number | Volatile<number | undefined>
+  /** Hours between automatic runs. */
+  minIntervalHours?: number | Volatile<number | undefined>
+  /** Minimum new episodes since last run to trigger. */
+  minNewEpisodes?: number | Volatile<number | undefined>
+  /** Maximum characters a session summary chain can carry before backfill. */
+  maxChainChars?: number | Volatile<number | undefined>
+  /** Safety margin in tokens subtracted from the context window. */
+  safetyTokens?: number | Volatile<number | undefined>
+}
+```
+<!-- END GENERATED config-catalog:@tomato/memory-dream -->
+
 <!-- BEGIN GENERATED config-catalog:@tomato/message-feedback -->
 <a id="tomatomessage-feedback"></a>
 
@@ -3434,6 +3499,31 @@ export interface Config {
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/plugin-package-inventory-deepseek -->
+
+<!-- BEGIN GENERATED config-catalog:@tomato/plugin-tomato-market -->
+<a id="tomatoplugin-tomato-market"></a>
+
+## `@tomato/plugin-tomato-market`
+
+- `inject`: `connection`
+- `source`: [`plugins/tomato-market/src/index.ts:46`](../plugins/tomato-market/src/index.ts)
+
+```ts config-catalog
+/** The market's read bounds and destinations; every field has a fixed default. */
+export interface MarketOptions {
+  /** Catalog mirrors, tried in order until one answers; defaults to the shipped mirrors. */
+  readonly indexUrls?: readonly string[]
+  /** GitHub star-count documents, tried in the same way. */
+  readonly starUrls?: readonly string[]
+  /** Deadline of one HTTP read, its body included. */
+  readonly timeoutMs?: number
+  /** How long a successful catalog, star, manifest, or README read stays cached. */
+  readonly cacheTtlMs?: number
+  /** Where Skill entries install; defaults to the user skill root below the tomato home. */
+  readonly skillRoot?: string
+}
+```
+<!-- END GENERATED config-catalog:@tomato/plugin-tomato-market -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/ptc-runtime-node -->
 <a id="tomatoptc-runtime-node"></a>
@@ -4522,6 +4612,70 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@tomato/subagent-spawn-in-process -->
 
+<!-- BEGIN GENERATED config-catalog:@tomato/superagent-runtime -->
+<a id="tomatosuperagent-runtime"></a>
+
+## `@tomato/superagent-runtime`
+
+- `inject`: `agents` · `sessions` · `storageDomain`
+- `source`: [`packages/experimental/superagent-runtime/src/index.ts:142`](../packages/experimental/superagent-runtime/src/index.ts)
+
+```ts config-catalog
+/** Deployment choices the team runs under. */
+export interface Config {
+  /** Directory work runs in; each ticket gets its own Session in it. */
+  directory: string
+  /** Provider id of the model route every turn uses; omit both to inherit the Host's default model. */
+  provider: string
+  /** Model id on {@link provider} for every turn; omit both to inherit the Host's default model. */
+  model: string
+  /** Policy version every acceptance is recorded under. */
+  policyVersion: string
+  /** People whose requests the team takes, in the bot service's identity namespace. */
+  allowedSenders: string[]
+  /**
+   * Bot service the team reads and answers through. Omit it to run app-only:
+   * requests then arrive through `submit` from the deployment's own GUI.
+   */
+  bot?: {
+    /** Base URL of the bot service. */
+    baseUrl: string
+    /** Identity the service records for reads and replies. */
+    userId: string
+  } | undefined
+  /** Actor the policy admits app submissions from. */
+  appUser: string
+  /** How often to read the service, in seconds; zero runs only when asked. */
+  pollSeconds: number
+  /** The bot's own open id, so its own messages never start work. */
+  botOpenId: string
+  /** How far accepted work may go; defaults to a change. */
+  scope: string
+  /** Most events one cycle reads. */
+  limit: number
+  /**
+   * Whether each ticket works in its own checkout. The Host must then carry
+   * `ctx.worktrees`, and the configured directory is the repository to branch from.
+   */
+  isolate: boolean
+  /** Whether to answer in the conversation each request arrived in. */
+  replies: boolean
+  /**
+   * Preset the work turn composes; empty keeps the Host default.
+   */
+  workerPreset: string
+  /** Permission preset a run's session gets, so it cannot leave its directory; empty keeps the Host default. */
+  permissionPreset: string
+  /**
+   * Output-token budget for one turn. Zero selects the model's default: a
+   * reasoning model spends nearly all of it thinking, so it needs far more than
+   * a plain chat model before the answer itself fits.
+   */
+  maxOutputTokens: number
+}
+```
+<!-- END GENERATED config-catalog:@tomato/superagent-runtime -->
+
 <!-- BEGIN GENERATED config-catalog:@tomato/system-prompt -->
 <a id="tomatosystem-prompt"></a>
 
@@ -5414,6 +5568,30 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@tomato/tool-web -->
 
+<!-- BEGIN GENERATED config-catalog:@tomato/tool-work-team -->
+<a id="tomatotool-work-team"></a>
+
+## `@tomato/tool-work-team`
+
+- `inject`: `agents` · `crews` · `robots` · `tools`
+- `refs`: [`SandboxLevel`](../packages/experimental/robot/src/index.ts) · `Volatile` (`@tomato/cordis`)
+- `source`: [`packages/experimental/tool-work-team/src/index.ts:56`](../packages/experimental/tool-work-team/src/index.ts)
+
+```ts config-catalog
+/** Live-editable defaults applied to every robot this tool creates. */
+export interface Config {
+  /** Provider route new team robots use; live-editable in the work-team settings page. */
+  defaultProvider?: string | Volatile<string | undefined>
+  /** Model id new team robots use; live-editable in the work-team settings page. */
+  defaultModel?: string | Volatile<string | undefined>
+  /** Permission preset new team robots run under. */
+  permissionPreset?: string | Volatile<string | undefined>
+  /** Filesystem and command confinement new team robots run under. */
+  sandbox?: SandboxLevel | Volatile<SandboxLevel | undefined>
+}
+```
+<!-- END GENERATED config-catalog:@tomato/tool-work-team -->
+
 <!-- BEGIN GENERATED config-catalog:@tomato/tool-workflow -->
 <a id="tomatotool-workflow"></a>
 
@@ -5521,22 +5699,24 @@ export type ApprovalPolicy = 'ask' | 'never'
 ## `@tomato/web`
 
 - `refs`: `Volatile` (`@tomato/cordis`)
-- `source`: [`packages/web/web/src/index.ts:62`](../packages/web/web/src/index.ts)
+- `source`: [`packages/web/web/src/index.ts:64`](../packages/web/web/src/index.ts)
 
 ```ts config-catalog
 /**
- * Config for the web seam. `searchProvider` / `fetchProvider` pin which provider
- * wins for each capability; both are optional (a single registered usable
- * provider auto-selects). Each operation reads the current value, so a settings
- * change applies to the next search or fetch without remounting the service.
- * Operational overrides such as environment variables must feed these same
- * fields rather than introduce a hidden priority chain.
+ * Config for the web seam. `searchProviders` / `fetchProviders` are ordered
+ * candidate lists: the first candidate that is registered and reports itself
+ * available wins, so a deployment can name a preferred backend and a fallback.
+ * An empty list auto-selects a single registered usable provider. Each
+ * operation reads the current value, so a settings change applies to the next
+ * search or fetch without remounting the service. Operational overrides such
+ * as environment variables must feed these same fields rather than introduce
+ * a second, hidden priority chain.
  */
 export interface WebRuntimeConfig {
-  /** Explicit search provider id. Omitted = auto-select when exactly one usable. */
-  readonly searchProvider: Volatile<string | undefined>
-  /** Explicit fetch provider id. Omitted = auto-select when exactly one usable. */
-  readonly fetchProvider: Volatile<string | undefined>
+  /** Ordered search provider ids; empty = auto-select when exactly one usable. */
+  readonly searchProviders: Volatile<string[]>
+  /** Ordered fetch provider ids; empty = auto-select when exactly one usable. */
+  readonly fetchProviders: Volatile<string[]>
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/web -->
@@ -5572,32 +5752,6 @@ export interface Config {
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/web-app -->
-
-<!-- BEGIN GENERATED config-catalog:@tomato/web-deepseek-api -->
-<a id="tomatoweb-deepseek-api"></a>
-
-## `@tomato/web-deepseek-api`
-
-- `inject`: `web`
-- `refs`: `Volatile` (`@tomato/cordis`)
-- `source`: [`packages/web/web-deepseek-api/src/index.ts:34`](../packages/web/web-deepseek-api/src/index.ts)
-
-```ts config-catalog
-/** Settings read by the next search or fetch without re-registering either provider. */
-export interface Config {
-  /** Literal DeepSeek API key; prefer {@link apiKeyEnv} so no secret enters configuration files. */
-  apiKey: Volatile<string | undefined>
-  /** Credential reference resolved for each operation; defaults to `DEEPSEEK_API_KEY`. */
-  apiKeyEnv: Volatile<string>
-  /** API base including its path prefix; `/search` and `/fetch` are appended. */
-  baseURL: Volatile<string>
-  /** Search API results per search, from 1 through 50; a smaller request bound wins. Defaults to 10. */
-  count: Volatile<number>
-  /** Send the triggering user question, bounded to 128 characters, as `ori_question`. Defaults to true. */
-  sendOriginalQuestion: Volatile<boolean>
-}
-```
-<!-- END GENERATED config-catalog:@tomato/web-deepseek-api -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/web-fetch-company -->
 <a id="tomatoweb-fetch-company"></a>
@@ -5667,86 +5821,6 @@ export interface Config {
 }
 ```
 <!-- END GENERATED config-catalog:@tomato/web-search-company -->
-
-<!-- BEGIN GENERATED config-catalog:@tomato/web-search-deepseek -->
-<a id="tomatoweb-search-deepseek"></a>
-
-## `@tomato/web-search-deepseek`
-
-- `inject`: `web`
-- `refs`: `Volatile` (`@tomato/cordis`)
-- `source`: [`packages/web/web-search-deepseek/src/index.ts:49`](../packages/web/web-search-deepseek/src/index.ts)
-
-```ts config-catalog
-/** Plugin config (all optional — `apply` fills env-var and constant defaults). */
-export interface Config {
-  /** Literal DeepSeek API key; prefer {@link apiKeyEnv} so no secret enters configuration files. */
-  apiKey: Volatile<string | undefined>
-  /** Credential reference resolved for each search; defaults to `DEEPSEEK_API_KEY`. */
-  apiKeyEnv: Volatile<string>
-  /** Anthropic-compatible endpoint base; `/messages` is appended. */
-  baseURL: Volatile<string | undefined>
-  /** Anthropic-format model name. Defaults to `deepseek-v4-flash`. */
-  model: Volatile<string>
-  /** `anthropic-version` header value. Defaults to `2023-06-01`. */
-  apiVersion: Volatile<string>
-  /** Upper bound on generated tokens for the Messages request. Defaults to 4096. */
-  maxTokens: Volatile<number>
-  /** Maximum `web_search` server-tool uses per request. Defaults to 5. */
-  maxUses: Volatile<number>
-}
-```
-<!-- END GENERATED config-catalog:@tomato/web-search-deepseek -->
-
-<!-- BEGIN GENERATED config-catalog:@tomato/web-search-exa -->
-<a id="tomatoweb-search-exa"></a>
-
-## `@tomato/web-search-exa`
-
-- `inject`: `web`
-- `source`: [`packages/web/web-search-exa/src/index.ts:35`](../packages/web/web-search-exa/src/index.ts)
-
-```ts config-catalog
-/** Plugin config (all optional — `apply` fills env-var and constant defaults). */
-export interface Config {
-  /** Exa API key. Falls back to `$EXA_API_KEY`. Empty → provider unavailable. */
-  apiKey?: string
-  /** Endpoint base; `/search` is appended. Defaults to the public API. */
-  baseURL?: string
-  /** Retrieval mode sent as Exa's `type`. Defaults to `auto`. */
-  searchType?: 'auto' | 'keyword' | 'neural'
-  /** Default result count when a request carries no `maxResults`. Omitted = none. */
-  numResults?: number
-  /** Highlight sentences requested per result. Defaults to 1. */
-  highlightsPerResult?: number
-}
-```
-<!-- END GENERATED config-catalog:@tomato/web-search-exa -->
-
-<!-- BEGIN GENERATED config-catalog:@tomato/web-search-perplexity -->
-<a id="tomatoweb-search-perplexity"></a>
-
-## `@tomato/web-search-perplexity`
-
-- `inject`: `web`
-- `source`: [`packages/web/web-search-perplexity/src/index.ts:30`](../packages/web/web-search-perplexity/src/index.ts)
-
-```ts config-catalog
-/** Plugin config (all optional — `apply` fills env-var and constant defaults). */
-export interface Config {
-  /** Perplexity API key. Falls back to `$PERPLEXITY_API_KEY`. Empty → unavailable. */
-  apiKey?: string
-  /** Endpoint base; `/chat/completions` is appended. Defaults to the public API. */
-  baseURL?: string
-  /** Search model name. Defaults to `sonar`. */
-  model?: string
-  /** Upper bound on generated answer tokens. Defaults to 1024. */
-  maxTokens?: number
-  /** Recency window sent as `search_recency_filter`. Omitted = no filter. */
-  searchRecency?: 'day' | 'week' | 'month' | 'year'
-}
-```
-<!-- END GENERATED config-catalog:@tomato/web-search-perplexity -->
 
 <!-- BEGIN GENERATED config-catalog:@tomato/webhook-github -->
 <a id="tomatowebhook-github"></a>
@@ -5915,7 +5989,7 @@ export interface Config {
 | `@tomato/client-ui-settings-session-log` | — | [`packages/client/ui-settings-session-log/src/index.ts`](../packages/client/ui-settings-session-log/src/index.ts) |
 | `@tomato/client-ui-settings-shell` | — | [`packages/client/ui-settings-shell/src/index.ts`](../packages/client/ui-settings-shell/src/index.ts) |
 | `@tomato/client-ui-settings-subagent` | — | [`packages/client/ui-settings-subagent/src/index.ts`](../packages/client/ui-settings-subagent/src/index.ts) |
-| `@tomato/client-ui-settings-web-search` | — | [`packages/client/ui-settings-web-search/src/index.ts`](../packages/client/ui-settings-web-search/src/index.ts) |
+| `@tomato/client-ui-settings-work-team` | — | [`packages/experimental/client-ui-settings-work-team/src/index.ts`](../packages/experimental/client-ui-settings-work-team/src/index.ts) |
 | `@tomato/client-ui-shortcuts` | — | [`packages/client/ui-shortcuts/src/index.ts`](../packages/client/ui-shortcuts/src/index.ts) |
 | `@tomato/client-ui-sidebar` | — | [`packages/client/ui-sidebar/src/index.ts`](../packages/client/ui-sidebar/src/index.ts) |
 | `@tomato/client-ui-sidebar-browser` | — | [`packages/client/ui-sidebar-browser/src/index.ts`](../packages/client/ui-sidebar-browser/src/index.ts) |
@@ -5925,6 +5999,9 @@ export interface Config {
 | `@tomato/client-ui-skill` | — | [`packages/client/ui-skill/src/index.ts`](../packages/client/ui-skill/src/index.ts) |
 | `@tomato/client-ui-skill-browser` | — | [`packages/client/ui-skill-browser/src/index.ts`](../packages/client/ui-skill-browser/src/index.ts) |
 | `@tomato/client-ui-subagent` | — | [`packages/client/ui-subagent/src/index.ts`](../packages/client/ui-subagent/src/index.ts) |
+| `@tomato/client-ui-superagent` | — | [`packages/experimental/client-ui-superagent/src/index.ts`](../packages/experimental/client-ui-superagent/src/index.ts) |
+| `@tomato/client-ui-system-monitor` | — | [`packages/client/ui-system-monitor/src/index.ts`](../packages/client/ui-system-monitor/src/index.ts) |
+| `@tomato/client-ui-tomato-market` | — | [`packages/client/ui-tomato-market/src/index.ts`](../packages/client/ui-tomato-market/src/index.ts) |
 | `@tomato/client-ui-tool` | — | [`packages/client/ui-tool/src/index.ts`](../packages/client/ui-tool/src/index.ts) |
 | `@tomato/client-ui-user-questions` | — | [`packages/client/ui-user-questions/src/index.ts`](../packages/client/ui-user-questions/src/index.ts) |
 | `@tomato/client-ui-workflow-run` | — | [`packages/client/ui-workflow-run/src/index.ts`](../packages/client/ui-workflow-run/src/index.ts) |
@@ -6058,6 +6135,7 @@ export interface Config {
 | `@tomato/experimental-plugin-market-bundle` | — | [`packages/experimental/plugin-market-bundle/src/index.ts`](../packages/experimental/plugin-market-bundle/src/index.ts) |
 | `@tomato/experimental-ralph-bundle` | — | [`packages/experimental/ralph-bundle/src/index.ts`](../packages/experimental/ralph-bundle/src/index.ts) |
 | `@tomato/experimental-robot-crew` | — | [`packages/experimental/experimental-robot-crew/src/index.ts`](../packages/experimental/experimental-robot-crew/src/index.ts) |
+| `@tomato/experimental-robot-crew-bundle` | — | [`packages/experimental/robot-crew-bundle/src/index.ts`](../packages/experimental/robot-crew-bundle/src/index.ts) |
 | `@tomato/experimental-robot-room` | — | [`packages/experimental/experimental-robot-room/src/index.ts`](../packages/experimental/experimental-robot-room/src/index.ts) |
 | `@tomato/experimental-session-search` | — | [`packages/experimental/session-search/src/index.ts`](../packages/experimental/session-search/src/index.ts) |
 | `@tomato/experimental-session-titles-bundle` | — | [`packages/experimental/session-titles-bundle/src/index.ts`](../packages/experimental/session-titles-bundle/src/index.ts) |
@@ -6098,6 +6176,8 @@ export interface Config {
 | `@tomato/session-telemetry` | — | [`packages/session/session-telemetry/src/index.ts`](../packages/session/session-telemetry/src/index.ts) |
 | `@tomato/session-title-llm` | — | [`packages/session/session-title-llm/src/index.ts`](../packages/session/session-title-llm/src/index.ts) |
 | `@tomato/ssh-helper-runtime` | — | [`packages/ssh/ssh-helper-runtime/src/index.ts`](../packages/ssh/ssh-helper-runtime/src/index.ts) |
+| `@tomato/superagent` | — | [`packages/experimental/superagent/src/index.ts`](../packages/experimental/superagent/src/index.ts) |
+| `@tomato/superagent-local` | — | [`packages/experimental/superagent-local/src/index.ts`](../packages/experimental/superagent-local/src/index.ts) |
 | `@tomato/timeout` | — | [`packages/util/timeout/src/index.ts`](../packages/util/timeout/src/index.ts) |
 | `@tomato/tool-testkit` | — | [`packages/test-support/tool-testkit/src/index.ts`](../packages/test-support/tool-testkit/src/index.ts) |
 | `@tomato/typert-generator` | — | [`packages/typert/generator/src/index.ts`](../packages/typert/generator/src/index.ts) |
@@ -6111,4 +6191,5 @@ export interface Config {
 | `@tomato/util-values` | — | [`packages/util/values/src/index.ts`](../packages/util/values/src/index.ts) |
 | `@tomato/util-workspace-path` | — | [`packages/util/workspace-path/src/index.ts`](../packages/util/workspace-path/src/index.ts) |
 | `@tomato/win32-process` | — | [`packages/subprocess/win32-process/src/index.ts`](../packages/subprocess/win32-process/src/index.ts) |
+| `@tomato/work-team-bundle` | — | [`packages/experimental/work-team-bundle/src/index.ts`](../packages/experimental/work-team-bundle/src/index.ts) |
 <!-- END GENERATED config-catalog:library -->

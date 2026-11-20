@@ -30,6 +30,9 @@ const PATTERNS = [
   '.agents/skills/**/*.md',
 ]
 
+/** A locally installed skill directory the repository's ignore rules exclude from version control. */
+const IGNORED_SKILL = /(?:^|\/)\.agents\/skills\/ppt-master\//
+
 /**
  * Discover authored Markdown sources, deduplicating symlinks.
  * Archived notes are excluded as sources, but links to them remain checked.
@@ -37,7 +40,9 @@ const PATTERNS = [
  * @returns forward-slash source paths relative to scanRoot.
  */
 export function markdownLinkSourcePaths(scanRoot: string = root): string[] {
-  return uniqueRepoFiles(scanRoot, PATTERNS, isArchivedAgentNotePath)
+  // A skill directory the repository ignores is a personal checkout, not repository documentation; its links
+  // point at whatever the owner kept locally.
+  return uniqueRepoFiles(scanRoot, PATTERNS, path => isArchivedAgentNotePath(path) || IGNORED_SKILL.test(path))
     .map(file => relative(scanRoot, file.abs).replaceAll('\\', '/'))
 }
 

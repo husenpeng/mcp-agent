@@ -41,6 +41,7 @@ This table connects model-visible tool names to the plugin package and service s
 | `@tomato/tool-ralph` | `ralph` | `ctx.tools`, `ctx.workflowEngine`, `ctx.subagents`, `ctx.systemPrompt`, `a calling Agent (exec.agent parents every fresh round)` | `tool/call`, `tool/result`, `workflow and child session events during execution` | - | A fixed foreground workflow starts one fresh structured child per round; the model selects only the immutable objective and an optional round cap. |
 | `@tomato/tool-skill` | `skill` | `ctx.workingDirectory`, `ctx.tools`, `ctx.agents`, `ctx.skills` | `tool/call`, `tool/result`, `user/message replacement catalogs via agent.inject()` | - | - |
 | `@tomato/tool-session-query` | `session_event_read`, `session_event_search`, `session_event_trace`, `session_search`, `session_trace` | `ctx.tools`, `ctx.systemPrompt`, `ctx.sessionQuery`, `ctx.agents`, `a calling Agent for workspace authority` | `tool/call`, `tool/result` | - | The five read-only tools hide provider cursors and authorize every result from the immutable calling agent session. The package is opt-in; compositions that need enforced deadlines or bounded inline output also mount the generic timeout or spill policies. |
+| `@tomato/tool-work-team` | `work_team_create` | `ctx.tools`, `ctx.agents`, `ctx.crews`, `ctx.robots` | `published crew and robot specifications through ctx.crews and ctx.robots`, `tool/call`, `tool/result` | - | One tool that publishes a crew from a conversation. Member ids are lowercase slugs and edges stay acyclic; with no edges the members are chained in order. Robot display names stay unique among published specifications by a numeric suffix on collision. The work-team settings page edits the live team defaults the created robots start from. |
 | `@tomato/experimental-tool-memory` | `memory_forget`, `memory_get`, `memory_related`, `memory_search`, `memory_write` | `ctx.tools`, `ctx.memory`, `ctx.agents`, `ctx.commands`, `ctx.sessionProjections`, `ctx.llm`, `a calling Agent; workspace memories also need a Session project directory`, `a signed-in account where ctx.tomatoAccount exists` | `tool/call`, `tomato_memory storage domain create, update, or delete`, `plugin:tool-memory/query-expansion plugin record`, `plugin:tool-memory/turn-capture plugin record`, `tool/result`, `user/message memory snapshot` | - | Explicit experimental composition only, shipped switched off in the Memory and goal focus bundle. memory_write stores an active record only when user_quote is contained in a user message of the current turn; otherwise the record is an unconfirmed candidate. scope profile records reach every workspace of their owner. memory_search may send one auxiliary expansion request when the literal query matches fewer than maxRecallResults records. With capture on, one auxiliary request reads a finished turn and stores durable statements as candidates. Delegated agents may search but not write or delete. |
 | `@tomato/experimental-tool-robot` | `robot_create`, `robot_update` | `ctx.tools`, `ctx.agents`, `ctx.robots`, `a direct-human top-level Agent in an open turn` | `tool/call`, `robot specification revision and one instantiated robot`, `tool/result` | - | Shipped by the optional Tomato Rbot bundle beside the robot-creation and grilling skills. robot_create collects the four basic fields and the skill, plugin, and MCP lists, then publishes and instantiates in one call; robot_update replaces only the capability lists a call names and rebinds the robot to the new revision. Both start every other block from emptyRobotSpec() and require direct-human root authority, so delegated and unattended turns cannot create or change robots. |
 | `@tomato/experimental-tool-subagent-oar` | `subagent_oar` | `ctx.tools`, `ctx.subagents` | `tool/call`, `tool/result`, `parent subagent catalog and completion notices` | - | The subagent_oar tool selects among configured aliases for external providers. This catalog shows Codex and Claude Code aliases; each deployment chooses its providers. Native model and permission settings belong to the selected provider configuration. |
@@ -2153,6 +2154,130 @@ Read the authorized session lineage around one session, including complete visib
 Source: [`packages/experimental/tool-session-query/src/index.ts`](../packages/experimental/tool-session-query/src/index.ts)
 
 The five read-only tools hide provider cursors and authorize every result from the immutable calling agent session. The package is opt-in; compositions that need enforced deadlines or bounded inline output also mount the generic timeout or spill policies.
+
+<a id="tomatotool-work-team"></a>
+
+## `@tomato/tool-work-team`
+
+### `work_team_create`
+
+Create a complete work team of Tomato Rbot agents from a description of its roles. Use it when the user describes what a team must do and which roles it needs. It creates one Rbot per member (mission, model route, and confinement) and publishes the crew that wires them together. Ask for the team goal and the roles first if they are unclear; edges pass results forward and every member shares the mission.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Display name, unique among crews."
+    },
+    "mission": {
+      "type": "string",
+      "description": "One-sentence purpose every member keeps in view."
+    },
+    "description": {
+      "type": "string",
+      "description": "One-line summary shown in the team list."
+    },
+    "successCriteria": {
+      "type": "array",
+      "description": "Observable conditions that mean the whole team succeeded.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "members": {
+      "type": "array",
+      "description": "At least two roles; one new Rbot is created for each.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Lowercase slug such as research; also the A2A address."
+          },
+          "label": {
+            "type": "string",
+            "description": "Short display name; also the new Rbot name."
+          },
+          "role": {
+            "type": "string",
+            "description": "One sentence naming the part this member plays; becomes the Rbot mission."
+          },
+          "instruction": {
+            "type": "string",
+            "description": "Outcome this member must produce, stated observably."
+          },
+          "kind": {
+            "type": "string",
+            "description": "Reviewer checks outputs; observer reads only.",
+            "enum": [
+              "worker",
+              "reviewer",
+              "observer"
+            ]
+          },
+          "provider": {
+            "type": "string",
+            "description": "Override the team default provider route for this member."
+          },
+          "model": {
+            "type": "string",
+            "description": "Override the team default model for this member."
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "role",
+          "instruction"
+        ]
+      }
+    },
+    "edges": {
+      "type": "array",
+      "description": "Directed handoffs; the graph must stay acyclic. Omitted chains the members in order.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "type": "string",
+            "description": "Source member id."
+          },
+          "to": {
+            "type": "string",
+            "description": "Target member id."
+          },
+          "kind": {
+            "type": "string",
+            "description": "What the edge carries.",
+            "enum": [
+              "handoff",
+              "delegate",
+              "review"
+            ]
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ]
+      }
+    }
+  },
+  "required": [
+    "name",
+    "mission",
+    "members"
+  ]
+}
+```
+
+Source: [`packages/experimental/tool-work-team/src/index.ts`](../packages/experimental/tool-work-team/src/index.ts)
+
+One tool that publishes a crew from a conversation. Member ids are lowercase slugs and edges stay acyclic; with no edges the members are chained in order. Robot display names stay unique among published specifications by a numeric suffix on collision. The work-team settings page edits the live team defaults the created robots start from.
 
 <a id="tomatoexperimental-tool-memory"></a>
 

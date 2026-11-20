@@ -525,6 +525,14 @@ interface LlmConfigurableProvider {
   defaultBaseURL?: string
   /** Environment variables used to construct a provider endpoint; absent when none are reported. */
   baseURLEnv?: readonly string[]
+  /**
+   * The one wire protocol this route's installed catalog models agree on,
+   * when the adapter reports it and a hand-declared route may name it.
+   * Configuration surfaces derive endpoint-protocol advice from it together
+   * with `defaultBaseURL`; absent when the route ships no catalog, its models
+   * disagree, or the shared protocol is not one a hand-declared route may name.
+   */
+  sharedProtocol?: string
   /** Authentication the adapter performs when the profile names no credential reference; absent when it reports none. */
   nativeAuth?: LlmNativeAuth
   /** Configuration diagnostic for repair; unaffected models may remain serviceable. */
@@ -780,6 +788,69 @@ interface LlmDiscoveredModel {
   maxTokens?: number
   /** Accepted input types when disclosed by the catalog or endpoint; absent means unknown. */
   inputModalities?: readonly ModelModality[]
+}
+```
+
+把草稿模型适配到其家族是同一类配置期动作：请求携带生效的路由事实与草稿行，回复是界面可采纳的逐模型 profile 字段建议，而不是背着界面写入的配置。
+
+```ts type-equiv
+/**
+ * One drafted model row an adaptation request asks about. The fields carry
+ * what the draft already declares so the adapter advises only what is missing;
+ * an omitted field is unset, and `reasoningEfforts: false` is an explicit
+ * non-reasoning declaration the adapter must not overwrite.
+ */
+interface LlmModelAdaptationTarget {
+  /** Model id the route sends to the provider. */
+  id: string
+  /** Request modalities the row declares, when it declares any. */
+  input?: readonly ModelModality[]
+  /** Reasoning levels the row declares; `false` declares a non-reasoning model. */
+  reasoningEfforts?: false | Readonly<Record<string, string | null>>
+  /** Wire-compatibility switches the row declares. */
+  compat?: Readonly<Record<string, JsonValue>>
+}
+```
+
+```ts type-equiv
+/**
+ * One adaptation request over a provider draft. Like discovery, this describes
+ * configuration a surface is still editing: the adapter reads nothing stored
+ * and writes nothing, and the reply is profile-field advice the surface may
+ * adopt. The route facts are the effective ones the form shows — a draft value
+ * wins over the inherited one — so advice matches what a save would resolve.
+ */
+interface LlmModelAdaptationRequest {
+  /** Route the draft edits, when it edits an existing one; lets the adapter read its installed catalog. */
+  provider?: string
+  /** Wire protocol the route speaks, when the form names one. */
+  api?: string
+  /** Route-level modalities a model inherits when neither its row nor the catalog declares any. */
+  defaultInput?: readonly ModelModality[]
+  /** Route-level wire-compatibility switches a model inherits per field. */
+  compat?: Readonly<Record<string, JsonValue>>
+  /** The drafted rows to advise, in list order; at least one. */
+  models: readonly LlmModelAdaptationTarget[]
+}
+```
+
+```ts type-equiv
+/**
+ * Adapter advice for one model: the profile fields the draft is missing to
+ * serve the model with its family's protocol parameters and reasoning levels.
+ * Every field is a patch the surface applies verbatim — the adapter names only
+ * fields the request left unset and no catalog entry already supplies, so
+ * adopting advice never overwrites a deployment's own declaration.
+ */
+interface LlmModelAdaptation {
+  /** Model id the advice belongs to. */
+  id: string
+  /** Request modalities to declare, when the family widens the effective fallback. */
+  input?: readonly ModelModality[]
+  /** Reasoning levels and their wire spellings to declare, when the model would otherwise not reason. */
+  reasoningEfforts?: Readonly<Record<string, string | null>>
+  /** Wire-compatibility switches to declare, each missing from the row and the route. */
+  compat?: Readonly<Record<string, JsonValue>>
 }
 ```
 
@@ -1072,6 +1143,39 @@ async discoverModels( settingsNs: string, request: LlmModelDiscoveryRequest, sig
  * @throws RemoteError with `llm/model-discovery-rejected` when discovery refuses or fails.
  */
 @Remote('discoverModels') async remoteDiscoverModels( settingsNs: string, request: LlmModelDiscoveryRequest, signal: AbortSignal, ): Promise<LlmDiscoveredModel[]>
+
+/**
+ * Offer to advise model-adaptation profile fields on behalf of the settings
+ * namespace this plugin owns. The namespace is the key for the same reason
+ * discovery uses it: a configuration surface holds it from the directory,
+ * and a provider being added has no route to name yet. Disposed with the fiber.
+ * @param settingsNs - the namespace whose profiles this adaptation serves.
+ * @param adapt - computes the missing profile fields for one draft.
+ * @returns the disposer that withdraws the offer.
+ */
+registerModelAdaptation( settingsNs: string, adapt: (request: LlmModelAdaptationRequest) => Promise<readonly LlmModelAdaptation[]>, ): () => void
+
+/**
+ * Advise the profile fields a provider draft is missing to serve its models
+ * with their families' protocol parameters and reasoning levels. Like
+ * discovery, this reads and writes nothing stored: the request carries the
+ * draft, and the reply is advice a surface may adopt. Each model is advised
+ * at most once, in request order.
+ * @param settingsNs - namespace whose registered adaptation serves this draft.
+ * @param request - the route facts and drafted rows to advise.
+ * @returns one advice entry per model that has something to declare; a model
+ *   already complete yields no entry.
+ */
+async adaptModels( settingsNs: string, request: LlmModelAdaptationRequest, ): Promise<LlmModelAdaptation[]>
+
+/**
+ * Remote adapter for one draft model-adaptation request.
+ * @param settingsNs - namespace whose registered adaptation serves this draft.
+ * @param request - the route facts and drafted rows to advise.
+ * @returns advice entries in request order.
+ * @throws RemoteError with `llm/model-adaptation-rejected` when adaptation refuses or fails.
+ */
+@Remote('adaptModels') async remoteAdaptModels( settingsNs: string, request: LlmModelAdaptationRequest, ): Promise<LlmModelAdaptation[]>
 
 /**
  * Resolve the retry policy captured when one provider route was registered.

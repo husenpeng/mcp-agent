@@ -39,7 +39,7 @@ import type { ImageAttachmentLimits, ImageAttachmentRef, SaveImageAttachment, St
 import UserQuestionService from '@tomato/user-questions'
 import PlanModeController from '@tomato/plan-mode'
 import WebRuntime from '@tomato/web'
-import * as WebDeepSeekApi from '@tomato/web-deepseek-api'
+import * as WebSearchCompany from '@tomato/web-search-company'
 import * as WebFetchLocal from '@tomato/web-fetch-http'
 import SubagentRuntime from '@tomato/subagent'
 import type { SubagentProvider } from '@tomato/subagent'
@@ -73,7 +73,9 @@ import * as ToolSkill from '@tomato/tool-skill'
 import * as ToolSessionQuery from '@tomato/tool-session-query'
 import * as ToolMemory from '@tomato/experimental-tool-memory'
 import * as ToolRobot from '@tomato/experimental-tool-robot'
+import * as ToolWorkTeam from '@tomato/tool-work-team'
 import type Robots from '@tomato/experimental-robot'
+import { type Crews } from '@tomato/experimental-robot-crew'
 import type MemoryService from '@tomato/experimental-memory'
 import CommandRuntime from '@tomato/commands'
 import * as ToolJobs from '@tomato/tool-jobs'
@@ -596,6 +598,24 @@ const TOOL_PACKAGES: ToolPackage[] = [
       'The five read-only tools hide provider cursors and authorize every result from the immutable calling agent session. The package is opt-in; compositions that need enforced deadlines or bounded inline output also mount the generic timeout or spill policies.',
   },
   {
+    pkg: '@tomato/tool-work-team',
+    dir: 'tool-work-team',
+    source: 'packages/experimental/tool-work-team/src/index.ts',
+    requires: ['ctx.tools', 'ctx.agents', 'ctx.crews', 'ctx.robots'],
+    writes: [
+      'published crew and robot specifications through ctx.crews and ctx.robots', 'tool/call', 'tool/result',
+    ],
+    async mount(ctx) {
+      await ctx.plugin(AgentRegistry)
+      // Schema harvest never publishes anything, so the two registries are declaration-only stubs.
+      ctx.provide('robots', {} as Robots)
+      ctx.provide('crews', {} as Crews)
+      await ctx.plugin(ToolWorkTeam)
+    },
+    note:
+      'One tool that publishes a crew from a conversation. Member ids are lowercase slugs and edges stay acyclic; with no edges the members are chained in order. Robot display names stay unique among published specifications by a numeric suffix on collision. The work-team settings page edits the live team defaults the created robots start from.',
+  },
+  {
     pkg: '@tomato/experimental-tool-memory',
     dir: 'tool-memory',
     source: 'packages/experimental/tool-memory/src/index.ts',
@@ -832,7 +852,7 @@ const TOOL_PACKAGES: ToolPackage[] = [
       // Mount search and fetch providers so both tools register. Their schemas
       // do not depend on provider identity or availability.
       await ctx.plugin(WebRuntime)
-      await ctx.plugin(WebDeepSeekApi)
+      await ctx.plugin(WebSearchCompany, {})
       await ctx.plugin(WebFetchLocal)
       await ctx.plugin(ToolWeb)
     },

@@ -635,6 +635,26 @@ type ObjectJsonSchema = JsonSchemaNode & { type: 'object' }
 
 Generated from source by `scripts/gen-cordis-catalog.ts` (verified fresh by `pnpm run verify-cordis-catalog` in doc-sync; regenerate with `pnpm run gen-cordis-catalog`) — the language sides differ only in locale-specific paired document paths. Signature blocks use a `ts cordis-catalog` fence and keep the original source JSDoc; dispatch modes are defined in the [primer](../cordis-primer.zh.md#dispatch-modes), and the framework-inherited `ctx` API lives in [cordis-api/inherited.md](../cordis-api/inherited.md).
 
+<a id="ctxsystemmonitorcontroller--systemmonitorcontroller"></a>
+
+### `ctx.systemMonitorController` — `SystemMonitorController`
+
+Sampled host metrics over Typert Remote.
+
+```ts cordis-catalog
+/**
+ * Stream one frame per interval: the current reading immediately, then one
+ * after each wait. The stream has no natural end; the carrier closes it when
+ * the browser disconnects, and the frame already in flight settles first.
+ * @param request - interval and process limit overrides for this consumer.
+ * @param signal - cancellation owned by the Remote stream carrier.
+ * @returns the sampled frames.
+ */
+@Remote({ mode: 'stream' }) async *sample(request: SystemMonitorRequest, signal: AbortSignal): AsyncIterable<SystemSampleFrame>
+```
+
+Source: [`packages/api/system-monitor-controller/src/index.ts`](../../packages/api/system-monitor-controller/src/index.ts)
+
 <a id="ctxtools--toolsservice"></a>
 
 ### `ctx.tools` — `ToolsService`

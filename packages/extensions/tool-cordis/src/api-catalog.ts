@@ -2294,6 +2294,25 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         throws: ['RemoteError with `llm/model-discovery-rejected` when discovery refuses or fails.'],
       },
       {
+        signature: 'registerModelAdaptation( settingsNs: string, adapt: (request: LlmModelAdaptationRequest) => Promise<readonly LlmModelAdaptation[]>, ): () => void',
+        description: 'Offer to advise model-adaptation profile fields on behalf of the settings namespace this plugin owns. The namespace is the key for the same reason discovery uses it: a configuration surface holds it from the directory, and a provider being added has no route to name yet. Disposed with the fiber.',
+        parameters: [{ name: 'settingsNs', description: 'the namespace whose profiles this adaptation serves.' }, { name: 'adapt', description: 'computes the missing profile fields for one draft.' }],
+        returns: 'the disposer that withdraws the offer.',
+      },
+      {
+        signature: 'async adaptModels( settingsNs: string, request: LlmModelAdaptationRequest, ): Promise<LlmModelAdaptation[]>',
+        description: 'Advise the profile fields a provider draft is missing to serve its models with their families\' protocol parameters and reasoning levels. Like discovery, this reads and writes nothing stored: the request carries the draft, and the reply is advice a surface may adopt. Each model is advised at most once, in request order.',
+        parameters: [{ name: 'settingsNs', description: 'namespace whose registered adaptation serves this draft.' }, { name: 'request', description: 'the route facts and drafted rows to advise.' }],
+        returns: 'one advice entry per model that has something to declare; a model already complete yields no entry.',
+      },
+      {
+        signature: '@Remote(\'adaptModels\') async remoteAdaptModels( settingsNs: string, request: LlmModelAdaptationRequest, ): Promise<LlmModelAdaptation[]>',
+        description: 'Remote adapter for one draft model-adaptation request.',
+        parameters: [{ name: 'settingsNs', description: 'namespace whose registered adaptation serves this draft.' }, { name: 'request', description: 'the route facts and drafted rows to advise.' }],
+        returns: 'advice entries in request order.',
+        throws: ['RemoteError with `llm/model-adaptation-rejected` when adaptation refuses or fails.'],
+      },
+      {
         signature: 'providerRetryPolicy(provider: string): ResolvedRetryPolicy',
         description: 'Resolve the retry policy captured when one provider route was registered.',
         parameters: [{ name: 'provider', description: 'registered provider route to inspect.' }],
@@ -2518,6 +2537,12 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         returns: 'the active record, or `undefined` when the view sees no candidate with that id.',
       },
       {
+        signature: 'async dismiss(view: MemoryView, id: MemoryIdType): Promise<MemoryRecord | undefined>',
+        description: 'Silence one candidate for its current evidence. It becomes visible again only after another write states it, which is how a repeated statement still reaches a person.',
+        parameters: [{ name: 'view', description: 'view that must see the record.' }, { name: 'id', description: 'candidate to dismiss.' }],
+        returns: 'the updated record, or `undefined` when the view sees no candidate with that id.',
+      },
+      {
         signature: 'list(view: MemoryView): readonly MemoryRecord[]',
         description: 'Enumerate every record a view sees, for human management.',
         parameters: [{ name: 'view', description: 'owner and optional workspace.' }],
@@ -2525,10 +2550,10 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
       },
       {
         signature: 'async rememberEpisode(request: RememberEpisodeRequest): Promise<EpisodeRecord>',
-        description: 'Store one compressed episode. A repeated fingerprint of the same owner and project updates the earlier record\'s timestamp instead of appending. Every text field is normalized before the size check and the fingerprint lookup.',
+        description: 'Store one compressed episode. A repeated fingerprint of the same owner and project updates the earlier record\'s timestamp instead of appending. Every text field is normalized before the size check and the fingerprint lookup, and bounded to EPISODE_BOUNDS, so a stored episode always satisfies episodeRecordSchema.',
         parameters: [{ name: 'request', description: 'owner, project, episode fields, fingerprint, and source.' }],
         returns: 'the stored episode.',
-        throws: ['{@link MemoryError} `invalid-identifier`, `empty-value`, `episode-too-large`, or `episodes-full`.'],
+        throws: ['{@link MemoryError} `invalid-identifier`, `empty-value`, or `episode-too-large`.'],
       },
       {
         signature: 'async promote(view: MemoryView): Promise<readonly PromotionOutcome[]>',
@@ -2577,6 +2602,31 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         description: 'Select the records a Session receives without searching.',
         parameters: [{ name: 'view', description: 'owner and optional workspace.' }],
         returns: 'every active profile record, then at most `maxPinnedRecords` pinned workspace records; each group ordered by entity, then key.',
+      },
+    ],
+  },
+  {
+    key: 'memoryDream',
+    summary: 'Dream consolidation service: checks when a run is due and consolidates memory episodes.',
+    description: 'Dream consolidation service: checks when a run is due and consolidates memory episodes.',
+    methods: [
+      {
+        signature: 'getCursor(): DreamCursor',
+        description: 'Current cursor state.',
+        parameters: [],
+        returns: 'a copy of the cursor the next run starts from.',
+      },
+      {
+        signature: 'isDue(view: MemoryView): boolean',
+        description: 'Check whether a dream run is due based on time and episode count.',
+        parameters: [{ name: 'view', description: 'memory view to check.' }],
+        returns: 'whether a run should start.',
+      },
+      {
+        signature: 'async run(session: Session, view: MemoryView): Promise<DreamOutcome>',
+        description: 'Run one dream consolidation cycle.',
+        parameters: [{ name: 'session', description: 'session that triggered this run (for logging).' }, { name: 'view', description: 'memory view to consolidate.' }],
+        returns: 'the run outcome.',
       },
     ],
   },
@@ -3491,6 +3541,12 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         throws: ['RemoteError `room/not-found` or `room/conflict`.'],
       },
       {
+        signature: '@Remote(\'work\') work(request: RoomTargetRequest): Promise<readonly RoomWorkRecord[]>',
+        description: 'Read the work records one room produced.',
+        parameters: [{ name: 'request', description: 'room identity.' }],
+        returns: 'one record per ticket, oldest first.',
+      },
+      {
         signature: '@Remote(\'messages\') async messages(request: RoomMessagesRequest): Promise<readonly RoomMessage[]>',
         description: 'Read room messages.',
         parameters: [{ name: 'request', description: 'room, start sequence, and limit.' }],
@@ -3569,6 +3625,12 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         description: 'Read room messages in sequence order.',
         parameters: [{ name: 'id', description: 'room identity.' }, { name: 'afterSeq', description: 'read messages after this sequence; omitted starts at `1`.' }, { name: 'limit', description: 'maximum messages to return; omitted uses the provider default.' }],
         returns: 'messages in sequence order.',
+      },
+      {
+        signature: 'abstract work(id: RoomId): Promise<readonly RoomWorkRecord[]>',
+        description: 'Read the work records one room produced, oldest first.',
+        parameters: [{ name: 'id', description: 'room identity.' }],
+        returns: 'one record per ticket the room opened.',
       },
       {
         signature: 'abstract pause(id: RoomId, paused: boolean): Promise<Room>',
@@ -3806,7 +3868,7 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
       },
       {
         signature: '@Remote async initializeDefaultModel(): Promise<void>',
-        description: 'Select the first available account model after login when no provider API key is configured.',
+        description: 'Select the first available model from a configured provider when no provider API key is configured.',
         parameters: [],
         returns: 'after saving the first available model or retaining the existing default.',
       },
@@ -4929,6 +4991,68 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'superagent',
+    summary: 'The team one Host runs, for a caller that asks it to work or watches it.',
+    description: 'The team one Host runs, for a caller that asks it to work or watches it.',
+    methods: [
+      {
+        signature: 'runOnce(): Promise<TeamReport>',
+        description: 'Read one page of requests and carry each accepted one through work and review.',
+        parameters: [],
+        returns: 'the report of the completed team cycle.',
+      },
+      {
+        signature: 'tickets(): readonly Ticket[]',
+        description: 'Every stored ticket, for a watcher.',
+        parameters: [],
+        returns: 'the team\'s current tickets.',
+      },
+      {
+        signature: 'submit(text: string): Promise<SubmitResult>',
+        description: 'Take one request a person typed into the app: admit it, let the supervisor decide what it becomes, and queue the accepted work. The work runs in the background; watch the tickets to see it progress.',
+        parameters: [{ name: 'text', description: 'the request as the person stated it.' }],
+        returns: 'what the request became, with the opened tickets or the refusal reason.',
+      },
+      {
+        signature: 'message(ticket: string, text: string): Promise<TicketSummary>',
+        description: 'Send one ticket new context — an answer, a correction, or a continuation after a cancelled run. The message joins the ticket\'s thread and the next run reads it as the latest instruction.',
+        parameters: [{ name: 'ticket', description: 'ticket to continue.' }, { name: 'text', description: 'the context or answer.' }],
+        returns: 'the ticket as the message left it.',
+      },
+      {
+        signature: 'cancel(ticket: string): Promise<TicketSummary>',
+        description: 'Abort the ticket\'s in-flight run. The run reports `dropped`, the ticket stays open, and a later message may start the next run.',
+        parameters: [{ name: 'ticket', description: 'ticket whose run to abort.' }],
+        returns: 'the ticket once the aborted run settled.',
+      },
+      {
+        signature: 'stop(ticket: string): Promise<TicketSummary>',
+        description: 'Stop a ticket for good, aborting its in-flight run when it has one. A stopped ticket takes no new work and no further messages.',
+        parameters: [{ name: 'ticket', description: 'ticket to stop.' }],
+        returns: 'the stopped ticket.',
+      },
+      {
+        signature: 'detail(ticket: string): Promise<TicketDetail>',
+        description: 'Read everything one ticket holds: its mandate, every run and report, the latest review, and the messages on its threads.',
+        parameters: [{ name: 'ticket', description: 'ticket to read.' }],
+        returns: 'the full detail a person reads the flow from.',
+      },
+    ],
+  },
+  {
+    key: 'systemMonitorController',
+    summary: 'Sampled host metrics over Typert Remote.',
+    description: 'Sampled host metrics over Typert Remote.',
+    methods: [
+      {
+        signature: '@Remote({ mode: \'stream\' }) async *sample(request: SystemMonitorRequest, signal: AbortSignal): AsyncIterable<SystemSampleFrame>',
+        description: 'Stream one frame per interval: the current reading immediately, then one after each wait. The stream has no natural end; the carrier closes it when the browser disconnects, and the frame already in flight settles first.',
+        parameters: [{ name: 'request', description: 'interval and process limit overrides for this consumer.' }, { name: 'signal', description: 'cancellation owned by the Remote stream carrier.' }],
+        returns: 'the sampled frames.',
+      },
+    ],
+  },
+  {
     key: 'systemPrompt',
     summary: 'Registry service for the prompt inputs assembled before each model step.',
     description: 'Registry service for the prompt inputs assembled before each model step.',
@@ -5470,7 +5594,7 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
   {
     key: 'web',
     summary: 'The web access service.',
-    description: 'The web access service. Registered as `ctx.web` (one instance per context) and exposed to Clients as the `web` Remote namespace (`listProviders`).\n\nSelection semantics (resolved at execution time, never order-dependent):\n\n- A configured id that is registered and `available()` → that provider.\n- A configured id not registered → `WEB_PROVIDER_CONFIGURED_MISSING`.\n- A configured id registered but unavailable → `WEB_PROVIDER_CONFIGURED_UNAVAILABLE`.\n- No id configured, exactly one registered usable provider → that provider.\n- No id configured, multiple usable providers → `WEB_PROVIDER_AMBIGUOUS`.\n- No id configured, no usable provider → `WEB_PROVIDER_UNAVAILABLE`.',
+    description: 'The web access service. Registered as `ctx.web` (one instance per context) and exposed to Clients as the `web` Remote namespace (`listProviders`).\n\nSelection semantics (resolved at execution time; registration order only breaks ties inside one configured list, never across auto-selection):\n\n- With candidates, the first registered candidate whose `available()` is true wins.\n- A candidate that is not registered is skipped; when none wins and a candidate was missing, `WEB_PROVIDER_CONFIGURED_MISSING` names the first one.\n- Candidates all registered but unavailable → `WEB_PROVIDER_CONFIGURED_UNAVAILABLE`.\n- No candidates, exactly one registered usable provider → that provider.\n- No candidates, multiple usable providers → `WEB_PROVIDER_AMBIGUOUS`.\n- No candidates, no usable provider → `WEB_PROVIDER_UNAVAILABLE`.',
     methods: [
       {
         signature: 'registerSearchProvider(provider: WebSearchProvider): () => void',
@@ -6504,6 +6628,14 @@ export const EVENT_API: readonly EventApiEntry[] = [
     parameters: [{ name: 'info', description: 'provider, child identity, and durable direct creator `parentSessionId`.' }],
   },
   {
+    name: 'superagent/changed',
+    mode: 'emit',
+    signature: '\'superagent/changed\'(ticket: TicketId | undefined): void',
+    summary: 'One committed change to the team\'s tickets: intake decided a request, a run started or reported, a review recorded, or a person cancelled, messaged, or stopped a ticket.',
+    description: 'One committed change to the team\'s tickets: intake decided a request, a run started or reported, a review recorded, or a person cancelled, messaged, or stopped a ticket.',
+    parameters: [{ name: 'ticket', description: 'ticket whose state changed, or undefined for a list-level change.' }],
+  },
+  {
     name: 'system-prompt/assemble',
     mode: 'waterfall',
     signature: '\'system-prompt/assemble\'(this: Scoped<SystemPrompt>, assembly: PromptPresentation, context: AssembleContext, next: () => Promise<PromptPresentation>): Promise<PromptPresentation>',
@@ -6788,12 +6920,24 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type ActiveRunState = Extract<RunState, \'running\' | \'waiting\' | \'finalizing\'>;',
   },
   {
+    name: 'ActorId',
+    declaration: 'export type ActorId = Branded<\'ActorId\'>;',
+  },
+  {
     name: 'AdapterRegistrationHandle',
     declaration: 'export interface AdapterRegistrationHandle {\n    (): void;\n    replace(providers: string[]): void;\n}',
   },
   {
     name: 'AddShareSessionsRequest',
     declaration: 'export interface AddShareSessionsRequest {\n    readonly shareId: string;\n    readonly sessionIds: readonly string[];\n}',
+  },
+  {
+    name: 'Admission',
+    declaration: 'export type Admission = {\n    readonly admitted: true;\n    readonly strength: MandateStrength;\n    readonly rule: string;\n} | {\n    readonly admitted: false;\n    readonly reason: AdmissionReason;\n};',
+  },
+  {
+    name: 'AdmissionReason',
+    declaration: 'export type AdmissionReason = \'bot-authored\' | \'unknown-source\' | \'actor-not-allowed\' | \'not-addressed\';',
   },
   {
     name: 'AdmittedPromptContentPart',
@@ -6970,6 +7114,22 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'AssembledSection',
     declaration: 'export interface AssembledSection {\n    name: string;\n    text: string;\n    interpolate?: boolean;\n}',
+  },
+  {
+    name: 'Assignment',
+    declaration: 'export interface Assignment {\n    readonly id: AssignmentId;\n    readonly session: string;\n    readonly directory: string;\n    readonly ended: boolean;\n    readonly report?: AssignmentReport | undefined;\n}',
+  },
+  {
+    name: 'AssignmentId',
+    declaration: 'export type AssignmentId = Branded<\'AssignmentId\'>;',
+  },
+  {
+    name: 'AssignmentReport',
+    declaration: 'export interface AssignmentReport {\n    readonly state: ReportState;\n    readonly summary?: string | undefined;\n    readonly question?: string | undefined;\n}',
+  },
+  {
+    name: 'AssignmentView',
+    declaration: 'export interface AssignmentView {\n    readonly id: string;\n    readonly session: string;\n    readonly directory: string;\n    readonly ended: boolean;\n    readonly report?: {\n        readonly state: \'progress\' | \'waiting\' | \'ready\' | \'blocked\' | \'failed\' | \'dropped\';\n        readonly summary?: string | undefined;\n        readonly question?: string | undefined;\n    } | undefined;\n}',
   },
   {
     name: 'AssistantMessage',
@@ -7172,10 +7332,6 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type ChecksRollup = \'none\' | \'pending\' | \'success\' | \'failure\';',
   },
   {
-    name: 'CheckState',
-    declaration: 'export type CheckState = \'pending\' | \'success\' | \'failure\' | \'neutral\' | \'skipped\' | \'cancelled\';',
-  },
-  {
     name: 'ClaimOutcome',
     declaration: 'export interface ClaimOutcome {\n    readonly claimed: number;\n    readonly skipped: number;\n}',
   },
@@ -7332,6 +7488,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface ConnectionTrustRequest {\n    readonly headers: Headers | Readonly<Record<string, string | readonly string[] | undefined>>;\n}',
   },
   {
+    name: 'ContentBlock',
+    declaration: 'export type ContentBlock = ContentBlockMap[ContentBlockType];',
+  },
+  {
     name: 'ContentBlockMap',
     declaration: 'export interface ContentBlockMap {\n    \'text\': TextBlock;\n    \'reasoning\': ReasoningBlock;\n    \'image\': ImageBlock;\n    \'file\': FileBlock;\n    \'tool-call\': ToolCallBlock;\n    \'tool-addition\': ToolAdditionBlock;\n    \'tool-removal\': ToolRemovalBlock;\n}',
   },
@@ -7426,6 +7586,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'CotTranslationSnapshot',
     declaration: 'export interface CotTranslationSnapshot {\n    maxTextChars: number;\n    preferences: CotTranslationPreferences;\n    availableProviders: readonly TranslationProvider[];\n}',
+  },
+  {
+    name: 'CpuReading',
+    declaration: 'export interface CpuReading {\n    readonly usage: number;\n    readonly perCore: readonly number[];\n    readonly loadAverage: readonly number[];\n}',
   },
   {
     name: 'CreateAgentOptions',
@@ -7660,6 +7824,14 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type CurrentAccount = {\n    readonly status: \'signed-in\';\n    readonly user: SessionUser;\n} | {\n    readonly status: \'signed-out\';\n} | {\n    readonly status: \'unknown\';\n};',
   },
   {
+    name: 'CycleResult',
+    declaration: 'export interface CycleResult {\n    readonly nextCursor: number;\n    readonly verdicts: readonly CycleVerdict[];\n    readonly outcomes: readonly IntakeOutcome[];\n}',
+  },
+  {
+    name: 'CycleVerdict',
+    declaration: 'export type CycleVerdict = {\n    readonly kind: \'accepted\';\n    readonly tickets: readonly Ticket[];\n    readonly trigger: Trigger;\n} | {\n    readonly kind: \'declined\';\n    readonly reason: string;\n    readonly trigger: Trigger;\n} | {\n    readonly kind: \'continued\';\n    readonly reached: readonly TicketId[];\n    readonly trigger: Trigger;\n} | {\n    readonly kind: \'refused\';\n    readonly admission: Extract<Admission, {\n        readonly admitted: false;\n    }>;\n    readonly trigger: Trigger;\n};',
+  },
+  {
     name: 'DailyInput',
     declaration: 'export interface DailyInput {\n    readonly time: string;\n    readonly time_zone: string;\n}',
   },
@@ -7740,6 +7912,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface DirectoryRegistrationHandle {\n    (): void;\n    replace(entries: readonly LlmConfigurableProvider[]): void;\n}',
   },
   {
+    name: 'DiskReading',
+    declaration: 'export interface DiskReading {\n    readonly mount: string;\n    readonly totalBytes: number;\n    readonly freeBytes: number;\n}',
+  },
+  {
     name: 'Domain',
     declaration: 'export interface Domain<S extends DomainSpec> {\n    readonly name: string;\n    readonly global: DomainGlobalHandleOf<S>;\n    table<N extends keyof S[\'tables\'] & string>(name: N): KvTable<TableKeyOf<S, N>, TableValueOf<S, N>>;\n    changeStamp(): Promise<number | undefined>;\n    reload(): Promise<void>;\n    close(): Promise<void>;\n}',
   },
@@ -7782,6 +7958,22 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'DomainTableSpec',
     declaration: 'export interface DomainTableSpec<K extends string = string, V = unknown> {\n    readonly valueSchema: ZodType<V>;\n    readonly __key?: K;\n}',
+  },
+  {
+    name: 'DreamCursor',
+    declaration: 'export interface DreamCursor {\n    readonly index: number;\n    readonly targetDigest: string;\n    readonly shrinkStreak: number;\n    readonly lastRunAt: number;\n    readonly watermark: number;\n}',
+  },
+  {
+    name: 'DreamOpResult',
+    declaration: 'export interface DreamOpResult {\n    readonly op: DreamPlanOp;\n    readonly status: \'applied\' | \'rejected\' | \'failed\';\n    readonly detail?: string | undefined;\n}',
+  },
+  {
+    name: 'DreamOutcome',
+    declaration: 'export interface DreamOutcome {\n    readonly status: \'completed\' | \'empty-plan\' | \'failed\' | \'skipped\';\n    readonly reason?: string | undefined;\n    readonly chunksProcessed: number;\n    readonly chunksTotal: number;\n    readonly targetsCovered: number;\n    readonly targetsPending: number;\n    readonly opResults: readonly DreamOpResult[];\n    readonly notes: readonly string[];\n    readonly inputTokens: number;\n    readonly outputTokens: number;\n    readonly modelRoute: {\n        readonly provider: string;\n        readonly model: string;\n    };\n}',
+  },
+  {
+    name: 'DreamPlanOp',
+    declaration: 'export type DreamPlanOp = {\n    readonly kind: \'merge\';\n    readonly keepId: string;\n    readonly dropIds: readonly string[];\n    readonly reason: string;\n} | {\n    readonly kind: \'proposal\';\n    readonly targetId: string;\n    readonly value: string;\n    readonly reason: string;\n    readonly evidence: readonly string[];\n} | {\n    readonly kind: \'promote\';\n    readonly episodeIds: readonly string[];\n    readonly entity: string;\n    readonly key: string;\n    readonly value: string;\n    readonly reason: string;\n} | {\n    readonly kind: \'pin\';\n    readonly ids: readonly string[];\n} | {\n    readonly kind: \'unpin\';\n    readonly ids: readonly string[];\n} | {\n    readonly kind: \'prune\';\n    readonly ids: readonly string[];\n};',
   },
   {
     name: 'DuplicateMatch',
@@ -7926,6 +8118,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'FileUploadValue',
     declaration: 'export interface FileUploadValue {\n    readonly receiptId: FileUploadReceiptId;\n    readonly file: FileAttachmentRef;\n}',
+  },
+  {
+    name: 'FindingView',
+    declaration: 'export interface FindingView {\n    readonly summary: string;\n    readonly severity: \'p0\' | \'p1\' | \'p2\';\n    readonly file: string;\n    readonly line?: number | undefined;\n}',
   },
   {
     name: 'FinishReason',
@@ -8288,6 +8484,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface GoalView extends GoalSnapshot {\n    readonly roundsStarted: number;\n    readonly createdAt: number;\n    readonly updatedAt: number;\n    readonly activation: GoalActivation;\n}',
   },
   {
+    name: 'GpuReading',
+    declaration: 'export interface GpuReading {\n    readonly name: string;\n    readonly utilization: number;\n    readonly renderer: number | null;\n    readonly tiler: number | null;\n    readonly inUseMemoryBytes: number | null;\n    readonly allocatedMemoryBytes: number | null;\n}',
+  },
+  {
     name: 'GrantRecord',
     declaration: 'export interface GrantRecord {\n    readonly kind: \'grant\';\n    readonly payload: unknown;\n}',
   },
@@ -8326,6 +8526,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'HostConnectionRpc',
     declaration: 'export interface HostConnectionRpc {\n    handle(channel: string, handler: ConnectionRpcHandler): () => Promise<void>;\n    intercept(channel: \'/api\', matches: ConnectionRpcEndpointMatcher, handler: ConnectionRpcHandler): () => Promise<void>;\n}',
+  },
+  {
+    name: 'HostFacts',
+    declaration: 'export interface HostFacts {\n    readonly hostname: string;\n    readonly platform: string;\n    readonly arch: string;\n    readonly osVersion: string;\n    readonly model: string;\n    readonly chip: string;\n    readonly cores: number;\n    readonly totalMemoryBytes: number;\n    readonly uptimeSeconds: number;\n}',
   },
   {
     name: 'ImageAttachmentLimits',
@@ -8398,6 +8602,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'InstallSpecKind',
     declaration: 'export type InstallSpecKind = \'registry\' | \'path\' | \'git\' | \'tarball\';',
+  },
+  {
+    name: 'IntakeOutcome',
+    declaration: 'export interface IntakeOutcome {\n    readonly outcome: \'stored\' | \'duplicate\';\n    readonly reached: readonly TicketId[];\n}',
   },
   {
     name: 'InvocationDescriptor',
@@ -8593,7 +8801,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'LlmConfigurableProvider',
-    declaration: 'export interface LlmConfigurableProvider {\n    provider: string;\n    displayName: string;\n    settingsNs: string;\n    settingsPath: readonly string[];\n    declared?: boolean;\n    defaultBaseURL?: string;\n    baseURLEnv?: readonly string[];\n    nativeAuth?: LlmNativeAuth;\n    error?: string;\n}',
+    declaration: 'export interface LlmConfigurableProvider {\n    provider: string;\n    displayName: string;\n    settingsNs: string;\n    settingsPath: readonly string[];\n    declared?: boolean;\n    defaultBaseURL?: string;\n    baseURLEnv?: readonly string[];\n    sharedProtocol?: string;\n    nativeAuth?: LlmNativeAuth;\n    error?: string;\n}',
   },
   {
     name: 'LlmDiscoveredModel',
@@ -8610,6 +8818,18 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'LlmImageRequestPricing',
     declaration: 'export interface LlmImageRequestPricing {\n    priceImages(images: readonly ImageBlock[]): readonly LlmImageRequestPrice[];\n}',
+  },
+  {
+    name: 'LlmModelAdaptation',
+    declaration: 'export interface LlmModelAdaptation {\n    id: string;\n    input?: readonly ModelModality[];\n    reasoningEfforts?: Readonly<Record<string, string | null>>;\n    compat?: Readonly<Record<string, JsonValue>>;\n}',
+  },
+  {
+    name: 'LlmModelAdaptationRequest',
+    declaration: 'export interface LlmModelAdaptationRequest {\n    provider?: string;\n    api?: string;\n    defaultInput?: readonly ModelModality[];\n    compat?: Readonly<Record<string, JsonValue>>;\n    models: readonly LlmModelAdaptationTarget[];\n}',
+  },
+  {
+    name: 'LlmModelAdaptationTarget',
+    declaration: 'export interface LlmModelAdaptationTarget {\n    id: string;\n    input?: readonly ModelModality[];\n    reasoningEfforts?: false | Readonly<Record<string, string | null>>;\n    compat?: Readonly<Record<string, JsonValue>>;\n}',
   },
   {
     name: 'LlmModelBadge',
@@ -8661,7 +8881,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'LlmRuntime',
-    declaration: 'export class LlmRuntime extends TypertRemoteService {\n    constructor(ctx: Context);\n    registerAdapter(providers: string[], adapter: LlmAdapter): AdapterRegistrationHandle;\n    @Remote\n    listProviders(): LlmProviderInfo[];\n    registerConfigurableProviders(entries: readonly LlmConfigurableProvider[]): DirectoryRegistrationHandle;\n    @Remote\n    listConfigurableProviders(): LlmConfigurableProvider[];\n    registerModelDiscovery(settingsNs: string, discover: (request: LlmModelDiscoveryRequest, signal?: AbortSignal) => Promise<readonly LlmDiscoveredModel[]>): () => void;\n    async discoverModels(settingsNs: string, request: LlmModelDiscoveryRequest, signal?: AbortSignal): Promise<LlmDiscoveredModel[]>;\n    @Remote(\'discoverModels\')\n    async remoteDiscoverModels(settingsNs: string, request: LlmModelDiscoveryRequest, signal: AbortSignal): Promise<LlmDiscoveredModel[]>;\n    providerRetryPolicy(provider: string): ResolvedRetryPolicy;\n    imageRequestPricing(provider: string, model: string): LlmImageRequestPricing | undefined;\n    imageRequestTarget(provider: string, model: string, image: ImageAttachmentRef): ImageRequestTarget;\n    fileRequestText(ref: FileAttachmentRef): string;\n    async listModels(provider: string): Promise<LlmModelInfo[]>;\n    async resolveModelInfo(provider: string, model: string, signal?: AbortSignal): Promise<LlmResolvedModelInfo>;\n    async resolveCallConfig(config: LlmCallConfig, signal?: AbortSignal): Promise<LlmCallConfig>;\n    async prepareCall(conf /* …truncated — full shape in source */',
+    declaration: 'export class LlmRuntime extends TypertRemoteService {\n    constructor(ctx: Context);\n    registerAdapter(providers: string[], adapter: LlmAdapter): AdapterRegistrationHandle;\n    @Remote\n    listProviders(): LlmProviderInfo[];\n    registerConfigurableProviders(entries: readonly LlmConfigurableProvider[]): DirectoryRegistrationHandle;\n    @Remote\n    listConfigurableProviders(): LlmConfigurableProvider[];\n    registerModelDiscovery(settingsNs: string, discover: (request: LlmModelDiscoveryRequest, signal?: AbortSignal) => Promise<readonly LlmDiscoveredModel[]>): () => void;\n    async discoverModels(settingsNs: string, request: LlmModelDiscoveryRequest, signal?: AbortSignal): Promise<LlmDiscoveredModel[]>;\n    @Remote(\'discoverModels\')\n    async remoteDiscoverModels(settingsNs: string, request: LlmModelDiscoveryRequest, signal: AbortSignal): Promise<LlmDiscoveredModel[]>;\n    registerModelAdaptation(settingsNs: string, adapt: (request: LlmModelAdaptationRequest) => Promise<readonly LlmModelAdaptation[]>): () => void;\n    async adaptModels(settingsNs: string, request: LlmModelAdaptationRequest): Promise<LlmModelAdaptation[]>;\n    @Remote(\'adaptModels\')\n    async remoteAdaptModels(settingsNs: string, request: LlmModelAdaptationRequest): Promise<LlmModelAdaptation[]>;\n    providerRetryPolicy(provider: string): ResolvedRetryPolicy;\n    imageRequestPricing(provider: string, model: string): LlmImageRequestPricing | undefined;\n    imageRequestTarget(provider: string, model: string, ima /* …truncated — full shape in source */',
   },
   {
     name: 'LocalAtInput',
@@ -8718,6 +8938,22 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'ManagementError',
     declaration: 'export interface ManagementError {\n    code: ReadOnlyReason | \'unknown-plugin\' | \'invalid-spec\' | \'already-installed\' | \'ambiguous-install\' | \'not-bundle\' | \'not-removable\' | \'stop-profile\' | \'bundle-in-use\' | \'stale-approval\' | \'incompatible-version\' | \'unsupported-platform\' | \'unexpected-package\' | \'operation-error\';\n    diagnostic?: string;\n    incompatible?: IncompatiblePlugin[];\n}',
+  },
+  {
+    name: 'Mandate',
+    declaration: 'export interface Mandate {\n    readonly id: MandateId;\n    readonly policyVersion: string;\n    readonly scope: MandateScope;\n    readonly strength: MandateStrength;\n    readonly matchedRules: readonly string[];\n    readonly sender: ActorId;\n    readonly thread: ThreadRef;\n    readonly at: string;\n}',
+  },
+  {
+    name: 'MandateId',
+    declaration: 'export type MandateId = Branded<\'MandateId\'>;',
+  },
+  {
+    name: 'MandateScope',
+    declaration: 'export type MandateScope = \'investigate\' | \'change\' | \'release\';',
+  },
+  {
+    name: 'MandateStrength',
+    declaration: 'export type MandateStrength = \'explicit\' | \'proposed\';',
   },
   {
     name: 'ManualCompactAgentContext',
@@ -8782,10 +9018,6 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'MarketSearchResult',
     declaration: 'export interface MarketSearchResult {\n    readonly url: string;\n    readonly title: LocalizedText;\n    readonly description?: LocalizedText;\n    readonly metadata: MarketIndexMetadata;\n    readonly fetchedAt: number;\n    readonly entries: readonly MarketListingEntry[];\n    readonly total: number;\n    readonly nextOffset: number | null;\n}',
-  },
-  {
-    name: 'MarketSort',
-    declaration: 'export type MarketSort = {\n    readonly kind: \'index\';\n} | {\n    readonly kind: \'relevance\';\n} | {\n    readonly kind: \'published\';\n    readonly direction: \'asc\' | \'desc\';\n} | {\n    readonly kind: \'key\';\n    readonly id: string;\n    readonly direction: \'asc\' | \'desc\';\n};',
   },
   {
     name: 'MarketSortKeyDeclaration',
@@ -8870,6 +9102,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'MemoryOwner',
     declaration: 'export type MemoryOwner = Branded<\'MemoryOwner\'>;',
+  },
+  {
+    name: 'MemoryReading',
+    declaration: 'export interface MemoryReading {\n    readonly totalBytes: number;\n    readonly usedBytes: number;\n    readonly freeBytes: number;\n    readonly appBytes: number;\n    readonly wiredBytes: number;\n    readonly compressedBytes: number;\n    readonly cachedBytes: number;\n    readonly swapTotalBytes: number;\n    readonly swapUsedBytes: number;\n}',
   },
   {
     name: 'MemoryRecord',
@@ -9086,6 +9322,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'NetworkPolicy',
     declaration: 'export type NetworkPolicy = \'none\' | \'allowlist\' | \'any\';',
+  },
+  {
+    name: 'NetworkReading',
+    declaration: 'export interface NetworkReading {\n    readonly receivedBytesPerSecond: number;\n    readonly sentBytesPerSecond: number;\n    readonly totalReceivedBytes: number;\n    readonly totalSentBytes: number;\n}',
   },
   {
     name: 'NpmFileSource',
@@ -9428,6 +9668,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type PostToolDecision = {\n    kind: \'accept\';\n    content?: ContentBlock[];\n    value?: never;\n    additionalContexts?: UserMessage[];\n} | {\n    kind: \'accept\';\n    value: JsonValue;\n    content?: never;\n    additionalContexts?: UserMessage[];\n} | {\n    kind: \'block\';\n    feedback: ContentBlock[];\n    info?: ToolErrorInfo;\n    additionalContexts?: UserMessage[];\n};',
   },
   {
+    name: 'PowerReading',
+    declaration: 'export interface PowerReading {\n    readonly batteryPercent: number | null;\n    readonly charging: boolean | null;\n    readonly thermalPressure: string;\n}',
+  },
+  {
     name: 'PreparedAdapterCall',
     declaration: 'export interface PreparedAdapterCall {\n    readonly model: LlmResolvedModelInfo;\n    stream(options: GenerateOptions): AsyncIterable<StreamChunk>;\n}',
   },
@@ -9482,6 +9726,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'PrincipalMap',
     declaration: 'export interface PrincipalMap {\n    owner: {\n        readonly kind: \'owner\';\n    };\n}',
+  },
+  {
+    name: 'ProcessReading',
+    declaration: 'export interface ProcessReading {\n    readonly pid: number;\n    readonly name: string;\n    readonly cpuPercent: number;\n    readonly memoryPercent: number;\n}',
   },
   {
     name: 'ProductEvent',
@@ -9828,6 +10076,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type ReplyStatus = \'done\' | \'partial\' | \'declined\' | \'aborted\';',
   },
   {
+    name: 'ReportState',
+    declaration: 'export type ReportState = \'progress\' | \'waiting\' | \'ready\' | \'blocked\' | \'failed\' | \'dropped\';',
+  },
+  {
     name: 'RequestContext',
     declaration: 'export interface RequestContext {\n    provider: string;\n    model: string;\n    contextWindow?: number;\n    systemPromptUpdate?: SystemPromptUpdate;\n}',
   },
@@ -9898,14 +10150,6 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'ResumeAgentOptions',
     declaration: 'export interface ResumeAgentOptions {\n    readonly resumeSessionId: SessionId;\n    readonly agentOptions?: AgentOptions;\n    readonly signal?: AbortSignal;\n    readonly setup?: AgentSetup;\n}',
-  },
-  {
-    name: 'ReviewDecision',
-    declaration: 'export type ReviewDecision = \'approved\' | \'changes-requested\' | \'review-required\' | \'none\';',
-  },
-  {
-    name: 'ReviewVerdict',
-    declaration: 'export type ReviewVerdict = \'approved\' | \'changes-requested\' | \'commented\' | \'dismissed\';',
   },
   {
     name: 'Robot',
@@ -10048,6 +10292,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface RoomBudgetSpec {\n    readonly dailyTokens: number;\n    readonly softLimitRatio: number;\n}',
   },
   {
+    name: 'RoomCapabilitySpec',
+    declaration: 'export interface RoomCapabilitySpec {\n    readonly tools?: {\n        readonly allow?: readonly string[];\n        readonly deny?: readonly string[];\n    };\n    readonly skills?: readonly string[];\n    readonly mcpServers?: readonly string[];\n    readonly permissionPreset?: string;\n}',
+  },
+  {
     name: 'RoomContextSpec',
     declaration: 'export interface RoomContextSpec {\n    readonly window: number;\n    readonly messageChars: number;\n    readonly summaryChars: number;\n    readonly triggerChars: number;\n}',
   },
@@ -10124,6 +10372,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface RoomPublicationRequest {\n    readonly id?: RoomId;\n    readonly spec: RoomSpec;\n}',
   },
   {
+    name: 'RoomReviewSpec',
+    declaration: 'export interface RoomReviewSpec {\n    readonly selfReview: boolean;\n    readonly acceptance: boolean;\n    readonly maxRounds: number;\n}',
+  },
+  {
     name: 'RoomRobotRef',
     declaration: 'export interface RoomRobotRef {\n    readonly spec: string;\n    readonly revision: number;\n}',
   },
@@ -10137,7 +10389,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'RoomSpec',
-    declaration: 'export interface RoomSpec {\n    readonly name: string;\n    readonly charter: string;\n    readonly members: readonly RoomMemberSpec[];\n    readonly routing: RoomRoutingSpec;\n    readonly guard: RoomGuardSpec;\n    readonly budget: RoomBudgetSpec;\n    readonly context: RoomContextSpec;\n    readonly workspaceRoot?: string;\n}',
+    declaration: 'export interface RoomSpec {\n    readonly name: string;\n    readonly charter: string;\n    readonly members: readonly RoomMemberSpec[];\n    readonly routing: RoomRoutingSpec;\n    readonly guard: RoomGuardSpec;\n    readonly budget: RoomBudgetSpec;\n    readonly context: RoomContextSpec;\n    readonly review?: RoomReviewSpec;\n    readonly capability?: RoomCapabilitySpec;\n    readonly workspaceRoot?: string;\n}',
   },
   {
     name: 'RoomState',
@@ -10146,6 +10398,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'RoomTargetRequest',
     declaration: 'export interface RoomTargetRequest {\n    readonly room: RoomId;\n}',
+  },
+  {
+    name: 'RoomWorkRecord',
+    declaration: 'export interface RoomWorkRecord {\n    readonly ticket: string;\n    readonly room: string;\n    readonly thread: string;\n    readonly member: string;\n    readonly subject: string;\n    readonly sender: string;\n    readonly strength: \'explicit\' | \'proposed\';\n    readonly state: \'running\' | \'ready\' | \'blocked\' | \'failed\' | \'dropped\';\n    readonly rounds: number;\n    readonly review?: {\n        readonly rounds: number;\n        readonly findings: readonly string[];\n    } | undefined;\n    readonly at: number;\n}',
   },
   {
     name: 'RpcId',
@@ -10386,10 +10642,6 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'Session',
     declaration: 'export class Session {\n    get surface(): SessionSurface;\n    readonly header: SessionHeader;\n    readonly inheritedEventCount: SessionLogOffset;\n    get id(): SessionId;\n    readonly firstLiveSeq: SessionLogOffset;\n    readonly firstLifecycleSeq: SessionLogOffset;\n    static create(id: SessionId, seed?: readonly SessionEvent[], header?: SessionHeader, inheritedEventCount?: SessionLogOffset, projections?: readonly SessionMessageProjection[]): Session;\n    static fromRestore(id: SessionId, seed: readonly SessionEvent[], header: SessionHeader, inheritedEventCount: SessionLogOffset, eventState: SessionSeedEventState, projections?: readonly SessionMessageProjection[]): Session;\n    eventAt(seq: SessionSeq): SessionEvent | undefined;\n    snapshotEvents(fromSeq: SessionLogOffset = SessionLogOffset(0), toSeqExclusive: SessionLogOffset = this.seq): readonly SessionEvent[];\n    ownEvents(): readonly SessionEvent[];\n    isOwnSeq(seq: SessionSeq): boolean;\n    get seq(): SessionLogOffset;\n    get currentBatchPublication(): SessionEvent | undefined;\n    append(inputs: readonly SessionEventInput[]): readonly SessionEvent[];\n    append<T extends SessionEventType>(type: T, data: SessionEventMap[T], ...opts: T extends SurfaceEventType ? [\n        opts: SurfaceIntent<T>\n    ] : [\n    ]): SessionEvent<T>;\n    requestHeader(): EpochHeader | undefined;\n    requestContext(): RequestContext | undefined;\n    toolHistory(): ToolHistory;\n    deriveMessages(): Message[];\n    deriveEventMessage(event:  /* …truncated — full shape in source */',
-  },
-  {
-    name: 'SessionAccess',
-    declaration: 'export type SessionAccess = \'read\' | \'write\';',
   },
   {
     name: 'SessionActivity',
@@ -11468,6 +11720,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface SubagentStopReasonMap {\n    completed: \'completed\';\n    aborted: \'aborted\';\n    error: \'error\';\n    \'max-tokens\': \'max-tokens\';\n    refusal: \'refusal\';\n}',
   },
   {
+    name: 'SubmitResult',
+    declaration: 'export type SubmitResult = {\n    readonly kind: \'accepted\';\n    readonly tickets: readonly TicketSummary[];\n} | {\n    readonly kind: \'declined\';\n    readonly reason: string;\n} | {\n    readonly kind: \'refused\';\n    readonly reason: string;\n};',
+  },
+  {
     name: 'SubprocessCollect',
     declaration: 'export interface SubprocessCollect {\n    maxBytes: number;\n    spill?: {\n        maxBytes: number;\n    };\n}',
   },
@@ -11556,6 +11812,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface SystemMessage extends MessageBase {\n    readonly role: \'system\';\n    readonly source: MessageSourceMap[\'system-prompt\'];\n}',
   },
   {
+    name: 'SystemMonitorRequest',
+    declaration: 'export interface SystemMonitorRequest {\n    readonly intervalMs?: number;\n    readonly processLimit?: number;\n}',
+  },
+  {
     name: 'SystemPrompt',
     declaration: 'export class SystemPrompt extends Service {\n    static Config: z<Config>;\n    constructor(ctx: Context, config: Config);\n    section(section: PromptSection): () => void;\n    getSectionOrder(name: PromptSectionOrderName): number;\n    getContextOrder(name: PromptContextOrderName): number;\n    context(context: PromptContext): () => void;\n    suppressRuntimeContext(): () => void;\n    tools(provider: (context: AssembleContext) => ToolProviderResult): () => void;\n    variable(name: string, provider: (context: AssembleContext) => string | undefined): () => void;\n    refreshContext(assembly: PromptAssembly, context: AssembleContext = {}): PromptAssembly;\n    async assemble(context: AssembleContext = {}): Promise<PromptAssembly>;\n}',
   },
@@ -11568,12 +11828,20 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type SystemPromptUpdate = \'in-history\';',
   },
   {
+    name: 'SystemSampleFrame',
+    declaration: 'export interface SystemSampleFrame {\n    readonly type: \'sample\';\n    readonly at: number;\n    readonly host: HostFacts;\n    readonly cpu: CpuReading;\n    readonly memory: MemoryReading;\n    readonly gpu: GpuReading | null;\n    readonly disk: DiskReading | null;\n    readonly network: NetworkReading | null;\n    readonly power: PowerReading | null;\n    readonly processes: readonly ProcessReading[];\n    readonly unavailable: readonly string[];\n}',
+  },
+  {
     name: 'TableKeyOf',
     declaration: 'export type TableKeyOf<S extends DomainSpec, N extends keyof S[\'tables\']> = S[\'tables\'][N] extends DomainTableSpec<infer K> ? K : never;',
   },
   {
     name: 'TableValueOf',
     declaration: 'export type TableValueOf<S extends DomainSpec, N extends keyof S[\'tables\']> = S[\'tables\'][N] extends DomainTableSpec<string, infer V> ? V : never;',
+  },
+  {
+    name: 'TeamReport',
+    declaration: 'export interface TeamReport {\n    readonly cycle: CycleResult;\n    readonly worked: readonly WorkOutcome[];\n}',
   },
   {
     name: 'TeamTaskAction',
@@ -11720,8 +11988,32 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface TestPublishRequest {\n    readonly sessionId: string;\n}',
   },
   {
+    name: 'TextBlock',
+    declaration: 'export interface TextBlock {\n    type: \'text\';\n    text: string;\n}',
+  },
+  {
     name: 'TextProps',
     declaration: 'export interface TextProps {\n    readonly color?: string | undefined;\n    readonly bold?: boolean | undefined;\n    readonly dimColor?: boolean | undefined;\n    readonly italic?: boolean | undefined;\n    readonly underline?: boolean | undefined;\n    readonly children?: UiNode | undefined;\n}',
+  },
+  {
+    name: 'ThreadRef',
+    declaration: 'export interface ThreadRef {\n    readonly source: string;\n    readonly id: string;\n}',
+  },
+  {
+    name: 'Ticket',
+    declaration: 'export interface Ticket {\n    readonly id: TicketId;\n    readonly subject: string;\n    readonly mandate: Mandate;\n    readonly supervisor: string;\n    readonly follows: readonly ThreadRef[];\n    readonly stopped: boolean;\n    readonly ended: boolean;\n    readonly assignments: readonly Assignment[];\n    readonly review?: ReviewVerdict | undefined;\n}',
+  },
+  {
+    name: 'TicketDetail',
+    declaration: 'export interface TicketDetail {\n    readonly summary: TicketSummary;\n    readonly mandate: {\n        readonly scope: \'investigate\' | \'change\' | \'release\';\n        readonly strength: \'explicit\' | \'proposed\';\n        readonly policyVersion: string;\n        readonly sender: string;\n        readonly at: string;\n    };\n    readonly assignments: readonly AssignmentView[];\n    readonly review?: {\n        readonly rounds: number;\n        readonly findings: readonly FindingView[];\n    } | undefined;\n    readonly triggers: readonly TriggerView[];\n    readonly ended: boolean;\n}',
+  },
+  {
+    name: 'TicketId',
+    declaration: 'export type TicketId = Branded<\'TicketId\'>;',
+  },
+  {
+    name: 'TicketSummary',
+    declaration: 'export interface TicketSummary {\n    readonly id: string;\n    readonly subject: string;\n    readonly stage: \'working\' | \'person\' | \'idle\' | \'ended\';\n    readonly needs?: \'delivery\' | \'answer\' | \'review\' | \'blocked\' | \'failed\' | undefined;\n    readonly state?: \'progress\' | \'waiting\' | \'ready\' | \'blocked\' | \'failed\' | \'dropped\' | undefined;\n    readonly blocking: number;\n    readonly rounds: number;\n    readonly running: boolean;\n    readonly stopped: boolean;\n}',
   },
   {
     name: 'TimedUserQuestionResult',
@@ -11940,8 +12232,8 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type TranslationSpec = AnonymousTranslationSpec | PaidTranslationSpec;',
   },
   {
-    name: 'Trigger',
-    declaration: 'export type Trigger = {\n    readonly kind: \'manual\';\n} | {\n    readonly kind: \'cron\';\n    readonly expression: string;\n    readonly timeZone: string;\n} | {\n    readonly kind: \'event\';\n    readonly topic: string;\n} | {\n    readonly kind: \'webhook\';\n    readonly name: string;\n} | {\n    readonly kind: \'dependency\';\n    readonly task: string;\n} | {\n    readonly kind: \'threshold\';\n    readonly metric: string;\n    readonly above: number;\n};',
+    name: 'TriggerView',
+    declaration: 'export interface TriggerView {\n    readonly at: string;\n    readonly source: string;\n    readonly actor: string;\n    readonly text: string;\n}',
   },
   {
     name: 'TurnBoundaryProjection',
@@ -12370,6 +12662,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'WorkflowStopReason',
     declaration: 'export type WorkflowStopReason = \'completed\' | \'cancelled\' | \'error\';',
+  },
+  {
+    name: 'WorkOutcome',
+    declaration: 'export interface WorkOutcome {\n    readonly ticket: TicketId;\n    readonly state: ReportState;\n    readonly review?: ReviewDecision | undefined;\n}',
   },
   {
     name: 'Workspace',

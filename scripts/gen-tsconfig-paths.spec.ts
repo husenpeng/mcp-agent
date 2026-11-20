@@ -44,20 +44,66 @@ describe('generated tsconfig package aliases', () => {
   })
 
   it('replaces only the marked region', () => {
+    // The region behaves like any other member of `paths`: it trails a comma while members follow it.
     const text = [
-      '{ "before": 1,',
+      '{',
+      '  "paths": {',
       '      // BEGIN generated package aliases — pnpm run gen-tsconfig-paths',
       '      "stale": ["gone"]',
       '      // END generated package aliases',
-      '  "after": 2 }',
+      '      "@tomato/handwritten": ["./packages/g/hand/src"]',
+      '  },',
+      '  "after": 2',
+      '}',
     ].join('\n')
 
     const next = writeRegion(text, '      "fresh": ["kept"]')
 
-    expect(next).toContain('{ "before": 1,')
-    expect(next).toContain('  "after": 2 }')
-    expect(next).toContain('"fresh": ["kept"]')
+    expect(next).toContain('  "after": 2')
+    expect(next).toContain('"fresh": ["kept"],')
+    expect(next).toContain('"@tomato/handwritten": ["./packages/g/hand/src"]')
     expect(next).not.toContain('stale')
+    expect(() => { JSON.parse(next.replace(/^\s*\/\/.*$/gm, '')) }).not.toThrow()
+  })
+
+  it('wraps a hand-maintained alias block in the markers on its first write', () => {
+    const text = [
+      '{',
+      '  "paths": {',
+      '      "@tomato/a": ["./packages/g/a/src"],',
+      '      "@tomato/b": ["./packages/g/b/src"],',
+      '      "@tomato/handwritten": ["./packages/g/hand/src"]',
+      '  }',
+      '}',
+    ].join('\n')
+
+    const next = writeRegion(text, '      "@tomato/a": ["./packages/g/a/src"]')
+
+    expect(next).toContain('// BEGIN generated package aliases')
+    expect(next).toContain('// END generated package aliases')
+    // The generated member comes before the hand-written ones, which keep their own trailing comma.
+    expect(next.indexOf('@tomato/a')).toBeLessThan(next.indexOf('@tomato/handwritten'))
+    expect(next).toContain('"@tomato/b": ["./packages/g/b/src"],')
+    expect(next).toContain('"@tomato/handwritten": ["./packages/g/hand/src"]')
+  })
+
+  it('keeps hand-written members after the region valid on every rewrite', () => {
+    const text = [
+      '{',
+      '  "paths": {',
+      '      // BEGIN generated package aliases — pnpm run gen-tsconfig-paths',
+      '      "@tomato/a": ["./packages/g/a/src"]',
+      '      // END generated package aliases',
+      '      "@tomato/b": ["./packages/g/b/src"],',
+      '      "@tomato/handwritten": ["./packages/g/hand/src"]',
+      '  }',
+      '}',
+    ].join('\n')
+
+    const next = writeRegion(text, '      "@tomato/a": ["./packages/g/a/src"]')
+
+    // The rewritten text parses once its line comments, the only non-JSON syntax here, are dropped.
+    expect(() => { JSON.parse(next.replace(/^\s*\/\/.*$/gm, '')) }).not.toThrow()
   })
 
   it('refuses a config without the region markers', () => {
