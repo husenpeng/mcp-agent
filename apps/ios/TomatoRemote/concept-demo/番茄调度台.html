@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="light">
+<html lang="zh-CN" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,38 +8,40 @@
 <style>
 /* ===== tokens ===== */
 :root{
-  --paper:#FCF6F0; --card:#FFFDFA; --ink:#26140C; --mute:#8C7263; --faint:#BBA392;
-  --line:#F0DFD4; --rail:#E8D2C4;
-  --tomato:#E23B22; --tomato-deep:#B02510;
-  --wash:linear-gradient(135deg,#FFE9DD 0%,#FBD9CB 55%,#F7E3D4 100%); --wash-line:#F3CDBB;
-  --leaf:#35855A; --leaf-wash:#EAF2E2;
-  --amber:#C2610A; --amber-wash:#FBEBD6;
-  --code:#2B130C; --code-ink:#F6EDE4; --code-bar:#C9A18E;
-  --grad:linear-gradient(135deg,#FF8A4C 0%,#F4502C 34%,#D82C12 68%,#AE1F0A 100%);
-  --head-grad:linear-gradient(100deg,#26140C 0%,#6E2412 52%,#C2401F 100%);
-  --ambient:radial-gradient(820px 460px at 10% -6%,rgba(255,122,69,.16),transparent 62%),radial-gradient(680px 400px at 92% -2%,rgba(255,176,64,.14),transparent 60%);
-  --phone-bg:linear-gradient(180deg,#FFFAF5 0%,#FCF4EC 34%,#FAF0E7 100%);
-  --grid-c:rgba(210,42,18,.05); --dock-tint:rgba(255,122,69,.07);
-  --glow:0 12px 32px -14px rgba(210,42,18,.55); --glow-c:rgba(210,42,18,.40);
-  --shadow:0 1px 2px rgba(38,20,12,.05),0 8px 24px -18px rgba(38,20,12,.28);
-  --r-card:18px; --r-small:12px;
+  --paper:#F4F5F7; --card:#FFFFFF; --ink:#14161A; --mute:#5C6470; --faint:#98A0AC;
+  --line:#E3E6EA; --rail:#D5D9DE;
+  --tomato:#FF2418; --tomato-deep:#D40000;
+  --wash:linear-gradient(135deg,#FFE7E4 0%,#FFD3CE 55%,#FFE0DA 100%); --wash-line:#FFB3AC;
+  --leaf:#00A651; --leaf-wash:#E2F8E9;
+  --amber:#A97B00; --amber-wash:#FFF6D6;
+  --code:#101216; --code-ink:#E6E9EE; --code-bar:#8B93A0;
+  --grad:linear-gradient(135deg,#FF6B5E 0%,#FF2418 36%,#E00D0D 68%,#A30000 100%);
+  --user-grad:linear-gradient(135deg,#FF2418 0%,#D40000 55%,#A30000 100%);
+  --head-grad:linear-gradient(100deg,#14161A 0%,#7A0000 52%,#FF2418 100%);
+  --ambient:radial-gradient(820px 460px at 10% -6%,rgba(255,36,24,.10),transparent 62%),radial-gradient(680px 400px at 92% -2%,rgba(255,0,90,.06),transparent 60%);
+  --phone-bg:linear-gradient(180deg,#FFFFFF 0%,#F6F7F9 34%,#F2F3F6 100%);
+  --grid-c:rgba(20,22,26,.05); --dock-tint:rgba(255,36,24,.05);
+  --glow:0 12px 32px -14px rgba(255,36,24,.5); --glow-c:rgba(255,36,24,.35);
+  --shadow:0 1px 2px rgba(20,22,26,.06),0 8px 24px -18px rgba(20,22,26,.3);
+  --r-card:14px; --r-small:9px;
   --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
 }
 [data-theme="dark"]{
-  --paper:#150C07; --card:#22140C; --ink:#F8ECE2; --mute:#BC9E8C; --faint:#86695A;
-  --line:#3B2418; --rail:#4A2E1E;
-  --tomato:#FF6A4D; --tomato-deep:#FF8A70;
-  --wash:linear-gradient(135deg,#4A2114 0%,#3A1A10 55%,#31150C 100%); --wash-line:#5E3122;
-  --leaf:#86C79A; --leaf-wash:#21301F;
-  --amber:#E8A050; --amber-wash:#33290F;
-  --code:#170B06; --code-ink:#EFE5DA; --code-bar:#B08A76;
-  --grad:linear-gradient(135deg,#FF9A5C 0%,#FF6A3D 36%,#F04E2E 70%,#C22A10 100%);
-  --head-grad:linear-gradient(100deg,#FFF3EA 0%,#FFC0A8 55%,#FF6A4D 100%);
-  --ambient:radial-gradient(820px 460px at 10% -6%,rgba(255,90,60,.12),transparent 62%),radial-gradient(680px 400px at 92% -2%,rgba(255,150,60,.08),transparent 60%);
-  --phone-bg:linear-gradient(180deg,#20130B 0%,#180E08 40%,#140B06 100%);
-  --grid-c:rgba(255,122,69,.05); --dock-tint:rgba(255,106,77,.08);
-  --glow:0 12px 32px -14px rgba(255,90,60,.35); --glow-c:rgba(255,90,60,.30);
-  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -18px rgba(0,0,0,.7);
+  --paper:#0A0B0E; --card:#14161B; --ink:#F2F4F7; --mute:#9AA3AF; --faint:#6B7480;
+  --line:#262A31; --rail:#333842;
+  --tomato:#FF3B30; --tomato-deep:#FF6B5E;
+  --wash:linear-gradient(135deg,#3A0D0D 0%,#2A0808 55%,#330B0B 100%); --wash-line:#6E1414;
+  --leaf:#3DFF8C; --leaf-wash:#062B16;
+  --amber:#FFD60A; --amber-wash:#332B00;
+  --code:#0D0F13; --code-ink:#E6E9EE; --code-bar:#8B93A0;
+  --grad:linear-gradient(135deg,#FF7A6B 0%,#FF3B30 36%,#FF1F1F 68%,#C00000 100%);
+  --user-grad:linear-gradient(135deg,#FF4D3D 0%,#FF1F1F 55%,#C00000 100%);
+  --head-grad:linear-gradient(100deg,#F2F4F7 0%,#FFB3AC 55%,#FF3B30 100%);
+  --ambient:radial-gradient(820px 460px at 10% -6%,rgba(255,30,30,.16),transparent 62%),radial-gradient(680px 400px at 92% -2%,rgba(255,0,90,.10),transparent 60%);
+  --phone-bg:linear-gradient(180deg,#12141A 0%,#0A0B0E 40%,#07080B 100%);
+  --grid-c:rgba(255,40,40,.06); --dock-tint:rgba(255,30,30,.08);
+  --glow:0 0 24px -6px rgba(255,30,30,.45); --glow-c:rgba(255,30,30,.35);
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px -18px rgba(0,0,0,.8);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
@@ -318,9 +320,7 @@ body{background-color:var(--paper);background-image:var(--ambient);background-at
 .code .bar{color:var(--code-bar)}
 
 /* ===== refine circled surfaces ===== */
-:root{--wash:linear-gradient(135deg,#FFE8D0 0%,#FFD9BC 55%,#FBE4CC 100%);--wash-line:#F4CBA6;--user-grad:linear-gradient(135deg,#EF4E2B 0%,#D22A12 55%,#A81D0B 100%)}
-[data-theme="dark"]{--wash:linear-gradient(135deg,#4A2412 0%,#3A1C0E 55%,#31160B 100%);--wash-line:#5E3418;--user-grad:linear-gradient(135deg,#FF7A4D 0%,#F04E2E 55%,#C22A10 100%)}
-.mem.cand{background-color:var(--card);background-image:linear-gradient(135deg,rgba(255,138,76,.14),rgba(216,44,18,.06) 55%,rgba(255,255,255,0));border-color:var(--wash-line);position:relative;overflow:hidden}
+.mem.cand{background-color:var(--card);background-image:linear-gradient(135deg,rgba(255,36,24,.12),rgba(255,0,90,.05) 55%,rgba(255,255,255,0));border-color:var(--wash-line);position:relative;overflow:hidden}
 .mem.cand::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background-image:var(--grad)}
 .mem .acts .btn.leaf{background-color:var(--tomato);background-image:var(--grad);color:#fff;box-shadow:0 8px 20px -10px var(--glow-c)}
 [data-theme="dark"] .mem .acts .btn.leaf{color:#20100C}
@@ -331,8 +331,8 @@ body{background-color:var(--paper);background-image:var(--ambient);background-at
 .cchip svg:nth-child(2){color:var(--faint)}
 
 /* ===== composed page headers ===== */
-.page-head{position:relative;margin:14px 18px 0;padding:16px;border-radius:20px;background-color:var(--card);background-image:linear-gradient(135deg,rgba(255,138,76,.12),rgba(216,44,18,.05) 55%,rgba(255,255,255,0));border:1px solid var(--wash-line);overflow:hidden}
-.page-head::before{content:"";position:absolute;right:-46px;top:-46px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(255,138,76,.30),rgba(216,44,18,.10) 60%,transparent 72%);pointer-events:none}
+.page-head{position:relative;margin:14px 18px 0;padding:16px;border-radius:var(--r-card);background-color:var(--card);background-image:linear-gradient(135deg,rgba(255,36,24,.10),rgba(255,0,90,.05) 55%,rgba(255,255,255,0));border:1px solid var(--wash-line);overflow:hidden}
+.page-head::before{content:"";position:absolute;right:-46px;top:-46px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(255,36,24,.28),rgba(255,0,90,.10) 60%,transparent 72%);pointer-events:none}
 .page-head::after{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background-image:var(--grad)}
 .ph-row{display:flex;align-items:center;gap:12px;position:relative}
 .ph-medal{flex:none;width:44px;height:44px;border-radius:14px;background-color:var(--tomato);background-image:var(--grad);color:#fff;display:grid;place-items:center;box-shadow:var(--glow)}
@@ -353,6 +353,15 @@ body{background-color:var(--paper);background-image:var(--ambient);background-at
 .hero .display{position:relative;font-size:26px;margin-top:10px;padding-bottom:12px}
 .hero .display::after{content:"";position:absolute;left:2px;bottom:2px;width:56px;height:4px;border-radius:2px;background-image:var(--grad)}
 .hero .lede{margin-top:8px;font-size:14px;color:var(--mute);max-width:34ch;position:relative}
+
+/* ===== punk tech extras ===== */
+.num{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.2px}
+.micro{letter-spacing:.3px}
+.live::before{background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 4px),linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:auto,22px 22px,22px 22px}
+.dock{border-top:1px solid var(--wash-line)}
+[data-theme="dark"] .btn.leaf{color:#062B16}
+[data-theme="dark"] .pill.ok{color:#062B16;background:var(--leaf)}
+[data-theme="dark"] .node.done::before{background:var(--leaf);border-color:var(--leaf)}
 </style>
 </head>
 <body>
@@ -470,7 +479,7 @@ const DB = {
 };
 
 /* ===== state & helpers ===== */
-const S = {route:'home', memFilter:'all', query:'', model:'Tomato 1', perm:'默认', notify:true, dark:false, running:{r2:true}, folded:{}, streaming:null};
+const S = {route:'home', memFilter:'all', query:'', model:'Tomato 1', perm:'默认', notify:true, dark:true, running:{r2:true}, folded:{}, streaming:null};
 const $ = s=>document.querySelector(s);
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 let toastTimer=null;
