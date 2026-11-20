@@ -316,6 +316,43 @@ body{background-color:var(--paper);background-image:var(--ambient);background-at
 .sheet{background-image:linear-gradient(180deg,var(--dock-tint),transparent 140px)}
 .chat-head{background-image:linear-gradient(180deg,var(--dock-tint),transparent)}
 .code .bar{color:var(--code-bar)}
+
+/* ===== refine circled surfaces ===== */
+:root{--wash:linear-gradient(135deg,#FFE8D0 0%,#FFD9BC 55%,#FBE4CC 100%);--wash-line:#F4CBA6;--user-grad:linear-gradient(135deg,#EF4E2B 0%,#D22A12 55%,#A81D0B 100%)}
+[data-theme="dark"]{--wash:linear-gradient(135deg,#4A2412 0%,#3A1C0E 55%,#31160B 100%);--wash-line:#5E3418;--user-grad:linear-gradient(135deg,#FF7A4D 0%,#F04E2E 55%,#C22A10 100%)}
+.mem.cand{background-color:var(--card);background-image:linear-gradient(135deg,rgba(255,138,76,.14),rgba(216,44,18,.06) 55%,rgba(255,255,255,0));border-color:var(--wash-line);position:relative;overflow:hidden}
+.mem.cand::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background-image:var(--grad)}
+.mem .acts .btn.leaf{background-color:var(--tomato);background-image:var(--grad);color:#fff;box-shadow:0 8px 20px -10px var(--glow-c)}
+[data-theme="dark"] .mem .acts .btn.leaf{color:#20100C}
+.say-user{background-color:var(--tomato);background-image:var(--user-grad);color:#fff;border-color:transparent;box-shadow:0 8px 20px -12px var(--glow-c)}
+[data-theme="dark"] .say-user{color:#20100C}
+.cchip{background-color:var(--card);background-image:var(--wash);border-color:var(--wash-line);color:var(--tomato-deep)}
+.cchip svg{color:var(--tomato)}
+.cchip svg:nth-child(2){color:var(--faint)}
+
+/* ===== composed page headers ===== */
+.page-head{position:relative;margin:14px 18px 0;padding:16px;border-radius:20px;background-color:var(--card);background-image:linear-gradient(135deg,rgba(255,138,76,.12),rgba(216,44,18,.05) 55%,rgba(255,255,255,0));border:1px solid var(--wash-line);overflow:hidden}
+.page-head::before{content:"";position:absolute;right:-46px;top:-46px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(255,138,76,.30),rgba(216,44,18,.10) 60%,transparent 72%);pointer-events:none}
+.page-head::after{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background-image:var(--grad)}
+.ph-row{display:flex;align-items:center;gap:12px;position:relative}
+.ph-medal{flex:none;width:44px;height:44px;border-radius:14px;background-color:var(--tomato);background-image:var(--grad);color:#fff;display:grid;place-items:center;box-shadow:var(--glow)}
+[data-theme="dark"] .ph-medal{color:#20100C}
+.ph-txt{flex:1;min-width:0}
+.ph-txt .display{font-size:22px;padding:0;margin:0}
+.ph-txt .sub{margin-top:2px}
+.ph-chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;position:relative}
+.ph-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background-color:var(--paper);border:1px solid var(--line);font-size:12px;font-weight:600;color:var(--mute)}
+.ph-chip b{color:var(--tomato-deep);font-weight:800}
+.ph-chip .dot{width:6px;height:6px;border-radius:50%;flex:none}
+.ph-chip svg{color:var(--tomato)}
+.page-head.hero{padding:18px}
+.hero .ph-top{display:flex;align-items:center;gap:8px;position:relative}
+.hero .ph-top .date{flex:1;display:flex;align-items:baseline;gap:8px;font-size:13px;color:var(--mute);font-weight:600}
+.hero .ph-top .date .dot{width:7px;height:7px;border-radius:50%;background:var(--leaf);align-self:center}
+.hero .ph-medal{width:36px;height:36px;border-radius:11px}
+.hero .display{position:relative;font-size:26px;margin-top:10px;padding-bottom:12px}
+.hero .display::after{content:"";position:absolute;left:2px;bottom:2px;width:56px;height:4px;border-radius:2px;background-image:var(--grad)}
+.hero .lede{margin-top:8px;font-size:14px;color:var(--mute);max-width:34ch;position:relative}
 </style>
 </head>
 <body>
@@ -473,15 +510,22 @@ function diagramSvg(){
   +'<rect x="204" y="108" width="72" height="28" rx="6" fill="none" stroke="currentColor" stroke-width="1.4"/><text x="240" y="126" text-anchor="middle">正常打开</text>'
   +'</g></svg>';
 }
+/* ===== shared page head ===== */
+function pageHead(icon,title,sub,chips,action){
+  return '<header class="page-head"><div class="ph-row"><span class="ph-medal">'+ico(icon,20)+'</span><div class="ph-txt"><h2 class="display">'+esc(title)+'</h2>'+(sub?'<p class="sub">'+esc(sub)+'</p>':'')+'</div>'+(action||'')+'</div>'
+  +(chips&&chips.length?'<div class="ph-chips">'+chips.map(c=>'<span class="ph-chip">'+(c[0]?'<span class="dot" style="background:'+c[0]+'"></span>':'')+esc(c[1])+' <b class="num">'+esc(c[2])+'</b></span>').join('')+'</div>':'')
+  +'</header>';
+}
 /* ===== view: home ===== */
 function viewHome(){
   const g=DB.goal, pct=Math.round(g.round/g.max*100);
   const cand=DB.memories.filter(m=>m.status==='candidate');
   return ''
-  +'<header class="masthead">'
-  +  '<div class="date"><span class="dot"></span>'+esc(DB.recap.date)+' · Mac '+esc(DB.host.state)+'</div>'
+  +'<header class="page-head hero">'
+  +  '<div class="ph-top"><span class="date"><span class="dot"></span>'+esc(DB.recap.date)+' · Mac '+esc(DB.host.state)+'</span><span class="ph-medal">'+ico('spark',18)+'</span></div>'
   +  '<h2 class="display">'+esc(DB.recap.headline)+'</h2>'
   +  '<p class="lede">'+esc(DB.recap.lede)+'</p>'
+  +  '<div class="ph-chips"><span class="ph-chip">'+ico('bubble',12)+'消息 <b class="num">'+DB.recap.messages+'</b></span><span class="ph-chip"><span class="dot" style="background:var(--leaf)"></span>完成 <b class="num">'+DB.today.filter(n=>n.state==='done').length+'</b></span><span class="ph-chip"><span class="dot" style="background:var(--tomato)"></span>待办 <b class="num">'+DB.today.filter(n=>n.state==='open').length+'</b></span></div>'
   +'</header>'
   +'<button class="live" onclick="openChat(\''+g.session+'\')" aria-label="打开正在运行的会话">'
   +  '<span class="go">'+ico('chev',18)+'</span>'
