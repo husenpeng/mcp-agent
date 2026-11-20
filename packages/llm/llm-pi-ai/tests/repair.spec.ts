@@ -96,7 +96,7 @@ describe('provider failure repair write', () => {
   })
 
   it('writes nothing for a model that already declares text only', () => {
-    const declared = { models: [{ id: 'acme-large', input: ['text'] }] }
+    const declared = { models: [{ id: 'acme-large', input: ['text'] as ('text' | 'image')[] }] }
     expect(repairSettingsPatch(declared, 'acme-large', { summary: 'image-input', input: ['text'] })).toBeUndefined()
   })
 })
