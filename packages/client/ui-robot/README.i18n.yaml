@@ -3,20 +3,20 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/client/ui-robot/README.md
 /:
-  en: 69d3dcf0556ae29d
-  zh: 4a1a7442f1ffae76
+  en: 8acb4a449b08ffe4
+  zh: 910ca59c096c0f20
 /robot-ui:
   en: 80f8edd09a932929
   zh: e70a66f9bf8ac89a
 /robot-ui/summary:
-  en: 5dfa793ceb494c0a
-  zh: 29502a44f78ecf21
+  en: e9204f0082f82c8b
+  zh: 2b5f6d9c0f9b5ad0
 /robot-ui/table-of-contents:
   en: 134c9b5c374e0e8e
   zh: f79065d96be7863e
 /robot-ui/use-this-package:
-  en: 2950e32430a076f8
-  zh: 75136525d485ff2f
+  en: 6b8afa7e5d5ebc55
+  zh: 615ff61a8ab0267b
 /robot-ui/dev-note:
   en: 66a7daa4b5869b08
   zh: 66b3ffa5c6fe14c7
