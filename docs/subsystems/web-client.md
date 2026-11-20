@@ -70,6 +70,7 @@ Web and desktop share the [Coding Tools preference](../../packages/client/ui-set
 | durable Session display | Host Session log → packed Remote `follow`/`page` history → Client `SessionEventLikeEntry` window → Conversation Contexts → target snapshot (`chat`, `trajectory`, or another registered target) → Slot view → React |
 | transient Session control | Host control baseline → Remote snapshot stream → `SessionManager` projection stores → Session and list snapshots → standard hooks → components |
 | Background jobs | Host job registry → `job.list` / `job.follow` → [`ClientJobs`](../../packages/api/job-controller/README.md) roster and output views → job list and panels |
+| System monitor | Host sampler → `systemMonitor.sample` frames → [`ctx.systemMonitor`](../../packages/api/system-monitor-controller/README.md) snapshot and retained points → [`inside the shell overlay`](../../packages/client/ui-system-monitor/README.md) |
 | Workspace state | Host Workspace baseline and increments → `ClientWorkspaceModel` → `ctx.workspaces.list` → `useWorkspaces` → sidebar, hero, and navigation entries |
 | scoped interaction | Host Cordis waterfall → API Remotes `$events` → `ctx.remote.$on()` on the Session Context → owning UI package → result or `next()` |
 | user command | component callback → registration inject face or Slot owner → `ctx.sessions`, `ctx.workspaces`, or generated scoped Remote → Host Controller → authoritative update → stream or event projection back to the Client |

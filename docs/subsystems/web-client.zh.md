@@ -70,6 +70,7 @@ Web 和桌面端共享[代码工作工具偏好](../../packages/client/ui-settin
 | 持久 Session 展示 | Host Session log → packed Remote `follow`/`page` 历史 → Client `SessionEventLikeEntry` window → Conversation Context → target snapshot（`chat`、`trajectory` 或其他已注册 target）→ Slot view → React |
 | 瞬态 Session control | Host control baseline → Remote snapshot stream → `SessionManager` projection store → Session 与 list snapshot → 标准 hook → component |
 | 后台任务 | Host job 注册表 → `job.list` / `job.follow` → [`ClientJobs`](../../packages/api/job-controller/README.zh.md) 名册与输出视图 → 任务列表和面板 |
+| 系统监控 | Host 采样器 → `systemMonitor.sample` 帧 → [`ctx.systemMonitor`](../../packages/api/system-monitor-controller/README.zh.md) 快照与保留点 → [shell 浮层内](../../packages/client/ui-system-monitor/README.zh.md) |
 | Workspace 状态 | Host Workspace baseline 与 increment → `ClientWorkspaceModel` → `ctx.workspaces.list` → `useWorkspaces` → sidebar、hero 与 navigation entry |
 | scoped interaction | Host Cordis waterfall → API Remotes `$events` → Session Context 上的 `ctx.remote.$on()` → 所属 UI 包 → result 或 `next()` |
 | 用户 command | component callback → 注册项 inject face 或 Slot owner → `ctx.sessions`、`ctx.workspaces` 或生成的 scoped Remote → Host Controller → 权威 update → stream 或 event projection 回到 Client |
