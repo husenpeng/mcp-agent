@@ -62,9 +62,18 @@ describe('model adaptation dataset', () => {
     ])).map(entry => entry.id)).toEqual([undefined])
   })
 
-  it('skips an unrecognized family and an empty id', () => {
-    // Only the route remains: the endpoint still needs the gateway dialect.
+  it('gives an unrecognized chat family image input and skips an empty id', () => {
+    // Nothing is known about `acme-large` beyond its being a chat model, so it
+    // reads images until a refusal says otherwise; the route still needs the
+    // gateway dialect.
     expect(adaptModels(gateway([{ id: 'acme-large' }, { id: '' }]))).toEqual([
+      { id: 'acme-large', input: ['text', 'image'] },
+      { route: true, compat: GATEWAY_ROUTE },
+    ])
+  })
+
+  it('leaves an unrecognized family text-only when the route already declares images', () => {
+    expect(adaptModels(gateway([{ id: 'acme-large' }], { defaultInput: ['text', 'image'] }))).toEqual([
       { route: true, compat: GATEWAY_ROUTE },
     ])
   })

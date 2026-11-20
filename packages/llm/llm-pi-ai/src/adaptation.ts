@@ -280,6 +280,17 @@ function inferApi(request: LlmModelAdaptationRequest): string {
  *   at most one entry naming the route with `route: true`; a complete draft
  *   yields no entry.
  */
+/**
+ * Whether one wire protocol serves chat completions, the protocols whose models
+ * a person attaches an image to.
+ * @param api - the resolved wire protocol.
+ * @returns whether the protocol is a chat protocol.
+ */
+function isChatProtocol(api: string): boolean {
+  return api === 'openai-completions' || api === 'openai-responses' || api === 'azure-openai-responses'
+    || api === 'openai-codex-responses' || api === 'anthropic-messages' || api === 'mistral-conversations'
+}
+
 export function adaptModels(request: LlmModelAdaptationRequest): readonly LlmModelAdaptation[] {
   const advice: LlmModelAdaptation[] = []
   const dialects: CompletionsDialect[] = []
@@ -288,13 +299,24 @@ export function adaptModels(request: LlmModelAdaptationRequest): readonly LlmMod
     if (target.id.length === 0) continue
     const canonical = canonicalModelId(target.id)
     if (NON_CHAT_PATTERN.test(canonical)) continue
-    const family = familyFor(canonical)
-    if (family === undefined) continue
     const base = catalogBaseFor(request.provider, target.id)
     const api = routeApi ?? base?.api ?? 'openai-completions'
     let input: readonly PiAiModality[] | undefined
     let reasoningEfforts: PiAiReasoningEfforts | undefined
     let compat: Record<string, JsonValue> | undefined
+
+    const family = familyFor(canonical)
+    if (family === undefined) {
+      // A family the dataset does not know still reads images on a chat protocol:
+      // a gateway's newest model usually does, and a text-only one shows up as a
+      // refused request the person can act on, not as a model that silently
+      // cannot take an image at all.
+      const declared = request.defaultInput ?? ['text']
+      if (base === undefined && target.input === undefined && isChatProtocol(api) && !declared.includes('image')) {
+        advice.push({ id: target.id, input: ['text', 'image'] })
+      }
+      continue
+    }
 
     // Reasoning rides the catalog entry whenever one exists; the dataset fills
     // only a model the catalog does not describe, and only on a protocol whose
