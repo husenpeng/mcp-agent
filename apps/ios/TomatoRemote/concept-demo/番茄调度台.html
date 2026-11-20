@@ -552,8 +552,9 @@ function viewSessions(){
   const list=DB.sessions.filter(s=>!q||s.title.toLowerCase().includes(q)||s.project.toLowerCase().includes(q));
   const running=list.filter(s=>s.running);
   const projects=[...new Set(list.map(s=>s.project))];
-  let h='<div class="pad" style="padding-bottom:8px"><h2 class="display" style="font-size:24px">会话</h2><p class="sub" style="margin-top:4px">Mac 上正在跑和跑过的对话。</p></div>'
-  +'<div class="search">'+ico('search',18)+'<input placeholder="搜索会话或项目" value="'+esc(S.query)+'" oninput="setQuery(this.value)" aria-label="搜索会话"></div>';
+  const totTok=DB.sessions.reduce((a,s)=>a+(s.usage?s.usage.tin+s.usage.tout:0),0);
+  let h=pageHead('bubble','会话','Mac 上正在跑和跑过的对话。',[['var(--tomato)','进行中',running.length],['','项目',projects.length],['','累计',fmtTok(totTok)+' tok']])
+  +'<div class="search" style="margin-top:12px">'+ico('search',18)+'<input placeholder="搜索会话或项目" value="'+esc(S.query)+'" oninput="setQuery(this.value)" aria-label="搜索会话"></div>';
   if(running.length){
     h+='<div class="group">'+icoFill('bolt',14)+'进行中<span class="count num">'+running.length+'</span></div><div style="padding:0 18px">'
     + running.map(s=>'<button class="row" onclick="openChat(\''+s.id+'\')" style="background:var(--wash);border-color:var(--wash-line)"><span class="chip-ico">'+ico('bubble',18)+'</span><span class="grow"><span class="t">'+esc(s.title)+'</span><span class="d">'+esc(s.preview)+'</span><span class="micro num">'+fmtTok(s.usage.tin+s.usage.tout)+' tok · '+fmtCost(s.usage.cost)+'</span></span>'+pill('running')+'</button>').join('')+'</div>';
@@ -619,8 +620,8 @@ function viewMemory(){
   const list=DB.memories.filter(m=>f==='all'||m.status===f);
   const counts={all:DB.memories.length,candidate:DB.memories.filter(m=>m.status==='candidate').length,active:DB.memories.filter(m=>m.status==='active').length,observed:DB.memories.filter(m=>m.status==='observed').length};
   const label={all:'全部',candidate:'待确认',active:'生效中',observed:'观察'};
-  let h='<div class="pad" style="padding-bottom:10px"><h2 class="display" style="font-size:24px">个人记忆</h2><p class="sub" style="margin-top:4px">Agent 记住的偏好、习惯和事实；在这里确认、删除或补充。</p></div>'
-  +'<div class="filters">'+Object.keys(label).map(k=>'<button class="fchip'+(f===k?' on':'')+'" onclick="setMemFilter(\''+k+'\')">'+label[k]+' <span class="num">'+counts[k]+'</span></button>').join('')+'</div>'
+  let h=pageHead('brain','个人记忆','Agent 记住的偏好、习惯和事实；在这里确认、删除或补充。',[['var(--tomato)','待确认',counts.candidate],['var(--leaf)','生效中',counts.active],['','观察',counts.observed]])
+  +'<div class="filters" style="margin-top:12px">'+Object.keys(label).map(k=>'<button class="fchip'+(f===k?' on':'')+'" onclick="setMemFilter(\''+k+'\')">'+label[k]+' <span class="num">'+counts[k]+'</span></button>').join('')+'</div>'
   +'<div style="height:12px"></div>';
   if(!list.length)h+='<div class="empty"><div class="box">'+ico('brain',22)+'</div><div class="t">这一类还没有记忆</div><div class="d">Agent 会在对话里慢慢积累。</div></div>';
   list.forEach(m=>{
@@ -636,8 +637,8 @@ function viewMemory(){
 
 /* ===== view: robots ===== */
 function viewRobots(){
-  let h='<div class="pad" style="padding-bottom:8px;display:flex;align-items:flex-end;gap:10px"><div style="flex:1"><h2 class="display" style="font-size:24px">智能体</h2><p class="sub" style="margin-top:4px">桌面端配置的机器人；这里启动、中断，并查看对话记录。</p></div><button class="icon-btn" onclick="toast(\'演示中：聘用新智能体\')" aria-label="新建智能体">'+ico('plus',18)+'</button></div>';
-  h+='<div style="padding:0 18px">'+DB.robots.map(r=>{
+  let h=pageHead('cpu','智能体','桌面端配置的机器人；这里启动、中断，并查看对话记录。',[['var(--tomato)','运行',DB.robots.filter(r=>r.state==='running').length],['var(--leaf)','空闲',DB.robots.filter(r=>r.state==='idle').length],['var(--amber)','暂停',DB.robots.filter(r=>r.state==='paused').length]],'<button class="icon-btn" onclick="toast(\'演示中：聘用新智能体\')" aria-label="新建智能体">'+ico('plus',18)+'</button>');
+  h+='<div style="padding:0 18px;margin-top:12px">'+DB.robots.map(r=>{
     const running=r.state==='running';
     return '<button class="row" onclick="robotSheet(\''+r.id+'\')" style="'+(running?'background:var(--wash);border-color:var(--wash-line)':'')+'"><span class="chip-ico'+(running?'':' neutral')+'">'+ico('cpu',18)+'</span><span class="grow"><span class="t">'+esc(r.name)+'</span><span class="d">'+esc(r.mission)+'</span><span class="micro">'+esc(r.last)+'</span></span>'+pill(r.state)+'</button>';
   }).join('')+'</div>';
@@ -646,8 +647,8 @@ function viewRobots(){
 
 /* ===== view: rooms ===== */
 function viewRooms(){
-  let h='<div class="pad" style="padding-bottom:8px;display:flex;align-items:flex-end;gap:10px"><div style="flex:1"><h2 class="display" style="font-size:24px">群聊</h2><p class="sub" style="margin-top:4px">一个群聊一条日志：成员、委派、回复和熔断都在这里。</p></div><button class="icon-btn" onclick="toast(\'演示中：新建群聊\')" aria-label="新建群聊">'+ico('plus',18)+'</button></div>';
-  h+='<div style="padding:0 18px">'+DB.rooms.map(g=>{
+  let h=pageHead('people','群聊','一个群聊一条日志：成员、委派、回复和熔断都在这里。',[['var(--leaf)','活跃',DB.rooms.filter(g=>g.state==='active').length],['var(--tomato)','熔断',DB.rooms.filter(g=>g.state==='tripped').length]],'<button class="icon-btn" onclick="toast(\'演示中：新建群聊\')" aria-label="新建群聊">'+ico('plus',18)+'</button>');
+  h+='<div style="padding:0 18px;margin-top:12px">'+DB.rooms.map(g=>{
     const bad=g.state==='tripped';
     return '<button class="row" onclick="roomSheet(\''+g.id+'\')" style="'+(bad?'background:var(--wash);border-color:var(--wash-line)':'')+'"><span class="stack">'+g.members.map((m,i)=>'<span class="avatar a'+((i%4)+1)+'">'+esc(m)+'</span>').join('')+'</span><span class="grow"><span class="t">'+esc(g.name)+'</span><span class="d">'+esc(g.last)+'</span></span>'+pill(g.state)+'</button>';
   }).join('')+'</div>';
@@ -664,8 +665,8 @@ function viewAccount(){
     ['moon','深色模式','跟随手动切换','toggleDark()'],
     ['shield','关于与隐私','版本、数据与权限','aboutSheet()']
   ];
-  return '<div class="pad" style="padding-bottom:8px"><h2 class="display" style="font-size:24px">我的</h2></div>'
-  +'<div style="padding:0 18px"><div class="row" style="cursor:default"><span class="avatar" style="width:44px;height:44px;font-size:16px">U</span><span class="grow"><span class="t" style="font-size:17px">Underdog</span><span class="d">me@example.com</span></span><span class="pill ok">'+ico('check',12)+'已登录</span></div></div>'
+  return pageHead('person','我的','账号、Host 与偏好设置。',[['var(--leaf)','Host',DB.host.state],['','记忆',DB.memories.length],['','通知',S.notify?'开':'关']])
+  +'<div style="padding:0 18px;margin-top:12px"><div class="row" style="cursor:default"><span class="avatar" style="width:44px;height:44px;font-size:16px">U</span><span class="grow"><span class="t" style="font-size:17px">Underdog</span><span class="d">me@example.com</span></span><span class="pill ok">'+ico('check',12)+'已登录</span></div></div>'
   +'<div class="group">当前 Host</div>'
   +'<div style="padding:0 18px"><button class="row" onclick="hostSheet()"><span class="chip-ico leaf">'+ico('desktop',18)+'</span><span class="grow"><span class="t">'+esc(DB.host.name)+'</span><span class="d num">'+esc(DB.host.addr)+' · '+esc(DB.host.since)+'</span></span><span class="pill ok"><span class="pulse" style="width:6px;height:6px"></span>'+esc(DB.host.state)+'</span></button></div>'
   +'<div class="group">设置</div>'
