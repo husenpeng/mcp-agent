@@ -51,7 +51,7 @@
     "@tomato/schemastery": "workspace:~",
     "zod": "4.6.6",
     "@tomato/subprocess": "workspace:*",
-    "@puppeteer/browsers": "3.2.2"
+    "@puppeteer/browsers": "3.2.3"
   },
   "devDependencies": {
     "@tomato/cordis": "workspace:~",
