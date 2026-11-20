@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Work 桥接 · 交互原型</title>
+<style>
+  :root{
+    --bg:#14161a; --panel:#1d2026; --panel2:#23272f; --line:#2e333d;
+    --text:#e8eaed; --dim:#9aa0ab; --faint:#6b7280;
+    --accent:#ff6b4a; --green:#3fb96f; --yellow:#e5b94e; --purple:#a78bfa; --red:#ef5b5b; --blue:#5ba3ef;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font:14px/1.55 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+  header{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--panel)}
+  header .logo{width:26px;height:26px;border-radius:7px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:14px}
+  header h1{font-size:15px;font-weight:600}
+  header .sub{color:var(--faint);font-size:12px}
+  header .spacer{flex:1}
+  button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:8px;padding:6px 12px;transition:.15s}
+  button:hover{border-color:var(--faint)}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  button.primary:hover{filter:brightness(1.1)}
+  button.primary:disabled{opacity:.4;cursor:not-allowed;filter:none}
+  button.ghost{background:transparent}
+  button.danger{color:var(--red);border-color:var(--red)}
+  select,textarea,input{font:inherit;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 10px;outline:none}
+  select:focus,textarea:focus{border-color:var(--accent)}
+  .main{flex:1;display:flex;min-height:0}
+  /* ── 左栏：应用清单 ── */
+  .apps{width:270px;border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;min-height:0}
+  .apps .head{padding:12px 14px 8px;display:flex;align-items:center;justify-content:space-between}
+  .apps .head b{font-size:13px}
+  .apps .head .count{color:var(--faint);font-size:12px}
+  .app-list{flex:1;overflow-y:auto;padding:0 10px 10px;display:flex;flex-direction:column;gap:8px}
+  .app-card{border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;background:var(--panel2);cursor:pointer;transition:.15s;position:relative}
+  .app-card:hover{border-color:var(--faint)}
+  .app-card.selected{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  .app-card .row1{display:flex;align-items:center;gap:8px}
+  .app-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex:none}
+  .app-card .name{font-weight:600;font-size:13px;flex:1}
+  .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .st-ready{background:var(--green)} .st-gui{background:var(--purple)} .st-auth{background:var(--yellow)} .st-out{background:var(--faint)} .st-scan{background:var(--blue);animation:pulse 1s infinite}
+  @keyframes pulse{50%{opacity:.3}}
+  .app-card .meta{color:var(--faint);font-size:11.5px;margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .tier{border:1px solid var(--line);border-radius:4px;padding:0 4px;font-size:10.5px;color:var(--dim)}
+  .tier.on{color:var(--green);border-color:var(--green)}
+  .tier.gui{color:var(--purple);border-color:var(--purple)}
+  .status-label{font-size:11.5px;margin-top:4px}
+  .status-label.ready{color:var(--green)} .status-label.gui{color:var(--purple)} .status-label.auth{color:var(--yellow)} .status-label.out{color:var(--faint)}
+  .login-hint{font-size:11px;color:var(--yellow);margin-top:4px}
+  .apps .foot{padding:10px 14px;border-top:1px solid var(--line);color:var(--faint);font-size:11.5px}
+  /* ── 右栏 ── */
+  .right{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
+  .composer{padding:14px 18px;border-bottom:1px solid var(--line);background:var(--panel)}
+  .composer textarea{width:100%;height:64px;resize:vertical;margin-bottom:10px}
+  .composer .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .composer label{color:var(--dim);font-size:12.5px}
+  .preflight{margin-top:10px;border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;background:var(--panel2);font-size:12.5px;display:none}
+  .preflight.show{display:block}
+  .preflight.reject{border-color:var(--red)}
+  .preflight .pf-head{display:flex;align-items:center;gap:8px;font-weight:600;margin-bottom:4px}
+  .preflight .pf-body{color:var(--dim)}
+  .preflight .risk{color:var(--yellow)}
+  .preflight .ok{color:var(--green)}
+  /* ── 任务时间线 ── */
+  .tasks{flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:12px}
+  .tasks .empty{color:var(--faint);text-align:center;margin-top:60px;font-size:13px}
+  .task-card{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);overflow:hidden}
+  .task-card .tc-head{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .task-card .tc-title{font-weight:600;font-size:13px;flex:1;min-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .badge{font-size:11px;border-radius:5px;padding:2px 8px;font-weight:600;flex:none}
+  .b-direct{background:rgba(63,185,111,.15);color:var(--green)}
+  .b-fallback{background:rgba(229,185,78,.15);color:var(--yellow);cursor:help}
+  .b-gui{background:rgba(167,139,250,.15);color:var(--purple)}
+  .b-running{background:rgba(91,163,239,.15);color:var(--blue)}
+  .b-success{background:rgba(63,185,111,.15);color:var(--green)}
+  .b-error{background:rgba(239,91,91,.15);color:var(--red)}
+  .b-aborted{background:rgba(154,160,171,.15);color:var(--dim)}
+  .b-unknown{background:rgba(239,91,91,.25);color:var(--red)}
+  .gui-banner{background:rgba(167,139,250,.12);color:var(--purple);font-size:12px;padding:6px 14px;display:flex;gap:8px;align-items:center}
+  .timeline{padding:10px 14px;display:flex;flex-direction:column;gap:6px;font-size:12.5px}
+  .tl-step{display:flex;gap:8px;align-items:flex-start;color:var(--dim);animation:fadein .25s}
+  @keyframes fadein{from{opacity:0;transform:translateY(3px)}}
+  .tl-step .ico{flex:none;width:16px;text-align:center}
+  .tl-step.fallback{color:var(--yellow)}
+  .tl-step.err{color:var(--red)}
+  .tl-step.ok{color:var(--green)}
+  .tl-step .shot{width:86px;height:52px;border-radius:5px;background:linear-gradient(135deg,#2b3040,#3a2f4d);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;color:var(--faint);font-size:10px;margin-left:6px;vertical-align:middle}
+  .result{margin:0 14px 12px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--panel2);font-size:12.5px;white-space:pre-wrap}
+  .result .r-head{font-weight:600;margin-bottom:4px;display:flex;gap:8px;align-items:center}
+  .result.err{border-color:rgba(239,91,91,.4)}
+  .result .unverified{color:var(--purple);font-size:11px}
+  .route-details{margin:0 14px 12px;font-size:11.5px;color:var(--faint)}
+  .route-details summary{cursor:pointer;color:var(--dim)}
+  .route-details pre{margin-top:6px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:8px;overflow-x:auto;font-size:11px;color:var(--dim)}
+  .unknown-bar{margin:0 14px 12px;border:1px solid var(--red);border-radius:8px;padding:10px 12px;background:rgba(239,91,91,.08);font-size:12.5px}
+  .unknown-bar .ub-title{color:var(--red);font-weight:600;margin-bottom:6px}
+  .unknown-bar .ub-actions{display:flex;gap:8px;margin-top:8px}
+  .conflict-bar{margin:0 14px 12px;border:1px solid var(--yellow);border-radius:8px;padding:10px 12px;background:rgba(229,185,78,.08);font-size:12.5px}
+  .conflict-bar .ub-actions{display:flex;gap:8px;margin-top:8px}
+  /* ── 弹窗 ── */
+  .modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:50}
+  .modal-mask.show{display:flex}
+  .modal{width:460px;max-width:92vw;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;max-height:84vh;overflow-y:auto}
+  .modal h3{font-size:15px;margin-bottom:10px}
+  .modal .m-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+  .modal .m-row .k{color:var(--dim)}
+  .modal .m-warn{color:var(--yellow);font-size:12.5px;margin:10px 0}
+  .modal .m-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+  .modal table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+  .modal th,.modal td{text-align:left;padding:5px 6px;border-bottom:1px solid var(--line)}
+  .modal th{color:var(--dim);font-weight:500}
+  /* ── 场景条 ── */
+  .scenarios{padding:8px 18px;border-bottom:1px solid var(--line);background:var(--panel);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .scenarios .lbl{color:var(--faint);font-size:12px}
+  .scenarios button{font-size:12px;padding:4px 10px}
+  .scenarios button.active{border-color:var(--accent);color:var(--accent)}
+  .banner{padding:7px 18px;font-size:12.5px;display:none}
+  .banner.show{display:block}
+  .banner.warn{background:rgba(229,185,78,.12);color:var(--yellow)}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 16px;font-size:12.5px;z-index:99;display:none}
+  .toast.show{display:block;animation:fadein .2s}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">番</div>
+  <h1>Work 桥接</h1>
+  <span class="sub">第三方 work app 检测 · 任务直连 · 原型 v0.1</span>
+  <div class="spacer"></div>
+  <button id="btn-refresh">↻ 刷新检测</button>
+  <button id="btn-settings" class="ghost">⚙ 设置</button>
+</header>
+
+<div class="banner warn" id="banner"></div>
+
+<div class="scenarios">
+  <span class="lbl">演示场景：</span>
+  <button data-sc="direct" class="active">正常直连</button>
+  <button data-sc="fallback">一跳回退</button>
+  <button data-sc="doublefail">两跳失败</button>
+  <button data-sc="quota">配额失败(不回退)</button>
+  <button data-sc="cancel">执行中取消</button>
+  <button data-sc="unknown">崩溃→unknown</button>
+  <button data-sc="cua">GUI 自动化(豆包)</button>
+  <button data-sc="conflict">GUI+人工冲突</button>
+  <button data-sc="empty">无可用 app</button>
+</div>
+
+<div class="main">
+  <aside class="apps">
+    <div class="head"><b>应用清单</b><span class="count" id="app-count"></span></div>
+    <div class="app-list" id="app-list"></div>
+    <div class="foot">点击应用卡 = 指定目标；检测只读，不启动任务</div>
+  </aside>
+
+  <section class="right">
+    <div class="composer">
+      <textarea id="task-input" placeholder="描述要派发给 work app 的任务…">重构 src/utils/date.ts：合并 formatDate 与 formatTime 的重复逻辑，补齐单元测试，保持现有导出不变。</textarea>
+      <div class="controls">
+        <label>目标</label>
+        <select id="target-select"></select>
+        <label>工作区</label>
+        <select id="cwd-select">
+          <option>当前工作区 · tomatoHarness</option>
+          <option>~/projects/demo-app</option>
+        </select>
+        <div style="flex:1"></div>
+        <button class="primary" id="btn-dispatch">派发任务</button>
+      </div>
+      <div class="preflight" id="preflight"></div>
+    </div>
+    <div class="tasks" id="tasks">
+      <div class="empty" id="tasks-empty">还没有任务。输入任务后点「派发任务」，或先选一个演示场景。</div>
+    </div>
+  </section>
+</div>
+
+<!-- 审批弹窗 -->
+<div class="modal-mask" id="approval-mask">
+  <div class="modal">
+    <h3>派发审批</h3>
+    <div id="approval-body"></div>
+    <div class="m-warn" id="approval-warn"></div>
+    <div class="m-actions">
+      <button id="approval-reject">拒绝</button>
+      <button class="primary" id="approval-approve">批准并执行</button>
+    </div>
+  </div>
+</div>
+
+<!-- 设置弹窗 -->
+<div class="modal-mask" id="settings-mask">
+  <div class="modal">
+    <h3>桥接设置（注册表 + 策略）</h3>
+    <div style="color:var(--dim);font-size:12.5px">新增 app = 注册表加一行；以下均为 cordis.patch.yml 可配项，原型中只读。</div>
+    <table id="registry-table"></table>
+    <div class="m-row"><span class="k">每 app 并发上限</span><span>2</span></div>
+    <div class="m-row"><span class="k">任务超时</span><span>15 min</span></div>
+    <div class="m-row"><span class="k">单探针超时</span><span>5 s</span></div>
+    <div class="m-row"><span class="k">回退策略</span><span>最多一跳 · 禁止回退环 · CUA 不参与 auto</span></div>
+    <div class="m-actions"><button id="settings-close">关闭</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════ 注册表（数据，不是代码分支） ═══════════ */
+const APPS = [
+  {id:'claude-code', name:'Claude Code', icon:'C', color:'#d97757', version:'2.0.31',
+   install:'both', tiers:{A:true,B:false,C:true,D:false}, auth:'ok', status:'ready',
+   adapter:'A · 官方 Agent SDK', cli:'claude'},
+  {id:'codex', name:'Codex', icon:'X', color:'#3a3f4b', version:'0.52.0',
+   install:'both', tiers:{A:true,B:false,C:true,D:false}, auth:'ok', status:'ready',
+   adapter:'A · app-server 协议', cli:'codex'},
+  {id:'qwen-code', name:'Qwen Code', icon:'Q', color:'#615ced', version:'0.4.1',
+   install:'cli', tiers:{A:false,B:true,C:true,D:false}, auth:'ok', status:'ready',
+   adapter:'B · ACP', cli:'qwen'},
+  {id:'gemini-cli', name:'Gemini CLI', icon:'G', color:'#4285f4', version:'0.18.2',
+   install:'cli', tiers:{A:false,B:true,C:true,D:false}, auth:'missing', status:'not-logged-in',
+   adapter:'B · ACP', cli:'gemini'},
+  {id:'doubao-work', name:'豆包工作台', icon:'豆', color:'#2b6de8', version:'2.25.16',
+   install:'desktop', tiers:{A:false,B:false,C:false,D:true}, auth:'ok', status:'gui-only',
+   adapter:'D · CUA GUI 自动化', bundle:'com.bot.pc.doubao'},
+  {id:'tongyi', name:'通义', icon:'通', color:'#7c3aed', version:'3.1.0',
+   install:'desktop', tiers:{A:false,B:false,C:false,D:true}, auth:'ok', status:'gui-only',
+   adapter:'D · CUA GUI 自动化', bundle:'com.alibaba.tongyi'},
+];
+const ABSENT = [
+  {id:'cursor-cli', name:'Cursor CLI', status:'absent'},
+  {id:'aider', name:'Aider', status:'absent'},
+];
+const STATUS_META = {
+  'ready':{dot:'st-ready',label:'可直连',cls:'ready'},
+  'gui-only':{dot:'st-gui',label:'仅 GUI（best-effort）',cls:'gui'},
+  'not-logged-in':{dot:'st-auth',label:'未登录',cls:'auth'},
+  'outdated':{dot:'st-out',label:'版本过低',cls:'out'},
+  'absent':{dot:'st-out',label:'未安装',cls:'out'},
+};
+const AUTO_PRIORITY = ['claude-code','codex','qwen-code'];
+
+/* ═══════════ 状态 ═══════════ */
+let scenario = 'direct';
+let selectedTarget = 'auto';
+let scanning = false;
+let taskSeq = 0;
+const runningTasks = new Map();
+
+const $ = id => document.getElementById(id);
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2600); }
+function banner(msg){ const b=$('banner'); if(!msg){b.classList.remove('show');return;} b.textContent=msg; b.classList.add('show'); }
+
+/* ═══════════ 应用清单渲染 ═══════════ */
+function renderApps(scan=false){
+  const list=$('app-list'); list.innerHTML='';
+  const visible = scenario==='empty' ? [] : APPS;
+  $('app-count').textContent = scanning ? '扫描中…' : `${visible.filter(a=>a.status!=='absent').length} 个已安装`;
+  if(scanning){
+    APPS.forEach(a=>{
+      const el=document.createElement('div'); el.className='app-card';
+      el.innerHTML=`<div class="row1"><div class="app-icon" style="background:${a.color}">${a.icon}</div>
+        <div class="name">${a.name}</div><div class="dot st-scan"></div></div>
+        <div class="meta">探测适配档位 / 登录态…</div>`;
+      list.appendChild(el);
+    });
+    return;
+  }
+  if(visible.length===0){
+    list.innerHTML=`<div style="border:1px dashed var(--line);border-radius:10px;padding:16px;color:var(--dim);font-size:12.5px">
+      <b style="color:var(--text)">未检测到 work app</b><br><br>
+      支持直连：Claude Code、Codex、Qwen Code、Gemini CLI（安装 CLI 并登录）<br><br>
+      支持 GUI 桥接：豆包工作台、通义（安装桌面版并授予辅助功能权限）<br><br>
+      <span style="color:var(--faint)">安装后点「刷新检测」。</span></div>`;
+    return;
+  }
+  visible.forEach(a=>{
+    const sm=STATUS_META[a.status];
+    const el=document.createElement('div');
+    el.className='app-card'+(selectedTarget===a.id?' selected':'');
+    const tiers=['A','B','C','D'].map(t=>{
+      const on=a.tiers[t];
+      return `<span class="tier ${on?(t==='D'?'gui':'on'):''}">${t}${on?'':'✗'}</span>`;
+    }).join('');
+    el.innerHTML=`<div class="row1"><div class="app-icon" style="background:${a.color}">${a.icon}</div>
+      <div class="name">${a.name}</div><div class="dot ${sm.dot}"></div></div>
+      <div class="status-label ${sm.cls}">${sm.label}</div>
+      <div class="meta">${a.version?`v${a.version}`:''} ${tiers}</div>
+      ${a.status==='not-logged-in'?'<div class="login-hint">↳ 在终端运行 '+a.cli+' 完成登录后刷新</div>':''}`;
+    el.onclick=()=>{ selectedTarget=a.id; $('target-select').value=a.id; renderApps(); runPreflight(); };
+    list.appendChild(el);
+  });
+}
+
+function renderTargetSelect(){
+  const sel=$('target-select'); sel.innerHTML='';
+  const opt=document.createElement('option'); opt.value='auto'; opt.textContent='auto · 自动选路'; sel.appendChild(opt);
+  (scenario==='empty'?[]:APPS).forEach(a=>{
+    const o=document.createElement('option'); o.value=a.id;
+    o.textContent=`${a.name} · ${STATUS_META[a.status].label}`; sel.appendChild(o);
+  });
+  sel.value=selectedTarget;
+}
+
+/* ═══════════ Preflight ═══════════ */
+function resolveAuto(){
+  for(const id of AUTO_PRIORITY){
+    const a=APPS.find(x=>x.id===id);
+    if(a && a.status==='ready') return {app:a, reason:null};
+  }
+  return {app:null, reason:APPS.map(a=>`${a.name}: ${STATUS_META[a.status].label}`).join('；')};
+}
+function currentPreflight(){
+  const task=$('task-input').value.trim();
+  if(!task) return {ok:false, msg:'任务文本为空（schema 层拒绝，C7）'};
+  if(scenario==='empty') return {ok:false, msg:'无可用后端（C1）。落选原因：'+APPS.map(a=>`${a.name}=${STATUS_META[a.status].label}`).join('；')};
+  let app;
+  if(selectedTarget==='auto'){
+    const r=resolveAuto();
+    if(!r.app) return {ok:false, msg:'auto 无任一 ready app（C1）：'+r.reason};
+    app=r.app;
+  } else {
+    app=APPS.find(a=>a.id===selectedTarget);
+    if(app.status==='not-logged-in') return {ok:false, app, msg:`${app.name} 未登录（B1）：在终端运行 \`${app.cli}\` 完成登录后刷新。不 spawn 进程。`};
+    if(app.status==='absent') return {ok:false, app, msg:`${app.name} 未安装。`};
+  }
+  const gui=app.status==='gui-only';
+  const risks = gui
+    ? ['控制你的桌面（CUA）','结果提取未验证（G3）','app 内可能弹登录/付费墙（G5）']
+    : ['写入工作区文件','使用 app 原生登录态（凭据不下发）'];
+  return {ok:true, app, gui, risks, needsApproval:true,
+    routeType: selectedTarget==='auto'?'auto→直连':'显式指定'};
+}
+function runPreflight(){
+  const pf=$('preflight'); const r=currentPreflight();
+  pf.classList.add('show');
+  if(!r.ok){
+    pf.classList.add('reject');
+    pf.innerHTML=`<div class="pf-head" style="color:var(--red)">✗ Preflight 拒绝</div><div class="pf-body">${r.msg}</div>`;
+    $('btn-dispatch').disabled=true; return;
+  }
+  pf.classList.remove('reject');
+  $('btn-dispatch').disabled=false;
+  pf.innerHTML=`<div class="pf-head"><span class="ok">✓ Preflight 通过</span>
+      <span style="color:var(--dim);font-weight:400">${r.routeType}</span></div>
+    <div class="pf-body">目标：<b style="color:var(--text)">${r.app.name}</b> · ${r.app.adapter} · v${r.app.version}<br>
+    工作区：${$('cwd-select').value} · 风险：<span class="risk">${r.risks.join('；')}</span><br>
+    ${r.gui?'<span style="color:var(--purple)">GUI 档永不参与 auto 兜底，只能显式指定（§5）</span>':'并发槽位：1/2 可用'}
+    · 需审批</div>`;
+}
+
+/* ═══════════ 场景脚本 ═══════════ */
+function scriptFor(sc, app){
+  const T=(delay,ev)=>({delay,...ev});
+  const directSteps=[
+    T(500,{type:'step',ico:'▶',text:`spawn ${app.cli}（${app.adapter}）· cwd 已校验`}),
+    T(900,{type:'step',ico:'◦',text:'语义更新：读取 src/utils/date.ts，识别 3 处重复逻辑'}),
+    T(1100,{type:'step',ico:'◦',text:'语义更新：合并实现，新增 formatDateTime 内部函数'}),
+    T(1000,{type:'step',ico:'◦',text:'语义更新：写入 date.test.ts（12 个用例）'}),
+    T(900,{type:'result',text:'已完成重构：formatDate/formatTime 合并为单一实现，导出签名不变；新增 12 个测试全部通过。\n\n变更：src/utils/date.ts (+41 −63) · src/utils/date.test.ts (+96)',ok:true}),
+  ];
+  switch(sc){
+    case 'direct': return directSteps;
+    case 'fallback': return [
+      T(500,{type:'step',ico:'▶',text:`spawn ${app.cli}（A 档 · 官方 SDK）`}),
+      T(900,{type:'step',ico:'✗',text:'SDK 启动边界失败：query-start / 平台载荷缺失（不回退宿主 CLI 探测）',cls:'err'}),
+      T(600,{type:'fallback',text:'选路回退（一跳）：A → C 档 headless CLI · fallbackReason=adapter-payload-missing'}),
+      T(800,{type:'step',ico:'▶',text:`spawn ${app.cli} -p（C 档 · subprocess seam）`}),
+      T(1100,{type:'step',ico:'◦',text:'语义更新：读取文件 → 合并逻辑 → 写测试'}),
+      T(900,{type:'result',text:'（经 C 档兜底完成）重构完成，12 个测试通过。导出签名不变。',ok:true}),
+    ];
+    case 'doublefail': return [
+      T(500,{type:'step',ico:'▶',text:`spawn ${app.cli}（A 档）`}),
+      T(800,{type:'step',ico:'✗',text:'A 档失败：query-start / unknown',cls:'err'}),
+      T(500,{type:'fallback',text:'选路回退（一跳）：A → C · fallbackReason=adapter-payload-missing'}),
+      T(800,{type:'step',ico:'▶',text:`spawn ${app.cli} -p（C 档）`}),
+      T(900,{type:'step',ico:'✗',text:'C 档失败：error(auth) · 登录态在任务中失效（B2）',cls:'err'}),
+      T(400,{type:'error',text:'两跳均失败，禁止第三跳（C3）。应用状态已翻转为「未登录」，不自动重试、不触发登录弹窗。'}),
+    ];
+    case 'quota': return [
+      T(500,{type:'step',ico:'▶',text:`spawn ${app.cli}（${app.adapter}）`}),
+      T(1000,{type:'step',ico:'✗',text:'error(quota)：app 侧配额耗尽 / 限流（D7）',cls:'err'}),
+      T(400,{type:'error',text:'配额失败不触发回退（D7）：换后端烧的是同一份额度，回退会误导。请等待配额恢复或显式改派其他 app。'}),
+    ];
+    case 'cancel': return [
+      T(500,{type:'step',ico:'▶',text:`spawn ${app.cli}（${app.adapter}）`}),
+      T(900,{type:'step',ico:'◦',text:'语义更新：分析文件结构…'}),
+      T(1200,{type:'step',ico:'◦',text:'语义更新：生成重构方案…（此时点右上「取消」试试）'}),
+      T(8000,{type:'step',ico:'◦',text:'（长时间步骤，供演示取消）'}),
+      T(600,{type:'result',text:'任务完成。',ok:true}),
+    ];
+    case 'unknown': return [
+      T(500,{type:'step',ico:'▶',text:`spawn ${app.cli}（${app.adapter}）`}),
+      T(900,{type:'step',ico:'◦',text:'语义更新：已写入 src/utils/date.ts（写操作已发生）'}),
+      T(1000,{type:'step',ico:'✗',text:'子进程失联：SIGKILL / 退出码不可观测（D1）',cls:'err'}),
+      T(400,{type:'unknown'}),
+    ];
+    case 'cua': return [
+      T(500,{type:'step',ico:'▶',text:'CUA：定位豆包工作台窗口（com.bot.pc.doubao）',shot:true}),
+      T(1000,{type:'step',ico:'◦',text:'CUA：进入「工作台」→ 选择研发工作台 → 输入任务',shot:true}),
+      T(1400,{type:'step',ico:'◦',text:'CUA：观察到生成中… 等待完成信号',shot:true}),
+      T(1200,{type:'step',ico:'◦',text:'CUA：检测到完成信号，提取结果文本',shot:true}),
+      T(600,{type:'result',text:'（GUI 提取）豆包工作台返回了重构建议与代码片段。注意：结果未经程序化验证，请人工核对后再采纳。',ok:true,unverified:true}),
+    ];
+    case 'conflict': return [
+      T(500,{type:'step',ico:'▶',text:'CUA：定位豆包工作台窗口',shot:true}),
+      T(1000,{type:'step',ico:'◦',text:'CUA：输入任务，开始生成',shot:true}),
+      T(1200,{type:'conflict'}),
+      T(1200,{type:'step',ico:'◦',text:'CUA：恢复观察，等待完成信号',shot:true}),
+      T(800,{type:'result',text:'（GUI 提取）任务完成，结果未验证。',ok:true,unverified:true}),
+    ];
+  }
+  return directSteps;
+}
+
+/* ═══════════ 任务卡 ═══════════ */
+function createTaskCard(pf, sc){
+  $('tasks-empty').style.display='none';
+  const id=++taskSeq;
+  const card=document.createElement('div'); card.className='task-card'; card.id='task-'+id;
+  const taskText=$('task-input').value.trim();
+  const title=taskText.length>46?taskText.slice(0,46)+'…':taskText;
+  const routeBadge = pf.gui
+    ? '<span class="badge b-gui">GUI 自动化</span>'
+    : '<span class="badge b-direct" data-route>直连</span>';
+  card.innerHTML=`
+    <div class="tc-head">
+      <span class="tc-title">#${id} · ${title}</span>
+      <span class="badge" style="background:var(--panel2);color:var(--dim)">${pf.app.name}</span>
+      ${routeBadge}
+      <span class="badge b-running" data-status>运行中</span>
+      <button class="ghost danger" data-cancel style="padding:3px 10px;font-size:12px">取消</button>
+    </div>
+    ${pf.gui?'<div class="gui-banner">⚠ 正在控制你的桌面 · 取消按钮随时可用 · 结果将标注「未验证」</div>':''}
+    <div class="timeline" data-tl></div>
+    <div data-body></div>`;
+  $('tasks').prepend(card);
+  const route={app:pf.app.id, adapter:pf.app.adapter, routeType:pf.gui?'gui':'direct', fallbackReason:null, steps:[]};
+  const state={id, card, route, timer:null, cancelled:false, settled:false, paused:false, sc};
+  runningTasks.set(id,state);
+  card.querySelector('[data-cancel]').onclick=()=>cancelTask(state);
+  return state;
+}
+function addStep(state, ico, text, cls='', shot=false){
+  const tl=state.card.querySelector('[data-tl]');
+  const el=document.createElement('div'); el.className='tl-step '+cls;
+  el.innerHTML=`<span class="ico">${ico}</span><span>${text}${shot?'<span class="shot">截图证据</span>':''}</span>`;
+  tl.appendChild(el);
+  state.route.steps.push(text);
+  state.card.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function setStatus(state, cls, text){
+  const b=state.card.querySelector('[data-status]');
+  b.className='badge '+cls; b.textContent=text;
+}
+function finish(state){
+  state.settled=true; runningTasks.delete(state.id);
+  const c=state.card.querySelector('[data-cancel]'); if(c) c.remove();
+  const body=state.card.querySelector('[data-body]');
+  const det=document.createElement('details'); det.className='route-details';
+  det.innerHTML=`<summary>ExecutionRoute（可解释路径）</summary><pre>${JSON.stringify(state.route,null,2)}</pre>`;
+  body.appendChild(det);
+}
+function cancelTask(state){
+  if(state.settled) return;
+  state.cancelled=true; clearTimeout(state.timer);
+  addStep(state,'■','用户取消 → 本地取消在结果竞态中胜出 · managed-range 逐级终止（D5）','err');
+  setStatus(state,'b-aborted','aborted');
+  state.route.outcome='aborted';
+  finish(state);
+}
+function runScript(state, script, idx=0){
+  if(state.cancelled||state.settled) return;
+  if(idx>=script.length) return;
+  const ev=script[idx];
+  state.timer=setTimeout(()=>{
+    if(state.cancelled||state.settled) return;
+    switch(ev.type){
+      case 'step': addStep(state,ev.ico,ev.text,ev.cls||'',ev.shot); break;
+      case 'fallback':
+        addStep(state,'⇢',ev.text,'fallback');
+        state.route.routeType='fallback';
+        state.route.fallbackReason=ev.text.split('fallbackReason=')[1]||'adapter-failure';
+        const rb=state.card.querySelector('[data-route]');
+        if(rb){rb.className='badge b-fallback';rb.textContent='已回退';rb.title=state.route.fallbackReason;}
+        break;
+      case 'result':{
+        setStatus(state,'b-success','success');
+        const body=state.card.querySelector('[data-body]');
+        const r=document.createElement('div'); r.className='result';
+        r.innerHTML=`<div class="r-head"><span style="color:var(--green)">✓ 最终结果</span>
+          ${ev.unverified?'<span class="unverified">GUI 提取 · 未验证（G3）</span>':''}</div>${ev.text}`;
+        body.appendChild(r);
+        state.route.outcome='success';
+        finish(state); return;
+      }
+      case 'error':{
+        setStatus(state,'b-error','error');
+        const body=state.card.querySelector('[data-body]');
+        const r=document.createElement('div'); r.className='result err';
+        r.innerHTML=`<div class="r-head" style="color:var(--red)">✗ 失败诊断</div>${ev.text}`;
+        body.appendChild(r);
+        state.route.outcome='error';
+        if(state.sc==='doublefail'){
+          const a=APPS.find(x=>x.id===state.route.app);
+          if(a){a.auth='missing';a.status='not-logged-in';renderApps();renderTargetSelect();}
+        }
+        finish(state); return;
+      }
+      case 'unknown':{
+        setStatus(state,'b-unknown','unknown');
+        const body=state.card.querySelector('[data-body]');
+        const bar=document.createElement('div'); bar.className='unknown-bar';
+        bar.innerHTML=`<div class="ub-title">⚠ 结果未知：写操作已发生，但进程失联，无完成证据（D1/E3）</div>
+          不自动重试（文件写入没有幂等 tx）。请人工决定：
+          <div class="ub-actions">
+            <button data-ufail>标记失败</button>
+            <button data-ucheck>我去检查工作区</button>
+          </div>`;
+        body.appendChild(bar);
+        bar.querySelector('[data-ufail]').onclick=()=>{
+          bar.remove(); setStatus(state,'b-error','error · 人工判定');
+          addStep(state,'✗','人工决定：标记失败（已写入 session event）','err');
+          state.route.outcome='error(human)'; finish(state);
+        };
+        bar.querySelector('[data-ucheck]').onclick=()=>{
+          bar.remove(); setStatus(state,'b-aborted','待人工核查');
+          addStep(state,'◦','人工决定：去检查工作区（任务保持未结算，直到回填结论）','fallback');
+          toast('已打开工作区 diff 视图（原型示意）');
+          state.route.outcome='unknown(checking)'; finish(state);
+        };
+        state.route.outcome='unknown';
+        state.settled=true; runningTasks.delete(state.id);
+        const c=state.card.querySelector('[data-cancel]'); if(c) c.remove();
+        return;
+      }
+      case 'conflict':{
+        state.paused=true;
+        const body=state.card.querySelector('[data-body]');
+        const bar=document.createElement('div'); bar.className='conflict-bar';
+        bar.innerHTML=`<b style="color:var(--yellow)">⚠ 检测到人工操作（G4）</b> — 你在豆包窗口里动了鼠标/键盘，CUA 已暂停，避免与人抢控制权。
+          <div class="ub-actions"><button data-cont>继续自动化</button><button data-stop class="danger">取消任务</button></div>`;
+        body.appendChild(bar);
+        bar.querySelector('[data-cont]').onclick=()=>{bar.remove();state.paused=false;addStep(state,'▶','用户选择继续 · CUA 恢复','ok');runScript(state,script,idx+1);};
+        bar.querySelector('[data-stop]').onclick=()=>{bar.remove();cancelTask(state);};
+        return;
+      }
+    }
+    runScript(state,script,idx+1);
+  }, ev.delay);
+}
+
+/* ═══════════ 派发 + 审批 ═══════════ */
+let pendingDispatch=null;
+$('btn-dispatch').onclick=()=>{
+  const pf=currentPreflight();
+  if(!pf.ok){runPreflight();return;}
+  pendingDispatch={pf,sc:scenario};
+  const body=$('approval-body');
+  body.innerHTML=`
+    <div class="m-row"><span class="k">任务</span><span style="max-width:280px;text-align:right">${$('task-input').value.trim().slice(0,60)}…</span></div>
+    <div class="m-row"><span class="k">目标</span><span>${pf.app.name} · ${pf.app.adapter}</span></div>
+    <div class="m-row"><span class="k">工作区</span><span>${$('cwd-select').value}</span></div>
+    <div class="m-row"><span class="k">权限档</span><span>${pf.gui?'CUA 桌面控制（含启动 app）':'acceptEdits（接受文件编辑）'}</span></div>
+    <div class="m-row"><span class="k">凭据</span><span>使用 app 原生登录态 · 不下发任何密钥</span></div>`;
+  $('approval-warn').textContent = pf.gui
+    ? '⚠ GUI 自动化将控制你的桌面；结果提取未验证；遇人工输入冲突会暂停。'
+    : '⚠ 该任务将写入工作区文件。审批在 executor 层强制，未批准不会 spawn。';
+  $('approval-mask').classList.add('show');
+};
+$('approval-reject').onclick=()=>{
+  $('approval-mask').classList.remove('show');
+  toast('已拒绝：任务停在 approval 态，不 spawn（C8）');
+  pendingDispatch=null;
+};
+$('approval-approve').onclick=()=>{
+  $('approval-mask').classList.remove('show');
+  if(!pendingDispatch) return;
+  const {pf,sc}=pendingDispatch; pendingDispatch=null;
+  const state=createTaskCard(pf,sc);
+  addStep(state,'✓','审批通过（已写入 session event）· preflight 复检通过','ok');
+  runScript(state, scriptFor(sc,pf.app));
+};
+
+/* ═══════════ 场景切换 / 刷新 / 设置 ═══════════ */
+document.querySelectorAll('.scenarios button').forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll('.scenarios button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    scenario=btn.dataset.sc;
+    if(scenario==='cua'||scenario==='conflict'){ selectedTarget='doubao-work'; }
+    else if(scenario==='empty'){ selectedTarget='auto'; }
+    else if(selectedTarget==='doubao-work'){ selectedTarget='auto'; }
+    banner(scenario==='empty'?'演示：本机未检测到任何 work app（A1 空态）':null);
+    renderApps(); renderTargetSelect(); runPreflight();
+    if(scenario==='cancel') toast('派发后在任务卡上点「取消」，演示 D5 取消语义');
+    if(scenario==='unknown') toast('派发后进程将在写入中途失联，演示 unknown 人工决策（E3）');
+    if(scenario==='conflict') toast('派发后 CUA 会检测到人工输入并暂停（G4）');
+  };
+});
+$('btn-refresh').onclick=()=>{
+  if(scanning) return;
+  scanning=true; renderApps();
+  setTimeout(()=>{ scanning=false; renderApps(); toast('检测完成：只读探针，未启动任何任务'); },1600);
+};
+$('target-select').onchange=e=>{ selectedTarget=e.target.value; renderApps(); runPreflight(); };
+$('task-input').oninput=runPreflight;
+$('cwd-select').onchange=runPreflight;
+$('btn-settings').onclick=()=>{
+  const t=$('registry-table');
+  t.innerHTML='<tr><th>App</th><th>入口</th><th>档位</th><th>状态</th></tr>'+
+    APPS.map(a=>`<tr><td>${a.name}</td><td>${a.bundle||a.cli}</td><td>${Object.entries(a.tiers).filter(([k,v])=>v).map(([k])=>k).join('/')||'—'}</td><td>${STATUS_META[a.status].label}</td></tr>`).join('')+
+    ABSENT.map(a=>`<tr><td style="color:var(--faint)">${a.name}</td><td style="color:var(--faint)">—</td><td style="color:var(--faint)">—</td><td style="color:var(--faint)">未安装</td></tr>`).join('');
+  $('settings-mask').classList.add('show');
+};
+$('settings-close').onclick=()=>$('settings-mask').classList.remove('show');
+document.querySelectorAll('.modal-mask').forEach(m=>m.addEventListener('click',e=>{if(e.target===m&&m.id==='settings-mask')m.classList.remove('show');}));
+
+/* init */
+renderApps(); renderTargetSelect(); runPreflight();
+</script>
+</body>
+</html>

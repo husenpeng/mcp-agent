@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>番茄调度台 · TomatoRemote 概念演示</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='18' r='12' fill='%23E23B22'/%3E%3Cpath d='M16 6c-2 0-4 1-5 3 2 0 3 .5 5 .5S19 9 21 9c-1-2-3-3-5-3z' fill='%23337A4D'/%3E%3C/svg%3E">
+<style>
+/* ===== tokens ===== */
+:root{
+  --paper:#F4F5F7; --card:#FFFFFF; --ink:#14161A; --mute:#5C6470; --faint:#98A0AC;
+  --line:#E3E6EA; --rail:#D5D9DE;
+  --tomato:#FF2418; --tomato-deep:#D40000;
+  --wash:linear-gradient(135deg,#FFE7E4 0%,#FFD3CE 55%,#FFE0DA 100%); --wash-line:#FFB3AC;
+  --leaf:#00A651; --leaf-wash:#E2F8E9;
+  --amber:#A97B00; --amber-wash:#FFF6D6;
+  --code:#101216; --code-ink:#E6E9EE; --code-bar:#8B93A0;
+  --grad:linear-gradient(135deg,#FF6B5E 0%,#FF2418 36%,#E00D0D 68%,#A30000 100%);
+  --user-grad:linear-gradient(135deg,#FF2418 0%,#D40000 55%,#A30000 100%);
+  --head-grad:linear-gradient(100deg,#14161A 0%,#7A0000 52%,#FF2418 100%);
+  --ambient:radial-gradient(820px 460px at 10% -6%,rgba(255,36,24,.10),transparent 62%),radial-gradient(680px 400px at 92% -2%,rgba(255,0,90,.06),transparent 60%);
+  --phone-bg:linear-gradient(180deg,#FFFFFF 0%,#F6F7F9 34%,#F2F3F6 100%);
+  --grid-c:rgba(20,22,26,.05); --dock-tint:rgba(255,36,24,.05);
+  --glow:0 12px 32px -14px rgba(255,36,24,.5); --glow-c:rgba(255,36,24,.35);
+  --shadow:0 1px 2px rgba(20,22,26,.06),0 8px 24px -18px rgba(20,22,26,.3);
+  --r-card:14px; --r-small:9px;
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+}
+[data-theme="dark"]{
+  --paper:#0A0B0E; --card:#14161B; --ink:#F2F4F7; --mute:#9AA3AF; --faint:#6B7480;
+  --line:#262A31; --rail:#333842;
+  --tomato:#FF3B30; --tomato-deep:#FF6B5E;
+  --wash:linear-gradient(135deg,#3A0D0D 0%,#2A0808 55%,#330B0B 100%); --wash-line:#6E1414;
+  --leaf:#3DFF8C; --leaf-wash:#062B16;
+  --amber:#FFD60A; --amber-wash:#332B00;
+  --code:#0D0F13; --code-ink:#E6E9EE; --code-bar:#8B93A0;
+  --grad:linear-gradient(135deg,#FF7A6B 0%,#FF3B30 36%,#FF1F1F 68%,#C00000 100%);
+  --user-grad:linear-gradient(135deg,#FF4D3D 0%,#FF1F1F 55%,#C00000 100%);
+  --head-grad:linear-gradient(100deg,#F2F4F7 0%,#FFB3AC 55%,#FF3B30 100%);
+  --ambient:radial-gradient(820px 460px at 10% -6%,rgba(255,30,30,.16),transparent 62%),radial-gradient(680px 400px at 92% -2%,rgba(255,0,90,.10),transparent 60%);
+  --phone-bg:linear-gradient(180deg,#12141A 0%,#0A0B0E 40%,#07080B 100%);
+  --grid-c:rgba(255,40,40,.06); --dock-tint:rgba(255,30,30,.08);
+  --glow:0 0 24px -6px rgba(255,30,30,.45); --glow-c:rgba(255,30,30,.35);
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px -18px rgba(0,0,0,.8);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);line-height:1.55;font-size:15px}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,textarea{font:inherit;color:inherit}
+svg{display:block;flex:none}
+::selection{background:var(--wash)}
+
+/* ===== studio shell ===== */
+.studio{min-height:100%;display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px 12px}
+.studio-bar{width:min(430px,100%);display:flex;align-items:center;gap:10px}
+.studio-bar .mark{width:26px;height:26px;border-radius:8px;background:var(--tomato);display:grid;place-items:center;color:#fff}
+.studio-bar h1{font-size:15px;font-weight:700;letter-spacing:.2px}
+.studio-bar .note{font-size:12px;color:var(--faint);margin-left:auto}
+.icon-btn{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--mute);border:1px solid var(--line);background:var(--card)}
+.icon-btn:active{transform:scale(.94)}
+.phone{width:min(430px,100%);height:min(900px,calc(100vh - 96px));min-height:560px;background:var(--paper);border:1px solid var(--line);border-radius:38px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;position:relative}
+@media (max-width:520px){
+  .studio{padding:0;gap:0}
+  .studio-bar{display:none}
+  .phone{width:100%;height:100vh;height:100dvh;min-height:0;border:0;border-radius:0;box-shadow:none}
+}
+.screen{flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+.screen::-webkit-scrollbar{display:none}
+.pad{padding:18px 18px 26px}
+
+/* ===== type ===== */
+.display{font-size:30px;line-height:1.22;font-weight:800;letter-spacing:-.4px}
+.h2{font-size:16px;font-weight:700;letter-spacing:.1px}
+.sub{font-size:13px;color:var(--mute)}
+.micro{font-size:12px;color:var(--faint)}
+.num{font-variant-numeric:tabular-nums}
+
+/* ===== masthead ===== */
+.masthead{padding:22px 18px 6px}
+.masthead .date{display:flex;align-items:baseline;gap:8px;font-size:13px;color:var(--mute);font-weight:600}
+.masthead .date .dot{width:7px;height:7px;border-radius:50%;background:var(--leaf);align-self:center}
+.masthead .display{margin-top:8px}
+.masthead .lede{margin-top:8px;font-size:14px;color:var(--mute);max-width:34ch}
+
+/* ===== live block ===== */
+.live{margin:16px 18px 0;background:var(--tomato);color:#fff;border-radius:var(--r-card);padding:16px;display:block;width:calc(100% - 36px);text-align:left;position:relative;overflow:hidden}
+[data-theme="dark"] .live{color:#20100C}
+.live:active{transform:scale(.985)}
+.live .top{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.4px;opacity:.92}
+.pulse{width:8px;height:8px;border-radius:50%;background:currentColor;position:relative}
+.pulse::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid currentColor;opacity:.5;animation:pulse 1.6s ease-out infinite}
+@keyframes pulse{0%{transform:scale(.5);opacity:.7}100%{transform:scale(1.25);opacity:0}}
+.live .title{display:block;margin-top:8px;font-size:18px;font-weight:800;line-height:1.3}
+.live .ticker{display:block;margin-top:6px;font-size:13px;opacity:.9;min-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.live .meter{margin-top:12px;display:flex;align-items:center;gap:10px}
+.live .bar{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.32);overflow:hidden}
+[data-theme="dark"] .live .bar{background:rgba(32,16,12,.25)}
+.live .bar i{display:block;height:100%;background:currentColor;border-radius:2px}
+.live .round{font-size:12px;font-weight:700}
+.live .go{position:absolute;right:14px;top:14px;opacity:.85}
+
+/* ===== sections & vine ===== */
+.section{margin-top:22px}
+.section-head{display:flex;align-items:baseline;gap:8px;padding:0 18px;margin-bottom:10px}
+.section-head .h2{flex:1}
+.section-head .link{font-size:13px;font-weight:600;color:var(--tomato);min-height:32px;display:flex;align-items:center}
+.vine{position:relative;margin:0 18px;padding-left:26px}
+.vine::before{content:"";position:absolute;left:8px;top:8px;bottom:8px;width:2px;background:var(--rail);border-radius:1px}
+.node{position:relative;padding:8px 0}
+.node::before{content:"";position:absolute;left:-22px;top:15px;width:10px;height:10px;border-radius:50%;background:var(--card);border:2px solid var(--faint)}
+.node.done::before{background:var(--leaf);border-color:var(--leaf)}
+.node.open::before{background:var(--card);border-color:var(--tomato)}
+.node.live::before{background:var(--tomato);border-color:var(--tomato)}
+.node .t{font-size:15px;font-weight:600}
+.node .d{font-size:13px;color:var(--mute);margin-top:2px}
+.node .when{font-size:12px;color:var(--faint);margin-top:2px}
+
+/* ===== rows / cards ===== */
+.row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);min-height:56px}
+.row + .row{margin-top:8px}
+.row:active{transform:scale(.985)}
+.row .grow{flex:1;min-width:0}
+.row .t{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .d{font-size:13px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.chip-ico{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;background:var(--wash);color:var(--tomato)}
+.chip-ico.neutral{background:var(--paper);color:var(--mute)}
+.chip-ico.leaf{background:var(--leaf-wash);color:var(--leaf)}
+.chev{color:var(--faint)}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--paper);color:var(--mute);border:1px solid var(--line)}
+.pill.run{background:var(--wash);color:var(--tomato-deep);border-color:var(--wash-line)}
+.pill.ok{background:var(--leaf-wash);color:var(--leaf);border-color:transparent}
+.pill.bad{background:var(--wash);color:var(--tomato-deep);border-color:var(--wash-line)}
+.pill.warn{background:var(--amber-wash);color:var(--amber);border-color:transparent}
+
+/* ===== plain history ===== */
+.plain{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;padding:10px 4px;min-height:48px}
+.plain + .plain{border-top:1px solid var(--line)}
+.plain .ico{color:var(--faint);margin-top:2px}
+.plain .grow{flex:1;min-width:0}
+.plain .t{font-size:15px;font-weight:600}
+.plain .d{font-size:13px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plain .when{font-size:12px;color:var(--faint);flex:none;margin-top:2px}
+
+/* ===== group header ===== */
+.group{display:flex;align-items:center;gap:8px;margin:18px 18px 8px;font-size:13px;font-weight:700;color:var(--mute)}
+.group .count{margin-left:auto;font-weight:600;color:var(--faint)}
+
+/* ===== buttons ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 16px;border-radius:14px;font-size:14px;font-weight:700;background:var(--tomato);color:#fff}
+[data-theme="dark"] .btn{color:#20100C}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.btn.small{min-height:36px;padding:0 12px;font-size:13px;border-radius:11px}
+.btn.leaf{background:var(--leaf);color:#fff}
+.btn.danger-ghost{background:var(--card);color:var(--tomato-deep);border:1px solid var(--wash-line)}
+
+/* ===== memory ===== */
+.filters{display:flex;gap:8px;padding:0 18px;overflow-x:auto;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.fchip{flex:none;min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:13px;font-weight:600;color:var(--mute)}
+.fchip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.mem{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:14px;margin:0 18px 10px}
+.mem.cand{background:var(--wash);border-color:var(--wash-line)}
+.mem .kind{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--tomato-deep)}
+.mem .kind .scope{margin-left:auto;font-weight:600;color:var(--mute);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:1px 8px}
+.mem .val{margin-top:6px;font-size:15px;font-weight:600;line-height:1.5}
+.mem .acts{display:flex;gap:8px;margin-top:12px}
+.mem .meta{margin-top:8px;font-size:12px;color:var(--faint)}
+
+/* ===== chat ===== */
+.chat-head{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--paper);border-bottom:1px solid var(--line)}
+.chat-head .back{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;color:var(--ink)}
+.chat-head .ttl{flex:1;min-width:0;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.transcript{padding:16px 18px 20px;display:flex;flex-direction:column;gap:16px}
+.say-user{align-self:flex-end;max-width:82%;background:var(--wash);border:1px solid var(--wash-line);color:var(--ink);border-radius:16px 16px 4px 16px;padding:10px 14px;font-size:15px}
+.turn{display:flex;gap:10px}
+.turn .rail{flex:none;width:26px;display:flex;flex-direction:column;align-items:center}
+.turn .rail .seed{width:26px;height:26px;border-radius:9px;background:var(--wash);color:var(--tomato);display:grid;place-items:center}
+.turn .rail .stem{flex:1;width:2px;background:var(--rail);margin-top:6px;border-radius:1px}
+.turn .body{flex:1;min-width:0}
+.turn .who{font-size:12px;font-weight:700;color:var(--mute);margin-bottom:6px}
+.turn .prose{font-size:15px;line-height:1.65}
+.turn .prose h3{font-size:16px;font-weight:800;margin:10px 0 4px}
+.turn .prose p{margin:6px 0}
+.turn .prose ul{margin:6px 0 6px 18px}
+.fold{display:inline-flex;align-items:center;gap:7px;min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:13px;font-weight:600;color:var(--mute);margin:4px 0}
+.fold .st{width:7px;height:7px;border-radius:50%;background:var(--leaf)}
+.fold.run .st{background:var(--tomato);animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.3}}
+.steps{border-left:2px solid var(--rail);margin:6px 0 6px 6px;padding-left:12px;display:flex;flex-direction:column;gap:6px}
+.step{font-size:13px;color:var(--mute)}
+.step b{color:var(--ink);font-weight:600}
+.code{background:var(--code);color:var(--code-ink);border-radius:14px;overflow:hidden;margin:8px 0}
+.code .bar{display:flex;align-items:center;padding:8px 12px;font-size:12px;font-weight:700;letter-spacing:.6px;color:#B9AE9F;border-bottom:1px solid rgba(255,255,255,.08)}
+.code .bar button{margin-left:auto;color:#B9AE9F;min-height:32px;min-width:32px;display:grid;place-items:center;border-radius:8px}
+.code pre{padding:12px 14px;font-size:13px;line-height:1.6;overflow-x:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.diagram{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:12px;margin:8px 0;position:relative}
+.diagram button.zoom{position:absolute;right:8px;top:8px;width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:var(--paper);display:grid;place-items:center;color:var(--mute)}
+.composer{position:sticky;bottom:0;z-index:6;border-top:1px solid var(--line);background:var(--card);padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+.composer .chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-bottom:8px}
+.composer .chips::-webkit-scrollbar{display:none}
+.cchip{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--paper);font-size:12px;font-weight:600;color:var(--mute)}
+.composer .line{display:flex;align-items:flex-end;gap:8px}
+.composer textarea{flex:1;min-height:44px;max-height:120px;resize:none;border:1px solid var(--line);background:var(--paper);border-radius:14px;padding:11px 12px;font-size:16px;line-height:1.4;outline:none}
+.composer textarea:focus{border-color:var(--wash-line)}
+.send{width:44px;height:44px;border-radius:14px;background:var(--tomato);color:#fff;display:grid;place-items:center}
+[data-theme="dark"] .send{color:#20100C}
+.send:disabled{background:var(--line);color:var(--faint)}
+.typing{display:inline-flex;gap:4px;align-items:center;height:20px}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--faint);animation:blink 1s infinite}
+.typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+
+/* ===== chat layout fix & usage ===== */
+.screen.chat-mode{display:flex;flex-direction:column;overflow:hidden}
+.screen.chat-mode .chat-head{position:static;flex:none}
+.screen.chat-mode .usage{flex:none}
+.screen.chat-mode .transcript{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+.screen.chat-mode .transcript::-webkit-scrollbar{display:none}
+.screen.chat-mode .composer{position:static;flex:none}
+.usage{display:flex;align-items:center;gap:8px;width:calc(100% - 36px);margin:10px 18px 0;padding:8px 12px;border:1px solid var(--wash-line);border-radius:12px;background:var(--wash);color:var(--mute);font-size:12px;font-weight:600;text-align:left}
+.usage:active{transform:scale(.99)}
+.usage i{font-style:normal;color:var(--tomato-deep);font-weight:800}
+.usage em{font-style:normal;margin-left:auto;color:var(--faint);font-weight:500;white-space:nowrap}
+.usage svg:last-child{color:var(--faint)}
+.turn-u{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:11px;font-weight:600;color:var(--faint)}
+.turn-u svg{color:var(--tomato)}
+.utable{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px;margin-top:6px}
+.utable th{text-align:left;font-size:12px;color:var(--faint);font-weight:600;padding:6px 4px;border-bottom:1px solid var(--line)}
+.utable td{padding:8px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+.utable th:not(:first-child),.utable td:not(:first-child){text-align:right}
+.utable tr.total td{font-weight:800;color:var(--tomato-deep);border-bottom:0}
+.row .grow .t,.row .grow .d,.row .grow .micro,.plain .grow .t,.plain .grow .d,.opt .grow .t,.opt .grow .d{display:block}
+.row .grow .micro{margin-top:2px}
+.fchip.on{background:var(--tomato);color:#fff;border-color:var(--tomato)}
+[data-theme="dark"] .fchip.on{color:#20100C}
+.section-head .h2{position:relative;padding-left:12px}
+.section-head .h2::before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);width:4px;height:14px;border-radius:2px;background:var(--tomato)}
+.group svg{color:var(--tomato)}
+.search:focus-within{border-color:var(--wash-line)}
+.composer textarea:focus{border-color:var(--tomato)}
+
+/* ===== dock ===== */
+.dock{flex:none;display:flex;border-top:1px solid var(--line);background:var(--card);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 0 5px;border-radius:14px;color:var(--faint);min-height:52px}
+.tab span{font-size:11px;font-weight:600}
+.tab.on{color:var(--tomato)}
+.tab.on span{font-weight:800}
+.tab .ind{width:4px;height:4px;border-radius:50%;background:transparent;margin-top:1px}
+.tab.on .ind{background:var(--tomato)}
+
+/* ===== sheet / toast ===== */
+.scrim{position:absolute;inset:0;background:rgba(20,16,12,.42);z-index:20;display:none}
+.scrim.on{display:block}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:21;background:var(--card);border-radius:22px 22px 0 0;padding:14px 18px calc(20px + env(safe-area-inset-bottom));transform:translateY(102%);transition:transform .26s cubic-bezier(.3,.8,.3,1);max-height:76%;overflow-y:auto}
+.sheet.on{transform:translateY(0)}
+.sheet .grab{width:36px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 12px}
+.sheet h3{font-size:17px;font-weight:800;margin-bottom:4px}
+.sheet .sub{margin-bottom:12px}
+.opt{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:12px 12px;border-radius:14px;border:1px solid var(--line);background:var(--paper);min-height:48px}
+.opt + .opt{margin-top:8px}
+.opt .grow{flex:1;min-width:0}
+.opt .t{font-size:15px;font-weight:600}
+.opt .d{font-size:12px;color:var(--mute)}
+.opt.on{border-color:var(--tomato);background:var(--wash)}
+.opt .tick{color:var(--tomato)}
+.toast{position:absolute;left:50%;bottom:86px;transform:translate(-50%,16px);z-index:30;background:var(--ink);color:var(--paper);font-size:13px;font-weight:600;padding:9px 16px;border-radius:999px;opacity:0;pointer-events:none;transition:.22s;white-space:nowrap;max-width:88%;overflow:hidden;text-overflow:ellipsis}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ===== misc ===== */
+.search{display:flex;align-items:center;gap:8px;margin:0 18px 4px;padding:0 12px;min-height:44px;border:1px solid var(--line);background:var(--card);border-radius:14px;color:var(--faint)}
+.search input{flex:1;border:0;outline:none;background:none;font-size:16px;min-width:0}
+.empty{padding:40px 24px;text-align:center;color:var(--mute)}
+.empty .box{width:54px;height:54px;border-radius:16px;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;margin:0 auto 12px;color:var(--faint)}
+.empty .t{font-size:16px;font-weight:700;color:var(--ink)}
+.empty .d{font-size:13px;margin-top:6px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:11px 2px;border-bottom:1px solid var(--line);font-size:14px}
+.kv:last-child{border-bottom:0}
+.kv .k{color:var(--mute)}
+.kv .v{font-weight:600;text-align:right}
+.switch{width:46px;height:28px;border-radius:999px;background:var(--line);position:relative;transition:.2s;flex:none}
+.switch i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.switch.on{background:var(--tomato)}
+.switch.on i{left:21px}
+.avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;background:var(--tomato)}
+.avatar.a2{background:var(--leaf)}.avatar.a3{background:var(--amber)}.avatar.a4{background:var(--mute)}
+.stack{display:flex}
+.stack .avatar{border:2px solid var(--card);margin-left:-10px}
+.stack .avatar:first-child{margin-left:0}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ===== gradient warm-red tech theme ===== */
+body{background-color:var(--paper);background-image:var(--ambient);background-attachment:fixed}
+::selection{background:var(--wash-line)}
+.phone{background:var(--phone-bg);box-shadow:var(--shadow),0 24px 70px -34px var(--glow-c)}
+.phone::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background-image:radial-gradient(var(--grid-c) 1px,transparent 1px);background-size:18px 18px}
+.phone>.screen,.phone>.dock{position:relative;z-index:1}
+.display{background-image:none;-webkit-background-clip:border-box;background-clip:border-box;color:var(--ink)}
+.masthead .display{position:relative;padding-bottom:12px}
+.masthead .display::after{content:"";position:absolute;left:2px;bottom:2px;width:56px;height:4px;border-radius:2px;background-image:var(--grad)}
+.live{background-image:var(--grad);box-shadow:var(--glow)}
+.live::before{content:"";position:absolute;inset:0;z-index:0;background-image:linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px);background-size:22px 22px}
+.live::after{content:"";position:absolute;inset:0;z-index:0;background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.16) 46%,transparent 62%)}
+.live>*{position:relative;z-index:1}
+.btn{background-image:var(--grad);box-shadow:0 8px 20px -10px var(--glow-c)}
+.btn.ghost,.btn.danger-ghost,.btn.leaf{background-image:none;box-shadow:none}
+.send{background-image:var(--grad);box-shadow:0 8px 20px -10px var(--glow-c)}
+.send:disabled{background-image:none;box-shadow:none}
+.switch.on{background-image:var(--grad)}
+.avatar{background-image:var(--grad)}
+.avatar.a2,.avatar.a3,.avatar.a4{background-image:none}
+[data-theme="dark"] .avatar,[data-theme="dark"] .studio-bar .mark{color:#20100C}
+.studio-bar .mark{background-image:var(--grad)}
+.fchip.on{background-image:var(--grad);border-color:transparent}
+.section-head .h2::before{background-image:var(--grad)}
+.tab.on .ind{width:16px;height:3px;border-radius:2px;background-image:var(--grad)}
+.dock{background-image:linear-gradient(180deg,var(--dock-tint),transparent 46%)}
+.sheet{background-image:linear-gradient(180deg,var(--dock-tint),transparent 140px)}
+.chat-head{background-image:linear-gradient(180deg,var(--dock-tint),transparent)}
+.code .bar{color:var(--code-bar)}
+
+/* ===== refine circled surfaces ===== */
+.mem.cand{background-color:var(--card);background-image:linear-gradient(135deg,rgba(255,36,24,.12),rgba(255,0,90,.05) 55%,rgba(255,255,255,0));border-color:var(--wash-line);position:relative;overflow:hidden}
+.mem.cand::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background-image:var(--grad)}
+.mem .acts .btn.leaf{background-color:var(--tomato);background-image:var(--grad);color:#fff;box-shadow:0 8px 20px -10px var(--glow-c)}
+[data-theme="dark"] .mem .acts .btn.leaf{color:#20100C}
+.say-user{background-color:var(--tomato);background-image:var(--user-grad);color:#fff;border-color:transparent;box-shadow:0 8px 20px -12px var(--glow-c)}
+[data-theme="dark"] .say-user{color:#20100C}
+.cchip{background-color:var(--card);background-image:var(--wash);border-color:var(--wash-line);color:var(--tomato-deep)}
+.cchip svg{color:var(--tomato)}
+.cchip svg:nth-child(2){color:var(--faint)}
+
+/* ===== composed page headers ===== */
+.page-head{position:relative;margin:14px 18px 0;padding:16px;border-radius:var(--r-card);background-color:var(--card);background-image:linear-gradient(135deg,rgba(255,36,24,.10),rgba(255,0,90,.05) 55%,rgba(255,255,255,0));border:1px solid var(--wash-line);overflow:hidden}
+.page-head::before{content:"";position:absolute;right:-46px;top:-46px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(255,36,24,.28),rgba(255,0,90,.10) 60%,transparent 72%);pointer-events:none}
+.page-head::after{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background-image:var(--grad)}
+.ph-row{display:flex;align-items:center;gap:12px;position:relative}
+.ph-medal{flex:none;width:44px;height:44px;border-radius:14px;background-color:var(--tomato);background-image:var(--grad);color:#fff;display:grid;place-items:center;box-shadow:var(--glow)}
+[data-theme="dark"] .ph-medal{color:#20100C}
+.ph-txt{flex:1;min-width:0}
+.ph-txt .display{font-size:22px;padding:0;margin:0}
+.ph-txt .sub{margin-top:2px}
+.ph-chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;position:relative}
+.ph-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background-color:var(--paper);border:1px solid var(--line);font-size:12px;font-weight:600;color:var(--mute)}
+.ph-chip b{color:var(--tomato-deep);font-weight:800}
+.ph-chip .dot{width:6px;height:6px;border-radius:50%;flex:none}
+.ph-chip svg{color:var(--tomato)}
+.page-head.hero{padding:18px}
+.hero .ph-top{display:flex;align-items:center;gap:8px;position:relative}
+.hero .ph-top .date{flex:1;display:flex;align-items:baseline;gap:8px;font-size:13px;color:var(--mute);font-weight:600}
+.hero .ph-top .date .dot{width:7px;height:7px;border-radius:50%;background:var(--leaf);align-self:center}
+.hero .ph-medal{width:36px;height:36px;border-radius:11px}
+.hero .display{position:relative;font-size:26px;margin-top:10px;padding-bottom:12px}
+.hero .display::after{content:"";position:absolute;left:2px;bottom:2px;width:56px;height:4px;border-radius:2px;background-image:var(--grad)}
+.hero .lede{margin-top:8px;font-size:14px;color:var(--mute);max-width:34ch;position:relative}
+
+/* ===== punk tech extras ===== */
+.num{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.2px}
+.micro{letter-spacing:.3px}
+.live::before{background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 4px),linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:auto,22px 22px,22px 22px}
+.dock{border-top:1px solid var(--wash-line)}
+[data-theme="dark"] .btn.leaf{color:#062B16}
+[data-theme="dark"] .pill.ok{color:#062B16;background:var(--leaf)}
+[data-theme="dark"] .node.done::before{background:var(--leaf);border-color:var(--leaf)}
+
+/* ===== tomato phone ===== */
+.call{margin:14px 18px 0;padding:20px 16px;border-radius:var(--r-card);background-color:var(--card);background-image:linear-gradient(160deg,rgba(255,36,24,.14),rgba(255,0,90,.06) 55%,transparent);border:1px solid var(--wash-line);text-align:center;position:relative;overflow:hidden}
+.call .who{display:flex;flex-direction:column;align-items:center;gap:10px;position:relative}
+.call .big{width:76px;height:76px;border-radius:24px;background-color:var(--tomato);background-image:var(--grad);color:#fff;display:grid;place-items:center;box-shadow:var(--glow)}
+[data-theme="dark"] .call .big{color:#20100C}
+.call .name{font-size:20px;font-weight:800}
+.call .st{font-size:13px;color:var(--mute);font-weight:600}
+.call .st.live{color:var(--tomato-deep)}
+.wave{display:flex;align-items:flex-end;gap:3px;height:26px;justify-content:center;margin-top:12px}
+.wave i{width:3px;border-radius:2px;background:var(--tomato);height:6px;opacity:.5}
+.call.on .wave i{animation:wv 1s ease-in-out infinite;opacity:1}
+.wave i:nth-child(2){animation-delay:.1s}.wave i:nth-child(3){animation-delay:.2s}.wave i:nth-child(4){animation-delay:.3s}.wave i:nth-child(5){animation-delay:.4s}.wave i:nth-child(6){animation-delay:.5s}.wave i:nth-child(7){animation-delay:.6s}
+@keyframes wv{0%,100%{height:6px}50%{height:24px}}
+.call .ctl{display:flex;justify-content:center;gap:14px;margin-top:16px;position:relative}
+.cbtn{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background-color:var(--paper);border:1px solid var(--line);color:var(--mute)}
+.cbtn.on{background-color:var(--wash);border-color:var(--wash-line);color:var(--tomato-deep)}
+.cbtn.hang{background-color:var(--tomato);background-image:var(--grad);color:#fff;border-color:transparent;box-shadow:var(--glow)}
+.cbtn.dial{background-color:var(--leaf);color:#fff;border-color:transparent}
+[data-theme="dark"] .cbtn.hang{color:#20100C}
+[data-theme="dark"] .cbtn.dial{color:#062B16}
+.call .quick{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px;position:relative}
+.calllog{margin:12px 18px 0;display:flex;flex-direction:column;gap:8px}
+.calllog .ln{font-size:13px;padding:8px 12px;border-radius:12px;background-color:var(--card);border:1px solid var(--line)}
+.calllog .ln.me{align-self:flex-end;background-color:var(--tomato);background-image:var(--user-grad);color:#fff;border-color:transparent}
+[data-theme="dark"] .calllog .ln.me{color:#20100C}
+.calllog .ln.ai{align-self:flex-start;max-width:86%}
+.calllog .ln .t{font-weight:700;font-size:11px;color:var(--faint);display:block}
+.calllog .ln.me .t{color:rgba(255,255,255,.7)}
+
+/* ===== compatibility ===== */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+button,input,textarea{-webkit-appearance:none;appearance:none}
+button{touch-action:manipulation}
+body{background-attachment:scroll}
+.scrim{top:0;right:0;bottom:0;left:0}
+.pulse::after{top:-4px;right:-4px;bottom:-4px;left:-4px}
+.phone::before,.live::before,.live::after{top:0;right:0;bottom:0;left:0}
+@supports not (padding:env(safe-area-inset-bottom)){
+  .composer{padding:10px 12px 10px}
+  .dock{padding:6px 6px 6px}
+  .sheet{padding:14px 18px 20px}
+}
+@supports not (gap:1px){
+  .studio>*+*{margin-top:14px}
+  .studio-bar>*+*{margin-left:10px}
+  .row>*+*{margin-left:12px}
+  .plain>*+*{margin-left:12px}
+  .opt>*+*{margin-left:10px}
+  .turn>*+*{margin-left:10px}
+  .transcript>*+*{margin-top:16px}
+  .steps>*+*{margin-top:6px}
+  .section-head>*+*{margin-left:8px}
+  .group>*+*{margin-left:8px}
+  .ph-row>*+*{margin-left:12px}
+  .ph-top>*+*{margin-left:8px}
+  .ph-chips>*+*{margin-left:8px}
+  .filters>*+*{margin-left:8px}
+  .composer .chips>*+*{margin-left:8px}
+  .composer .line>*+*{margin-left:8px}
+  .mem .acts>*+*{margin-left:8px}
+  .live .meter>*+*{margin-left:10px}
+  .usage>*+*{margin-left:8px}
+  .call .who>*+*{margin-top:10px}
+  .call .ctl>*+*{margin-left:14px}
+  .call .quick>*+*{margin-left:8px}
+  .calllog>*+*{margin-top:8px}
+}
+@supports not (place-items:center){
+  .chip-ico,.icon-btn,.ph-medal,.avatar,.send,.empty .box,.studio-bar .mark,.turn .rail .seed,.code .bar button,.diagram button.zoom,.call .big,.cbtn{align-items:center;justify-items:center}
+}
+
+/* ===== tomato phone (cloud agent app) ===== */
+.attach{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
+.attach button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 0;border-radius:12px;background-color:var(--paper);border:1px solid var(--line);font-size:12px;font-weight:600;color:var(--mute)}
+.attach button svg{color:var(--tomato)}
+.cchip.on{background-image:var(--wash);border-color:var(--wash-line);color:var(--tomato-deep)}
+.csay{display:flex;gap:10px}
+.csay .av{flex:none;width:26px;height:26px;border-radius:9px;background-image:var(--wash);color:var(--tomato);display:grid;place-items:center}
+.csay .bd{flex:1;min-width:0}
+.csay .who{font-size:12px;font-weight:600;color:var(--faint);margin-bottom:4px}
+.csay .prose{font-size:15px;line-height:1.65}
+.csay .prose h3{font-size:16px;font-weight:800;margin:10px 0 4px}
+.csay .prose p{margin:6px 0}
+.csay .prose ul{margin:6px 0 6px 18px}
+.pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.pgrid button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 0;border-radius:12px;background-color:var(--paper);border:1px solid var(--line);font-size:12px;font-weight:600;color:var(--mute)}
+.pgrid button svg{color:var(--tomato)}
+</style>
+</head>
+<body>
+<div class="studio">
+  <div class="studio-bar">
+    <div class="mark" id="markIco"></div>
+    <h1>番茄调度台</h1>
+    <span class="note">TomatoRemote 概念演示 · 示例数据</span>
+    <button class="icon-btn" id="themeBtn" aria-label="切换深浅色"></button>
+  </div>
+  <div class="phone">
+    <div class="screen" id="screen"></div>
+    <nav class="dock" id="dock" aria-label="主导航"></nav>
+    <div class="scrim" id="scrim"></div>
+    <div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+    <div class="toast" id="toast" role="status"></div>
+  </div>
+</div>
+<script>
+/* ===== icons ===== */
+const P = {
+  spark:'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z',
+  bubble:'M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-5 4z',
+  cpu:'M8 8h8v8H8zM4 10h2M4 14h2M18 10h2M18 14h2M10 4v2M14 4v2M10 18v2M14 18v2',
+  people:'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2 19c0-3 3-5 7-5s7 2 7 5M16 11a3 3 0 1 0-2-5.2M17 14c3 .4 5 2.2 5 5',
+  person:'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 20c0-3.5 3.5-6 8-6s8 2.5 8 6',
+  chev:'M9 6l6 6-6 6',
+  back:'M15 6l-6 6 6 6',
+  bolt:'M13 2L4 14h6l-1 8 9-12h-6z',
+  clock:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2',
+  check:'M4 12l5 5L20 6',
+  circle:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z',
+  brain:'M9 3a3 3 0 0 0-3 3 3 3 0 0 0-2 3c0 1 .4 1.9 1 2.5A3 3 0 0 0 6 17a3 3 0 0 0 3 3h1V3zM15 3a3 3 0 0 1 3 3 3 3 0 0 1 2 3c0 1-.4 1.9-1 2.5A3 3 0 0 1 18 17a3 3 0 0 1-3 3h-1V3z',
+  folder:'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',
+  send:'M12 19V5M5 12l7-7 7 7',
+  mic:'M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zM6 11a6 6 0 0 0 12 0M12 17v4',
+  clip:'M8 12l6-6a3 3 0 0 1 4 4l-8 8a5 5 0 0 1-7-7l8-8',
+  cam:'M4 8a2 2 0 0 1 2-2h2l2-2h4l2 2h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM12 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z',
+  img:'M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM9 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM4 17l5-5 4 4 3-3 4 4',
+  copy:'M9 9h10v10H9zM5 15V5h10',
+  expand:'M4 9V4h5M20 15v5h-5M4 4l6 6M20 20l-6-6',
+  x:'M6 6l12 12M18 6L6 18',
+  search:'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4',
+  gear:'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1',
+  desktop:'M3 5h18v11H3zM9 20h6M12 16v4',
+  log:'M6 3h9l4 4v14H6zM9 11h7M9 15h7M9 7h4',
+  moon:'M20 14A8 8 0 1 1 10 4a7 7 0 0 0 10 10z',
+  sun:'M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4',
+  bell:'M6 16v-5a6 6 0 0 1 12 0v5l2 3H4zM10 21h4',
+  shield:'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z',
+  play:'M8 5l11 7-11 7z',
+  stop:'M7 7h10v10H7z',
+  pause:'M9 5v14M15 5v14',
+  plus:'M12 5v14M5 12h14',
+  refresh:'M20 12a8 8 0 1 1-2.3-5.7M20 4v4h-4',
+  doc:'M6 3h9l4 4v14H6zM15 3v4h4',
+  wave:'M4 12h2l2-5 3 10 3-8 2 3h4',
+  chart:'M4 19V5M4 19h16M8 15v-4M12 15V8M16 15v-6',
+  phone:'M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z',
+  cloud:'M7 18a4 4 0 0 1 0-8 5 5 0 0 1 9.6-1.5A3.5 3.5 0 0 1 17 18z'
+};
+function ico(n,s=20,w=1.8){return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+w+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+P[n]+'"/></svg>';}
+function icoFill(n,s=20){return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="'+P[n]+'"/></svg>';}
+const LOGO_D='M33.17.02q.66-.08 1.24.21c.49.24.75.66.84 1.1.08.41.02.85-.1 1.22l-.28 1.05a16.2 16.2 0 0 1 9.6 4.66l.18.18a79 79 0 0 1 8.37-.05l1.23.06q5.22.37 8.07 1.62c1.89.84 3.06 2.04 3.23 3.63.18 1.8-.87 3.72-2.85 5.68a36 36 0 0 1-7.46 5.34 67 67 0 0 1-8.68 4.06l-.03.02q-.91 1.36-2.06 2.52a16.3 16.3 0 0 1-20.29 2.24c-3.38.34-7.02.61-10.4.61h-.1c-3.54 0-6.45-.28-8.61-.86-2.61-.7-4.36-1.88-4.9-3.64a4.7 4.7 0 0 1 .54-3.72 13 13 0 0 1 3.4-3.63 35 35 0 0 1 4.85-3.05 53 53 0 0 1 8.17-3.5h.01a16 16 0 0 1 4.28-7.5l.33-.33.53-.48-.87-.6-.01-.01a2 2 0 0 1-.79-1.95c.07-.52.36-.88.73-1.1a2 2 0 0 1 1.12-.26h.07l.04.01 2.57.39.78-1.99c.03-.08.14-.32.33-.57.2-.25.55-.55 1.04-.62h.01a1.8 1.8 0 0 1 1.46.46l1.26 1.12 2-1.8h.01q.5-.44 1.14-.52m9.73 30.07q-4.14 1.36-8.44 2.08c-1.74.3-4.08.64-6.73.97A14.4 14.4 0 0 0 42.9 30.1m11.22-19.65a76 76 0 0 0-7.84-.09q.75 1.05 1.3 2.21c1.39.13 2.44.57 2.8 1.57.3.8 0 1.6-.35 2.2-.29.5-.66.92-.93 1.2v.02l-.18.18-.18.17-.25.26-.72.74v-.06l-.47.43v-.04c-2.86 2.35-7.07 4.3-12.06 5.61-5.19 1.36-10.82 1.92-15.08 1.5v.01l-.55-.07v.01l-.53-.09h-.07l-.02-.01.02.03-.92-.19-.23-.05h-.01a6 6 0 0 1-1.91-.73c-.54-.34-.92-.8-1.04-1.38-.17-.8.23-1.5.65-1.99.33-.39.74-.71 1.05-.93q-.06-1.47.08-2.93a51 51 0 0 0-6.6 2.9c-5.08 2.67-6.96 4.78-7.64 6-.46.84-.55 1.53-.36 2.18l.04.1c.21.57.82 1.29 2.45 1.88 1.74.63 4.57 1.1 9.1 1.1h.1c3 0 6.21-.22 9.26-.51l.2-.02.52-.05.2-.02.46-.05h.1c3.81-.42 7.28-.94 9.63-1.31q5.68-.98 11.08-3.04l.17-.07.56-.21.17-.07.7-.28 1.25-.53v.02q3.17-1.36 6.2-3.04a34 34 0 0 0 7.04-5.03l.3-.3a10 10 0 0 0 1.51-1.99q.55-1.04.46-1.77l-.02-.15c-.17-.77-.96-1.53-2.75-2.16a27 27 0 0 0-6.7-1.16M34.36 5.6l.8 1.21c.38.44.49 1.16.4 1.8-.08.51-.4.86-.72 1.08-.32.2-.67.3-.93.34h-.11l-3.83.17-2.93 1.81h-.01q-.55.33-1.18.3-.3 0-.61-.06c-.46-.1-.77-.38-.96-.67a2 2 0 0 1-.31-.83v-.09l-.03-2.03q-.6.48-1.13 1.03a14.4 14.4 0 0 0-3.5 14.55q.46.08 1.05.13c4 .4 9.38-.12 14.37-1.43 5.4-1.42 9.7-3.58 12.23-6.06q-.24-1.2-.7-2.35h-.04l-.12-.33-.12-.32q-.9-2-2.38-3.63l-.02-.02-.9-.9h.02a14.2 14.2 0 0 0-8.33-3.77zM17 23.25q-.1.12-.13.2l.2.16zm31.5-8.35.02-.07-.05-.03zM30.49 4.6l-.1.1h-.03l-.32.3-.21-.2-.2-.16-1.94-1.73-.83 2.12-.26.67-.02.06-.15.38-.32-.05-.16-.02-2.77-.42 1.04.73.6.4.25.19.62.43.21.15v.25l.04 2.5.12-.02 3.2-1.98.11-.06h.13l4.1-.2h-.01l-1.24-1.91-.12-.19.05-.21.23-.9.1-.37.09-.35.03-.14.03-.12.44-1.68z';
+let logoSeq=0;
+function logoSvg(w,h){const id='tlg'+(++logoSeq);return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 65.57 36.1" fill="none" preserveAspectRatio="none" aria-hidden="true" style="display:block"><path fill="url(#'+id+')" d="'+LOGO_D+'"/><defs><linearGradient id="'+id+'" x1="32.78" x2="32.78" y1="0" y2="36.1" gradientUnits="userSpaceOnUse"><stop stop-color="#93000a"/><stop offset="1" stop-color="#ff5449"/></linearGradient></defs></svg>';}
+
+
+/* ===== mock data ===== */
+const DB = {
+  host:{name:'Underdog 的 MacBook Pro',addr:'100.64.12.8:43110',state:'在线',since:'已配对 32 天'},
+  recap:{date:'11月20日 周五',headline:'修好了会话列表的点击',lede:'定位到手势冲突，并把样式对齐到对话类 App 的排布。',messages:12},
+  goal:{title:'把 iOS 会话列表点击无效修好，并补齐样式与 UI 测试',round:3,max:10,session:'s1'},
+  live:{session:'s1',phase:'正在思考',tools:['bash · swiftlint lint','grep · NavigationLink','read · SessionListView.swift','edit · HomeView.swift']},
+  sessions:[
+    {id:'s1',title:'修复 iOS 会话列表点击无效',project:'tomatoHarness',running:true,when:'5 分钟前',preview:'已经定位到原因：NavigationLink 上的手势冲突。',usage:{tin:18400,tout:5200,cost:0.61,turns:6,tools:9,secs:840}},
+    {id:'s3',title:'图文回答',project:'tomatoHarness',running:false,when:'1 分钟前',preview:'这是一段带代码的回答。',usage:{tin:6200,tout:1800,cost:0.21,turns:2,tools:1,secs:120}},
+    {id:'s2',title:'整理本周发布说明',project:'tomatoHarness',running:false,when:'2 小时前',preview:'发布说明已按模块归并。',usage:{tin:2400,tout:900,cost:0.08,turns:1,tools:1,secs:60}},
+    {id:'s4',title:'数据看板 SQL 优化',project:'analytics',running:false,when:'3 天前',preview:'把三次全表扫描合并成一次。',usage:{tin:15800,tout:4100,cost:0.47,turns:4,tools:6,secs:600}}
+  ],
+  today:[
+    {state:'done',t:'会话列表点击无效',d:'手势抢走了点击，改成按钮驱动。',when:'10:42'},
+    {state:'done',t:'每日摘要生成',d:'12 条消息归并成 3 件完成事项。',when:'09:15'},
+    {state:'open',t:'补 UI 测试',d:'覆盖首页与待处理入口。',when:'待办'}
+  ],
+  memories:[
+    {id:'m1',scope:'个人',kind:'偏好',status:'candidate',val:'最常在下班后使用，工作日晚上 8 点到 11 点之间最活跃。'},
+    {id:'m2',scope:'个人',kind:'偏好',status:'candidate',val:'提问很短，通常一两句话，喜欢先给结论再补细节。'},
+    {id:'m3',scope:'个人',kind:'偏好',status:'active',val:'提问很短'},
+    {id:'m4',scope:'个人',kind:'事实',status:'active',val:'负责的品牌是 Tomato，主要做达人营销自动化；周报每周一上午发出，侧重达人建联进度与投放 ROI。'},
+    {id:'m5',scope:'项目',kind:'决策',status:'active',val:'页面不展示左上角标题文案，内容分模块用列表呈现，复杂内容进详情页。'},
+    {id:'m6',scope:'个人',kind:'偏好',status:'observed',val:'经常带截图提问'}
+  ],
+  tasks:[{id:'t1',title:'每天检查发布状态',time:'每天 09:00',next:'明天 09:00',on:true}],
+  robots:[
+    {id:'r1',name:'周报写手',state:'idle',mission:'每周一上午汇总达人建联进度与投放 ROI。',last:'上次：完成 · 周一 09:12'},
+    {id:'r2',name:'发布巡检',state:'running',mission:'发布前跑一遍冒烟与回滚预案。',last:'这次运行：执行中 · 2 分钟前'},
+    {id:'r3',name:'竞品雷达',state:'paused',mission:'每周扫一遍竞品 changelog 与定价页。',last:'上次：暂停 · 上周'}
+  ],
+  rooms:[
+    {id:'g1',name:'发布值班群',members:['周','吴','T'],state:'active',last:'Tomato：巡检通过，可以发布。'},
+    {id:'g2',name:'选题 brainstorm',members:['李','T'],state:'tripped',last:'熔断：连续 3 轮无新增结论。'}
+  ],
+  cloud:{
+    agents:[
+      {id:'a1',name:'周报写手',cat:'写作',desc:'汇总建联进度与投放 ROI，生成周报初稿。',ico:'doc'},
+      {id:'a2',name:'数据分析师',cat:'分析',desc:'读表读图，给结论与口径说明。',ico:'chart'},
+      {id:'a3',name:'灵感画师',cat:'创作',desc:'把想法变成海报与插画草图。',ico:'img'},
+      {id:'a4',name:'代码助手',cat:'代码',desc:'解释、重构与生成代码片段。',ico:'cpu'},
+      {id:'a5',name:'发布文案',cat:'写作',desc:'把 changelog 写成用户能读的发布说明。',ico:'spark'}
+    ],
+    list:[
+      {id:'c1',title:'本周达人建联摘要',when:'今天 10:20',group:'今天'},
+      {id:'c2',title:'海报文案 brainstorm',when:'昨天 21:05',group:'昨天'},
+      {id:'c3',title:'SQL 口径疑问',when:'周一',group:'更早'}
+    ],
+    chats:{
+      c1:[{role:'user',text:'帮我摘要本周达人建联'},{role:'agent',md:'## 本周建联\n\n新增建联 14 位，回复率 62%；头部 3 位已寄样。\n\n- 建议优先跟进已寄样未反馈的 2 位'}],
+      c2:[{role:'user',text:'给夏季海报想几句文案'},{role:'agent',md:'## 文案候选\n\n- 把夏天装进番茄红\n- 一口清爽，整夏上线\n- 热浪退散，灵感上线'}],
+      c3:[{role:'user',text:'ROI 口径按消耗还是按回款'},{role:'agent',md:'## 口径\n\n对外周报用回款口径，内部投放优化用消耗口径；两者差异在账期。'}]
+    }
+  },
+  chats:{
+    s1:[
+      {role:'user',text:'会话列表点进去没反应，帮我看看'},
+      {role:'tools',steps:[['grep','NavigationLink'],['bash','swiftlint lint']],done:true},
+      {role:'agent',u:{tin:3200,tout:900,cost:0.11,secs:41},md:'## 原因\n\n行上叠加的 simultaneousGesture 抢走了 NavigationLink 的点击。\n\n### 修复\n\n- 去掉 simultaneousGesture\n- 用路径驱动按钮'},
+      {role:'code',lang:'SWIFT',code:'Button { open(summary) }\nlabel: { SessionRow(summary: summary) }'},
+      {role:'agent',u:{tin:2600,tout:700,cost:0.09,secs:33},md:'已补齐 16 项 UI 回归，全部通过。'}
+    ],
+    s3:[
+      {role:'user',text:'给我看一张图和一段代码'},
+      {role:'agent',u:{tin:3100,tout:900,cost:0.10,secs:52},md:'## 结果\n\n这是一段带代码的回答，原因和 simultaneousGesture 抢点击有关。'},
+      {role:'diagram'},
+      {role:'code',lang:'SWIFT',code:'Button { open(summary) }\nlabel: { SessionRow(summary: summary) }'}
+    ],
+    s2:[{role:'user',text:'把本周发布说明整理一下'},{role:'agent',u:{tin:2400,tout:900,cost:0.08,secs:60},md:'## 发布说明\n\n已按模块归并：会话列表、记忆页、账号页。'}],
+    s4:[{role:'user',text:'看板太慢了'},{role:'agent',u:{tin:7900,tout:2050,cost:0.24,secs:180},md:'## 优化\n\n把三次全表扫描合并成一次，p95 从 4.2s 降到 0.8s。'}]
+  }
+};
+
+/* ===== state & helpers ===== */
+const S = {route:'home', memFilter:'all', query:'', model:'Tomato 1', perm:'默认', notify:true, dark:true, running:{r2:true}, folded:{}, streaming:null};
+const $ = s=>document.querySelector(s);
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+let toastTimer=null;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('on'),1800);}
+function openSheet(html){$('#sheet').innerHTML='<div class="grab"></div>'+html;$('#sheet').classList.add('on');$('#scrim').classList.add('on');}
+function closeSheet(){$('#sheet').classList.remove('on');$('#scrim').classList.remove('on');}
+$('#scrim').addEventListener('click',closeSheet);
+function go(r){S.route=r;render();$('#screen').scrollTop=0;}
+window.addEventListener('hashchange',()=>{const r=location.hash.replace('#/','')||'home';if(r!==S.route){S.route=r;render();}});
+
+/* ===== shared fragments ===== */
+function pill(state){
+  if(state==='cloud')return '<span class="pill run">'+ico('cloud',12)+'云端</span>';
+  if(state==='running'||state==='active')return '<span class="pill run">'+icoFill('bolt',12)+'进行中</span>';
+  if(state==='done'||state==='idle')return '<span class="pill ok">'+ico('check',12)+'完成</span>';
+  if(state==='tripped'||state==='failed')return '<span class="pill bad">'+ico('x',12)+'熔断</span>';
+  if(state==='paused')return '<span class="pill warn">'+ico('pause',12)+'暂停</span>';
+  return '<span class="pill">'+esc(state)+'</span>';
+}
+function mdToHtml(md){
+  return md.split('\n').map(line=>{
+    if(line.startsWith('## '))return '<h3>'+esc(line.slice(3))+'</h3>';
+    if(line.startsWith('### '))return '<h3>'+esc(line.slice(4))+'</h3>';
+    if(line.startsWith('- '))return '<ul><li>'+esc(line.slice(2))+'</li></ul>';
+    if(line.trim()==='')return '';
+    return '<p>'+esc(line)+'</p>';
+  }).join('').replace(/<\/ul><ul>/g,'');
+}
+function diagramSvg(){
+  return '<svg viewBox="0 0 300 150" width="100%" height="150" role="img" aria-label="流程图">'
+  +'<g font-family="inherit" font-size="12" fill="currentColor">'
+  +'<rect x="110" y="8" width="80" height="30" rx="6" fill="none" stroke="currentColor" stroke-width="1.4"/><text x="150" y="27" text-anchor="middle">点击行</text>'
+  +'<path d="M150 38v22" stroke="currentColor" stroke-width="1.4"/><path d="M146 56l4 6 4-6" fill="none" stroke="currentColor" stroke-width="1.4"/>'
+  +'<path d="M150 62l42 24-42 24-42-24z" fill="none" stroke="currentColor" stroke-width="1.4"/><text x="150" y="90" text-anchor="middle">手势优先?</text>'
+  +'<path d="M108 86H60v22" stroke="currentColor" stroke-width="1.4" fill="none"/><path d="M192 86h48v22" stroke="currentColor" stroke-width="1.4" fill="none"/>'
+  +'<text x="70" y="80">是</text><text x="222" y="80">否</text>'
+  +'<rect x="24" y="108" width="72" height="28" rx="6" fill="none" stroke="currentColor" stroke-width="1.4"/><text x="60" y="126" text-anchor="middle">链接收不到</text>'
+  +'<rect x="204" y="108" width="72" height="28" rx="6" fill="none" stroke="currentColor" stroke-width="1.4"/><text x="240" y="126" text-anchor="middle">正常打开</text>'
+  +'</g></svg>';
+}
+/* ===== shared page head ===== */
+function pageHead(icon,title,sub,chips,action){
+  return '<header class="page-head"><div class="ph-row"><span class="ph-medal">'+ico(icon,20)+'</span><div class="ph-txt"><h2 class="display">'+esc(title)+'</h2>'+(sub?'<p class="sub">'+esc(sub)+'</p>':'')+'</div>'+(action||'')+'</div>'
+  +(chips&&chips.length?'<div class="ph-chips">'+chips.map(c=>'<span class="ph-chip">'+(c[0]?'<span class="dot" style="background:'+c[0]+'"></span>':'')+esc(c[1])+' <b class="num">'+esc(c[2])+'</b></span>').join('')+'</div>':'')
+  +'</header>';
+}
+/* ===== view: home ===== */
+function viewHome(){
+  const g=DB.goal, pct=Math.round(g.round/g.max*100);
+  const cand=DB.memories.filter(m=>m.status==='candidate');
+  return ''
+  +'<header class="page-head hero">'
+  +  '<div class="ph-top"><span class="date"><span class="dot"></span>'+esc(DB.recap.date)+' · Mac '+esc(DB.host.state)+'</span><span class="ph-medal">'+ico('spark',18)+'</span></div>'
+  +  '<h2 class="display">'+esc(DB.recap.headline)+'</h2>'
+  +  '<p class="lede">'+esc(DB.recap.lede)+'</p>'
+  +  '<div class="ph-chips"><span class="ph-chip">'+ico('bubble',12)+'消息 <b class="num">'+DB.recap.messages+'</b></span><span class="ph-chip"><span class="dot" style="background:var(--leaf)"></span>完成 <b class="num">'+DB.today.filter(n=>n.state==='done').length+'</b></span><span class="ph-chip"><span class="dot" style="background:var(--tomato)"></span>待办 <b class="num">'+DB.today.filter(n=>n.state==='open').length+'</b></span></div>'
+  +'</header>'
+  +'<button class="live" onclick="openChat(\''+g.session+'\')" aria-label="打开正在运行的会话">'
+  +  '<span class="go">'+ico('chev',18)+'</span>'
+  +  '<span class="top"><span class="pulse"></span>正在发生 · '+esc(DB.live.phase)+'</span>'
+  +  '<span class="title">'+esc(g.title)+'</span>'
+  +  '<span class="ticker" id="ticker">'+esc(DB.live.tools[0])+'</span>'
+  +  '<span class="meter"><span class="bar"><i style="width:'+pct+'%"></i></span><span class="round num">第 '+g.round+' / '+g.max+' 轮</span></span>'
+  +'</button>'
+  +'<div style="padding:12px 18px 0"><button class="row" onclick="go(\'phone\')"><span class="chip-ico">'+ico('phone',18)+'</span><span class="grow"><span class="t">Tomato Phone</span><span class="d">云端 Agent 对话与创作，不连 Mac。</span></span><span class="chev">'+ico('chev',18)+'</span></button></div>'
+  +'<section class="section"><div class="section-head"><h3 class="h2">今日回顾</h3><span class="micro num">'+DB.recap.messages+' 条消息</span></div>'
+  +  '<div class="vine">'+DB.today.map(n=>'<div class="node '+n.state+'"><div class="t">'+esc(n.t)+'</div><div class="d">'+esc(n.d)+'</div><div class="when num">'+esc(n.when)+'</div></div>').join('')+'</div>'
+  +'</section>'
+  +(cand.length?'<section class="section"><div class="section-head"><h3 class="h2">等你确认</h3><button class="link" onclick="go(\'memory\')">全部记忆</button></div>'
+  +  cand.slice(0,1).map(m=>'<div class="mem cand"><div class="kind">'+ico('brain',14)+'Agent 想记住<span class="scope">'+esc(m.scope)+'</span></div><div class="val">'+esc(m.val)+'</div><div class="acts"><button class="btn small leaf" onclick="confirmMem(\''+m.id+'\')">'+ico('check',14)+'确认</button><button class="btn small ghost" onclick="forgetMem(\''+m.id+'\')">忽略</button></div></div>').join('')
+  +'</section>':'')
+  +'<section class="section"><div class="section-head"><h3 class="h2">定时任务</h3><button class="link" onclick="toast(\'演示中：定时任务管理\')">管理</button></div>'
+  +  '<div style="padding:0 18px">'+DB.tasks.map(t=>'<button class="row" onclick="toggleTask(\''+t.id+'\')"><span class="chip-ico neutral">'+ico('clock',18)+'</span><span class="grow"><span class="t">'+esc(t.title)+'</span><span class="d">'+esc(t.time)+' · 下次 '+esc(t.next)+'</span></span><span class="switch'+(t.on?' on':'')+'"><i></i></span></button>').join('')+'</div>'
+  +'</section>'
+  +'<section class="section"><div style="padding:0 18px"><button class="row" onclick="go(\'memory\')" style="background:var(--wash);border-color:var(--wash-line)"><span class="chip-ico">'+ico('brain',18)+'</span><span class="grow"><span class="t">个人记忆</span><span class="d">偏好、习惯和事实，由 Agent 记住并在这里确认。</span></span><span class="chev">'+ico('chev',18)+'</span></button></div></section>';
+}
+
+/* ===== view: sessions ===== */
+function viewSessions(){
+  const q=S.query.trim().toLowerCase();
+  const list=DB.sessions.filter(s=>!q||s.title.toLowerCase().includes(q)||s.project.toLowerCase().includes(q));
+  const running=list.filter(s=>s.running);
+  const projects=[...new Set(list.map(s=>s.project))];
+  const totTok=DB.sessions.reduce((a,s)=>a+(s.usage?s.usage.tin+s.usage.tout:0),0);
+  let h=pageHead('bubble','会话','Mac 上正在跑和跑过的对话。',[['var(--tomato)','进行中',running.length],['','项目',projects.length],['','累计',fmtTok(totTok)+' tok']],'<button class="icon-btn" onclick="go(\'phone\')" aria-label="Tomato Phone">'+ico('phone',18)+'</button>')
+  +'<div class="search" style="margin-top:12px">'+ico('search',18)+'<input placeholder="搜索会话或项目" value="'+esc(S.query)+'" oninput="setQuery(this.value)" aria-label="搜索会话"></div>';
+  if(running.length){
+    h+='<div class="group">'+icoFill('bolt',14)+'进行中<span class="count num">'+running.length+'</span></div><div style="padding:0 18px">'
+    + running.map(s=>'<button class="row" onclick="openChat(\''+s.id+'\')" style="background:var(--wash);border-color:var(--wash-line)"><span class="chip-ico">'+ico('bubble',18)+'</span><span class="grow"><span class="t">'+esc(s.title)+'</span><span class="d">'+esc(s.preview)+'</span><span class="micro num">'+fmtTok(s.usage.tin+s.usage.tout)+' tok · '+fmtCost(s.usage.cost)+'</span></span>'+pill('running')+'</button>').join('')+'</div>';
+  }
+  projects.forEach(p=>{
+    const rows=list.filter(s=>s.project===p&&!s.running);
+    if(!rows.length)return;
+    h+='<div class="group">'+ico('folder',14)+esc(p)+'<span class="count num">'+rows.length+'</span></div><div style="padding:0 18px">'
+    + rows.map(s=>'<button class="row" onclick="openChat(\''+s.id+'\')"><span class="chip-ico neutral">'+ico('bubble',18)+'</span><span class="grow"><span class="t">'+esc(s.title)+'</span><span class="d">'+esc(s.preview)+'</span><span class="micro num">'+fmtTok(s.usage.tin+s.usage.tout)+' tok · '+fmtCost(s.usage.cost)+'</span></span><span class="micro num">'+esc(s.when)+'</span></button>').join('')+'</div>';
+  });
+  if(!list.length)h+='<div class="empty"><div class="box">'+ico('search',22)+'</div><div class="t">没有匹配的会话</div><div class="d">换个关键词，或清空搜索。</div></div>';
+  h+='<div class="group">最近完成</div><div style="padding:0 18px">'
+  + DB.sessions.filter(s=>!s.running).slice(0,3).map(s=>'<button class="plain" onclick="openChat(\''+s.id+'\')"><span class="ico">'+ico('check',16)+'</span><span class="grow"><span class="t">'+esc(s.title)+'</span><span class="d">'+esc(s.preview)+'</span></span><span class="when num">'+esc(s.when)+'</span></button>').join('')+'</div>';
+  return h;
+}
+
+/* ===== view: chat ===== */
+function chatBody(id){
+  const evs=DB.chats[id]||[];
+  let h='';
+  evs.forEach((e,i)=>{
+    if(e.role==='user'){h+='<div class="say-user">'+esc(e.text)+'</div>';return;}
+    if(e.role==='tools'){
+      const key=id+'-'+i, open=S.folded[key];
+      h+='<div class="turn"><div class="rail"><span class="seed">'+ico('cpu',14)+'</span><span class="stem"></span></div><div class="body">'
+      +'<button class="fold'+(e.done?'':' run')+'" onclick="toggleFold(\''+key+'\')"><span class="st"></span>'+e.steps.length+' 步工作过程'+ico(open?'x':'chev',14)+'</button>'
+      +(open?'<div class="steps">'+e.steps.map(s=>'<div class="step"><b>'+esc(s[0])+'</b> · '+esc(s[1])+'</div>').join('')+'</div>':'')
+      +'</div></div>';return;
+    }
+    if(e.role==='code'){
+      h+='<div class="turn"><div class="rail"><span class="seed">'+ico('spark',14)+'</span><span class="stem"></span></div><div class="body"><div class="code"><div class="bar">'+esc(e.lang)+'<button onclick="copyCode(this,\''+id+'-'+i+'\')" aria-label="复制代码">'+ico('copy',16)+'</button></div><pre id="code-'+id+'-'+i+'">'+esc(e.code)+'</pre></div></div></div>';return;
+    }
+    if(e.role==='diagram'){
+      h+='<div class="turn"><div class="rail"><span class="seed">'+ico('spark',14)+'</span><span class="stem"></span></div><div class="body"><div class="diagram"><button class="zoom" onclick="zoomDiagram()" aria-label="放大流程图">'+ico('expand',15)+'</button>'+diagramSvg()+'</div></div></div>';return;
+    }
+    h+='<div class="turn"><div class="rail"><span class="seed">'+ico('spark',14)+'</span><span class="stem"></span></div><div class="body"><div class="who">Tomato</div><div class="prose">'+mdToHtml(e.md)+'</div>'+(e.u?turnU(e.u):'')+'</div></div>';
+  });
+  if(S.streaming&&S.streaming.session===id){
+    h+='<div class="turn"><div class="rail"><span class="seed">'+ico('spark',14)+'</span><span class="stem"></span></div><div class="body"><div class="who">Tomato</div><div class="prose" id="stream">'+(S.streaming.text?esc(S.streaming.text):'<span class="typing"><i></i><i></i><i></i></span>')+'</div>'+turnU(S.streaming.u,'streamU')+'</div></div>';
+  }
+  return h;
+}
+function viewChat(id){
+  const s=DB.sessions.find(x=>x.id===id)||{title:'对话',running:false};
+  return '<div class="chat-head"><button class="back" onclick="go(\'sessions\')" aria-label="返回会话列表">'+ico('back',18)+'</button><div class="ttl">'+esc(s.title)+'</div>'+pill(s.running?'running':'done')+'</div>'
+  +usageBarHtml(id)
+  +'<div class="transcript" id="transcript">'+chatBody(id)+'</div>'
+  +'<div class="composer"><div class="chips">'
+  +'<button class="cchip" onclick="modelSheet()">'+ico('cpu',14)+esc(S.model)+ico('chev',12)+'</button>'
+  +'<button class="cchip" onclick="permSheet()">'+ico('shield',14)+esc(S.perm)+ico('chev',12)+'</button>'
+  +'<button class="cchip" onclick="toast(\'演示中：附加图片\')">'+ico('img',14)+'图片</button>'
+  +'<button class="cchip" onclick="toast(\'演示中：附加文件\')">'+ico('clip',14)+'文件</button>'
+  +'</div><div class="line">'
+  +'<button class="icon-btn" style="border:0;background:var(--paper)" onclick="toast(\'演示中：语音输入\')" aria-label="语音输入">'+ico('mic',18)+'</button>'
+  +'<textarea id="draft" rows="1" placeholder="给 Tomato 发消息" oninput="autoGrow(this)" aria-label="消息输入"></textarea>'
+  +'<button class="send" id="sendBtn" onclick="sendMsg(\''+id+'\')" aria-label="发送">'+ico('send',18)+'</button>'
+  +'</div></div>';
+}
+
+/* ===== view: memory ===== */
+function viewMemory(){
+  const f=S.memFilter;
+  const list=DB.memories.filter(m=>f==='all'||m.status===f);
+  const counts={all:DB.memories.length,candidate:DB.memories.filter(m=>m.status==='candidate').length,active:DB.memories.filter(m=>m.status==='active').length,observed:DB.memories.filter(m=>m.status==='observed').length};
+  const label={all:'全部',candidate:'待确认',active:'生效中',observed:'观察'};
+  let h=pageHead('brain','个人记忆','Agent 记住的偏好、习惯和事实；在这里确认、删除或补充。',[['var(--tomato)','待确认',counts.candidate],['var(--leaf)','生效中',counts.active],['','观察',counts.observed]])
+  +'<div class="filters" style="margin-top:12px">'+Object.keys(label).map(k=>'<button class="fchip'+(f===k?' on':'')+'" onclick="setMemFilter(\''+k+'\')">'+label[k]+' <span class="num">'+counts[k]+'</span></button>').join('')+'</div>'
+  +'<div style="height:12px"></div>';
+  if(!list.length)h+='<div class="empty"><div class="box">'+ico('brain',22)+'</div><div class="t">这一类还没有记忆</div><div class="d">Agent 会在对话里慢慢积累。</div></div>';
+  list.forEach(m=>{
+    if(m.status==='candidate'){
+      h+='<div class="mem cand"><div class="kind">'+ico('brain',14)+'待确认<span class="scope">'+esc(m.scope)+' · '+esc(m.kind)+'</span></div><div class="val">'+esc(m.val)+'</div><div class="acts"><button class="btn small leaf" onclick="confirmMem(\''+m.id+'\')">'+ico('check',14)+'确认</button><button class="btn small danger-ghost" onclick="forgetMem(\''+m.id+'\')">'+ico('x',14)+'删除</button></div></div>';
+    }else{
+      h+='<div class="mem"><div class="kind" style="color:var(--mute)">'+ico(m.status==='active'?'check':'circle',14)+(m.status==='active'?'生效中':'观察中')+'<span class="scope">'+esc(m.scope)+' · '+esc(m.kind)+'</span></div><div class="val">'+esc(m.val)+'</div><div class="meta"><button class="link" style="color:var(--tomato);font-size:12px;font-weight:600" onclick="forgetMem(\''+m.id+'\')">删除这条记忆</button></div></div>';
+    }
+  });
+  h+='<div style="padding:6px 18px 0"><button class="btn ghost" style="width:100%" onclick="toast(\'演示中：手动补充记忆\')">'+ico('plus',16)+'补充一条记忆</button></div>';
+  return h;
+}
+
+/* ===== view: robots ===== */
+function viewRobots(){
+  let h=pageHead('cpu','智能体','桌面端配置的机器人；这里启动、中断，并查看对话记录。',[['var(--tomato)','运行',DB.robots.filter(r=>r.state==='running').length],['var(--leaf)','空闲',DB.robots.filter(r=>r.state==='idle').length],['var(--amber)','暂停',DB.robots.filter(r=>r.state==='paused').length]],'<button class="icon-btn" onclick="toast(\'演示中：聘用新智能体\')" aria-label="新建智能体">'+ico('plus',18)+'</button>');
+  h+='<div style="padding:0 18px;margin-top:12px">'+DB.robots.map(r=>{
+    const running=r.state==='running';
+    return '<button class="row" onclick="robotSheet(\''+r.id+'\')" style="'+(running?'background:var(--wash);border-color:var(--wash-line)':'')+'"><span class="chip-ico'+(running?'':' neutral')+'">'+ico('cpu',18)+'</span><span class="grow"><span class="t">'+esc(r.name)+'</span><span class="d">'+esc(r.mission)+'</span><span class="micro">'+esc(r.last)+'</span></span>'+pill(r.state)+'</button>';
+  }).join('')+'</div>';
+  return h;
+}
+
+/* ===== view: rooms ===== */
+function viewRooms(){
+  let h=pageHead('people','群聊','一个群聊一条日志：成员、委派、回复和熔断都在这里。',[['var(--leaf)','活跃',DB.rooms.filter(g=>g.state==='active').length],['var(--tomato)','熔断',DB.rooms.filter(g=>g.state==='tripped').length]],'<button class="icon-btn" onclick="toast(\'演示中：新建群聊\')" aria-label="新建群聊">'+ico('plus',18)+'</button>');
+  h+='<div style="padding:0 18px;margin-top:12px">'+DB.rooms.map(g=>{
+    const bad=g.state==='tripped';
+    return '<button class="row" onclick="roomSheet(\''+g.id+'\')" style="'+(bad?'background:var(--wash);border-color:var(--wash-line)':'')+'"><span class="chip-ico">'+logoSvg(26,15)+'</span><span class="grow"><span class="t">'+esc(g.name)+'</span><span class="d">'+esc(g.last)+'</span></span>'+pill(g.state)+'</button>';
+  }).join('')+'</div>';
+  return h;
+}
+
+/* ===== view: account ===== */
+function viewAccount(){
+  const rows=[
+    ['brain','个人记忆','偏好、习惯和事实','go(\'memory\')'],
+    ['desktop','桌面与配对','Host 地址、配对与连接','hostSheet()'],
+    ['log','运行日志','网络、流与界面事件','logsSheet()'],
+    ['bell','通知','任务完成与待确认提醒','toggleNotify()'],
+    ['moon','深色模式','跟随手动切换','toggleDark()'],
+    ['shield','关于与隐私','版本、数据与权限','aboutSheet()']
+  ];
+  return pageHead('person','我的','账号、Host 与偏好设置。',[['var(--leaf)','Host',DB.host.state],['','记忆',DB.memories.length],['','通知',S.notify?'开':'关']])
+  +'<div style="padding:0 18px;margin-top:12px"><div class="row" style="cursor:default"><span class="avatar" style="width:44px;height:44px;font-size:16px">U</span><span class="grow"><span class="t" style="font-size:17px">Underdog</span><span class="d">me@example.com</span></span><span class="pill ok">'+ico('check',12)+'已登录</span></div></div>'
+  +'<div class="group">当前 Host</div>'
+  +'<div style="padding:0 18px"><button class="row" onclick="hostSheet()"><span class="chip-ico leaf">'+ico('desktop',18)+'</span><span class="grow"><span class="t">'+esc(DB.host.name)+'</span><span class="d num">'+esc(DB.host.addr)+' · '+esc(DB.host.since)+'</span></span><span class="pill ok"><span class="pulse" style="width:6px;height:6px"></span>'+esc(DB.host.state)+'</span></button></div>'
+  +'<div class="group">设置</div>'
+  +'<div style="padding:0 18px"><div class="row" style="display:block;padding:4px 14px;cursor:default">'
+  + rows.map((r,i)=>'<button class="plain" style="width:100%;'+(i?'border-top:1px solid var(--line)':'')+'" onclick="'+r[3]+'"><span class="ico" style="color:var(--tomato)">'+ico(r[0],18)+'</span><span class="grow"><span class="t">'+r[1]+'</span><span class="d">'+r[2]+'</span></span>'
+    + (r[0]==='bell'?'<span class="switch'+(S.notify?' on':'')+'"><i></i></span>':r[0]==='moon'?'<span class="switch'+(S.dark?' on':'')+'"><i></i></span>':'<span class="chev">'+ico('chev',16)+'</span>')
+    +'</button>').join('')
+  +'</div></div>'
+  +'<div style="padding:16px 18px 0"><button class="btn ghost" style="width:100%;color:var(--tomato-deep)" onclick="toast(\'演示中：退出登录\')">退出登录</button></div>';
+}
+
+/* ===== sheets ===== */
+function modelSheet(){
+  const opts=[['Tomato 1','默认 · 平衡速度与质量'],['Tomato 1 Pro','更深推理 · 较慢'],['Tomato Flash','最快 · 轻量任务']];
+  openSheet('<h3>模型</h3><p class="sub">这次会话用哪个模型回答。</p>'+opts.map(o=>'<button class="opt'+(S.model===o[0]?' on':'')+'" onclick="pickModel(\''+o[0]+'\')"><span class="grow"><span class="t">'+o[0]+'</span><span class="d">'+o[1]+'</span></span>'+(S.model===o[0]?'<span class="tick">'+ico('check',18)+'</span>':'')+'</button>').join(''));
+}
+function permSheet(){
+  const opts=[['默认','只读与建议'],['工作区写入','允许改文件与跑命令'],['完全访问','允许任意操作 · 谨慎']];
+  openSheet('<h3>权限</h3><p class="sub">Agent 在这台 Mac 上能做什么。</p>'+opts.map(o=>'<button class="opt'+(S.perm===o[0]?' on':'')+'" onclick="pickPerm(\''+o[0]+'\')"><span class="grow"><span class="t">'+o[0]+'</span><span class="d">'+o[1]+'</span></span>'+(S.perm===o[0]?'<span class="tick">'+ico('check',18)+'</span>':'')+'</button>').join(''));
+}
+function hostSheet(){
+  openSheet('<h3>桌面与配对</h3><p class="sub">手机只发指令，任务在 Mac 上执行。</p>'
+  +'<div class="kv"><span class="k">设备</span><span class="v">'+esc(DB.host.name)+'</span></div>'
+  +'<div class="kv"><span class="k">地址</span><span class="v num">'+esc(DB.host.addr)+'</span></div>'
+  +'<div class="kv"><span class="k">状态</span><span class="v" style="color:var(--leaf)">'+esc(DB.host.state)+'</span></div>'
+  +'<div class="kv"><span class="k">配对</span><span class="v">'+esc(DB.host.since)+'</span></div>'
+  +'<div style="display:flex;gap:8px;margin-top:14px"><button class="btn ghost" style="flex:1" onclick="toast(\'演示中：重新配对\')">重新配对</button><button class="btn" style="flex:1" onclick="toast(\'演示中：刷新连接\');closeSheet()">刷新连接</button></div>');
+}
+function logsSheet(){
+  const logs=[['12:27','stream','会话流已恢复'],['12:26','network','permissionPresets/catalog 200'],['12:24','ui','打开对话 s3'],['12:20','stream','智能体流中断 · 第 1 次'],['12:16','ui','切换深色模式']];
+  openSheet('<h3>运行日志</h3><p class="sub">最近的网络、流与界面事件。</p>'+logs.map(l=>'<div class="kv"><span class="k num">'+l[0]+' · '+l[1]+'</span><span class="v" style="font-weight:500">'+esc(l[2])+'</span></div>').join(''));
+}
+function aboutSheet(){
+  openSheet('<h3>关于与隐私</h3><p class="sub">概念演示 · 示例数据，不连接真实 Host。</p>'
+  +'<div class="kv"><span class="k">版本</span><span class="v num">v0.2.0 concept</span></div>'
+  +'<div class="kv"><span class="k">数据</span><span class="v">全部为本地示例</span></div>'
+  +'<div class="kv"><span class="k">记忆</span><span class="v">仅存于本页内存</span></div>'
+  +'<div class="kv"><span class="k">网络</span><span class="v">无外部请求</span></div>');
+}
+function robotSheet(id){
+  const r=DB.robots.find(x=>x.id===id);
+  const running=r.state==='running';
+  openSheet('<h3>'+esc(r.name)+'</h3><p class="sub">'+esc(r.mission)+'</p>'
+  +'<div class="kv"><span class="k">状态</span><span class="v">'+pill(r.state)+'</span></div>'
+  +'<div class="kv"><span class="k">最近</span><span class="v" style="font-weight:500">'+esc(r.last)+'</span></div>'
+  +'<div style="display:flex;gap:8px;margin-top:14px">'
+  +(running?'<button class="btn danger-ghost" style="flex:1" onclick="runRobot(\''+id+'\')">'+ico('stop',16)+'中断</button>':'<button class="btn" style="flex:1" onclick="runRobot(\''+id+'\')">'+ico('play',16)+'运行</button>')
+  +'<button class="btn ghost" style="flex:1" onclick="closeSheet();openChat(\'s2\')">对话记录</button></div>');
+}
+function roomSheet(id){
+  const g=DB.rooms.find(x=>x.id===id);
+  const log=g.state==='tripped'?[['12:02','Tomato','提出第 4 个选题方向'],['12:05','李','重复上一轮结论'],['12:09','系统','熔断：连续 3 轮无新增结论']]:[['11:40','周','请求发布前巡检'],['11:44','Tomato','冒烟 12 项通过'],['11:47','Tomato','巡检通过，可以发布']];
+  openSheet('<h3>'+esc(g.name)+'</h3><p class="sub" style="display:flex;align-items:center;gap:8px">'+logoSvg(30,17)+'<span>'+g.members.length+' 个成员 · '+esc(g.last)+'</span></p>'
+  +log.map(l=>'<div class="kv"><span class="k num">'+l[0]+' · '+esc(l[1])+'</span><span class="v" style="font-weight:500">'+esc(l[2])+'</span></div>').join('')
+  +'<div style="display:flex;gap:8px;margin-top:14px"><button class="btn ghost" style="flex:1" onclick="toast(\'演示中：委派任务\')">委派任务</button>'+(g.state==='tripped'?'<button class="btn" style="flex:1" onclick="toast(\'演示中：解除熔断\');closeSheet()">解除熔断</button>':'<button class="btn" style="flex:1" onclick="toast(\'演示中：查看完整日志\');closeSheet()">完整日志</button>')+'</div>');
+}
+function zoomDiagram(){openSheet('<h3>流程图</h3><p class="sub">点击行后的手势判定。</p><div class="diagram" style="margin:0">'+diagramSvg()+'</div><div style="display:flex;gap:8px;margin-top:14px"><button class="btn ghost" style="flex:1" onclick="toast(\'演示中：复制源码\')">'+ico('copy',16)+'复制源码</button><button class="btn" style="flex:1" onclick="closeSheet()">关闭</button></div>');}
+
+/* ===== usage helpers ===== */
+function fmtTok(n){return n>=1000?(n/1000).toFixed(1)+'k':String(n);}
+function fmtCost(c){return '¥'+c.toFixed(2);}
+function usageOf(id){const s=DB.sessions.find(x=>x.id===id);return (s&&s.usage)||{tin:0,tout:0,cost:0,turns:0,tools:0,secs:0};}
+function usageBarHtml(id){const u=usageOf(id);return '<button class="usage" id="usageBar" onclick="usageSheet(\''+id+'\')" aria-label="查看用量记录">'+ico('chart',14)+'<span class="num">↑ '+fmtTok(u.tin)+' · ↓ '+fmtTok(u.tout)+' tokens</span><i class="num">'+fmtCost(u.cost)+'</i><em class="num">'+u.turns+' 轮 · '+u.tools+' 工具 · '+Math.max(1,Math.round(u.secs/60))+' 分钟</em>'+ico('chev',13)+'</button>';}
+function turnU(u,id){return '<div class="turn-u num"'+(id?' id="'+id+'"':'')+'>'+ico('chart',12)+'↑ '+fmtTok(u.tin)+' · ↓ '+fmtTok(u.tout)+' tokens · '+fmtCost(u.cost)+' · '+u.secs+'s</div>';}
+function usageSheet(id){
+  const s=DB.sessions.find(x=>x.id===id);const u=usageOf(id);
+  const turns=(DB.chats[id]||[]).filter(e=>e.role==='agent'&&e.u);
+  openSheet('<h3>用量记录</h3><p class="sub">'+esc(s?s.title:'对话')+' · '+esc(S.model)+'</p>'
+  +'<table class="utable"><colgroup><col style="width:34%"><col style="width:22%"><col style="width:22%"><col style="width:22%"></colgroup><thead><tr><th>回合</th><th>输入</th><th>输出</th><th>费用</th></tr></thead><tbody>'
+  +turns.map((e,i)=>'<tr><td>第 '+(i+1)+' 回合 · '+e.u.secs+'s</td><td class="num">'+fmtTok(e.u.tin)+'</td><td class="num">'+fmtTok(e.u.tout)+'</td><td class="num">'+fmtCost(e.u.cost)+'</td></tr>').join('')
+  +'<tr class="total"><td>合计</td><td class="num">'+fmtTok(u.tin)+'</td><td class="num">'+fmtTok(u.tout)+'</td><td class="num">'+fmtCost(u.cost)+'</td></tr></tbody></table>'
+  +'<div class="kv"><span class="k">对话轮次</span><span class="v num">'+u.turns+'</span></div>'
+  +'<div class="kv"><span class="k">工具调用</span><span class="v num">'+u.tools+' 次</span></div>'
+  +'<div class="kv"><span class="k">累计耗时</span><span class="v num">'+Math.max(1,Math.round(u.secs/60))+' 分钟</span></div>'
+  +'<p class="micro" style="margin-top:10px">合计含工具调用与系统提示开销；按 Tomato 1 示例计价（输入 ¥0.02/千 tokens、输出 ¥0.06/千 tokens）。</p>'
+  +'<div style="display:flex;gap:8px;margin-top:14px"><button class="btn ghost" style="flex:1" onclick="toast(\'演示中：导出用量\')">导出</button><button class="btn" style="flex:1" onclick="closeSheet()">关闭</button></div>');
+}
+
+/* ===== actions ===== */
+function openChat(id){S.autoscroll=true;go('chat/'+id);}
+function setQuery(v){S.query=v;const sc=$('#screen');const top=sc.scrollTop;render();sc.scrollTop=top;const inp=sc.querySelector('.search input');if(inp){inp.focus();inp.setSelectionRange(v.length,v.length);}}
+function setMemFilter(f){S.memFilter=f;render();}
+function toggleFold(k){S.folded[k]=!S.folded[k];render();}
+function confirmMem(id){const m=DB.memories.find(x=>x.id===id);if(m){m.status='active';toast('已确认，Agent 会记住这条');render();}}
+function forgetMem(id){const i=DB.memories.findIndex(x=>x.id===id);if(i>-1){DB.memories.splice(i,1);toast('已删除这条记忆');render();}}
+function toggleTask(id){const t=DB.tasks.find(x=>x.id===id);if(t){t.on=!t.on;toast(t.on?'已开启：'+t.title:'已暂停：'+t.title);render();}}
+function runRobot(id){const r=DB.robots.find(x=>x.id===id);if(!r)return;if(r.state==='running'){r.state='idle';r.last='上次：中断 · 刚刚';toast('已中断 '+r.name);}else{r.state='running';r.last='这次运行：执行中 · 刚刚';toast('已启动 '+r.name);}closeSheet();render();}
+function pickModel(v){S.model=v;closeSheet();toast('模型已切换为 '+v);render();}
+function pickPerm(v){S.perm=v;closeSheet();toast('权限已切换为 '+v);render();}
+function toggleNotify(){S.notify=!S.notify;toast(S.notify?'通知已开启':'通知已关闭');render();}
+function toggleDark(){S.dark=!S.dark;document.documentElement.dataset.theme=S.dark?'dark':'light';paintThemeBtn();toast(S.dark?'已切换深色':'已切换浅色');render();}
+function paintThemeBtn(){$('#themeBtn').innerHTML=ico(S.dark?'sun':'moon',18);}
+function autoGrow(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
+function copyCode(btn,key){const pre=document.getElementById('code-'+key);if(!pre)return;const txt=pre.textContent;if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(()=>toast('代码已复制'),()=>toast('复制失败'));}else{toast('代码已复制');}}
+function sendMsg(id){
+  const ta=$('#draft');const text=(ta.value||'').trim();if(!text){toast('先写点什么');return;}
+  DB.chats[id]=DB.chats[id]||[];DB.chats[id].push({role:'user',text});
+  const full='收到。我会在 Mac 上处理「'+text+'」，完成后在这里给你结论和改动清单。';
+  S.streaming={session:id,text:'',full:full,u:{tin:0,tout:0,cost:0,secs:0}};
+  S.autoscroll=true;render();
+  let i=0;
+  const timer=setInterval(()=>{
+    i+=2;S.streaming.text=full.slice(0,i);
+    const u=S.streaming.u;u.tin+=37;u.tout+=11;u.cost=Math.round((u.cost+0.0006)*10000)/10000;u.secs=Math.max(1,Math.round(i*0.02));
+    const node=document.getElementById('stream');if(node)node.textContent=S.streaming.text;
+    const ub=document.getElementById('usageBar');if(ub)ub.outerHTML=usageBarHtml(id);
+    const su=document.getElementById('streamU');if(su)su.outerHTML=turnU(u,'streamU');
+    const tr=$('#screen .transcript');if(tr)tr.scrollTop=tr.scrollHeight;
+    if(i>=full.length){clearInterval(timer);
+      DB.chats[id].push({role:'agent',md:S.streaming.full,u:u});
+      const sess=DB.sessions.find(x=>x.id===id);
+      if(sess&&sess.usage){sess.usage.tin+=u.tin;sess.usage.tout+=u.tout;sess.usage.cost=Math.round((sess.usage.cost+u.cost)*100)/100;sess.usage.turns+=1;sess.usage.tools+=2;sess.usage.secs+=u.secs;}
+      S.streaming=null;S.autoscroll=true;render();}
+  },40);
+}
+
+/* ===== tomato phone (cloud agent app) ===== */
+const PC={cat:'all',attach:false,think:false,model:'Tomato Cloud'};
+let cloudStream=null;
+function openPhoneChat(id){go('phone/chat/'+id);}
+function pickPhoneCat(c){PC.cat=c;render();}
+function rerenderKeepDraft(){const d=$('#draft');const v=d?d.value:'';render();const nd=$('#draft');if(nd){nd.value=v;autoGrow(nd);}}
+function toggleAttach(){PC.attach=!PC.attach;rerenderKeepDraft();}
+function toggleThink(){PC.think=!PC.think;toast(PC.think?'深度思考已开':'深度思考已关');rerenderKeepDraft();}
+function cloudModelSheet(){
+  const opts=[['Tomato Cloud','默认 · 平衡速度与质量'],['Tomato Cloud Pro','更深推理 · 较慢'],['Tomato Cloud Flash','最快 · 轻量任务']];
+  openSheet('<h3>云端模型</h3><p class="sub">Tomato Phone 走云端算力，不连接 Mac。</p>'+opts.map(o=>'<button class="opt'+(PC.model===o[0]?' on':'')+'" onclick="pickPhoneModel(\''+o[0]+'\')"><span class="grow"><span class="t">'+o[0]+'</span><span class="d">'+o[1]+'</span></span>'+(PC.model===o[0]?'<span class="tick">'+ico('check',18)+'</span>':'')+'</button>').join(''));
+}
+function pickPhoneModel(m){PC.model=m;closeSheet();toast('模型已切换为 '+m);rerenderKeepDraft();}
+function newPhoneChat(agentId){
+  const a=agentId?DB.cloud.agents.find(x=>x.id===agentId):null;
+  const id='c'+(DB.cloud.list.length+1);
+  DB.cloud.list.unshift({id:id,title:a?a.name+' · 新对话':'新对话',when:'刚刚',group:'今天'});
+  DB.cloud.chats[id]=a?[{role:'agent',md:'## '+a.name+'\n\n'+a.desc+' 告诉我你的具体需求。'}]:[];
+  openPhoneChat(id);
+}
+function phoneHistorySheet(){
+  const groups=['今天','昨天','更早'];
+  openSheet('<div class="row" style="cursor:default"><span class="avatar">U</span><span class="grow"><span class="t">Underdog</span><span class="d">云端账号 · me@example.com</span></span><span class="pill ok">'+ico('check',12)+'已登录</span></div>'
+  +'<div class="pgrid"><button onclick="closeSheet();newPhoneChat()">'+ico('plus',18)+'新对话</button><button onclick="closeSheet();go(\'phone\')">'+ico('cpu',18)+'我的智能体</button><button onclick="toast(\'演示中：收藏\')">'+ico('spark',18)+'收藏</button><button onclick="toast(\'演示中：设置\')">'+ico('gear',18)+'设置</button></div>'
+  +groups.map(g=>{const rows=DB.cloud.list.filter(x=>x.group===g);if(!rows.length)return '';return '<div class="group" style="margin:12px 0 6px">'+g+'</div>'+rows.map(x=>'<button class="plain" style="width:100%" onclick="closeSheet();openPhoneChat(\''+x.id+'\')"><span class="ico">'+ico('bubble',16)+'</span><span class="grow"><span class="t">'+esc(x.title)+'</span></span><span class="when num">'+esc(x.when)+'</span></button>').join('');}).join(''));
+}
+function cloudBody(id){
+  const evs=DB.cloud.chats[id]||[];let h='';
+  evs.forEach(e=>{
+    if(e.role==='user'){h+='<div class="say-user">'+esc(e.text)+'</div>';return;}
+    h+='<div class="csay"><span class="av">'+ico('spark',14)+'</span><div class="bd"><div class="who">Tomato · '+esc(PC.model)+'</div><div class="prose">'+mdToHtml(e.md)+'</div></div></div>';
+  });
+  if(cloudStream&&cloudStream.session===id){
+    h+='<div class="csay"><span class="av">'+ico('spark',14)+'</span><div class="bd"><div class="who">Tomato · '+esc(PC.model)+'</div><div class="prose" id="cstream">'+(cloudStream.text?esc(cloudStream.text):'<span class="typing"><i></i><i></i><i></i></span>')+'</div></div></div>';
+  }
+  return h;
+}
+function viewPhoneChat(id){
+  const m=DB.cloud.list.find(x=>x.id===id)||{title:'云端对话'};
+  return '<div class="chat-head"><button class="back" onclick="go(\'phone\')" aria-label="返回">'+ico('back',18)+'</button><div class="ttl">'+esc(m.title)+'</div>'+pill('cloud')+'<button class="icon-btn" onclick="phoneHistorySheet()" aria-label="历史">'+ico('log',18)+'</button></div>'
+  +'<div class="transcript" id="transcript">'+cloudBody(id)+'</div>'
+  +'<div class="composer"><div class="chips">'
+  +'<button class="cchip" onclick="cloudModelSheet()">'+ico('cpu',14)+esc(PC.model)+ico('chev',12)+'</button>'
+  +'<button class="cchip'+(PC.think?' on':'')+'" onclick="toggleThink()">'+ico('brain',14)+'深度思考</button>'
+  +'<button class="cchip'+(PC.attach?' on':'')+'" onclick="toggleAttach()">'+ico('clip',14)+'附件</button>'
+  +'</div>'
+  +(PC.attach?'<div class="attach"><button onclick="toast(\'演示中：拍照\')">'+ico('cam',20)+'拍照</button><button onclick="toast(\'演示中：相册\')">'+ico('img',20)+'相册</button><button onclick="toast(\'演示中：文件\')">'+ico('clip',20)+'文件</button><button onclick="toast(\'演示中：语音\')">'+ico('mic',20)+'语音</button></div>':'')
+  +'<div class="line"><textarea id="draft" rows="1" placeholder="给 Tomato Cloud 发消息" oninput="autoGrow(this)" aria-label="消息输入"></textarea><button class="send" onclick="sendCloud(\''+id+'\')" aria-label="发送">'+ico('send',18)+'</button></div></div>';
+}
+function sendCloud(id){
+  const ta=$('#draft');const text=(ta.value||'').trim();if(!text){toast('先写点什么');return;}
+  DB.cloud.chats[id]=DB.cloud.chats[id]||[];DB.cloud.chats[id].push({role:'user',text});
+  const full=(PC.think?'（深度思考）':'')+'收到。云端直接处理「'+text+'」，不占用 Mac；完成后在这里给你结论与草稿。';
+  cloudStream={session:id,text:'',full:full};
+  render();
+  let i=0;
+  const t=setInterval(()=>{
+    i+=2;cloudStream.text=full.slice(0,i);
+    const n=document.getElementById('cstream');if(n)n.textContent=cloudStream.text;
+    const tr=$('#screen .transcript');if(tr)tr.scrollTop=tr.scrollHeight;
+    if(i>=full.length){clearInterval(t);DB.cloud.chats[id].push({role:'agent',md:cloudStream.full});cloudStream=null;render();const tr2=$('#screen .transcript');if(tr2)tr2.scrollTop=tr2.scrollHeight;}
+  },40);
+}
+function viewPhone(){
+  const cats=['all','写作','分析','创作','代码'];
+  const agents=DB.cloud.agents.filter(a=>PC.cat==='all'||a.cat===PC.cat);
+  const groups=['今天','昨天','更早'];
+  return '<div class="chat-head"><button class="back" onclick="go(\'home\')" aria-label="返回">'+ico('back',18)+'</button><div class="ttl">Tomato Phone</div>'+pill('cloud')+'<button class="icon-btn" onclick="phoneHistorySheet()" aria-label="历史">'+ico('log',18)+'</button></div>'
+  +'<header class="page-head hero"><div class="ph-top"><span class="date"><span class="dot"></span>云端 Agent · 在线</span><span class="ph-medal">'+ico('cloud',18)+'</span></div><h2 class="display">嗨，我是 Tomato</h2><p class="lede">不连 Mac，云端直接对话与创作。</p><div class="ph-chips"><span class="ph-chip">'+ico('cpu',12)+'模型 <b>'+esc(PC.model)+'</b></span><span class="ph-chip"><span class="dot" style="background:var(--leaf)"></span>云端 <b>在线</b></span></div></header>'
+  +'<section class="section"><div class="section-head"><h3 class="h2">智能体市场</h3></div><div class="filters">'+cats.map(c=>'<button class="fchip'+(PC.cat===c?' on':'')+'" onclick="pickPhoneCat(\''+c+'\')">'+(c==='all'?'全部':c)+'</button>').join('')+'</div><div style="height:10px"></div><div style="padding:0 18px">'+agents.map(a=>'<div class="row" style="cursor:default"><span class="chip-ico">'+ico(a.ico,18)+'</span><span class="grow"><span class="t">'+esc(a.name)+'</span><span class="d">'+esc(a.desc)+'</span></span><button class="btn small" onclick="newPhoneChat(\''+a.id+'\')">使用</button></div>').join('')+'</div></section>'
+  +'<section class="section"><div class="section-head"><h3 class="h2">最近对话</h3><button class="link" onclick="phoneHistorySheet()">全部</button></div>'+groups.map(g=>{const rows=DB.cloud.list.filter(x=>x.group===g);if(!rows.length)return '';return '<div class="group">'+g+'<span class="count num">'+rows.length+'</span></div><div style="padding:0 18px">'+rows.map(x=>'<button class="plain" onclick="openPhoneChat(\''+x.id+'\')"><span class="ico">'+ico('bubble',16)+'</span><span class="grow"><span class="t">'+esc(x.title)+'</span></span><span class="when num">'+esc(x.when)+'</span></button>').join('')+'</div>';}).join('')+'</section>'
+  +'<div style="padding:14px 18px 0"><button class="btn" style="width:100%" onclick="newPhoneChat()">'+ico('plus',16)+'新建云端对话</button></div>';
+}
+
+/* ===== router & dock ===== */
+const TABS=[['home','今天','spark'],['sessions','会话','bubble'],['robots','智能体','cpu'],['rooms','群聊','people'],['account','我的','person']];
+function baseOf(r){return r.startsWith('chat/')?'sessions':r==='memory'?'account':r.startsWith('phone')?'home':r;}
+function renderDock(){
+  const base=baseOf(S.route);
+  $('#dock').innerHTML=TABS.map(t=>'<button class="tab'+(base===t[0]?' on':'')+'" onclick="go(\''+t[0]+'\')" aria-label="'+t[1]+'">'+ico(t[2],22)+'<span>'+t[1]+'</span><span class="ind"></span></button>').join('');
+}
+function render(){
+  const r=S.route;let h;
+  if(r.startsWith('chat/'))h=viewChat(r.slice(5));
+  else if(r.startsWith('phone/chat/'))h=viewPhoneChat(r.slice(11));
+  else if(r==='sessions')h=viewSessions();
+  else if(r==='memory')h=viewMemory();
+  else if(r==='robots')h=viewRobots();
+  else if(r==='rooms')h=viewRooms();
+  else if(r==='account')h=viewAccount();
+  else if(r==='phone')h=viewPhone();
+  else h=viewHome();
+  const sc=$('#screen');
+  const oldTr=sc.querySelector('.transcript');const keep=oldTr?oldTr.scrollTop:null;
+  sc.innerHTML=h;
+  const chat=r.startsWith('chat/')||r.startsWith('phone/chat/');
+  sc.classList.toggle('chat-mode',chat);
+  renderDock();
+  if(chat){const tr=sc.querySelector('.transcript');if(tr)tr.scrollTop=S.autoscroll?tr.scrollHeight:(keep==null?tr.scrollHeight:keep);S.autoscroll=false;}
+}
+/* live ticker */
+let tickIdx=0;
+setInterval(()=>{const el=document.getElementById('ticker');if(!el)return;tickIdx=(tickIdx+1)%DB.live.tools.length;el.textContent=DB.live.tools[tickIdx];},2200);
+/* init */
+$('#markIco').innerHTML=icoFill('spark',15);
+paintThemeBtn();
+$('#themeBtn').addEventListener('click',toggleDark);
+S.route=location.hash.replace('#/','')||'home';
+render();
+</script>
+</body>
+</html>

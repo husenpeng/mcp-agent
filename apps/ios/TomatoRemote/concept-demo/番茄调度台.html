@@ -15,8 +15,8 @@
   --leaf:#00A651; --leaf-wash:#E2F8E9;
   --amber:#A97B00; --amber-wash:#FFF6D6;
   --code:#101216; --code-ink:#E6E9EE; --code-bar:#8B93A0;
-  --grad:linear-gradient(135deg,#FF6B5E 0%,#FF2418 36%,#E00D0D 68%,#A30000 100%);
-  --user-grad:linear-gradient(135deg,#FF2418 0%,#D40000 55%,#A30000 100%);
+  --grad:linear-gradient(135deg,#F4503C 0%,#E02412 36%,#C00D0D 68%,#9E0000 100%);
+  --user-grad:linear-gradient(135deg,#E02412 0%,#C00000 55%,#9E0000 100%);
   --head-grad:linear-gradient(100deg,#14161A 0%,#7A0000 52%,#FF2418 100%);
   --ambient:radial-gradient(820px 460px at 10% -6%,rgba(255,36,24,.10),transparent 62%),radial-gradient(680px 400px at 92% -2%,rgba(255,0,90,.06),transparent 60%);
   --phone-bg:linear-gradient(180deg,#FFFFFF 0%,#F6F7F9 34%,#F2F3F6 100%);
@@ -34,8 +34,8 @@
   --leaf:#3DFF8C; --leaf-wash:#062B16;
   --amber:#FFD60A; --amber-wash:#332B00;
   --code:#0D0F13; --code-ink:#E6E9EE; --code-bar:#8B93A0;
-  --grad:linear-gradient(135deg,#FF7A6B 0%,#FF3B30 36%,#FF1F1F 68%,#C00000 100%);
-  --user-grad:linear-gradient(135deg,#FF4D3D 0%,#FF1F1F 55%,#C00000 100%);
+  --grad:linear-gradient(135deg,#D93A2B 0%,#C21807 36%,#A00000 68%,#7E0000 100%);
+  --user-grad:linear-gradient(135deg,#D22A12 0%,#B00000 55%,#8A0000 100%);
   --head-grad:linear-gradient(100deg,#F2F4F7 0%,#FFB3AC 55%,#FF3B30 100%);
   --ambient:radial-gradient(820px 460px at 10% -6%,rgba(255,30,30,.16),transparent 62%),radial-gradient(680px 400px at 92% -2%,rgba(255,0,90,.10),transparent 60%);
   --phone-bg:linear-gradient(180deg,#12141A 0%,#0A0B0E 40%,#07080B 100%);
@@ -362,6 +362,101 @@ body{background-color:var(--paper);background-image:var(--ambient);background-at
 [data-theme="dark"] .btn.leaf{color:#062B16}
 [data-theme="dark"] .pill.ok{color:#062B16;background:var(--leaf)}
 [data-theme="dark"] .node.done::before{background:var(--leaf);border-color:var(--leaf)}
+
+/* ===== tomato phone ===== */
+.call{margin:14px 18px 0;padding:20px 16px;border-radius:var(--r-card);background-color:var(--card);background-image:linear-gradient(160deg,rgba(255,36,24,.14),rgba(255,0,90,.06) 55%,transparent);border:1px solid var(--wash-line);text-align:center;position:relative;overflow:hidden}
+.call .who{display:flex;flex-direction:column;align-items:center;gap:10px;position:relative}
+.call .big{width:76px;height:76px;border-radius:24px;background-color:var(--tomato);background-image:var(--grad);color:#fff;display:grid;place-items:center;box-shadow:var(--glow)}
+[data-theme="dark"] .call .big{color:#20100C}
+.call .name{font-size:20px;font-weight:800}
+.call .st{font-size:13px;color:var(--mute);font-weight:600}
+.call .st.live{color:var(--tomato-deep)}
+.wave{display:flex;align-items:flex-end;gap:3px;height:26px;justify-content:center;margin-top:12px}
+.wave i{width:3px;border-radius:2px;background:var(--tomato);height:6px;opacity:.5}
+.call.on .wave i{animation:wv 1s ease-in-out infinite;opacity:1}
+.wave i:nth-child(2){animation-delay:.1s}.wave i:nth-child(3){animation-delay:.2s}.wave i:nth-child(4){animation-delay:.3s}.wave i:nth-child(5){animation-delay:.4s}.wave i:nth-child(6){animation-delay:.5s}.wave i:nth-child(7){animation-delay:.6s}
+@keyframes wv{0%,100%{height:6px}50%{height:24px}}
+.call .ctl{display:flex;justify-content:center;gap:14px;margin-top:16px;position:relative}
+.cbtn{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background-color:var(--paper);border:1px solid var(--line);color:var(--mute)}
+.cbtn.on{background-color:var(--wash);border-color:var(--wash-line);color:var(--tomato-deep)}
+.cbtn.hang{background-color:var(--tomato);background-image:var(--grad);color:#fff;border-color:transparent;box-shadow:var(--glow)}
+.cbtn.dial{background-color:var(--leaf);color:#fff;border-color:transparent}
+[data-theme="dark"] .cbtn.hang{color:#20100C}
+[data-theme="dark"] .cbtn.dial{color:#062B16}
+.call .quick{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px;position:relative}
+.calllog{margin:12px 18px 0;display:flex;flex-direction:column;gap:8px}
+.calllog .ln{font-size:13px;padding:8px 12px;border-radius:12px;background-color:var(--card);border:1px solid var(--line)}
+.calllog .ln.me{align-self:flex-end;background-color:var(--tomato);background-image:var(--user-grad);color:#fff;border-color:transparent}
+[data-theme="dark"] .calllog .ln.me{color:#20100C}
+.calllog .ln.ai{align-self:flex-start;max-width:86%}
+.calllog .ln .t{font-weight:700;font-size:11px;color:var(--faint);display:block}
+.calllog .ln.me .t{color:rgba(255,255,255,.7)}
+
+/* ===== compatibility ===== */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+button,input,textarea{-webkit-appearance:none;appearance:none}
+button{touch-action:manipulation}
+body{background-attachment:scroll}
+.scrim{top:0;right:0;bottom:0;left:0}
+.pulse::after{top:-4px;right:-4px;bottom:-4px;left:-4px}
+.phone::before,.live::before,.live::after{top:0;right:0;bottom:0;left:0}
+@supports not (padding:env(safe-area-inset-bottom)){
+  .composer{padding:10px 12px 10px}
+  .dock{padding:6px 6px 6px}
+  .sheet{padding:14px 18px 20px}
+}
+@supports not (gap:1px){
+  .studio>*+*{margin-top:14px}
+  .studio-bar>*+*{margin-left:10px}
+  .row>*+*{margin-left:12px}
+  .plain>*+*{margin-left:12px}
+  .opt>*+*{margin-left:10px}
+  .turn>*+*{margin-left:10px}
+  .transcript>*+*{margin-top:16px}
+  .steps>*+*{margin-top:6px}
+  .section-head>*+*{margin-left:8px}
+  .group>*+*{margin-left:8px}
+  .ph-row>*+*{margin-left:12px}
+  .ph-top>*+*{margin-left:8px}
+  .ph-chips>*+*{margin-left:8px}
+  .filters>*+*{margin-left:8px}
+  .composer .chips>*+*{margin-left:8px}
+  .composer .line>*+*{margin-left:8px}
+  .mem .acts>*+*{margin-left:8px}
+  .live .meter>*+*{margin-left:10px}
+  .usage>*+*{margin-left:8px}
+  .call .who>*+*{margin-top:10px}
+  .call .ctl>*+*{margin-left:14px}
+  .call .quick>*+*{margin-left:8px}
+  .calllog>*+*{margin-top:8px}
+}
+@supports not (place-items:center){
+  .chip-ico,.icon-btn,.ph-medal,.avatar,.send,.empty .box,.studio-bar .mark,.turn .rail .seed,.code .bar button,.diagram button.zoom,.call .big,.cbtn{align-items:center;justify-items:center}
+}
+
+/* ===== tomato phone (cloud agent app) ===== */
+.attach{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
+.attach button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 0;border-radius:12px;background-color:var(--paper);border:1px solid var(--line);font-size:12px;font-weight:600;color:var(--mute)}
+.attach button svg{color:var(--tomato)}
+.cchip.on{background-image:var(--wash);border-color:var(--wash-line);color:var(--tomato-deep)}
+.csay{display:flex;gap:10px}
+.csay .av{flex:none;width:26px;height:26px;border-radius:9px;background-image:var(--wash);color:var(--tomato);display:grid;place-items:center}
+.csay .bd{flex:1;min-width:0}
+.csay .who{font-size:12px;font-weight:600;color:var(--faint);margin-bottom:4px}
+.csay .prose{font-size:15px;line-height:1.65}
+.csay .prose h3{font-size:16px;font-weight:800;margin:10px 0 4px}
+.csay .prose p{margin:6px 0}
+.csay .prose ul{margin:6px 0 6px 18px}
+.pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.pgrid button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 0;border-radius:12px;background-color:var(--paper);border:1px solid var(--line);font-size:12px;font-weight:600;color:var(--mute)}
+.pgrid button svg{color:var(--tomato)}
+
+/* ===== red surfaces use white text ===== */
+[data-theme="dark"] .live,[data-theme="dark"] .send,[data-theme="dark"] .fchip.on,[data-theme="dark"] .studio-bar .mark,[data-theme="dark"] .say-user,[data-theme="dark"] .mem .acts .btn.leaf,[data-theme="dark"] .calllog .ln.me,[data-theme="dark"] .cbtn.hang,[data-theme="dark"] .ph-medal,[data-theme="dark"] .call .big{color:#fff}
+[data-theme="dark"] .btn:not(.ghost):not(.danger-ghost):not(.leaf){color:#fff}
+[data-theme="dark"] .avatar:not(.a2):not(.a3):not(.a4){color:#fff}
+[data-theme="dark"] .live .bar{background:rgba(255,255,255,.28)}
+[data-theme="dark"] .calllog .ln.me .t{color:rgba(255,255,255,.7)}
 </style>
 </head>
 <body>
@@ -419,10 +514,16 @@ const P = {
   refresh:'M20 12a8 8 0 1 1-2.3-5.7M20 4v4h-4',
   doc:'M6 3h9l4 4v14H6zM15 3v4h4',
   wave:'M4 12h2l2-5 3 10 3-8 2 3h4',
-  chart:'M4 19V5M4 19h16M8 15v-4M12 15V8M16 15v-6'
+  chart:'M4 19V5M4 19h16M8 15v-4M12 15V8M16 15v-6',
+  phone:'M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z',
+  cloud:'M7 18a4 4 0 0 1 0-8 5 5 0 0 1 9.6-1.5A3.5 3.5 0 0 1 17 18z'
 };
 function ico(n,s=20,w=1.8){return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+w+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+P[n]+'"/></svg>';}
 function icoFill(n,s=20){return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="'+P[n]+'"/></svg>';}
+const LOGO_D='M33.17.02q.66-.08 1.24.21c.49.24.75.66.84 1.1.08.41.02.85-.1 1.22l-.28 1.05a16.2 16.2 0 0 1 9.6 4.66l.18.18a79 79 0 0 1 8.37-.05l1.23.06q5.22.37 8.07 1.62c1.89.84 3.06 2.04 3.23 3.63.18 1.8-.87 3.72-2.85 5.68a36 36 0 0 1-7.46 5.34 67 67 0 0 1-8.68 4.06l-.03.02q-.91 1.36-2.06 2.52a16.3 16.3 0 0 1-20.29 2.24c-3.38.34-7.02.61-10.4.61h-.1c-3.54 0-6.45-.28-8.61-.86-2.61-.7-4.36-1.88-4.9-3.64a4.7 4.7 0 0 1 .54-3.72 13 13 0 0 1 3.4-3.63 35 35 0 0 1 4.85-3.05 53 53 0 0 1 8.17-3.5h.01a16 16 0 0 1 4.28-7.5l.33-.33.53-.48-.87-.6-.01-.01a2 2 0 0 1-.79-1.95c.07-.52.36-.88.73-1.1a2 2 0 0 1 1.12-.26h.07l.04.01 2.57.39.78-1.99c.03-.08.14-.32.33-.57.2-.25.55-.55 1.04-.62h.01a1.8 1.8 0 0 1 1.46.46l1.26 1.12 2-1.8h.01q.5-.44 1.14-.52m9.73 30.07q-4.14 1.36-8.44 2.08c-1.74.3-4.08.64-6.73.97A14.4 14.4 0 0 0 42.9 30.1m11.22-19.65a76 76 0 0 0-7.84-.09q.75 1.05 1.3 2.21c1.39.13 2.44.57 2.8 1.57.3.8 0 1.6-.35 2.2-.29.5-.66.92-.93 1.2v.02l-.18.18-.18.17-.25.26-.72.74v-.06l-.47.43v-.04c-2.86 2.35-7.07 4.3-12.06 5.61-5.19 1.36-10.82 1.92-15.08 1.5v.01l-.55-.07v.01l-.53-.09h-.07l-.02-.01.02.03-.92-.19-.23-.05h-.01a6 6 0 0 1-1.91-.73c-.54-.34-.92-.8-1.04-1.38-.17-.8.23-1.5.65-1.99.33-.39.74-.71 1.05-.93q-.06-1.47.08-2.93a51 51 0 0 0-6.6 2.9c-5.08 2.67-6.96 4.78-7.64 6-.46.84-.55 1.53-.36 2.18l.04.1c.21.57.82 1.29 2.45 1.88 1.74.63 4.57 1.1 9.1 1.1h.1c3 0 6.21-.22 9.26-.51l.2-.02.52-.05.2-.02.46-.05h.1c3.81-.42 7.28-.94 9.63-1.31q5.68-.98 11.08-3.04l.17-.07.56-.21.17-.07.7-.28 1.25-.53v.02q3.17-1.36 6.2-3.04a34 34 0 0 0 7.04-5.03l.3-.3a10 10 0 0 0 1.51-1.99q.55-1.04.46-1.77l-.02-.15c-.17-.77-.96-1.53-2.75-2.16a27 27 0 0 0-6.7-1.16M34.36 5.6l.8 1.21c.38.44.49 1.16.4 1.8-.08.51-.4.86-.72 1.08-.32.2-.67.3-.93.34h-.11l-3.83.17-2.93 1.81h-.01q-.55.33-1.18.3-.3 0-.61-.06c-.46-.1-.77-.38-.96-.67a2 2 0 0 1-.31-.83v-.09l-.03-2.03q-.6.48-1.13 1.03a14.4 14.4 0 0 0-3.5 14.55q.46.08 1.05.13c4 .4 9.38-.12 14.37-1.43 5.4-1.42 9.7-3.58 12.23-6.06q-.24-1.2-.7-2.35h-.04l-.12-.33-.12-.32q-.9-2-2.38-3.63l-.02-.02-.9-.9h.02a14.2 14.2 0 0 0-8.33-3.77zM17 23.25q-.1.12-.13.2l.2.16zm31.5-8.35.02-.07-.05-.03zM30.49 4.6l-.1.1h-.03l-.32.3-.21-.2-.2-.16-1.94-1.73-.83 2.12-.26.67-.02.06-.15.38-.32-.05-.16-.02-2.77-.42 1.04.73.6.4.25.19.62.43.21.15v.25l.04 2.5.12-.02 3.2-1.98.11-.06h.13l4.1-.2h-.01l-1.24-1.91-.12-.19.05-.21.23-.9.1-.37.09-.35.03-.14.03-.12.44-1.68z';
+let logoSeq=0;
+function logoSvg(w,h){const id='tlg'+(++logoSeq);return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 65.57 36.1" fill="none" preserveAspectRatio="none" aria-hidden="true" style="display:block"><path fill="url(#'+id+')" d="'+LOGO_D+'"/><defs><linearGradient id="'+id+'" x1="32.78" x2="32.78" y1="0" y2="36.1" gradientUnits="userSpaceOnUse"><stop stop-color="#93000a"/><stop offset="1" stop-color="#ff5449"/></linearGradient></defs></svg>';}
+
 
 /* ===== mock data ===== */
 const DB = {
@@ -459,6 +560,25 @@ const DB = {
     {id:'g1',name:'发布值班群',members:['周','吴','T'],state:'active',last:'Tomato：巡检通过，可以发布。'},
     {id:'g2',name:'选题 brainstorm',members:['李','T'],state:'tripped',last:'熔断：连续 3 轮无新增结论。'}
   ],
+  cloud:{
+    agents:[
+      {id:'a1',name:'周报写手',cat:'写作',desc:'汇总建联进度与投放 ROI，生成周报初稿。',ico:'doc'},
+      {id:'a2',name:'数据分析师',cat:'分析',desc:'读表读图，给结论与口径说明。',ico:'chart'},
+      {id:'a3',name:'灵感画师',cat:'创作',desc:'把想法变成海报与插画草图。',ico:'img'},
+      {id:'a4',name:'代码助手',cat:'代码',desc:'解释、重构与生成代码片段。',ico:'cpu'},
+      {id:'a5',name:'发布文案',cat:'写作',desc:'把 changelog 写成用户能读的发布说明。',ico:'spark'}
+    ],
+    list:[
+      {id:'c1',title:'本周达人建联摘要',when:'今天 10:20',group:'今天'},
+      {id:'c2',title:'海报文案 brainstorm',when:'昨天 21:05',group:'昨天'},
+      {id:'c3',title:'SQL 口径疑问',when:'周一',group:'更早'}
+    ],
+    chats:{
+      c1:[{role:'user',text:'帮我摘要本周达人建联'},{role:'agent',md:'## 本周建联\n\n新增建联 14 位，回复率 62%；头部 3 位已寄样。\n\n- 建议优先跟进已寄样未反馈的 2 位'}],
+      c2:[{role:'user',text:'给夏季海报想几句文案'},{role:'agent',md:'## 文案候选\n\n- 把夏天装进番茄红\n- 一口清爽，整夏上线\n- 热浪退散，灵感上线'}],
+      c3:[{role:'user',text:'ROI 口径按消耗还是按回款'},{role:'agent',md:'## 口径\n\n对外周报用回款口径，内部投放优化用消耗口径；两者差异在账期。'}]
+    }
+  },
   chats:{
     s1:[
       {role:'user',text:'会话列表点进去没反应，帮我看看'},
@@ -492,6 +612,7 @@ window.addEventListener('hashchange',()=>{const r=location.hash.replace('#/','')
 
 /* ===== shared fragments ===== */
 function pill(state){
+  if(state==='cloud')return '<span class="pill run">'+ico('cloud',12)+'云端</span>';
   if(state==='running'||state==='active')return '<span class="pill run">'+icoFill('bolt',12)+'进行中</span>';
   if(state==='done'||state==='idle')return '<span class="pill ok">'+ico('check',12)+'完成</span>';
   if(state==='tripped'||state==='failed')return '<span class="pill bad">'+ico('x',12)+'熔断</span>';
@@ -543,6 +664,7 @@ function viewHome(){
   +  '<span class="ticker" id="ticker">'+esc(DB.live.tools[0])+'</span>'
   +  '<span class="meter"><span class="bar"><i style="width:'+pct+'%"></i></span><span class="round num">第 '+g.round+' / '+g.max+' 轮</span></span>'
   +'</button>'
+  +'<div style="padding:12px 18px 0"><button class="row" onclick="go(\'phone\')"><span class="chip-ico">'+ico('phone',18)+'</span><span class="grow"><span class="t">Tomato Phone</span><span class="d">云端 Agent 对话与创作，不连 Mac。</span></span><span class="chev">'+ico('chev',18)+'</span></button></div>'
   +'<section class="section"><div class="section-head"><h3 class="h2">今日回顾</h3><span class="micro num">'+DB.recap.messages+' 条消息</span></div>'
   +  '<div class="vine">'+DB.today.map(n=>'<div class="node '+n.state+'"><div class="t">'+esc(n.t)+'</div><div class="d">'+esc(n.d)+'</div><div class="when num">'+esc(n.when)+'</div></div>').join('')+'</div>'
   +'</section>'
@@ -562,7 +684,7 @@ function viewSessions(){
   const running=list.filter(s=>s.running);
   const projects=[...new Set(list.map(s=>s.project))];
   const totTok=DB.sessions.reduce((a,s)=>a+(s.usage?s.usage.tin+s.usage.tout:0),0);
-  let h=pageHead('bubble','会话','Mac 上正在跑和跑过的对话。',[['var(--tomato)','进行中',running.length],['','项目',projects.length],['','累计',fmtTok(totTok)+' tok']])
+  let h=pageHead('bubble','会话','Mac 上正在跑和跑过的对话。',[['var(--tomato)','进行中',running.length],['','项目',projects.length],['','累计',fmtTok(totTok)+' tok']],'<button class="icon-btn" onclick="go(\'phone\')" aria-label="Tomato Phone">'+ico('phone',18)+'</button>')
   +'<div class="search" style="margin-top:12px">'+ico('search',18)+'<input placeholder="搜索会话或项目" value="'+esc(S.query)+'" oninput="setQuery(this.value)" aria-label="搜索会话"></div>';
   if(running.length){
     h+='<div class="group">'+icoFill('bolt',14)+'进行中<span class="count num">'+running.length+'</span></div><div style="padding:0 18px">'
@@ -659,7 +781,7 @@ function viewRooms(){
   let h=pageHead('people','群聊','一个群聊一条日志：成员、委派、回复和熔断都在这里。',[['var(--leaf)','活跃',DB.rooms.filter(g=>g.state==='active').length],['var(--tomato)','熔断',DB.rooms.filter(g=>g.state==='tripped').length]],'<button class="icon-btn" onclick="toast(\'演示中：新建群聊\')" aria-label="新建群聊">'+ico('plus',18)+'</button>');
   h+='<div style="padding:0 18px;margin-top:12px">'+DB.rooms.map(g=>{
     const bad=g.state==='tripped';
-    return '<button class="row" onclick="roomSheet(\''+g.id+'\')" style="'+(bad?'background:var(--wash);border-color:var(--wash-line)':'')+'"><span class="stack">'+g.members.map((m,i)=>'<span class="avatar a'+((i%4)+1)+'">'+esc(m)+'</span>').join('')+'</span><span class="grow"><span class="t">'+esc(g.name)+'</span><span class="d">'+esc(g.last)+'</span></span>'+pill(g.state)+'</button>';
+    return '<button class="row" onclick="roomSheet(\''+g.id+'\')" style="'+(bad?'background:var(--wash);border-color:var(--wash-line)':'')+'"><span class="chip-ico">'+logoSvg(26,15)+'</span><span class="grow"><span class="t">'+esc(g.name)+'</span><span class="d">'+esc(g.last)+'</span></span>'+pill(g.state)+'</button>';
   }).join('')+'</div>';
   return h;
 }
@@ -728,7 +850,7 @@ function robotSheet(id){
 function roomSheet(id){
   const g=DB.rooms.find(x=>x.id===id);
   const log=g.state==='tripped'?[['12:02','Tomato','提出第 4 个选题方向'],['12:05','李','重复上一轮结论'],['12:09','系统','熔断：连续 3 轮无新增结论']]:[['11:40','周','请求发布前巡检'],['11:44','Tomato','冒烟 12 项通过'],['11:47','Tomato','巡检通过，可以发布']];
-  openSheet('<h3>'+esc(g.name)+'</h3><p class="sub">'+g.members.length+' 个成员 · '+esc(g.last)+'</p>'
+  openSheet('<h3>'+esc(g.name)+'</h3><p class="sub" style="display:flex;align-items:center;gap:8px">'+logoSvg(30,17)+'<span>'+g.members.length+' 个成员 · '+esc(g.last)+'</span></p>'
   +log.map(l=>'<div class="kv"><span class="k num">'+l[0]+' · '+esc(l[1])+'</span><span class="v" style="font-weight:500">'+esc(l[2])+'</span></div>').join('')
   +'<div style="display:flex;gap:8px;margin-top:14px"><button class="btn ghost" style="flex:1" onclick="toast(\'演示中：委派任务\')">委派任务</button>'+(g.state==='tripped'?'<button class="btn" style="flex:1" onclick="toast(\'演示中：解除熔断\');closeSheet()">解除熔断</button>':'<button class="btn" style="flex:1" onclick="toast(\'演示中：查看完整日志\');closeSheet()">完整日志</button>')+'</div>');
 }
@@ -792,9 +914,83 @@ function sendMsg(id){
   },40);
 }
 
+/* ===== tomato phone (cloud agent app) ===== */
+const PC={cat:'all',attach:false,think:false,model:'Tomato Cloud'};
+let cloudStream=null;
+function openPhoneChat(id){go('phone/chat/'+id);}
+function pickPhoneCat(c){PC.cat=c;render();}
+function rerenderKeepDraft(){const d=$('#draft');const v=d?d.value:'';render();const nd=$('#draft');if(nd){nd.value=v;autoGrow(nd);}}
+function toggleAttach(){PC.attach=!PC.attach;rerenderKeepDraft();}
+function toggleThink(){PC.think=!PC.think;toast(PC.think?'深度思考已开':'深度思考已关');rerenderKeepDraft();}
+function cloudModelSheet(){
+  const opts=[['Tomato Cloud','默认 · 平衡速度与质量'],['Tomato Cloud Pro','更深推理 · 较慢'],['Tomato Cloud Flash','最快 · 轻量任务']];
+  openSheet('<h3>云端模型</h3><p class="sub">Tomato Phone 走云端算力，不连接 Mac。</p>'+opts.map(o=>'<button class="opt'+(PC.model===o[0]?' on':'')+'" onclick="pickPhoneModel(\''+o[0]+'\')"><span class="grow"><span class="t">'+o[0]+'</span><span class="d">'+o[1]+'</span></span>'+(PC.model===o[0]?'<span class="tick">'+ico('check',18)+'</span>':'')+'</button>').join(''));
+}
+function pickPhoneModel(m){PC.model=m;closeSheet();toast('模型已切换为 '+m);rerenderKeepDraft();}
+function newPhoneChat(agentId){
+  const a=agentId?DB.cloud.agents.find(x=>x.id===agentId):null;
+  const id='c'+(DB.cloud.list.length+1);
+  DB.cloud.list.unshift({id:id,title:a?a.name+' · 新对话':'新对话',when:'刚刚',group:'今天'});
+  DB.cloud.chats[id]=a?[{role:'agent',md:'## '+a.name+'\n\n'+a.desc+' 告诉我你的具体需求。'}]:[];
+  openPhoneChat(id);
+}
+function phoneHistorySheet(){
+  const groups=['今天','昨天','更早'];
+  openSheet('<div class="row" style="cursor:default"><span class="avatar">U</span><span class="grow"><span class="t">Underdog</span><span class="d">云端账号 · me@example.com</span></span><span class="pill ok">'+ico('check',12)+'已登录</span></div>'
+  +'<div class="pgrid"><button onclick="closeSheet();newPhoneChat()">'+ico('plus',18)+'新对话</button><button onclick="closeSheet();go(\'phone\')">'+ico('cpu',18)+'我的智能体</button><button onclick="toast(\'演示中：收藏\')">'+ico('spark',18)+'收藏</button><button onclick="toast(\'演示中：设置\')">'+ico('gear',18)+'设置</button></div>'
+  +groups.map(g=>{const rows=DB.cloud.list.filter(x=>x.group===g);if(!rows.length)return '';return '<div class="group" style="margin:12px 0 6px">'+g+'</div>'+rows.map(x=>'<button class="plain" style="width:100%" onclick="closeSheet();openPhoneChat(\''+x.id+'\')"><span class="ico">'+ico('bubble',16)+'</span><span class="grow"><span class="t">'+esc(x.title)+'</span></span><span class="when num">'+esc(x.when)+'</span></button>').join('');}).join(''));
+}
+function cloudBody(id){
+  const evs=DB.cloud.chats[id]||[];let h='';
+  evs.forEach(e=>{
+    if(e.role==='user'){h+='<div class="say-user">'+esc(e.text)+'</div>';return;}
+    h+='<div class="csay"><span class="av">'+ico('spark',14)+'</span><div class="bd"><div class="who">Tomato · '+esc(PC.model)+'</div><div class="prose">'+mdToHtml(e.md)+'</div></div></div>';
+  });
+  if(cloudStream&&cloudStream.session===id){
+    h+='<div class="csay"><span class="av">'+ico('spark',14)+'</span><div class="bd"><div class="who">Tomato · '+esc(PC.model)+'</div><div class="prose" id="cstream">'+(cloudStream.text?esc(cloudStream.text):'<span class="typing"><i></i><i></i><i></i></span>')+'</div></div></div>';
+  }
+  return h;
+}
+function viewPhoneChat(id){
+  const m=DB.cloud.list.find(x=>x.id===id)||{title:'云端对话'};
+  return '<div class="chat-head"><button class="back" onclick="go(\'phone\')" aria-label="返回">'+ico('back',18)+'</button><div class="ttl">'+esc(m.title)+'</div>'+pill('cloud')+'<button class="icon-btn" onclick="phoneHistorySheet()" aria-label="历史">'+ico('log',18)+'</button></div>'
+  +'<div class="transcript" id="transcript">'+cloudBody(id)+'</div>'
+  +'<div class="composer"><div class="chips">'
+  +'<button class="cchip" onclick="cloudModelSheet()">'+ico('cpu',14)+esc(PC.model)+ico('chev',12)+'</button>'
+  +'<button class="cchip'+(PC.think?' on':'')+'" onclick="toggleThink()">'+ico('brain',14)+'深度思考</button>'
+  +'<button class="cchip'+(PC.attach?' on':'')+'" onclick="toggleAttach()">'+ico('clip',14)+'附件</button>'
+  +'</div>'
+  +(PC.attach?'<div class="attach"><button onclick="toast(\'演示中：拍照\')">'+ico('cam',20)+'拍照</button><button onclick="toast(\'演示中：相册\')">'+ico('img',20)+'相册</button><button onclick="toast(\'演示中：文件\')">'+ico('clip',20)+'文件</button><button onclick="toast(\'演示中：语音\')">'+ico('mic',20)+'语音</button></div>':'')
+  +'<div class="line"><textarea id="draft" rows="1" placeholder="给 Tomato Cloud 发消息" oninput="autoGrow(this)" aria-label="消息输入"></textarea><button class="send" onclick="sendCloud(\''+id+'\')" aria-label="发送">'+ico('send',18)+'</button></div></div>';
+}
+function sendCloud(id){
+  const ta=$('#draft');const text=(ta.value||'').trim();if(!text){toast('先写点什么');return;}
+  DB.cloud.chats[id]=DB.cloud.chats[id]||[];DB.cloud.chats[id].push({role:'user',text});
+  const full=(PC.think?'（深度思考）':'')+'收到。云端直接处理「'+text+'」，不占用 Mac；完成后在这里给你结论与草稿。';
+  cloudStream={session:id,text:'',full:full};
+  render();
+  let i=0;
+  const t=setInterval(()=>{
+    i+=2;cloudStream.text=full.slice(0,i);
+    const n=document.getElementById('cstream');if(n)n.textContent=cloudStream.text;
+    const tr=$('#screen .transcript');if(tr)tr.scrollTop=tr.scrollHeight;
+    if(i>=full.length){clearInterval(t);DB.cloud.chats[id].push({role:'agent',md:cloudStream.full});cloudStream=null;render();const tr2=$('#screen .transcript');if(tr2)tr2.scrollTop=tr2.scrollHeight;}
+  },40);
+}
+function viewPhone(){
+  const cats=['all','写作','分析','创作','代码'];
+  const agents=DB.cloud.agents.filter(a=>PC.cat==='all'||a.cat===PC.cat);
+  const groups=['今天','昨天','更早'];
+  return '<div class="chat-head"><button class="back" onclick="go(\'home\')" aria-label="返回">'+ico('back',18)+'</button><div class="ttl">Tomato Phone</div>'+pill('cloud')+'<button class="icon-btn" onclick="phoneHistorySheet()" aria-label="历史">'+ico('log',18)+'</button></div>'
+  +'<header class="page-head hero"><div class="ph-top"><span class="date"><span class="dot"></span>云端 Agent · 在线</span><span class="ph-medal">'+ico('cloud',18)+'</span></div><h2 class="display">嗨，我是 Tomato</h2><p class="lede">不连 Mac，云端直接对话与创作。</p><div class="ph-chips"><span class="ph-chip">'+ico('cpu',12)+'模型 <b>'+esc(PC.model)+'</b></span><span class="ph-chip"><span class="dot" style="background:var(--leaf)"></span>云端 <b>在线</b></span></div></header>'
+  +'<section class="section"><div class="section-head"><h3 class="h2">智能体市场</h3></div><div class="filters">'+cats.map(c=>'<button class="fchip'+(PC.cat===c?' on':'')+'" onclick="pickPhoneCat(\''+c+'\')">'+(c==='all'?'全部':c)+'</button>').join('')+'</div><div style="height:10px"></div><div style="padding:0 18px">'+agents.map(a=>'<div class="row" style="cursor:default"><span class="chip-ico">'+ico(a.ico,18)+'</span><span class="grow"><span class="t">'+esc(a.name)+'</span><span class="d">'+esc(a.desc)+'</span></span><button class="btn small" onclick="newPhoneChat(\''+a.id+'\')">使用</button></div>').join('')+'</div></section>'
+  +'<section class="section"><div class="section-head"><h3 class="h2">最近对话</h3><button class="link" onclick="phoneHistorySheet()">全部</button></div>'+groups.map(g=>{const rows=DB.cloud.list.filter(x=>x.group===g);if(!rows.length)return '';return '<div class="group">'+g+'<span class="count num">'+rows.length+'</span></div><div style="padding:0 18px">'+rows.map(x=>'<button class="plain" onclick="openPhoneChat(\''+x.id+'\')"><span class="ico">'+ico('bubble',16)+'</span><span class="grow"><span class="t">'+esc(x.title)+'</span></span><span class="when num">'+esc(x.when)+'</span></button>').join('')+'</div>';}).join('')+'</section>'
+  +'<div style="padding:14px 18px 0"><button class="btn" style="width:100%" onclick="newPhoneChat()">'+ico('plus',16)+'新建云端对话</button></div>';
+}
+
 /* ===== router & dock ===== */
 const TABS=[['home','今天','spark'],['sessions','会话','bubble'],['robots','智能体','cpu'],['rooms','群聊','people'],['account','我的','person']];
-function baseOf(r){return r.startsWith('chat/')?'sessions':r==='memory'?'account':r;}
+function baseOf(r){return r.startsWith('chat/')?'sessions':r==='memory'?'account':r.startsWith('phone')?'home':r;}
 function renderDock(){
   const base=baseOf(S.route);
   $('#dock').innerHTML=TABS.map(t=>'<button class="tab'+(base===t[0]?' on':'')+'" onclick="go(\''+t[0]+'\')" aria-label="'+t[1]+'">'+ico(t[2],22)+'<span>'+t[1]+'</span><span class="ind"></span></button>').join('');
@@ -802,16 +998,18 @@ function renderDock(){
 function render(){
   const r=S.route;let h;
   if(r.startsWith('chat/'))h=viewChat(r.slice(5));
+  else if(r.startsWith('phone/chat/'))h=viewPhoneChat(r.slice(11));
   else if(r==='sessions')h=viewSessions();
   else if(r==='memory')h=viewMemory();
   else if(r==='robots')h=viewRobots();
   else if(r==='rooms')h=viewRooms();
   else if(r==='account')h=viewAccount();
+  else if(r==='phone')h=viewPhone();
   else h=viewHome();
   const sc=$('#screen');
   const oldTr=sc.querySelector('.transcript');const keep=oldTr?oldTr.scrollTop:null;
   sc.innerHTML=h;
-  const chat=r.startsWith('chat/');
+  const chat=r.startsWith('chat/')||r.startsWith('phone/chat/');
   sc.classList.toggle('chat-mode',chat);
   renderDock();
   if(chat){const tr=sc.querySelector('.transcript');if(tr)tr.scrollTop=S.autoscroll?tr.scrollHeight:(keep==null?tr.scrollHeight:keep);S.autoscroll=false;}
