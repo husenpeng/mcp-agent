@@ -55,7 +55,7 @@
     "@tomato/client-ui-layout": "workspace:*",
     "@tomato/branded": "workspace:*",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react-dom": "^19.3.1",
     "@tomato/client-test-runtime": "workspace:*",
     "@tomato/session": "workspace:*",
     "@tomato/client-ui-dockkit": "workspace:*",
