@@ -15,7 +15,11 @@ function fakeWindow(initial: Rectangle) {
   let bounds = { ...initial }
   let visible = false
   let destroyed = false
-  const window: PanelWindow & { emit(event: string): void; loaded: string[]; destroyed: () => boolean } = {
+  const window: PanelWindow & {
+    emit(event: string): void
+    loaded: string[]
+    destroyed: () => boolean
+  } = {
     loaded: [],
     destroyed: () => destroyed,
     async loadURL(url: string) { this.loaded.push(url) },

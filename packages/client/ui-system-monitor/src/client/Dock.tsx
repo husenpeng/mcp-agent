@@ -215,13 +215,18 @@ export function SystemMonitorDock({ useMonitor, watch, surface, floatPanel, clos
 
   /**
    * Begin a drag, unless the press belongs to a control, a process row, or the
-   * dashboard body. A parked ball has no drag handler.
+   * dashboard body. A parked ball has no drag handler. The desktop panel moves its
+   * own window through the header's native drag region instead.
    * @param event - the pointer press on the monitor.
+   * @param controlsDrag - whether the form's own controls move it. The pill's open
+   *   control covers almost the whole pill, so excluding it would leave a strip to
+   *   grab; a press there travels with the pointer, while one that stays put keeps
+   *   opening the pill because {@link claimClick} only swallows a drag's click.
    */
-  const startDrag = (event: PointerEvent<HTMLElement>): void => {
+  const startDrag = (event: PointerEvent<HTMLElement>, controlsDrag: boolean): void => {
     // A press on a control, on a process row, or in the dashboard body is that
     // element's, not the drag's.
-    if (event.target instanceof Element && event.target.closest('button, li, [data-no-drag]') !== null) return
+    if (!controlsDrag && event.target instanceof Element && event.target.closest('button, li, [data-no-drag]') !== null) return
     if (event.button !== 0) return
     const current = layoutRef.current
     capturePointer(event.target as Element, event.pointerId)
@@ -266,12 +271,27 @@ export function SystemMonitorDock({ useMonitor, watch, surface, floatPanel, clos
   /**
    * Record the form a monitored press began in; every gesture starts here.
    * @param event - the pointer press on the monitor.
+   * @param controlsDrag - whether the form's own controls move it.
    */
-  const beginGesture = (event: PointerEvent<HTMLElement>): void => {
+  const beginGesture = (event: PointerEvent<HTMLElement>, controlsDrag: boolean): void => {
     dragStartForm.current = layoutRef.current.form === 'card' ? 'card' : 'pill'
-    startDrag(event)
+    startDrag(event, controlsDrag)
   }
 
+
+  /**
+   * The pointer handlers one form spreads. The pill moves from anywhere, its open
+   * control included; a card keeps its header controls their own presses.
+   * @param controlsDrag - whether a press on the form's controls moves it.
+   * @returns the handlers for that form.
+   */
+  const dragHandlers = (controlsDrag: boolean) => ({
+    onPointerDown: (event: PointerEvent<HTMLElement>): void => { beginGesture(event, controlsDrag) },
+    onPointerMove: dragTo,
+    onPointerUp: endDrag,
+    onPointerCancel: endDrag,
+    onClickCapture: claimClick,
+  })
 
   /**
    * Open the monitor's own menu at a viewport point.
@@ -473,8 +493,10 @@ export function SystemMonitorDock({ useMonitor, watch, surface, floatPanel, clos
           aria-label={t('title')}
           data-system-monitor-card
           data-window-surface
+          {...dragHandlers(false)}
+          onContextMenu={openMenu}
         >
-          <header className={css.windowHeader}>
+          <header className={css.windowHeader} data-drag-handle>
             <span className={css.title}>{t('title')}</span>
             <span className={css.status}>
               <span className={css.dot} data-state={snapshot.status} aria-hidden="true" />
@@ -515,13 +537,6 @@ export function SystemMonitorDock({ useMonitor, watch, surface, floatPanel, clos
     )
   }
 
-  const dragHandlers = {
-    onPointerDown: beginGesture,
-    onPointerMove: dragTo,
-    onPointerUp: endDrag,
-    onPointerCancel: endDrag,
-    onClickCapture: claimClick,
-  }
   const menuOpen = menu !== null
   // Half of a parked ball hangs outside the edge it rests against.
   const overhang = formSize('ball').width / 2
@@ -571,7 +586,7 @@ export function SystemMonitorDock({ useMonitor, watch, surface, floatPanel, clos
           role="group"
           aria-label={t('title')}
           data-system-monitor-pill
-          {...dragHandlers}
+          {...dragHandlers(true)}
           onContextMenu={openMenu}
         >
           <button
@@ -642,7 +657,7 @@ export function SystemMonitorDock({ useMonitor, watch, surface, floatPanel, clos
         style={{ left: layout.x, top: layout.y }}
         aria-label={t('title')}
         data-system-monitor-card
-        {...dragHandlers}
+        {...dragHandlers(false)}
         onContextMenu={openMenu}
       >
         <header

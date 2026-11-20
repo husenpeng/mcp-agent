@@ -520,6 +520,8 @@
   pointer-events: none;
 }
 
+/* The desktop panel's card fills its native window, which the header's drag
+ * region moves; the document never lays the card out at an offset. */
 .windowCard {
   display: flex;
   flex: 1;
@@ -538,6 +540,9 @@
   gap: 6px;
   align-items: center;
   padding: 10px 12px 6px;
+  /* The frameless panel has no title bar, so the header is its handle: the native
+   * drag region follows the pointer past the window's own edges, where a page
+   * drag cannot, and each control declares itself outside it. */
   -webkit-app-region: drag;
   user-select: none;
 }

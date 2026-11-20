@@ -244,6 +244,20 @@ describe('SystemMonitorDock', () => {
     expect(cardOffsets()).toEqual({ left: '210px', top: '110px' })
   })
 
+  it('drags the pill from its own open control, which covers almost all of it', () => {
+    mount()
+    const pill = document.querySelector('[data-system-monitor-pill]') as HTMLElement
+    const open = screen.getByRole('button', { name: 'Open the system monitor' })
+    const start = Math.round(Number.parseFloat(pill.style.left))
+    fireEvent.pointerDown(open, { button: 0, pointerId: 30, clientX: 900, clientY: 700 })
+    fireEvent.pointerMove(open, { pointerId: 30, clientX: 820, clientY: 660 })
+    fireEvent.pointerUp(open, { pointerId: 30 })
+    expect(Math.round(Number.parseFloat(pill.style.left))).toBe(start - 80)
+    // The click that ends the drag never reaches the control, so the pill stays closed.
+    fireEvent.click(open)
+    expect(document.querySelector('[data-system-monitor-card]')).toBeNull()
+  })
+
   it('drags the pill anywhere but only opens it for a press that did not move', () => {
     mount()
     const pill = document.querySelector('[data-system-monitor-pill]') as HTMLElement
@@ -538,6 +552,21 @@ describe('SystemMonitorDock', () => {
     expect(cardOffsets()).toEqual({ left: '210px', top: '180px' })
   })
 
+  it('restores the form a drag started from when its trailing click had toggled the card', () => {
+    mount()
+    const pill = document.querySelector('[data-system-monitor-pill]') as HTMLElement
+    fireEvent.pointerDown(pill, { button: 0, pointerId: 15, clientX: 200, clientY: 200 })
+    fireEvent.pointerMove(pill, { pointerId: 15, clientX: 260, clientY: 260 })
+    fireEvent.pointerUp(pill, { pointerId: 15 })
+    // The gesture expands the card; a later click on the card's surface is swallowed and the pill returns.
+    const card = screen.getByLabelText('System monitor')
+    fireEvent.pointerDown(card, { button: 0, pointerId: 16, clientX: 240, clientY: 240 })
+    fireEvent.pointerMove(card, { pointerId: 16, clientX: 300, clientY: 300 })
+    fireEvent.pointerUp(card, { pointerId: 16 })
+    fireEvent.click(card)
+    expect(document.querySelector('[data-system-monitor-pill]')).toBeTruthy()
+  })
+
   it('ends a drag where it began when the release lands on the header controls', () => {
     window.innerWidth = 1024
     window.innerHeight = 768
@@ -613,6 +642,19 @@ describe('SystemMonitorDock', () => {
     expect(screen.getByText('paused')).toBeTruthy()
     expect(screen.queryByText('32%')).toBeNull()
     view.unmount()
+  })
+
+  it('keeps the desktop panel card filling its window and its controls their presses', () => {
+    storeLayout(100, 100)
+    mount(snapshotOf(), { surface: 'window' })
+    const card = document.querySelector('[data-window-surface]') as HTMLElement
+    // The header's native drag region moves the window, so the document never
+    // offsets the card inside it.
+    expect({ left: card.style.left, top: card.style.top }).toEqual({ left: '', top: '' })
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Pause sampling' }), { button: 0, pointerId: 11 })
+    expect(screen.getByRole('button', { name: 'Pause sampling' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Pause sampling' }))
+    expect(screen.getByRole('button', { name: 'Resume sampling' })).toBeTruthy()
   })
 
   it('renders the desktop panel surface without the pill', () => {
