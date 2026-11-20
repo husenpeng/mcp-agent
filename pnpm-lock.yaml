@@ -24,7 +24,7 @@ patchedDependencies:
   lexical@0.49.0: 54c4413db208cf234cb68c6a837f2523d3b319aa17911f1da385af08362e1356
   mdast-util-gfm-autolink-literal@2.0.1: 7fa6fc7927128a45c3f148d31faf388806895e2de39c14a144200edbc1e7aaa0
   micromark-extension-gfm-autolink-literal@2.1.0: 906ae7c0cd1f69e7ee308a41bc0542e0085276ac7517e56e96f0ccaf5a89327d
-  node-pty@1.2.0-beta.15: ad9ab9a88a385cbb0d0e679e122db127f85a3502162aa5f008827768545b66de
+  node-pty@1.2.0-beta.15: 09e56f08891465228733b75de798eede9aa5cac12e7a30fd3152feca4a0fa9f1
 
 importers:
 
@@ -19330,7 +19330,7 @@ importers:
         version: 3.1.1
       node-pty:
         specifier: 1.2.0-beta.15
-        version: 1.2.0-beta.15(patch_hash=ad9ab9a88a385cbb0d0e679e122db127f85a3502162aa5f008827768545b66de)
+        version: 1.2.0-beta.15(patch_hash=09e56f08891465228733b75de798eede9aa5cac12e7a30fd3152feca4a0fa9f1)
     devDependencies:
       '@tomato/cordis':
         specifier: workspace:~
@@ -35564,7 +35564,7 @@ snapshots:
 
   node-int64@0.4.0: {}
 
-  node-pty@1.2.0-beta.15(patch_hash=ad9ab9a88a385cbb0d0e679e122db127f85a3502162aa5f008827768545b66de):
+  node-pty@1.2.0-beta.15(patch_hash=09e56f08891465228733b75de798eede9aa5cac12e7a30fd3152feca4a0fa9f1):
     dependencies:
       node-addon-api: 7.1.1
 
