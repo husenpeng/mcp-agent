@@ -349,6 +349,9 @@ class TomatoFamily extends ReleaseFamily {
   readonly id = 'tomato'
   readonly patterns = [
     'packages/*/*/package.json',
+    // The plugin bundles live in their own tier; the Desktop payload resolves them from the family.
+    // The others in that tier are owner-authored and name no @tomato package.
+    'plugins/tomato-market/package.json',
     'apps/*/package.json',
   ] as const
   readonly tagPrefix = 'tomato-v'
